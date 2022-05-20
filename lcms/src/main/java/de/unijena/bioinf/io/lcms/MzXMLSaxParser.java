@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.io.lcms;
 
+import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -202,7 +203,7 @@ class MzXMLSaxParser extends DefaultHandler {
 
         Polarity polarity;
         long retentionTime;
-        double collisionEnergy;
+        CollisionEnergy collisionEnergy ;
         int msLevel;
         int npeaks;
         int scanNumber;
@@ -220,7 +221,7 @@ class MzXMLSaxParser extends DefaultHandler {
         public ScanHandler(Attributes attr) {
             polarity = get(attr, "polarity", Polarity.UNKNOWN, (s)-> s.equals("+") ? Polarity.POSITIVE : (s.equals("-") ? Polarity.NEGATIVE : Polarity.UNKNOWN));
             retentionTime = get(attr, "retentionTime", 0L, (s)->datatypeFactory.newDuration(s).getTimeInMillis(Calendar.getInstance()));
-            collisionEnergy = get(attr,"collisionEnergy", 0d, Double::parseDouble);
+            collisionEnergy = get(attr,"collisionEnergy", CollisionEnergy.none(), x->new CollisionEnergy(Double.parseDouble(x)));
             msLevel = get(attr, "msLevel", 1, Integer::parseInt);
             npeaks = get(attr,"peaksCount",0,Integer::parseInt);
             scanNumber = get(attr, "num", -1, Integer::parseInt);

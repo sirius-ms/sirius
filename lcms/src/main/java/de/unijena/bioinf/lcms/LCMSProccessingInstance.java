@@ -48,6 +48,7 @@ import de.unijena.bioinf.lcms.peakshape.CustomPeakShapeFitting;
 import de.unijena.bioinf.lcms.peakshape.PeakShape;
 import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bioinf.model.lcms.*;
+import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
 import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
 import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
 import gnu.trove.list.array.TDoubleArrayList;
@@ -57,7 +58,6 @@ import org.apache.commons.math3.distribution.LaplaceDistribution;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -117,13 +117,26 @@ public class LCMSProccessingInstance {
         return ms2Storage;
     }
 
-    public FragmentedIon createMs2Ion(ProcessedSample sample, MergedSpectrum merged, MutableChromatographicPeak peak, ChromatographicPeak.Segment segment) {
-        final int id = numberOfMs2Scans.incrementAndGet();
-        final SimpleSpectrum spec = merged.finishMerging();
-        final SimpleSpectrum spec2 = Spectrums.extractMostIntensivePeaks(spec, 8, 100);
-        final Scan scan = new Scan(id, merged.getScans().get(0).getPolarity(),peak.getRetentionTimeAt(segment.getApexIndex()), merged.getScans().get(0).getCollisionEnergy(),spec.size(), Spectrums.calculateTIC(spec), true, merged.getPrecursor());
-        ms2Storage.add(scan, spec);
-        final FragmentedIon ion = new FragmentedIon(merged.getScans().get(0).getPolarity(), scan, new CosineQueryUtils(new IntensityWeightedSpectralAlignment(new Deviation(20))).createQueryWithIntensityTransformationNoLoss(spec2, merged.getPrecursor().getMass(), true), merged.getQuality(spec), peak, segment, merged.getScans().toArray(Scan[]::new));
+    public FragmentedIon createMs2Ion(ProcessedSample sample, MergedSpectrumWithCollisionEnergies merged, MutableChromatographicPeak peak, ChromatographicPeak.Segment segment) {
+        Scan[] scans = new Scan[merged.numberOfEnergies()];
+        CollisionEnergy[] energies = new CollisionEnergy[merged.numberOfEnergies()];
+        SimpleSpectrum[] toMerge = new SimpleSpectrum[merged.numberOfEnergies()];
+        Quality bestQuality = Quality.UNUSABLE;
+        for (int k=0; k < merged.numberOfEnergies(); ++k) {
+            energies[k] = merged.energyAt(k);
+            final int id = numberOfMs2Scans.incrementAndGet();
+            final SimpleSpectrum spec = merged.spectrumAt(k).finishMerging();
+            final Quality quality = merged.spectrumAt(k).getQuality(spec);
+            if (quality.betterThan(bestQuality)) bestQuality = quality;
+            final SimpleSpectrum spec2 = Spectrums.extractMostIntensivePeaks(spec, 8, 100);
+            toMerge[k] = spec2;
+            final Scan someScan = merged.spectrumAt(k).getScans().get(0);
+            final Scan scan = new Scan(id, someScan.getPolarity(),peak.getRetentionTimeAt(segment.getApexIndex()),merged.energyAt(k),spec.size(), Spectrums.calculateTIC(spec), true, someScan.getPrecursor());
+            scans[k] = scan;
+            ms2Storage.add(scan, spec);
+        }
+        SimpleSpectrum mergedAll = Spectrums.mergeSpectra(new Deviation(10), true, false, Arrays.asList(toMerge));
+        final FragmentedIon ion = new FragmentedIon(scans[0].getPolarity(), scans,energies, new CosineQueryUtils(new IntensityWeightedSpectralAlignment(new Deviation(20))).createQueryWithIntensityTransformationNoLoss(mergedAll, merged.getPrecursor().getMass(), true), bestQuality, peak, segment, merged.getAllScans().toArray(Scan[]::new));
         return ion;
     }
 
@@ -291,18 +304,12 @@ public class LCMSProccessingInstance {
     public Feature makeFeature(ProcessedSample sample, FragmentedIon ion, boolean gapFilled) {
         int charge = ion.getChargeState();
         if (charge == 0) {
-            if (ion.getMsMsScan()!=null && ion.getMsMsScan().getPolarity()!=null) {
-                charge = ion.getMsMsScan().getPolarity().charge;
+            if (ion.getMsMsScans()!=null && ion.getMsMsScans()[0].getPolarity()!=null) {
+                charge = ion.getMsMsScans()[0].getPolarity().charge;
             } else {
                 //LoggerFactory.getLogger(LCMSProccessingInstance.class).warn("Unknown polarity. Set polarity to POSITIVE");
                 charge = 1;
             }
-        }
-        CollisionEnergy collisionEnergy;
-        if (ion.getMsMsScan()!=null){
-            collisionEnergy= new CollisionEnergy(ion.getMsMsScan().getCollisionEnergy(),ion.getMsMsScan().getCollisionEnergy());
-        }else {
-            collisionEnergy= null;
         }
 
 
@@ -321,11 +328,11 @@ public class LCMSProccessingInstance {
 
         // TODO: mal nachlesen wie man am sinnvollsten quanifiziert
         final double intensity = ion.getPeak().getIntensityAt(ion.getSegment().getApexIndex());
-
+        int isoLen = 0;
         final ArrayList<SimpleSpectrum> correlatedFeatures = new ArrayList<>();
         {
             final SimpleMutableSpectrum isotope = new SimpleMutableSpectrum(ion.getIsotopesAsSpectrum());
-
+            isoLen = isotope.size();
             correlatedFeatures.add(new SimpleSpectrum(isotope));
             for (CorrelatedIon adduct : ion.getAdducts()) {
                 correlatedFeatures.add(adduct.ion.getIsotopesAsSpectrum());
@@ -342,7 +349,11 @@ public class LCMSProccessingInstance {
             fitPeakShape(sample,ion);
 
 
-        final Feature feature = new Feature(sample.run, ionMass, intensity, getTraceset(sample,ion), correlatedFeatures.toArray(new SimpleSpectrum[0]), 0,ion.getMsMsScan()==null ? new SimpleSpectrum[0] : new SimpleSpectrum[]{ms2Storage.getScan(ion.getMsMsScan())},sample.ms2NoiseInformation,collisionEnergy, ionType, ion.getPossibleAdductTypes(), sample.recalibrationFunction,
+        SimpleSpectrum[] spectra = ion.getMsMsScans()==null ? new SimpleSpectrum[0] : Arrays.stream(ion.getMsMsScans()).map(x->ms2Storage.getScan(x)).toArray(SimpleSpectrum[]::new);
+        CollisionEnergy[] energies = ion.getEnergies();
+
+
+        final Feature feature = new Feature(sample.run, ionMass, intensity, getTraceset(sample,ion), correlatedFeatures.toArray(SimpleSpectrum[]::new), 0, spectra,sample.ms2NoiseInformation,energies, ionType, ion.getPossibleAdductTypes(), sample.recalibrationFunction,
                 ion.getPeakShape().getPeakShapeQuality(), ion.getMsQuality(), ion.getMsMsQuality(),ion.getChimericPollution()
 
                 );

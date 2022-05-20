@@ -48,7 +48,7 @@ public class Feature implements Annotated<DataAnnotation> {
     protected final Set<PrecursorIonType> alternativeIonTypes;
     protected final UnivariateFunction rtRecalibration;
     protected Annotated.Annotations<DataAnnotation> annotations = new Annotations<>();
-    protected final CollisionEnergy collisionEnergy;
+    protected final CollisionEnergy[] collisionEnergies;
     // quality terms
     protected final Quality peakShapeQuality, ms1Quality, ms2Quality;
     protected double chimericPollution;
@@ -56,7 +56,26 @@ public class Feature implements Annotated<DataAnnotation> {
     protected final CoelutingTraceSet traceset;
     protected final NoiseInformation ms2NoiseModel;
 
-    public Feature(LCMSRun origin, double mz, double intensity, CoelutingTraceSet traceset, SimpleSpectrum[] correlatedFeatures, int isotope, SimpleSpectrum[] ms2Spectra, NoiseInformation noiseInformation, CollisionEnergy collisionEnergy,PrecursorIonType ionType, Set<PrecursorIonType> alternativeIonTypes, UnivariateFunction rtRecalibration,Quality peakShapeQuality, Quality ms1Quality, Quality ms2Quality, double chimericPollution) {
+    /**
+     *
+     * @param origin lcms run this feature was extracted from
+     * @param mz averaged m/z of the feature
+     * @param intensity max apex intensity of the feature
+     * @param traceset all correlated ion traces
+     * @param correlatedFeatures all correlated ion features
+     * @param isotope index of the isotope trace within the correlatedFeaturs array
+     * @param ms2Spectra MS/MS spectra for each collision energy
+     * @param noiseInformation noise statistics
+     * @param collisionEnergies collision energy for each MS/MS spectrum
+     * @param ionType detected precursor ion type. Might be unknown
+     * @param alternativeIonTypes all possible precursor ion types
+     * @param rtRecalibration recalibration function for retention time
+     * @param peakShapeQuality peak shape quality estimate
+     * @param ms1Quality MS1 quality estimate
+     * @param ms2Quality MS2 quality estimate
+     * @param chimericPollution ratio of chimeric pollution to precursor intensity
+     */
+    public Feature(LCMSRun origin, double mz, double intensity, CoelutingTraceSet traceset, SimpleSpectrum[] correlatedFeatures, int isotope, SimpleSpectrum[] ms2Spectra, NoiseInformation noiseInformation, CollisionEnergy[] collisionEnergies,PrecursorIonType ionType, Set<PrecursorIonType> alternativeIonTypes, UnivariateFunction rtRecalibration,Quality peakShapeQuality, Quality ms1Quality, Quality ms2Quality, double chimericPollution) {
         this.origin = origin;
         this.mz = mz;
         this.intensity = intensity;
@@ -72,7 +91,7 @@ public class Feature implements Annotated<DataAnnotation> {
         this.ms2Quality = ms2Quality;
         this.alternativeIonTypes = alternativeIonTypes;
         this.chimericPollution = chimericPollution;
-        this.collisionEnergy=collisionEnergy;
+        this.collisionEnergies=collisionEnergies;
     }
 
     public CoelutingTraceSet getTraceset() {
@@ -134,7 +153,7 @@ public class Feature implements Annotated<DataAnnotation> {
         return ms2Spectra;
     }
 
-    public CollisionEnergy getCollisionEnergy() {return collisionEnergy;};
+    public CollisionEnergy[] getCollisionEnergies() {return collisionEnergies;};
 
     public PrecursorIonType getIonType() {
         return ionType;
@@ -157,9 +176,10 @@ public class Feature implements Annotated<DataAnnotation> {
         exp.setPrecursorIonType(ionType);
         exp.setMergedMs1Spectrum(Spectrums.mergeSpectra(getCorrelatedFeatures()));
         final ArrayList<MutableMs2Spectrum> ms2Spectra = new ArrayList<>();
-        for (SimpleSpectrum s : getMs2Spectra()) {
-            ms2Spectra.add(new MutableMs2Spectrum(s, mz, this.collisionEnergy, 2));
+        for (int i=0; i < this.ms2Spectra.length; ++i) {
+            ms2Spectra.add(new MutableMs2Spectrum(this.ms2Spectra[i], mz, this.collisionEnergies[i], 2));
         }
+        for (MutableMs2Spectrum spec : ms2Spectra) spec.setIonization(ionType.getIonization());
         exp.setMs2Spectra(ms2Spectra);
         exp.setIonMass(mz);
         exp.setAnnotation(RetentionTime.class, new RetentionTime(traceset.getRetentionTimes()[peak.absoluteIndexLeft()]/1000d, traceset.getRetentionTimes()[peak.absoluteIndexRight()]/1000d, traceset.getRetentionTimes()[peak.getAbsoluteIndexApex()]/1000d));

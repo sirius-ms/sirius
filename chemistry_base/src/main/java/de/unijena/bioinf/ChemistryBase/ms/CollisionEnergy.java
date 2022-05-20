@@ -59,8 +59,13 @@ public class CollisionEnergy {
         this.maxEnergySource = maxSource;
     }
 
+    public CollisionEnergy(double collisionEnergy) {
+        this(collisionEnergy,collisionEnergy);
+    }
+
     public static CollisionEnergy mergeAll(CollisionEnergy... others) {
-        if (others == null || others.length == 0) return new CollisionEnergy(0, 0);
+        others = Arrays.stream(others).filter(x->!x.isUnknown()).toArray(CollisionEnergy[]::new);
+        if (others.length == 0) return new CollisionEnergy(0, 0);
         double minSource = Arrays.stream(others).mapToDouble(CollisionEnergy::minEnergySource).min().orElse(Double.NaN);
         double maxSource = Arrays.stream(others).mapToDouble(CollisionEnergy::maxEnergySource).max().orElse(Double.NaN);
         double min = Double.NaN;
@@ -73,6 +78,10 @@ public class CollisionEnergy {
             min = Arrays.stream(others).mapToDouble(CollisionEnergy::getMinEnergy).min().orElse(Double.NaN);
 
         return new CollisionEnergy(min, max, minSource, maxSource);
+    }
+
+    private boolean isUnknown() {
+        return minEnergySource<0;
     }
 
     @Nullable
@@ -193,11 +202,11 @@ public class CollisionEnergy {
     }
 
     protected double minEnergy() {
-        return maxEnergy;
+        return minEnergy;
     }
 
     protected double maxEnergy() {
-        return maxEnergySource;
+        return maxEnergy;
     }
 
     public boolean isCorrected() {
@@ -233,10 +242,10 @@ public class CollisionEnergy {
                     (Double.isNaN(minEnergy) ? "" : " (corrected " + stringify(minEnergy) + " eV)");
         if (minEnergy != maxEnergy && minEnergySource == maxEnergySource)
             return stringify(minEnergySource) + " eV" +
-                    (Double.isNaN(minEnergy) && Double.isNaN(maxEnergy) ? "" : " (corrected " + stringify(minEnergy) + " - " + stringify(maxEnergy) + " eV)");
+                    (Double.isNaN(minEnergy) || Double.isNaN(maxEnergy) ? "" : " (corrected " + stringify(minEnergy) + " - " + stringify(maxEnergy) + " eV)");
 
         return stringify(minEnergySource) + " - " + stringify(maxEnergySource) + " eV" +
-                (Double.isNaN(minEnergy) && Double.isNaN(maxEnergy) ? "" : " (corrected " + stringify(minEnergy) + " - " + stringify(maxEnergy) + " eV)");
+                (Double.isNaN(minEnergy) || Double.isNaN(maxEnergy) ? "" : " (corrected " + stringify(minEnergy) + " - " + stringify(maxEnergy) + " eV)");
     }
 
     @Override

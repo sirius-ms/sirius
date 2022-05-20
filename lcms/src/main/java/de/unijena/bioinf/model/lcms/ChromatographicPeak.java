@@ -116,6 +116,15 @@ public interface ChromatographicPeak {
         return set;
     }
 
+    public default int index2scanNumber(int index) {
+        return getScanNumberAt(index);
+    }
+    public default Range<Integer> index2scanNumber(Range<Integer> indizes) {
+        int from = getScanNumberAt(indizes.lowerEndpoint());
+        int to = getScanNumberAt(indizes.upperEndpoint());
+        return Range.closed(from, to);
+    }
+
     public static class Segment {
 
         protected final ChromatographicPeak peak;

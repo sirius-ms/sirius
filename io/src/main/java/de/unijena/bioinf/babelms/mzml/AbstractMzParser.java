@@ -23,6 +23,9 @@ package de.unijena.bioinf.babelms.mzml;
 import com.google.common.collect.Iterators;
 import de.unijena.bioinf.ChemistryBase.exceptions.InvalidInputData;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Warning;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.lcms.InMemoryStorage;
 import de.unijena.bioinf.lcms.LCMSProccessingInstance;
@@ -32,6 +35,7 @@ import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bioinf.model.lcms.Feature;
 import de.unijena.bioinf.model.lcms.FragmentedIon;
 import de.unijena.bioinf.model.lcms.LCMSRun;
+import de.unijena.bioinf.sirius.validation.Ms2Validator;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
@@ -68,7 +72,9 @@ public abstract class AbstractMzParser implements Parser<Ms2Experiment> {
                 final FragmentedIon ion = ions.next();
                 AdductResolver.resolve(instance, ion);
                 Feature feature = instance.makeFeature(sample, ion, false);
-                return feature.toMsExperiment(sample.run.getIdentifier() + "_" + String.valueOf(counter++));
+                MutableMs2Experiment experiment = feature.toMsExperiment(sample.run.getIdentifier() + "_" + String.valueOf(counter++)).mutate();
+                new Ms2Validator().validate(experiment, Warning.Logger, true);
+                return experiment;
             } else {
                 instance = null;
                 inMemoryStorage = null;
