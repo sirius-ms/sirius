@@ -3,10 +3,9 @@ package de.unijena.bioinf.fragmenter;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import org.openscience.cdk.interfaces.IBond;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 
 public class DirectedBondTypeScoring implements CombinatorialFragmenterScoring{
 
@@ -113,6 +112,36 @@ public class DirectedBondTypeScoring implements CombinatorialFragmenterScoring{
                     currentLine = fileReader.readLine();
                 }
             }
+        }
+    }
+
+    private static void writeFieldName(String fieldName, BufferedWriter writer) throws IOException {
+        writer.write(fieldName);
+        writer.newLine();
+    }
+
+    public static void writeScoringToFile(File scoringFile, String[] bondNames, double[] bondScores, double wildcardScore, double hydrogenRearrangementProb, double pseudoFragmentScore) throws IOException {
+        try(BufferedWriter fileWriter = Files.newBufferedWriter(scoringFile.toPath(), Charset.defaultCharset())){
+            // Write the bond scores into the file:
+            writeFieldName(">bondScores", fileWriter);
+            for(int i = 0; i < bondNames.length; i++){
+                fileWriter.write(bondNames[i]+" "+bondScores[i]);
+                fileWriter.newLine();
+            }
+
+            // Write the wildcard score into the file:
+            writeFieldName(">wildcard", fileWriter);
+            fileWriter.write(Double.toString(wildcardScore));
+            fileWriter.newLine();
+
+            // Write the hydrogen rearrangement probability into the given file:
+            writeFieldName(">hydrogenRearrangementProbability", fileWriter);
+            fileWriter.write(Double.toString(hydrogenRearrangementProb));
+            fileWriter.newLine();
+
+            // Write the pseudo fragment score into the file:
+            writeFieldName(">pseudoFragmentScore", fileWriter);
+            fileWriter.write(Double.toString(pseudoFragmentScore));
         }
     }
 
