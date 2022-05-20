@@ -291,8 +291,13 @@ class SpectrumPlot extends Base {
         this.spectrum = data.spectra[0];
         this.mzs = this.spectrum.peaks.map(d => d.mz);
         this.mzsSize = this.mzs.length;
-        this.domain_fix.xMin = d3.min(this.mzs)-3;
-        this.domain_fix.xMax = d3.max(this.mzs)+3;
+        if (this.spectrum.parentmass) {
+            this.domain_fix.xMin = 0;
+            this.domain_fix.xMax = this.spectrum.parentmass + 5;
+        } else {
+            this.domain_fix.xMin = d3.min(this.mzs)-3;
+            this.domain_fix.xMax = d3.max(this.mzs)+3;
+        }
         this.y;
         this.yAxis;
         this.zoomY;
