@@ -39,6 +39,7 @@ import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidateFingerprintsGUI;
@@ -49,6 +50,7 @@ import picocli.CommandLine;
 
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.IOException;
 
 @CommandLine.Command(name = "gui", aliases = {"GUI"}, description = "Starts the graphical user interface of SIRIUS", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
 public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
@@ -149,15 +151,22 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                         updateProgress(0, max, progress++, "Checking Webservice connection...");
                         ConnectionMonitor.ConnectionCheck cc = MainFrame.MF.CONNECTION_MONITOR().checkConnection();
                         if (cc.hasInternet()) {
-                            System.out.println("INSERT GITHUB UPDATE CHECK HERE");
-                            /*if (versionsNumber != null) {
-                                if (versionsNumber.expired()) {
-                                    new UpdateDialog(MainFrame.MF, versionsNumber);
+                            try {
+                                ApplicationCore.DEFAULT_LOGGER.info("Checking for Update... ");
+                                @Nullable VersionsInfo versionInfo = ApplicationCore.WEB_API.getVersionInfo(true);
+                                if (versionInfo != null){
+                                    ApplicationCore.DEFAULT_LOGGER.info("Latest Release: " + versionInfo.getLatestSiriusVersion() + " (Installed: " + ApplicationCore.VERSION() + ")");
+
+                                    if ((!UpdateDialog.isDontAskMe()  && ApplicationCore.VERSION_OBJ().compareTo(versionInfo.getLatestSiriusVersion()) < 0) || versionInfo.expired()) {
+                                        new UpdateDialog(MainFrame.MF, versionInfo);
+                                    }
+                                    if (versionInfo.hasNews()) {
+                                        new NewsDialog(MainFrame.MF, versionInfo.getNews());
+                                    }
                                 }
-                                if (versionsNumber.hasNews()) {
-                                    new NewsDialog(MainFrame.MF, versionsNumber.getNews());
-                                }
-                            }*/
+                            } catch (IOException e) {
+                                ApplicationCore.DEFAULT_LOGGER.error("Error when fetching update/release information form GitHub.", e);
+                            }
                         }
                         return true;
                     } catch (Exception e) {
