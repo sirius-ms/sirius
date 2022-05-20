@@ -21,6 +21,7 @@
 package de.unijena.bioinf.io.lcms;
 
 import de.unijena.bioinf.ChemistryBase.data.DataSource;
+import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
 import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
@@ -139,11 +140,14 @@ public class MzMLParser implements LCMSParser {
                 }
 
                 Precursor precursor = null;
-                double collisionEnergy = 0d;
+                double collisionEnergy = Double.NaN;
                 if (msLevel > 1) {
                     precursor = spectrum.getPrecursorList().getPrecursor().get(0);
                     collisionEnergy = precursor.getActivation().getCvParam().stream().filter(cv -> cv.getAccession().equals("MS:1000045"))
                             .findFirst().map(cv -> Double.parseDouble(cv.getValue())).orElse(0d);
+
+
+
                 }
 
                 double[] mzArray = null;
@@ -175,7 +179,7 @@ public class MzMLParser implements LCMSParser {
                         spectrum.getIndex(),
                         polarity,
                         retentionTimeMillis, //retention time
-                        collisionEnergy, //collision energy
+                        Double.isFinite(collisionEnergy) ? new CollisionEnergy(collisionEnergy) : CollisionEnergy.none(), //collision energy
                         spec.size(),
                         Spectrums.calculateTIC(spec),
                         centroided,

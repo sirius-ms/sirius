@@ -448,7 +448,7 @@ public class IonNetwork {
         private Edge.Type type;
 
         public CorAlignedIon(CorrelatedIon ion, FragmentedIon orig, Edge.Type type) {
-            super(Polarity.of(orig.getPolarity()), null, null, Quality.UNUSABLE, ion.ion.getPeak(), ion.ion.getSegment(),new Scan[0]);
+            super(Polarity.of(orig.getPolarity()), null, null, null, Quality.UNUSABLE, ion.ion.getPeak(), ion.ion.getSegment(),new Scan[0]);
             this.type = type;
             this.ion = ion;
         }

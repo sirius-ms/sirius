@@ -187,7 +187,7 @@ public class CorrelatedPeakDetector {
         Scan ms1Scan = sample.run.getScanByNumber(ion.getSegment().getApexScanNumber()).get();
         final SimpleSpectrum ms1 = sample.storage.getScan(ms1Scan);
         final double basePeak = Spectrums.getMaximalIntensity(spectrum);
-        double precursor = ion.getMsMsScan().getPrecursor().getMass();
+        double precursor = ion.getPrecursor().getMass();
         for (int k = 0; k < spectrum.size(); ++k) {
             if (spectrum.getMzAt(k) >= (precursor - 2))
                 continue;
