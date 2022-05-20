@@ -24,7 +24,9 @@ import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.model.lcms.FragmentedIon;
 import de.unijena.bioinf.model.lcms.IonConnection;
+import de.unijena.bioinf.model.lcms.IonGroup;
 import de.unijena.bioinf.model.lcms.Scan;
+import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
 import gnu.trove.list.array.TDoubleArrayList;
 
 import java.util.*;
@@ -48,7 +50,7 @@ public class AlignedFeatures {
         this.representativeFeature = representativeFeature;
         this.rtLeft = rtLeft;
         this.rtRight = rtRight;
-        this.chargeState = features.values().stream().mapToInt(x->x.getChargeState()).max().orElse(0);
+        this.chargeState = features.values().stream().mapToInt(IonGroup::getChargeState).max().orElse(0);
         calculate();
     }
 
@@ -71,7 +73,7 @@ public class AlignedFeatures {
         return Optional.of(new AlignedFeatures(
                 Statistics.robustAverage(mz.toArray()),
                 Statistics.robustAverage(rt.toArray()),
-                scans.stream().max(Comparator.comparingDouble(s->features.get(s).getMsMsScan().getTIC())).orElse(null),
+                scans.stream().max(Comparator.comparingDouble(s->features.get(s).getMsMs().getSelfSimilarity())).orElse(null),
                 newFeatures,
                 rtLeft,rtRight
         ));
@@ -159,10 +161,10 @@ public class AlignedFeatures {
         for (Map.Entry<ProcessedSample, FragmentedIon> f :  copy.entrySet()) {
             rts.add(f.getKey().getRecalibratedRT(f.getValue().getRetentionTime()));
         }
-        Scan l = representativeFeature == null ? null : features.get(representativeFeature).getMsMsScan();
-        Scan r = other.representativeFeature == null ? null : other.features.get(other.representativeFeature).getMsMsScan();
-        double ltic = l==null ? 0 : l.getTIC();
-        double rtic = r==null ? 0 : r.getTIC();
+        CosineQuerySpectrum l = representativeFeature == null ? null : features.get(representativeFeature).getMsMs();
+        CosineQuerySpectrum r = other.representativeFeature == null ? null : other.features.get(other.representativeFeature).getMsMs();
+        double ltic = l==null ? 0 : l.getSelfSimilarity();
+        double rtic = r==null ? 0 : r.getSelfSimilarity();
         return new AlignedFeatures(Statistics.robustAverage(masses.toArray()), Statistics.robustAverage(rts.toArray()), ltic>rtic? representativeFeature : other.representativeFeature , copy, rt, other.rt);
     }
     public AlignedFeatures merge(ProcessedSample otherSample, FragmentedIon other) {
@@ -177,10 +179,10 @@ public class AlignedFeatures {
         for (Map.Entry<ProcessedSample, FragmentedIon> f :  copy.entrySet()) {
             rts.add(f.getKey().getRecalibratedRT(f.getValue().getRetentionTime()));
         }
-        Scan l = representativeFeature == null ? null : features.get(representativeFeature).getMsMsScan();
-        Scan r = other.getMsMs()== null ? null : other.getMsMsScan();
-        double ltic = l==null ? 0 : l.getTIC();
-        double rtic = r==null ? 0 : r.getTIC();
+        CosineQuerySpectrum l = representativeFeature == null ? null : features.get(representativeFeature).getMsMs();
+        CosineQuerySpectrum r = other.getMsMs()== null ? null : other.getMsMs();
+        double ltic = l==null ? 0 : l.getSelfSimilarity();
+        double rtic = r==null ? 0 : r.getSelfSimilarity();
         return new AlignedFeatures(Statistics.robustAverage(masses.toArray()), Statistics.robustAverage(rts.toArray()), ltic>rtic? representativeFeature : otherSample , copy, rt, otherSample.getRecalibratedRT(other.getRetentionTime()));
     }
 
