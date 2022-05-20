@@ -83,22 +83,22 @@ public class SpectraJSONWriter{
             annotatePeakMatches(spectra.get("spectra").getAsJsonArray(), matchPeaks(extractedIsotopePattern, spectrum, ms1MassDiffDev));
             spectra.get("spectra").getAsJsonArray().remove(1); // remove Isotope spectrum, peak matches are left
         } else
-            spectra = jsonSpectra(spectrum, "MS1");
+            spectra = jsonSpectraMs1(spectrum, "MS1");
 		final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 		return gson.toJson(spectra);
 	}
 
 	// MS2 spectrum w/o FragmentationTree
-	public String ms2JSON(MutableMs2Spectrum spectrum) {
-		JsonObject spectra = jsonSpectra(spectrum, "MS2");
+	public String ms2JSON(Ms2Experiment experiment, MutableMs2Spectrum spectrum) {
+		JsonObject spectra = jsonSpectraMs2(experiment, spectrum, "MS2");
 		final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 		return gson.toJson(spectra);
 	}
 
 	// MS2 Spectrum with FragmentationTree (single)
-	public String ms2JSON(MutableMs2Spectrum spectrum, FTree tree) {
+	public String ms2JSON(Ms2Experiment experiment, MutableMs2Spectrum spectrum, FTree tree) {
 		Fragment[] fragments = annotate(spectrum, tree);
-		JsonObject jSpectrum = ms2Annotated(spectrum, fragments);
+		JsonObject jSpectrum = ms2Annotated(experiment, spectrum, fragments);
 		annotatePeakPairs(jSpectrum, tree, fragments);
 		final JsonObject j = new JsonObject();
 		JsonArray spectra = new JsonArray();
@@ -113,6 +113,7 @@ public class SpectraJSONWriter{
 		final JsonArray jPeaks = ms2JsonPeaks(experiment, tree);
 		final JsonObject jSpectrum = new JsonObject();
 		jSpectrum.addProperty("name", "MS2 merged");
+		jSpectrum.addProperty("parentmass", experiment.getIonMass());
 		final JsonObject spectrumMetadata = new JsonObject(); // TODO
 		jSpectrum.add("spectrumMetadata", spectrumMetadata);
 		final JsonObject j = new JsonObject();
@@ -137,10 +138,21 @@ public class SpectraJSONWriter{
 		return j;
 	}
 
-	protected JsonObject jsonSpectra(Spectrum<? extends Peak> spectrum, String name){
+	protected JsonObject jsonSpectraMs1(Spectrum<? extends Peak> spectrum, String name){
 		final JsonObject j = new JsonObject();
 		JsonObject spectrum1 = spectrum2json(spectrum);
 		spectrum1.addProperty("name", name);
+		JsonArray spectra = new JsonArray();
+		spectra.add(spectrum1);
+		j.add("spectra", spectra);
+		return j;
+	}
+
+	protected JsonObject jsonSpectraMs2(Ms2Experiment experiment, Spectrum<? extends Peak> spectrum, String name){
+		final JsonObject j = new JsonObject();
+		JsonObject spectrum1 = spectrum2json(spectrum);
+		spectrum1.addProperty("name", name);
+		spectrum1.addProperty("parentmass", experiment.getIonMass());
 		JsonArray spectra = new JsonArray();
 		spectra.add(spectrum1);
 		j.add("spectra", spectra);
@@ -199,9 +211,10 @@ public class SpectraJSONWriter{
 	}
 
 
-	protected JsonObject ms2Annotated(Spectrum<? extends Peak> spectrum, Fragment[] fragments) {
+	protected JsonObject ms2Annotated(Ms2Experiment experiment, Spectrum<? extends Peak> spectrum, Fragment[] fragments) {
 		final JsonObject jSpectrum = new JsonObject();
 		jSpectrum.addProperty("name", getSpectrumName(spectrum, "MS2"));
+		jSpectrum.addProperty("parentmass", experiment.getIonMass());
 		final JsonObject spectrumMetadata = new JsonObject(); // TODO
 		jSpectrum.add("spectrumMetadata", spectrumMetadata);
 		double scale  = spectrum.getMaxIntensity();
