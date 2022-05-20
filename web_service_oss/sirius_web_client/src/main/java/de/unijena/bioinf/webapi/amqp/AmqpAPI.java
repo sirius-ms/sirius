@@ -122,6 +122,11 @@ public final class AmqpAPI<WebChemDB extends AbstractChemicalDatabase> extends A
     }
 
     @Override
+    public @Nullable VersionsInfo getVersionInfo(boolean updateInfo) throws IOException {
+        return null;
+    }
+
+    @Override
     public @Nullable VersionsInfo getVersionInfo() {
         //todo request via data service as static file like the models?
         return new VersionsInfo(FingerIDProperties.sirius_guiVersion(), getChemDbDate(), false);

@@ -22,6 +22,7 @@ package de.unijena.bioinf.fingerid.utils;
 
 
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * All version numbers are directly taken from the build. So there is no more redundant data. Note that version a.b.c-SNAPSHOT lower than a.b.c
@@ -33,12 +34,18 @@ public class FingerIDProperties {
     }
 
     public static String fingeridMinorVersion() {
-        String[] splits = fingeridFullVersion().split("[.]");
+        return toMinorVersion(fingeridFullVersion());
+    }
+    public static String toMinorVersion(@NotNull String version) {
+        String[] splits = version.split("[.]");
         return splits[0] + "." + splits[1];
     }
 
     public static String fingeridMajorVersion() {
-        return fingeridFullVersion().split("[.]")[0];
+        return toMajorVersion(fingeridFullVersion());
+    }
+    public static String toMajorVersion(@NotNull String version) {
+        return version.split("[.]")[0];
     }
 
     public static String siriusFallbackWebHost() {
@@ -50,7 +57,7 @@ public class FingerIDProperties {
     }
 
     public static String sirius_guiVersion() {
-        return siriusVersion();
+        return  PropertyManager.getProperty("de.unijena.bioinf.siriusFrontend.version");
     }
 
     public static String databaseDate() {

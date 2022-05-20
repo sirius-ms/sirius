@@ -126,7 +126,12 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
      *
      * @return version and connectivity information of the webserver
      */
-    @Nullable VersionsInfo getVersionInfo() throws IOException;
+    @Nullable VersionsInfo getVersionInfo(boolean updateInfo) throws IOException;
+
+    @Nullable
+    default VersionsInfo getVersionInfo() throws IOException {
+        return getVersionInfo(false);
+    }
 
     Multimap<ConnectionError.Klass, ConnectionError> checkConnection();
 
