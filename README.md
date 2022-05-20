@@ -1,5 +1,5 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blueviolet.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Generic badge](https://img.shields.io/badge/Version-5.5.1-informational.svg)](https://shields.io/)
+[![Generic badge](https://img.shields.io/badge/Version-5.5.2-informational.svg)](https://shields.io/)
 [![Build and Pubish](https://github.com/boecker-lab/sirius/actions/workflows/distribute.yaml/badge.svg?branch=release-4-pre)](https://github.com/boecker-lab/sirius/actions/workflows/distribute.yaml)
 
 *<span style="color: #808080;">Our methods are offered to the scientific community as freely available resources. (Re-)distribution of the
@@ -25,17 +25,17 @@ graphical user interface and the command line version of SIRIUS seamlessly integ
 
 <!--begin download-->
 
-### SIRIUS+CSI:FingerID GUI and CLI - Version 5.5.1 (2022-05-17)
+### SIRIUS+CSI:FingerID GUI and CLI - Version 5.5.2 (2022-05-21)
 ##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
-- for Windows (64bit): [msi](https://github.com/boecker-lab/sirius/releases/download/v5.5.1/sirius-5.5.1-win64.msi) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.1/sirius-5.5.1-win64.zip)
-- for Linux (64bit): [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.1/sirius-5.5.1-linux64.zip)
-- for Mac (64bit): [pkg](https://github.com/boecker-lab/sirius/releases/download/v5.5.1/sirius-5.5.1-osx64.pkg) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.1/sirius-5.5.1-osx64.zip)
+- for Windows (64bit): [msi](https://github.com/boecker-lab/sirius/releases/download/v5.5.2/sirius-5.5.2-win64.msi) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.2/sirius-5.5.2-win64.zip)
+- for Linux (64bit): [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.2/sirius-5.5.2-linux64.zip)
+- for Mac (64bit): [pkg](https://github.com/boecker-lab/sirius/releases/download/v5.5.2/sirius-5.5.2-osx64.pkg) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.2/sirius-5.5.2-osx64.zip)
 
-### SIRIUS+CSI:FingerID Command-Line Interface only - Version 5.5.1 (2022-05-17)
+### SIRIUS+CSI:FingerID Command-Line Interface only - Version 5.5.2 (2022-05-21)
 ##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
-- for Windows (64bit): [msi](https://github.com/boecker-lab/sirius/releases/download/v5.5.1/sirius-5.5.1-win64-headless.msi) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.1/sirius-5.5.1-win64-headless.zip)
-- for Linux (64bit): [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.1/sirius-5.5.1-linux64-headless.zip)
-- for Mac (64bit): [pkg](https://github.com/boecker-lab/sirius/releases/download/v5.5.1/sirius-5.5.1-osx64-headless.pkg) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.1/sirius-5.5.1-osx64-headless.zip)
+- for Windows (64bit): [msi](https://github.com/boecker-lab/sirius/releases/download/v5.5.2/sirius-5.5.2-win64-headless.msi) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.2/sirius-5.5.2-win64-headless.zip)
+- for Linux (64bit): [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.2/sirius-5.5.2-linux64-headless.zip)
+- for Mac (64bit): [pkg](https://github.com/boecker-lab/sirius/releases/download/v5.5.2/sirius-5.5.2-osx64-headless.pkg) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.2/sirius-5.5.2-osx64-headless.zip)
 
 
 <!--end download-->
@@ -68,8 +68,8 @@ website. Results are retrieved from the web service and can be displayed in the 
 also available for the SIRIUS command-line tool. Training structures for CSI:FingerID's predictors are available through the CSI:FingerID web API:
 <!--begin training-->
 
-- https://www.csi-fingerid.uni-jena.de/v2.6.1/api/fingerid/trainingstructures?predictor=1 (training structures for positive ion mode)
-- https://www.csi-fingerid.uni-jena.de/v2.6.1/api/fingerid/trainingstructures?predictor=2 (training structures for negative ion mode)
+- https://www.csi-fingerid.uni-jena.de/v2.6.2/api/fingerid/trainingstructures?predictor=1 (training structures for positive ion mode)
+- https://www.csi-fingerid.uni-jena.de/v2.6.2/api/fingerid/trainingstructures?predictor=2 (training structures for negative ion mode)
 
 <!--end training-->
 
