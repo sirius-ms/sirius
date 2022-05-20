@@ -31,9 +31,11 @@ public class VersionsInfo {
     /**
      * this version number increments if custom databases change and are not longer valid. This is for example the case when the fingerprint computation changes.
      */
-    public static final int CUSTOM_DATABASE_SCHEMA = PropertyManager.getInteger("de.unijena.bioinf.fingerid.customdb.version",0);
+    public static final int CUSTOM_DATABASE_SCHEMA = PropertyManager.getInteger("de.unijena.bioinf.fingerid.customdb.version", 0);
     public String databaseDate;
     public final DefaultArtifactVersion siriusGuiVersion;
+    private DefaultArtifactVersion latestSiriusVersion = null;
+    private String latestSiriusLink = null;
     //Expiry Dates
     public final boolean expired;
     public final Timestamp acceptJobs;
@@ -62,8 +64,8 @@ public class VersionsInfo {
     /**
      * filter already seen news
      *
-     * @param newsList
-     * @return
+     * @param newsList unfiltered news list
+     * @return filtered news list
      */
     private List<News> filterNews(List<News> newsList) {
         List<News> filteredNews = new ArrayList<>();
@@ -105,6 +107,22 @@ public class VersionsInfo {
 
     public boolean databaseOutdated(String s) {
         return databaseDate.compareTo(s) > 0;
+    }
+
+    public DefaultArtifactVersion getLatestSiriusVersion() {
+        return latestSiriusVersion;
+    }
+
+    public void setLatestSiriusVersion(DefaultArtifactVersion latestSiriusVersion) {
+        this.latestSiriusVersion = latestSiriusVersion;
+    }
+
+    public String getLatestSiriusLink() {
+        return latestSiriusLink;
+    }
+
+    public void setLatestSiriusLink(String latestSiriusLink) {
+        this.latestSiriusLink = latestSiriusLink;
     }
 
     @Override

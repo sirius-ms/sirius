@@ -110,7 +110,6 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
     private Subscription activeSubscription;
 
 
-
     public RestAPI(@Nullable AuthService authService, @NotNull AccountClient accountClient, @NotNull InfoClient infoClient, JobsClient jobsClient, @NotNull ChemDBClient chemDBClient, @NotNull FingerIdClient fingerIdClient, @NotNull CanopusClient canopusClient) {
         super(authService);
         this.accountClient = accountClient;
@@ -192,12 +191,12 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
 
     //region ServerInfo
     @NotNull
-    public VersionsInfo getVersionInfo() throws IOException {
-        return ProxyManager.applyClient(serverInfoClient::getVersionInfo);
+    public VersionsInfo getVersionInfo(boolean updateInfo) throws IOException {
+        return ProxyManager.applyClient((c) -> serverInfoClient.getVersionInfo(c, updateInfo));
     }
 
     @Override
-    public String getChemDbDate() { //todo this is ugly an should be moved to a separate endpoint in the chemDB client
+    public String getChemDbDate() {
         try {
             return getVersionInfo().databaseDate;
         } catch (IOException e) {
