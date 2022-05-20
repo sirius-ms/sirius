@@ -35,6 +35,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +45,7 @@ import javax.json.JsonReader;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URL;
 import java.sql.Timestamp;
 import java.util.Collections;
 import java.util.Date;
@@ -59,10 +61,14 @@ public class InfoClient extends AbstractCsiClient {
     }
 
     @NotNull
-    public VersionsInfo getVersionInfo(final CloseableHttpClient client) throws IOException {
+    public VersionsInfo getVersionInfo(final CloseableHttpClient client, boolean includeUpdateInfo) throws IOException {
         return execute(client,
                 () -> {
-                    HttpGet get = new HttpGet(buildVersionSpecificWebapiURI(WEBAPI_VERSION_JSON).setParameter("fingeridVersion", FingerIDProperties.fingeridFullVersion()).setParameter("siriusguiVersion", FingerIDProperties.sirius_guiVersion()).build());
+                    HttpGet get = new HttpGet(buildVersionSpecificWebapiURI(WEBAPI_VERSION_JSON)
+                            .setParameter("fingeridVersion", FingerIDProperties.fingeridFullVersion())
+                            .setParameter("siriusguiVersion", FingerIDProperties.sirius_guiVersion())
+                            .setParameter("updateInfo", String.valueOf(includeUpdateInfo))
+                            .build());
                     get.setConfig(RequestConfig.custom().setConnectTimeout(8000).setSocketTimeout(8000).build());
                     return get;
                 },
@@ -99,7 +105,15 @@ public class InfoClient extends AbstractCsiClient {
                     final String newsJson = o.getJsonArray("news").toString();
                     newsList = News.parseJsonNews(newsJson);
                 }
-                return new VersionsInfo(version, database, expired, accept, finish, newsList);
+                VersionsInfo v = new VersionsInfo(version, database, expired, accept, finish, newsList);
+
+                if (gui.containsKey("latestVersion") && gui.getString("latestVersion") != null)
+                    v.setLatestSiriusVersion(new DefaultArtifactVersion(gui.getString("latestVersion")));
+
+                if (gui.containsKey("latestVersionUrl"))
+                    v.setLatestSiriusLink(gui.getString("latestVersionUrl"));
+
+                return v;
             }
         }
         return null;
@@ -133,7 +147,8 @@ public class InfoClient extends AbstractCsiClient {
 
                     return new HttpGet(builder.build());
                 },
-                new TypeReference<>() {}
+                new TypeReference<>() {
+                }
         );
     }
 }
