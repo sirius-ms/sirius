@@ -19,8 +19,9 @@
 
 package de.unijena.bioinf.ms.gui.dialogs;
 
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import org.slf4j.LoggerFactory;
 
@@ -30,60 +31,77 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 
-public class UpdateDialog extends JDialog implements ActionListener {
-
+public class UpdateDialog extends DoNotShowAgainDialog implements ActionListener {
+    public static final String DO_NOT_ASK_KEY = "de.unijena.bioinf.sirius.UpdateDialog.dontAskAgain";
     JButton ignore, download;
 
+    private final VersionsInfo version;
+
     public UpdateDialog(Frame owner, VersionsInfo version) {
-        super(owner, "Update for SIRIUS is available", ModalityType.APPLICATION_MODAL);
-        this.setLocationRelativeTo(owner);
-        setLayout(new BorderLayout());
+        super(owner, "Update for SIRIUS available!", createMessage(version), DO_NOT_ASK_KEY);
+        this.version = version;
+        setPreferredSize(new Dimension(50, getPreferredSize().height));
+        setVisible(true);
+    }
+
+
+    private static String createMessage(VersionsInfo version){
         StringBuilder message = new StringBuilder();
-        message.append("<html>There is a new version of SIRIUS available.<br> Download the latest <b>SIRIUS</b>")
-                .append(" to receive the newest upgrades.<br> Your current version is ")
-                .append(FingerIDProperties.sirius_guiVersion())
-                .append("<br>");
-        if (version.finishJobs()) {
-            if (version.acceptJobs()) {
-                message.append("The CSI:FingerID webservice will accept jobs from your current version until <b>")
-                        .append(version.acceptJobs.toString()).append("</b>.<br>");
+        message.append("<html>A new version (<b>").append(version.getLatestSiriusVersion()).append("</b>) of SIRIUS is available! <br><br>Upgrade to the latest <b>SIRIUS</b>")
+                .append(" to receive the newest features and fixes.<br> Your current version is: <b>")
+                .append(ApplicationCore.VERSION())
+                .append("</b><br>");
+
+        if (version.expired()) {
+            if (version.finishJobs()) {
+                if (version.acceptJobs()) {
+                    message.append("The CSI:FingerID webservice will accept jobs from your current version until <b>")
+                            .append(version.acceptJobs.toString()).append("</b>.<br>");
+                } else {
+                    message.append("The CSI:FingerID webservice will no longer accept jobs from your current version")
+                            .append("<br>");
+                }
+                message.append("Submitted jobs will be allowed to finish until <b>").append(version.finishJobs.toString()).append("</b>.");
             } else {
-                message.append("The CSI:FingerID webservice will no longer accept jobs from your current version")
-                        .append("<br>");
+                message.append("Your Sirius version is not longer supported by the CSI:FingerID webservice.<br> Therefore the CSI:FingerID search is disabled in this version");
             }
-            message.append("Submitted jobs will be allowed to finish until <b>").append(version.finishJobs.toString()).append("</b>.");
-        } else {
-            message.append("Your Sirius version is not longer supported by the CSI:FingerID webservice.<br> Therefore the CSI:FingerID search is disabled in this version");
         }
         message.append("</html>");
-        final JLabel label = new JLabel(message.toString());
-        label.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-        add(label, BorderLayout.CENTER);
-        final JPanel subpanel = new JPanel(new FlowLayout());
-        ignore = new JButton("Ignore update");
-        download = new JButton("Download latest SIRIUS");
-        subpanel.add(download);
-        subpanel.add(ignore);
-        subpanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-        add(subpanel, BorderLayout.SOUTH);
-        download.addActionListener(this);
-        ignore.addActionListener(this);
-        pack();
-        setVisible(true);
+        return message.toString();
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == ignore) {
-        } else if (e.getSource() == download) {
+       /* if (e.getSource() == ignore) {
+
+        } else */if (e.getSource() == download) {
             try {
-                Desktop.getDesktop().browse(new URI(PropertyManager.getProperty("de.unijena.bioinf.sirius.download")));
-            } catch (IOException | URISyntaxException e1) {
+                Desktop.getDesktop().browse(URI.create(version.getLatestSiriusLink()));
+            } catch (IOException e1) {
                 LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(), e1);
             }
         }
-        this.dispose();
+        saveDoNotAskMeAgain();
+        dispose();
+    }
+
+    public static boolean isDontAskMe(){
+        return PropertyManager.getBoolean(DO_NOT_ASK_KEY,false);
+    }
+
+    @Override
+    protected void decorateButtonPanel(JPanel boxedButtonPanel) {
+        ignore = new JButton("Not now");
+        download = new JButton("Download latest SIRIUS");
+        boxedButtonPanel.add(ignore);
+        boxedButtonPanel.add(download);
+        download.addActionListener(this);
+        ignore.addActionListener(this);
+    }
+
+    @Override
+    protected Icon makeDialogIcon() {
+        return Icons.REFRESH_32;
     }
 }
