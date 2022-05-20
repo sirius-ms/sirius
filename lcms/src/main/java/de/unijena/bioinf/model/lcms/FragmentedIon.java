@@ -21,6 +21,7 @@
 package de.unijena.bioinf.model.lcms;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
@@ -45,7 +46,8 @@ import java.util.Set;
 public class FragmentedIon extends IonGroup {
 
     protected final CosineQuerySpectrum msms;
-    protected final Scan ms2Scan;
+    protected final Scan[] ms2Scans;
+    protected final CollisionEnergy[] energies;
     protected final List<CorrelatedIon> adducts, inSourceFragments;
     protected PrecursorIonType detectedIonType;
     protected Set<PrecursorIonType> alternativeIonTypes;
@@ -70,12 +72,13 @@ public class FragmentedIon extends IonGroup {
 
     protected Scan[] mergedScans;
 
-    public FragmentedIon(Polarity polarity, Scan ms2Scan, CosineQuerySpectrum msms, Quality ms2Quality, MutableChromatographicPeak chromatographicPeak,ChromatographicPeak.Segment segment, Scan[] mergedScans) {
+    public FragmentedIon(Polarity polarity, Scan[] ms2Scans, CollisionEnergy[] energies, CosineQuerySpectrum msms, Quality ms2Quality, MutableChromatographicPeak chromatographicPeak,ChromatographicPeak.Segment segment, Scan[] mergedScans) {
         super(chromatographicPeak, segment, new ArrayList<>());
         this.connections = new ArrayList<>();
         this.polarity = polarity;
         this.msms = msms;
-        this.ms2Scan = ms2Scan;
+        this.energies = energies;
+        this.ms2Scans = ms2Scans;
         this.adducts = new ArrayList<>();
         this.inSourceFragments = new ArrayList<>();
         this.ms2Quality = ms2Quality;
@@ -83,6 +86,14 @@ public class FragmentedIon extends IonGroup {
         this.chimerics = new ArrayList<>();
         this.additionalInfos = new ArrayList<>();
         this.mergedScans = mergedScans;
+    }
+
+    public CollisionEnergy[] getEnergies() {
+        return energies;
+    }
+
+    public Precursor getPrecursor() {
+        return ms2Scans[0].getPrecursor();
     }
 
     public void addAdductPeak(Peak adduct) {
@@ -239,7 +250,7 @@ return null;
     }
 
     public String toString() {
-        return "MS/MS("+chargeState+") m/z = " + (msms==null ? "GAP FILLED" : ms2Scan.getPrecursor().getMass()) + ", apex = " + peak.getRetentionTimeAt(segmentApexIndex)/60000d + " min";
+        return "MS/MS("+chargeState+") m/z = " + (msms==null ? "GAP FILLED" : ms2Scans[0].getPrecursor().getMass()) + ", apex = " + peak.getRetentionTimeAt(segmentApexIndex)/60000d + " min";
     }
 
     public ArrayList<CompoundReport> getAdditionalInfos() {
@@ -258,8 +269,8 @@ return null;
         return msms;
     }
 
-    public Scan getMsMsScan() {
-        return ms2Scan;
+    public Scan[] getMsMsScans() {
+        return ms2Scans;
     }
 
     public void setChimerics(List<ChromatographicPeak> chimerics) {

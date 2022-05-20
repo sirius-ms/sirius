@@ -21,6 +21,7 @@
 package de.unijena.bioinf.model.lcms;
 
 import com.google.common.collect.Range;
+import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.*;
@@ -37,9 +38,11 @@ public final class MergedSpectrum extends PeaklistSpectrum<MergedPeak> implement
     protected double noiseLevel;
     protected double dotProduct, cosine;
     protected double tic = Double.NaN;
+    protected CollisionEnergy collisionEnergy;
 
     public MergedSpectrum(Scan scan, Spectrum<? extends Peak> spectrum, Precursor precursor, double noiseLevel) {
         super(new ArrayList<>());
+        this.collisionEnergy = scan.getCollisionEnergy();
         this.noiseLevel = noiseLevel;
         for (int k=0; k < spectrum.size(); ++k) {
             peaks.add(new MergedPeak(new ScanPoint(scan, spectrum.getMzAt(k), spectrum.getIntensityAt(k))));
@@ -60,6 +63,7 @@ public final class MergedSpectrum extends PeaklistSpectrum<MergedPeak> implement
 
     public MergedSpectrum(Precursor precursor, List<MergedPeak> peaks, List<Scan> scans, double cosine) {
         super(peaks);
+        this.collisionEnergy = CollisionEnergy.mergeAll(scans.stream().map(Scan::getCollisionEnergy).toArray(CollisionEnergy[]::new));
         this.peaks.sort(Comparator.comparingDouble(Peak::getMass));
         this.scans = scans;
         this.precursor=precursor;
@@ -70,6 +74,15 @@ public final class MergedSpectrum extends PeaklistSpectrum<MergedPeak> implement
             }
         }
         this.cosine = cosine;
+    }
+
+    public MergedSpectrumWithCollisionEnergies toCollisionEnergyGroup() {
+        return new MergedSpectrumWithCollisionEnergies(this);
+    }
+
+    @Override
+    public CollisionEnergy getCollisionEnergy() {
+        return collisionEnergy;
     }
 
     // we have to do this. Otherwise, memory consumption is just too high
