@@ -12,6 +12,7 @@ stages:
   - clean
   - prepare
   - build
+  - test
 #  - build-cli
 #  - build-multi-cli
 #  - build-gui
@@ -70,6 +71,15 @@ distGuiLinux64:
     changes:
       - "**/*.{java,gradle,properties,yml,tex,png,ico,json,xml,html,csv,tsv,py}"
       - "**/src/main/java/**/*"
+
+#first try testing
+testDist:
+  stage: test
+  script:
+    - cd sirius_cli/src/test/java/
+    - javac BuildTest.java
+    - java BuildTest
+
 
 #push to github for multiOS build
 pushToGitHub:
