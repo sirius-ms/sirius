@@ -12,6 +12,7 @@ stages:
   - clean
   - prepare
   - build
+  - test
 #  - build-cli
 #  - build-multi-cli
 #  - build-gui
@@ -70,6 +71,25 @@ distGuiLinux64:
     changes:
       - "**/*.{java,gradle,properties,yml,tex,png,ico,json,xml,html,csv,tsv,py}"
       - "**/src/main/java/**/*"
+
+#first try testing
+testDist:
+  stage: test
+  script:
+    - cd sirius_cli/src/test/java/
+    - javac BuildTest.java
+    - java BuildTest
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - master
+      - master-dist-tests
+      - stable
+
 
 #push to github for multiOS build
 pushToGitHub:
