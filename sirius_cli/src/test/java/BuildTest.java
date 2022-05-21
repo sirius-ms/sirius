@@ -12,7 +12,7 @@ public class BuildTest {
 
         System.out.print("Hello World.");
 
-        if(!outContent.toString().equals("Bye World.")){
+        if(!outContent.toString().equals("Hello World.")){
             throw new RuntimeException();
         }
 
