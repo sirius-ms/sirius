@@ -22,17 +22,19 @@ package de.unijena.bioinf.ms.frontend.core;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.AuthServices;
-import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.frontend.bibtex.BibtexManager;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.properties.SiriusConfigUtils;
+import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.sirius.SiriusCachedFactory;
 import de.unijena.bioinf.sirius.SiriusFactory;
+import de.unijena.bioinf.webapi.Tokens;
 import de.unijena.bioinf.webapi.WebAPI;
 import de.unijena.bioinf.webapi.rest.ProxyManager;
 import de.unijena.bioinf.webapi.rest.RestAPI;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jbibtex.BibTeXDatabase;
 import org.jbibtex.BibTeXParser;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +42,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -65,7 +66,8 @@ public abstract class ApplicationCore {
 
     public static final SiriusFactory SIRIUS_PROVIDER = new SiriusCachedFactory();
     public static final WebAPI<?> WEB_API;
-    @NotNull public static final BibtexManager BIBTEX;
+    @NotNull
+    public static final BibtexManager BIBTEX;
 
     private static final boolean TIME = false;
     private static long t1;
@@ -87,7 +89,7 @@ public abstract class ApplicationCore {
         try {
             //init static block (does not work via static import Oo)
             Path it = WORKSPACE;
-            final String version = PropertyManager.getProperty("de.unijena.bioinf.siriusFrontend.version");
+            final String version = VERSION();
             // create ws files
             try {
                 if (Files.exists(versionFile)) {
@@ -167,8 +169,8 @@ public abstract class ApplicationCore {
                 final StringWriter buff = new StringWriter();
                 PropertyManager.DEFAULTS.write(buff);
                 String[] lines = buff.toString().split(System.lineSeparator());
-                try (BufferedWriter w = Files.newBufferedWriter(customProfileFile,StandardCharsets.UTF_8)) {
-                    for(String line : lines){
+                try (BufferedWriter w = Files.newBufferedWriter(customProfileFile, StandardCharsets.UTF_8)) {
+                    for (String line : lines) {
                         w.write(line.startsWith("#") ? line : "#" + line);
                         w.newLine();
                     }
@@ -246,9 +248,17 @@ public abstract class ApplicationCore {
 
             measureTime("DONE init bug reporting, START init WebAPI");
             TOKEN_FILE = WORKSPACE.resolve(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.tokenFile", null, ".rtoken"));
-            URI webserviceHost = URI.create(FingerIDProperties.fingeridWebHost());
-            AuthService service = AuthServices.createDefault(webserviceHost, TOKEN_FILE, ProxyManager.getSirirusHttpAsyncClient());
-            WEB_API = new RestAPI(service, webserviceHost);
+
+            AuthService service = AuthServices.createDefault(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.audience"), TOKEN_FILE, ProxyManager.getSirirusHttpAsyncClient());
+            Subscription sub = null; //web connection
+            try {
+                sub = service.getToken().map(Tokens::getActiveSubscription).orElse(null);
+            } catch (Exception e) {
+                LoggerFactory.getLogger(ApplicationCore.class).warn("Error when refreshing token: " + e.getMessage() + " Cleaning login information. Please re-login!");
+                LoggerFactory.getLogger(ApplicationCore.class).debug("Error when refreshing token", e);
+                AuthServices.clearRefreshToken(service, TOKEN_FILE); // in case token is corrupted or the account has been deleted
+            }
+            WEB_API = new RestAPI(service, sub);
             DEFAULT_LOGGER.info("Web API initialized.");
             measureTime("DONE init  init WebAPI");
 
@@ -272,6 +282,14 @@ public abstract class ApplicationCore {
 
     public static String VERSION_STRING() {
         return PropertyManager.getProperty("de.unijena.bioinf.sirius.versionString");
+    }
+
+    public static String VERSION() {
+        return PropertyManager.getProperty("de.unijena.bioinf.siriusFrontend.version");
+    }
+
+    public static DefaultArtifactVersion VERSION_OBJ() {
+        return new DefaultArtifactVersion(VERSION());
     }
 }
 

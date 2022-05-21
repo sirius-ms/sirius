@@ -36,6 +36,7 @@ import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.dialogs.FilePresentDialog;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
+import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.ms_viewer.InSilicoSelectionBox;
 import de.unijena.bioinf.ms.gui.ms_viewer.InsilicoFragmenter;
@@ -105,6 +106,10 @@ public class SpectraVisualizationPanel
 	JComboBox<String> modesBox;
 	JComboBox<String> ceBox;
 	final Optional<InSilicoSelectionBox> optAnoBox;
+	final Optional<JCheckBox> anoModeBox;
+	public final static boolean USE_TREEALGO_BY_DEFAULT = true;
+
+
 	String preferredMode;
 
     JButton saveButton;
@@ -114,10 +119,10 @@ public class SpectraVisualizationPanel
     public WebViewSpectraViewer browser;
 	final JToolBar toolBar;
 	public SpectraVisualizationPanel(boolean annotationBox) {
-		this(MS1_DISPLAY, annotationBox);
+		this(MS1_DISPLAY, annotationBox, annotationBox);
 	}
 
-	public SpectraVisualizationPanel(String preferredMode, boolean annotationBox) {
+	public SpectraVisualizationPanel(String preferredMode, boolean annotationBox, boolean expModeBox) {
 		this.setLayout(new BorderLayout());
 		this.fragmenter = new InsilicoFragmenter();
 		this.preferredMode = preferredMode;
@@ -137,11 +142,17 @@ public class SpectraVisualizationPanel
 		toolBar.add(ceBox);
 
 		optAnoBox = annotationBox ? Optional.of(new InSilicoSelectionBox(new Dimension(200, 100), 5)) : Optional.empty();
+		anoModeBox = expModeBox ? Optional.of(new JCheckBox("experimental mode", USE_TREEALGO_BY_DEFAULT)) : Optional.empty();
 
 		optAnoBox.ifPresent(anoBox -> {
 			toolBar.add(anoBox);
 			anoBox.setAction(new InsilicoFrament());
 		});
+		anoModeBox.ifPresent(anoBox -> {
+			toolBar.addSeparator(new Dimension(10, 10));
+			toolBar.add(anoBox);
+		});
+
 
         toolBar.addSeparator(new Dimension(10, 10));
         saveButton = Buttons.getExportButton24("Export spectra");
@@ -169,6 +180,10 @@ public class SpectraVisualizationPanel
     public SpectraViewerConnector getConnector(){
         return browser.getConnector();
     }
+
+	public Optional<JCheckBox> getAnoModeBox() {
+		return anoModeBox;
+	}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
@@ -213,12 +228,12 @@ public class SpectraVisualizationPanel
 				MutableMs2Spectrum spectrum = experiment.getMs2Spectra().get(ce_index);
 				FTree ftree = Optional.ofNullable(sre).flatMap(FormulaResultBean::getFragTree).orElse(null);
 				if (ftree != null)
-					jsonSpectra = spectraWriter.ms2JSON(spectrum, ftree);
+					jsonSpectra = spectraWriter.ms2JSON(experiment.getExperiment(), spectrum, ftree);
 				else
-					jsonSpectra = spectraWriter.ms2JSON(spectrum);
+					jsonSpectra = spectraWriter.ms2JSON(experiment.getExperiment(), spectrum);
 			}
 		} else {
-			System.err.println("Cannot draw spectra: Mode " + mode + " not (yet) supported!");
+			LoggerFactory.getLogger(getClass()).warn("Cannot draw spectra: Mode " + mode + " not (yet) supported!");
 			return;
 		}
 
@@ -241,8 +256,11 @@ public class SpectraVisualizationPanel
 	private JJob<Boolean> backgroundLoader = null;
 	private final Lock backgroundLoaderLock = new ReentrantLock();
 
+	private InsilicoFragmenter.Job insilicoJob = null;
+
 	public void resultsChanged(InstanceBean experimentParam, FormulaResultBean sre, @Nullable CompoundCandidate spectrumAno) {
 		try {
+			final boolean expMode = anoModeBox.map(AbstractButton::isSelected).orElse(USE_TREEALGO_BY_DEFAULT);
 			backgroundLoaderLock.lock();
 			final JJob<Boolean> old = backgroundLoader;
 			backgroundLoader = Jobs.runInBackground(new BasicMasterJJob<>(JJob.JobType.TINY_BACKGROUND) {
@@ -302,7 +320,7 @@ public class SpectraVisualizationPanel
 
 					if (sre != SpectraVisualizationPanel.this.sre || spectrumAno != null) {
 						if (sre != null && spectrumAno != null) {
-							InsilicoFragmenter.Result r = submitSubJob(fragmenter.fragmentJob(sre, spectrumAno)).awaitResult();
+							InsilicoFragmenter.Result r = submitSubJob(fragmenter.fragmentJob(sre, spectrumAno, expMode)).awaitResult();
 							checkForInterruption();
 							setInsilicoResult(r);
 						} else {
@@ -422,8 +440,8 @@ public class SpectraVisualizationPanel
 	public class InsilicoFrament extends AbstractAction {
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			final Object selectedItem = ((InSilicoSelectionBox) e.getSource()).getSelectedItem();
-			if (selectedItem != null && selectedItem instanceof InSilicoSelectionBox.Item) {
+			final Object selectedItem = (e!=null && e.getSource() instanceof InSilicoSelectionBox) ?((InSilicoSelectionBox) e.getSource()).getSelectedItem() : optAnoBox.map(JComboBox::getSelectedItem).orElse(null);
+			if (selectedItem instanceof InSilicoSelectionBox.Item) {
 				InSilicoSelectionBox.Item item = (InSilicoSelectionBox.Item) selectedItem;
 				if (item.getCandidate() != null) {
 					resultsChanged(experiment, sre, item.getCandidate());

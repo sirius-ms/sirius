@@ -34,8 +34,6 @@ public class SummaryConfigPanel extends SubToolConfigPanel<SummaryOptions> {
 
         paras.add(new JXTitledSeparator("Summary Output Location"));
         paras.add(makeGenericOptionCheckBox("Zip Compression", "compress"));
-
-        paras.add(new JXTitledSeparator("Summary Output Location"));
         FileChooserPanel summaryLocation = new FileChooserPanel(
                 Optional.ofNullable(MainFrame.MF.ps().projectSpace().getLocation().getParent()).map(Path::toString).orElse(""), "",
                 JFileChooser.FILES_AND_DIRECTORIES,JFileChooser.SAVE_DIALOG);

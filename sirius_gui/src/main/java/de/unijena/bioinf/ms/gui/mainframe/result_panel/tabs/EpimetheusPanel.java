@@ -52,7 +52,7 @@ public class EpimetheusPanel extends JPanel implements PanelDescription {
         this.structureList = structureList;
         this.candidateTable = new CandidateListTableView(structureList);
 //        final TreeVisualizationPanel overviewTVP = new TreeVisualizationPanel();
-        final SpectraVisualizationPanel overviewSVP = new SpectraVisualizationPanel(SpectraVisualizationPanel.MS2_DISPLAY, false);
+        final SpectraVisualizationPanel overviewSVP = new SpectraVisualizationPanel(SpectraVisualizationPanel.MS2_DISPLAY, false, false);
         this.structureList.getTopLevelSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         // Class to synchronize selected peak/node
@@ -67,6 +67,17 @@ public class EpimetheusPanel extends JPanel implements PanelDescription {
 //            overviewTVP.resultsChanged(inst, form, null, null);
             overviewSVP.resultsChanged(inst, form, sre != null ? sre.getFingerprintCandidate() : null);
         });
+        overviewSVP.getAnoModeBox().ifPresent(x->{
+            x.addItemListener(y->{
+                DefaultEventSelectionModel<FingerprintCandidateBean> selections = (DefaultEventSelectionModel<FingerprintCandidateBean>) candidateTable.getFilteredSelectionModel();
+                FingerprintCandidateBean sre = selections.getSelected().stream().findFirst().orElse(null);
+                FormulaResultBean form = sre != null ? sre.getFormulaResult() : null;
+                InstanceBean inst = form != null ? form.getInstance() : null;
+//            overviewTVP.resultsChanged(inst, form, null, null);
+                overviewSVP.resultsChanged(inst, form, sre != null ? sre.getFingerprintCandidate() : null);
+            });
+        });
+
 
 //        JSplitPane south = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, overviewSVP, overviewTVP);
 //        south.setDividerLocation(.5d);

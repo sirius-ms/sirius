@@ -22,6 +22,9 @@ package de.unijena.bioinf.ms.gui.mainframe;
 
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.rest.model.license.Subscription;
+import de.unijena.bioinf.ms.rest.model.license.SubscriptionConsumables;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -59,13 +62,17 @@ public class WebServiceInfoPanel extends JToolBar implements PropertyChangeListe
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         final ConnectionMonitor.ConnectionUpdateEvent cevt = (ConnectionMonitor.ConnectionUpdateEvent) evt;
-        ConnectionMonitor.ConnetionCheck check = cevt.getConnectionCheck();
-        if (check.license != null) {
-            license.setText("<html>License: <b>" + check.license.getLicensee() + "</b>" + (check.license.getDescription() == null ? "" : " (" + check.license.getDescription() + ")</html>"));
-            if (check.license.isCountQueries()) {
-                String max = check.license.hasCompoundLimit() ? String.valueOf(check.license.getCompoundLimit()) : INF;
-                String current = check.license.getCountedCompounds() < 0 ? "N/A" :  String.valueOf(check.license.getCountedCompounds());
-                consumedCompounds.setText("<html>Compounds: <b>" + current + "/" + max + "</b> (per " + (check.license.hasCompoundLimit() ? "Year" : "Month") + ")</html>");
+        ConnectionMonitor.ConnectionCheck check = cevt.getConnectionCheck();
+
+        if (check.licenseInfo.subscription().isPresent()) {
+            @Nullable Subscription sub = check.licenseInfo.getSubscription();
+            license.setText("<html>License: <b>" + sub.getSubscriberName() + "</b>" + (check.licenseInfo.getSubscription() == null ? "" : " (" + check.licenseInfo.getSubscription().getName() + ")</html>"));
+            if (sub.getCountQueries()) {
+                String max = sub.hasCompoundLimit() ? String.valueOf(sub.getCompoundLimit()) : INF;
+                String current = check.licenseInfo.consumables().map(SubscriptionConsumables::getCountedCompounds).orElse(-1) < 0
+                        ? "N/A" : check.licenseInfo.consumables().map(SubscriptionConsumables::getCountedCompounds)
+                        .map(String::valueOf).get();
+                consumedCompounds.setText("<html>Compounds: <b>" + current + "/" + max + "</b> (per " + (sub.hasCompoundLimit() ? "Year" : "Month") + ")</html>");
             } else {
                 consumedCompounds.setText("<html>Compounds: <b>UNLIMITED</b></html>");
             }
