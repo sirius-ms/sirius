@@ -79,6 +79,16 @@ testDist:
     - cd sirius_cli/src/test/java/
     - javac BuildTest.java
     - java BuildTest
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - master
+      - master-dist-tests
+      - stable
 
 
 #push to github for multiOS build
