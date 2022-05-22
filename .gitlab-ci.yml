@@ -76,11 +76,14 @@ distGuiLinux64:
 testDist:
   stage: test
   script:
+    - cd sirius_cli/src/main/java/de/unijena/bioinf/ms/frontend/
+    - javac SiriusCLIApplication.java
+    - java SiriusCLIApplication --input testdata/mgf/laudanosine.mgf formula -p orbitrap fingerprint structure compound-classes write-summaries --output mgf_temp_summary
+#    - sirius --input testdata/mgf/laudanosine.mgf formula -p orbitrap fingerprint structure compound-classes write-summaries --output mgf_temp_summary
     - cd sirius_cli/src/test/
-    - sirius -1 testdata/txt/chelidonine_ms.txt -2 testdata/txt/chelidonine_msms1.txt,testdata/txt/chelidonine_msms2.txt -z 354.134704589844 -o results.txt formula -p orbitrap
-    - javac java/TxtTest.java
-    - java java/TxtTest
-    - rm results.txt
+    - javac java/MgfTest.java
+    - java java/MgfTest
+    - rmdir mgf_temp_summary
 
 #    - cd sirius_cli/src/test/java/
 #    - javac BuildTest.java
