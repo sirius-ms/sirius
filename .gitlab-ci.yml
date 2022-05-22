@@ -76,14 +76,46 @@ distGuiLinux64:
 testDist:
   stage: test
   script:
-    - cd sirius_cli/src/main/java/de/unijena/bioinf/ms/frontend/
-    - javac SiriusCLIApplication.java
-    - java SiriusCLIApplication --input testdata/mgf/laudanosine.mgf formula -p orbitrap fingerprint structure compound-classes write-summaries --output mgf_temp_summary
-#    - sirius --input testdata/mgf/laudanosine.mgf formula -p orbitrap fingerprint structure compound-classes write-summaries --output mgf_temp_summary
-    - cd sirius_cli/src/test/
-    - javac java/MgfTest.java
-    - java java/MgfTest
+#    - cd sirius_cli/src/main/java/de/unijena/bioinf/ms/frontend/
+#    - javac SiriusCLIApplication.java
+#    - java SiriusCLIApplication --input testdata/mgf/laudanosine.mgf formula -p orbitrap fingerprint structure compound-classes write-summaries --output sirius_cli/src/test/mgf_temp_summary
+
+    # testing MGF data
+    - sirius --input testdata/mgf/laudanosine.mgf formula -p orbitrap fingerprint structure compound-classes write-summaries --output sirius_cli/src/test/mgf_temp_summary
+    - cd sirius_cli/src/test/java/
+    - javac MgfTest.java
+    - java MgfTest
+    - cd..
     - rmdir mgf_temp_summary
+    - cd..
+    - cd..
+    - cd..
+
+    # testing TXT data
+    - sirius -1 testdata/txt/chelidonine_ms.txt -2 testdata/txt/chelidonine_msms1.txt,testdata/txt/chelidonine_msms2.txt -z 354.134704589844 formula -p orbitrap write-summaries --output sirius_cli/src/test/txt_temp_summary
+    - cd sirius_cli/src/test/java/
+    - javac TxtTest.java
+    - java TxtTest
+    - cd..
+    - rmdir txt_temp_summary
+    - cd..
+    - cd..
+    - cd..
+
+    # testing MS data (three different commands)
+    - sirius -i demo-data/ms/Bicuculline.ms formula -p orbitrap write-summaries --output sirius_cli/src/test/ms_temp_summary_fa
+    - sirius -i demo-data/ms/Bicuculline.ms formula -p orbitrap fingerprint structure compound-classes write-summaries --output sirius_cli/src/test/ms_temp_summary_cca
+    - sirius -i demo-data/ms/Bicuculline.ms --ignore-formula formula -p orbitrap -c 5 write-summaries --output sirius_cli/src/test/ms_temp_summary_if
+    - cd sirius_cli/src/test/java/
+    - javac MsTest.java
+    - java MsTest
+    - cd..
+    - rmdir ms_temp_summary_fa
+    - rmdir ms_temp_summary_cca
+    - rmdir ms_temp_summary_if
+    - cd..
+    - cd..
+    - cd..
 
 #    - cd sirius_cli/src/test/java/
 #    - javac BuildTest.java

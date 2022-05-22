@@ -3,7 +3,6 @@ import java.io.File;
 import java.io.IOException;
 
 public class MgfTest {
-    String output = "sirius_cli/src/test/mgf_temp_summary";
     private static void isEqual(File firstFile, File secondFile) throws IOException {
         if(!FileUtils.contentEquals(firstFile, secondFile)){
             throw new RuntimeException();
