@@ -76,9 +76,15 @@ distGuiLinux64:
 testDist:
   stage: test
   script:
-    - cd sirius_cli/src/test/java/
-    - javac BuildTest.java
-    - java BuildTest
+    - cd sirius_cli/src/test/
+    - sirius -1 testdata/txt/chelidonine_ms.txt -2 testdata/txt/chelidonine_msms1.txt,testdata/txt/chelidonine_msms2.txt -z 354.134704589844 -o results.txt formula -p orbitrap
+    - javac java/TxtTest.java
+    - java java/TxtTest
+    - rm results.txt
+
+#    - cd sirius_cli/src/test/java/
+#    - javac BuildTest.java
+#    - java BuildTest
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
