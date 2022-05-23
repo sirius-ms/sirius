@@ -21,6 +21,7 @@ import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.HashMap;
 import java.util.Optional;
 
 public class MolecularGraph {
@@ -166,7 +167,7 @@ public class MolecularGraph {
         return bondNames;
     }
 
-    public TObjectIntHashMap<String> getBondTypeNames(boolean specificBondName){
+    public TObjectIntHashMap<String> getNumberOfBondTypes(boolean specificBondName){
         TObjectIntHashMap<String> bondNames2Amount = new TObjectIntHashMap<>(this.molecule.getBondCount(), 0.75f, 0);
 
         for(IBond bond : this.molecule.bonds()){
@@ -182,5 +183,25 @@ public class MolecularGraph {
         }
 
         return bondNames2Amount;
+    }
+
+    public HashMap<String, ArrayList<IBond>> bondNames2BondList(boolean specificBondName){
+        HashMap<String, ArrayList<IBond>> bondNames2BondList = new HashMap<>(this.molecule.getBondCount(), 0.75f);
+
+        for(IBond bond : this.bonds){
+            String[] bondNames = this.getBondTypeName(bond, specificBondName);
+
+            if(bondNames2BondList.containsKey(bondNames[0])){
+                bondNames2BondList.get(bondNames[0]).add(bond);
+            }else if(bondNames2BondList.containsKey(bondNames[1])){
+                bondNames2BondList.get(bondNames[1]).add(bond);
+            }else{
+                ArrayList<IBond> bondList = new ArrayList<>();
+                bondList.add(bond);
+                bondNames2BondList.put(bondNames[0], bondList);
+            }
+        }
+
+        return bondNames2BondList;
     }
 }
