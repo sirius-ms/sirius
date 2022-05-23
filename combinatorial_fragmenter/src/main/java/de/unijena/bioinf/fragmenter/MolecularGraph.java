@@ -4,13 +4,17 @@ import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.TableSelection;
+import gnu.trove.impl.Constants;
 import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.map.hash.TObjectIntHashMap;
 import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.Cycles;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IBond;
+import org.openscience.cdk.silent.SilentChemObjectBuilder;
+import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 
@@ -149,7 +153,33 @@ public class MolecularGraph {
         return formula.getTableSelection();
     }
 
+    private String[] getBondTypeName(IBond bond, boolean specificBondName){
+        String[] bondNames = new String[2];
+        if(specificBondName){
+            bondNames[0] = DirectedBondTypeScoring.bondNameSpecific(bond, true);
+            bondNames[1] = DirectedBondTypeScoring.bondNameSpecific(bond, false);
+        }else{
+            bondNames[0] = DirectedBondTypeScoring.bondNameGeneric(bond, true);
+            bondNames[1] = DirectedBondTypeScoring.bondNameGeneric(bond, false);
+        }
+        return bondNames;
+    }
 
+    public TObjectIntHashMap<String> getBondTypeName(boolean specificBondName){
+        TObjectIntHashMap<String> bondNames2Amount = new TObjectIntHashMap<>(this.molecule.getBondCount(), 0.75f, 0);
 
+        for(IBond bond : this.molecule.bonds()){
+            String[] bondNames = this.getBondTypeName(bond, specificBondName);
 
+            if(bondNames2Amount.containsKey(bondNames[0])){
+                bondNames2Amount.adjustValue(bondNames[0], 1);
+            }else if(bondNames2Amount.containsKey(bondNames[1])){
+                bondNames2Amount.adjustValue(bondNames[1], 1);
+            }else{
+                bondNames2Amount.put(bondNames[0], 1);
+            }
+        }
+
+        return bondNames2Amount;
+    }
 }
