@@ -1,5 +1,6 @@
 package de.unijena.bioinf.fragmenter;
 
+import gnu.trove.map.hash.TObjectIntHashMap;
 import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -85,6 +86,7 @@ public class IterateThroughMolecule {
     }
 
 
+    /*
     public static void main(String[] args){
         File spectraDir = new File(args[0]);
         File outputFile = new File(args[1]);
@@ -130,6 +132,43 @@ public class IterateThroughMolecule {
             writeBondNamesIntoFile(outputFile, allBondNames);
             executor.shutdown();
         } catch (InterruptedException | ExecutionException | IOException e) {
+            e.printStackTrace();
+        }
+    }
+     */
+
+    public static void main(String[] args){
+        try {
+            File spectraDir = new File(args[0]);
+            File outputFile = new File(args[1]);
+            String[] spectraFiles = spectraDir.list();
+
+            TObjectIntHashMap<String> bondName2Count = new TObjectIntHashMap<>();
+
+            for (String fileName : spectraFiles) {
+                IAtomContainer molecule = readMolecule(new File(spectraDir, fileName));
+
+                for(IBond bond : molecule.bonds()){
+                    String bondName1 = explainBondBy(bond, true);
+                    String bondName2 = explainBondBy(bond, false);
+
+                    if(bondName2Count.containsKey(bondName1)){
+                        bondName2Count.adjustValue(bondName1, 1);
+                    }else if(bondName2Count.containsKey(bondName2)){
+                        bondName2Count.adjustValue(bondName2,1);
+                    }else{
+                        bondName2Count.put(bondName1, 1);
+                    }
+                }
+            }
+
+            try(BufferedWriter fileWriter = new BufferedWriter(new FileWriter(outputFile))){
+                for(String bondName : bondName2Count.keySet()){
+                    fileWriter.write(bondName+" "+bondName2Count.get(bondName));
+                    fileWriter.newLine();
+                }
+            }
+        } catch (CDKException | IOException e) {
             e.printStackTrace();
         }
     }
