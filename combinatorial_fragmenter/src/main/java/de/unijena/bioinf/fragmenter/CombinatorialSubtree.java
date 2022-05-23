@@ -1,10 +1,12 @@
 package de.unijena.bioinf.fragmenter;
 
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.interfaces.IBond;
 
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
@@ -187,6 +189,39 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
         }
 
         return adjMatrix;
+    }
+
+    /**
+     * Returns an array of length 2 containing the number of cuts regarding this given bond.<br>
+     * The first position of the returned integer array is the number of cuts where
+     * the first atom is contained in the fragment. The second position of the returned array is the number
+     * of cuts where the second atom is contained in the fragment.
+     *
+     * @param bond {@link IBond} which is part of the molecule
+     * @return an integer array of length 2 containing the amount of cuts regarding the given bond
+     */
+    public int[] getNumberOfCuts(IBond bond){
+        int[] numberOfCuts = new int[2];
+
+        // Every vertex (except the root) has an in-degree of 1 --> one incoming edge:
+        for(CombinatorialNode node : this.nodes){
+            CombinatorialEdge edge = node.incomingEdges.get(0);
+
+            if(edge.getCut1() == bond){
+                if(edge.getDirectionOfFirstCut()){
+                    numberOfCuts[0]++;
+                }else{
+                    numberOfCuts[1]++;
+                }
+            }else if(edge.getCut2() == bond){
+                if(edge.getDirectionOfSecondCut()){
+                    numberOfCuts[0]++;
+                }else{
+                    numberOfCuts[1]++;
+                }
+            }
+        }
+        return numberOfCuts;
     }
 
     public float getScore(){
