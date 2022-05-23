@@ -9,6 +9,7 @@ import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.graph.Cycles;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -165,7 +166,7 @@ public class MolecularGraph {
         return bondNames;
     }
 
-    public TObjectIntHashMap<String> getBondTypeName(boolean specificBondName){
+    public TObjectIntHashMap<String> getBondTypeNames(boolean specificBondName){
         TObjectIntHashMap<String> bondNames2Amount = new TObjectIntHashMap<>(this.molecule.getBondCount(), 0.75f, 0);
 
         for(IBond bond : this.molecule.bonds()){
