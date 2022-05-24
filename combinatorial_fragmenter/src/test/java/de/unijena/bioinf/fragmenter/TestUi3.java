@@ -55,8 +55,7 @@ public class TestUi3 {
             final HashMap<MolecularFormula, List<Fragment>> formulas = new HashMap<>();
             for (Fragment f : tree.getFragmentsWithoutRoot()) formulas.computeIfAbsent(f.getFormula().withoutHydrogen(), (x)->new ArrayList<>()).add(f);
             final MolecularGraph graph = new MolecularGraph(M);
-            final DirectedBondTypeScoring scoring = new DirectedBondTypeScoring();
-            final PriorizedFragmenter fragmenter = new PriorizedFragmenter(graph, scoring.getScoringFor(graph,tree));
+            final PriorizedFragmenter fragmenter = new PriorizedFragmenter(graph, new DirectedBondTypeScoring(graph));
 
             final HashMap<Fragment, CombinatorialNode> bestMatch = new HashMap<>();
             final HashMap<Fragment, CombinatorialNode> secondBestMatch = new HashMap<>();

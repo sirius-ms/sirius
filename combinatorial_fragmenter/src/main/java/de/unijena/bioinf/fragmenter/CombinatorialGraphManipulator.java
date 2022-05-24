@@ -13,19 +13,16 @@ import java.util.HashMap;
  */
 public class CombinatorialGraphManipulator {
 
-    private static BitSet toBitSet(int number){
-        BitSet bitset = new BitSet();
-        int currentNumber = number;
+    private static BitSet increment(BitSet bitSet){
+        BitSet newBitSet = (BitSet) bitSet.clone();
         int idx = 0;
 
-        while(currentNumber > 0){
-            int newNumber = currentNumber / 2;
-            int rest = currentNumber - 2*newNumber;
-            if(rest == 1) bitset.set(idx);
-            currentNumber = newNumber;
+        while(newBitSet.get(idx)){
+            newBitSet.set(idx, false);
             idx++;
         }
-        return bitset;
+        newBitSet.set(idx, true);
+        return newBitSet;
     }
 
     //todo: change to 'incrementBitSet' --> just in case the FTree contains more nodes than 2^{natoms}
@@ -59,21 +56,21 @@ public class CombinatorialGraphManipulator {
         // for each vertex in 'fTree', add a terminal node into the CombinatorialGraph if
         // there are CombinatorialNodes in 'graph' which have the same molecular formula without hydrogen atoms.
         // Then connect this terminal node with these nodes.
-        int count = 0;
+        BitSet terminalNodeBitSet = new BitSet();
+        terminalNodeBitSet.set(molecule.natoms); // terminal nodes are not real fragments --> this bit characterises them
+
         for(Fragment ftFrag : fTree){
             MolecularFormula mf = ftFrag.getFormula().withoutHydrogen();
             lst = mf2NodeSet.get(mf);
             if(lst != null){
                 // in this case, there are nodes in 'graph' (and 'lst') with the same molecular formula base
-                BitSet terminalNodeBitSet = toBitSet(count);
-                terminalNodeBitSet.set(molecule.natoms); // terminal nodes are not real fragment --> this bit characterises them
                 CombinatorialFragment terminalFragment = new CombinatorialFragment(molecule,terminalNodeBitSet,ftFrag.getFormula(),new BitSet());
 
                 for(CombinatorialNode node : lst){
                     graph.addReturnAlways(node, terminalFragment, null, null, scoring, null);
                 }
 
-                count++;
+                terminalNodeBitSet = increment(terminalNodeBitSet);
             }
         }
     }
