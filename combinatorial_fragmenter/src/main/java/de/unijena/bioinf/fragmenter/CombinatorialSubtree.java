@@ -171,6 +171,24 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
         return edgeList;
     }
 
+    public ArrayList<CombinatorialNode> getLeaves(){
+        // every node (except the root) is considered a leaf if it doesn't have outgoing edges.
+        ArrayList<CombinatorialNode> leaves = new ArrayList<>();
+        for(CombinatorialNode node : this.nodes){
+            if(node.getOutgoingEdges().isEmpty()) leaves.add(node);
+        }
+        return leaves;
+    }
+
+    public ArrayList<CombinatorialNode> getTerminalNodes(){
+        // every node whose bitset.length is greater than the number of atoms (in the molecule) is a terminal node:
+        ArrayList<CombinatorialNode> terminalNodes = new ArrayList<>();
+        for(CombinatorialNode node : this.nodes){
+            if(!node.fragment.isRealFragment()) terminalNodes.add(node);
+        }
+        return terminalNodes;
+    }
+
     public double[][] getAdjacencyMatrix(){
         ArrayList<CombinatorialNode> sortedNodeList = this.getSortedNodeList();
         TObjectIntHashMap<CombinatorialNode> nodeIndices = new TObjectIntHashMap<>(this.numberOfNodes());
