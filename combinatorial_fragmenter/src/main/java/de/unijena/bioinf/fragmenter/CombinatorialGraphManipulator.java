@@ -28,6 +28,7 @@ public class CombinatorialGraphManipulator {
         return bitset;
     }
 
+    //todo: change to 'incrementBitSet' --> just in case the FTree contains more nodes than 2^{natoms}
     /**
      * This method adds for each vertex in the given {@link FTree} a terminal node in the {@link CombinatorialGraph}
      * and connects each {@link CombinatorialNode} with the vertex if their molecular formula differs only
