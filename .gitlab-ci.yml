@@ -131,6 +131,8 @@ testDist:
       - master-dist-tests
       - stable
 
+# ignore this comment, it´s only for commit testing
+
 
 #push to github for multiOS build
 pushToGitHub:
