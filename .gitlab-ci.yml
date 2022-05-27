@@ -81,7 +81,7 @@ testDist:
 #    - java SiriusCLIApplication --input testdata/mgf/laudanosine.mgf formula -p orbitrap fingerprint structure compound-classes write-summaries --output sirius_cli/src/test/mgf_temp_summary
 
     # testing MGF data
-    - sirius --input testdata/mgf/laudanosine.mgf formula -p orbitrap fingerprint structure compound-classes write-summaries --output sirius_cli/src/test/mgf_temp_summary
+    - sirius --input sirius_doc/manual/demo-data/mgf/laudanosine.mgf formula -p orbitrap fingerprint structure compound-classes write-summaries --output sirius_cli/src/test/mgf_temp_summary
     - cd sirius_cli/src/test/java/
     - javac MgfTest.java
     - java MgfTest
@@ -92,7 +92,7 @@ testDist:
     - cd..
 
     # testing TXT data
-    - sirius -1 testdata/txt/chelidonine_ms.txt -2 testdata/txt/chelidonine_msms1.txt,testdata/txt/chelidonine_msms2.txt -z 354.134704589844 formula -p orbitrap write-summaries --output sirius_cli/src/test/txt_temp_summary
+    - sirius -1 sirius_doc/manual/demo-data/txt/chelidonine_ms.txt -2 sirius_doc/manual/demo-data/txt/chelidonine_msms1.txt,sirius_doc/manual/demo-data/txt/chelidonine_msms2.txt -z 354.134704589844 formula -p orbitrap write-summaries --output sirius_cli/src/test/txt_temp_summary
     - cd sirius_cli/src/test/java/
     - javac TxtTest.java
     - java TxtTest
@@ -103,9 +103,9 @@ testDist:
     - cd..
 
     # testing MS data (three different commands)
-    - sirius -i demo-data/ms/Bicuculline.ms formula -p orbitrap write-summaries --output sirius_cli/src/test/ms_temp_summary_fa
-    - sirius -i demo-data/ms/Bicuculline.ms formula -p orbitrap fingerprint structure compound-classes write-summaries --output sirius_cli/src/test/ms_temp_summary_cca
-    - sirius -i demo-data/ms/Bicuculline.ms --ignore-formula formula -p orbitrap -c 5 write-summaries --output sirius_cli/src/test/ms_temp_summary_if
+    - sirius -i sirius_doc/manual/demo-data/ms/Bicuculline.ms formula -p orbitrap write-summaries --output sirius_cli/src/test/ms_temp_summary_fa
+    - sirius -i sirius_doc/manual/demo-data/ms/Bicuculline.ms formula -p orbitrap fingerprint structure compound-classes write-summaries --output sirius_cli/src/test/ms_temp_summary_cca
+    - sirius -i sirius_doc/manual/demo-data/ms/Bicuculline.ms --ignore-formula formula -p orbitrap -c 5 write-summaries --output sirius_cli/src/test/ms_temp_summary_if
     - cd sirius_cli/src/test/java/
     - javac MsTest.java
     - java MsTest
@@ -130,9 +130,6 @@ testDist:
       - master
       - master-dist-tests
       - stable
-
-# ignore this comment, it´s only for commit testing
-
 
 #push to github for multiOS build
 pushToGitHub:
