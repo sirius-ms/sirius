@@ -76,11 +76,37 @@ distGuiLinux64:
 testDist:
   stage: test
   script:
-#    - cd sirius_cli/src/main/java/de/unijena/bioinf/ms/frontend/
+    - .\gradlew :sirius_dist:sirius_cli_single_os:distImage
+    - cd sirius_dist/sirius_cli_single_os/build/distributions/sirius
+    - .\sirius.exe --input sirius_doc/manual/demo-data/mgf/laudanosine.mgf formula -p orbitrap fingerprint structure compound-classes write-summaries --output sirius_cli/src/test/mgf_temp_summary
+    - java MgfTest
+    - cd..
+    - rmdir mgf_temp_summary
+    - cd..
+    - cd..
+    - cd..
+
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - master
+      - master-dist-tests
+      - stable
+
+
+
+
+    #    - cd sirius_cli/src/main/java/de/unijena/bioinf/ms/frontend/
 #    - javac SiriusCLIApplication.java
 #    - java SiriusCLIApplication --input testdata/mgf/laudanosine.mgf formula -p orbitrap fingerprint structure compound-classes write-summaries --output sirius_cli/src/test/mgf_temp_summary
 
     # testing MGF data
+
+'''
     - sirius --input sirius_doc/manual/demo-data/mgf/laudanosine.mgf formula -p orbitrap fingerprint structure compound-classes write-summaries --output sirius_cli/src/test/mgf_temp_summary
     - cd sirius_cli/src/test/java/
     - javac MgfTest.java
@@ -116,20 +142,12 @@ testDist:
     - cd..
     - cd..
     - cd..
+'''
 
 #    - cd sirius_cli/src/test/java/
 #    - javac BuildTest.java
 #    - java BuildTest
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: push
-  tags:
-    - kubernetes
-  only:
-    refs:
-      - master
-      - master-dist-tests
-      - stable
+
 
 #push to github for multiOS build
 pushToGitHub:
