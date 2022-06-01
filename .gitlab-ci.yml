@@ -77,7 +77,7 @@ testDist:
   script:
     - cd sirius_dist
     - cd ..
-    - .\gradle :sirius_dist:sirius_cli_single_os:distImage
+    - gradle :sirius_dist:sirius_cli_single_os:distImage
     - .\sirius_dist\sirius_cli_single_os\build\distributions\sirius\sirius.exe --input \sirius_frontend\sirius_doc\manual\demo-data\mgf\laudanosine.mgf formula -p orbitrap fingerprint structure compound-classes write-summaries --output \sirius_frontend\sirius_cli\src\test\mgf_temp_summary
     - cd sirius_cli\src\test\java
     - javac MgfTest.java
