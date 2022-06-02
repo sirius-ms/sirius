@@ -58,6 +58,10 @@ public class CompoundCandidate {
     //citation info
     protected PubmedLinks pubmedIDs = null;
 
+    protected Double taxonomicScore;
+    protected String taxonomicSpecies;
+
+
     public CompoundCandidate(InChI inchi, String name, String smiles, int pLayer, int qLayer, double xlogp, @Nullable Double tanimoto, long bitset, DBLink[] links, PubmedLinks pubmedIDs) {
         this(inchi, name, smiles, pLayer, qLayer, xlogp, tanimoto, bitset, new ArrayList<>(List.of(links)), pubmedIDs);
     }
@@ -87,6 +91,8 @@ public class CompoundCandidate {
         this.tanimoto = c.tanimoto;
         if (c.pubmedIDs != null)
             this.pubmedIDs = c.pubmedIDs;
+        this.taxonomicScore = c.taxonomicScore;
+        this.taxonomicSpecies = c.taxonomicSpecies;
     }
 
     public CompoundCandidate(InChI inchi) {
@@ -183,6 +189,24 @@ public class CompoundCandidate {
 
     public void setTanimoto(Double tanimoto) {
         this.tanimoto = tanimoto;
+    }
+
+    @Nullable
+    public Double getTaxonomicScore() {
+        return taxonomicScore;
+    }
+
+    public void setTaxonomicScore(Double taxonomicScore) {
+        this.taxonomicScore = taxonomicScore;
+    }
+
+    @Nullable
+    public String getTaxonomicSpecies() {
+        return taxonomicSpecies;
+    }
+
+    public void setTaxonomicSpecies(String taxonomicSpecies) {
+        this.taxonomicSpecies = taxonomicSpecies;
     }
 
     @Deprecated
