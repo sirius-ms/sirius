@@ -74,6 +74,7 @@ distCliLinux64:
     - kubernetes
   only:
     refs:
+      - master-casmi
       - master
       - stable
     # stupid there is no exclude if only specific type was changed, so we have to use some heuristic to exclude README only changes
@@ -96,6 +97,7 @@ distGuiLinux64:
     - kubernetes
   only:
     refs:
+      - master-casmi
       - master
       - stable
     # stupid there is no exclude if only specific type was changed, so we have to use some heuristic to exclude README only changes
@@ -121,6 +123,7 @@ pushToGitHub:
     - kubernetes
   only:
     refs:
+      - master-casmi
       - stable
       - master
 #distCliWin64:

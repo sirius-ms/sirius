@@ -4,6 +4,8 @@ on:
     branches:
       - stable
       - master
+      - master-casmi
+
     paths-ignore:
       - '**/README.md'
       - 'sirius_doc/**/*'
