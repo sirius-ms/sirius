@@ -35,6 +35,7 @@ import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
 
+import java.io.File;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -227,5 +228,13 @@ public class ProjecSpaceOptions implements StandaloneTool<ProjectSpaceWorkflow> 
     public ProjectSpaceWorkflow makeWorkflow(RootOptions<?,?,?> rootOptions, ParameterConfig config) {
         return new ProjectSpaceWorkflow(rootOptions, this, config);
     }
+
+
+    //// temp /////
+    @CommandLine.Option(
+            names={"--classyfire"},
+            description = {"add ClassyFire annotations to csi results"}
+    )
+    public File classyfireInjection;
 }
 
