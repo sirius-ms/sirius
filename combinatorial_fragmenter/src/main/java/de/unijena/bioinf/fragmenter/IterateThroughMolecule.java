@@ -10,8 +10,11 @@ import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.concurrent.*;
 
 public class IterateThroughMolecule {
@@ -137,6 +140,7 @@ public class IterateThroughMolecule {
     }
      */
 
+    /*
     public static void main(String[] args){
         try {
             File spectraDir = new File(args[0]);
@@ -169,6 +173,55 @@ public class IterateThroughMolecule {
                 }
             }
         } catch (CDKException | IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+     */
+
+    public static void main(String[] args){
+        try{
+            File subtreeDir = new File(args[0]);
+            File outputFile = new File(args[1]);
+            String[] fileNames = subtreeDir.list();
+            ArrayList<Float> listOfPenalties = new ArrayList<>();
+
+            ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+            ArrayList<Callable<Collection<Float>>> tasks = new ArrayList<>();
+            for(String fileName : fileNames){
+                Callable<Collection<Float>> task = () -> {
+                    File subtreeFile = new File(subtreeDir, fileName);
+                    FileReader reader = new FileReader(subtreeFile);
+                    CombinatorialSubtree tree = CombinatorialSubtreeCalculatorJsonReader.readTreeFromJson(reader);
+
+                    ArrayList<CombinatorialNode> terminalNodes = tree.getTerminalNodes();
+                    HashMap<CombinatorialNode,Float> penalties = new HashMap<>(terminalNodes.size());
+
+                    for(CombinatorialNode terminalNode : terminalNodes){
+                        CombinatorialNode fragment = terminalNode.incomingEdges.get(0).source;
+                        penalties.putIfAbsent(fragment, fragment.totalScore);
+                    }
+
+                    return penalties.values();
+                };
+                tasks.add(task);
+            }
+
+            Collection<Future<Collection<Float>>> futures = executor.invokeAll(tasks);
+            for(Future<Collection<Float>> future : futures){
+                Collection<Float> penalties = future.get();
+                listOfPenalties.addAll(penalties);
+            }
+            executor.shutdown();
+
+            try(BufferedWriter fileWriter = Files.newBufferedWriter(outputFile.toPath(), Charset.defaultCharset())){
+                for(float penalty : listOfPenalties){
+                    fileWriter.write(Float.toString(penalty));
+                    fileWriter.newLine();
+                }
+            }
+
+        } catch (InterruptedException | ExecutionException | IOException e) {
             e.printStackTrace();
         }
     }
