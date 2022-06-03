@@ -2,18 +2,19 @@ package de.unijena.bioinf.fragmenter;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import de.unijena.bioinf.ChemistryBase.data.JacksonDocument;
+import gnu.trove.impl.Constants;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import gnu.trove.map.hash.TObjectFloatHashMap;
+import gnu.trove.map.hash.TObjectIntHashMap;
 import org.openscience.cdk.interfaces.IBond;
 
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 public class ScoringParameterEstimator {
 
@@ -28,6 +29,9 @@ public class ScoringParameterEstimator {
     private double wildcardScore;
     private double hydrogenRearrangementProb;
     private double pseudoFragmentScore;
+
+    private double gammaDisShapeParameter;
+    private double gammaDisScaleParameter;
 
     public ScoringParameterEstimator(File subtreeDir, File outputDir, double peakExplanationPercentile, double significanceValueBondScores){
         if(subtreeDir.isDirectory() && outputDir.isDirectory()){
@@ -62,6 +66,23 @@ public class ScoringParameterEstimator {
     // TODO: either it's the exponential or gamma distribution and compute the ML estimator and the quantile
     private double calculatePseudoFragmentScore(Collection<Float> penaltyObservations){
         return 0d;
+    }
+
+    private double calculateWildcardScore(TObjectDoubleHashMap<String> directedBondTypeName2BreakProb){
+        double[] breakProbabilities = directedBondTypeName2BreakProb.values();
+        double min = breakProbabilities[0];
+        double max = breakProbabilities[0];
+
+        for(int i = 1; i < breakProbabilities.length; i++){
+            if(breakProbabilities[i] < min){
+                min = breakProbabilities[i];
+            }
+            if(breakProbabilities[i] > max){
+                max = breakProbabilities[i];
+            }
+        }
+
+        return Math.log(min+max)-Math.log(4); // Math.log(((min+max)/2)*0.5)
     }
 
     /* 'bonds' represent all bonds in the molecule of same type 'X~Y'
@@ -112,7 +133,7 @@ public class ScoringParameterEstimator {
     }
 
 
-    public void estimateParameters(){
+    public void estimateParameters() throws InterruptedException, ExecutionException {
         /* Create an ExecutorService and collect all tasks.
          * Each task corresponds to one computed subtree and:
          * - 1.) collects for each assignment the hydrogen rearrangements and 2.) the penalties of the assigned fragments,
@@ -161,12 +182,82 @@ public class ScoringParameterEstimator {
             };
             tasks.add(task);
         }
-        //todo
+
+        /* Now: for every instance its corresponding task was defined and it was put into the collection 'tasks'.
+         * We submit all these tasks to the executor and wait until all tasks have been finished.
+         * The result of each task is converted into a Future object.
+         * Thus, we will receive a collection of Future objects together with the extracted data.
+         */
+        System.out.println("All tasks will be submitted to the executor service.\n" +
+                "The main thread will be stopped until all tasks have been completed.");
+        Collection<Future<ExtractedData>> futures = executor.invokeAll(tasks);
+
+        // At this point, the executor service computed all tasks. We can shutdown the executor service.
+        executor.shutdown();
+
+        // COLLECTING:
+        // Collect all extracted data:
+        System.out.println("Collect all extracted instance data.");
+        Collection<Integer> hydrogenRearrangements = new ArrayList<>();
+        Collection<Float> penalties = new ArrayList<>();
+        TObjectDoubleHashMap<String> directedBondTypeName2BreakProb = new TObjectDoubleHashMap<>(); // 'X~Y' -> average bond break prob.
+        TObjectDoubleHashMap<String> directedBondTypeName2CutDirProb = new TObjectDoubleHashMap<>(); // 'X~Y' -> average prob. that 'X' remains
+        TObjectIntHashMap<String> directedBondTypeName2NumberInstances = new TObjectIntHashMap<>(); // 'X~Y' --> number of instances whose molecule contains at least one bond of type 'X~Y'
+
+        for(Future<ExtractedData> future : futures){
+            ExtractedData data = future.get();
+
+            hydrogenRearrangements.addAll(data.hydrogenRearrangements);
+            penalties.addAll(data.penalties);
+
+            // Let's say, 'future' is result of instance i and we processed all results for instance 0 to (i-1).
+            // Thus, 'directedBondTypeName2BreakProb' and '<..>CutDirProb' contains for each bond type 'X~Y' the sum of estimated  probs.
+            // for instance j_0 to j_(k-1). If this instance has also a bond of type 'X~Y', we add the estimated
+            // probs to the value. Also, we know that k instances with bond 'X~Y' were processed.
+            for(String bondTypeName : data.directedBondName2BreakProb.keySet()){
+                // we know: this instance contains at least one bond of type 'bondTypeName'
+                directedBondTypeName2NumberInstances.adjustOrPutValue(bondTypeName, 1, 1);
+
+                double breakProb = data.directedBondName2BreakProb.get(bondTypeName);
+                double cutDirProb = data.directedBondName2cutDirProb.get(bondTypeName);
+
+                directedBondTypeName2BreakProb.adjustOrPutValue(bondTypeName, breakProb, breakProb);
+                directedBondTypeName2CutDirProb.adjustOrPutValue(bondTypeName, cutDirProb, cutDirProb);
+            }
+        }
+
+        // AVERAGING and TRANSFORMING INTO LOG-LIKELIHOOD:
+        // For each bond type 'X~Y' (present in the data) we computed the sum of the estimated probabilities.
+        // We want to compute the average and after that computing the log-likelihood or logscore.
+        // To avoid dealing with probabilities equal 0, we add a small constant to each estimated probability.
+        double stabilityConstant = 0.000001;
+        TObjectDoubleHashMap<String> directedBondTypeName2LogProb = new TObjectDoubleHashMap<>(directedBondTypeName2BreakProb.size(), 0.75f);
+
+        for(String bondTypeName : directedBondTypeName2BreakProb.keySet()){
+            double sumBreakProb = directedBondTypeName2BreakProb.get(bondTypeName);
+            double sumCutDirProb = directedBondTypeName2CutDirProb.get(bondTypeName);
+            int numInstancesWithBondTypeName = directedBondTypeName2NumberInstances.get(bondTypeName);
+
+            double averageBreakProb = (sumBreakProb / numInstancesWithBondTypeName) + stabilityConstant;
+            double averageCutDirProb = (sumCutDirProb / numInstancesWithBondTypeName) + stabilityConstant;
+
+            directedBondTypeName2BreakProb.put(bondTypeName, averageBreakProb);
+            directedBondTypeName2CutDirProb.put(bondTypeName, averageCutDirProb);
+            directedBondTypeName2LogProb.put(bondTypeName, Math.log(averageBreakProb) + Math.log(averageCutDirProb));
+        }
+
+        System.out.println("All extracted data was collected. Estimate all parameters.");
+        this.hydrogenRearrangementProb = this.estimateHydrogenRearrangementProbability(hydrogenRearrangements);
+        this.pseudoFragmentScore = this.calculatePseudoFragmentScore(penalties);
+        this.directedBondName2Score = this.postprocessBondScores(directedBondTypeName2LogProb);
+        this.wildcardScore = this.calculateWildcardScore(directedBondTypeName2BreakProb);
+
+
 
     }
 
-    private void postprocessBondScores(){
-
+    private TObjectDoubleHashMap<String> postprocessBondScores(TObjectDoubleHashMap<String> directedBondTypeName2LogProb){
+        return null;
     }
 
     private class ExtractedData{
