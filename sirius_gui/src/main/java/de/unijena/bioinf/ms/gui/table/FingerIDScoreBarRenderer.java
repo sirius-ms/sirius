@@ -42,7 +42,7 @@ public class FingerIDScoreBarRenderer extends ListStatBarTableCellRenderer<Formu
 
     @Override
     protected double getThresh(JTable table, boolean isSelected, boolean hasFocus, int row, int column) {
-        System.out.println("Reimplement threshold separator line computation"); //todo threshold
+//        System.out.println("Reimplement threshold separator line computation"); //todo threshold
         return getMax(table, isSelected, hasFocus, row, column) * 0.5;
 
     }
