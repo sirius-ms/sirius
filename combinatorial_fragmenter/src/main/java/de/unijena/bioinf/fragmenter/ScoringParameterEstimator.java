@@ -62,7 +62,6 @@ public class ScoringParameterEstimator {
         return ((double) sum )/ (sum + numberOfObservations);
     }
 
-    // TODO: either it's the exponential or gamma distribution and compute the ML estimator and the quantile
     private double calculatePseudoFragmentScore(Collection<Float> penaltyObservations){
         // Calculate the mean and the mean of log(penalty):
         int numberObservations = penaltyObservations.size();
