@@ -203,8 +203,18 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
         } else {
             ConnectionError err = errors.values().stream().sorted().findFirst().get();
             ConnectionError.Klass mainError = err.getErrorKlass();
+            //check if internet error is not just internet check unreachable
+            if (mainError == INTERNET){
+                if (errors.values().size() > 1 &&
+                        (errors.values().stream().map(ConnectionError::getErrorKlass).noneMatch(e -> e == LOGIN_SERVER)
+                    || errors.values().stream().map(ConnectionError::getErrorKlass).noneMatch(e -> e == LICENSE_SERVER))
+                ){
+                    err = errors.values().stream().filter(e -> e.getErrorKlass() != INTERNET).sorted().findFirst().get();
+                    mainError = err.getErrorKlass();
+                }
+            }
             switch (mainError) {
-                case INTERNET:
+                case INTERNET :
                     addHTMLTextPanel(resultPanel, err + "<br><b> Could not establish an internet connection.</b><br>" +
                             "Please check whether your computer is connected to the internet. " +
                             "All features depending on the SIRIUS web services won't work without internet connection.<br>" +
