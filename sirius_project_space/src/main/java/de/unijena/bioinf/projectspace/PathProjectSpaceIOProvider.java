@@ -235,6 +235,14 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
          * @throws IOException If any IO error happens
          */
         private ResolvedPath resolvePath(String relativeFromRoot, Boolean isDir) throws IOException {
+            return resolvePathRaw(relativeFromRoot, isDir, false);
+        }
+
+        private Optional<ResolvedPath> resolvePathRO(String relativeFromRoot, Boolean isDir) throws IOException {
+            return Optional.ofNullable(resolvePathRaw(relativeFromRoot, isDir, true));
+        }
+
+        private ResolvedPath resolvePathRaw(String relativeFromRoot, Boolean isDir, boolean readOnly) throws IOException {
             if (compressionFormat.getCompressedLevel() < 1 || relativeFromRoot == null || relativeFromRoot.isBlank())
                 return new ResolvedPath(root, relativeFromRoot);
 
@@ -253,9 +261,11 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
                     // check if subfs already opened
                     FSNode zipFSNode = getFS(prefix);
                     if (zipFSNode == null) {
+                        if (readOnly && !Files.exists(root.rootPath().resolve(prefix.toString())))
+                            return null;
                         childFileSystemsLock.writeLock().lock();
                         try {
-                            zipFSNode = new FSNode(this, root.rootPath().resolve(prefix.toString()), useTempFile, maxWrites, compressionFormat.compressionMethod, new ReentrantReadWriteLock());
+                            zipFSNode = new FSNode(this, root.rootPath().resolve(prefix.toString()), !readOnly, useTempFile, maxWrites, compressionFormat.compressionMethod, new ReentrantReadWriteLock());
                             putFS(prefix, zipFSNode);
                             maintainBuffer();
                         } finally {
@@ -366,6 +376,7 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
 
         /**
          * Check if the nested zipFS is empty after deletion of rp. If yes delete it.
+         *
          * @param rp Path that has been deleted
          * @throws IOException if IO Exception happens
          */
@@ -375,8 +386,9 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
                     rp.fs.lock.writeLock().lock();
                     try {
                         rp.fs.close();
-                        ResolvedPath rpRoot = resolvePath(getRoot().relativize(getRoot().getFileSystem().getPath(rp.fs.location.toString())).toString(), false);
-                        Files.deleteIfExists(rpRoot.getPath());
+                        Optional<ResolvedPath> rpRoot = resolvePathRO(getRoot().relativize(getRoot().getFileSystem().getPath(rp.fs.location.toString())).toString(), false);
+                        if (rpRoot.isPresent())
+                            Files.deleteIfExists(rpRoot.get().getPath());
                     } finally {
                         rp.fs.lock.writeLock().unlock();
                     }
@@ -465,6 +477,10 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
             }
         }
 
+        public boolean exists(String relative) throws IOException {
+            return resolvePathRO(relative, false).map(rp -> Files.exists(rp.getPath())).orElse(false);
+        }
+
         public void readFile(String relative, IOFunctions.IOConsumer<Path> readWithFS) throws IOException {
             readFile(relative, p -> {
                 readWithFS.accept(p);
@@ -477,7 +493,8 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
         }
 
         private <R> R readFile(String relative, boolean isDir, IOFunctions.IOFunction<Path, R> readWithFS) throws IOException {
-            ResolvedPath rp = resolvePath(relative, isDir);
+            ResolvedPath rp = resolvePathRO(relative, isDir).orElseThrow(() -> new NoSuchFileException(relative));
+
             try {
                 if (!rp.fs.isDefault())
                     rp.fs.lock.readLock().lock();
@@ -511,7 +528,15 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
         @Override
         public List<String> list(String relative, String globPattern, boolean recursive, boolean includeFiles, boolean includeDirs) throws IOException {
             List<String> output = new ArrayList<>();
-            final ResolvedPath workingRootFS = resolvePath(relative, true);
+            final ResolvedPath workingRootFS;
+            {
+                Optional<ResolvedPath> wsOpt = resolvePathRO(relative, true);
+                if (wsOpt.isEmpty())
+                    return List.of();
+                else
+                    workingRootFS = wsOpt.get();
+            }
+
             final String walkingRoot = relativizeToRoot(workingRootFS, null);
 
             if (globPattern != null)
@@ -537,7 +562,11 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
             }
 
             while (!paths.isEmpty()) {
-                final ResolvedPath current = resolvePath(paths.poll(), null);
+                Optional<ResolvedPath> currentOpt = resolvePathRO(paths.poll(), null);
+                if (currentOpt.isEmpty())
+                    continue;
+
+                final ResolvedPath current = currentOpt.get();
                 if (!current.fs.isDefault())
                     current.fs.lock.readLock().lock();
                 try {
@@ -656,8 +685,8 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
         private FileSystem zipFS;
 
 
-        private FSNode(FSTree parent, Path location, boolean useTempFile, int maxwrites, ZipCompressionMethod compressionMethod, ReentrantReadWriteLock lock) throws IOException {
-            this(parent, lock, location, Files.notExists(location), useTempFile, maxwrites, compressionMethod);
+        private FSNode(FSTree parent, Path location, boolean createNew, boolean useTempFile, int maxwrites, ZipCompressionMethod compressionMethod, ReentrantReadWriteLock lock) throws IOException {
+            this(parent, lock, location, createNew, useTempFile, maxwrites, compressionMethod);
         }
 
         private FSNode(FSTree parent, ReentrantReadWriteLock lock, Path location, boolean createNew, boolean useTempFile, int maxWrites, ZipCompressionMethod compressionMethod) throws IOException {
