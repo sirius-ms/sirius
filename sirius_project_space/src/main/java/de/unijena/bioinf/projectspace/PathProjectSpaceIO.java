@@ -55,7 +55,7 @@ public class PathProjectSpaceIO implements ProjectIO {
 
     @Override
     public boolean exists(String relativePath) throws IOException {
-        return fs.readFile(resolve(relativePath), (IOFunctions.IOFunction<Path, Boolean>) Files::exists);
+        return fs.exists(resolve(relativePath));
     }
 
 
