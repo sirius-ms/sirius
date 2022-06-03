@@ -75,7 +75,7 @@ public class ScoringParameterEstimator {
             }
         }
 
-        return Math.log(min) - Math.log(2); // log(min * 0.5)
+        return Math.log(min) - Math.log(2); // log(min * 0.5) --> wildcard score should not be better than other scores
     }
 
     /* 'bonds' represent all bonds in the molecule of same type 'X~Y'
@@ -279,7 +279,7 @@ public class ScoringParameterEstimator {
             // FILTERING STEP:
             for(String genericBondName : genericBondNames){
                 double groupScore = this.directedBondName2Score.get(genericBondName);
-                ArrayList<String> specificBondNames = (ArrayList<String>) genericBondName2SpecificBondNameList.get(genericBondName).clone();
+                ArrayList<String> specificBondNames = new ArrayList<>(genericBondName2SpecificBondNameList.get(genericBondName));
                 for(String specificBondName : specificBondNames){
                     double score = directedBondTypeName2LogProb.get(specificBondName);
                     if(Math.exp(score) - Math.exp(groupScore) >= this.bondScoreSignificanceValue){
