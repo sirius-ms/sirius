@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import de.unijena.bioinf.ChemistryBase.data.JacksonDocument;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
+import org.apache.commons.math3.special.Gamma;
+import org.apache.commons.math3.distribution.GammaDistribution;
 import org.openscience.cdk.interfaces.IBond;
 
 import java.io.File;
@@ -27,8 +29,8 @@ public class ScoringParameterEstimator {
     private double hydrogenRearrangementProb;
     private double pseudoFragmentScore;
 
-    private double gammaDisShapeParameter;
-    private double gammaDisScaleParameter;
+    private double gammaShapeParameter;
+    private double gammaScaleParameter;
 
     public ScoringParameterEstimator(File subtreeDir, File outputDir, double peakExplanationPercentile, double significanceValueBondScores){
         if(subtreeDir.isDirectory() && outputDir.isDirectory()){
@@ -62,7 +64,37 @@ public class ScoringParameterEstimator {
 
     // TODO: either it's the exponential or gamma distribution and compute the ML estimator and the quantile
     private double calculatePseudoFragmentScore(Collection<Float> penaltyObservations){
-        return 0d;
+        // Calculate the mean and the mean of log(penalty):
+        int numberObservations = penaltyObservations.size();
+        double sum = 0, logSum = 0;
+        for(float penalty : penaltyObservations){
+            sum = sum + penalty;
+            logSum = logSum + Math.log(penalty);
+        }
+        double meanPenalty = sum / numberObservations;
+        double meanLogPenalty = logSum / numberObservations;
+
+        // Estimate the shape and scale parameter of the underlying Gamma distribution:
+        double currentShapeParameter = (0.5 / (Math.log(meanPenalty) - meanLogPenalty));
+        while(true){
+            double digammaValue = Gamma.digamma(currentShapeParameter);
+            double trigammaValue = Gamma.trigamma(currentShapeParameter);
+            double reciprocalNewParam = 1/currentShapeParameter + (meanLogPenalty - Math.log(meanPenalty) + Math.log(currentShapeParameter) - digammaValue) / (Math.pow(currentShapeParameter,2)*((1/currentShapeParameter)-trigammaValue));
+
+            double oldShapeParameter = currentShapeParameter;
+            currentShapeParameter = 1/reciprocalNewParam;
+
+            if(Math.abs(oldShapeParameter - currentShapeParameter) < 0.0001) break;
+        }
+        this.gammaShapeParameter = currentShapeParameter;
+        this.gammaScaleParameter = meanPenalty / this.gammaShapeParameter;
+
+        // Computing the pseudoFragmentScore using the peakExplanationPercentile and the hydrogenRearrangementProb:
+        GammaDistribution gammaDistribution = new GammaDistribution(this.gammaShapeParameter, this.gammaScaleParameter);
+        double quantile = gammaDistribution.inverseCumulativeProbability(this.peakExplanationPercentile);
+        double expectedHydrogenRearrangements = this.hydrogenRearrangementProb / (1-this.hydrogenRearrangementProb);
+
+        return quantile + expectedHydrogenRearrangements*Math.log(this.hydrogenRearrangementProb);
     }
 
     private double calculateWildcardScore(TObjectDoubleHashMap<String> directedBondTypeName2BreakProb){
@@ -245,8 +277,8 @@ public class ScoringParameterEstimator {
         this.postprocessBondScores(directedBondTypeName2LogProb);
         this.wildcardScore = this.calculateWildcardScore(directedBondTypeName2BreakProb);
 
-
-
+        System.out.println("All parameters were estimated. Save unprocessed and processed data.");
+        this.saveData();
     }
 
     private void postprocessBondScores(TObjectDoubleHashMap<String> directedBondTypeName2LogProb){
@@ -314,6 +346,11 @@ public class ScoringParameterEstimator {
         String secondAtomSymbol = atomTypeNames[1].split("\\.")[0];
         char bondChar = specificBondName.charAt(atomTypeNames[0].length());
         return firstAtomSymbol+bondChar+secondAtomSymbol;
+    }
+
+    // todo:
+    private void saveData(){
+
     }
 
     private class ExtractedData{
