@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ChemistryBase.utils.ZipCompressionMethod;
 import de.unijena.bioinf.jjobs.JobProgressEventListener;
+import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.PostprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.export.tables.ExportPredictionsOptions;
@@ -75,7 +76,10 @@ public class SummarySubToolJob extends PostprocessingJob<Boolean> implements Wor
             StopWatch w = new StopWatch(); w.start();
             final JobProgressEventListener listener = this::updateProgress;
 
-            Iterable<? extends Instance> compounds = SiriusJobs.getGlobalJobManager().submitJob(rootOptions.makeDefaultPreprocessingJob()).awaitResult();
+            //todo ugly hack to prevent double import of compounds during cli, find real solution
+            Iterable<? extends Instance> compounds = rootOptions instanceof CLIRootOptions ?  project
+                    : SiriusJobs.getGlobalJobManager().submitJob(rootOptions.makeDefaultPreprocessingJob()).awaitResult();
+
 
             List<CompoundContainerId> ids = null;
             if (compounds != null && !compounds.equals(project)) {
