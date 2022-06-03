@@ -437,7 +437,7 @@ public class MztabMExporter implements Summarizer {
         try {
             return result.getId().getParentId().getDirectoryName() + ":" + ex.getIonMass() + ":" + result.getId().getIonType().withoutAdduct().toString().replaceAll("[\\[\\] _]", "");
         } catch (Exception e) {
-            System.out.println("Instance was not written?????????? -> " + ex.getName());
+//            System.out.println("Instance was not written?????????? -> " + ex.getName());
             throw e;
         }
     }
