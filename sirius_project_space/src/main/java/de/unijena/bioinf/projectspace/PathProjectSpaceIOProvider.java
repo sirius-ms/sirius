@@ -364,78 +364,104 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
             }
         }
 
+        /**
+         * Check if the nested zipFS is empty after deletion of rp. If yes delete it.
+         * @param rp Path that has been deleted
+         * @throws IOException if IO Exception happens
+         */
+        private void removeFsIfEmpty(ResolvedPath rp) throws IOException {
+            if (!rp.fs.isDefault()) {
+                if (FileUtils.listAndClose(rp.fs.rootPath(), s -> s.findAny().isEmpty())) {
+                    rp.fs.lock.writeLock().lock();
+                    try {
+                        rp.fs.close();
+                        ResolvedPath rpRoot = resolvePath(getRoot().relativize(getRoot().getFileSystem().getPath(rp.fs.location.toString())).toString(), false);
+                        Files.deleteIfExists(rpRoot.getPath());
+                    } finally {
+                        rp.fs.lock.writeLock().unlock();
+                    }
+                }
+            }
+        }
 
         @Override
         public void delete(String relative, boolean recursive) throws IOException {
             final ResolvedPath rp = resolvePath(relative, null);
             try {
-                if (!rp.fs.isDefault())
-                    rp.fs.lock.readLock().lock();
-                if (Files.notExists(rp.getPath()))
-                    return;
-            } finally {
-                if (!rp.fs.isDefault())
-                    rp.fs.lock.readLock().unlock();
-            }
-
-            try {
-                if (!rp.fs.isDefault())
-                    rp.fs.lock.writeLock().lock();
-                try {
-                    Path rootPath = rp.getPath();
-                    if (Files.notExists(rootPath))
-                        return;
-                    if (recursive) {
-                        if (rp.isLocalRoot()) {
-                            rp.fs.close();
-                            Files.deleteIfExists(rp.fs.location);
-                        } else if (Files.isRegularFile(rootPath)) {
-                            Files.deleteIfExists(rootPath);
-                        } else {
-                            List<Path> files = FileUtils.walkAndClose(w -> w.sorted(Comparator.reverseOrder()).collect(Collectors.toList()), rootPath);
-                            //close if some files are cached subfs, cannot be null because this would mean deleting the root
-                            files.stream().map(p -> root.zipFS.getPath(relativizeToRoot(new ResolvedPath(rp.fs, Path.of(rp.relativeToPsRoot).resolve(rootPath.relativize(p).toString()).toString()), null)))
-                                    .map(childFileSystems::get).filter(Objects::nonNull).forEach(fsNode -> {
-                                        try {
-                                            fsNode.close();
-                                        } catch (IOException e) {
-                                            LoggerFactory.getLogger(getClass()).error("Error when closing cached sub filesystem!", e);
-                                        }
-                                    });
-                            for (Path file : files)
-                                Files.deleteIfExists(file);
-                        }
-
-                    } else {
-                        if (rp.isLocalRoot()) {
-                            rp.fs.close();
-                            Files.deleteIfExists(rp.fs.location);
-                        } else {
-                            Files.deleteIfExists(rootPath);
-                        }
+                {
+                    if (!rp.fs.isDefault())
+                        rp.fs.lock.readLock().lock();
+                    try {
+                        if (Files.notExists(rp.getPath()))
+                            return;
+                    } finally {
+                        if (!rp.fs.isDefault())
+                            rp.fs.lock.readLock().unlock();
                     }
-                } finally {
-                    if (!rp.fs.isDefault())
-                        rp.fs.lock.writeLock().unlock();
-                    rp.fs.ensureWrite();
-                }
-            } catch (ClosedFileSystemException | ClosedChannelException e) {
-                LoggerFactory.getLogger(getClass()).warn("FS delete operation cancelled unexpectedly! Connection to ZipFS Lost. Try reopening and execute with Full Lock and lazy deletion.");
-                LoggerFactory.getLogger(getClass()).debug("FS delete operation cancelled unexpectedly! Connection to ZipFS Lost. Try reopening and execute with Full Lock and lazy deletion.", e);
-                if (!rp.fs.isDefault())
-                    rp.fs.lock.writeLock().lock();
-                try {
-                    rp.fs.ensureOpen();
-                    if (recursive)
-                        FileUtils.deleteRecursively(rp.getPath());
-                    else
-                        Files.deleteIfExists(rp.getPath());
-                } finally {
-                    if (!rp.fs.isDefault())
-                        rp.fs.lock.writeLock().unlock();
-                    rp.fs.ensureWrite();
                 }
 
+
+                try {
+                    if (!rp.fs.isDefault())
+                        rp.fs.lock.writeLock().lock();
+                    try {
+                        Path rootPath = rp.getPath();
+                        if (Files.notExists(rootPath))
+                            return;
+                        if (recursive) {
+                            if (rp.isLocalRoot()) {
+                                rp.fs.close();
+                                Files.deleteIfExists(rp.fs.location);
+                            } else if (Files.isRegularFile(rootPath)) {
+                                Files.deleteIfExists(rootPath);
+                            } else {
+                                List<Path> files = FileUtils.walkAndClose(w -> w.sorted(Comparator.reverseOrder()).collect(Collectors.toList()), rootPath);
+                                //close if some files are cached subfs, cannot be null because this would mean deleting the root
+                                files.stream().map(p -> root.zipFS.getPath(relativizeToRoot(new ResolvedPath(rp.fs, Path.of(rp.relativeToPsRoot).resolve(rootPath.relativize(p).toString()).toString()), null)))
+                                        .map(childFileSystems::get).filter(Objects::nonNull).forEach(fsNode -> {
+                                            try {
+                                                fsNode.close();
+                                            } catch (IOException e) {
+                                                LoggerFactory.getLogger(getClass()).error("Error when closing cached sub filesystem!", e);
+                                            }
+                                        });
+                                for (Path file : files)
+                                    Files.deleteIfExists(file);
+                            }
+
+                        } else {
+                            if (rp.isLocalRoot()) {
+                                rp.fs.close();
+                                Files.deleteIfExists(rp.fs.location);
+                            } else {
+                                Files.deleteIfExists(rootPath);
+                            }
+                        }
+                    } finally {
+                        if (!rp.fs.isDefault())
+                            rp.fs.lock.writeLock().unlock();
+                        rp.fs.ensureWrite();
+                    }
+                } catch (ClosedFileSystemException | ClosedChannelException e) {
+                    LoggerFactory.getLogger(getClass()).warn("FS delete operation cancelled unexpectedly! Connection to ZipFS Lost. Try reopening and execute with Full Lock and lazy deletion.");
+                    LoggerFactory.getLogger(getClass()).debug("FS delete operation cancelled unexpectedly! Connection to ZipFS Lost. Try reopening and execute with Full Lock and lazy deletion.", e);
+                    if (!rp.fs.isDefault())
+                        rp.fs.lock.writeLock().lock();
+                    try {
+                        rp.fs.ensureOpen();
+                        if (recursive)
+                            FileUtils.deleteRecursively(rp.getPath());
+                        else
+                            Files.deleteIfExists(rp.getPath());
+                    } finally {
+                        if (!rp.fs.isDefault())
+                            rp.fs.lock.writeLock().unlock();
+                        rp.fs.ensureWrite();
+                    }
+
+                }
+            } finally {
+                removeFsIfEmpty(rp);
             }
         }
 
