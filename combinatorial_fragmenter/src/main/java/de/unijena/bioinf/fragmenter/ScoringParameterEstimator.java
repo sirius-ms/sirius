@@ -2,16 +2,13 @@ package de.unijena.bioinf.fragmenter;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import de.unijena.bioinf.ChemistryBase.data.JacksonDocument;
-import gnu.trove.impl.Constants;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
-import gnu.trove.map.hash.TObjectFloatHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import org.openscience.cdk.interfaces.IBond;
 
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.concurrent.*;
@@ -71,18 +68,14 @@ public class ScoringParameterEstimator {
     private double calculateWildcardScore(TObjectDoubleHashMap<String> directedBondTypeName2BreakProb){
         double[] breakProbabilities = directedBondTypeName2BreakProb.values();
         double min = breakProbabilities[0];
-        double max = breakProbabilities[0];
 
         for(int i = 1; i < breakProbabilities.length; i++){
             if(breakProbabilities[i] < min){
                 min = breakProbabilities[i];
             }
-            if(breakProbabilities[i] > max){
-                max = breakProbabilities[i];
-            }
         }
 
-        return Math.log(min+max)-Math.log(4); // Math.log(((min+max)/2)*0.5)
+        return Math.log(min) - Math.log(2); // log(min * 0.5)
     }
 
     /* 'bonds' represent all bonds in the molecule of same type 'X~Y'
@@ -249,15 +242,78 @@ public class ScoringParameterEstimator {
         System.out.println("All extracted data was collected. Estimate all parameters.");
         this.hydrogenRearrangementProb = this.estimateHydrogenRearrangementProbability(hydrogenRearrangements);
         this.pseudoFragmentScore = this.calculatePseudoFragmentScore(penalties);
-        this.directedBondName2Score = this.postprocessBondScores(directedBondTypeName2LogProb);
+        this.postprocessBondScores(directedBondTypeName2LogProb);
         this.wildcardScore = this.calculateWildcardScore(directedBondTypeName2BreakProb);
 
 
 
     }
 
-    private TObjectDoubleHashMap<String> postprocessBondScores(TObjectDoubleHashMap<String> directedBondTypeName2LogProb){
-        return null;
+    private void postprocessBondScores(TObjectDoubleHashMap<String> directedBondTypeName2LogProb){
+        // GROUPING:
+        // Put all bonds whose specific bond name matches a generic bond name into one group:
+        HashMap<String, ArrayList<String>> genericBondName2SpecificBondNameList = new HashMap<>();
+        for(String specificBondName : directedBondTypeName2LogProb.keySet()){
+            String genericBondName = this.getGenericBondName(specificBondName);
+            genericBondName2SpecificBondNameList.computeIfAbsent(genericBondName, str -> new ArrayList<>()).add(specificBondName);
+        }
+        Collection<String> genericBondNames = genericBondName2SpecificBondNameList.keySet();
+
+        // For each group, compute its average value and put it into the hashmap:
+        this.directedBondName2Score = new TObjectDoubleHashMap<>();
+        for(String genericBondName : genericBondNames){
+            ArrayList<String> specificBondNames = genericBondName2SpecificBondNameList.get(genericBondName);
+            double averageScore = this.computeAverageLogScore(directedBondTypeName2LogProb, specificBondNames);
+            this.directedBondName2Score.put(genericBondName, averageScore);
+        }
+
+        // LOOP:
+        // While there were some specific bond types which form their own group, do:
+        // - remove all specific bond types from their group if their score differs from the group score by some specific value
+        // - these specific bond types form their own group now --> put them separately into the hashmap
+        // - recompute the average score for each group
+        int oldSize = 0;
+        while(this.directedBondName2Score.size() - oldSize  != 0){
+            oldSize = this.directedBondName2Score.size();
+
+            // FILTERING STEP:
+            for(String genericBondName : genericBondNames){
+                double groupScore = this.directedBondName2Score.get(genericBondName);
+                ArrayList<String> specificBondNames = (ArrayList<String>) genericBondName2SpecificBondNameList.get(genericBondName).clone();
+                for(String specificBondName : specificBondNames){
+                    double score = directedBondTypeName2LogProb.get(specificBondName);
+                    if(Math.exp(score) - Math.exp(groupScore) >= this.bondScoreSignificanceValue){
+                        // specificBondName breaks more often than genericBondName by the given significance value.
+                        // Thus, remove specificBondName from the group and put it separately into the hashmap:
+                        genericBondName2SpecificBondNameList.get(genericBondName).remove(specificBondName);
+                        this.directedBondName2Score.put(specificBondName, score);
+                    }
+                }
+            }
+
+            // UPDATE STEP:
+            for(String genericBondName : genericBondNames){
+                ArrayList<String> specificBondNames = genericBondName2SpecificBondNameList.get(genericBondName);
+                double newGroupScore = this.computeAverageLogScore(directedBondTypeName2LogProb, specificBondNames);
+                this.directedBondName2Score.put(genericBondName, newGroupScore);
+            }
+        }
+    }
+
+    private double computeAverageLogScore(TObjectDoubleHashMap<String> directedBondName2LogProb, ArrayList<String> bondNameGroup){
+        double sum = 0;
+        for(String bondName : bondNameGroup){
+            sum = sum + directedBondName2LogProb.get(bondName);
+        }
+        return sum / bondNameGroup.size();
+    }
+
+    private String getGenericBondName(String specificBondName){
+        String[] atomTypeNames = specificBondName.split("[:\\-=#?]"); // Assumption: no atom type name contains one of these characters
+        String firstAtomSymbol = atomTypeNames[0].split("\\.")[0];
+        String secondAtomSymbol = atomTypeNames[1].split("\\.")[0];
+        char bondChar = specificBondName.charAt(atomTypeNames[0].length());
+        return firstAtomSymbol+bondChar+secondAtomSymbol;
     }
 
     private class ExtractedData{
@@ -274,8 +330,4 @@ public class ScoringParameterEstimator {
             this.directedBondName2cutDirProb = directedBondName2cutDirProb;
         }
     }
-
-
-
-
 }
