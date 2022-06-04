@@ -457,6 +457,19 @@ public class ScoringParameterEstimator {
         this.saveData(hydrogenRearrangements, penalties, directedBondTypeName2BreakProb, directedBondTypeName2CutDirProb, directedBondTypeName2LogProb, directedBondTypeName2NumberInstances);
     }
 
+    public static void main(String[] args){
+        try {
+            File subtreeDir = new File(args[0]);
+            File outputDir = new File(args[1]);
+            double peakExplanationPercentile = Double.parseDouble(args[2]);
+            double bondScoresSignificanceValue = Double.parseDouble(args[3]);
+            ScoringParameterEstimator estimator = new ScoringParameterEstimator(subtreeDir, outputDir, peakExplanationPercentile, bondScoresSignificanceValue);
+            estimator.estimateParameters();
+        } catch (IOException | ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
     private class ExtractedData{
 
         protected final Collection<Integer> hydrogenRearrangements;
