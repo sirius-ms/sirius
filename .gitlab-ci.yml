@@ -84,9 +84,10 @@ testDist:
     - ls
     - cd build
     - ls
-    - cd distributions
+    - cd scripts
     - ls
-    - cd sirius
+    - cd ..
+    - cd install
     - ls
     - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/sirius.exe --input /sirius_frontend/sirius_doc/manual/demo-data/mgf/laudanosine.mgf formula -p orbitrap fingerprint structure compound-classes write-summaries --output /sirius_frontend/sirius_cli/src/test/mgf_temp_summary
     - cd sirius_cli/src/test/java
