@@ -8,12 +8,16 @@ import org.apache.commons.math3.special.Gamma;
 import org.apache.commons.math3.distribution.GammaDistribution;
 import org.openscience.cdk.interfaces.IBond;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 public class ScoringParameterEstimator {
 
@@ -52,6 +56,15 @@ public class ScoringParameterEstimator {
         return val >= 0d && val <= 1d;
     }
 
+    /**
+     * This method estimates the probability that one hydrogen atom is attached to/dissociated from a fragment.<br>
+     * It is assumed that hydrogen rearrangements follow a geometric distribution.
+     * Thus, this method estimates the parameter of a geometric distribution using the Maximum Likelihood method
+     * and the observed hydrogen rearrangements in the data.
+     *
+     * @param hydrogenRearrangementObservations
+     * @return the ML estimated probability that one hydrogen rearrangement occurs
+     */
     private double estimateHydrogenRearrangementProbability(Collection<Integer> hydrogenRearrangementObservations){
         int numberOfObservations = hydrogenRearrangementObservations.size();
         long sum = 0;
@@ -62,7 +75,27 @@ public class ScoringParameterEstimator {
         return ((double) sum )/ (sum + numberOfObservations);
     }
 
+    /**
+     * This method returns the score which is assigned to each pseudo-fragment/terminal node.<br>
+     * The user parameter {@link ScoringParameterEstimator#peakExplanationPercentile} defines how many
+     * peaks should be explained. And a peak is explained if there is a profitable path from the root to the
+     * corresponding terminal node (a peak can also be explained if its fragment is already present in the tree).
+     * So the pseudo-fragment score must be greater than the absolute penalty.<br>
+     *
+     * By observing the penalties of each assigned fragment, we can estimate the parameters of a Gamma distribution
+     * using Maximum Likelihood Estimation. With this Gamma distribution we can compute the quantile according
+     * to the given percentile. We use this quantile for the pseudo-fragment score.<br>
+     * Because there is also the penalty for hydrogen rearrangements, we add the expected hydrogen rearrangement penalty.
+     *
+     * @param penaltyObservations
+     * @return the pseudo-fragment score
+     */
     private double calculatePseudoFragmentScore(Collection<Float> penaltyObservations){
+        // Filtering and Transforming:
+        // 1.) Remove all penalty equal 0. These 0-penalties belong to the root which are attached to the precursor peak.
+        // 2.) The penalties are negative. Transform them into positive values.
+        penaltyObservations = penaltyObservations.stream().filter(p -> p != 0).map(p -> -p).collect(Collectors.toList());
+
         // Calculate the mean and the mean of log(penalty):
         int numberObservations = penaltyObservations.size();
         double sum = 0, logSum = 0;
@@ -73,12 +106,14 @@ public class ScoringParameterEstimator {
         double meanPenalty = sum / numberObservations;
         double meanLogPenalty = logSum / numberObservations;
 
-        // Estimate the shape and scale parameter of the underlying Gamma distribution:
-        double currentShapeParameter = (0.5 / (Math.log(meanPenalty) - meanLogPenalty));
+        // MAXIMUM LIKELIHOOD ESTIMATION:
+        // Estimate the shape and scale parameter of the underlying Gamma distribution.
+        // Because there is no closed formula for the shape parameter, we compute it by using Newtons iteration procedure.
+        double currentShapeParameter = 0.5 / (Math.log(meanPenalty) - meanLogPenalty);
         while(true){
             double digammaValue = Gamma.digamma(currentShapeParameter);
             double trigammaValue = Gamma.trigamma(currentShapeParameter);
-            double reciprocalNewParam = 1/currentShapeParameter + (meanLogPenalty - Math.log(meanPenalty) + Math.log(currentShapeParameter) - digammaValue) / (Math.pow(currentShapeParameter,2)*((1/currentShapeParameter)-trigammaValue));
+            double reciprocalNewParam = (1/currentShapeParameter) + (meanLogPenalty - Math.log(meanPenalty) + Math.log(currentShapeParameter) - digammaValue) / (Math.pow(currentShapeParameter,2)*((1/currentShapeParameter)-trigammaValue));
 
             double oldShapeParameter = currentShapeParameter;
             currentShapeParameter = 1/reciprocalNewParam;
@@ -88,17 +123,30 @@ public class ScoringParameterEstimator {
         this.gammaShapeParameter = currentShapeParameter;
         this.gammaScaleParameter = meanPenalty / this.gammaShapeParameter;
 
+        // COMPUTATION OF QUANTILE AND EXPECTED HYDROGEN PENALTY:
         // Computing the pseudoFragmentScore using the peakExplanationPercentile and the hydrogenRearrangementProb:
         GammaDistribution gammaDistribution = new GammaDistribution(this.gammaShapeParameter, this.gammaScaleParameter);
         double quantile = gammaDistribution.inverseCumulativeProbability(this.peakExplanationPercentile);
         double expectedHydrogenRearrangements = this.hydrogenRearrangementProb / (1-this.hydrogenRearrangementProb);
 
-        return quantile + expectedHydrogenRearrangements*Math.log(this.hydrogenRearrangementProb);
+        return quantile - expectedHydrogenRearrangements*Math.log(this.hydrogenRearrangementProb);
     }
 
+    /**
+     * This method returns the wildcard score. This score is assigned to a cleaved bond if its specific and
+     * generic bond type is not present in the scoring model. This is only the case if there was no instance with this
+     * bond type in the training data.<br>
+     *
+     * It is assumed, that bonds which are not covered by the training data break less frequent.
+     * Thus, the wildcard score is the logarithm of the minimal observed break probability times 0.5.<br>
+     * 0.5 stands for the probability that the first atom is contained in the remaining fragment.
+     *
+     * @param directedBondTypeName2BreakProb
+     * @return the score for an bond not contained in the resulting scoring model
+     */
     private double calculateWildcardScore(TObjectDoubleHashMap<String> directedBondTypeName2BreakProb){
         double[] breakProbabilities = directedBondTypeName2BreakProb.values();
-        double min = breakProbabilities[0];
+        double min = breakProbabilities.length > 0 ? breakProbabilities[0] : 0d;
 
         for(int i = 1; i < breakProbabilities.length; i++){
             if(breakProbabilities[i] < min){
@@ -156,8 +204,137 @@ public class ScoringParameterEstimator {
         }
     }
 
+    private void postprocessBondScores(TObjectDoubleHashMap<String> directedBondTypeName2LogProb){
+        // GROUPING:
+        // Put all bonds whose specific bond name matches a generic bond name into one group:
+        HashMap<String, ArrayList<String>> genericBondName2SpecificBondNameList = new HashMap<>();
+        for(String specificBondName : directedBondTypeName2LogProb.keySet()){
+            String genericBondName = this.getGenericBondName(specificBondName);
+            genericBondName2SpecificBondNameList.computeIfAbsent(genericBondName, str -> new ArrayList<>()).add(specificBondName);
+        }
+        Collection<String> genericBondNames = genericBondName2SpecificBondNameList.keySet();
 
-    public void estimateParameters() throws InterruptedException, ExecutionException {
+        // For each group, compute its average value and put it into the hashmap:
+        this.directedBondName2Score = new TObjectDoubleHashMap<>();
+        for(String genericBondName : genericBondNames){
+            ArrayList<String> specificBondNames = genericBondName2SpecificBondNameList.get(genericBondName);
+            double averageScore = this.computeAverageLogScore(directedBondTypeName2LogProb, specificBondNames);
+            this.directedBondName2Score.put(genericBondName, averageScore);
+        }
+
+        // LOOP:
+        // While there were some specific bond types which form their own group, do:
+        // - remove all specific bond types from their group if their score differs from the group score by some specific value
+        // - these specific bond types form their own group now --> put them separately into the hashmap
+        // - recompute the average score for each group
+        int oldSize = 0;
+        while(this.directedBondName2Score.size() - oldSize  != 0){
+            oldSize = this.directedBondName2Score.size();
+
+            // FILTERING STEP:
+            for(String genericBondName : genericBondNames){
+                double groupScore = this.directedBondName2Score.get(genericBondName);
+                ArrayList<String> specificBondNames = new ArrayList<>(genericBondName2SpecificBondNameList.get(genericBondName));
+                for(String specificBondName : specificBondNames){
+                    double score = directedBondTypeName2LogProb.get(specificBondName);
+                    if(Math.exp(score) - Math.exp(groupScore) >= this.bondScoreSignificanceValue){
+                        // specificBondName breaks more often than genericBondName by the given significance value.
+                        // Thus, remove specificBondName from the group and put it separately into the hashmap:
+                        genericBondName2SpecificBondNameList.get(genericBondName).remove(specificBondName);
+                        this.directedBondName2Score.put(specificBondName, score);
+                    }
+                }
+            }
+
+            // UPDATE STEP:
+            for(String genericBondName : genericBondNames){
+                ArrayList<String> specificBondNames = genericBondName2SpecificBondNameList.get(genericBondName);
+                double newGroupScore = this.computeAverageLogScore(directedBondTypeName2LogProb, specificBondNames);
+                this.directedBondName2Score.put(genericBondName, newGroupScore);
+            }
+        }
+    }
+
+    private double computeAverageLogScore(TObjectDoubleHashMap<String> directedBondName2LogProb, ArrayList<String> bondNameGroup){
+        double sum = 0;
+        for(String bondName : bondNameGroup){
+            sum = sum + directedBondName2LogProb.get(bondName);
+        }
+        return sum / bondNameGroup.size();
+    }
+
+    private String getGenericBondName(String specificBondName){
+        String[] atomTypeNames = specificBondName.split("[:\\-=#?]"); // Assumption: no atom type name contains one of these characters
+        String firstAtomSymbol = atomTypeNames[0].split("\\.")[0];
+        String secondAtomSymbol = atomTypeNames[1].split("\\.")[0];
+        char bondChar = specificBondName.charAt(atomTypeNames[0].length());
+        return firstAtomSymbol+bondChar+secondAtomSymbol;
+    }
+
+    private void saveData(Collection<Integer> hydrogenRearrangements, Collection<Float> penalties, TObjectDoubleHashMap<String> directedBondName2BreakProb, TObjectDoubleHashMap<String> directedBondName2CutDirProb, TObjectDoubleHashMap<String> directedBondName2LogProb, TObjectIntHashMap<String> directedBondName2NumInstances) throws IOException {
+        // 1. Save the observed hydrogen rearrangements:
+        this.saveObservedValues(new File(this.outputDir, "H-rearrangement_observations.txt"), hydrogenRearrangements, false);
+
+        // 2. Save the observed penalties:
+        this.saveObservedValues(new File(this.outputDir, "observed_fragment_penalties.txt"), penalties, true);
+
+        // 3. Save all computed scores and values for each observed specific directed bond type:
+        File allScoresFile = new File(this.outputDir, "unprocessed_bond_scores.txt");
+        Collection<String> bondNames = directedBondName2LogProb.keySet();
+        try(BufferedWriter fileWriter = Files.newBufferedWriter(allScoresFile.toPath())){
+            fileWriter.write("directedBondTypeName,numObservations,breakProb,cutDirectionProb,logProb");
+            fileWriter.newLine();
+
+            for(String bondName : bondNames){
+                int numObservations = directedBondName2NumInstances.get(bondName);
+                double breakProb = directedBondName2BreakProb.get(bondName);
+                double cutDirProb = directedBondName2CutDirProb.get(bondName);
+                double logProb = directedBondName2LogProb.get(bondName);
+
+                fileWriter.write(bondName+","+numObservations+","+breakProb+","+cutDirProb+","+logProb);
+                fileWriter.newLine();
+            }
+        }
+
+        // 4. Save the resulting scoring model with all of its parameters:
+        File scoringModelFile = new File(this.outputDir, "scoring_model.txt");
+        String[] bondNamesArray = new String[this.directedBondName2Score.size()];
+        double[] bondScores = new double[this.directedBondName2Score.size()];
+
+        int idx = 0;
+        for(String bondName : this.directedBondName2Score.keySet()){
+            double score = this.directedBondName2Score.get(bondName);
+            bondNamesArray[idx] = bondName;
+            bondScores[idx] = score;
+            idx++;
+        }
+
+        DirectedBondTypeScoring.writeScoringToFile(scoringModelFile, bondNamesArray, bondScores, this.wildcardScore, this.hydrogenRearrangementProb, this.pseudoFragmentScore);
+    }
+
+
+    private <T extends Number> void saveObservedValues(File file, Collection<T> values, boolean isPenalties) throws IOException {
+        try(BufferedWriter fileWriter = Files.newBufferedWriter(file.toPath())){
+            // Write parameter into the given file:
+            if(isPenalties){
+                fileWriter.write("# Gamma distribution with parameter:"); fileWriter.newLine();
+                fileWriter.write("# shape "+this.gammaShapeParameter); fileWriter.newLine();
+                fileWriter.write("# scale "+this.gammaScaleParameter);
+            }else{
+                fileWriter.write("# Geometric distribution with parameter:"); fileWriter.newLine();
+                fileWriter.write("# probability "+this.hydrogenRearrangementProb);
+            }
+            fileWriter.newLine();
+
+            // Write values into the file:
+            for(T val : values){
+                fileWriter.write(val.toString());
+                fileWriter.newLine();
+            }
+        }
+    }
+
+    public void estimateParameters() throws InterruptedException, ExecutionException, IOException {
         /* Create an ExecutorService and collect all tasks.
          * Each task corresponds to one computed subtree and:
          * - 1.) collects for each assignment the hydrogen rearrangements and 2.) the penalties of the assigned fragments,
@@ -272,84 +449,12 @@ public class ScoringParameterEstimator {
 
         System.out.println("All extracted data was collected. Estimate all parameters.");
         this.hydrogenRearrangementProb = this.estimateHydrogenRearrangementProbability(hydrogenRearrangements);
-        this.pseudoFragmentScore = this.calculatePseudoFragmentScore(penalties);
+        this.pseudoFragmentScore = this.calculatePseudoFragmentScore(penalties); // after this method, 'penalties' contains non-zero positive values
         this.postprocessBondScores(directedBondTypeName2LogProb);
         this.wildcardScore = this.calculateWildcardScore(directedBondTypeName2BreakProb);
 
         System.out.println("All parameters were estimated. Save unprocessed and processed data.");
-        this.saveData();
-    }
-
-    private void postprocessBondScores(TObjectDoubleHashMap<String> directedBondTypeName2LogProb){
-        // GROUPING:
-        // Put all bonds whose specific bond name matches a generic bond name into one group:
-        HashMap<String, ArrayList<String>> genericBondName2SpecificBondNameList = new HashMap<>();
-        for(String specificBondName : directedBondTypeName2LogProb.keySet()){
-            String genericBondName = this.getGenericBondName(specificBondName);
-            genericBondName2SpecificBondNameList.computeIfAbsent(genericBondName, str -> new ArrayList<>()).add(specificBondName);
-        }
-        Collection<String> genericBondNames = genericBondName2SpecificBondNameList.keySet();
-
-        // For each group, compute its average value and put it into the hashmap:
-        this.directedBondName2Score = new TObjectDoubleHashMap<>();
-        for(String genericBondName : genericBondNames){
-            ArrayList<String> specificBondNames = genericBondName2SpecificBondNameList.get(genericBondName);
-            double averageScore = this.computeAverageLogScore(directedBondTypeName2LogProb, specificBondNames);
-            this.directedBondName2Score.put(genericBondName, averageScore);
-        }
-
-        // LOOP:
-        // While there were some specific bond types which form their own group, do:
-        // - remove all specific bond types from their group if their score differs from the group score by some specific value
-        // - these specific bond types form their own group now --> put them separately into the hashmap
-        // - recompute the average score for each group
-        int oldSize = 0;
-        while(this.directedBondName2Score.size() - oldSize  != 0){
-            oldSize = this.directedBondName2Score.size();
-
-            // FILTERING STEP:
-            for(String genericBondName : genericBondNames){
-                double groupScore = this.directedBondName2Score.get(genericBondName);
-                ArrayList<String> specificBondNames = new ArrayList<>(genericBondName2SpecificBondNameList.get(genericBondName));
-                for(String specificBondName : specificBondNames){
-                    double score = directedBondTypeName2LogProb.get(specificBondName);
-                    if(Math.exp(score) - Math.exp(groupScore) >= this.bondScoreSignificanceValue){
-                        // specificBondName breaks more often than genericBondName by the given significance value.
-                        // Thus, remove specificBondName from the group and put it separately into the hashmap:
-                        genericBondName2SpecificBondNameList.get(genericBondName).remove(specificBondName);
-                        this.directedBondName2Score.put(specificBondName, score);
-                    }
-                }
-            }
-
-            // UPDATE STEP:
-            for(String genericBondName : genericBondNames){
-                ArrayList<String> specificBondNames = genericBondName2SpecificBondNameList.get(genericBondName);
-                double newGroupScore = this.computeAverageLogScore(directedBondTypeName2LogProb, specificBondNames);
-                this.directedBondName2Score.put(genericBondName, newGroupScore);
-            }
-        }
-    }
-
-    private double computeAverageLogScore(TObjectDoubleHashMap<String> directedBondName2LogProb, ArrayList<String> bondNameGroup){
-        double sum = 0;
-        for(String bondName : bondNameGroup){
-            sum = sum + directedBondName2LogProb.get(bondName);
-        }
-        return sum / bondNameGroup.size();
-    }
-
-    private String getGenericBondName(String specificBondName){
-        String[] atomTypeNames = specificBondName.split("[:\\-=#?]"); // Assumption: no atom type name contains one of these characters
-        String firstAtomSymbol = atomTypeNames[0].split("\\.")[0];
-        String secondAtomSymbol = atomTypeNames[1].split("\\.")[0];
-        char bondChar = specificBondName.charAt(atomTypeNames[0].length());
-        return firstAtomSymbol+bondChar+secondAtomSymbol;
-    }
-
-    // todo:
-    private void saveData(){
-
+        this.saveData(hydrogenRearrangements, penalties, directedBondTypeName2BreakProb, directedBondTypeName2CutDirProb, directedBondTypeName2LogProb, directedBondTypeName2NumberInstances);
     }
 
     private class ExtractedData{
