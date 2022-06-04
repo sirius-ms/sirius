@@ -79,15 +79,15 @@ testDist:
     - cd ..
     - gradle :sirius_dist:sirius_cli_single_os:distImage
     - cd sirius_dist
-    - ls
+    - cd sirius_cli_single_os
+    - cd build
+    - cd scripts
     - cd sirius_cli_single_os
     - ls
-    - cd build
-    - ls
-    - cd scripts
-    - ls
+    - cd ..
     - cd ..
     - cd install
+    - cd sirius_cli_single_os
     - ls
     - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/sirius.exe --input /sirius_frontend/sirius_doc/manual/demo-data/mgf/laudanosine.mgf formula -p orbitrap fingerprint structure compound-classes write-summaries --output /sirius_frontend/sirius_cli/src/test/mgf_temp_summary
     - cd sirius_cli/src/test/java
