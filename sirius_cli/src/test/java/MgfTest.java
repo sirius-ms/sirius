@@ -52,11 +52,15 @@ public class MgfTest {
     }
 
     public static void main(String[] args) throws IOException {
-        File preFormula = new File("sirius_cli/src/test/test_results/mgf_candidates/formula_candidates.tsv");
-        File tempFormula = new File("sirius_cli/src/test/mgf_temp_summary/0_laudanosine_FEATURE_1/formula_candidates.tsv");
 
-        File preStructure = new File("sirius_cli/src/test/test_results/mgf_candidates/structure_candidates.tsv");
-        File tempStructure = new File("sirius_cli/src/test/mgf_temp_summary/0_laudanosine_FEATURE_1/structure_candidates.tsv");
+        // delete
+        System.out.println("Working Directory = " + System.getProperty("user.dir"));
+
+        File preFormula = new File("sirius_frontend/sirius_cli/src/test/test_results/mgf_candidates/formula_candidates.tsv");
+        File tempFormula = new File("sirius_frontend/sirius_cli/src/test/mgf_temp_summary/0_laudanosine_FEATURE_1/formula_candidates.tsv");
+
+        File preStructure = new File("sirius_frontend/sirius_cli/src/test/test_results/mgf_candidates/structure_candidates.tsv");
+        File tempStructure = new File("sirius_frontend/sirius_cli/src/test/mgf_temp_summary/0_laudanosine_FEATURE_1/structure_candidates.tsv");
 
         boolean comparisonFormula = isEqual(preFormula.toPath(), tempFormula.toPath());
         if (!comparisonFormula) {
