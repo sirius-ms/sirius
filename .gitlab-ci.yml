@@ -76,7 +76,7 @@ testDist:
   stage: test
   script:
     - gradle :sirius_dist:sirius_cli_single_os:distImage
-    - cd sirius_frontend\sirius_cli\src\test
+    - cd sirius_frontend/sirius_cli/src/test
     - mkdir temp_results
     - cd temp_results
     - mkdir mgf_temp_summary
