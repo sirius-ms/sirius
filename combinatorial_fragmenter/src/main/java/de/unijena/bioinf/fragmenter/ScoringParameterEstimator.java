@@ -204,6 +204,19 @@ public class ScoringParameterEstimator {
         }
     }
 
+    /**
+     * This method computes the final bond scores.<br>
+     * The given argument is a hashmap which assigns each observed specific directed bond type "X.a~Y.b" its
+     * estimated score (i.e. the log probability that this bond dissociates and that the first atom 'X'
+     * remains in the fragment).<br>
+     * All observed specific bond types "X.a~Y.b" which correspond to a generic bond type "X~Y" are clustered into
+     * one group. All groups are assigned the average log-score regarding their elements.
+     * If their is a specific bond type "X.a~Y.b" whose score is better than a predefined value,
+     * "X.a~Y.b" will be removed from its group and put separately into the resulting scoring.<br>
+     * This procedure will terminate until there are no changes.
+     *
+     * @param directedBondTypeName2LogProb
+     */
     private void postprocessBondScores(TObjectDoubleHashMap<String> directedBondTypeName2LogProb){
         // GROUPING:
         // Put all bonds whose specific bond name matches a generic bond name into one group:
