@@ -23,6 +23,15 @@ task DataProcessing_FatJar(type: Jar) {
     with jar
 }
 
+task ScoringParameterEstimation_FatJar(type: Jar) {
+    manifest {
+        attributes 'Main-Class': 'de.unijena.bioinf.fragmenter.ScoringParameterEstimator'
+    }
+    archiveBaseName = "ScoringParameterEstimator"
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
 task CollectAllBondTypes(type: Jar){
     manifest {
         attributes 'Main-Class': 'de.unijena.bioinf.fragmenter.IterateThroughMolecule'
