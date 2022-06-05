@@ -89,8 +89,8 @@ testDist:
     - cd ..
     - cd temp_results
     - ls
-    - rmdir -r mgf_temp_summary
-    - rmdir -r mgf_temp_output
+    - rm -r mgf_temp_summary
+    - rm -r mgf_temp_output
     - ls
   cache:
     key: "$CI_COMMIT_REF_NAME"
