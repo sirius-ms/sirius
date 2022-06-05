@@ -56,10 +56,10 @@ public class MgfTest {
         //System.out.println("Working Directory = " + System.getProperty("user.dir"));
 
         File preFormula = new File("/builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/test_results/mgf_candidates/formula_candidates.tsv");
-        File tempFormula = new File("/builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/mgf_temp_summary/0_laudanosine_FEATURE_1/formula_candidates.tsv");
+        File tempFormula = new File("/builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_summary/0_laudanosine_FEATURE_1/formula_candidates.tsv");
 
         File preStructure = new File("/builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/test_results/mgf_candidates/structure_candidates.tsv");
-        File tempStructure = new File("/builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/mgf_temp_summary/0_laudanosine_FEATURE_1/structure_candidates.tsv");
+        File tempStructure = new File("/builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_summary/0_laudanosine_FEATURE_1/structure_candidates.tsv");
 
         boolean comparisonFormula = isEqual(preFormula.toPath(), tempFormula.toPath());
         if (!comparisonFormula) {

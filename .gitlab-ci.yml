@@ -76,13 +76,13 @@ testDist:
   stage: test
   script:
     - gradle :sirius_dist:sirius_cli_single_os:distImage
-    - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius --input /builds/bioinf-mit/ms/sirius_frontend/sirius_doc/manual/demo-data/mgf/laudanosine.mgf formula -p orbitrap fingerprint structure compound-classes write-summaries --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/mgf_temp_summary
-    - cd sirius_cli/src/test
-    - ls
-    - cd java
+    - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius --input /builds/bioinf-mit/ms/sirius_frontend/sirius_doc/manual/demo-data/mgf/laudanosine.mgf formula -p orbitrap fingerprint structure compound-classes write-summaries --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_summary
+    - cd sirius_cli/src/test/java
     - javac MgfTest.java
     - java MgfTest
     - cd ..
+    - cd temp_results
+    - ls
     - rmdir mgf_temp_summary
     - ls
   cache:
