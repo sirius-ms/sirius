@@ -76,14 +76,22 @@ testDist:
   stage: test
   script:
     - gradle :sirius_dist:sirius_cli_single_os:distImage
-    - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius --input /builds/bioinf-mit/ms/sirius_frontend/sirius_doc/manual/demo-data/mgf/laudanosine.mgf formula -p orbitrap fingerprint structure compound-classes write-summaries --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_summary
+    - cd sirius_frontend\sirius_cli\src\test
+    - mkdir temp_results
+    - cd temp_results
+    - mkdir mgf_temp_summary
+    - mkdir mgf_temp_output
+    - cd -
+    - cd -
+    - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius --input /builds/bioinf-mit/ms/sirius_frontend/sirius_doc/manual/demo-data/mgf/laudanosine.mgf --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_output formula -p orbitrap fingerprint structure compound-classes write-summaries --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_summary
     - cd sirius_cli/src/test/java
     - javac MgfTest.java
     - java MgfTest
     - cd ..
     - cd temp_results
     - ls
-    - rmdir mgf_temp_summary
+    - rmdir -r mgf_temp_summary
+    - rmdir -r mgf_temp_output
     - ls
   cache:
     key: "$CI_COMMIT_REF_NAME"
