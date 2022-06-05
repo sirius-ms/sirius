@@ -199,8 +199,13 @@ public class ScoringParameterEstimator {
             directedBondTypeName2CutDirProb.put(bondNameLeftToRight, 0.5);
             directedBondTypeName2CutDirProb.put(bondNameRightToLeft, 0.5);
         }else{
-            directedBondTypeName2CutDirProb.put(bondNameLeftToRight, ((double) numCasesAtom1 / (numCasesAtom1 + numCasesAtom2)));
-            directedBondTypeName2CutDirProb.put(bondNameRightToLeft, ((double) numCasesAtom2 /(numCasesAtom1 + numCasesAtom2)));
+            if(numCutBonds > 0) {
+                directedBondTypeName2CutDirProb.put(bondNameLeftToRight, ((double) numCasesAtom1 / (numCasesAtom1 + numCasesAtom2)));
+                directedBondTypeName2CutDirProb.put(bondNameRightToLeft, ((double) numCasesAtom2 / (numCasesAtom1 + numCasesAtom2)));
+            }else{
+                directedBondTypeName2CutDirProb.put(bondNameLeftToRight, 0.5);
+                directedBondTypeName2CutDirProb.put(bondNameRightToLeft, 0.5);
+            }
         }
     }
 
@@ -452,8 +457,8 @@ public class ScoringParameterEstimator {
             double sumCutDirProb = directedBondTypeName2CutDirProb.get(bondTypeName);
             int numInstancesWithBondTypeName = directedBondTypeName2NumberInstances.get(bondTypeName);
 
-            double averageBreakProb = (sumBreakProb / numInstancesWithBondTypeName) + stabilityConstant;
-            double averageCutDirProb = (sumCutDirProb / numInstancesWithBondTypeName) + stabilityConstant;
+            double averageBreakProb = (sumBreakProb + stabilityConstant) / (numInstancesWithBondTypeName + stabilityConstant);
+            double averageCutDirProb = (sumCutDirProb + stabilityConstant) / (numInstancesWithBondTypeName + stabilityConstant);
 
             directedBondTypeName2BreakProb.put(bondTypeName, averageBreakProb);
             directedBondTypeName2CutDirProb.put(bondTypeName, averageCutDirProb);
