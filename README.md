@@ -33,8 +33,8 @@ graphical user interface and the command line version of SIRIUS seamlessly integ
 
 ### SIRIUS+CSI:FingerID Command-Line Interface only - Version 5.5.4 (2022-06-06)
 ##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
-- for Windows (64bit): [msi](https://github.com/boecker-lab/sirius/releases/download/v5.5.4/sirius-5.5.4-win64-headless.msi) / [msi (signed by Bright Giant)](https://github.com/bright-giant/sirius/releases/download/v5.5.4/sirius-5.5.4-win64-headless.msi) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.4/sirius-5.5.4-win64-headless.zip)
-- for Mac (64bit): [pkg](https://github.com/boecker-lab/sirius/releases/download/v5.5.4/sirius-5.5.4-osx64-headless.pkg) / [pkg (signed by Bright Giant)](https://github.com/bright-giant/sirius/releases/download/v5.5.4/sirius-5.5.4-osx64-headless.pkg) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.4/sirius-5.5.4-osx64-headless.zip)
+- for Windows (64bit): [msi](https://github.com/boecker-lab/sirius/releases/download/v5.5.4/sirius-5.5.4-win64-headless.msi) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.4/sirius-5.5.4-win64-headless.zip) / [msi (signed by Bright Giant)](https://github.com/bright-giant/sirius/releases/download/v5.5.4/sirius-5.5.4-win64-headless.msi)
+- for Mac (64bit): [pkg](https://github.com/boecker-lab/sirius/releases/download/v5.5.4/sirius-5.5.4-osx64-headless.pkg) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.4/sirius-5.5.4-osx64-headless.zip) / [pkg (signed by Bright Giant)](https://github.com/bright-giant/sirius/releases/download/v5.5.4/sirius-5.5.4-osx64-headless.pkg)
 - for Linux (64bit): [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.4/sirius-5.5.4-linux64-headless.zip)
 
 
