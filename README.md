@@ -41,14 +41,17 @@ graphical user interface and the command line version of SIRIUS seamlessly integ
 <!--end download-->
 
 All (including previous) releases can be found [here](https://github.com/boecker-lab/sirius/releases).
-For **Windows** and **MacOS** users we highly recommend the **signed** installers provided by
-[Bright Giant](https://github.com/bright-giant/sirius/releases).
-They ease the installation process by causing no (or less) security warnings of the respective OS.
 
 ### [Installation](https://boecker-lab.github.io/docs.sirius.github.io/install)
 For  Windows and MacOS, the installer version of SIRIUS (msi/pkg) should be preferred but might require administrator permissions.
-Since we do not pay Microsoft/Apple for certification, you might have to confirm that you want to trust "software from an unknown source" on Windows/MacOS.
+Since we do not pay Microsoft/Apple for certification, you might have to confirm that you want to trust "software from an unknown source" on Windows/MacOS when using the installers provided by us.
+
+Therefore we highly recommend using the **signed** installers provided by
+[Bright Giant](https://github.com/bright-giant/sirius/releases).
+They ease the installation process by causing no (or less) security issues of the respective OS.
+
 See the [documenntation](https://boecker-lab.github.io/docs.sirius.github.io/install) for details.
+
 
 ### [Creating a user account](https://boecker-lab.github.io/docs.sirius.github.io/account-and-license/)
 User accounts can be created directly via the SIRIUS GUI. Please, use your **institutional email address**. SIRIUS
