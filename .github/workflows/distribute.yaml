@@ -248,7 +248,7 @@ jobs:
       - uses: ncipollo/release-action@v1
         with:
           artifacts: "sirius_dist/build/tmp/artifacts/*/*"
-          body: "Prebuilt SIRIUS releases for all supported platforms."
+          body: "Prebuilt SIRIUS releases for all supported platforms. [Signed installers](https://github.com/bright-giant/sirius/releases) of this builds might be provided by [Bright Giant](https://bright-giant.com/)"
           name: "SIRIUS v${{ steps.sirius_version.outputs.value }}"
           tag: "v${{ steps.sirius_version.outputs.value }}"
           prerelease: ${{ endsWith(steps.sirius_version.outputs.value, '-SNAPSHOT') }}
