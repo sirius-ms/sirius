@@ -47,7 +47,7 @@ For  Windows and MacOS, the installer version of SIRIUS (msi/pkg) should be pref
 Since we do not pay Microsoft/Apple for certification, you might have to confirm that you want to trust "software from an unknown source" on Windows/MacOS when using the installers provided by us.
 
 Therefore, we highly recommend using the **signed** installers provided by
-[Bright Giant](https://github.com/bright-giant/sirius/releases).
+[Bright Giant](https://github.com/bright-giant/sirius/releases) (also linked above).
 They ease the installation process by triggering no (or less) security issues of the respective OS.
 
 See the [documenntation](https://boecker-lab.github.io/docs.sirius.github.io/install) for details.
