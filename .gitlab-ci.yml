@@ -88,10 +88,9 @@ testDist:
     - java MgfTest
     - cd ..
     - cd temp_results
-    - ls
+    - ls -R
     - rm -r mgf_temp_summary
     - rm -r mgf_temp_output
-    - ls
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
