@@ -258,6 +258,9 @@ task refreshDownloadLinks {
     }
 }
 
+String cleanVersion = fingeridVersion.toString().replace('-SNAPSHOT', '')
+String minorVersion = "${cleanVersion.split('[.]')[0]}.${cleanVersion.split('[.]')[1]}"
+
 task refreshTrainingLinks {
     File webPath = getBuildDir().toPath().resolve('tmp/webSite/').toFile()
     group = 'publishing'
@@ -267,8 +270,8 @@ task refreshTrainingLinks {
     doLast {
         webPath.mkdirs()
         List<String> lines = [
-                "- https://www.csi-fingerid.uni-jena.de/v$fingeridVersion/api/fingerid/trainingstructures?predictor=1 (training structures for positive ion mode)",
-                "- https://www.csi-fingerid.uni-jena.de/v$fingeridVersion/api/fingerid/trainingstructures?predictor=2 (training structures for negative ion mode)"
+                "- https://www.csi-fingerid.uni-jena.de/v$minorVersion/api/fingerid/trainingstructures?predictor=1 (training structures for positive ion mode)",
+                "- https://www.csi-fingerid.uni-jena.de/v$minorVersion/api/fingerid/trainingstructures?predictor=2 (training structures for negative ion mode)"
         ] as List
 
         Files.deleteIfExists(outfile.toPath())
