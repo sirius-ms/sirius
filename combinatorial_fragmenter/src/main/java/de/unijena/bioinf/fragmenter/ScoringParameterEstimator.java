@@ -483,6 +483,13 @@ public class ScoringParameterEstimator {
             double bondScoresSignificanceValue = Double.parseDouble(args[3]);
             ScoringParameterEstimator estimator = new ScoringParameterEstimator(subtreeDir, outputDir, peakExplanationPercentile, bondScoresSignificanceValue);
             estimator.estimateParameters();
+
+            File parameterFile = new File(outputDir, "input_parameters.txt");
+            try(BufferedWriter fileWriter = Files.newBufferedWriter(parameterFile.toPath())){
+                fileWriter.write("peakExplanationPercentile: "+peakExplanationPercentile);
+                fileWriter.newLine();
+                fileWriter.write("bondScoresProbabilityDifference: "+bondScoresSignificanceValue);
+            }
         } catch (IOException | ExecutionException | InterruptedException e) {
             e.printStackTrace();
         }
