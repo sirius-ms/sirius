@@ -236,5 +236,8 @@ public class ProjecSpaceOptions implements StandaloneTool<ProjectSpaceWorkflow> 
             description = {"add ClassyFire annotations to csi results"}
     )
     public File classyfireInjection;
+
+    @CommandLine.Option(names={"--fix-top-formula"})
+    public boolean fixTopFormula;
 }
 
