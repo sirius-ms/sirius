@@ -37,6 +37,8 @@ public interface FileSystemManager extends Closeable {
 
     void delete(String relative, boolean recursive) throws IOException;
 
+    boolean exists(@Nullable String relative) throws IOException;
+
     void readFile(@Nullable String relative, IOFunctions.IOConsumer<Path> readWithFS) throws IOException;
 
     <R> R readFile(@Nullable String relative, IOFunctions.IOFunction<Path, R> readWithFS) throws IOException;
