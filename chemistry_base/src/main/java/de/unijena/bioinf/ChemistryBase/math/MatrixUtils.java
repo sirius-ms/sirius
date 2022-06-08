@@ -20,12 +20,16 @@
 
 package de.unijena.bioinf.ChemistryBase.math;
 
+import de.unijena.bioinf.ChemistryBase.ms.MutableSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import gnu.trove.list.array.TIntArrayList;
 
 import java.util.Arrays;
+import java.util.Comparator;
 
 public class MatrixUtils {
 
@@ -851,4 +855,157 @@ public class MatrixUtils {
         final boolean[] values = new boolean[count];
         return flatMatrix(matrix, values);
     }
+
+
+
+    public static interface IntComparator {
+        public int compare(int a, int b);
+    }
+
+    public static int[] argsort(int[] values) {
+        int[] indizes = values.clone();
+        fillIndizes(indizes);
+        argsort(indizes, (i,j)->Integer.compare(values[i],values[j]));
+        return indizes;
+    }
+    public static int[] argsort(float[] values) {
+        int[] indizes = new int[values.length];
+        fillIndizes(indizes);
+        argsort(indizes, (i,j)->Float.compare(values[i],values[j]));
+        return indizes;
+    }
+    public static int[] argsort(double[] values) {
+        int[] indizes = new int[values.length];
+        fillIndizes(indizes);
+        argsort(indizes, (i,j)->Double.compare(values[i],values[j]));
+        return indizes;
+    }
+    public static int[] argsort(long[] values) {
+        int[] indizes = new int[values.length];
+        fillIndizes(indizes);
+        argsort(indizes, (i,j)->Long.compare(values[i],values[j]));
+        return indizes;
+    }
+    public static int[] argsort(short[] values) {
+        int[] indizes = new int[values.length];
+        fillIndizes(indizes);
+        argsort(indizes, (i,j)->Short.compare(values[i],values[j]));
+        return indizes;
+    }
+
+    private static void fillIndizes(int[] indizes) {
+        for (int i=0; i < indizes.length; ++i) indizes[i] = i;
+    }
+
+    public static void argsort(int[] indizes, IntComparator compare) {
+        final int n = indizes.length;
+        // Insertion sort on smallest arrays
+        if (n <= 20) {
+            for (int i = 0; i < n; i++) {
+                for (int j = i; j > 0 && compare.compare(indizes[j], indizes[j - 1]) < 0; j--) {
+                    __swap(indizes, j, j - 1);
+                }
+            }
+            return;
+        }
+        // quicksort on larger arrays
+        {
+            int i = 1;
+            for (; i < n; ++i) {
+                if (compare.compare(indizes[i], indizes[i - 1]) < 0) break;
+            }
+            if (i < n) __quickSort__(indizes, compare, 0, n - 1, 0);
+        }
+
+    }
+
+    private static final short[] ALMOST_RANDOM = new short[]{9205, 23823, 4568, 17548, 15556, 31788, 3, 580, 17648, 22647, 17439, 24971, 10767, 9388, 6174, 21774, 4527, 19015, 22379, 12727, 23433, 11160, 15808, 27189, 17833, 7758, 32619, 12980, 31234, 31103, 5140, 571, 4439};
+
+    /**
+     * http://en.wikipedia.org/wiki/Quicksort#In-place_version
+     *
+     * @param low
+     * @param high
+     */
+    private static void __quickSort__(int[] s, IntComparator comp, int low, int high, int depth) {
+        int n = high - low + 1;
+        if (n >= 20 && depth <= 32) {
+            if (low < high) {
+                int pivot = ALMOST_RANDOM[depth] % n + low;
+                pivot = __partition__(s, comp, low, high, pivot);
+                __quickSort__(s, comp, low, pivot - 1, depth + 1);
+                __quickSort__(s, comp, pivot + 1, high, depth + 1);
+            }
+        } else if (n < 40) {
+            for (int i = low; i <= high; i++) {
+                for (int j = i; j > low && comp.compare(s[j], s[j - 1]) < 0; j--) {
+                    __swap(s, j, j - 1);
+                }
+            }
+            return;
+        } else heap_sort(s, comp, low, n);
+    }
+
+    private static void heap_sort(int[] s, IntComparator comp, int offset, int length) {
+        heap_build(s, comp, offset, length);
+        int n = length;
+        while (n > 1) {
+            __swap(s, offset, offset + n - 1);
+            heap_heapify(s, comp, offset, --n, 0);
+        }
+
+    }
+
+    private static void heap_heapify(int[] s, IntComparator comp, int offset, int length, int i) {
+        do {
+            int max = i;
+            final int right_i = 2 * i + 2;
+            final int left_i = right_i - 1;
+            if (left_i < length && comp.compare(s[offset + left_i], s[offset + max]) > 0)
+                max = left_i;
+            if (right_i < length && comp.compare(s[offset + right_i], s[offset + max]) > 0)
+                max = right_i;
+            if (max == i)
+                break;
+            __swap(s, offset + i, offset + max);
+            i = max;
+        } while (true);
+    }
+
+    private static void heap_build(int[] s, IntComparator comp, int offset, int length) {
+        if (length == 0) return;
+        for (int i = (length >> 1) - 1; i >= 0; --i)
+            heap_heapify(s, comp, offset, length, i);
+    }
+
+    /**
+     * http://en.wikipedia.org/wiki/Quicksort#In-place_version
+     *
+     * @param low
+     * @param high
+     * @param pivot
+     * @return
+     */
+    private static <T extends Peak, S extends MutableSpectrum<T>>
+    int __partition__(int[] s, IntComparator comp, int low, int high, int pivot) {
+        __swap(s, high, pivot);
+        int store = low;
+        for (int i = low; i < high; i++) {
+            if (comp.compare(s[i], s[high]) < 0) {
+                if (i != store) __swap(s, i, store);
+                store++;
+            }
+        }
+        __swap(s, store, high);
+        return store;
+    }
+
+    private static void __swap(int[] list, int a, int b) {
+        final int z = list[a];
+        list[a] = list[b];
+        list[b] = z;
+    }
+
+
+
 }

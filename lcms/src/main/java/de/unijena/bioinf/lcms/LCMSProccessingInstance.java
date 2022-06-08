@@ -97,8 +97,21 @@ public class LCMSProccessingInstance {
                 PrecursorIonType.fromString("[M-H]-"),
                 PrecursorIonType.fromString("[M+Cl]-"),
                 PrecursorIonType.fromString("[M+Br]-"),
-                PrecursorIonType.fromString("[M-H2O-H]-")
+                PrecursorIonType.fromString("[M-H2O-H]-"),
+
+                        PrecursorIonType.fromString("[M - H2O - H]-"),
+                PrecursorIonType.fromString("[M + CH2O2 - H]-"),
+                PrecursorIonType.fromString("[M + C2H4O2 - H]-"),
+                PrecursorIonType.fromString("[M + H2O - H]-"),
+                PrecursorIonType.fromString("[M - H3N - H]-"),
+                PrecursorIonType.fromString("[M - CO2 - H]-"),
+                PrecursorIonType.fromString("[M - CH2O3 - H]-"),
+                PrecursorIonType.fromString("[M - CH3 - H]-"),
+                PrecursorIonType.fromString("[M+Na-2H]-")
+
         ));
+
+
     }
 
     public CoelutingTraceSet getTraceset(ProcessedSample sample, FragmentedIon ion) {
@@ -302,12 +315,12 @@ public class LCMSProccessingInstance {
     }
 
     public Feature makeFeature(ProcessedSample sample, FragmentedIon ion, boolean gapFilled) {
-        int charge = ion.getChargeState();
+        int charge = ion.getPolarity();
         if (charge == 0) {
             if (ion.getMsMsScans()!=null && ion.getMsMsScans()[0].getPolarity()!=null) {
                 charge = ion.getMsMsScans()[0].getPolarity().charge;
             } else {
-                //LoggerFactory.getLogger(LCMSProccessingInstance.class).warn("Unknown polarity. Set polarity to POSITIVE");
+                LoggerFactory.getLogger(LCMSProccessingInstance.class).warn("Unknown polarity. Set polarity to POSITIVE");
                 charge = 1;
             }
         }

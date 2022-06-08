@@ -8,6 +8,7 @@ import de.unijena.bioinf.model.lcms.FragmentedIon;
 import gnu.trove.list.array.TDoubleArrayList;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class AdductResolver {
 
@@ -27,7 +28,7 @@ public class AdductResolver {
     }
 
     public static void resolve(LCMSProccessingInstance inst, FragmentedIon ion) {
-        final AdductResolver r = new AdductResolver(ion.getMass(), inst.getDetectableIonTypes());
+        final AdductResolver r = new AdductResolver(ion.getMass(), inst.getDetectableIonTypes().stream().filter(x->(x.getCharge()>0)==(ion.getPolarity()>0)).collect(Collectors.toSet()));
         ion.getAdducts().forEach(c->r.addAdduct(c.ion.getMass(), c.correlation.score));
         r.attachAdductRules(ion);
     }
@@ -138,14 +139,14 @@ public class AdductResolver {
             ion.setDetectedIonType(PrecursorIonType.unknown(ion.getPolarity()));
             return;
         }
-        // case 3: attach all ions to the set. Add default ions, too, if nullHyp above 25%.
+        // case 3: attach all ions to the set. Add default ions, too, if nullHyp above 10%.
         HashSet<PrecursorIonType> ions = new HashSet<>();
         for (AdductAssignment x : xs) {
             if (x.probability>=0.05) {
                 ions.add(x.ionType);
             }
         }
-        if (nullHyp >= 0.25) {
+        if (nullHyp >= 0.10) {
             if (ion.getPolarity()>0) {
                 ions.add(PrecursorIonType.getPrecursorIonType("[M+H]+"));
                 ions.add(PrecursorIonType.getPrecursorIonType("[M+Na]+"));
