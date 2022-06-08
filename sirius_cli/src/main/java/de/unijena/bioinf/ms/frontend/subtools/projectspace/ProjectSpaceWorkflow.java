@@ -174,6 +174,9 @@ public class ProjectSpaceWorkflow implements Workflow {
                 if (projecSpaceOptions.classyfireInjection!=null) {
                     injectClassyfire(space,projecSpaceOptions);
                 }
+                if (projecSpaceOptions.fixTopFormula) {
+                    fixTopFormula(space,projecSpaceOptions);
+                }
 
                 ///////////////
                 try {
@@ -225,6 +228,39 @@ public class ProjectSpaceWorkflow implements Workflow {
             }
         } catch (IOException e) {
             LoggerFactory.getLogger(getClass()).error("Error when closing Project(s)!", e);
+        }
+    }
+
+    private void fixTopFormula(ProjectSpaceManager space, ProjecSpaceOptions projecSpaceOptions) throws IOException {
+        for (Instance i : space) {
+            final List<? extends SScored<FormulaResult, ? extends FormulaScore>> hits = i.loadFormulaResults(FBCandidates.class, CanopusResult.class);
+            double besthit = hits.stream().mapToDouble(x->x.getCandidate().getAnnotation(FBCandidates.class).map(y->Optional.ofNullable(y.getTopHitScore()).map(z->z.scoreIfNa(Double.NEGATIVE_INFINITY)).orElse(Double.NEGATIVE_INFINITY)).orElse(Double.NEGATIVE_INFINITY)).max().orElse(Double.NEGATIVE_INFINITY);
+            List<FormulaResult> toDelete = new ArrayList<>();
+            boolean foundCorrectHit = false;
+            for (SScored<FormulaResult, ? extends FormulaScore> hit : hits) {
+                final Optional<FBCandidates> fb = hit.getCandidate().getAnnotation(FBCandidates.class);
+                final double mztheoretical = hit.getCandidate().getId().getIonType().neutralMassToPrecursorMass(hit.getCandidate().getId().getMolecularFormula().getMass());
+                final double mzexact = i.getExperiment().getIonMass();
+                final double diff = Math.abs(mztheoretical-mzexact);
+                boolean tooLarge = diff >= 5e-4;
+                if (fb.isPresent() && Optional.ofNullable(fb.get().getTopHitScore()).map(z->z.scoreIfNa(Double.NEGATIVE_INFINITY)).orElse(Double.NEGATIVE_INFINITY)>= besthit) {
+                    if (tooLarge) {
+                        System.out.println("Wrong molecular formula for " + i.getID().toString() + " with formula is " + hit.getCandidate().getId() + " and difference is " + diff);
+                        foundCorrectHit = false;
+                    } else {
+                        foundCorrectHit = true;
+                        System.out.println("Delete all other molecular formulas");
+                    }
+                }
+                if (tooLarge) {
+                    toDelete.add(hit.getCandidate());
+                }
+            }
+            if (foundCorrectHit) {
+                i.deleteFormulaResults(toDelete.stream().map(FormulaResult::getId).toArray(FormulaResultId[]::new));
+            }
+
+
         }
     }
 
