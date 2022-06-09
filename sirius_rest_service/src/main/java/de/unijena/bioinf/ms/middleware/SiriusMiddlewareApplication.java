@@ -27,8 +27,9 @@ import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoade
 import de.unijena.bioinf.ms.frontend.subtools.middleware.MiddlewareAppOptions;
 import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
 import de.unijena.bioinf.ms.frontend.workfow.MiddlewareWorkflowBuilder;
-import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
-import de.unijena.bioinf.projectspace.SiriusProjectSpace;
+import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.projectspace.fingerid.*;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.boot.Banner;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.WebApplicationType;
@@ -37,6 +38,7 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 
 import java.io.IOException;
+import java.util.function.Supplier;
 
 @SpringBootApplication
 public class SiriusMiddlewareApplication extends SiriusCLIApplication implements CommandLineRunner {
@@ -54,6 +56,17 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
         ApplicationCore.DEFAULT_LOGGER.info("Init AppCore");
         try {
             configureShutDownHook(shutdownWebservice());
+            {
+                final @NotNull Supplier<ProjectSpaceConfiguration> dc = ProjectSpaceManager.DEFAULT_CONFIG;
+                ProjectSpaceManager.DEFAULT_CONFIG = () -> {
+                    final ProjectSpaceConfiguration config = dc.get();
+                    final FBCandidateNumber one = new FBCandidateNumber(1);
+                    config.registerComponent(FormulaResult.class, FBCandidatesTopK.class, new FBCandidatesSerializerTopK(one));
+                    config.registerComponent(FormulaResult.class, FBCandidateFingerprintsTopK.class, new FBCandidateFingerprintSerializerTopK(one));
+                    return config;
+                };
+            }
+
             final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
             rootOptions = new CLIRootOptions<>(configOptionLoader, new ProjectSpaceManagerFactory.Default());
             if (RUN != null)

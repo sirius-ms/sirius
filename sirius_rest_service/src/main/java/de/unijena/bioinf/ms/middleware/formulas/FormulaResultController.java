@@ -55,7 +55,7 @@ public class FormulaResultController extends BaseApiController {
         super(context);
     }
 
-    @GetMapping(value = "/formulas", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @GetMapping(value = "/formulas", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<FormulaId> getFormulaIds(@PathVariable String pid, @PathVariable String cid, @RequestParam(required = false) boolean includeFormulaScores) {
         SiriusProjectSpace space = projectSpace(pid);
         LoggerFactory.getLogger(FormulaResultController.class).info("Started collecting formulas...");
@@ -74,7 +74,7 @@ public class FormulaResultController extends BaseApiController {
         }).collect(Collectors.toList())).orElse(Collections.emptyList());
     }
 
-    @GetMapping(value = "/formulas/{fid}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @GetMapping(value = "/formulas/{fid}", produces = MediaType.APPLICATION_JSON_VALUE)
     public FormulaId getFormulaResult(@PathVariable String pid, @PathVariable String cid, @PathVariable String fid) {
         SiriusProjectSpace space = projectSpace(pid);
         return this.getAnnotatedFormulaResult(space,cid,fid,FormulaScoring.class).
@@ -85,7 +85,7 @@ public class FormulaResultController extends BaseApiController {
         }).orElse(null);
     }
 
-    @GetMapping(value = "/formulas/{fid}/scores", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @GetMapping(value = "/formulas/{fid}/scores", produces = MediaType.APPLICATION_JSON_VALUE)
     public FormulaResultScores getFormulaResultScores(@PathVariable String pid, @PathVariable String cid, @PathVariable String fid){
         SiriusProjectSpace projectSpace = projectSpace(pid);
         return this.getAnnotatedFormulaResult(projectSpace,cid,fid,FormulaScoring.class).map(fr -> {
@@ -94,7 +94,7 @@ public class FormulaResultController extends BaseApiController {
         }).orElse(null);
     }
 
-    @GetMapping(value = "/formulas/{fid}/candidates", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @GetMapping(value = "/formulas/{fid}/candidates", produces = MediaType.APPLICATION_JSON_VALUE)
     public String getStructureCandidates(@PathVariable String pid, @PathVariable String cid, @PathVariable String fid){
         SiriusProjectSpace projectSpace = projectSpace(pid);
         ObjectMapper mapper = new ObjectMapper();
@@ -112,7 +112,7 @@ public class FormulaResultController extends BaseApiController {
         }).orElse(null);
     }
 
-    @GetMapping(value = "/formulas/topHitCandidate", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @GetMapping(value = "/formulas/topHitCandidate", produces = MediaType.APPLICATION_JSON_VALUE)
     public String getTopHitCandidate(@PathVariable String pid, @PathVariable String cid) throws JsonProcessingException {
         SiriusProjectSpace projectSpace = projectSpace(pid);
         Stream<Optional<FormulaResult>> annotatedFResults = this.getCompound(projectSpace,cid).map(cc ->
@@ -146,7 +146,7 @@ public class FormulaResultController extends BaseApiController {
         return new ObjectMapper().writeValueAsString(bestCandidate.getCandidate());
     }
 
-    @GetMapping(value = "formulas/{fid}/tree", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @GetMapping(value = "formulas/{fid}/tree", produces = MediaType.APPLICATION_JSON_VALUE)
     public String getFragmentationTree(@PathVariable String pid, @PathVariable String cid, @PathVariable String fid){
         SiriusProjectSpace projectSpace = super.projectSpace(pid);
         Optional<FormulaResult> fResult = this.getAnnotatedFormulaResult(projectSpace, cid, fid, FTree.class);
@@ -155,7 +155,7 @@ public class FormulaResultController extends BaseApiController {
         return ftWriter.treeToJsonString(fTree);
     }
 
-    @GetMapping(value = "formulas/{fid}/fingerprint", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @GetMapping(value = "formulas/{fid}/fingerprint", produces = MediaType.APPLICATION_JSON_VALUE)
     public double[] getFingerprint(@PathVariable String pid, @PathVariable String cid, @PathVariable String fid, @RequestParam(required = false) boolean asDeterministic){
         SiriusProjectSpace projectSpace = super.projectSpace(pid);
         Optional<FormulaResult> fResult = this.getAnnotatedFormulaResult(projectSpace, cid, fid, FingerprintResult.class);

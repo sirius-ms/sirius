@@ -36,10 +36,7 @@ import de.unijena.bioinf.projectspace.FormulaResult;
 import de.unijena.bioinf.projectspace.GuiProjectSpaceManagerFactory;
 import de.unijena.bioinf.projectspace.ProjectSpaceConfiguration;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
-import de.unijena.bioinf.projectspace.fingerid.FBCandidateFingerprintSerializerGUI;
-import de.unijena.bioinf.projectspace.fingerid.FBCandidateFingerprintsGUI;
-import de.unijena.bioinf.projectspace.fingerid.FBCandidatesGUI;
-import de.unijena.bioinf.projectspace.fingerid.FBCandidatesSerializerGUI;
+import de.unijena.bioinf.projectspace.fingerid.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
@@ -87,8 +84,8 @@ public class SiriusGUIApplication extends SiriusCLIApplication {
             final @NotNull Supplier<ProjectSpaceConfiguration> dc = ProjectSpaceManager.DEFAULT_CONFIG;
             ProjectSpaceManager.DEFAULT_CONFIG = () -> {
                 final ProjectSpaceConfiguration config = dc.get();
-                config.registerComponent(FormulaResult.class, FBCandidatesGUI.class, new FBCandidatesSerializerGUI());
-                config.registerComponent(FormulaResult.class, FBCandidateFingerprintsGUI.class, new FBCandidateFingerprintSerializerGUI());
+                config.registerComponent(FormulaResult.class, FBCandidatesTopK.class, new FBCandidatesSerializerTopK(FBCandidateNumber.GUI_DEFAULT));
+                config.registerComponent(FormulaResult.class, FBCandidateFingerprintsTopK.class, new FBCandidateFingerprintSerializerTopK(FBCandidateNumber.GUI_DEFAULT));
                 return config;
             };
 

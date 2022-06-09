@@ -25,7 +25,7 @@ public class StructureResultSummary {
     protected String smiles;
 
     protected Double csiScore;
-    protected Double similarity;
+    protected Double tanimotoSimilarity;
     protected Double confidenceScore;
 
     protected Integer numOfPubMedIds;
@@ -56,12 +56,12 @@ public class StructureResultSummary {
         this.csiScore = csiScore;
     }
 
-    public Double getSimilarity() {
-        return similarity;
+    public Double getTanimotoSimilarity() {
+        return tanimotoSimilarity;
     }
 
-    public void setSimilarity(Double similarity) {
-        this.similarity = similarity;
+    public void setTanimotoSimilarity(Double tanimotoSimilarity) {
+        this.tanimotoSimilarity = tanimotoSimilarity;
     }
 
     public Double getConfidenceScore() {
