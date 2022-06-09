@@ -40,7 +40,7 @@ public class VersionInfoController extends BaseApiController {
     }
 
 
-    @RequestMapping(value = "/version.json", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @RequestMapping(value = "/version.json", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public String getVersionInfo() {
         return "{" +
                 "\"version\": \"0.1.0-SNAPSHOT\"" +

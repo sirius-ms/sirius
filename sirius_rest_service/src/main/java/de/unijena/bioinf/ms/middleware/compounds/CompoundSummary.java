@@ -29,7 +29,7 @@ public class CompoundSummary {
     //result previews
     protected FormulaResultSummary formulaResultSummary = null; // SIRIUS + ZODIAC
     protected StructureResultSummary structureResultSummary = null; // CSI:FingerID
-    protected CategoryResultSummary categoryResultSummary = null; // CANOPUS
+    protected CanopusResultSummary canopusResultSummary = null; // CANOPUS
 
 
     public FormulaResultSummary getFormulaResultSummary() {
@@ -48,11 +48,11 @@ public class CompoundSummary {
         this.structureResultSummary = structureResultSummary;
     }
 
-    public CategoryResultSummary getCategoryResultSummary() {
-        return categoryResultSummary;
+    public CanopusResultSummary getCategoryResultSummary() {
+        return canopusResultSummary;
     }
 
-    public void setCategoryResultSummary(CategoryResultSummary categoryResultSummary) {
-        this.categoryResultSummary = categoryResultSummary;
+    public void setCategoryResultSummary(CanopusResultSummary canopusResultSummary) {
+        this.canopusResultSummary = canopusResultSummary;
     }
 }

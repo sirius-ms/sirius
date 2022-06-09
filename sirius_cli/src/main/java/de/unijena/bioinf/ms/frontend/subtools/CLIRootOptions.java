@@ -69,7 +69,7 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
         }
     }
 
-    @Option(names = {"--log", "--loglevel"}, description = "Set logging level of the Jobs SIRIUS will execute. Valid values: ${COMPLETION-CANDIDATES}", order = 5, defaultValue = "WARNING")
+    @Option(names = {"--log", "--loglevel"}, description = "Set logging level of the Jobs SIRIUS will execute. Valid values: ${COMPLETION-CANDIDATES}", order = 5/*, defaultValue = "WARNING"*/)
     public void setLogLevel(final LogLevel loglevel) {
         Arrays.stream(LogManager.getLogManager().getLogger(LoggerFactory.getLogger(JJob.DEFAULT_LOGGER_KEY).getName()).getHandlers())
                 .filter(h -> h instanceof ConsoleHandler).findFirst().ifPresent(h -> h.setFilter(r -> {

@@ -36,4 +36,5 @@ public class BaseApiController {
     protected SiriusProjectSpace projectSpace(String pid) {
         return context.getProjectSpace(pid).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"There is no project space with name '"+pid+"'"));
     }
+
 }

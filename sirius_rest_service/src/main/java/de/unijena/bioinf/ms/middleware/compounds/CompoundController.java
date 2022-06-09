@@ -23,6 +23,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
@@ -34,6 +35,7 @@ import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.PubmedLinks;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
+import de.unijena.bioinf.ms.frontend.utils.SummaryUtils;
 import de.unijena.bioinf.ms.middleware.BaseApiController;
 import de.unijena.bioinf.ms.middleware.SiriusContext;
 import de.unijena.bioinf.ms.middleware.spectrum.AnnotatedSpectrum;
@@ -42,10 +44,12 @@ import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.projectspace.CompoundContainer;
 import de.unijena.bioinf.projectspace.FormulaResult;
+import de.unijena.bioinf.projectspace.fingerid.FBCandidatesTopK;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.sirius.scores.TreeScore;
+import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,14 +70,16 @@ import java.util.stream.Collectors;
 @RequestMapping(value = "/api/projects/{pid}")
 public class CompoundController extends BaseApiController {
 
-
+    //todo request list of IDs???
     @Autowired
     public CompoundController(SiriusContext context) {
         super(context);
     }
 
-    @GetMapping(value = "/compounds", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @GetMapping(value = "/compounds", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<CompoundId> getCompoundIds(@PathVariable String pid, @RequestParam(required = false) boolean includeSummary, @RequestParam(required = false) boolean includeMsData) {
+        StopWatch w = new StopWatch();
+        w.start();
         final SiriusProjectSpace space = projectSpace(pid);
         LoggerFactory.getLogger(CompoundController.class).info("Started collecting compounds...");
 
@@ -81,10 +87,12 @@ public class CompoundController extends BaseApiController {
         space.iterator().forEachRemaining(ccid -> compoundIds.add(asCompoundId(ccid, pid, includeSummary, includeMsData)));
 
         LoggerFactory.getLogger(CompoundController.class).info("Finished parsing compounds...");
+        w.stop();
+        System.out.println("TIME: " + w.formatTime());
         return compoundIds;
     }
 
-    @GetMapping(value = "/compounds/{cid}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @GetMapping(value = "/compounds/{cid}", produces = MediaType.APPLICATION_JSON_VALUE)
     public CompoundId getCompound(@PathVariable String pid, @PathVariable String cid, @RequestParam(required = false) boolean includeSummary, @RequestParam(required = false) boolean includeMsData) {
         final SiriusProjectSpace space = projectSpace(pid);
         final CompoundContainerId ccid = space.findCompound(cid).
@@ -132,7 +140,7 @@ public class CompoundController extends BaseApiController {
                         });
 
                 // fingerid result
-                space.getFormulaResult(topHit.getId(), FBCandidates.class).getAnnotation(FBCandidates.class).
+                space.getFormulaResult(topHit.getId(), FBCandidatesTopK.class).getAnnotation(FBCandidatesTopK.class).
                         ifPresent(fbres -> {
                             final StructureResultSummary sSum = new StructureResultSummary();
                             cSum.setStructureResultSummary(sSum);
@@ -142,12 +150,12 @@ public class CompoundController extends BaseApiController {
 
                                 // scores
                                 sSum.setCsiScore(can.getScore());
-                                sSum.setSimilarity(Double.NaN); //todo calculate Tanimoto or drop because we have to read another file for that
+                                sSum.setTanimotoSimilarity(can.getCandidate().getTanimoto());
                                 scorings.getAnnotation(ConfidenceScore.class).
                                         ifPresent(cScore -> sSum.setConfidenceScore(cScore.score()));
 
                                 //Structure information
-                                //todo ugly workaround until "null" strings are fixed
+                                //check for "null" strings since the database might not be perfectly curated
                                 final String n = can.getCandidate().getName();
                                 if (n != null && !n.isEmpty() && !n.equals("null"))
                                     sSum.setStructureName(n);
@@ -163,11 +171,10 @@ public class CompoundController extends BaseApiController {
                             }
                         });
 
-                // canopus results //todo extract useful canopus summary
                 space.getFormulaResult(topHit.getId(), CanopusResult.class).getAnnotation(CanopusResult.class).
-                        ifPresent(cRes -> {
-                            cSum.setCategoryResultSummary(new CategoryResultSummary());
-                        });
+                        ifPresent(cRes -> cSum.setCategoryResultSummary(SummaryUtils.chooseBestNPCAssignments(
+                                cRes.getNpcFingerprint().orElse(null),
+                                cRes.getCanopusFingerprint())));
             }
         } catch (IOException e) {
             throw new RuntimeException(e);

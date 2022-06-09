@@ -42,8 +42,8 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
-import de.unijena.bioinf.projectspace.fingerid.FBCandidateFingerprintsGUI;
-import de.unijena.bioinf.projectspace.fingerid.FBCandidatesGUI;
+import de.unijena.bioinf.projectspace.fingerid.FBCandidateFingerprintsTopK;
+import de.unijena.bioinf.projectspace.fingerid.FBCandidatesTopK;
 import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import picocli.CommandLine;
@@ -86,8 +86,8 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
         @Override
         public void run() {
             // modify fingerid subtool so that it works with reduced GUI candidate list.
-            FingerblastSubToolJob.formulaResultComponentsToClear.add(FBCandidatesGUI.class);
-            FingerblastSubToolJob.formulaResultComponentsToClear.add(FBCandidateFingerprintsGUI.class);
+            FingerblastSubToolJob.formulaResultComponentsToClear.add(FBCandidatesTopK.class);
+            FingerblastSubToolJob.formulaResultComponentsToClear.add(FBCandidateFingerprintsTopK.class);
             //todo minor: cancellation handling
 
             // NOTE: we do not want to run ConfigJob here because we want to set
