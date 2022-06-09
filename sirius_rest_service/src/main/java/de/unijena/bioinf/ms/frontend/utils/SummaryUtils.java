@@ -41,8 +41,8 @@
 package de.unijena.bioinf.ms.frontend.utils;
 
 import de.unijena.bioinf.ChemistryBase.fp.*;
-import de.unijena.bioinf.ms.middleware.compounds.CanopusResultSummary;
-import de.unijena.bioinf.ms.middleware.compounds.CompoundClass;
+import de.unijena.bioinf.ms.middleware.compounds.model.CanopusResultSummary;
+import de.unijena.bioinf.ms.middleware.compounds.model.CompoundClass;
 import org.jetbrains.annotations.Nullable;
 
 public class SummaryUtils {

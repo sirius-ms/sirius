@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.middleware;
 
+import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.SiriusProjectSpace;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,7 +34,7 @@ public class BaseApiController {
         this.context = context;
     }
 
-    protected SiriusProjectSpace projectSpace(String pid) {
+    protected ProjectSpaceManager projectSpace(String pid) {
         return context.getProjectSpace(pid).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"There is no project space with name '"+pid+"'"));
     }
 
