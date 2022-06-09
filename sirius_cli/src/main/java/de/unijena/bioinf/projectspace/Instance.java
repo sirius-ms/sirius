@@ -132,12 +132,12 @@ public class Instance {
 
     @SafeVarargs
     public final synchronized Optional<FormulaResult> loadTopFormulaResult(Class<? extends DataAnnotation>... components) {
-        return getTop(loadFormulaResults(components));
+        return getTop(loadFormulaResults(), components);
     }
 
     @SafeVarargs
     public final synchronized Optional<FormulaResult> loadTopFormulaResult(List<Class<? extends FormulaScore>> rankingScoreTypes, Class<? extends DataAnnotation>... components) {
-        return getTop(loadFormulaResults(rankingScoreTypes, components));
+        return getTop(loadFormulaResults(rankingScoreTypes), components);
     }
 
     @SafeVarargs
