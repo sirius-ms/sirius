@@ -68,17 +68,27 @@ public class MsExperimentParser {
         final int i = fileName.lastIndexOf('.');
         if (i < 0) return null; // no parser found
         final String extName = fileName.substring(i).toLowerCase();
+        return getParserByExt(extName);
+    }
+
+    public GenericParser<Ms2Experiment> getParserByExt(String extName) {
+        if (!extName.startsWith("."))
+            extName = "." + extName;
+
         final Class<? extends Parser<Ms2Experiment>> pc = KNOWN_ENDINGS.get(extName);
-        if (pc==null) return null;
+        if (pc == null) return null;
         try {
             if (pc.equals(ZippedSpectraParser.class))
                 return (GenericParser<Ms2Experiment>) pc.getConstructor().newInstance();
 
             return new GenericParser<>(pc.getConstructor().newInstance(), DEFAULTS_ANNOTATOR);
-        } catch (InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+        } catch (InstantiationException | NoSuchMethodException | InvocationTargetException |
+                 IllegalAccessException e) {
             throw new RuntimeException(e);
         }
+
     }
+
 
     public static boolean isSupportedFileName(final @NotNull String fileName) {
         int index = fileName.lastIndexOf('.');
