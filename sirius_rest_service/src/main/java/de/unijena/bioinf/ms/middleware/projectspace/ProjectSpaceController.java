@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.middleware.projectspace;
 
 import de.unijena.bioinf.ms.middleware.BaseApiController;
 import de.unijena.bioinf.ms.middleware.SiriusContext;
+import de.unijena.bioinf.ms.middleware.projectspace.model.ProjectSpaceId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -47,7 +48,7 @@ public class ProjectSpaceController extends BaseApiController {
 
     @GetMapping(value = "/{name}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ProjectSpaceId getProjectSpace(@PathVariable String name) {
-        return context.getProjectSpace(name).map(x -> new ProjectSpaceId(name, x.getLocation())).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no project space with name '" + name + "'"));
+        return context.getProjectSpace(name).map(x -> new ProjectSpaceId(name, x.projectSpace().getLocation())).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no project space with name '" + name + "'"));
     }
 
     @PutMapping(value = "/{name}", produces = MediaType.APPLICATION_JSON_VALUE)
