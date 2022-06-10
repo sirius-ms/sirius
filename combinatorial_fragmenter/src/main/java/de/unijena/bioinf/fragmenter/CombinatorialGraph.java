@@ -1,6 +1,7 @@
 package de.unijena.bioinf.fragmenter;
 
 import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
+import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import org.openscience.cdk.interfaces.IBond;
 
@@ -162,6 +163,51 @@ public class CombinatorialGraph {
             edgeList.addAll(node.incomingEdges);
         }
         return edgeList;
+    }
+
+    /**
+     * This method returns a hashmap which assigns each CombinatorialEdge in this graph a unique index with
+     * index >= 0 and index <= #Edges.<br>
+     * This hashmap can be used to transform a {@link CombinatorialSubtree} into a binary array denoting
+     * which edges are contained and which are not contained in the subtree.
+     *
+     */
+    public TObjectIntHashMap<CombinatorialEdge> getEdgeIndices(){
+        TObjectIntHashMap<CombinatorialEdge> edgeIndices = new TObjectIntHashMap<>();
+        int idx = 0;
+        for(CombinatorialNode node : this.nodes){
+            for(CombinatorialEdge edge : node.incomingEdges){
+                edgeIndices.put(edge, idx);
+                idx++;
+            }
+        }
+        return edgeIndices;
+    }
+
+    public TIntIntHashMap edgeValue2Index(){
+        int maxBitSetLength = this.maximalBitSetLength();
+        TIntIntHashMap edgeValue2Index = new TIntIntHashMap();
+        int idx = 0;
+        for(CombinatorialNode node : this.nodes){
+            for(CombinatorialEdge edge : node.incomingEdges){
+                int edgeValue = edge.toIntegerValue(maxBitSetLength);
+                edgeValue2Index.put(edgeValue, idx);
+                idx++;
+            }
+        }
+
+        return edgeValue2Index;
+    }
+
+    public int maximalBitSetLength(){
+        int maxBitSetLength = this.root.fragment.bitset.length();
+        for(CombinatorialNode node : this.nodes){
+            int nodeBitSetLength = node.fragment.bitset.length();
+            if(nodeBitSetLength > maxBitSetLength){
+                maxBitSetLength = nodeBitSetLength;
+            }
+        }
+        return maxBitSetLength;
     }
 
     public boolean contains(CombinatorialFragment fragment){
