@@ -1,6 +1,7 @@
 package de.unijena.bioinf.fragmenter;
 
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
+import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.InvalidSmilesException;
@@ -341,7 +342,29 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
         return this.toNewickString(this.root);
     }
 
-    public int[] toBinaryArray(CombinatorialGraph graph){
-        throw new UnsupportedOperationException();
+    public boolean[] toBooleanArray(CombinatorialGraph graph){
+        int maxBitSetLength = graph.maximalBitSetLength();
+        TIntIntHashMap edgeValue2Index = graph.edgeValue2Index();
+        boolean[] subtreeArray = new boolean[edgeValue2Index.size()];
+
+        for(CombinatorialNode node : this.nodes){
+            CombinatorialEdge edge = node.incomingEdges.get(0);
+            int edgeValue = edge.toIntegerValue(maxBitSetLength);
+            int edgeIdx = edgeValue2Index.get(edgeValue);
+            subtreeArray[edgeIdx] = true;
+        }
+
+        return subtreeArray;
+    }
+
+    public int[] toIntegerArray(CombinatorialGraph graph){
+        boolean[] subtreeBoolArray = this.toBooleanArray(graph);
+        int[] subtreeIntArray = new int[subtreeBoolArray.length];
+
+        for(int i = 0; i < subtreeBoolArray.length; i++){
+            subtreeIntArray[i] = subtreeBoolArray[i] ? 1 : 0;
+        }
+
+        return subtreeIntArray;
     }
 }
