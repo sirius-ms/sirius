@@ -1,7 +1,12 @@
 package de.unijena.bioinf.fragmenter;
 
+import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IBond;
+import org.openscience.cdk.silent.SilentChemObjectBuilder;
+import org.openscience.cdk.smiles.SmilesParser;
+
+import java.util.BitSet;
 
 public class CombinatorialEdge {
     protected IBond cut1, cut2;
@@ -55,6 +60,38 @@ public class CombinatorialEdge {
         }else{
             return null;
         }
+    }
+
+    /**
+     * Converts this {@link CombinatorialEdge} into an integer value by concatenating
+     * the BitSet of its source and target fragments and
+     * then converting the resulting BitSet into its decimal value.<br>
+     * The given parameter {@code bitSetLength} denotes the maximal length of each BitSet found in the
+     * corresponding {@link CombinatorialGraph}.
+     * Although each source fragment should be a real fragment and that the first BitSet
+     * has length {@link MolecularGraph#natoms}. But in the future there can be some changes,
+     * so that the source fragment does not have to be a real fragment.
+     * Thus, the length of the BitSet can be greater than the number of atoms in the molecule.
+     *
+     * @return an integer value representing this CombinatorialEdge
+     */
+    public int toIntegerValue(int bitSetLength){
+        BitSet sourceBitSet = this.source.fragment.bitset;
+        BitSet targetBitSet = this.target.fragment.bitset;
+
+        int resultValue = 0;
+        for(int i = sourceBitSet.nextSetBit(0); i >= 0; i = sourceBitSet.nextSetBit(i+1)){
+            // 'i' is index of a bit that is set to true (or 1)
+            resultValue = resultValue + (int) Math.pow(2,i);
+        }
+
+        for(int i = targetBitSet.nextSetBit(0); i>= 0; i = targetBitSet.nextSetBit(i+1)){
+            // 'i' is index of a bit that is set to true in 'targetBitSet'.
+            // because we are "merging" the source and target bitsets, the first index of targetBitSet is equal to 'bitSetLength'
+            resultValue = resultValue + (int) Math.pow(2,i+bitSetLength);
+        }
+
+        return resultValue;
     }
 
     public boolean getDirectionOfFirstCut() {
