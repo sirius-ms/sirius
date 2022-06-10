@@ -23,20 +23,20 @@ import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import picocli.CommandLine;
 
 import java.io.IOException;
+import java.util.concurrent.Callable;
 
-public class AutoCompletionScript {
+@CommandLine.Command(name = "autocompletion")
+public class AutoCompletionScript implements Callable<Integer> {
     /**
      * Pass this CommandLine instance and the name of the script to the picocli.AutoComplete::bash method.
      * The method will return the source code of a completion script. Save the source code to a file and install it.
      * For the installation of the completion Script, please see the following: <a href="https://picocli.info/autocomplete.html#_install_completion_script">...</a>
-     *
-     * @param args
-     * @throws IOException
      */
-    public static void main(String[] args) throws IOException {
+    public Integer call() throws IOException{
         //TODO cannot load ConfigOptions subcommand -> not enclosed class?
         //TODO maybe get Subcommandinstances from WorkflowBuilder
         //TODO generate completion Script during build: See https://picocli.info/autocomplete.html#_generating_completion_scripts_during_the_build
+
         DefaultParameterConfigLoader defaultparameter = new DefaultParameterConfigLoader();
         CommandLine hierarchy = new CommandLine(new CLIRootOptions<>(defaultparameter, new ProjectSpaceManagerFactory.Default()));
         //hierarchy.addSubcommand("config", new DefaultParameterConfigLoader.ConfigOptions());
@@ -57,7 +57,12 @@ public class AutoCompletionScript {
         hierarchy.addSubcommand("write-summaries", new SummaryOptions());
         hierarchy.addSubcommand("webservice", new WebserviceOptions());
         hierarchy.addSubcommand("zodiac", new ZodiacOptions(defaultparameter));
+        //hierarchy.addSubcommand("generate-autocompletion", new AutoCompletionScript());
+        return 0;
+    }
 
-        hierarchy.parseWithHandler(new CommandLine.RunLast(), args);
+    public static void main(String... args) {
+        int exitCode = new CommandLine(new AutoCompletionScript()).execute(args);
+        System.exit(exitCode);
     }
 }
