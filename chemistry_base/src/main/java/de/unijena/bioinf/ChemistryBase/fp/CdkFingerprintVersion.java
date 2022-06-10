@@ -140,9 +140,10 @@ public class CdkFingerprintVersion extends FingerprintVersion {
      * will be replaced by complete setup as soon as fingerprints are imported into the database.
      */
     private static final USED_FINGERPRINTS[] EXTENDED_SETUP = new USED_FINGERPRINTS[]{
-            USED_FINGERPRINTS.OPENBABEL, USED_FINGERPRINTS.SUBSTRUCTURE, USED_FINGERPRINTS.MACCS, USED_FINGERPRINTS.PUBCHEM, USED_FINGERPRINTS.KLEKOTA_ROTH, USED_FINGERPRINTS.ECFP, USED_FINGERPRINTS.BIOSMARTS, USED_FINGERPRINTS.RINGSYSTEMS};
+            USED_FINGERPRINTS.OPENBABEL, USED_FINGERPRINTS.SUBSTRUCTURE, USED_FINGERPRINTS.MACCS, USED_FINGERPRINTS.PUBCHEM, USED_FINGERPRINTS.KLEKOTA_ROTH, USED_FINGERPRINTS.ECFP, USED_FINGERPRINTS.BIOSMARTS, USED_FINGERPRINTS.RINGSYSTEMS, USED_FINGERPRINTS.INSILICO};
 
-    private static final USED_FINGERPRINTS[] DEFAULT_SETUP = EXTENDED_SETUP;
+    private static final USED_FINGERPRINTS[] DEFAULT_SETUP = new USED_FINGERPRINTS[]{
+        USED_FINGERPRINTS.OPENBABEL, USED_FINGERPRINTS.SUBSTRUCTURE, USED_FINGERPRINTS.MACCS, USED_FINGERPRINTS.PUBCHEM, USED_FINGERPRINTS.KLEKOTA_ROTH, USED_FINGERPRINTS.ECFP, USED_FINGERPRINTS.BIOSMARTS, USED_FINGERPRINTS.RINGSYSTEMS, USED_FINGERPRINTS.INSILICO};
 
 
     public enum USED_FINGERPRINTS {
@@ -151,7 +152,8 @@ public class CdkFingerprintVersion extends FingerprintVersion {
 
         BIOSMARTS(6, 283, false, true),
         RINGSYSTEMS(7, 463, false, true),
-        SHORTEST_PATH(8, 2718, false, true);
+        INSILICO(8, 4329, false, true)
+        ;
 
         public final int defaultPosition, length;
         /*
@@ -318,11 +320,10 @@ public class CdkFingerprintVersion extends FingerprintVersion {
             }
         }
 
-        // SHORTEST PATH FINGERPRINTS
-        try (final BufferedReader r = FileUtils.ensureBuffering(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/fingerprints/shortest_paths.txt")))) {
+        try (final BufferedReader r = FileUtils.ensureBuffering(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/fingerprints/insilico.txt")))) {
             String line = null;
             while ((line = r.readLine()) != null) {
-                properties.add(new ShortestPathProperty(line));
+                properties.add(new SubstructureProperty(line));
             }
         }
 

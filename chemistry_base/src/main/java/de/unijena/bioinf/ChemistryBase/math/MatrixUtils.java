@@ -862,6 +862,20 @@ public class MatrixUtils {
         public int compare(int a, int b);
     }
 
+    public static <T> int[] argsort(int size, IntComparator comparator) {
+        int[] indizes = new int[size];
+        fillIndizes(indizes);
+        argsort(indizes, (i,j)->comparator.compare(i,j));
+        return indizes;
+    }
+
+    public static <T> int[] argsort(T[] values, Comparator<T> comp) {
+        int[] indizes = new int[values.length];
+        fillIndizes(indizes);
+        argsort(indizes, (i,j)->comp.compare(values[i],values[j]));
+        return indizes;
+    }
+
     public static int[] argsort(int[] values) {
         int[] indizes = values.clone();
         fillIndizes(indizes);

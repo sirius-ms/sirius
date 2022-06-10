@@ -67,7 +67,7 @@ public class Fingerprinter {
             case PUBCHEM: return new PubchemFingerprinter(DefaultChemObjectBuilder.getInstance());
             case KLEKOTA_ROTH: return new KlekotaRothFingerprinter();
             case ECFP: return new ECFPFingerprinter();
-            case SHORTEST_PATH: return new ShortestPathFingerprinter();
+            case INSILICO: return new InsilicoFingerprinter();
             case BIOSMARTS: return new BiosmartsFingerprinter();
             case RINGSYSTEMS: return new RingsystemFingerprinter();
             default: throw new IllegalArgumentException();
@@ -87,7 +87,7 @@ public class Fingerprinter {
             case "spheres": return new SphericalFingerprint();
             case "ecfp": return new ECFPFingerprinter();
             case "biosmarts": return new BiosmartsFingerprinter();
-            case "shortest_paths": return new ShortestPathFingerprinter();
+            case "insilico": return new InsilicoFingerprinter();
             case "ringsystems": return new RingsystemFingerprinter();
             default: try {
                 return getFingerprinter(CdkFingerprintVersion.USED_FINGERPRINTS.valueOf(name.toUpperCase()));
