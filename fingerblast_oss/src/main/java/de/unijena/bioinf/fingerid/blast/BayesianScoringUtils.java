@@ -538,7 +538,7 @@ public class BayesianScoringUtils {
         final List<FingerprintCandidate> keys;
         try {
             keys = sqlChemDB.useConnection(connection -> {
-                connection.connection.setNetworkTimeout(Runnable::run,300000);
+                connection.connection.setNetworkTimeout(Runnable::run,3000000);
                 final List<FingerprintCandidate> k = new ArrayList<>();
                 try (PreparedStatement st = connection.connection.prepareStatement(String.format("SELECT s.inchi_key_1, s.inchi, f.fingerprint FROM structures s INNER JOIN fingerprints f ON s.inchi_key_1=f.inchi_key_1 AND s.flags&%d>0 AND f.fp_id=%s", mask, ChemicalDatabase.FINGERPRINT_ID))) {
                     try (ResultSet set = st.executeQuery()) {
