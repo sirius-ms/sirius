@@ -20,21 +20,27 @@
 package de.unijena.bioinf.ms.middleware;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.jjobs.JobManager;
+import de.unijena.bioinf.ms.frontend.SiriusCLIApplication;
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.middleware.projectspace.model.ProjectSpaceId;
 import de.unijena.bioinf.projectspace.ProjectSpaceIO;
+import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import de.unijena.bioinf.projectspace.SiriusProjectSpace;
+import de.unijena.bioinf.webapi.rest.ProxyManager;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.web.server.ResponseStatusException;
 
+import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -47,18 +53,54 @@ public class SiriusContext implements DisposableBean {
     //todo we need GUI version here due to background computation logging
     protected final ProjectSpaceManagerFactory<ProjectSpaceManager> projectSpaceManagerFactory = new ProjectSpaceManagerFactory.Default();
 
-    protected final HashMap<String, ProjectSpaceManager> projectSpace;
-    protected final ReadWriteLock projectSpaceLock;
+    private final HashMap<String, ProjectSpaceManager> projectSpaces = new HashMap<>();
+    private final Set<String> computationLocks = new HashSet<>();
 
-    public SiriusContext() {
-        this.projectSpaceLock = new ReentrantReadWriteLock();
-        this.projectSpace = new HashMap<>();
+
+    protected final ReadWriteLock projectSpaceLock = new ReentrantReadWriteLock();
+    protected final ReadWriteLock computationLocksLock = new ReentrantReadWriteLock();
+
+
+    @PreDestroy
+    public void cleanUp() {
+        ApplicationCore.DEFAULT_LOGGER.info("SIRIUS is cleaning up threads and shuts down...");
+
+        //todo make cleanup nice with beans
+        //todo maybe close jobs???
+        LoggerFactory.getLogger(SiriusMiddlewareApplication.class).warn("TODO: Cancel jobs If implemented!");
+
+        try {
+            ApplicationCore.WEB_API.shutdown();
+        } catch (IOException e) {
+            LoggerFactory.getLogger(SiriusCLIApplication.class).warn("Could not clean up Server data! " + e.getMessage());
+            LoggerFactory.getLogger(SiriusCLIApplication.class).debug("Could not clean up Server data!", e);
+        }
+
+        LoggerFactory.getLogger(SiriusMiddlewareApplication.class).info("Closing Projects...'");
+        projectSpaces.values().forEach(ps -> {
+            try {
+                ps.close();
+                LoggerFactory.getLogger(SiriusMiddlewareApplication.class).info("Project: '" + ps.projectSpace().getLocation() + "' successfully closed.");
+            } catch (IOException e) {
+                LoggerFactory.getLogger(getClass()).error("Error when closing Project-Space '" + ps.projectSpace().getLocation() + "'. Data might be corrupted.");
+            }
+        });
+
+
+        //shut down hook to clean up when sirius is shutting down
+        try {
+            JobManager.shutDownNowAllInstances();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            ProxyManager.disconnect();
+        }
     }
 
     public List<ProjectSpaceId> listAllProjectSpaces() {
         projectSpaceLock.readLock().lock();
         try {
-            return projectSpace.entrySet().stream().map(x -> new ProjectSpaceId(x.getKey(), x.getValue().projectSpace().getLocation())).collect(Collectors.toList());
+            return projectSpaces.entrySet().stream().map(x -> new ProjectSpaceId(x.getKey(), x.getValue().projectSpace().getLocation())).collect(Collectors.toList());
         } finally {
             projectSpaceLock.readLock().unlock();
         }
@@ -67,7 +109,7 @@ public class SiriusContext implements DisposableBean {
     public Optional<ProjectSpaceManager> getProjectSpace(String name) {
         projectSpaceLock.readLock().lock();
         try {
-            return Optional.ofNullable(projectSpace.get(name));
+            return Optional.ofNullable(projectSpaces.get(name));
         } finally {
             projectSpaceLock.readLock().unlock();
         }
@@ -81,11 +123,11 @@ public class SiriusContext implements DisposableBean {
         final Lock lock = projectSpaceLock.writeLock();
         lock.lock();
         try {
-            if (!projectSpace.containsKey(suggestion)) {
+            if (!projectSpaces.containsKey(suggestion)) {
                 return useUniqueName.apply(suggestion);
             } else {
                 int index = 2;
-                while (projectSpace.containsKey(suggestion + "_" + index)) {
+                while (projectSpaces.containsKey(suggestion + "_" + index)) {
                     ++index;
                 }
                 return useUniqueName.apply(suggestion + "_" + index);
@@ -99,13 +141,13 @@ public class SiriusContext implements DisposableBean {
         final Lock lock = projectSpaceLock.writeLock();
         lock.lock();
         try {
-            if (projectSpace.containsKey(id.name)) {
+            if (projectSpaces.containsKey(id.name)) {
                 throw new IllegalArgumentException("project space with name '" + id.name + "' already exists.");
             }
             if (!ProjectSpaceIO.isExistingProjectspaceDirectory(id.path) && !ProjectSpaceIO.isZipProjectSpace(id.path)) {
                 throw new IllegalArgumentException("'" + id.name + "' is no valid SIRIUS project space.");
             }
-            projectSpace.put(id.name, projectSpaceManagerFactory.create(new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(id.path)));
+            projectSpaces.put(id.name, projectSpaceManagerFactory.create(new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(id.path)));
             return id;
         } finally {
             lock.unlock();
@@ -114,7 +156,7 @@ public class SiriusContext implements DisposableBean {
 
     public ProjectSpaceId addProjectSpace(@NotNull String nameSuggestion, @NotNull SiriusProjectSpace projectSpaceToAdd) {
         return ensureUniqueName(nameSuggestion, (name) -> {
-            projectSpace.put(name, projectSpaceManagerFactory.create(projectSpaceToAdd));
+            projectSpaces.put(name, projectSpaceManagerFactory.create(projectSpaceToAdd));
             return new ProjectSpaceId(name, projectSpaceToAdd.getLocation());
         });
     }
@@ -131,13 +173,13 @@ public class SiriusContext implements DisposableBean {
         projectSpaceLock.writeLock().lock();
         try {
             String name = ensureUniqueProjectName(nameSuggestion);
-            if (projectSpace.containsKey(name))
+            if (projectSpaces.containsKey(name))
                 throw new IllegalArgumentException("project space with name '" + name + "' already exists.");
 
             ProjectSpaceManager project = projectSpaceManagerFactory.create(
                     new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createNewProjectSpace(location));
 
-            projectSpace.put(name, project);
+            projectSpaces.put(name, project);
             return new ProjectSpaceId(name, location);
         } finally {
             projectSpaceLock.writeLock().unlock();
@@ -145,12 +187,12 @@ public class SiriusContext implements DisposableBean {
     }
 
     private String ensureUniqueProjectName(String nameSuggestion) {
-        if (!projectSpace.containsKey(nameSuggestion))
+        if (!projectSpaces.containsKey(nameSuggestion))
             return nameSuggestion;
         int app = 2;
         while (true) {
             final String n = nameSuggestion + "_" + app++;
-            if (!projectSpace.containsKey(n))
+            if (!projectSpaces.containsKey(n))
                 return n;
         }
     }
@@ -159,7 +201,7 @@ public class SiriusContext implements DisposableBean {
         return ensureUniqueName("temporary", (name) -> {
             try {
                 SiriusProjectSpace space = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createTemporaryProjectSpace();
-                projectSpace.put(name, projectSpaceManagerFactory.create(space));
+                projectSpaces.put(name, projectSpaceManagerFactory.create(space));
                 return new ProjectSpaceId(name, space.getLocation());
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -170,12 +212,12 @@ public class SiriusContext implements DisposableBean {
     public void closeProjectSpace(String name) throws IOException {
         projectSpaceLock.writeLock().lock();
         try {
-            final ProjectSpaceManager space = projectSpace.get(name);
+            final ProjectSpaceManager space = projectSpaces.get(name);
             if (space == null) {
-                throw new IllegalArgumentException("Project space with name '" + name + "' does not exist");
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Project space with name '" + name + "' does not exist");
             }
             space.close();
-            projectSpace.remove(name);
+            projectSpaces.remove(name);
         } finally {
             projectSpaceLock.writeLock().unlock();
         }
@@ -185,10 +227,10 @@ public class SiriusContext implements DisposableBean {
     public void destroy() throws Exception {
         projectSpaceLock.writeLock().lock();
         try {
-            for (ProjectSpaceManager space : projectSpace.values()) {
+            for (ProjectSpaceManager space : projectSpaces.values()) {
                 space.close();
             }
-            projectSpace.clear();
+            projectSpaces.clear();
         } finally {
             projectSpaceLock.writeLock().unlock();
         }

@@ -19,8 +19,7 @@
 
 package de.unijena.bioinf.ms.middleware;
 
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
-import de.unijena.bioinf.projectspace.SiriusProjectSpace;
+import de.unijena.bioinf.projectspace.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.server.ResponseStatusException;
@@ -35,7 +34,35 @@ public class BaseApiController {
     }
 
     protected ProjectSpaceManager projectSpace(String pid) {
-        return context.getProjectSpace(pid).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"There is no project space with name '"+pid+"'"));
+        return context.getProjectSpace(pid).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no project space with name '" + pid + "'"));
     }
 
+    protected Instance loadInstance(String pid, String cid) {
+        return loadInstance(projectSpace(pid), cid);
+    }
+
+    protected Instance loadInstance(ProjectSpaceManager ps, String cid) {
+        return ps.newInstanceFromCompound(parseCID(ps, cid));
+    }
+
+    protected CompoundContainerId parseCID(String pid, String cid) {
+        return parseCID(projectSpace(pid), cid);
+    }
+
+    protected CompoundContainerId parseCID(ProjectSpaceManager ps, String cid) {
+        return ps.projectSpace().findCompound(cid).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no Compound with ID '" + cid + "' in project with name '" + ps.projectSpace().getLocation() + "'"));
+    }
+
+    protected FormulaResultId parseFID(String pid, String cid, String fid) {
+        return parseFID(loadInstance(pid, cid), fid);
+    }
+
+    protected FormulaResultId parseFID(Instance instance, String fid) {
+        return instance.loadCompoundContainer().findResult(fid).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "FormulaResult with FID '" + fid + "' not found!"));
+
+    }
+
+    protected String idString(String pid, String cid, String fid){
+        return "'" + pid +"/"+ cid + "/" + fid + "'";
+    }
 }

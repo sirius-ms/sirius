@@ -56,7 +56,6 @@ import de.unijena.bioinf.projectspace.summaries.mztab.MztabMExporter;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.sirius.scores.TreeScore;
-import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -78,7 +77,8 @@ import java.util.function.Supplier;
  * maybe some type of caching?
  */
 public class ProjectSpaceManager implements Iterable<Instance> {
-    @NotNull public static Supplier<ProjectSpaceConfiguration> DEFAULT_CONFIG = () -> {
+    @NotNull
+    public static Supplier<ProjectSpaceConfiguration> DEFAULT_CONFIG = () -> {
         final ProjectSpaceConfiguration config = new ProjectSpaceConfiguration();
         //configure ProjectSpaceProperties
         config.defineProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSPropertySerializer());
@@ -205,6 +205,7 @@ public class ProjectSpaceManager implements Iterable<Instance> {
     public Iterator<Instance> iterator() {
         return instanceIterator();
     }
+
     public Iterator<Instance> instanceIterator(Class<? extends DataAnnotation>... c) {
         if (compoundIdFilter != null)
             return filteredIterator(compoundIdFilter, null);
@@ -262,7 +263,7 @@ public class ProjectSpaceManager implements Iterable<Instance> {
      * <p>
      * Results are cached!
      *
-     * @param interrupted  Tell the waiting job how it can check if it was interrupted
+     * @param interrupted Tell the waiting job how it can check if it was interrupted
      * @return true if data files are  NOT incompatible with the Server version (compatible or not existent)
      * @throws TimeoutException     if server request times out
      * @throws InterruptedException if waiting for server request is interrupted
@@ -319,7 +320,8 @@ public class ProjectSpaceManager implements Iterable<Instance> {
                     }
                 }
             }
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+                 NoSuchMethodException e) {
             throw new RuntimeException("Error during java reflection Object instantiation of '" + propClz.getName() + "'.", e);
         }
     }
@@ -346,7 +348,7 @@ public class ProjectSpaceManager implements Iterable<Instance> {
     }
 
 
-    public static ProjectSpaceConfiguration newDefaultConfig(){
+    public static ProjectSpaceConfiguration newDefaultConfig() {
         return DEFAULT_CONFIG.get();
     }
     //end region
