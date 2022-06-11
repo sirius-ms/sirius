@@ -49,7 +49,7 @@ public class FBCandidateFingerprintSerializer implements ComponentSerializer<For
             final FingerIdData fingerIdData = reader.getProjectSpaceProperty(FingerIdDataProperty.class)
                     .map(p -> p.getByIonType(id.getIonType())).orElseThrow();
 
-            final FBCandidateNumber numC = container.getAnnotationOrNull(FBCandidateNumber.class);
+            final FBCandidateNumber numC = id.getAnnotationOrNull(FBCandidateNumber.class);
             return reader.binaryFile(FINGERBLAST_FPs.relFilePath(id), br -> {
                 List<Fingerprint> fps = new ArrayList<>();
                 try (DataInputStream dis = new DataInputStream(br)) {
