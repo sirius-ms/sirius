@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.middleware;
 
+import de.unijena.bioinf.ms.annotations.PrintCitations;
 import de.unijena.bioinf.ms.frontend.Run;
 import de.unijena.bioinf.ms.frontend.SiriusCLIApplication;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -27,6 +28,7 @@ import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoade
 import de.unijena.bioinf.ms.frontend.subtools.middleware.MiddlewareAppOptions;
 import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
 import de.unijena.bioinf.ms.frontend.workfow.MiddlewareWorkflowBuilder;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.*;
 import de.unijena.bioinf.projectspace.fingerid.*;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +57,17 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
     public static void main(String[] args) {
         ApplicationCore.DEFAULT_LOGGER.info("Init AppCore");
         try {
-            configureShutDownHook(shutdownWebservice());
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                ApplicationCore.DEFAULT_LOGGER.info("CLI shut down hook: SIRIUS is cleaning up threads and shuts down...");
+                try {
+                    if (SiriusCLIApplication.RUN != null)
+                        SiriusCLIApplication.RUN.cancel();
+                } finally {
+                    if (successfulParsed && PropertyManager.DEFAULTS.createInstanceWithDefaults(PrintCitations.class).value)
+                        ApplicationCore.BIBTEX.citeToSystemErr();
+                }
+            }));
+
             {
                 final @NotNull Supplier<ProjectSpaceConfiguration> dc = ProjectSpaceManager.DEFAULT_CONFIG;
                 ProjectSpaceManager.DEFAULT_CONFIG = () -> {
