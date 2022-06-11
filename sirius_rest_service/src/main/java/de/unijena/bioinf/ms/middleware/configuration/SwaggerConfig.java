@@ -39,8 +39,8 @@ public class SwaggerConfig {
     private Info apiInfo() {
         return new Info()
 
-                .title("Sirius Nightsky Middleware API")
-                .description("Sirius Nightsky Middleware API")
+                .title("SIRIUS Nightsky API")
+                .description("REST API that provides the full functionality of SIRIUS as background service. It is intended as access-point for scripting languages and software integration.")
 //                .termsOfServiceUrl("https://bio.informatik.uni-jena.de/software/sirius/")
 //                .license("GNU General Public License v3.0")
 //                .licenseUrl("https://github.com/boecker-lab/sirius_frontend/blob/release-4.4/LICENSE.txt")
