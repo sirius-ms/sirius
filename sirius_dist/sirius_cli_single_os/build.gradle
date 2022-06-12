@@ -18,9 +18,11 @@ launch4j{
 }
 
 distImage {
-    dependsOn  test {useJUnitPlatform()
+    dependsOn  test {
+        useJUnitPlatform()
         filter.includeTestsMatching("MgfTest")
-        testLogging.showStandardStreams(true)}
+        testLogging.showStandardStreams(true)
+    }
     dependsOn getParent().tasks.getByName('extractRuntimeImageHeadless')
     runtimeImageDirectory = getParent().tasks.getByName('extractRuntimeImageHeadless').outputs.files.singleFile
     imageName = 'sirius'
