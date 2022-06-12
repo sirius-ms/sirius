@@ -1,5 +1,7 @@
 package de.unijena.bioinf.ms.frontend.utils;
 
+import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
+import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
@@ -19,13 +21,21 @@ import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchOption
 import de.unijena.bioinf.ms.frontend.subtools.summaries.SummaryOptions;
 import de.unijena.bioinf.ms.frontend.subtools.webservice.WebserviceOptions;
 import de.unijena.bioinf.ms.frontend.subtools.zodiac.ZodiacOptions;
+import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
+import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
+import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
+import picocli.AutoComplete;
 import picocli.CommandLine;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
-@CommandLine.Command(name = "autocompletion")
+@CommandLine.Command(name = "sirius")
 public class AutoCompletionScript implements Callable<Integer> {
     /**
      * Pass this CommandLine instance and the name of the script to the picocli.AutoComplete::bash method.
@@ -58,11 +68,45 @@ public class AutoCompletionScript implements Callable<Integer> {
         hierarchy.addSubcommand("webservice", new WebserviceOptions());
         hierarchy.addSubcommand("zodiac", new ZodiacOptions(defaultparameter));
         //hierarchy.addSubcommand("generate-autocompletion", new AutoCompletionScript());
+
+
+        String script = AutoComplete.bash("sirius", hierarchy);
+        Files.writeString(Path.of("/home/debian/sirius_completion3"), script);
         return 0;
     }
 
-    public static void main(String... args) {
+    public static void main(String... args) throws IOException {
+        //AutoCompletionScript complete = new AutoCompletionScript();
+        //complete.call();
+
+        System.setProperty("de.unijena.bioinf.ms.propertyLocations", "sirius_frontend.build.properties");
+        FingerIDProperties.sirius_guiVersion();
         int exitCode = new CommandLine(new AutoCompletionScript()).execute(args);
-        System.exit(exitCode);
+        final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
+        WorkflowBuilder<CLIRootOptions<ProjectSpaceManager>> builder = new WorkflowBuilder<>(new CLIRootOptions<>(configOptionLoader, new ProjectSpaceManagerFactory.Default()), configOptionLoader, new SimpleInstanceBuffer.Factory());
+        builder.initRootSpec();
+        CommandLine commandline = new CommandLine(builder.getRootSpec());
+        commandline.setCaseInsensitiveEnumValuesAllowed(true);
+        commandline.registerConverter(DefaultParameter.class, new DefaultParameter.Converter());
+        setRecursionDepthLimit(commandline, 5);
+        String s = AutoComplete.bash("sirius", commandline);
+        Files.writeString(Path.of("/home/debian/sirius_completion4"), s);
+    }
+
+    private static void setRecursionDepthLimit(CommandLine commandline, int remaining_depth) {
+        CommandLine.Model.CommandSpec subcommandsSpec = commandline.getCommandSpec();
+        if(subcommandsSpec.subcommands().isEmpty()) return;
+
+        //TODO resolve concurrent modification Exception
+        if(remaining_depth < 1) {
+            Iterator<String> commands = subcommandsSpec.subcommands().keySet().iterator();
+            while(commands.hasNext()){
+                subcommandsSpec.removeSubcommand(commands.next());
+                }
+            }
+        ////////////////////////////////////////////////////////////////////////////////
+        else {
+            subcommandsSpec.subcommands().forEach((name, command) -> setRecursionDepthLimit(command, remaining_depth - 1));
+        }
     }
 }
