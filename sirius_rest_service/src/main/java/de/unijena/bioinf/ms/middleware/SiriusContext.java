@@ -107,7 +107,7 @@ public class SiriusContext implements DisposableBean {
     public List<ProjectSpaceId> listAllProjectSpaces() {
         projectSpaceLock.readLock().lock();
         try {
-            return projectSpaces.entrySet().stream().map(x -> new ProjectSpaceId(x.getKey(), x.getValue().projectSpace().getLocation())).collect(Collectors.toList());
+            return projectSpaces.entrySet().stream().map(x -> ProjectSpaceId.of(x.getKey(), x.getValue().projectSpace().getLocation())).collect(Collectors.toList());
         } finally {
             projectSpaceLock.readLock().unlock();
         }
@@ -151,10 +151,11 @@ public class SiriusContext implements DisposableBean {
             if (projectSpaces.containsKey(id.name)) {
                 throw new IllegalArgumentException("project space with name '" + id.name + "' already exists.");
             }
-            if (!ProjectSpaceIO.isExistingProjectspaceDirectory(id.path) && !ProjectSpaceIO.isZipProjectSpace(id.path)) {
+            Path p = id.getAsPath();
+            if (!ProjectSpaceIO.isExistingProjectspaceDirectory(p) && !ProjectSpaceIO.isZipProjectSpace(p)) {
                 throw new IllegalArgumentException("'" + id.name + "' is no valid SIRIUS project space.");
             }
-            projectSpaces.put(id.name, projectSpaceManagerFactory.create(new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(id.path)));
+            projectSpaces.put(id.name, projectSpaceManagerFactory.create(new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(p)));
             return id;
         } finally {
             lock.unlock();
@@ -164,7 +165,7 @@ public class SiriusContext implements DisposableBean {
     public ProjectSpaceId addProjectSpace(@NotNull String nameSuggestion, @NotNull SiriusProjectSpace projectSpaceToAdd) {
         return ensureUniqueName(nameSuggestion, (name) -> {
             projectSpaces.put(name, projectSpaceManagerFactory.create(projectSpaceToAdd));
-            return new ProjectSpaceId(name, projectSpaceToAdd.getLocation());
+            return ProjectSpaceId.of(name, projectSpaceToAdd.getLocation());
         });
     }
 
@@ -187,7 +188,7 @@ public class SiriusContext implements DisposableBean {
                     new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createNewProjectSpace(location));
 
             projectSpaces.put(name, project);
-            return new ProjectSpaceId(name, location);
+            return ProjectSpaceId.of(name, location);
         } finally {
             projectSpaceLock.writeLock().unlock();
         }
@@ -209,7 +210,7 @@ public class SiriusContext implements DisposableBean {
             try {
                 SiriusProjectSpace space = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createTemporaryProjectSpace();
                 projectSpaces.put(name, projectSpaceManagerFactory.create(space));
-                return new ProjectSpaceId(name, space.getLocation());
+                return ProjectSpaceId.of(name, space.getLocation());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -221,7 +222,7 @@ public class SiriusContext implements DisposableBean {
         try {
             final ProjectSpaceManager space = projectSpaces.get(name);
             if (space == null) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Project space with name '" + name + "' does not exist");
+                throw new ResponseStatusException(HttpStatus.NO_CONTENT, "Project space with name '" + name + "' not found!");
             }
             space.close();
             projectSpaces.remove(name);

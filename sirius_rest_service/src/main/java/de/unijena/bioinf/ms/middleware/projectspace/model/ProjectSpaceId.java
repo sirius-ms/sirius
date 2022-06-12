@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.middleware.projectspace.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,12 +29,21 @@ import java.util.Objects;
 @Getter
 public final class ProjectSpaceId {
 
-    public final @NotNull  String name;
-    public final @NotNull  Path path;
+    public final @NotNull String name;
+    public final @NotNull String path;
 
-    public ProjectSpaceId(@NotNull  String name, @NotNull Path path) {
+    /*public ProjectSpaceId(@NotNull  String name, @NotNull Path path) {
+            this()
+    }*/
+    public ProjectSpaceId(@NotNull String name, @NotNull String path) {
         this.name = name;
         this.path = path;
+    }
+
+
+    @JsonIgnore
+    public Path getAsPath() {
+        return Path.of(getPath());
     }
 
     @Override
@@ -48,5 +58,9 @@ public final class ProjectSpaceId {
     @Override
     public int hashCode() {
         return Objects.hash(name, path);
+    }
+
+    public static ProjectSpaceId of(String projectId, Path location) {
+        return new ProjectSpaceId(projectId, location.toAbsolutePath().toString());
     }
 }
