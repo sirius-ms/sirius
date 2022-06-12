@@ -8,6 +8,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
 
+import org.jetbrains.annotations.NotNull;
 import org.junit.BeforeClass;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -34,7 +35,7 @@ public class MgfTest {
         assertArrayEquals(pre_candidates, post_candidates);
     }
 
-    public static String[] readCandidates(String filePath){
+    public static String @NotNull [] readCandidates(String filePath){
 
         BufferedReader reader;
 
@@ -47,6 +48,7 @@ public class MgfTest {
         String[] top_results = new String[candidates_num];
 
         try{
+            reader.readLine();
             for(int i = 0; i< candidates_num -1; i++){
                 String line = reader.readLine();
 
@@ -60,7 +62,7 @@ public class MgfTest {
         try{
             reader.close();
         }catch(IOException e){
-            System.err.println("The file was not closed properly.");
+            throw new RuntimeException("The file was not closed properly.");
         }
         return top_results;
     }
