@@ -2,16 +2,19 @@
 //import java.io.File;
 //import java.io.IOException;
 
-import java.io.*;
+//import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Arrays;
 
-import org.junit.*;
+import org.junit.BeforeClass;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import org.junit.jupiter.api.DisplayName;
-import static org.junit.Assert.*;
 
 public class MgfTest {
 
-    private static int candidates_num = 3;
     private static String[] pre_candidates = null;
     private static String[] post_candidates = null;
 
@@ -40,10 +43,11 @@ public class MgfTest {
         }catch(IOException e){
             throw new RuntimeException("The file is not in the specified directory!");
         }
+        int candidates_num = 3;
         String[] top_results = new String[candidates_num];
 
         try{
-            for(int i = 0; i< candidates_num-1; i++){
+            for(int i = 0; i< candidates_num -1; i++){
                 String line = reader.readLine();
 
                 top_results[i] = line.split("\t")[1];
