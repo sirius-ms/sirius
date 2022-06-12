@@ -19,7 +19,7 @@ launch4j{
 
 distImage {
     dependsOn  test {useJUnitPlatform()
-        filter.includeTestsMatching("ResultEqualityTest")
+        filter.includeTestsMatching("MgfTest")
         testLogging.showStandardStreams(true)}
     dependsOn getParent().tasks.getByName('extractRuntimeImageHeadless')
     runtimeImageDirectory = getParent().tasks.getByName('extractRuntimeImageHeadless').outputs.files.singleFile
