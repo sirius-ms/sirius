@@ -20,41 +20,14 @@
 
 package de.unijena.bioinf.ms.middleware.formulas.model;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class LossEdge {
     FragmentNode sourceFragment;
     FragmentNode targetFragment;
     String molecularFormula;
     double score;
-
-    public FragmentNode getSourceFragment() {
-        return sourceFragment;
-    }
-
-    public void setSourceFragment(FragmentNode sourceFragment) {
-        this.sourceFragment = sourceFragment;
-    }
-
-    public FragmentNode getTargetFragment() {
-        return targetFragment;
-    }
-
-    public void setTargetFragment(FragmentNode targetFragment) {
-        this.targetFragment = targetFragment;
-    }
-
-    public String getMolecularFormula() {
-        return molecularFormula;
-    }
-
-    public void setMolecularFormula(String molecularFormula) {
-        this.molecularFormula = molecularFormula;
-    }
-
-    public double getScore() {
-        return score;
-    }
-
-    public void setScore(double score) {
-        this.score = score;
-    }
 }

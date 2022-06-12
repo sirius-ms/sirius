@@ -45,7 +45,6 @@ import java.util.function.Supplier;
 @SpringBootApplication
 public class SiriusMiddlewareApplication extends SiriusCLIApplication implements CommandLineRunner {
 
-
     protected static CLIRootOptions rootOptions;
     protected final SiriusContext context;
     protected static ConfigurableApplicationContext appContext = null;

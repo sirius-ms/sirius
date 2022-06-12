@@ -22,7 +22,11 @@ package de.unijena.bioinf.ms.middleware.compute.model;
 
 
 import de.unijena.bioinf.jjobs.JJob;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 public class JobProgress {
     boolean indeterminate;
     JJob.JobState state;

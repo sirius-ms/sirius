@@ -22,8 +22,8 @@ package de.unijena.bioinf.ms.middleware.compute;
 
 import de.unijena.bioinf.ms.middleware.BaseApiController;
 import de.unijena.bioinf.ms.middleware.SiriusContext;
+import de.unijena.bioinf.ms.middleware.compute.model.JobSubmission;
 import de.unijena.bioinf.ms.rest.model.JobId;
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -40,26 +40,33 @@ public class ComputeController extends BaseApiController {
         super(context);
     }
 
-    @Operation(summary = "Get job information and its current state and progress (if available).")
+    /**
+     * Get job information and its current state and progress (if available).
+     */
     @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<JobId> getJobs(@RequestParam(required = false, defaultValue = "false") boolean includeState) {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "NOT YET IMPLEMENTED");
     }
 
-
-    @Operation(summary = "Get job information and its current state and progress (if available).")
+    /**
+     * Get job information and its current state and progress (if available).
+     */
     @GetMapping(value = "/{jobId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public JobId getJob(@PathVariable String jobId) {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "NOT YET IMPLEMENTED");
     }
 
-    @Operation(summary = "Start computation for given compounds and with given parameters.")
+    /**
+     * Start computation for given compounds and with given parameters.
+     */
     @PostMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
-    public JobId startJon(@PathVariable String pid, @RequestParam(required = false) boolean includeSummary, @RequestParam(required = false) boolean includeMsData) {
+    public JobId startJon(@RequestBody JobSubmission jobSubmission) {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "NOT YET IMPLEMENTED");
     }
 
-    @Operation(summary = "Delete job. Specify how to behave for running jobs.")
+    /**
+     * Delete job. Specify how to behave for running jobs.
+     */
     @DeleteMapping(value = "/{jobId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public void deleteJob(@PathVariable String jobId,
                           @RequestParam(required = false, defaultValue = "true") boolean cancelIfRunning,

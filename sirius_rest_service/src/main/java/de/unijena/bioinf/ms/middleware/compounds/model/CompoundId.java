@@ -21,11 +21,15 @@ package de.unijena.bioinf.ms.middleware.compounds.model;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * The CompoundId contains the ID of a compound together with some read-only information that might be displayed in
  * some summary view.
  */
+@Getter
+@Setter
 public class CompoundId {
 
     // identifier
@@ -43,91 +47,11 @@ public class CompoundId {
     protected Double rtEndSeconds;
 
     //Summary of the results of the compounds
-    protected CompoundSummary summary;
-    protected CompoundMsData msData;
+    protected CompoundAnnotation topAnnotation;
+    protected MsData msData;
 
     //todo handle computing flag
     protected boolean computing = false;
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public long getIndex() {
-        return index;
-    }
-
-    public void setIndex(long index) {
-        this.index = index;
-    }
-
-    public Double getIonMass() {
-        return ionMass;
-    }
-
-    public void setIonMass(Double ionMass) {
-        this.ionMass = ionMass;
-    }
-
-    public String getIonType() {
-        return ionType;
-    }
-
-    public void setIonType(String ionType) {
-        this.ionType = ionType;
-    }
-
-    public Double getRtStartSeconds() {
-        return rtStartSeconds;
-    }
-
-    public void setRtStartSeconds(Double rtStartSeconds) {
-        this.rtStartSeconds = rtStartSeconds;
-    }
-
-    public Double getRtEndSeconds() {
-        return rtEndSeconds;
-    }
-
-    public void setRtEndSeconds(Double rtEndSeconds) {
-        this.rtEndSeconds = rtEndSeconds;
-    }
-
-    public CompoundSummary getSummary() {
-        return summary;
-    }
-
-    public void setSummary(CompoundSummary summary) {
-        this.summary = summary;
-    }
-
-    public CompoundMsData getMsData() {
-        return msData;
-    }
-
-    public void setMsData(CompoundMsData msData) {
-        this.msData = msData;
-    }
-
-    public boolean isComputing() {
-        return computing;
-    }
-
-    public void setComputing(boolean computing) {
-        this.computing = computing;
-    }
 
     public static CompoundId of(CompoundContainerId cid) {
         final CompoundId id = new CompoundId();
