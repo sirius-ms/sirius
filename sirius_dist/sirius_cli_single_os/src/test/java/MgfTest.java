@@ -33,14 +33,14 @@ public class MgfTest {
     public static String @NotNull [] readCandidates(String filePath){
 
         BufferedReader reader;
+        int candidates_num = 3;
+        String[] top_results = new String[candidates_num];
 
         try{
             reader = new BufferedReader(new FileReader(filePath));
-        }catch(IOException e){
+        }catch(IOException e) {
             throw new RuntimeException("The file is not in the specified directory!");
         }
-        int candidates_num = 3;
-        String[] top_results = new String[candidates_num];
 
         try{
             reader.readLine();
@@ -59,6 +59,7 @@ public class MgfTest {
         }catch(IOException e){
             throw new RuntimeException("The file was not closed properly.");
         }
+
         return top_results;
     }
 
