@@ -59,7 +59,7 @@ public class ProjectSpaceController extends BaseApiController {
     @GetMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ProjectSpaceId getProjectSpace(@PathVariable String projectId) {
         //todo add infos like size and number of compounds?
-        return context.getProjectSpace(projectId).map(x -> new ProjectSpaceId(projectId, x.projectSpace().getLocation())).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no project space with name '" + projectId + "'"));
+        return context.getProjectSpace(projectId).map(x -> ProjectSpaceId.of(projectId, x.projectSpace().getLocation())).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no project space with name '" + projectId + "'"));
     }
 
     /**
@@ -68,7 +68,7 @@ public class ProjectSpaceController extends BaseApiController {
      */
     @PutMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ProjectSpaceId openProjectSpace(@PathVariable String projectId, @RequestParam String pathToProject) throws IOException {
-        return context.openProjectSpace(new ProjectSpaceId(projectId, Path.of(pathToProject)));
+        return context.openProjectSpace(new ProjectSpaceId(projectId, pathToProject));
     }
 
     /**
