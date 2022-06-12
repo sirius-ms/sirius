@@ -1,25 +1,20 @@
-//import org.apache.commons.io.FileUtils;
-//import java.io.File;
-//import java.io.IOException;
-
-//import java.io.*;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
 
 import org.jetbrains.annotations.NotNull;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import org.junit.jupiter.api.DisplayName;
 
 public class MgfTest {
 
-    private static String[] pre_candidates = null;
-    private static String[] post_candidates = null;
+    private static String[] pre_candidates;
+    private static String[] post_candidates ;
 
-    @BeforeClass
+    @BeforeAll
     public static void getCandidates(){
         pre_candidates  = readCandidates("/builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/test_results/mgf_candidates/formula_candidates.tsv");
         post_candidates = readCandidates("/builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_summary/0_laudanosine_FEATURE_1/formula_candidates.tsv");
@@ -49,7 +44,7 @@ public class MgfTest {
 
         try{
             reader.readLine();
-            for(int i = 0; i< candidates_num -1; i++){
+            for(int i = 0; i < candidates_num; i++){
                 String line = reader.readLine();
 
                 top_results[i] = line.split("\t")[1];
