@@ -3,6 +3,7 @@
 //import java.io.IOException;
 
 import java.io.*;
+import java.util.Arrays;
 
 import org.junit.*;
 import org.junit.jupiter.api.DisplayName;
@@ -23,6 +24,10 @@ public class MgfTest {
     @Test
     @DisplayName("Testing if SIRIUS calculates expected formula candidates with mgf file.")
     public void testTopCandidates(){
+
+        System.out.println(Arrays.toString(pre_candidates));
+        System.out.println(Arrays.toString(post_candidates));
+
         assertArrayEquals(pre_candidates, post_candidates);
     }
 
