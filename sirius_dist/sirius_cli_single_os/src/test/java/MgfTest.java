@@ -54,7 +54,7 @@ public class MgfTest {
             }
         }
         catch(IOException e){
-            System.err.println("There are more required top candidates than candidates in the file.");
+            throw new RuntimeException("There are more required top candidates than candidates in the file.");
         }
 
         try{
