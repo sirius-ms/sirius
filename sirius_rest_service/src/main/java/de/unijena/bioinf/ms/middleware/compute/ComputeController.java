@@ -60,7 +60,7 @@ public class ComputeController extends BaseApiController {
      * Start computation for given compounds and with given parameters.
      */
     @PostMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
-    public JobId startJon(@RequestBody JobSubmission jobSubmission) {
+    public JobId startJob(@RequestBody JobSubmission jobSubmission) {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "NOT YET IMPLEMENTED");
     }
 
