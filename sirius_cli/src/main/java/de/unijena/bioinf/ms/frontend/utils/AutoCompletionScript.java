@@ -33,6 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 @CommandLine.Command(name = "sirius")
@@ -78,19 +79,27 @@ public class AutoCompletionScript implements Callable<Integer> {
     public static void main(String... args) throws IOException {
         //AutoCompletionScript complete = new AutoCompletionScript();
         //complete.call();
-
+        String NAME = "SiriusLinuxCompletionScript";
+        Path PATH = Path.of(String.format("./sirius_cli/scripts/%s",NAME));
         System.setProperty("de.unijena.bioinf.ms.propertyLocations", "sirius_frontend.build.properties");
         FingerIDProperties.sirius_guiVersion();
-        int exitCode = new CommandLine(new AutoCompletionScript()).execute(args);
+        //int exitCode = new CommandLine(new AutoCompletionScript()).execute(args);
         final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
         WorkflowBuilder<CLIRootOptions<ProjectSpaceManager>> builder = new WorkflowBuilder<>(new CLIRootOptions<>(configOptionLoader, new ProjectSpaceManagerFactory.Default()), configOptionLoader, new SimpleInstanceBuffer.Factory());
         builder.initRootSpec();
         CommandLine commandline = new CommandLine(builder.getRootSpec());
         commandline.setCaseInsensitiveEnumValuesAllowed(true);
         commandline.registerConverter(DefaultParameter.class, new DefaultParameter.Converter());
-        setRecursionDepthLimit(commandline, 5);
+        int depth;
+        if (args.length == 0) depth = 5;
+        else depth = Integer.parseInt(args[0]);
+        System.out.println(String.format("Creating AutocompletionScript of length %d", depth));
+        setRecursionDepthLimit(commandline, depth);
         String s = AutoComplete.bash("sirius", commandline);
-        Files.writeString(Path.of("/home/debian/sirius_completion4"), s);
+        System.out.println(String.format("AutocompletionScript created successfull at %s", PATH));
+        Files.writeString(PATH, s);
+        System.out.println(String.format("Please install the Script temporarly by typing the following into the Terminal: "+ (char)27 + "[1m. %s", NAME));
+
     }
 
     private static void setRecursionDepthLimit(CommandLine commandline, int remaining_depth) {
@@ -99,9 +108,10 @@ public class AutoCompletionScript implements Callable<Integer> {
 
         //TODO resolve concurrent modification Exception
         if(remaining_depth < 1) {
-            Iterator<String> commands = subcommandsSpec.subcommands().keySet().iterator();
-            while(commands.hasNext()){
-                subcommandsSpec.removeSubcommand(commands.next());
+            Set<String> commands = subcommandsSpec.subcommands().keySet();
+            while(!commands.isEmpty()){
+                subcommandsSpec.removeSubcommand(commands.stream().iterator().next());
+                commands = subcommandsSpec.subcommands().keySet();
                 }
             }
         ////////////////////////////////////////////////////////////////////////////////
