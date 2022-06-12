@@ -40,6 +40,15 @@
 
 package de.unijena.bioinf.ms.middleware.compounds.model;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+/**
+ * Predicted compound class with name and probability.
+ * To independent compound class ontologies are available (ClassyFire and NPC).
+ */
 public class CompoundClass {
     public enum Type {ClassyFire, NPC}
 
@@ -53,30 +62,4 @@ public class CompoundClass {
         this.name = name;
         this.probability = probability;
     }
-
-    public Type getType() {
-        return type;
-    }
-
-    public void setType(Type type) {
-        this.type = type;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public Double getProbability() {
-        return probability;
-    }
-
-    public void setProbability(Double probability) {
-        this.probability = probability;
-    }
-
-
 }

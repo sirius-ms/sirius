@@ -18,16 +18,22 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.middleware.compute.model;
+package de.unijena.bioinf.ms.middleware.formulas.model;
 
+import de.unijena.bioinf.canopus.CanopusResult;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class JobId {
-    String id;
-    String command;
+public class CanopusPredictions {
+    String[] classyFireClassNames;
+    double[] classyFireProbabilities;
+    String[] NpcClassNames;
+    double[] NpcProbabilities;
 
-    JobProgress progress;
+    public static CanopusPredictions of(CanopusResult result){
+        return new CanopusPredictions();
+    }
+    //todo implement
 }

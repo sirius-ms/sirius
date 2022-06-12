@@ -18,16 +18,31 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.middleware.compute.model;
+package de.unijena.bioinf.ms.middleware.compounds.gui.model;
 
-import lombok.Getter;
-import lombok.Setter;
+/**
+ * Parameters to "remote control" the SIRIUS GUI.
+ */
+public class GuiParameters {
+    /**
+     * Selected Result ab.
+     */
+    GuiResultTab selectedTab;
+    /**
+     * ID of Selected compound.
+     */
+    String cid;
+    /**
+     * ID of Selected Formula candidate of the selected compound.
+     */
+    String fid;
+    /**
+     * InChIKey of selected structure candidate of selected formula candidate.
+     */
+    String structureCandidateInChIKey;
+    /**
+     * If true bring SIRIUS GUI window to foreground.
+     */
+    boolean bringToFront;
 
-@Getter
-@Setter
-public class JobId {
-    String id;
-    String command;
-
-    JobProgress progress;
 }

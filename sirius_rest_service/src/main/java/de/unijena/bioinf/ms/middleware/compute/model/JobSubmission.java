@@ -20,14 +20,6 @@
 
 package de.unijena.bioinf.ms.middleware.compute.model;
 
-import lombok.Getter;
-import lombok.Setter;
+public class JobSubmission {
 
-@Getter
-@Setter
-public class JobId {
-    String id;
-    String command;
-
-    JobProgress progress;
 }

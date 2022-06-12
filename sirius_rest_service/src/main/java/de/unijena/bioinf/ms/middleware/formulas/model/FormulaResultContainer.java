@@ -20,51 +20,51 @@
 package de.unijena.bioinf.ms.middleware.formulas.model;
 
 import de.unijena.bioinf.projectspace.FormulaResultId;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
- * The CompoundId contains the ID of a compound together with some read-only information that might be displayed in
- * some summary view.
- */
-public class FormulaId {
+ * Container for formula level results that holds a unique identifier (molecular formula + adduct).
+ * It can be extended/annotated with a list of results that are available for this formula candidate and their scores.
+ * It can further be extended/annotated with the action formula candidate results.
+  */
+@Getter
+@Setter
+public class FormulaResultContainer {
 
-    // identifier
+    /**
+     * Unique identifier of this formula candidate
+     */
     protected String id;
 
-    // identifier source
+    /**
+     * molecular formula of this formula candidate
+     */
     protected String molecularFormula;
+    /**
+     * Adduct of this formula candidate
+     */
     protected String adduct;
 
-    // optional detail
-    protected FormulaResultScores resultScores;
+    /**
+     * Available results for this formula candidate (OPTIONAL)
+     */
+    protected ResultOverview resultOverview;
 
-    public FormulaId(FormulaResultId id) {
+    /**
+     * The actual formula candidate represented by this identifier (OPTIONAL)
+     */
+    protected FormulaCandidate candidate;
+
+
+    public FormulaResultContainer(FormulaResultId id) {
         this(id.fileName(), id.getMolecularFormula().toString(), id.getIonType().toString());
     }
 
-    public FormulaId(String id, String molecularFormula, String adduct) {
+    public FormulaResultContainer(String id, String molecularFormula, String adduct) {
         this.id = id;
         this.molecularFormula = molecularFormula;
         this.adduct = adduct;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public String getAdduct() {
-        return adduct;
-    }
-
-    public String getMolecularFormula() {
-        return molecularFormula;
-    }
-
-    public FormulaResultScores getResultScores() {
-        return resultScores;
-    }
-
-    public void setResultScores(FormulaResultScores availableResults) {
-        this.resultScores = availableResults;
     }
 }
 

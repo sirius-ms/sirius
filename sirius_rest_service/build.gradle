@@ -75,9 +75,16 @@ dependencies {
 
     ////////////////////// API DOC ///////////////////
     // Generate interactive documentation from a Swagger-compliant API
-    implementation 'org.springdoc:springdoc-openapi-ui:1.5.13'
+    implementation 'org.springdoc:springdoc-openapi-ui:1.6.9'
+    implementation 'org.springdoc:springdoc-openapi-javadoc:1.6.9'
+    //process javadoc for swagger/openapi
+    annotationProcessor 'com.github.therapi:therapi-runtime-javadoc-scribe:0.13.0'
 //    implementation 'org.springdoc:springdoc-openapi-security:1.5.13'
     ////////////////////////////////////////////////////
+
+    //getter setter constructor logger, save boilerplate
+    implementation 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
 
     // thymeleaf pages
 //    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
@@ -92,7 +99,6 @@ dependencies {
 //    implementation 'io.micrometer:micrometer-registry-prometheus'
     //must match minio version
     implementation 'com.squareup.okhttp3:okhttp:4.8.1'
-
 
 
 

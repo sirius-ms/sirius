@@ -39,80 +39,24 @@
 
 package de.unijena.bioinf.ms.middleware.compounds.model;
 
-public class StructureResultSummary {
+import de.unijena.bioinf.ms.middleware.formulas.model.CompoundClasses;
+import de.unijena.bioinf.ms.middleware.formulas.model.FormulaCandidate;
+import de.unijena.bioinf.ms.middleware.formulas.model.StructureCandidate;
+import lombok.Getter;
+import lombok.Setter;
 
-    protected String structureName;
-    protected String smiles;
-
-    protected Double csiScore;
-    protected Double tanimotoSimilarity;
-    protected Double confidenceScore;
-
-    protected Integer numOfPubMedIds;
-    protected Double xlogP;
-    protected String inchiKey;
-
-    public String getStructureName() {
-        return structureName;
-    }
-
-    public void setStructureName(String structureName) {
-        this.structureName = structureName;
-    }
-
-    public String getSmiles() {
-        return smiles;
-    }
-
-    public void setSmiles(String smiles) {
-        this.smiles = smiles;
-    }
-
-    public Double getCsiScore() {
-        return csiScore;
-    }
-
-    public void setCsiScore(Double csiScore) {
-        this.csiScore = csiScore;
-    }
-
-    public Double getTanimotoSimilarity() {
-        return tanimotoSimilarity;
-    }
-
-    public void setTanimotoSimilarity(Double tanimotoSimilarity) {
-        this.tanimotoSimilarity = tanimotoSimilarity;
-    }
-
-    public Double getConfidenceScore() {
-        return confidenceScore;
-    }
-
-    public void setConfidenceScore(Double confidenceScore) {
-        this.confidenceScore = confidenceScore;
-    }
-
-    public Integer getNumOfPubMedIds() {
-        return numOfPubMedIds;
-    }
-
-    public void setNumOfPubMedIds(Integer numOfPubMedIds) {
-        this.numOfPubMedIds = numOfPubMedIds;
-    }
-
-    public Double getXlogP() {
-        return xlogP;
-    }
-
-    public void setXlogP(Double xlogP) {
-        this.xlogP = xlogP;
-    }
-
-    public String getInchiKey() {
-        return inchiKey;
-    }
-
-    public void setInchiKey(String inchiKey) {
-        this.inchiKey = inchiKey;
-    }
+/**
+ * Summary of the results of a Compound. Can be added to a CompoundId.
+ * It is not null within a CompoundId if it was not requested und non null otherwise
+ * The different summary fields within this summary are null if the corresponding
+ * compound does not contain the represented results. The content of  non NULL
+ * summary field id the result was computed but is empty.
+ * */
+@Getter
+@Setter
+public class CompoundAnnotation {
+    //result previews
+    protected FormulaCandidate formulaAnnotation; // SIRIUS + ZODIAC
+    protected StructureCandidate structureAnnotation; // CSI:FingerID
+    protected CompoundClasses compoundClassAnnotation; // CANOPUS
 }

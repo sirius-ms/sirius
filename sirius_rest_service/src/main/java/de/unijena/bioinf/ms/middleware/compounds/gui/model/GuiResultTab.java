@@ -18,16 +18,17 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.middleware.compute.model;
+package de.unijena.bioinf.ms.middleware.compounds.gui.model;
 
-import lombok.Getter;
-import lombok.Setter;
-
-@Getter
-@Setter
-public class JobId {
-    String id;
-    String command;
-
-    JobProgress progress;
+/**
+ * Available result tabs in the SIRIUS GUI. Name correspond to the names in the GUI.
+ */
+public enum GuiResultTab {
+    FORMULAS,
+    SPECTRA,
+    TREES,
+    PREDICTED_FINGERPRINT,
+    STRUCTURES,
+    STRUCTURE_ANNOTATION,
+    COMPOUND_CLASSES
 }

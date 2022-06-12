@@ -25,53 +25,23 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.babelms.descriptor.DescriptorRegistry;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.*;
 import java.util.stream.Collectors;
-
-public class FragTree {
+@Getter
+@Setter
+public class FragmentationTree {
     protected List<FragmentNode> fragments;
     protected List<LossEdge> losses;
     double treeScore;
     FragmentNode root;
 
-
-    public List<FragmentNode> getFragments() {
-        return fragments;
-    }
-
-    public void setFragments(List<FragmentNode> fragments) {
-        this.fragments = fragments;
-    }
-
-    public List<LossEdge> getLosses() {
-        return losses;
-    }
-
-    public void setLosses(List<LossEdge> losses) {
-        this.losses = losses;
-    }
-
-    public double getTreeScore() {
-        return treeScore;
-    }
-
-    public void setTreeScore(double treeScore) {
-        this.treeScore = treeScore;
-    }
-
-    public FragmentNode getRoot() {
-        return root;
-    }
-
-    public void setRoot(FragmentNode root) {
-        this.root = root;
-    }
-
-    public static FragTree fromFtree(FTree sourceTree) {
+    public static FragmentationTree fromFtree(FTree sourceTree) {
         DescriptorRegistry registry = DescriptorRegistry.getInstance();
 
-        final FragTree tree = new FragTree();
+        final FragmentationTree tree = new FragmentationTree();
         Map<Integer, FragmentNode> fragmentNodes = new HashMap<>();
         List<LossEdge> lossEdges = new ArrayList<>();
 

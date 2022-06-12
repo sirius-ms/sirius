@@ -23,9 +23,13 @@ package de.unijena.bioinf.ms.middleware.formulas.model;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIdentityReference;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import lombok.Getter;
+import lombok.Setter;
 
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 @JsonIdentityReference(alwaysAsId = false)
+@Getter
+@Setter
 public class FragmentNode {
     int id;
     String molecularFormula;
@@ -36,68 +40,4 @@ public class FragmentNode {
 
     double intensity;
     double mz;
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getMolecularFormula() {
-        return molecularFormula;
-    }
-
-    public void setMolecularFormula(String molecularFormula) {
-        this.molecularFormula = molecularFormula;
-    }
-
-    public String getIonType() {
-        return ionType;
-    }
-
-    public void setIonType(String ionType) {
-        this.ionType = ionType;
-    }
-
-    public double getMassDeviationDa() {
-        return massDeviationDa;
-    }
-
-    public void setMassDeviationDa(double massDeviationDa) {
-        this.massDeviationDa = massDeviationDa;
-    }
-
-    public double getMassErrorPpm() {
-        return massErrorPpm;
-    }
-
-    public void setMassErrorPpm(double massErrorPpm) {
-        this.massErrorPpm = massErrorPpm;
-    }
-
-    public double getScore() {
-        return score;
-    }
-
-    public void setScore(double score) {
-        this.score = score;
-    }
-
-    public double getIntensity() {
-        return intensity;
-    }
-
-    public void setIntensity(double intensity) {
-        this.intensity = intensity;
-    }
-
-    public double getMz() {
-        return mz;
-    }
-
-    public void setMz(double mz) {
-        this.mz = mz;
-    }
 }

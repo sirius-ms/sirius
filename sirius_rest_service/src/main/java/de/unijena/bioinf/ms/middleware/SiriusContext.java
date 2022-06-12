@@ -32,6 +32,7 @@ import de.unijena.bioinf.webapi.rest.ProxyManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
@@ -49,6 +50,12 @@ import java.util.stream.Collectors;
 
 @Component
 public class SiriusContext implements DisposableBean {
+    @Value("${de.unijena.bioinf.siriusNightsky.version}")
+    private String apiVersion;
+
+    public String getApiVersion() {
+        return apiVersion;
+    }
 
     //todo we need GUI version here due to background computation logging
     protected final ProjectSpaceManagerFactory<ProjectSpaceManager> projectSpaceManagerFactory = new ProjectSpaceManagerFactory.Default();
