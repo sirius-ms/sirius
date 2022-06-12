@@ -1,9 +1,16 @@
-plugins {
-    id 'org.springframework.boot' version '2.6.7'
-    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
-    id 'war'
-    id 'java-library'
+buildscript {
+    repositories {
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:2.6.8")
+    }
 }
+
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'war'
+apply plugin: 'java-library'
 
 repositories {
     mavenLocal()
@@ -29,43 +36,24 @@ ext['okhttp.version'] = '4.8.1'
 
 dependencies {
     api project(':sirius_cli')
-//    implementation project(':rest_service:rest_db')
-//    implementation group: "mysql", name: "mysql-connector-java", version: "$jdbc_mysql_version"
-
-//    implementation project(':confidence_score_train')
-
-    //internal
-//    implementation group: "de.unijena.bioinf.ms", name: "web_core_oss", version: "$fingeridVersion"
-//    implementation group: "de.unijena.bioinf.ms", name: "model_store_oss", version: "$fingeridVersion"
-//    implementation group: "de.unijena.bioinf.ms", name: "chemical_db_oss", version: "$fingeridVersion"
-//    implementation group: "de.unijena.bioinf.ms", name: "chemdb_blob_oss", version: "$fingeridVersion"
-//    implementation group: "de.unijena.bioinf.ms", name: "chemdb_sql_oss", version: "$fingeridVersion"
-//    implementation group: "de.unijena.bioinf.ms", name: "chemdb_utils_oss", version: "$fingeridVersion"
-
-    // CDK
-//    for (module in ["sdg", "render", "renderbasic", "silent", "renderextra", "renderawt", "inchi", "qsarmolecular", "interfaces", "core"]) {
-//        implementation group: "org.openscience.cdk", name: "cdk-$module", version: "$cdk_version"
-//    }
-
-//    implementation group: "org.apache.xmlgraphics", name: "batik-awt-util", version: "$batik_version"
-//    implementation group: "org.apache.xmlgraphics", name: "batik-svggen", version: "$batik_version"
-//    implementation group: "org.apache.xmlgraphics", name: "batik-dom", version: "$batik_version"
-//
-
-//    implementation group: 'org.apache.commons', name: 'commons-email', version: "${commons_email_version}"
 
     //////////// configure logging ///////////////////
     //logging bridges
     implementation("org.slf4j:log4j-over-slf4j:$slf4j_version")
     implementation("org.slf4j:jcl-over-slf4j:$slf4j_version")
     implementation("org.slf4j:jul-to-slf4j:$slf4j_version")
+    //todo move back to logback if we have a real spring boot app later
+    implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+
+
     ////////////////////////////////////////////////////
 
 
     //////////// Spring (boot) ////////////////////////
     // Default bootJar config
     implementation("org.springframework.boot:spring-boot-starter-web")
-    providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
+//    implementation("org.springframework.boot:spring-boot-starter-jul")
+//    providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
 //    providedRuntime 'org.springframework.boot:spring-boot-starter-jetty'
 
     // expose operational information about the running application via /actuator
@@ -101,7 +89,6 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp:4.8.1'
 
 
-
     testImplementation group: 'junit', name: 'junit', version: '4.12'
 }
 
@@ -110,8 +97,12 @@ configurations.all {
     it.exclude group: "log4j", module: "log4j"
     //replaced by jcl-over-slf4j
     it.exclude group: "commons-logging", module: "commons-logging"
+    it.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+//    it.exclude group: 'org.slf4j', module: 'logback-classic'
 }
-
+war {
+    enabled = false
+}
 jar {
     enabled = false
 }

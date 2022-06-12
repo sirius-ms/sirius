@@ -34,6 +34,7 @@ import picocli.CommandLine.Option;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
@@ -69,14 +70,18 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
         }
     }
 
-    @Option(names = {"--log", "--loglevel"}, description = "Set logging level of the Jobs SIRIUS will execute. Valid values: ${COMPLETION-CANDIDATES}", order = 5/*, defaultValue = "WARNING"*/)
+    @Option(names = {"--log", "--loglevel"}, description = "Set logging level of the Jobs SIRIUS will execute. Valid values: ${COMPLETION-CANDIDATES}", order = 5, defaultValue = "WARNING")
     public void setLogLevel(final LogLevel loglevel) {
-        Arrays.stream(LogManager.getLogManager().getLogger(LoggerFactory.getLogger(JJob.DEFAULT_LOGGER_KEY).getName()).getHandlers())
-                .filter(h -> h instanceof ConsoleHandler).findFirst().ifPresent(h -> h.setFilter(r -> {
-            if (r.getLoggerName().equals(JJob.DEFAULT_LOGGER_KEY))
-                return r.getLevel().intValue() >= loglevel.level.intValue();
-            return true;
-        }));
+        Optional.ofNullable(LoggerFactory.getLogger(JJob.DEFAULT_LOGGER_KEY)).map(Logger::getName)
+                .map(LogManager.getLogManager()::getLogger).map(java.util.logging.Logger::getHandlers)
+                .map(Arrays::stream).ifPresent(s -> {
+                    s.filter(h -> h instanceof ConsoleHandler).findFirst().ifPresent(h -> h.setFilter(r -> {
+                        if (r.getLoggerName().equals(JJob.DEFAULT_LOGGER_KEY))
+                            return r.getLevel().intValue() >= loglevel.level.intValue();
+                        return true;
+                    }));
+                });
+
     }
 
     @Option(names = {"--cores", "--processors"}, description = "Number of cpu cores to use. If not specified Sirius uses all available cores.", order = 10)

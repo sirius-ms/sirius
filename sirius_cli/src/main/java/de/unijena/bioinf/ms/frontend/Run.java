@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
 import java.util.Arrays;
+import java.util.List;
 
 
 /**
@@ -37,10 +38,10 @@ import java.util.Arrays;
  * <p>
  * Basic Idea:
  * <p>
- * Note: A Workspace can be input and output at the same time!
+ * Note: A project-space can be input and output at the same time!
  * Some methods will use it as input and check whether
  * the needed input is present (e.g Zodiac).
- * Other Methods only produce output to the Workspace (e.g. SIRIUS).
+ * Other Methods only produce output to the project-space (e.g. SIRIUS).
  * So they need to merge their results with the existing ones.
  */
 public class Run extends ApplicationCore {
@@ -73,6 +74,8 @@ public class Run extends ApplicationCore {
         commandline.setCaseInsensitiveEnumValuesAllowed(true);
         commandline.registerConverter(DefaultParameter.class, new DefaultParameter.Converter());
         flow = commandline.parseWithHandler(builder.makeParseResultHandler(), args);
+        List<Exception> l = commandline.getParseResult().errors();
+        CommandLine.ParseResult r = commandline.getParseResult();
         return flow != null; //todo maybe workflow validation would be nice here???
     }
 
