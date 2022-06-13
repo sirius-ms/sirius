@@ -20,5 +20,16 @@
 
 package de.unijena.bioinf.ms.middleware.compute.model.tools;
 
+
+import lombok.Getter;
+import lombok.Setter;
+
+/**
+ * User/developer friendly parameter subset for the CSI:FingerID Fingerprint tool
+ */
+@Getter
+@Setter
 public class FingerprintPrediction {
+
+
 }

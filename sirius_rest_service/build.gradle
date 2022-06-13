@@ -51,10 +51,12 @@ dependencies {
 
     //////////// Spring (boot) ////////////////////////
     // Default bootJar config
-    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-web"){
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
+    }
 //    implementation("org.springframework.boot:spring-boot-starter-jul")
 //    providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
-//    providedRuntime 'org.springframework.boot:spring-boot-starter-jetty'
+    providedRuntime 'org.springframework.boot:spring-boot-starter-jetty'
 
     // expose operational information about the running application via /actuator
     implementation("org.springframework.boot:spring-boot-starter-actuator")

@@ -20,5 +20,13 @@
 
 package de.unijena.bioinf.ms.middleware.compute.model.tools;
 
+import lombok.Getter;
+import lombok.Setter;
+
+/**
+ * User/developer friendly parameter subset for the CSI:FingerID structure db search tool.
+ */
+@Getter
+@Setter
 public class StructureDbSearch {
 }

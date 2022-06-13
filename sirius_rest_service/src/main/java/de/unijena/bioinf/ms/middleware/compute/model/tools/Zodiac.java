@@ -20,5 +20,16 @@
 
 package de.unijena.bioinf.ms.middleware.compute.model.tools;
 
+import lombok.Getter;
+import lombok.Setter;
+
+/**
+ * User/developer friendly parameter subset for the ZODIAC tool (Network base molecular formula re-ranking).
+ */
+@Getter
+@Setter
 public class Zodiac {
+    int consideredCandidates300;
+    int consideredCandidates650;
+    
 }
