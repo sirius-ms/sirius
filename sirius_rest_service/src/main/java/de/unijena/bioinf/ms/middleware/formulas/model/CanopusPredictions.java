@@ -20,20 +20,59 @@
 
 package de.unijena.bioinf.ms.middleware.formulas.model;
 
+import de.unijena.bioinf.ChemistryBase.fp.ClassyfireProperty;
+import de.unijena.bioinf.ChemistryBase.fp.FPIter;
+import de.unijena.bioinf.ChemistryBase.fp.NPCFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.canopus.CanopusResult;
 import lombok.Getter;
 import lombok.Setter;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Container class that holds the CANOPUS compound class predictions for alle predictable compound classes.
+ * This is the full CANOPUS result.
+ */
 @Getter
 @Setter
 public class CanopusPredictions {
-    String[] classyFireClassNames;
-    double[] classyFireProbabilities;
-    String[] NpcClassNames;
-    double[] NpcProbabilities;
+    /**
+     * All predicted ClassyFire classes
+     */
+    CompoundClass[] classyFireClasses;
+    /**
+     * All predicted NPC classes
+     */
+    CompoundClass[] npcClasses;
 
-    public static CanopusPredictions of(CanopusResult result){
-        return new CanopusPredictions();
+
+    public static CanopusPredictions of(CanopusResult canopusResult) {
+        return of(canopusResult.getNpcFingerprint().orElse(null), canopusResult.getCanopusFingerprint());
     }
-    //todo implement
+
+    public static CanopusPredictions of(@Nullable ProbabilityFingerprint npcClassification, @Nullable ProbabilityFingerprint cfClassification) {
+        final CanopusPredictions sum = new CanopusPredictions();
+
+        if (npcClassification != null) {
+            List<CompoundClass> cc = new ArrayList<>();
+            for (FPIter fpIter : npcClassification) {
+                NPCFingerprintVersion.NPCProperty prop = ((NPCFingerprintVersion.NPCProperty) fpIter.getMolecularProperty());
+                cc.add(CompoundClass.of(prop, fpIter.getProbability()));
+            }
+            sum.setNpcClasses(cc.toArray(CompoundClass[]::new));
+        }
+
+        if (cfClassification != null) {
+            List<CompoundClass> cc = new ArrayList<>();
+            for (FPIter fpIter : cfClassification) {
+                ClassyfireProperty prop = (ClassyfireProperty) fpIter.getMolecularProperty();
+                cc.add(CompoundClass.of(prop, fpIter.getProbability()));
+            }
+            sum.setClassyFireClasses(cc.toArray(CompoundClass[]::new));
+        }
+        return sum;
+    }
 }

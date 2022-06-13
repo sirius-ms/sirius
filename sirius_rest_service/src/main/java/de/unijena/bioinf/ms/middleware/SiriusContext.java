@@ -149,7 +149,7 @@ public class SiriusContext implements DisposableBean {
         lock.lock();
         try {
             if (projectSpaces.containsKey(id.name)) {
-                throw new IllegalArgumentException("project space with name '" + id.name + "' already exists.");
+                throw new ResponseStatusException(HttpStatus.SEE_OTHER, "project space with name '" + id.name + "' already exists.");
             }
             Path p = id.getAsPath();
             if (!ProjectSpaceIO.isExistingProjectspaceDirectory(p) && !ProjectSpaceIO.isZipProjectSpace(p)) {

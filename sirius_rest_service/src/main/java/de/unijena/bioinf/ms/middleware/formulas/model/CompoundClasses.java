@@ -21,11 +21,16 @@
 
 package de.unijena.bioinf.ms.middleware.formulas.model;
 
+import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.canopus.CanopusResult;
-import de.unijena.bioinf.ms.middleware.compounds.model.CompoundClass;
 import lombok.Getter;
 import lombok.Setter;
+import org.jetbrains.annotations.Nullable;
 
+/**
+ * Container class that holds the best matching compound class for different levels of each ontology for a
+ * certain compound/feature/predicted fingerprint.
+ */
 @Getter
 @Setter
 public class CompoundClasses {
@@ -41,12 +46,62 @@ public class CompoundClasses {
     protected CompoundClass classyFireLevel5;
 
     protected CompoundClass classyFireClass;
+
     protected CompoundClass classyFireSubClass;
 
     protected CompoundClass classyFireSuperClass;
 
     public static CompoundClasses of(CanopusResult canopusResult) {
-        //todo implement
-        return new CompoundClasses();
+        return of(canopusResult.getNpcFingerprint().orElse(null), canopusResult.getCanopusFingerprint());
+    }
+
+    public static CompoundClasses of(@Nullable ProbabilityFingerprint npcClassification, @Nullable ProbabilityFingerprint cfClassification) {
+        CompoundClasses sum = new CompoundClasses();
+
+        if (npcClassification != null) {
+            double[] perLevelProp = new double[NPCFingerprintVersion.NPCLevel.values().length];
+            NPCFingerprintVersion.NPCProperty[] perLevelProps = new NPCFingerprintVersion.NPCProperty[NPCFingerprintVersion.NPCLevel.values().length];
+            for (FPIter fpIter : npcClassification) {
+                NPCFingerprintVersion.NPCProperty prop = ((NPCFingerprintVersion.NPCProperty) fpIter.getMolecularProperty());
+
+                if (fpIter.getProbability() >= perLevelProp[prop.level.level]) {
+                    perLevelProp[prop.level.level] = fpIter.getProbability();
+                    perLevelProps[prop.level.level] = prop;
+                }
+            }
+
+            sum.setNpcPathway(CompoundClass.of(perLevelProps[0], perLevelProp[0]));
+            sum.setNpcSuperclass(CompoundClass.of(perLevelProps[1], perLevelProp[1]));
+            sum.setNpcClass(CompoundClass.of(perLevelProps[2], perLevelProp[2]));
+        }
+
+        if (cfClassification != null) {
+            FingerprintVersion v = cfClassification.getFingerprintVersion();
+            if (v instanceof MaskedFingerprintVersion) v = ((MaskedFingerprintVersion) v).getMaskedFingerprintVersion();
+            ClassyFireFingerprintVersion CLF = (ClassyFireFingerprintVersion) v;
+            ClassyfireProperty primaryClass = CLF.getPrimaryClass(cfClassification);
+            final ClassyfireProperty[] lineage = primaryClass.getLineage();
+
+            sum.setClassyFireMostSpecific(CompoundClass.of(primaryClass,
+                    cfClassification.getProbability(CLF.getIndexOfMolecularProperty(primaryClass))));
+
+            if (lineage.length > 5)
+                sum.setClassyFireLevel5(CompoundClass.of(lineage[5],
+                        cfClassification.getProbability(CLF.getIndexOfMolecularProperty(lineage[5]))));
+
+            if (lineage.length > 4)
+                sum.setClassyFireSubClass(CompoundClass.of(lineage[4],
+                        cfClassification.getProbability(CLF.getIndexOfMolecularProperty(lineage[4]))));
+
+            if (lineage.length > 3)
+                sum.setClassyFireClass(CompoundClass.of(lineage[3],
+                        cfClassification.getProbability(CLF.getIndexOfMolecularProperty(lineage[3]))));
+
+            if (lineage.length > 2)
+                sum.setClassyFireSuperClass(CompoundClass.of(lineage[2],
+                        cfClassification.getProbability(CLF.getIndexOfMolecularProperty(lineage[2]))));
+        }
+
+        return sum;
     }
 }

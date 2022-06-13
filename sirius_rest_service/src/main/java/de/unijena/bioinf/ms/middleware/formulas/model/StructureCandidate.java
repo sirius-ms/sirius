@@ -24,11 +24,8 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.DBLink;
-import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.PubmedLinks;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
-import de.unijena.bioinf.fingerid.blast.FBCandidates;
-import de.unijena.bioinf.projectspace.FormulaResult;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import lombok.Getter;
 import lombok.Setter;
@@ -73,7 +70,7 @@ public class StructureCandidate {
         return of(can, null, scorings, includeDB, includePubMed);
     }
 
-    public static StructureCandidate of(Scored<CompoundCandidate> can, @Nullable Fingerprint fp, FormulaScoring scorings,
+    public static StructureCandidate of(Scored<CompoundCandidate> can, @Nullable Fingerprint fp, @Nullable FormulaScoring confidenceScoreProvider,
                                         boolean includeDB, boolean includePubMed) {
 
 
@@ -82,7 +79,8 @@ public class StructureCandidate {
         // scores
         sSum.setCsiScore(can.getScore());
         sSum.setTanimotoSimilarity(can.getCandidate().getTanimoto());
-        scorings.getAnnotation(ConfidenceScore.class).map(ConfidenceScore::score).ifPresent(sSum::setConfidenceScore);
+        if (confidenceScoreProvider != null)
+            confidenceScoreProvider.getAnnotation(ConfidenceScore.class).map(ConfidenceScore::score).ifPresent(sSum::setConfidenceScore);
 
         //Structure information
         //check for "null" strings since the database might not be perfectly curated
@@ -107,7 +105,7 @@ public class StructureCandidate {
 
         //FP
         if (fp != null)
-            sSum.setFpBitsSet(((FingerprintCandidate) can.getCandidate()).getFingerprint().toIndizesArray());
+            sSum.setFpBitsSet(fp.toIndizesArray());
 
         return sSum;
     }
