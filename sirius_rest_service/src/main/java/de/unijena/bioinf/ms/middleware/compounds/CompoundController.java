@@ -98,6 +98,8 @@ public class CompoundController extends BaseApiController {
      * Import ms/ms data from the given format into the specified project-space
      * Possible formats (ms, mgf, cef, msp, mzML, mzXML)
      *
+     * THIS METHOD HAS KNOWN ISSUES PLEASE USE 'import-from-string' until fixed.
+     *
      * @param projectId  project-space to import into.
      * @param format     data format specified by the usual file extension of the format (without [.])
      * @param sourceName name that specifies the data source. Can e.g. be a file path or just a name.
@@ -110,6 +112,38 @@ public class CompoundController extends BaseApiController {
         final ProjectSpaceManager space = projectSpace(projectId);
         GenericParser<Ms2Experiment> parser = new MsExperimentParser().getParserByExt(format.toLowerCase());
         try (InputStream bodyStream = body.getInputStream()) {
+            try (CloseableIterator<Ms2Experiment> it = parser.parseIterator(bodyStream, null)) {
+                while (it.hasNext()) {
+                    Ms2Experiment next = it.next();
+                    if (sourceName != null)     //todo import handling needs to be improved ->  this naming hassle is ugly
+                        next.setAnnotation(SpectrumFileSource.class,
+                                new SpectrumFileSource(
+                                        new File("./" + (sourceName.endsWith(format) ? sourceName : sourceName + "." + format.toLowerCase())).toURI()));
+
+                    @NotNull Instance inst = space.newCompoundWithUniqueId(next);
+                    ids.add(CompoundId.of(inst.getID()));
+                }
+            }
+            return ids;
+        }
+    }
+
+    /**
+     * Import ms/ms data from the given format into the specified project-space
+     * Possible formats (ms, mgf, cef, msp, mzML, mzXML)
+     *
+     * @param projectId  project-space to import into.
+     * @param format     data format specified by the usual file extension of the format (without [.])
+     * @param sourceName name that specifies the data source. Can e.g. be a file path or just a name.
+     * @param body       data content in specified format
+     * @return CompoundIds of the imported compounds/features.
+     */
+    @PostMapping(value = "/compounds/import-from-string", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.TEXT_PLAIN_VALUE)
+    public List<CompoundId> importCompoundsFromString(@PathVariable String projectId, @RequestParam String format, @RequestParam(required = false) String sourceName, @RequestBody String body) throws IOException {
+        List<CompoundId> ids = new ArrayList<>();
+        final ProjectSpaceManager space = projectSpace(projectId);
+        GenericParser<Ms2Experiment> parser = new MsExperimentParser().getParserByExt(format.toLowerCase());
+        try (BufferedReader bodyStream = new BufferedReader(new StringReader(body))) {
             try (CloseableIterator<Ms2Experiment> it = parser.parseIterator(bodyStream, null)) {
                 while (it.hasNext()) {
                     Ms2Experiment next = it.next();
