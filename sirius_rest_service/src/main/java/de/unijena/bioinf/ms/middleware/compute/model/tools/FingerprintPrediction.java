@@ -38,5 +38,5 @@ public class FingerprintPrediction {
          * If true, an adaptive soft threshold will be applied to only compute Fingerprints for promising formula candidates
          * Enabling is highly recommended.
          */
-        FormulaResultThreshold useScoreThreshold = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaResultThreshold.class);
+        boolean useScoreThreshold = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaResultThreshold.class).useThreshold();
 }
