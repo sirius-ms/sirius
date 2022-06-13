@@ -96,7 +96,7 @@ public class ComputeController extends BaseApiController {
      *
      * @param projectId project-space to run jobs on
      */
-    @PostMapping(value = "/default-parameters", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/default-parameters", produces = MediaType.APPLICATION_JSON_VALUE)
     public JobSubmission getDefaultJobParameters(@PathVariable String projectId, @RequestParam(required = false, defaultValue = "false") boolean includeConfigMap) {
         return JobSubmission.createDefaultInstance(includeConfigMap);
     }
