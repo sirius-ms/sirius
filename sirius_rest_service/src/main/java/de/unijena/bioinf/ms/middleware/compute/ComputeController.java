@@ -43,6 +43,8 @@ public class ComputeController extends BaseApiController {
     /**
      * Get job information and its current state and progress (if available).
      */
+
+    @Deprecated
     @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<JobId> getJobs(@RequestParam(required = false, defaultValue = "false") boolean includeState) {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "NOT YET IMPLEMENTED");
@@ -51,6 +53,7 @@ public class ComputeController extends BaseApiController {
     /**
      * Get job information and its current state and progress (if available).
      */
+    @Deprecated
     @GetMapping(value = "/{jobId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public JobId getJob(@PathVariable String jobId) {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "NOT YET IMPLEMENTED");
@@ -59,6 +62,7 @@ public class ComputeController extends BaseApiController {
     /**
      * Start computation for given compounds and with given parameters.
      */
+    @Deprecated
     @PostMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
     public JobId startJob(@RequestBody JobSubmission jobSubmission) {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "NOT YET IMPLEMENTED");
@@ -67,10 +71,19 @@ public class ComputeController extends BaseApiController {
     /**
      * Delete job. Specify how to behave for running jobs.
      */
+    @Deprecated
     @DeleteMapping(value = "/{jobId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public void deleteJob(@PathVariable String jobId,
                           @RequestParam(required = false, defaultValue = "true") boolean cancelIfRunning,
                           @RequestParam(required = false, defaultValue = "true") boolean awaitDeletion) {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "NOT YET IMPLEMENTED");
+    }
+
+    /**
+     * Get with all parameters set to default values.
+     */
+    @PostMapping(value = "/default-parameters", produces = MediaType.APPLICATION_JSON_VALUE)
+    public JobSubmission getDefaultJobParameters(@RequestParam(required = false, defaultValue = "false") boolean includeConfigMap) {
+        return JobSubmission.createDefaultInstance(includeConfigMap);
     }
 }

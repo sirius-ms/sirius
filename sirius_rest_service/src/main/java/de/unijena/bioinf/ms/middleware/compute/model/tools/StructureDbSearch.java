@@ -20,8 +20,13 @@
 
 package de.unijena.bioinf.ms.middleware.compute.model.tools;
 
+import de.unijena.bioinf.chemdb.DataSource;
+import de.unijena.bioinf.elgordo.InjectElGordoCompounds;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.List;
 
 /**
  * User/developer friendly parameter subset for the CSI:FingerID structure db search tool.
@@ -29,4 +34,22 @@ import lombok.Setter;
 @Getter
 @Setter
 public class StructureDbSearch {
+    //todo make custom database support
+    /**
+     * Structure databases to search in
+     */
+    List<DataSource> structureSearchDBs;
+    //todo add lipid class support to api
+    /**
+     * Candidates matching the lipid class estimated by El Gordo will be tagged.
+     * The lipid class will only be available if El Gordo predicts that the MS/MS is a lipid spectrum.
+     * If this parameter is set to 'false' El Gordo will still be executed and e.g. improve the fragmentation
+     * tree, but the matching structure candidates will not be tagged if they match lipid class.
+     */
+    boolean tagLipids;
+
+    public StructureDbSearch() {
+        structureSearchDBs = List.of(DataSource.BIO);
+        tagLipids = PropertyManager.DEFAULTS.createInstanceWithDefaults(InjectElGordoCompounds.class).value;
+    }
 }
