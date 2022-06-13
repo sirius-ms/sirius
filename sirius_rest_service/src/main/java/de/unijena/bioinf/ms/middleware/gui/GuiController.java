@@ -50,45 +50,45 @@ import org.springframework.web.server.ResponseStatusException;
 //todo we need
 
 @RestController
-@RequestMapping(value = "/api/projects/{pid}/gui")
+@RequestMapping(value = "/api/projects/{projectId}/gui")
 @Tag(name = "Graphical user Interface", description = "Open, control and close SIRIUS GUI on the specified project-space.")
 public class GuiController {
 
     /**
      * Open GUI instance on specified project-space and bring the GUI window to foreground.
      * @param readOnly open in read-only mode.
-     * @param pid of project-space the GUI instance will connect to.
+     * @param projectId of project-space the GUI instance will connect to.
      */
     @Deprecated
     @PostMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
-    public void openGui(@PathVariable String pid, @RequestParam(required = false, defaultValue = "true") boolean readOnly) {
+    public void openGui(@PathVariable String projectId, @RequestParam(required = false, defaultValue = "true") boolean readOnly) {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "NOT YET IMPLEMENTED");
     }
 
     /**
      * Apply given changes to the running GUI instance.
-     * @param pid of project-space the GUI instance is connected to.
+     * @param projectId of project-space the GUI instance is connected to.
      * @param guiParameters parameters that should be applied.
      */
     @Deprecated
     @PatchMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
-    public void applyToGui (@PathVariable String pid, @RequestBody GuiParameters guiParameters) {
+    public void applyToGui (@PathVariable String projectId, @RequestBody GuiParameters guiParameters) {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "NOT YET IMPLEMENTED");
     }
 
     /**
      * Close GUI instance of given project-space if available.
-     * @param pid if project-space the GUI instance is connected to.
+     * @param projectId if project-space the GUI instance is connected to.
      */
     @Deprecated
     @DeleteMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
-    public void closeGui(@PathVariable String pid) {
+    public void closeGui(@PathVariable String projectId) {
         boolean isOpen = false;
         if (isOpen) {
             //todo close
-            throw new ResponseStatusException(HttpStatus.OK, "Gui instance on '" + pid + "' successfully closed.");
+            throw new ResponseStatusException(HttpStatus.OK, "Gui instance on '" + projectId + "' successfully closed.");
         } else {
-            throw new ResponseStatusException(HttpStatus.NO_CONTENT, "No running Gui instance on '" + pid + "'. Nothing to do.");
+            throw new ResponseStatusException(HttpStatus.NO_CONTENT, "No running Gui instance on '" + projectId + "'. Nothing to do.");
         }
     }
 }

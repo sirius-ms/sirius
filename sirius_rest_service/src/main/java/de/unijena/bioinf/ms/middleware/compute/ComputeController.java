@@ -33,7 +33,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 
 @RestController
-@RequestMapping(value = "/api/jobs")
+@RequestMapping(value = "/api/projects/{projectId}/jobs")
 @Tag(name = "Computations", description = "Start, monitor and cancel compute jobs.")
 public class ComputeController extends BaseApiController {
     public ComputeController(SiriusContext context) {
@@ -42,38 +42,50 @@ public class ComputeController extends BaseApiController {
 
     /**
      * Get job information and its current state and progress (if available).
+     *
+     * @param projectId project-space to run jobs on
      */
 
     @Deprecated
     @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<JobId> getJobs(@RequestParam(required = false, defaultValue = "false") boolean includeState) {
+    public List<JobId> getJobs(@PathVariable String projectId, @RequestParam(required = false, defaultValue = "false") boolean includeState) {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "NOT YET IMPLEMENTED");
     }
 
     /**
      * Get job information and its current state and progress (if available).
+     *
+     * @param projectId project-space to run jobs on
+     * @param jobId of the job to be returned
      */
     @Deprecated
     @GetMapping(value = "/{jobId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public JobId getJob(@PathVariable String jobId) {
+    public JobId getJob(@PathVariable String projectId, @PathVariable String jobId) {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "NOT YET IMPLEMENTED");
     }
 
     /**
      * Start computation for given compounds and with given parameters.
+     *
+     * @param projectId project-space to run jobs on
+     * @param jobSubmission configuration of the job that will be submitted of the job to be returned
      */
     @Deprecated
     @PostMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
-    public JobId startJob(@RequestBody JobSubmission jobSubmission) {
+    public JobId startJob(@PathVariable String projectId, @RequestBody JobSubmission jobSubmission) {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "NOT YET IMPLEMENTED");
     }
 
     /**
      * Delete job. Specify how to behave for running jobs.
+     *
+     * @param projectId project-space to run jobs on
+     * @param jobId of the job to be deleted
      */
     @Deprecated
     @DeleteMapping(value = "/{jobId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public void deleteJob(@PathVariable String jobId,
+    public void deleteJob(@PathVariable String projectId,
+                          @PathVariable String jobId,
                           @RequestParam(required = false, defaultValue = "true") boolean cancelIfRunning,
                           @RequestParam(required = false, defaultValue = "true") boolean awaitDeletion) {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "NOT YET IMPLEMENTED");
@@ -81,9 +93,11 @@ public class ComputeController extends BaseApiController {
 
     /**
      * Get with all parameters set to default values.
+     *
+     * @param projectId project-space to run jobs on
      */
     @PostMapping(value = "/default-parameters", produces = MediaType.APPLICATION_JSON_VALUE)
-    public JobSubmission getDefaultJobParameters(@RequestParam(required = false, defaultValue = "false") boolean includeConfigMap) {
+    public JobSubmission getDefaultJobParameters(@PathVariable String projectId, @RequestParam(required = false, defaultValue = "false") boolean includeConfigMap) {
         return JobSubmission.createDefaultInstance(includeConfigMap);
     }
 }
