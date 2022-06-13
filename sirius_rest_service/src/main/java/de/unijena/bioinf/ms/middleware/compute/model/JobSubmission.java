@@ -20,6 +20,51 @@
 
 package de.unijena.bioinf.ms.middleware.compute.model;
 
-public class JobSubmission {
+import de.unijena.bioinf.ms.middleware.compute.model.tools.*;
+import lombok.Getter;
+import lombok.Setter;
 
+import java.util.List;
+
+/**
+ * Object to submit a job to be executed by SIRIUS
+ */
+@Getter
+@Setter
+public class JobSubmission {
+    /**
+     * Compounds that should be the input for this Job
+     */
+    List<String> compoundIds;
+
+    /**
+     * Indicate if already existing result for a tool to be executed should be overwritten or not.
+     */
+    boolean recompute;
+
+    /**
+     * Parameter Object for molecular formula identification tool (CLI-Tool: formula, sirius).
+     * If NULL the tool will not be executed.
+     */
+    Sirius formulaIdParas;
+    /**
+     * Parameter Object for network  based molecular formula re-ranking (CLI-Tool: zodiac).
+     * If NULL the tool will not be executed.
+     */
+    Zodiac zodiacParas;
+    /**
+     * Parameter Object for Fingerprint prediction with CSI:FingerID (CLI-Tool: fingerint).
+     * If NULL the tool will not be executed.
+     */
+    FingerprintPrediction fingerprintPredictionParas;
+    /**
+     * Parameter Object for structure database search with CSI:FingerID (CLI-Tool: structure).
+     * If NULL the tool will not be executed.
+     */
+    StructureDbSearch structureDbSearchParas;
+    /**
+     * Parameter Object for CANOPUS compound class prediction tool (CLI-Tool: canopus).
+     * If NULL the tool will not be executed.
+     */
+    Canopus canopusParas;
 }
