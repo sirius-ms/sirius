@@ -29,14 +29,20 @@ import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
-import de.unijena.bioinf.ms.frontend.utils.SummaryUtils;
+import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.middleware.BaseApiController;
 import de.unijena.bioinf.ms.middleware.SiriusContext;
-import de.unijena.bioinf.ms.middleware.compounds.model.*;
+import de.unijena.bioinf.ms.middleware.compounds.model.CompoundAnnotation;
+import de.unijena.bioinf.ms.middleware.compounds.model.CompoundId;
+import de.unijena.bioinf.ms.middleware.compounds.model.MsData;
+import de.unijena.bioinf.ms.middleware.formulas.model.CompoundClasses;
 import de.unijena.bioinf.ms.middleware.formulas.model.FormulaCandidate;
 import de.unijena.bioinf.ms.middleware.formulas.model.StructureCandidate;
 import de.unijena.bioinf.ms.middleware.spectrum.AnnotatedSpectrum;
-import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.projectspace.CompoundContainerId;
+import de.unijena.bioinf.projectspace.FormulaScoring;
+import de.unijena.bioinf.projectspace.Instance;
+import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidateNumber;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.jetbrains.annotations.NotNull;
@@ -118,8 +124,8 @@ public class CompoundController extends BaseApiController {
      */
     @GetMapping(value = "/compounds/{cid}", produces = MediaType.APPLICATION_JSON_VALUE)
     public CompoundId getCompound(@PathVariable String projectId, @PathVariable String cid,
-                                  @RequestParam(required = false) boolean topAnnotation,
-                                  @RequestParam(required = false) boolean msData) {
+                                  @RequestParam(required = false, defaultValue = "false") boolean topAnnotation,
+                                  @RequestParam(required = false, defaultValue = "false") boolean msData) {
         final ProjectSpaceManager space = projectSpace(projectId);
         final CompoundContainerId ccid = parseCID(space, cid);
         return asCompoundId(ccid, space, topAnnotation, msData);
@@ -127,7 +133,7 @@ public class CompoundController extends BaseApiController {
 
 
     private CompoundAnnotation asCompoundSummary(Instance inst) {
-        return inst.loadTopFormulaResult().map(de.unijena.bioinf.projectspace.FormulaResult::getId).flatMap(frid -> {
+        return inst.loadTopFormulaResult(List.of(TopCSIScore.class)).map(de.unijena.bioinf.projectspace.FormulaResult::getId).flatMap(frid -> {
             frid.setAnnotation(FBCandidateNumber.class, new FBCandidateNumber(1));
             return inst.loadFormulaResult(frid, FormulaScoring.class, FTree.class, FBCandidates.class, CanopusResult.class)
                     .map(topHit -> {
@@ -143,14 +149,12 @@ public class CompoundController extends BaseApiController {
                                                 true, true))
                                 .ifPresent(cSum::setStructureAnnotation);
 
-                        topHit.getAnnotation(CanopusResult.class).
-                                ifPresent(cRes -> cSum.setCompoundClassAnnotation(SummaryUtils.chooseBestNPCAssignments(
-                                        cRes.getNpcFingerprint().orElse(null),
-                                        cRes.getCanopusFingerprint())));
+                        topHit.getAnnotation(CanopusResult.class).map(CompoundClasses::of).
+                                ifPresent(cSum::setCompoundClassAnnotation);
                         return cSum;
 
                     });
-        }).orElse(new CompoundAnnotation());
+        }).orElse(null);
     }
 
     private MsData asCompoundMsData(Instance instance) {

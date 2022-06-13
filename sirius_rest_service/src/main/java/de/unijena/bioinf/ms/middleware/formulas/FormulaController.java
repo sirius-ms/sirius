@@ -29,6 +29,7 @@ import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
+import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.middleware.BaseApiController;
 import de.unijena.bioinf.ms.middleware.SiriusContext;
@@ -132,23 +133,35 @@ public class FormulaController extends BaseApiController {
                                                            @RequestParam(defaultValue = "false") boolean pubMedIds,
 
                                                            @RequestParam(defaultValue = "-1") int topK) {
-        List<Class<? extends DataAnnotation>> para = (fingerprint ? List.of(FBCandidates.class, FBCandidateFingerprints.class) : List.of(FBCandidates.class));
+        List<Class<? extends DataAnnotation>> para = (fingerprint ? List.of(FormulaScoring.class, FBCandidates.class, FBCandidateFingerprints.class) : List.of(FormulaScoring.class, FBCandidates.class));
         Instance instance = loadInstance(projectId, compoundId);
         FormulaResultId fidObj = parseFID(instance, formulaId);
         fidObj.setAnnotation(FBCandidateNumber.class, topK <= 0 ? FBCandidateNumber.ALL : new FBCandidateNumber(topK));
         FormulaResult fr = instance.loadFormulaResult(fidObj, (Class<? extends DataAnnotation>[]) para.toArray(Class[]::new)).orElseThrow();
         return fr.getAnnotation(FBCandidates.class).map(FBCandidates::getResults).map(l -> {
+            List<StructureCandidate> candidates = new ArrayList();
+            Iterator<Scored<CompoundCandidate>> it = l.iterator();
 
             if (fingerprint) {
-                List<StructureCandidate> candidate = new ArrayList();
                 Iterator<Fingerprint> fps = fr.getAnnotationOrThrow(FBCandidateFingerprints.class).getFingerprints().iterator();
-                Iterator<Scored<CompoundCandidate>> it = l.iterator();
+
+                if (it.hasNext())//tophit
+                    candidates.add(StructureCandidate.of(it.next(), fps.next(),
+                            fr.getAnnotationOrThrow(FormulaScoring.class), dbLinks, pubMedIds));
+
                 while (it.hasNext())
-                    candidate.add(StructureCandidate.of(it.next(), fps.next(), fr.getAnnotationOrThrow(FormulaScoring.class), dbLinks, pubMedIds));
-                return candidate;
+                    candidates.add(StructureCandidate.of(it.next(), fps.next(),
+                            null, dbLinks, pubMedIds));
             } else {
-                return l.stream().map(s -> StructureCandidate.of(s, fr.getAnnotationOrThrow(FormulaScoring.class), dbLinks, pubMedIds)).collect(Collectors.toList());
+                if (it.hasNext())//tophit
+                    candidates.add(StructureCandidate.of(it.next(), null,
+                            fr.getAnnotationOrThrow(FormulaScoring.class), dbLinks, pubMedIds));
+
+                while (it.hasNext())
+                    candidates.add(StructureCandidate.of(it.next(), null,
+                            null, dbLinks, pubMedIds));
             }
+            return candidates;
         }).orElse(null);
     }
 
@@ -168,12 +181,18 @@ public class FormulaController extends BaseApiController {
     @GetMapping(value = "/top-structure", produces = MediaType.APPLICATION_JSON_VALUE)
     public StructureCandidate getTopStructureCandidate(@PathVariable String projectId, @PathVariable String compoundId, @RequestParam(defaultValue = "false") boolean fingerprint, @RequestParam(defaultValue = "false") boolean dbLinks, @RequestParam(defaultValue = "false") boolean pubMedIds) {
 
-        List<Class<? extends DataAnnotation>> para = (fingerprint ? List.of(FBCandidates.class, FBCandidateFingerprints.class) : List.of(FBCandidates.class));
+        List<Class<? extends DataAnnotation>> para = (fingerprint ? List.of(FormulaScoring.class, FBCandidates.class, FBCandidateFingerprints.class) : List.of(FormulaScoring.class, FBCandidates.class));
         Instance instance = loadInstance(projectId, compoundId);
 
-        return instance.loadTopFormulaResult().flatMap(fr -> {
+        return instance.loadTopFormulaResult(List.of(TopCSIScore.class)).flatMap(fr -> {
             fr.getId().setAnnotation(FBCandidateNumber.class, new FBCandidateNumber(1));
-            return instance.loadFormulaResult(fr.getId(), (Class<? extends DataAnnotation>[]) para.toArray(Class[]::new)).flatMap(fr2 -> fr2.getAnnotation(FBCandidates.class).map(FBCandidates::getResults).filter(l -> !l.isEmpty()).map(r -> r.get(0)).map(sc -> StructureCandidate.of(sc, fingerprint ? fr2.getAnnotationOrThrow(FBCandidateFingerprints.class).getFingerprints().get(0) : null, fr.getAnnotationOrThrow(FormulaScoring.class), dbLinks, pubMedIds)));
+            return instance.loadFormulaResult(fr.getId(), (Class<? extends DataAnnotation>[]) para.toArray(Class[]::new))
+                    .flatMap(fr2 -> fr2.getAnnotation(FBCandidates.class).map(FBCandidates::getResults)
+                            .filter(l -> !l.isEmpty()).map(r -> r.get(0))
+                            .map(sc -> StructureCandidate.of(sc, fingerprint
+                                    ? fr2.getAnnotationOrThrow(FBCandidateFingerprints.class).getFingerprints().get(0)
+                                    : null, fr.getAnnotationOrThrow(FormulaScoring.class), dbLinks, pubMedIds))
+                    );
         }).orElseThrow();
     }
 
@@ -222,7 +241,7 @@ public class FormulaController extends BaseApiController {
      * @return probabilistic fingerprint predicted by CSI:FingerID
      */
     @GetMapping(value = "/formulas/{formulaId}/fingerprint", produces = MediaType.APPLICATION_JSON_VALUE)
-    public double[] getFingerprint(@PathVariable String projectId, @PathVariable String compoundId, @PathVariable String formulaId) {
+    public double[] getFingerprintPrediction(@PathVariable String projectId, @PathVariable String compoundId, @PathVariable String formulaId) {
         Instance instance = loadInstance(projectId, compoundId);
         Optional<FormulaResult> fResult = instance.loadFormulaResult(parseFID(instance, formulaId), FingerprintResult.class);
         return fResult.flatMap(fr -> fr.getAnnotation(FingerprintResult.class).map(fpResult -> fpResult.fingerprint.toProbabilityArray()))
@@ -252,8 +271,8 @@ public class FormulaController extends BaseApiController {
      * @param formulaId identifier of the requested formula result
      * @return Best matching Predicted compound classes
      */
-    @GetMapping(value = "/formulas/{formulaId}/compound-classes", produces = MediaType.APPLICATION_JSON_VALUE)
-    public CompoundClasses getCanopusCompoundClasses(@PathVariable String projectId, @PathVariable String compoundId, @PathVariable String formulaId) {
+    @GetMapping(value = "/formulas/{formulaId}/best-canopus-predictions", produces = MediaType.APPLICATION_JSON_VALUE)
+    public CompoundClasses getBestMatchingCanopusPredictions(@PathVariable String projectId, @PathVariable String compoundId, @PathVariable String formulaId) {
         Instance instance = loadInstance(projectId, compoundId);
         Optional<FormulaResult> fResult = instance.loadFormulaResult(parseFID(instance, formulaId), CanopusResult.class);
         return fResult.flatMap(fr -> fr.getAnnotation(CanopusResult.class).map(CompoundClasses::of))
