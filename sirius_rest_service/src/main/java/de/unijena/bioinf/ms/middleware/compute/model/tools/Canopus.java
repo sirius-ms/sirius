@@ -30,4 +30,9 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Canopus {
+    /**
+     * Just a placeholder
+     */
+    boolean enabled = true;
+
 }

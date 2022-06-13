@@ -21,15 +21,22 @@
 package de.unijena.bioinf.ms.middleware.compute.model.tools;
 
 
+import de.unijena.bioinf.fingerid.annotations.FormulaResultThreshold;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import lombok.Getter;
 import lombok.Setter;
 
 /**
  * User/developer friendly parameter subset for the CSI:FingerID Fingerprint tool
  */
+
 @Getter
 @Setter
 public class FingerprintPrediction {
 
-
+        /**
+         * If true, an adaptive soft threshold will be applied to only compute Fingerprints for promising formula candidates
+         * Enabling is highly recommended.
+         */
+        FormulaResultThreshold useScoreThreshold = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaResultThreshold.class);
 }

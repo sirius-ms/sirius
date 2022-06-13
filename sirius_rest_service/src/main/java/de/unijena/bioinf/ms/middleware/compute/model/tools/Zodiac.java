@@ -20,6 +20,8 @@
 
 package de.unijena.bioinf.ms.middleware.compute.model.tools;
 
+import de.unijena.bioinf.GibbsSampling.properties.*;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -29,7 +31,30 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Zodiac {
-    int consideredCandidates300;
-    int consideredCandidates650;
-    
+
+    /**
+     * Maximum number of candidate molecular formulas (fragmentation trees computed by SIRIUS) per compound which are considered by ZODIAC for compounds below 300 m/z.
+     */
+    ZodiacNumberOfConsideredCandidatesAt300Mz consideredCandidatesAt300Mz = PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacNumberOfConsideredCandidatesAt300Mz.class);
+    /**
+     * Maximum number of candidate molecular formulas (fragmentation trees computed by SIRIUS) per compound which are considered by ZODIAC for compounds above 800 m/z.
+     */
+    ZodiacNumberOfConsideredCandidatesAt800Mz consideredCandidatesAt800Mz = PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacNumberOfConsideredCandidatesAt800Mz.class);
+    /**
+     * As default ZODIAC runs a 2-step approach. First running 'good quality compounds' only, and afterwards including the remaining.
+     */
+    ZodiacRunInTwoSteps runInTwoSteps = PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacRunInTwoSteps.class);
+
+    /**
+     * thresholdFilter = Defines the proportion of edges of the complete network which will be ignored.
+     * minLocalConnections = Minimum number of compounds to which at least one candidate per compound must be connected to.
+     */
+    ZodiacEdgeFilterThresholds edgeFilterThresholds;
+
+    /**
+     * iterations: "Number of epochs to run the Gibbs sampling. When multiple Markov chains are computed, all chains' iterations sum up to this value."
+     * burnInPeriod: "Number of epochs considered as 'burn-in period'.
+     * numberOfMarkovChains: Number of separate Gibbs sampling runs.
+     */
+    ZodiacEpochs gibbsSamplerParameters = PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacEpochs.class);
 }
