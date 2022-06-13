@@ -174,7 +174,7 @@ public class SiriusContext implements DisposableBean {
     }
 
     public ProjectSpaceId createProjectSpace(@NotNull String nameSuggestion, @NotNull Path location) throws IOException {
-        if (!Files.exists(location) || (Files.isDirectory(location) && FileUtils.listAndClose(location, s -> s.findAny().isEmpty())))
+        if (Files.exists(location) && !(Files.isDirectory(location) && FileUtils.listAndClose(location, s -> s.findAny().isEmpty())))
             throw new IllegalArgumentException("Location '" + location.toAbsolutePath() +
                     "' already exists and is not an empty directory. Cannot create new project space here.");
 
