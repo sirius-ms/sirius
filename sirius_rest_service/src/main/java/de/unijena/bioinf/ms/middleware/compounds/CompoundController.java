@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.middleware.compounds;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.SpectrumFileSource;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.babelms.CloseableIterator;
@@ -53,8 +54,10 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import javax.servlet.http.HttpServletRequest;
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -75,9 +78,10 @@ public class CompoundController extends BaseApiController {
 
     /**
      * Get all available compounds/features in the given project-space.
-     * @param projectId project-space to read from.
+     *
+     * @param projectId     project-space to read from.
      * @param topAnnotation include the top annotation of this feature into the output (if available).
-     * @param msData include corresponding source data (MS and MS/MS) into the output.
+     * @param msData        include corresponding source data (MS and MS/MS) into the output.
      * @return CompoundIds with additional annotations and MS/MS data (if specified).
      */
     @GetMapping(value = "/compounds", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -95,31 +99,41 @@ public class CompoundController extends BaseApiController {
     /**
      * Import ms/ms data from the given format into the specified project-space
      * Possible formats (ms, mgf, cef, msp, mzML, mzXML)
-     * @param projectId project-space to import into.
-     * @param format format of te
-     * @param request data content in specified format
+     *
+     * @param projectId  project-space to import into.
+     * @param format     data format specified by the usual file extension of the format (without [.])
+     * @param sourceName name that specifies the data source. Can e.g. be a file path or just a name.
+     * @param body       data content in specified format
      * @return CompoundIds of the imported compounds/features.
      */
-    @PostMapping(value = "/compounds", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<CompoundId> importCompounds(@PathVariable String projectId, @RequestParam String format, HttpServletRequest request) throws IOException {
+    @PostMapping(value = "/compounds", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public List<CompoundId> importCompounds(@PathVariable String projectId, @RequestParam String format, @RequestParam(required = false) String sourceName, @RequestBody byte[] body) throws IOException {
         List<CompoundId> ids = new ArrayList<>();
         final ProjectSpaceManager space = projectSpace(projectId);
-        GenericParser<Ms2Experiment> parser = new MsExperimentParser().getParserByExt(format);
-        try (CloseableIterator<Ms2Experiment> it = parser.parseIterator(request.getInputStream(), null)) {
-            while (it.hasNext()) {
-                Ms2Experiment next = it.next();
-                @NotNull Instance inst = space.newCompoundWithUniqueId(next);
-                ids.add(CompoundId.of(inst.getID()));
+        GenericParser<Ms2Experiment> parser = new MsExperimentParser().getParserByExt(format.toLowerCase());
+        try (InputStream bodyStream = new ByteArrayInputStream(body)) {
+            try (CloseableIterator<Ms2Experiment> it = parser.parseIterator(bodyStream, null)) {
+                while (it.hasNext()) {
+                    Ms2Experiment next = it.next();
+                    if (sourceName != null)     //todo import handling needs to be improved ->  this naming hassle is ugly
+                        next.setAnnotation(SpectrumFileSource.class,
+                                new SpectrumFileSource(
+                                        new File("./" + (sourceName.endsWith(format) ? sourceName : sourceName + "." + format.toLowerCase())).toURI()));
+
+                    @NotNull Instance inst = space.newCompoundWithUniqueId(next);
+                    ids.add(CompoundId.of(inst.getID()));
+                }
             }
+            return ids;
         }
-        return ids;
     }
 
     /**
      * Get compound/feature with the given identifier from the specified project-space.
-     * @param projectId project-space to read from.
+     *
+     * @param projectId     project-space to read from.
      * @param topAnnotation include the top annotation of this feature into the output (if available).
-     * @param msData include corresponding source data (MS and MS/MS) into the output.
+     * @param msData        include corresponding source data (MS and MS/MS) into the output.
      * @return CompoundId with additional annotations and MS/MS data (if specified).
      */
     @GetMapping(value = "/compounds/{cid}", produces = MediaType.APPLICATION_JSON_VALUE)
