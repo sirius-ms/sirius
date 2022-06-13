@@ -52,6 +52,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.ByteArrayInputStream;
@@ -107,11 +108,11 @@ public class CompoundController extends BaseApiController {
      * @return CompoundIds of the imported compounds/features.
      */
     @PostMapping(value = "/compounds", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public List<CompoundId> importCompounds(@PathVariable String projectId, @RequestParam String format, @RequestParam(required = false) String sourceName, @RequestBody byte[] body) throws IOException {
+    public List<CompoundId> importCompounds(@PathVariable String projectId, @RequestParam String format, @RequestParam(required = false) String sourceName, @RequestBody MultipartFile body) throws IOException {
         List<CompoundId> ids = new ArrayList<>();
         final ProjectSpaceManager space = projectSpace(projectId);
         GenericParser<Ms2Experiment> parser = new MsExperimentParser().getParserByExt(format.toLowerCase());
-        try (InputStream bodyStream = new ByteArrayInputStream(body)) {
+        try (InputStream bodyStream = body.getInputStream()) {
             try (CloseableIterator<Ms2Experiment> it = parser.parseIterator(bodyStream, null)) {
                 while (it.hasNext()) {
                     Ms2Experiment next = it.next();
