@@ -27,14 +27,20 @@ import de.unijena.bioinf.ms.middleware.login.model.AccountInfo;
 import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.webapi.Tokens;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.awt.*;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+
+import static com.hp.hpl.jena.vocabulary.RSS.url;
 
 @RestController
 @RequestMapping(value = "/api/account")
@@ -43,20 +49,21 @@ public class LoginController {
 
     /**
      * Login into SIRIUS web services.
-     * @param credentials used to log in.
-     * @param failIfLoggedIn if true request fails if an active login already exists.
-     * @param includeSubs  include available and active subscriptions in {@link AccountInfo}.
+     *
+     * @param credentials      used to log in.
+     * @param failWhenLoggedIn if true request fails if an active login already exists.
+     * @param includeSubs      include available and active subscriptions in {@link AccountInfo}.
      * @return Basic information about the account that has been logged in and its subscriptions.
      */
     @PostMapping(value = "/login", produces = MediaType.APPLICATION_JSON_VALUE)
     public AccountInfo login(@RequestBody AccountCredentials credentials,
-                             @RequestParam(required = false, defaultValue = "false") boolean failIfLoggedIn,
+                             @RequestParam(required = false, defaultValue = "false") boolean failWhenLoggedIn,
                              @RequestParam(required = false, defaultValue = "false") boolean includeSubs
     ) throws IOException, ExecutionException, InterruptedException {
         AuthService as = ApplicationCore.WEB_API.getAuthService();
         if (!as.needsLogin()) {
-            if (failIfLoggedIn)
-                throw new ResponseStatusException(HttpStatus.METHOD_NOT_ALLOWED, "Already logged in. PLeas logout first or use 'failIfExists=false'.");
+            if (failWhenLoggedIn)
+                throw new ResponseStatusException(HttpStatus.METHOD_NOT_ALLOWED, "Already logged in. PLeas logout first or use 'failWhenLoggedIn=false'.");
             else
                 as.logout();
         }
@@ -74,13 +81,14 @@ public class LoginController {
 
     /**
      * Get information about the account currently logged in. Fails if not logged in.
+     *
      * @param includeSubs include available and active subscriptions in {@link AccountInfo}.
      * @return Basic information about the account that has been logged in and its subscriptions.
      */
     @GetMapping(value = "/", produces = MediaType.APPLICATION_JSON_VALUE)
     public AccountInfo getAccountInfo(@RequestParam(required = false, defaultValue = "false") boolean includeSubs) {
         return ApplicationCore.WEB_API.getAuthService()
-                .getToken().map(t -> AccountInfo.of(t, ApplicationCore.WEB_API.getActiveSubscription()))
+                .getToken().map(t -> AccountInfo.of(t, ApplicationCore.WEB_API.getActiveSubscription(), includeSubs))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not Logged in. Please log in to retrieve account information."));
     }
 
@@ -97,11 +105,12 @@ public class LoginController {
 
     /**
      * Request a long-lived refresh token for the account currently logged in (keep it save).
+     *
      * @return refresh_token in JWT bearer format.
      */
     @Deprecated
     @PostMapping(value = "/request-token", produces = MediaType.APPLICATION_JSON_VALUE)
-    public String requestRefreshToken(){
+    public String requestRefreshToken() {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "NOT YET IMPLEMENTED");
     }
 
@@ -110,8 +119,40 @@ public class LoginController {
      */
     @Deprecated
     @PostMapping(value = "/invalidate-token", produces = MediaType.APPLICATION_JSON_VALUE)
-    public void invalidateRefreshToken(){
+    public void invalidateRefreshToken() {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "NOT YET IMPLEMENTED");
     }
 
+    /**
+     * Get SignUp URL (For signUp via web browser)
+     */
+    @GetMapping(value = "/signUpURL", produces = MediaType.APPLICATION_JSON_VALUE)
+    public URI getSignUpURL() throws URISyntaxException {
+        return ApplicationCore.WEB_API.getSignUpURL();
+    }
+
+
+    /**
+     * Open SignUp window in system browser and return signUp link.
+     */
+    @Deprecated
+    @GetMapping(value = "/signUp", produces = MediaType.APPLICATION_JSON_VALUE)
+    public String signUp() throws URISyntaxException {
+        URI path = getSignUpURL();
+        try {
+            if (Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().browse(path);
+            } else {
+                String message = "Could not detect system browser to open URL. Try visit Page Manually: " + path;
+                LoggerFactory.getLogger(getClass()).error("Desktop NOT supported: " + message);
+
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, message);
+            }
+        } catch (IOException e) {
+            String message = "Could not Open URL in System Browser. Try visit Page Manually: " + path;
+            LoggerFactory.getLogger(getClass()).error(message, e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, message);
+        }
+        return path.toString();
+    }
 }

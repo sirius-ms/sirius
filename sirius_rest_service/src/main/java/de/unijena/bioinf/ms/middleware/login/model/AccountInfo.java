@@ -29,7 +29,9 @@ import de.unijena.bioinf.webapi.Tokens;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.jetbrains.annotations.Nullable;
 
+import java.net.URI;
 import java.util.List;
 
 @Getter
@@ -39,31 +41,30 @@ public class AccountInfo {
     //todo maybe move CLASS to auth service module
     String userID;
     String username;
-    String emailEmail;
+    String userEmail;
+    String gravatarURL;
     List<Subscription> subscriptions;
 
     @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "sid")
     @JsonIdentityReference(alwaysAsId = true)
     Subscription activeSubscription;
 
-    public static AccountInfo of(AuthService.Token token, boolean includeSubscription) {
-        AccountInfo ai = new AccountInfo();
 
+    public static AccountInfo of(AuthService.Token token, @Nullable Subscription activeSubscription, boolean includeSubscription) {
+        AccountInfo ai = new AccountInfo();
+        Tokens.getUserEmail(token).ifPresent(ai::setUserEmail);
+        Tokens.getUserId(token).ifPresent(ai::setUserID);
+        Tokens.getUserEmail(token).ifPresent(ai::setUsername);
+        Tokens.getUserImage(token).map(URI::toString).ifPresent(ai::setGravatarURL);
         if (includeSubscription) {
             ai.setSubscriptions(Tokens.getSubscriptions(token));
-            ai.setActiveSubscription(Tokens.getActiveSubscription(ai.getSubscriptions()));
+            ai.setActiveSubscription(Tokens.getActiveSubscription(ai.getSubscriptions(),
+                    activeSubscription== null ? null : activeSubscription.getSid()));
         }
         return ai;
     }
 
-    public static AccountInfo of(AuthService.Token token, Subscription activeSubscription) {
-        AccountInfo ai = new AccountInfo();
-        ai.setSubscriptions(Tokens.getSubscriptions(token));
-        ai.setActiveSubscription(Tokens.getActiveSubscription(ai.getSubscriptions(), activeSubscription.getSid()));
-        return ai;
-    }
-
     public static AccountInfo of(AuthService.Token token) {
-        return of(token, false);
+        return of(token, null, false);
     }
 }
