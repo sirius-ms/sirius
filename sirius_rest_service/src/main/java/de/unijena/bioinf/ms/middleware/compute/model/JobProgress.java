@@ -25,12 +25,41 @@ import de.unijena.bioinf.jjobs.JJob;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * Progress information of a computation job that has already been submitted to SIRIUS.
+ * if  currentProgress == maxProgress job is finished and should change to state done soon.
+ * if a job is DONE all results can be accessed via the Project-Spaces api.
+ */
 @Getter
 @Setter
 public class JobProgress {
+    /**
+     * Is the progress indeterminate or not
+     */
     boolean indeterminate;
+    /**
+     * Current state of the Jobs in the SIRIUS internal Job scheduler
+     *
+     *         WAITING: Waiting for submission to ExecutorService (e.g. due to dependent jobs)
+     *         READY: Ready for submission but not yet enqueued for submission to ExecutorService.
+     *         QUEUED: Enqueued for submission to ExecutorService.
+     *         SUBMITTED: Submitted and waiting to be executed.
+     *         RUNNING: Job is running.
+     *         CANCELED: Jobs is finished due to cancellation by suer or dependent jobs.
+     *         FAILED: Job is finished but failed.
+     *         DONE: Job finished successfully.
+     */
     JJob.JobState state;
+    /**
+     * Current progress value of the job.
+     */
     Long currentProgress;
+    /**
+     * Progress value to reach (might also change during execution)
+     */
     Long maxProgress;
+    /**
+     * Progress information, warnings and errors.
+     */
     String message;
 }
