@@ -33,7 +33,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 
 @RestController
-@RequestMapping(value = "/api/projects/{projectId}/jobs")
+@RequestMapping(value = "/api")
 @Tag(name = "Computations", description = "Start, monitor and cancel compute jobs.")
 public class ComputeController extends BaseApiController {
     public ComputeController(SiriusContext context) {
@@ -47,7 +47,7 @@ public class ComputeController extends BaseApiController {
      */
 
     @Deprecated
-    @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/projects/{projectId}/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<JobId> getJobs(@PathVariable String projectId, @RequestParam(required = false, defaultValue = "false") boolean includeState) {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "NOT YET IMPLEMENTED");
     }
@@ -59,7 +59,7 @@ public class ComputeController extends BaseApiController {
      * @param jobId of the job to be returned
      */
     @Deprecated
-    @GetMapping(value = "/{jobId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/projects/{projectId}/jobs/{jobId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public JobId getJob(@PathVariable String projectId, @PathVariable String jobId) {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "NOT YET IMPLEMENTED");
     }
@@ -71,7 +71,7 @@ public class ComputeController extends BaseApiController {
      * @param jobSubmission configuration of the job that will be submitted of the job to be returned
      */
     @Deprecated
-    @PostMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/projects/{projectId}/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
     public JobId startJob(@PathVariable String projectId, @RequestBody JobSubmission jobSubmission) {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "NOT YET IMPLEMENTED");
     }
@@ -83,7 +83,7 @@ public class ComputeController extends BaseApiController {
      * @param jobId of the job to be deleted
      */
     @Deprecated
-    @DeleteMapping(value = "/{jobId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @DeleteMapping(value = "/projects/{projectId}/jobs/{jobId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public void deleteJob(@PathVariable String projectId,
                           @PathVariable String jobId,
                           @RequestParam(required = false, defaultValue = "true") boolean cancelIfRunning,
@@ -93,11 +93,9 @@ public class ComputeController extends BaseApiController {
 
     /**
      * Get with all parameters set to default values.
-     *
-     * @param projectId project-space to run jobs on
      */
-    @GetMapping(value = "/default-parameters", produces = MediaType.APPLICATION_JSON_VALUE)
-    public JobSubmission getDefaultJobParameters(@PathVariable String projectId, @RequestParam(required = false, defaultValue = "false") boolean includeConfigMap) {
+    @GetMapping(value = "/default-job-parameters", produces = MediaType.APPLICATION_JSON_VALUE)
+    public JobSubmission getDefaultJobParameters(@RequestParam(required = false, defaultValue = "false") boolean includeConfigMap) {
         return JobSubmission.createDefaultInstance(includeConfigMap);
     }
 }
