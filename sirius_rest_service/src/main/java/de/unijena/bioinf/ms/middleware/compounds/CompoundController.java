@@ -55,10 +55,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -107,7 +104,7 @@ public class CompoundController extends BaseApiController {
      * @param body       data content in specified format
      * @return CompoundIds of the imported compounds/features.
      */
-    @PostMapping(value = "/compounds", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @PostMapping(value = "/compounds", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public List<CompoundId> importCompounds(@PathVariable String projectId, @RequestParam String format, @RequestParam(required = false) String sourceName, @RequestBody MultipartFile body) throws IOException {
         List<CompoundId> ids = new ArrayList<>();
         final ProjectSpaceManager space = projectSpace(projectId);
