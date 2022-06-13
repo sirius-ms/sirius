@@ -25,4 +25,22 @@ public class CombinatorialSubtreeManipulator {
         }
         return score;
     }
+
+    public static double tanimoto(CombinatorialSubtree subtree1, CombinatorialSubtree subtree2, CombinatorialGraph graph){
+        boolean[] subtree1Array = subtree1.toBooleanArray(graph);
+        boolean[] subtree2Array = subtree2.toBooleanArray(graph);
+        return tanimoto(subtree1Array, subtree2Array);
+    }
+
+    public static double tanimoto(boolean[] subtree1, boolean[] subtree2){
+        int numCommonEdges = 0;
+        int numEdges = 0;
+
+        for(int i = 0; i < subtree1.length; i++){
+            numCommonEdges = numCommonEdges + (subtree1[i] && subtree2[i] ? 1 : 0);
+            numEdges = numEdges + (subtree1[i] || subtree2[i] ? 1 : 0);
+        }
+
+        return ((double) numCommonEdges / numEdges);
+    }
 }
