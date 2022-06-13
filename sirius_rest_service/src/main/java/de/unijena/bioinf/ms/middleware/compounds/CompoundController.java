@@ -130,6 +130,7 @@ public class CompoundController extends BaseApiController {
      * Get compound/feature with the given identifier from the specified project-space.
      *
      * @param projectId     project-space to read from.
+     * @param cid           identifier of compound to access.
      * @param topAnnotation include the top annotation of this feature into the output (if available).
      * @param msData        include corresponding source data (MS and MS/MS) into the output.
      * @return CompoundId with additional annotations and MS/MS data (if specified).
@@ -141,6 +142,19 @@ public class CompoundController extends BaseApiController {
         final ProjectSpaceManager space = projectSpace(projectId);
         final CompoundContainerId ccid = parseCID(space, cid);
         return asCompoundId(ccid, space, topAnnotation, msData);
+    }
+
+    /**
+     * Delete compound/feature with the given identifier from the specified project-space.
+     *
+     * @param projectId     project-space to delete from.
+     * @param cid           identifier of compound to delete.
+     */
+    @DeleteMapping(value = "/compounds/{cid}")
+    public void deleteCompound(@PathVariable String projectId, @PathVariable String cid) throws IOException {
+        final ProjectSpaceManager space = projectSpace(projectId);
+        CompoundContainerId compound = space.projectSpace().findCompound(cid).orElseThrow(() -> new ResponseStatusException(HttpStatus.NO_CONTENT, "Compound with id '" + cid + "' does not exist in '" + projectId + "'."));
+        space.projectSpace().deleteCompound(compound);
     }
 
 
