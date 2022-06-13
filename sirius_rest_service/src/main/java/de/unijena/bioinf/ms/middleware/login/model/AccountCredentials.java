@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.login.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
 
