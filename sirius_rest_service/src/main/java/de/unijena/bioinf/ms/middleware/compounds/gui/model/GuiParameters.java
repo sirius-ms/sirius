@@ -20,9 +20,14 @@
 
 package de.unijena.bioinf.ms.middleware.compounds.gui.model;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * Parameters to "remote control" the SIRIUS GUI.
  */
+@Getter
+@Setter
 public class GuiParameters {
     /**
      * Selected Result ab.
