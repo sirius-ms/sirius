@@ -297,20 +297,19 @@ public class ScoringParameterEstimator {
         this.saveObservedValues(new File(this.outputDir, "observed_fragment_penalties.txt"), penalties, true);
 
         // 3. Save all computed scores and values for each observed specific directed bond type:
-        File allScoresFile = new File(this.outputDir, "unprocessed_bond_scores.txt");
+        File allScoresFile = new File(this.outputDir, "unprocessed_bond_scores.csv");
         Collection<String> bondNames = directedBondName2LogProb.keySet();
         try(BufferedWriter fileWriter = Files.newBufferedWriter(allScoresFile.toPath())){
             fileWriter.write("directedBondTypeName,numObservations,breakProb,cutDirectionProb,logProb");
-            fileWriter.newLine();
 
             for(String bondName : bondNames){
+                fileWriter.newLine();
                 int numObservations = directedBondName2NumInstances.get(bondName);
                 double breakProb = directedBondName2BreakProb.get(bondName);
                 double cutDirProb = directedBondName2CutDirProb.get(bondName);
                 double logProb = directedBondName2LogProb.get(bondName);
 
                 fileWriter.write(bondName+","+numObservations+","+breakProb+","+cutDirProb+","+logProb);
-                fileWriter.newLine();
             }
         }
 
@@ -342,12 +341,11 @@ public class ScoringParameterEstimator {
                 fileWriter.write("# Geometric distribution with parameter:"); fileWriter.newLine();
                 fileWriter.write("# probability "+this.hydrogenRearrangementProb);
             }
-            fileWriter.newLine();
 
             // Write values into the file:
             for(T val : values){
-                fileWriter.write(val.toString());
                 fileWriter.newLine();
+                fileWriter.write(val.toString());
             }
         }
     }
