@@ -438,6 +438,15 @@ subprojects {
     }
     distImage.shouldRunAfter downloadManual
 
+
+    task distImageTest(dependsOn: distImage, group: 'distribution') {
+        // add here the test for the output files
+        // when distImage is not build already, this builds it first (see dependsOn)
+        // when distImage is already build, it is not build again
+    }
+    distImageTest.shouldRunAfter distImage
+
+
     task signDistImage(dependsOn: distImage, group: 'distribution') {
 
         inputs.dir(distImage.outputDir)
