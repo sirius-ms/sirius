@@ -12,12 +12,15 @@ import org.junit.jupiter.api.DisplayName;
 public class MgfTest {
 
     private static String[] pre_candidates;
-    private static String[] post_candidates ;
+    private static String[] post_candidates;
+    private static int rank_count = 3;
+    private static int table_feature = 1;
+
 
     @BeforeAll
     public static void getCandidates(){
-        pre_candidates  = readCandidates("/builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/test_results/mgf_candidates/formula_candidates.tsv");
-        post_candidates = readCandidates("/builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_summary/0_laudanosine_FEATURE_1/formula_candidates.tsv");
+        pre_candidates  = readCandidates("/builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/test_results/mgf_candidates/formula_candidates.tsv", rank_count, table_feature);
+        post_candidates = readCandidates("/builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_summary/0_laudanosine_FEATURE_1/formula_candidates.tsv", rank_count, table_feature);
     }
 
     @Test
@@ -30,10 +33,16 @@ public class MgfTest {
         assertArrayEquals(pre_candidates, post_candidates);
     }
 
-    public static String @NotNull [] readCandidates(String filePath){
+    /**
+     * A method returning a String[] containing a number of features of the same type from the specified file.
+     * @param   filePath        the file to read from
+     * @param   candidates_num  the number of rows to read from the file
+     * @param   feature         the column of the split String to read
+     * @return                  the String[] containing the specified information
+     */
+    public static String @NotNull [] readCandidates(String filePath, int candidates_num, int feature){
 
         BufferedReader reader;
-        int candidates_num = 3;
         String[] top_results = new String[candidates_num];
 
         try{
@@ -47,7 +56,7 @@ public class MgfTest {
             for(int i = 0; i < candidates_num; i++){
                 String line = reader.readLine();
 
-                top_results[i] = line.split("\t")[1];
+                top_results[i] = line.split("\t")[feature];
             }
         }
         catch(IOException e){
