@@ -29,6 +29,7 @@ import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.babelms.CloseableIterator;
+import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.FormulaCandidate;
 import de.unijena.bioinf.chemdb.JSONReader;
@@ -39,8 +40,11 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +54,12 @@ public class StructureSearchClient extends AbstractCsiClient {
 
     protected CdkFingerprintVersion fpVersion = null;
     protected final boolean cacheFpVersion;
+
+    /**
+     * read only value retrieved from server.
+     * can be cached safely
+     */
+    private String chemDbDateCache;
 
 
     @SafeVarargs
@@ -69,7 +79,8 @@ public class StructureSearchClient extends AbstractCsiClient {
     public CdkFingerprintVersion getCDKFingerprintVersion(CloseableHttpClient client) throws IOException {
         if (!cacheFpVersion || fpVersion == null) {
             fpVersion = new CdkFingerprintVersion(
-                    executeFromJson(client, () -> new HttpGet(buildVersionSpecificWebapiURI("/usedfingerprints").build()), new TypeReference<>() {})
+                    executeFromJson(client, () -> new HttpGet(buildVersionSpecificWebapiURI("/usedfingerprints").build()), new TypeReference<>() {
+                    })
             );
         }
         return fpVersion;
@@ -119,5 +130,19 @@ public class StructureSearchClient extends AbstractCsiClient {
                     }
                 }
         );
+    }
+
+    /**
+     * Retrieve date of chem db copy from Server. Since this value is read only it will be cached by the client
+     * @param client http client to use
+     * @return Date string
+     * @throws IOException if http query or Json marshaling fails
+     */
+    public String getChemDbDate(CloseableHttpClient client) throws IOException {
+        if (chemDbDateCache == null) {
+            chemDbDateCache = executeFromStream(client, () -> new HttpGet(buildVersionSpecificWebapiURI("/structure-db-date").build()),
+                    r -> new BufferedReader(new InputStreamReader(r, StandardCharsets.UTF_8)).lines().findFirst().orElse(null));
+        }
+        return chemDbDateCache;
     }
 }

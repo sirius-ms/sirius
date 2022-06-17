@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
@@ -34,9 +35,20 @@ public class InMemoryChemicalDatabase implements AbstractChemicalDatabase {
     protected HashMap<MolecularFormula, List<FingerprintCandidate>> candidatesPerFormula;
     protected HashMap<String, FingerprintCandidate> candidatePerKey;
     protected MolecularFormula[] formulas;
+    protected final String dbData;
 
     public InMemoryChemicalDatabase(List<FingerprintCandidate> candidates) {
+        this(candidates, null);
+    }
+
+    public InMemoryChemicalDatabase(List<FingerprintCandidate> candidates, @Nullable String chemDBdate) {
+        this.dbData = chemDBdate;
         setCandidates(candidates);
+    }
+
+    @Override
+    public String getChemDbDate() throws ChemicalDatabaseException {
+        return dbData;
     }
 
     public void addCandidates(Iterable<FingerprintCandidate> candidates) {
@@ -45,12 +57,12 @@ public class InMemoryChemicalDatabase implements AbstractChemicalDatabase {
     }
 
     public void addCandidate(FingerprintCandidate fc) {
-        if (candidatePerKey.put(fc.getInchiKey2D(), fc)==null) {
+        if (candidatePerKey.put(fc.getInchiKey2D(), fc) == null) {
             final MolecularFormula formula = fc.getInchi().extractFormulaOrThrow();
             if (!candidatesPerFormula.containsKey(formula)) {
                 candidatesPerFormula.put(formula, new ArrayList<FingerprintCandidate>());
-                this.formulas = Arrays.copyOf(formulas, formulas.length+1);
-                this.formulas[formulas.length-1] = formula;
+                this.formulas = Arrays.copyOf(formulas, formulas.length + 1);
+                this.formulas[formulas.length - 1] = formula;
                 Arrays.sort(formulas);
             }
             candidatesPerFormula.get(formula).add(fc);
@@ -73,7 +85,8 @@ public class InMemoryChemicalDatabase implements AbstractChemicalDatabase {
             candidatesPerFormula.get(formula).add(fc);
         }
         this.formulas = new MolecularFormula[candidatesPerFormula.keySet().size()];
-        int k=0; for (MolecularFormula f : candidatesPerFormula.keySet()) formulas[k++] = f;
+        int k = 0;
+        for (MolecularFormula f : candidatesPerFormula.keySet()) formulas[k++] = f;
         Arrays.sort(formulas);
     }
 
@@ -85,11 +98,11 @@ public class InMemoryChemicalDatabase implements AbstractChemicalDatabase {
             @Override
             public int compare(Object o1, Object o2) {
                 double a1, a2;
-                if (o1 instanceof MolecularFormula) a1 = ((MolecularFormula)o1).getMass();
-                else a1 = (double)o1;
-                if (o2 instanceof MolecularFormula) a2 = ((MolecularFormula)o2).getMass();
-                else a2 = (double)o2;
-                return Double.compare(a1,a2);
+                if (o1 instanceof MolecularFormula) a1 = ((MolecularFormula) o1).getMass();
+                else a1 = (double) o1;
+                if (o2 instanceof MolecularFormula) a2 = ((MolecularFormula) o2).getMass();
+                else a2 = (double) o2;
+                return Double.compare(a1, a2);
             }
         });
         if (index < 0) {
@@ -105,7 +118,7 @@ public class InMemoryChemicalDatabase implements AbstractChemicalDatabase {
             ++endIndex;
         }
         final ArrayList<FormulaCandidate> candidates = new ArrayList<>();
-        for (int i=index; i < endIndex; ++i) {
+        for (int i = index; i < endIndex; ++i) {
             candidates.add(new FormulaCandidate(formulas[i], ionType, 0));
         }
         return candidates;
@@ -114,12 +127,13 @@ public class InMemoryChemicalDatabase implements AbstractChemicalDatabase {
     @Override
     public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
         final List<FingerprintCandidate> fps = candidatesPerFormula.get(formula);
-        if (fps==null) return Collections.emptyList();
+        if (fps == null) return Collections.emptyList();
         return new AbstractList<CompoundCandidate>() {
             @Override
             public CompoundCandidate get(int index) {
                 return fps.get(index);
             }
+
             @Override
             public int size() {
                 return fps.size();

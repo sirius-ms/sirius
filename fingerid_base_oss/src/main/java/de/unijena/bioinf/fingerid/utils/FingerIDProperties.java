@@ -60,10 +60,6 @@ public class FingerIDProperties {
         return  PropertyManager.getProperty("de.unijena.bioinf.siriusFrontend.version");
     }
 
-    public static String databaseDate() {
-        return PropertyManager.getProperty("de.unijena.bioinf.fingerid.db.date");
-    }
-
     public static String gcsChemDBName() {
         return PropertyManager.getProperty("de.unijena.bioinf.chemdb.gcs.name");
     }
