@@ -11,7 +11,6 @@ public class ProjectSpaceTest {
 
     public static void main(String[] args) throws IOException {
         PropertyManager.setProperty("de.unijena.bioinf.fingerid.web.host", "https://www.csi-fingerid.uni-jena.de");
-        PropertyManager.setProperty("de.unijena.bioinf.fingerid.db.date", "2017-08-28");
         PropertyManager.setProperty("de.unijena.bioinf.sirius.version", "4.1.0-SNAPSHOT");
         PropertyManager.setProperty("de.unijena.bioinf.sirius.build", "666");
         PropertyManager.setProperty("de.unijena.bioinf.fingerid.version", "1.2.0-SNAPSHOT");
