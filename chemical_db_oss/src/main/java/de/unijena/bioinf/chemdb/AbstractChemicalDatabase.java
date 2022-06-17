@@ -28,6 +28,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 
 import java.io.Closeable;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -96,13 +97,11 @@ public interface AbstractChemicalDatabase extends Closeable, Cloneable, SearchSt
     List<InChI> findInchiByNames(List<String> names) throws ChemicalDatabaseException;
 
     /**
-     * Returns Date of the the represented structure database that is defined in the library.
+     * Returns Date of the represented structure database.
      * Override this method in remote database implementations to return the correct date.
      * @return Date of the represented structure database
      */
 
-    default String getChemDbDate() throws ChemicalDatabaseException{
-        return PropertyManager.getProperty("de.unijena.bioinf.fingerid.db.date");
-    }
+    String getChemDbDate() throws ChemicalDatabaseException;
 
 }
