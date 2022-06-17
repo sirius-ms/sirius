@@ -725,4 +725,9 @@ public class ChemicalDatabase implements AbstractChemicalDatabase, PooledDB<Conn
         }
         return new ArrayFingerprint(USE_EXTENDED_FINGERPRINTS ? CdkFingerprintVersion.getExtended() : CdkFingerprintVersion.getDefault(), shorts.toArray());
     }
+    // todo this should be stored in and retrieved from the relation database, based on the used tables...
+    // todo probably the date could be used to choose the table?
+    public String getChemDbDate() throws ChemicalDatabaseException{
+        return PropertyManager.getProperty("de.unijena.bioinf.fingerid.db.psqlDbDate");
+    }
 }

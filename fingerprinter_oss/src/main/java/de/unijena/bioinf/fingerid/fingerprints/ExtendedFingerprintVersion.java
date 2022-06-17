@@ -113,6 +113,11 @@ public class ExtendedFingerprintVersion extends FingerprintVersion {
         }
 
         @Override
+        public String getChemDbDate() throws ChemicalDatabaseException {
+            return innerDatabase.getChemDbDate();
+        }
+
+        @Override
         public void close() throws IOException {
             innerDatabase.close();
         }
