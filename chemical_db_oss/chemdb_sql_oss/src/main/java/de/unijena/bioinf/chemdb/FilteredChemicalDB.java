@@ -31,7 +31,7 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 
-// this class is just a workaround to prevent old api for the internal csi Fingerid tools and should not
+// this class is just a workaround to preserve support for old api of the internal csi Fingerid tools and should not
 // be used for new code
 @Deprecated
 public class FilteredChemicalDB implements AbstractChemicalDatabase, Cloneable {
@@ -121,5 +121,10 @@ public class FilteredChemicalDB implements AbstractChemicalDatabase, Cloneable {
     @Override
     public boolean containsFormula(MolecularFormula formula) throws ChemicalDatabaseException {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getChemDbDate() throws ChemicalDatabaseException {
+        return wrappedDB.getChemDbDate();
     }
 }

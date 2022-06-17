@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.jjobs.Partition;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -48,8 +50,8 @@ public class RESTDatabase implements AbstractChemicalDatabase {
     }
 
     private final CloseableHttpClient client;
-    private final String chemDbDate;
-    protected StructureSearchClient chemDBClient;
+
+    private StructureSearchClient chemDBClient;
     protected final ChemDBFileCache cache;
     protected long filter;
 
@@ -61,13 +63,16 @@ public class RESTDatabase implements AbstractChemicalDatabase {
     }
 
     @Override
-    public String getChemDbDate() {
-        return chemDbDate;
+    public String getChemDbDate() throws ChemicalDatabaseException {
+        try {
+            return chemDBClient.getChemDbDate(client);
+        } catch (IOException e) {
+            throw new ChemicalDatabaseException(e);
+        }
     }
 
-    public RESTDatabase(@Nullable BlobStorage cacheDir, long filter, String chemDbDate, @NotNull StructureSearchClient chemDBClient, @NotNull CloseableHttpClient client) {
+    public RESTDatabase(@Nullable BlobStorage cacheDir, long filter, @NotNull StructureSearchClient chemDBClient, @NotNull CloseableHttpClient client) {
         this.filter = filter;
-        this.chemDbDate = chemDbDate;
         this.chemDBClient = chemDBClient;
         this.client = client;
         this.cache = new ChemDBFileCache(cacheDir != null ? cacheDir : defaultCache(), new SearchStructureByFormula() {
@@ -84,9 +89,27 @@ public class RESTDatabase implements AbstractChemicalDatabase {
         });
     }
 
-    public RESTDatabase(long filter, String chemDbDate, @NotNull AuthService authService) {
-        this(RESTDatabase.defaultCache(), filter, chemDbDate, new ChemDBClient(null, authService) , HttpClients.createDefault());
+
+    public RESTDatabase(long filter, @NotNull AuthService authService) {
+        this(filter, URI.create(FingerIDProperties.siriusFallbackWebHost()), authService);
     }
+
+    public RESTDatabase(long filter) {
+        this(filter, URI.create(FingerIDProperties.siriusFallbackWebHost()));
+    }
+
+    public RESTDatabase(long filter, @NotNull URI serverURL) {
+        this(RESTDatabase.defaultCache(), filter, new ChemDBClient(serverURL), HttpClients.createDefault());
+    }
+
+    public RESTDatabase(long filter, @NotNull URI serverURL, @NotNull AuthService authService) {
+        this(RESTDatabase.defaultCache(), filter, new ChemDBClient(serverURL, authService), HttpClients.createDefault());
+    }
+
+    public RESTDatabase(long filter, @NotNull StructureSearchClient chemDBClient) {
+        this(RESTDatabase.defaultCache(), filter, chemDBClient, HttpClients.createDefault());
+    }
+
 
     @Override
     public List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
@@ -107,10 +130,9 @@ public class RESTDatabase implements AbstractChemicalDatabase {
 
     @Override
     public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
-        fingerprintCandidates.addAll(cache.lookupStructuresAndFingerprintsByFormula(formula,filter));
+        fingerprintCandidates.addAll(cache.lookupStructuresAndFingerprintsByFormula(formula, filter));
         return fingerprintCandidates;
     }
-
 
 
     @Override
@@ -121,7 +143,7 @@ public class RESTDatabase implements AbstractChemicalDatabase {
 
             try {
                 for (List<String> inchiKeys : keyParts)
-                    compounds.addAll(((ChemDBClient)chemDBClient).postCompounds(inchiKeys, client));
+                    compounds.addAll(((ChemDBClient) chemDBClient).postCompounds(inchiKeys, client));
             } catch (IOException e) {
                 throw new ChemicalDatabaseException(e);
             }
@@ -134,7 +156,6 @@ public class RESTDatabase implements AbstractChemicalDatabase {
     public Iterable<? extends FingerprintCandidate> lookupManyFingerprintsBy2dInchis(Collection<String> inchis2d) throws ChemicalDatabaseException {
         return lookupFingerprintsByInchis(inchis2d);
     }
-
 
 
     @Override
@@ -164,7 +185,7 @@ public class RESTDatabase implements AbstractChemicalDatabase {
 
     @Override
     public boolean containsFormula(MolecularFormula formula) throws ChemicalDatabaseException {
-        throw  new UnsupportedOperationException();
+        throw new UnsupportedOperationException();
     }
 
     @Override
