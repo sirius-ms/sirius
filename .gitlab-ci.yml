@@ -72,6 +72,26 @@ before_script:
 #      - "**/*.{java,gradle,properties,yml,tex,png,ico,json,xml,html,csv,tsv,py}"
 #      - "**/src/main/java/**/*"
 
+###Meeting###
+#haben tasks oder stages den gleichen Cache?
+#wir wollen nicht für jeden Task ein neues Build anfertigen
+#gruppieren, nicht build -> test -> build -> upload
+
+#Test lokal ausführen mit gradle, gradle tasks nacheinander ablaufen und in Pipeline einfügen
+
+#build aufrufen, dann compile und test
+#hier wird gebuildet ohne test
+
+#gradle kann auch pipeline aufgaben
+
+
+#2 aufruf von SIRIUS in gradle oder Unittests
+
+#3 test soll schauen ob distImage aktuell ist
+#kann man dann lokal ausfürehn
+#lokal beide tasks ausführen
+
+
 testDist:
   stage: test
   script:
