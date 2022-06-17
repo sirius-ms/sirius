@@ -198,7 +198,7 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
     @Override
     public String getChemDbDate() {
         try {
-            return getVersionInfo().databaseDate;
+            return ProxyManager.applyClient(chemDBClient::getChemDbDate);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -359,13 +359,13 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
 
     //region ChemDB
     public void consumeStructureDB(long filter, @Nullable BlobStorage cacheDir, IOFunctions.IOConsumer<RESTDatabase> doWithClient) throws IOException {
-        try (RESTDatabase restDB = new RESTDatabase(cacheDir, filter, getChemDbDate(), chemDBClient, ProxyManager.client())) {
+        try (RESTDatabase restDB = new RESTDatabase(cacheDir, filter, chemDBClient, ProxyManager.client())) {
             doWithClient.accept(restDB);
         }
     }
 
     public <T> T applyStructureDB(long filter, @Nullable BlobStorage cacheDir, IOFunctions.IOFunction<RESTDatabase, T> doWithClient) throws IOException {
-        try (RESTDatabase restDB = new RESTDatabase(cacheDir, filter, getChemDbDate(), chemDBClient, ProxyManager.client())) {
+        try (RESTDatabase restDB = new RESTDatabase(cacheDir, filter, chemDBClient, ProxyManager.client())) {
             return doWithClient.apply(restDB);
         }
     }
