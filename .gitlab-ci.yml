@@ -114,9 +114,9 @@ beforetestDist:
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
-  artifacts:
-    paths:
-      - hallo/
+#  artifacts:
+#    paths:
+#      - hallo/
   tags:
     - kubernetes
   only:
@@ -133,9 +133,9 @@ afterTestDist:
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
-  artifacts:
-    paths:
-      - hallo/
+#  artifacts:
+#    paths:
+#      - hallo/
   tags:
     - kubernetes
   only:
