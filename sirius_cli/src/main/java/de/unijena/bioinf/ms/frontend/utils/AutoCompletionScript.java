@@ -43,7 +43,7 @@ public class AutoCompletionScript implements Callable<Integer> {
         commandline.setCaseInsensitiveEnumValuesAllowed(true);
         commandline.registerConverter(DefaultParameter.class, new DefaultParameter.Converter());
         System.out.println(String.format("Creating AutocompletionScript of length %d", depth));
-        setRecursionDepthLimit(commandline, depth);
+        commandline = setRecursionDepthLimit(commandline, depth);
         String s = AutoComplete.bash("sirius", commandline);
         System.out.println(String.format("AutocompletionScript created successfull at %s", PATH));
         Files.writeString(PATH, s);
@@ -56,18 +56,31 @@ public class AutoCompletionScript implements Callable<Integer> {
         System.exit(exitCode);
     }
 
-    private static void setRecursionDepthLimit(CommandLine commandline, int remaining_depth) {
+    private static CommandLine setRecursionDepthLimit(CommandLine commandline, int remaining_depth) {
         CommandLine.Model.CommandSpec subcommandsSpec = commandline.getCommandSpec();
-        if(subcommandsSpec.subcommands().isEmpty()) return;
+        if(subcommandsSpec.subcommands().isEmpty()) return commandline;
+
+        //redundant Command
+
         if(remaining_depth < 1) {
             Set<String> commands = subcommandsSpec.subcommands().keySet();
             while(!commands.isEmpty()){
-                subcommandsSpec.removeSubcommand(commands.stream().iterator().next());
+                String subcommand = commands.stream().iterator().next();
+                commandline = subcommandsSpec.removeSubcommand(subcommand);
                 commands = subcommandsSpec.subcommands().keySet();
+                /*
+                // add subcommand to all parents
+                CommandLine parent = commandline.getParent();
+                while(parent != null) {
+                    parent.getCommandSpec().addSubcommand(subcommand, parent);
+                    parent = parent.getParent();
+                    }
+                 */
                 }
             }
         else {
             subcommandsSpec.subcommands().forEach((name, command) -> setRecursionDepthLimit(command, remaining_depth - 1));
         }
+        return commandline;
     }
 }
