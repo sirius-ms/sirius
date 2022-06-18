@@ -116,7 +116,7 @@ beforetestDist:
     policy: push
   artifacts:
     paths:
-      - hallo/
+      - hallo
   tags:
     - kubernetes
   only:
@@ -133,9 +133,6 @@ afterTestDist:
     cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
-    artifacts:
-      paths:
-        - hallo/
     tags:
       - kubernetes
     only:
