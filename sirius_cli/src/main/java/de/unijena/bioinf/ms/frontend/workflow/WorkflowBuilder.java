@@ -38,6 +38,7 @@ import de.unijena.bioinf.ms.frontend.subtools.similarity.SimilarityMatrixOptions
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.summaries.SummaryOptions;
 import de.unijena.bioinf.ms.frontend.subtools.zodiac.ZodiacOptions;
+import de.unijena.bioinf.ms.frontend.utils.AutoCompletionScript;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -94,6 +95,7 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
     public final ExportPredictionsOptions exportPredictions;
     public final MgfExporterOptions mgfExporterOptions;
     public final FTreeExporterOptions ftreeExporterOptions;
+    public final AutoCompletionScript autocompleteOptions;
 
     //preprocessing, project-space providing tool, pre-project-space tool
     public final LcmsAlignOptions lcmsAlignOptions = new LcmsAlignOptions();
@@ -124,6 +126,7 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
         summaryOptions = new SummaryOptions();
         exportPredictions = new ExportPredictionsOptions();
         loginOptions = new LoginOptions();
+        autocompleteOptions = new AutoCompletionScript();
     }
 
     public void initRootSpec() {
@@ -149,7 +152,7 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
     }
 
     protected Object[] standaloneTools() {
-        return new Object[]{projectSpaceOptions, customDBOptions, similarityMatrixOptions, decompOptions, mgfExporterOptions, ftreeExporterOptions, exportPredictions, loginOptions};
+        return new Object[]{projectSpaceOptions, customDBOptions, similarityMatrixOptions, decompOptions, mgfExporterOptions, ftreeExporterOptions, exportPredictions, loginOptions, autocompleteOptions};
     }
 
     protected Map<Class<? extends ToolChainOptions>, CommandLine.Model.CommandSpec> configureChainTools(CommandLine.Model.CommandSpec... postProcessors) {
