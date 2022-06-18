@@ -49,7 +49,7 @@ import java.util.logging.LogManager;
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-@CommandLine.Command(name = "sirius", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false, showDefaultValues = true, subcommands = AutoComplete.GenerateCompletion.class)
+@CommandLine.Command(name = "sirius", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false, showDefaultValues = true)
 public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOptions<M, PreprocessingJob<M>, PostprocessingJob<Boolean>> {
     public static final Logger LOG = LoggerFactory.getLogger(CLIRootOptions.class);
 
