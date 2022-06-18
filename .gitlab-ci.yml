@@ -116,7 +116,7 @@ beforetestDist:
     policy: push
   artifacts:
     paths:
-      - hallo
+      - hallo/
   tags:
     - kubernetes
   only:
@@ -130,16 +130,19 @@ afterTestDist:
   script:
 #    - hallo/sirius --input /builds/bioinf-mit/ms/sirius_frontend/sirius_doc/manual/demo-data/mgf/laudanosine.mgf --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_output formula -p orbitrap fingerprint structure compound-classes write-summaries --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_summary
     - gradle :sirius_dist:sirius_cli_single_os:distImageTest
-    cache:
+  cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
-    tags:
-      - kubernetes
-    only:
-      refs:
-        - master
-        - master-dist-tests
-        - stable
+  artifacts:
+    paths:
+      - hallo/
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - master
+      - master-dist-tests
+      - stable
 
 
 
