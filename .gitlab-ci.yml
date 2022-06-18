@@ -12,6 +12,7 @@ stages:
   - clean
   - prepare
   - build
+  - beforetest
   - test
 #  - build-cli
 #  - build-multi-cli
@@ -92,27 +93,30 @@ before_script:
 #lokal beide tasks ausführen
 
 
-testDist:
-  stage: test
+beforetestDist:
+  stage: beforetest
   script:
     - gradle :sirius_dist:sirius_cli_single_os:distImage
-    - cd sirius_cli/src/test
-    - mkdir temp_results
-    - cd temp_results
-    - mkdir mgf_temp_summary
-    - mkdir mgf_temp_output
-    - cd ../../../..
+#    - cd sirius_cli/src/test
+ #   - mkdir temp_results
+  #  - cd temp_results
+   # - mkdir mgf_temp_summary
+ #   - mkdir mgf_temp_output
+  #  - cd ../../../..
 #    - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius login -u jonas.emmert@uni-jena.de -p
-    - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius --input /builds/bioinf-mit/ms/sirius_frontend/sirius_doc/manual/demo-data/mgf/laudanosine.mgf --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_output formula -p orbitrap fingerprint structure compound-classes write-summaries --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_summary
+ #   - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius --input /builds/bioinf-mit/ms/sirius_frontend/sirius_doc/manual/demo-data/mgf/laudanosine.mgf --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_output formula -p orbitrap fingerprint structure compound-classes write-summaries --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_summary
 #    - cd sirius_cli/src/test/java
 #    - javac MgfTest.java
 #    - java MgfTest
-    - gradle :sirius_dist:sirius_cli_single_os:build # includes the test
-    - cd sirius_cli/src/test
-    - rm -r temp_results
+#    - gradle :sirius_dist:sirius_cli_single_os:build # includes the test
+#    - cd sirius_cli/src/test
+#    - rm -r temp_results
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
+  artifacts:
+    paths:
+      - hallo/
   tags:
     - kubernetes
   only:
@@ -120,6 +124,27 @@ testDist:
       - master
       - master-dist-tests
       - stable
+
+afterTestDist:
+  stage: test
+  script:
+    - hallo/sirius --input /builds/bioinf-mit/ms/sirius_frontend/sirius_doc/manual/demo-data/mgf/laudanosine.mgf --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_output formula -p orbitrap fingerprint structure compound-classes write-summaries --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_summary
+    - gradle :sirius_dist:sirius_cli_single_os:distImageTest
+    cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+    artifacts:
+      paths:
+        - hallo/
+    tags:
+      - kubernetes
+    only:
+      refs:
+        - master
+        - master-dist-tests
+        - stable
+
+
 
 #    # testing MGF data
 #    - sirius --input sirius_doc/manual/demo-data/mgf/laudanosine.mgf formula -p orbitrap fingerprint structure compound-classes write-summaries --output sirius_cli/src/test/mgf_temp_summary
