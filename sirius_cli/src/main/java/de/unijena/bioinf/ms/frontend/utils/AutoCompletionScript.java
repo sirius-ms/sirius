@@ -26,8 +26,8 @@ public class AutoCompletionScript implements Callable<Integer> {
     @CommandLine.Parameters(index = "0",description = "Maximum depth of subcommands" ,defaultValue = "5")
     private int depth;
 
-    private static String NAME = "SiriusLinuxCompletionScript";
-    private static Path PATH = Path.of(String.format("./sirius_cli/scripts/%s",NAME));
+    private static final String NAME = "SiriusLinuxCompletionScript";
+    private static final Path PATH = Path.of(String.format("./sirius_cli/scripts/%s",NAME));
 
 
     /**
@@ -37,9 +37,6 @@ public class AutoCompletionScript implements Callable<Integer> {
      */
     public Integer call() throws IOException{
         //TODO generate completion Script during build: See https://picocli.info/autocomplete.html#_generating_completion_scripts_during_the_build
-
-        NAME = NAME.concat("_"+ depth); // Adds the depth to the name
-        PATH = Path.of(String.format("./sirius_cli/scripts/%s",NAME)); //Update Path
         System.setProperty("de.unijena.bioinf.ms.propertyLocations", "sirius_frontend.build.properties");
         FingerIDProperties.sirius_guiVersion();
         final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
