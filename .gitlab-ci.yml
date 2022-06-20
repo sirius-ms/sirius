@@ -93,7 +93,7 @@ before_script:
 
 
 beforeTestDist:
-  stage: test
+  stage: build
   script:
     - gradle :sirius_dist:sirius_cli_single_os:distImage
 #    - cd sirius_cli/src/test
