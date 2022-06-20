@@ -6,7 +6,6 @@ import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import picocli.AutoComplete;
@@ -15,10 +14,10 @@ import picocli.CommandLine;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 @CommandLine.Command(name = "generateAutocompletion", description = "<STANDALONE> generates an Autocompletion-Script with the given depth of parameters",
     mixinStandardHelpOptions = true)
@@ -66,9 +65,11 @@ public class AutoCompletionScript implements Callable<Integer> {
         commandline.getCommandSpec().removeSubcommand("generateAutocompletion");
 
         //remove aliases
-        HashSet<String> aliases = new HashSet<>();
-        commandline.getCommandSpec().subcommands().forEach((name, subcommand) -> Arrays.stream(subcommand.getCommandSpec().aliases()).iterator().forEachRemaining(alias -> aliases.add(alias)));
-        //TODO remove alias but not original command
+        HashSet<String> nonAliases = new HashSet<>();
+        commandline.getCommandSpec().subcommands().forEach((name, subcommand) -> nonAliases.add(subcommand.getCommandSpec().name()));
+        HashSet<String> keyset = new HashSet<>(commandline.getCommandSpec().subcommands().keySet());
+        Set<String> aliases = keyset.stream().filter(name -> !(nonAliases.contains(name))).collect(Collectors.toSet());
+        //TODO remove the alias but not the underlying command
         //aliases.forEach(alias -> commandline.getCommandSpec().removeSubcommand(alias));
 
         if(remaining_depth < 1) {
