@@ -19,11 +19,16 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
-@CommandLine.Command(name = "generateAutocompletion", description = "<STANDALONE> generates an Autocompletion-Script with the given depth of parameters",
+@CommandLine.Command(name = "generateAutocompletion", description = "<STANDALONE> generates an Autocompletion-Script with the given depth of subcommands",
     mixinStandardHelpOptions = true)
 public class AutoCompletionScript implements Callable<Integer> {
-    @CommandLine.Parameters(index = "0",description = "Maximum depth of parameters" ,defaultValue = "5")
+
+    @CommandLine.Parameters(index = "0",description = "Maximum depth of subcommands" ,defaultValue = "5")
     private int depth;
+
+    private static String NAME = "SiriusLinuxCompletionScript";
+    private static Path PATH = Path.of(String.format("./sirius_cli/scripts/%s",NAME));
+
 
     /**
      * Pass this CommandLine instance and the name of the script to the picocli.AutoComplete::bash method.
@@ -33,8 +38,8 @@ public class AutoCompletionScript implements Callable<Integer> {
     public Integer call() throws IOException{
         //TODO generate completion Script during build: See https://picocli.info/autocomplete.html#_generating_completion_scripts_during_the_build
 
-        String NAME = "SiriusLinuxCompletionScript";
-        Path PATH = Path.of(String.format("./sirius_cli/scripts/%s",NAME));
+        NAME = NAME.concat("_"+ depth); // Adds the depth to the name
+        PATH = Path.of(String.format("./sirius_cli/scripts/%s",NAME)); //Update Path
         System.setProperty("de.unijena.bioinf.ms.propertyLocations", "sirius_frontend.build.properties");
         FingerIDProperties.sirius_guiVersion();
         final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
@@ -43,12 +48,12 @@ public class AutoCompletionScript implements Callable<Integer> {
         CommandLine commandline = new CommandLine(builder.getRootSpec());
         commandline.setCaseInsensitiveEnumValuesAllowed(true);
         commandline.registerConverter(DefaultParameter.class, new DefaultParameter.Converter());
-        System.out.println(String.format("Creating AutocompletionScript of length %d", depth));
-        commandline = setRecursionDepthLimit(commandline, depth);
+        System.out.printf("Creating AutocompletionScript of length %d%n", depth);
+        setRecursionDepthLimit(commandline, depth);
         String s = AutoComplete.bash("sirius", commandline);
-        System.out.println(String.format("AutocompletionScript created successfull at %s", PATH));
+        System.out.printf("AutocompletionScript created successfully at %s%n", PATH);
         Files.writeString(PATH, s);
-        System.out.println(String.format("Please install the Script temporarly by typing the following into the Terminal: "+ (char)27 + "[1m. %s", NAME));
+        System.out.printf("Please install the Script temporarily by typing the following into the Terminal: "+ (char)27 + "[1m. %s%n", NAME);
         return 0;
     }
 
@@ -57,9 +62,9 @@ public class AutoCompletionScript implements Callable<Integer> {
         System.exit(exitCode);
     }
 
-    private static CommandLine setRecursionDepthLimit(CommandLine commandline, int remaining_depth) {
+    private static void setRecursionDepthLimit(CommandLine commandline, int remaining_depth) {
         CommandLine.Model.CommandSpec subcommandsSpec = commandline.getCommandSpec();
-        if(subcommandsSpec.subcommands().isEmpty()) return commandline;
+        if(subcommandsSpec.subcommands().isEmpty()) return;
 
         //remove Autocompletion Command
         commandline.getCommandSpec().removeSubcommand("generateAutocompletion");
@@ -80,6 +85,5 @@ public class AutoCompletionScript implements Callable<Integer> {
         else {
             subcommandsSpec.subcommands().forEach((name, command) -> setRecursionDepthLimit(command, remaining_depth - 1));
         }
-        return commandline;
     }
 }
