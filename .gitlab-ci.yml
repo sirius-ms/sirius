@@ -112,6 +112,8 @@ beforeTestDist:
 #    - rm -r temp_results
   cache:
     key: "$CI_COMMIT_REF_NAME"
+    paths:
+      - /builds/bioinf-mit/ms/sirius_frontend
     policy: push
 #  artifacts:
 #    paths:
@@ -131,6 +133,8 @@ afterTestDist:
     - gradle :sirius_dist:sirius_cli_single_os:distImageTest
   cache:
     key: "$CI_COMMIT_REF_NAME"
+    paths:
+      - /builds/bioinf-mit/ms/sirius_frontend
     policy: pull
 #  artifacts:
 #    paths:
