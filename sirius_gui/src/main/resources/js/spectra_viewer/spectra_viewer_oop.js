@@ -311,11 +311,10 @@ class SpectrumPlot extends Base {
 
     static resetColor(self, peakData) {
         if (peakData !== undefined) {
-            let precursor = self.spectrum.peaks[self.mzsSize-1].formula;
             if (self.spectrum.name.includes("MS1")) {
                 return (Object.keys(peakData.peakMatches).length !== 0) ? "peak_matched peak" : "peak_1 peak";
             } else {
-                if (self.structureView && ("structureInformation" in peakData || peakData.formula === precursor)) {
+                if (self.structureView && "structureInformation" in peakData ) {
                     return "peak_2 peak_structInfo peak";
                 } else {
                     return ("formula" in peakData) ? "peak_2 peak" : "peak_1 peak";
