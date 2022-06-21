@@ -4,7 +4,6 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.babelms.MsIO;
-import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
@@ -40,7 +39,7 @@ public class DataProcessor {
              * Exclude all fTree files whose results are already processed and stored in 'outputDir'.
              * An fTree file and a result file share the same ending ".json".
              */
-            System.out.println("Filter out already processed instances.");
+            System.out.println("Filter out already processed instances in case you want to compute new subtrees.");
             String[] resultFileNames = outputDir.list();
             List<String> filteredFTreeFileNames = Arrays.stream(fTreeDir.list()).
                     filter(fileName -> {
@@ -87,6 +86,43 @@ public class DataProcessor {
 
     public DataProcessor(File spectraDir, File fTreeDir, File outputDir){
         this(spectraDir, fTreeDir, outputDir, 1, 0);
+    }
+
+    public DataProcessor(File spectraDir, File fTreeDir, File outputDir, int numInstancesToProcess){
+        if(spectraDir.isDirectory() && fTreeDir.isDirectory() && outputDir.isDirectory()){
+            this.spectraDir = spectraDir;
+            this.fTreeDir = fTreeDir;
+            this.outputDir = outputDir;
+
+            // FILTERING:
+            // - a fTree and a CombinatorialSubtree are stored in a JSON file
+            // - if there is a file in 'outputDir' whose filename exists in 'fTreeDir',
+            //   it is assumed that these files belong to the same instance
+            System.out.println("Filter out already processed instances in case you want to compute new subtrees.");
+            String[] resultFileNames = this.outputDir.list();
+            List<String> filteredFTreeFileNames = Arrays.stream(fTreeDir.list()).
+                    filter(fileName -> {
+                        for(String resultFileName : resultFileNames){
+                            if(fileName.equals(resultFileName)) return false;
+                        }
+                        return true;
+                    }).collect(Collectors.toList());
+            System.out.println(filteredFTreeFileNames.size()+" instances remain after filtering.");
+
+            if(filteredFTreeFileNames.size() < numInstancesToProcess){
+                numInstancesToProcess = filteredFTreeFileNames.size();
+            }
+            System.out.println("Sort and shuffle these instances and choose "+numInstancesToProcess+" Instances.");
+            Collections.sort(filteredFTreeFileNames);
+            Collections.shuffle(filteredFTreeFileNames, new Random(SHUFFLE_SEED));
+
+            this.fileNames = new String[numInstancesToProcess];
+            for(int i = 0; i < numInstancesToProcess; i++){
+                this.fileNames[i] = filteredFTreeFileNames.get(i).replaceFirst("\\.json", "");
+            }
+        }else{
+            throw new RuntimeException("The given abstract path names don't exist or aren't a directory.");
+        }
     }
 
     private MolecularGraph readMolecule(String fileName) throws IOException, InvalidSmilesException, UnknownElementException {
@@ -154,6 +190,62 @@ public class DataProcessor {
         }
     }
 
+    private CombinatorialSubtreeCalculator getComputedSubtreeCalculator(FTree fTree, MolecularGraph molecule, CombinatorialFragmenterScoring scoring, CombinatorialFragmenter.Callback2 fragmentationConstraint, SubtreeComputationMethod subtreeCompMethod) throws Exception{
+        CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(molecule, scoring);
+        CombinatorialGraph graph = fragmenter.createCombinatorialFragmentationGraph(fragmentationConstraint);
+        CombinatorialGraphManipulator.addTerminalNodes(graph, scoring, fTree);
+        return this.getComputedSubtreeCalculator(fTree, graph, scoring, subtreeCompMethod);
+    }
+
+    private CombinatorialSubtreeCalculator getComputedSubtreeCalculator(FTree fTree, CombinatorialGraph graph, CombinatorialFragmenterScoring scoring, SubtreeComputationMethod subtreeCompMethod) throws Exception {
+        CombinatorialSubtreeCalculator subtreeCalc;
+        switch(subtreeCompMethod){
+            case ILP:
+                PCSTFragmentationTreeAnnotator ilpCalc = new PCSTFragmentationTreeAnnotator(fTree, graph, scoring);
+                ilpCalc.initialize(null);
+                ilpCalc.computeSubtree();
+                subtreeCalc = ilpCalc;
+                break;
+            case PRIM:
+                PrimSubtreeCalculator primCalc = new PrimSubtreeCalculator(fTree, graph, scoring);
+                primCalc.initialize(null);
+                primCalc.computeSubtree();
+                subtreeCalc = primCalc;
+                break;
+            case INSERTION:
+                InsertionSubtreeCalculator insertionCalc = new InsertionSubtreeCalculator(fTree, graph ,scoring);
+                insertionCalc.initialize(null);
+                insertionCalc.computeSubtree();
+                subtreeCalc = insertionCalc;
+                break;
+            case CRITICAL_PATH_1:
+                CriticalPathSubtreeCalculator cp1Calc = new CriticalPathSubtreeCalculator(fTree, graph, scoring, true);
+                cp1Calc.initialize(null);
+                cp1Calc.computeSubtree();
+                subtreeCalc = cp1Calc;
+                break;
+            case CRITICAL_PATH_2:
+                CriticalPathSubtreeCalculator cp2Calc = new CriticalPathSubtreeCalculator(fTree, graph, scoring, false);
+                cp2Calc.initialize(null);
+                cp2Calc.computeSubtree();
+                subtreeCalc = cp2Calc;
+                break;
+            case CRITICAL_PATH_3:
+                CriticalPathInsertionSubtreeCalculator cp3Calc = new CriticalPathInsertionSubtreeCalculator(fTree, graph, scoring);
+                cp3Calc.initialize(null);
+                cp3Calc.computeSubtree();
+                subtreeCalc = cp3Calc;
+                break;
+            default:
+                CriticalPathSubtreeCalculator defaultCalc = new CriticalPathSubtreeCalculator(fTree, graph, scoring, true);
+                defaultCalc.initialize(null);
+                defaultCalc.computeSubtree();
+                subtreeCalc = defaultCalc;
+                break;
+        }
+        return subtreeCalc;
+    }
+
     private void unreference(MolecularGraph molecule, FTree fTree, CombinatorialFragmenterScoring scoring, CombinatorialSubtreeCalculator subtreeCalc){
         molecule = null;
         fTree = null;
@@ -161,7 +253,7 @@ public class DataProcessor {
         subtreeCalc = null;
     }
 
-    public void run(CombinatorialFragmenter.Callback2 fragmentationConstraint) throws InterruptedException {
+    public void computeCombinatorialSubtrees(CombinatorialFragmenter.Callback2 fragmentationConstraint, SubtreeComputationMethod subtreeCompMethod) throws InterruptedException {
         // INITIALISATION:
         // Initialise the ExecutorService:
         System.out.println("Initialise ExecutorService...");
@@ -180,13 +272,11 @@ public class DataProcessor {
                     FTree fTree = this.readFTree(fileName + ".json");
                     DirectedBondTypeScoring scoring = new DirectedBondTypeScoring(molecule);
 
-                    CriticalPathSubtreeCalculator subtreeCalc = new CriticalPathSubtreeCalculator(fTree, molecule, scoring, true);
-                    subtreeCalc.initialize(fragmentationConstraint);
-                    subtreeCalc.computeSubtree();
+                    CombinatorialSubtreeCalculator subtreeCalc = this.getComputedSubtreeCalculator(fTree, molecule, scoring, fragmentationConstraint, subtreeCompMethod);
 
                     CombinatorialSubtreeCalculatorJsonWriter.writeResultsToFile(subtreeCalc, new File(this.outputDir, fileName + ".json"));
                     this.unreference(molecule, fTree, scoring, subtreeCalc);
-                }catch (CDKException | UnknownElementException | IOException e) {
+                }catch (Exception e) {
                     System.out.println("An error occurred during processing instance "+fileName);
                     File resultFile = new File(this.outputDir, fileName + ".json");
                     if(resultFile.exists()){
@@ -212,31 +302,21 @@ public class DataProcessor {
         executor.shutdown();
     }
 
-    public static void main(String[] args){
-        try{
-            File scoringFile = new File(args[0]);
-            File spectraDir = new File(args[1]);
-            File fTreeDir = new File(args[2]);
-            File outputDir = new File(args[3]);
-            int fragmentationDepth = Integer.parseInt(args[4]);
-            int numPartitions = Integer.parseInt(args[5]);
-            int idxPartition = Integer.parseInt(args[6]);
-
-            DirectedBondTypeScoring.loadScoringFromFile(scoringFile);
-            DataProcessor dataProcessor = new DataProcessor(spectraDir, fTreeDir, outputDir, numPartitions, idxPartition);
-            promptEnterKeyToContinue("The DataProcessor is initialised. Press ENTER to start processing...");
-            dataProcessor.run(node -> node.depth < fragmentationDepth);
-        } catch (InterruptedException | IOException e) {
-            e.printStackTrace();
-        }
+    public void compareSubtreeComputationMethods(CombinatorialFragmenter.Callback2 fragmentationConstraint){
+        throw new UnsupportedOperationException("This comparison method is not supported.");
     }
 
-    private static void promptEnterKeyToContinue(String msg){
-        try(Scanner scanner = new Scanner(System.in)){
-            System.out.println(msg);
-            scanner.nextLine();
-        }
+    public void runStructureIdentification(CombinatorialFragmenter.Callback2 fragmentationConstraint, SubtreeComputationMethod subtreeCompMethod){
+        throw new UnsupportedOperationException("This structure identification method is not supported.");
     }
 
+    public enum SubtreeComputationMethod{
+        ILP,
+        PRIM,
+        INSERTION,
+        CRITICAL_PATH_1,
+        CRITICAL_PATH_2,
+        CRITICAL_PATH_3
+    }
 
 }
