@@ -12,11 +12,12 @@ dependencies() {
     testCompile "org.openscience.cdk:cdk-bundle:$cdk_version"
 
     compile "com.gurobi:gurobi-jar:$gurobi_version"
+    compile "args4j:args4j:2.32"
 }
 
 task DataProcessing_FatJar(type: Jar) {
     manifest {
-        attributes 'Main-Class': 'de.unijena.bioinf.fragmenter.DataProcessor'
+        attributes 'Main-Class': 'de.unijena.bioinf.fragmenter.DataProcessorExecutor'
     }
     archiveBaseName = "DataProcessor"
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
