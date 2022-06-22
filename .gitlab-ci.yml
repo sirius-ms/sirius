@@ -131,6 +131,7 @@ afterTestDist:
   script:
     # sollte funktionieren falls Sirius wirklich cached ist
     # todo: Pfad zum cache als Pfad für Sirius finden (cache wird als cache.zip gespeichert, siehe https://docs.gitlab.com/ee/ci/caching/index.html#where-the-caches-are-stored)
+    - find /builds/ -name cache.zip
     - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius --input /builds/bioinf-mit/ms/sirius_frontend/sirius_doc/manual/demo-data/mgf/laudanosine.mgf --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_output formula -p orbitrap fingerprint structure compound-classes write-summaries --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_summary
     - gradle :sirius_dist:sirius_cli_single_os:distImageTest
   cache:
