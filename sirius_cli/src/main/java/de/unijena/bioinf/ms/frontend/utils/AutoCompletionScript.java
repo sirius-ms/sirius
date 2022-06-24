@@ -8,16 +8,17 @@ import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
-import org.reflections8.util.SynchronizedHashSetMultimap;
 import picocli.AutoComplete;
 import picocli.CommandLine;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
 
 @CommandLine.Command(name = "generateAutocompletion", description = "<STANDALONE> generates an Autocompletion-Script with the given depth of subcommands",
     mixinStandardHelpOptions = true)
