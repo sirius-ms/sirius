@@ -1,5 +1,7 @@
 package de.unijena.bioinf.fragmenter;
 
+import gnu.trove.map.hash.TIntIntHashMap;
+
 import java.util.ArrayList;
 
 public class CombinatorialSubtreeManipulator {
@@ -27,8 +29,14 @@ public class CombinatorialSubtreeManipulator {
     }
 
     public static double tanimoto(CombinatorialSubtree subtree1, CombinatorialSubtree subtree2, CombinatorialGraph graph){
-        boolean[] subtree1Array = subtree1.toBooleanArray(graph);
-        boolean[] subtree2Array = subtree2.toBooleanArray(graph);
+        int maxBitSetLength = graph.maximalBitSetLength();
+        TIntIntHashMap edgeValue2edgeIndex = graph.edgeValue2Index();
+        return tanimoto(subtree1, subtree2, edgeValue2edgeIndex, maxBitSetLength);
+    }
+
+    public static double tanimoto(CombinatorialSubtree subtree1, CombinatorialSubtree subtree2, TIntIntHashMap edgeValue2edgeIdx, int maxBitSetLength){
+        boolean[] subtree1Array = subtree1.toBooleanArray(edgeValue2edgeIdx, maxBitSetLength);
+        boolean[] subtree2Array = subtree2.toBooleanArray(edgeValue2edgeIdx, maxBitSetLength);
         return tanimoto(subtree1Array, subtree2Array);
     }
 
