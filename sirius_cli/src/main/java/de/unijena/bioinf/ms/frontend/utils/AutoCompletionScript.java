@@ -129,7 +129,7 @@ public class AutoCompletionScript implements Callable<Integer> {
             String valueHolder = words[4].split("@")[0];
             Integer val = Integer.valueOf(valueHolder.substring(7, valueHolder.length()-1));
             if (!(removed.contains(val))) {
-                // dont remove
+                // don't remove current line
                 currentOutput.append(line).append("\n");
             }
         }
@@ -141,6 +141,7 @@ public class AutoCompletionScript implements Callable<Integer> {
         System.exit(exitCode);
     }
 /*
+//maybe useful later
     private static Map<String, CommandLine> setRecursionDepthLimit(CommandLine commandline, int remaining_depth) {
         CommandLine.Model.CommandSpec subcommandsSpec = commandline.getCommandSpec();
         if(subcommandsSpec.subcommands().isEmpty()) return new HashMap<>(subcommandsSpec.subcommands());
