@@ -342,9 +342,33 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
         return this.toNewickString(this.root);
     }
 
+    /**
+     * Converts this {@link CombinatorialSubtree} into a boolean array denoting
+     * which edges of {@code graph} are contained in this subtree.<br>
+     *
+     * @param graph the {@link CombinatorialGraph} that respresents the supergraph of this subtree
+     * @return an boolean array denoting which edges of {@code graph} are present in this subtree
+     */
     public boolean[] toBooleanArray(CombinatorialGraph graph){
         int maxBitSetLength = graph.maximalBitSetLength();
         TIntIntHashMap edgeValue2Index = graph.edgeValue2Index();
+        return this.toBooleanArray(edgeValue2Index, maxBitSetLength);
+    }
+
+    /**
+     * Converts this {@link CombinatorialSubtree} into a boolean array denoting
+     * which edges of {@code graph} are contained in this subtree.<br>
+     *
+     * The given hashmap {@code edgeValue2Index} assigns each edge of the underlying supergraph a unique index
+     * starting from 0 and ending at (#edges-1). Because each edge can be assigned a unique value regarding the
+     * source and fragment bitset (see {@link CombinatorialEdge#toIntegerValue(int)}, this hashmap
+     * assigns each "edge value" (standing for a unique edge) a unique index in the resulting array.<br>
+     *
+     * @param edgeValue2Index hashmap that assigns each edge a unique index in the resulting array
+     * @param maxBitSetLength the maximal length of all bitsets found in the {@link CombinatorialGraph}
+     * @return a boolean array denoting which edges of the supergraph are contained in this subtree
+     */
+    public boolean[] toBooleanArray(TIntIntHashMap edgeValue2Index, int maxBitSetLength){
         boolean[] subtreeArray = new boolean[edgeValue2Index.size()];
 
         for(CombinatorialNode node : this.nodes){
