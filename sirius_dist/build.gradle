@@ -440,6 +440,7 @@ subprojects {
 
 
     task distImageTest(dependsOn: distImage, group: 'distribution') {
+        System.out.println("distImageTest done")
         // add here the test for the output files
         // when distImage is not build already, this builds it first (see dependsOn)
         // when distImage is already build, it is not build again
