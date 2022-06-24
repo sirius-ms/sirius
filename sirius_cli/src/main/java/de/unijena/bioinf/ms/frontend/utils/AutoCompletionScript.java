@@ -8,6 +8,7 @@ import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
+import org.jetbrains.annotations.NotNull;
 import picocli.AutoComplete;
 import picocli.CommandLine;
 
@@ -55,7 +56,7 @@ public class AutoCompletionScript implements Callable<Integer> {
         System.out.printf("Please install the Script temporarily by typing the following into the Terminal: "+ (char)27 + "[1m. %s%n", NAME);
         return 0;
     }
-    private String formatScript() throws IOException {
+    private @NotNull String formatScript() throws IOException {
         StringBuilder output = new StringBuilder();
         BufferedReader reader = new BufferedReader(new FileReader(String.valueOf(PATH)));
         String line;
@@ -90,7 +91,7 @@ public class AutoCompletionScript implements Callable<Integer> {
         return output.toString();
     }
 
-    private String formatLocalCommandDef(BufferedReader reader) throws IOException {
+    private @NotNull String formatLocalCommandDef(@NotNull BufferedReader reader) throws IOException {
         String[] words;
         HashSet<Integer> removed = new HashSet<>();
         StringBuilder currentOutput = new StringBuilder();
@@ -114,7 +115,7 @@ public class AutoCompletionScript implements Callable<Integer> {
         return currentOutput.toString();
     }
 
-    private String removeCompWords(BufferedReader reader, HashSet<Integer> removed) throws IOException {
+    private @NotNull String removeCompWords(@NotNull BufferedReader reader, HashSet<Integer> removed) throws IOException {
         String[] words;
         StringBuilder currentOutput = new StringBuilder();
         String line;
