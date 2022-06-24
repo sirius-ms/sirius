@@ -7,6 +7,7 @@ import org.kohsuke.args4j.Option;
 import java.io.File;
 import java.io.IOException;
 import java.util.Scanner;
+import java.util.concurrent.ExecutionException;
 
 public class DataProcessorExecutor {
 
@@ -93,15 +94,16 @@ public class DataProcessorExecutor {
 
             // COMPUTATION:
             //  Choose the desired processing method:
-            if(executor.processingMethod.equals(ProcessingMethod.COMPARISON)){
-                dataProcessor.compareSubtreeComputationMethods(fragmentationConstraint);
-            }else{
-                DataProcessor.SubtreeComputationMethod subtreeComputationMethod = executor.subtreeComputationMethod;
-                if(executor.processingMethod.equals(ProcessingMethod.COMPUTE_SUBTREES)){
-                    dataProcessor.computeCombinatorialSubtrees(fragmentationConstraint, subtreeComputationMethod);
-                }else if(executor.processingMethod.equals(ProcessingMethod.STRUCTURE_IDENTIFICATION)){
-                    dataProcessor.runStructureIdentification(fragmentationConstraint, subtreeComputationMethod);
-                }
+            switch(processingMethod){
+                case COMPARISON:
+                    dataProcessor.compareSubtreeComputationMethods(fragmentationConstraint);
+                    break;
+                case COMPUTE_SUBTREES:
+                    dataProcessor.computeCombinatorialSubtrees(fragmentationConstraint, executor.subtreeComputationMethod);
+                    break;
+                case STRUCTURE_IDENTIFICATION:
+                    dataProcessor.runStructureIdentification(fragmentationConstraint, executor.subtreeComputationMethod);
+                    break;
             }
         } catch (CmdLineException e) {
             System.err.println("The arguments were not set correctly.");
@@ -110,7 +112,7 @@ public class DataProcessorExecutor {
         } catch (IOException e) {
             System.err.println("An error occurred while loading the scoring model.");
             e.printStackTrace();
-        } catch (InterruptedException e) {
+        } catch (InterruptedException | ExecutionException e ) {
             System.err.println("An error occurred during the computation of an instance.");
             e.printStackTrace();
         }

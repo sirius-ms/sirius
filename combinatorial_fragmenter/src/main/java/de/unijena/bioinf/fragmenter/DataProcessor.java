@@ -4,16 +4,17 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.babelms.MsIO;
+import gnu.trove.map.hash.TIntIntHashMap;
+import gnu.trove.map.hash.TObjectDoubleHashMap;
+import gnu.trove.map.hash.TObjectLongHashMap;
 import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 public class DataProcessor {
@@ -302,8 +303,108 @@ public class DataProcessor {
         executor.shutdown();
     }
 
-    public void compareSubtreeComputationMethods(CombinatorialFragmenter.Callback2 fragmentationConstraint){
-        throw new UnsupportedOperationException("This comparison method is not supported.");
+    public void compareSubtreeComputationMethods(CombinatorialFragmenter.Callback2 fragmentationConstraint) throws InterruptedException, IOException, ExecutionException {
+        // We know: this.fileNames contains the filenames of all instances that have to be processed.
+        // For each instance, we want to compare all subtree computation methods.
+        // That means, we want to compute the fragmentation graph and the subtrees, their score and running times and
+        // the tanimoto coefficient between each heuristic subtree and the optimal subtree (ILP).
+        // We store these results in a CSV file which is saved in the specified output directory.
+
+        // INITIALISATION:
+        // Initialise the ExecutorService:
+        final int NUM_AVAILABLE_PROCESSORS = Runtime.getRuntime().availableProcessors();
+        ExecutorService executor = Executors.newFixedThreadPool(NUM_AVAILABLE_PROCESSORS);
+
+        // Create an array with all SubtreeComputationMethods and find the index of the ILP method:
+        final SubtreeComputationMethod[] methods = SubtreeComputationMethod.values(); // array of the methods in the order they're declared
+        final int ilpIdx = SubtreeComputationMethod.ILP.ordinal();
+
+        // CREATING ALL TASKS:
+        // Each instance in this.fileNames corresponds to one task.
+        // Each task does the following:
+        // - load the molecule and the FTree from their files in 'spectraDir' and 'fTreeDir', and create a scoring object
+        // - create a CombinatorialGraph with terminal nodes and measure the running time of construction
+        // - compute the CombinatorialSubtree for each method (ILP, Insertion, Prim, Critical Path1-3)
+        // - measure the running the times, the score and the tanimoto coefficient against the ILP solution
+        // - save all data in a string matching the CSV ordering and return it
+        System.out.println("Collect all tasks...");
+        ArrayList<Callable<String>> tasks = new ArrayList<>(this.fileNames.length);
+        for(String fileName : this.fileNames){
+            Callable<String> task = () -> {
+                // 1.) Initialise the molecule, the FTree and the scoring object:
+                MolecularGraph molecule = this.readMolecule(fileName+".ms");
+                FTree fTree = this.readFTree(fileName+".json");
+                DirectedBondTypeScoring scoring = new DirectedBondTypeScoring(molecule);
+
+                // 2.) Create the CombinatorialGraph and add the terminal nodes to it:
+                // Measure the running time for constructing such fragmentation graph.
+                long timeStamp, constructionRuntime;
+                CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(molecule, scoring);
+                timeStamp = System.currentTimeMillis();
+                CombinatorialGraph graph = fragmenter.createCombinatorialFragmentationGraph(fragmentationConstraint);
+                CombinatorialGraphManipulator.addTerminalNodes(graph, scoring, fTree);
+                constructionRuntime = System.currentTimeMillis() - timeStamp;
+
+                // 3.) Compute the CombinatorialSubtree of 'graph' with each SubtreeComputationMethod:
+                // Save the score, the running time and the tanimoto coefficient between the ILP solution for each method.
+                CombinatorialSubtree[] subtrees = new CombinatorialSubtree[methods.length];
+                long[] runningTimes = new long[methods.length];
+                double[] scores = new double[methods.length];
+                double[] tanimotoScores = new double[methods.length];
+
+                // 3.1: For each method, compute the subtree, measure the runtime and score:
+                for(int i = 0; i < methods.length; i++){
+                    SubtreeComputationMethod method = methods[i];
+                    timeStamp = System.currentTimeMillis();
+                    CombinatorialSubtreeCalculator subtreeCalc = this.getComputedSubtreeCalculator(fTree, graph, scoring, method);
+
+                    runningTimes[i] = System.currentTimeMillis() - timeStamp;
+                    subtrees[i] = subtreeCalc.getSubtree();
+                    scores[i] = subtreeCalc.getScore();
+                }
+
+                // 3.2: For each method, compute the tanimoto coefficient between the subtree and the ILP subtree:
+                CombinatorialSubtree ilpSubtree = subtrees[ilpIdx];
+                TIntIntHashMap edgeValue2edgeIdx = graph.edgeValue2Index();
+                int maxBitSetLength = graph.maximalBitSetLength();
+
+                for(int i = 0; i < methods.length; i++){
+                    CombinatorialSubtree subtree = subtrees[i];
+                    tanimotoScores[i] = CombinatorialSubtreeManipulator.tanimoto(subtree, ilpSubtree, edgeValue2edgeIdx, maxBitSetLength);
+                }
+
+                // 4.) Save all data into one string:
+                // The string should look like this:
+                // "<instance name>,<constrRunningtime>,{Running times},{Scores},{Tanimoto-Scores}"
+                StringBuilder strBuilder = new StringBuilder(fileName+","+constructionRuntime);
+                for(int i = 0; i < methods.length; i++) strBuilder.append(","+runningTimes[i]);
+                for(int i = 0; i < methods.length; i++) strBuilder.append(","+scores[i]);
+                for(int i = 0; i < methods.length; i++) strBuilder.append(","+tanimotoScores[i]);
+
+                return strBuilder.toString();
+            };
+            tasks.add(task);
+        }
+        System.out.println("All tasks were collected and will be executed now...");
+        List<Future<String>> futures = executor.invokeAll(tasks);
+
+        System.out.println("All tasks are computed. Store all data into a CSV file and save it into "+this.outputDir+".");
+        StringBuilder startingString = new StringBuilder("instance_name,construction_runtime");
+        for(int i = 0; i < methods.length; i++) startingString.append(","+methods[i].name()+"_runtime");
+        for(int i = 0; i < methods.length; i++) startingString.append(","+methods[i].name()+"_score");
+        for(int i = 0; i < methods.length; i++) startingString.append(","+methods[i].name()+"_tanimoto");
+
+        File csvOutputFile = new File(this.outputDir, "subtreeCompMethod_comparison_results.csv");
+        try(BufferedWriter fileWriter = Files.newBufferedWriter(csvOutputFile.toPath())){
+            fileWriter.write(startingString.toString());
+
+            for(Future<String> future : futures){
+                String resultString = future.get();
+
+                fileWriter.newLine();
+                fileWriter.write(resultString);
+            }
+        }
     }
 
     public void runStructureIdentification(CombinatorialFragmenter.Callback2 fragmentationConstraint, SubtreeComputationMethod subtreeCompMethod){
