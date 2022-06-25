@@ -443,7 +443,7 @@ subprojects {
         // delete this and add the sirius call with following JUnit test
 
         commandLine "cd ../.."
-        commandLine "cd sirius_cli/src/test"
+        commandLine "cd sirius_cli\\src\\test"
         commandLine "mkdir temp_results"
         commandLine "cd temp_results"
         commandLine "mkdir mgf_temp_summary"
@@ -451,20 +451,17 @@ subprojects {
 
         //go back to sirius_frontend
         commandLine "cd ../../../.."
-        //go to build folder
-        commandLine "cd sirius_dist/sirius_cli_single_os/build/distributions/sirius"
 
         //execution of sirius.exe
-        commandLine "C:\\Users\\timsc\\Documents\\Programms\\sirius_frontend\\sirius_dist\\sirius_cli_single_os\\build\\distributions\\sirius\\sirius.exe --input \\builds\\bioinf-mit/ms/sirius_frontend/sirius_doc/manual/demo-data/mgf/laudanosine.mgf --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_output formula -p orbitrap fingerprint structure compound-classes write-summaries --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_summary"
+        commandLine ".\\sirius_dist\\sirius_cli_single_os\\build\\distributions\\sirius\\sirius.exe --input sirius_doc\\manual\\demo-data\\mgf\\laudanosine.mgf --output sirius_cli\\src\\test\\temp_results\\mgf_temp_output formula -p orbitrap fingerprint structure compound-classes write-summaries --output sirius_cli\\src\\test\\temp_results\\mgf_temp_summary"
 
-
-        commandLine "cd sirius_dist/sirius_cli_sinngle_os/src/test/java"
+        //go into test folder
+        commandLine "cd sirius_dist\\sirius_cli_single_os\\src\\test\\java"
         commandLine "javac MgfTest.java"
         commandLine "java MgfTest"
         commandLine "cd ../../../../.."
-        commandLine "cd sirius_cli/src/test"
+        commandLine "cd sirius_cli\\src\\test"
         commandLine "rm -r temp_results"
-
     }
     distImageTest.shouldRunAfter distImage
 
