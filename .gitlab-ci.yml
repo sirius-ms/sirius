@@ -1,13 +1,22 @@
+# This is the Gradle build system for JVM applications
+# https://gradle.org/
+# https://github.com/gradle/gradle
+#image: gradle:alpine
 default:
   image: git.bio.informatik.uni-jena.de:5050/bioinf-mit/docker-images/ubuntu-zulu-fx-gradle:18.04-15.0.3-6.9-5
 # Disable the Gradle daemon for Continuous Integration servers as correctness
 # is usually a priority over speed in CI environments. Using a fresh
 # runtime for each build is more reliable since the runtime is completely
 # isolated from any previous builds.
-
 stages:
+  - clean
+  - prepare
+  - build
   - beforetest
   - test
+#  - build-cli
+#  - build-multi-cli
+#  - build-gui
   - publish
 
 before_script:
@@ -18,44 +27,88 @@ before_script:
   - echo "$GITLAB_GITHUB_SIRIUS_PUBLIC_KEY" >> ~/.ssh/id_ed25519.pub
   - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
 
-beforetestDist:
-  stage: beforetest
+#distCliLinux64:
+#  variables:
+#    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+#  stage: build
+#  script:
+#    - cd sirius_dist/sirius_cli_single_os
+#    - gradle clean artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
+#  cache:
+#    key: "$CI_COMMIT_REF_NAME"
+#    policy: push
+#  tags:
+#    - kubernetes
+#  only:
+#    refs:
+#      - master
+#      - master-dist-tests
+#      - stable
+#    # stupid there is no exclude if only specific type was changed, so we have to use some heuristic to exclude README only changes
+#    # from pipeline
+#    changes:
+#      - "**/*.{java,gradle,properties,yml,tex,png,ico,json,xml,html,csv,tsv,py}"
+#      - "**/src/main/java/**/*"
+#
+#distGuiLinux64:
+#  variables:
+#    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+#  stage: build
+#  script:
+#    - cd sirius_dist/sirius_gui_single_os
+#    - gradle clean artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
+#  cache:
+#    key: "$CI_COMMIT_REF_NAME"
+#    policy: push
+#  tags:
+#    - kubernetes
+#  only:
+#    refs:
+#      - master
+#      - master-dist-tests
+#      - stable
+#    # stupid there is no exclude if only specific type was changed, so we have to use some heuristic to exclude README only changes
+#    # from pipeline
+#    changes:
+#      - "**/*.{java,gradle,properties,yml,tex,png,ico,json,xml,html,csv,tsv,py}"
+#      - "**/src/main/java/**/*"
+
+
+buildSirius:
+  stage: build
   script:
     - gradle :sirius_dist:sirius_cli_single_os:distImage
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
-  artifacts:
-    paths:
-      - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius
-  tags:
-    - kubernetes
-  only:
-    refs:
-      - master
-      - master-dist-tests
-      - stable
+    artifacts:
+      paths:
+        - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius
+    tags:
+      - kubernetes
+    only:
+      refs:
+        - master
+        - master-dist-tests
+        - stable
 
-afterTestDist:
+TestSirius:
   stage: test
   script:
-#    - hallo/sirius --input /builds/bioinf-mit/ms/sirius_frontend/sirius_doc/manual/demo-data/mgf/laudanosine.mgf --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_output formula -p orbitrap fingerprint structure compound-classes write-summaries --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_summary
-    - gradle :sirius_dist:sirius_cli_single_os:distImageTest
-    - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius --help
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: push
-  artifacts:
-    paths:
-      - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius
-  tags:
-    - kubernetes
-  only:
-    refs:
-      - master
-      - master-dist-tests
-      - stable
+    - cd sirius_cli/src/test
+    - mkdir temp_results
+    - cd temp_results
+    - mkdir mgf_temp_summary
+    - mkdir mgf_temp_output
+    - cd ../../../..
+    - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius --input /builds/bioinf-mit/ms/sirius_frontend/sirius_doc/manual/demo-data/mgf/laudanosine.mgf --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_output formula -p orbitrap fingerprint structure compound-classes write-summaries --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_summary
+    - cd sirius_cli/src/test/java
+    - javac MgfTest.java
+    - java MgfTest
+    - cd sirius_cli/src/test
+    - rm -r temp_results
 
+#push to github for multiOS build
 pushToGitHub:
   stage: publish
   script:
@@ -64,8 +117,8 @@ pushToGitHub:
     - git remote show origin
     - git remote set-url --push origin git@github.com:boecker-lab/sirius.git
     - git remote show origin
-  #   todo  re-insert before merge to master
-  #    - git push --follow-tags origin HEAD:$CI_COMMIT_REF_NAME
+#   todo  re-insert before merge to master
+#    - git push --follow-tags origin HEAD:$CI_COMMIT_REF_NAME
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
