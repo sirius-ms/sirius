@@ -20,8 +20,13 @@ public class MgfTestLocal {
 
     @BeforeAll
     public static void getCandidates(){
-        pre_candidates  = readCandidates("sirius_cli\\src\\test\\test_results\\mgf_candidates\\formula_candidates.tsv", rank_count, table_feature);
-        post_candidates = readCandidates("sirius_cli\\src\\test\\temp_results\\mgf_temp_summary\\0_laudanosine_FEATURE_1\\formula_candidates.tsv", rank_count, table_feature);
+
+        // generate absolute path to summary files
+        String absPath = System.getProperty("user.dir");
+        absPath = absPath.split("sirius_dist\\\\sirius_cli_single_os")[0];
+
+        pre_candidates  = readCandidates(absPath + "sirius_cli\\src\\test\\test_results\\mgf_candidates\\formula_candidates.tsv", rank_count, table_feature);
+        post_candidates = readCandidates(absPath + "sirius_cli\\src\\test\\temp_results\\mgf_temp_summary\\0_laudanosine_FEATURE_1\\formula_candidates.tsv", rank_count, table_feature);
     }
 
     @Test
@@ -45,11 +50,6 @@ public class MgfTestLocal {
 
         BufferedReader reader;
         String[] top_results = new String[candidates_num];
-
-        //versuche aboluten Pfad zu erzeugen
-        String absPath = System.getProperty("user.dir");
-        filePath = absPath + filePath;
-        System.out.println(filePath);
 
         try{
             reader = new BufferedReader(new FileReader(filePath));

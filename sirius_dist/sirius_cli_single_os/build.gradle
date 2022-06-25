@@ -8,6 +8,7 @@ dependencies {
 test {
     useJUnitPlatform()
     filter.includeTestsMatching("MgfTest")
+    filter.includeTestsMatching("MgfTestLocal")
     testLogging.showStandardStreams(true)
 }
 
