@@ -440,6 +440,7 @@ subprojects {
 
 
     task distImageTest(dependsOn: distImage, group: 'distribution') {
+        // delete this and add the sirius call with following JUnit test
         doLast {
             File f = new File("C:\\Users\\jonas\\Documents\\SHK Stelle\\sirius_frontend\\sirius_dist\\sirius_cli_single_os\\build\\distributions\\sirius\\sirius.exe");
             if(!f.exists()) {
