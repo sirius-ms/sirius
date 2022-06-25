@@ -27,7 +27,7 @@ beforetestDist:
     policy: push
   artifacts:
     paths:
-      - sirius_art
+      - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius
   tags:
     - kubernetes
   only:
@@ -47,7 +47,7 @@ afterTestDist:
     policy: push
   artifacts:
     paths:
-      - sirius_art
+      - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius
   tags:
     - kubernetes
   only:
