@@ -1,21 +1,13 @@
-# This is the Gradle build system for JVM applications
-# https://gradle.org/
-# https://github.com/gradle/gradle
-#image: gradle:alpine
 default:
   image: git.bio.informatik.uni-jena.de:5050/bioinf-mit/docker-images/ubuntu-zulu-fx-gradle:18.04-15.0.3-6.9-5
 # Disable the Gradle daemon for Continuous Integration servers as correctness
 # is usually a priority over speed in CI environments. Using a fresh
 # runtime for each build is more reliable since the runtime is completely
 # isolated from any previous builds.
+
 stages:
-  - clean
-  - prepare
-  - build
+  - beforetest
   - test
-#  - build-cli
-#  - build-multi-cli
-#  - build-gui
   - publish
 
 before_script:
@@ -26,98 +18,16 @@ before_script:
   - echo "$GITLAB_GITHUB_SIRIUS_PUBLIC_KEY" >> ~/.ssh/id_ed25519.pub
   - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
 
-#distCliLinux64:
-#  variables:
-#    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-#  stage: build
-#  script:
-#    - cd sirius_dist/sirius_cli_single_os
-#    - gradle clean artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
-#  cache:
-#    key: "$CI_COMMIT_REF_NAME"
-#    policy: push
-#  tags:
-#    - kubernetes
-#  only:
-#    refs:
-#      - master
-#      - master-dist-tests
-#      - stable
-#    # stupid there is no exclude if only specific type was changed, so we have to use some heuristic to exclude README only changes
-#    # from pipeline
-#    changes:
-#      - "**/*.{java,gradle,properties,yml,tex,png,ico,json,xml,html,csv,tsv,py}"
-#      - "**/src/main/java/**/*"
-#
-#distGuiLinux64:
-#  variables:
-#    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-#  stage: build
-#  script:
-#    - cd sirius_dist/sirius_gui_single_os
-#    - gradle clean artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
-#  cache:
-#    key: "$CI_COMMIT_REF_NAME"
-#    policy: push
-#  tags:
-#    - kubernetes
-#  only:
-#    refs:
-#      - master
-#      - master-dist-tests
-#      - stable
-#    # stupid there is no exclude if only specific type was changed, so we have to use some heuristic to exclude README only changes
-#    # from pipeline
-#    changes:
-#      - "**/*.{java,gradle,properties,yml,tex,png,ico,json,xml,html,csv,tsv,py}"
-#      - "**/src/main/java/**/*"
-
-###Meeting###
-#haben tasks oder stages den gleichen Cache?
-#wir wollen nicht für jeden Task ein neues Build anfertigen
-#gruppieren, nicht build -> test -> build -> upload
-
-#Test lokal ausführen mit gradle, gradle tasks nacheinander ablaufen und in Pipeline einfügen
-
-#build aufrufen, dann compile und test
-#hier wird gebuildet ohne test
-
-#gradle kann auch pipeline aufgaben
-
-
-#2 aufruf von SIRIUS in gradle oder Unittests
-
-#3 test soll schauen ob distImage aktuell ist
-#kann man dann lokal ausfürehn
-#lokal beide tasks ausführen
-
-
-beforeTestDist:
-  stage: build
+beforetestDist:
+  stage: beforetest
   script:
     - gradle :sirius_dist:sirius_cli_single_os:distImage
-#    - cd sirius_cli/src/test
- #   - mkdir temp_results
-  #  - cd temp_results
-   # - mkdir mgf_temp_summary
- #   - mkdir mgf_temp_output
-  #  - cd ../../../..
-#    - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius login -u jonas.emmert@uni-jena.de -p
- #   - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius --input /builds/bioinf-mit/ms/sirius_frontend/sirius_doc/manual/demo-data/mgf/laudanosine.mgf --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_output formula -p orbitrap fingerprint structure compound-classes write-summaries --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_summary
-#    - cd sirius_cli/src/test/java
-#    - javac MgfTest.java
-#    - java MgfTest
-#    - gradle :sirius_dist:sirius_cli_single_os:build # includes the test
-#    - cd sirius_cli/src/test
-#    - rm -r temp_results
   cache:
     key: "$CI_COMMIT_REF_NAME"
-    paths:
-      - /builds/bioinf-mit/ms/sirius_frontend
     policy: push
-#  artifacts:
-#    paths:
-#      - hallo/
+  artifacts:
+    paths:
+      - hallo/
   tags:
     - kubernetes
   only:
@@ -129,20 +39,14 @@ beforeTestDist:
 afterTestDist:
   stage: test
   script:
-    # sollte funktionieren falls Sirius wirklich cached ist
-    # todo: Pfad zum cache als Pfad für Sirius finden (cache wird als cache.zip gespeichert, siehe https://docs.gitlab.com/ee/ci/caching/index.html#where-the-caches-are-stored)
-    - find /builds -type f -name "cache.zip"
-    - find /builds -type f -name "*.zip"
-    - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius --input /builds/bioinf-mit/ms/sirius_frontend/sirius_doc/manual/demo-data/mgf/laudanosine.mgf --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_output formula -p orbitrap fingerprint structure compound-classes write-summaries --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_summary
+#    - hallo/sirius --input /builds/bioinf-mit/ms/sirius_frontend/sirius_doc/manual/demo-data/mgf/laudanosine.mgf --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_output formula -p orbitrap fingerprint structure compound-classes write-summaries --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_summary
     - gradle :sirius_dist:sirius_cli_single_os:distImageTest
   cache:
     key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  artifacts:
     paths:
-      - /builds/bioinf-mit/ms/sirius_frontend
-    policy: pull
-#  artifacts:
-#    paths:
-#      - hallo/
+      - hallo/
   tags:
     - kubernetes
   only:
@@ -151,51 +55,6 @@ afterTestDist:
       - master-dist-tests
       - stable
 
-
-
-#    # testing MGF data
-#    - sirius --input sirius_doc/manual/demo-data/mgf/laudanosine.mgf formula -p orbitrap fingerprint structure compound-classes write-summaries --output sirius_cli/src/test/mgf_temp_summary
-#    - cd sirius_cli/src/test/java/
-#    - javac MgfTest.java
-#    - java MgfTest
-#    - cd..
-#    - rmdir mgf_temp_summary
-#    - cd..
-#    - cd..
-#    - cd..
-#
-#    # testing TXT data
-#    - sirius -1 sirius_doc/manual/demo-data/txt/chelidonine_ms.txt -2 sirius_doc/manual/demo-data/txt/chelidonine_msms1.txt,sirius_doc/manual/demo-data/txt/chelidonine_msms2.txt -z 354.134704589844 formula -p orbitrap write-summaries --output sirius_cli/src/test/txt_temp_summary
-#    - cd sirius_cli/src/test/java/
-#    - javac TxtTest.java
-#    - java TxtTest
-#    - cd..
-#    - rmdir txt_temp_summary
-#    - cd..
-#    - cd..
-#    - cd..
-#
-#    # testing MS data (three different commands)
-#    - sirius -i sirius_doc/manual/demo-data/ms/Bicuculline.ms formula -p orbitrap write-summaries --output sirius_cli/src/test/ms_temp_summary_fa
-#    - sirius -i sirius_doc/manual/demo-data/ms/Bicuculline.ms formula -p orbitrap fingerprint structure compound-classes write-summaries --output sirius_cli/src/test/ms_temp_summary_cca
-#    - sirius -i sirius_doc/manual/demo-data/ms/Bicuculline.ms --ignore-formula formula -p orbitrap -c 5 write-summaries --output sirius_cli/src/test/ms_temp_summary_if
-#    - cd sirius_cli/src/test/java/
-#    - javac MsTest.java
-#    - java MsTest
-#    - cd..
-#    - rmdir ms_temp_summary_fa
-#    - rmdir ms_temp_summary_cca
-#    - rmdir ms_temp_summary_if
-#    - cd..
-#    - cd..
-#    - cd..
-
-#    - cd sirius_cli/src/test/java/
-#    - javac BuildTest.java
-#    - java BuildTest
-
-
-#push to github for multiOS build
 pushToGitHub:
   stage: publish
   script:
@@ -204,8 +63,8 @@ pushToGitHub:
     - git remote show origin
     - git remote set-url --push origin git@github.com:boecker-lab/sirius.git
     - git remote show origin
-#   todo  re-insert before merge to master
-#    - git push --follow-tags origin HEAD:$CI_COMMIT_REF_NAME
+  #   todo  re-insert before merge to master
+  #    - git push --follow-tags origin HEAD:$CI_COMMIT_REF_NAME
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
