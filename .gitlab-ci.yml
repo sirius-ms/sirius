@@ -81,16 +81,16 @@ buildSirius:
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
-    artifacts:
+  artifacts:
       paths:
         - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius
-    tags:
+  tags:
       - kubernetes
-    only:
-      refs:
-        - master
-        - master-dist-tests
-        - stable
+  only:
+    refs:
+      - master
+      - master-dist-tests
+      - stable
 
 TestSirius:
   stage: test
@@ -107,6 +107,19 @@ TestSirius:
     - java MgfTest
     - cd sirius_cli/src/test
     - rm -r temp_results
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+    artifacts:
+      paths:
+        - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius
+    tags:
+      - kubernetes
+    only:
+      refs:
+        - master
+        - master-dist-tests
+        - stable
 
 #push to github for multiOS build
 pushToGitHub:
@@ -117,7 +130,7 @@ pushToGitHub:
     - git remote show origin
     - git remote set-url --push origin git@github.com:boecker-lab/sirius.git
     - git remote show origin
-#   todo  re-insert before merge to master
+#todo  re-insert before merge to master
 #    - git push --follow-tags origin HEAD:$CI_COMMIT_REF_NAME
   cache:
     key: "$CI_COMMIT_REF_NAME"
