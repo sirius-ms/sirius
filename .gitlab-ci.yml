@@ -83,8 +83,7 @@ buildSirius:
     policy: push
   artifacts:
     paths:
-      - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius
-      - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/lib
+      - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius
   tags:
     - kubernetes
   only:
@@ -115,8 +114,7 @@ TestSirius:
     policy: push
   artifacts:
     paths:
-      - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius
-      - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/lib
+      - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius
   tags:
     - kubernetes
   only:
