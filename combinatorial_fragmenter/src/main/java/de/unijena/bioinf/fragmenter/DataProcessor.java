@@ -315,7 +315,7 @@ public class DataProcessor {
         final int NUM_AVAILABLE_PROCESSORS = Runtime.getRuntime().availableProcessors();
         ExecutorService executor = Executors.newFixedThreadPool(NUM_AVAILABLE_PROCESSORS);
 
-        // Create an array with all SubtreeComputationMethods and find the index of the ILP method:
+        // Create an array with all SubtreeComputationMethods and determine the index of the ILP method:
         final SubtreeComputationMethod[] methods = SubtreeComputationMethod.values(); // array of the methods in the order they're declared
         final int ilpIdx = SubtreeComputationMethod.ILP.ordinal();
 
@@ -405,6 +405,8 @@ public class DataProcessor {
                 fileWriter.write(resultString);
             }
         }
+        System.out.println("The executor service will be shutdown.");
+        executor.shutdown();
     }
 
     public void runStructureIdentification(CombinatorialFragmenter.Callback2 fragmentationConstraint, SubtreeComputationMethod subtreeCompMethod){
