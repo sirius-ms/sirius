@@ -19,8 +19,6 @@ jobs:
       MACOS_IDENTITY_ID: ${{ secrets.MACOS_IDENTITY_ID }}
       MACOS_APPLE_ID: ${{ secrets.MACOS_APPLE_ID }}
       MACOS_APPLE_ID_PW: ${{ secrets.MACOS_APPLE_ID_PW }}
-#      WIN_INSTALLER_CERTIFICATE_PW: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE_PW }}
-#      WIN_INSTALLER_CERTIFICATE_TIMESTAMP_URL: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE_TIMESTAMP_URL }}
       #          LINUX_INSTALLER_CERTIFICATE_FILE: ${{ steps.generic_codesign_cert.outputs.filePath }}
     steps:
       - uses: actions/checkout@v2
@@ -94,7 +92,7 @@ jobs:
   distGUI:
     strategy:
       matrix:
-        os: [windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     env:
       GENERIC_INSTALLER_CERTIFICATE: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE }}
@@ -102,8 +100,6 @@ jobs:
       MACOS_IDENTITY_ID: ${{ secrets.MACOS_IDENTITY_ID }}
       MACOS_APPLE_ID: ${{ secrets.MACOS_APPLE_ID }}
       MACOS_APPLE_ID_PW: ${{ secrets.MACOS_APPLE_ID_PW }}
-#      WIN_INSTALLER_CERTIFICATE_PW: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE_PW }}
-#      WIN_INSTALLER_CERTIFICATE_TIMESTAMP_URL: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE_TIMESTAMP_URL }}
     steps:
       - uses: actions/checkout@v2
       - name: Set up Zulu JDK-FX
@@ -227,7 +223,7 @@ jobs:
 
 
   release:
-    needs: [ distGUI]
+    needs: [ distCLI, distGUI, distMulti]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
