@@ -5,8 +5,6 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.babelms.MsIO;
 import gnu.trove.map.hash.TIntIntHashMap;
-import gnu.trove.map.hash.TObjectDoubleHashMap;
-import gnu.trove.map.hash.TObjectLongHashMap;
 import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
@@ -191,62 +189,6 @@ public class DataProcessor {
         }
     }
 
-    private CombinatorialSubtreeCalculator getComputedSubtreeCalculator(FTree fTree, MolecularGraph molecule, CombinatorialFragmenterScoring scoring, CombinatorialFragmenter.Callback2 fragmentationConstraint, SubtreeComputationMethod subtreeCompMethod) throws Exception{
-        CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(molecule, scoring);
-        CombinatorialGraph graph = fragmenter.createCombinatorialFragmentationGraph(fragmentationConstraint);
-        CombinatorialGraphManipulator.addTerminalNodes(graph, scoring, fTree);
-        return this.getComputedSubtreeCalculator(fTree, graph, scoring, subtreeCompMethod);
-    }
-
-    private CombinatorialSubtreeCalculator getComputedSubtreeCalculator(FTree fTree, CombinatorialGraph graph, CombinatorialFragmenterScoring scoring, SubtreeComputationMethod subtreeCompMethod) throws Exception {
-        CombinatorialSubtreeCalculator subtreeCalc;
-        switch(subtreeCompMethod){
-            case ILP:
-                PCSTFragmentationTreeAnnotator ilpCalc = new PCSTFragmentationTreeAnnotator(fTree, graph, scoring);
-                ilpCalc.initialize(null);
-                ilpCalc.computeSubtree();
-                subtreeCalc = ilpCalc;
-                break;
-            case PRIM:
-                PrimSubtreeCalculator primCalc = new PrimSubtreeCalculator(fTree, graph, scoring);
-                primCalc.initialize(null);
-                primCalc.computeSubtree();
-                subtreeCalc = primCalc;
-                break;
-            case INSERTION:
-                InsertionSubtreeCalculator insertionCalc = new InsertionSubtreeCalculator(fTree, graph ,scoring);
-                insertionCalc.initialize(null);
-                insertionCalc.computeSubtree();
-                subtreeCalc = insertionCalc;
-                break;
-            case CRITICAL_PATH_1:
-                CriticalPathSubtreeCalculator cp1Calc = new CriticalPathSubtreeCalculator(fTree, graph, scoring, true);
-                cp1Calc.initialize(null);
-                cp1Calc.computeSubtree();
-                subtreeCalc = cp1Calc;
-                break;
-            case CRITICAL_PATH_2:
-                CriticalPathSubtreeCalculator cp2Calc = new CriticalPathSubtreeCalculator(fTree, graph, scoring, false);
-                cp2Calc.initialize(null);
-                cp2Calc.computeSubtree();
-                subtreeCalc = cp2Calc;
-                break;
-            case CRITICAL_PATH_3:
-                CriticalPathInsertionSubtreeCalculator cp3Calc = new CriticalPathInsertionSubtreeCalculator(fTree, graph, scoring);
-                cp3Calc.initialize(null);
-                cp3Calc.computeSubtree();
-                subtreeCalc = cp3Calc;
-                break;
-            default:
-                CriticalPathSubtreeCalculator defaultCalc = new CriticalPathSubtreeCalculator(fTree, graph, scoring, true);
-                defaultCalc.initialize(null);
-                defaultCalc.computeSubtree();
-                subtreeCalc = defaultCalc;
-                break;
-        }
-        return subtreeCalc;
-    }
-
     private void unreference(MolecularGraph molecule, FTree fTree, CombinatorialFragmenterScoring scoring, CombinatorialSubtreeCalculator subtreeCalc){
         molecule = null;
         fTree = null;
@@ -273,7 +215,7 @@ public class DataProcessor {
                     FTree fTree = this.readFTree(fileName + ".json");
                     DirectedBondTypeScoring scoring = new DirectedBondTypeScoring(molecule);
 
-                    CombinatorialSubtreeCalculator subtreeCalc = this.getComputedSubtreeCalculator(fTree, molecule, scoring, fragmentationConstraint, subtreeCompMethod);
+                    CombinatorialSubtreeCalculator subtreeCalc = SubtreeComputationMethod.getComputedSubtreeCalculator(fTree, molecule, scoring, fragmentationConstraint, subtreeCompMethod);
 
                     CombinatorialSubtreeCalculatorJsonWriter.writeResultsToFile(subtreeCalc, new File(this.outputDir, fileName + ".json"));
                     this.unreference(molecule, fTree, scoring, subtreeCalc);
@@ -356,7 +298,7 @@ public class DataProcessor {
                 for(int i = 0; i < methods.length; i++){
                     SubtreeComputationMethod method = methods[i];
                     timeStamp = System.currentTimeMillis();
-                    CombinatorialSubtreeCalculator subtreeCalc = this.getComputedSubtreeCalculator(fTree, graph, scoring, method);
+                    CombinatorialSubtreeCalculator subtreeCalc = SubtreeComputationMethod.getComputedSubtreeCalculator(fTree, graph, scoring, method);
 
                     runningTimes[i] = System.currentTimeMillis() - timeStamp;
                     subtrees[i] = subtreeCalc.getSubtree();
@@ -407,15 +349,6 @@ public class DataProcessor {
         }
         System.out.println("The executor service will be shutdown.");
         executor.shutdown();
-    }
-
-    public enum SubtreeComputationMethod{
-        ILP,
-        PRIM,
-        INSERTION,
-        CRITICAL_PATH_1,
-        CRITICAL_PATH_2,
-        CRITICAL_PATH_3
     }
 
 }
