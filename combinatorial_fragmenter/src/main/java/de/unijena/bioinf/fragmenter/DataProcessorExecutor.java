@@ -32,7 +32,7 @@ public class DataProcessorExecutor {
     private ProcessingMethod processingMethod;
 
     @Option(name = "-scm", aliases = {"--subtreeComputationMethod", "--subtreeCompMethod"}, usage = "The method for computing the combinatorial subtree.")
-    private DataProcessor.SubtreeComputationMethod subtreeComputationMethod;
+    private SubtreeComputationMethod subtreeComputationMethod;
 
     @Option(name = "-d", aliases = {"--fd", "--fragmentationDepth"}, usage = "The fragmentation depth used for computing the subtrees.", required = true)
     private int fragmentationDepth;
