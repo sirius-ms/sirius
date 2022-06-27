@@ -14,7 +14,6 @@ public class DataProcessorExecutor {
     private enum ProcessingMethod{
         COMPUTE_SUBTREES,
         COMPARISON,
-        STRUCTURE_IDENTIFICATION
     }
 
     @Option(name = "-scoring", aliases = {"--scoringFile"}, usage = "Specify the scoring parameters that should be used.", required = true)
@@ -100,9 +99,6 @@ public class DataProcessorExecutor {
                     break;
                 case COMPUTE_SUBTREES:
                     dataProcessor.computeCombinatorialSubtrees(fragmentationConstraint, executor.subtreeComputationMethod);
-                    break;
-                case STRUCTURE_IDENTIFICATION:
-                    dataProcessor.runStructureIdentification(fragmentationConstraint, executor.subtreeComputationMethod);
                     break;
             }
         } catch (CmdLineException e) {
