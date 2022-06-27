@@ -409,10 +409,6 @@ public class DataProcessor {
         executor.shutdown();
     }
 
-    public void runStructureIdentification(CombinatorialFragmenter.Callback2 fragmentationConstraint, SubtreeComputationMethod subtreeCompMethod){
-        throw new UnsupportedOperationException("This structure identification method is not supported.");
-    }
-
     public enum SubtreeComputationMethod{
         ILP,
         PRIM,
