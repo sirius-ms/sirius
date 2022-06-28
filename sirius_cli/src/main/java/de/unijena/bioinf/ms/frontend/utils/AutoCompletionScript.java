@@ -9,6 +9,7 @@ import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import picocli.AutoComplete;
 import picocli.CommandLine;
 
@@ -17,6 +18,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.concurrent.Callable;
@@ -27,6 +29,7 @@ public class AutoCompletionScript implements Callable<Integer> {
 
     @CommandLine.Parameters(index = "0",description = "Maximum depth of subcommands" ,defaultValue = "5")
     private static int depth;
+    private final HashSet<String> aliases = new HashSet<>();
     private static final String NAME = "SiriusLinuxCompletionScript";
     private static final Path PATH = Path.of(String.format("./sirius_cli/scripts/%s",NAME));
 
@@ -48,6 +51,7 @@ public class AutoCompletionScript implements Callable<Integer> {
         commandline.registerConverter(DefaultParameter.class, new DefaultParameter.Converter());
         System.out.printf("Creating AutocompletionScript of length %d%n", depth);
         //setRecursionDepthLimit(commandline, depth);
+        updateAliases(commandline);
         String s = AutoComplete.bash("sirius", commandline);
         System.out.printf("AutocompletionScript created successfully at %s%n", PATH);
         Files.writeString(PATH, s);
@@ -56,39 +60,57 @@ public class AutoCompletionScript implements Callable<Integer> {
         System.out.printf("Please install the Script temporarily by typing the following into the Terminal: "+ (char)27 + "[1m. %s%n", NAME);
         return 0;
     }
+
+    private void updateAliases(CommandLine commandline) {
+        commandline.getCommandSpec().subcommands().forEach((name, subcommand) -> aliases.addAll(Arrays.asList(subcommand.getCommandSpec().aliases())));
+    }
+
     private @NotNull String formatScript() throws IOException {
+        // remove sirius alias
+        aliases.remove("sirius");
         StringBuilder output = new StringBuilder();
         BufferedReader reader = new BufferedReader(new FileReader(String.valueOf(PATH)));
         String line;
         while ((line = reader.readLine()) != null) {
             String[] words = line.split(" ");
 
-            // find completion_script function
-            if (words.length > 1 && Objects.equals(words[0], "function") && words[1].equals("_complete_sirius()")) {
-                output.append(line).append("\n");
-                int defaultlength = 16;
-                while ((line = reader.readLine()) != null) {
-                    words = line.split(" ");
-
-                    if (line.equals("  # Find the longest sequence of subcommands and call the bash function for that subcommand.")) {
-                        // end of completion_script function
-                        output.append(formatLocalCommandDef(reader));
-                        break;
-                    }
-
-                    if (words.length <= defaultlength+depth) {
-                        // line small enough
-                        output.append(line).append("\n");
-                    }
-                }
-            }
-
+            line = modifyCompletionScriptFunction(output, reader, line, words);
 
 
             // line uninteresting
             output.append(line).append("\n");
         }
         return output.toString();
+    }
+
+    private String modifyCompletionScriptFunction(StringBuilder output, BufferedReader reader, String line, String[] words) throws IOException {
+        // find completion_script function
+        if (words.length > 1 && Objects.equals(words[0], "function") && words[1].equals("_complete_sirius()")) {
+            output.append(line).append("\n");
+            int defaultlength = 16;
+            while ((line = reader.readLine()) != null) {
+                words = line.split(" ");
+
+                if (line.equals("  # Find the longest sequence of subcommands and call the bash function for that subcommand.")) {
+                    // end of completion_script function
+                    output.append(formatLocalCommandDef(reader));
+                    break;
+                }
+                int actualpos = 7;
+                if (words.length >= 7) {
+                    String[] actualwords = new String[words.length - actualpos];
+                    System.arraycopy(words, actualpos, actualwords, 0, words.length - actualpos);
+                    if (doesntcontainalias(actualwords)) {
+                        // not an alias
+                        if (words.length <= defaultlength + depth) {
+                            // line small enough
+                            output.append(line).append("\n");
+                        }
+                    }
+                }
+            }
+        }
+        return line;
     }
 
     private @NotNull String formatLocalCommandDef(@NotNull BufferedReader reader) throws IOException {
@@ -103,16 +125,22 @@ public class AutoCompletionScript implements Callable<Integer> {
                 currentOutput.append(removeCompWords(reader, removed));
                 return currentOutput.toString();
             }
-
-            if (words.length <= defaultlength+depth) {
-                // line small enough
-                currentOutput.append(line).append("\n");
+           // if (doesntcontainalias(words)) {
+                // not an alias
+                if (words.length <= defaultlength + depth) {
+                    // line small enough
+                    currentOutput.append(line).append("\n");
+             //   }
             }
             else {
                 removed.add(Integer.valueOf((words[3].split("="))[0].substring(4)));
             }
         }
         return currentOutput.toString();
+    }
+
+    private boolean doesntcontainalias(String[] words) {
+        return !(Arrays.stream(words).anyMatch(word -> aliases.stream().anyMatch(word::contains)));
     }
 
     private @NotNull String removeCompWords(@NotNull BufferedReader reader, HashSet<Integer> removed) throws IOException {
