@@ -17,116 +17,122 @@ import java.util.stream.Collectors;
 
 public class DataProcessor {
 
-    private final File spectraDir;
+    private File spectraDir;
+    private File predictionsDir;
+
     private final File fTreeDir;
     private final File outputDir;
     private final String[] fileNames;
 
     private static final long SHUFFLE_SEED = 42;
 
-    public DataProcessor(File spectraDir, File fTreeDir, File outputDir, int numPartitions, int idxPartition){
-        if(spectraDir.isDirectory() && fTreeDir.isDirectory() && outputDir.isDirectory()){
-            this.spectraDir = spectraDir;
+    public DataProcessor(File spectraDir, File predictionsDir, File fTreeDir, File outputDir){
+        this(spectraDir, predictionsDir, fTreeDir, outputDir, 1, 0);
+    }
+
+    public DataProcessor(File spectraDir, File predictionsDir, File fTreeDir, File outputDir, int numPartitions, int idxPartition){
+        this(spectraDir, predictionsDir, fTreeDir, outputDir,
+                Arrays.stream(Objects.requireNonNull(outputDir.list())).
+                        map(processedInstanceFileName -> processedInstanceFileName.replaceFirst("\\..+$", "")).
+                        collect(Collectors.toList()),
+                numPartitions, idxPartition);
+    }
+
+    public DataProcessor(File spectraDir, File predictionsDir, File fTreeDir, File outputDir, Collection<String> processedInstances){
+        this(spectraDir, predictionsDir, fTreeDir, outputDir, processedInstances, 1, 0);
+    }
+
+    public DataProcessor(File spectraDir, File predictionsDir, File fTreeDir, File outputDir, Collection<String> processedInstances, int numPartitions, int idxPartition){
+        this(fTreeDir, outputDir, processedInstances, numPartitions, idxPartition);
+
+        if(spectraDir != null){
+            if(spectraDir.isDirectory()){
+                this.spectraDir = spectraDir;
+            }else{
+                throw new RuntimeException("The given abstract path name denoting the directory containing the mass spectra " +
+                        "does not exist or is not a directory.");
+            }
+        }
+        if(predictionsDir != null){
+            if(predictionsDir.isDirectory()){
+                this.predictionsDir = predictionsDir;
+            }else{
+                throw new RuntimeException("The given abstract path name denoting the directory containing the predicted compounds" +
+                        "does not exist or is not a directory.");
+            }
+        }
+    }
+
+    private DataProcessor(File fTreeDir, File outputDir, Collection<String> processedInstances, int numPartitions, int idxPartition) {
+        if(fTreeDir.isDirectory() && outputDir.isDirectory()) {
             this.fTreeDir = fTreeDir;
             this.outputDir = outputDir;
 
-            /* Assumptions:
-             * 1. 'spectraDir' and 'fTreeDir' contain the same amount of files
-             * 2. For each spectrum in 'spectraDir' there is the corresponding FTree in 'fTreeDir' with the same name
-             *
-             * Now: FILTERING
-             * Exclude all fTree files whose results are already processed and stored in 'outputDir'.
-             * An fTree file and a result file share the same ending ".json".
-             */
-            System.out.println("Filter out already processed instances in case you want to compute new subtrees.");
-            String[] resultFileNames = outputDir.list();
-            List<String> filteredFTreeFileNames = Arrays.stream(fTreeDir.list()).
-                    filter(fileName -> {
-                        for(String resultFileName : resultFileNames){
-                            if(fileName.equals(resultFileName)) return false;
-                        }
-                        return true;
-                    }).collect(Collectors.toList());
-            System.out.println(filteredFTreeFileNames.size()+" instances remain after filtering.");
+            System.out.println("Filter out already processed instances.");
+            List<String> filteredInstanceFileNames = this.filterOutProcessedInstances(processedInstances);
+            System.out.println(filteredInstanceFileNames.size() + " instances remain after filtering.");
 
-            /* PARTITION:
-             * Create the 'idxPartition'-th partition of 'filteredFTreeFileNames.
-             */
-            System.out.println("Partition the data set into "+numPartitions+" partitions.");
+            System.out.println("Sort the remaining the instances lexicographically and shuffle them with " +
+                    "seed " + SHUFFLE_SEED + ".");
+            Collections.sort(filteredInstanceFileNames);
+            Collections.shuffle(filteredInstanceFileNames, new Random(SHUFFLE_SEED));
 
-            /* First, sort 'filteredFTreeFileNames' lexicographically - just in case that
-             * 'File.list()' is not reproducible due to system properties.
-             * Second, shuffle 'filteredFTreeFileNames' to distribute the instances equally between the partitions.
-             */
-            Collections.sort(filteredFTreeFileNames);
-            Collections.shuffle(filteredFTreeFileNames, new Random(SHUFFLE_SEED));
+            System.out.println("Partition the instances into " + numPartitions + ".");
+            this.fileNames = this.getPartitionOfInstances(filteredInstanceFileNames, numPartitions, idxPartition);
+            System.out.println("The partition with index " + idxPartition + " was created and contains " +
+                    this.fileNames.length + " instances.");
+        }else{
+            throw new RuntimeException("Whether the given abstract path name for the fragmentation tree" +
+                    "directory or the output directory does not exist or is not a directory.");
+        }
+    }
 
-            int lengthPartition = filteredFTreeFileNames.size() / numPartitions;
-            int rest = filteredFTreeFileNames.size() - (lengthPartition * numPartitions);
+    private List<String> filterOutProcessedInstances(Collection<String> processedInstanceFileNames) {
+        // For each method (computation of subtrees, comparison or structure ranking), FTrees are always needed.
+        return Arrays.stream(Objects.requireNonNull(this.fTreeDir.list())).
+                map(fTreeFileName -> fTreeFileName.replaceFirst("\\.json", "")).
+                filter(fileName -> {
+                    for (String processedFileName : processedInstanceFileNames) {
+                        if (fileName.equals(processedFileName)) return false;
+                    }
+                    return true;
+                }).collect(Collectors.toList());
+    }
 
-            int startIndex, endIndex; // startIndex inclusive, endIndex exclusive
-            if(idxPartition < rest){
-                startIndex = idxPartition * lengthPartition + idxPartition;
+    private String[] getPartitionOfInstances(List<String> instanceFileNames, int numPartitions, int idxPartition) {
+        int numberOfInstances = instanceFileNames.size();
+        if (numberOfInstances <= numPartitions) {
+            if (idxPartition <= numberOfInstances - 1) {
+                return new String[]{instanceFileNames.get(idxPartition)};
+            } else {
+                return new String[0];
+            }
+        } else {
+            int lengthPartition = numberOfInstances / numPartitions;
+            int rest = numberOfInstances - numPartitions * lengthPartition;
+
+            int startIndex, endIndex;// 'startIndex' is inclusive, 'endIndex' is exclusive
+            if (idxPartition < rest) {
+                // the partition will take one additional element and
+                // all successor partitions have one additional element from the rest as well
+                startIndex = idxPartition * (lengthPartition + 1);
                 endIndex = startIndex + lengthPartition + 1;
-            }else{
+            } else {
                 startIndex = idxPartition * lengthPartition + rest;
                 endIndex = startIndex + lengthPartition;
             }
 
-            this.fileNames = new String[endIndex - startIndex];
-            for(int i = startIndex; i < endIndex; i++){
-                this.fileNames[i - startIndex] = filteredFTreeFileNames.get(i).replaceFirst("\\.json", "");
+            String[] fileNames = new String[endIndex - startIndex];
+            for (int i = 0; i < fileNames.length; i++) {
+                fileNames[i] = instanceFileNames.get(startIndex + i);
             }
-            System.out.println("The "+(idxPartition+1)+"-th partition with "+this.fileNames.length+" instances was created.");
-        }else{
-            throw new RuntimeException("The given abstract path names don't exist or aren't a directory.");
+            return fileNames;
         }
     }
 
-    public DataProcessor(File spectraDir, File fTreeDir, File outputDir){
-        this(spectraDir, fTreeDir, outputDir, 1, 0);
-    }
-
-    public DataProcessor(File spectraDir, File fTreeDir, File outputDir, int numInstancesToProcess){
-        if(spectraDir.isDirectory() && fTreeDir.isDirectory() && outputDir.isDirectory()){
-            this.spectraDir = spectraDir;
-            this.fTreeDir = fTreeDir;
-            this.outputDir = outputDir;
-
-            // FILTERING:
-            // - a fTree and a CombinatorialSubtree are stored in a JSON file
-            // - if there is a file in 'outputDir' whose filename exists in 'fTreeDir',
-            //   it is assumed that these files belong to the same instance
-            System.out.println("Filter out already processed instances in case you want to compute new subtrees.");
-            String[] resultFileNames = this.outputDir.list();
-            List<String> filteredFTreeFileNames = Arrays.stream(fTreeDir.list()).
-                    filter(fileName -> {
-                        for(String resultFileName : resultFileNames){
-                            if(fileName.equals(resultFileName)) return false;
-                        }
-                        return true;
-                    }).collect(Collectors.toList());
-            System.out.println(filteredFTreeFileNames.size()+" instances remain after filtering.");
-
-            if(filteredFTreeFileNames.size() < numInstancesToProcess){
-                numInstancesToProcess = filteredFTreeFileNames.size();
-            }
-            System.out.println("Sort and shuffle these instances and choose "+numInstancesToProcess+" Instances.");
-            Collections.sort(filteredFTreeFileNames);
-            Collections.shuffle(filteredFTreeFileNames, new Random(SHUFFLE_SEED));
-
-            this.fileNames = new String[numInstancesToProcess];
-            for(int i = 0; i < numInstancesToProcess; i++){
-                this.fileNames[i] = filteredFTreeFileNames.get(i).replaceFirst("\\.json", "");
-            }
-        }else{
-            throw new RuntimeException("The given abstract path names don't exist or aren't a directory.");
-        }
-    }
-
-    private MolecularGraph readMolecule(String fileName) throws IOException, InvalidSmilesException, UnknownElementException {
+    private MolecularGraph readMoleculeFromMsFile(String fileName) throws IOException, InvalidSmilesException, UnknownElementException {
         File file = new File(this.spectraDir, fileName);
-        try(BufferedReader fileReader = new BufferedReader(new FileReader(file))) {
+        try (BufferedReader fileReader = new BufferedReader(new FileReader(file))) {
 
             String currentLine = fileReader.readLine();
             String molecularFormula = null, smiles = null;
@@ -157,39 +163,7 @@ public class DataProcessor {
         return fTree;
     }
 
-    private ArrayList<String[]> divideInstancesIntoBatches(int numOfBatches){
-        if(this.fileNames.length <= numOfBatches){
-            ArrayList<String[]> batches = new ArrayList<>(this.fileNames.length);
-            for(String fileName : this.fileNames){
-                String[] batch = new String[]{fileName};
-                batches.add(batch);
-            }
-            return batches;
-        }else{
-            ArrayList<String[]> batches = new ArrayList<>(numOfBatches);
-            int numInstancesPerBatch = this.fileNames.length / numOfBatches;
-            int rest = this.fileNames.length - (numInstancesPerBatch * numOfBatches);
-
-            for(int i = 0; i < numOfBatches; i++){
-                int startIndex, endIndex; // startIndex is inclusive, endIndex is exclusive
-                if(i < rest){
-                    startIndex = i * (numInstancesPerBatch + 1);
-                    endIndex = startIndex + numInstancesPerBatch + 1;
-                }else{
-                    startIndex = i * numInstancesPerBatch + rest;
-                    endIndex = startIndex + numInstancesPerBatch;
-                }
-                String[] batch = new String[endIndex - startIndex];
-                for(int j = startIndex; j < endIndex; j++){
-                    batch[j - startIndex] = this.fileNames[j];
-                }
-                batches.add(batch);
-            }
-            return batches;
-        }
-    }
-
-    private void unreference(MolecularGraph molecule, FTree fTree, CombinatorialFragmenterScoring scoring, CombinatorialSubtreeCalculator subtreeCalc){
+    private void unreference(MolecularGraph molecule, FTree fTree, CombinatorialFragmenterScoring scoring, CombinatorialSubtreeCalculator subtreeCalc) {
         molecule = null;
         fTree = null;
         scoring = null;
@@ -208,10 +182,10 @@ public class DataProcessor {
         // CriticalPath1 and saves the result into a JSON file.
         System.out.println("Each instance corresponds to one task. Collect all tasks...");
         ArrayList<Callable<Object>> tasks = new ArrayList<>(this.fileNames.length);
-        for(String fileName : this.fileNames){
+        for (String fileName : this.fileNames) {
             Callable<Object> task = Executors.callable(() -> {
                 try {
-                    MolecularGraph molecule = this.readMolecule(fileName + ".ms");
+                    MolecularGraph molecule = this.readMoleculeFromMsFile(fileName + ".ms");
                     FTree fTree = this.readFTree(fileName + ".json");
                     DirectedBondTypeScoring scoring = new DirectedBondTypeScoring(molecule);
 
@@ -219,15 +193,15 @@ public class DataProcessor {
 
                     CombinatorialSubtreeCalculatorJsonWriter.writeResultsToFile(subtreeCalc, new File(this.outputDir, fileName + ".json"));
                     this.unreference(molecule, fTree, scoring, subtreeCalc);
-                }catch (Exception e) {
-                    System.out.println("An error occurred during processing instance "+fileName);
+                } catch (Exception e) {
+                    System.out.println("An error occurred during processing instance " + fileName);
                     File resultFile = new File(this.outputDir, fileName + ".json");
-                    if(resultFile.exists()){
+                    if (resultFile.exists()) {
                         boolean wasDeleted = resultFile.delete();
-                        if(wasDeleted) {
-                            System.out.println(fileName+".json was successfully deleted.");
-                        }else{
-                            System.out.println("Could not delete "+fileName+".json.");
+                        if (wasDeleted) {
+                            System.out.println(fileName + ".json was successfully deleted.");
+                        } else {
+                            System.out.println("Could not delete " + fileName + ".json.");
                         }
                     }
                     e.printStackTrace();
@@ -241,7 +215,7 @@ public class DataProcessor {
         System.out.println("Execute all tasks...");
         Collection<Future<Object>> futures = executor.invokeAll(tasks);
 
-        System.out.println(futures.size()+" tasks of "+tasks.size()+" have been processed and the executor service will be shutdown.");
+        System.out.println(futures.size() + " tasks of " + tasks.size() + " have been processed and the executor service will be shutdown.");
         executor.shutdown();
     }
 
@@ -271,11 +245,11 @@ public class DataProcessor {
         // - save all data in a string matching the CSV ordering and return it
         System.out.println("Collect all tasks...");
         ArrayList<Callable<String>> tasks = new ArrayList<>(this.fileNames.length);
-        for(String fileName : this.fileNames){
+        for (String fileName : this.fileNames) {
             Callable<String> task = () -> {
                 // 1.) Initialise the molecule, the FTree and the scoring object:
-                MolecularGraph molecule = this.readMolecule(fileName+".ms");
-                FTree fTree = this.readFTree(fileName+".json");
+                MolecularGraph molecule = this.readMoleculeFromMsFile(fileName + ".ms");
+                FTree fTree = this.readFTree(fileName + ".json");
                 DirectedBondTypeScoring scoring = new DirectedBondTypeScoring(molecule);
 
                 // 2.) Create the CombinatorialGraph and add the terminal nodes to it:
@@ -295,7 +269,7 @@ public class DataProcessor {
                 double[] tanimotoScores = new double[methods.length];
 
                 // 3.1: For each method, compute the subtree, measure the runtime and score:
-                for(int i = 0; i < methods.length; i++){
+                for (int i = 0; i < methods.length; i++) {
                     SubtreeComputationMethod method = methods[i];
                     timeStamp = System.currentTimeMillis();
                     CombinatorialSubtreeCalculator subtreeCalc = SubtreeComputationMethod.getComputedSubtreeCalculator(fTree, graph, scoring, method);
@@ -310,7 +284,7 @@ public class DataProcessor {
                 TIntIntHashMap edgeValue2edgeIdx = graph.edgeValue2Index();
                 int maxBitSetLength = graph.maximalBitSetLength();
 
-                for(int i = 0; i < methods.length; i++){
+                for (int i = 0; i < methods.length; i++) {
                     CombinatorialSubtree subtree = subtrees[i];
                     tanimotoScores[i] = CombinatorialSubtreeManipulator.tanimoto(subtree, ilpSubtree, edgeValue2edgeIdx, maxBitSetLength);
                 }
@@ -318,10 +292,10 @@ public class DataProcessor {
                 // 4.) Save all data into one string:
                 // The string should look like this:
                 // "<instance name>,<constrRunningtime>,{Running times},{Scores},{Tanimoto-Scores}"
-                StringBuilder strBuilder = new StringBuilder(fileName+","+constructionRuntime);
-                for(int i = 0; i < methods.length; i++) strBuilder.append(","+runningTimes[i]);
-                for(int i = 0; i < methods.length; i++) strBuilder.append(","+scores[i]);
-                for(int i = 0; i < methods.length; i++) strBuilder.append(","+tanimotoScores[i]);
+                StringBuilder strBuilder = new StringBuilder(fileName + "," + constructionRuntime);
+                for (int i = 0; i < methods.length; i++) strBuilder.append("," + runningTimes[i]);
+                for (int i = 0; i < methods.length; i++) strBuilder.append("," + scores[i]);
+                for (int i = 0; i < methods.length; i++) strBuilder.append("," + tanimotoScores[i]);
 
                 return strBuilder.toString();
             };
@@ -330,17 +304,17 @@ public class DataProcessor {
         System.out.println("All tasks were collected and will be executed now...");
         List<Future<String>> futures = executor.invokeAll(tasks);
 
-        System.out.println("All tasks are computed. Store all data into a CSV file and save it into "+this.outputDir+".");
+        System.out.println("All tasks are computed. Store all data into a CSV file and save it into " + this.outputDir + ".");
         StringBuilder startingString = new StringBuilder("instance_name,construction_runtime");
-        for(int i = 0; i < methods.length; i++) startingString.append(","+methods[i].name()+"_runtime");
-        for(int i = 0; i < methods.length; i++) startingString.append(","+methods[i].name()+"_score");
-        for(int i = 0; i < methods.length; i++) startingString.append(","+methods[i].name()+"_tanimoto");
+        for (int i = 0; i < methods.length; i++) startingString.append("," + methods[i].name() + "_runtime");
+        for (int i = 0; i < methods.length; i++) startingString.append("," + methods[i].name() + "_score");
+        for (int i = 0; i < methods.length; i++) startingString.append("," + methods[i].name() + "_tanimoto");
 
         File csvOutputFile = new File(this.outputDir, "subtreeCompMethod_comparison_results.csv");
-        try(BufferedWriter fileWriter = Files.newBufferedWriter(csvOutputFile.toPath())){
+        try (BufferedWriter fileWriter = Files.newBufferedWriter(csvOutputFile.toPath())) {
             fileWriter.write(startingString.toString());
 
-            for(Future<String> future : futures){
+            for (Future<String> future : futures) {
                 String resultString = future.get();
 
                 fileWriter.newLine();
