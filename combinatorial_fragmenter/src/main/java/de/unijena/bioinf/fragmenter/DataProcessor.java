@@ -219,7 +219,7 @@ public class DataProcessor {
         executor.shutdown();
     }
 
-    public void compareSubtreeComputationMethods(CombinatorialFragmenter.Callback2 fragmentationConstraint) throws InterruptedException, IOException, ExecutionException {
+    public void compareSubtreeComputationMethods(CombinatorialFragmenter.Callback2 fragmentationConstraint, String outputFileName) throws InterruptedException, IOException, ExecutionException {
         // We know: this.fileNames contains the filenames of all instances that have to be processed.
         // For each instance, we want to compare all subtree computation methods.
         // That means, we want to compute the fragmentation graph and the subtrees, their score and running times and
@@ -323,6 +323,10 @@ public class DataProcessor {
         }
         System.out.println("The executor service will be shutdown.");
         executor.shutdown();
+    }
+
+    public void runStructureRanking(CombinatorialFragmenter.Callback2 fragmentationConstraint, SubtreeComputationMethod subtreeCompMethod){
+        throw new UnsupportedOperationException("This method is currently not supported.");
     }
 
 }
