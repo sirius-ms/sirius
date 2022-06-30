@@ -4,7 +4,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.babelms.MsIO;
-import gnu.trove.map.hash.TIntIntHashMap;
+import gnu.trove.map.hash.TObjectIntHashMap;
 import gurobi.GRBException;
 import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
@@ -247,7 +247,7 @@ public class DataProcessor {
         // Test if 'outputFileName' is an existing file in this.outputDir
         // and if not, create a new file and write the starting string to it:
         File outputFile = new File(this.outputDir, outputFileName);
-        if(outputDir.createNewFile()){
+        if(outputFile.createNewFile()){
             StringBuilder startingString = new StringBuilder("instance_name,construction_runtime");
             for (int i = 0; i < methods.length; i++) startingString.append("," + methods[i].name() + "_runtime");
             for (int i = 0; i < methods.length; i++) startingString.append("," + methods[i].name() + "_score");
@@ -302,12 +302,12 @@ public class DataProcessor {
 
                     // 3.2: For each method, compute the tanimoto coefficient between the subtree and the ILP subtree:
                     CombinatorialSubtree ilpSubtree = subtrees[ilpIdx];
-                    TIntIntHashMap edgeValue2edgeIdx = graph.edgeValue2Index();
+                    TObjectIntHashMap<BitSet> mergedEdgeBitSet2Index = graph.mergedEdgeBitSet2Index();
                     int maxBitSetLength = graph.maximalBitSetLength();
 
                     for (int i = 0; i < methods.length; i++) {
                         CombinatorialSubtree subtree = subtrees[i];
-                        tanimotoScores[i] = CombinatorialSubtreeManipulator.tanimoto(subtree, ilpSubtree, edgeValue2edgeIdx, maxBitSetLength);
+                        tanimotoScores[i] = CombinatorialSubtreeManipulator.tanimoto(subtree, ilpSubtree, mergedEdgeBitSet2Index, maxBitSetLength);
                     }
 
                     // 4.) Save all data into one string and write this string into the output file:
