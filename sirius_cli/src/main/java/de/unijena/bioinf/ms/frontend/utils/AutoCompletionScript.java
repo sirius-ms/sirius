@@ -9,7 +9,6 @@ import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import picocli.AutoComplete;
 import picocli.CommandLine;
 
@@ -22,8 +21,9 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-@CommandLine.Command(name = "generateAutocompletion", description = "<STANDALONE> generates an Autocompletion-Script with the given depth of subcommands",
+@CommandLine.Command(name = "generateAutocompletion", description = " [WIP] <STANDALONE> generates an Autocompletion-Script with the given depth of subcommands",
     mixinStandardHelpOptions = true)
 public class AutoCompletionScript implements Callable<Integer> {
 
@@ -67,7 +67,7 @@ public class AutoCompletionScript implements Callable<Integer> {
 
     private @NotNull String formatScript() throws IOException {
         // remove sirius alias
-        aliases.remove("sirius");
+        //aliases.remove("sirius");
         StringBuilder output = new StringBuilder();
         BufferedReader reader = new BufferedReader(new FileReader(String.valueOf(PATH)));
         String line;
@@ -100,12 +100,12 @@ public class AutoCompletionScript implements Callable<Integer> {
                 if (words.length >= 7) {
                     String[] actualwords = new String[words.length - actualpos];
                     System.arraycopy(words, actualpos, actualwords, 0, words.length - actualpos);
-                    if (doesntcontainalias(actualwords)) {
+                //    if (doesntcontainalias(actualwords)) {
                         // not an alias
                         if (words.length <= defaultlength + depth) {
                             // line small enough
                             output.append(line).append("\n");
-                        }
+                  //      }
                     }
                 }
             }
@@ -125,12 +125,14 @@ public class AutoCompletionScript implements Callable<Integer> {
                 currentOutput.append(removeCompWords(reader, removed));
                 return currentOutput.toString();
             }
-           // if (doesntcontainalias(words)) {
+            //aliases.clear();
+            //aliases.add("sirius");
+            //if (doesntcontainalias(words)) {
                 // not an alias
                 if (words.length <= defaultlength + depth) {
                     // line small enough
                     currentOutput.append(line).append("\n");
-             //   }
+              //  }
             }
             else {
                 removed.add(Integer.valueOf((words[3].split("="))[0].substring(4)));
@@ -140,7 +142,21 @@ public class AutoCompletionScript implements Callable<Integer> {
     }
 
     private boolean doesntcontainalias(String[] words) {
-        return !(Arrays.stream(words).anyMatch(word -> aliases.stream().anyMatch(word::contains)));
+        String[] word_prefixes = {""};
+        String[] word_suffixes = {"", "\"", ")"};
+        AtomicBoolean noMatch = new AtomicBoolean(true);
+
+        aliases.forEach(alias -> {
+            Arrays.stream(words).forEach(word -> {
+                for (String word_prefix : word_prefixes) {
+                    for (String word_suffix : word_suffixes) {
+                        if (word.equals(word_prefix + alias + word_suffix)) noMatch.set(false);
+                    }
+                }
+
+            });
+        });
+        return noMatch.get();
     }
 
     private @NotNull String removeCompWords(@NotNull BufferedReader reader, HashSet<Integer> removed) throws IOException {
