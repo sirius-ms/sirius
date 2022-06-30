@@ -2,6 +2,7 @@ package de.unijena.bioinf.fragmenter;
 
 import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
 import gnu.trove.map.hash.TIntIntHashMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import org.openscience.cdk.interfaces.IBond;
 
@@ -184,19 +185,20 @@ public class CombinatorialGraph {
         return edgeIndices;
     }
 
-    public TIntIntHashMap edgeValue2Index(){
+    public TObjectIntHashMap<BitSet> mergedEdgeBitSet2Index(){
         int maxBitSetLength = this.maximalBitSetLength();
-        TIntIntHashMap edgeValue2Index = new TIntIntHashMap();
+        TObjectIntHashMap<BitSet> mergedEdgeBitSet2Index = new TObjectIntHashMap<>();
+
         int idx = 0;
         for(CombinatorialNode node : this.nodes){
             for(CombinatorialEdge edge : node.incomingEdges){
-                int edgeValue = edge.toIntegerValue(maxBitSetLength);
-                edgeValue2Index.put(edgeValue, idx);
+                BitSet mergedEdgeBitSet = edge.getMergedBitSet(maxBitSetLength);
+                mergedEdgeBitSet2Index.put(mergedEdgeBitSet, idx);
                 idx++;
             }
         }
 
-        return edgeValue2Index;
+        return mergedEdgeBitSet2Index;
     }
 
     public int maximalBitSetLength(){

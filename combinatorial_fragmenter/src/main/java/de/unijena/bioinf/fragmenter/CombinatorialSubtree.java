@@ -351,44 +351,34 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
      */
     public boolean[] toBooleanArray(CombinatorialGraph graph){
         int maxBitSetLength = graph.maximalBitSetLength();
-        TIntIntHashMap edgeValue2Index = graph.edgeValue2Index();
-        return this.toBooleanArray(edgeValue2Index, maxBitSetLength);
+        TObjectIntHashMap<BitSet> mergedEdgeBitSet2Index = graph.mergedEdgeBitSet2Index();
+        return this.toBooleanArray(mergedEdgeBitSet2Index, maxBitSetLength);
     }
 
     /**
      * Converts this {@link CombinatorialSubtree} into a boolean array denoting
      * which edges of {@code graph} are contained in this subtree.<br>
      *
-     * The given hashmap {@code edgeValue2Index} assigns each edge of the underlying supergraph a unique index
-     * starting from 0 and ending at (#edges-1). Because each edge can be assigned a unique value regarding the
-     * source and fragment bitset (see {@link CombinatorialEdge#toIntegerValue(int)}, this hashmap
-     * assigns each "edge value" (standing for a unique edge) a unique index in the resulting array.<br>
+     * The given hashmap {@code mergedEdgeBitSet2Index} assigns each {@link BitSet}, that is the result
+     * of merging the source and target BitSet of an {@link CombinatorialEdge} contained in the
+     * underlying {@link CombinatorialGraph}, a unique integer value
+     * in the range from 0 to #edgesInCombGraph. Because every {@link CombinatorialNode} in {@link CombinatorialGraph}
+     * has a unique BitSet object, every merged edge BitSet is also unique.<br>
      *
-     * @param edgeValue2Index hashmap that assigns each edge a unique index in the resulting array
+     * @param mergedEdgeBitSet2Index hashmap that assigns each edge a unique index in the resulting array
      * @param maxBitSetLength the maximal length of all bitsets found in the {@link CombinatorialGraph}
      * @return a boolean array denoting which edges of the supergraph are contained in this subtree
      */
-    public boolean[] toBooleanArray(TIntIntHashMap edgeValue2Index, int maxBitSetLength){
-        boolean[] subtreeArray = new boolean[edgeValue2Index.size()];
+    public boolean[] toBooleanArray(TObjectIntHashMap<BitSet> mergedEdgeBitSet2Index, int maxBitSetLength){
+        boolean[] subtreeArray = new boolean[mergedEdgeBitSet2Index.size()];
 
         for(CombinatorialNode node : this.nodes){
             CombinatorialEdge edge = node.incomingEdges.get(0);
-            int edgeValue = edge.toIntegerValue(maxBitSetLength);
-            int edgeIdx = edgeValue2Index.get(edgeValue);
+            BitSet mergedEdgeBitSet = edge.getMergedBitSet(maxBitSetLength);
+            int edgeIdx = mergedEdgeBitSet2Index.get(mergedEdgeBitSet);
             subtreeArray[edgeIdx] = true;
         }
 
         return subtreeArray;
-    }
-
-    public int[] toIntegerArray(CombinatorialGraph graph){
-        boolean[] subtreeBoolArray = this.toBooleanArray(graph);
-        int[] subtreeIntArray = new int[subtreeBoolArray.length];
-
-        for(int i = 0; i < subtreeBoolArray.length; i++){
-            subtreeIntArray[i] = subtreeBoolArray[i] ? 1 : 0;
-        }
-
-        return subtreeIntArray;
     }
 }

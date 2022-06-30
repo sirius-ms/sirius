@@ -63,35 +63,37 @@ public class CombinatorialEdge {
     }
 
     /**
-     * Converts this {@link CombinatorialEdge} into an integer value by concatenating
-     * the BitSet of its source and target fragments and
-     * then converting the resulting BitSet into its decimal value.<br>
-     * The given parameter {@code bitSetLength} denotes the maximal length of each BitSet found in the
+     * This method returns the {@link BitSet} that results from merging the
+     * source and target BitSet of this edge.<br>
+     * The given parameter {@code maxBitSetLength} is the maximal length of all BitSets found in the
      * corresponding {@link CombinatorialGraph}.
-     * Although each source fragment should be a real fragment and that the first BitSet
-     * has length {@link MolecularGraph#natoms}. But in the future there can be some changes,
-     * so that the source fragment does not have to be a real fragment.
-     * Thus, the length of the BitSet can be greater than the number of atoms in the molecule.
+     * Although the source fragment of each {@link CombinatorialEdge} in the CombinatorialGraph
+     * is currently a real fragment and the source BitSet has maximum length of {@link MolecularGraph#natoms},
+     * there can always be some changes in the code. Thus, this parameter is necessary for adapting
+     * to further changes.
      *
-     * @return an integer value representing this CombinatorialEdge
+     * @param maxBitSetLength maximum length of all BitSet objects found in the corresponding CombinatorialGraph
+     * @return the BitSet resulting from merging the source and the target BitSet
      */
-    public int toIntegerValue(int bitSetLength){
+    public BitSet getMergedBitSet(int maxBitSetLength){
         BitSet sourceBitSet = this.source.fragment.bitset;
         BitSet targetBitSet = this.target.fragment.bitset;
 
-        int resultValue = 0;
+        // First: Set all bits to true, which are set to true in sourceBitSet
+        BitSet mergedBitSet = new BitSet(2*maxBitSetLength);
         for(int i = sourceBitSet.nextSetBit(0); i >= 0; i = sourceBitSet.nextSetBit(i+1)){
-            // 'i' is index of a bit that is set to true (or 1)
-            resultValue = resultValue + (int) Math.pow(2,i);
+            // 'i' is the index of a bit that is set to true:
+            mergedBitSet.set(i);
         }
 
-        for(int i = targetBitSet.nextSetBit(0); i>= 0; i = targetBitSet.nextSetBit(i+1)){
-            // 'i' is index of a bit that is set to true in 'targetBitSet'.
-            // because we are "merging" the source and target bitsets, the first index of targetBitSet is equal to 'bitSetLength'
-            resultValue = resultValue + (int) Math.pow(2,i+bitSetLength);
+        // Second: set all bits to true, which are true in targetBiSet,
+        // but shift those bits by maxBitSetLength:
+        for(int i = targetBitSet.nextSetBit(0); i >= 0; i = targetBitSet.nextSetBit(i+1)){
+            // 'i' is the index of a bit that is set to true
+            mergedBitSet.set(maxBitSetLength + i);
         }
 
-        return resultValue;
+        return mergedBitSet;
     }
 
     public boolean getDirectionOfFirstCut() {
