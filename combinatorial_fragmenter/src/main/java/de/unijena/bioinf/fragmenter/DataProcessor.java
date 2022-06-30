@@ -167,8 +167,8 @@ public class DataProcessor {
 
     private synchronized void appendStringToFile(File file, String str) throws IOException{
         try(BufferedWriter fileWriter = Files.newBufferedWriter(file.toPath(), StandardOpenOption.APPEND)){
-            fileWriter.write(str);
             fileWriter.newLine();
+            fileWriter.write(str);
         }
     }
 
@@ -252,7 +252,10 @@ public class DataProcessor {
             for (int i = 0; i < methods.length; i++) startingString.append("," + methods[i].name() + "_runtime");
             for (int i = 0; i < methods.length; i++) startingString.append("," + methods[i].name() + "_score");
             for (int i = 0; i < methods.length; i++) startingString.append("," + methods[i].name() + "_tanimoto");
-            this.appendStringToFile(outputFile, startingString.toString());
+
+            try(BufferedWriter fileWriter = Files.newBufferedWriter(outputFile.toPath())){
+                fileWriter.write(startingString.toString());
+            }
         }
 
         // CREATING ALL TASKS:
