@@ -31,6 +31,7 @@ public class AutoCompletionScript implements Callable<Integer> {
     private static int depth;
     private final HashSet<String> aliases = new HashSet<>();
     private static final String NAME = "SiriusLinuxCompletionScript";
+    private CommandLine commandline;
     private static final Path PATH = Path.of(String.format("./sirius_cli/scripts/%s",NAME));
 
 
@@ -46,17 +47,19 @@ public class AutoCompletionScript implements Callable<Integer> {
         final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
         WorkflowBuilder<CLIRootOptions<ProjectSpaceManager>> builder = new WorkflowBuilder<>(new CLIRootOptions<>(configOptionLoader, new ProjectSpaceManagerFactory.Default()), configOptionLoader, new SimpleInstanceBuffer.Factory());
         builder.initRootSpec();
-        CommandLine commandline = new CommandLine(builder.getRootSpec());
+        commandline = new CommandLine(builder.getRootSpec());
         commandline.setCaseInsensitiveEnumValuesAllowed(true);
         commandline.registerConverter(DefaultParameter.class, new DefaultParameter.Converter());
         System.out.printf("Creating AutocompletionScript of length %d%n", depth);
         //setRecursionDepthLimit(commandline, depth);
-        updateAliases(commandline);
+
+        //updateAliases(commandline);
+        removeAliases();
         String s = AutoComplete.bash("sirius", commandline);
         System.out.printf("AutocompletionScript created successfully at %s%n", PATH);
         Files.writeString(PATH, s);
-        s = formatScript();
-        Files.writeString(PATH, s);
+        //s = formatScript();
+        //Files.writeString(PATH, s);
         System.out.printf("Please install the Script temporarily by typing the following into the Terminal: "+ (char)27 + "[1m. %s%n", NAME);
         return 0;
     }
