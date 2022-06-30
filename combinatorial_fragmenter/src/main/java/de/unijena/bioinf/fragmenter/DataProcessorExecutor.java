@@ -77,6 +77,8 @@ public class DataProcessorExecutor {
 
             // CONSTRUCTOR-CALLING + PROCESSING:
             // A specific constructor of DataProcessor will be called depending on the ProcessingMethod:
+            Scanner scanner = new Scanner(System.in);
+
             if(processingMethod.equals(ProcessingMethod.COMPUTE_SUBTREES)){
                 if(executor.spectraDir != null){
                     File spectraDir = new File(executor.spectraDir);
@@ -87,7 +89,7 @@ public class DataProcessorExecutor {
                     }else{
                         dataProcessor = new DataProcessor(spectraDir, null, fTreeDir, outputDir, executor.numPartitions, executor.idxPartition);
                     }
-                    promptEnterKeyToContinue("The DataProcessor is initialised. Press ENTER to continue.");
+                    promptEnterKeyToContinue(scanner,"The DataProcessor is initialised. Press ENTER to continue.");
                     dataProcessor.computeCombinatorialSubtrees(fragmentationConstraint, executor.subtreeComputationMethod);
                 }else{
                     throw new RuntimeException("The directory containing the spectra was not set.");
@@ -96,7 +98,7 @@ public class DataProcessorExecutor {
                 if(executor.spectraDir != null){
                     File spectraDir = new File(executor.spectraDir);
 
-                    String outputFileName = typeInString("Enter the name of the output file.");
+                    String outputFileName = typeInString(scanner,"Enter the name of the output file: ");
                     Collection<String> processedInstances = readProcessedInstanceFileNames(new File(outputDir, outputFileName));
 
                     DataProcessor dataProcessor;
@@ -105,7 +107,7 @@ public class DataProcessorExecutor {
                     }else{
                         dataProcessor = new DataProcessor(spectraDir, null, fTreeDir, outputDir, processedInstances, executor.numPartitions, executor.idxPartition);
                     }
-                    promptEnterKeyToContinue("The DataProcessor is initialised. Press ENTER to continue.");
+                    promptEnterKeyToContinue(scanner,"The DataProcessor is initialised. Press ENTER to continue.");
                     dataProcessor.compareSubtreeComputationMethods(fragmentationConstraint, outputFileName);
                 }else{
                     throw new RuntimeException("The directory containing the spectra was not set.");
@@ -120,12 +122,13 @@ public class DataProcessorExecutor {
                     }else{
                         dataProcessor = new DataProcessor(null, predictionsDir, fTreeDir, outputDir, executor.numPartitions, executor.idxPartition);
                     }
-                    promptEnterKeyToContinue("The DataProcessor is initialised. Press ENTER to continue.");
+                    promptEnterKeyToContinue(scanner,"The DataProcessor is initialised. Press ENTER to continue.");
                     dataProcessor.runStructureRanking(fragmentationConstraint, executor.subtreeComputationMethod);
                 }else{
                     throw new RuntimeException("The directory containing the predicted structure files was not set.");
                 }
             }
+            scanner.close();
         } catch (CmdLineException e) {
             System.err.println("The arguments were not set correctly.");
             e.printStackTrace();
@@ -139,18 +142,14 @@ public class DataProcessorExecutor {
         }
     }
 
-    private static void promptEnterKeyToContinue(String msg){
-        try(Scanner scanner = new Scanner(System.in)){
-            System.out.println(msg);
-            scanner.nextLine();
-        }
+    private static void promptEnterKeyToContinue(Scanner scanner, String msg){
+        System.out.print(msg);
+        scanner.nextLine();
     }
 
-    private static String typeInString(String msg){
-        try(Scanner scanner = new Scanner(System.in)){
-            System.out.println(msg);
-            return scanner.nextLine();
-        }
+    private static String typeInString(Scanner scanner, String msg){
+        System.out.print(msg);
+        return scanner.nextLine();
     }
 
     private static Collection<String> readProcessedInstanceFileNames(File outputFile) throws IOException{
