@@ -74,7 +74,7 @@ public class DataProcessor {
             List<String> filteredInstanceFileNames = this.filterOutProcessedInstances(processedInstances);
             System.out.println(filteredInstanceFileNames.size() + " instances remain after filtering.");
 
-            System.out.println("Sort the remaining the instances lexicographically and shuffle them with " +
+            System.out.println("Sort the remaining instances lexicographically and shuffle them with " +
                     "seed " + SHUFFLE_SEED + ".");
             Collections.sort(filteredInstanceFileNames);
             Collections.shuffle(filteredInstanceFileNames, new Random(SHUFFLE_SEED));
