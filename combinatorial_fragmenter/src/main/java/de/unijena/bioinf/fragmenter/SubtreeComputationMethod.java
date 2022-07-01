@@ -1,6 +1,7 @@
 package de.unijena.bioinf.fragmenter;
 
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import gurobi.GRBException;
 
 public enum SubtreeComputationMethod {
     ILP,
@@ -10,14 +11,14 @@ public enum SubtreeComputationMethod {
     CRITICAL_PATH_2,
     CRITICAL_PATH_3;
 
-    public static CombinatorialSubtreeCalculator getComputedSubtreeCalculator(FTree fTree, MolecularGraph molecule, CombinatorialFragmenterScoring scoring, CombinatorialFragmenter.Callback2 fragmentationConstraint, SubtreeComputationMethod subtreeCompMethod) throws Exception{
+    public static CombinatorialSubtreeCalculator getComputedSubtreeCalculator(FTree fTree, MolecularGraph molecule, CombinatorialFragmenterScoring scoring, CombinatorialFragmenter.Callback2 fragmentationConstraint, SubtreeComputationMethod subtreeCompMethod) throws GRBException{
         CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(molecule, scoring);
         CombinatorialGraph graph = fragmenter.createCombinatorialFragmentationGraph(fragmentationConstraint);
         CombinatorialGraphManipulator.addTerminalNodes(graph, scoring, fTree);
         return getComputedSubtreeCalculator(fTree, graph, scoring, subtreeCompMethod);
     }
 
-    public static CombinatorialSubtreeCalculator getComputedSubtreeCalculator(FTree fTree, CombinatorialGraph graph, CombinatorialFragmenterScoring scoring, SubtreeComputationMethod subtreeCompMethod) throws Exception {
+    public static CombinatorialSubtreeCalculator getComputedSubtreeCalculator(FTree fTree, CombinatorialGraph graph, CombinatorialFragmenterScoring scoring, SubtreeComputationMethod subtreeCompMethod) throws GRBException {
         CombinatorialSubtreeCalculator subtreeCalc;
         switch(subtreeCompMethod){
             case ILP:
