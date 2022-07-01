@@ -80,6 +80,7 @@ public class PCSTFragmentationTreeAnnotator extends CombinatorialSubtreeCalculat
     private double[] createAndSolveILP() throws GRBException{
         // Initialisation of the gurobi environment:
         GRBEnv env = new GRBEnv(true);
+        env.set(GRB.IntParam.Threads, 1);
         env.start();
 
         // Create the ILP Model:
