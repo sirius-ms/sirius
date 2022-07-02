@@ -439,28 +439,42 @@ subprojects {
     distImage.shouldRunAfter downloadManual
 
 
-    task distImageTest(dependsOn: distImage, group: 'distribution', type: Exec) {
+    task distImageTest(dependsOn: distImage, group: 'distribution') {
         doLast{
-            commandLine "cd .."
-            commandLine "cd sirius_cli\\src\\test"
-            commandLine "mkdir temp_results"
-            commandLine "cd temp_results"
-            commandLine "mkdir mgf_temp_summary"
-            commandLine "mkdir mgf_temp_output"
+            Path currentRelativePath = Paths.get("")
+            String s = currentRelativePath.toAbsolutePath().toString()
+            println(s)
+            mkdir "C:\\Users\\jonas\\Documents\\SHK Stelle\\sirius_frontend\\sirius_cli\\src\\test\\temp_results"
+            mkdir "C:\\Users\\jonas\\Documents\\SHK Stelle\\sirius_frontend\\sirius_cli\\src\\test\\temp_results\\mgf_temp_output"
+            mkdir "C:\\Users\\jonas\\Documents\\SHK Stelle\\sirius_frontend\\sirius_cli\\src\\test\\temp_results\\mfg_temp_summary"
+            project.exec { commandLine(['C:\\Users\\jonas\\Documents\\SHK Stelle\\sirius_frontend\\sirius_dist\\sirius_cli_single_os\\build\\distributions\\sirius\\sirius.exe',
+            '--input', 'C:\\Users\\jonas\\Documents\\SHK Stelle\\sirius_frontend\\sirius_doc\\manual\\demo-data\\mgf\\laudanosine.mgf',
+            '--output', 'C:\\Users\\jonas\\Documents\\SHK Stelle\\sirius_frontend\\sirius_cli\\src\\test\\temp_results\\mgf_temp_output',
+            'formula', '-p', 'orbitrap', 'fingerprint', 'structure', 'compound-classes',
+            'write-summaries', '--output', 'C:\\Users\\jonas\\Documents\\SHK Stelle\\sirius_frontend\\sirius_cli\\src\\test\\temp_results\\mfg_temp_summary'])}
+//            project.exec {
+//                //commandLine("cd temp_results")
+//                //mkdir "mgf_temp_summary"
+//                //mkdir "mgf_temp_output"
+//            }
 
-            //go back to sirius_frontend
-            commandLine "cd ../../../.."
-
-            //execution of sirius.exe
-            commandLine ".\\sirius_dist\\sirius_cli_single_os\\build\\distributions\\sirius\\sirius.exe --input sirius_doc\\manual\\demo-data\\mgf\\laudanosine.mgf --output sirius_cli\\src\\test\\temp_results\\mgf_temp_output formula -p orbitrap fingerprint structure compound-classes write-summaries --output sirius_cli\\src\\test\\temp_results\\mgf_temp_summary"
-
-            //go into test folder
-            commandLine "cd sirius_dist\\sirius_cli_single_os\\src\\test\\java"
-            commandLine "javac MgfTestLocal.java"
-            commandLine "java MgfTestLocal"
-            commandLine "cd ../../../../.."
-            commandLine "cd sirius_cli\\src\\test"
-            commandLine "rm -r temp_results"
+            //mkdir "temp_results"
+//
+//            //go back to sirius_frontend
+//            commandLine "cd ../../../.."
+//
+//            //execution of sirius.exe
+//            executable = ".\\sirius_dist\\sirius_cli_single_os\\build\\distributions\\sirius\\sirius.exe"
+//            args = ["--input sirius_doc\\manual\\demo-data\\mgf\\laudanosine.mgf", "--output sirius_cli\\src\\test\\temp_results\\mgf_temp_output", "formula -p orbitrap fingerprint structure compound-classes", "write-summaries --output sirius_cli\\src\\test\\temp_results\\mgf_temp_summary"]
+//            //commandLine ".\\sirius_dist\\sirius_cli_single_os\\build\\distributions\\sirius\\sirius.exe --input sirius_doc\\manual\\demo-data\\mgf\\laudanosine.mgf --output sirius_cli\\src\\test\\temp_results\\mgf_temp_output formula -p orbitrap fingerprint structure compound-classes write-summaries --output sirius_cli\\src\\test\\temp_results\\mgf_temp_summary"
+//
+//            //go into test folder
+//            commandLine "cd sirius_dist\\sirius_cli_single_os\\src\\test\\java"
+//            commandLine "javac MgfTestLocal.java"
+//            commandLine "java MgfTestLocal"
+//            commandLine "cd ../../../../.."
+//            commandLine "cd sirius_cli\\src\\test"
+//            commandLine "rm -r temp_results"
         }
     }
     distImageTest.shouldRunAfter distImage
