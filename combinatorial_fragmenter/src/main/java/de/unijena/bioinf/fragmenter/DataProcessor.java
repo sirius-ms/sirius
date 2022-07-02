@@ -280,10 +280,10 @@ public class DataProcessor {
                     // Measure the running time for constructing such fragmentation graph.
                     long timeStamp, constructionRuntime;
                     CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(molecule, scoring);
-                    timeStamp = System.currentTimeMillis();
+                    timeStamp = System.nanoTime();
                     CombinatorialGraph graph = fragmenter.createCombinatorialFragmentationGraph(fragmentationConstraint);
                     CombinatorialGraphManipulator.addTerminalNodes(graph, scoring, fTree);
-                    constructionRuntime = System.currentTimeMillis() - timeStamp;
+                    constructionRuntime = System.nanoTime() - timeStamp;
 
                     // 3.) Compute the CombinatorialSubtree of 'graph' with each SubtreeComputationMethod:
                     // Save the score, the running time and the tanimoto coefficient between the ILP solution for each method.
@@ -295,10 +295,10 @@ public class DataProcessor {
                     // 3.1: For each method, compute the subtree, measure the runtime and score:
                     for (int i = 0; i < methods.length; i++) {
                         SubtreeComputationMethod method = methods[i];
-                        timeStamp = System.currentTimeMillis();
+                        timeStamp = System.nanoTime();
                         CombinatorialSubtreeCalculator subtreeCalc = SubtreeComputationMethod.getComputedSubtreeCalculator(fTree, graph, scoring, method);
 
-                        runningTimes[i] = System.currentTimeMillis() - timeStamp;
+                        runningTimes[i] = System.nanoTime() - timeStamp;
                         subtrees[i] = subtreeCalc.getSubtree();
                         scores[i] = subtreeCalc.getScore();
                     }
