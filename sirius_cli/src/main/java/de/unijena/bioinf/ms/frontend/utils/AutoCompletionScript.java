@@ -9,6 +9,7 @@ import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import picocli.AutoComplete;
 import picocli.CommandLine;
 
@@ -17,11 +18,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
 
 @CommandLine.Command(name = "generateAutocompletion", description = " [WIP] <STANDALONE> generates an Autocompletion-Script with the given depth of subcommands",
     mixinStandardHelpOptions = true)
@@ -30,10 +30,10 @@ public class AutoCompletionScript implements Callable<Integer> {
     @CommandLine.Parameters(index = "0",description = "Maximum depth of subcommands" ,defaultValue = "5")
     private static int depth;
     private final HashSet<String> aliases = new HashSet<>();
+    private final HashSet<Integer> removedDefinitions = new HashSet<>();
     private static final String NAME = "SiriusLinuxCompletionScript";
-    private CommandLine commandline;
     private static final Path PATH = Path.of(String.format("./sirius_cli/scripts/%s",NAME));
-
+    private CommandLine commandline;
 
     /**
      * Pass this CommandLine instance and the name of the script to the picocli.AutoComplete::bash method.
@@ -51,176 +51,127 @@ public class AutoCompletionScript implements Callable<Integer> {
         commandline.setCaseInsensitiveEnumValuesAllowed(true);
         commandline.registerConverter(DefaultParameter.class, new DefaultParameter.Converter());
         System.out.printf("Creating AutocompletionScript of length %d%n", depth);
-        //setRecursionDepthLimit(commandline, depth);
-
-        //updateAliases(commandline);
-        removeAliases();
+        findAliases(commandline);
         String s = AutoComplete.bash("sirius", commandline);
         System.out.printf("AutocompletionScript created successfully at %s%n", PATH);
         Files.writeString(PATH, s);
-        //s = formatScript();
-        //Files.writeString(PATH, s);
+        s = formatScript();
+        Files.writeString(PATH, s);
         System.out.printf("Please install the Script temporarily by typing the following into the Terminal: "+ (char)27 + "[1m. %s%n", NAME);
         return 0;
     }
 
-    private void updateAliases(CommandLine commandline) {
-        commandline.getCommandSpec().subcommands().forEach((name, subcommand) -> aliases.addAll(Arrays.asList(subcommand.getCommandSpec().aliases())));
+    private void findAliases(@NotNull CommandLine currentCommandline) {
+        CommandLine.Model.CommandSpec subcommandsSpec = currentCommandline.getCommandSpec();
+        if(subcommandsSpec.subcommands().isEmpty()) return;
+        Map<String, CommandLine> commands = new HashMap<>(subcommandsSpec.subcommands());
+
+        // add command aliases from this depth to Set
+        aliases.addAll(Arrays.asList(subcommandsSpec.aliases()));
+
+        // add subcommand aliases from this depth to Set
+        commands.forEach((name, subcommand)  -> aliases.addAll(Arrays.asList(subcommand.getCommandSpec().aliases())));
+
+
+        // go through further depths
+        subcommandsSpec.subcommands().forEach((name, command) -> findAliases(command));
     }
 
+
     private @NotNull String formatScript() throws IOException {
-        // remove sirius alias
-        //aliases.remove("sirius");
+
         StringBuilder output = new StringBuilder();
         BufferedReader reader = new BufferedReader(new FileReader(String.valueOf(PATH)));
         String line;
+        HashSet<Integer> removed = new HashSet<>();
+        String functionstatus = null;
         while ((line = reader.readLine()) != null) {
             String[] words = line.split(" ");
 
-            line = modifyCompletionScriptFunction(output, reader, line, words);
+            // update functionstatus
+            functionstatus = getFunctionstatus(line, functionstatus, words);
 
 
-            // line uninteresting
-            output.append(line).append("\n");
+            // Check functionstatus and format line
+            line = formatLine(line, functionstatus, words);
+
+            if(line != null) output.append(line).append("\n");
         }
         return output.toString();
     }
 
-    private String modifyCompletionScriptFunction(StringBuilder output, BufferedReader reader, String line, String[] words) throws IOException {
-        // find completion_script function
-        if (words.length > 1 && Objects.equals(words[0], "function") && words[1].equals("_complete_sirius()")) {
-            output.append(line).append("\n");
-            int defaultlength = 16;
-            while ((line = reader.readLine()) != null) {
-                words = line.split(" ");
+    @Nullable
+    private String getFunctionstatus(String line, String functionstatus, String[] words) {
+        if (functionstatus == null && words.length > 1 && Objects.equals(words[0], "function") && words[1].equals("_complete_sirius()"))
+            functionstatus = "CompletionScriptFunction";
+        else if (Objects.equals(functionstatus, "CompletionScriptFunction") && line.equals("  # Find the longest sequence of subcommands and call the bash function for that subcommand."))
+            functionstatus = "LocalCommandDef";
+        else if(Objects.equals(functionstatus, "LocalCommandDef") && words.length >= 3 && !Objects.equals(words[2], "local"))
+            functionstatus = "CompWords";
+        else if(Objects.equals(functionstatus, "CompWords") && line.equals("  # No subcommands were specified; generate completions for the top-level command."))
+            functionstatus = "EOF";
+        return functionstatus;
+    }
 
-                if (line.equals("  # Find the longest sequence of subcommands and call the bash function for that subcommand.")) {
-                    // end of completion_script function
-                    output.append(formatLocalCommandDef(reader));
+    private String formatLine(String line, String functionstatus, String[] words) {
+        if (functionstatus != null && !functionstatus.equals("EOF")) {
+            switch (functionstatus) {
+                case "CompletionScriptFunction": {
+                    line = formatCompletionFunction(line, words);
                     break;
                 }
-                int actualpos = 7;
-                if (words.length >= 7) {
-                    String[] actualwords = new String[words.length - actualpos];
-                    System.arraycopy(words, actualpos, actualwords, 0, words.length - actualpos);
-                //    if (doesntcontainalias(actualwords)) {
-                        // not an alias
-                        if (words.length <= defaultlength + depth) {
-                            // line small enough
-                            output.append(line).append("\n");
-                  //      }
-                    }
+                case "LocalCommandDef": {
+                    line = formatCommandDefinitions(line, words);
+                    break;
+                }
+                case "CompWords": {
+                    line = removeCompWords(line, words);
+                    break;
                 }
             }
         }
         return line;
     }
 
-    private @NotNull String formatLocalCommandDef(@NotNull BufferedReader reader) throws IOException {
-        String[] words;
-        HashSet<Integer> removed = new HashSet<>();
-        StringBuilder currentOutput = new StringBuilder();
-        String line;
-        int defaultlength = 3;
-        while ((line = reader.readLine()) != null) {
-            words = line.split(" ");
-            if(words.length >= 3 && !Objects.equals(words[2], "local")) {
-                currentOutput.append(removeCompWords(reader, removed));
-                return currentOutput.toString();
-            }
-            //aliases.clear();
-            //aliases.add("sirius");
-            //if (doesntcontainalias(words)) {
-                // not an alias
-                if (words.length <= defaultlength + depth) {
-                    // line small enough
-                    currentOutput.append(line).append("\n");
-              //  }
-            }
-            else {
-                removed.add(Integer.valueOf((words[3].split("="))[0].substring(4)));
-            }
-        }
-        return currentOutput.toString();
+    private String formatCompletionFunction(@NotNull String line, @NotNull String[] words) {
+        if (Arrays.stream(words).anyMatch(word -> aliases.stream().anyMatch(alias -> alias.equals(word)))) line = null;
+        if (Arrays.stream(words).anyMatch(word -> aliases.stream().anyMatch(alias -> (alias+"\"").equals(word)))) line = null;
+        return line;
     }
 
-    private boolean doesntcontainalias(String[] words) {
-        String[] word_prefixes = {""};
-        String[] word_suffixes = {"", "\"", ")"};
-        AtomicBoolean noMatch = new AtomicBoolean(true);
+    private String formatCommandDefinitions(@NotNull String line, @NotNull String[] words) {
+        if (words.length < 4) return line;
+        if (!words[2].equals("local")) return line;
 
-        aliases.forEach(alias -> {
-            Arrays.stream(words).forEach(word -> {
-                for (String word_prefix : word_prefixes) {
-                    for (String word_suffix : word_suffixes) {
-                        if (word.equals(word_prefix + alias + word_suffix)) noMatch.set(false);
-                    }
+        Integer number = Integer.valueOf((words[3].split("=")[0].substring(4)));
+        for(String word : words) {
+            String[] subwords = word.split("\\p{Punct}");
+            for (String subword : subwords) {
+                if (aliases.stream().anyMatch(alias -> alias.equals(subword))) {
+                    line = null;
+                    removedDefinitions.add(number);
                 }
-
-            });
-        });
-        return noMatch.get();
-    }
-
-    private @NotNull String removeCompWords(@NotNull BufferedReader reader, HashSet<Integer> removed) throws IOException {
-        String[] words;
-        StringBuilder currentOutput = new StringBuilder();
-        String line;
-
-        while ((line = reader.readLine()) != null) {
-            words = line.split(" ");
-
-            if (line.equals("# No subcommands were specified; generate completions for the top-level command.") || words.length < 5) {
-                return currentOutput.toString();
-            }
-            String valueHolder = words[4].split("@")[0];
-            Integer val = Integer.valueOf(valueHolder.substring(7, valueHolder.length()-1));
-            if (!(removed.contains(val))) {
-                // don't remove current line
-                currentOutput.append(line).append("\n");
             }
         }
-        return currentOutput.toString();
+        return line;
     }
+
+    private String removeCompWords(@NotNull String line, @NotNull String[] words) {
+        System.out.println(line);
+        if (words.length < 5) return line;
+        String valueHolder = words[4].split("@")[0];
+        Integer val = Integer.valueOf(valueHolder.substring(7, valueHolder.length() - 1));
+        if (removedDefinitions.contains(val)) line = null;
+        return line;
+    }
+
+
+
+
+
 
     public static void main(String... args) throws IOException {
         int exitCode = new CommandLine(new AutoCompletionScript()).execute(args);
         System.exit(exitCode);
     }
-/*
-//maybe useful later
-    private static Map<String, CommandLine> setRecursionDepthLimit(CommandLine commandline, int remaining_depth) {
-        CommandLine.Model.CommandSpec subcommandsSpec = commandline.getCommandSpec();
-        if(subcommandsSpec.subcommands().isEmpty()) return new HashMap<>(subcommandsSpec.subcommands());
-
-        //remove Autocompletion Command
-        commandline.getCommandSpec().removeSubcommand("generateAutocompletion");
-
-        if(remaining_depth >= depth-1) {
-            counter++;
-            StringBuilder progress = new StringBuilder();
-            for(int i=0; i<counter; i++) progress.append("=");
-            for(int i=0; i<commandline.getCommandSpec().subcommands().size() - counter; i++) progress.append(" ");
-            System.out.println("|"+progress+"|\r");
-        }
-
-        if(remaining_depth < 1) {
-            Map<String, CommandLine> commands = new HashMap<>(subcommandsSpec.subcommands());
-            commands.forEach((name, subcommand)  -> subcommandsSpec.removeSubcommand(name));
-        }
-        else {
-            subcommandsSpec.subcommands().forEach((name, command) -> {
-                Map<String, CommandLine> commands = setRecursionDepthLimit(command, remaining_depth - 1);
-                commands.forEach((subname, subcommand) -> {
-                    try {
-                        if (commandline.getParent() != null) commandline.getParent().getCommandSpec().addSubcommand(subname, subcommand);
-                    }
-                    catch (CommandLine.DuplicateNameException ignored){};
-                });
-            });
-        }
-        return new HashMap<>(subcommandsSpec.subcommands());
-    }
-
- */
 }
