@@ -441,17 +441,15 @@ subprojects {
 
     task distImageTest(dependsOn: distImage, group: 'distribution') {
         doLast{
-            Path currentRelativePath = Paths.get("")
-            String s = currentRelativePath.toAbsolutePath().toString()
-            println(s)
-            mkdir "C:\\Users\\jonas\\Documents\\SHK Stelle\\sirius_frontend\\sirius_cli\\src\\test\\temp_results"
-            mkdir "C:\\Users\\jonas\\Documents\\SHK Stelle\\sirius_frontend\\sirius_cli\\src\\test\\temp_results\\mgf_temp_output"
-            mkdir "C:\\Users\\jonas\\Documents\\SHK Stelle\\sirius_frontend\\sirius_cli\\src\\test\\temp_results\\mfg_temp_summary"
-            project.exec { commandLine(['C:\\Users\\jonas\\Documents\\SHK Stelle\\sirius_frontend\\sirius_dist\\sirius_cli_single_os\\build\\distributions\\sirius\\sirius.exe',
-            '--input', 'C:\\Users\\jonas\\Documents\\SHK Stelle\\sirius_frontend\\sirius_doc\\manual\\demo-data\\mgf\\laudanosine.mgf',
-            '--output', 'C:\\Users\\jonas\\Documents\\SHK Stelle\\sirius_frontend\\sirius_cli\\src\\test\\temp_results\\mgf_temp_output',
+            String abs_path = project.projectDir.toString().split('sirius_frontend')[0]
+            mkdir abs_path+"sirius_frontend\\sirius_cli\\src\\test\\temp_results"
+            mkdir abs_path+"sirius_frontend\\sirius_cli\\src\\test\\temp_results\\mgf_temp_output"
+            mkdir abs_path+"sirius_frontend\\sirius_cli\\src\\test\\temp_results\\mfg_temp_summary"
+            project.exec { commandLine([abs_path+'sirius_frontend\\sirius_dist\\sirius_cli_single_os\\build\\distributions\\sirius\\sirius.exe',
+            '--input', abs_path+'sirius_frontend\\sirius_doc\\manual\\demo-data\\mgf\\laudanosine.mgf',
+            '--output', abs_path+'sirius_frontend\\sirius_cli\\src\\test\\temp_results\\mgf_temp_output',
             'formula', '-p', 'orbitrap', 'fingerprint', 'structure', 'compound-classes',
-            'write-summaries', '--output', 'C:\\Users\\jonas\\Documents\\SHK Stelle\\sirius_frontend\\sirius_cli\\src\\test\\temp_results\\mfg_temp_summary'])}
+            'write-summaries', '--output', abs_path+'sirius_frontend\\sirius_cli\\src\\test\\temp_results\\mfg_temp_summary'])}
 //            project.exec {
 //                //commandLine("cd temp_results")
 //                //mkdir "mgf_temp_summary"
