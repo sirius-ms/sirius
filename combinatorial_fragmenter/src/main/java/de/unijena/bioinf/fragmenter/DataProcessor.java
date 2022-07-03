@@ -165,6 +165,71 @@ public class DataProcessor {
         return fTree;
     }
 
+    private CSIPredictionData readPredictionDataFromTSV(String fileName) throws IOException, UnknownElementException {
+        File file = new File(this.predictionsDir, fileName);
+        try(BufferedReader fileReader = Files.newBufferedReader(file.toPath())){
+            // 1.: Get the index of the columns of interest:
+            String[] columnNames = fileReader.readLine().split("\\t");
+            int rankIdx = -1, csiScoreIdx = -1, confidenceScoreIdx = -1, mfIdx = -1, smilesIdx = -1;
+
+            for(int i = 0; i < columnNames.length; i++){
+                String columnName = columnNames[i];
+                switch(columnName){
+                    case "rank":
+                        rankIdx = i;
+                        break;
+                    case "ConfidenceScore":
+                        confidenceScoreIdx = i;
+                        break;
+                    case "CSI:FingerIDScore":
+                        csiScoreIdx = i;
+                        break;
+                    case "molecularFormula":
+                        mfIdx = i;
+                        break;
+                    case "smiles":
+                        smilesIdx = i;
+                        break;
+                }
+            }
+
+            // 2.: Read all lines in the file and return a list of String arrays:
+            ArrayList<String[]> lines = this.readAllRemainingLines(fileReader);
+
+            // 3.: Now parse these lines and create a CSIPredictionData object:
+            int numberOfDataLines = lines.size();
+            int[] ranks = new int[numberOfDataLines];
+            double[] csiScores = new double[numberOfDataLines];
+            double[] confidenceScores = new double[numberOfDataLines];
+            MolecularFormula[] molecularFormulas = new MolecularFormula[numberOfDataLines];
+            String[] smilesStrings = new String[numberOfDataLines];
+
+            for(int i = 0; i < numberOfDataLines; i++){
+                String[] currentLine = lines.get(i);
+                ranks[i] = Integer.parseInt(currentLine[rankIdx]);
+                csiScores[i] = Double.parseDouble(currentLine[csiScoreIdx]);
+                confidenceScores[i] = Double.parseDouble(currentLine[confidenceScoreIdx]);
+                molecularFormulas[i] = MolecularFormula.parse(currentLine[mfIdx]);
+                smilesStrings[i] = currentLine[smilesIdx];
+            }
+
+            return new CSIPredictionData(ranks, csiScores, confidenceScores, molecularFormulas, smilesStrings);
+        }
+    }
+
+    private ArrayList<String[]> readAllRemainingLines(BufferedReader fileReader) throws IOException{
+        ArrayList<String[]> lines = new ArrayList<>();
+        String currentLine = fileReader.readLine();
+        while(currentLine != null){
+            String[] data = currentLine.split("\\t");
+            lines.add(data);
+
+            currentLine = fileReader.readLine();
+        }
+
+        return lines;
+    }
+
     private synchronized void appendStringToFile(File file, String str) throws IOException{
         try(BufferedWriter fileWriter = Files.newBufferedWriter(file.toPath(), StandardOpenOption.APPEND)){
             fileWriter.newLine();
@@ -338,6 +403,24 @@ public class DataProcessor {
 
     public void runStructureRanking(CombinatorialFragmenter.Callback2 fragmentationConstraint, SubtreeComputationMethod subtreeCompMethod){
         throw new UnsupportedOperationException("This method is currently not supported.");
+    }
+
+    private class CSIPredictionData{
+
+        protected final int[] ranks;
+        protected final double[] csiScores;
+        protected final double[] confidenceScores;
+        protected final MolecularFormula[] molecularFormulas;
+        protected final String[] smilesStrings;
+
+        public CSIPredictionData(int[] ranks, double[] csiScores, double[] confidenceScores, MolecularFormula[] molecularFormulas, String[] smilesStrings){
+            this.ranks = ranks;
+            this.csiScores = csiScores;
+            this.confidenceScores = confidenceScores;
+            this.molecularFormulas = molecularFormulas;
+            this.smilesStrings = smilesStrings;
+        }
+
     }
 
 }
