@@ -22,8 +22,10 @@ package de.unijena.bioinf.ms.gui.mainframe;
 import ca.odell.glazedlists.BasicEventList;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
+import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.gui.GuiAppOptions;
@@ -55,8 +57,9 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.CookieHandler;
 import java.net.CookieManager;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
@@ -155,12 +158,12 @@ public class MainFrame extends JFrame implements DropTargetListener {
         setLayout(new BorderLayout());
         new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this);
 
-        log = new LogDialog(null,false, Level.INFO); //todo property
+        log = new LogDialog(null, false, Level.INFO); //todo property
     }
 
     //if we want to add taskbar stuff we can configure this here
     private void configureTaskbar() {
-        if (Taskbar.isTaskbarSupported()){
+        if (Taskbar.isTaskbarSupported()) {
             LoggerFactory.getLogger(getClass()).debug("Adding Taskbar support");
             if (Taskbar.getTaskbar().isSupported(Taskbar.Feature.ICON_IMAGE))
                 Taskbar.getTaskbar().setIconImage(Icons.SIRIUS_APP_IMAGE);
@@ -237,7 +240,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         resultsPanel = new ResultPanel(formulaList, ApplicationCore.WEB_API);
         JPanel resultPanelContainer = new JPanel(new BorderLayout());
         resultPanelContainer.setBorder(BorderFactory.createEmptyBorder());
-        resultPanelContainer.add(resultsPanel,BorderLayout.CENTER);
+        resultPanelContainer.add(resultsPanel, BorderLayout.CENTER);
         if (PropertyManager.getBoolean("de.unijena.bioinf.webservice.infopanel", false))
             resultPanelContainer.add(new WebServiceInfoPanel(CONNECTION_MONITOR()), BorderLayout.SOUTH);
 
@@ -318,9 +321,69 @@ public class MainFrame extends JFrame implements DropTargetListener {
     }
 
 
+    public static class TaxonomicInformation {
+        private final String fid;
+        private final String inchiKey2d;
+        private final String taxon;
+        private final double biologicalScore;
+
+
+        public TaxonomicInformation(String fid, String inchiKey2d, double biologicalScore, String taxon) {
+            this.fid = fid;
+            this.inchiKey2d = inchiKey2d;
+            this.biologicalScore = biologicalScore;
+            this.taxon = taxon;
+        }
+
+        public static TaxonomicInformation of(String csvLine) {
+            return of(csvLine, ",");
+        }
+
+        public static TaxonomicInformation of(String csvLine, String separator) {
+            String[] cols = csvLine.split(separator);
+            return new TaxonomicInformation(cols[0], cols[1], Double.parseDouble(cols[2]), cols.length > 3 ? cols[3]: null);
+        }
+    }
+
     private void importDragAndDropFiles(InputFilesOptions files) {
         ps.importOneExperimentPerLocation(files); //import all batch mode importable file types (e.g. .sirius, project-dir, .ms, .mgf, .mzml, .mzxml)
+        if (files.getAllFilesStream().anyMatch(f -> f.toFile().getName().startsWith("taxonomic_enrichment"))) {
+            Path input = files.getAllFilesStream().filter(f -> f.toFile().getName().startsWith("taxonomic_enrichment")).findAny().orElseThrow();
+            Jobs.runInBackgroundAndLoad(this, "Enriching candidates with taxonomic information", () -> {
+                final Map<String, List<TaxonomicInformation>> infos = new HashMap<>();
+                List<String> l = Files.readAllLines(input);
+                l.subList(1,l.size()).stream().map(TaxonomicInformation::of).forEach(ti -> infos.computeIfAbsent(ti.fid, k -> new ArrayList<>()).add(ti));
+                compoundBaseList.forEach(instanceBean -> {
+                    String[] s = instanceBean.getID().getDirectoryName().split("_");
+                    String fid = s[s.length - 1];
 
+                    final Map<String, TaxonomicInformation> candidates = infos.getOrDefault(fid, List.of()).stream().collect(Collectors.toMap(k -> k.inchiKey2d, v -> v));
+
+                    if (!candidates.isEmpty()) {
+                        instanceBean.loadFormulaResults(FBCandidates.class).stream().map(SScored::getCandidate).forEach(r -> {
+                            final AtomicBoolean changed = new AtomicBoolean(false);
+                            r.getAnnotation(FBCandidates.class).ifPresent(cs -> {
+                                cs.getResults().stream().map(SScored::getCandidate)
+                                        .forEach(c -> {
+                                            TaxonomicInformation info = candidates.get(c.getInchiKey2D());
+                                            if (candidates.containsKey(c.getInchiKey2D())) {
+                                                c.setTaxonomicScore(info.biologicalScore);
+                                                c.setTaxonomicSpecies(info.taxon);
+                                                changed.set(true);
+                                            }
+                                        });
+                            });
+                            if (changed.get())
+                                instanceBean.updateFormulaResult(r, FBCandidates.class);
+                        });
+                    }
+
+                });
+                return null;
+
+            }).getResult();
+            return;
+        }
         // check if unknown files contain csv files with spectra
         final CSVFormatReader csvChecker = new CSVFormatReader();
         List<File> csvFiles = files.msInput != null ? files.msInput.unknownFiles.keySet().stream().map(Path::toFile)
