@@ -3,6 +3,7 @@ package de.unijena.bioinf.fragmenter;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
+import gnu.trove.map.hash.TObjectIntHashMap;
 
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -70,6 +71,69 @@ public class CombinatorialGraphManipulator {
                 }
 
                 terminalNodeBitSet = increment(terminalNodeBitSet);
+            }
+        }
+    }
+
+    public static void removeAllNodesNotConnectedToTerminalNodes(CombinatorialGraph graph){
+        // INITIALISATION:
+        // First create a hashmap which assigns each node in graph an unique index:
+        final TObjectIntHashMap<CombinatorialNode> node2Index = new TObjectIntHashMap<>(graph.numberOfNodes());
+        node2Index.put(graph.getRoot(), 0);
+
+        int idx = 1;
+        for(CombinatorialNode node : graph.getNodes()){
+            node2Index.put(node, idx);
+            idx++;
+        }
+
+        // ASSIGNING BOOLEAN STATES:
+        // Assign each node a state equals 'true' if there is a path from this node to a terminal node,
+        // otherwise, assign 'false' to this node:
+        boolean[] states = new boolean[graph.numberOfNodes()];
+        for(CombinatorialNode terminalNode : graph.getTerminalNodes()){
+            colorAllToRoot(terminalNode, states, node2Index);
+        }
+
+        // REMOVE ALL NODES WHOSE STATE IS 'FALSE':
+        // Iterate over all nodes in 'graph.getNodes()' and request their state/colour.
+        // If the state of a node is still 'false', we know it's not connected to a terminal node.
+        // In this case, remove this node.
+        ArrayList<CombinatorialNode> nodesWithoutRoot = new ArrayList<>(graph.getNodes());
+        for(CombinatorialNode node : nodesWithoutRoot){
+            int nodeIdx = node2Index.get(node);
+            if(!states[nodeIdx]){
+                graph.deleteNodeDangerously(node);
+            }
+        }
+    }
+
+    private static void colorAllToRoot(CombinatorialNode node, boolean[] states, TObjectIntHashMap<CombinatorialNode> node2Index){
+        // set the state of 'node' to true:
+        int nodeIdx = node2Index.get(node);
+        states[nodeIdx] = true;
+
+        // 'stack' contains only nodes which are connected with 'node':
+        ArrayList<CombinatorialNode> stack = new ArrayList<>();
+        stack.add(node);
+
+        // Do the following for each node in 'stack':
+        // - poll 'currentNode' from the stack -> 'currentNode' is connected with 'node'
+        // - each parent node of 'currentNode' is connected to 'node'
+        // - if the parent node is not coloured 'true', colour it 'true' and add it to the stack
+        // - if it's already coloured to 'true', there are two cases:
+        //      case 1: this node was already processed
+        //      case 2: this node was not processed yet, but it's contained in the stack and will be processed
+        while(!stack.isEmpty()){
+            CombinatorialNode currentNode = stack.remove(stack.size() - 1);
+
+            for(CombinatorialEdge edge : currentNode.incomingEdges){
+                CombinatorialNode parentNode = edge.source;
+                int parentNodeIdx = node2Index.get(parentNode);
+                if(!states[parentNodeIdx]){
+                    states[parentNodeIdx] = true;
+                    stack.add(parentNode);
+                }
             }
         }
     }

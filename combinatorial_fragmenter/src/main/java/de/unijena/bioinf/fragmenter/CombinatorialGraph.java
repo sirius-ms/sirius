@@ -103,6 +103,44 @@ public class CombinatorialGraph {
     }
 
     /**
+     * This method removes the {@link CombinatorialNode} {@code node} from this CombinatorialGraph
+     * in a "dangerous" fashion because it can happen that the resulting graph is not connected and
+     * the attributes of the successor nodes are not valid anymore.
+     * Thus, use this method carefully.<br>
+     * All nodes in this graph except the root can be removed.
+     *
+     * @param node the {@link CombinatorialNode} to remove
+     * @return {@code true} if this node was removed successfully from this graph;<br>
+     * {@code false} if this node is not contained in this graph, is the root of this graph or is assigned with {@code null}
+     */
+    public boolean deleteNodeDangerously(CombinatorialNode node){
+        if(node != null && node != this.root && node == this.bitset2node.get(node.fragment.bitset)){
+            // 1: Delete this node from this.nodes and this.bitset2node:
+            this.nodes.remove(node);
+            this.bitset2node.remove(node.fragment.bitset, node);
+
+            // 2: Delete all pointers to this node from its parent and child nodes:
+            for(CombinatorialEdge inEdge : node.incomingEdges){
+                CombinatorialNode parentNode = inEdge.source;
+                parentNode.outgoingEdges.remove(inEdge);
+            }
+
+            for(CombinatorialEdge outEdge : node.outgoingEdges){
+                CombinatorialNode childNode = outEdge.target;
+                childNode.incomingEdges.remove(outEdge);
+            }
+
+            // 3.: Delete all pointer to its parent and child nodes:
+            node.incomingEdges.clear();
+            node.outgoingEdges.clear();
+
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+    /**
      * for each node, allow only paths back to root which have minimal distance
      */
     public void pruneLongerPaths() {
@@ -222,6 +260,16 @@ public class CombinatorialGraph {
 
     public List<CombinatorialNode> getNodes() {
         return nodes;
+    }
+
+    public List<CombinatorialNode> getTerminalNodes(){
+        ArrayList<CombinatorialNode> terminalNodeList = new ArrayList<>();
+        for(CombinatorialNode node : this.nodes){
+            if(!node.fragment.isRealFragment()){
+                terminalNodeList.add(node);
+            }
+        }
+        return terminalNodeList;
     }
 
     public CombinatorialNode getRoot() {
