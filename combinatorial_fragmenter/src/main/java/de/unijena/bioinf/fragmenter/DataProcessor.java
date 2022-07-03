@@ -345,9 +345,11 @@ public class DataProcessor {
                     // Measure the running time for constructing such fragmentation graph.
                     long timeStamp, constructionRuntime;
                     CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(molecule, scoring);
+
                     timeStamp = System.nanoTime();
                     CombinatorialGraph graph = fragmenter.createCombinatorialFragmentationGraph(fragmentationConstraint);
                     CombinatorialGraphManipulator.addTerminalNodes(graph, scoring, fTree);
+                    CombinatorialGraphManipulator.removeAllNodesNotConnectedToTerminalNodes(graph);
                     constructionRuntime = System.nanoTime() - timeStamp;
 
                     // 3.) Compute the CombinatorialSubtree of 'graph' with each SubtreeComputationMethod:

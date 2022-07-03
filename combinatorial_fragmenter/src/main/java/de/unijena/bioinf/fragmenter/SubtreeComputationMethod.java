@@ -15,6 +15,7 @@ public enum SubtreeComputationMethod {
         CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(molecule, scoring);
         CombinatorialGraph graph = fragmenter.createCombinatorialFragmentationGraph(fragmentationConstraint);
         CombinatorialGraphManipulator.addTerminalNodes(graph, scoring, fTree);
+        CombinatorialGraphManipulator.removeAllNodesNotConnectedToTerminalNodes(graph);
         return getComputedSubtreeCalculator(fTree, graph, scoring, subtreeCompMethod);
     }
 
