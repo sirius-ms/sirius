@@ -195,27 +195,29 @@ public class DataProcessor {
                 }
             }
 
-            // 2.: Read all lines in the file and return a list of String arrays:
+            // 2.: Read all remaining lines in the file and return a list of String arrays:
+            // 'fileReader' has already read the first line of 'file' which is the definition line containing the column names.
+            // Now read the remaining lines which contain all the data. Each line corresponds to a predicted structure.
             ArrayList<String[]> lines = this.readAllRemainingLines(fileReader);
 
             // 3.: Now parse these lines and create a CSIPredictionData object:
-            int numberOfDataLines = lines.size();
-            int[] ranks = new int[numberOfDataLines];
-            double[] csiScores = new double[numberOfDataLines];
-            double[] confidenceScores = new double[numberOfDataLines];
-            MolecularFormula[] molecularFormulas = new MolecularFormula[numberOfDataLines];
-            String[] smilesStrings = new String[numberOfDataLines];
+            int numberOfStructures = lines.size();
+            int[] ranks = new int[numberOfStructures];
+            double[] csiScores = new double[numberOfStructures];
+            double[] confidenceScores = new double[numberOfStructures];
+            MolecularFormula[] molecularFormulas = new MolecularFormula[numberOfStructures];
+            String[] smilesStrings = new String[numberOfStructures];
 
-            for(int i = 0; i < numberOfDataLines; i++){
+            for(int i = 0; i < numberOfStructures; i++){
                 String[] currentLine = lines.get(i);
                 ranks[i] = Integer.parseInt(currentLine[rankIdx]);
                 csiScores[i] = Double.parseDouble(currentLine[csiScoreIdx]);
-                confidenceScores[i] = Double.parseDouble(currentLine[confidenceScoreIdx]);
+                confidenceScores[i] = (currentLine[confidenceScoreIdx].equals("N/A")) ? Double.NaN : Double.parseDouble(currentLine[confidenceScoreIdx]);
                 molecularFormulas[i] = MolecularFormula.parse(currentLine[mfIdx]);
                 smilesStrings[i] = currentLine[smilesIdx];
             }
 
-            return new CSIPredictionData(numberOfDataLines, ranks, csiScores, confidenceScores, molecularFormulas, smilesStrings);
+            return new CSIPredictionData(numberOfStructures, ranks, csiScores, confidenceScores, molecularFormulas, smilesStrings);
         }
     }
 
