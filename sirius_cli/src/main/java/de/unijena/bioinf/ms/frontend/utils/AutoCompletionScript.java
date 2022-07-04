@@ -23,17 +23,16 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
-@CommandLine.Command(name = "generateAutocompletion", description = " [WIP] <STANDALONE> generates an Autocompletion-Script with the given depth of subcommands",
+@CommandLine.Command(name = "generateAutocompletion", description = " [WIP] <STANDALONE> generates an Autocompletion-Script with all subcommands",
     mixinStandardHelpOptions = true)
 public class AutoCompletionScript implements Callable<Integer> {
 
-    @CommandLine.Parameters(index = "0",description = "Maximum depth of subcommands" ,defaultValue = "5")
-    private static int depth;
     private final HashSet<String> aliases = new HashSet<>();
     private final HashSet<Integer> removedDefinitions = new HashSet<>();
     private static final String NAME = "SiriusLinuxCompletionScript";
-    private static final Path PATH = Path.of(String.format("./sirius_cli/scripts/%s",NAME));
+    private static final Path PATH = Path.of(String.format("./scripts/%s",NAME));
     private CommandLine commandline;
+    private boolean validDeclaration;
 
     /**
      * Pass this CommandLine instance and the name of the script to the picocli.AutoComplete::bash method.
@@ -50,7 +49,7 @@ public class AutoCompletionScript implements Callable<Integer> {
         commandline = new CommandLine(builder.getRootSpec());
         commandline.setCaseInsensitiveEnumValuesAllowed(true);
         commandline.registerConverter(DefaultParameter.class, new DefaultParameter.Converter());
-        System.out.printf("Creating AutocompletionScript of length %d%n", depth);
+        System.out.println("Creating AutocompletionScript");
         findAliases(commandline);
         String s = AutoComplete.bash("sirius", commandline);
         System.out.printf("AutocompletionScript created successfully at %s%n", PATH);
@@ -79,7 +78,7 @@ public class AutoCompletionScript implements Callable<Integer> {
 
 
     private @NotNull String formatScript() throws IOException {
-
+        System.out.print("Progress: [                    ]\r");
         StringBuilder output = new StringBuilder();
         BufferedReader reader = new BufferedReader(new FileReader(String.valueOf(PATH)));
         String line;
@@ -97,24 +96,34 @@ public class AutoCompletionScript implements Callable<Integer> {
 
             if(line != null) output.append(line).append("\n");
         }
+        System.out.println("Progress: [████████████████████]\r");
         return output.toString();
     }
 
     @Nullable
     private String getFunctionstatus(String line, String functionstatus, String[] words) {
-        if (functionstatus == null && words.length > 1 && Objects.equals(words[0], "function") && words[1].equals("_complete_sirius()"))
+        if (functionstatus == null && words.length > 1 && Objects.equals(words[0], "function") && words[1].equals("_complete_sirius()")) {
             functionstatus = "CompletionScriptFunction";
-        else if (Objects.equals(functionstatus, "CompletionScriptFunction") && line.equals("  # Find the longest sequence of subcommands and call the bash function for that subcommand."))
+            System.out.print("Progress: [████                ]\r");
+        }
+        else if (Objects.equals(functionstatus, "CompletionScriptFunction") && line.equals("  # Find the longest sequence of subcommands and call the bash function for that subcommand.")) {
             functionstatus = "LocalCommandDef";
-        else if(Objects.equals(functionstatus, "LocalCommandDef") && words.length >= 3 && !Objects.equals(words[2], "local"))
+            System.out.print("Progress: [████████            ]\r");
+        }
+        else if(Objects.equals(functionstatus, "LocalCommandDef") && words.length >= 3 && !Objects.equals(words[2], "local")) {
             functionstatus = "CompWords";
-        else if(Objects.equals(functionstatus, "CompWords") && line.equals("  # No subcommands were specified; generate completions for the top-level command."))
-            functionstatus = "EOF";
+            System.out.print("Progress: [████████████        ]\r");
+        }
+        else if(Objects.equals(functionstatus, "CompWords") && line.equals("  # No subcommands were specified; generate completions for the top-level command.")) {
+            functionstatus = "Subcommandfunction";
+            validDeclaration = true;
+            System.out.print("Progress: [████████████████    ]\r");
+        }
         return functionstatus;
     }
 
     private String formatLine(String line, String functionstatus, String[] words) {
-        if (functionstatus != null && !functionstatus.equals("EOF")) {
+        if (functionstatus != null) {
             switch (functionstatus) {
                 case "CompletionScriptFunction": {
                     line = formatCompletionFunction(line, words);
@@ -126,6 +135,10 @@ public class AutoCompletionScript implements Callable<Integer> {
                 }
                 case "CompWords": {
                     line = removeCompWords(line, words);
+                    break;
+                }
+                case "Subcommandfunction": {
+                    line = formatSubcommandFunction(line, words);
                     break;
                 }
             }
@@ -157,17 +170,43 @@ public class AutoCompletionScript implements Callable<Integer> {
     }
 
     private String removeCompWords(@NotNull String line, @NotNull String[] words) {
-        System.out.println(line);
         if (words.length < 5) return line;
         String valueHolder = words[4].split("@")[0];
         Integer val = Integer.valueOf(valueHolder.substring(7, valueHolder.length() - 1));
         if (removedDefinitions.contains(val)) line = null;
         return line;
     }
+    private String formatSubcommandFunction(String line, String[] words) {
+        String[] DECLARATIONINDICATOR = {"#","Generates","completions","for","the","options","and","subcommands","of","the"};
+        boolean declaration = true;
+        if (words.length >= 10) {
+            for (int i = 0; i < 9; i++) {
+                if (!(words[i].equals(DECLARATIONINDICATOR[i]))) {
+                    declaration = false;
+                    break;
+                }
+            }
+        }
 
+        // Check if function is valid
+        if(declaration && words.length >= 11) {
+            String word = words[10].replaceAll("\\p{Punct}", "");
+            validDeclaration = !aliases.contains(word);
+        }
 
+        // remove invalid functions
+        //if(!validDeclaration) line = null;
 
-
+        // remove invalid subcommands from valid functions
+        if(validDeclaration) {
+            StringBuilder newline = new StringBuilder();
+            for (String word : words) {
+                if (!(aliases.contains(word))) newline.append(word).append(" ");
+            }
+            line = newline.toString();
+        }
+        return line;
+    }
 
 
     public static void main(String... args) throws IOException {
