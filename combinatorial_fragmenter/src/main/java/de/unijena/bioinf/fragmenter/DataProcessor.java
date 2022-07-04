@@ -6,7 +6,9 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.babelms.MsIO;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import gurobi.GRBException;
+import it.unimi.dsi.fastutil.ints.IntComparator;
 import org.openscience.cdk.exception.InvalidSmilesException;
+import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
 
@@ -213,7 +215,7 @@ public class DataProcessor {
                 smilesStrings[i] = currentLine[smilesIdx];
             }
 
-            return new CSIPredictionData(ranks, csiScores, confidenceScores, molecularFormulas, smilesStrings);
+            return new CSIPredictionData(numberOfDataLines, ranks, csiScores, confidenceScores, molecularFormulas, smilesStrings);
         }
     }
 
@@ -234,6 +236,19 @@ public class DataProcessor {
         try(BufferedWriter fileWriter = Files.newBufferedWriter(file.toPath(), StandardOpenOption.APPEND)){
             fileWriter.newLine();
             fileWriter.write(str);
+        }
+    }
+
+    private void saveRankingData(File file, CSIPredictionData predictionData, int[] fragmenterRanks, double[] fragmenterScores) throws IOException{
+        try(BufferedWriter fileWriter = Files.newBufferedWriter(file.toPath())){
+            fileWriter.write("CSI_Rank\tfragmenterRank\tCSI:FingerIDScore\tfragmenterScore\tConfidenceScore\tmolecularFormula\tsmiles");
+
+            for(int i = 0; i < predictionData.numberOfStructures; i++){
+                fileWriter.newLine();
+                fileWriter.write(predictionData.ranks[i]+"\t"+fragmenterRanks[i]+"\t"+predictionData.csiScores[i]+
+                        "\t"+fragmenterScores[i]+"\t"+predictionData.confidenceScores[i]+"\t"+
+                        predictionData.molecularFormulas[i].toString()+"\t"+predictionData.smilesStrings[i]);
+            }
         }
     }
 
@@ -403,19 +418,94 @@ public class DataProcessor {
         executor.shutdown();
     }
 
-    public void runStructureRanking(CombinatorialFragmenter.Callback2 fragmentationConstraint, SubtreeComputationMethod subtreeCompMethod){
-        throw new UnsupportedOperationException("This method is currently not supported.");
+    public void runStructureRanking(CombinatorialFragmenter.Callback2 fragmentationConstraint, SubtreeComputationMethod subtreeCompMethod) throws InterruptedException {
+        // INITIALISATION:
+        // Initialise the executor service:
+        System.out.println("Initialise the executor service.");
+        final int NUM_AVAILABLE_PROCESSOR = Runtime.getRuntime().availableProcessors();
+        ExecutorService executor = Executors.newFixedThreadPool(NUM_AVAILABLE_PROCESSOR);
+
+        // COLLECT ALL TASKS:
+        // For each instance in this.fileNames do:
+        // - load the corresponding fragmentation tree and the predicted structures together with their data
+        // - for each predicted structure:
+        //      ->  create the fragmentation graph, add the terminal nodes (regarding the fTree) and
+        //          remove nodes which are not connected to a terminal node
+        //      ->  compute the rooted subtree in this graph and also its score
+        // - assign each predicted structure a rank corresponding to its score
+        // - write the new data into an TSV file
+        System.out.println("Each instance corresponds to one task. Collect all tasks...");
+        ArrayList<Callable<Object>> tasks = new ArrayList<>(this.fileNames.length);
+        for(String fileName : this.fileNames){
+            Callable<Object> task = Executors.callable(()-> {
+                try{
+                    // 1. Load the fragmentation tree and the prediction data:
+                    FTree fTree = this.readFTree(fileName+".json");
+                    CSIPredictionData predictionData = this.readPredictionDataFromTSV(fileName+".tsv");
+
+                    // 2. Iterate over the predicted structures and compute their fragmentation graphs
+                    // and their corresponding subtree using the specified SubtreeComputationMethod 'subtreeCompMethod'.
+                    // For structure 'i', store the score of the subtree in an array at index 'i'.
+                    SmilesParser smiParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+                    double[] scores = new double[predictionData.numberOfStructures];
+
+                    for(int i = 0; i < predictionData.numberOfStructures; i++){
+                        String smiles = predictionData.smilesStrings[i];
+                        MolecularFormula mf = predictionData.molecularFormulas[i];
+
+                        MolecularGraph candidateMolecule = new MolecularGraph(mf, smiParser.parseSmiles(smiles));
+                        DirectedBondTypeScoring scoring = new DirectedBondTypeScoring(candidateMolecule);
+
+                        CombinatorialSubtreeCalculator subtreeCalc = SubtreeComputationMethod.getComputedSubtreeCalculator(fTree, candidateMolecule, scoring, fragmentationConstraint, subtreeCompMethod);
+
+                        scores[i] = subtreeCalc.getScore();
+                    }
+
+                    // 3. Compute the ranks of the candidate structures using the computed scores:
+                    // Structure with rank 'i' corresponds to the structure with the i-th best score.
+                    // --> the ranks correspond to the position of the structures in the sorted list
+                    Integer[] indices = new Integer[predictionData.numberOfStructures];
+                    for(int i = 0; i < predictionData.numberOfStructures; i++) indices[i] = i;
+                    Arrays.sort(indices, (idx1, idx2) -> (int) (scores[idx2] - scores[idx1]));
+
+                    // after sorting: indices[i] = j
+                    // --> structure with index 'j' is at index 'i' in the descending order of 'scores'
+                    // --> structure 'j' has rank 'i+1'
+                    int[] fragmenterRanks = new int[predictionData.numberOfStructures];
+                    for(int i = 0; i < indices.length; i++){
+                        int structureIdx = indices[i];
+                        fragmenterRanks[structureIdx] = i+1;
+                    }
+
+                    // 4. Store the data in a TSV file:
+                    this.saveRankingData(new File(this.outputDir, fileName+".tsv"), predictionData, fragmenterRanks, scores);
+                } catch (IOException | UnknownElementException | InvalidSmilesException e) {
+                    e.printStackTrace();
+                } catch (GRBException e) {
+                    e.printStackTrace();
+                }
+            });
+            tasks.add(task);
+        }
+
+        System.out.println("All tasks were collected and will be given to the executor service for their computation...");
+        executor.invokeAll(tasks);
+
+        System.out.println("All tasks have been processed. The executor service will be shutdown.");
+        executor.shutdown();
     }
 
     private class CSIPredictionData{
 
+        protected final int numberOfStructures;
         protected final int[] ranks;
         protected final double[] csiScores;
         protected final double[] confidenceScores;
         protected final MolecularFormula[] molecularFormulas;
         protected final String[] smilesStrings;
 
-        public CSIPredictionData(int[] ranks, double[] csiScores, double[] confidenceScores, MolecularFormula[] molecularFormulas, String[] smilesStrings){
+        public CSIPredictionData(int numberOfStructures, int[] ranks, double[] csiScores, double[] confidenceScores, MolecularFormula[] molecularFormulas, String[] smilesStrings){
+            this.numberOfStructures = numberOfStructures;
             this.ranks = ranks;
             this.csiScores = csiScores;
             this.confidenceScores = confidenceScores;
