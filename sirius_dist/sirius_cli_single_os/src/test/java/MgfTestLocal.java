@@ -1,4 +1,3 @@
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,6 +23,7 @@ public class MgfTestLocal {
         // generate absolute path to summary files
         String absPath = System.getProperty("user.dir");
         absPath = absPath.split("sirius_dist\\\\sirius_cli_single_os")[0];
+        System.out.println(absPath);
 
         pre_candidates  = readCandidates(absPath + "sirius_cli\\src\\test\\test_results\\mgf_candidates\\formula_candidates.tsv", rank_count, table_feature);
         post_candidates = readCandidates(absPath + "sirius_cli\\src\\test\\temp_results\\mgf_temp_summary\\0_laudanosine_FEATURE_1\\formula_candidates.tsv", rank_count, table_feature);
@@ -46,7 +46,7 @@ public class MgfTestLocal {
      * @param   feature         the column of the split String to read
      * @return                  the String[] containing the specified information
      */
-    public static String @NotNull [] readCandidates(String filePath, int candidates_num, int feature){
+    public static String[] readCandidates(String filePath, int candidates_num, int feature){
 
         BufferedReader reader;
         String[] top_results = new String[candidates_num];
