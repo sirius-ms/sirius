@@ -10,13 +10,9 @@ plugins {
 }
 
 dependencies{
-
     testImplementation('org.junit.jupiter:junit-jupiter:5.8.2')
 }
 
-test{
-    useJUnitPlatform()
-}
 
 ext {
     // version for bundeled JRE
@@ -447,8 +443,9 @@ subprojects {
     distImage.shouldRunAfter downloadManual
 
 
-    task distImageTest(dependsOn: distImage, group: 'distribution') {
-        doLast{
+    task distImageTest(type: Test, dependsOn: distImage, group: 'distribution') {
+
+        doFirst{
             String abs_path = project.projectDir.toString().split('sirius_frontend')[0]
             mkdir abs_path+'sirius_frontend\\sirius_cli\\src\\test\\temp_results'
             mkdir abs_path+'sirius_frontend\\sirius_cli\\src\\test\\temp_results\\mgf_temp_output'
@@ -460,14 +457,18 @@ subprojects {
             'formula', '-p', 'orbitrap', 'fingerprint', 'structure', 'compound-classes',
             'write-summaries', '--output', abs_path+'sirius_frontend\\sirius_cli\\src\\test\\temp_results\\mfg_temp_summary'])}
 
-            project.exec { commandLine(['javac', abs_path+'sirius_frontend\\sirius_dist\\sirius_cli_single_os\\src\\test\\java\\MgfTestLocal.java'])}
-            project.exec { commandLine(['java', abs_path+'sirius_frontend\\sirius_dist\\sirius_cli_single_os\\src\\test\\java\\MgfTestLocal'])}
+            //project.exec { commandLine(['javac', abs_path+'sirius_frontend\\sirius_dist\\sirius_cli_single_os\\src\\test\\java\\MgfTestLocal.java'])}
+            //project.exec { commandLine(['java', abs_path+'sirius_frontend\\sirius_dist\\sirius_cli_single_os\\src\\test\\java\\MgfTestLocal'])}
 
+            useJUnitPlatform()
+        }
+
+        doLast{
             project.delete(abs_path+'sirius_frontend\\sirius_cli\\src\\test\\temp_results')
         }
+
     }
     distImageTest.shouldRunAfter distImage
-
 
     task signDistImage(dependsOn: distImage, group: 'distribution') {
 
