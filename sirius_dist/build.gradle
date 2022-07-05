@@ -9,6 +9,14 @@ plugins {
     id 'org.gradle.crypto.checksum' version '1.4.0'
 }
 
+dependencies{
+
+    testImplementation('org.junit.jupiter:junit-jupiter:5.8.2')
+}
+
+test{
+    useJUnitPlatform()
+}
 
 ext {
     // version for bundeled JRE
