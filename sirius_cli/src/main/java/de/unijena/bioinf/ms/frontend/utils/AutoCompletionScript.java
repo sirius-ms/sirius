@@ -27,6 +27,7 @@ import java.util.regex.Pattern;
     mixinStandardHelpOptions = true)
 public class AutoCompletionScript implements Callable<Integer> {
 
+    private boolean firstsirius = true;
     private final HashSet<String> aliases = new HashSet<>();
     private final HashSet<Integer> removedDefinitions = new HashSet<>();
     private static final String NAME = "SiriusLinuxCompletionScript";
@@ -51,6 +52,7 @@ public class AutoCompletionScript implements Callable<Integer> {
         commandline.registerConverter(DefaultParameter.class, new DefaultParameter.Converter());
         System.out.println("Creating AutocompletionScript");
         findAliases(commandline);
+        addAliasesEdgeCases();
         String s = AutoComplete.bash("sirius", commandline);
         System.out.printf("AutocompletionScript created successfully at %s%n", PATH);
         Files.writeString(PATH, s);
@@ -58,6 +60,12 @@ public class AutoCompletionScript implements Callable<Integer> {
         Files.writeString(PATH, s);
         System.out.printf("Please install the Script temporarily by typing the following into the Terminal: "+ (char)27 + "[1m. %s%n", NAME);
         return 0;
+    }
+
+    private void addAliasesEdgeCases() {
+        aliases.add("rerank"); // for rerank-formulas
+        aliases.add("search"); // for search-structure-db
+        aliases.add("compound"); // for compound-classes
     }
 
     private void findAliases(@NotNull CommandLine currentCommandline) {
@@ -75,7 +83,6 @@ public class AutoCompletionScript implements Callable<Integer> {
         // go through further depths
         subcommandsSpec.subcommands().forEach((name, command) -> findAliases(command));
     }
-
 
     private @NotNull String formatScript() throws IOException {
         System.out.print("Progress: [                    ]\r");
@@ -178,7 +185,7 @@ public class AutoCompletionScript implements Callable<Integer> {
     }
     private String formatSubcommandFunction(String line, String[] words) {
         String[] DECLARATIONINDICATOR = {"#","Generates","completions","for","the","options","and","subcommands","of","the"};
-        boolean declaration = true;
+        boolean declaration = words.length >= 10;
         if (words.length >= 10) {
             for (int i = 0; i < 9; i++) {
                 if (!(words[i].equals(DECLARATIONINDICATOR[i]))) {
@@ -194,14 +201,21 @@ public class AutoCompletionScript implements Callable<Integer> {
             validDeclaration = !aliases.contains(word);
         }
 
+        //Allow first declaration of sirius command
+        if(firstsirius && declaration && !validDeclaration) {
+            firstsirius = false;
+            validDeclaration = true;
+        }
+
         // remove invalid functions
-        //if(!validDeclaration) line = null;
+        // if(!validDeclaration) line = null;
 
         // remove invalid subcommands from valid functions
         if(validDeclaration) {
             StringBuilder newline = new StringBuilder();
             for (String word : words) {
-                if (!(aliases.contains(word))) newline.append(word).append(" ");
+                if ( !(aliases.contains(word.replaceAll("\"", "")))) newline.append(word).append(" ");
+                else if (word.endsWith("\"")) newline.append("\"");
             }
             line = newline.toString();
         }
