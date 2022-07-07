@@ -23,7 +23,6 @@ public class MgfTestLocal {
         // generate absolute path to summary files
         String absPath = System.getProperty("user.dir");
         absPath = absPath.split("sirius_dist\\\\sirius_cli_single_os")[0];
-        System.out.println(absPath);
 
         pre_candidates  = readCandidates(absPath + "sirius_cli\\src\\test\\test_results\\mgf_candidates\\formula_candidates.tsv", rank_count, table_feature);
         post_candidates = readCandidates(absPath + "sirius_cli\\src\\test\\temp_results\\mgf_temp_summary\\0_laudanosine_FEATURE_1\\formula_candidates.tsv", rank_count, table_feature);
@@ -32,9 +31,6 @@ public class MgfTestLocal {
     @Test
     @DisplayName("Testing if SIRIUS calculates expected formula candidates with mgf file.")
     public void testTopCandidates(){
-
-        System.out.println(Arrays.toString(pre_candidates));
-        System.out.println(Arrays.toString(post_candidates));
 
         assertArrayEquals(pre_candidates, post_candidates);
     }
