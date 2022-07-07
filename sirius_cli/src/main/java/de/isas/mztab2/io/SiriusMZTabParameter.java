@@ -93,13 +93,11 @@ public enum SiriusMZTabParameter {
             .name("CSI:FingerID")
             .value(PropertyManager.getProperty("de.unijena.bioinf.fingerid.version"));
 
-    //todo should we integrade this service in DataSourceService.java
     public final static Database NO_DATABASE = new Database().id(1).param(new Parameter().name("no database").value("null"));
     public final static Database DE_NOVO = new Database().id(2).param(new Parameter().name("de novo"));
     public final static Database PUBCHEM = new Database().id(3)
             .prefix("CID")
             .uri("https://pubchem.ncbi.nlm.nih.gov/compound/")
-            .version(PropertyManager.getProperty("de.unijena.bioinf.fingerid.db.date"))
             .param(new Parameter().name("CSI:FingerID PubChem Copy").value("CID"));
 
 
