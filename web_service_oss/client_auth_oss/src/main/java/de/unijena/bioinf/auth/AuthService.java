@@ -209,6 +209,16 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
         }
     }
 
+    public void login(String refreshToken) throws IOException {
+        tokenLock.writeLock().lock();
+        try {
+            this.refreshToken = refreshToken;
+            refreshIfNeeded();
+        } finally {
+            tokenLock.writeLock().unlock();
+        }
+    }
+
     @Override
     public void accept(HttpUriRequest httpUriRequest) throws IOException {
         httpUriRequest.setHeader("Authorization", "Bearer " + refreshIfNeeded().getAccessToken());
