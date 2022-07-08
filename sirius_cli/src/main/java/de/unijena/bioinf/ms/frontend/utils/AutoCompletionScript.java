@@ -14,18 +14,23 @@ import picocli.AutoComplete;
 import picocli.CommandLine;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.regex.Pattern;
 
 @CommandLine.Command(name = "generateAutocompletion", description = " [WIP] <STANDALONE> generates an Autocompletion-Script with all subcommands",
     mixinStandardHelpOptions = true)
 public class AutoCompletionScript implements Callable<Integer> {
+
+    @CommandLine.Option(names = {"-i","--install"}, defaultValue = "true", description = "If the script should be permanently installed")
+    public boolean toInstall;
+
+    @CommandLine.Option(names = {"--OStype","-o"}, required = false, description = "Overrides specification of the SystemOS. (Detected automatically per Default) Possibilities: {Linux, Windows, Mac, Solaris}")
+    public String OS;
 
     private boolean firstsirius = true;
     private final HashSet<String> aliases = new HashSet<>();
@@ -40,13 +45,14 @@ public class AutoCompletionScript implements Callable<Integer> {
      * The method will return the source code of a completion script. Save the source code to a file and install it.
      * For the installation of the completion Script, please see the following: <a href="https://picocli.info/autocomplete.html#_install_completion_script">...</a>
      */
-    public Integer call() throws IOException{
-        //TODO generate completion Script during build: See https://picocli.info/autocomplete.html#_generating_completion_scripts_during_the_build
+    public Integer call() throws IOException, UknownOSException{
         System.setProperty("de.unijena.bioinf.ms.propertyLocations", "sirius_frontend.build.properties");
         FingerIDProperties.sirius_guiVersion();
         final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
         WorkflowBuilder<CLIRootOptions<ProjectSpaceManager>> builder = new WorkflowBuilder<>(new CLIRootOptions<>(configOptionLoader, new ProjectSpaceManagerFactory.Default()), configOptionLoader, new SimpleInstanceBuffer.Factory());
         builder.initRootSpec();
+        if (toInstall && this.OS == null) this.OS = detectOS();
+        if (toInstall) System.out.println("Detected OS as "+OS);
         commandline = new CommandLine(builder.getRootSpec());
         commandline.setCaseInsensitiveEnumValuesAllowed(true);
         commandline.registerConverter(DefaultParameter.class, new DefaultParameter.Converter());
@@ -54,12 +60,59 @@ public class AutoCompletionScript implements Callable<Integer> {
         findAliases(commandline);
         addAliasesEdgeCases();
         String s = AutoComplete.bash("sirius", commandline);
-        System.out.printf("AutocompletionScript created successfully at %s%n", PATH);
         Files.writeString(PATH, s);
         s = formatScript();
         Files.writeString(PATH, s);
-        System.out.printf("Please install the Script temporarily by typing the following into the Terminal: "+ (char)27 + "[1m. %s%n", NAME);
+        System.out.printf("AutocompletionScript created successfully at %s%n", PATH);
+        if (!toInstall) System.out.printf("Please install the Script temporarily by typing the following into the Terminal: "+ (char)27 + "[1m. %s%n", NAME);
+        else installScript(s, OS);
         return 0;
+    }
+
+    private static void installScript(final String Script, final String OS) throws IOException {
+        switch (OS) {
+            case "Linux":
+                installScriptLinux(Script);
+                break;
+            case "Mac":
+                installScriptMac(Script);
+                break;
+            case "Windows":
+                installScriptWindows(Script);
+                break;
+            default:
+                installScriptSolaris(Script);
+                break;
+        }
+
+    }
+
+    private static void installScriptLinux(String Script) throws IOException {
+        final Path ScriptPath = Path.of("~/../../usr/bin/SiriusCompletion");
+        //TODO find place without sudo permission
+        Files.writeString(ScriptPath, Script);
+    }
+
+    private static void installScriptWindows(String script) {
+        //TODO create InstallationScript
+    }
+
+    private static void installScriptMac(String script) {
+        //TODO create InstallationScript
+    }
+
+    private static void installScriptSolaris(String script) {
+        //TODO create InstallationScript
+    }
+
+    private static @NotNull String detectOS() throws UknownOSException {
+        final String OSName = System.getProperty("os.name").toLowerCase();
+
+        if (OSName.contains("win")) return "Windows";
+        else if (OSName.contains("mac")) return "Mac";
+        else if (OSName.contains("nux") || OSName.contains("nix") || OSName.contains("aix")) return "Linux";
+        else if (OSName.contains("sunos")) return "Solaris";
+        else throw new UknownOSException("Could not detect OS");
     }
 
     private void addAliasesEdgeCases() {
@@ -201,6 +254,12 @@ public class AutoCompletionScript implements Callable<Integer> {
             validDeclaration = !aliases.contains(word);
         }
 
+        // Second check for function validity
+        if(line.contains("function _picocli_sirius_")) {
+            final String functionName = words[1].substring(13);
+            if (aliases.stream().anyMatch(alias -> functionName.contains("_"+alias+"_"))) validDeclaration = false;
+        }
+
         //Allow first declaration of sirius command
         if(firstsirius && declaration && !validDeclaration) {
             firstsirius = false;
@@ -226,5 +285,11 @@ public class AutoCompletionScript implements Callable<Integer> {
     public static void main(String... args) throws IOException {
         int exitCode = new CommandLine(new AutoCompletionScript()).execute(args);
         System.exit(exitCode);
+    }
+
+    static class UknownOSException extends RuntimeException {
+        public UknownOSException(String could_not_detect_os) {
+            super(could_not_detect_os);
+        }
     }
 }
