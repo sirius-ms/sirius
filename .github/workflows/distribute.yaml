@@ -9,167 +9,91 @@ on:
       - '**/README.md'
       - 'sirius_doc/**/*'
 jobs:
-#  distCLI:
-#    strategy:
-#      matrix:
-#        os: [ubuntu-latest, windows-latest, macos-latest]
-#    runs-on: ${{ matrix.os }}
-#    env:
-#      GENERIC_INSTALLER_CERTIFICATE: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE }}
-#      MACOS_APP_IDENTITY_ID: ${{ secrets.MACOS_APP_IDENTITY_ID }}
-#      MACOS_IDENTITY_ID: ${{ secrets.MACOS_IDENTITY_ID }}
-#      MACOS_APPLE_ID: ${{ secrets.MACOS_APPLE_ID }}
-#      MACOS_APPLE_ID_PW: ${{ secrets.MACOS_APPLE_ID_PW }}
-#
-#    steps:
-#      - uses: actions/checkout@v2
-#      - name: Set up Zulu JDK
-#        uses: actions/setup-java@v1
-#        with:
-#          java-version: '15' # The JDK version to make available on the path.
-#          java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
-#          architecture: x64 # (x64 or x86) - defaults to x64
-#      - name: Load Build properties
-#        uses: Reedyuk/read-properties@v1.0.1
-#        id: sirius_version
-#        with:
-#          path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
-#          property: 'de.unijena.bioinf.siriusFrontend.version'
-#
-#      - if: ${{ (matrix.os == 'macos-latest') && (env.MACOS_APP_IDENTITY_ID != '') }}
-#        name: Import Apple APP Code-signing ID and p12
-#        uses: apple-actions/import-codesign-certs@v1
-#        with:
-#          keychain-password: ${{ secrets.MACOS_TMP_KEYCHAIN_PWD }}
-#          p12-file-base64: ${{ secrets.MACOS_APP_CERTIFICATE }}
-#          p12-password: ${{ secrets.MACOS_APP_CERTIFICATE_PWD }}
-#
-#      - if: ${{ (matrix.os == 'macos-latest') && (env.MACOS_IDENTITY_ID != '') }}
-#        name: Import Apple Installer Code-signing ID and p12
-#        uses: apple-actions/import-codesign-certs@v1
-#        with:
-#          create-keychain: false
-#          keychain-password: ${{ secrets.MACOS_TMP_KEYCHAIN_PWD }}
-#          p12-file-base64: ${{ secrets.MACOS_CERTIFICATE }}
-#          p12-password: ${{ secrets.MACOS_CERTIFICATE_PWD }}
-#
-#      - if: matrix.os == 'macos-latest'
-#        name: Check Identities
-#        run: /usr/bin/security find-identity
-#
-#      - if: ${{ (matrix.os == 'windows-latest' ||  matrix.os == 'ubuntu-latest') && (env.GENERIC_INSTALLER_CERTIFICATE != '') }}
-#        name: Load generic installer codesign cert
-#        id: generic_codesign_cert
-#        uses: timheuer/base64-to-file@v1.1
-#        with:
-#          fileName: 'generic_installer_cert.p12'
-#          encodedString: ${{ env.GENERIC_INSTALLER_CERTIFICATE }}
-#
-#      - name: Gradle Build
-#        uses: eskatos/gradle-command-action@v1
-#        env:
-#          WIN_INSTALLER_CERTIFICATE_FILE: ${{ steps.generic_codesign_cert.outputs.filePath }}
-#        with:
-#          gradle-version: 6.9
-#          build-root-directory: sirius_dist/sirius_cli_single_os
-#          arguments: clean publishSiriusPublicationToMavenLocal -P "de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID=${{ secrets.MACOS_APP_IDENTITY_ID }}" -P "de.unijena.bioinf.build.MACOS_IDENTITY_ID=${{ secrets.MACOS_IDENTITY_ID }}" -P "de.unijena.bioinf.build.MACOS_APPLE_ID=${{ secrets.MACOS_APPLE_ID }}" -P "de.unijena.bioinf.build.WIN_INSTALLER_CERTIFICATE_FILE=${{ steps.generic_codesign_cert.outputs.filePath }}"  -P "de.unijena.bioinf.WIN_INSTALLER_CERTIFICATE_PW=${{ secrets.GENERIC_INSTALLER_CERTIFICATE_PW }}" -P "de.unijena.bioinf.WIN_INSTALLER_CERTIFICATE_TIMESTAMP_URL=${{ secrets.GENERIC_INSTALLER_CERTIFICATE_TIMESTAMP_URL }}"
-#      - name: Upload multiOS Source
-#        uses: actions/upload-artifact@v2
-#        with:
-#          name: "sirius-${{ steps.sirius_version.outputs.value }}-${{ runner.os }}-x86-64-headless-img"
-#          path: sirius_dist/sirius_cli_single_os/build/distributions/${{ runner.os == 'macOS' && 'sirius.app' || 'sirius' }}/
-#
-#      - name: Upload Distributions
-#        uses: actions/upload-artifact@v2
-#        with:
-#          retention-days: 1
-#          name: "sirius-${{ steps.sirius_version.outputs.value }}-${{ runner.os }}-x86-64-headless"
-#          path: |
-#            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.zip
-#            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.msi
-#            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.pkg
-#            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.deb
-#            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.sha256
-#  distGUI:
-#    strategy:
-#      matrix:
-#        os: [ubuntu-latest, windows-latest, macos-latest]
-#    runs-on: ${{ matrix.os }}
-#    env:
-#      GENERIC_INSTALLER_CERTIFICATE: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE }}
-#      MACOS_APP_IDENTITY_ID: ${{ secrets.MACOS_APP_IDENTITY_ID }}
-#      MACOS_IDENTITY_ID: ${{ secrets.MACOS_IDENTITY_ID }}
-#      MACOS_APPLE_ID: ${{ secrets.MACOS_APPLE_ID }}
-#      MACOS_APPLE_ID_PW: ${{ secrets.MACOS_APPLE_ID_PW }}
-#    steps:
-#      - uses: actions/checkout@v2
-#      - name: Set up Zulu JDK-FX
-#        uses: actions/setup-java@v1
-#        with:
-#          java-version: '15' # The JDK version to make available on the path.
-#          java-package: jdk+fx # (jre, jdk, or jdk+fx) - defaults to jdk
-#          architecture: x64 # (x64 or x86) - defaults to x64
-#      - name: Load Build properties
-#        uses: Reedyuk/read-properties@v1.0.1
-#        id: sirius_version
-#        with:
-#          path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
-#          property: 'de.unijena.bioinf.siriusFrontend.version'
-#
-#      - if: ${{ (matrix.os == 'macos-latest') && (env.MACOS_APP_IDENTITY_ID != '') }}
-#        name: Import Apple APP Code-signing ID and p12
-#        uses: apple-actions/import-codesign-certs@v1
-#        with:
-#          keychain-password: ${{ secrets.MACOS_TMP_KEYCHAIN_PWD }}
-#          p12-file-base64: ${{ secrets.MACOS_APP_CERTIFICATE }}
-#          p12-password: ${{ secrets.MACOS_APP_CERTIFICATE_PWD }}
-#
-#      - if: ${{ (matrix.os == 'macos-latest') && (env.MACOS_IDENTITY_ID != '') }}
-#        name: Import Apple Installer Code-signing ID and p12
-#        uses: apple-actions/import-codesign-certs@v1
-#        with:
-#          create-keychain: false
-#          keychain-password: ${{ secrets.MACOS_TMP_KEYCHAIN_PWD }}
-#          p12-file-base64: ${{ secrets.MACOS_CERTIFICATE }}
-#          p12-password: ${{ secrets.MACOS_CERTIFICATE_PWD }}
-#
-#      - if: matrix.os == 'macos-latest'
-#        name: Check Identities
-#        run: /usr/bin/security find-identity
-#
-#      - if: ${{ (matrix.os == 'windows-latest' ||  matrix.os == 'ubuntu-latest') && (env.GENERIC_INSTALLER_CERTIFICATE != '') }}
-#        name: Load generic installer codesign cert
-#        id: generic_codesign_cert
-#        uses: timheuer/base64-to-file@v1.1
-#        with:
-#          fileName: 'generic_installer_cert.p12'
-#          encodedString: ${{ env.GENERIC_INSTALLER_CERTIFICATE }}
-#
-#      - name: Gradle Build
-#        uses: eskatos/gradle-command-action@v1
-#        env:
-#          WIN_INSTALLER_CERTIFICATE_FILE: ${{ steps.generic_codesign_cert.outputs.filePath }}
-#        with:
-#          gradle-version: 6.9
-#          build-root-directory: sirius_dist/sirius_gui_single_os
-#          arguments: clean publishSiriusPublicationToMavenLocal -P "de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID=${{ secrets.MACOS_APP_IDENTITY_ID }}" -P "de.unijena.bioinf.build.MACOS_IDENTITY_ID=${{ secrets.MACOS_IDENTITY_ID }}" -P "de.unijena.bioinf.build.MACOS_APPLE_ID=${{ secrets.MACOS_APPLE_ID }}" -P "de.unijena.bioinf.build.WIN_INSTALLER_CERTIFICATE_FILE=${{ steps.generic_codesign_cert.outputs.filePath }}" -P "de.unijena.bioinf.WIN_INSTALLER_CERTIFICATE_PW=${{ secrets.GENERIC_INSTALLER_CERTIFICATE_PW }}" -P "de.unijena.bioinf.WIN_INSTALLER_CERTIFICATE_TIMESTAMP_URL=${{ secrets.GENERIC_INSTALLER_CERTIFICATE_TIMESTAMP_URL }}"
-#      - name: Upload Distributions
-#        uses: actions/upload-artifact@v2
-#        with:
-#          retention-days: 1
-#          name: "sirius-${{ steps.sirius_version.outputs.value }}-${{ runner.os }}-x86-64"
-#          path: |
-#            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.zip
-#            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.msi
-#            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.pkg
-#            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.deb
-#            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.sha256
-#
-
-  distService:
+  distCLI:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      GENERIC_INSTALLER_CERTIFICATE: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE }}
+      MACOS_APP_IDENTITY_ID: ${{ secrets.MACOS_APP_IDENTITY_ID }}
+      MACOS_IDENTITY_ID: ${{ secrets.MACOS_IDENTITY_ID }}
+      MACOS_APPLE_ID: ${{ secrets.MACOS_APPLE_ID }}
+      MACOS_APPLE_ID_PW: ${{ secrets.MACOS_APPLE_ID_PW }}
+      #          LINUX_INSTALLER_CERTIFICATE_FILE: ${{ steps.generic_codesign_cert.outputs.filePath }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Zulu JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: '15' # The JDK version to make available on the path.
+          java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
+          architecture: x64 # (x64 or x86) - defaults to x64
+      - name: Load Build properties
+        uses: Reedyuk/read-properties@v1.0.1
+        id: sirius_version
+        with:
+          path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
+          property: 'de.unijena.bioinf.siriusFrontend.version'
+
+      - if: ${{ (matrix.os == 'macos-latest') && (env.MACOS_APP_IDENTITY_ID != '') }}
+        name: Import Apple APP Code-signing ID and p12
+        uses: apple-actions/import-codesign-certs@v1
+        with:
+          keychain-password: ${{ secrets.MACOS_TMP_KEYCHAIN_PWD }}
+          p12-file-base64: ${{ secrets.MACOS_APP_CERTIFICATE }}
+          p12-password: ${{ secrets.MACOS_APP_CERTIFICATE_PWD }}
+
+      - if: ${{ (matrix.os == 'macos-latest') && (env.MACOS_IDENTITY_ID != '') }}
+        name: Import Apple Installer Code-signing ID and p12
+        uses: apple-actions/import-codesign-certs@v1
+        with:
+          create-keychain: false
+          keychain-password: ${{ secrets.MACOS_TMP_KEYCHAIN_PWD }}
+          p12-file-base64: ${{ secrets.MACOS_CERTIFICATE }}
+          p12-password: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+
+      - if: matrix.os == 'macos-latest'
+        name: Check Identities
+        run: /usr/bin/security find-identity
+
+      - if: ${{ (matrix.os == 'windows-latest' ||  matrix.os == 'ubuntu-latest') && (env.GENERIC_INSTALLER_CERTIFICATE != '') }}
+        name: Load generic installer codesign cert
+        id: generic_codesign_cert
+        uses: timheuer/base64-to-file@v1.1
+        with:
+          fileName: 'generic_installer_cert.p12'
+          encodedString: ${{ env.GENERIC_INSTALLER_CERTIFICATE }}
+
+      - name: Gradle Build
+        uses: eskatos/gradle-command-action@v1
+        env:
+          WIN_INSTALLER_CERTIFICATE_FILE: ${{ steps.generic_codesign_cert.outputs.filePath }}
+        with:
+          gradle-version: 6.9
+          build-root-directory: sirius_dist/sirius_cli_single_os
+          arguments: clean publishSiriusPublicationToMavenLocal -P "de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID=${{ secrets.MACOS_APP_IDENTITY_ID }}" -P "de.unijena.bioinf.build.MACOS_IDENTITY_ID=${{ secrets.MACOS_IDENTITY_ID }}" -P "de.unijena.bioinf.build.MACOS_APPLE_ID=${{ secrets.MACOS_APPLE_ID }}" -P "de.unijena.bioinf.build.WIN_INSTALLER_CERTIFICATE_FILE=${{ steps.generic_codesign_cert.outputs.filePath }}"  -P "de.unijena.bioinf.WIN_INSTALLER_CERTIFICATE_PW=${{ secrets.GENERIC_INSTALLER_CERTIFICATE_PW }}" -P "de.unijena.bioinf.WIN_INSTALLER_CERTIFICATE_TIMESTAMP_URL=${{ secrets.GENERIC_INSTALLER_CERTIFICATE_TIMESTAMP_URL }}"
+      - name: Upload multiOS Source
+        uses: actions/upload-artifact@v2
+        with:
+          name: "sirius-${{ steps.sirius_version.outputs.value }}-${{ runner.os }}-x86-64-headless-img"
+          path: sirius_dist/sirius_cli_single_os/build/distributions/${{ runner.os == 'macOS' && 'sirius.app' || 'sirius' }}/
+
+      - name: Upload Distributions
+        uses: actions/upload-artifact@v2
+        with:
+          retention-days: 1
+          name: "sirius-${{ steps.sirius_version.outputs.value }}-${{ runner.os }}-x86-64-headless"
+          path: |
+            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.zip
+            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.msi
+            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.pkg
+            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.deb
+            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.sha256
+  distService:
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
     runs-on: ${{ matrix.os }}
     env:
       GENERIC_INSTALLER_CERTIFICATE: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE }}
@@ -243,67 +167,142 @@ jobs:
             ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.deb
             ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.sha256
 
+distGUI:
+  strategy:
+    matrix:
+      os: [ubuntu-latest, windows-latest, macos-latest]
+  runs-on: ${{ matrix.os }}
+  env:
+    GENERIC_INSTALLER_CERTIFICATE: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE }}
+    MACOS_APP_IDENTITY_ID: ${{ secrets.MACOS_APP_IDENTITY_ID }}
+    MACOS_IDENTITY_ID: ${{ secrets.MACOS_IDENTITY_ID }}
+    MACOS_APPLE_ID: ${{ secrets.MACOS_APPLE_ID }}
+    MACOS_APPLE_ID_PW: ${{ secrets.MACOS_APPLE_ID_PW }}
+  steps:
+    - uses: actions/checkout@v2
+    - name: Set up Zulu JDK-FX
+      uses: actions/setup-java@v1
+      with:
+        java-version: '15' # The JDK version to make available on the path.
+        java-package: jdk+fx # (jre, jdk, or jdk+fx) - defaults to jdk
+        architecture: x64 # (x64 or x86) - defaults to x64
+    - name: Load Build properties
+      uses: Reedyuk/read-properties@v1.0.1
+      id: sirius_version
+      with:
+        path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
+        property: 'de.unijena.bioinf.siriusFrontend.version'
 
-#  distMulti:
-#    needs: distCLI
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: actions/checkout@v2
-#      - name: Set up Zulu JDK
-#        uses: actions/setup-java@v1
-#        with:
-#          java-version: '15' # The JDK version to make available on the path.
-#          java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
-#          architecture: x64 # (x64 or x86) - defaults to x64
-#      - name: Load Build properties
-#        uses: Reedyuk/read-properties@v1.0.1
-#        id: sirius_version
-#        with:
-#          path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
-#          property: 'de.unijena.bioinf.siriusFrontend.version'
-#
-#      - uses: actions/download-artifact@v2
-#        with:
-#          name: "sirius-${{ steps.sirius_version.outputs.value }}-Linux-x86-64-headless-img"
-#          path: sirius_dist/sirius_cli_multi_os/build/tmp/artifacts/sirius-${{ steps.sirius_version.outputs.value }}-Linux-x86-64-headless-img
-#      - uses: actions/download-artifact@v2
-#        with:
-#          name: "sirius-${{ steps.sirius_version.outputs.value }}-Windows-x86-64-headless-img"
-#          path: sirius_dist/sirius_cli_multi_os/build/tmp/artifacts/sirius-${{ steps.sirius_version.outputs.value }}-Windows-x86-64-headless-img
-#      - uses: actions/download-artifact@v2
-#        with:
-#          name: "sirius-${{ steps.sirius_version.outputs.value }}-macOS-x86-64-headless-img"
-#          path: sirius_dist/sirius_cli_multi_os/build/tmp/artifacts/sirius-${{ steps.sirius_version.outputs.value }}-macOS-x86-64-headless-img
-#      - name: Display downloaded artifact files
-#        run: ls -lah
-#        working-directory: sirius_dist/sirius_cli_multi_os/build/tmp/artifacts/
-#
-#      - name: Gradle Build
-#        uses: eskatos/gradle-command-action@v1
-#        with:
-#          gradle-version: 6.9
-#          build-root-directory: sirius_dist/sirius_cli_multi_os
-#          arguments: publishSiriusPublicationToMavenLocal
-#      - name: Upload Distributions
-#        uses: actions/upload-artifact@v2
-#        with:
-#          retention-days: 1
-#          name: "sirius-${{ steps.sirius_version.outputs.value }}-multiOS-x86-64-headless"
-#          path: |
-#            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.zip
-#            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.sha256
-#      - name: Delete img artifacts
-#        uses: geekyeggo/delete-artifact@v1
-#        with:
-#          name: |
-#            sirius-${{ steps.sirius_version.outputs.value }}-Linux-x86-64-headless-img
-#            sirius-${{ steps.sirius_version.outputs.value }}-Windows-x86-64-headless-img
-#            sirius-${{ steps.sirius_version.outputs.value }}-macOS-x86-64-headless-img
+    - if: ${{ (matrix.os == 'macos-latest') && (env.MACOS_APP_IDENTITY_ID != '') }}
+      name: Import Apple APP Code-signing ID and p12
+      uses: apple-actions/import-codesign-certs@v1
+      with:
+        keychain-password: ${{ secrets.MACOS_TMP_KEYCHAIN_PWD }}
+        p12-file-base64: ${{ secrets.MACOS_APP_CERTIFICATE }}
+        p12-password: ${{ secrets.MACOS_APP_CERTIFICATE_PWD }}
+
+    - if: ${{ (matrix.os == 'macos-latest') && (env.MACOS_IDENTITY_ID != '') }}
+      name: Import Apple Installer Code-signing ID and p12
+      uses: apple-actions/import-codesign-certs@v1
+      with:
+        create-keychain: false
+        keychain-password: ${{ secrets.MACOS_TMP_KEYCHAIN_PWD }}
+        p12-file-base64: ${{ secrets.MACOS_CERTIFICATE }}
+        p12-password: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+
+    - if: matrix.os == 'macos-latest'
+      name: Check Identities
+      run: /usr/bin/security find-identity
+
+    - if: ${{ (matrix.os == 'windows-latest' ||  matrix.os == 'ubuntu-latest') && (env.GENERIC_INSTALLER_CERTIFICATE != '') }}
+      name: Load generic installer codesign cert
+      id: generic_codesign_cert
+      uses: timheuer/base64-to-file@v1.1
+      with:
+        fileName: 'generic_installer_cert.p12'
+        encodedString: ${{ env.GENERIC_INSTALLER_CERTIFICATE }}
+
+    - name: Gradle Build
+      uses: eskatos/gradle-command-action@v1
+      env:
+        WIN_INSTALLER_CERTIFICATE_FILE: ${{ steps.generic_codesign_cert.outputs.filePath }}
+      with:
+        gradle-version: 6.9
+        build-root-directory: sirius_dist/sirius_gui_single_os
+        arguments: clean publishSiriusPublicationToMavenLocal -P "de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID=${{ secrets.MACOS_APP_IDENTITY_ID }}" -P "de.unijena.bioinf.build.MACOS_IDENTITY_ID=${{ secrets.MACOS_IDENTITY_ID }}" -P "de.unijena.bioinf.build.MACOS_APPLE_ID=${{ secrets.MACOS_APPLE_ID }}" -P "de.unijena.bioinf.build.WIN_INSTALLER_CERTIFICATE_FILE=${{ steps.generic_codesign_cert.outputs.filePath }}" -P "de.unijena.bioinf.WIN_INSTALLER_CERTIFICATE_PW=${{ secrets.GENERIC_INSTALLER_CERTIFICATE_PW }}" -P "de.unijena.bioinf.WIN_INSTALLER_CERTIFICATE_TIMESTAMP_URL=${{ secrets.GENERIC_INSTALLER_CERTIFICATE_TIMESTAMP_URL }}"
+    - name: Upload Distributions
+      uses: actions/upload-artifact@v2
+      with:
+        retention-days: 1
+        name: "sirius-${{ steps.sirius_version.outputs.value }}-${{ runner.os }}-x86-64"
+        path: |
+          ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.zip
+          ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.msi
+          ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.pkg
+          ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.deb
+          ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.sha256
+
+
+
+  distMulti:
+    needs: distCLI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Zulu JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: '15' # The JDK version to make available on the path.
+          java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
+          architecture: x64 # (x64 or x86) - defaults to x64
+      - name: Load Build properties
+        uses: Reedyuk/read-properties@v1.0.1
+        id: sirius_version
+        with:
+          path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
+          property: 'de.unijena.bioinf.siriusFrontend.version'
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: "sirius-${{ steps.sirius_version.outputs.value }}-Linux-x86-64-headless-img"
+          path: sirius_dist/sirius_cli_multi_os/build/tmp/artifacts/sirius-${{ steps.sirius_version.outputs.value }}-Linux-x86-64-headless-img
+      - uses: actions/download-artifact@v2
+        with:
+          name: "sirius-${{ steps.sirius_version.outputs.value }}-Windows-x86-64-headless-img"
+          path: sirius_dist/sirius_cli_multi_os/build/tmp/artifacts/sirius-${{ steps.sirius_version.outputs.value }}-Windows-x86-64-headless-img
+      - uses: actions/download-artifact@v2
+        with:
+          name: "sirius-${{ steps.sirius_version.outputs.value }}-macOS-x86-64-headless-img"
+          path: sirius_dist/sirius_cli_multi_os/build/tmp/artifacts/sirius-${{ steps.sirius_version.outputs.value }}-macOS-x86-64-headless-img
+      - name: Display downloaded artifact files
+        run: ls -lah
+        working-directory: sirius_dist/sirius_cli_multi_os/build/tmp/artifacts/
+
+      - name: Gradle Build
+        uses: eskatos/gradle-command-action@v1
+        with:
+          gradle-version: 6.9
+          build-root-directory: sirius_dist/sirius_cli_multi_os
+          arguments: publishSiriusPublicationToMavenLocal
+      - name: Upload Distributions
+        uses: actions/upload-artifact@v2
+        with:
+          retention-days: 1
+          name: "sirius-${{ steps.sirius_version.outputs.value }}-multiOS-x86-64-headless"
+          path: |
+            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.zip
+            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.sha256
+      - name: Delete img artifacts
+        uses: geekyeggo/delete-artifact@v1
+        with:
+          name: |
+            sirius-${{ steps.sirius_version.outputs.value }}-Linux-x86-64-headless-img
+            sirius-${{ steps.sirius_version.outputs.value }}-Windows-x86-64-headless-img
+            sirius-${{ steps.sirius_version.outputs.value }}-macOS-x86-64-headless-img
 
 
   release:
-#    needs: [ distCLI, distGUI, distMulti]
-    needs: [distService]
+    needs: [ distCLI, distGUI, distService, distMulti]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
