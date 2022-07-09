@@ -64,8 +64,8 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
     protected String emailToReset;
 
     // DELETE Account
-    @CommandLine.Option(names = "--clear",
-            description = {"Delete stored refresh/access token (re-login required to use webservices)"})
+    @CommandLine.Option(names = {"--logout", "--clear"},
+            description = {"Logout. Deletes stored refresh and access token (re-login required to use webservices again)."})
     protected boolean clearLogin;
 
 
@@ -79,22 +79,91 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
             description = {"Show license information and compound limits."})
     protected boolean showLicense;
 
-    @CommandLine.Option(names = {"--select-license", "--select-subscription"}, required = false,
+    @CommandLine.Option(names = {"--select-license", "--select-subscription"},
             description = {"Specify active subscription (sid) if multiple licenses are available at your account. Available subscriptions can be listed with '--show'"})
     protected String sid = null;
 
+    @CommandLine.Option(names = {"--request-token-only"},
+            description = {"Requests and prints a new SECRET refresh token but does not store the token as login.", "This can be used to request a token to be used in third party applications that wish to call SIRIUS Web Services using your account.", "Do never store your username and password in third party apps.", "Do not store the output of this command in any log. We recommend redirecting the output into a file."})
+    protected boolean tokenRequestOnly = false;
+
+    //todo token invalidation command.
+
     //SET Account
-    @CommandLine.ArgGroup(exclusive = false)
+    //only one of the login methods can be used.
+    @CommandLine.ArgGroup(exclusive = true)
     LoginOpts login;
 
     private static class LoginOpts {
+        @CommandLine.ArgGroup(exclusive = false)
+        private InteractiveLoginOpts interactiveLogin = null;
+        @CommandLine.ArgGroup(exclusive = false)
+        private TokenLoginOpts tokenLogin = null;
+        @CommandLine.ArgGroup(exclusive = false)
+        private BatchLoginOpts batchLogin = null;
+
+        public boolean isTokenAuth() {
+            return tokenLogin != null;
+        }
+
+        public String getRefreshToken() {
+            if (!isTokenAuth())
+                return null;
+            return tokenLogin.token;
+        }
+
+        public String getUsername() {
+            if (interactiveLogin != null)
+                return interactiveLogin.username;
+            if (batchLogin != null)
+                return batchLogin.username;
+            return null;
+        }
+
+        public String getPassword() {
+            if (interactiveLogin != null)
+                return interactiveLogin.password;
+            if (batchLogin != null)
+                return batchLogin.password;
+            return null;
+        }
+
+
+    }
+
+    private static class InteractiveLoginOpts {
         @CommandLine.Option(names = {"--user", "--email", "-u"}, required = true,
-                description = {"Compute fragmentation tree alignments between all compounds in the dataset, incorporating the given fragmentation tree library. The similarity is not the raw alignment score, but the correlation of the scores."})
+                description = {"Login username/email"})
         protected String username;
 
         @CommandLine.Option(names = {"--password", "--pwd", "-p"}, required = true,
                 description = {"Console password input."},
                 interactive = true)
+        protected String password;
+    }
+
+    private static class TokenLoginOpts {
+        @CommandLine.Option(names = {"--token"}, required = true,
+                description = {"Refresh token to use as login."})
+        protected String token;
+    }
+
+    private static class BatchLoginOpts {
+        @CommandLine.Option(names = {"--user-env"}, required = true,
+                description = {"Environment variable with login username."})
+        private void setUsername(String envUsername) {
+            this.username = System.getenv(envUsername);
+        }
+
+        protected String username;
+
+
+        @CommandLine.Option(names = {"--password-env"}, required = true,
+                description = {"Environment variable with login password."})
+        private void setPassword(String envPassword) {
+            this.password = System.getenv(envPassword);
+        }
+
         protected String password;
     }
 
@@ -131,16 +200,24 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
             }
 
 
-            if (login != null && login.username != null && login.password != null) {
+            if (login != null) {
                 AuthService service = ApplicationCore.WEB_API.getAuthService();
                 try {
-                    service.login(login.username, login.password);
+                    if (login.isTokenAuth())
+                        service.login(login.getRefreshToken());
+                    else
+                        service.login(login.getUsername(), login.getPassword());
+
+                    if (tokenRequestOnly){
+                        String rToken = service.getToken().map(t -> t.getSource().getRefreshToken()).orElseThrow(() -> new IOException("Could not extract refresh token after successful login!"));
+                        System.out.println("###################### Refresh token ######################");
+                        System.out.println(rToken);
+                        System.out.println("###########################################################");
+                    }
                     AuthServices.writeRefreshToken(service, ApplicationCore.TOKEN_FILE);
                     final AuthService.Token token = service.getToken().orElse(null);
                     if (showProfile)
                         showProfile(token);
-
-
                     {
                         Subscription sub = null;
                         @NotNull List<Subscription> subs = Tokens.getSubscriptions(token);
@@ -191,7 +268,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                         if (sid != null && sid.equals(subUsed.getSid())) { //make host change persistent because connection was successful
                             SiriusProperties.setAndStoreInBackground(Tokens.ACTIVE_SUBSCRIPTION_KEY, sid);
                         }
-                        System.out.println("Login successful! Active License is: '" + subUsed.getSid() + " - " + subUsed.getName() +"'.");
+                        System.out.println("Login successful! Active License is: '" + subUsed.getSid() + " - " + subUsed.getName() + "'.");
                     }
                 } catch (ExecutionException | InterruptedException | IOException e) {
                     LoggerFactory.getLogger(getClass()).error("Could not login to Authentication Server!", e);
@@ -229,7 +306,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                 @NotNull List<Subscription> subs = Tokens.getSubscriptions(token);
                 if (subs.isEmpty()) {
                     System.out.println("<NO SUBSCRIPTIONS/LICENSES AVAILABLE>");
-                }else{
+                } else {
                     try {
                         System.out.println(new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(subs));
                     } catch (JsonProcessingException e) {
