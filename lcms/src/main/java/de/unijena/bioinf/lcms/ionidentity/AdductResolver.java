@@ -1,9 +1,7 @@
 package de.unijena.bioinf.lcms.ionidentity;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.lcms.LCMSProccessingInstance;
-import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.model.lcms.FragmentedIon;
 import gnu.trove.list.array.TDoubleArrayList;
 

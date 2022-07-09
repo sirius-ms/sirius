@@ -25,10 +25,8 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 
-import javax.naming.OperationNotSupportedException;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.List;
 
 // this class is just a workaround to preserve support for old api of the internal csi Fingerid tools and should not

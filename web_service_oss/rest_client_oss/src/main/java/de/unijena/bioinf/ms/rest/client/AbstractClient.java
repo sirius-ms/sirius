@@ -154,11 +154,11 @@ public abstract class AbstractClient {
     }
 
     public <T, R extends TypeReference<T>> T executeFromJson(@NotNull CloseableHttpClient client, @NotNull final HttpUriRequest request, R tr) throws IOException {
-        return execute(client, request, r -> r != null && r.ready() ? new ObjectMapper().readValue(r, tr) : null);
+        return execute(client, request, r -> r != null ? new ObjectMapper().readValue(r, tr) : null);
     }
 
     public <T, R extends TypeReference<T>> T executeFromJson(@NotNull CloseableHttpClient client, @NotNull final HTTPSupplier<?> makeRequest, R tr) throws IOException {
-        return execute(client, makeRequest, r -> r != null && r.ready() ? new ObjectMapper().readValue(r, tr) : null);
+        return execute(client, makeRequest, r -> r != null ? new ObjectMapper().readValue(r, tr) : null);
     }
 
     public <T> T executeFromStream(@NotNull CloseableHttpClient client, @NotNull final HTTPSupplier<?> makeRequest, IOFunctions.IOFunction<InputStream, T> respHandling) throws IOException {
