@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.lcms;
 
-import com.google.common.base.Joiner;
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
