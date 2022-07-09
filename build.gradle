@@ -220,9 +220,9 @@ allprojects {
 }
 
 task refreshDownloadLinks {
-    File webPath =  getBuildDir().toPath().resolve('tmp/webSite/').toFile()
+    File webPath = getBuildDir().toPath().resolve('tmp/webSite/').toFile()
     group = 'publishing'
-    File outfile = new File(webPath,"sirius-download.md")
+    File outfile = new File(webPath, "sirius-download.md")
     outputs.file(outfile)
 
     doLast {
@@ -233,18 +233,23 @@ task refreshDownloadLinks {
                 "### SIRIUS+CSI:FingerID GUI and CLI - Version $version (${new Date().format('yyyy-MM-dd')})",
                 "##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.",
                 "- for Windows (64bit): [msi](https://github.com/boecker-lab/sirius/releases/download/v$version/sirius-$version-win64.msi) / " +
-                        "[zip](https://github.com/boecker-lab/sirius/releases/download/v$version/sirius-$version-win64.zip)",
-                "- for Linux (64bit): [zip](https://github.com/boecker-lab/sirius/releases/download/v$version/sirius-$version-linux64.zip)",
+                        "[zip](https://github.com/boecker-lab/sirius/releases/download/v$version/sirius-$version-win64.zip) / " +
+                        "[msi (signed by Bright Giant)](https://github.com/bright-giant/sirius/releases/download/v$version/sirius-$version-win64.msi)",
                 "- for Mac (64bit): [pkg](https://github.com/boecker-lab/sirius/releases/download/v$version/sirius-$version-osx64.pkg) / " +
-                        "[zip](https://github.com/boecker-lab/sirius/releases/download/v$version/sirius-$version-osx64.zip)",
+                        "[zip](https://github.com/boecker-lab/sirius/releases/download/v$version/sirius-$version-osx64.zip) / " +
+                        "[pkg (signed by Bright Giant)](https://github.com/bright-giant/sirius/releases/download/v$version/sirius-$version-osx64.pkg)",
+                "- for Linux (64bit): [zip](https://github.com/boecker-lab/sirius/releases/download/v$version/sirius-$version-linux64.zip)",
+
                 "",
                 "### SIRIUS+CSI:FingerID Command-Line Interface only - Version $version (${new Date().format('yyyy-MM-dd')})",
                 "##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.",
                 "- for Windows (64bit): [msi](https://github.com/boecker-lab/sirius/releases/download/v$version/sirius-$version-win64-headless.msi) / " +
-                        "[zip](https://github.com/boecker-lab/sirius/releases/download/v$version/sirius-$version-win64-headless.zip)",
-                "- for Linux (64bit): [zip](https://github.com/boecker-lab/sirius/releases/download/v$version/sirius-$version-linux64-headless.zip)",
+                        "[zip](https://github.com/boecker-lab/sirius/releases/download/v$version/sirius-$version-win64-headless.zip) / " +
+                        "[msi (signed by Bright Giant)](https://github.com/bright-giant/sirius/releases/download/v$version/sirius-$version-win64-headless.msi)",
                 "- for Mac (64bit): [pkg](https://github.com/boecker-lab/sirius/releases/download/v$version/sirius-$version-osx64-headless.pkg) / " +
-                        "[zip](https://github.com/boecker-lab/sirius/releases/download/v$version/sirius-$version-osx64-headless.zip)",
+                        "[zip](https://github.com/boecker-lab/sirius/releases/download/v$version/sirius-$version-osx64-headless.zip) / " +
+                        "[pkg (signed by Bright Giant)](https://github.com/bright-giant/sirius/releases/download/v$version/sirius-$version-osx64-headless.pkg)",
+                "- for Linux (64bit): [zip](https://github.com/boecker-lab/sirius/releases/download/v$version/sirius-$version-linux64-headless.zip)",
                 ""
         ] as List
 
@@ -253,17 +258,20 @@ task refreshDownloadLinks {
     }
 }
 
+String cleanVersion = fingeridVersion.toString().replace('-SNAPSHOT', '')
+String minorVersion = "${cleanVersion.split('[.]')[0]}.${cleanVersion.split('[.]')[1]}"
+
 task refreshTrainingLinks {
-    File webPath =  getBuildDir().toPath().resolve('tmp/webSite/').toFile()
+    File webPath = getBuildDir().toPath().resolve('tmp/webSite/').toFile()
     group = 'publishing'
-    File outfile = new File(webPath,"sirius-training.md")
+    File outfile = new File(webPath, "sirius-training.md")
     outputs.file(outfile)
 
     doLast {
         webPath.mkdirs()
         List<String> lines = [
-                "- https://www.csi-fingerid.uni-jena.de/v$fingeridVersion/api/fingerid/trainingstructures?predictor=1 (training structures for positive ion mode)",
-                "- https://www.csi-fingerid.uni-jena.de/v$fingeridVersion/api/fingerid/trainingstructures?predictor=2 (training structures for negative ion mode)"
+                "- https://www.csi-fingerid.uni-jena.de/v$minorVersion/api/fingerid/trainingstructures?predictor=1 (training structures for positive ion mode)",
+                "- https://www.csi-fingerid.uni-jena.de/v$minorVersion/api/fingerid/trainingstructures?predictor=2 (training structures for negative ion mode)"
         ] as List
 
         Files.deleteIfExists(outfile.toPath())
@@ -294,9 +302,9 @@ task refreshReadMe {
         String keywordEnd = null
 
         lines.each { String line ->
-            if (line.startsWith("[![Generic badge](https://img.shields.io/badge/Version-")){
-                nuLines.add("[![Generic badge](https://img.shields.io/badge/Version-${project.version.replace("-","--")}-informational.svg)](https://shields.io/)")
-            }else if (keyword == null) {
+            if (line.startsWith("[![Generic badge](https://img.shields.io/badge/Version-")) {
+                nuLines.add("[![Generic badge](https://img.shields.io/badge/Version-${project.version.replace("-", "--")}-informational.svg)](https://shields.io/)")
+            } else if (keyword == null) {
                 keywordEnd = keywords.get(line)
                 nuLines.add(line)
                 if (keywordEnd != null) {
