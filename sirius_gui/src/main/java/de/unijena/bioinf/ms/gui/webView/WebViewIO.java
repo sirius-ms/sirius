@@ -25,6 +25,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.Charset;
 
 import org.apache.batik.transcoder.Transcoder;
 import org.apache.batik.transcoder.TranscoderException;
@@ -46,7 +47,7 @@ public class WebViewIO {
 
     public static void writePDF(File file, String svg){
         Transcoder transcoder = new PDFTranscoder();
-        TranscoderInput transcoderInput = new TranscoderInput(IOUtils.toInputStream(svg));
+        TranscoderInput transcoderInput = new TranscoderInput(IOUtils.toInputStream(svg, Charset.defaultCharset()));
         try {
             TranscoderOutput transcoderOutput = new TranscoderOutput(new FileOutputStream(file));
             transcoder.transcode(transcoderInput, transcoderOutput);
