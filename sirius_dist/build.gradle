@@ -467,7 +467,6 @@ subprojects {
 
     task distImageTestCI(type: Test, group: 'distribution') {
         useJUnitPlatform()
-        filter.includeTestsMatching("MgfTestLocal")
         filter.includeTestsMatching("MgfTest")
     }
 
