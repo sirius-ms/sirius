@@ -1,9 +1,7 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Arrays;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -37,7 +35,7 @@ public class MgfTest {
      * @param   feature         the column of the split String to read
      * @return                  the String[] containing the specified information
      */
-    public static String @NotNull [] readCandidates(String filePath, int candidates_num, int feature){
+    public static String[] readCandidates(String filePath, int candidates_num, int feature){
 
         BufferedReader reader;
         String[] top_results = new String[candidates_num];

@@ -96,21 +96,16 @@ buildSirius:
 TestSirius:
   stage: test
   script:
-    - cd sirius_cli/src/test
-    - mkdir temp_results
-    - cd temp_results
-    - mkdir mgf_temp_summary
-    - mkdir mgf_temp_output
-    - cd ../../../..
-    #- ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius --input /builds/bioinf-mit/ms/sirius_frontend/sirius_doc/manual/demo-data/mgf/laudanosine.mgf --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_output formula -p orbitrap fingerprint structure compound-classes write-summaries --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_summary
+    - mkdir sirius_cli/src/test/temp_results
+    - mkdir sirius_cli/src/test/temp_results/mgf_temp_summary
+    - mkdir sirius_cli/src/test/temp_results/mgf_temp_output
     - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius login --token $SIRIUS_TOKEN
-    - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius --help
-    - cd sirius_dist/sirius_cli_single_os/src/test/java
-    - javac MgfTest.java
-    - java MgfTest
-    - cd ../../../../..
-    - cd sirius_cli/src/test
-    - rm -r temp_results
+    - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius --input /builds/bioinf-mit/ms/sirius_frontend/sirius_doc/manual/demo-data/mgf/laudanosine.mgf --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_output formula -p orbitrap fingerprint structure compound-classes write-summaries --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_summary
+    #- ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius --help
+    - ls sirius_cli/src/test/temp_results/mgf_temp_summary/0_laudanosine_FEATURE_1
+    - javac sirius_dist/sirius_cli_single_os/src/test/java/MgfTest.java
+    - java sirius_dist/sirius_cli_single_os/src/test/java/MgfTest
+    - rm -r sirius_cli/src/test/temp_results
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
