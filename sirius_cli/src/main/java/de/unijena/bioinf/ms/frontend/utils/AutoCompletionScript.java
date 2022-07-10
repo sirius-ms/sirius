@@ -13,10 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import picocli.AutoComplete;
 import picocli.CommandLine;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -26,17 +23,18 @@ import java.util.concurrent.Callable;
     mixinStandardHelpOptions = true)
 public class AutoCompletionScript implements Callable<Integer> {
 
-    @CommandLine.Option(names = {"-i","--install"}, defaultValue = "true", description = "If the script should be permanently installed")
-    public boolean toInstall;
 
-    @CommandLine.Option(names = {"--OStype","-o"}, required = false, description = "Overrides specification of the SystemOS. (Detected automatically per Default) Possibilities: {Linux, Windows, Mac, Solaris}")
-    public String OS;
+    @CommandLine.ArgGroup()
+    Installationtype install = new Installationtype();
+
+    @CommandLine.Option(names = {"--OStype", "-o"}, description = "Overrides specification of the SystemOS. (Detected automatically per Default) Possibilities: {Linux, Windows, Mac, Solaris}")
+    private String OS;
 
     private boolean firstsirius = true;
     private final HashSet<String> aliases = new HashSet<>();
     private final HashSet<Integer> removedDefinitions = new HashSet<>();
-    private static final String NAME = "SiriusLinuxCompletionScript";
-    private static final Path PATH = Path.of(String.format("./scripts/%s",NAME));
+    private static final String NAME = "SiriusLinux_completion";
+    private static final Path PATH = Path.of(String.format("./scripts/%s", NAME));
     private CommandLine commandline;
     private boolean validDeclaration;
 
@@ -45,14 +43,14 @@ public class AutoCompletionScript implements Callable<Integer> {
      * The method will return the source code of a completion script. Save the source code to a file and install it.
      * For the installation of the completion Script, please see the following: <a href="https://picocli.info/autocomplete.html#_install_completion_script">...</a>
      */
-    public Integer call() throws IOException, UknownOSException{
+    public Integer call() throws IOException, UknownOSException {
         System.setProperty("de.unijena.bioinf.ms.propertyLocations", "sirius_frontend.build.properties");
         FingerIDProperties.sirius_guiVersion();
         final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
         WorkflowBuilder<CLIRootOptions<ProjectSpaceManager>> builder = new WorkflowBuilder<>(new CLIRootOptions<>(configOptionLoader, new ProjectSpaceManagerFactory.Default()), configOptionLoader, new SimpleInstanceBuffer.Factory());
         builder.initRootSpec();
-        if (toInstall && this.OS == null) this.OS = detectOS();
-        if (toInstall) System.out.println("Detected OS as "+OS);
+        if (install.toInstall() && this.OS == null) this.OS = detectOS();
+        if (install.toInstall()) System.out.println("Detected OS as " + OS);
         commandline = new CommandLine(builder.getRootSpec());
         commandline.setCaseInsensitiveEnumValuesAllowed(true);
         commandline.registerConverter(DefaultParameter.class, new DefaultParameter.Converter());
@@ -64,12 +62,11 @@ public class AutoCompletionScript implements Callable<Integer> {
         s = formatScript();
         Files.writeString(PATH, s);
         System.out.printf("AutocompletionScript created successfully at %s%n", PATH);
-        if (!toInstall) System.out.printf("Please install the Script temporarily by typing the following into the Terminal: "+ (char)27 + "[1m. %s%n", NAME);
-        else installScript(s, OS);
+        if (install.toInstall()) installScript(s, OS);
         return 0;
     }
 
-    private static void installScript(final String Script, final String OS) throws IOException {
+    private void installScript(final String Script, final String OS) {
         switch (OS) {
             case "Linux":
                 installScriptLinux(Script);
@@ -87,18 +84,20 @@ public class AutoCompletionScript implements Callable<Integer> {
 
     }
 
-    private static void installScriptLinux(String Script) throws IOException {
-        final Path ScriptPath = Path.of("~/../../usr/bin/SiriusCompletion");
-        //TODO find place without sudo permission
-        Files.writeString(ScriptPath, Script);
+    private void installScriptLinux(String Script) {
+        if (this.install.permInstall()) {
+            AutoCompletionScript.executeBashCommand("cd ./scripts; for f in $(find . -name \"*_completion\"); do line=\". $(pwd)/$f\"; grep \"$line\" ~/.bash_profile || echo \"$line\" >> ~/.bash_profile; done; source ~/.bash_profile");
+            System.out.println("Script installed. Pleases restart the terminal if the Autocompletion does not work");
+        }
+        else AutoCompletionScript.executeBashCommand("cd ./scripts; . *_completion");
     }
 
-    private static void installScriptWindows(String script) {
-        //TODO create InstallationScript
+    private void installScriptWindows(String script) {
+        //TODO create InstallationScript for Windows users
     }
 
-    private static void installScriptMac(String script) {
-        //TODO create InstallationScript
+    private void installScriptMac(String script) {
+        installScriptLinux(script);
     }
 
     private static void installScriptSolaris(String script) {
@@ -123,14 +122,14 @@ public class AutoCompletionScript implements Callable<Integer> {
 
     private void findAliases(@NotNull CommandLine currentCommandline) {
         CommandLine.Model.CommandSpec subcommandsSpec = currentCommandline.getCommandSpec();
-        if(subcommandsSpec.subcommands().isEmpty()) return;
+        if (subcommandsSpec.subcommands().isEmpty()) return;
         Map<String, CommandLine> commands = new HashMap<>(subcommandsSpec.subcommands());
 
         // add command aliases from this depth to Set
         aliases.addAll(Arrays.asList(subcommandsSpec.aliases()));
 
         // add subcommand aliases from this depth to Set
-        commands.forEach((name, subcommand)  -> aliases.addAll(Arrays.asList(subcommand.getCommandSpec().aliases())));
+        commands.forEach((name, subcommand) -> aliases.addAll(Arrays.asList(subcommand.getCommandSpec().aliases())));
 
 
         // go through further depths
@@ -154,7 +153,7 @@ public class AutoCompletionScript implements Callable<Integer> {
             // Check functionstatus and format line
             line = formatLine(line, functionstatus, words);
 
-            if(line != null) output.append(line).append("\n");
+            if (line != null) output.append(line).append("\n");
         }
         System.out.println("Progress: [████████████████████]\r");
         return output.toString();
@@ -165,16 +164,13 @@ public class AutoCompletionScript implements Callable<Integer> {
         if (functionstatus == null && words.length > 1 && Objects.equals(words[0], "function") && words[1].equals("_complete_sirius()")) {
             functionstatus = "CompletionScriptFunction";
             System.out.print("Progress: [████                ]\r");
-        }
-        else if (Objects.equals(functionstatus, "CompletionScriptFunction") && line.equals("  # Find the longest sequence of subcommands and call the bash function for that subcommand.")) {
+        } else if (Objects.equals(functionstatus, "CompletionScriptFunction") && line.equals("  # Find the longest sequence of subcommands and call the bash function for that subcommand.")) {
             functionstatus = "LocalCommandDef";
             System.out.print("Progress: [████████            ]\r");
-        }
-        else if(Objects.equals(functionstatus, "LocalCommandDef") && words.length >= 3 && !Objects.equals(words[2], "local")) {
+        } else if (Objects.equals(functionstatus, "LocalCommandDef") && words.length >= 3 && !Objects.equals(words[2], "local")) {
             functionstatus = "CompWords";
             System.out.print("Progress: [████████████        ]\r");
-        }
-        else if(Objects.equals(functionstatus, "CompWords") && line.equals("  # No subcommands were specified; generate completions for the top-level command.")) {
+        } else if (Objects.equals(functionstatus, "CompWords") && line.equals("  # No subcommands were specified; generate completions for the top-level command.")) {
             functionstatus = "Subcommandfunction";
             validDeclaration = true;
             System.out.print("Progress: [████████████████    ]\r");
@@ -208,7 +204,8 @@ public class AutoCompletionScript implements Callable<Integer> {
 
     private String formatCompletionFunction(@NotNull String line, @NotNull String[] words) {
         if (Arrays.stream(words).anyMatch(word -> aliases.stream().anyMatch(alias -> alias.equals(word)))) line = null;
-        if (Arrays.stream(words).anyMatch(word -> aliases.stream().anyMatch(alias -> (alias+"\"").equals(word)))) line = null;
+        if (Arrays.stream(words).anyMatch(word -> aliases.stream().anyMatch(alias -> (alias + "\"").equals(word))))
+            line = null;
         return line;
     }
 
@@ -217,7 +214,7 @@ public class AutoCompletionScript implements Callable<Integer> {
         if (!words[2].equals("local")) return line;
 
         Integer number = Integer.valueOf((words[3].split("=")[0].substring(4)));
-        for(String word : words) {
+        for (String word : words) {
             String[] subwords = word.split("\\p{Punct}");
             for (String subword : subwords) {
                 if (aliases.stream().anyMatch(alias -> alias.equals(subword))) {
@@ -236,8 +233,9 @@ public class AutoCompletionScript implements Callable<Integer> {
         if (removedDefinitions.contains(val)) line = null;
         return line;
     }
+
     private String formatSubcommandFunction(String line, String[] words) {
-        String[] DECLARATIONINDICATOR = {"#","Generates","completions","for","the","options","and","subcommands","of","the"};
+        String[] DECLARATIONINDICATOR = {"#", "Generates", "completions", "for", "the", "options", "and", "subcommands", "of", "the"};
         boolean declaration = words.length >= 10;
         if (words.length >= 10) {
             for (int i = 0; i < 9; i++) {
@@ -249,19 +247,19 @@ public class AutoCompletionScript implements Callable<Integer> {
         }
 
         // Check if function is valid
-        if(declaration && words.length >= 11) {
+        if (declaration && words.length >= 11) {
             String word = words[10].replaceAll("\\p{Punct}", "");
             validDeclaration = !aliases.contains(word);
         }
 
         // Second check for function validity
-        if(line.contains("function _picocli_sirius_")) {
+        if (line.contains("function _picocli_sirius_")) {
             final String functionName = words[1].substring(13);
-            if (aliases.stream().anyMatch(alias -> functionName.contains("_"+alias+"_"))) validDeclaration = false;
+            if (aliases.stream().anyMatch(alias -> functionName.contains("_" + alias + "_"))) validDeclaration = false;
         }
 
         //Allow first declaration of sirius command
-        if(firstsirius && declaration && !validDeclaration) {
+        if (firstsirius && declaration && !validDeclaration) {
             firstsirius = false;
             validDeclaration = true;
         }
@@ -270,10 +268,10 @@ public class AutoCompletionScript implements Callable<Integer> {
         // if(!validDeclaration) line = null;
 
         // remove invalid subcommands from valid functions
-        if(validDeclaration) {
+        if (validDeclaration) {
             StringBuilder newline = new StringBuilder();
             for (String word : words) {
-                if ( !(aliases.contains(word.replaceAll("\"", "")))) newline.append(word).append(" ");
+                if (!(aliases.contains(word.replaceAll("\"", "")))) newline.append(word).append(" ");
                 else if (word.endsWith("\"")) newline.append("\"");
             }
             line = newline.toString();
@@ -287,9 +285,33 @@ public class AutoCompletionScript implements Callable<Integer> {
         System.exit(exitCode);
     }
 
-    static class UknownOSException extends RuntimeException {
+    public static boolean executeBashCommand(String command) {
+        boolean success = false;
+        Runtime r = Runtime.getRuntime();
+        String[] commands = {"bash", "-c", command};
+        try {
+            Process p = r.exec(commands);
+            p.waitFor();
+            success = true;
+        } catch (Exception e) {
+            System.err.println("Failed to execute bash with command: " + command);
+            e.printStackTrace();
+        }
+        return success;
+    }
+
+    public static class UknownOSException extends RuntimeException {
         public UknownOSException(String could_not_detect_os) {
             super(could_not_detect_os);
         }
     }
+}
+ class Installationtype {
+    @CommandLine.Option(names = {"--temporary", "--temp", "-t"}, defaultValue = "false",
+            description = "[Exclusive to -p] installs the Completionscript temporary")  private boolean temp;
+    @CommandLine.Option(names = {"--permanent", "--perm", "-p"}, defaultValue = "false",
+            description = "[Exclusive to -t] installs the Completionscript permanently")  private boolean perm;
+
+    boolean toInstall() {return (temp || perm);}
+    boolean permInstall() {return perm;}
 }
