@@ -22,12 +22,10 @@ import java.util.concurrent.Callable;
 @CommandLine.Command(name = "generateAutocompletion", description = " [WIP] <STANDALONE> generates an Autocompletion-Script with all subcommands",
     mixinStandardHelpOptions = true)
 public class AutoCompletionScript implements Callable<Integer> {
-
-
     @CommandLine.ArgGroup()
     Installationtype install = new Installationtype();
 
-    @CommandLine.Option(names = {"--OStype", "-o"}, description = "Overrides specification of the SystemOS. (Detected automatically per Default) Possibilities: {Linux, Windows, Mac, Solaris}")
+    @CommandLine.Option(names = {"--OStype", "-o"}, description = "Overrides specification of the SystemOS. (Detected automatically per Default) Possibilities: {Linux, Mac, Solaris}")
     private String OS;
 
     private boolean firstsirius = true;
@@ -77,11 +75,12 @@ public class AutoCompletionScript implements Callable<Integer> {
             case "Windows":
                 installScriptWindows(Script);
                 break;
-            default:
+            case "Solaris":
                 installScriptSolaris(Script);
                 break;
+            default:
+                throw new UknownOSException(String.format("OS %s is not supported!", OS));
         }
-
     }
 
     private void installScriptLinux(String Script) {
@@ -93,15 +92,17 @@ public class AutoCompletionScript implements Callable<Integer> {
     }
 
     private void installScriptWindows(String script) {
-        //TODO create InstallationScript for Windows users
+        throw new RuntimeException("Autocompletion under Windows is not supported by default");
     }
 
     private void installScriptMac(String script) {
+        // same as Linux
         installScriptLinux(script);
     }
 
-    private static void installScriptSolaris(String script) {
-        //TODO create InstallationScript
+    private void installScriptSolaris(String script) {
+        // same as Linux
+        installScriptLinux(script);
     }
 
     private static @NotNull String detectOS() throws UknownOSException {
@@ -306,7 +307,7 @@ public class AutoCompletionScript implements Callable<Integer> {
         }
     }
 }
- class Installationtype {
+class Installationtype {
     @CommandLine.Option(names = {"--temporary", "--temp", "-t"}, defaultValue = "false",
             description = "[Exclusive to -p] installs the Completionscript temporary")  private boolean temp;
     @CommandLine.Option(names = {"--permanent", "--perm", "-p"}, defaultValue = "false",
