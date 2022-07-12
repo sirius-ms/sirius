@@ -12,6 +12,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import picocli.AutoComplete;
 import picocli.CommandLine;
+import picocli.CommandLine.ArgGroup;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -19,13 +22,14 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Callable;
 
-@CommandLine.Command(name = "generateAutocompletion", description = " [WIP] <STANDALONE> generates an Autocompletion-Script with all subcommands",
+
+@Command(name = "generateAutocompletion", description = " [WIP] <STANDALONE> generates an Autocompletion-Script with all subcommands",
     mixinStandardHelpOptions = true)
 public class AutoCompletionScript implements Callable<Integer> {
-    @CommandLine.ArgGroup()
+    @ArgGroup()
     Installationtype install = new Installationtype();
 
-    @CommandLine.Option(names = {"--OStype", "-o"}, description = "Overrides specification of the SystemOS. (Detected automatically per Default) Possibilities: {Linux, Mac, Solaris}")
+    @Option(names = {"--OStype", "-o"}, description = "Overrides specification of the SystemOS. (Detected automatically per Default) Possibilities: {Linux, Mac, Solaris}")
     private String OS;
 
     private boolean firstsirius = true;
@@ -308,9 +312,9 @@ public class AutoCompletionScript implements Callable<Integer> {
     }
 }
 class Installationtype {
-    @CommandLine.Option(names = {"--temporary", "--temp", "-t"}, defaultValue = "false",
+    @Option(names = {"--temporary", "--temp", "-t"}, defaultValue = "false",
             description = "[Exclusive to -p] installs the Completionscript temporary")  private boolean temp;
-    @CommandLine.Option(names = {"--permanent", "--perm", "-p"}, defaultValue = "false",
+    @Option(names = {"--permanent", "--perm", "-p"}, defaultValue = "false",
             description = "[Exclusive to -t] installs the Completionscript permanently")  private boolean perm;
 
     boolean toInstall() {return (temp || perm);}
