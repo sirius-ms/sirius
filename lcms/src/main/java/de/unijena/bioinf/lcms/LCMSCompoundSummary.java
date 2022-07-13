@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.lcms;
 
-import com.google.common.base.Joiner;
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
@@ -95,7 +94,7 @@ public class LCMSCompoundSummary {
 
         final double ionmz = compoundTrace.getMonoisotopicPeak().getApexMass();
         final AdductResolver resolver = new AdductResolver(ionmz, possibleIonTypes);
-        System.out.println(possibleIonTypes);
+//        System.out.println(possibleIonTypes);
         final IonTrace[] adducts = traceSet.getIonTrace().getAdducts();
         for (int i = 0; i < adducts.length; ++i) {
             resolver.addAdduct(adducts[i].getMonoisotopicPeak().getApexMass(), adducts[i].getCorrelationScores().length > 0 ? adducts[i].getCorrelationScores()[0] : 1e-3);
