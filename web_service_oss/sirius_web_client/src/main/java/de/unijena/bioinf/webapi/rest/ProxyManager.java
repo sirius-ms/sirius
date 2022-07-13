@@ -296,7 +296,9 @@ public class ProxyManager {
     }
 
     public static Optional<ConnectionError> checkAuthServer(HttpClient proxy) {
-        String auth0HealthCheck = "https://status.auth0.com/feed?domain=dev-4yibfvd4.auth0.com";
+//        String auth0HealthCheck = "https://status.auth0.com/feed?domain=dev-4yibfvd4.auth0.com";
+        //todo this is a bad heathcheck. find alternative
+        String auth0HealthCheck = "https://status.auth0.com/?region=EU&environment=Production";
         return checkConnectionToUrl(proxy, auth0HealthCheck)
                 .map(e -> e.withNewMessage(2, "Could not connect to the Authentication Server: " + auth0HealthCheck,
                         ConnectionError.Klass.LOGIN_SERVER));
