@@ -15,7 +15,6 @@ public class MgfTest {
     private static int rank_count = 3;
     private static int table_feature = 1;
 
-
     @BeforeAll
     public static void getCandidates(){
 
