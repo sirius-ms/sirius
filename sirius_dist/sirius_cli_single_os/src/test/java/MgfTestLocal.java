@@ -1,3 +1,4 @@
+import org.apache.commons.lang3.SystemUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,13 +21,11 @@ public class MgfTestLocal {
     @BeforeAll
     public static void getCandidates(){
 
+        char sep = SystemUtils.IS_OS_MAC ? System.getProperty("file.separator").charAt(0) : '/';
+
         // generate absolute path to summary files
         String absPath = System.getProperty("user.dir");
-        absPath = absPath.split("sirius_dist/sirius_cli_single_os")[0];
-
-        //does not work for Windows bc string needs escape char in java
-        //only change seperator on OSX
-        char sep = System.getProperty("file.separator").charAt(0);
+        absPath = absPath.split("sirius_dist")[0].replace('\\', sep);
 
         pre_candidates  = readCandidates(absPath + "sirius_cli/src/test/test_results/mgf_candidates/formula_candidates.tsv".replace('/', sep), rank_count, table_feature);
         post_candidates = readCandidates(absPath + "sirius_cli/src/test/temp_results/mgf_temp_summary/0_laudanosine_FEATURE_1/formula_candidates.tsv".replace('/', sep), rank_count, table_feature);
@@ -47,6 +46,8 @@ public class MgfTestLocal {
      * @return                  the String[] containing the specified information
      */
     public static String[] readCandidates(String filePath, int candidates_num, int feature){
+
+        System.out.println(filePath);
 
         BufferedReader reader;
         String[] top_results = new String[candidates_num];
