@@ -99,10 +99,13 @@ TestSirius:
     - mkdir sirius_cli/src/test/temp_results
     - mkdir sirius_cli/src/test/temp_results/mgf_temp_summary
     - mkdir sirius_cli/src/test/temp_results/mgf_temp_output
+    - mkdir sirius_cli/src/test/temp_results/txt_temp_summary
+    - mkdir sirius_cli/src/test/temp_results/txt_temp_output
     - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius login --token $SIRIUS_TOKEN
     - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius --input /builds/bioinf-mit/ms/sirius_frontend/sirius_doc/manual/demo-data/mgf/laudanosine.mgf --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_output formula -p orbitrap fingerprint structure compound-classes write-summaries --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_summary
-    - ls sirius_cli/src/test/temp_results/mgf_temp_summary/0_laudanosine_FEATURE_1
-    #- gradle :sirius_dist:sirius_cli_single_os:distImageTestCI
+    - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius -1 /builds/bioinf-mit/ms/sirius_frontend/sirius_doc/manual/demo-data/txt/chelidonine_ms.txt -2 /builds/bioinf-mit/ms/sirius_frontend/sirius_doc/manual/demo-data/txt/chelidonine_msms1.txt,/builds/bioinf-mit/ms/sirius_frontend/sirius_doc/manual/demo-data/txt/chelidonine_msms2.txt -z 354.134704589844 --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/txt_temp_output formula -p orbitrap write-summaries --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/txt_temp_summary
+    #- ls sirius_cli/src/test/temp_results/mgf_temp_summary/0_laudanosine_FEATURE_1
+    - gradle :sirius_dist:sirius_cli_single_os:distImageTestCI
     - rm -r sirius_cli/src/test/temp_results
   cache:
     key: "$CI_COMMIT_REF_NAME"
