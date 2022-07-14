@@ -454,34 +454,36 @@ subprojects {
                              '--input', abs_path + 'sirius_frontend\\sirius_doc\\manual\\demo-data\\mgf\\laudanosine.mgf',
                              '--output', abs_path + 'sirius_frontend\\sirius_cli\\src\\test\\temp_results\\mgf_temp_output',
                              'formula', '-p', 'orbitrap', 'fingerprint', 'structure', 'compound-classes',
-                             'write-summaries', '--output', abs_path + 'sirius_frontend\\sirius_cli\\src\\test\\temp_results\\mgf_temp_summary'])
+                             'write-summaries', '--output', abs_path + 'sirius_frontend\\sirius_cli\\src\\test\\temp_results\\mgf_temp_summary'
+                ])
             }
 
             mkdir abs_path + 'sirius_frontend\\sirius_cli\\src\\test\\temp_results\\txt_temp_output'
             mkdir abs_path + 'sirius_frontend\\sirius_cli\\src\\test\\temp_results\\txt_temp_summary'
 
             project.exec {
+
                 commandLine([abs_path + 'sirius_frontend\\sirius_dist\\sirius_cli_single_os\\build\\distributions\\sirius\\sirius.exe',
-                        '-1', abs_path + 'sirius_frontend\\sirius_doc\\manual\\demo-data\\txt\\chelidonine_ms.txt',
-                        '-2', abs_path + 'sirius_frontend\\sirius_doc\\manual\\demo-data\\txt\\chelidonine_msms1.txt',
-                        '-2', abs_path + 'sirius_frontend\\sirius_doc\\manual\\demo-data\\txt\\chelidonine_msms2.txt',
-                        '-z', '354.134704589844',
-                        '-o', abs_path + 'sirius_frontend\\sirius_cli\\src\\test\\temp_results\\txt_temp_summary',
-                        'formula',
-                        '-p', 'orbitrap'])
+                             '-1', abs_path + 'sirius_frontend\\sirius_doc\\manual\\demo-data\\txt\\chelidonine_ms.txt',
+                             '-2', abs_path + 'sirius_frontend\\sirius_doc\\manual\\demo-data\\txt\\chelidonine_msms1.txt' + ',' + abs_path + 'sirius_frontend\\sirius_doc\\manual\\demo-data\\txt\\chelidonine_msms2.txt',
+                             '-z', '354.134704589844', '-o', abs_path + 'sirius_frontend\\sirius_cli\\src\\test\\temp_results\\txt_temp_output',
+                             'formula', '-p', 'orbitrap',
+                             'write-summaries', '--output', abs_path + 'sirius_frontend\\sirius_cli\\src\\test\\temp_results\\txt_temp_summary'
+                ])
             }
         }
-        doLast{
-            String abs_path = project.projectDir.toString().split('sirius_frontend')[0]
-            project.delete(abs_path+'sirius_frontend\\sirius_cli\\src\\test\\temp_results')
-        }
+//        doLast{
+//            String abs_path = project.projectDir.toString().split('sirius_frontend')[0]
+//            project.delete(abs_path+'sirius_frontend\\sirius_cli\\src\\test\\temp_results')
+//        }
     }
     distImageTestLocal.shouldRunAfter distImage
 
 
     task distImageTestCI(type: Test, group: 'distribution') {
         useJUnitPlatform()
-        filter.includeTestsMatching("MgfTest")
+        filter.includeTestsMatching("MgfTestLocal")
+        filter.includeTestsMatching("TxtTestLocal")
     }
 
 
