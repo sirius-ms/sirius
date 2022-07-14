@@ -26,11 +26,18 @@ import java.util.concurrent.Callable;
 @Command(name = "generateAutocompletion", description = " [WIP] <STANDALONE> generates an Autocompletion-Script with all subcommands",
     mixinStandardHelpOptions = true)
 public class AutoCompletionScript implements Callable<Integer> {
-    @ArgGroup()
-    Installationtype install = new Installationtype();
 
+    /**
+     * type of installation of the Autocompletion Script
+     */
+    @ArgGroup()
+    public Installationtype install = new Installationtype();
+
+    /**
+     *  type of the current OS
+     */
     @Option(names = {"--OStype", "-o"}, description = "Overrides specification of the SystemOS. (Detected automatically per Default) Possibilities: {Linux, Mac, Solaris}")
-    private String OS;
+    public String OS;
 
     private boolean firstsirius = true;
     private final HashSet<String> aliases = new HashSet<>();
@@ -41,9 +48,8 @@ public class AutoCompletionScript implements Callable<Integer> {
     private boolean validDeclaration;
 
     /**
-     * Pass this CommandLine instance and the name of the script to the picocli.AutoComplete::bash method.
-     * The method will return the source code of a completion script. Save the source code to a file and install it.
-     * For the installation of the completion Script, please see the following: <a href="https://picocli.info/autocomplete.html#_install_completion_script">...</a>
+     * generates a CompletionScript for the sirius Commandline instance.
+     * @return returns 1 if execution was successful
      */
     public Integer call() throws IOException, UknownOSException {
         System.setProperty("de.unijena.bioinf.ms.propertyLocations", "sirius_frontend.build.properties");
@@ -65,7 +71,7 @@ public class AutoCompletionScript implements Callable<Integer> {
         Files.writeString(PATH, s);
         System.out.printf("AutocompletionScript created successfully at %s%n", PATH);
         if (install.toInstall()) installScript(s, OS);
-        return 0;
+        return 1;
     }
 
     private void installScript(final String Script, final String OS) {
@@ -89,8 +95,9 @@ public class AutoCompletionScript implements Callable<Integer> {
 
     private void installScriptLinux(String Script) {
         if (this.install.permInstall()) {
-            AutoCompletionScript.executeBashCommand("cd ./scripts; for f in $(find . -name \"*_completion\"); do line=\". $(pwd)/$f\"; grep \"$line\" ~/.bash_profile || echo \"$line\" >> ~/.bash_profile; done; source ~/.bash_profile");
-            System.out.println("Script installed. Pleases restart the terminal if the Autocompletion does not work");
+            boolean successful = AutoCompletionScript.executeBashCommand("cd ./scripts; for f in $(find . -name \"*_completion\"); do line=\". $(pwd)/$f\"; grep \"$line\" ~/.bash_profile || echo \"$line\" >> ~/.bash_profile; done; source ~/.bash_profile");
+            if (successful) System.out.println("Script installed. Pleases restart the terminal if the Autocompletion does not work");
+            else throw new RuntimeException("Unable to install CompletionScript");
         }
         else AutoCompletionScript.executeBashCommand("cd ./scripts; . *_completion");
     }
@@ -285,11 +292,10 @@ public class AutoCompletionScript implements Callable<Integer> {
     }
 
 
-    public static void main(String... args) throws IOException {
-        int exitCode = new CommandLine(new AutoCompletionScript()).execute(args);
-        System.exit(exitCode);
-    }
-
+    /**
+     * executes the given String as a Bash Command
+     * @return true if execution was successful
+     */
     public static boolean executeBashCommand(String command) {
         boolean success = false;
         Runtime r = Runtime.getRuntime();
@@ -305,6 +311,9 @@ public class AutoCompletionScript implements Callable<Integer> {
         return success;
     }
 
+    /**
+     * Exception for detection of an Unknown OS
+     */
     public static class UknownOSException extends RuntimeException {
         public UknownOSException(String could_not_detect_os) {
             super(could_not_detect_os);
@@ -317,6 +326,37 @@ class Installationtype {
     @Option(names = {"--permanent", "--perm", "-p"}, defaultValue = "false",
             description = "[Exclusive to -t] installs the Completionscript permanently")  private boolean perm;
 
-    boolean toInstall() {return (temp || perm);}
-    boolean permInstall() {return perm;}
+    /**
+     * returns true if any installation is required
+     */
+    public boolean toInstall() {return (temp || perm);}
+
+    /**
+     * returns true if a permanent installation is required
+     */
+    public boolean permInstall() {return perm;}
+
+    /**
+     * Changes the installationtype to the given Parameter
+     * @param installationtype valid are: {null, temporary, permanent}
+     * @return successfull change of the installationtype
+     */
+    public boolean setInstallationtype(@Nullable String installationtype) {
+        if (installationtype == null) {
+            this.temp = false;
+            this.perm = false;
+            return true;
+        }
+        if (installationtype.equals("temporary")) {
+            this.temp = true;
+            this.perm = false;
+            return true;
+        }
+        if (installationtype.equals("permanent")) {
+            this.temp = false;
+            this.perm = true;
+            return true;
+        }
+        return false;
+    }
 }
