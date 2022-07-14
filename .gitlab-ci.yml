@@ -101,9 +101,8 @@ TestSirius:
     - mkdir sirius_cli/src/test/temp_results/mgf_temp_output
     - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius login --token $SIRIUS_TOKEN
     - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius --input /builds/bioinf-mit/ms/sirius_frontend/sirius_doc/manual/demo-data/mgf/laudanosine.mgf --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_output formula -p orbitrap fingerprint structure compound-classes write-summaries --output /builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_summary
-    #- ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius --help
     - ls sirius_cli/src/test/temp_results/mgf_temp_summary/0_laudanosine_FEATURE_1
-    - gradle :sirius_dist:sirius_cli_single_os:distImageTestCI
+    #- gradle :sirius_dist:sirius_cli_single_os:distImageTestCI
     - rm -r sirius_cli/src/test/temp_results
   cache:
     key: "$CI_COMMIT_REF_NAME"

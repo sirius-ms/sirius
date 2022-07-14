@@ -47,8 +47,6 @@ public class MgfTestLocal {
      */
     public static String[] readCandidates(String filePath, int candidates_num, int feature){
 
-        System.out.println(filePath);
-
         BufferedReader reader;
         String[] top_results = new String[candidates_num];
 
