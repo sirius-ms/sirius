@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -18,12 +19,11 @@ public class MgfTest {
     @BeforeAll
     public static void getCandidates(){
 
-        //does not work for Windows bc string needs escape char in java
-        //only change seperator on OSX
-        char sep = System.getProperty("file.separator").charAt(0);
+        char sep = SystemUtils.IS_OS_MAC ? System.getProperty("file.separator").charAt(0) : '/';
 
-        pre_candidates  = readCandidates("/builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/test_results/mgf_candidates/formula_candidates.tsv".replace('/', System.getProperty("file.separator").charAt(0)), rank_count, table_feature);
-        post_candidates = readCandidates("/builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_summary/0_laudanosine_FEATURE_1/formula_candidates.tsv".replace('/', System.getProperty("file.separator").charAt(0)), rank_count, table_feature);
+        pre_candidates  = readCandidates("/builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/test_results/mgf_candidates/formula_candidates.tsv".replace('/', sep), rank_count, table_feature);
+        post_candidates = readCandidates("/builds/bioinf-mit/ms/sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_summary/0_laudanosine_FEATURE_1/formula_candidates.tsv".replace('/', sep), rank_count, table_feature);
+
     }
 
     @Test
