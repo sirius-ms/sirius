@@ -484,6 +484,10 @@ subprojects {
         useJUnitPlatform()
         filter.includeTestsMatching("MgfTestLocal")
         filter.includeTestsMatching("TxtTestLocal")
+
+        doLast{
+            System.out.println("Gradle task executed")
+        }
     }
 
 
