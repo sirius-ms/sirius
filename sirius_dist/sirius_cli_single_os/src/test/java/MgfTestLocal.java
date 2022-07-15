@@ -20,7 +20,7 @@ public class MgfTestLocal {
         String absPath = System.getProperty("user.dir").split("sirius_dist")[0];
         String sep = System.getProperty("file.separator");
 
-        pre_candidates  = readCandidates(absPath + "sirius_Wcli/src/test/test_results/mgf_candidates/formula_candidates.tsv".replace("/", sep), rank_count, table_feature);
+        pre_candidates  = readCandidates(absPath + "sirius_cli/src/test/test_results/mgf_candidates/formula_candidates.tsv".replace("/", sep), rank_count, table_feature);
         post_candidates = readCandidates(absPath + "sirius_cli/src/test/temp_results/mgf_temp_summary/0_laudanosine_FEATURE_1/formula_candidates.tsv".replace("/", sep), rank_count, table_feature);
     }
 
