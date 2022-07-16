@@ -47,6 +47,7 @@ public class AutoCompletionScript implements Callable<Integer> {
     private CommandLine commandline;
     private boolean validDeclaration;
 
+    private boolean subvalidDeclaration;
     /**
      * generates a CompletionScript for the sirius Commandline instance.
      * @return returns 1 if execution was successful
@@ -246,7 +247,29 @@ public class AutoCompletionScript implements Callable<Integer> {
         return line;
     }
 
+    private boolean isvalidsubalias(String alias) {
+        // TODO Problems with some aliases (Commented)
+        return (
+                alias.equals("A") || alias.equals("PS") //|| alias.equals("C")
+                  || alias.equals("EPR")  || alias.equals("F")
+                  || alias.equals("tree") || alias.equals("MGF")|| alias.equals("compound") || alias.equals("search-structure-db")
+                || alias.equals("P")|| alias.equals("sirius")
+                || alias.equals("rerank")
+                            || alias.equals("search")
+      //                      || alias.equals("S")
+            //    || alias.equals("T")
+                        //    || alias.equals("W")
+                        //   || alias.equals("Z")
+                         ||  alias.equals("rerank-formulas")
+                || alias.equals("compound-classes") || alias.equals("DB")
+        );
+    }
+
     private String formatSubcommandFunction(String line, String[] words) {
+        HashSet<String> subaliases = new HashSet(aliases);
+        aliases.forEach(alias -> {
+            if (!isvalidsubalias(alias)) subaliases.remove(alias);
+        });
         String[] DECLARATIONINDICATOR = {"#", "Generates", "completions", "for", "the", "options", "and", "subcommands", "of", "the"};
         boolean declaration = words.length >= 10;
         if (words.length >= 10) {
@@ -262,12 +285,14 @@ public class AutoCompletionScript implements Callable<Integer> {
         if (declaration && words.length >= 11) {
             String word = words[10].replaceAll("\\p{Punct}", "");
             validDeclaration = !aliases.contains(word);
+            subvalidDeclaration = !subaliases.contains(word);
         }
 
         // Second check for function validity
         if (line.contains("function _picocli_sirius_")) {
             final String functionName = words[1].substring(13);
             if (aliases.stream().anyMatch(alias -> functionName.contains("_" + alias + "_"))) validDeclaration = false;
+            if (subaliases.stream().anyMatch(alias -> functionName.contains("_" + alias + "_"))) subvalidDeclaration = false;
         }
 
         //Allow first declaration of sirius command
@@ -277,7 +302,7 @@ public class AutoCompletionScript implements Callable<Integer> {
         }
 
         // remove invalid functions
-        // if(!validDeclaration) line = null;
+        if(!validDeclaration && !subvalidDeclaration) line = null;
 
         // remove invalid subcommands from valid functions
         if (validDeclaration) {
