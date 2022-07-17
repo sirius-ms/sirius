@@ -468,7 +468,7 @@ public class DataProcessor {
                     // --> the ranks correspond to the position of the structures in the sorted list
                     Integer[] indices = new Integer[predictionData.numberOfStructures];
                     for(int i = 0; i < predictionData.numberOfStructures; i++) indices[i] = i;
-                    Arrays.sort(indices, (idx1, idx2) -> (int) (scores[idx2] - scores[idx1]));
+                    Arrays.sort(indices, (idx1, idx2) -> (int) Math.signum(scores[idx2] - scores[idx1]));
 
                     // after sorting: indices[i] = j
                     // --> structure with index 'j' is at index 'i' in the descending order of 'scores'
