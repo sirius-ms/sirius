@@ -6,12 +6,12 @@ import java.io.FileReader;
 import java.io.IOException;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
-public class MgfTestLocal {
+public class MsTestLocal {
 
     private static String[] pre_candidates;
     private static String[] post_candidates;
-    private static int rank_count = 3;
-    private static int table_feature = 1;
+    private static int rank_count = 1;
+    private static int table_feature = 2;
 
     @BeforeAll
     public static void getCandidates(){
@@ -19,16 +19,16 @@ public class MgfTestLocal {
         String absPath = System.getProperty("user.dir").split("sirius_dist")[0];
         String sep = System.getProperty("file.separator");
 
-        pre_candidates  = readCandidates(absPath + "sirius_cli/src/test/test_results/mgf_candidates/formula_candidates.tsv".replace("/", sep), rank_count, table_feature);
-        post_candidates = readCandidates(absPath + "sirius_cli/src/test/temp_results/mgf_temp_summary/0_laudanosine_FEATURE_1/formula_candidates.tsv".replace("/", sep), rank_count, table_feature);
+        pre_candidates  = readCandidates(absPath + "sirius_cli/src/test/test_results/ms_candidates/formula_annotation/formula_candidates.tsv".replace("/", sep), rank_count, table_feature);
+        post_candidates = readCandidates(absPath + "sirius_cli/src/test/temp_results/ms_temp_summary/0_Bicuculline_Bicuculline/formula_candidates.tsv".replace("/", sep), rank_count, table_feature);
     }
 
     @Test
-    @DisplayName("Testing if SIRIUS calculates expected formula candidates with mgf file.")
+    @DisplayName("Testing if SIRIUS calculates expected formula candidates with ms file.")
     public void testTopCandidates(){
 
         assertArrayEquals(pre_candidates, post_candidates);
-        System.out.println("MGF passed");
+        System.out.println("MS passed");
     }
 
     /**
@@ -70,5 +70,3 @@ public class MgfTestLocal {
         return top_results;
     }
 }
-
-
