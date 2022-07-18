@@ -24,7 +24,7 @@ public class TxtTestLocal {
 
     }
     @Test
-    @DisplayName("Testing if SIRIUS calculates expected formula candidates with mgf file.")
+    @DisplayName("Testing if SIRIUS calculates expected formula candidates with txt file.")
     public void testTopCandidates(){
         assertArrayEquals(pre_candidates, post_candidates);
         System.out.println("TXT passed");
