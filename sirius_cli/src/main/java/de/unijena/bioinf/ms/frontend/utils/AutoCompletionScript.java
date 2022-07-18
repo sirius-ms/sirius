@@ -117,7 +117,13 @@ public class AutoCompletionScript implements Callable<Integer> {
         installScriptLinux(script);
     }
 
-    private static @NotNull String detectOS() throws UknownOSException {
+    /**
+     * detects the currently running SystemOS
+     *
+     * @return One of the following Strings: {"Windows", "Mac", "Linux", "Solaris"}
+     * @throws UknownOSException if the OS does not fall into the 4 categories of the output
+     */
+    public static @NotNull String detectOS() throws UknownOSException {
         final String OSName = System.getProperty("os.name").toLowerCase();
 
         if (OSName.contains("win")) return "Windows";
@@ -248,7 +254,7 @@ public class AutoCompletionScript implements Callable<Integer> {
     }
 
     private boolean isvalidsubalias(String alias) {
-        // TODO Problems with some aliases (Commented)
+        // TODO Problems with some aliases? (Commented)
         return (
                 alias.equals("A") || alias.equals("PS") //|| alias.equals("C")
                   || alias.equals("EPR")  || alias.equals("F")
@@ -346,9 +352,9 @@ public class AutoCompletionScript implements Callable<Integer> {
     }
 }
 class Installationtype {
-    @Option(names = {"--temporary", "--temp", "-t"}, defaultValue = "false",
+    @Option(names = {"--temporary", "-t"}, defaultValue = "false",
             description = "[Exclusive to -p] installs the Completionscript temporary")  private boolean temp;
-    @Option(names = {"--permanent", "--perm", "-p"}, defaultValue = "false",
+    @Option(names = {"--permanent", "-p"}, defaultValue = "false",
             description = "[Exclusive to -t] installs the Completionscript permanently")  private boolean perm;
 
     /**
