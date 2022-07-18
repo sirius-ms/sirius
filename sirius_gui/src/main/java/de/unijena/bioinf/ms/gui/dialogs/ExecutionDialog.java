@@ -29,6 +29,7 @@ import de.unijena.bioinf.ms.frontend.workfow.GuiInstanceBufferFactory;
 import de.unijena.bioinf.ms.gui.compute.SubToolConfigPanel;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.logging.TextAreaJJobContainer;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jetbrains.annotations.NotNull;
@@ -120,7 +121,7 @@ public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
 //        setMinimumSize(new Dimension(350, getMinimumSize().height));
     }
 
-    public void start (){
+    public void start() {
         setResizable(false);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         pack();
@@ -165,7 +166,7 @@ public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
 
             if (computation.isWorkflowDefined()) {
                 final TextAreaJJobContainer<Boolean> j = Jobs.runWorkflow(computation.getFlow(), compounds == null ? List.of() : compounds, command, configPanel.toolCommand());
-                LoadingBackroundTask.connectToJob(this.getOwner(), "Running '" + configPanel.toolCommand() + "'...", indeterminateProgress, j);
+                LoadingBackroundTask.connectToJob(this.getOwner() != null ? this.getOwner() : MF, "Running '" + configPanel.toolCommand() + "'...", indeterminateProgress, j);
             }
         } catch (Exception e) {
             LoggerFactory.getLogger(getClass()).error("Error when running '" + configPanel.toolCommand() + "'.", e);
