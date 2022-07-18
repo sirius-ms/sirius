@@ -76,8 +76,8 @@ dependencies {
     api 'com.glazedlists:glazedlists:1.11.0'
 
 //    api 'com.kitfox.svg:svg-salamander:1.0'
-    api 'org.apache.xmlgraphics:batik-rasterizer:1.13'
-    api 'org.apache.xmlgraphics:fop:2.3'
+    api 'org.apache.xmlgraphics:batik-rasterizer:1.14'
+    api 'org.apache.xmlgraphics:fop:2.7'
 
 }
 

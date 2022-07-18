@@ -1,5 +1,5 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blueviolet.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Generic badge](https://img.shields.io/badge/Version-5.5.1-informational.svg)](https://shields.io/)
+[![Generic badge](https://img.shields.io/badge/Version-5.5.7-informational.svg)](https://shields.io/)
 [![Build and Pubish](https://github.com/boecker-lab/sirius/actions/workflows/distribute.yaml/badge.svg?branch=release-4-pre)](https://github.com/boecker-lab/sirius/actions/workflows/distribute.yaml)
 
 *<span style="color: #808080;">Our methods are offered to the scientific community as freely available resources. (Re-)distribution of the
@@ -25,32 +25,44 @@ graphical user interface and the command line version of SIRIUS seamlessly integ
 
 <!--begin download-->
 
-### SIRIUS+CSI:FingerID GUI and CLI - Version 5.5.1 (2022-05-17)
+### SIRIUS+CSI:FingerID GUI and CLI - Version 5.5.7 (2022-07-13)
 ##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
-- for Windows (64bit): [msi](https://github.com/boecker-lab/sirius/releases/download/v5.5.1/sirius-5.5.1-win64.msi) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.1/sirius-5.5.1-win64.zip)
-- for Linux (64bit): [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.1/sirius-5.5.1-linux64.zip)
-- for Mac (64bit): [pkg](https://github.com/boecker-lab/sirius/releases/download/v5.5.1/sirius-5.5.1-osx64.pkg) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.1/sirius-5.5.1-osx64.zip)
+- for Windows (64bit): [msi](https://github.com/boecker-lab/sirius/releases/download/v5.5.7/sirius-5.5.7-win64.msi) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.7/sirius-5.5.7-win64.zip) / [msi (signed by Bright Giant)](https://github.com/bright-giant/sirius/releases/download/v5.5.7/sirius-5.5.7-win64.msi)
+- for Mac (64bit): [pkg](https://github.com/boecker-lab/sirius/releases/download/v5.5.7/sirius-5.5.7-osx64.pkg) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.7/sirius-5.5.7-osx64.zip) / [pkg (signed by Bright Giant)](https://github.com/bright-giant/sirius/releases/download/v5.5.7/sirius-5.5.7-osx64.pkg)
+- for Linux (64bit): [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.7/sirius-5.5.7-linux64.zip)
 
-### SIRIUS+CSI:FingerID Command-Line Interface only - Version 5.5.1 (2022-05-17)
+### SIRIUS+CSI:FingerID Command-Line Interface only - Version 5.5.7 (2022-07-13)
 ##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
-- for Windows (64bit): [msi](https://github.com/boecker-lab/sirius/releases/download/v5.5.1/sirius-5.5.1-win64-headless.msi) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.1/sirius-5.5.1-win64-headless.zip)
-- for Linux (64bit): [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.1/sirius-5.5.1-linux64-headless.zip)
-- for Mac (64bit): [pkg](https://github.com/boecker-lab/sirius/releases/download/v5.5.1/sirius-5.5.1-osx64-headless.pkg) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.1/sirius-5.5.1-osx64-headless.zip)
+- for Windows (64bit): [msi](https://github.com/boecker-lab/sirius/releases/download/v5.5.7/sirius-5.5.7-win64-headless.msi) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.7/sirius-5.5.7-win64-headless.zip) / [msi (signed by Bright Giant)](https://github.com/bright-giant/sirius/releases/download/v5.5.7/sirius-5.5.7-win64-headless.msi)
+- for Mac (64bit): [pkg](https://github.com/boecker-lab/sirius/releases/download/v5.5.7/sirius-5.5.7-osx64-headless.pkg) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.7/sirius-5.5.7-osx64-headless.zip) / [pkg (signed by Bright Giant)](https://github.com/bright-giant/sirius/releases/download/v5.5.7/sirius-5.5.7-osx64-headless.pkg)
+- for Linux (64bit): [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.7/sirius-5.5.7-linux64-headless.zip)
 
 
 <!--end download-->
-All (previous) releases can be found [here](https://github.com/boecker-lab/sirius/releases).
-Further, there are **signed** installers provided by Bright Giant [here](https://github.com/bright-giant/sirius/releases).
+
+All (including previous) releases can be found [here](https://github.com/boecker-lab/sirius/releases).
 
 ### [Installation](https://boecker-lab.github.io/docs.sirius.github.io/install)
 For  Windows and MacOS, the installer version of SIRIUS (msi/pkg) should be preferred but might require administrator permissions.
-Since we do not pay Microsoft/Apple for certification, you might have to confirm that you want to trust "software from an unknown source" on Windows/MacOS.
+
+Since we do not pay Microsoft/Apple for certification, you might have to confirm that you want to trust "software from
+an unknown source" on Windows/MacOS when using the installers provided by us.
+Therefore, we highly recommend using the [**signed** installers](https://github.com/bright-giant/sirius/releases) provided by
+[Bright Giant](https://bright-giant.com) (also linked above).
+These installers ease the installation process by triggering no (or less) security issues of the respective OS.
+
 See the [documenntation](https://boecker-lab.github.io/docs.sirius.github.io/install) for details.
 
-[Creating a user account](https://boecker-lab.github.io/docs.sirius.github.io/account-and-license/)
-User accounts can be created directly via the SIRIUS GUI. Please, use your institutional email address. SIRIUS
-web services are free for academic/non-commercial use. In some cases, further validation may be required.
+
+### [Creating a user account](https://boecker-lab.github.io/docs.sirius.github.io/account-and-license/)
+User accounts can be created directly via the SIRIUS GUI. Please, use your **institutional email address**. SIRIUS
+web services are free for academic/non-commercial use. Usually academic institutions are identified by their
+email domain and access will be granted automatically. In some cases, further validation of your academic/non-commercial
+may be required.
 [See also SIRIUS Documentation – Account and License](https://boecker-lab.github.io/docs.sirius.github.io/account-and-license/).
+
+These might be especially interesting for Windows and MacOS users that have problems with the installation due to
+an unsigned installer (Unknown developer etc...)
 
 ### [Sources on GitHub](https://github.com/boecker-lab)
 - [SIRIUS frontend](https://github.com/boecker-lab/sirius)
@@ -65,8 +77,8 @@ website. Results are retrieved from the web service and can be displayed in the 
 also available for the SIRIUS command-line tool. Training structures for CSI:FingerID's predictors are available through the CSI:FingerID web API:
 <!--begin training-->
 
-- https://www.csi-fingerid.uni-jena.de/v2.6.1/api/fingerid/trainingstructures?predictor=1 (training structures for positive ion mode)
-- https://www.csi-fingerid.uni-jena.de/v2.6.1/api/fingerid/trainingstructures?predictor=2 (training structures for negative ion mode)
+- https://www.csi-fingerid.uni-jena.de/v2.6/api/fingerid/trainingstructures?predictor=1 (training structures for positive ion mode)
+- https://www.csi-fingerid.uni-jena.de/v2.6/api/fingerid/trainingstructures?predictor=2 (training structures for negative ion mode)
 
 <!--end training-->
 

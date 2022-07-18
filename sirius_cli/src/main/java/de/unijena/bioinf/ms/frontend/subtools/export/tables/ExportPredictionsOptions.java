@@ -117,7 +117,6 @@ public class ExportPredictionsOptions implements StandaloneTool<ExportPrediction
                     filtered.add(inst);
                 }
             }
-            System.out.println(filtered);
             if (filtered.isEmpty()) {
                 updateProgress(0, 1, 1, "No instances to export!");
                 return Boolean.FALSE;
