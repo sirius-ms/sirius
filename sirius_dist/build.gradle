@@ -484,10 +484,10 @@ subprojects {
                 }
             }
         }
-//        doLast{
-//            String abs_path = project.projectDir.toString().split('sirius_frontend')[0]
-//            project.delete(abs_path+'sirius_frontend\\sirius_cli\\src\\test\\temp_results')
-//        }
+        doLast{
+            String abs_path = project.projectDir.toString().split('sirius_frontend')[0]
+            project.delete(abs_path+'sirius_frontend\\sirius_cli\\src\\test\\temp_results')
+        }
     }
     distImageTestLocal.shouldRunAfter distImage
 
@@ -581,7 +581,19 @@ subprojects {
             }
         }
     }
+
     distImageZip.mustRunAfter(signDistImage)
+
+    task DistImageUnzip(type: Copy, group: 'distribution') {
+
+            String abs_path = project.projectDir.toString().split('sirius_dist')[0]
+
+            def zipFile = file(abs_path + '/sirius_dist/sirius_cli_single_os/build/distributions/sirius.zip')
+            def outputDir = file(abs_path + '/sirius_dist/sirius_cli_single_os/build/distributions/sirius')
+
+            from zipTree(zipFile)
+            into outputDir
+    }
 
     task distInstaller(type: AppInstaller, dependsOn: distImage, group: 'distribution') {
         distImg = distImage
