@@ -589,7 +589,7 @@ subprojects {
             String abs_path = project.projectDir.toString().split('sirius_dist')[0]
 
             def zipFile = file(abs_path + 'sirius_dist/sirius_cli_single_os/build/distributions/sirius.zip')
-            def outputDir = file(abs_path + 'sirius_dist/sirius_cli_single_os/build/distributions/sirius')
+            def outputDir = file(abs_path + 'sirius_dist/sirius_cli_single_os/build/distributions/unzipped')
 
             from zipTree(zipFile)
             into outputDir
