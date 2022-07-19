@@ -77,13 +77,13 @@ before_script:
 buildSirius:
   stage: build
   script:
-    - gradle :sirius_dist:sirius_cli_single_os:distImage
+    - gradle :sirius_dist:sirius_cli_single_os:distImageZip
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
   artifacts:
     paths:
-      - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius
+      - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius.zip
   tags:
     - kubernetes
   only:
@@ -96,6 +96,7 @@ buildSirius:
 TestSirius:
   stage: test
   script:
+    - gradle :sirius_dist:sirius_cli_single_os:distImageUnZip
     - mkdir sirius_cli/src/test/temp_results
     - mkdir sirius_cli/src/test/temp_results/mgf_temp_summary
     - mkdir sirius_cli/src/test/temp_results/mgf_temp_output
@@ -115,7 +116,7 @@ TestSirius:
     policy: push
   artifacts:
     paths:
-      - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius
+      - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius.zip
   tags:
     - kubernetes
   only:
