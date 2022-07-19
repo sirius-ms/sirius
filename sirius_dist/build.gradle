@@ -588,11 +588,15 @@ subprojects {
 
             String abs_path = project.projectDir.toString().split('sirius_dist')[0]
 
-            def zipFile = file(abs_path + '/sirius_dist/sirius_cli_single_os/build/distributions/sirius.zip')
-            def outputDir = file(abs_path + '/sirius_dist/sirius_cli_single_os/build/distributions/sirius')
+            def zipFile = file(abs_path + '/sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius.zip')
+            def outputDir = file(abs_path + '/sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius')
 
             from zipTree(zipFile)
             into outputDir
+
+        doLast{
+            print("unzip successful!")
+        }
     }
 
     task distInstaller(type: AppInstaller, dependsOn: distImage, group: 'distribution') {
