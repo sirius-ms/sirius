@@ -444,6 +444,7 @@ subprojects {
         filter.includeTestsMatching("*Local")
 
         testLogging{
+            outputs.upToDateWhen {false}
             showStandardStreams = true
         }
 
