@@ -443,6 +443,10 @@ subprojects {
         useJUnitPlatform()
         filter.includeTestsMatching("*Local")
 
+        testLogging{
+            showStandardStreams = true
+        }
+
         if(OS.isWindows()) {
             doFirst{
                 String abs_path = project.projectDir.toString().split('sirius_frontend')[0]
