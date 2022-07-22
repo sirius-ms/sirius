@@ -438,7 +438,7 @@ subprojects {
     distImage.shouldRunAfter downloadManual
 
 
-    task distImageTestLocal(type: Test, dependsOn: distImage, group: 'distribution') {
+    task distImageTest(type: Test, dependsOn: distImage, group: 'distribution') {
 
         useJUnitPlatform()
         filter.includeTestsMatching("*Local")
@@ -451,6 +451,7 @@ subprojects {
         if(OS.isWindows()) {
             doFirst{
                 String abs_path = project.projectDir.toString().split('sirius_frontend')[0]
+
                 mkdir abs_path + 'sirius_frontend\\sirius_cli\\src\\test\\temp_results'
                 mkdir abs_path + 'sirius_frontend\\sirius_cli\\src\\test\\temp_results\\mgf_temp_output'
                 mkdir abs_path + 'sirius_frontend\\sirius_cli\\src\\test\\temp_results\\mgf_temp_summary'
@@ -544,20 +545,7 @@ subprojects {
         throw new IllegalArgumentException("Cannot determine operating system for build")
         }
     }
-    distImageTestLocal.shouldRunAfter distImage
-
-
-    task distImageTestCI(type: Test, group: 'distribution') {
-        useJUnitPlatform()
-        filter.includeTestsMatching("MgfTestLocal")
-        filter.includeTestsMatching("TxtTestLocal")
-        filter.includeTestsMatching("MsTestLocal")
-
-        doLast{
-            System.out.println("Gradle task executed")
-        }
-    }
-
+    distImageTest.shouldRunAfter distImage
 
     task signDistImage(dependsOn: distImage, group: 'distribution') {
 
@@ -636,7 +624,6 @@ subprojects {
             }
         }
     }
-
     distImageZip.mustRunAfter(signDistImage)
 
     task distImageUnzip(type: Copy, group: 'distribution') {
