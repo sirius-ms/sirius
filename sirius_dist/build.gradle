@@ -452,12 +452,23 @@ subprojects {
             doFirst{
                 String abs_path = project.projectDir.toString().split('sirius_frontend')[0]
 
+                String cli_or_gui
+                if (Files.exists(Paths.get(abs_path + 'sirius_frontend\\sirius_dist\\sirius_cli_single_os\\build\\distributions\\sirius\\sirius.exe'))){
+                    cli_or_gui = 'sirius_cli_single_os'
+                } else {
+                    cli_or_gui = 'sirius_gui_single_os'
+                }
+
                 mkdir abs_path + 'sirius_frontend\\sirius_cli\\src\\test\\temp_results'
                 mkdir abs_path + 'sirius_frontend\\sirius_cli\\src\\test\\temp_results\\mgf_temp_output'
                 mkdir abs_path + 'sirius_frontend\\sirius_cli\\src\\test\\temp_results\\mgf_temp_summary'
+                mkdir abs_path + 'sirius_frontend\\sirius_cli\\src\\test\\temp_results\\txt_temp_output'
+                mkdir abs_path + 'sirius_frontend\\sirius_cli\\src\\test\\temp_results\\txt_temp_summary'
+                mkdir abs_path + 'sirius_frontend\\sirius_cli\\src\\test\\temp_results\\ms_temp_output'
+                mkdir abs_path + 'sirius_frontend\\sirius_cli\\src\\test\\temp_results\\ms_temp_summary'
 
                 project.exec {
-                    commandLine([abs_path + 'sirius_frontend\\sirius_dist\\sirius_cli_single_os\\build\\distributions\\sirius\\sirius.exe',
+                    commandLine([abs_path + 'sirius_frontend\\sirius_dist\\' + cli_or_gui + '\\build\\distributions\\sirius\\sirius.exe',
                                  '--input', abs_path + 'sirius_frontend\\sirius_doc\\manual\\demo-data\\mgf\\laudanosine.mgf',
                                  '--output', abs_path + 'sirius_frontend\\sirius_cli\\src\\test\\temp_results\\mgf_temp_output',
                                  'formula', '-p', 'orbitrap', 'fingerprint', 'structure', 'compound-classes',
@@ -465,45 +476,51 @@ subprojects {
                     ])
                 }
 
-                mkdir abs_path + 'sirius_frontend\\sirius_cli\\src\\test\\temp_results\\txt_temp_output'
-                mkdir abs_path + 'sirius_frontend\\sirius_cli\\src\\test\\temp_results\\txt_temp_summary'
-
                 project.exec {
-
-                    commandLine([abs_path + 'sirius_frontend\\sirius_dist\\sirius_cli_single_os\\build\\distributions\\sirius\\sirius.exe',
+                    commandLine([abs_path + 'sirius_frontend\\sirius_dist\\' + cli_or_gui + '\\build\\distributions\\sirius\\sirius.exe',
                                  '-1', abs_path + 'sirius_frontend\\sirius_doc\\manual\\demo-data\\txt\\chelidonine_ms.txt',
                                  '-2', abs_path + 'sirius_frontend\\sirius_doc\\manual\\demo-data\\txt\\chelidonine_msms1.txt' + ',' + abs_path + 'sirius_frontend\\sirius_doc\\manual\\demo-data\\txt\\chelidonine_msms2.txt',
                                  '-z', '354.134704589844', '-o', abs_path + 'sirius_frontend\\sirius_cli\\src\\test\\temp_results\\txt_temp_output',
                                  'formula', '-p', 'orbitrap',
                                  'write-summaries', '--output', abs_path + 'sirius_frontend\\sirius_cli\\src\\test\\temp_results\\txt_temp_summary'
                     ])
+                }
 
-                    mkdir abs_path + 'sirius_frontend\\sirius_cli\\src\\test\\temp_results\\ms_temp_output'
-                    mkdir abs_path + 'sirius_frontend\\sirius_cli\\src\\test\\temp_results\\ms_temp_summary'
-
-                    project.exec {
-
-                        commandLine([abs_path + 'sirius_frontend\\sirius_dist\\sirius_cli_single_os\\build\\distributions\\sirius\\sirius.exe',
-                                     '-o', abs_path + 'sirius_frontend\\sirius_cli\\src\\test\\temp_results\\ms_temp_output',
-                                     '-i', abs_path + 'sirius_frontend\\sirius_doc\\manual\\demo-data\\ms\\Bicuculline.ms',
-                                     'formula', '-p', 'orbitrap',
-                                     'write-summaries', '--output', abs_path + 'sirius_frontend\\sirius_cli\\src\\test\\temp_results\\ms_temp_summary'])
-                    }
+                project.exec {
+                    commandLine([abs_path + 'sirius_frontend\\sirius_dist\\' + cli_or_gui + '\\build\\distributions\\sirius\\sirius.exe',
+                                 '-o', abs_path + 'sirius_frontend\\sirius_cli\\src\\test\\temp_results\\ms_temp_output',
+                                 '-i', abs_path + 'sirius_frontend\\sirius_doc\\manual\\demo-data\\ms\\Bicuculline.ms',
+                                 'formula', '-p', 'orbitrap',
+                                 'write-summaries', '--output', abs_path + 'sirius_frontend\\sirius_cli\\src\\test\\temp_results\\ms_temp_summary'
+                    ])
                 }
             }
             doLast{
                 String abs_path = project.projectDir.toString().split('sirius_frontend')[0]
                 project.delete(abs_path+'sirius_frontend\\sirius_cli\\src\\test\\temp_results')
             }
+
         } else if (OS.isLinux()) {
             doFirst{
                 String abs_path = project.projectDir.toString().split('sirius_frontend')[0]
+
+                String cli_or_gui
+                if (Files.exists(abs_path + 'sirius_frontend/sirius_dist/sirius_cli_single_os/build/distributions/sirius/sirius.exe')){
+                    cli_or_gui = 'sirius_cli_single_os'
+                } else {
+                    cli_or_gui = 'sirius_gui_single_os'
+                }
+
                 mkdir abs_path + 'sirius_frontend/sirius_cli/src/test/temp_results'
                 mkdir abs_path + 'sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_output'
                 mkdir abs_path + 'sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_summary'
+                mkdir abs_path + 'sirius_frontend/sirius_cli/src/test/temp_results/txt_temp_output'
+                mkdir abs_path + 'sirius_frontend/sirius_cli/src/test/temp_results/txt_temp_summary'
+                mkdir abs_path + 'sirius_frontend/sirius_cli/src/test/temp_results/ms_temp_output'
+                mkdir abs_path + 'sirius_frontend/sirius_cli/src/test/temp_results/ms_temp_summary'
 
                 project.exec {
-                    commandLine([abs_path + 'sirius_frontend/sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius',
+                    commandLine([abs_path + 'sirius_frontend/sirius_dist/' + cli_or_gui + '/build/distributions/sirius/bin/sirius',
                                  '--input', abs_path + 'sirius_frontend/sirius_doc/manual/demo-data/mgf/laudanosine.mgf',
                                  '--output', abs_path + 'sirius_frontend/sirius_cli/src/test/temp_results/mgf_temp_output',
                                  'formula', '-p', 'orbitrap', 'fingerprint', 'structure', 'compound-classes',
@@ -511,38 +528,33 @@ subprojects {
                     ])
                 }
 
-                mkdir abs_path + 'sirius_frontend/sirius_cli/src/test/temp_results/txt_temp_output'
-                mkdir abs_path + 'sirius_frontend/sirius_cli/src/test/temp_results/txt_temp_summary'
-
                 project.exec {
-
-                    commandLine([abs_path + 'sirius_frontend/sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius',
+                    commandLine([abs_path + 'sirius_frontend/sirius_dist/' + cli_or_gui + '/build/distributions/sirius/bin/sirius',
                                  '-1', abs_path + 'sirius_frontend/sirius_doc/manual/demo-data/txt/chelidonine_ms.txt',
                                  '-2', abs_path + 'sirius_frontend/sirius_doc/manual/demo-data/txt/chelidonine_msms1.txt' + ',' + abs_path + 'sirius_frontend/sirius_doc/manual/demo-data/txt/chelidonine_msms2.txt',
                                  '-z', '354.134704589844', '-o', abs_path + 'sirius_frontend/sirius_cli/src/test/temp_results/txt_temp_output',
                                  'formula', '-p', 'orbitrap',
                                  'write-summaries', '--output', abs_path + 'sirius_frontend/sirius_cli/src/test/temp_results/txt_temp_summary'
                     ])
+                }
 
-                    mkdir abs_path + 'sirius_frontend/sirius_cli/src/test/temp_results/ms_temp_output'
-                    mkdir abs_path + 'sirius_frontend/sirius_cli/src/test/temp_results/ms_temp_summary'
-
-                    project.exec {
-
-                        commandLine([abs_path + 'sirius_frontend/sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius',
-                                     '-o', abs_path + 'sirius_frontend/sirius_cli/src/test/temp_results/ms_temp_output',
-                                     '-i', abs_path + 'sirius_frontend/sirius_doc/manual/demo-data/ms/Bicuculline.ms',
-                                     'formula', '-p', 'orbitrap',
-                                     'write-summaries', '--output', abs_path + 'sirius_frontend/sirius_cli/src/test/temp_results/ms_temp_summary'])
-                    }
+                project.exec {
+                    commandLine([abs_path + 'sirius_frontend/sirius_dist/' + cli_or_gui + '/build/distributions/sirius/bin/sirius',
+                                 '-o', abs_path + 'sirius_frontend/sirius_cli/src/test/temp_results/ms_temp_output',
+                                 '-i', abs_path + 'sirius_frontend/sirius_doc/manual/demo-data/ms/Bicuculline.ms',
+                                 'formula', '-p', 'orbitrap',
+                                 'write-summaries', '--output', abs_path + 'sirius_frontend/sirius_cli/src/test/temp_results/ms_temp_summary'
+                    ])
                 }
             }
+
             doLast{
                 String abs_path = project.projectDir.toString().split('sirius_frontend')[0]
                 project.delete(abs_path+'sirius_frontend/sirius_cli/src/test/temp_results')
             }
+
         }  else {
-        throw new IllegalArgumentException("Cannot determine operating system for build")
+            throw new IllegalArgumentException("Cannot determine operating system for build")
         }
     }
     distImageTest.shouldRunAfter distImage
