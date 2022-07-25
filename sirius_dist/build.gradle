@@ -462,9 +462,7 @@ subprojects {
                 throw new IllegalArgumentException("Could not determine the OS to build on")
             }
 
-            cli_or_gui = Files.exists(Paths.get(abs_path +
-                    'sirius_frontend'+sep+'sirius_dist'+sep+'sirius_cli_single_os'+sep+'build'+sep+'distributions'+sep+
-                    'sirius')) ?
+            cli_or_gui = project.name.toString() == 'sirius_cli_single_os' ?
                     'sirius_cli_single_os' : 'sirius_gui_single_os'
 
             sirius_exec = project.OS.isWindows() ?
