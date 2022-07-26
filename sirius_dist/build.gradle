@@ -9,6 +9,10 @@ plugins {
     id 'org.gradle.crypto.checksum' version '1.4.0'
 }
 
+dependencies {
+    implementation 'org.junit.jupiter:junit-jupiter:5.8.2'
+}
+
 ext {
     // version for bundeled JRE
     jre_version = '17.0.2'//'15.0.6'
@@ -438,7 +442,7 @@ subprojects {
     distImage.shouldRunAfter downloadManual
 
 
-    task distImageTest(type: Test, dependsOn: distImage, group: 'distribution') {
+    task distImageTest(type: Test, group: 'distribution') {
 
         useJUnitPlatform()
         filter.includeTestsMatching("*Local")
@@ -455,7 +459,7 @@ subprojects {
             String sirius_exec
 
 
-            if(project.OS.isWindows() || project.OS.isLinux()){
+            if(project.OS.isWindows() || project.OS.isLinux() || project.OS.isMacOsX()){
                 sep = System.getProperty("file.separator")
             } else {
                 throw new IllegalArgumentException("Could not determine the OS to build on")
@@ -464,9 +468,13 @@ subprojects {
             cli_or_gui = project.name.toString() == 'sirius_cli_single_os' ?
                     'sirius_cli_single_os' : 'sirius_gui_single_os'
 
-            sirius_exec = project.OS.isWindows() ?
-                    abs_path + 'sirius_frontend\\sirius_dist\\' + cli_or_gui + '\\build\\distributions\\sirius\\sirius.exe' :
-                    abs_path + 'sirius_frontend/sirius_dist/' + cli_or_gui + '/build/distributions/sirius/bin/sirius'
+            if (project.OS.isWindows()) {
+                sirius_exec = abs_path + 'sirius_frontend\\sirius_dist\\' + cli_or_gui + '\\build\\distributions\\sirius\\sirius.exe'
+            } else if (project.OS.isLinux()) {
+                sirius_exec = abs_path + 'sirius_frontend/sirius_dist/' + cli_or_gui + '/build/distributions/sirius/bin/sirius'
+            } else {
+                sirius_exec = abs_path + 'sirius.app'+sep+'Contents'+sep+'MacOS'+sep+'sirius'
+            }
 
             String temp_res_path = abs_path+'sirius_frontend'+sep+'sirius_cli'+sep+'src'+sep+'test'+sep+'temp_results'
             String demo_path = abs_path+'sirius_frontend'+sep+'sirius_doc'+sep+'manual'+sep+'demo-data'+sep
@@ -511,18 +519,18 @@ subprojects {
         }
         doLast{
             String abs_path = project.projectDir.toString().split('sirius_frontend')[0]
-            String sep
-            if(project.OS.isWindows()){
-                sep = '\\'
-            } else if(project.OS.isLinux()) {
-                sep = '/'
-            }
+            String sep = System.getProperty("file.separator")
             String temp_res_path = abs_path+'sirius_frontend'+sep+'sirius_cli'+sep+'src'+sep+'test'+sep+'temp_results'
             project.delete(temp_res_path)
         }
     }
-    distImageTest.shouldRunAfter distImage
 
+
+    task distImageTestLocal(group: 'distribution'){
+        dependsOn 'distImageTest'
+        dependsOn 'distImage'
+        tasks.findByName('distImageTest').mustRunAfter 'distImage'
+    }
 
 
     task signDistImage(dependsOn: distImage, group: 'distribution') {
