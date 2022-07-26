@@ -454,10 +454,9 @@ subprojects {
             String sep
             String sirius_exec
 
-            if(project.OS.isWindows()){
-                sep = '\\'
-            } else if(project.OS.isLinux()) {
-                sep = '/'
+
+            if(project.OS.isWindows() || project.OS.isLinux()){
+                sep = System.getProperty("file.separator")
             } else {
                 throw new IllegalArgumentException("Could not determine the OS to build on")
             }
