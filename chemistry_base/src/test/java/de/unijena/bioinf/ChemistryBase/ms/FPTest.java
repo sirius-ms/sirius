@@ -58,6 +58,11 @@ public class FPTest {
         public boolean compatible(FingerprintVersion fingerprintVersion) {
             return fingerprintVersion.equals(this);
         }
+
+        @Override
+        public boolean identical(FingerprintVersion fingerprintVersion) {
+            return false;
+        }
     }
 
     @Test
