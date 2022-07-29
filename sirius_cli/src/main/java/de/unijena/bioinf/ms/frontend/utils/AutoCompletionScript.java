@@ -46,7 +46,7 @@ public class AutoCompletionScript implements Callable<Integer> {
     private static final Path PATH = Path.of(String.format("./scripts/%s", NAME));
     private CommandLine commandline;
     private boolean validDeclaration;
-
+    private Progressbar progressbar;
     private boolean subvalidDeclaration;
     /**
      * generates a CompletionScript for the sirius Commandline instance.
@@ -94,13 +94,17 @@ public class AutoCompletionScript implements Callable<Integer> {
         }
     }
 
-    private void installScriptLinux(String Script) {
+    private void UnixinstallScript(String Script, String FolderPath) {
         if (this.install.permInstall()) {
-            boolean successful = AutoCompletionScript.executeBashCommand("cd ./scripts; for f in $(find . -name \"*_completion\"); do line=\". $(pwd)/$f\"; grep \"$line\" ~/.bash_profile || echo \"$line\" >> ~/.bash_profile; done; source ~/.bash_profile");
+            boolean successful = AutoCompletionScript.executeBashCommand("cd ./scripts; for f in $(find . -name \"*_completion\"); do line=\". $(pwd)/$f\"; grep \"$line\" "+ FolderPath +" || echo \"$line\" >> ~/.bash_profile; done; source ~/.bash_profile");
             if (successful) System.out.println("Script installed. Pleases restart the terminal if the Autocompletion does not work");
             else throw new RuntimeException("Unable to install CompletionScript");
         }
         else AutoCompletionScript.executeBashCommand("cd ./scripts; . *_completion");
+    }
+
+    private void installScriptLinux(String script) {
+        UnixinstallScript(script, "~/.bash_profile");
     }
 
     private void installScriptWindows(String script) {
@@ -108,13 +112,12 @@ public class AutoCompletionScript implements Callable<Integer> {
     }
 
     private void installScriptMac(String script) {
-        // same as Linux
-        installScriptLinux(script);
+        UnixinstallScript(script, "~/.zprofile");
     }
 
     private void installScriptSolaris(String script) {
         // same as Linux
-        installScriptLinux(script);
+        UnixinstallScript(script, "~/.bash_profile");
     }
 
     /**
@@ -156,7 +159,7 @@ public class AutoCompletionScript implements Callable<Integer> {
     }
 
     private @NotNull String formatScript() throws IOException {
-        System.out.print("Progress: [                    ]\r");
+        this.progressbar = new Progressbar(5);
         StringBuilder output = new StringBuilder();
         BufferedReader reader = new BufferedReader(new FileReader(String.valueOf(PATH)));
         String line;
@@ -174,7 +177,7 @@ public class AutoCompletionScript implements Callable<Integer> {
 
             if (line != null) output.append(line).append("\n");
         }
-        System.out.println("Progress: [████████████████████]\r");
+        progressbar.increaseProgress();
         return output.toString();
     }
 
@@ -182,17 +185,17 @@ public class AutoCompletionScript implements Callable<Integer> {
     private String getFunctionstatus(String line, String functionstatus, String[] words) {
         if (functionstatus == null && words.length > 1 && Objects.equals(words[0], "function") && words[1].equals("_complete_sirius()")) {
             functionstatus = "CompletionScriptFunction";
-            System.out.print("Progress: [████                ]\r");
+            progressbar.increaseProgress();
         } else if (Objects.equals(functionstatus, "CompletionScriptFunction") && line.equals("  # Find the longest sequence of subcommands and call the bash function for that subcommand.")) {
             functionstatus = "LocalCommandDef";
-            System.out.print("Progress: [████████            ]\r");
+            progressbar.increaseProgress();
         } else if (Objects.equals(functionstatus, "LocalCommandDef") && words.length >= 3 && !Objects.equals(words[2], "local")) {
             functionstatus = "CompWords";
-            System.out.print("Progress: [████████████        ]\r");
+            progressbar.increaseProgress();
         } else if (Objects.equals(functionstatus, "CompWords") && line.equals("  # No subcommands were specified; generate completions for the top-level command.")) {
             functionstatus = "Subcommandfunction";
             validDeclaration = true;
-            System.out.print("Progress: [████████████████    ]\r");
+            progressbar.increaseProgress();
         }
         return functionstatus;
     }
@@ -254,21 +257,26 @@ public class AutoCompletionScript implements Callable<Integer> {
     }
 
     private boolean isvalidsubalias(String alias) {
-        // TODO Problems with some aliases? (Commented)
+                return false;
+
+        //TODO Ambigous - non Deterministic?
+        /*
         return (
                 alias.equals("A") || alias.equals("PS") //|| alias.equals("C")
                   || alias.equals("EPR")  || alias.equals("F")
                   || alias.equals("tree") || alias.equals("MGF")|| alias.equals("compound") || alias.equals("search-structure-db")
                 || alias.equals("P")|| alias.equals("sirius")
                 || alias.equals("rerank")
-                            || alias.equals("search")
+    //                        || alias.equals("search")
       //                      || alias.equals("S")
             //    || alias.equals("T")
                         //    || alias.equals("W")
                         //   || alias.equals("Z")
                          ||  alias.equals("rerank-formulas")
-                || alias.equals("compound-classes") || alias.equals("DB")
+  //              || alias.equals("compound-classes") || alias.equals("DB")
         );
+
+         */
     }
 
     private String formatSubcommandFunction(String line, String[] words) {
@@ -348,6 +356,48 @@ public class AutoCompletionScript implements Callable<Integer> {
     public static class UknownOSException extends RuntimeException {
         public UknownOSException(String could_not_detect_os) {
             super(could_not_detect_os);
+        }
+    }
+
+    public class Progressbar {
+        private Integer currentprogress;
+        private final Integer maxprogress;
+        private final Integer stepsize;
+        private final Integer actualMaxsize;
+        private final Integer MAXSIZE = 32;
+
+        public Progressbar(Integer steps) {
+            this.maxprogress = steps;
+            this.currentprogress = 0;
+            this.stepsize = calculateStepsize(steps);
+            this.actualMaxsize = stepsize*maxprogress;
+            System.out.print(printProgress());
+        }
+
+        private int calculateStepsize(Integer steps) {
+            for(int i=2; i<=MAXSIZE; i++) {
+                if(i*steps > MAXSIZE) return (i-1);
+            }
+            return MAXSIZE;
+        }
+
+        public String printProgress() {
+            StringBuilder progressbar = new StringBuilder();
+            progressbar.append("█".repeat(stepsize*currentprogress));
+            while(progressbar.length() < actualMaxsize) progressbar.append(" ");
+            return ("Progress: ["+progressbar+"]\r");
+        }
+
+        public void increaseProgress() {
+            if (currentprogress.equals(maxprogress)) throw new IndexOutOfBoundsException("Progressbar limit reached!");
+            this.currentprogress++;
+            if (currentprogress.equals(maxprogress)) System.out.println(printProgress());
+            else System.out.print(printProgress());
+        }
+        public void decreaseProgress() {
+            if (currentprogress == 0) throw new IndexOutOfBoundsException("Progressbar limit reached!");
+            this.currentprogress--;
+            System.out.print(printProgress());
         }
     }
 }
