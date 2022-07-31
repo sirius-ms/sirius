@@ -38,7 +38,6 @@ public class AutoCompletionScript implements Callable<Integer> {
      */
     @Option(names = {"--OStype", "-o"}, description = "Overrides specification of the SystemOS. (Detected automatically per Default) Possibilities: {Linux, Mac, Solaris}")
     public String OS;
-
     private boolean firstsirius = true;
     private final HashSet<String> aliases = new HashSet<>();
     private final HashSet<Integer> removedDefinitions = new HashSet<>();
@@ -75,6 +74,11 @@ public class AutoCompletionScript implements Callable<Integer> {
         return 1;
     }
 
+    /**
+     * calls the necessary function for the Script installation on different OS
+     * @param Script the Script to be installed
+     * @param OS the current Operating System - Possibilites: {"Linux", "Mac", "Windows", "Solaris"}
+     */
     private void installScript(final String Script, final String OS) {
         switch (OS) {
             case "Linux":
@@ -94,6 +98,11 @@ public class AutoCompletionScript implements Callable<Integer> {
         }
     }
 
+    /**
+     * installs the Script for any bash-based terminals
+     * @param Script the Script to be installed
+     * @param FolderPath Absolute Path to the installation File (e.g. "~/.bash_profile")
+     */
     private void UnixinstallScript(String Script, String FolderPath) {
         if (this.install.permInstall()) {
             boolean successful = AutoCompletionScript.executeBashCommand("cd ./scripts; for f in $(find . -name \"*_completion\"); do line=\". $(pwd)/$f\"; grep \"$line\" "+ FolderPath +" || echo \"$line\" >> ~/.bash_profile; done; source ~/.bash_profile");
@@ -103,18 +112,31 @@ public class AutoCompletionScript implements Callable<Integer> {
         else AutoCompletionScript.executeBashCommand("cd ./scripts; . *_completion");
     }
 
+    /**
+     * installs the given Script on a typical Linux machine using ~/.bash_profile
+     */
     private void installScriptLinux(String script) {
         UnixinstallScript(script, "~/.bash_profile");
     }
 
+    /**
+     * installs the given Script on a typical Windows machine (not supported!)
+     */
     private void installScriptWindows(String script) {
+        //TODO Windows installation Script
         throw new RuntimeException("Autocompletion under Windows is not supported by default");
     }
 
+    /**
+     * installs the given Script in a MacOS machine using ~./zprofile
+     */
     private void installScriptMac(String script) {
         UnixinstallScript(script, "~/.zprofile");
     }
 
+    /**
+     * installs the given Script on a typical Solaris machine using ~/.bash_profile
+     */
     private void installScriptSolaris(String script) {
         // same as Linux
         UnixinstallScript(script, "~/.bash_profile");
@@ -136,12 +158,19 @@ public class AutoCompletionScript implements Callable<Integer> {
         else throw new UknownOSException("Could not detect OS");
     }
 
+    /**
+     * Edge cases that causes mismatches with the current used RegEx
+     */
     private void addAliasesEdgeCases() {
         aliases.add("rerank"); // for rerank-formulas
         aliases.add("search"); // for search-structure-db
         aliases.add("compound"); // for compound-classes
     }
 
+    /**
+     * recursive function for the detection of different aliases on all Commandline depths
+     * @param currentCommandline the Commandlineinstance for the different dpeths
+     */
     private void findAliases(@NotNull CommandLine currentCommandline) {
         CommandLine.Model.CommandSpec subcommandsSpec = currentCommandline.getCommandSpec();
         if (subcommandsSpec.subcommands().isEmpty()) return;
@@ -158,6 +187,12 @@ public class AutoCompletionScript implements Callable<Integer> {
         subcommandsSpec.subcommands().forEach((name, command) -> findAliases(command));
     }
 
+    /**
+     * main function for reading the bash-autocompletion Script and calling different functions
+     * for the different parts of the script
+     * @return the modified Script
+     * @throws IOException if the File is unreadable
+     */
     private @NotNull String formatScript() throws IOException {
         this.progressbar = new Progressbar(5);
         StringBuilder output = new StringBuilder();
@@ -181,6 +216,13 @@ public class AutoCompletionScript implements Callable<Integer> {
         return output.toString();
     }
 
+    /**
+     * Detects the current part of the autocompletion Script
+     * @param line the line of the Script
+     * @param functionstatus the last detected part of the Script
+     * @param words the line split for all words
+     * @return the current functionstatus
+     */
     @Nullable
     private String getFunctionstatus(String line, String functionstatus, String[] words) {
         if (functionstatus == null && words.length > 1 && Objects.equals(words[0], "function") && words[1].equals("_complete_sirius()")) {
@@ -200,6 +242,13 @@ public class AutoCompletionScript implements Callable<Integer> {
         return functionstatus;
     }
 
+    /**
+     * modifies the current line by calling the necessary function for the current functionstatus
+     * @param line the currently read line
+     * @param functionstatus the current functionstatus
+     * @param words the line split for the needed words
+     * @return the modified line (Null if line should be empty)
+     */
     private String formatLine(String line, String functionstatus, String[] words) {
         if (functionstatus != null) {
             switch (functionstatus) {
@@ -224,6 +273,12 @@ public class AutoCompletionScript implements Callable<Integer> {
         return line;
     }
 
+    /**
+     * Modifies the first part of the AutoCompletion Script
+     * @param line the currently read line
+     * @param words the currently read line split for the different words
+     * @return the modified line
+     */
     private String formatCompletionFunction(@NotNull String line, @NotNull String[] words) {
         if (Arrays.stream(words).anyMatch(word -> aliases.stream().anyMatch(alias -> alias.equals(word)))) line = null;
         if (Arrays.stream(words).anyMatch(word -> aliases.stream().anyMatch(alias -> (alias + "\"").equals(word))))
@@ -231,6 +286,12 @@ public class AutoCompletionScript implements Callable<Integer> {
         return line;
     }
 
+    /**
+     * Modifies the second part of the AutoCompletion Script
+     * @param line the currently read line
+     * @param words the currently read line split for the different words
+     * @return the modified line
+     */
     private String formatCommandDefinitions(@NotNull String line, @NotNull String[] words) {
         if (words.length < 4) return line;
         if (!words[2].equals("local")) return line;
@@ -248,6 +309,12 @@ public class AutoCompletionScript implements Callable<Integer> {
         return line;
     }
 
+    /**
+     * Modifies the third part of the AutoCompletion Script
+     * @param line the currently read line
+     * @param words the currently read line split for the different words
+     * @return the modified line
+     */
     private String removeCompWords(@NotNull String line, @NotNull String[] words) {
         if (words.length < 5) return line;
         String valueHolder = words[4].split("@")[0];
@@ -256,6 +323,11 @@ public class AutoCompletionScript implements Callable<Integer> {
         return line;
     }
 
+    /**
+     * Definition of removed functionnames in fourth part of the AutocompletionScript.
+     * @param alias the currently detected alias
+     * @return if the function for the alias should be removed
+     */
     private boolean isvalidsubalias(String alias) {
                 return false;
 
@@ -279,6 +351,12 @@ public class AutoCompletionScript implements Callable<Integer> {
          */
     }
 
+    /**
+     * Modifies the fourth part of the AutoCompletion Script
+     * @param line the currently read line
+     * @param words the currently read line split for the different words
+     * @return the modified line
+     */
     private String formatSubcommandFunction(String line, String[] words) {
         HashSet<String> subaliases = new HashSet(aliases);
         aliases.forEach(alias -> {
@@ -359,6 +437,10 @@ public class AutoCompletionScript implements Callable<Integer> {
         }
     }
 
+    /**
+     * class for a Progressbar instance.
+     * Do not print to System.out while the Progressbar is not finished
+     */
     public class Progressbar {
         private Integer currentprogress;
         private final Integer maxprogress;
@@ -366,6 +448,10 @@ public class AutoCompletionScript implements Callable<Integer> {
         private final Integer actualMaxsize;
         private final Integer MAXSIZE = 32;
 
+        /**
+         * generated a Progressbar instance and prints an Empty bar to System.out
+         * @param steps the amount of different Positions in the Progressbar
+         */
         public Progressbar(Integer steps) {
             this.maxprogress = steps;
             this.currentprogress = 0;
@@ -374,6 +460,11 @@ public class AutoCompletionScript implements Callable<Integer> {
             System.out.print(printProgress());
         }
 
+        /**
+         * calculates the size of the bar for the given Stepsize
+         * @param steps the maximum amount of different positions
+         * @return the size of the bar for any stepsize
+         */
         private int calculateStepsize(Integer steps) {
             for(int i=2; i<=MAXSIZE; i++) {
                 if(i*steps > MAXSIZE) return (i-1);
@@ -381,6 +472,10 @@ public class AutoCompletionScript implements Callable<Integer> {
             return MAXSIZE;
         }
 
+        /**
+         * prints the current Progress of the Progressbar
+         * @return the current Progressbar
+         */
         public String printProgress() {
             StringBuilder progressbar = new StringBuilder();
             progressbar.append("█".repeat(stepsize*currentprogress));
@@ -388,12 +483,19 @@ public class AutoCompletionScript implements Callable<Integer> {
             return ("Progress: ["+progressbar+"]\r");
         }
 
+        /**
+         * increases the bar by 1 step and prints the result to System.out
+         */
         public void increaseProgress() {
             if (currentprogress.equals(maxprogress)) throw new IndexOutOfBoundsException("Progressbar limit reached!");
             this.currentprogress++;
             if (currentprogress.equals(maxprogress)) System.out.println(printProgress());
             else System.out.print(printProgress());
         }
+
+        /**
+         * decreases the bar by 1 step and prints the result to System.out
+         */
         public void decreaseProgress() {
             if (currentprogress == 0) throw new IndexOutOfBoundsException("Progressbar limit reached!");
             this.currentprogress--;
@@ -401,6 +503,10 @@ public class AutoCompletionScript implements Callable<Integer> {
         }
     }
 }
+
+/**
+ * class for determining the type of installation for the AutocompletionScript
+ */
 class Installationtype {
     @Option(names = {"--temporary", "-t"}, defaultValue = "false",
             description = "[Exclusive to -p] installs the Completionscript temporary")  private boolean temp;
