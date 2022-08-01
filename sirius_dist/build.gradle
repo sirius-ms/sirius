@@ -45,7 +45,7 @@ ext {
 
 task downloadJDKFX(type: Download) {
     String fname = "zulu${zulu_jre_version}-ca-fx-jdk${jre_version}-${zosName}_x64"
-    String ext = ".${OS.isWindows() ? 'zip' : 'tar.gz'}";
+    String ext = ".${OS.isWindows() ? 'zip' : 'tar.gz'}"
     project.ext.set("jdkfxPath", getBuildDir().toPath().resolve('tmp').resolve(fname).toFile())
 
 
@@ -248,7 +248,7 @@ subprojects {
             def errorCount = 0
             logger.lifecycle(System.lineSeparator() + "Checking for NULL values in Profile...")
             defaultProfile.keys().each { e ->
-                def v = defaultProfile.getProperty(e);
+                def v = defaultProfile.getProperty(e)
                 if (v == null || ((String) v).isEmpty()) {
                     logger.warn("${e} is NULL!")
                     errorCount++
@@ -445,7 +445,8 @@ subprojects {
     task distImageTest(type: Test, group: 'distribution') {
 
         useJUnitPlatform()
-        filter.includeTestsMatching("*Local")
+        testClassesDirs = project(':sirius_dist').sourceSets.test.output
+        filter.includeTestsMatching('*Local')
 
         testLogging{
             outputs.upToDateWhen {false}
@@ -526,7 +527,7 @@ subprojects {
     }
 
 
-    task distImageTestLocal(group: 'distribution'){
+    task distImageTestLocal(type: Test, group: 'distribution'){
         dependsOn 'distImageTest'
         dependsOn 'distImage'
         tasks.findByName('distImageTest').mustRunAfter 'distImage'
