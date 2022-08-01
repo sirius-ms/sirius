@@ -455,9 +455,9 @@ subprojects {
 
         doFirst{
             String abs_path = project.projectDir.toString().split('sirius_frontend')[0]
-            String cli_or_gui
-            String sep
+            String cli_or_gui = project.name.toString()
             String sirius_exec
+            String sep
 
 
             if(project.OS.isWindows() || project.OS.isLinux() || project.OS.isMacOsX()){
@@ -465,9 +465,6 @@ subprojects {
             } else {
                 throw new IllegalArgumentException("Could not determine the OS to build on")
             }
-
-            cli_or_gui = project.name.toString() == 'sirius_cli_single_os' ?
-                    'sirius_cli_single_os' : 'sirius_gui_single_os'
 
             if (project.OS.isWindows()) {
                 sirius_exec = abs_path + 'sirius_frontend\\sirius_dist\\' + cli_or_gui + '\\build\\distributions\\sirius\\sirius.exe'
