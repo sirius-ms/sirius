@@ -73,23 +73,23 @@ before_script:
 #      - "**/src/main/java/**/*"
 
 
-#buildCLI:
-#  stage: build
-#  script:
-#    - gradle :sirius_dist:sirius_cli_single_os:distImage
-#  cache:
-#    key: "$CI_COMMIT_REF_NAME"
-#    policy: push
-#  artifacts:
-#    paths:
-#      - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius
-#  tags:
-#    - kubernetes
-#  only:
-#    refs:
-#      - master
-#      - master-dist-tests
-#      - stable
+buildCLI:
+  stage: build
+  script:
+    - gradle :sirius_dist:sirius_cli_single_os:distImage
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  artifacts:
+    paths:
+      - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - master
+      - master-dist-tests
+      - stable
 
 
 buildGUI:
@@ -111,22 +111,22 @@ buildGUI:
       - stable
 
 
-#testCLI:
-#  stage: test
-#  script:
-#    - gradle :sirius_dist:sirius_cli_single_os:distImageTest
-#  cache:
-#    key: "$CI_COMMIT_REF_NAME"
-#    policy: push
-#  dependencies:
-#    - buildCLI
-#  tags:
-#    - kubernetes
-#  only:
-#    refs:
-#      - master
-#      - master-dist-tests
-#      - stable
+testCLI:
+  stage: test
+  script:
+    - gradle :sirius_dist:sirius_cli_single_os:distImageTest
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  dependencies:
+    - buildCLI
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - master
+      - master-dist-tests
+      - stable
 
 
 testGUI:
