@@ -137,7 +137,7 @@ testGUI:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
   dependencies:
-    - buildCLI
+    - buildGUI
   tags:
     - kubernetes
   only:
