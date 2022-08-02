@@ -194,7 +194,8 @@ public class AutoCompletionScript implements Callable<Integer> {
      * @throws IOException if the File is unreadable
      */
     private @NotNull String formatScript() throws IOException {
-        this.progressbar = new Progressbar(5);
+        this.progressbar = new Progressbar(5, System.out);
+        this.progressbar.start();
         StringBuilder output = new StringBuilder();
         BufferedReader reader = new BufferedReader(new FileReader(String.valueOf(PATH)));
         String line;
@@ -434,72 +435,6 @@ public class AutoCompletionScript implements Callable<Integer> {
     public static class UknownOSException extends RuntimeException {
         public UknownOSException(String could_not_detect_os) {
             super(could_not_detect_os);
-        }
-    }
-
-    /**
-     * class for a Progressbar instance.
-     * Do not print to System.out while the Progressbar is not finished
-     */
-    public class Progressbar {
-        private Integer currentprogress;
-        private final Integer maxprogress;
-        private final Integer stepsize;
-        private final Integer actualMaxsize;
-        private final Integer MAXSIZE = 32;
-
-        /**
-         * generated a Progressbar instance and prints an Empty bar to System.out
-         * @param steps the amount of different Positions in the Progressbar
-         */
-        public Progressbar(Integer steps) {
-            this.maxprogress = steps;
-            this.currentprogress = 0;
-            this.stepsize = calculateStepsize(steps);
-            this.actualMaxsize = stepsize*maxprogress;
-            System.out.print(printProgress());
-        }
-
-        /**
-         * calculates the size of the bar for the given Stepsize
-         * @param steps the maximum amount of different positions
-         * @return the size of the bar for any stepsize
-         */
-        private int calculateStepsize(Integer steps) {
-            for(int i=2; i<=MAXSIZE; i++) {
-                if(i*steps > MAXSIZE) return (i-1);
-            }
-            return MAXSIZE;
-        }
-
-        /**
-         * prints the current Progress of the Progressbar
-         * @return the current Progressbar
-         */
-        public String printProgress() {
-            StringBuilder progressbar = new StringBuilder();
-            progressbar.append("█".repeat(stepsize*currentprogress));
-            while(progressbar.length() < actualMaxsize) progressbar.append(" ");
-            return ("Progress: ["+progressbar+"]\r");
-        }
-
-        /**
-         * increases the bar by 1 step and prints the result to System.out
-         */
-        public void increaseProgress() {
-            if (currentprogress.equals(maxprogress)) throw new IndexOutOfBoundsException("Progressbar limit reached!");
-            this.currentprogress++;
-            if (currentprogress.equals(maxprogress)) System.out.println(printProgress());
-            else System.out.print(printProgress());
-        }
-
-        /**
-         * decreases the bar by 1 step and prints the result to System.out
-         */
-        public void decreaseProgress() {
-            if (currentprogress == 0) throw new IndexOutOfBoundsException("Progressbar limit reached!");
-            this.currentprogress--;
-            System.out.print(printProgress());
         }
     }
 }
