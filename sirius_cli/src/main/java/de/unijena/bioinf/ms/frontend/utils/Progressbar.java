@@ -7,6 +7,7 @@ import java.io.PrintStream;
  * Do not print to System.out while the Progressbar is not finished
  */
 public class Progressbar implements Runnable {
+    private final Integer DELAY = 500;
     private Thread thread;
     private Integer currentprogress;
     private final Integer maxprogress;
@@ -43,13 +44,13 @@ public class Progressbar implements Runnable {
     }
     public void run() {
         try {
+            int status = -1;
             while (currentprogress < maxprogress) {
-                output.print(printProgress(false));
-                Thread.sleep(500);
-                output.print(printProgress(true));
-                Thread.sleep(500);
+                output.print(printProgress(status));
+                Thread.sleep(this.DELAY);
+                status = (status+1) % 4;
             }
-            output.println(printProgress(false));
+            output.println(printProgress(-1));
         }
         catch(InterruptedException ignored) {}
     }
@@ -70,10 +71,13 @@ public class Progressbar implements Runnable {
      * prints the current Progress of the Progressbar
      * @return the current Progressbar
      */
-    private String printProgress(boolean added) {
+    private String printProgress(int status) {
         StringBuilder progressbar = new StringBuilder();
         progressbar.append("█".repeat(stepsize*currentprogress));
-        if (added) progressbar.append("█");
+        if (status == 0) progressbar.append("▏");
+        else if (status == 1) progressbar.append("▍");
+        else if (status == 2) progressbar.append("▋");
+        else if (status == 3) progressbar.append("▉");
         while(progressbar.length() < actualMaxsize) progressbar.append(" ");
         return ("Progress: ["+progressbar+"]\r");
     }
