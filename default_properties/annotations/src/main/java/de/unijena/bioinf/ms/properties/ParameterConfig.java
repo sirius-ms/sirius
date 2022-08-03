@@ -172,7 +172,7 @@ public final class ParameterConfig {
         config.addConfiguration(nuLayer, name);
         localConfigName = name;
         Iterator<Configuration> it = inner.iterator();
-        innerNames.forEach(n -> config.addConfiguration(it.next(),n));
+        innerNames.forEach(n -> config.addConfiguration(it.next(), n));
     }
 
     public void updateConfig(ParameterConfig update) {
@@ -195,7 +195,7 @@ public final class ParameterConfig {
         if (!containsConfiguration(name))
             throw new IllegalArgumentException("Update failed: Configuration with name '" + name + "' does not exist.");
         final Configuration toUpdate = config.getConfiguration(name);
-        if (toUpdate ==  update)
+        if (toUpdate == update)
             return;
         update.getKeys().forEachRemaining(k -> {
             if (overrideExistingKeys || !toUpdate.containsKey(k))
@@ -517,7 +517,10 @@ public final class ParameterConfig {
             objectValue = (T) invokePossiblyPrivateMethod(fromString, null, stringValue);
         } else {
             if (fType.isPrimitive() || fType.isAssignableFrom(Boolean.class) || fType.isAssignableFrom(Byte.class) || fType.isAssignableFrom(Short.class) || fType.isAssignableFrom(Integer.class) || fType.isAssignableFrom(Long.class) || fType.isAssignableFrom(Float.class) || fType.isAssignableFrom(Double.class) || fType.isAssignableFrom(String.class) || fType.isAssignableFrom(Color.class)) {
-                objectValue = convertToDefaultType(fType, stringValue);
+                if (fType.isAssignableFrom(Color.class) && stringValue.startsWith("#"))
+                    objectValue = (T) Color.decode(stringValue);
+                else
+                    objectValue = convertToDefaultType(fType, stringValue);
             } else if (fType.isArray()) {
                 Class<?> elementType = fType.getComponentType();
                 if (elementType.isPrimitive()) {
