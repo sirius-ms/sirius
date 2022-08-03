@@ -510,8 +510,8 @@ subprojects {
                 commandLine([sirius_exec,
                              '-o', temp_res_path+'ms_temp_output',
                              '-i', demo_path+'ms'+sep+'Bicuculline.ms',
-                             'formula', '-p', 'orbitrap', 'fingerprint',
-                             'structure', 'compound-classes',
+                             '--ignore-formula', 'formula', '-p', 'orbitrap', '-c', '5',
+                             'fingerprint', 'structure', 'compound-classes',
                              'write-summaries', '--output', temp_res_path+'ms_temp_summary'
                 ])
             }
