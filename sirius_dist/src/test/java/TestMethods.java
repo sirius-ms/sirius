@@ -1,6 +1,10 @@
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class TestMethods {
 
@@ -41,5 +45,25 @@ public class TestMethods {
         }
 
         return top_results;
+    }
+
+
+    /**
+     * Test if canopus, canopus_npc, fingerid and fingerprints folders exist and are filled for MGF
+     */
+    public static void isDirNotEmpty(Path directory) throws IOException {
+        DirectoryStream<Path> dirStream = Files.newDirectoryStream(directory);
+        if(!dirStream.iterator().hasNext()){
+            dirStream.close();
+            throw new RuntimeException("The "+ directory +" folder is empty!");
+        }
+        dirStream.close();
+    }
+
+    public static void isDirExisting(String directory){
+        File f = new File(directory);
+        if(!f.exists() || !f.isDirectory()) {
+            throw new RuntimeException("The "+directory+" folder does not exist or is not a folder!");
+        }
     }
 }
