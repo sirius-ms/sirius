@@ -10,9 +10,9 @@ public class MsTestLocal {
     @Test
     @DisplayName("Testing if SIRIUS calculates expected formula candidates with ms file.")
     public void testTopCandidates(){
-        int rank_count = 1;
+        int rank_count = 3;
         int table_feature = 2;
-        String[] pre_formula = TestMethods.readCandidates(absPath + "sirius_cli/src/test/test_results/ms_candidates/compound_class_annotation/formula_candidates.tsv".replace("/", sep), rank_count, table_feature);
+        String[] pre_formula = TestMethods.readCandidates(absPath + "sirius_cli/src/test/test_results/ms_candidates/ignore_formula/formula_candidates.tsv".replace("/", sep), rank_count, table_feature);
         String[] post_formula = TestMethods.readCandidates(absPath + "sirius_cli/src/test/temp_results/ms_temp_summary/0_Bicuculline_Bicuculline/formula_candidates.tsv".replace("/", sep), rank_count, table_feature);
 
         rank_count = 3;
