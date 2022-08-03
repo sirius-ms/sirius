@@ -1,5 +1,8 @@
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import java.io.IOException;
+import java.nio.file.Paths;
+
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 public class MgfTestLocal {
@@ -9,7 +12,17 @@ public class MgfTestLocal {
 
     @Test
     @DisplayName("Testing if SIRIUS calculates expected formula candidates with mgf file.")
-    public void testTopCandidates(){
+    public void testTopCandidates() throws IOException {
+        TestMethods.isDirExisting(absPath + "sirius_cli/src/test/temp_results/mgf_temp_output/0_laudanosine_FEATURE_1/canopus");
+        TestMethods.isDirExisting(absPath + "sirius_cli/src/test/temp_results/mgf_temp_output/0_laudanosine_FEATURE_1/canopus_npc");
+        TestMethods.isDirExisting(absPath + "sirius_cli/src/test/temp_results/mgf_temp_output/0_laudanosine_FEATURE_1/fingerid");
+        TestMethods.isDirExisting(absPath + "sirius_cli/src/test/temp_results/mgf_temp_output/0_laudanosine_FEATURE_1/fingerprints");
+
+        TestMethods.isDirNotEmpty(Paths.get(absPath + "sirius_cli/src/test/temp_results/mgf_temp_output/0_laudanosine_FEATURE_1/canopus"));
+        TestMethods.isDirNotEmpty(Paths.get(absPath + "sirius_cli/src/test/temp_results/mgf_temp_output/0_laudanosine_FEATURE_1/canopus_npc"));
+        TestMethods.isDirNotEmpty(Paths.get(absPath + "sirius_cli/src/test/temp_results/mgf_temp_output/0_laudanosine_FEATURE_1/fingerid"));
+        TestMethods.isDirNotEmpty(Paths.get(absPath + "sirius_cli/src/test/temp_results/mgf_temp_output/0_laudanosine_FEATURE_1/fingerprints"));
+
         int rank_count = 3;
         int table_feature = 1;
         String[] pre_formula = TestMethods.readCandidates(absPath + "sirius_cli/src/test/test_results/mgf_candidates/formula_candidates.tsv".replace("/", sep), rank_count, table_feature);
