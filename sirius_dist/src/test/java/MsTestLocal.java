@@ -1,5 +1,9 @@
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
+import java.nio.file.Paths;
+
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 public class MsTestLocal {
@@ -9,7 +13,22 @@ public class MsTestLocal {
 
     @Test
     @DisplayName("Testing if SIRIUS calculates expected formula candidates with ms file.")
-    public void testTopCandidates(){
+    public void testTopCandidates() throws IOException {
+        TestMethods.isDirExisting(absPath + "sirius_cli/src/test/temp_results/ms_temp_output/0_Bicuculline_Bicuculline/canopus".replace("/", sep));
+        TestMethods.isDirExisting(absPath + "sirius_cli/src/test/temp_results/ms_temp_output/0_Bicuculline_Bicuculline/canopus_npc".replace("/", sep));
+        TestMethods.isDirExisting(absPath + "sirius_cli/src/test/temp_results/ms_temp_output/0_Bicuculline_Bicuculline/fingerid".replace("/", sep));
+        TestMethods.isDirExisting(absPath + "sirius_cli/src/test/temp_results/ms_temp_output/0_Bicuculline_Bicuculline/fingerprints".replace("/", sep));
+
+        TestMethods.isDirNotEmpty(Paths.get(absPath + "sirius_cli/src/test/temp_results/ms_temp_output/0_Bicuculline_Bicuculline/canopus".replace("/", sep)));
+        TestMethods.isDirNotEmpty(Paths.get(absPath + "sirius_cli/src/test/temp_results/ms_temp_output/0_Bicuculline_Bicuculline/canopus_npc".replace("/", sep)));
+        TestMethods.isDirNotEmpty(Paths.get(absPath + "sirius_cli/src/test/temp_results/ms_temp_output/0_Bicuculline_Bicuculline/fingerid".replace("/", sep)));
+        TestMethods.isDirNotEmpty(Paths.get(absPath + "sirius_cli/src/test/temp_results/ms_temp_output/0_Bicuculline_Bicuculline/fingerprints".replace("/", sep)));
+
+        TestMethods.areContentsEqual(absPath + "sirius_cli/src/test/temp_results/ms_temp_output/0_Bicuculline_Bicuculline/canopus".replace("/", sep),
+                absPath + "sirius_cli/src/test/temp_results/ms_temp_output/0_Bicuculline_Bicuculline/canopus_npc".replace("/", sep),
+                absPath + "sirius_cli/src/test/temp_results/ms_temp_output/0_Bicuculline_Bicuculline/fingerprints".replace("/", sep));
+
+
         int rank_count = 3;
         int table_feature = 2;
         String[] pre_formula = TestMethods.readCandidates(absPath + "sirius_cli/src/test/test_results/ms_candidates/ignore_formula/formula_candidates.tsv".replace("/", sep), rank_count, table_feature);
