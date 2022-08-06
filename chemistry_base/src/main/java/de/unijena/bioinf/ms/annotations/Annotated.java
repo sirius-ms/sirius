@@ -121,14 +121,30 @@ public interface Annotated<A extends DataAnnotation> {
      * Set the annotation with lazily extracted the Key
      * Setting the value to null will be ignored since the Key cannot be extracted
      *
+     * @param annotation The value that will be annotated to this object.
+     *
      * @return The value that was annotated or null
      */
-    default <D extends A> D annotate(@Nullable final D result) {
-        if (result != null) {
-            Class<D> clzz = (Class<D>) result.getClass();
-            setAnnotation(clzz, result);
+    default <D extends A> D annotate(@Nullable final D annotation) {
+        return annotate(annotation, true);
+    }
+
+    /**
+     * Annotates this object with lazily extracted the Key
+     * Setting the value to null will be ignored since the Key cannot be extracted
+     *
+     * @param annotation The value that will be annotated to this object.
+     * @param overrideExisting if true existing value will be overwritten.
+     *
+     * @return The value that was annotated or null
+     */
+    default <D extends A> D annotate(@Nullable final D annotation, boolean overrideExisting) {
+        if (annotation != null) {
+            Class<D> clzz = (Class<D>) annotation.getClass();
+            if (overrideExisting || !annotations().map.containsKey(clzz))
+                setAnnotation(clzz, annotation);
         }
-        return result;
+        return annotation;
     }
 
     default <D extends A> D takeAndAnnotate(@NotNull final JJob<D> resultJJob) {
