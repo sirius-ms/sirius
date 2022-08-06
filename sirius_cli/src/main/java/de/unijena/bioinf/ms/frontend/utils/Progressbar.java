@@ -1,6 +1,9 @@
 package de.unijena.bioinf.ms.frontend.utils;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.PrintStream;
+import java.security.InvalidParameterException;
 
 /**
  * class for a Progressbar instance.
@@ -8,6 +11,7 @@ import java.io.PrintStream;
  */
 public class Progressbar implements Runnable {
     private final Integer DELAY = 500;
+    private final Integer UPDATE = 10;
     private Thread thread;
     private Integer currentprogress;
     private final Integer maxprogress;
@@ -17,10 +21,11 @@ public class Progressbar implements Runnable {
     private final PrintStream output;
 
     /**
-     * generated a Progressbar instance
+     * generated a Progressbar instance. Please use the println function of this Progressbar instance
+     * to send additional Messages via the PrintStream
      * @param steps the amount of different Positions in the Progressbar
      */
-    public Progressbar(Integer steps, PrintStream output) {
+    public Progressbar(@NotNull Integer steps,@NotNull PrintStream output) {
         this.maxprogress = steps;
         this.output = output;
         this.currentprogress = 0;
@@ -29,7 +34,7 @@ public class Progressbar implements Runnable {
     }
 
     /**
-     * starts the Progressbar - Please do not write to the Printstream while the Progressbar is not finished
+     * starts the Progressbar
      */
     public void start() {
         if (this.thread == null) this.thread = new Thread(this);
@@ -50,8 +55,10 @@ public class Progressbar implements Runnable {
         try {
             int status = -1;
             while ((!thread.isInterrupted()) && currentprogress < maxprogress) {
-                output.print(printProgress(status));
-                Thread.sleep(this.DELAY);
+                for(int i=0; i<this.DELAY/this.UPDATE; i++) {
+                    output.print(printProgress(status));
+                    Thread.sleep(this.UPDATE);
+                }
                 status = (status+1) % 4;
             }
             output.println(printProgress(-1));
@@ -64,17 +71,17 @@ public class Progressbar implements Runnable {
      * @param steps the maximum amount of different positions
      * @return the size of the bar for any stepsize
      */
-    private int calculateStepsize(Integer steps) {
-        for(int i=2; i<=MAXSIZE; i++) {
-            if(i*steps > MAXSIZE) return (i-1);
-        }
-        return MAXSIZE;
+    private int calculateStepsize(@NotNull Integer steps) {
+        if (steps == 0) throw new InvalidParameterException("cannot have Stepsize 0");
+        if (steps > MAXSIZE) return 1;
+        return MAXSIZE/steps;
     }
 
     /**
      * prints the current Progress of the Progressbar
      * @return the current Progressbar
      */
+    @NotNull
     private String printProgress(int status) {
         StringBuilder progressbar = new StringBuilder();
         progressbar.append("█".repeat(stepsize*currentprogress));
@@ -84,6 +91,15 @@ public class Progressbar implements Runnable {
         else if (status == 3) progressbar.append("▉");
         while(progressbar.length() < actualMaxsize) progressbar.append(" ");
         return ("Progress: ["+progressbar+"]\r");
+    }
+
+    /**
+     * Please use this function to print Text while the Progressbar is still running
+     * @param message the message to send via the given PrintStream
+     */
+    public void println(String message) {
+        if (!thread.isInterrupted()) output.print(message+"\r\n");
+        else output.println(message);
     }
 
     /**

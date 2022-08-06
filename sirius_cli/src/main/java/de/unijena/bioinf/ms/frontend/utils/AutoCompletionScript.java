@@ -69,6 +69,7 @@ public class AutoCompletionScript implements Callable<Integer> {
         Files.writeString(PATH, s);
         s = formatScript();
         Files.writeString(PATH, s);
+        this.progressbar.interrupt();
         System.out.printf("AutocompletionScript created successfully at %s%n", PATH);
         if (install.toInstall()) installScript(s, OS);
         return 1;
