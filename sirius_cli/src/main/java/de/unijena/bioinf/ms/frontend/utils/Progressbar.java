@@ -4,7 +4,7 @@ import java.io.PrintStream;
 
 /**
  * class for a Progressbar instance.
- * Do not print to System.out while the Progressbar is not finished
+ * Do not print to the given PrintStream while the Progressbar is not finished
  */
 public class Progressbar implements Runnable {
     private final Integer DELAY = 500;
@@ -40,12 +40,16 @@ public class Progressbar implements Runnable {
      * interrupts the Progressbar to enable printing to the PrintStream
      */
     public void interrupt() {
-        thread.interrupt();
+        if (!thread.isInterrupted()) thread.interrupt();
     }
+
+    /**
+     * run method for printing the progressbar to the given PrintStream. Called via internal Thread
+     */
     public void run() {
         try {
             int status = -1;
-            while (currentprogress < maxprogress) {
+            while ((!thread.isInterrupted()) && currentprogress < maxprogress) {
                 output.print(printProgress(status));
                 Thread.sleep(this.DELAY);
                 status = (status+1) % 4;
