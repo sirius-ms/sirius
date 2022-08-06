@@ -71,7 +71,7 @@ public class ExportPredictionsOptions implements StandaloneTool<ExportPrediction
     protected PredictionsOptions predictionsOptions;
 
     @Override
-    public ExportPredictionWorkflow makeWorkflow(RootOptions<?, ?, ?> rootOptions, ParameterConfig config) {
+    public ExportPredictionWorkflow makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
         return new ExportPredictionWorkflow((PreprocessingJob<? extends Iterable<Instance>>) rootOptions.makeDefaultPreprocessingJob(), this, config);
     }
 

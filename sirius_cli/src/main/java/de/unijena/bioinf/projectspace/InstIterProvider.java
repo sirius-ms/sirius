@@ -24,11 +24,11 @@ import java.util.Iterator;
 import java.util.function.Predicate;
 
 public interface InstIterProvider extends Iterator<Ms2Experiment> {
-    default InstanceImportIteratorMS2Exp asInstanceIterator(ProjectSpaceManager projectSpace) {
+    default InstanceImportIteratorMS2Exp asInstanceIterator(ProjectSpaceManager<?> projectSpace) {
         return new InstanceImportIteratorMS2Exp(this, projectSpace);
     }
 
-    default InstanceImportIteratorMS2Exp asInstanceIterator(ProjectSpaceManager projectSpace, Predicate<CompoundContainer> compoundFilter) {
+    default InstanceImportIteratorMS2Exp asInstanceIterator(ProjectSpaceManager<?> projectSpace, Predicate<CompoundContainer> compoundFilter) {
         return new InstanceImportIteratorMS2Exp(this, projectSpace, compoundFilter);
     }
 }

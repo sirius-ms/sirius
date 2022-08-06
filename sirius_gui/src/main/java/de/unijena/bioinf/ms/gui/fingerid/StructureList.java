@@ -169,7 +169,7 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
                     checkForInterruption();
 
                     if (refillElementsEDT(emChache))
-                        loadMols = Jobs.MANAGER.submitJob(new LoadMoleculeJob(emChache));
+                        loadMols = Jobs.MANAGER().submitJob(new LoadMoleculeJob(emChache));
 
                     return true;
                 }

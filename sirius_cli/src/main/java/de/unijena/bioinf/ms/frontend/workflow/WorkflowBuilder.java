@@ -64,10 +64,13 @@ import java.util.stream.Stream;
  * We just have to define its parameters in h
  */
 
-// todo In general a lot of the configuration here could be done on compile time.
-//  On the other hand I do not think it is performance critical.
 
-public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
+/*
+ * NOTE: In general a lot of the configuration here could be done on compile time.
+ * On the other hand I do not think it is performance critical.
+ */
+
+public class WorkflowBuilder<R extends RootOptions<?,?,?,?>> {
 
     private final InstanceBufferFactory<?> bufferFactory;
     //root

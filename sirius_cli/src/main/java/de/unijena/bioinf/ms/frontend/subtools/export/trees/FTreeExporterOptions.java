@@ -57,7 +57,7 @@ public class FTreeExporterOptions implements StandaloneTool<FTreeExporterWorkflo
 
 
     @Override
-    public FTreeExporterWorkflow makeWorkflow(RootOptions<?, ?, ?> rootOptions, ParameterConfig config) {
+    public FTreeExporterWorkflow makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
         return new FTreeExporterWorkflow((PreprocessingJob<? extends Iterable<Instance>>) rootOptions.makeDefaultPreprocessingJob(), this, config);
     }
 }

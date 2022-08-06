@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class InstanceBeanFactory implements InstanceFactory<InstanceBean> {
     @Override
-    public InstanceBean create(@NotNull CompoundContainer compoundContainer, @NotNull ProjectSpaceManager spaceManager) {
+    public InstanceBean create(@NotNull CompoundContainer compoundContainer, @NotNull ProjectSpaceManager<InstanceBean> spaceManager) {
         return new InstanceBean(compoundContainer,spaceManager);
     }
 }

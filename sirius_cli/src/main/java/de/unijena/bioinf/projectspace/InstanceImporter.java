@@ -62,14 +62,14 @@ import java.util.stream.Collectors;
 
 public class InstanceImporter {
     protected static final Logger LOG = LoggerFactory.getLogger(InstanceImporter.class);
-    private final ProjectSpaceManager importTarget;
+    private final ProjectSpaceManager<?> importTarget;
     private final Predicate<Ms2Experiment> expFilter;
     private final Predicate<CompoundContainerId> cidFilter;
     private final boolean move; //try to move instead of copy the data where possible
     private final boolean updateFingerprintData; //try to move instead of copy the data where possible
 
 
-    public InstanceImporter(ProjectSpaceManager importTarget, Predicate<Ms2Experiment> expFilter, Predicate<CompoundContainerId> cidFilter, boolean move, boolean updateFingerprintData) {
+    public InstanceImporter(ProjectSpaceManager<?> importTarget, Predicate<Ms2Experiment> expFilter, Predicate<CompoundContainerId> cidFilter, boolean move, boolean updateFingerprintData) {
         this.importTarget = importTarget;
         this.expFilter = expFilter;
         this.cidFilter = cidFilter;
@@ -77,7 +77,7 @@ public class InstanceImporter {
         this.updateFingerprintData = updateFingerprintData;
     }
 
-    public InstanceImporter(ProjectSpaceManager importTarget, Predicate<Ms2Experiment> expFilter, Predicate<CompoundContainerId> cidFilter) {
+    public InstanceImporter(ProjectSpaceManager<?> importTarget, Predicate<Ms2Experiment> expFilter, Predicate<CompoundContainerId> cidFilter) {
         this(importTarget, expFilter, cidFilter, false, false);
     }
 
@@ -198,7 +198,7 @@ public class InstanceImporter {
     }
 
     public static List<CompoundContainerId> importProject(
-            @NotNull SiriusProjectSpace inputSpace, @NotNull ProjectSpaceManager importTarget,
+            @NotNull SiriusProjectSpace inputSpace, @NotNull ProjectSpaceManager<?> importTarget,
             @NotNull Predicate<CompoundContainerId> cidFilter, boolean move, boolean updateFingerprintVersion) throws IOException {
 
         return importProject(inputSpace, importTarget, cidFilter, move, updateFingerprintVersion, null);
@@ -207,7 +207,7 @@ public class InstanceImporter {
     // we do not exp level filter here since we want to prevent reading the spectrum file
     // we do file system level copies where we can here
     public static List<CompoundContainerId> importProject(
-            @NotNull SiriusProjectSpace inputSpace, @NotNull ProjectSpaceManager importTarget,
+            @NotNull SiriusProjectSpace inputSpace, @NotNull ProjectSpaceManager<?> importTarget,
             @NotNull Predicate<CompoundContainerId> cidFilter, boolean move, boolean updateFingerprintVersion, @Nullable JobProgressMerger prog) throws IOException {
 
         final int size = inputSpace.size();
@@ -307,7 +307,7 @@ public class InstanceImporter {
 
                 if (resultsToSkip != null) {
                     LoggerFactory.getLogger(InstanceImporter.class).info("Updating Compound score of '" + id + "' after deleting Fingerprint related results...");
-                    Instance inst = importTarget.newInstanceFromCompound(id);
+                    Instance inst = importTarget.getInstanceFromCompound(id);
                     List<FormulaResult> l = inst.loadFormulaResults(FormulaScoring.class).stream().map(SScored::getCandidate)
                             .filter(r -> r.getAnnotation(FormulaScoring.class).map(s -> (s.removeAnnotation(TopCSIScore.class) != null)
                                     || (s.removeAnnotation(ConfidenceScore.class) != null)).orElse(false))
@@ -357,7 +357,7 @@ public class InstanceImporter {
     }
 
 
-    public static Predicate<String> checkDataCompatibility(@NotNull Path toImportPath, @Nullable ProjectSpaceManager importTarget, NetUtils.InterruptionCheck interrupted) throws IOException {
+    public static Predicate<String> checkDataCompatibility(@NotNull Path toImportPath, @Nullable ProjectSpaceManager<?> importTarget, NetUtils.InterruptionCheck interrupted) throws IOException {
         try {
             final ProjectReader reader;
             if (FileUtils.isZipArchive(toImportPath))
@@ -398,7 +398,7 @@ public class InstanceImporter {
      * @param interrupted  Tell the waiting job how it can check if it was interrupted
      * @return null if compatible, predicate checking for paths to be skipped during import.
      */
-    public static Predicate<String> checkDataCompatibility(@NotNull SiriusProjectSpace toImport, @Nullable ProjectSpaceManager importTarget, NetUtils.InterruptionCheck interrupted) {
+    public static Predicate<String> checkDataCompatibility(@NotNull SiriusProjectSpace toImport, @Nullable ProjectSpaceManager<?> importTarget, NetUtils.InterruptionCheck interrupted) {
         Predicate<String> r;
         r = checkDataCompatibility(toImport.getProjectSpaceProperty(FingerIdDataProperty.class).orElse(null),
                 FingerIdData.class, ApplicationCore.WEB_API::getFingerIdData, importTarget, interrupted);
@@ -417,7 +417,7 @@ public class InstanceImporter {
 
 
     public static <F extends FingerprintVersion, D extends FingerprintData<F>, P extends PosNegFpProperty<F, D>>
-    Predicate<String> checkDataCompatibility(@Nullable P importFd, Class<D> dataClz, @NotNull IOFunctions.IOFunction<PredictorType, D> dataLoader, @Nullable ProjectSpaceManager importTarget, NetUtils.InterruptionCheck interrupted) {
+    Predicate<String> checkDataCompatibility(@Nullable P importFd, Class<D> dataClz, @NotNull IOFunctions.IOFunction<PredictorType, D> dataLoader, @Nullable ProjectSpaceManager<?> importTarget, NetUtils.InterruptionCheck interrupted) {
         try {
             //check prop
             if (importFd != null) {

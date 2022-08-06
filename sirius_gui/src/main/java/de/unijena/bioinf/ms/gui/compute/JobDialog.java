@@ -51,7 +51,7 @@ public class JobDialog extends JDialog {
 
     private JJobManagerPanel createJobManagerPanel() {
         //todo button enable disable stuff
-        final JJobTable jobTable = new JJobTable(Jobs.MANAGER, new JJobTableFormat(), new SiriusTableCellRenderer());
+        final JJobTable jobTable = new JJobTable(Jobs.MANAGER(), new JJobTableFormat(), new SiriusTableCellRenderer());
         jobTable.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) { // check if a double click
@@ -100,7 +100,7 @@ public class JobDialog extends JDialog {
         JPanel cleaningButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JButton clearFailedB = new JButton("Clear");
         clearFailedB.setToolTipText("Remove all done/canceled/failed jobs from job list. This will also remove the logs");
-        clearFailedB.addActionListener(e -> Jobs.MANAGER.clearFinished()); //todo this could be a global action
+        clearFailedB.addActionListener(e -> Jobs.MANAGER().clearFinished()); //todo this could be a global action
 
 
         cleaningButtonPanel.add(clearFailedB);

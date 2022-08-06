@@ -36,12 +36,12 @@ import java.util.stream.Collectors;
 
 public class Instance {
     @NotNull
-    protected final ProjectSpaceManager spaceManager;
+    protected final ProjectSpaceManager<?> spaceManager;
     private CompoundContainer compoundCache;
 
     protected Map<FormulaResultId, FormulaResult> formulaResultCache = new HashMap<>();
 
-    protected Instance(@NotNull CompoundContainer compoundContainer, @NotNull ProjectSpaceManager spaceManager) {
+    protected Instance(@NotNull CompoundContainer compoundContainer, @NotNull ProjectSpaceManager<?> spaceManager) {
         this.compoundCache = compoundContainer;
         this.spaceManager = spaceManager;
     }
@@ -63,7 +63,7 @@ public class Instance {
         return getProjectSpaceManager().projectSpace();
     }
 
-    public ProjectSpaceManager getProjectSpaceManager() {
+    public ProjectSpaceManager<?> getProjectSpaceManager() {
         return spaceManager;
     }
 
