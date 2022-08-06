@@ -41,15 +41,11 @@ import java.util.function.Function;
  */
 
 public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements ToolChainJob<Instance> {
+    //todo store only Id and use Cache in projectspace manage instead -> allows for larger InstanceBuffer sizes.
     protected Instance input = null;
-    protected final boolean needsMS2;
 
     public InstanceJob(JobSubmitter submitter) {
-        this(submitter, true);
-    }
-    public InstanceJob(JobSubmitter submitter, boolean needsMS2) {
         super(submitter);
-        this.needsMS2 = needsMS2;
     }
 
     @Override
@@ -104,7 +100,7 @@ public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements 
     protected void checkInput() {
         if (input == null)
             throw new IllegalArgumentException("No Input available! Maybe a previous job could not provide the needed results due to failure.");
-        if (needsMS2)
+        if (needsMs2())
             if (input.getExperiment().getMs2Spectra().isEmpty())
                 throw new IllegalArgumentException("Input contains no non empty MS/MS spectrum but MS/MS data is mandatory for this job.");
     }
@@ -144,4 +140,6 @@ public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements 
     protected boolean checkFingerprintCompatibility() throws TimeoutException, InterruptedException {
         return input.getProjectSpaceManager().checkAndFixDataFiles(this::checkForInterruption);
     }
+
+    protected boolean needsMs2(){return true;};
 }

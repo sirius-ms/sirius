@@ -17,41 +17,47 @@
  *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.frontend.subtools.gui;
+package de.unijena.bioinf.ms.frontend.subtools;
 
-import de.unijena.bioinf.ms.frontend.subtools.*;
-import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
-import de.unijena.bioinf.projectspace.InstanceBean;
-import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
+import de.unijena.bioinf.projectspace.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@CommandLine.Command(name = "gui-background-computation", aliases = {"gbc"},  versionProvider = Provide.Versions.class, sortOptions = false)
-public class GuiComputeRoot implements RootOptions<GuiProjectSpaceManager, PreprocessingJob<List<InstanceBean>>, PostprocessingJob<?>> {
+@CommandLine.Command(name = "background-computation", aliases = {"bc"}, versionProvider = Provide.Versions.class, sortOptions = false)
+public class ComputeRootOption<P extends ProjectSpaceManager<I>, I extends Instance> implements RootOptions<I, P, PreprocessingJob<Iterable<I>>, PostprocessingJob<?>> {
 
-    protected final GuiProjectSpaceManager guiProjectSpace;
-    protected final List<InstanceBean> instances;
+    protected final P projectSpace;
+    protected Iterable<I> instances;
+
     protected InputFilesOptions inputFiles = null;
 
-    public GuiComputeRoot(GuiProjectSpaceManager guiProjectSpace, List<InstanceBean> instances) {
-        this.guiProjectSpace = guiProjectSpace;
+    public ComputeRootOption(@NotNull P projectSpace) {
+        this(projectSpace, (Iterable<I>) null);
+
+    }
+    public ComputeRootOption(@NotNull P projectSpace, @Nullable Iterable<I> instances) {
+        this.projectSpace = projectSpace;
         this.instances = instances;
+    }
+
+    public ComputeRootOption(@NotNull P projectSpace, @NotNull List<CompoundContainerId> containerIds) {
+        this.projectSpace = projectSpace;
+        instances = () -> makeInstanceIterator(containerIds.iterator());
     }
 
     /**
      * here we need to provide the PP to write on.
-     * */
+     */
     @Override
-    public GuiProjectSpaceManager getProjectSpace() {
-        return guiProjectSpace;
+    public P getProjectSpace() {
+        return projectSpace;
     }
 
     @Override
@@ -80,11 +86,27 @@ public class GuiComputeRoot implements RootOptions<GuiProjectSpaceManager, Prepr
      * @return PreprocessingJob that provides the iterable of the Instances to be computed
      */
     @Override
-    public @NotNull PreprocessingJob<List<InstanceBean>> makeDefaultPreprocessingJob() {
+    public @NotNull PreprocessingJob<Iterable<I>> makeDefaultPreprocessingJob() {
         return new PreprocessingJob<>() {
             @Override
-            protected List<InstanceBean> compute() {
+            protected Iterable<I> compute() {
                 return instances;
+            }
+        };
+    }
+
+    private Iterator<I> makeInstanceIterator(@NotNull final Iterator<CompoundContainerId> compoundIDs) {
+        return new Iterator<>() {
+            @Override
+            public boolean hasNext() {
+                return compoundIDs.hasNext();
+            }
+
+            @Override
+            public I next() {
+                final CompoundContainerId c = compoundIDs.next();
+                if (c == null) return null;
+                return projectSpace.getInstanceFromCompound(c);
             }
         };
     }
@@ -102,7 +124,7 @@ public class GuiComputeRoot implements RootOptions<GuiProjectSpaceManager, Prepr
     }
 
     @Override
-    public ProjectSpaceManagerFactory<GuiProjectSpaceManager> getSpaceManagerFactory() {
+    public ProjectSpaceManagerFactory<I, P> getSpaceManagerFactory() {
         return null;
     }
 }

@@ -50,13 +50,13 @@ import java.util.logging.LogManager;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 @CommandLine.Command(name = "sirius", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false, showDefaultValues = true)
-public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOptions<M, PreprocessingJob<M>, PostprocessingJob<Boolean>> {
+public class CLIRootOptions<I extends Instance, M extends ProjectSpaceManager<I>> implements RootOptions<I, M, PreprocessingJob<M>, PostprocessingJob<Boolean>> {
     public static final Logger LOG = LoggerFactory.getLogger(CLIRootOptions.class);
 
     protected final DefaultParameterConfigLoader defaultConfigOptions;
-    protected final ProjectSpaceManagerFactory<M> spaceManagerFactory;
+    protected final ProjectSpaceManagerFactory<I, M> spaceManagerFactory;
 
-    public CLIRootOptions(@NotNull DefaultParameterConfigLoader defaultConfigOptions, @NotNull ProjectSpaceManagerFactory<M> spaceManagerFactory) {
+    public CLIRootOptions(@NotNull DefaultParameterConfigLoader defaultConfigOptions, @NotNull ProjectSpaceManagerFactory<I, M> spaceManagerFactory) {
         this.defaultConfigOptions = defaultConfigOptions;
         this.spaceManagerFactory = spaceManagerFactory;
     }
@@ -145,7 +145,7 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
 
     private M projectSpaceToWriteOn = null;
 
-    public ProjectSpaceManagerFactory<M> getSpaceManagerFactory() {
+    public ProjectSpaceManagerFactory<I, M> getSpaceManagerFactory() {
         return spaceManagerFactory;
     }
 

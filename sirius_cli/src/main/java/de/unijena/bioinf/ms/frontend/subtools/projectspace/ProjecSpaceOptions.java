@@ -224,7 +224,7 @@ public class ProjecSpaceOptions implements StandaloneTool<ProjectSpaceWorkflow> 
     @CommandLine.Option(names = {"--move", "-m"}, description = "DANGERZONE: Move instead of copy data (where possible) when merging or splitting projects to save time. Be aware of the risk that you may end up with corrupted input or output data when the program crashes.")
     public boolean move = false;
 
-    public ProjectSpaceWorkflow makeWorkflow(RootOptions<?,?,?> rootOptions, ParameterConfig config) {
+    public ProjectSpaceWorkflow makeWorkflow(RootOptions<?,?,?,?> rootOptions, ParameterConfig config) {
         return new ProjectSpaceWorkflow(rootOptions, this, config);
     }
 }

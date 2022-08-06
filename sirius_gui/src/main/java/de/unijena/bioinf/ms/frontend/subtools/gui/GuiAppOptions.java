@@ -68,18 +68,18 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
     }
 
     @Override
-    public Flow makeWorkflow(RootOptions<?, ?, ?> rootOptions, ParameterConfig config) {
+    public Flow makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
         return new Flow(rootOptions, config);
 
     }
 
     public class Flow implements Workflow {
-        private final PreprocessingJob<ProjectSpaceManager> preproJob;
+        private final PreprocessingJob<GuiProjectSpaceManager> preproJob;
         private final ParameterConfig config;
 
 
-        private Flow(RootOptions<?, ?, ?> rootOptions, ParameterConfig config) {
-            this.preproJob = (PreprocessingJob<ProjectSpaceManager>) rootOptions.makeDefaultPreprocessingJob();
+        private Flow(RootOptions<?,?, ?, ?> rootOptions, ParameterConfig config) {
+            this.preproJob = (PreprocessingJob<GuiProjectSpaceManager>) rootOptions.makeDefaultPreprocessingJob();
             this.config = config;
         }
 
@@ -99,13 +99,13 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
             MainFrame.MF.addWindowListener(new WindowAdapter() {
                 @Override
                 public void windowClosing(WindowEvent event) {
-                    if (!Jobs.MANAGER.hasActiveJobs() || new QuestionDialog(MainFrame.MF,
+                    if (!Jobs.MANAGER().hasActiveJobs() || new QuestionDialog(MainFrame.MF,
                             "<html>Do you really want close SIRIUS?" +
                                     "<br> <b>There are still some Jobs running.</b> Running Jobs will be canceled when closing SIRIUS.</html>", DONT_ASK_CLOSE_KEY).isSuccess()) {
                         try {
                             ApplicationCore.DEFAULT_LOGGER.info("Saving properties file before termination.");
                             SiriusProperties.SIRIUS_PROPERTIES_FILE().store();
-                            Jobs.runInBackgroundAndLoad(MainFrame.MF, "Cancelling running jobs...", Jobs::cancelALL);
+                            Jobs.runInBackgroundAndLoad(MainFrame.MF, "Cancelling running jobs...", Jobs::cancelAllRuns);
 
                             ApplicationCore.DEFAULT_LOGGER.info("Closing Project-Space");
                             Jobs.runInBackgroundAndLoad(MainFrame.MF, "Closing Project-Space", true, new TinyBackgroundJJob<Boolean>() {
@@ -142,7 +142,7 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
 //                        ApplicationCore.DEFAULT_LOGGER.info("Initializing Startup Project-Space...");
                         updateProgress(0, max, progress++, "Initializing Project-Space...");
                         // run prepro job. this jobs imports all existing data into the projectspace we use for the GUI session
-                        final ProjectSpaceManager projectSpace = SiriusJobs.getGlobalJobManager().submitJob(preproJob).takeResult();
+                        final ProjectSpaceManager<?> projectSpace = SiriusJobs.getGlobalJobManager().submitJob(preproJob).takeResult();
 //                        ApplicationCore.DEFAULT_LOGGER.info("GUI initialized, showing GUI..");
                         updateProgress(0, max, progress++, "Painting GUI...");
                         MainFrame.MF.decoradeMainFrameInstance((GuiProjectSpaceManager) projectSpace);

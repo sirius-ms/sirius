@@ -30,14 +30,14 @@ import de.unijena.bioinf.jjobs.BasicJJob;
  */
 public abstract class PreprocessingJob<P extends Iterable<? extends Instance>> extends BasicJJob<P> {
 //    protected InputFilesOptions input;
-//    protected ProjectSpaceManager space;
+//    protected ProjectSpaceManager<?> space;
 
     public PreprocessingJob() {
                 super(JobType.SCHEDULER);
 
     }
 
-    /*public PreprocessingJob(@Nullable InputFilesOptions input, @Nullable ProjectSpaceManager space) {
+    /*public PreprocessingJob(@Nullable InputFilesOptions input, @Nullable ProjectSpaceManager<?> space) {
         super(JobType.SCHEDULER);
 //        this.input = input;
 //        this.space = space;
@@ -47,7 +47,7 @@ public abstract class PreprocessingJob<P extends Iterable<? extends Instance>> e
         this.input = input;
     }
 
-    public void setProjectSpace(ProjectSpaceManager space) {
+    public void setProjectSpace(ProjectSpaceManager<?> space) {
         this.space = space;
     }*/
 }

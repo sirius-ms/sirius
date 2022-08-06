@@ -43,7 +43,12 @@ import java.util.Optional;
 
 public class SiriusSubToolJob extends InstanceJob {
     public SiriusSubToolJob(JobSubmitter jobSubmitter) {
-        super(jobSubmitter, false);
+        super(jobSubmitter);
+    }
+
+    @Override
+    protected boolean needsMs2() {
+        return false;
     }
 
     @Override

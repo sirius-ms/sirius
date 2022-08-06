@@ -56,7 +56,7 @@ public class GuiInstanceBufferFactory implements InstanceBufferFactory<SimpleIns
                     Jobs.submit((ProgressJJob<?>)j, j::identifier, () -> jobType);
                     return j;
                 } else {
-                    return Jobs.MANAGER.submitJob(j);
+                    return Jobs.MANAGER().submitJob(j);
                 }
             }
         });

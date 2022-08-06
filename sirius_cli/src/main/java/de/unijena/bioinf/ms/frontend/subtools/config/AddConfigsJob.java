@@ -39,8 +39,13 @@ public class AddConfigsJob extends InstanceJob {
     private final ParameterConfig computeConfig;
 
     public AddConfigsJob(ParameterConfig computeConfig) {
-        super(SiriusJobs.getGlobalJobManager(), false);
+        super(SiriusJobs.getGlobalJobManager());
         this.computeConfig = computeConfig;
+    }
+
+    @Override
+    protected boolean needsMs2() {
+        return false;
     }
 
     @Override

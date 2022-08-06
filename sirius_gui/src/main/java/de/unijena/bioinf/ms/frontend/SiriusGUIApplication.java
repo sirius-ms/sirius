@@ -104,8 +104,11 @@ public class SiriusGUIApplication extends SiriusCLIApplication {
                         ApplicationCore.DEFAULT_LOGGER.info("Swing Job MANAGER initialized! " + SiriusJobs.getGlobalJobManager().getCPUThreads() + " : " + SiriusJobs.getGlobalJobManager().getIOThreads());
                         updateProgress(0, 7, 2, "Configure shutdown hooks...");
 
+                        measureTime("Setting GUI Instance Buffer factory");
+                        BackgroundRuns.setBufferFactory(new GuiInstanceBufferFactory());
+
                         configureShutDownHook(() -> {
-                            Jobs.cancelALL();
+                            Jobs.cancelAllRuns();
                             shutdownWebservice().run();
                         });
 
@@ -116,7 +119,7 @@ public class SiriusGUIApplication extends SiriusCLIApplication {
                             CLIRootOptions rootOptions = new CLIRootOptions<>(configOptionLoader, new GuiProjectSpaceManagerFactory());
                             updateProgress(0, 7, 4, "Firing up SIRIUS... ");
                             removePropertyChangeListener(splash);
-                            return new GuiWorkflowBuilder<>(rootOptions, configOptionLoader, new GuiInstanceBufferFactory(), splash);
+                            return new GuiWorkflowBuilder<>(rootOptions, configOptionLoader, BackgroundRuns.getBufferFactory(), splash);
                         });
                         return null;
                     }

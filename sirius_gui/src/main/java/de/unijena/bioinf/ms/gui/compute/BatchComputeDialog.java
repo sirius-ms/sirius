@@ -25,11 +25,6 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
-import de.unijena.bioinf.ms.frontend.Run;
-import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
-import de.unijena.bioinf.ms.frontend.subtools.gui.GuiComputeRoot;
-import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
-import de.unijena.bioinf.ms.frontend.workfow.GuiInstanceBufferFactory;
 import de.unijena.bioinf.ms.gui.actions.CheckConnectionAction;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.*;
@@ -299,9 +294,9 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             } else {
                 new WarningDialog(this, "No web service connection!",
                         "<html><body>Could not perform Fingerprint compatibility check <br> " +
-                        "due to missing web service connection (see Webservice panel for details). <br> " +
-                        "CSI:FingerID and CANOPUS are not available; all corresponding jobs will fail and be skipped." +
-                        "</body></html>", DO_NOT_SHOW_AGAIN_KEY_NO_FP_CHECK);
+                                "due to missing web service connection (see Webservice panel for details). <br> " +
+                                "CSI:FingerID and CANOPUS are not available; all corresponding jobs will fail and be skipped." +
+                                "</body></html>", DO_NOT_SHOW_AGAIN_KEY_NO_FP_CHECK);
 
 
             }
@@ -353,15 +348,8 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
 
                 try {
                     final List<String> toolList = new ArrayList<>();
-                    final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader(PropertyManager.DEFAULTS.newIndependentInstance("BATCH_COMPUTE"));
-                    final WorkflowBuilder<GuiComputeRoot> wfBuilder = new WorkflowBuilder<>(new GuiComputeRoot(MF.ps(), finalComps), configOptionLoader, new GuiInstanceBufferFactory());
-                    final Run computation = new Run(wfBuilder);
                     final List<String> c = makeCommand(toolList);
-                    computation.parseArgs(c.toArray(String[]::new));
-
-                    if (computation.isWorkflowDefined())
-                        Jobs.runWorkflow(computation.getFlow(), finalComps, c, String.join(" > ", toolList));//todo make som nice head job that does some organizing stuff
-                    //todo else some error message with pico cli output
+                    Jobs.runCommand(c, finalComps, String.join(" > ", toolList));
                 } catch (Exception e) {
                     new ExceptionDialog(MF, e.getMessage());
                 }

@@ -70,17 +70,13 @@ public class ToolChainWorkflow implements Workflow {
         if (canceled.get())
             throw new InterruptedException("Workflow was canceled");
     }
-
+    //todo add PROGRESS support!
     //todo allow dataset jobs da do not have to put all exps into memory
     //todo low io mode: if instance buffer is infinity we do never have to read instances from disk (write only)
     @Override
     public void run() {
         try {
             checkForCancellation();
-
-            //todo the tool chain should not know anything about the project space. that should be outside this class.
-            //todo maybe closing the space should be a "postprocess" job??
-//            final ProjectSpaceManager project = (ProjectSpaceManager) ;
             // prepare input
             Iterable<? extends Instance> iteratorSource = SiriusJobs.getGlobalJobManager().submitJob(preprocessingJob).awaitResult();
             // build toolchain
