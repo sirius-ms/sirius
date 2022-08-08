@@ -149,6 +149,51 @@ testGUI:
       - stable
 
 
+publishCLI:
+  variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  stage: publish
+  script:
+    - cd sirius_dist/sirius_cli_single_os
+    - gradle clean artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  needs: [testCLI]
+  dependencies:
+    - buildCLI
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - master
+      - master-dist-tests
+      - stable
+
+
+publishGUI:
+  variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  stage: publish
+  script:
+    - cd sirius_dist/sirius_gui_single_os
+    - gradle clean artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  needs: [testGUI]
+  dependencies:
+    - buildGUI
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - master
+      - master-dist-tests
+      - stable
+
+
+
 #push to github for multiOS build
 pushToGitHub:
   stage: publish
