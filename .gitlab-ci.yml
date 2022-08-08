@@ -114,6 +114,7 @@ buildGUI:
 testCLI:
   stage: test
   script:
+    - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius login --token $SIRIUS_TOKEN
     - gradle :sirius_dist:sirius_cli_single_os:distImageTest
   cache:
     key: "$CI_COMMIT_REF_NAME"
@@ -133,6 +134,7 @@ testCLI:
 testGUI:
   stage: test
   script:
+    - ./sirius_dist/sirius_gui_single_os/build/distributions/sirius/bin/sirius login --token $SIRIUS_TOKEN
     - gradle :sirius_dist:sirius_gui_single_os:distImageTest
   cache:
     key: "$CI_COMMIT_REF_NAME"
@@ -149,49 +151,48 @@ testGUI:
       - stable
 
 
-#publishCLI:
-#  variables:
-#    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-#  stage: publish
-#  script:
-#    - cd sirius_dist/sirius_cli_single_os
-#    - gradle clean artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
-#  cache:
-#    key: "$CI_COMMIT_REF_NAME"
-#    policy: push
-#  needs: [buildCLI, testCLI]
-#  dependencies:
-#    - buildCLI
-#  tags:
-#    - kubernetes
-#  only:
-#    refs:
-#      - master
-#      - master-dist-tests
-#      - stable
-#
-#
-#publishGUI:
-#  variables:
-#    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-#  stage: publish
-#  script:
-#    - cd sirius_dist/sirius_gui_single_os
-#    - gradle clean artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
-#  cache:
-#    key: "$CI_COMMIT_REF_NAME"
-#    policy: push
-#  needs: [buildGUI, testGUI]
-#  dependencies:
-#    - buildGUI
-#  tags:
-#    - kubernetes
-#  only:
-#    refs:
-#      - master
-#      - master-dist-tests
-#      - stable
+publishCLI:
+  variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  stage: publish
+  script:
+    - cd sirius_dist/sirius_cli_single_os
+    - gradle clean artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  needs: [buildCLI, testCLI]
+  dependencies:
+    - buildCLI
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - master
+      - master-dist-tests
+      - stable
 
+
+publishGUI:
+  variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  stage: publish
+  script:
+    - cd sirius_dist/sirius_gui_single_os
+    - gradle clean artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  needs: [buildGUI, testGUI]
+  dependencies:
+    - buildGUI
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - master
+      - master-dist-tests
+      - stable
 
 
 #push to github for multiOS build
