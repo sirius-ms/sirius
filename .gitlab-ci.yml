@@ -159,7 +159,7 @@ publishCLI:
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
-  needs: [testCLI]
+  needs: [buildCLI, testCLI]
   dependencies:
     - buildCLI
   tags:
@@ -181,7 +181,7 @@ publishGUI:
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
-  needs: [testGUI]
+  needs: [buildGUI, testGUI]
   dependencies:
     - buildGUI
   tags:
