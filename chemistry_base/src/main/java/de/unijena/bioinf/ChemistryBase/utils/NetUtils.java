@@ -28,11 +28,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class NetUtils {
+    private static final Set<CountDownLatch> WAITERS = Collections.newSetFromMap(new ConcurrentHashMap<>());
     public static final Logger LOG = LoggerFactory.getLogger(NetUtils.class);
-    public final static boolean DEBUG = PropertyManager.getBoolean("de.unijena.bioinf.ms.rest.DEBUG",false);
+    public final static boolean DEBUG = PropertyManager.getBoolean("de.unijena.bioinf.ms.rest.DEBUG", false);
 
     public static void tryAndWaitAsJJob(NetRunnable tryToDo) {
         tryAndWaitAsJJob(() -> {
@@ -113,7 +119,16 @@ public class NetUtils {
     public static void sleep(@NotNull final InterruptionCheck interrupted, long waitTime) throws InterruptedException {
         for (long i = waitTime; i > 0; i -= TICK) {
             interrupted.check();
-            Thread.sleep(Math.min(i, TICK));
+            final CountDownLatch waiter = new CountDownLatch(1);
+            try {
+                WAITERS.add(waiter);
+                if (waiter.await(Math.min(i, TICK), TimeUnit.MILLISECONDS)){
+                    LOG.info("Stop waiting due to external interruption.");
+                    return;
+                }
+            } finally {
+                WAITERS.remove(waiter);
+            }
         }
     }
 
@@ -138,6 +153,11 @@ public class NetUtils {
             if (thread.isInterrupted())
                 throw new InterruptedException("Interruption by thread: " + thread.getName());
         };
+    }
+
+    public synchronized static void awakeAll() {
+        //iterator against concurrent modification exception
+        WAITERS.iterator().forEachRemaining(CountDownLatch::countDown);
     }
 
 
