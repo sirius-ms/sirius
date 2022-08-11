@@ -36,12 +36,12 @@ import java.util.stream.Collectors;
 
 public class Instance {
     @NotNull
-    protected final ProjectSpaceManager spaceManager;
+    protected final ProjectSpaceManager<?> spaceManager;
     private CompoundContainer compoundCache;
 
     protected Map<FormulaResultId, FormulaResult> formulaResultCache = new HashMap<>();
 
-    protected Instance(@NotNull CompoundContainer compoundContainer, @NotNull ProjectSpaceManager spaceManager) {
+    protected Instance(@NotNull CompoundContainer compoundContainer, @NotNull ProjectSpaceManager<?> spaceManager) {
         this.compoundCache = compoundContainer;
         this.spaceManager = spaceManager;
     }
@@ -63,7 +63,7 @@ public class Instance {
         return getProjectSpaceManager().projectSpace();
     }
 
-    public ProjectSpaceManager getProjectSpaceManager() {
+    public ProjectSpaceManager<?> getProjectSpaceManager() {
         return spaceManager;
     }
 
@@ -132,12 +132,12 @@ public class Instance {
 
     @SafeVarargs
     public final synchronized Optional<FormulaResult> loadTopFormulaResult(Class<? extends DataAnnotation>... components) {
-        return getTop(loadFormulaResults(components));
+        return getTop(loadFormulaResults(), components);
     }
 
     @SafeVarargs
     public final synchronized Optional<FormulaResult> loadTopFormulaResult(List<Class<? extends FormulaScore>> rankingScoreTypes, Class<? extends DataAnnotation>... components) {
-        return getTop(loadFormulaResults(rankingScoreTypes, components));
+        return getTop(loadFormulaResults(rankingScoreTypes), components);
     }
 
     @SafeVarargs

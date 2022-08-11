@@ -85,6 +85,7 @@ public class FingerprintSubToolJob extends InstanceJob {
             inst.getProjectSpaceManager().setProjectSpaceProperty(FingerIdDataProperty.class, new FingerIdDataProperty(pos, neg));
         }
 
+        updateProgress(10);
         checkForInterruption();
 
         final EnumSet<PredictorType> predictors = inst.getExperiment().getAnnotationOrThrow(PredictorTypeAnnotation.class).toPredictors(inst.getExperiment().getPrecursorIonType().getCharge());
@@ -92,27 +93,34 @@ public class FingerprintSubToolJob extends InstanceJob {
 
         checkForInterruption();
 
+        updateProgress(20);
         // expand IDResult list with adducts
         final FingerprintPreprocessingJJob<?> fpPreproJob = new FingerprintPreprocessingJJob<>(inst.getExperiment(),
                 formulaResults.stream().map(res ->
                         new IdentificationResult<>(res.getCandidate().getAnnotationOrThrow(FTree.class),
                                 res.getScoreObject())).collect(Collectors.toList()));
 
+
         // do computation and await results
         List<? extends IdentificationResult<?>> filteredResults = submitSubJob(fpPreproJob).awaitResult();
 
+        updateProgress(30);
         checkForInterruption();
 
         // prediction jobs: predict fingerprints via webservice
         final FingerprintJJob fpPredictJob = submitSubJob(FingerprintJJob.of(csi, inst.getExperiment(), filteredResults));
+
+        updateProgress(35);
         List<FingerIdResult> result = fpPredictJob.awaitResult();
 
+        updateProgress(70);
         checkForInterruption();
 
         // ############### Make results persistent ####################
         final Map<FTree, FormulaResult> formulaResultsMap = formulaResults.stream().collect(Collectors.toMap(r -> r.getCandidate().getAnnotationOrThrow(FTree.class), SScored::getCandidate));
         Map<? extends IdentificationResult<?>, ? extends IdentificationResult<?>> addedResults = fpPreproJob.getAddedIdentificationResults();
 
+        updateProgress(80);
         // add new id results to project-space.
         addedResults.forEach((k, v) ->
                 inst.newFormulaResultWithUniqueId(k.getTree())
@@ -136,6 +144,7 @@ public class FingerprintSubToolJob extends InstanceJob {
 
         assert formulaResultsMap.size() >= result.size();
 
+        updateProgress(90);
         checkForInterruption();
 
         //annotate FingerIdResults to FormulaResult
@@ -148,6 +157,7 @@ public class FingerprintSubToolJob extends InstanceJob {
             inst.updateFormulaResult(formRes, FingerprintResult.class);
         }
         inst.updateCompoundID();
+        updateProgress(97);
     }
 
     @Override

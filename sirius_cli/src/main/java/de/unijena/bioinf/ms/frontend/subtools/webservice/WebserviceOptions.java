@@ -21,20 +21,13 @@
 package de.unijena.bioinf.ms.frontend.subtools.webservice;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
-import de.unijena.bioinf.auth.AuthService;
-import de.unijena.bioinf.auth.AuthServices;
-import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
-
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
 
 
 @CommandLine.Command(name = "webservice", description = "<STANDALONE> Show info about the web service like available workers, pending jobs and personal usage stats.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
@@ -55,7 +48,7 @@ public class WebserviceOptions implements StandaloneTool<WebserviceOptions.WF> {
 
 
     @Override
-    public WF makeWorkflow(RootOptions<?, ?, ?> rootOptions, ParameterConfig config) {
+    public WF makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
         return new WF();
     }
 

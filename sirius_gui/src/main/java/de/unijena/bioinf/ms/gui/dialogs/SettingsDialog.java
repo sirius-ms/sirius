@@ -23,7 +23,10 @@ import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.actions.CheckConnectionAction;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.settings.*;
+import de.unijena.bioinf.ms.gui.settings.AdductSettingsPanel;
+import de.unijena.bioinf.ms.gui.settings.GerneralSettingsPanel;
+import de.unijena.bioinf.ms.gui.settings.NetworkSettingsPanel;
+import de.unijena.bioinf.ms.gui.settings.SettingsPanel;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -125,13 +128,17 @@ public class SettingsDialog extends JDialog implements ActionListener {
         if (e.getSource() == discard) {
             this.dispose();
         } else {
-            boolean restartMessage = collectChangedProps();
-            Jobs.runInBackground(()->{
-                LoggerFactory.getLogger(this.getClass()).info("Saving settings to properties File");
-                SiriusProperties.SIRIUS_PROPERTIES_FILE().store();
-                CheckConnectionAction.checkConnectionAndLoad().isConnected();
-            });
-            if (restartMessage)
+            final boolean rm = Jobs.runInBackgroundAndLoad(this, "Applying Changes...", () ->  {
+                boolean restartMessage = collectChangedProps();
+                Jobs.runInBackground(() -> {
+                    LoggerFactory.getLogger(this.getClass()).info("Saving settings to properties File");
+                    SiriusProperties.SIRIUS_PROPERTIES_FILE().store();
+                    CheckConnectionAction.checkConnectionAndLoad().isConnected();
+                });
+                return restartMessage;
+            }).getResult();
+
+            if (rm)
                 new InfoDialog(this, "At least one change you made requires a restart of Sirius to take effect.");
             this.dispose();
         }

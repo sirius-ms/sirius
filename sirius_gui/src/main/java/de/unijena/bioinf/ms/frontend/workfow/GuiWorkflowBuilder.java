@@ -34,7 +34,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class GuiWorkflowBuilder<R extends RootOptions<?, PreprocessingJob<? extends ProjectSpaceManager>,?>>  extends WorkflowBuilder<R> {
+public class GuiWorkflowBuilder<R extends RootOptions<?, ?, PreprocessingJob<? extends ProjectSpaceManager<?>>,?>>  extends WorkflowBuilder<R> {
     private final Splash splash;
     public GuiWorkflowBuilder(@NotNull R rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, InstanceBufferFactory<?> bufferFactory, @Nullable Splash splash) throws IOException {
         super(rootOptions, configOptionLoader,bufferFactory);
