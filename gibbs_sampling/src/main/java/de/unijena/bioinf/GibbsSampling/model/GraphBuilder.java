@@ -285,7 +285,7 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
 
     @Override
     public void progressChanged(JobProgressEvent progressEvent) {
-        if (progressEvent.getNewValue().longValue() !=100) return;
+        if (progressEvent.getProgress() !=100) return;
         ++numberOfFinishedComputations;
         if(numberOfFinishedComputations % step == 0 || numberOfFinishedComputations==size) {
             logInfo(Math.round(100*((double)numberOfFinishedComputations)/size)+"%");

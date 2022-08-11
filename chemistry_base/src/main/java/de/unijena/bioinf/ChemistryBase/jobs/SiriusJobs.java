@@ -34,7 +34,7 @@ import java.util.concurrent.Callable;
 
 public class SiriusJobs {
 
-    private static volatile JobManagerFactory<?> instanceCreator = (cores) -> new JobManager(cores, Math.min(cores, 3));
+    private static volatile JobManagerFactory<?> instanceCreator = (cores) -> new JobManager(cores, Math.min(cores, 4));
     private static volatile JobManager globalJobManager = null;
 
     private SiriusJobs() {/*prevent instantiation*/}

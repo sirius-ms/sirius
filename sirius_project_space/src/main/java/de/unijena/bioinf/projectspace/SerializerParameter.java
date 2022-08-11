@@ -18,17 +18,9 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.projectspace.fingerid;
+package de.unijena.bioinf.projectspace;
 
-import de.unijena.bioinf.projectspace.SerializerParameter;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
 
-public class FBCandidateNumber implements SerializerParameter {
-    public static final FBCandidateNumber ALL = new FBCandidateNumber(-1);
-    public static final FBCandidateNumber GUI_DEFAULT = new FBCandidateNumber(100);
-
-    public final int value;
-
-    public FBCandidateNumber(int value) {
-        this.value = value;
-    }
+public interface SerializerParameter extends DataAnnotation {
 }

@@ -39,19 +39,19 @@ import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobOutput;
 import de.unijena.bioinf.ms.rest.model.fingerid.TrainingData;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.entity.InputStreamEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 public class FingerIdClient extends AbstractCsiClient {
@@ -60,7 +60,7 @@ public class FingerIdClient extends AbstractCsiClient {
         super(serverUrl, requestDecorators);
     }
 
-    public JobUpdate<FingerprintJobOutput> postJobs(final FingerprintJobInput input, CloseableHttpClient client) throws IOException {
+    public JobUpdate<FingerprintJobOutput> postJobs(final FingerprintJobInput input, HttpClient client) throws IOException {
         //check predictor compatibility
         final int c = input.experiment.getPrecursorIonType().getCharge();
         for (PredictorType type : input.predictors)
@@ -70,8 +70,8 @@ public class FingerIdClient extends AbstractCsiClient {
         return executeFromJson(client,
                 () -> {
                     final HttpPost post = new HttpPost(buildVersionSpecificWebapiURI("/fingerid/" + CID + "/fp-jobs").build());
-                    String entity = new ObjectMapper().writeValueAsString(input);
-                    post.setEntity(new StringEntity(entity, StandardCharsets.UTF_8));
+                    post.setEntity(new InputStreamEntity(new ByteArrayInputStream(
+                            new ObjectMapper().writeValueAsBytes(input.asStringInput())), ContentType.APPLICATION_JSON));
                     post.addHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
 
                     return post;
@@ -86,7 +86,7 @@ public class FingerIdClient extends AbstractCsiClient {
      * @return prediction model
      * @throws IOException if http response parsing fails
      */
-    public FingerIdData getFingerIdData(PredictorType predictorType, CloseableHttpClient client) throws IOException {
+    public FingerIdData getFingerIdData(PredictorType predictorType, HttpClient client) throws IOException {
         return execute(client,
                 () -> new HttpGet(buildVersionSpecificWebapiURI("/fingerid/data")
                         .setParameter("predictor", predictorType.toBitsAsString())
@@ -96,12 +96,12 @@ public class FingerIdClient extends AbstractCsiClient {
     }
 
 
-    public JobUpdate<CovtreeJobOutput> postCovtreeJobs(final CovtreeJobInput input, CloseableHttpClient client) throws IOException {
+    public JobUpdate<CovtreeJobOutput> postCovtreeJobs(final CovtreeJobInput input, HttpClient client) throws IOException {
         return executeFromJson(client,
                 () -> {
                     final HttpPost post = new HttpPost(buildVersionSpecificWebapiURI("/fingerid/" + CID + "/covtree-jobs").build());
-                    String v = new ObjectMapper().writeValueAsString(input);
-                    post.setEntity(new StringEntity(v, StandardCharsets.UTF_8));
+                    post.setEntity(new InputStreamEntity(new ByteArrayInputStream(
+                            new ObjectMapper().writeValueAsBytes(input)), ContentType.APPLICATION_JSON));
                     post.addHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
                     return post;
                 }, new TypeReference<>() {}
@@ -109,7 +109,7 @@ public class FingerIdClient extends AbstractCsiClient {
     }
 
 
-    public BayesnetScoring getCovarianceScoring(@NotNull PredictorType predictorType, @NotNull FingerprintVersion fpVersion, @Nullable MolecularFormula formula, @NotNull PredictionPerformance[] performances, @NotNull CloseableHttpClient client) throws IOException {
+    public BayesnetScoring getCovarianceScoring(@NotNull PredictorType predictorType, @NotNull FingerprintVersion fpVersion, @Nullable MolecularFormula formula, @NotNull PredictionPerformance[] performances, @NotNull HttpClient client) throws IOException {
         return execute(client,
                 () -> {
                     final URIBuilder u = buildVersionSpecificWebapiURI("/fingerid/covariancetree")
@@ -122,7 +122,7 @@ public class FingerIdClient extends AbstractCsiClient {
     }
 
 
-    public Map<String, TrainedSVM> getTrainedConfidence(@NotNull final PredictorType predictorType, CloseableHttpClient client) throws IOException {
+    public Map<String, TrainedSVM> getTrainedConfidence(@NotNull final PredictorType predictorType, HttpClient client) throws IOException {
         return execute(client,
                 () -> new HttpGet(buildVersionSpecificWebapiURI("/fingerid/confidence")
                         .setParameter("predictor", predictorType.toBitsAsString())
@@ -131,7 +131,7 @@ public class FingerIdClient extends AbstractCsiClient {
         );
     }
 
-    public TrainingData getTrainingStructures(PredictorType predictorType, CloseableHttpClient client) throws IOException {
+    public TrainingData getTrainingStructures(PredictorType predictorType, HttpClient client) throws IOException {
         return execute(client,
                 () -> new HttpGet(buildVersionSpecificWebapiURI("/fingerid/trainingstructures").setParameter("predictor", predictorType.toBitsAsString()).build()),
                 TrainingData::readTrainingData

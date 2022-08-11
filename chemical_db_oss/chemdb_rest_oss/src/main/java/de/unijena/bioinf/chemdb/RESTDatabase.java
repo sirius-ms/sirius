@@ -32,8 +32,7 @@ import de.unijena.bioinf.ms.rest.client.chemdb.ChemDBClient;
 import de.unijena.bioinf.ms.rest.client.chemdb.StructureSearchClient;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.storage.blob.file.FileBlobStorage;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.http.client.HttpClient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +48,7 @@ public class RESTDatabase implements AbstractChemicalDatabase {
         FingerIDProperties.fingeridFullVersion();
     }
 
-    private final CloseableHttpClient client;
+    private final HttpClient client;
 
     private StructureSearchClient chemDBClient;
     protected final ChemDBFileCache cache;
@@ -71,7 +70,7 @@ public class RESTDatabase implements AbstractChemicalDatabase {
         }
     }
 
-    public RESTDatabase(@Nullable BlobStorage cacheDir, long filter, @NotNull StructureSearchClient chemDBClient, @NotNull CloseableHttpClient client) {
+    public RESTDatabase(@Nullable BlobStorage cacheDir, long filter, @NotNull StructureSearchClient chemDBClient, @NotNull HttpClient client) {
         this.filter = filter;
         this.chemDBClient = chemDBClient;
         this.client = client;
@@ -189,7 +188,8 @@ public class RESTDatabase implements AbstractChemicalDatabase {
     }
 
     @Override
-    public void close() throws IOException {
-        client.close();
+    public void close() {
+        // client is managed outside the db to be reuseable
+        // client.close();
     }
 }
