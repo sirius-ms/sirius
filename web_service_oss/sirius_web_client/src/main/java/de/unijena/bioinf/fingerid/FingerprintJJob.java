@@ -27,7 +27,6 @@ import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.ms.webapi.WebJJob;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +38,7 @@ import java.util.stream.Collectors;
 /**
  * Executing {@link WebJJob}s for a given set of
  * {@link IdentificationResult}s/{@link FingerIdResult}s from a given {@link Ms2Experiment}.
- *
+ * <p>
  * This Job is just a Scheduler do wrap all predictions jobs of a single experiment into one single job.
  */
 //todo can be easily be connected to preprocessing job if needed
@@ -104,16 +103,16 @@ public class FingerprintJJob extends BasicJJob<List<FingerIdResult>> {
 
         for (FingerIdResult fingeridInput : idResult) {
             // prediction job: predict fingerprint
-            predictionJobs.put(NetUtils.tryAndWait(() -> predictor.csiWebAPI.submitFingerprintJob(
+            predictionJobs.put(predictor.csiWebAPI.submitFingerprintJob(
                             new FingerprintJobInput(experiment, fingeridInput.getSourceTree(),
                                     UserDefineablePredictorType.toPredictorTypes(experiment.getPrecursorIonType(), predictors.value))),
-                    this::checkForInterruption), new FingerIdResult(fingeridInput.getSourceTree()));
+                    new FingerIdResult(fingeridInput.getSourceTree()));
         }
 
         checkForInterruption();
 
         logDebug("CSI:FingerID fingerprint predictions DONE!");
-        predictionJobs.forEach((k,v) -> v.takeAndAnnotate(k));
+        predictionJobs.forEach((k, v) -> v.takeAndAnnotate(k));
 
         //in linked maps values() collection is not a set -> so we have to make that distinct
         return predictionJobs.values().stream().distinct().collect(Collectors.toList());
@@ -124,7 +123,7 @@ public class FingerprintJJob extends BasicJJob<List<FingerIdResult>> {
         return super.identifier() + " | " + experiment.getName() + "@" + experiment.getIonMass() + "m/z";
     }
 
-    public static FingerprintJJob of(@NotNull CSIPredictor predictor, @Nullable Ms2Experiment experiment, @NotNull List<? extends IdentificationResult<?>> formulaResults){
+    public static FingerprintJJob of(@NotNull CSIPredictor predictor, @Nullable Ms2Experiment experiment, @NotNull List<? extends IdentificationResult<?>> formulaResults) {
         return new FingerprintJJob(predictor, experiment, formulaResults.stream().map(FingerIdResult::new).collect(Collectors.toList()));
     }
 }

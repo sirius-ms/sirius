@@ -51,10 +51,7 @@ import de.unijena.bioinf.ms.rest.client.chemdb.StructureSearchClient;
 import de.unijena.bioinf.ms.rest.client.fingerid.FingerIdClient;
 import de.unijena.bioinf.ms.rest.client.info.InfoClient;
 import de.unijena.bioinf.ms.rest.client.jobs.JobsClient;
-import de.unijena.bioinf.ms.rest.model.JobId;
-import de.unijena.bioinf.ms.rest.model.JobTable;
-import de.unijena.bioinf.ms.rest.model.JobUpdate;
-import de.unijena.bioinf.ms.rest.model.SecurityService;
+import de.unijena.bioinf.ms.rest.model.*;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobOutput;
@@ -74,10 +71,10 @@ import de.unijena.bioinf.ms.webapi.WebJJob;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.webapi.AbstractWebAPI;
 import de.unijena.bioinf.webapi.Tokens;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -87,6 +84,7 @@ import javax.annotation.concurrent.ThreadSafe;
 import java.io.IOException;
 import java.net.URI;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 
 /**
@@ -106,6 +104,10 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
     private final StructureSearchClient chemDBClient;
     private final FingerIdClient fingerprintClient;
     private final CanopusClient canopusClient;
+
+    private static final String JOB_WATCHER_CLIENT_ID = "JOB_WATCHER";
+    private static final String JOB_SUBMITTER_CLIENT_ID = "JOB_SUBMITTER";
+    private static final String CONNECTION_CHECK_CLIENT_ID = "CONNECTION_CHECK";
 
     private Subscription activeSubscription;
 
@@ -286,7 +288,7 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
         }
     }
 
-    private Optional<ConnectionError> checkUnsecuredConnection(@NotNull CloseableHttpClient client) {
+    private Optional<ConnectionError> checkUnsecuredConnection(@NotNull HttpClient client) {
         try {
             serverInfoClient.execute(client, () -> new HttpGet(serverInfoClient.getBaseURI("/actuator/health").build()));
             return Optional.empty();
@@ -299,7 +301,7 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
         }
     }
 
-    private Optional<ConnectionError> checkSecuredConnection(@NotNull CloseableHttpClient client) {
+    private Optional<ConnectionError> checkSecuredConnection(@NotNull HttpClient client) {
         try {
             serverInfoClient.execute(client, () -> {
                 HttpGet get = new HttpGet(serverInfoClient.getBaseURI("/api/check").build());
@@ -340,16 +342,20 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
         return ProxyManager.applyClient(client -> serverInfoClient.getConsumables(monthAndYear, byMonth, client));
     }
 
-    public List<JobUpdate<?>> updateJobStates(JobTable jobTable) throws IOException {
-        return updateJobStates(EnumSet.of(jobTable)).get(jobTable);
+    public EnumMap<JobTable, List<JobUpdate<?>>> submitJobs(JobInputs submission) throws IOException {
+        return ProxyManager.applyClient(client -> jobsClient.postJobs(submission, client), JOB_SUBMITTER_CLIENT_ID);
     }
 
-    public EnumMap<JobTable, List<JobUpdate<?>>> updateJobStates(Collection<JobTable> jobTablesToCheck) throws IOException {
-        return ProxyManager.applyClient(client -> jobsClient.getJobs(jobTablesToCheck, client));
+    public List<JobUpdate<?>> getFinishedJobs(JobTable jobTable) throws IOException {
+        return getFinishedJobs(EnumSet.of(jobTable)).get(jobTable);
+    }
+
+    public EnumMap<JobTable, List<JobUpdate<?>>> getFinishedJobs(Collection<JobTable> jobTablesToCheck) throws IOException {
+        return ProxyManager.applyClient(client -> jobsClient.getFinishedJobs(jobTablesToCheck, client), JOB_WATCHER_CLIENT_ID);
     }
 
     public void deleteJobs(Collection<JobId> jobsToDelete, Map<JobId, Integer> countingHashes) throws IOException {
-        ProxyManager.consumeClient(client -> jobsClient.deleteJobs(jobsToDelete, countingHashes, client));
+        ProxyManager.consumeClient(client -> jobsClient.deleteJobs(jobsToDelete, countingHashes, client), JOB_WATCHER_CLIENT_ID);
     }
 
     public void deleteClientAndJobs() throws IOException {
@@ -359,15 +365,20 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
 
     //region ChemDB
     public void consumeStructureDB(long filter, @Nullable BlobStorage cacheDir, IOFunctions.IOConsumer<RESTDatabase> doWithClient) throws IOException {
-        try (RESTDatabase restDB = new RESTDatabase(cacheDir, filter, getChemDbDate(), chemDBClient, ProxyManager.client())) {
-            doWithClient.accept(restDB);
-        }
+        ProxyManager.consumeClient(client -> {
+            try (RESTDatabase restDB = new RESTDatabase(cacheDir, filter, getChemDbDate(), chemDBClient, client)) {
+                doWithClient.accept(restDB);
+            }
+        });
+
     }
 
     public <T> T applyStructureDB(long filter, @Nullable BlobStorage cacheDir, IOFunctions.IOFunction<RESTDatabase, T> doWithClient) throws IOException {
-        try (RESTDatabase restDB = new RESTDatabase(cacheDir, filter, getChemDbDate(), chemDBClient, ProxyManager.client())) {
-            return doWithClient.apply(restDB);
-        }
+        return ProxyManager.applyClient(client -> {
+            try (RESTDatabase restDB = new RESTDatabase(cacheDir, filter, getChemDbDate(), chemDBClient, client)) {
+                return doWithClient.apply(restDB);
+            }
+        });
     }
 
     //endregion
@@ -375,11 +386,20 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
     //region Canopus
     @Override
     public WebJJob<CanopusJobInput, ?, CanopusResult, ?> submitCanopusJob(CanopusJobInput input, @Nullable Integer countingHash) throws IOException {
-        JobUpdate<CanopusJobOutput> jobUpdate = ProxyManager.applyClient(client -> canopusClient.postJobs(input, client));
         final MaskedFingerprintVersion version = getClassifierMaskedFingerprintVersion(input.predictor.toCharge());
-        RestWebJJob<CanopusJobInput, CanopusJobOutput, CanopusResult> job = new RestWebJJob<>(jobUpdate.getID(), input, new CanopusWebResultConverter(version, MaskedFingerprintVersion.allowAll(NPCFingerprintVersion.get())));
-        job.setCountingHash(countingHash);
-        return jobWatcher.watchJob(job);
+        try {
+            final WebJobWatcher.SubmissionWaiterJJob<CanopusJobInput, CanopusJobOutput, CanopusResult> callback =
+                    jobWatcher.submitAndWatchJob(input, JobTable.JOBS_CANOPUS, (i, id) ->
+                            new RestWebJJob<>(id, input, new CanopusWebResultConverter(version,
+                                    MaskedFingerprintVersion.allowAll(NPCFingerprintVersion.get()))));
+
+
+            RestWebJJob<CanopusJobInput, CanopusJobOutput, CanopusResult> job = callback.awaitResult();
+            job.setCountingHash(countingHash);
+            return job;
+        } catch (ExecutionException e) {
+            throw new IOException(e);
+        }
     }
 
     @Override
@@ -395,9 +415,16 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
 
     //region CSI:FingerID
     public WebJJob<FingerprintJobInput, ?, FingerprintResult, ?> submitFingerprintJob(FingerprintJobInput input) throws IOException {
-        final JobUpdate<FingerprintJobOutput> jobUpdate = ProxyManager.applyClient(client -> fingerprintClient.postJobs(input, client));
         final MaskedFingerprintVersion version = getCDKMaskedFingerprintVersion(input.experiment.getPrecursorIonType().getCharge());
-        return jobWatcher.watchJob(new RestWebJJob<>(jobUpdate.getID(), input, new FingerprintWebResultConverter(version)));
+        try {
+            WebJobWatcher.SubmissionWaiterJJob<FingerprintJobInput, FingerprintJobOutput, FingerprintResult> callback =
+                    jobWatcher.submitAndWatchJob(input, JobTable.JOBS_FINGERID, (in, id) ->
+                            new RestWebJJob<>(id, in, new FingerprintWebResultConverter(version)));
+
+            return callback.awaitResult();
+        } catch (ExecutionException e) {
+            throw new IOException(e);
+        }
     }
 
     @Override
@@ -407,11 +434,17 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
 
     // use via predictor/scoring method
     public WebJJob<CovtreeJobInput, ?, BayesnetScoring, ?> submitCovtreeJob(@NotNull MolecularFormula formula, @NotNull PredictorType predictorType) throws IOException {
-        final CovtreeJobInput input = new CovtreeJobInput(formula.toString(), predictorType);
-        final JobUpdate<CovtreeJobOutput> jobUpdate = ProxyManager.applyClient(client -> fingerprintClient.postCovtreeJobs(input, client));
         final MaskedFingerprintVersion fpVersion = getFingerIdData(predictorType).getFingerprintVersion();
         final PredictionPerformance[] performances = getFingerIdData(predictorType).getPerformances();
-        return jobWatcher.watchJob(new RestWebJJob<>(jobUpdate.getID(), input, new CovtreeWebResultConverter(fpVersion, performances)));
+        final CovtreeJobInput input = new CovtreeJobInput(formula.toString(), predictorType);
+        try {
+            WebJobWatcher.SubmissionWaiterJJob<CovtreeJobInput, CovtreeJobOutput, BayesnetScoring> callback =
+                    jobWatcher.submitAndWatchJob(input, JobTable.JOBS_COVTREE, (i, id) ->
+                            new RestWebJJob<>(id, i, new CovtreeWebResultConverter(fpVersion, performances)));
+            return  callback.awaitResult();
+        } catch (ExecutionException e) {
+            throw new IOException(e);
+        }
     }
 
 
