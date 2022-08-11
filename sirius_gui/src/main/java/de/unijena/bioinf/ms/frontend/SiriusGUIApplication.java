@@ -100,7 +100,7 @@ public class SiriusGUIApplication extends SiriusCLIApplication {
                         ApplicationCore.DEFAULT_LOGGER.info("Starting Application Core");
                         updateProgress(0, 7, 1, "Starting Application Core...");
                         measureTime("Init Swing Job Manager");
-                        SiriusJobs.setJobManagerFactory((cpuThreads) -> new SwingJobManager(Math.min(defaultThreadNumber(), cpuThreads), 1));
+                        SiriusJobs.setJobManagerFactory((cpuThreads) -> new SwingJobManager(Math.min(defaultThreadNumber(), cpuThreads), Math.min(PropertyManager.getNumberOfThreads(), 4)));
                         ApplicationCore.DEFAULT_LOGGER.info("Swing Job MANAGER initialized! " + SiriusJobs.getGlobalJobManager().getCPUThreads() + " : " + SiriusJobs.getGlobalJobManager().getIOThreads());
                         updateProgress(0, 7, 2, "Configure shutdown hooks...");
 

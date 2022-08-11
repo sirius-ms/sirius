@@ -21,9 +21,7 @@
 package de.unijena.bioinf.ms.frontend;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.jjobs.JobManager;
-import de.unijena.bioinf.jjobs.ProgressJJob;
+import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.ms.frontend.subtools.ComputeRootOption;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.workflow.InstanceBufferFactory;
@@ -184,18 +182,24 @@ public final class BackgroundRuns {
         protected Boolean compute() throws Exception {
             try {
                 checkForInterruption();
-
+                logInfo("Locking Instances for Computation...");
                 if (instanceIds != null && !instanceIds.isEmpty())
                     project.projectSpace().setFlags(CompoundContainerId.Flag.COMPUTING, true,
                             instanceIds.toArray(CompoundContainerId[]::new));
+                logInfo("All instances locked!");
 
                 checkForInterruption();
-                if (computation instanceof ProgressJJob)
-                    ((ProgressJJob<?>) computation).addJobProgressListener(this::updateProgress);
+                if (computation instanceof ProgressSupport)
+                    ((ProgressSupport) computation).addJobProgressListener(this::updateProgress);
+                else if (computation instanceof PropertyChangeOrator) //add JobProgressEventListener that only triggers if this is a progress event.
+                    ((PropertyChangeOrator) computation).addPropertyChangeListener((JobProgressEventListener) this::updateProgress);
+                else if (computation instanceof PropertyChangeSupport) //add JobProgressEventListener that only triggers if this is a progress event.
+                    ((PropertyChangeSupport) computation).addPropertyChangeListener((JobProgressEventListener) this::updateProgress);
 
                 checkForInterruption();
-
+                logInfo("Start Computation...");
                 computation.run();
+                logInfo("Computation DONE!");
                 return true;
             } finally {
                 logInfo("Flushing Results to disk in background...");
@@ -216,11 +220,17 @@ public final class BackgroundRuns {
 
         @Override
         protected void cleanup() {
-            if (instanceIds != null && !instanceIds.isEmpty())
-                project.projectSpace().setFlags(CompoundContainerId.Flag.COMPUTING, false,
-                        instanceIds.toArray(CompoundContainerId[]::new));
-            removeRun(this);
-            super.cleanup();
+            try {
+                logInfo("Unlocking Instances after Computation...");
+                if (instanceIds != null && !instanceIds.isEmpty())
+                    project.projectSpace().setFlags(CompoundContainerId.Flag.COMPUTING, false,
+                            instanceIds.toArray(CompoundContainerId[]::new));
+                logInfo("All Instances unlocked!");
+            } finally {
+                removeRun(this);
+                super.cleanup();
+            }
+
         }
     }
 }

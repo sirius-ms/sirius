@@ -100,7 +100,8 @@ public class ZodiacSubToolJob extends DataSetJob {
 
         // TODO: we might want to do that for SIRIUS
         checkForInterruption();
-        logInfo("Use caching of formulas.");
+        updateProgress(Math.round(.02 * maxProgress),"Use caching of formulas.");
+
         {
             HashMap<MolecularFormula,MolecularFormula> formulaMap = new HashMap<>();
             for (List<FTree> trees : ms2ExperimentToTreeCandidates.values()) {
@@ -116,15 +117,16 @@ public class ZodiacSubToolJob extends DataSetJob {
                 }
             }
         }
-        logInfo("Caching done.");
+//        logInfo();
         checkForInterruption();
+        updateProgress(Math.round(.03 * maxProgress),"Caching done.");
 
         maxCandidatesAt300 = settings.getAnnotationOrThrow(ZodiacNumberOfConsideredCandidatesAt300Mz.class).value;
         maxCandidatesAt800 = settings.getAnnotationOrThrow(ZodiacNumberOfConsideredCandidatesAt800Mz.class).value;
         forcedCandidatesPerIonizationRatio = settings.getAnnotationOrThrow(ZodiacRatioOfConsideredCandidatesPerIonization.class).value;
 
         //annotate compound quality at limit number of candidates
-        LoggerFactory.getLogger(ZodiacSubToolJob.class).info("TREES LOADED.");
+       logInfo("TREES LOADED.");
         TreeQualityEvaluator treeQualityEvaluator = new TreeQualityEvaluator(0.8, 5);
         for (Map.Entry<Ms2Experiment, List<FTree>> ms2ExperimentListEntry : ms2ExperimentToTreeCandidates.entrySet()) {
             checkForInterruption();
@@ -147,6 +149,8 @@ public class ZodiacSubToolJob extends DataSetJob {
             treeCandidates = applyMaxCandidateThreshold(experiment, treeCandidates);
             ms2ExperimentListEntry.setValue(treeCandidates);
         }
+
+        updateProgress(Math.round(.04 * maxProgress));
 
 
         if (instances.size() == 0) return;
@@ -201,6 +205,7 @@ public class ZodiacSubToolJob extends DataSetJob {
         CommonFragmentAndLossScorer c = new CommonFragmentAndLossScorerNoiseIntensityWeighted();
         ScoreProbabilityDistributionEstimator<FragmentsCandidate> scoreProbabilityDistributionEstimator = new ScoreProbabilityDistributionEstimator<>(c, probabilityDistribution, edgeFilterThresholds.thresholdFilter);
 
+        updateProgress(Math.round(.05 * maxProgress));
         checkForInterruption();
 
         Zodiac zodiac = new Zodiac(ms2ExperimentToTreeCandidates,
@@ -212,7 +217,7 @@ public class ZodiacSubToolJob extends DataSetJob {
         );
 
         checkForInterruption();
-
+        //todo FINISH ZODIAC Progress
         //todo clustering disabled. Evaluate if it might help at any point?
         LoggerFactory.getLogger(ZodiacSubToolJob.class).info("RUN ZODIAC");
         final ZodiacResultsWithClusters clusterResults = submitSubJob(
@@ -221,6 +226,8 @@ public class ZodiacSubToolJob extends DataSetJob {
         final Map<Ms2Experiment, Map<FTree, ZodiacScore>> scoreResults = zodiac.getZodiacScoredTrees();
 
         checkForInterruption();
+
+        updateProgress(Math.round(.9 * maxProgress));
 
         //add score and set new Ranking score
         instances.forEach(inst -> {

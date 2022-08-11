@@ -103,7 +103,7 @@ public class InstanceImporter {
 
         @Override
         protected List<CompoundContainerId> compute() throws Exception {
-            prog = new JobProgressMerger(pcs, this);
+            prog = new JobProgressMerger(pcs);
             return importMultipleSources(inputFiles);
         }
 

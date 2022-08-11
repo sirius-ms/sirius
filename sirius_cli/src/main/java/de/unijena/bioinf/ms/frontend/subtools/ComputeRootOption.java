@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.frontend.subtools;
 
+import de.unijena.bioinf.ChemistryBase.utils.IterableWithSize;
 import de.unijena.bioinf.projectspace.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +50,18 @@ public class ComputeRootOption<P extends ProjectSpaceManager<I>, I extends Insta
 
     public ComputeRootOption(@NotNull P projectSpace, @NotNull List<CompoundContainerId> containerIds) {
         this.projectSpace = projectSpace;
-        instances = () -> makeInstanceIterator(containerIds.iterator());
+        instances = new IterableWithSize<>() {
+            @Override
+            public int size() {
+                return containerIds.size();
+            }
+
+            @NotNull
+            @Override
+            public Iterator<I> iterator() {
+                return makeInstanceIterator(containerIds.iterator());
+            }
+        };
     }
 
     /**
