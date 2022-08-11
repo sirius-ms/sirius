@@ -33,10 +33,10 @@ import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.FormulaCandidate;
 import de.unijena.bioinf.chemdb.JSONReader;
 import de.unijena.bioinf.ms.rest.client.AbstractCsiClient;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -66,7 +66,7 @@ public class StructureSearchClient extends AbstractCsiClient {
     /**
      * gives you the Fingerprint version used by CSI:FingerID
      */
-    public CdkFingerprintVersion getCDKFingerprintVersion(CloseableHttpClient client) throws IOException {
+    public CdkFingerprintVersion getCDKFingerprintVersion(HttpClient client) throws IOException {
         if (!cacheFpVersion || fpVersion == null) {
             fpVersion = new CdkFingerprintVersion(
                     executeFromJson(client, () -> new HttpGet(buildVersionSpecificWebapiURI("/usedfingerprints").build()), new TypeReference<>() {})
@@ -75,7 +75,7 @@ public class StructureSearchClient extends AbstractCsiClient {
         return fpVersion;
     }
 
-    public List<FormulaCandidate> getFormulas(double mass, Deviation deviation, PrecursorIonType ionType, long filter, CloseableHttpClient client) throws IOException {
+    public List<FormulaCandidate> getFormulas(double mass, Deviation deviation, PrecursorIonType ionType, long filter, HttpClient client) throws IOException {
         return execute(client,
                 () -> new HttpGet(buildVersionSpecificWebapiURI("/formulasdb")
                         .setParameter("mass", String.valueOf(mass))
@@ -97,11 +97,11 @@ public class StructureSearchClient extends AbstractCsiClient {
         );
     }
 
-    public List<FingerprintCandidate> getCompounds(@NotNull MolecularFormula formula, long filter, CloseableHttpClient client) throws IOException {
+    public List<FingerprintCandidate> getCompounds(@NotNull MolecularFormula formula, long filter, HttpClient client) throws IOException {
         return getCompounds(formula, filter, getCDKFingerprintVersion(client), client);
     }
 
-    public List<FingerprintCandidate> getCompounds(@NotNull MolecularFormula formula, long filter, @NotNull CdkFingerprintVersion fpVersion, CloseableHttpClient client) throws IOException {
+    public List<FingerprintCandidate> getCompounds(@NotNull MolecularFormula formula, long filter, @NotNull CdkFingerprintVersion fpVersion, HttpClient client) throws IOException {
         return execute(client,
                 () -> {
                     final HttpGet get = new HttpGet(buildVersionSpecificWebapiURI("/compounds/" + formula.toString())

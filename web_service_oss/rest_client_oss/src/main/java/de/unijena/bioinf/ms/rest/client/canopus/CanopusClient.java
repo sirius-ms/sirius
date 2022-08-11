@@ -30,19 +30,19 @@ import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobOutput;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.entity.InputStreamEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 
 public class CanopusClient extends AbstractCsiClient {
 
@@ -51,15 +51,15 @@ public class CanopusClient extends AbstractCsiClient {
         super(serverUrl, requestDecorators);
     }
 
-    public CanopusCfData getCfData(PredictorType predictorType, CloseableHttpClient client) throws IOException {
+    public CanopusCfData getCfData(PredictorType predictorType, HttpClient client) throws IOException {
         return executeDataRequest(predictorType, client, "/canopus/cf-data", CanopusCfData::read);
     }
 
-    public CanopusNpcData getNpcData(PredictorType predictorType, CloseableHttpClient client) throws IOException {
+    public CanopusNpcData getNpcData(PredictorType predictorType, HttpClient client) throws IOException {
         return executeDataRequest(predictorType, client, "/canopus/npc-data", CanopusNpcData::read);
     }
 
-    private <T> T executeDataRequest(PredictorType predictorType, CloseableHttpClient client, String path, IOFunctions.IOFunction<BufferedReader, T> respHandling) throws IOException {
+    private <T> T executeDataRequest(PredictorType predictorType, HttpClient client, String path, IOFunctions.IOFunction<BufferedReader, T> respHandling) throws IOException {
         return execute(client,
                 () -> new HttpGet(buildVersionSpecificWebapiURI(path)
                         .setParameter("predictor", predictorType.toBitsAsString())
@@ -68,12 +68,12 @@ public class CanopusClient extends AbstractCsiClient {
         );
     }
 
-    public JobUpdate<CanopusJobOutput> postJobs(final CanopusJobInput input, CloseableHttpClient client) throws IOException {
+    public JobUpdate<CanopusJobOutput> postJobs(final CanopusJobInput input, HttpClient client) throws IOException {
         return executeFromJson(client,
                 () -> {
                     final HttpPost post = new HttpPost(buildVersionSpecificWebapiURI("/canopus/" + CID + "/jobs").build());
-                    String v = new ObjectMapper().writeValueAsString(input);
-                    post.setEntity(new StringEntity(v, StandardCharsets.UTF_8));
+                    post.setEntity(new InputStreamEntity(new ByteArrayInputStream(
+                            new ObjectMapper().writeValueAsBytes(input))));
                     post.setHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
                     return post;
                 }, new TypeReference<>() {
