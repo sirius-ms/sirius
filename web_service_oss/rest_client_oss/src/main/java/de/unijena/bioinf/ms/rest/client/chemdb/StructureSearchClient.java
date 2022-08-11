@@ -137,7 +137,7 @@ public class StructureSearchClient extends AbstractCsiClient {
      * @return Date string
      * @throws IOException if http query or Json marshaling fails
      */
-    public String getChemDbDate(CloseableHttpClient client) throws IOException {
+    public String getChemDbDate(HttpClient client) throws IOException {
         if (chemDbDateCache == null) {
             chemDbDateCache = executeFromStream(client, () -> new HttpGet(buildVersionSpecificWebapiURI("/structure-db-date").build()),
                     r -> new BufferedReader(new InputStreamReader(r, StandardCharsets.UTF_8)).lines().findFirst().orElse(null));
