@@ -30,11 +30,11 @@ import de.unijena.bioinf.ms.rest.model.info.News;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.ms.rest.model.license.SubscriptionConsumables;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +45,6 @@ import javax.json.JsonReader;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URL;
 import java.sql.Timestamp;
 import java.util.Collections;
 import java.util.Date;
@@ -61,7 +60,7 @@ public class InfoClient extends AbstractCsiClient {
     }
 
     @NotNull
-    public VersionsInfo getVersionInfo(final CloseableHttpClient client, boolean includeUpdateInfo) throws IOException {
+    public VersionsInfo getVersionInfo(final HttpClient client, boolean includeUpdateInfo) throws IOException {
         return execute(client,
                 () -> {
                     HttpGet get = new HttpGet(buildVersionSpecificWebapiURI(WEBAPI_VERSION_JSON)
@@ -120,7 +119,7 @@ public class InfoClient extends AbstractCsiClient {
     }
 
     @Nullable
-    public WorkerList getWorkerInfo(@NotNull CloseableHttpClient client) throws IOException {
+    public WorkerList getWorkerInfo(@NotNull HttpClient client) throws IOException {
         return executeFromJson(client,
                 () -> {
                     HttpGet get = new HttpGet(buildVersionSpecificWebapiURI(WEBAPI_WORKER_JSON).build());
@@ -132,11 +131,11 @@ public class InfoClient extends AbstractCsiClient {
         );
     }
 
-    public SubscriptionConsumables getConsumables(@NotNull Date monthAndYear, boolean byMonth, @NotNull CloseableHttpClient client) throws IOException {
+    public SubscriptionConsumables getConsumables(@NotNull Date monthAndYear, boolean byMonth, @NotNull HttpClient client) throws IOException {
         return getConsumables(monthAndYear, null, byMonth, client);
     }
 
-    public SubscriptionConsumables getConsumables(@NotNull Date monthAndYear, @Nullable JobTable jobType, boolean byMonth, @NotNull CloseableHttpClient client) throws IOException {
+    public SubscriptionConsumables getConsumables(@NotNull Date monthAndYear, @Nullable JobTable jobType, boolean byMonth, @NotNull HttpClient client) throws IOException {
         return executeFromJson(client,
                 () -> {
                     URIBuilder builder = buildVersionSpecificWebapiURI("/consumed-resources")

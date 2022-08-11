@@ -28,11 +28,7 @@ import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.chemdb.PubmedLinks;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
-import de.unijena.bioinf.projectspace.ComponentSerializer;
-import de.unijena.bioinf.projectspace.FormulaResultId;
-import de.unijena.bioinf.projectspace.ProjectReader;
-import de.unijena.bioinf.projectspace.ProjectWriter;
-import de.unijena.bioinf.projectspace.FormulaResult;
+import de.unijena.bioinf.projectspace.*;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -47,14 +43,14 @@ import java.util.stream.Collectors;
 import static de.unijena.bioinf.projectspace.fingerid.FingerIdLocations.FINGERBLAST;
 
 public class FBCandidatesSerializer implements ComponentSerializer<FormulaResultId, FormulaResult, FBCandidates> {
-
+    public static final List<Class<? extends SerializerParameter>> supportedParameters = List.of(FBCandidateNumber.class);
     protected ArrayList<Scored<CompoundCandidate>> readCandidates(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
         if (!reader.exists(FINGERBLAST.relFilePath(id)))
             return null;
 
         final Pattern dblinkPat = Pattern.compile("^.+?:\\(.*\\)$");
         final ArrayList<Scored<CompoundCandidate>> results = new ArrayList<>();
-        final FBCandidateNumber numC = container.getAnnotation(FBCandidateNumber.class).orElse(FBCandidateNumber.ALL);
+        final FBCandidateNumber numC = id.getAnnotation(FBCandidateNumber.class).orElse(FBCandidateNumber.ALL);
 
         reader.table(FINGERBLAST.relFilePath(id), true, 0, numC.value, (row) -> {
             if (row.length == 0) return;
