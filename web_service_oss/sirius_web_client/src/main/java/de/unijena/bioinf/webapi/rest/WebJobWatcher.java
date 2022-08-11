@@ -74,7 +74,7 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
 
         if (notIfy){
             synchronized (jobsToSubmit) {
-                System.out.println("Wake up submitter!");
+//                System.out.println("Wake up submitter!");
                 jobsToSubmit.notifyAll();
             }
         }
@@ -175,13 +175,13 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
                 if (jobsToSubmit.isEmpty()) {
                     synchronized (jobsToSubmit) {
                         if (jobsToSubmit.isEmpty()) {
-                            System.out.println("Start waiting in Submitter!");
+//                            System.out.println("Start waiting in Submitter!");
                             jobsToSubmit.wait();
-                            System.out.println("Stop waiting in Submitter!");
+//                            System.out.println("Stop waiting in Submitter!");
                         }
                     }
                 } else if ((waitTime = (System.currentTimeMillis() - lastSubmission)) + 50 < INIT_WAIT_TIME) {
-                    System.out.println("Waiting For submission:" + (INIT_WAIT_TIME - waitTime));
+//                    System.out.println("Waiting For submission:" + (INIT_WAIT_TIME - waitTime));
                     NetUtils.sleep(this::checkForInterruption, INIT_WAIT_TIME - waitTime);
                 }
 
@@ -210,7 +210,7 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
                                     waitingJobs.put(j.getID(), wj.result());
                                 });
                             });
-                            System.out.println("Wake up Watcher!");
+//                            System.out.println("Wake up Watcher!");
                             waitingJobs.notifyAll();
                         }
                     }
@@ -240,9 +240,9 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
                     if (waitingJobs.isEmpty()) {
                         synchronized (waitingJobs) {
                             if (waitingJobs.isEmpty()) {
-                                System.out.println("Start waiting in Watcher!");
+//                                System.out.println("Start waiting in Watcher!");
                                 waitingJobs.wait();
-                                System.out.println("Stop waiting in Watcher!");
+//                                System.out.println("Stop waiting in Watcher!");
                             }
                         }
                     }
@@ -267,7 +267,7 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
 
                         checkForInterruption();
 
-                        System.out.println("Number of jobs retrieved: " + finished.size());
+//                        System.out.println("Number of jobs retrieved: " + finished.size());
 
                         try {
                             if (!finished.isEmpty()) {
@@ -290,7 +290,7 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
                                     }
                                 }
 
-                                System.out.println("Number of finished jobs to remove: " + toRemove.size());
+//                                System.out.println("Number of finished jobs to remove: " + toRemove.size());
                             }
                             checkForInterruption();
 
@@ -299,7 +299,7 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
                                 if (v.isFinished())
                                     toRemove.add(k);
                             });
-                            System.out.println("Number of finished jobs to remove (with canceled): " + toRemove.size());
+//                            System.out.println("Number of finished jobs to remove (with canceled): " + toRemove.size());
                         } finally {
                             if (!toRemove.isEmpty()) {
                                 // not in sync because it may take some time and is not needed since jobwatcher is singlethreaded

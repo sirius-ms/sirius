@@ -24,8 +24,6 @@ import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
-import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.jjobs.Partition;
 import de.unijena.bioinf.ms.rest.client.chemdb.ChemDBClient;
@@ -37,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -86,27 +83,6 @@ public class RESTDatabase implements AbstractChemicalDatabase {
                 }
             }
         });
-    }
-
-
-    public RESTDatabase(long filter, @NotNull AuthService authService) {
-        this(filter, URI.create(FingerIDProperties.siriusFallbackWebHost()), authService);
-    }
-
-    public RESTDatabase(long filter) {
-        this(filter, URI.create(FingerIDProperties.siriusFallbackWebHost()));
-    }
-
-    public RESTDatabase(long filter, @NotNull URI serverURL) {
-        this(RESTDatabase.defaultCache(), filter, new ChemDBClient(serverURL), HttpClients.createDefault());
-    }
-
-    public RESTDatabase(long filter, @NotNull URI serverURL, @NotNull AuthService authService) {
-        this(RESTDatabase.defaultCache(), filter, new ChemDBClient(serverURL, authService), HttpClients.createDefault());
-    }
-
-    public RESTDatabase(long filter, @NotNull StructureSearchClient chemDBClient) {
-        this(RESTDatabase.defaultCache(), filter, chemDBClient, HttpClients.createDefault());
     }
 
 
