@@ -24,15 +24,13 @@ import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.jjobs.Partition;
 import de.unijena.bioinf.ms.rest.client.chemdb.ChemDBClient;
 import de.unijena.bioinf.ms.rest.client.chemdb.StructureSearchClient;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.storage.blob.file.FileBlobStorage;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.http.client.HttpClient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +45,7 @@ public class RESTDatabase implements AbstractChemicalDatabase {
         FingerIDProperties.fingeridFullVersion();
     }
 
-    private final CloseableHttpClient client;
+    private final HttpClient client;
     private final String chemDbDate;
     protected StructureSearchClient chemDBClient;
     protected final ChemDBFileCache cache;
@@ -65,7 +63,7 @@ public class RESTDatabase implements AbstractChemicalDatabase {
         return chemDbDate;
     }
 
-    public RESTDatabase(@Nullable BlobStorage cacheDir, long filter, String chemDbDate, @NotNull StructureSearchClient chemDBClient, @NotNull CloseableHttpClient client) {
+    public RESTDatabase(@Nullable BlobStorage cacheDir, long filter, String chemDbDate, @NotNull StructureSearchClient chemDBClient, @NotNull HttpClient client) {
         this.filter = filter;
         this.chemDbDate = chemDbDate;
         this.chemDBClient = chemDBClient;
@@ -82,10 +80,6 @@ public class RESTDatabase implements AbstractChemicalDatabase {
                 }
             }
         });
-    }
-
-    public RESTDatabase(long filter, String chemDbDate, @NotNull AuthService authService) {
-        this(RESTDatabase.defaultCache(), filter, chemDbDate, new ChemDBClient(null, authService) , HttpClients.createDefault());
     }
 
     @Override
@@ -168,7 +162,8 @@ public class RESTDatabase implements AbstractChemicalDatabase {
     }
 
     @Override
-    public void close() throws IOException {
-        client.close();
+    public void close() {
+        // client is managed outside the db to be reuseable
+        // client.close();
     }
 }
