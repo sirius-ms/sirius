@@ -26,6 +26,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
+import de.unijena.bioinf.ChemistryBase.utils.IterableWithSize;
 import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.babelms.projectspace.PassatuttoSerializer;
@@ -79,7 +80,7 @@ import java.util.stream.Collectors;
  * e.g. iteration on Instance level.
  * maybe some type of caching?
  */
-public class ProjectSpaceManager<I extends Instance> implements Iterable<I> {
+public class ProjectSpaceManager<I extends Instance> implements IterableWithSize<I> {
     @NotNull
     public static Supplier<ProjectSpaceConfiguration> DEFAULT_CONFIG = () -> {
         final ProjectSpaceConfiguration config = new ProjectSpaceConfiguration();
