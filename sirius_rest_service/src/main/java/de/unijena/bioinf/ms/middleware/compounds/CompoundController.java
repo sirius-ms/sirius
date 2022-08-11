@@ -19,42 +19,43 @@
 
 package de.unijena.bioinf.ms.middleware.compounds;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.SpectrumFileSource;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.GibbsSampling.ZodiacScore;
+import de.unijena.bioinf.babelms.CloseableIterator;
+import de.unijena.bioinf.babelms.GenericParser;
+import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.canopus.CanopusResult;
-import de.unijena.bioinf.chemdb.CompoundCandidate;
-import de.unijena.bioinf.chemdb.PubmedLinks;
-import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
+import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.middleware.BaseApiController;
 import de.unijena.bioinf.ms.middleware.SiriusContext;
+import de.unijena.bioinf.ms.middleware.compounds.model.CompoundAnnotation;
+import de.unijena.bioinf.ms.middleware.compounds.model.CompoundId;
+import de.unijena.bioinf.ms.middleware.compounds.model.MsData;
+import de.unijena.bioinf.ms.middleware.formulas.model.CompoundClasses;
+import de.unijena.bioinf.ms.middleware.formulas.model.FormulaCandidate;
+import de.unijena.bioinf.ms.middleware.formulas.model.StructureCandidate;
 import de.unijena.bioinf.ms.middleware.spectrum.AnnotatedSpectrum;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.FormulaScoring;
-import de.unijena.bioinf.projectspace.SiriusProjectSpace;
-import de.unijena.bioinf.projectspace.CompoundContainer;
-import de.unijena.bioinf.projectspace.FormulaResult;
-import de.unijena.bioinf.sirius.FTreeMetricsHelper;
-import de.unijena.bioinf.sirius.scores.IsotopeScore;
-import de.unijena.bioinf.sirius.scores.SiriusScore;
-import de.unijena.bioinf.sirius.scores.TreeScore;
+import de.unijena.bioinf.projectspace.Instance;
+import de.unijena.bioinf.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.projectspace.fingerid.FBCandidateNumber;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -63,151 +64,179 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping(value = "/api/projects/{pid}")
+@RequestMapping(value = "/api/projects/{projectId}")
+@Tag(name = "Compounds", description = "Access compounds (aka features) of a specified project-space.")
 public class CompoundController extends BaseApiController {
-
 
     @Autowired
     public CompoundController(SiriusContext context) {
         super(context);
     }
 
-    @GetMapping(value = "/compounds", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public List<CompoundId> getCompoundIds(@PathVariable String pid, @RequestParam(required = false) boolean includeSummary, @RequestParam(required = false) boolean includeMsData) {
-        final SiriusProjectSpace space = projectSpace(pid);
+
+    /**
+     * Get all available compounds/features in the given project-space.
+     *
+     * @param projectId     project-space to read from.
+     * @param topAnnotation include the top annotation of this feature into the output (if available).
+     * @param msData        include corresponding source data (MS and MS/MS) into the output.
+     * @return CompoundIds with additional annotations and MS/MS data (if specified).
+     */
+    @GetMapping(value = "/compounds", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<CompoundId> getCompounds(@PathVariable String projectId, @RequestParam(required = false) boolean topAnnotation, @RequestParam(required = false) boolean msData) {
         LoggerFactory.getLogger(CompoundController.class).info("Started collecting compounds...");
+        final ProjectSpaceManager space = projectSpace(projectId);
 
         final ArrayList<CompoundId> compoundIds = new ArrayList<>();
-        space.iterator().forEachRemaining(ccid -> compoundIds.add(asCompoundId(ccid, pid, includeSummary, includeMsData)));
+        space.projectSpace().forEach(ccid -> compoundIds.add(asCompoundId(ccid, space, topAnnotation, msData)));
 
         LoggerFactory.getLogger(CompoundController.class).info("Finished parsing compounds...");
         return compoundIds;
     }
 
-    @GetMapping(value = "/compounds/{cid}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public CompoundId getCompound(@PathVariable String pid, @PathVariable String cid, @RequestParam(required = false) boolean includeSummary, @RequestParam(required = false) boolean includeMsData) {
-        final SiriusProjectSpace space = projectSpace(pid);
-        final CompoundContainerId ccid = space.findCompound(cid).
-                orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no Compound with ID '" + cid + "' in project with name '" + pid + "'"));
-        return asCompoundId(ccid, pid, includeSummary, includeMsData);
+    /**
+     * Import ms/ms data from the given format into the specified project-space
+     * Possible formats (ms, mgf, cef, msp, mzML, mzXML)
+     *
+     * THIS METHOD HAS KNOWN ISSUES PLEASE USE 'import-from-string' until fixed.
+     *
+     * @param projectId  project-space to import into.
+     * @param format     data format specified by the usual file extension of the format (without [.])
+     * @param sourceName name that specifies the data source. Can e.g. be a file path or just a name.
+     * @param body       data content in specified format
+     * @return CompoundIds of the imported compounds/features.
+     */
+    @PostMapping(value = "/compounds", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public List<CompoundId> importCompounds(@PathVariable String projectId, @RequestParam String format, @RequestParam(required = false) String sourceName, @RequestBody MultipartFile body) throws IOException {
+        List<CompoundId> ids = new ArrayList<>();
+        final ProjectSpaceManager space = projectSpace(projectId);
+        GenericParser<Ms2Experiment> parser = new MsExperimentParser().getParserByExt(format.toLowerCase());
+        try (InputStream bodyStream = body.getInputStream()) {
+            try (CloseableIterator<Ms2Experiment> it = parser.parseIterator(bodyStream, null)) {
+                while (it.hasNext()) {
+                    Ms2Experiment next = it.next();
+                    if (sourceName != null)     //todo import handling needs to be improved ->  this naming hassle is ugly
+                        next.setAnnotation(SpectrumFileSource.class,
+                                new SpectrumFileSource(
+                                        new File("./" + (sourceName.endsWith(format) ? sourceName : sourceName + "." + format.toLowerCase())).toURI()));
 
-    }
-
-
-    private CompoundSummary asCompoundSummary(CompoundContainerId cid, String pid) {
-        final CompoundSummary cSum = new CompoundSummary();
-        try {
-            final SiriusProjectSpace space = projectSpace(pid);
-            final CompoundContainer c = space.getCompound(cid);
-            if (c.hasResults()) {
-                SScored<FormulaResult, ? extends FormulaScore> scoredTopHit =
-                        space.getFormulaResultsOrderedBy(cid, cid.getRankingScoreTypes(), FormulaScoring.class).get(0);
-
-                final FormulaResult topHit = scoredTopHit.getCandidate();
-                final FormulaScoring scorings = topHit.getAnnotationOrThrow(FormulaScoring.class);
-
-                //add formula summary
-                final FormulaResultSummary frs = new FormulaResultSummary();
-                cSum.setFormulaResultSummary(frs);
-
-                frs.setMolecularFormula(topHit.getId().getMolecularFormula().toString());
-                frs.setAdduct(topHit.getId().getIonType().toString());
-
-                scorings.getAnnotation(SiriusScore.class).
-                        ifPresent(sscore -> frs.setSiriusScore(sscore.score()));
-                scorings.getAnnotation(IsotopeScore.class).
-                        ifPresent(iscore -> frs.setIsotopeScore(iscore.score()));
-                scorings.getAnnotation(TreeScore.class).
-                        ifPresent(tscore -> frs.setTreeScore(tscore.score()));
-                scorings.getAnnotation(ZodiacScore.class).
-                        ifPresent(zscore -> frs.setZodiacScore(zscore.score()));
-
-                space.getFormulaResult(topHit.getId(), FTree.class).getAnnotation(FTree.class).
-                        ifPresent(fTree -> {
-                            final FTreeMetricsHelper metrHelp = new FTreeMetricsHelper(fTree);
-                            frs.setNumOfexplainedPeaks(metrHelp.getNumOfExplainedPeaks());
-                            frs.setNumOfexplainablePeaks(metrHelp.getNumberOfExplainablePeaks());
-                            frs.setTotalExplainedIntensity(metrHelp.getExplainedIntensityRatio());
-                            frs.setMedianMassDeviation(metrHelp.getMedianMassDeviation());
-                        });
-
-                // fingerid result
-                space.getFormulaResult(topHit.getId(), FBCandidates.class).getAnnotation(FBCandidates.class).
-                        ifPresent(fbres -> {
-                            final StructureResultSummary sSum = new StructureResultSummary();
-                            cSum.setStructureResultSummary(sSum);
-
-                            if (!fbres.getResults().isEmpty()) {
-                                final Scored<CompoundCandidate> can = fbres.getResults().get(0);
-
-                                // scores
-                                sSum.setCsiScore(can.getScore());
-                                sSum.setSimilarity(Double.NaN); //todo calculate Tanimoto or drop because we have to read another file for that
-                                scorings.getAnnotation(ConfidenceScore.class).
-                                        ifPresent(cScore -> sSum.setConfidenceScore(cScore.score()));
-
-                                //Structure information
-                                //todo ugly workaround until "null" strings are fixed
-                                final String n = can.getCandidate().getName();
-                                if (n != null && !n.isEmpty() && !n.equals("null"))
-                                    sSum.setStructureName(n);
-
-                                sSum.setSmiles(can.getCandidate().getSmiles());
-                                sSum.setInchiKey(can.getCandidate().getInchiKey2D());
-                                sSum.setXlogP(can.getCandidate().getXlogp());
-
-                                //meta data
-                                PubmedLinks pubMedIds = can.getCandidate().getPubmedIDs();
-                                if (pubMedIds != null)
-                                    sSum.setNumOfPubMedIds(pubMedIds.getNumberOfPubmedIDs());
-                            }
-                        });
-
-                // canopus results //todo extract useful canopus summary
-                space.getFormulaResult(topHit.getId(), CanopusResult.class).getAnnotation(CanopusResult.class).
-                        ifPresent(cRes -> {
-                            cSum.setCategoryResultSummary(new CategoryResultSummary());
-                        });
+                    @NotNull Instance inst = space.newCompoundWithUniqueId(next);
+                    ids.add(CompoundId.of(inst.getID()));
+                }
             }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return cSum;
-    }
-
-    private CompoundMsData asCompoundMsData(CompoundContainerId cid, String pid) {
-        try {
-            CompoundContainer compound = projectSpace(pid).getCompound(cid, Ms2Experiment.class);
-            @NotNull Ms2Experiment experiment = compound.getAnnotationOrThrow(Ms2Experiment.class, () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Compound with ID '" + compound + "' has no input Data!"));
-            return new CompoundMsData(
-                    opt(experiment.getMergedMs1Spectrum(), this::asSpectrum),
-                    Optional.empty(),
-                    experiment.getMs1Spectra().stream().map(this::asSpectrum).collect(Collectors.toList()),
-                    experiment.getMs2Spectra().stream().map(this::asSpectrum).collect(Collectors.toList())
-            );
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
+            return ids;
         }
     }
 
-    private CompoundId asCompoundId(CompoundContainerId cid, String pid, boolean includeSummary, boolean includeMsData) {
-        final CompoundId compoundId = asCompoundId(cid);
-        if (includeSummary)
-            compoundId.setSummary(asCompoundSummary(cid, pid));
-        if (includeMsData)
-            compoundId.setMsData(asCompoundMsData(cid, pid));
+    /**
+     * Import ms/ms data from the given format into the specified project-space
+     * Possible formats (ms, mgf, cef, msp, mzML, mzXML)
+     *
+     * @param projectId  project-space to import into.
+     * @param format     data format specified by the usual file extension of the format (without [.])
+     * @param sourceName name that specifies the data source. Can e.g. be a file path or just a name.
+     * @param body       data content in specified format
+     * @return CompoundIds of the imported compounds/features.
+     */
+    @PostMapping(value = "/compounds/import-from-string", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.TEXT_PLAIN_VALUE)
+    public List<CompoundId> importCompoundsFromString(@PathVariable String projectId, @RequestParam String format, @RequestParam(required = false) String sourceName, @RequestBody String body) throws IOException {
+        List<CompoundId> ids = new ArrayList<>();
+        final ProjectSpaceManager space = projectSpace(projectId);
+        GenericParser<Ms2Experiment> parser = new MsExperimentParser().getParserByExt(format.toLowerCase());
+        try (BufferedReader bodyStream = new BufferedReader(new StringReader(body))) {
+            try (CloseableIterator<Ms2Experiment> it = parser.parseIterator(bodyStream, null)) {
+                while (it.hasNext()) {
+                    Ms2Experiment next = it.next();
+                    if (sourceName != null)     //todo import handling needs to be improved ->  this naming hassle is ugly
+                        next.setAnnotation(SpectrumFileSource.class,
+                                new SpectrumFileSource(
+                                        new File("./" + (sourceName.endsWith(format) ? sourceName : sourceName + "." + format.toLowerCase())).toURI()));
+
+                    @NotNull Instance inst = space.newCompoundWithUniqueId(next);
+                    ids.add(CompoundId.of(inst.getID()));
+                }
+            }
+            return ids;
+        }
+    }
+
+    /**
+     * Get compound/feature with the given identifier from the specified project-space.
+     *
+     * @param projectId     project-space to read from.
+     * @param cid           identifier of compound to access.
+     * @param topAnnotation include the top annotation of this feature into the output (if available).
+     * @param msData        include corresponding source data (MS and MS/MS) into the output.
+     * @return CompoundId with additional annotations and MS/MS data (if specified).
+     */
+    @GetMapping(value = "/compounds/{cid}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public CompoundId getCompound(@PathVariable String projectId, @PathVariable String cid,
+                                  @RequestParam(required = false, defaultValue = "false") boolean topAnnotation,
+                                  @RequestParam(required = false, defaultValue = "false") boolean msData) {
+        final ProjectSpaceManager space = projectSpace(projectId);
+        final CompoundContainerId ccid = parseCID(space, cid);
+        return asCompoundId(ccid, space, topAnnotation, msData);
+    }
+
+    /**
+     * Delete compound/feature with the given identifier from the specified project-space.
+     *
+     * @param projectId     project-space to delete from.
+     * @param cid           identifier of compound to delete.
+     */
+    @DeleteMapping(value = "/compounds/{cid}")
+    public void deleteCompound(@PathVariable String projectId, @PathVariable String cid) throws IOException {
+        final ProjectSpaceManager space = projectSpace(projectId);
+        CompoundContainerId compound = space.projectSpace().findCompound(cid).orElseThrow(() -> new ResponseStatusException(HttpStatus.NO_CONTENT, "Compound with id '" + cid + "' does not exist in '" + projectId + "'."));
+        space.projectSpace().deleteCompound(compound);
+    }
+
+
+    private CompoundAnnotation asCompoundSummary(Instance inst) {
+        return inst.loadTopFormulaResult(List.of(TopCSIScore.class)).map(de.unijena.bioinf.projectspace.FormulaResult::getId).flatMap(frid -> {
+            frid.setAnnotation(FBCandidateNumber.class, new FBCandidateNumber(1));
+            return inst.loadFormulaResult(frid, FormulaScoring.class, FTree.class, FBCandidates.class, CanopusResult.class)
+                    .map(topHit -> {
+                        final CompoundAnnotation cSum = new CompoundAnnotation();
+//
+                        //add formula summary
+                        cSum.setFormulaAnnotation(FormulaCandidate.of(topHit));
+
+                        // fingerid result
+                        topHit.getAnnotation(FBCandidates.class).map(FBCandidates::getResults)
+                                .filter(l -> !l.isEmpty()).map(r -> r.get(0)).map(s ->
+                                        StructureCandidate.of(s, topHit.getAnnotationOrThrow(FormulaScoring.class),
+                                                true, true))
+                                .ifPresent(cSum::setStructureAnnotation);
+
+                        topHit.getAnnotation(CanopusResult.class).map(CompoundClasses::of).
+                                ifPresent(cSum::setCompoundClassAnnotation);
+                        return cSum;
+
+                    });
+        }).orElse(null);
+    }
+
+    private MsData asCompoundMsData(Instance instance) {
+        return instance.loadCompoundContainer(Ms2Experiment.class)
+                .getAnnotation(Ms2Experiment.class).map(exp -> new MsData(
+                        opt(exp.getMergedMs1Spectrum(), this::asSpectrum).orElse(null),
+                        null,
+                        exp.getMs1Spectra().stream().map(this::asSpectrum).collect(Collectors.toList()),
+                        exp.getMs2Spectra().stream().map(this::asSpectrum).collect(Collectors.toList()))).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Compound with ID '" + instance + "' has no input Data!"));
+    }
+
+    private CompoundId asCompoundId(CompoundContainerId cid, ProjectSpaceManager ps, boolean includeSummary, boolean includeMsData) {
+        final CompoundId compoundId = CompoundId.of(cid);
+        if (includeSummary || includeMsData) {
+            Instance instance = ps.newInstanceFromCompound(cid);
+            if (includeSummary)
+                compoundId.setTopAnnotation(asCompoundSummary(instance));
+            if (includeMsData)
+                compoundId.setMsData(asCompoundMsData(instance));
+        }
         return compoundId;
-    }
-
-    private CompoundId asCompoundId(CompoundContainerId cid) {
-        return new CompoundId(
-                cid.getDirectoryName(),
-                cid.getCompoundName(),
-                cid.getCompoundIndex(),
-                cid.getIonMass().orElse(0d),
-                cid.getIonType().map(PrecursorIonType::toString).orElse(null)
-        );
     }
 
     private <S, T> Optional<T> opt(S input, Function<S, T> convert) {
@@ -217,7 +246,5 @@ public class CompoundController extends BaseApiController {
     private AnnotatedSpectrum asSpectrum(Spectrum<Peak> spec) {
         return new AnnotatedSpectrum(Spectrums.copyMasses(spec), Spectrums.copyIntensities(spec), new HashMap<>());
     }
-
-
 }
 

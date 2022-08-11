@@ -49,9 +49,9 @@ public class SummarySubToolJob extends PostprocessingJob<Boolean> implements Wor
     private static final Logger LOG = LoggerFactory.getLogger(SummarySubToolJob.class);
     private final SummaryOptions options;
     private final ParameterConfig config;
-    private final RootOptions<?,?,?> rootOptions;
+    private final RootOptions<?,?,?,?> rootOptions;
 
-    public SummarySubToolJob(RootOptions<?,?,?> rootOptions, ParameterConfig config, SummaryOptions options) {
+    public SummarySubToolJob(RootOptions<?,?,?,?> rootOptions, ParameterConfig config, SummaryOptions options) {
         this.rootOptions = rootOptions;
         this.config = config;
         this.options = options;

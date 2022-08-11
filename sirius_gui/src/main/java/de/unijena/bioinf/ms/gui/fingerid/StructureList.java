@@ -32,8 +32,8 @@ import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
 import de.unijena.bioinf.projectspace.FormulaResult;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
-import de.unijena.bioinf.projectspace.fingerid.FBCandidateFingerprintsGUI;
-import de.unijena.bioinf.projectspace.fingerid.FBCandidatesGUI;
+import de.unijena.bioinf.projectspace.fingerid.FBCandidateFingerprintsTopK;
+import de.unijena.bioinf.projectspace.fingerid.FBCandidatesTopK;
 
 import javax.swing.*;
 import java.util.*;
@@ -133,8 +133,8 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
                         for (FormulaResultBean formRes : formulasToShow) {
                             checkForInterruption();
                             if (formRes != null) {
-                                Class<? extends FBCandidates> cClass = loadAll.get() ? FBCandidates.class : FBCandidatesGUI.class;
-                                Class<? extends FBCandidateFingerprints> fpClass = loadAll.get() ? FBCandidateFingerprints.class : FBCandidateFingerprintsGUI.class;
+                                Class<? extends FBCandidates> cClass = loadAll.get() ? FBCandidates.class : FBCandidatesTopK.class;
+                                Class<? extends FBCandidateFingerprints> fpClass = loadAll.get() ? FBCandidateFingerprints.class : FBCandidateFingerprintsTopK.class;
 
                                 final Optional<FormulaResult> resOpt = formRes.getResult(FingerprintResult.class, cClass, fpClass);
                                 checkForInterruption();
@@ -169,7 +169,7 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
                     checkForInterruption();
 
                     if (refillElementsEDT(emChache))
-                        loadMols = Jobs.MANAGER.submitJob(new LoadMoleculeJob(emChache));
+                        loadMols = Jobs.MANAGER().submitJob(new LoadMoleculeJob(emChache));
 
                     return true;
                 }

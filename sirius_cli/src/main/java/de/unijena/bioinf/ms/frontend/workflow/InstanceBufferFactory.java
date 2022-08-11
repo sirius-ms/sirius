@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.frontend.workflow;
 
+import de.unijena.bioinf.jjobs.JobProgressMerger;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.projectspace.Instance;
@@ -29,9 +30,9 @@ import java.util.Iterator;
 import java.util.List;
 
 public interface InstanceBufferFactory<B extends InstanceBuffer> {
-    default B create(int bufferSize, @NotNull Iterator<? extends Instance> instances, @NotNull List<InstanceJob.Factory<?>> tasks) {
-        return create(bufferSize, instances, tasks, null);
+    default B create(int bufferSize, @NotNull Iterator<? extends Instance> instances, @NotNull List<InstanceJob.Factory<?>> tasks, @NotNull JobProgressMerger progressSupport) {
+        return create(bufferSize, instances, tasks, null, progressSupport);
     }
 
-    B create(int bufferSize, @NotNull Iterator<? extends Instance> instances, @NotNull List<InstanceJob.Factory<?>> tasks, @Nullable DataSetJob.Factory<?> collectorJobFactory);
+    B create(int bufferSize, @NotNull Iterator<? extends Instance> instances, @NotNull List<InstanceJob.Factory<?>> tasks, @Nullable DataSetJob.Factory<?> collectorJobFactory, @NotNull JobProgressMerger progressSupport);
 }

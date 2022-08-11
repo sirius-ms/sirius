@@ -42,9 +42,9 @@ import de.unijena.bioinf.projectspace.canopus.CanopusCfDataProperty;
 import de.unijena.bioinf.projectspace.canopus.CanopusNpcDataProperty;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 public class CanopusSubToolJob extends InstanceJob {
@@ -77,6 +77,7 @@ public class CanopusSubToolJob extends InstanceJob {
 
         checkFingerprintCompatibilityOrThrow();
 
+        updateProgress(10);
         checkForInterruption();
 
         //todo we might need a generic solution here because CANOPUS will predict many more stuff in the future.
@@ -95,30 +96,34 @@ public class CanopusSubToolJob extends InstanceJob {
             inst.getProjectSpaceManager().setProjectSpaceProperty(new CanopusNpcDataProperty(pos, neg));
         }
 
+        updateProgress(20);
         checkForInterruption();
         // spec has to count compounds
         final int specHash = Spectrums.mergeSpectra(inst.getExperiment().getMs2Spectra()).hashCode();
+        updateProgress(25);
+
         // submit canopus jobs for Identification results that contain CSI:FingerID results
         Map<FormulaResult, WebJJob<CanopusJobInput, ?, CanopusResult, ?>> jobs = res.stream().collect(Collectors.toMap(r -> r, ir -> buildAndSubmitRemote(ir, specHash)));
+        updateProgress(30);
+
 
         checkForInterruption();
-
-
         jobs.forEach((k, v) -> k.setAnnotation(CanopusResult.class, v.takeResult()));
+        updateProgress(80);
 
         // write canopus results
         for (FormulaResult r : res)
             inst.updateFormulaResult(r, CanopusResult.class);
+        updateProgress(97);
     }
 
-    private WebJJob<CanopusJobInput, ?, CanopusResult, ?> buildAndSubmitRemote(@NotNull final FormulaResult ir, int specHash) {
+    private WebJJob<CanopusJobInput, ?, CanopusResult, ?> buildAndSubmitRemote(@NotNull final FormulaResult ir, int specHash)  {
         try {
-            return NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.submitCanopusJob(
+            return ApplicationCore.WEB_API.submitCanopusJob(
                     ir.getId().getMolecularFormula(), ir.getId().getIonType().getCharge(),
                     ir.getAnnotationOrThrow(FingerprintResult.class).fingerprint, specHash
-                    ), this::checkForInterruption
             );
-        } catch (TimeoutException | InterruptedException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }

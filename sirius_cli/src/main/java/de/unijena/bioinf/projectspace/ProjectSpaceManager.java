@@ -26,6 +26,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
+import de.unijena.bioinf.ChemistryBase.utils.IterableWithSize;
 import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.babelms.projectspace.PassatuttoSerializer;
@@ -56,7 +57,8 @@ import de.unijena.bioinf.projectspace.summaries.mztab.MztabMExporter;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.sirius.scores.TreeScore;
-import org.apache.commons.lang3.time.StopWatch;
+import org.apache.commons.collections.map.AbstractReferenceMap;
+import org.apache.commons.collections.map.ReferenceMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -71,14 +73,16 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * Manage the project space.
  * e.g. iteration on Instance level.
  * maybe some type of caching?
  */
-public class ProjectSpaceManager implements Iterable<Instance> {
-    @NotNull public static Supplier<ProjectSpaceConfiguration> DEFAULT_CONFIG = () -> {
+public class ProjectSpaceManager<I extends Instance> implements IterableWithSize<I> {
+    @NotNull
+    public static Supplier<ProjectSpaceConfiguration> DEFAULT_CONFIG = () -> {
         final ProjectSpaceConfiguration config = new ProjectSpaceConfiguration();
         //configure ProjectSpaceProperties
         config.defineProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSPropertySerializer());
@@ -113,10 +117,10 @@ public class ProjectSpaceManager implements Iterable<Instance> {
     public final Function<Ms2Experiment, String> nameFormatter;
     public final BiFunction<Integer, String, String> namingScheme;
     private Predicate<CompoundContainerId> compoundIdFilter;
-    protected final InstanceFactory<?> instFac;
+    protected final InstanceFactory<I> instFac;
 
 
-    public ProjectSpaceManager(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<?> factory, @Nullable Function<Ms2Experiment, String> formatter) {
+    public ProjectSpaceManager(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<I> factory, @Nullable Function<Ms2Experiment, String> formatter) {
         this.space = space;
         this.instFac = factory;
         this.nameFormatter = space.getProjectSpaceProperty(FilenameFormatter.PSProperty.class)
@@ -136,7 +140,7 @@ public class ProjectSpaceManager implements Iterable<Instance> {
 
 
     @NotNull
-    public Instance newCompoundWithUniqueId(Ms2Experiment inputExperiment) {
+    public I newCompoundWithUniqueId(Ms2Experiment inputExperiment) {
         final String name = nameFormatter.apply(inputExperiment);
         final CompoundContainer container = projectSpace().newCompoundWithUniqueId(name, (idx) -> namingScheme.apply(idx, name), inputExperiment).orElseThrow(() -> new RuntimeException("Could not create an project space ID for the Instance"));
         return instFac.create(container, this);
@@ -151,15 +155,38 @@ public class ProjectSpaceManager implements Iterable<Instance> {
     }
 
     @SafeVarargs
-    public final Instance newInstanceFromCompound(CompoundContainerId id, Class<? extends DataAnnotation>... components) {
+    private I newInstanceFromCompound(CompoundContainerId id, Class<? extends DataAnnotation>... components) {
         try {
             CompoundContainer c = projectSpace().getCompound(id, components);
             return instFac.create(c, this);
         } catch (IOException e) {
-            LoggerFactory.getLogger(Instance.class).error("Could not create read Input Experiment from Project Space.");
+            LoggerFactory.getLogger(getClass()).error("Could not create read Input Experiment from Project Space.");
             throw new RuntimeException("Could not create read Input Experiment from Project Space.", e);
         }
     }
+
+    private static final ReferenceMap instanceCache = new ReferenceMap(AbstractReferenceMap.HARD, AbstractReferenceMap.WEAK, true);
+
+    @SafeVarargs
+    public final I getInstanceFromCompound(CompoundContainerId id, Class<? extends DataAnnotation>... components) {
+        I instance;
+        synchronized (instanceCache) {
+             instance = (I) instanceCache.computeIfAbsent(id, i -> newInstanceFromCompound(id));
+        }
+        instance.loadCompoundContainer(components);
+        return instance;
+    }
+
+    public final List<I> getInstancesFromCompounds(Collection<CompoundContainerId> ids, Class<? extends DataAnnotation>... components) {
+        List<I> instances = new ArrayList<>(ids.size());
+        synchronized (instanceCache) {
+            instances = ids.stream().map(id -> (I) instanceCache.computeIfAbsent(id, i -> newInstanceFromCompound(id)))
+                    .collect(Collectors.toList());
+        }
+        instances.forEach(i -> i.loadCompoundContainer(components));
+        return instances;
+    }
+
 
     public <T extends ProjectSpaceProperty> Optional<T> getProjectSpaceProperty(Class<T> key) {
         return projectSpace().getProjectSpaceProperty(key);
@@ -190,7 +217,7 @@ public class ProjectSpaceManager implements Iterable<Instance> {
     }
 
     @NotNull
-    public Iterator<Instance> filteredIterator(@Nullable Predicate<CompoundContainerId> cidFilter, @Nullable final Predicate<CompoundContainer> compoundFilter) {
+    public Iterator<I> filteredIterator(@Nullable Predicate<CompoundContainerId> cidFilter, @Nullable final Predicate<CompoundContainer> compoundFilter) {
         if (compoundFilter == null && cidFilter == null)
             return iterator();
         final Predicate<CompoundContainerId> cidF = (cidFilter != null && compoundFilter != null)
@@ -202,16 +229,17 @@ public class ProjectSpaceManager implements Iterable<Instance> {
 
     @NotNull
     @Override
-    public Iterator<Instance> iterator() {
+    public Iterator<I> iterator() {
         return instanceIterator();
     }
-    public Iterator<Instance> instanceIterator(Class<? extends DataAnnotation>... c) {
+
+    public Iterator<I> instanceIterator(Class<? extends DataAnnotation>... c) {
         if (compoundIdFilter != null)
             return filteredIterator(compoundIdFilter, null);
         return makeInstanceIterator(space.compoundIterator(c));
     }
 
-    private Iterator<Instance> makeInstanceIterator(@NotNull final Iterator<CompoundContainer> compoundIt) {
+    private Iterator<I> makeInstanceIterator(@NotNull final Iterator<CompoundContainer> compoundIt) {
         return new Iterator<>() {
             @Override
             public boolean hasNext() {
@@ -219,7 +247,7 @@ public class ProjectSpaceManager implements Iterable<Instance> {
             }
 
             @Override
-            public Instance next() {
+            public I next() {
                 final CompoundContainer c = compoundIt.next();
                 if (c == null) return null;
                 return instFac.create(c, ProjectSpaceManager.this);
@@ -262,7 +290,7 @@ public class ProjectSpaceManager implements Iterable<Instance> {
      * <p>
      * Results are cached!
      *
-     * @param interrupted  Tell the waiting job how it can check if it was interrupted
+     * @param interrupted Tell the waiting job how it can check if it was interrupted
      * @return true if data files are  NOT incompatible with the Server version (compatible or not existent)
      * @throws TimeoutException     if server request times out
      * @throws InterruptedException if waiting for server request is interrupted
@@ -319,7 +347,8 @@ public class ProjectSpaceManager implements Iterable<Instance> {
                     }
                 }
             }
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+                 NoSuchMethodException e) {
             throw new RuntimeException("Error during java reflection Object instantiation of '" + propClz.getName() + "'.", e);
         }
     }
@@ -346,7 +375,7 @@ public class ProjectSpaceManager implements Iterable<Instance> {
     }
 
 
-    public static ProjectSpaceConfiguration newDefaultConfig(){
+    public static ProjectSpaceConfiguration newDefaultConfig() {
         return DEFAULT_CONFIG.get();
     }
     //end region
