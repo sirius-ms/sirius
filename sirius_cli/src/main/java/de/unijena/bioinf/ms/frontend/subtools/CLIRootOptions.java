@@ -34,6 +34,7 @@ import picocli.CommandLine.Option;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
@@ -49,13 +50,13 @@ import java.util.logging.LogManager;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 @CommandLine.Command(name = "sirius", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false, showDefaultValues = true)
-public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOptions<M, PreprocessingJob<M>, PostprocessingJob<Boolean>> {
+public class CLIRootOptions<I extends Instance, M extends ProjectSpaceManager<I>> implements RootOptions<I, M, PreprocessingJob<M>, PostprocessingJob<Boolean>> {
     public static final Logger LOG = LoggerFactory.getLogger(CLIRootOptions.class);
 
     protected final DefaultParameterConfigLoader defaultConfigOptions;
-    protected final ProjectSpaceManagerFactory<M> spaceManagerFactory;
+    protected final ProjectSpaceManagerFactory<I, M> spaceManagerFactory;
 
-    public CLIRootOptions(@NotNull DefaultParameterConfigLoader defaultConfigOptions, @NotNull ProjectSpaceManagerFactory<M> spaceManagerFactory) {
+    public CLIRootOptions(@NotNull DefaultParameterConfigLoader defaultConfigOptions, @NotNull ProjectSpaceManagerFactory<I, M> spaceManagerFactory) {
         this.defaultConfigOptions = defaultConfigOptions;
         this.spaceManagerFactory = spaceManagerFactory;
     }
@@ -71,33 +72,37 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
 
     @Option(names = {"--log", "--loglevel"}, description = "Set logging level of the Jobs SIRIUS will execute. Valid values: ${COMPLETION-CANDIDATES}", order = 5, defaultValue = "WARNING")
     public void setLogLevel(final LogLevel loglevel) {
-        Arrays.stream(LogManager.getLogManager().getLogger(LoggerFactory.getLogger(JJob.DEFAULT_LOGGER_KEY).getName()).getHandlers())
-                .filter(h -> h instanceof ConsoleHandler).findFirst().ifPresent(h -> h.setFilter(r -> {
-            if (r.getLoggerName().equals(JJob.DEFAULT_LOGGER_KEY))
-                return r.getLevel().intValue() >= loglevel.level.intValue();
-            return true;
-        }));
+        Optional.ofNullable(LoggerFactory.getLogger(JJob.DEFAULT_LOGGER_KEY)).map(Logger::getName)
+                .map(LogManager.getLogManager()::getLogger).map(java.util.logging.Logger::getHandlers)
+                .map(Arrays::stream).ifPresent(s -> {
+                    s.filter(h -> h instanceof ConsoleHandler).findFirst().ifPresent(h -> h.setFilter(r -> {
+                        if (r.getLoggerName().equals(JJob.DEFAULT_LOGGER_KEY))
+                            return r.getLevel().intValue() >= loglevel.level.intValue();
+                        return true;
+                    }));
+                });
+
     }
 
     @Option(names = {"--cores", "--processors"}, description = "Number of cpu cores to use. If not specified Sirius uses all available cores.", order = 10)
     public void setNumOfCores(int numOfCores) {
         PropertyManager.setProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(numOfCores));
         SiriusJobs.setGlobalJobManager(numOfCores);
-        if (instanceBuffer < 0)
-            setInitialInstanceBuffer(-1);
+        if (instanceBuffer == null)
+            setInitialInstanceBuffer(0);
     }
 
-    @Option(names = {"--compound-buffer", "--initial-compound-buffer"}, defaultValue = "0", description = "Number of compounds that will be loaded into the Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all compounds immediately set it to -1. Default (numeric value 0): 3 x --cores. Note that for <DATASET_TOOLS> the compound buffer may have no effect because this tools may have to load compounds simultaneously into the memory.", order = 20)
+    @Option(names = {"--instance-buffer", "--compound-buffer", "--initial-compound-buffer"}, defaultValue = "0", description = "Number of compounds that will be loaded into the Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all compounds immediately set it to -1. Default (numeric value 0): 3 x --cores. Note that for <DATASET_TOOLS> the compound buffer may have no effect because this tools may have to load compounds simultaneously into the memory.", order = 20)
     public void setInitialInstanceBuffer(int initialInstanceBuffer) {
         this.instanceBuffer = /*initialInstanceBuffer == null ? -1 :*/ initialInstanceBuffer;
         if (instanceBuffer == 0) {
-            instanceBuffer = 3 * SiriusJobs.getGlobalJobManager().getCPUThreads();
+            instanceBuffer = 5 * SiriusJobs.getGlobalJobManager().getCPUThreads();
         }
 
         PropertyManager.setProperty("de.unijena.bioinf.sirius.instanceBuffer", String.valueOf(instanceBuffer));
     }
 
-    private int instanceBuffer = -1;
+    private Integer instanceBuffer = null;
 
     @Option(names = {"--workspace", "-w"}, description = "Specify sirius workspace location. This is the directory for storing Property files, logs, databases and caches.  This is NOT for the project-space that stores the results! Default is $USER_HOME/.sirius-<MINOR_VERSION>", order = 30, hidden = true)
     public Files workspace; //todo change in application core
@@ -140,7 +145,7 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
 
     private M projectSpaceToWriteOn = null;
 
-    public ProjectSpaceManagerFactory<M> getSpaceManagerFactory() {
+    public ProjectSpaceManagerFactory<I, M> getSpaceManagerFactory() {
         return spaceManagerFactory;
     }
 

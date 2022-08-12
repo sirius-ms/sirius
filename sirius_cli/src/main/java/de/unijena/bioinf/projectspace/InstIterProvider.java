@@ -20,15 +20,35 @@
 package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.utils.IterableWithSize;
+import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
+
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.function.Predicate;
 
 public interface InstIterProvider extends Iterator<Ms2Experiment> {
-    default InstanceImportIteratorMS2Exp asInstanceIterator(ProjectSpaceManager projectSpace) {
+    /**
+     * @return the exact size of the result iterable or an upper bound if not available, if result is null it returns -1.
+     */
+    static int getResultSizeEstimate(@Nullable Iterable<? extends Instance> source) {;
+        if (source == null)
+            return -1;
+        if (!source.iterator().hasNext())
+            return 0;
+        if (source instanceof Collection)
+            return ((Collection<?>) source).size();
+        if (source instanceof IterableWithSize)
+            return ((IterableWithSize<?>) source).size();
+        LoggerFactory.getLogger(InstIterProvider.class).warn("Estimating Iterable<Instance> size from project-space. Might be inaccurate and slow.");
+        return source.iterator().next().getProjectSpaceManager().size();
+    }
+    default InstanceImportIteratorMS2Exp asInstanceIterator(ProjectSpaceManager<?> projectSpace) {
         return new InstanceImportIteratorMS2Exp(this, projectSpace);
     }
 
-    default InstanceImportIteratorMS2Exp asInstanceIterator(ProjectSpaceManager projectSpace, Predicate<CompoundContainer> compoundFilter) {
+    default InstanceImportIteratorMS2Exp asInstanceIterator(ProjectSpaceManager<?> projectSpace, Predicate<CompoundContainer> compoundFilter) {
         return new InstanceImportIteratorMS2Exp(this, projectSpace, compoundFilter);
     }
 }

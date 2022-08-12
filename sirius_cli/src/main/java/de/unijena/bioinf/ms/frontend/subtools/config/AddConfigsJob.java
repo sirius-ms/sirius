@@ -26,9 +26,9 @@ import de.unijena.bioinf.babelms.ms.InputFileConfig;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
+import de.unijena.bioinf.projectspace.FormulaResultRankingScore;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceConfig;
-import de.unijena.bioinf.projectspace.FormulaResultRankingScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.apache.commons.configuration2.CombinedConfiguration;
 import org.jetbrains.annotations.NotNull;
@@ -39,8 +39,14 @@ public class AddConfigsJob extends InstanceJob {
     private final ParameterConfig computeConfig;
 
     public AddConfigsJob(ParameterConfig computeConfig) {
-        super(SiriusJobs.getGlobalJobManager(), false);
+        super(SiriusJobs.getGlobalJobManager());
         this.computeConfig = computeConfig;
+        asIO();
+    }
+
+    @Override
+    protected boolean needsMs2() {
+        return false;
     }
 
     @Override
@@ -63,7 +69,7 @@ public class AddConfigsJob extends InstanceJob {
         baseConfig = psConfig
                 .map(projectSpaceConfig -> {
                     ParameterConfig conf = projectSpaceConfig.config;
-                    if (!computeConfig.getLocalConfigName().equals(DefaultParameterConfigLoader.CLI_CONFIG_NAME) && computeConfig.containsConfiguration(DefaultParameterConfigLoader.CLI_CONFIG_NAME)){
+                    if (!computeConfig.getLocalConfigName().equals(DefaultParameterConfigLoader.CLI_CONFIG_NAME) && computeConfig.containsConfiguration(DefaultParameterConfigLoader.CLI_CONFIG_NAME)) {
                         conf = conf.newIndependentInstance(DefaultParameterConfigLoader.CLI_CONFIG_NAME);
                         conf.updateConfig(DefaultParameterConfigLoader.CLI_CONFIG_NAME, ((CombinedConfiguration) computeConfig.getConfigs()).getConfiguration(DefaultParameterConfigLoader.CLI_CONFIG_NAME));
                     }
@@ -105,7 +111,7 @@ public class AddConfigsJob extends InstanceJob {
 
         checkForInterruption();
 
-        inst.updateExperiment(); //todo we should optize this, so that this is not needed anymore
+        inst.updateExperiment(); //todo we should optimize this, so that this is not needed anymore
         inst.updateConfig();
     }
 

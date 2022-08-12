@@ -74,7 +74,7 @@ public class FingerblastOptions implements ToolChainOptions<FingerblastSubToolJo
         defaultConfigOptions.changeOption("StructurePredictors", predictors);
     }
 
-    @Option(names = {"-l", "flag-lipids", "--elgordo"}, descriptionKey = "InjectElGordoCompounds", description = {"Tag candidates that are matching lipid class determined by El Gordo in CSI:FingerID candidate list."})
+    @Option(names = {"-l", "tag-lipids", "flag-lipids", "--elgordo"}, descriptionKey = "InjectElGordoCompounds", description = {"Tag candidates that are matching lipid class determined by El Gordo in CSI:FingerID candidate list."})
     public void setInjectElGordoCompounds(DefaultParameter value) throws Exception {
         defaultConfigOptions.changeOption("InjectElGordoCompounds", value);
     }

@@ -36,7 +36,7 @@ import java.util.Optional;
 public class LcmsAlignOptions implements PreprocessingTool<LcmsAlignSubToolJob> {
 
     @Override
-    public LcmsAlignSubToolJob makePreprocessingJob(RootOptions<?,?,?> rootOptions, ParameterConfig config) {
+    public LcmsAlignSubToolJob makePreprocessingJob(RootOptions<?,?,?,?> rootOptions, ParameterConfig config) {
         return new LcmsAlignSubToolJob(rootOptions.getInput(), rootOptions.getProjectSpace(), config, this);
     }
 

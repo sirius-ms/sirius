@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
+import de.unijena.bioinf.ChemistryBase.utils.ExFunctions;
 import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -45,14 +46,16 @@ public class SignOutAction extends AbstractAction {
     public synchronized void actionPerformed(ActionEvent e) {
         boolean r = Jobs.runInBackgroundAndLoad(MF, "Logging out...", () -> {
             try {
-                ApplicationCore.WEB_API.changeActiveSubscription(null);
-                AuthServices.clearRefreshToken(ApplicationCore.WEB_API.getAuthService(), ApplicationCore.TOKEN_FILE);
-                ProxyManager.reconnect();
+                ProxyManager.withConnectionLock((ExFunctions.Runnable) () -> {
+                    ApplicationCore.WEB_API.changeActiveSubscription(null);
+                    AuthServices.clearRefreshToken(ApplicationCore.WEB_API.getAuthService(), ApplicationCore.TOKEN_FILE);
+                    ProxyManager.reconnect();
+                });
                 return true;
             } catch (IOException ex) {
                 LoggerFactory.getLogger(getClass()).warn("Error during logout!", ex);
                 return false;
-            }finally {
+            } finally {
                 MF.CONNECTION_MONITOR().checkConnectionInBackground();
             }
         }).getResult();

@@ -69,7 +69,7 @@ public class InstanceBean extends Instance implements SiriusPCS {
 
     //todo som unregister listener stategy
 
-    public InstanceBean(@NotNull CompoundContainer compoundContainer, @NotNull ProjectSpaceManager spaceManager) {
+    public InstanceBean(@NotNull CompoundContainer compoundContainer, @NotNull ProjectSpaceManager<InstanceBean> spaceManager) {
         super(compoundContainer, spaceManager);
     }
 

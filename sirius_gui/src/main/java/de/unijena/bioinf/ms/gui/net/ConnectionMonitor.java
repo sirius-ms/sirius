@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.gui.net;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -63,10 +64,6 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         backgroundMonitorJob = null;
     }
 
-    /*  public enum ConnectionState {
-          YES, WARN, TERMS, AUTH_ERROR, NO; //NO means ERROR (No connection)
-      }
-  */
     private volatile ConnectionCheck checkResult = new ConnectionCheck(Multimaps.newSetMultimap(Map.of(), Set::of), null, new LicenseInfo());
     private volatile CheckJob checkJob = null;
 
@@ -119,6 +116,9 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
 
         old = this.checkResult;
         this.checkResult = checkResult;
+
+        if (!old.isConnected() && (checkResult.isConnected() || checkResult.hasOnlyWarning()))
+            NetUtils.awakeAll();//awake waiting web connections
 
         firePropertyChange(new ConnectionUpdateEvent(checkResult));
         firePropertyChange(new ConnectionStateEvent(old, checkResult));
@@ -180,7 +180,9 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
 
             checkForInterruption();
 
-            return new ConnectionCheck(errors, wl, ll);
+            ConnectionCheck result = new ConnectionCheck(errors, wl, ll);
+
+            return result;
         }
 
         @Override
