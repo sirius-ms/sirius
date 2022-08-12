@@ -29,6 +29,7 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.utils.IterableWithSize;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
@@ -53,7 +54,7 @@ import java.util.function.IntFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCloseable {
+public class SiriusProjectSpace implements IterableWithSize<CompoundContainerId>, AutoCloseable {
 
     private final ReadWriteLock idLock = new ReentrantReadWriteLock();
     private final Map<String, CompoundContainerId> ids;

@@ -22,13 +22,12 @@ package de.unijena.bioinf.ms.rest.client.account;
 
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.auth.AuthService;
-import de.unijena.bioinf.auth.LoginException;
 import de.unijena.bioinf.ms.rest.client.AbstractClient;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -68,7 +67,7 @@ public class AccountClient extends AbstractClient {
         return authService.signUpURL(getSignUpRedirectURL());
     }
 
-    public boolean deleteAccount(@NotNull CloseableHttpClient client) {
+    public boolean deleteAccount(@NotNull HttpClient client) {
         try {
             execute(client, () -> {
                 HttpDelete delete = new HttpDelete(getBaseURI("/account/delete").build());
@@ -83,7 +82,7 @@ public class AccountClient extends AbstractClient {
         }
     }
 
-    public boolean acceptTerms(@NotNull CloseableHttpClient client) {
+    public boolean acceptTerms(@NotNull HttpClient client) {
         try {
             execute(client, () -> {
                 HttpPost post = new HttpPost(getBaseURI("/account/accept-terms").build());

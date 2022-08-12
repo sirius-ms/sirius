@@ -20,21 +20,19 @@
 
 package de.unijena.bioinf.webapi.rest;
 
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.utils.ExFunctions;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.apache.http.HttpHost;
-import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpHead;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.impl.client.BasicCredentialsProvider;
@@ -42,11 +40,10 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.apache.http.impl.nio.client.HttpAsyncClients;
-import org.apache.http.params.HttpParams;
-import org.apache.http.protocol.HttpContext;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
@@ -59,8 +56,8 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 
 /**
@@ -68,9 +65,9 @@ import java.util.function.Function;
  */
 public class ProxyManager {
     private static final RequestConfig DEFAULT_CONFIG = RequestConfig.custom()
-            .setConnectTimeout(15000)
+            .setConnectTimeout(PropertyManager.getInteger("de.unijena.bioinf.sirius.http.connectTimeout", 15000))
 //                .setConnectionRequestTimeout(30000)
-            .setSocketTimeout(15000)
+            .setSocketTimeout(PropertyManager.getInteger("de.unijena.bioinf.sirius.http.socketTimeout", 15000))
             .setCookieSpec(CookieSpecs.IGNORE_COOKIES)
             .build();
 
@@ -103,12 +100,12 @@ public class ProxyManager {
     }
 
     // this method inits the proxy configuration at program start
-    public static CloseableHttpClient getSirirusHttpClient() {
-        return getSirirusHttpClient(getProxyStrategy());
+    public static CloseableHttpClient getSirirusHttpClient(boolean pooled) {
+        return getSirirusHttpClient(getProxyStrategy(), pooled);
     }
 
-    public static CloseableHttpClient getSirirusHttpClient(ProxyStrategy strategy) {
-        return (CloseableHttpClient) getSirirusHttpClient(strategy, false);
+    public static CloseableHttpClient getSirirusHttpClient(ProxyStrategy strategy, boolean pooled) {
+        return (CloseableHttpClient) getSirirusHttpClient(strategy, false, pooled);
     }
 
     public static CloseableHttpAsyncClient getSirirusHttpAsyncClient() {
@@ -116,22 +113,22 @@ public class ProxyManager {
     }
 
     public static CloseableHttpAsyncClient getSirirusHttpAsyncClient(ProxyStrategy strategy) {
-        return (CloseableHttpAsyncClient) getSirirusHttpClient(strategy, true);
+        return (CloseableHttpAsyncClient) getSirirusHttpClient(strategy, true, false);
     }
 
-    private static Object getSirirusHttpClient(ProxyStrategy strategy, boolean async) {
+    private static Object getSirirusHttpClient(ProxyStrategy strategy, boolean async, boolean pooled) {
         final Object client;
         switch (strategy) {
             case SIRIUS:
-                client = getSiriusProxyClient(async);
+                client = getSiriusProxyClient(async, pooled);
                 LoggerFactory.getLogger(ProxyStrategy.class).debug("Using Proxy Type " + ProxyStrategy.SIRIUS);
                 break;
             case NONE:
-                client = getNoProxyClient(async);
+                client = getNoProxyClient(async, pooled);
                 LoggerFactory.getLogger(ProxyStrategy.class).debug("Using Proxy Type " + ProxyStrategy.NONE);
                 break;
             default:
-                client = getNoProxyClient(async);
+                client = getNoProxyClient(async, pooled);
                 LoggerFactory.getLogger(ProxyStrategy.class).debug("Using FALLBACK Proxy Type " + ProxyStrategy.NONE);
         }
         return client;
@@ -151,13 +148,28 @@ public class ProxyManager {
     }
 
     public static Optional<List<ConnectionError>> checkInternetConnection() {
-        try (CloseableHttpClient client = getSirirusHttpClient()) {
+        try (CloseableHttpClient client = getSirirusHttpClient(false)) {
             return checkInternetConnection(client);
         } catch (IOException e) {
             String m = "Could not create Http client during Internet connection check.";
             LoggerFactory.getLogger(ProxyManager.class).error(m, e);
             return Optional.of(List.of(new ConnectionError(98, m, ConnectionError.Klass.UNKNOWN)));
         }
+    }
+
+    private static HttpClientConnectionManager connectionPoolManager() {
+        // minus 2 because we have to dedicated connection for job submission and watching
+        return connectionPoolManager(PropertyManager.getInteger("de.unijena.bioinf.sirius.http.maxTotal", 5) - 2);
+    }
+
+    private static HttpClientConnectionManager connectionPoolManager(int maxTotal) {
+        int maxPerRoute = Math.min(Math.max(1, SiriusJobs.getCPUThreads()), maxTotal);
+//        System.out.println("Starting http Client with MaxPerRout=" + maxPerRoute + " / maxTotal=" + maxTotal + "(Threads=" + SiriusJobs.getCPUThreads() + ").");
+        LoggerFactory.getLogger(ProxyManager.class).info("Starting http Client with MaxPerRout=" + maxPerRoute + " / maxTotal=" + maxTotal + "(Threads=" + SiriusJobs.getCPUThreads() + ").");
+        PoolingHttpClientConnectionManager poolingConnManager = new PoolingHttpClientConnectionManager();
+        poolingConnManager.setDefaultMaxPerRoute(maxPerRoute);
+        poolingConnManager.setMaxTotal(maxTotal);
+        return poolingConnManager;
     }
 
     private static <B> B handleSSLValidation(@NotNull final B builder) {
@@ -177,14 +189,16 @@ public class ProxyManager {
         return builder;
     }
 
-    private static Object getNoProxyClient(boolean async) {
+    private static Object getNoProxyClient(boolean async, boolean pooled) {
         Object builder = handleSSLValidation(async
                 ? HttpAsyncClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG)
+                : pooled
+                ? HttpClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG).setConnectionManager(connectionPoolManager())
                 : HttpClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG));
         return async ? ((HttpAsyncClientBuilder) builder).build() : ((HttpClientBuilder) builder).build();
     }
 
-    private static Object getSiriusProxyClient(boolean async) {
+    private static Object getSiriusProxyClient(boolean async, boolean pooled) {
         final String hostName = PropertyManager.getProperty("de.unijena.bioinf.sirius.proxy.hostname");
         final int port = Integer.parseInt(PropertyManager.getProperty("de.unijena.bioinf.sirius.proxy.port"));
         final String scheme = PropertyManager.getProperty("de.unijena.bioinf.sirius.proxy.scheme");
@@ -199,10 +213,11 @@ public class ProxyManager {
                     scheme,
                     PropertyManager.getProperty("de.unijena.bioinf.sirius.proxy.credentials.user"),
                     PropertyManager.getProperty("de.unijena.bioinf.sirius.proxy.credentials.pw"),
-                    async
+                    async,
+                    pooled
             );
         } else {
-            builder = getClientBuilderWithProxySettings(hostName, port, scheme, null, null, async);
+            builder = getClientBuilderWithProxySettings(hostName, port, scheme, null, null, async, pooled);
         }
 
         handleSSLValidation(builder);
@@ -211,10 +226,12 @@ public class ProxyManager {
 
     }
 
-    private static Object getClientBuilderWithProxySettings(final String hostname, final int port, final String scheme, final String username, final String password, boolean async) {
+    private static Object getClientBuilderWithProxySettings(final String hostname, final int port, final String scheme, final String username, final String password, boolean async, boolean pooled) {
         return decorateClientBuilderWithProxySettings(
                 async
                         ? HttpAsyncClients.custom().setDefaultRequestConfig(DEFAULT_CONFIG)
+                        : pooled
+                        ? HttpClients.custom().setDefaultRequestConfig(DEFAULT_CONFIG).setConnectionManager(connectionPoolManager())
                         : HttpClients.custom().setDefaultRequestConfig(DEFAULT_CONFIG),
                 hostname, port, scheme, username, password);
     }
@@ -346,157 +363,116 @@ public class ProxyManager {
 
     //region HTTPClientManagement
     public static void disconnect() {
-        closingContainers.add(clientContainer);
-        Iterator<GentlyHttpClientCloser> iterator = closingContainers.iterator();
-        while (iterator.hasNext()) {
-            try {
-                LoggerFactory.getLogger(ProxyManager.class).info("Closing open http connection before shutdown");
-                iterator.next().client.close();
-            } catch (IOException e) {
-                LoggerFactory.getLogger(PropertyManager.class).error("Error when closing HTTP connection", e);
-            }
+        reconnectLock.writeLock().lock();
+        try {
+            close(clients);
+            clients = null; // prevents reconnection
+        } finally {
+            reconnectLock.writeLock().unlock();
         }
     }
+
+    private static void close(final Map<String, CloseableHttpClient> clients) {
+        if (clients == null)
+            return;
+        clients.forEach((k, c) -> {
+            try {
+                c.close();
+                LoggerFactory.getLogger("Close clients: '" + k + "' Successfully closed!");
+            } catch (IOException e) {
+                LoggerFactory.getLogger(ProxyManager.class).warn("Could not close HttpClient: " + k, e);
+            }
+        });
+
+    }
+
+    private static final ReadWriteLock reconnectLock = new ReentrantReadWriteLock();
 
     public static void reconnect() {
-        final GentlyHttpClientCloser old = clientContainer;
-        synchronized (old.clientUsers) {
-            clientContainer = new GentlyHttpClientCloser(getSirirusHttpClient());
-            old.closeMe.set(true);
-            closingContainers.add(old);
+        final Map<String, CloseableHttpClient> old;
+        reconnectLock.writeLock().lock();
+        try {
+            old = clients;
+            clients = new ConcurrentHashMap<>();
+        } finally {
+            reconnectLock.writeLock().unlock();
+        }
+
+        SiriusJobs.runInBackground(() -> close(old));
+    }
+
+    static HttpClient client() {
+        return client(POOL_CLIENT_ID);
+    }
+
+    static HttpClient client(String clientID) {
+        if (clients == null)
+            throw new IllegalStateException("ProxyManager has already been closed! Use reconnect to re-enable!");
+        reconnectLock.readLock().lock();
+        try {
+            return clients.computeIfAbsent(clientID, k -> getSirirusHttpClient(POOL_CLIENT_ID.equals(clientID)));
+        } finally {
+            reconnectLock.readLock().unlock();
         }
     }
 
-    static LockedClosableHttpClient client() {
-        return new LockedClosableHttpClient(clientContainer);
+    public static void consumeClient(IOFunctions.IOConsumer<HttpClient> doWithClient) throws IOException {
+        consumeClient(doWithClient, POOL_CLIENT_ID);
     }
 
-    public static void consumeClient(IOFunctions.IOConsumer<LockedClosableHttpClient> doWithClient) throws IOException {
-        try (LockedClosableHttpClient client = ProxyManager.client()) {
-            doWithClient.accept(client);
-        }
-    }
-
-    public static <T> T doWithClient(Function<LockedClosableHttpClient, T> doWithClient) {
-        try (LockedClosableHttpClient client = ProxyManager.client()) {
-            return doWithClient.apply(client);
+    public static void consumeClient(IOFunctions.IOConsumer<HttpClient> doWithClient, String clientID) throws IOException {
+        reconnectLock.readLock().lock();
+        try {
+            doWithClient.accept(client(clientID));
+        }finally {
+            reconnectLock.readLock().unlock();
         }
     }
 
-    public static <T> T applyClient(IOFunctions.IOFunction<LockedClosableHttpClient, T> doWithClient) throws IOException {
-        try (LockedClosableHttpClient client = ProxyManager.client()) {
-            return doWithClient.apply(client);
+    public static <T> T doWithClient(Function<HttpClient, T> doWithClient) {
+        return doWithClient(doWithClient, POOL_CLIENT_ID);
+    }
+
+    public static <T> T doWithClient(Function<HttpClient, T> doWithClient, String clientID) {
+        reconnectLock.readLock().lock();
+        try {
+            return doWithClient.apply(ProxyManager.client(clientID));
+        }finally {
+            reconnectLock.readLock().unlock();
         }
     }
 
+    public static <T> T applyClient(IOFunctions.IOFunction<HttpClient, T> doWithClient) throws IOException {
+        return applyClient(doWithClient, POOL_CLIENT_ID);
+    }
 
-    private static final Set<GentlyHttpClientCloser> closingContainers = Collections.newSetFromMap(new ConcurrentHashMap<>());
-    private static GentlyHttpClientCloser clientContainer = new GentlyHttpClientCloser(getSirirusHttpClient());
-
-    private static class GentlyHttpClientCloser {
-        private final AtomicBoolean closeMe = new AtomicBoolean(false);
-        private final AtomicInteger clientUsers = new AtomicInteger(0);
-        private final CloseableHttpClient client;
-
-        private GentlyHttpClientCloser(final CloseableHttpClient client) {
-            this.client = client;
-        }
-
-
-        private void close() throws IOException {
-            synchronized (clientUsers) {
-                if (closeMe.get() && clientUsers.get() == 0) {
-                    client.close();
-                    closingContainers.remove(this);
-                }
-            }
+    public static <T> T applyClient(IOFunctions.IOFunction<HttpClient, T> doWithClient, String clientID) throws IOException {
+        reconnectLock.readLock().lock();
+        try {
+            return doWithClient.apply(ProxyManager.client(clientID));
+        }finally {
+            reconnectLock.readLock().unlock();
         }
     }
 
-    public static class LockedClosableHttpClient extends CloseableHttpClient implements AutoCloseable {
-        private final GentlyHttpClientCloser clientContainer;
-        private final AtomicBoolean closed = new AtomicBoolean(false);
-
-        private LockedClosableHttpClient(final GentlyHttpClientCloser clientCon) {
-            this.clientContainer = clientCon;
-            synchronized (clientContainer.clientUsers) {
-                if (clientContainer.closeMe.get()) {
-                    throw new RuntimeException("Client has been already stated for closing");
-                }
-                clientContainer.clientUsers.incrementAndGet();
-            }
-        }
-
-        @Override
-        protected CloseableHttpResponse doExecute(HttpHost target, HttpRequest request, HttpContext context) {
-            throw new RuntimeException("Method not Implemented because of delegation from wrapped http client");
-        }
-
-        @Override
-        public CloseableHttpResponse execute(HttpHost target, HttpRequest request, HttpContext context) throws IOException {
-            return clientContainer.client.execute(target, request, context);
-        }
-
-        @Override
-        public CloseableHttpResponse execute(HttpUriRequest request, HttpContext context) throws IOException {
-            return clientContainer.client.execute(request, context);
-        }
-
-        @Override
-        public CloseableHttpResponse execute(HttpUriRequest request) throws IOException {
-            return clientContainer.client.execute(request);
-        }
-
-        @Override
-        public CloseableHttpResponse execute(HttpHost target, HttpRequest request) throws IOException {
-            return clientContainer.client.execute(target, request);
-        }
-
-        @Override
-        public <T> T execute(HttpUriRequest request, ResponseHandler<? extends T> responseHandler) throws IOException {
-            return clientContainer.client.execute(request, responseHandler);
-        }
-
-        @Override
-        public <T> T execute(HttpUriRequest request, ResponseHandler<? extends T> responseHandler, HttpContext context) throws IOException {
-            return clientContainer.client.execute(request, responseHandler, context);
-        }
-
-        @Override
-        public <T> T execute(HttpHost target, HttpRequest request, ResponseHandler<? extends T> responseHandler) throws IOException {
-            return clientContainer.client.execute(target, request, responseHandler);
-        }
-
-        @Override
-        public <T> T execute(HttpHost target, HttpRequest request, ResponseHandler<? extends T> responseHandler, HttpContext context) throws IOException {
-            return clientContainer.client.execute(target, request, responseHandler, context);
-        }
-
-        @Override
-        @Deprecated
-        public HttpParams getParams() {
-            return clientContainer.client.getParams();
-        }
-
-        @Override
-        @Deprecated
-        public ClientConnectionManager getConnectionManager() {
-            return clientContainer.client.getConnectionManager();
-        }
-
-        @Override
-        public void close() {
-            if (!closed.getAndSet(true)) {
-                synchronized (clientContainer.clientUsers) {
-                    clientContainer.clientUsers.decrementAndGet();
-                    try {
-                        clientContainer.close();
-                    } catch (IOException e) {
-                        LoggerFactory.getLogger(PropertyManager.class).error("Error while HTTP container closing attempt!", e);
-                    }
-                }
-            }
+    public static void withConnectionLock(Runnable runner){
+        reconnectLock.writeLock().lock();
+        try {
+           runner.run();
+        }finally {
+            reconnectLock.writeLock().unlock();
         }
     }
-    //endregion
+
+    public static void withConnectionLock(ExFunctions.Runnable runner) throws Exception {
+        reconnectLock.writeLock().lock();
+        try {
+            runner.run();
+        }finally {
+            reconnectLock.writeLock().unlock();
+        }
+    }
+
+    private static final String POOL_CLIENT_ID = "POOL_CLIENT";
+    private static ConcurrentHashMap<String, CloseableHttpClient> clients = new ConcurrentHashMap<>();
 }

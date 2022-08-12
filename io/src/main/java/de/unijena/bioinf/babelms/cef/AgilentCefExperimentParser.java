@@ -26,6 +26,7 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import org.apache.commons.io.input.ReaderInputStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -55,21 +56,31 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
     private XMLEventReader xmlEventReader;
 
     private InputStream currentStream = null;
-    private @NotNull URI currentUrl = null;
-
+    private URI currentUrl = null;
 
 
     private Iterator<Ms2Experiment> iterator = null;
 
     @Override
-    public <S extends Ms2Experiment> S parse(@Nullable BufferedReader ignored, @NotNull URI source) throws IOException {
+    public <S extends Ms2Experiment> S parse(BufferedReader secondChoice, @Nullable URI source) throws IOException {
         //XML parsing on readers works bad, so we create our own stream from url
         if (iterator != null && iterator.hasNext()) {
             return (S) iterator.next();
         } else if (!Objects.equals(currentUrl, source) || xmlEventReader == null || unmarshaller == null) {
             try {
+                if (secondChoice == null && source == null)
+                    throw new IllegalArgumentException("Neither Reader nor File is given, No Input to parse!");
+
                 currentUrl = source;
-                currentStream = currentUrl.toURL().openStream();
+                if (source != null) {
+                    currentStream = currentUrl.toURL().openStream();
+                    if (secondChoice != null)
+                        secondChoice.close();
+                } else {
+                    //todo how to handle charset.
+                    currentStream = new ReaderInputStream(secondChoice);
+                }
+
                 // create xml event reader for input stream
                 XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
                 xmlEventReader = xmlInputFactory.createXMLEventReader(currentStream);
@@ -114,6 +125,7 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
     }
 
     private static final Pattern PEAK_MATCHER = Pattern.compile("^\\d+M.*|\\+\\d+$");
+
     private <S extends Ms2Experiment> List<S> experimentFromMFECompound(Compound compound) {
         final Spectrum mfe = compound.getSpectrum().stream().filter(s -> s.getType().equals("MFE"))
                 .findAny().orElseThrow(() -> new IllegalArgumentException("Compound must contain a MFE spectrum to be parsed as MFE spectrum!"));
@@ -124,7 +136,7 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
             if (PEAK_MATCHER.matcher(p.getS()).find()) {
                 LoggerFactory.getLogger(getClass()).warn("Skipping potential precursor at `" + p.getX() + "Da` (and corresponding MS/MS) due to an unsupported ion type '" + p.getS() + "'.)");
                 return false;
-            }else {
+            } else {
                 return true;
             }
         }).forEach(p -> {
@@ -151,7 +163,8 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
         //todo how do we get the real dev? maybe load profile/ from outside
         MS2MassDeviation dev = PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class);
         exp.setName("rt=" + compound.location.rt + "-p=" + NUMBER_FORMAT.format(exp.getIonMass()));
-        exp.setSource(new SpectrumFileSource(currentUrl));
+        if (currentUrl != null)
+            exp.setSource(new SpectrumFileSource(currentUrl));
 
         List<SimpleSpectrum> ms1Spectra = new ArrayList<>();
         List<MutableMs2Spectrum> ms2Spectra = new ArrayList<>();
@@ -184,7 +197,7 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
             return CollisionEnergy.fromString(spec.msDetails.getCe().replace("V", "ev"));
         } catch (Exception e) {
             LoggerFactory.getLogger(getClass()).warn("Could not parse collision energy! Cause: " + e.getMessage());
-            LoggerFactory.getLogger(getClass()).debug("Could not parse collision energy!" , e);
+            LoggerFactory.getLogger(getClass()).debug("Could not parse collision energy!", e);
             return CollisionEnergy.none();
         }
     }
