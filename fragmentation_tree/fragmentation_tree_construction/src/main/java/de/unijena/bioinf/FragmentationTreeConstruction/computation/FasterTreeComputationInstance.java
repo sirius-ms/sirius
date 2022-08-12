@@ -133,7 +133,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
     }
 
     protected void configureProgress(int to, int numberOfTicks) {
-        configureProgress(Math.min(to-1, this.currentProgress().getNewValue().intValue()), to, numberOfTicks);
+        configureProgress((int) Math.min(to-1, this.currentProgress().getProgress()), to, numberOfTicks);
     }
 
     protected void configureProgress(int from, int to, int numberOfTicks) {

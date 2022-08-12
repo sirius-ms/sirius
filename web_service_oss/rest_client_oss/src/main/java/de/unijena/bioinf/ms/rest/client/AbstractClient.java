@@ -29,11 +29,10 @@ import de.unijena.bioinf.ms.rest.client.utils.HTTPSupplier;
 import de.unijena.bioinf.ms.rest.model.SecurityService;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.*;
-import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -105,7 +104,7 @@ public abstract class AbstractClient {
 
 
     //region http request execution API
-    public <T> T executeWithResponse(@NotNull CloseableHttpClient client, @NotNull final HTTPSupplier<?> makeRequest, IOFunctions.IOFunction<HttpResponse, T> respHandling) throws IOException {
+    public <T> T executeWithResponse(@NotNull HttpClient client, @NotNull final HTTPSupplier<?> makeRequest, IOFunctions.IOFunction<HttpResponse, T> respHandling) throws IOException {
         try {
             return executeWithResponse(client, makeRequest.get(), respHandling);
         } catch (URISyntaxException e) {
@@ -113,13 +112,11 @@ public abstract class AbstractClient {
         }
     }
 
-    public <T> T executeWithResponse(@NotNull CloseableHttpClient client, @NotNull final HttpUriRequest request, IOFunctions.IOFunction<HttpResponse, T> respHandling) throws IOException {
-        try (CloseableHttpResponse response = client.execute(request)) {
-            return respHandling.apply(response);
-        }
+    public <T> T executeWithResponse(@NotNull HttpClient client, @NotNull final HttpUriRequest request, IOFunctions.IOFunction<HttpResponse, T> respHandling) throws IOException {
+            return respHandling.apply(client.execute(request));
     }
 
-    public <T> T execute(@NotNull CloseableHttpClient client, @NotNull final HttpUriRequest request, IOFunctions.IOFunction<BufferedReader, T> respHandling) throws IOException {
+    public <T> T execute(@NotNull HttpClient client, @NotNull final HttpUriRequest request, IOFunctions.IOFunction<BufferedReader, T> respHandling) throws IOException {
         for (IOFunctions.IOConsumer<HttpUriRequest> requestDecorator : requestDecorators)
             requestDecorator.accept(request);
         return executeWithResponse(client, request, response -> {
@@ -137,7 +134,7 @@ public abstract class AbstractClient {
         });
     }
 
-    public <T> T execute(@NotNull CloseableHttpClient client, @NotNull final HTTPSupplier<?> makeRequest, IOFunctions.IOFunction<BufferedReader, T> respHandling) throws IOException {
+    public <T> T execute(@NotNull HttpClient client, @NotNull final HTTPSupplier<?> makeRequest, IOFunctions.IOFunction<BufferedReader, T> respHandling) throws IOException {
         try {
             return execute(client, makeRequest.get(), respHandling);
         } catch (URISyntaxException e) {
@@ -145,23 +142,23 @@ public abstract class AbstractClient {
         }
     }
 
-    public void execute(@NotNull CloseableHttpClient client, @NotNull final HTTPSupplier<?> makeRequest) throws IOException {
+    public void execute(@NotNull HttpClient client, @NotNull final HTTPSupplier<?> makeRequest) throws IOException {
         execute(client, makeRequest, (br) -> true);
     }
 
-    public void execute(@NotNull CloseableHttpClient client, @NotNull final HttpUriRequest request) throws IOException {
+    public void execute(@NotNull HttpClient client, @NotNull final HttpUriRequest request) throws IOException {
         execute(client, () -> request);
     }
 
-    public <T, R extends TypeReference<T>> T executeFromJson(@NotNull CloseableHttpClient client, @NotNull final HttpUriRequest request, R tr) throws IOException {
+    public <T, R extends TypeReference<T>> T executeFromJson(@NotNull HttpClient client, @NotNull final HttpUriRequest request, R tr) throws IOException {
         return execute(client, request, r -> r != null ? new ObjectMapper().readValue(r, tr) : null);
     }
 
-    public <T, R extends TypeReference<T>> T executeFromJson(@NotNull CloseableHttpClient client, @NotNull final HTTPSupplier<?> makeRequest, R tr) throws IOException {
+    public <T, R extends TypeReference<T>> T executeFromJson(@NotNull HttpClient client, @NotNull final HTTPSupplier<?> makeRequest, R tr) throws IOException {
         return execute(client, makeRequest, r -> r != null ? new ObjectMapper().readValue(r, tr) : null);
     }
 
-    public <T> T executeFromStream(@NotNull CloseableHttpClient client, @NotNull final HTTPSupplier<?> makeRequest, IOFunctions.IOFunction<InputStream, T> respHandling) throws IOException {
+    public <T> T executeFromStream(@NotNull HttpClient client, @NotNull final HTTPSupplier<?> makeRequest, IOFunctions.IOFunction<InputStream, T> respHandling) throws IOException {
         try {
             return executeFromStream(client, makeRequest.get(), respHandling);
         } catch (URISyntaxException e) {
@@ -169,22 +166,21 @@ public abstract class AbstractClient {
         }
     }
 
-    public <T> T executeFromStream(@NotNull CloseableHttpClient client, @NotNull final HttpUriRequest request, IOFunctions.IOFunction<InputStream, T> respHandling) throws IOException {
+    public <T> T executeFromStream(@NotNull HttpClient client, @NotNull final HttpUriRequest request, IOFunctions.IOFunction<InputStream, T> respHandling) throws IOException {
         for (IOFunctions.IOConsumer<HttpUriRequest> requestDecorator : requestDecorators)
             requestDecorator.accept(request);
 
-        try (CloseableHttpResponse response = client.execute(request)) {
-            isSuccessful(response, request);
-            if (response.getEntity() != null) {
-                try (final InputStream stream = response.getEntity().getContent()) {
-                    return respHandling.apply(stream);
-                }
+        HttpResponse response = client.execute(request);
+        isSuccessful(response, request);
+        if (response.getEntity() != null) {
+            try (final InputStream stream = response.getEntity().getContent()) {
+                return respHandling.apply(stream);
             }
-            return null;
         }
+        return null;
     }
 
-    public <T> T executeFromByteBuffer(@NotNull CloseableHttpClient client, @NotNull final HTTPSupplier<?> makeRequest, IOFunctions.IOFunction<ByteBuffer, T> respHandling, int bufferSize) throws IOException {
+    public <T> T executeFromByteBuffer(@NotNull HttpClient client, @NotNull final HTTPSupplier<?> makeRequest, IOFunctions.IOFunction<ByteBuffer, T> respHandling, int bufferSize) throws IOException {
         try {
             return executeFromByteBuffer(client, makeRequest.get(), respHandling, bufferSize);
         } catch (URISyntaxException e) {
@@ -192,7 +188,7 @@ public abstract class AbstractClient {
         }
     }
 
-    public <T> T executeFromByteBuffer(@NotNull CloseableHttpClient client, @NotNull final HttpUriRequest request, IOFunctions.IOFunction<ByteBuffer, T> respHandling, int bufferSize) throws IOException {
+    public <T> T executeFromByteBuffer(@NotNull HttpClient client, @NotNull final HttpUriRequest request, IOFunctions.IOFunction<ByteBuffer, T> respHandling, int bufferSize) throws IOException {
         return executeFromStream(client, request, inputStream -> {
             final ByteBuffer byteBuffer = ByteBuffer.allocate(bufferSize);
             byteBuffer.put(inputStream.readAllBytes());
@@ -219,8 +215,8 @@ public abstract class AbstractClient {
 
             System.out.println("----- Response");
             System.out.println("Content encoding: '" + charset + "'");
-            System.out.println("Used Content encoding: '" + (entity==null ? "<ENTITY NULL>" : entity.getContentEncoding()) + "'");
-            System.out.println("Content Type: '" + (entity==null ? "<ENTITY NULL>" : entity.getContentType()) + "'");
+            System.out.println("Used Content encoding: '" + (entity == null ? "<ENTITY NULL>" : entity.getContentEncoding()) + "'");
+            System.out.println("Content Type: '" + (entity == null ? "<ENTITY NULL>" : entity.getContentType()) + "'");
             System.out.println("Response Return Code: '" + response.getStatusLine().getStatusCode() + "'");
             System.out.println("Response Reason Phrase: '" + response.getStatusLine().getReasonPhrase() + "'");
             System.out.println("Response Protocol Version: '" + response.getStatusLine().getProtocolVersion().toString() + "'");
@@ -229,7 +225,7 @@ public abstract class AbstractClient {
                 System.out.println("Request Header: '" + header.getName() + "':'" + header.getValue() + "'");
             System.out.println("----- Content");
 
-            final String content = (entity == null ||entity.getContent() == null) ? null : IOUtils.toString(new InputStreamReader(entity.getContent(), charset));
+            final String content = (entity == null || entity.getContent() == null) ? null : IOUtils.toString(new InputStreamReader(entity.getContent(), charset));
             if (content == null || content.isBlank())
                 System.out.println("<NO CONTENT>");
             else

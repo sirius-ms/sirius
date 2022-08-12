@@ -25,23 +25,36 @@ import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.WaiterJJob;
 import de.unijena.bioinf.ms.rest.model.JobId;
+import de.unijena.bioinf.ms.rest.model.JobInputs;
 import de.unijena.bioinf.ms.rest.model.JobTable;
 import de.unijena.bioinf.ms.rest.model.JobUpdate;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 final class WebJobWatcher { //todo rename to RestJobWatcher
-    private static final int INIT_WAIT_TIME = 1000;
+    private static final int INIT_WAIT_TIME = 250;
+    private static final int STAY_AT_INIT_TIME = 3;
 
     private final Map<JobId, RestWebJJob<?, ?, ?>> waitingJobs = new ConcurrentHashMap<>();
+    private final Set<SubmissionWaiterJJob<?, ?, ?>> jobsToSubmit = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
     private final RestAPI api;
-    private WebJobWatcherJJob job = null;
+    private WebJobWatcherJJob watcherJob = null;
+    private final Lock watcherJobLock = new ReentrantLock();
+    private WebJobSubmitterJJob submitterJob = null;
+    private final Lock submitterJobLock = new ReentrantLock();
+
     private final AtomicBoolean isShutDown = new AtomicBoolean(false);
 
     //this is for efficient job update even with a large number of jobs on large multi core machines
@@ -49,40 +62,165 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
         this.api = api;
     }
 
-    public <I, D, O, J extends RestWebJJob<I, D, O>> J watchJob(@NotNull final J jobToWatch) {
-        checkWatcherJob();
 
-        synchronized (waitingJobs) {
-            waitingJobs.put(jobToWatch.getJobId(), jobToWatch);
-            waitingJobs.notifyAll();
+    public <I, O, R> SubmissionWaiterJJob<I, O, R> submitAndWatchJob(@NotNull final I jobInput, JobTable type, BiFunction<I, JobId, RestWebJJob<I, O, R>> jobBuilder) throws IOException {
+        checkWatcherJob();
+        checkSubmitterJob();
+
+        final boolean notIfy = jobsToSubmit.isEmpty();
+
+        SubmissionWaiterJJob<I, O, R> waiter = new SubmissionWaiterJJob<>(type, jobInput, jobBuilder);
+        jobsToSubmit.add(waiter);
+
+        if (notIfy){
+            synchronized (jobsToSubmit) {
+//                System.out.println("Wake up submitter!");
+                jobsToSubmit.notifyAll();
+            }
         }
 
-        return jobToWatch;
+
+        return waiter;
     }
 
     public void shutdown() {
         isShutDown.set(true);
-        if (job != null)
-            job.cancel();
+        if (submitterJob != null)
+            submitterJob.cancel();
+        if (watcherJob != null)
+            watcherJob.cancel();
     }
 
-    public boolean awaitShutdown() {
+    public void awaitShutdown() {
         shutdown();
-        if (job == null)
-            return false;
 
-        try {
-            return job.awaitResult();
-        } catch (ExecutionException e) {
-            return false;
+        if (submitterJob != null) {
+            try {
+                submitterJob.awaitResult();
+            } catch (ExecutionException e) {
+                LoggerFactory.getLogger(getClass()).warn("Error when cancelling SubmitterSJob!", e);
+            }
+        }
+
+        if (watcherJob != null) {
+            try {
+                watcherJob.awaitResult();
+            } catch (ExecutionException e) {
+                LoggerFactory.getLogger(getClass()).warn("Error when cancelling WatcherJob!", e);
+            }
         }
     }
 
-    private synchronized void checkWatcherJob() {
+
+    private void checkWatcherJob() {
         if (isShutDown.get())
             throw new IllegalStateException("Watcher is already shut Down! Pls create a new Instance!");
-        if (job == null || job.isFinished())
-            job = SiriusJobs.getGlobalJobManager().submitJob(new WebJobWatcherJJob());
+        if (watcherJob == null || watcherJob.isFinished()) {
+            watcherJobLock.lock();
+            try {
+                if (watcherJob == null || watcherJob.isFinished())
+                    watcherJob = SiriusJobs.getGlobalJobManager().submitJob(new WebJobWatcherJJob());
+            } finally {
+                watcherJobLock.unlock();
+            }
+        }
+    }
+
+    private void checkSubmitterJob() {
+        if (isShutDown.get())
+            throw new IllegalStateException("Job watcher is already shut Down! Pls create a new Instance!");
+        if (submitterJob == null || submitterJob.isFinished()) {
+            submitterJobLock.lock();
+            try {
+                if (submitterJob == null || submitterJob.isFinished())
+                    submitterJob = SiriusJobs.getGlobalJobManager().submitJob(new WebJobSubmitterJJob());
+            } finally {
+                submitterJobLock.unlock();
+            }
+        }
+    }
+
+    final class SubmissionWaiterJJob<I, O, R> extends WaiterJJob<RestWebJJob<I, O, R>> {
+        private final JobTable table;
+        private final I input;
+        private final BiFunction<I, JobId, RestWebJJob<I, O, R>> jobBuilder;
+
+        public SubmissionWaiterJJob(JobTable table, I jobInput, BiFunction<I, JobId, RestWebJJob<I, O, R>> jobBuilder) {
+            this.table = table;
+            this.input = jobInput;
+            this.jobBuilder = jobBuilder;
+        }
+
+        public void finish(JobId id) {
+            super.finish(jobBuilder.apply(input, id));
+        }
+
+        void addToMap(@NotNull final Map<JobTable, List<? extends SubmissionWaiterJJob<?, ?, ?>>> jobMap) {
+            ((List<SubmissionWaiterJJob<I, O, R>>) jobMap.computeIfAbsent(table,
+                    t -> new ArrayList<SubmissionWaiterJJob<I, O, R>>())).add(this);
+        }
+    }
+
+    final class WebJobSubmitterJJob extends BasicJJob<Boolean> {
+        public WebJobSubmitterJJob() {
+            super(JobType.WEBSERVICE);
+        }
+
+        @Override
+        protected Boolean compute() throws Exception {
+            long lastSubmission = 0;
+            long waitTime;
+            checkForInterruption();
+            while (!isShutDown.get()) {
+                if (jobsToSubmit.isEmpty()) {
+                    synchronized (jobsToSubmit) {
+                        if (jobsToSubmit.isEmpty()) {
+//                            System.out.println("Start waiting in Submitter!");
+                            jobsToSubmit.wait();
+//                            System.out.println("Stop waiting in Submitter!");
+                        }
+                    }
+                } else if ((waitTime = (System.currentTimeMillis() - lastSubmission)) + 50 < INIT_WAIT_TIME) {
+//                    System.out.println("Waiting For submission:" + (INIT_WAIT_TIME - waitTime));
+                    NetUtils.sleep(this::checkForInterruption, INIT_WAIT_TIME - waitTime);
+                }
+
+                checkForInterruption();
+                if (!jobsToSubmit.isEmpty()) {
+                    final JobInputs jobSubmission = new JobInputs();
+                    final Map<JobTable, List<? extends SubmissionWaiterJJob<?, ?, ?>>> subWaiterJobs = new HashMap<>();
+                    final List<SubmissionWaiterJJob<?, ?, ?>> js = new ArrayList<>(jobsToSubmit);
+                    js.forEach(jobsToSubmit::remove);
+                    js.forEach(s -> {
+                        jobSubmission.addJobInput(s.input, s.table);
+                        s.addToMap(subWaiterJobs);
+                    });
+
+                    checkForInterruption();
+
+                    // submission in sync with waitingJobs map
+                    synchronized (waitingJobs) {
+                        if (jobSubmission.hasJobs()) {
+                            EnumMap<JobTable, List<JobUpdate<?>>> submittedJobs = NetUtils.tryAndWait(() -> api.submitJobs(jobSubmission), this::checkForInterruption);
+                            submittedJobs.forEach((t, wss) -> {
+                                Iterator<? extends SubmissionWaiterJJob<?, ?, ?>> it = subWaiterJobs.get(t).iterator();
+                                wss.forEach(j -> {
+                                    SubmissionWaiterJJob<?, ?, ?> wj = it.next();
+                                    wj.finish(j.getID());
+                                    waitingJobs.put(j.getID(), wj.result());
+                                });
+                            });
+//                            System.out.println("Wake up Watcher!");
+                            waitingJobs.notifyAll();
+                        }
+                    }
+                }
+                checkForInterruption();
+
+
+            }
+            return true;
+        }
     }
 
     final class WebJobWatcherJJob extends BasicJJob<Boolean> {
@@ -95,89 +233,105 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
         protected Boolean compute() throws Exception {
             try {
                 long waitTime = INIT_WAIT_TIME;
-                while (true) {
+                long emptyIterations = 0;
+                while (!isShutDown.get()) {
                     checkForInterruption();
 
-                    synchronized (waitingJobs) {
-                        if (waitingJobs.isEmpty())
-                            waitingJobs.wait();
+                    if (waitingJobs.isEmpty()) {
+                        synchronized (waitingJobs) {
+                            if (waitingJobs.isEmpty()) {
+//                                System.out.println("Start waiting in Watcher!");
+                                waitingJobs.wait();
+//                                System.out.println("Stop waiting in Watcher!");
+                            }
+                        }
                     }
 
-                    final Set<JobId> orphanJobs = new HashSet<>(waitingJobs.keySet());
-                    EnumMap<JobTable, List<JobUpdate<?>>> updates = NetUtils.tryAndWait(
-                            () -> api.updateJobStates(waitingJobs.keySet().stream().map(id -> id.jobTable).collect(Collectors.toSet())),
+                    final List<JobUpdate<?>> finished = NetUtils.tryAndWait(
+                            () -> api.getFinishedJobs(waitingJobs.keySet().stream().map(id -> id.jobTable).collect(Collectors.toSet()))
+                                    .values().stream().flatMap(Collection::stream).collect(Collectors.toCollection(LinkedList::new)),
                             this::checkForInterruption
                     );
-                    List<JobUpdate<?>> toRemove = null;
-                    Map<JobId,Integer> countingHashes = new HashMap<>();
 
-                    if (updates != null && !updates.isEmpty()) {
-                        //update, find orphans and notify finished jobs
-                        toRemove = updates.values().stream().flatMap(Collection::stream).filter(up -> {
-                            try {
-                                checkForInterruption();
 
-                                final JobId gid = up.getGlobalId();
-                                final RestWebJJob<?, ?, ?> job;
-                                orphanJobs.remove(gid);
-                                job = waitingJobs.get(gid);
+                    final Set<JobId> toRemove = new HashSet<>();
+                    final Map<JobId, Integer> countingHashes = new HashMap<>();
+                    {
+                        final Map<JobId, RestWebJJob<?, ?, ?>> waitingJobsSnap = new HashMap<>();
+                        synchronized (waitingJobs) {
+                            finished.forEach(j -> {
+                                JobId id = j.getGlobalId();
+                                waitingJobsSnap.put(id, waitingJobs.get(id));
+                            });
+                        }
 
-                                if (job == null) {
-                                    logDebug("Job \"" + up.getGlobalId().toString() + "\" was found on the server but is unknown locally. Trying to match it again later!");
-                                    return false;
+                        checkForInterruption();
+
+//                        System.out.println("Number of jobs retrieved: " + finished.size());
+
+                        try {
+                            if (!finished.isEmpty()) {
+                                //update, find orphans and notify finished jobs
+                                for (JobUpdate<?> up : finished) {
+                                    checkForInterruption();
+                                    try {
+                                        final JobId gid = up.getGlobalId();
+                                        RestWebJJob<?, ?, ?> job = waitingJobsSnap.get(gid);
+                                        if (job == null) {
+                                            logDebug("Job \"" + up.getGlobalId().toString() + "\" was found on the server but is unknown locally. Deleting it to prevent dangling jobs!");
+                                            toRemove.add(up.getGlobalId());
+                                        } else {
+                                            job.getJobCountingHash().ifPresent(h -> countingHashes.put(gid, h));
+                                            job.update(up);
+                                            toRemove.add(job.getJobId());
+                                        }
+                                    } catch (Exception e) {
+                                        logWarn("Could not update Job", e);
+                                    }
                                 }
 
-                                job.getJobCountingHash().ifPresent(h -> countingHashes.put(gid, h));
-                                return job.update(up).isFinished();
-                            } catch (Exception e) {
-                                logWarn("Could not update Job", e);
-                                return false;
+//                                System.out.println("Number of finished jobs to remove: " + toRemove.size());
                             }
-                        }).collect(Collectors.toList());
+                            checkForInterruption();
 
-                        checkForInterruption();
-
-                        // crash and notify orphan jobs
-                        orphanJobs.stream().map(waitingJobs::get).forEach(j -> {
-                            if (!j.isFinished()) {
-                                j.crash(new Exception("Job not found on Server. It might have been deleted due to an Error."));
-                            } else
-                                logWarn("Already finished job is missing on Server. This indicates some Synchronization problem");
-                        });
-
-                        checkForInterruption();
-
-                        orphanJobs.addAll(toRemove.stream().map(JobUpdate::getGlobalId).collect(Collectors.toSet()));
-
-
-                        checkForInterruption();
-
-                        if (!orphanJobs.isEmpty()) {
-                            orphanJobs.forEach(waitingJobs::remove);
-                            // not it sync because it may take some time and is not needed since jobwatcher is single threaded
-                            NetUtils.tryAndWait(() -> api.deleteJobs(orphanJobs, countingHashes), this::checkForInterruption);
+                            //add canceled jobs to removal
+                            waitingJobs.forEach((k, v) -> {
+                                if (v.isFinished())
+                                    toRemove.add(k);
+                            });
+//                            System.out.println("Number of finished jobs to remove (with canceled): " + toRemove.size());
+                        } finally {
+                            if (!toRemove.isEmpty()) {
+                                // not in sync because it may take some time and is not needed since jobwatcher is singlethreaded
+                                NetUtils.tryAndWait(() -> api.deleteJobs(toRemove, countingHashes), this::checkForInterruption);
+                                toRemove.forEach(waitingJobs::remove);
+                            }
                         }
-                    } else {
-                        logWarn("Cannot fetch jobUpdates from CSI:FingerID Server. Trying again in " + waitTime + "ms.");
                     }
-
+//                    System.out.println("Step4: Delete took: " + watch);
                     checkForInterruption();
                     // if nothing was finished increase waiting time
                     // else set back to normal for fast reaction times
-                    if (toRemove == null || toRemove.isEmpty()) {
-                        waitTime = (long) Math.min(waitTime * NetUtils.WAIT_TIME_MULTIPLIER, 30000);
-                        logDebug("No CSI:FingerID prediction jobs finished. Try again in " + waitTime / 1000d + "s");
+                    if (toRemove.isEmpty()) {
+                        if (++emptyIterations > STAY_AT_INIT_TIME)
+                            waitTime = (long) Math.min(waitTime * NetUtils.WAIT_TIME_MULTIPLIER, 30000);
+                        logInfo("No prediction jobs finished. Try again in " + waitTime / 1000d + "s");
                     } else {
+                        emptyIterations = 0;
                         waitTime = INIT_WAIT_TIME;
                     }
 
                     NetUtils.sleep(this::checkForInterruption, waitTime);
+//                    System.out.println("Step5: Full iteration took: " + watch);
+
                 }
-            } catch (InterruptedException e) {
+            } catch (
+                    InterruptedException e) {
                 if (isShutDown.get())
                     return true;
                 throw e;
             }
+            return true;
         }
 
         @Override

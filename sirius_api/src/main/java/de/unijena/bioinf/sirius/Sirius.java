@@ -39,7 +39,6 @@ import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.IsotopePatternAnalysis.generation.IsotopePatternGenerator;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
-import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
@@ -626,7 +625,7 @@ public class Sirius {
                 if (experiment.getAnnotationOrDefault(IsotopeSettings.class).isEnabled())
                     getMs1Analyzer().computeAndScoreIsotopePattern(input);
                 final FasterTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), input);
-                instance.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, evt -> updateProgress(0, 105,  ((Number)evt.getNewValue()).intValue()));
+                instance.addJobProgressListener(evt -> updateProgress(0, 105,  evt.getProgress()));
                 submitSubJob(instance);
                 FasterTreeComputationInstance.FinalResult fr = instance.awaitResult();
 
