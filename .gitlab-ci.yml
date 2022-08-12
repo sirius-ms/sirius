@@ -18,6 +18,7 @@ stages:
   - publish
 
 before_script:
+  - dpkg-reconfigure -p critical ca-certificates
   - eval `ssh-agent -s`
   - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null # add ssh key
   - mkdir -p ~/.ssh
