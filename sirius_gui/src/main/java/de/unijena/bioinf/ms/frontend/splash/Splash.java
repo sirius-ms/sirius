@@ -52,7 +52,7 @@ public class Splash extends JWindow implements JobProgressEventListener {
     @Override
     public void progressChanged(JobProgressEvent progressEvent) {
         if (progressEvent.getSource() != source) {
-            source = progressEvent.getSourceJJob();
+            source = (ProgressJJob<?>) progressEvent.getSource();
             progressBar.setMaximum(progressBar.getMaximum() + (int) progressEvent.getMaxValue());
             progressBar.setMinimum(progressBar.getMinimum() + (int) progressEvent.getMinValue());
         } else {
@@ -65,7 +65,7 @@ public class Splash extends JWindow implements JobProgressEventListener {
 
         if (progressEvent.isDetermined()) {
             progressBar.setIndeterminate(false);
-            progressBar.setValue(progressBar.getValue() + progressEvent.getNewValue().intValue());
+            progressBar.setValue(progressBar.getValue() + (int) progressEvent.getProgress());
         } else {
             progressBar.setIndeterminate(true);
         }

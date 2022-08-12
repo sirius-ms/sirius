@@ -36,10 +36,7 @@ import de.unijena.bioinf.projectspace.FormulaResult;
 import de.unijena.bioinf.projectspace.GuiProjectSpaceManagerFactory;
 import de.unijena.bioinf.projectspace.ProjectSpaceConfiguration;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
-import de.unijena.bioinf.projectspace.fingerid.FBCandidateFingerprintSerializerGUI;
-import de.unijena.bioinf.projectspace.fingerid.FBCandidateFingerprintsGUI;
-import de.unijena.bioinf.projectspace.fingerid.FBCandidatesGUI;
-import de.unijena.bioinf.projectspace.fingerid.FBCandidatesSerializerGUI;
+import de.unijena.bioinf.projectspace.fingerid.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
@@ -87,8 +84,8 @@ public class SiriusGUIApplication extends SiriusCLIApplication {
             final @NotNull Supplier<ProjectSpaceConfiguration> dc = ProjectSpaceManager.DEFAULT_CONFIG;
             ProjectSpaceManager.DEFAULT_CONFIG = () -> {
                 final ProjectSpaceConfiguration config = dc.get();
-                config.registerComponent(FormulaResult.class, FBCandidatesGUI.class, new FBCandidatesSerializerGUI());
-                config.registerComponent(FormulaResult.class, FBCandidateFingerprintsGUI.class, new FBCandidateFingerprintSerializerGUI());
+                config.registerComponent(FormulaResult.class, FBCandidatesTopK.class, new FBCandidatesSerializerTopK(FBCandidateNumber.GUI_DEFAULT));
+                config.registerComponent(FormulaResult.class, FBCandidateFingerprintsTopK.class, new FBCandidateFingerprintSerializerTopK(FBCandidateNumber.GUI_DEFAULT));
                 return config;
             };
 
@@ -103,12 +100,15 @@ public class SiriusGUIApplication extends SiriusCLIApplication {
                         ApplicationCore.DEFAULT_LOGGER.info("Starting Application Core");
                         updateProgress(0, 7, 1, "Starting Application Core...");
                         measureTime("Init Swing Job Manager");
-                        SiriusJobs.setJobManagerFactory((cpuThreads) -> new SwingJobManager(Math.min(defaultThreadNumber(), cpuThreads), 1));
+                        SiriusJobs.setJobManagerFactory((cpuThreads) -> new SwingJobManager(Math.min(defaultThreadNumber(), cpuThreads), Math.min(PropertyManager.getNumberOfThreads(), 4)));
                         ApplicationCore.DEFAULT_LOGGER.info("Swing Job MANAGER initialized! " + SiriusJobs.getGlobalJobManager().getCPUThreads() + " : " + SiriusJobs.getGlobalJobManager().getIOThreads());
                         updateProgress(0, 7, 2, "Configure shutdown hooks...");
 
+                        measureTime("Setting GUI Instance Buffer factory");
+                        BackgroundRuns.setBufferFactory(new GuiInstanceBufferFactory());
+
                         configureShutDownHook(() -> {
-                            Jobs.cancelALL();
+                            Jobs.cancelAllRuns();
                             shutdownWebservice().run();
                         });
 
@@ -119,7 +119,7 @@ public class SiriusGUIApplication extends SiriusCLIApplication {
                             CLIRootOptions rootOptions = new CLIRootOptions<>(configOptionLoader, new GuiProjectSpaceManagerFactory());
                             updateProgress(0, 7, 4, "Firing up SIRIUS... ");
                             removePropertyChangeListener(splash);
-                            return new GuiWorkflowBuilder<>(rootOptions, configOptionLoader, new GuiInstanceBufferFactory(), splash);
+                            return new GuiWorkflowBuilder<>(rootOptions, configOptionLoader, BackgroundRuns.getBufferFactory(), splash);
                         });
                         return null;
                     }

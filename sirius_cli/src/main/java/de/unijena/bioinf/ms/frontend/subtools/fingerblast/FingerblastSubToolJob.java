@@ -94,6 +94,7 @@ public class FingerblastSubToolJob extends InstanceJob {
             inst.getProjectSpaceManager().setProjectSpaceProperty(FingerIdDataProperty.class, new FingerIdDataProperty(pos, neg));
         }
 
+        updateProgress(10);
         checkForInterruption();
 
         final @NotNull CSIPredictor csi = NetUtils.tryAndWait(() -> (CSIPredictor)
@@ -102,6 +103,7 @@ public class FingerblastSubToolJob extends InstanceJob {
                                 .toPredictors(inst.getExperiment().getPrecursorIonType().getCharge()).iterator().next()),
                 this::checkForInterruption);
 
+        updateProgress(15);
         checkForInterruption();
 
         final Map<FormulaResult, FingerIdResult> formulaResultsMap = formulaResults.stream().map(SScored::getCandidate)
@@ -112,6 +114,7 @@ public class FingerblastSubToolJob extends InstanceJob {
                     return idr;
                 }));
 
+        updateProgress(20);
         {
             final FingerblastJJob job = new FingerblastJJob(csi, inst.getExperiment(), new ArrayList<>(formulaResultsMap.values()));
 
@@ -120,6 +123,7 @@ public class FingerblastSubToolJob extends InstanceJob {
             submitSubJob(job).awaitResult();
         }
 
+        updateProgress(50);
         checkForInterruption();
 
         {
@@ -143,6 +147,7 @@ public class FingerblastSubToolJob extends InstanceJob {
 
             submitSubJobsInBatchesByThreads(tanimotoJobs, SiriusJobs.getCPUThreads()).forEach(JJob::getResult);
 
+            updateProgress(80);
             checkForInterruption();
         }
 
@@ -165,9 +170,13 @@ public class FingerblastSubToolJob extends InstanceJob {
             inst.updateFormulaResult(formRes,
                     FormulaScoring.class, FingerprintResult.class, FBCandidates.class, FBCandidateFingerprints.class);
         }
+        updateProgress(90);
+
         final Double confidence = inst.loadTopFormulaResult(List.of(TopCSIScore.class, SiriusScore.class)).flatMap(r -> r.getAnnotation(FormulaScoring.class)).flatMap(s -> s.getAnnotation(ConfidenceScore.class)).map(ConfidenceScore::score).orElse(null);
         inst.getID().setConfidenceScore(confidence);
         inst.updateCompoundID();
+        updateProgress(97);
+
     }
 
     @Override

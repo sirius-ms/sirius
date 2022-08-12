@@ -30,8 +30,8 @@ import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
-import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.FormulaResultRankingScore;
+import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
@@ -42,8 +42,14 @@ import java.util.List;
 import java.util.Optional;
 
 public class SiriusSubToolJob extends InstanceJob {
+//    JobProgressMerger merger = new JobProgressMerger(pcs);
     public SiriusSubToolJob(JobSubmitter jobSubmitter) {
-        super(jobSubmitter, false);
+        super(jobSubmitter);
+    }
+
+    @Override
+    protected boolean needsMs2() {
+        return false;
     }
 
     @Override
@@ -80,29 +86,36 @@ public class SiriusSubToolJob extends InstanceJob {
             }
             exp.setAnnotation(Whiteset.class, wSet);
         }
-
+        updateProgress(5);
         checkForInterruption();
-
+        //todo improve progress with progress merger
         final Sirius sirius = ApplicationCore.SIRIUS_PROVIDER.sirius(inst.loadCompoundContainer(FinalConfig.class).getAnnotationOrThrow(FinalConfig.class).config.getConfigValue("AlgorithmProfile"));
-        List<IdentificationResult<SiriusScore>> results = submitSubJob(sirius.makeIdentificationJob(exp)).awaitResult();
+        Sirius.SiriusIdentificationJob idjob = sirius.makeIdentificationJob(exp);
+        idjob.addJobProgressListener(evt -> updateProgress(evt.getMinValue() + 5, evt.getMaxValue() + 10, evt.getProgress() + 5));
+        List<IdentificationResult<SiriusScore>> results = submitSubJob(idjob).awaitResult();
 
+//        updateProgress(90, 110);
         checkForInterruption();
 
         //write results to project space
         for (IdentificationResult<SiriusScore> result : results)
             inst.newFormulaResultWithUniqueId(result.getTree());
 
-        checkForInterruption();
+//        checkForInterruption();
 
         // set sirius to ranking score
         if (exp.getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto())
             inst.getID().setRankingScoreTypes(new ArrayList<>(List.of(SiriusScore.class)));
 
+        updateProgress(currentProgress().getProgress() + 3);
         checkForInterruption();
 
         //make possible adducts persistent without rewriting whole experiment
         inst.getID().setDetectedAdducts(exp.getAnnotationOrNull(DetectedAdducts.class));
         inst.updateCompoundID();
+        updateProgress(currentProgress().getProgress() + 2);
+
+//        updateProgress(99);
     }
 
     @Override

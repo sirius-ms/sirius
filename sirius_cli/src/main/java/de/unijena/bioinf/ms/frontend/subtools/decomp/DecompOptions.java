@@ -74,7 +74,7 @@ public class DecompOptions implements StandaloneTool<DecompWorkflow> {
     Path out;
 
     @Override
-    public DecompWorkflow makeWorkflow(RootOptions<?,?,?> rootOptions, ParameterConfig config) {
+    public DecompWorkflow makeWorkflow(RootOptions<?,?,?,?> rootOptions, ParameterConfig config) {
         return new DecompWorkflow(this, rootOptions.getInput());
     }
 }

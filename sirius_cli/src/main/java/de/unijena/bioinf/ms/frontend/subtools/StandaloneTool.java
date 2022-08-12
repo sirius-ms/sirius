@@ -24,5 +24,5 @@ import de.unijena.bioinf.ms.properties.ParameterConfig;
 
 public interface StandaloneTool<W extends Workflow> {
 
-    W makeWorkflow(RootOptions<?,?,?> rootOptions, ParameterConfig config);
+    W makeWorkflow(RootOptions<?,?,?,?> rootOptions, ParameterConfig config);
 }

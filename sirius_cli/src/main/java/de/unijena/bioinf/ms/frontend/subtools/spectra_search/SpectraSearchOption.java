@@ -29,7 +29,7 @@ import picocli.CommandLine;
 public class SpectraSearchOption implements StandaloneTool<SpectraSearchWorkflow> {
  // todo we want to implement a spectral library searches bases on cosine and similarity search.
     @Override
-    public SpectraSearchWorkflow makeWorkflow(RootOptions<?, ?, ?> rootOptions, ParameterConfig config) {
+    public SpectraSearchWorkflow makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
         return null;
     }
 }

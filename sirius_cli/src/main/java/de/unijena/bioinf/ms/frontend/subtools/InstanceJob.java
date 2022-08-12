@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.projectspace.IncompatibleFingerprintDataException;
@@ -41,15 +42,11 @@ import java.util.function.Function;
  */
 
 public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements ToolChainJob<Instance> {
+    //todo store only Id and use Cache in projectspace manage instead -> allows for larger InstanceBuffer sizes.
     protected Instance input = null;
-    protected final boolean needsMS2;
 
     public InstanceJob(JobSubmitter submitter) {
-        this(submitter, true);
-    }
-    public InstanceJob(JobSubmitter submitter, boolean needsMS2) {
         super(submitter);
-        this.needsMS2 = needsMS2;
     }
 
     @Override
@@ -63,23 +60,26 @@ public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements 
 
     @Override
     protected Instance compute() throws Exception {
+        updateProgress(0);
         checkForInterruption();
         checkInput();
         final boolean hasResults = isAlreadyComputed(input);
+        updateProgress(1);
+
         checkForInterruption();
         if (!hasResults || isRecompute(input)) {
             if (hasResults){
-                updateProgress(0, 100, 2, "Invalidate existing Results and Recompute!");
                 invalidateResults(input);
             }
-            updateProgress(0, 100, 99, "Start computation...");
+            updateProgress(2, "Invalidate existing Results and Recompute!");
+            progressInfo("Start computation...");
             setRecompute(input,true); // enable recompute so that following tools will recompute if results exist.
             checkForInterruption();
             computeAndAnnotateResult(input);
             checkForInterruption();
-            updateProgress(0, 100, 99, "DONE!");
+            updateProgress(JobProgressEvent.DEFAULT_MAX- 1, "DONE!");
         } else {
-            updateProgress(0, 100, 99, "Skipping Job because results already Exist and recompute not requested.");
+            updateProgress(JobProgressEvent.DEFAULT_MAX- 1, "Skipping Job because results already Exist and recompute not requested.");
         }
 
         return input;
@@ -104,7 +104,7 @@ public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements 
     protected void checkInput() {
         if (input == null)
             throw new IllegalArgumentException("No Input available! Maybe a previous job could not provide the needed results due to failure.");
-        if (needsMS2)
+        if (needsMs2())
             if (input.getExperiment().getMs2Spectra().isEmpty())
                 throw new IllegalArgumentException("Input contains no non empty MS/MS spectrum but MS/MS data is mandatory for this job.");
     }
@@ -144,4 +144,6 @@ public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements 
     protected boolean checkFingerprintCompatibility() throws TimeoutException, InterruptedException {
         return input.getProjectSpaceManager().checkAndFixDataFiles(this::checkForInterruption);
     }
+
+    protected boolean needsMs2(){return true;};
 }

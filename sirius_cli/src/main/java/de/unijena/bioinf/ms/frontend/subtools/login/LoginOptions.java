@@ -51,6 +51,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Scanner;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -81,6 +82,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
 
     @CommandLine.Option(names = {"--select-license", "--select-subscription"},
             description = {"Specify active subscription (sid) if multiple licenses are available at your account. Available subscriptions can be listed with '--show'"})
+//    protected int sidIndex = -1;
     protected String sid = null;
 
     @CommandLine.Option(names = {"--request-token-only"},
@@ -169,7 +171,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
 
 
     @Override
-    public LoginWorkflow makeWorkflow(RootOptions<?, ?, ?> rootOptions, ParameterConfig config) {
+    public LoginWorkflow makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
         return new LoginWorkflow();
     }
 
@@ -208,7 +210,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                     else
                         service.login(login.getUsername(), login.getPassword());
 
-                    if (tokenRequestOnly){
+                    if (tokenRequestOnly) {
                         String rToken = service.getToken().map(t -> t.getSource().getRefreshToken()).orElseThrow(() -> new IOException("Could not extract refresh token after successful login!"));
                         System.out.println("###################### Refresh token ######################");
                         System.out.println(rToken);
@@ -218,60 +220,26 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                     final AuthService.Token token = service.getToken().orElse(null);
                     if (showProfile)
                         showProfile(token);
-                    {
-                        Subscription sub = null;
-                        @NotNull List<Subscription> subs = Tokens.getSubscriptions(token);
-                        if (sid != null)
-                            sub = Tokens.getActiveSubscription(subs, sid, false);
-                        if (sub == null) {
-                            if (sid != null)
-                                LoggerFactory.getLogger(getClass()).debug("Could not find subscription with sid '"
-                                        + sid + "'. Trying to find fallback");
-                            sub = Tokens.getActiveSubscription(subs);
-                        }
-                        ApplicationCore.WEB_API.changeActiveSubscription(sub);
-                    }
 
+                    Multimap<ConnectionError.Klass, ConnectionError> errors = determineAndCheckActiveSubscription(token);
+                    if (errors.isEmpty())
+                        System.out.println("Login successful!");
 
-                    //check connection
-                    Multimap<ConnectionError.Klass, ConnectionError> errors = ApplicationCore.WEB_API.checkConnection();
-                    LoggerFactory.getLogger(getClass()).debug("Connection check after login returned errors: " +
-                            errors.values().stream().sorted(Comparator.comparing(ConnectionError::getSiriusErrorCode))
-                                    .map(ConnectionError::toString).collect(Collectors.joining(",\n")));
-
-                    if (errors.containsKey(ConnectionError.Klass.TERMS)) {
-                        List<Term> terms = Tokens.getActiveSubscriptionTerms(token);
-
-                        System.out.println();
-                        System.out.println("###################### Accept Terms ######################");
-                        System.out.println("I agree to the ");
-                        System.out.println(Term.toText(terms));
-                        System.out.print("Y(es)|No:  ");
-                        Scanner scanner = new Scanner(System.in);
-                        String answer = scanner.next();
-                        System.out.println("##########################################################");
-                        if (answer.equalsIgnoreCase("Y") || answer.equalsIgnoreCase("YES")) {
-                            ApplicationCore.WEB_API.acceptTermsAndRefreshToken();
-                            System.out.println("Terms accepted! Checking web service permissions...");
-                            errors = ApplicationCore.WEB_API.checkConnection();
-                        } else { //not accepted clear account data
-                            System.out.println("Terms NOT Accepted! Removing login information. Please re-login and accept terms to use web service based features.");
-                            AuthServices.clearRefreshToken(ApplicationCore.TOKEN_FILE);
-                            return;
-                        }
-                        System.out.println();
-
-                    }
-
-                    if (errors.isEmpty()) {
-                        Subscription subUsed = ApplicationCore.WEB_API.getActiveSubscription();
-                        if (sid != null && sid.equals(subUsed.getSid())) { //make host change persistent because connection was successful
-                            SiriusProperties.setAndStoreInBackground(Tokens.ACTIVE_SUBSCRIPTION_KEY, sid);
-                        }
-                        System.out.println("Login successful! Active License is: '" + subUsed.getSid() + " - " + subUsed.getName() + "'.");
-                    }
                 } catch (ExecutionException | InterruptedException | IOException e) {
                     LoggerFactory.getLogger(getClass()).error("Could not login to Authentication Server!", e);
+                }
+            } else if (sid != null) {
+                try {
+                    AuthService service = AuthServices.createDefault(
+                            URI.create(SiriusProperties.getProperty("de.unijena.bioinf.sirius.security.audience")),
+                            ApplicationCore.TOKEN_FILE,
+                            ProxyManager.getSirirusHttpAsyncClient());
+                    final AuthService.Token token = service.getToken().orElseThrow(() -> new IllegalStateException("Not logged in! Please log in to select a license!"));
+                    determineAndCheckActiveSubscription(token);
+                    if (showProfile)
+                        showProfile(service.getToken().orElse(null));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
             } else if (showProfile) {
                 try {
@@ -301,6 +269,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                 System.out.println("Logged in as: " + decodedId.getClaim("name").asString());
                 System.out.println("User ID: " + decodedId.getClaim("sub").asString());
                 System.out.println("Token expires at: " + decodedId.getExpiresAt().toString());
+                System.out.println("Active subscription: " + Optional.ofNullable(Tokens.getActiveSubscription(token)).map(Subscription::getSid).orElse("NONE"));
                 System.out.println();
                 System.out.println("---- Available Subscriptions ----");
                 @NotNull List<Subscription> subs = Tokens.getSubscriptions(token);
@@ -348,6 +317,64 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
             }
             System.out.println("##########################################################");
             System.out.println();
+        }
+
+        private Multimap<ConnectionError.Klass, ConnectionError> determineAndCheckActiveSubscription(AuthService.Token token) throws IOException {
+            Subscription sub = null;
+            @NotNull List<Subscription> subs = Tokens.getSubscriptions(token);
+            if (sid != null)
+                sub = Tokens.getActiveSubscription(subs, sid, false);
+            if (sub == null) {
+                if (sid != null)
+                    LoggerFactory.getLogger(getClass()).debug("Could not find subscription with sid '"
+                            + sid + "'. Trying to find fallback");
+                sub = Tokens.getActiveSubscription(subs);
+            }
+            ApplicationCore.WEB_API.changeActiveSubscription(sub);
+
+            //check connection
+            Multimap<ConnectionError.Klass, ConnectionError> errors = ApplicationCore.WEB_API.checkConnection();
+            LoggerFactory.getLogger(getClass()).debug("Connection check after login returned errors: " +
+                    errors.values().stream().sorted(Comparator.comparing(ConnectionError::getSiriusErrorCode))
+                            .map(ConnectionError::toString).collect(Collectors.joining(",\n")));
+
+            if (errors.containsKey(ConnectionError.Klass.TERMS)) {
+                List<Term> terms = Tokens.getActiveSubscriptionTerms(token);
+
+                System.out.println();
+                System.out.println("###################### Accept Terms ######################");
+                System.out.println("I agree to the ");
+                System.out.println(Term.toText(terms));
+                System.out.print("Y(es)|No:  ");
+                Scanner scanner = new Scanner(System.in);
+                String answer = scanner.next();
+                System.out.println("##########################################################");
+                if (answer.equalsIgnoreCase("Y") || answer.equalsIgnoreCase("YES")) {
+                    ApplicationCore.WEB_API.acceptTermsAndRefreshToken();
+                    System.out.println("Terms accepted! Checking web service permissions...");
+                    errors = ApplicationCore.WEB_API.checkConnection();
+                } else { //not accepted clear account data
+                    System.out.println("Terms NOT Accepted! Removing login information. Please re-login and accept terms to use web service based features.");
+                    AuthServices.clearRefreshToken(ApplicationCore.TOKEN_FILE);
+                    throw new IllegalArgumentException("Terms not Accepted!");
+                }
+                System.out.println();
+
+            }
+
+            if (errors.isEmpty()) {
+                Subscription subUsed = ApplicationCore.WEB_API.getActiveSubscription();
+                System.out.println();
+                if (sid != null && sid.equals(subUsed.getSid())) { //make host change persistent because connection was successful
+                    String old = SiriusProperties.getProperty(Tokens.ACTIVE_SUBSCRIPTION_KEY);
+                    SiriusProperties.setAndStoreInBackground(Tokens.ACTIVE_SUBSCRIPTION_KEY, sid);
+                    System.out.println("Active Subscription changed from '" + old + "' to '" + sid + "'.");
+                } else {
+                    System.out.println("Active Subscription is: '" + subUsed.getSid() + " - " + subUsed.getName() + "'.");
+                }
+            }
+
+            return errors;
         }
     }
 }
