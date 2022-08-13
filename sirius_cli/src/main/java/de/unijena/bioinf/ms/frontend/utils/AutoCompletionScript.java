@@ -4,6 +4,8 @@ import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.ms.frontend.utils.Progressbar.ProgressbarDefaultCalculator;
+import de.unijena.bioinf.ms.frontend.utils.Progressbar.ProgressbarDefaultVisualizer;
 import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
@@ -45,7 +47,7 @@ public class AutoCompletionScript implements Callable<Integer> {
     private static final Path PATH = Path.of(String.format("./scripts/%s", NAME));
     private CommandLine commandline;
     private boolean validDeclaration;
-    private Progressbar progressbar;
+    private ProgressbarDefaultVisualizer progressbar;
     private boolean subvalidDeclaration;
     /**
      * generates a CompletionScript for the sirius Commandline instance.
@@ -69,7 +71,7 @@ public class AutoCompletionScript implements Callable<Integer> {
         Files.writeString(PATH, s);
         s = formatScript();
         Files.writeString(PATH, s);
-        this.progressbar.interrupt();
+        this.progressbar.stop();
         System.out.printf("AutocompletionScript created successfully at %s%n", PATH);
         if (install.toInstall()) installScript(s, OS);
         return 1;
@@ -195,7 +197,7 @@ public class AutoCompletionScript implements Callable<Integer> {
      * @throws IOException if the File is unreadable
      */
     private @NotNull String formatScript() throws IOException {
-        this.progressbar = new Progressbar(5, System.out);
+        this.progressbar = new ProgressbarDefaultVisualizer(System.out, new ProgressbarDefaultCalculator(5));
         this.progressbar.start();
         StringBuilder output = new StringBuilder();
         BufferedReader reader = new BufferedReader(new FileReader(String.valueOf(PATH)));
@@ -214,7 +216,7 @@ public class AutoCompletionScript implements Callable<Integer> {
 
             if (line != null) output.append(line).append("\n");
         }
-        progressbar.increaseProgress();
+        progressbar.getCalculator().increaseProgress();
         return output.toString();
     }
 
@@ -229,17 +231,17 @@ public class AutoCompletionScript implements Callable<Integer> {
     private String getFunctionstatus(String line, String functionstatus, String[] words) {
         if (functionstatus == null && words.length > 1 && Objects.equals(words[0], "function") && words[1].equals("_complete_sirius()")) {
             functionstatus = "CompletionScriptFunction";
-            progressbar.increaseProgress();
+            progressbar.getCalculator().increaseProgress();
         } else if (Objects.equals(functionstatus, "CompletionScriptFunction") && line.equals("  # Find the longest sequence of subcommands and call the bash function for that subcommand.")) {
             functionstatus = "LocalCommandDef";
-            progressbar.increaseProgress();
+            progressbar.getCalculator().increaseProgress();
         } else if (Objects.equals(functionstatus, "LocalCommandDef") && words.length >= 3 && !Objects.equals(words[2], "local")) {
             functionstatus = "CompWords";
-            progressbar.increaseProgress();
+            progressbar.getCalculator().increaseProgress();
         } else if (Objects.equals(functionstatus, "CompWords") && line.equals("  # No subcommands were specified; generate completions for the top-level command.")) {
             functionstatus = "Subcommandfunction";
             validDeclaration = true;
-            progressbar.increaseProgress();
+            progressbar.getCalculator().increaseProgress();
         }
         return functionstatus;
     }
