@@ -57,15 +57,11 @@ public class SiriusContext implements DisposableBean {
         return apiVersion;
     }
 
-    //todo we need GUI version here due to background computation logging
-    protected final ProjectSpaceManagerFactory<ProjectSpaceManager> projectSpaceManagerFactory = new ProjectSpaceManagerFactory.Default();
+    protected final ProjectSpaceManagerFactory<?, ?> projectSpaceManagerFactory = new ProjectSpaceManagerFactory.Default();
 
-    private final HashMap<String, ProjectSpaceManager> projectSpaces = new HashMap<>();
-    private final Set<String> computationLocks = new HashSet<>();
-
+    private final HashMap<String, ProjectSpaceManager<?>> projectSpaces = new HashMap<>();
 
     protected final ReadWriteLock projectSpaceLock = new ReentrantReadWriteLock();
-    protected final ReadWriteLock computationLocksLock = new ReentrantReadWriteLock();
 
 
     @PreDestroy
@@ -104,6 +100,7 @@ public class SiriusContext implements DisposableBean {
         }
     }
 
+
     public List<ProjectSpaceId> listAllProjectSpaces() {
         projectSpaceLock.readLock().lock();
         try {
@@ -113,7 +110,7 @@ public class SiriusContext implements DisposableBean {
         }
     }
 
-    public Optional<ProjectSpaceManager> getProjectSpace(String name) {
+    public Optional<ProjectSpaceManager<?>> getProjectSpace(String name) {
         projectSpaceLock.readLock().lock();
         try {
             return Optional.ofNullable(projectSpaces.get(name));
@@ -184,7 +181,7 @@ public class SiriusContext implements DisposableBean {
             if (projectSpaces.containsKey(name))
                 throw new IllegalArgumentException("project space with name '" + name + "' already exists.");
 
-            ProjectSpaceManager project = projectSpaceManagerFactory.create(
+            ProjectSpaceManager<?> project = projectSpaceManagerFactory.create(
                     new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createNewProjectSpace(location));
 
             projectSpaces.put(name, project);
@@ -220,7 +217,7 @@ public class SiriusContext implements DisposableBean {
     public void closeProjectSpace(String name) throws IOException {
         projectSpaceLock.writeLock().lock();
         try {
-            final ProjectSpaceManager space = projectSpaces.get(name);
+            final ProjectSpaceManager<?> space = projectSpaces.get(name);
             if (space == null) {
                 throw new ResponseStatusException(HttpStatus.NO_CONTENT, "Project space with name '" + name + "' not found!");
             }
@@ -235,7 +232,7 @@ public class SiriusContext implements DisposableBean {
     public void destroy() throws Exception {
         projectSpaceLock.writeLock().lock();
         try {
-            for (ProjectSpaceManager space : projectSpaces.values()) {
+            for (ProjectSpaceManager<?> space : projectSpaces.values()) {
                 space.close();
             }
             projectSpaces.clear();

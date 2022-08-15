@@ -20,17 +20,21 @@
 
 package de.unijena.bioinf.ms.middleware.compute.model.tools;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.GibbsSampling.properties.*;
+import de.unijena.bioinf.ms.frontend.subtools.zodiac.ZodiacOptions;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.Map;
 
 /**
  * User/developer friendly parameter subset for the ZODIAC tool (Network base molecular formula re-ranking).
  */
 @Getter
 @Setter
-public class Zodiac {
+public class Zodiac extends Tool<ZodiacOptions> {
 
     /**
      * Maximum number of candidate molecular formulas (fragmentation trees computed by SIRIUS) per compound which are considered by ZODIAC for compounds below 300 m/z.
@@ -57,4 +61,26 @@ public class Zodiac {
      * numberOfMarkovChains: Number of separate Gibbs sampling runs.
      */
     ZodiacEpochs gibbsSamplerParameters = PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacEpochs.class);
+
+    public Zodiac() {
+        super(ZodiacOptions.class);
+    }
+
+    @JsonIgnore
+    @Override
+    public Map<String, String> asConfigMap() {
+        return Map.of(
+                "ZodiacNumberOfConsideredCandidatesAt300Mz", String.valueOf(consideredCandidatesAt300Mz.value),
+                "ZodiacNumberOfConsideredCandidatesAt800Mz", String.valueOf(consideredCandidatesAt800Mz.value),
+                "ZodiacRunInTwoSteps", String.valueOf(runInTwoSteps.value),
+
+                "ZodiacEpochs.iterations", String.valueOf(gibbsSamplerParameters.iterations),
+                "ZodiacEpochs.burnInPeriod", String.valueOf(gibbsSamplerParameters.burnInPeriod),
+                "ZodiacEpochs.numberOfMarkovChains", String.valueOf(gibbsSamplerParameters.numberOfMarkovChains),
+
+                "ZodiacEdgeFilterThresholds.thresholdFilter", String.valueOf(edgeFilterThresholds.thresholdFilter),
+                "ZodiacEdgeFilterThresholds.minLocalConnections", String.valueOf(edgeFilterThresholds.minLocalConnections),
+                "ZodiacEdgeFilterThresholds.minLocalCandidates", String.valueOf(edgeFilterThresholds.minLocalCandidates)
+        );
+    }
 }
