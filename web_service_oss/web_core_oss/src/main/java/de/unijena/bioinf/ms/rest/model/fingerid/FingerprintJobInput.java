@@ -20,10 +20,6 @@
 
 package de.unijena.bioinf.ms.rest.model.fingerid;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
@@ -34,7 +30,6 @@ import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import java.io.IOException;
 import java.util.EnumSet;
 
-@JsonSerialize(using = FingerprintJobInput.Serializer.class)
 public class FingerprintJobInput {
     public final Ms2Experiment experiment;
 
@@ -52,15 +47,49 @@ public class FingerprintJobInput {
             this.predictors = predictors;
     }
 
-    public static class Serializer extends JsonSerializer<FingerprintJobInput> {
+    public StringInput asStringInput() throws IOException {
+        return new StringInput(
+                new JenaMsWriter(true).writeToString(experiment),
+                new FTJsonWriter().treeToJsonString(ftree),
+                PredictorType.getBits(predictors)
+        );
+    }
 
-        @Override
-        public void serialize(FingerprintJobInput value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-            gen.writeStartObject();
-            gen.writeStringField("msData",  new JenaMsWriter(true).writeToString(value.experiment));
-            gen.writeStringField("ftJson",  new FTJsonWriter().treeToJsonString(value.ftree));
-            gen.writeNumberField("predictors", PredictorType.getBits(value.predictors));
-            gen.writeEndObject();
+    public static class StringInput {
+        private String msData;
+        private String ftJson;
+        private Long predictors;
+
+        public StringInput() {}
+
+        public StringInput(String msData, String ftJson, Long predictors) {
+            this.msData = msData;
+            this.ftJson = ftJson;
+            this.predictors = predictors;
+        }
+
+        public String getMsData() {
+            return msData;
+        }
+
+        public void setMsData(String msData) {
+            this.msData = msData;
+        }
+
+        public String getFtJson() {
+            return ftJson;
+        }
+
+        public void setFtJson(String ftJson) {
+            this.ftJson = ftJson;
+        }
+
+        public Long getPredictors() {
+            return predictors;
+        }
+
+        public void setPredictors(Long predictors) {
+            this.predictors = predictors;
         }
     }
 }
