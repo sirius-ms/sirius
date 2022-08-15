@@ -4,6 +4,7 @@ import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.ms.frontend.utils.Progressbar.ProgressVisualizer;
 import de.unijena.bioinf.ms.frontend.utils.Progressbar.ProgressbarDefaultCalculator;
 import de.unijena.bioinf.ms.frontend.utils.Progressbar.ProgressbarDefaultVisualizer;
 import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
@@ -47,7 +48,7 @@ public class AutoCompletionScript implements Callable<Integer> {
     private static final Path PATH = Path.of(String.format("./scripts/%s", NAME));
     private CommandLine commandline;
     private boolean validDeclaration;
-    private ProgressbarDefaultVisualizer progressbar;
+    private ProgressVisualizer progressbar;
     private boolean subvalidDeclaration;
     /**
      * generates a CompletionScript for the sirius Commandline instance.
@@ -74,6 +75,7 @@ public class AutoCompletionScript implements Callable<Integer> {
         this.progressbar.stop();
         System.out.printf("AutocompletionScript created successfully at %s%n", PATH);
         if (install.toInstall()) installScript(s, OS);
+        System.exit(0);
         return 1;
     }
 
