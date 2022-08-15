@@ -17,72 +17,58 @@
  *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.middleware.compounds;
+package de.unijena.bioinf.ms.middleware.compounds.model;
+
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.projectspace.CompoundContainerId;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * The CompoundId contains the ID of a compound together with some read-only information that might be displayed in
  * some summary view.
  */
+@Getter
+@Setter
 public class CompoundId {
 
     // identifier
     protected String id;
 
-    // identifier source
+    // identifier source //todo obsolete?
     protected String name;
     protected long index;
 
     // additional attributes
-    protected double ionMass;
+    protected Double ionMass;
     protected String ionType;
 
+    protected Double rtStartSeconds;
+    protected Double rtEndSeconds;
+
     //Summary of the results of the compounds
-    protected CompoundSummary summary;
-    protected CompoundMsData msData;
+    protected CompoundAnnotation topAnnotation;
+    protected MsData msData;
 
+    //todo handle computing flag
+    protected boolean computing = false;
 
-    public CompoundId(String id, String name, long index, double ionmass, String ionType) {
-        this.id = id;
-        this.name = name;
-        this.index = index;
-        this.ionMass = ionmass;
-        this.ionType = ionType;
-        this.summary = null;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public long getIndex() {
-        return index;
-    }
-
-    public String getId() {
+    public static CompoundId of(CompoundContainerId cid) {
+        final CompoundId id = new CompoundId();
+        id.setId(cid.getDirectoryName());
+        id.setName(cid.getCompoundName());
+        id.setIndex(cid.getCompoundIndex());
+        id.setIonMass(cid.getIonMass().orElse(0d));
+        cid.getIonType().map(PrecursorIonType::toString).ifPresent(id::setIonType);
+        cid.getRt().ifPresent(rt -> {
+            if (rt.isInterval()) {
+                id.setRtStartSeconds(rt.getStartTime());
+                id.setRtEndSeconds(rt.getEndTime());
+            }else {
+                id.setRtStartSeconds(rt.getRetentionTimeInSeconds());
+                id.setRtEndSeconds(rt.getRetentionTimeInSeconds());
+            }
+        });
         return id;
-    }
-
-    public double getIonMass() {
-        return ionMass;
-    }
-
-    public String getIonType() {
-        return ionType;
-    }
-
-    public CompoundSummary getSummary() {
-        return summary;
-    }
-
-    public void setSummary(CompoundSummary summary) {
-        this.summary = summary;
-    }
-
-    public CompoundMsData getMsData() {
-        return msData;
-    }
-
-    public void setMsData(CompoundMsData msData) {
-        this.msData = msData;
     }
 }

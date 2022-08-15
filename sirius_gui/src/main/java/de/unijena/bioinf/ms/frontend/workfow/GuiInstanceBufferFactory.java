@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.frontend.workfow;
 
 import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.jjobs.JobProgressMerger;
 import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.jjobs.ProgressJJob;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
@@ -47,8 +48,8 @@ public class GuiInstanceBufferFactory implements InstanceBufferFactory<SimpleIns
 
 
     @Override
-    public SimpleInstanceBuffer create(int bufferSize, @NotNull Iterator<? extends Instance> instances, @NotNull List<InstanceJob.Factory<?>> tasks, @Nullable DataSetJob.Factory<?> dependJob) {
-        return new SimpleInstanceBuffer(bufferSize, instances, tasks, dependJob, new JobSubmitter() {
+    public SimpleInstanceBuffer create(int bufferSize, @NotNull Iterator<? extends Instance> instances, @NotNull List<InstanceJob.Factory<?>> tasks, @Nullable DataSetJob.Factory<?> dependJob, @NotNull JobProgressMerger progressSupport) {
+        return new SimpleInstanceBuffer(bufferSize, instances, tasks, dependJob, progressSupport, new JobSubmitter() {
             @Override
             public <Job extends JJob<Result>, Result> Job submitJob(Job j) { //todo what do we want to show here?
                 if (j instanceof ToolChainJob) {
@@ -56,7 +57,7 @@ public class GuiInstanceBufferFactory implements InstanceBufferFactory<SimpleIns
                     Jobs.submit((ProgressJJob<?>)j, j::identifier, () -> jobType);
                     return j;
                 } else {
-                    return Jobs.MANAGER.submitJob(j);
+                    return Jobs.MANAGER().submitJob(j);
                 }
             }
         });

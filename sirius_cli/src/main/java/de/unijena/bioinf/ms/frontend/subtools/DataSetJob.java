@@ -38,6 +38,8 @@ public abstract class DataSetJob extends ToolChainJobImpl<Iterable<Instance>> im
     private List<Instance> failedInstances = new ArrayList<>();
     private List<Instance> inputInstances = new ArrayList<>();
 
+    protected long maxProgress = 100;
+
     private final Predicate<Instance> inputValidator;
 
     public DataSetJob(@NotNull Predicate<Instance> inputValidator, @NotNull JobSubmitter submitter) {
@@ -52,21 +54,29 @@ public abstract class DataSetJob extends ToolChainJobImpl<Iterable<Instance>> im
     @Override
     protected Iterable<Instance> compute() throws Exception {
         checkInputs();
+        maxProgress = inputInstances.size() * 101L + 1;
+        updateProgress(0L, maxProgress, Math.round(.25 * inputInstances.size()), "Invalidate existing Results and Recompute!");
+
         //todo maybe make decidable if any or all match
         final boolean hasResults = inputInstances.stream().anyMatch(this::isAlreadyComputed);
         final boolean recompute = inputInstances.stream().anyMatch(this::isRecompute);
 
+        updateProgress(Math.round(.5 * inputInstances.size()), "Invalidate existing Results and Recompute!");
+
+
         if (!hasResults || recompute) {
             if (hasResults) {
-                updateProgress(0, 100, 2, "Invalidate existing Results and Recompute!");
                 inputInstances.forEach(this::invalidateResults);
             }
-            updateProgress(0, 100, 99, "Start computation...");
+            updateProgress(Math.round(.9 * inputInstances.size()), "Invalidate existing Results and Recompute!");
+
+            progressInfo( "Start computation...");
             inputInstances.forEach(this::enableRecompute); // enable recompute so that following tools will recompute if results exist.
+            updateProgress(inputInstances.size());
             computeAndAnnotateResult(inputInstances);
-            updateProgress(0, 100, 99, "DONE!");
+            updateProgress(maxProgress - 1, "DONE!");
         } else {
-            updateProgress(0, 100, 99, "Skipping Job because results already Exist and recompute not requested.");
+            updateProgress(maxProgress - 1, "Skipping Job because results already Exist and recompute not requested.");
         }
 
         return inputInstances;

@@ -71,7 +71,7 @@ public class MgfExporterOptions implements StandaloneTool<MgfExporterWorkflow> {
 
 
     @Override
-    public MgfExporterWorkflow makeWorkflow(RootOptions<?, ?, ?> rootOptions, ParameterConfig config) {
+    public MgfExporterWorkflow makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
         return new MgfExporterWorkflow((PreprocessingJob<? extends Iterable<Instance>>) rootOptions.makeDefaultPreprocessingJob(), this, config);
     }
 }

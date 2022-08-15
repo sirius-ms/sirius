@@ -37,16 +37,26 @@
  *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
-package de.unijena.bioinf.projectspace.fingerid;
+package de.unijena.bioinf.ms.middleware.compounds.model;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
-import de.unijena.bioinf.chemdb.CompoundCandidate;
-import de.unijena.bioinf.fingerid.blast.FBCandidates;
+import de.unijena.bioinf.ms.middleware.formulas.model.CompoundClasses;
+import de.unijena.bioinf.ms.middleware.formulas.model.FormulaCandidate;
+import de.unijena.bioinf.ms.middleware.formulas.model.StructureCandidate;
+import lombok.Getter;
+import lombok.Setter;
 
-import java.util.List;
-
-public class FBCandidatesGUI extends FBCandidates {
-    public FBCandidatesGUI(List<Scored<CompoundCandidate>> results) {
-        super(results);
-    }
+/**
+ * Summary of the results of a Compound. Can be added to a CompoundId.
+ * It is not null within a CompoundId if it was not requested und non null otherwise
+ * The different summary fields within this summary are null if the corresponding
+ * compound does not contain the represented results. The content of  non NULL
+ * summary field id the result was computed but is empty.
+ * */
+@Getter
+@Setter
+public class CompoundAnnotation {
+    //result previews
+    protected FormulaCandidate formulaAnnotation; // SIRIUS + ZODIAC
+    protected StructureCandidate structureAnnotation; // CSI:FingerID
+    protected CompoundClasses compoundClassAnnotation; // CANOPUS
 }

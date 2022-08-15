@@ -25,13 +25,13 @@ import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface RootOptions<M extends ProjectSpaceManager, T extends PreprocessingJob<? extends Iterable<? extends Instance>>, P extends PostprocessingJob<?>> {
+public interface RootOptions<I extends Instance, M extends ProjectSpaceManager<I>, T extends PreprocessingJob<? extends Iterable<I>>, P extends PostprocessingJob<?>> {
     InputFilesOptions getInput();
 
     OutputOptions getOutput();
 
 
-    ProjectSpaceManager getProjectSpace();
+    M getProjectSpace();
 
     @NotNull
     T makeDefaultPreprocessingJob();
@@ -39,5 +39,5 @@ public interface RootOptions<M extends ProjectSpaceManager, T extends Preprocess
     @Nullable
     P makeDefaultPostprocessingJob();
 
-    ProjectSpaceManagerFactory<M> getSpaceManagerFactory();
+    ProjectSpaceManagerFactory<I,M> getSpaceManagerFactory();
 }

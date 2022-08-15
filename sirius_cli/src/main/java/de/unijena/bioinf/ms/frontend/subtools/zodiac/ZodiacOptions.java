@@ -107,10 +107,10 @@ public class ZodiacOptions implements ToolChainOptions<ZodiacSubToolJob, DataSet
         defaultConfigOptions.changeOption("ZodiacEpochs.burnInPeriod", value);
     }
 
-    @Option(names = "--separateRuns", hidden = true, descriptionKey = "ZodiacEdgeFilterThresholds.numberOfMarkovChains",
+    @Option(names = "--separateRuns", hidden = true, descriptionKey = "ZodiacEpochs.numberOfMarkovChains",
             description = {"Number of separate Gibbs sampling runs."})
     public void setSeparateRuns(DefaultParameter value) throws Exception {
-        defaultConfigOptions.changeOption("ZodiacEdgeFilterThresholds.numberOfMarkovChains", value);
+        defaultConfigOptions.changeOption("ZodiacEpochs.numberOfMarkovChains", value);
     }
 
 

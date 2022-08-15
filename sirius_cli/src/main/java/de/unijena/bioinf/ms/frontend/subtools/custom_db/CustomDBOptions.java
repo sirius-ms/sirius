@@ -82,7 +82,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
     public Compressible.Compression compression;
 
     @Override
-    public Workflow makeWorkflow(RootOptions<?, ?, ?> rootOptions, ParameterConfig config) {
+    public Workflow makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
         return new CustomDBWorkflow(rootOptions.getInput());
     }
 
@@ -156,6 +156,5 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
         customs = customs.stream().distinct().sorted(Comparator.comparing(CustomDatabase::name)).collect(Collectors.toList());
 
         SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(SearchableDatabases.PROP_KEY, customs.stream().map(CustomDatabase::storageLocation).collect(Collectors.joining(",")));
-
     }
 }
