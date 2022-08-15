@@ -53,7 +53,7 @@ public class AutoCompletionScript implements Callable<Integer> {
      * generates a CompletionScript for the sirius Commandline instance.
      * @return returns 1 if execution was successful
      */
-    public Integer call() throws IOException, UknownOSException {
+    public Integer call() throws IOException, UnknownOSException {
         System.setProperty("de.unijena.bioinf.ms.propertyLocations", "sirius_frontend.build.properties");
         FingerIDProperties.sirius_guiVersion();
         final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
@@ -80,7 +80,7 @@ public class AutoCompletionScript implements Callable<Integer> {
     /**
      * calls the necessary function for the Script installation on different OS
      * @param Script the Script to be installed
-     * @param OS the current Operating System - Possibilites: {"Linux", "Mac", "Windows", "Solaris"}
+     * @param OS the current Operating System - Possibilities: {"Linux", "Mac", "Windows", "Solaris"}
      */
     private void installScript(final String Script, final String OS) {
         switch (OS) {
@@ -97,7 +97,7 @@ public class AutoCompletionScript implements Callable<Integer> {
                 installScriptSolaris(Script);
                 break;
             default:
-                throw new UknownOSException(String.format("OS %s is not supported!", OS));
+                throw new UnknownOSException(String.format("OS %s is not supported!", OS));
         }
     }
 
@@ -131,7 +131,7 @@ public class AutoCompletionScript implements Callable<Integer> {
     }
 
     /**
-     * installs the given Script in a MacOS machine using ~./zprofile
+     * installs the given Script in a macOS machine using ~./zprofile
      */
     private void installScriptMac(String script) {
         UnixinstallScript(script, "~/.zprofile");
@@ -149,16 +149,16 @@ public class AutoCompletionScript implements Callable<Integer> {
      * detects the currently running SystemOS
      *
      * @return One of the following Strings: {"Windows", "Mac", "Linux", "Solaris"}
-     * @throws UknownOSException if the OS does not fall into the 4 categories of the output
+     * @throws UnknownOSException if the OS does not fall into the 4 categories of the output
      */
-    public static @NotNull String detectOS() throws UknownOSException {
+    public static @NotNull String detectOS() throws UnknownOSException {
         final String OSName = System.getProperty("os.name").toLowerCase();
 
         if (OSName.contains("win")) return "Windows";
         else if (OSName.contains("mac")) return "Mac";
         else if (OSName.contains("nux") || OSName.contains("nix") || OSName.contains("aix")) return "Linux";
         else if (OSName.contains("sunos")) return "Solaris";
-        else throw new UknownOSException("Could not detect OS");
+        else throw new UnknownOSException("Could not detect OS");
     }
 
     /**
@@ -172,7 +172,7 @@ public class AutoCompletionScript implements Callable<Integer> {
 
     /**
      * recursive function for the detection of different aliases on all Commandline depths
-     * @param currentCommandline the Commandlineinstance for the different dpeths
+     * @param currentCommandline the Commandlineinstance for the different depths
      */
     private void findAliases(@NotNull CommandLine currentCommandline) {
         CommandLine.Model.CommandSpec subcommandsSpec = currentCommandline.getCommandSpec();
@@ -335,7 +335,7 @@ public class AutoCompletionScript implements Callable<Integer> {
     private boolean isvalidsubalias(String alias) {
                 return false;
 
-        //TODO Ambigous - non Deterministic?
+        //TODO Ambiguous - non Deterministic?
         /*
         return (
                 alias.equals("A") || alias.equals("PS") //|| alias.equals("C")
@@ -435,8 +435,8 @@ public class AutoCompletionScript implements Callable<Integer> {
     /**
      * Exception for detection of an Unknown OS
      */
-    public static class UknownOSException extends RuntimeException {
-        public UknownOSException(String could_not_detect_os) {
+    public static class UnknownOSException extends RuntimeException {
+        public UnknownOSException(String could_not_detect_os) {
             super(could_not_detect_os);
         }
     }
