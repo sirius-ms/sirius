@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.frontend.workflow;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.subtools.PostprocessingJob;
@@ -27,6 +28,7 @@ import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.config.AddConfigsJob;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.projectspace.InstIterProvider;
 import de.unijena.bioinf.projectspace.Instance;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +41,8 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class ToolChainWorkflow implements Workflow {
+public class ToolChainWorkflow implements Workflow, ProgressSupport {
+    protected final JobProgressMerger progressSupport = new JobProgressMerger(this);
     protected final static Logger LOG = LoggerFactory.getLogger(ToolChainWorkflow.class);
     protected final ParameterConfig parameters;
     private final PreprocessingJob<?> preprocessingJob;
@@ -50,6 +53,7 @@ public class ToolChainWorkflow implements Workflow {
 
     private final AtomicBoolean canceled = new AtomicBoolean(false);
     private InstanceBuffer submitter = null;
+    private JobProgressEvent progress = null;
 
     public ToolChainWorkflow(@NotNull PreprocessingJob<?> preprocessingJob, @Nullable PostprocessingJob<?> postprocessingJob, @NotNull ParameterConfig parameters, @NotNull List<Object> toolchain, InstanceBufferFactory<?> bufferFactory) {
         this.preprocessingJob = preprocessingJob;
@@ -71,18 +75,22 @@ public class ToolChainWorkflow implements Workflow {
             throw new InterruptedException("Workflow was canceled");
     }
 
+    //todo add PROGRESS support!
     //todo allow dataset jobs da do not have to put all exps into memory
     //todo low io mode: if instance buffer is infinity we do never have to read instances from disk (write only)
     @Override
     public void run() {
         try {
             checkForCancellation();
-
-            //todo the tool chain should not know anything about the project space. that should be outside this class.
-            //todo maybe closing the space should be a "postprocess" job??
-//            final ProjectSpaceManager project = (ProjectSpaceManager) ;
             // prepare input
             Iterable<? extends Instance> iteratorSource = SiriusJobs.getGlobalJobManager().submitJob(preprocessingJob).awaitResult();
+            int iteratorSourceSize = InstIterProvider.getResultSizeEstimate(iteratorSource);
+            System.out.println("Instance Estimate: " + iteratorSourceSize);
+            System.out.println("Toolchain Size: " + toolchain.size());
+            System.out.println("Max Progress: " + (toolchain.size()) * iteratorSourceSize * 100);
+
+            updateProgress((long) (toolchain.size()) * iteratorSourceSize * 100, 0);
+
             // build toolchain
             final List<InstanceJob.Factory<?>> instanceJobChain = new ArrayList<>(toolchain.size());
             //job factory for job that add config annotations to an instance
@@ -91,19 +99,22 @@ public class ToolChainWorkflow implements Workflow {
                     (inst) -> {
                     }
             ));
+
             // get buffer size
             final int bufferSize = PropertyManager.getInteger("de.unijena.bioinf.sirius.instanceBuffer", "de.unijena.bioinf.sirius.cpu.cores", 0);
 
             //other jobs
+
             for (Object o : toolchain) {
                 checkForCancellation();
                 if (o instanceof InstanceJob.Factory) {
                     instanceJobChain.add((InstanceJob.Factory<?>) o);
                 } else if (o instanceof DataSetJob.Factory) {
-                    submitter = bufferFactory.create(bufferSize, iteratorSource.iterator(), instanceJobChain, ((DataSetJob.Factory<?>) o));
+                    submitter = bufferFactory.create(bufferSize, iteratorSource.iterator(), instanceJobChain, ((DataSetJob.Factory<?>) o), progressSupport);
                     submitter.start();
                     checkForCancellation();
                     iteratorSource = submitter.submitJob(submitter.getCollectorJob()).awaitResult();
+                    iteratorSourceSize = InstIterProvider.getResultSizeEstimate(iteratorSource);
                     checkForCancellation();
                     instanceJobChain.clear();
                 } else {
@@ -115,13 +126,13 @@ public class ToolChainWorkflow implements Workflow {
             // disk to not waste memory -> otherwise the whole buffer thing is useless.
             checkForCancellation();
             if (!instanceJobChain.isEmpty()) {
-                submitter = bufferFactory.create(bufferSize, iteratorSource.iterator(), instanceJobChain, null);
+                submitter = bufferFactory.create(bufferSize, iteratorSource.iterator(), instanceJobChain, progressSupport);
                 submitter.start(true);
             }
             LOG.info("Workflow has been finished!");
 
             checkForCancellation();
-            if (postprocessingJob != null){
+            if (postprocessingJob != null) {
                 LOG.info("Executing Postprocessing...");
                 submitter.submitJob(postprocessingJob).awaitResult();
             }
@@ -134,5 +145,30 @@ public class ToolChainWorkflow implements Workflow {
         } catch (InterruptedException e) {
             LOG.info("Workflow successfully canceled by interruption check!");
         }
+    }
+
+    @Override
+    public void updateProgress(long min, long max, long progress, String shortInfo) {
+        progressSupport.updateConnectedProgress(min, max, progress, shortInfo);
+    }
+
+    @Override
+    public void addJobProgressListener(JobProgressEventListener listener) {
+        progressSupport.addPropertyChangeListener(listener);
+    }
+
+    @Override
+    public void removeJobProgressListener(JobProgressEventListener listener) {
+        progressSupport.removeProgress(listener);
+    }
+
+    @Override
+    public JobProgressEvent currentProgress() {
+        return progressSupport.currentConnectedProgress();
+    }
+
+    @Override
+    public JobProgressEvent currentCombinedProgress() {
+        return progressSupport.currentCombinedProgress();
     }
 }

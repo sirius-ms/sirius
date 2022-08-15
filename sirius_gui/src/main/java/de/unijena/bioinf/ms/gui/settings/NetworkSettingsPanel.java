@@ -171,21 +171,22 @@ public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListen
 
     @Override
     public void reloadChanges() {
+        ProxyManager.withConnectionLock((Runnable) ()->{
+            ApplicationCore.WEB_API.changeActiveSubscription(null);
 
-        ApplicationCore.WEB_API.changeActiveSubscription(null);
+            URI host = URI.create(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.audience"));
+            ProxyManager.reconnect();
 
-        URI host = URI.create(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.audience"));
-        ProxyManager.reconnect();
+            ApplicationCore.WEB_API.getAuthService().reconnectService(
+                    AuthServices.createDefaultApi(host),
+                    ProxyManager.getSirirusHttpAsyncClient()); //load new proxy data from service.
 
-        ApplicationCore.WEB_API.getAuthService().reconnectService(
-                AuthServices.createDefaultApi(host),
-                ProxyManager.getSirirusHttpAsyncClient()); //load new proxy data from service.
+            ProxyManager.enforceGlobalProxySetting(); //update global proxy stuff for Webview.
 
-        ProxyManager.enforceGlobalProxySetting(); //update global proxy stuff for Webview.
-
-        ApplicationCore.WEB_API.changeActiveSubscription(
-                ApplicationCore.WEB_API.getAuthService().getToken()
-                        .map(Tokens::getActiveSubscription).orElse(null));
+            ApplicationCore.WEB_API.changeActiveSubscription(
+                    ApplicationCore.WEB_API.getAuthService().getToken()
+                            .map(Tokens::getActiveSubscription).orElse(null));
+        });
 
         MF.CONNECTION_MONITOR().checkConnectionInBackground();
     }

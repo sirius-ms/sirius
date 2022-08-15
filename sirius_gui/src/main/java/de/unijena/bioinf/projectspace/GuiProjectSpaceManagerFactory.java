@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
-public class GuiProjectSpaceManagerFactory implements ProjectSpaceManagerFactory<GuiProjectSpaceManager> {
+public class GuiProjectSpaceManagerFactory implements ProjectSpaceManagerFactory<InstanceBean, GuiProjectSpaceManager> {
 
     @Override
     public GuiProjectSpaceManager create(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<Instance> factory, @Nullable Function<Ms2Experiment, String> formatter) {

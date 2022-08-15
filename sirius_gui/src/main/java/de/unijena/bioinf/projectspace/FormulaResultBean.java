@@ -29,8 +29,8 @@ import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
-import de.unijena.bioinf.projectspace.fingerid.FBCandidateFingerprintsGUI;
-import de.unijena.bioinf.projectspace.fingerid.FBCandidatesGUI;
+import de.unijena.bioinf.projectspace.fingerid.FBCandidateFingerprintsTopK;
+import de.unijena.bioinf.projectspace.fingerid.FBCandidatesTopK;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 
 import java.util.ArrayList;
@@ -159,12 +159,12 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
     public Optional<FingerprintResult> getFingerprintResult(){
         return getResult(FingerprintResult.class).flatMap(r -> r.getAnnotation(FingerprintResult.class));
     }
-    public Optional<FBCandidatesGUI> getFingerIDCandidates(){
-        return getResult(FBCandidatesGUI.class).flatMap(r -> r.getAnnotation(FBCandidatesGUI.class));
+    public Optional<FBCandidatesTopK> getFingerIDCandidates(){
+        return getResult(FBCandidatesTopK.class).flatMap(r -> r.getAnnotation(FBCandidatesTopK.class));
     }
 
-    public Optional<FBCandidateFingerprintsGUI> getFingerIDCandidatesFPs(){
-        return getResult(FBCandidateFingerprintsGUI.class).flatMap(r -> r.getAnnotation(FBCandidateFingerprintsGUI.class));
+    public Optional<FBCandidateFingerprintsTopK> getFingerIDCandidatesFPs(){
+        return getResult(FBCandidateFingerprintsTopK.class).flatMap(r -> r.getAnnotation(FBCandidateFingerprintsTopK.class));
     }
 
 

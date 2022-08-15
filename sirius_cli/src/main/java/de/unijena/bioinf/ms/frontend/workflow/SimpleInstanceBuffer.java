@@ -20,10 +20,7 @@
 package de.unijena.bioinf.ms.frontend.workflow;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.jjobs.BasicDependentJJob;
-import de.unijena.bioinf.jjobs.DependentJJob;
-import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.jjobs.JobSubmitter;
+import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
@@ -53,12 +50,18 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
     private final int bufferSize;
     private final AtomicBoolean isCanceled = new AtomicBoolean(false);
 
-    public SimpleInstanceBuffer(int bufferSize, @NotNull Iterator<? extends Instance> instances, @NotNull List<InstanceJob.Factory<?>> tasks, @Nullable DataSetJob.Factory<?> dependJobFactory, JobSubmitter jobSubmitter) {
+    private final JobProgressMerger progressSupport;
+
+    public SimpleInstanceBuffer(int bufferSize, @NotNull Iterator<? extends Instance> instances, @NotNull List<InstanceJob.Factory<?>> tasks, @Nullable DataSetJob.Factory<?> dependJobFactory, @NotNull JobProgressMerger progressSupport, JobSubmitter jobSubmitter) {
         this.bufferSize = bufferSize < 1 ? Integer.MAX_VALUE : bufferSize;
         this.jobSubmitter = jobSubmitter;
         this.instances = instances;
         this.tasks = tasks;
+        this.progressSupport = progressSupport;
         this.dependJob = dependJobFactory == null ? null : dependJobFactory.makeJob(this);
+        if (dependJob != null)
+            dependJob.addPropertyChangeListener(this.progressSupport);
+
     }
 
     @Override
@@ -88,6 +91,7 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
                     JJob<Instance> jobToWaitOn = (DymmyExpResultJob) () -> instance;
                     for (InstanceJob.Factory<?> task : tasks) {
                         jobToWaitOn = task.createToolJob(jobToWaitOn);
+                        jobToWaitOn.addPropertyChangeListener(progressSupport);
                         submitJob(jobToWaitOn);
                         collector.addRequiredJob(jobToWaitOn);
                     }
@@ -230,8 +234,8 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
 
     public static class Factory implements InstanceBufferFactory<SimpleInstanceBuffer> {
         @Override
-        public SimpleInstanceBuffer create(int bufferSize, @NotNull Iterator<? extends Instance> instances, @NotNull List<InstanceJob.Factory<?>> tasks, @Nullable DataSetJob.Factory<?> dependJobFactory) {
-            return new SimpleInstanceBuffer(bufferSize, instances, tasks, dependJobFactory, SiriusJobs.getGlobalJobManager());
+        public SimpleInstanceBuffer create(int bufferSize, @NotNull Iterator<? extends Instance> instances, @NotNull List<InstanceJob.Factory<?>> tasks, @Nullable DataSetJob.Factory<?> dependJobFactory, @NotNull JobProgressMerger progressSupport) {
+            return new SimpleInstanceBuffer(bufferSize, instances, tasks, dependJobFactory, progressSupport, SiriusJobs.getGlobalJobManager());
         }
     }
 }

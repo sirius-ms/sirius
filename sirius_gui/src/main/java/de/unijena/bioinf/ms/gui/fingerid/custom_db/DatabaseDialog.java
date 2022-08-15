@@ -26,8 +26,8 @@ import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.frontend.Run;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.frontend.subtools.ComputeRootOption;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
-import de.unijena.bioinf.ms.frontend.subtools.gui.GuiComputeRoot;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.frontend.workfow.GuiInstanceBufferFactory;
 import de.unijena.bioinf.ms.gui.compute.DBSelectionList;
@@ -91,7 +91,7 @@ public class DatabaseDialog extends JDialog {
         this.dbList = new DatabaseList(customDatabases.keySet().stream().sorted().collect(Collectors.toList()));
         JScrollPane scroll = new JScrollPane(dbList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         TextHeaderBoxPanel pane = new TextHeaderBoxPanel("Custom Databases", scroll);
-        pane.setBorder(BorderFactory.createEmptyBorder(GuiUtils.SMALL_GAP, GuiUtils.SMALL_GAP,0,0));
+        pane.setBorder(BorderFactory.createEmptyBorder(GuiUtils.SMALL_GAP, GuiUtils.SMALL_GAP, 0, 0));
 
         addCustomDb = Buttons.getAddButton16("Create custom DB");
         deleteDB = Buttons.getRemoveButton16("Delete Custom Database");
@@ -131,7 +131,7 @@ public class DatabaseDialog extends JDialog {
 
         dbList.setSelectedIndex(0);
 
-        addCustomDb.addActionListener(e ->  new ImportDatabaseDialog());
+        addCustomDb.addActionListener(e -> new ImportDatabaseDialog());
 
 
         //klick on Entry ->  open import dialog
@@ -139,7 +139,7 @@ public class DatabaseDialog extends JDialog {
             @Override
             public void actionPerformed(ActionEvent e) {
                 final int k = dbList.getSelectedIndex();
-                if (k >= 0 && k < dbList.getModel().getSize()){
+                if (k >= 0 && k < dbList.getModel().getSize()) {
                     String key = dbList.getModel().getElementAt(k);
                     CustomDatabase<?> db = customDatabases.get(key);
                     new ImportDatabaseDialog(db);
@@ -151,7 +151,7 @@ public class DatabaseDialog extends JDialog {
         //edit button ->  open import dialog
         editDB.addActionListener(e -> {
             final int k = dbList.getSelectedIndex();
-            if (k >= 0 && k < dbList.getModel().getSize()){
+            if (k >= 0 && k < dbList.getModel().getSize()) {
                 String key = dbList.getModel().getElementAt(k);
                 CustomDatabase<?> db = customDatabases.get(key);
                 new ImportDatabaseDialog(db);
@@ -198,7 +198,7 @@ public class DatabaseDialog extends JDialog {
         SearchableDatabases.getCustomDatabaseByPath(Path.of(dbName)).ifPresent(db -> {
             this.customDatabases.put(db.name(), db);
             dbList.setListData(this.customDatabases.keySet().stream().sorted().toArray(String[]::new));
-            dbList.setSelectedValue(db.name(),true);
+            dbList.setSelectedValue(db.name(), true);
         });
     }
 
@@ -273,7 +273,7 @@ public class DatabaseDialog extends JDialog {
             importButton.setAlignmentX(Component.RIGHT_ALIGNMENT);
 
             configPanel = new DatabaseImportConfigPanel(db);
-            importButton.setEnabled(db != null && ! configPanel.dbLocationField.getFilePath().isBlank());
+            importButton.setEnabled(db != null && !configPanel.dbLocationField.getFilePath().isBlank());
             configPanel.dbLocationField.field.getDocument().addDocumentListener(new DocumentListener() {
                 @Override
                 public void insertUpdate(DocumentEvent e) {
@@ -331,24 +331,16 @@ public class DatabaseDialog extends JDialog {
             setVisible(true);
 
         }
+
         protected void runImportJob(@NotNull List<Path> source) {
             try {
-                final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader(PropertyManager.DEFAULTS.newIndependentInstance("DB_IMPORT"));
-                final WorkflowBuilder<GuiComputeRoot> wfBuilder = new WorkflowBuilder<>(new GuiComputeRoot(MF.ps(), null), configOptionLoader, new GuiInstanceBufferFactory());
-                wfBuilder.rootOptions.setNonCompoundInput(source);
-                final Run computation = new Run(wfBuilder);
-
                 List<String> command = new ArrayList<>();
                 command.add(configPanel.toolCommand());
                 command.addAll(configPanel.asParameterList());
 
-                computation.parseArgs(command.toArray(String[]::new));
-
-                if (computation.isWorkflowDefined()) {
-                    final TextAreaJJobContainer<Boolean> j = Jobs.runWorkflow(computation.getFlow(), List.of(), command, configPanel.toolCommand());
-                    LoadingBackroundTask.connectToJob(this, "Importing into '" + configPanel.dbLocationField.getFilePath() + "'...", false, j);
-                    whenCustomDbIsAdded(configPanel.dbLocationField.getFilePath());
-                }
+                final TextAreaJJobContainer<Boolean> j = Jobs.runCommand(command, null, configPanel.toolCommand());
+                LoadingBackroundTask.connectToJob(this, "Importing into '" + configPanel.dbLocationField.getFilePath() + "'...", false, j);
+                whenCustomDbIsAdded(configPanel.dbLocationField.getFilePath());
                 //todo else some error message with pico cli output
             } catch (Exception e) {
                 LoggerFactory.getLogger(getClass()).error("Unexpected Error during Custom DB import.", e);

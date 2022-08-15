@@ -71,7 +71,7 @@ public class SimilarityMatrixOptions implements StandaloneTool<SimilarityMatrixW
 
 
     @Override
-    public SimilarityMatrixWorkflow makeWorkflow(RootOptions<?,?,?> rootOptions, ParameterConfig config) {
-        return new SimilarityMatrixWorkflow((PreprocessingJob<ProjectSpaceManager>) rootOptions.makeDefaultPreprocessingJob(), this, config);
+    public SimilarityMatrixWorkflow makeWorkflow(RootOptions<?,?,?,?> rootOptions, ParameterConfig config) {
+        return new SimilarityMatrixWorkflow((PreprocessingJob<ProjectSpaceManager<?>>) rootOptions.makeDefaultPreprocessingJob(), this, config);
     }
 }

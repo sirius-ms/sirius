@@ -31,7 +31,7 @@ import java.util.function.Predicate;
 
 class InstanceImportIteratorMS2Exp implements Iterator<Instance> {
 
-    private final ProjectSpaceManager spaceManager;
+    private final ProjectSpaceManager<?> spaceManager;
     private final Iterator<Ms2Experiment> ms2ExperimentIterator;
     @NotNull
     private final Predicate<CompoundContainer> filter;
@@ -39,11 +39,11 @@ class InstanceImportIteratorMS2Exp implements Iterator<Instance> {
     private Instance next = null;
 
 
-    public InstanceImportIteratorMS2Exp(@NotNull Iterator<Ms2Experiment> ms2ExperimentIterator, @NotNull ProjectSpaceManager spaceManager) {
+    public InstanceImportIteratorMS2Exp(@NotNull Iterator<Ms2Experiment> ms2ExperimentIterator, @NotNull ProjectSpaceManager<?> spaceManager) {
        this(ms2ExperimentIterator,spaceManager, (c) -> true);
     }
 
-    public InstanceImportIteratorMS2Exp(@NotNull Iterator<Ms2Experiment> ms2ExperimentIterator, @NotNull ProjectSpaceManager spaceManager, @NotNull Predicate<CompoundContainer> compoundFilter) {
+    public InstanceImportIteratorMS2Exp(@NotNull Iterator<Ms2Experiment> ms2ExperimentIterator, @NotNull ProjectSpaceManager<?> spaceManager, @NotNull Predicate<CompoundContainer> compoundFilter) {
         this.ms2ExperimentIterator = ms2ExperimentIterator;
         this.spaceManager = spaceManager;
         this.filter = compoundFilter;

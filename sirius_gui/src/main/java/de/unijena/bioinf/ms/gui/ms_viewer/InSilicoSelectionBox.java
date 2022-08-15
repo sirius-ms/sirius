@@ -5,7 +5,7 @@ import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.utils.CompactComboBox;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
-import de.unijena.bioinf.projectspace.fingerid.FBCandidatesGUI;
+import de.unijena.bioinf.projectspace.fingerid.FBCandidatesTopK;
 import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.depict.DepictionGenerator;
@@ -74,7 +74,7 @@ public class InSilicoSelectionBox extends CompactComboBox<InSilicoSelectionBox.I
         if (sre==null) {
             setCandidateSet(new ArrayList<>());
         } else {
-            final Optional<FBCandidatesGUI> candidates = sre.getFingerIDCandidates();
+            final Optional<FBCandidatesTopK> candidates = sre.getFingerIDCandidates();
             if (candidates.isPresent()) {
                 final List<Scored<CompoundCandidate>> results = candidates.get().getResults();
                 setCandidateSet(results);
