@@ -26,15 +26,16 @@ import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.JSONReader;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.entity.InputStreamEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
@@ -53,15 +54,16 @@ public class ChemDBClient extends StructureSearchClient {
         super(serverUrl, cacheFpVersion, requestDecorators);
     }
 
-    public List<FingerprintCandidate> postCompounds(@NotNull List<String> inChIs2d, CloseableHttpClient client) throws IOException {
+    public List<FingerprintCandidate> postCompounds(@NotNull List<String> inChIs2d, HttpClient client) throws IOException {
         return postCompounds(inChIs2d, getCDKFingerprintVersion(client), client);
     }
 
-    public List<FingerprintCandidate> postCompounds(@NotNull List<String> inChIs2d, @NotNull CdkFingerprintVersion fpVersion, CloseableHttpClient client) throws IOException {
+    public List<FingerprintCandidate> postCompounds(@NotNull List<String> inChIs2d, @NotNull CdkFingerprintVersion fpVersion, HttpClient client) throws IOException {
         return execute(client,
                 () -> {
                     final HttpPost post = new HttpPost(buildVersionSpecificWebapiURI("/compounds").build());
-                    post.setEntity(new StringEntity(new ObjectMapper().writeValueAsString(inChIs2d), ContentType.APPLICATION_JSON));
+                    post.setEntity(new InputStreamEntity(new ByteArrayInputStream(
+                            new ObjectMapper().writeValueAsBytes(inChIs2d)), ContentType.APPLICATION_JSON));
                     post.setConfig(RequestConfig.custom().setSocketTimeout(120000).setConnectTimeout(120000).setContentCompressionEnabled(true).build());
 
                     return post;

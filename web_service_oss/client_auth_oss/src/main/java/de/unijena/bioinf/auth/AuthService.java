@@ -31,8 +31,15 @@ import com.github.scribejava.core.oauth.OAuth20Service;
 import com.github.scribejava.core.revoke.TokenTypeHint;
 import com.github.scribejava.httpclient.apache.ApacheHttpClient;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
+import org.apache.http.Header;
+import org.apache.http.HeaderElement;
+import org.apache.http.ParseException;
+import org.apache.http.annotation.Contract;
+import org.apache.http.annotation.ThreadingBehavior;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
+import org.apache.http.message.BasicHeaderElement;
+import org.apache.http.message.BasicHeaderValueParser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -46,6 +53,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Supplier;
 
 public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Closeable {
 
@@ -161,6 +169,11 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
         return !isRefreshTokenValid();
     }
 
+    public boolean isLoggedIn() {
+        return !needsLogin();
+    }
+
+
     public boolean needsRefresh() {
         tokenLock.readLock().lock();
         try {
@@ -177,6 +190,7 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
     public Token refreshIfNeeded() throws LoginException {
         return refreshIfNeeded(false);
     }
+
     public Token refreshIfNeeded(boolean force) throws LoginException {
         if (force || needsRefresh()) {
             tokenLock.writeLock().lock();
@@ -220,8 +234,45 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
     }
 
     @Override
-    public void accept(HttpUriRequest httpUriRequest) throws IOException {
-        httpUriRequest.setHeader("Authorization", "Bearer " + refreshIfNeeded().getAccessToken());
+    public void accept(HttpUriRequest httpUriRequest) {
+        if (isLoggedIn())
+            httpUriRequest.setHeader(new TokenHeader(() -> refreshIfNeeded().getAccessToken()));
+    }
+
+    @Contract(threading = ThreadingBehavior.IMMUTABLE)
+    private static class TokenHeader implements Header {
+        private static final HeaderElement[] EMPTY_HEADER_ELEMENTS = new HeaderElement[]{};
+
+        private final IOFunctions.IOSupplier<String> tokenSupplier;
+
+        private TokenHeader(IOFunctions.IOSupplier<String> tokenSupplier) {
+            this.tokenSupplier = tokenSupplier;
+        }
+
+        @Override
+        public HeaderElement[] getElements() throws ParseException {
+            String v = this.getValue();
+            if (v != null) {
+                // result intentionally not cached, it's probably not used again
+                String[] vs = v.split(" ");
+                return new HeaderElement[]{new BasicHeaderElement(vs[0], vs[1])};
+            }
+            return EMPTY_HEADER_ELEMENTS;
+        }
+
+        @Override
+        public String getName() {
+            return "Authorization";
+        }
+
+        @Override
+        public String getValue() {
+            try {
+                return "Bearer " + tokenSupplier.get();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     public void logout() {
@@ -258,18 +309,18 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
         this.minLifetime = minLifetime;
     }
 
-    protected String getRefreshToken(){
+    protected String getRefreshToken() {
         return refreshToken;
     }
 
-    public URI signUpURL(URI redirectUrl){
+    public URI signUpURL(URI redirectUrl) {
         return signUpURL(redirectUrl.toString());
     }
 
-    public URI signUpURL(String redirectUrl){
+    public URI signUpURL(String redirectUrl) {
         return URI.create(service.createAuthorizationUrlBuilder().additionalParams(Map.of(
-                "screen_hint","signup",
-                "prompt","login",
+                "screen_hint", "signup",
+                "prompt", "login",
                 "redirect_uri", redirectUrl)).build());
     }
 
