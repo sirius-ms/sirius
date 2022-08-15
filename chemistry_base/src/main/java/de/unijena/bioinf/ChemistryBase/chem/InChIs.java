@@ -293,7 +293,7 @@ public class InChIs {
         for (b = a + 1; b < inChI.length(); ++b)
             if (inChI.charAt(b) == '/') break;
 
-        return inChI.substring(a, b);
+        return inChI.substring(a + 1, b);
     }
 
     /**

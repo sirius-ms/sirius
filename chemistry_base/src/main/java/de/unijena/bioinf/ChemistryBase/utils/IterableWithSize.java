@@ -18,17 +18,11 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.projectspace.fingerid;
+package de.unijena.bioinf.ChemistryBase.utils;
 
-import de.unijena.bioinf.projectspace.SerializerParameter;
-
-public class FBCandidateNumber implements SerializerParameter {
-    public static final FBCandidateNumber ALL = new FBCandidateNumber(-1);
-    public static final FBCandidateNumber GUI_DEFAULT = new FBCandidateNumber(100);
-
-    public final int value;
-
-    public FBCandidateNumber(int value) {
-        this.value = value;
-    }
+public interface IterableWithSize<T> extends Iterable<T> {
+    /**
+     * @return size of this Iterable
+     */
+    int size();
 }
