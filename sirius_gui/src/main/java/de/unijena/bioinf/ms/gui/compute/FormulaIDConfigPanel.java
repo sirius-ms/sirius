@@ -93,6 +93,7 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
     protected final JSpinner ppmSpinner, candidatesSpinner, candidatesPerIonSpinner, treeTimeout, comoundTimeout, mzHeuristic, mzHeuristicOnly;
 
     enum Strategy {IGNORE, SCORE} //todo remove if Filter is implemented
+
     protected final JComboBox<Strategy> ms2IsotpeSetting;
 //    protected final JComboBox<IsotopeMs2Settings.Strategy> ms2IsotpeSetting;
 
@@ -106,7 +107,7 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
 
     protected final Dialog owner;
 
-    public FormulaIDConfigPanel(Dialog owner, List<InstanceBean> ecs) {
+    public FormulaIDConfigPanel(Dialog owner, List<InstanceBean> ecs, boolean ms2) {
         super(SiriusOptions.class);
         this.ecs = ecs;
         this.owner = owner;
@@ -126,12 +127,14 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         smallParameters.addNamed("Filter by isotope pattern", makeParameterCheckBox("IsotopeSettings.filter"));
 
         ms2IsotpeSetting = makeParameterComboBox("IsotopeMs2Settings", Strategy.class);
-        smallParameters.addNamed("MS/MS isotope scorer", ms2IsotpeSetting);
-
         ppmSpinner = makeParameterSpinner("MS2MassDeviation.allowedMassDeviation",
                 PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class).allowedMassDeviation.getPpm(),
                 0.25, 50, 0.25, m -> m.getNumber().doubleValue() + "ppm");
-        smallParameters.addNamed("MS2 mass accuracy (ppm)", ppmSpinner);
+
+        if (ms2) {
+            smallParameters.addNamed("MS2 mass accuracy (ppm)", ppmSpinner);
+            smallParameters.addNamed("MS/MS isotope scorer", ms2IsotpeSetting);
+        }
 
         candidatesSpinner = makeIntParameterSpinner("NumberOfCandidates", 1, 10000, 1);
         smallParameters.addNamed("Candidates stored", candidatesSpinner);
@@ -181,7 +184,6 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
 
         // ilp timeouts
         final TwoColumnPanel ilpOptions = new TwoColumnPanel();
-        center.add(new TextHeaderBoxPanel("ILP", ilpOptions));
 
         treeTimeout = makeIntParameterSpinner("Timeout.secondsPerTree", 0, Integer.MAX_VALUE, 1);
         ilpOptions.addNamed("Tree timeout", treeTimeout);
@@ -195,7 +197,11 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         mzHeuristicOnly = makeIntParameterSpinner("UseHeuristic.mzToUseHeuristicOnly", 0, 3000, 5);
         ilpOptions.addNamed("Use heuristic only above m/z", mzHeuristicOnly);
 
-        refreshPossibleIonizations(ecs.stream().map(it -> it.getIonization().getIonization().toString()).collect(Collectors.toSet()),true);
+        if (ms2)
+            center.add(new TextHeaderBoxPanel("ILP", ilpOptions));
+
+        // ionization refresh
+        refreshPossibleIonizations(ecs.stream().map(it -> it.getIonization().getIonization().toString()).collect(Collectors.toSet()), true);
     }
 
     public void refreshPossibleIonizations(Set<String> ionTypes, boolean enabled) {
@@ -259,12 +265,12 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         if (!ec.getMs1Spectra().isEmpty() || ec.getMergedMs1Spectrum() != null) {
             Jobs.runInBackgroundAndLoad(owner, "Detecting Elements...", () -> {
                 final Ms1Preprocessor pp = ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor();
-                ProcessedInput pi = pp.preprocess(new MutableMs2Experiment(ec.getExperiment(),false));
+                ProcessedInput pi = pp.preprocess(new MutableMs2Experiment(ec.getExperiment(), false));
 
                 pi.getAnnotation(FormulaConstraints.class).
                         ifPresentOrElse(c -> {
                                     for (Element element : c.getChemicalAlphabet()) {
-                                        if (c.getUpperbound(element)<=0) {
+                                        if (c.getUpperbound(element) <= 0) {
                                             c.setLowerbound(element, 0);
                                             c.setUpperbound(element, 0);
                                         }
@@ -284,7 +290,7 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         if (!ec.getMs1Spectra().isEmpty() || ec.getMergedMs1Spectrum() != null) {
             Jobs.runInBackgroundAndLoad(owner, "Detecting adducts...", () -> {
                 final Ms1Preprocessor pp = ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor();
-                ProcessedInput pi = pp.preprocess(new MutableMs2Experiment(ec.getExperiment(),false));
+                ProcessedInput pi = pp.preprocess(new MutableMs2Experiment(ec.getExperiment(), false));
 
                 pi.getAnnotation(PossibleAdducts.class).
                         ifPresentOrElse(pa -> {
