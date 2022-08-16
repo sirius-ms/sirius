@@ -188,7 +188,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
             try {
                 final SiriusProjectSpace ps = makeSpace.get();
                 compatible.set(InstanceImporter.checkDataCompatibility(ps, NetUtils.checkThreadInterrupt(Thread.currentThread())) == null);
-                Jobs.cancelALL();
+                Jobs.cancelAllRuns();
                 final GuiProjectSpaceManager gps = new GuiProjectSpaceManager(ps, psList, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY, 10));
                 inEDTAndWait(() -> MF.setTitlePath(gps.projectSpace().getLocation().toString()));
 

@@ -21,7 +21,6 @@ package de.unijena.bioinf.projectspace;
 
 import ca.odell.glazedlists.BasicEventList;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
@@ -35,6 +34,7 @@ import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.table.SiriusGlazedLists;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.canopus.CanopusCfDataProperty;
 import de.unijena.bioinf.projectspace.canopus.CanopusNpcDataProperty;
 import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
@@ -55,12 +55,12 @@ import java.util.stream.Collectors;
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.inEDTAndWait;
 
-public class GuiProjectSpaceManager extends ProjectSpaceManager {
+public class GuiProjectSpaceManager extends ProjectSpaceManager<InstanceBean> {
     protected static final Logger LOG = LoggerFactory.getLogger(GuiProjectSpaceManager.class);
     public final BasicEventList<InstanceBean> INSTANCE_LIST;
 
-
     protected final InstanceBuffer ringBuffer;
+
     private ContainerListener.Defined createListener;
     private ContainerListener.Defined computeListener;
 
@@ -91,16 +91,14 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
         });
 
         createListener = projectSpace().defineCompoundListener().onCreate().thenDo((event -> {
-            final InstanceBean inst = (InstanceBean) newInstanceFromCompound(event.getAffectedID());
+            final InstanceBean inst = getInstanceFromCompound(event.getAffectedID());
             Jobs.runEDTLater(() -> INSTANCE_LIST.add(inst));
         })).register();
 
         computeListener = projectSpace().defineCompoundListener().on(ContainerEvent.EventType.ID_FLAG).thenDo(event -> {
             if (event.getAffectedIDs().isEmpty() || !event.getAffectedIdFlags().contains(CompoundContainerId.Flag.COMPUTING))
                 return;
-
             Set<CompoundContainerId> eff = new HashSet<>(event.getAffectedIDs());
-            //todo do we want an index of ID to InstanceBean
             Set<InstanceBean> upt = INSTANCE_LIST.stream().filter(i -> eff.contains(i.getID())).collect(Collectors.toSet());
             Jobs.runEDTLater(() -> SiriusGlazedLists.multiUpdate(MainFrame.MF.getCompoundList().getCompoundList(), upt));
         }).register();
@@ -156,8 +154,9 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
 
     //ATTENTION Synchronizing around background tasks that block gui thread is dangerous
     public synchronized void importOneExperimentPerLocation(@NotNull final InputFilesOptions input) {
+        input.msInput.setAllowMS1Only(PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.allowMs1Only", true));
         boolean align = Jobs.runInBackgroundAndLoad(MF, "Checking for alignable input...", () ->
-                (input.msInput.msParserfiles.size() > 1 && input.msInput.projects.size() == 0 && input.msInput.msParserfiles.keySet().stream().map(p -> p.getFileName().toString().toLowerCase()).allMatch(n -> n.endsWith(".mzml") || n.endsWith(".mzxml"))))
+                        (input.msInput.msParserfiles.size() > 1 && input.msInput.projects.size() == 0 && input.msInput.msParserfiles.keySet().stream().map(p -> p.getFileName().toString().toLowerCase()).allMatch(n -> n.endsWith(".mzml") || n.endsWith(".mzxml"))))
                 .getResult();
 
         // todo this is hacky we need some real view for that at some stage.
@@ -170,7 +169,7 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
                 final LcmsAlignSubToolJob j = new LcmsAlignSubToolJob(input, this, null, new LcmsAlignOptions());
                 Jobs.runInBackgroundAndLoad(MF, j);
                 INSTANCE_LIST.addAll(j.getImportedCompounds().stream()
-                        .map(id -> (InstanceBean) newInstanceFromCompound(id))
+                        .map(id -> (InstanceBean) getInstanceFromCompound(id))
                         .collect(Collectors.toList()));
             } else {
                 final List<Path> outdated = Jobs.runInBackgroundAndLoad(MF, "Checking for incompatible data...", new TinyBackgroundJJob<List<Path>>() {
@@ -179,8 +178,8 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
                         if (input.msInput.projects.size() == 0)
                             return List.of();
                         final List<Path> out = new ArrayList<>(input.msInput.projects.size());
-                        for(Path p : input.msInput.projects.keySet()){
-                            if (InstanceImporter.checkDataCompatibility(p,GuiProjectSpaceManager.this,this::checkForInterruption) != null)
+                        for (Path p : input.msInput.projects.keySet()) {
+                            if (InstanceImporter.checkDataCompatibility(p, GuiProjectSpaceManager.this, this::checkForInterruption) != null)
                                 out.add(p);
                         }
                         return out;
@@ -188,9 +187,9 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
                 }).getResult();
 
                 boolean updateIfNeeded = !outdated.isEmpty() && new QuestionDialog(MF, GuiUtils.formatToolTip(
-                        "The following input projects are incompatible with the target", "'" + this.projectSpace().getLocation()+ "'", "",
-                        outdated.stream().map(Path::getFileName).map(Path::toString).collect(Collectors.joining(",")),"",
-                        "Do you wish to import and update the fingerprint data?","WARNING: All fingerprint related results will be excluded during import (CSI:FingerID, CANOPUS)")).isSuccess();
+                        "The following input projects are incompatible with the target", "'" + this.projectSpace().getLocation() + "'", "",
+                        outdated.stream().map(Path::getFileName).map(Path::toString).collect(Collectors.joining(",")), "",
+                        "Do you wish to import and update the fingerprint data?", "WARNING: All fingerprint related results will be excluded during import (CSI:FingerID, CANOPUS)")).isSuccess();
 
                 InstanceImporter importer = new InstanceImporter(this,
                         x -> {
@@ -203,8 +202,8 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
                         },
                         x -> true, false, updateIfNeeded
                 );
-                List<InstanceBean> imported = Optional.ofNullable(Jobs.runInBackgroundAndLoad(MF, "Auto-Importing supported Files...",  importer.makeImportJJob(input))
-                        .getResult()).map(c -> c.stream().map(id -> (InstanceBean) newInstanceFromCompound(id)).collect(Collectors.toList())).orElse(List.of());
+                List<InstanceBean> imported = Optional.ofNullable(Jobs.runInBackgroundAndLoad(MF, "Auto-Importing supported Files...", importer.makeImportJJob(input))
+                        .getResult()).map(c -> c.stream().map(id -> (InstanceBean) getInstanceFromCompound(id)).collect(Collectors.toList())).orElse(List.of());
 
                 Jobs.runInBackgroundAndLoad(MF, "Showing imported data...",
                         () -> Jobs.runEDTLater(() -> INSTANCE_LIST.addAll(imported)));

@@ -3,7 +3,7 @@
 # https://github.com/gradle/gradle
 #image: gradle:alpine
 default:
-  image: git.bio.informatik.uni-jena.de:5050/bioinf-mit/docker-images/ubuntu-zulu-fx-gradle:18.04-15.0.3-6.9-5
+  image: git.bio.informatik.uni-jena.de:5050/bioinf-mit/docker-images/ubuntu-zulu-fx-gradle:22.04-15.42.15-6.9.2-9
 # Disable the Gradle daemon for Continuous Integration servers as correctness
 # is usually a priority over speed in CI environments. Using a fresh
 # runtime for each build is more reliable since the runtime is completely
@@ -19,6 +19,7 @@ stages:
   - publish
 
 before_script:
+  - dpkg-reconfigure -p critical ca-certificates
   - eval `ssh-agent -s`
   - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null # add ssh key
   - mkdir -p ~/.ssh

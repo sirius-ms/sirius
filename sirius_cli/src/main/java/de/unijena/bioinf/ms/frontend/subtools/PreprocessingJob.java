@@ -19,8 +19,8 @@
 
 package de.unijena.bioinf.ms.frontend.subtools;
 
-import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.projectspace.Instance;
 
 /**
  * Only one preprocessing Subtool is allowed per Workflow. They can only run in last position
@@ -29,25 +29,8 @@ import de.unijena.bioinf.jjobs.BasicJJob;
  * behavior
  */
 public abstract class PreprocessingJob<P extends Iterable<? extends Instance>> extends BasicJJob<P> {
-//    protected InputFilesOptions input;
-//    protected ProjectSpaceManager space;
 
     public PreprocessingJob() {
-                super(JobType.SCHEDULER);
-
-    }
-
-    /*public PreprocessingJob(@Nullable InputFilesOptions input, @Nullable ProjectSpaceManager space) {
         super(JobType.SCHEDULER);
-//        this.input = input;
-//        this.space = space;
-    }*/
-
-/*    public void setInput(InputFilesOptions input) {
-        this.input = input;
     }
-
-    public void setProjectSpace(ProjectSpaceManager space) {
-        this.space = space;
-    }*/
 }

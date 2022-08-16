@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.gui.login;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
+import de.unijena.bioinf.ChemistryBase.utils.ExFunctions;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.LoginException;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -43,7 +44,6 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 public class AccountPanel extends JPanel {
     private final AuthService service;
-    //    private JTextField webserverURL;
     private JLabel userIconLabel, userInfoLabel;
     private JButton login, reset, create;
     private ToolbarButton refresh;
@@ -66,12 +66,16 @@ public class AccountPanel extends JPanel {
         refresh.addActionListener(e ->
                 Jobs.runInBackgroundAndLoad(MF, () -> {
                     try {
-                        ApplicationCore.WEB_API.changeActiveSubscription(null);
-                        AuthService.Token t = ApplicationCore.WEB_API.getAuthService().refreshIfNeeded(true);
-                        ApplicationCore.WEB_API.changeActiveSubscription(Tokens.getActiveSubscription(t));
-                        ProxyManager.reconnect();
+                        ProxyManager.withConnectionLock((ExFunctions.Runnable) () ->{
+                            ApplicationCore.WEB_API.changeActiveSubscription(null);
+                            AuthService.Token t = ApplicationCore.WEB_API.getAuthService().refreshIfNeeded(true);
+                            ApplicationCore.WEB_API.changeActiveSubscription(Tokens.getActiveSubscription(t));
+                            ProxyManager.reconnect();
+                        });
                     } catch (LoginException ex) {
                         LoggerFactory.getLogger(getClass()).error("Error when refreshing access_token!", ex);
+                    } catch (Exception ex) {
+                        throw new RuntimeException(ex); //should not happen
                     }finally {
                         MF.CONNECTION_MONITOR().checkConnectionInBackground();
                     }

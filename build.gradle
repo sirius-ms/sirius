@@ -1,5 +1,4 @@
 import java.nio.file.Files
-import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 
 buildscript {
@@ -25,7 +24,7 @@ plugins {
 ext {
     //version for external libraries
     slf4j_version = '1.7.36'
-    jjobs_version = '0.9.27'
+    jjobs_version = '0.9.29'
     json_version = '1.0' //todo move to gson
     json_impl_version = "1.0.4" //todo move to gson
 
