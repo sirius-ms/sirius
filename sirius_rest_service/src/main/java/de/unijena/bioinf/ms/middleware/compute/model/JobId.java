@@ -20,15 +20,18 @@
 
 package de.unijena.bioinf.ms.middleware.compute.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.Setter;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Identifier created by the SIRIUS Nightsky API for a newly created Job.
- * Object can be enriched  with Job status/progress information (JobProgress)
+ * Object can be enriched with Job status/progress information ({@link JobProgress}) and/or Job command information.
  */
 @Getter
 @Setter
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class JobId {
     /**
      * Unique identifier to access the job via the API
@@ -37,10 +40,12 @@ public class JobId {
     /**
      * Command string of the executed Task
      */
+    @Nullable
     String command;
 
     /**
      * Optional progress information of this job
      */
+    @Nullable
     JobProgress progress;
 }
