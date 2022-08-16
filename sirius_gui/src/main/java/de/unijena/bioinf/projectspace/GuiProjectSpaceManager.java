@@ -34,6 +34,7 @@ import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.table.SiriusGlazedLists;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.canopus.CanopusCfDataProperty;
 import de.unijena.bioinf.projectspace.canopus.CanopusNpcDataProperty;
 import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
@@ -58,7 +59,7 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager<InstanceBean> {
     protected static final Logger LOG = LoggerFactory.getLogger(GuiProjectSpaceManager.class);
     public final BasicEventList<InstanceBean> INSTANCE_LIST;
 
-   protected final InstanceBuffer ringBuffer;
+    protected final InstanceBuffer ringBuffer;
 
     private ContainerListener.Defined createListener;
     private ContainerListener.Defined computeListener;
@@ -153,8 +154,9 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager<InstanceBean> {
 
     //ATTENTION Synchronizing around background tasks that block gui thread is dangerous
     public synchronized void importOneExperimentPerLocation(@NotNull final InputFilesOptions input) {
+        input.msInput.setAllowMS1Only(PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.allowMs1Only", true));
         boolean align = Jobs.runInBackgroundAndLoad(MF, "Checking for alignable input...", () ->
-                (input.msInput.msParserfiles.size() > 1 && input.msInput.projects.size() == 0 && input.msInput.msParserfiles.keySet().stream().map(p -> p.getFileName().toString().toLowerCase()).allMatch(n -> n.endsWith(".mzml") || n.endsWith(".mzxml"))))
+                        (input.msInput.msParserfiles.size() > 1 && input.msInput.projects.size() == 0 && input.msInput.msParserfiles.keySet().stream().map(p -> p.getFileName().toString().toLowerCase()).allMatch(n -> n.endsWith(".mzml") || n.endsWith(".mzxml"))))
                 .getResult();
 
         // todo this is hacky we need some real view for that at some stage.
@@ -176,8 +178,8 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager<InstanceBean> {
                         if (input.msInput.projects.size() == 0)
                             return List.of();
                         final List<Path> out = new ArrayList<>(input.msInput.projects.size());
-                        for(Path p : input.msInput.projects.keySet()){
-                            if (InstanceImporter.checkDataCompatibility(p,GuiProjectSpaceManager.this,this::checkForInterruption) != null)
+                        for (Path p : input.msInput.projects.keySet()) {
+                            if (InstanceImporter.checkDataCompatibility(p, GuiProjectSpaceManager.this, this::checkForInterruption) != null)
                                 out.add(p);
                         }
                         return out;
@@ -185,9 +187,9 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager<InstanceBean> {
                 }).getResult();
 
                 boolean updateIfNeeded = !outdated.isEmpty() && new QuestionDialog(MF, GuiUtils.formatToolTip(
-                        "The following input projects are incompatible with the target", "'" + this.projectSpace().getLocation()+ "'", "",
-                        outdated.stream().map(Path::getFileName).map(Path::toString).collect(Collectors.joining(",")),"",
-                        "Do you wish to import and update the fingerprint data?","WARNING: All fingerprint related results will be excluded during import (CSI:FingerID, CANOPUS)")).isSuccess();
+                        "The following input projects are incompatible with the target", "'" + this.projectSpace().getLocation() + "'", "",
+                        outdated.stream().map(Path::getFileName).map(Path::toString).collect(Collectors.joining(",")), "",
+                        "Do you wish to import and update the fingerprint data?", "WARNING: All fingerprint related results will be excluded during import (CSI:FingerID, CANOPUS)")).isSuccess();
 
                 InstanceImporter importer = new InstanceImporter(this,
                         x -> {
@@ -200,7 +202,7 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager<InstanceBean> {
                         },
                         x -> true, false, updateIfNeeded
                 );
-                List<InstanceBean> imported = Optional.ofNullable(Jobs.runInBackgroundAndLoad(MF, "Auto-Importing supported Files...",  importer.makeImportJJob(input))
+                List<InstanceBean> imported = Optional.ofNullable(Jobs.runInBackgroundAndLoad(MF, "Auto-Importing supported Files...", importer.makeImportJJob(input))
                         .getResult()).map(c -> c.stream().map(id -> (InstanceBean) getInstanceFromCompound(id)).collect(Collectors.toList())).orElse(List.of());
 
                 Jobs.runInBackgroundAndLoad(MF, "Showing imported data...",

@@ -21,27 +21,35 @@
 package de.unijena.bioinf.ms.middleware.compute.model.tools;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
-import lombok.Getter;
-import lombok.Setter;
+import picocli.CommandLine;
 
 import java.util.Map;
 
-/**
- * User/developer friendly parameter subset for the CANOPUS tool
- * CANOPUS is parameter free, so this Object is just a flag that canopus should be executed.
- */
-@Getter
-@Setter
-public class Canopus extends Tool<CanopusOptions> {
-    public Canopus() {
-        super(CanopusOptions.class);
+public abstract class Tool<C> {
+    private final CommandLine.Command command;
+
+    /**
+     * tags whether the tool is enabled
+     */
+    private boolean enabled = true;
+
+    public Tool(Class<C> annotatedObject) {
+        command = annotatedObject.getAnnotation(CommandLine.Command.class);
     }
 
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
 
     @JsonIgnore
-    @Override
-    public Map<String, String> asConfigMap() {
-        return Map.of();
+    public CommandLine.Command getCommand() {
+        return command;
     }
+
+    @JsonIgnore
+    public abstract Map<String,String> asConfigMap();
 }

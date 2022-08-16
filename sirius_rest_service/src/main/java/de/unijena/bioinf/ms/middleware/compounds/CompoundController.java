@@ -85,7 +85,7 @@ public class CompoundController extends BaseApiController {
     @GetMapping(value = "/compounds", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<CompoundId> getCompounds(@PathVariable String projectId, @RequestParam(required = false) boolean topAnnotation, @RequestParam(required = false) boolean msData) {
         LoggerFactory.getLogger(CompoundController.class).info("Started collecting compounds...");
-        final ProjectSpaceManager space = projectSpace(projectId);
+        final ProjectSpaceManager<?> space = projectSpace(projectId);
 
         final ArrayList<CompoundId> compoundIds = new ArrayList<>();
         space.projectSpace().forEach(ccid -> compoundIds.add(asCompoundId(ccid, space, topAnnotation, msData)));
@@ -109,7 +109,7 @@ public class CompoundController extends BaseApiController {
     @PostMapping(value = "/compounds", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public List<CompoundId> importCompounds(@PathVariable String projectId, @RequestParam String format, @RequestParam(required = false) String sourceName, @RequestBody MultipartFile body) throws IOException {
         List<CompoundId> ids = new ArrayList<>();
-        final ProjectSpaceManager space = projectSpace(projectId);
+        final ProjectSpaceManager<?> space = projectSpace(projectId);
         GenericParser<Ms2Experiment> parser = new MsExperimentParser().getParserByExt(format.toLowerCase());
         try (InputStream bodyStream = body.getInputStream()) {
             try (CloseableIterator<Ms2Experiment> it = parser.parseIterator(bodyStream, null)) {
@@ -141,7 +141,7 @@ public class CompoundController extends BaseApiController {
     @PostMapping(value = "/compounds/import-from-string", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.TEXT_PLAIN_VALUE)
     public List<CompoundId> importCompoundsFromString(@PathVariable String projectId, @RequestParam String format, @RequestParam(required = false) String sourceName, @RequestBody String body) throws IOException {
         List<CompoundId> ids = new ArrayList<>();
-        final ProjectSpaceManager space = projectSpace(projectId);
+        final ProjectSpaceManager<?> space = projectSpace(projectId);
         GenericParser<Ms2Experiment> parser = new MsExperimentParser().getParserByExt(format.toLowerCase());
         try (BufferedReader bodyStream = new BufferedReader(new StringReader(body))) {
             try (CloseableIterator<Ms2Experiment> it = parser.parseIterator(bodyStream, null)) {
@@ -173,7 +173,7 @@ public class CompoundController extends BaseApiController {
     public CompoundId getCompound(@PathVariable String projectId, @PathVariable String cid,
                                   @RequestParam(required = false, defaultValue = "false") boolean topAnnotation,
                                   @RequestParam(required = false, defaultValue = "false") boolean msData) {
-        final ProjectSpaceManager space = projectSpace(projectId);
+        final ProjectSpaceManager<?> space = projectSpace(projectId);
         final CompoundContainerId ccid = parseCID(space, cid);
         return asCompoundId(ccid, space, topAnnotation, msData);
     }
@@ -186,7 +186,7 @@ public class CompoundController extends BaseApiController {
      */
     @DeleteMapping(value = "/compounds/{cid}")
     public void deleteCompound(@PathVariable String projectId, @PathVariable String cid) throws IOException {
-        final ProjectSpaceManager space = projectSpace(projectId);
+        final ProjectSpaceManager<?> space = projectSpace(projectId);
         CompoundContainerId compound = space.projectSpace().findCompound(cid).orElseThrow(() -> new ResponseStatusException(HttpStatus.NO_CONTENT, "Compound with id '" + cid + "' does not exist in '" + projectId + "'."));
         space.projectSpace().deleteCompound(compound);
     }
@@ -227,10 +227,10 @@ public class CompoundController extends BaseApiController {
                         "Compound with ID '" + instance + "' has no input Data!"));
     }
 
-    private CompoundId asCompoundId(CompoundContainerId cid, ProjectSpaceManager ps, boolean includeSummary, boolean includeMsData) {
+    private CompoundId asCompoundId(CompoundContainerId cid, ProjectSpaceManager<?> ps, boolean includeSummary, boolean includeMsData) {
         final CompoundId compoundId = CompoundId.of(cid);
         if (includeSummary || includeMsData) {
-            Instance instance = ps.newInstanceFromCompound(cid);
+            Instance instance = ps.getInstanceFromCompound(cid);
             if (includeSummary)
                 compoundId.setTopAnnotation(asCompoundSummary(instance));
             if (includeMsData)

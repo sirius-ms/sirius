@@ -76,6 +76,9 @@ public class InputFilesOptions {
         }
 
         @CommandLine.Option(names = {"--ignore-formula"}, description = "ignore given molecular formula if present in .ms or .mgf input files.", defaultValue = "false", order = 322)
+        public void setIgnoreFormula(boolean ignoreFormula){
+            this.ignoreFormula = ignoreFormula;
+        }
         private boolean ignoreFormula;
 
         public boolean isIgnoreFormula() {
@@ -83,6 +86,9 @@ public class InputFilesOptions {
         }
 
         @CommandLine.Option(names = {"--allow-ms1-only"}, description = "Allow MS1 only data to be imported.", defaultValue = "false", order = 323)
+        public void setAllowMS1Only(boolean allowMS1Only){
+            this.allowMS1Only = allowMS1Only;
+        }
         private boolean allowMS1Only;
 
         public boolean isAllowMS1Only() {

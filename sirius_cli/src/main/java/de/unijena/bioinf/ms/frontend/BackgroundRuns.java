@@ -35,11 +35,14 @@ import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Manage and execute command line (toolchain) runs in the background just if you had started it via the CLI.
@@ -47,6 +50,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * It runs the tool through the command line parser to that we can profit from the CLI parameter validation.
  */
 public final class BackgroundRuns {
+    private static final AtomicBoolean AUTOREMOVE = new AtomicBoolean(PropertyManager.getBoolean("de.unijena.bioinf.sirius.BackgroundRuns.autoremove",true));
+
+    private static final AtomicInteger RUN_COUNTER = new AtomicInteger(0);
+
     public static final String ACTIVE_RUNS_PROPERTY = "ACTIVE_RUNS";
     private static InstanceBufferFactory<?> BUFFER_FACTORY = new SimpleInstanceBuffer.Factory();
 
@@ -58,11 +65,17 @@ public final class BackgroundRuns {
         BUFFER_FACTORY = bufferFactory;
     }
 
-    private static final Set<BackgroundRunJob<?, ?>> ACTIVE_RUNS = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private static final ConcurrentHashMap<Integer, BackgroundRunJob<?, ?>> ACTIVE_RUNS = new ConcurrentHashMap<>();
+    private static final Map<Integer, BackgroundRunJob<?, ?>> ACTIVE_RUNS_IMMUTABLE = Collections.unmodifiableMap(ACTIVE_RUNS);
 
-    public static Set<BackgroundRunJob<?, ?>> getActiveRuns() {
-        return Collections.unmodifiableSet(ACTIVE_RUNS);
+    public static Collection<BackgroundRunJob<?, ?>> getActiveRuns() {
+        return Collections.unmodifiableCollection(ACTIVE_RUNS.values());
     }
+
+    public static Map<Integer, BackgroundRunJob<?, ?>> getActiveRunIdMap() {
+        return ACTIVE_RUNS_IMMUTABLE;
+    }
+
 
     public static boolean hasActiveComputations() {
         return !ACTIVE_RUNS.isEmpty();
@@ -71,27 +84,38 @@ public final class BackgroundRuns {
     private static void addRun(@NotNull BackgroundRunJob<?, ?> job) {
         synchronized (ACTIVE_RUNS) {
             int old = ACTIVE_RUNS.size();
-            ACTIVE_RUNS.add(job);
-            PCS.firePropertyChange(ACTIVE_RUNS_PROPERTY, old, ACTIVE_RUNS.size());
+            ACTIVE_RUNS.put(job.getRunId(), job);
+            PCS.firePropertyChange(new ChangeEvent(old, ACTIVE_RUNS.size(), List.of(job), false));
         }
+    }
+
+    public static BackgroundRunJob<?, ?> removeRun(int jobId) {
+        final BackgroundRunJob<?, ?> j = ACTIVE_RUNS.get(jobId);
+        if (j == null)
+            return null;
+
+        if (!j.isFinished())
+            throw new IllegalArgumentException("Job with ID '" +jobId+ "' is still Running! Only finished jobs can be removed.");
+
+        ACTIVE_RUNS.remove(j.runId);
+
+        return j;
     }
 
     private static void removeRun(@NotNull BackgroundRunJob<?, ?> job) {
         synchronized (ACTIVE_RUNS) {
             int old = ACTIVE_RUNS.size();
-            ACTIVE_RUNS.remove(job);
-            PCS.firePropertyChange(ACTIVE_RUNS_PROPERTY, old, ACTIVE_RUNS.size());
+            ACTIVE_RUNS.remove(job.runId);
+            PCS.firePropertyChange(new ChangeEvent(old, ACTIVE_RUNS.size(), List.of(job), true));
         }
     }
 
     public static void cancelAllRuns() {
         //iterator needed to prevent current modification exception
-        final Iterator<BackgroundRunJob<?, ?>> it = ACTIVE_RUNS.iterator();
-        while (it.hasNext())
-            it.next().cancel();
+        ACTIVE_RUNS.values().iterator().forEachRemaining(JJob::cancel);
     }
 
-    private static final PropertyChangeSupport PCS = new PropertyChangeSupport(Collections.unmodifiableSet(ACTIVE_RUNS));
+    private static final PropertyChangeSupport PCS = new PropertyChangeSupport(ACTIVE_RUNS_IMMUTABLE);
 
     public static void addPropertyChangeListener(PropertyChangeListener listener) {
         PCS.addPropertyChangeListener(listener);
@@ -106,7 +130,7 @@ public final class BackgroundRuns {
 
     public static <P extends ProjectSpaceManager<I>, I extends Instance> BackgroundRunJob<P, I> makeBackgroundRun(List<String> command, List<CompoundContainerId> instanceIds, P project) throws IOException {
         Workflow computation = makeWorkflow(command, new ComputeRootOption<>(project, instanceIds));
-        return new BackgroundRunJob<>(computation, project, instanceIds);
+        return new BackgroundRunJob<>(computation, project, instanceIds, RUN_COUNTER.incrementAndGet(), String.join(" ", command));
     }
 
     public static <P extends ProjectSpaceManager<I>, I extends Instance> BackgroundRunJob<P, I> runCommand(List<String> command, List<CompoundContainerId> instanceIds, P project) throws IOException {
@@ -116,7 +140,7 @@ public final class BackgroundRuns {
 
     public static <P extends ProjectSpaceManager<I>, I extends Instance> BackgroundRunJob<P, I> makeBackgroundRun(List<String> command, Iterable<I> instances, P project) throws IOException {
         Workflow computation = makeWorkflow(command, new ComputeRootOption<>(project, instances));
-        return new BackgroundRunJob<>(computation, project, instances);
+        return new BackgroundRunJob<>(computation, project, instances, RUN_COUNTER.incrementAndGet(), String.join(" ", command));
     }
 
     public static <P extends ProjectSpaceManager<I>, I extends Instance> BackgroundRunJob<P, I> runCommand(List<String> command, Iterable<I> instances, P project) throws IOException {
@@ -138,18 +162,22 @@ public final class BackgroundRuns {
     }
 
 
-    //todo make some nice head job that does some organizing stuff
     public static class BackgroundRunJob<P extends ProjectSpaceManager<I>, I extends Instance> extends BasicJJob<Boolean> {
+        protected final int runId;
+        protected final String command;
+
         @NotNull
-        protected final Workflow computation;
+        private Workflow computation;
         @NotNull
-        protected final P project;
+        private P project;
         @Nullable
-        protected final List<CompoundContainerId> instanceIds;
+        private List<CompoundContainerId> instanceIds;
 
         @Deprecated(forRemoval = true) //needed until GUI works with rest API
-        public BackgroundRunJob(@NotNull Workflow computation, @NotNull P project, @Nullable Iterable<I> instances) {
+        private BackgroundRunJob(@NotNull Workflow computation, @NotNull P project, @Nullable Iterable<I> instances, int runId, String command) {
             super(JobType.SCHEDULER);
+            this.runId = runId;
+            this.command = command;
             this.computation = computation;
             this.project = project;
             if (instances == null) {
@@ -161,12 +189,14 @@ public final class BackgroundRuns {
 
         }
 
-        public BackgroundRunJob(@NotNull Workflow computation, @NotNull P project) {
-            this(computation, project, (List<CompoundContainerId>) null);
+        public BackgroundRunJob(@NotNull Workflow computation, @NotNull P project, int runId, String command) {
+            this(computation, project, (List<CompoundContainerId>) null, runId, command);
         }
 
-        public BackgroundRunJob(@NotNull Workflow computation, @NotNull P project, @Nullable List<CompoundContainerId> instanceIds) {
+        public BackgroundRunJob(@NotNull Workflow computation, @NotNull P project, @Nullable List<CompoundContainerId> instanceIds, int runId, String command) {
             super(JobType.SCHEDULER);
+            this.runId = runId;
+            this.command = command;
             this.computation = computation;
             this.project = project;
             this.instanceIds = instanceIds;
@@ -205,9 +235,6 @@ public final class BackgroundRuns {
                 logInfo("Flushing Results to disk in background...");
                 project.projectSpace().flush(); //todo improve flushing strategy
                 logInfo("Results flushed!");
-                logInfo("Freeing up memory...");
-                System.gc(); //hint for the gc to collect som trash after computations
-                logInfo("Memory freed!");
             }
         }
 
@@ -226,11 +253,68 @@ public final class BackgroundRuns {
                     project.projectSpace().setFlags(CompoundContainerId.Flag.COMPUTING, false,
                             instanceIds.toArray(CompoundContainerId[]::new));
                 logInfo("All Instances unlocked!");
+                logInfo("Freeing up memory...");
+                computation = null;
+//                instanceIds = null;
+//                project = null;
+                System.gc(); //hint for the gc to collect som trash after computations
+                logInfo("Memory freed!");
             } finally {
-                removeRun(this);
+                if (AUTOREMOVE.get())
+                    removeRun(this);
                 super.cleanup();
             }
 
+        }
+
+        public int getRunId() {
+            return runId;
+        }
+
+        public String getCommand() {
+            return command;
+        }
+
+        public P getProject() {
+            return project;
+        }
+
+        public List<CompoundContainerId> getInstanceIds() {
+            if (instanceIds == null)
+                return null;
+            return Collections.unmodifiableList(instanceIds);
+        }
+    }
+
+    public static class ChangeEvent extends PropertyChangeEvent {
+
+
+        private final List<BackgroundRunJob<?, ?>> effectedJobs;
+        private final boolean deletion;
+
+        /**
+         * Constructs a new {@code ChangeEvent}.
+         *
+         * @param oldSize      the old value of the property
+         * @param newSize      the new value of the property
+         * @param effectedJobs the jobs that are added or removed
+         */
+        private ChangeEvent(int oldSize, int newSize, List<BackgroundRunJob<?, ?>> effectedJobs, boolean isDeletion) {
+            super(ACTIVE_RUNS_IMMUTABLE, ACTIVE_RUNS_PROPERTY, oldSize, newSize);
+            this.effectedJobs = effectedJobs;
+            this.deletion = isDeletion;
+        }
+
+        public List<BackgroundRunJob<?, ?>> getEffectedJobs() {
+            return effectedJobs;
+        }
+
+        public boolean isInsertion() {
+            return !isDeletion();
+        }
+
+        public boolean isDeletion() {
+            return deletion;
         }
     }
 }
