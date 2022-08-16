@@ -21,37 +21,56 @@ package de.unijena.bioinf.ms.gui.compute.jjobs;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.*;
-import de.unijena.bioinf.ms.frontend.workflow.Workflow;
+import de.unijena.bioinf.ms.frontend.BackgroundRuns;
 import de.unijena.bioinf.ms.gui.actions.ShowJobsDialogAction;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.logging.TextAreaJJobContainer;
+import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.sirius.Sirius;
 import javafx.application.Platform;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
+import java.beans.PropertyChangeListener;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
+/**
+ * Central access point for Background jobs from the GUI
+ * 1. It connects/executes GUI rendered background jobs to {@link SiriusJobs} job manager
+ * 2. It provides access to {@link BackgroundRuns} service to execute commandline runs.
+ * 3. Allows to manage task execution in Swing and JFX GUI threads.
+ */
 public class Jobs {
-    public static final SwingJobManager MANAGER = (SwingJobManager) SiriusJobs.getGlobalJobManager();
-    private static final AtomicInteger COMPUTATION_COUNTER = new AtomicInteger(0);
-    public static final Set<ComputationJJob> ACTIVE_COMPUTATIONS = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    public static SwingJobManager MANAGER(){
+        return (SwingJobManager) SiriusJobs.getGlobalJobManager();
+    }
+
+    private static final PropertyChangeListener BACKGROUND_RUN_LISTENER = evt -> {
+        if (BackgroundRuns.ACTIVE_RUNS_PROPERTY.equals(evt.getPropertyName())) {
+            int size = (int) evt.getNewValue();
+            ((ShowJobsDialogAction) SiriusActions.SHOW_JOBS.getInstance()).setComputing(size > 0);
+            SiriusActions.SUMMARIZE_WS.getInstance().setEnabled(size == 0);
+            SiriusActions.EXPORT_FBMN.getInstance().setEnabled(size == 0);
+        }
+    };
 
     private static final HashMap<String, Sirius> siriusPerProfile = new HashMap<>();
 
+    static {
+        BackgroundRuns.addPropertyChangeListener(BACKGROUND_RUN_LISTENER);
+    }
 
     private Jobs() {/*prevent instantiation*/}
 
@@ -72,13 +91,8 @@ public class Jobs {
     }
 
     public static <JJ extends SwingJJobContainer<?>> JJ submit(final JJ j) {
-        MANAGER.submitSwingJob(j);
+        MANAGER().submitSwingJob(j);
         return j;
-    }
-
-    public static Sirius getSiriusByProfile(String profile) {
-        checkProfile(profile);
-        return siriusPerProfile.get(profile);
     }
 
     public static TinyBackgroundJJob<Boolean> runInBackground(final Runnable task) {
@@ -98,7 +112,7 @@ public class Jobs {
     }
 
     public static LoadingBackroundTask<Boolean> runInBackgroundAndLoad(final Dialog owner, final String title, final Runnable task) {
-        return LoadingBackroundTask.runInBackground(owner, title, MANAGER, task);
+        return LoadingBackroundTask.runInBackground(owner, title, MANAGER(), task);
     }
 
     public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(final Dialog owner, Callable<T> task) {
@@ -106,7 +120,7 @@ public class Jobs {
     }
 
     public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(final Dialog owner, String title, Callable<T> task) {
-        return LoadingBackroundTask.runInBackground(owner, title, MANAGER, task);
+        return LoadingBackroundTask.runInBackground(owner, title, MANAGER(), task);
     }
 
     public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(final Dialog owner, ProgressJJob<T> task) {
@@ -114,7 +128,7 @@ public class Jobs {
     }
 
     public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(final Dialog owner, String title, ProgressJJob<T> task) {
-        return LoadingBackroundTask.runInBackground(owner, title, MANAGER, task);
+        return LoadingBackroundTask.runInBackground(owner, title, MANAGER(), task);
     }
 
     public static LoadingBackroundTask<Boolean> runInBackgroundAndLoad(final Window owner, final Runnable task) {
@@ -122,7 +136,7 @@ public class Jobs {
     }
 
     public static LoadingBackroundTask<Boolean> runInBackgroundAndLoad(final Window owner, final String title, final Runnable task) {
-        return LoadingBackroundTask.runInBackground(owner, title, MANAGER, task);
+        return LoadingBackroundTask.runInBackground(owner, title, MANAGER(), task);
     }
 
     public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(Window owner, Callable<T> task) {
@@ -130,7 +144,7 @@ public class Jobs {
     }
 
     public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(Window owner, String title, Callable<T> task) {
-        return LoadingBackroundTask.runInBackground(owner, title, MANAGER, task);
+        return LoadingBackroundTask.runInBackground(owner, title, MANAGER(), task);
     }
 
     public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(Window owner, ProgressJJob<T> task) {
@@ -138,11 +152,11 @@ public class Jobs {
     }
 
     public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(Window owner, String title, ProgressJJob<T> task) {
-        return LoadingBackroundTask.runInBackground(owner, title, MANAGER, task);
+        return LoadingBackroundTask.runInBackground(owner, title, MANAGER(), task);
     }
 
     public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(Window owner, String title, boolean indeterminateProgress, ProgressJJob<T> task) {
-        return LoadingBackroundTask.runInBackground(owner, title, indeterminateProgress, MANAGER, task);
+        return LoadingBackroundTask.runInBackground(owner, title, indeterminateProgress, MANAGER(), task);
     }
 
     /**
@@ -201,6 +215,21 @@ public class Jobs {
         SwingUtilities.invokeAndWait(action);
     }
 
+    public static TextAreaJJobContainer<Boolean> runCommand(@Nullable List<String> command, List<InstanceBean> compoundsToProcess, @Nullable String description) throws IOException {
+        BackgroundRuns.BackgroundRunJob<GuiProjectSpaceManager, InstanceBean> job =
+                BackgroundRuns.makeBackgroundRun(command, compoundsToProcess, MF.ps());
+
+        return submit(job, job.getRunId() + ": " + (description == null ? "" : description),
+                "Computation");
+    }
+    public static void cancelAllRuns() {
+        BackgroundRuns.cancelAllRuns();
+    }
+
+    public static Sirius getSiriusByProfile(String profile) {
+        checkProfile(profile);
+        return siriusPerProfile.get(profile);
+    }
 
     private static void checkProfile(String profile) {
         if (!siriusPerProfile.containsKey(profile))
@@ -210,87 +239,5 @@ public class Jobs {
                 LoggerFactory.getLogger(Jobs.class).error("Unknown instrument: '" + profile + "'", e);
                 throw new RuntimeException(e);
             }
-    }
-
-    public static void cancelALL() {
-        //iterator needed to prevent current modification exception
-        final Iterator<ComputationJJob> it = ACTIVE_COMPUTATIONS.iterator();
-        while (it.hasNext())
-            it.next().cancel();
-    }
-
-    //todo Singelton runs that are cancelable
-
-    public static TextAreaJJobContainer<Boolean> runWorkflow(Workflow computation, List<InstanceBean> compoundsToProcess, @Nullable List<String> command, @Nullable String description) {
-        //todo the run could be a job that reports progress. That would also be great for the cli
-
-        return submit(new ComputationJJob(computation,compoundsToProcess, command),
-                COMPUTATION_COUNTER.incrementAndGet() + ": " + (description==null ? "" : description), "Computation");
-    }
-
-    private static class ComputationJJob extends BasicJJob<Boolean> {
-        final Workflow computation;
-        final List<InstanceBean> compoundsToProcess;
-        final String command;
-
-        private ComputationJJob(@NotNull Workflow computation, @NotNull List<InstanceBean> compoundsToProcess, @Nullable List<String> command) {
-            super(JobType.SCHEDULER);
-            this.computation = computation;
-            this.compoundsToProcess = compoundsToProcess;
-            this.command = command == null ? null : "Command: `" + String.join(" ", command);
-        }
-
-        @Override
-        protected Boolean compute() throws Exception {
-            //todo progress? maybe move to CLI to have progress there to?
-            try {
-                synchronized (ACTIVE_COMPUTATIONS) { //todo this is a bit hacky but much mor efficient than listening to the job states
-                    ACTIVE_COMPUTATIONS.add(this);
-                    ((ShowJobsDialogAction) SiriusActions.SHOW_JOBS.getInstance()).setComputing(!ACTIVE_COMPUTATIONS.isEmpty());
-                    SiriusActions.SUMMARIZE_WS.getInstance().setEnabled(ACTIVE_COMPUTATIONS.isEmpty());
-                    SiriusActions.EXPORT_FBMN.getInstance().setEnabled(ACTIVE_COMPUTATIONS.isEmpty());
-                }
-                checkForInterruption();
-
-                MF.ps().setComputing(compoundsToProcess,true);
-
-                checkForInterruption();
-                if (computation instanceof ProgressJJob)
-                    ((ProgressJJob<?>) computation).addJobProgressListener(this::updateProgress);
-                logInfo(command);
-                computation.run();
-                return true;
-            } finally {
-                runInBackgroundAndLoad(MF, "Writing Results to disk...", () -> {
-                    MF.ps().projectSpace().flush(); //todo improve flushing strategy
-                    System.gc(); //hint for the gc to collect som trash after computations
-                    return true;
-                });
-            }
-        }
-
-        @Override
-        public void cancel(boolean mayInterruptIfRunning) {
-            computation.cancel();
-            super.cancel(mayInterruptIfRunning);
-        }
-
-        @Override
-        protected void cleanup() {
-            //todo flush ps?
-            synchronized (ACTIVE_COMPUTATIONS) {
-                ACTIVE_COMPUTATIONS.remove(this);
-                ((ShowJobsDialogAction) SiriusActions.SHOW_JOBS.getInstance()).setComputing(!ACTIVE_COMPUTATIONS.isEmpty());
-                SiriusActions.SUMMARIZE_WS.getInstance().setEnabled(ACTIVE_COMPUTATIONS.isEmpty());
-                SiriusActions.EXPORT_FBMN.getInstance().setEnabled(ACTIVE_COMPUTATIONS.isEmpty());
-            }
-            MF.ps().setComputing(compoundsToProcess,false);
-            /*{
-                compoundsToProcess.forEach(c -> c.setComputing(false, true));
-                final Set<InstanceBean> upt = new HashSet<>(compoundsToProcess);
-                runEDTLater(() -> SiriusGlazedLists.multiUpdate(MainFrame.MF.getCompoundList().getCompoundList(), upt));
-            }*/
-            super.cleanup();
-        }
     }
 }

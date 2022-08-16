@@ -21,7 +21,8 @@ package de.unijena.bioinf.ms.middleware.projectspace;
 
 import de.unijena.bioinf.ms.middleware.BaseApiController;
 import de.unijena.bioinf.ms.middleware.SiriusContext;
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.ms.middleware.projectspace.model.ProjectSpaceId;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -34,33 +35,57 @@ import java.util.List;
 
 @RestController
 @RequestMapping(value = "/api/projects")
+@Tag(name = "Project-Spaces", description = "Manage SIRIUS project-spaces.")
 public class ProjectSpaceController extends BaseApiController {
+//todo add access to fingerprint definitions aka molecular property names
 
     @Autowired
     public ProjectSpaceController(SiriusContext context) {
         super(context);
     }
 
-    @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    /**
+     * List all opened project spaces.
+     */
+    @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<ProjectSpaceId> getProjectSpaces() {
         return context.listAllProjectSpaces();
     }
 
-    @GetMapping(value = "/{name}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public ProjectSpaceId getProjectSpace(@PathVariable String name) {
-        return context.getProjectSpace(name).map(ProjectSpaceManager::projectSpace).map(x -> new ProjectSpaceId(name, x.getRootPath())).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no project space with name '" + name + "'"));
+    /**
+     * Get project space info by its projectId.
+     * @param projectId unique name/identifier tof the project-space to be accessed.
+     */
+    @GetMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ProjectSpaceId getProjectSpace(@PathVariable String projectId) {
+        //todo add infos like size and number of compounds?
+        return context.getProjectSpace(projectId).map(x -> ProjectSpaceId.of(projectId, x.projectSpace().getLocation())).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no project space with name '" + projectId + "'"));
     }
 
-    @PutMapping(value = "/{name}",  produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public ProjectSpaceId openProjectSpace(@PathVariable String name, @RequestParam Path path) throws IOException {
-        return context.openProjectSpace(new ProjectSpaceId(name, path));
+    /**
+     * Open an existing project-space and make it accessible via the given projectId.
+     * @param projectId unique name/identifier that shall be used to access the opened project-space.
+     */
+    @PutMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ProjectSpaceId openProjectSpace(@PathVariable String projectId, @RequestParam String pathToProject) throws IOException {
+        return context.openProjectSpace(new ProjectSpaceId(projectId, pathToProject));
     }
 
-    @PostMapping(value = "/new",  produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public ProjectSpaceId openProjectSpace(@RequestParam Path path) throws IOException {
-        final String name = path.getFileName().toString();
-        return context.ensureUniqueNameIO(name, (newName)-> context.openProjectSpace(new ProjectSpaceId(newName,path)));
+    /**
+     * Create and open a new project-space at given location and make it accessible via the given projectId.
+     * @param projectId unique name/identifier that shall be used to access the newly created project-space.
+     */
+    @PostMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ProjectSpaceId createProjectSpace(@PathVariable String projectId, @RequestParam String pathToProject) throws IOException {
+        return context.createProjectSpace(projectId, Path.of(pathToProject));
     }
 
-
+    /**
+     * Close project-space and remove it from application. Project-space will NOT be deleted from disk.
+     * @param projectId unique name/identifier of the  project-space to be closed.
+     */
+    @DeleteMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public void closeProjectSpace(@PathVariable String projectId) throws IOException {
+        context.closeProjectSpace(projectId);
+    }
 }

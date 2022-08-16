@@ -50,13 +50,8 @@ import de.unijena.bioinf.networks.Correlation;
 import de.unijena.bioinf.networks.MolecularNetwork;
 import de.unijena.bioinf.networks.NetworkNode;
 import de.unijena.bioinf.networks.serialization.ConnectionTable;
-import de.unijena.bioinf.projectspace.CompoundContainerId;
-import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
-import de.unijena.bioinf.projectspace.SiriusProjectSpace;
-import de.unijena.bioinf.projectspace.CompoundContainer;
+import de.unijena.bioinf.projectspace.*;
 import gnu.trove.map.hash.TObjectFloatHashMap;
-import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.distribution.RealDistribution;
 import org.slf4j.LoggerFactory;
 
@@ -67,14 +62,14 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
+public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager<?>> {
     protected final InputFilesOptions input;
     protected final ParameterConfig config;
-    protected final ProjectSpaceManager space;
+    protected final ProjectSpaceManager<?> space;
     protected final LcmsAlignOptions options;
     protected final List<CompoundContainerId> importedCompounds = new ArrayList<>();
 
-    public LcmsAlignSubToolJob(InputFilesOptions input, ProjectSpaceManager space, ParameterConfig config, LcmsAlignOptions options) {
+    public LcmsAlignSubToolJob(InputFilesOptions input, ProjectSpaceManager<?> space, ParameterConfig config, LcmsAlignOptions options) {
         super();
         this.config = config;
         this.input = input;
@@ -83,7 +78,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
     }
 
     @Override
-    protected ProjectSpaceManager compute() throws Exception {
+    protected ProjectSpaceManager<?> compute() throws Exception {
         importedCompounds.clear();
         final ArrayList<BasicJJob<?>> jobs = new ArrayList<>();
         final LCMSProccessingInstance i = new LCMSProccessingInstance();
@@ -142,7 +137,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
         return importIntoProjectSpace(i,alignment,sourcelocation);
     }
 
-    private ProjectSpaceManager computeWorkflow(LCMSWorkflow lcmsWorkflow) {
+    private ProjectSpaceManager<?> computeWorkflow(LCMSWorkflow lcmsWorkflow) {
         if (lcmsWorkflow instanceof PooledMs2Workflow) {
             return computePooledWorkflow((PooledMs2Workflow) lcmsWorkflow);
         } else if (lcmsWorkflow instanceof MixedWorkflow) {
@@ -152,11 +147,11 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
         } else throw new IllegalArgumentException("Unknown workflow: " + lcmsWorkflow.getClass().getName());
     }
 
-    private ProjectSpaceManager computeMixedWorkflow(MixedWorkflow lcmsWorkflow) {
+    private ProjectSpaceManager<?> computeMixedWorkflow(MixedWorkflow lcmsWorkflow) {
         return null;
     }
 
-    private ProjectSpaceManager computePooledWorkflow(PooledMs2Workflow lcmsWorkflow) {
+    private ProjectSpaceManager<?> computePooledWorkflow(PooledMs2Workflow lcmsWorkflow) {
         final LCMSProccessingInstance instance = new LCMSProccessingInstance();
         // read all files
         final JobManager jm = SiriusJobs.getGlobalJobManager();
@@ -182,7 +177,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
     }
 
 
-    private ProjectSpaceManager computeRemappingWorkflow(RemappingWorkflow lcmsWorkflow) {
+    private ProjectSpaceManager<?> computeRemappingWorkflow(RemappingWorkflow lcmsWorkflow) {
         final LCMSProccessingInstance instance = new LCMSProccessingInstance();
         // read all files
         final JobManager jm = SiriusJobs.getGlobalJobManager();
@@ -213,7 +208,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
         return space;
     }
 
-    private ProjectSpaceManager importIntoProjectSpace(LCMSProccessingInstance i, Cluster alignment, MultipleSources sourcelocation) {
+    private ProjectSpaceManager<?> importIntoProjectSpace(LCMSProccessingInstance i, Cluster alignment, MultipleSources sourcelocation) {
         final ConsensusFeature[] consensusFeatures = i.makeConsensusFeatures(alignment);
         logInfo(consensusFeatures.length + "Feature left after merging.");
 

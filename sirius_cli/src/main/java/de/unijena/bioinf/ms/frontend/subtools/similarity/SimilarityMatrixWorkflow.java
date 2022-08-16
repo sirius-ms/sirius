@@ -83,12 +83,12 @@ public class SimilarityMatrixWorkflow implements Workflow {
     private final static List<Class<? extends FormulaScore>> rankSores =
             List.of(TopCSIScore.class, ZodiacScore.class, SiriusScore.class);
     protected final SimilarityMatrixOptions options;
-    protected ProjectSpaceManager ps;
+    protected ProjectSpaceManager<?> ps;
     protected final ParameterConfig config;
 
-    protected final PreprocessingJob<ProjectSpaceManager> ppj;
+    protected final PreprocessingJob<ProjectSpaceManager<?>> ppj;
 
-    public SimilarityMatrixWorkflow(PreprocessingJob<ProjectSpaceManager> ppj, SimilarityMatrixOptions options, ParameterConfig config) {
+    public SimilarityMatrixWorkflow(PreprocessingJob<ProjectSpaceManager<?>> ppj, SimilarityMatrixOptions options, ParameterConfig config) {
         this.ppj = ppj;
         this.options = options;
         this.config = config;

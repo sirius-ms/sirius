@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
-public interface ProjectSpaceManagerFactory<M extends ProjectSpaceManager> {
+public interface ProjectSpaceManagerFactory<I extends Instance, M extends ProjectSpaceManager<I>> {
     default M create(SiriusProjectSpace space) {
         return create(space, null);
     }
@@ -38,10 +38,10 @@ public interface ProjectSpaceManagerFactory<M extends ProjectSpaceManager> {
     M create(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<Instance> factory, @Nullable Function<Ms2Experiment, String> formatter);
 
 
-    final class Default implements ProjectSpaceManagerFactory<ProjectSpaceManager> {
+    final class Default implements ProjectSpaceManagerFactory<Instance, ProjectSpaceManager<Instance>> {
         @Override
-        public ProjectSpaceManager create(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<Instance> factory, @Nullable Function<Ms2Experiment, String> formatter) {
-            return new ProjectSpaceManager(space, factory, formatter);
+        public ProjectSpaceManager<Instance> create(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<Instance> factory, @Nullable Function<Ms2Experiment, String> formatter) {
+            return new ProjectSpaceManager<>(space, factory, formatter);
         }
     }
 }

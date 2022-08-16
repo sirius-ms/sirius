@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.gui.login;
 
 import com.github.scribejava.core.model.OAuth2AccessTokenErrorResponse;
+import de.unijena.bioinf.ChemistryBase.utils.ExFunctions;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -77,7 +78,6 @@ public class UserLoginDialog extends JDialog {
         add(new DialogHeader(Icons.KEY_64), BorderLayout.NORTH);
 
 
-
         //============= SOUTH =================
         cancelAction = new AbstractAction() {
             @Override
@@ -94,17 +94,19 @@ public class UserLoginDialog extends JDialog {
             public void actionPerformed(ActionEvent e) {
                 Jobs.runInBackgroundAndLoad(UserLoginDialog.this, "Logging in...", () -> {
                     try {
-                        service.login(username.getText(), new String(password.getPassword()));
-                        AuthServices.writeRefreshToken(service, ApplicationCore.TOKEN_FILE);
-                        ApplicationCore.WEB_API.changeActiveSubscription(Tokens.getActiveSubscription(service.getToken().orElse(null)));
-                        ProxyManager.reconnect();
+                        ProxyManager.withConnectionLock((ExFunctions.Runnable) () -> {
+                            service.login(username.getText(), new String(password.getPassword()));
+                            AuthServices.writeRefreshToken(service, ApplicationCore.TOKEN_FILE);
+                            ApplicationCore.WEB_API.changeActiveSubscription(Tokens.getActiveSubscription(service.getToken().orElse(null)));
+                            ProxyManager.reconnect();
+                        });
                         performedLogin = true;
                         Jobs.runEDTLater(UserLoginDialog.this::dispose);
                         if (boxAcceptTerms.isSelected())
                             ApplicationCore.WEB_API.acceptTermsAndRefreshToken();
                     } catch (Throwable ex) {
-                        LoggerFactory.getLogger(getClass()).error("Error during Login.",ex);
-                        new ExceptionDialog(UserLoginDialog.this, (ex instanceof OAuth2AccessTokenErrorResponse)?((OAuth2AccessTokenErrorResponse) ex).getErrorDescription() : ex.getMessage(), "Login failed!");
+                        LoggerFactory.getLogger(getClass()).error("Error during Login.", ex);
+                        new ExceptionDialog(UserLoginDialog.this, (ex instanceof OAuth2AccessTokenErrorResponse) ? ((OAuth2AccessTokenErrorResponse) ex).getErrorDescription() : ex.getMessage(), "Login failed!");
                         try {
                             AuthServices.clearRefreshToken(service, ApplicationCore.TOKEN_FILE);
                         } catch (IOException ex2) {
@@ -112,8 +114,9 @@ public class UserLoginDialog extends JDialog {
                         }
                         try {
                             Jobs.runEDTAndWait(() -> password.setText(null));
-                        } catch (InvocationTargetException | InterruptedException ignored) {}
-                    }finally {
+                        } catch (InvocationTargetException | InterruptedException ignored) {
+                        }
+                    } finally {
                         MainFrame.MF.CONNECTION_MONITOR().checkConnection();
                     }
                 });
@@ -122,7 +125,7 @@ public class UserLoginDialog extends JDialog {
         final JButton login = new JButton(signInAction);
 
         Box buttons = Box.createHorizontalBox();
-        buttons.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
+        buttons.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         buttons.add(new JButton(SiriusActions.SIGN_UP.getInstance()));
         buttons.add(Box.createHorizontalGlue());
         buttons.add(cancel);
@@ -135,7 +138,7 @@ public class UserLoginDialog extends JDialog {
         center.addNamed("Email", username);
         center.addNamed("Password", password);
 
-        if (PropertyManager.getBoolean("de.unijena.bioinf.webservice.login.terms",false))
+        if (PropertyManager.getBoolean("de.unijena.bioinf.webservice.login.terms", false))
             addTermsPanel(center);
 
         add(center, BorderLayout.CENTER);
@@ -172,7 +175,7 @@ public class UserLoginDialog extends JDialog {
         if (!terms.isEmpty()) {
             boxAcceptTerms.setSelected(false);
             signInAction.setEnabled(false);
-            boxAcceptTerms.addActionListener(evt -> signInAction.setEnabled(((JCheckBox)evt.getSource()).isSelected()));
+            boxAcceptTerms.addActionListener(evt -> signInAction.setEnabled(((JCheckBox) evt.getSource()).isSelected()));
 
             WebviewHTMLTextJPanel htmlPanel = new WebviewHTMLTextJPanel("I accept " + Term.toLinks(terms) + ".");
             htmlPanel.setPreferredSize(new Dimension(getPreferredSize().width, 40));

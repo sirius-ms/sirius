@@ -28,8 +28,7 @@ import java.util.Map;
 
 @Component
 public class ShutDown extends ShutdownEndpoint {
-    private static final Map<String, String> SHUTDOWN_MESSAGE = Collections
-            .unmodifiableMap(Collections.singletonMap("message", "Shutting down SpringBootApp and SIRIUS afterward, bye..."));
+    private static final Map<String, String> SHUTDOWN_MESSAGE = Collections.singletonMap("message", "Shutting down SpringBootApp and SIRIUS afterward, bye...");
 
     @Override
     @WriteOperation

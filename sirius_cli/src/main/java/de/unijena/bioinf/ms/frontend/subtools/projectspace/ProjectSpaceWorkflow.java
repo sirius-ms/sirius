@@ -57,11 +57,11 @@ import java.util.stream.Collectors;
 public class ProjectSpaceWorkflow implements Workflow {
 
 
-    private final RootOptions<?, ?, ?> rootOptions;
+    private final RootOptions<?, ?, ?, ?> rootOptions;
     private final ProjecSpaceOptions projecSpaceOptions;
     private final ParameterConfig config;
 
-    public ProjectSpaceWorkflow(RootOptions<?, ?, ?> rootOptions, ProjecSpaceOptions projecSpaceOptions, ParameterConfig config) {
+    public ProjectSpaceWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ProjecSpaceOptions projecSpaceOptions, ParameterConfig config) {
         this.rootOptions = rootOptions;
         this.projecSpaceOptions = projecSpaceOptions;
         this.config = config;
@@ -79,7 +79,7 @@ public class ProjectSpaceWorkflow implements Workflow {
 //                LoggerFactory.getLogger(getClass()).info("The Splitting tool works only on project-spaces. Other inputs will be ignored!");
                 final InputFilesOptions projectInput = rootOptions.getInput();
 
-                ProjectSpaceManager source = null;
+                ProjectSpaceManager<?> source = null;
                 try {
                     if (projectInput.msInput.projects.size() > 1 || !projectInput.msInput.msParserfiles.isEmpty() || (projectInput.csvInputs != null && !projectInput.csvInputs.isEmpty())) {
                         source = rootOptions.getSpaceManagerFactory().create(
@@ -103,8 +103,8 @@ public class ProjectSpaceWorkflow implements Workflow {
                     // do io intense filtering
                     @Nullable Predicate<Instance> instFilter = projecSpaceOptions.getCombinedInstanceilter();
                     if (instFilter != null) {
-                        final ProjectSpaceManager finalSource = source;
-                        cids.removeIf(id -> instFilter.test(finalSource.newInstanceFromCompound(id)));
+                        final ProjectSpaceManager<?> finalSource = source;
+                        cids.removeIf(id -> instFilter.test(finalSource.getInstanceFromCompound(id)));
                     }
 
                     switch (splitOpts.order) {
@@ -134,7 +134,7 @@ public class ProjectSpaceWorkflow implements Workflow {
                     final String ext = idx < 0 ? "" : fileName.substring(idx);
                     for (int i = 0; i < part.size(); i++) {
                         final Set<CompoundContainerId> p = new HashSet<>(part.get(i));
-                        ProjectSpaceManager batchSpace = null;
+                        ProjectSpaceManager<?> batchSpace = null;
                         try {
                             batchSpace = rootOptions.getSpaceManagerFactory().create(
                                     new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createNewProjectSpace(parent.resolve(name + "_" + i + ext)),
@@ -159,7 +159,7 @@ public class ProjectSpaceWorkflow implements Workflow {
                         source.close();
                 }
             } else {
-                final ProjectSpaceManager space = rootOptions.getProjectSpace();
+                final ProjectSpaceManager<?> space = rootOptions.getProjectSpace();
                 try {
                     InputFilesOptions input = rootOptions.getInput();
 
@@ -212,7 +212,7 @@ public class ProjectSpaceWorkflow implements Workflow {
         }
     }
 
-    private void mergeCompounds(ProjectSpaceManager space, ProjecSpaceOptions projecSpaceOptions) {
+    private void mergeCompounds(ProjectSpaceManager<?> space, ProjecSpaceOptions projecSpaceOptions) {
         int topK = Optional.ofNullable(projecSpaceOptions.mergeCompoundsTopK).orElse(1);
         double cosine = Optional.ofNullable(projecSpaceOptions.mergeCompoundsCosine).orElse(0.9);
         long rtDiff = Optional.ofNullable(projecSpaceOptions.mergeCompoundsRtDiff).orElse(60L);
@@ -303,7 +303,7 @@ public class ProjectSpaceWorkflow implements Workflow {
         jobs.forEach(JJob::takeResult);
     }
 
-    private void filterOnInstanceLevel(ProjectSpaceManager outputProject, ProjecSpaceOptions projecSpaceOptions) {
+    private void filterOnInstanceLevel(ProjectSpaceManager<?> outputProject, ProjecSpaceOptions projecSpaceOptions) {
         final Predicate<Instance> pred = projecSpaceOptions.getCombinedInstanceilter();
         if (pred == null)
             return;

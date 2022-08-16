@@ -25,11 +25,6 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
-import de.unijena.bioinf.ms.frontend.Run;
-import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
-import de.unijena.bioinf.ms.frontend.subtools.gui.GuiComputeRoot;
-import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
-import de.unijena.bioinf.ms.frontend.workfow.GuiInstanceBufferFactory;
 import de.unijena.bioinf.ms.gui.actions.CheckConnectionAction;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.*;
@@ -71,6 +66,8 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
     public static final String DO_NOT_SHOW_AGAIN_KEY_NO_FP_CHECK = "de.unijena.bioinf.sirius.computeDialog.projectspace.outdated.na.dontAskAgain";
 
 
+
+
     // main parts
     private ExperimentEditPanel editPanel;
     private final Box mainPanel;
@@ -105,46 +102,50 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
 
 
         {
+            boolean ms2 = compoundsToProcess.stream().anyMatch(inst -> !inst.getMs2Spectra().isEmpty());
+
             // make subtool config panels
-            formulaIDConfigPanel = new ActFormulaIDConfigPanel(this, compoundsToProcess);
+            formulaIDConfigPanel = new ActFormulaIDConfigPanel(this, compoundsToProcess, ms2);
             addConfigPanel("SIRIUS - Molecular Formula Identification", formulaIDConfigPanel);
 
             zodiacConfigs = new ActZodiacConfigPanel();
-            zodiacConfigs.addEnableChangeListener((s, enabled) -> {
-                if (enabled) {
-                    if (!PropertyManager.getBoolean(DO_NOT_SHOW_AGAIN_KEY_Z_COMP, false)) {
-                        if (new QuestionDialog(MainFrame.MF, "Low number of Compounds",
-                                GuiUtils.formatToolTip("Please note that ZODIAC is meant to improve molecular formula annotations on complete LC-MS/MS datasets. Using a low number of compounds may not result in improvements.", "", "Do you wish to continue anyways?"),
-                                DO_NOT_SHOW_AGAIN_KEY_Z_COMP).isAbort()) {
-                            zodiacConfigs.activationButton.setSelected(false);
-                            return;
-                        }
-                    }
-
-                    if ((compoundsToProcess.size() > 2000 && (Runtime.getRuntime().maxMemory() / 1024 / 1024 / 1024) < 8)
-                            && !PropertyManager.getBoolean(DO_NOT_SHOW_AGAIN_KEY_Z_MEM, false)) {
-                        if (new QuestionDialog(MainFrame.MF, "High Memory Consumption",
-                                GuiUtils.formatToolTip("Your ZODIAC analysis contains `" + compoundsToProcess.size() + "` compounds and may therefore consume more system memory than available.", "", "Do you wish to continue anyways?"),
-                                DO_NOT_SHOW_AGAIN_KEY_Z_MEM).isAbort()) {
-                            zodiacConfigs.activationButton.setSelected(false);
-                            return;
-                        }
-                    }
-                }
-
-
-            });
-            if (compoundsToProcess.size() > 1)
-                addConfigPanel("ZODIAC - Network-based improvement of SIRIUS molecular formula ranking", zodiacConfigs);
-
             csiPredictConfigs = new ActFingerprintConfigPanel(formulaIDConfigPanel.content.ionizationList.checkBoxList);
-            JPanel csi = addConfigPanel("CSI:FingerID - Fingerprint Prediction", csiPredictConfigs);
-
             csiSearchConfigs = new ActFingerblastConfigPanel(formulaIDConfigPanel.content.searchDBList.checkBoxList);
-            addConfigPanel("CSI:FingerID - Structure Database Search", csiSearchConfigs, csi);
-
             canopusConfigPanel = new ActCanopusConfigPanel();
-            addConfigPanel("CANOPUS - Compound Class Prediction", canopusConfigPanel);
+
+            if (compoundsToProcess.size() > 1 && ms2){
+                zodiacConfigs.addEnableChangeListener((s, enabled) -> {
+                    if (enabled) {
+                        if (!PropertyManager.getBoolean(DO_NOT_SHOW_AGAIN_KEY_Z_COMP, false)) {
+                            if (new QuestionDialog(MainFrame.MF, "Low number of Compounds",
+                                    GuiUtils.formatToolTip("Please note that ZODIAC is meant to improve molecular formula annotations on complete LC-MS/MS datasets. Using a low number of compounds may not result in improvements.", "", "Do you wish to continue anyways?"),
+                                    DO_NOT_SHOW_AGAIN_KEY_Z_COMP).isAbort()) {
+                                zodiacConfigs.activationButton.setSelected(false);
+                                return;
+                            }
+                        }
+
+                        if ((compoundsToProcess.size() > 2000 && (Runtime.getRuntime().maxMemory() / 1024 / 1024 / 1024) < 8)
+                                && !PropertyManager.getBoolean(DO_NOT_SHOW_AGAIN_KEY_Z_MEM, false)) {
+                            if (new QuestionDialog(MainFrame.MF, "High Memory Consumption",
+                                    GuiUtils.formatToolTip("Your ZODIAC analysis contains `" + compoundsToProcess.size() + "` compounds and may therefore consume more system memory than available.", "", "Do you wish to continue anyways?"),
+                                    DO_NOT_SHOW_AGAIN_KEY_Z_MEM).isAbort()) {
+                                zodiacConfigs.activationButton.setSelected(false);
+                                return;
+                            }
+                        }
+                    }
+
+
+                });
+                addConfigPanel("ZODIAC - Network-based improvement of SIRIUS molecular formula ranking", zodiacConfigs);
+            }
+
+            if (ms2) {
+                JPanel csi = addConfigPanel("CSI:FingerID - Fingerprint Prediction", csiPredictConfigs);
+                addConfigPanel("CSI:FingerID - Structure Database Search", csiSearchConfigs, csi);
+                addConfigPanel("CANOPUS - Compound Class Prediction", canopusConfigPanel);
+            }
 
             //Make edit panel for single compound mode if needed
             if (compoundsToProcess.size() == 1)
@@ -299,9 +300,9 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             } else {
                 new WarningDialog(this, "No web service connection!",
                         "<html><body>Could not perform Fingerprint compatibility check <br> " +
-                        "due to missing web service connection (see Webservice panel for details). <br> " +
-                        "CSI:FingerID and CANOPUS are not available; all corresponding jobs will fail and be skipped." +
-                        "</body></html>", DO_NOT_SHOW_AGAIN_KEY_NO_FP_CHECK);
+                                "due to missing web service connection (see Webservice panel for details). <br> " +
+                                "CSI:FingerID and CANOPUS are not available; all corresponding jobs will fail and be skipped." +
+                                "</body></html>", DO_NOT_SHOW_AGAIN_KEY_NO_FP_CHECK);
 
 
             }
@@ -353,15 +354,8 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
 
                 try {
                     final List<String> toolList = new ArrayList<>();
-                    final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader(PropertyManager.DEFAULTS.newIndependentInstance("BATCH_COMPUTE"));
-                    final WorkflowBuilder<GuiComputeRoot> wfBuilder = new WorkflowBuilder<>(new GuiComputeRoot(MF.ps(), finalComps), configOptionLoader, new GuiInstanceBufferFactory());
-                    final Run computation = new Run(wfBuilder);
                     final List<String> c = makeCommand(toolList);
-                    computation.parseArgs(c.toArray(String[]::new));
-
-                    if (computation.isWorkflowDefined())
-                        Jobs.runWorkflow(computation.getFlow(), finalComps, c, String.join(" > ", toolList));//todo make som nice head job that does some organizing stuff
-                    //todo else some error message with pico cli output
+                    Jobs.runCommand(c, finalComps, String.join(" > ", toolList));
                 } catch (Exception e) {
                     new ExceptionDialog(MF, e.getMessage());
                 }

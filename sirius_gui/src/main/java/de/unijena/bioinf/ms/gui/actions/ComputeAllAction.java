@@ -18,11 +18,6 @@
  */
 
 package de.unijena.bioinf.ms.gui.actions;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 29.01.17.
- */
 
 import de.unijena.bioinf.ms.gui.compute.BatchComputeDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -52,8 +47,8 @@ public class ComputeAllAction extends AbstractAction {
                 setEnabled(listChanges.getSourceList().size() > 0));
 
         //Listen if there are active gui jobs
-        Jobs.MANAGER.getJobs().addListEventListener(listChanges -> {
-            if (Jobs.MANAGER.hasActiveJobs()) {
+        Jobs.MANAGER().getJobs().addListEventListener(listChanges -> {
+            if (Jobs.MANAGER().hasActiveJobs()) {
                 computationStarted();
             } else {
                 computationCanceled();
@@ -65,7 +60,7 @@ public class ComputeAllAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (isActive.get()) {
-            Jobs.runInBackgroundAndLoad(MF, "Canceling Jobs...", Jobs::cancelALL);
+            Jobs.runInBackgroundAndLoad(MF, "Canceling Jobs...", Jobs::cancelAllRuns);
         } else {
             if (MF.getCompounds().isEmpty()){
                 LoggerFactory.getLogger(getClass()).warn("Not instances to compute! Closing Compute Dialog...");

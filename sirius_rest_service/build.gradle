@@ -3,16 +3,14 @@ buildscript {
         maven { url "https://plugins.gradle.org/m2/" }
     }
     dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:2.1.6.RELEASE")
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:2.6.8")
     }
 }
 
-
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
-
-sourceCompatibility = 13
-targetCompatibility = 13
+apply plugin: 'war'
+apply plugin: 'java-library'
 
 repositories {
     mavenLocal()
@@ -32,80 +30,94 @@ repositories {
     }
 }
 
-ext {
-    springfoxVersion = '2.9.2'
-}
 ext['jna.version'] = '5.4.0' //force correct jna version -> springs is not compatible with ilp solver
+ext['slf4j.version'] = slf4j_version
+ext['okhttp.version'] = '4.8.1'
 
 dependencies {
-    compile project(':sirius_cli')
+    api project(':sirius_cli')
 
-    //////////// configure logging /////////////////////
-    //use spring boot with java logging instead of log4j
-    configurations.all {
-        exclude group: 'ch.qos.logback', module: 'logback-classic'
-    }
-
+    //////////// configure logging ///////////////////
     //logging bridges
-    compile("org.slf4j:log4j-over-slf4j:$slf4j_version")
-    compile("org.slf4j:jcl-over-slf4j:$slf4j_version")
-    compile("org.slf4j:jul-to-slf4j:$slf4j_version")
-    //logging implemetation
-    compile("org.slf4j:slf4j-jdk14:$slf4j_version")
+    implementation("org.slf4j:log4j-over-slf4j:$slf4j_version")
+    implementation("org.slf4j:jcl-over-slf4j:$slf4j_version")
+    implementation("org.slf4j:jul-to-slf4j:$slf4j_version")
+    //todo move back to logback if we have a real spring boot app later
+    implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+
+
     ////////////////////////////////////////////////////
 
 
     //////////// Spring (boot) ////////////////////////
-    //configure spring boot with jetty and jul
-    compile("org.springframework.boot:spring-boot-starter-web") {
+    // Default bootJar config
+    implementation("org.springframework.boot:spring-boot-starter-web"){
         exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
     }
-    compile("org.springframework.boot:spring-boot-starter-jetty")
+//    implementation("org.springframework.boot:spring-boot-starter-jul")
+//    providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
+    providedRuntime 'org.springframework.boot:spring-boot-starter-jetty'
+
     // expose operational information about the running application via /actuator
-    compile("org.springframework.boot:spring-boot-starter-actuator")
-
-    compile 'it.unimi.dsi:fastutil:8.5.6' //replaces old spring version
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation 'it.unimi.dsi:fastutil:8.5.8' //replaces old spring version
     ////////////////////////////////////////////////////
 
-
-    ///////////////////// Json Stuff ///////////////////
-    // TODO: maybe needed for better JSON-marshalling
-//    compile "com.fasterxml.jackson:jackson-bom:2.9.7"
-    // support for accessing parameter names
-//    compile "com.fasterxml.jackson.module:jjackson-module-parameter-names"
-    // support for other new Java 8 datatypes outside of date/time (mainly Optional)
-//    compile "com.fasterxml.jackson.datatype:jackson-datatype-jdk8"
-    // support for Java 8 date/time types
-//    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
-    ////////////////////////////////////////////////////
-
-
-    ////////////////////// API Stuff ///////////////////
-    // Automated JSON API documentation for API's built with Spring
-    compile "io.springfox:springfox-swagger2:${springfoxVersion}"
+    ////////////////////// API DOC ///////////////////
     // Generate interactive documentation from a Swagger-compliant API
-    compile "io.springfox:springfox-swagger-ui:${springfoxVersion}"
-
-    // swagger codegen as gradle task --> this is done in another project I thing!
-    /*plugins {
-    id 'org.hidetake.swagger.generator' version '2.18.1'
-    }*/
-//    swaggerCodegen 'io.swagger:swagger-codegen-cli:2.4.2'             // Swagger Codegen V2
-//    swaggerCodegen 'io.swagger.codegen.v3:swagger-codegen-cli:3.0.5'  // or Swagger Codegen V3
-//    swaggerCodegen 'org.openapitools:openapi-generator-cli:3.3.4'     // or OpenAPI Generator
+    implementation 'org.springdoc:springdoc-openapi-ui:1.6.9'
+    implementation 'org.springdoc:springdoc-openapi-javadoc:1.6.9'
+    //process javadoc for swagger/openapi
+    annotationProcessor 'com.github.therapi:therapi-runtime-javadoc-scribe:0.13.0'
+//    implementation 'org.springdoc:springdoc-openapi-security:1.5.13'
     ////////////////////////////////////////////////////
 
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+    //getter setter constructor logger, save boilerplate
+    implementation 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // thymeleaf pages
+//    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
+    // security
+//    implementation 'org.springframework.boot:spring-boot-starter-security'
+//    implementation 'org.springframework.security:spring-security-oauth2-resource-server'
+//    implementation 'org.springframework.security:spring-security-oauth2-jose'
+
+
+//    implementation 'io.micrometer:micrometer-core'
+//    implementation 'io.micrometer:micrometer-registry-prometheus'
+    //must match minio version
+    implementation 'com.squareup.okhttp3:okhttp:4.8.1'
+
+
+    testImplementation group: 'junit', name: 'junit', version: '4.12'
 }
 
+configurations.all {
+    //replaced by log4j-over-slf4j
+    it.exclude group: "log4j", module: "log4j"
+    //replaced by jcl-over-slf4j
+    it.exclude group: "commons-logging", module: "commons-logging"
+    it.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+//    it.exclude group: 'org.slf4j', module: 'logback-classic'
+}
+war {
+    enabled = false
+}
 jar {
-    enabled = true
+    enabled = false
 }
 
 bootJar {
     classifier = 'boot'
+    layered {
+        enabled = true
+    }
+    launchScript()
 }
 
+/*
 task buildFrontend(type: Exec, group: 'build') {
     //todo make conditional -> only if it doe not exists
     workingDir "${getRootProject().projectDir}/frontend"
@@ -123,6 +135,7 @@ task bootJarWithFrontend(group: 'build') {
     dependsOn(copyFrontend)
     dependsOn(bootJar)
 }
+*/
 
 
 artifactory {
