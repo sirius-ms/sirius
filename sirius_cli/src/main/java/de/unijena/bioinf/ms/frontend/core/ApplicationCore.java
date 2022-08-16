@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.frontend.core;
 
+import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.AuthServices;
@@ -53,12 +54,19 @@ import java.util.logging.Handler;
 import java.util.logging.LogManager;
 import java.util.logging.SimpleFormatter;
 
+import static de.unijena.bioinf.ms.frontend.SiriusCLIApplication.APP_TYPE_PROPERTY_KEY;
 import static de.unijena.bioinf.ms.frontend.core.Workspace.*;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public abstract class ApplicationCore {
+
+    public enum AppType {CLI, GUI, SERVICE};
+
+    public static final AppType APP_TYPE = AppType.valueOf(
+            System.getProperty(APP_TYPE_PROPERTY_KEY, "CLI"));
+
     public static final Logger DEFAULT_LOGGER;
 
 
@@ -200,6 +208,8 @@ public abstract class ApplicationCore {
 
             PropertyManager.setProperty("de.unijena.bioinf.sirius.versionString", (version != null) ? "SIRIUS " + version : "SIRIUS <Version Unknown>");
             DEFAULT_LOGGER.info("You run " + VERSION_STRING());
+            DEFAULT_LOGGER.info("You run SIRIUS in '" + APP_TYPE + "' mode." );
+
 
             BibTeXDatabase bibtex = null;
             try {
@@ -243,25 +253,26 @@ public abstract class ApplicationCore {
             measureTime("DONE  Hardware Check, START init bug reporting");
 
 
-            //bug reporting
-//            ErrorReporter.INIT_PROPS(PropertyManager.asProperties());
-//            DEFAULT_LOGGER.info("Bug reporter initialized.");
-
-            measureTime("DONE init bug reporting, START init WebAPI");
             TOKEN_FILE = WORKSPACE.resolve(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.tokenFile", null, ".rtoken"));
 
             AuthService service = AuthServices.createDefault(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.audience"), TOKEN_FILE, ProxyManager.getSirirusHttpAsyncClient());
             Subscription sub = null; //web connection
             try {
-                sub = service.getToken().map(Tokens::getActiveSubscription).orElse(null);
+                sub = NetUtils.tryAndWait(() -> service.getToken().map(Tokens::getActiveSubscription).orElse(null),
+                        () -> NetUtils.checkThreadInterrupt(Thread.currentThread()), 30000) ;
             } catch (Exception e) {
-                LoggerFactory.getLogger(ApplicationCore.class).warn("Error when refreshing token: " + e.getMessage() + " Cleaning login information. Please re-login!");
                 LoggerFactory.getLogger(ApplicationCore.class).debug("Error when refreshing token", e);
-                AuthServices.clearRefreshToken(service, TOKEN_FILE); // in case token is corrupted or the account has been deleted
+                if (APP_TYPE == AppType.CLI){
+                    LoggerFactory.getLogger(ApplicationCore.class).error("Error when refreshing token: " + e.getMessage() + " Your refresh token might be corrupted or invalid. Please clear login and re-login!", e);
+                    throw e; // fail CLI execution, since a run without login is likely to mak no sense.
+                }else {
+                    LoggerFactory.getLogger(ApplicationCore.class).warn("Error when refreshing token: " + e.getMessage() + " Cleaning login information. Please re-login!");
+                    AuthServices.clearRefreshToken(service, TOKEN_FILE); // in case token is corrupted or the account has been deleted
+                }
             }
             WEB_API = new RestAPI(service, sub);
             DEFAULT_LOGGER.info("Web API initialized.");
-            measureTime("DONE init  init WebAPI");
+            measureTime("DONE init WebAPI");
 
         } catch (Throwable e) {
             System.err.println("Application Core STATIC Block Error!");

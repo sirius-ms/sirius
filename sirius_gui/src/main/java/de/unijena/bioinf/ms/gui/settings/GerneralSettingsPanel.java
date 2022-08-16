@@ -51,6 +51,8 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
     final JComboBox<String> solver;
     private boolean restartRequired = false;
 
+    final JCheckBox allowMS1Only;
+
     public GerneralSettingsPanel(Properties properties) {
         super();
         this.props = properties;
@@ -61,6 +63,12 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         scalingSpinner = new JSpinner(model);
         scalingSpinner.setToolTipText(GuiUtils.formatToolTip("Set scaling factor of the Graphical User Interface"));
         addNamed("Scaling Factor", scalingSpinner);
+
+        add(new JXTitledSeparator("Data Import"));
+        allowMS1Only = new JCheckBox();
+        allowMS1Only.setSelected(Boolean.parseBoolean(props.getProperty("de.unijena.bioinf.sirius.ui.allowMs1Only","true")));
+        allowMS1Only.setToolTipText(GuiUtils.formatToolTip("If checked data without MS/MS spectra will be imported. Otherwise they will be skipped during import."));
+        addNamed("Import data without MS/MS", allowMS1Only);
 
         add(new JXTitledSeparator("ILP solver"));
         Vector<String> items = new Vector<>(Arrays.asList("clp,cplex,gurobi,glpk", "cplex,gurobi,clp,glpk", "cplex,clp,glpk", "gurobi,clp,glpk", "clp,glpk", "glpk,clp", "gurobi", "cplex", "clp", "glpk"));
@@ -99,6 +107,7 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
     @Override
     public void saveProperties() {
         props.setProperty("de.unijena.bioinf.sirius.treebuilder.solvers", (String) solver.getSelectedItem());
+        props.setProperty("de.unijena.bioinf.sirius.ui.allowMs1Only", String.valueOf(allowMS1Only.isSelected()));
 //        props.setProperty("de.unijena.bioinf.sirius.treebuilder.timeout", treeTimeout.getNumber().toString());
         final Path dir = Paths.get(db.getFilePath());
         if (Files.isDirectory(dir)) {

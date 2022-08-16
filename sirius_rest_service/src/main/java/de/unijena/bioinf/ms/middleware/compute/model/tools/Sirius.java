@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.middleware.compute.model.tools;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidates;
@@ -30,11 +31,15 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.model.IsotopeMs2Settings;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Timeout;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.UseHeuristic;
 import de.unijena.bioinf.chemdb.DataSource;
+import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -43,8 +48,8 @@ import java.util.stream.Collectors;
 
 @Getter
 @Setter
-public class Sirius {
-    enum Instrument { QTOF, ORBI, FTICR}
+public class Sirius extends Tool<SiriusOptions> {
+    enum Instrument {QTOF, ORBI, FTICR}
 
     /**
      * Instrument specific profile for internal algorithms
@@ -60,7 +65,7 @@ public class Sirius {
      * NumberOfCandidatesPerIon results per ionization.
      * if <= 0, this parameter will have no effect and just the top
      * NumberOfCandidates results will be reported.
-     * */
+     */
     NumberOfCandidatesPerIon numberOfCandidatesPerIon;
     /**
      * Maximum allowed mass accuracy. Only molecular formulas within this mass window are considered.
@@ -69,12 +74,12 @@ public class Sirius {
 
     /**
      * Specify how isotope patterns in MS/MS should be handled.
-     *
+     * <p>
      * FILTER: When filtering is enabled, molecular formulas are excluded if their
      * theoretical isotope pattern does not match the theoretical one, even if their MS/MS pattern has high score.
-     *
+     * <p>
      * SCORE: Use them for SCORING. To use this the instrument should produce clear MS/MS isotope patterns
-     *
+     * <p>
      * IGNORE: Ignore that there might be isotope patterns in MS/MS
      */
     IsotopeMs2Settings isotopeSettings;
@@ -88,7 +93,7 @@ public class Sirius {
     /**
      * These configurations hold the information how to autodetect elements based on the given formula constraints.
      * Note: If the compound is already assigned to a specific molecular formula, this annotation is ignored.
-     *
+     * <p>
      * Enforced: Enforced elements are always considered
      */
     String enforcedFormulaConstraints;
@@ -96,7 +101,7 @@ public class Sirius {
     /**
      * These configurations hold the information how to autodetect elements based on the given formula constraints.
      * Note: If the compound is already assigned to a specific molecular formula, this annotation is ignored.
-     *
+     * <p>
      * Fallback: Fallback elements are used, if the auto-detection fails (e.g. no isotope pattern available)
      */
     String fallbackFormulaConstraints;
@@ -104,7 +109,7 @@ public class Sirius {
     /**
      * These configurations hold the information how to autodetect elements based on the given formula constraints.
      * Note: If the compound is already assigned to a specific molecular formula, this annotation is ignored.
-     *
+     * <p>
      * Detectable: Detectable elements are added to the chemical alphabet, if there are indications for them (e.g. in isotope pattern)
      */
     List<String> detectableElements;
@@ -124,18 +129,41 @@ public class Sirius {
 
 
     public Sirius() {
+        super(SiriusOptions.class);
         profile = Instrument.QTOF;
         numberOfCandidates = PropertyManager.DEFAULTS.createInstanceWithDefaults(NumberOfCandidates.class);
         numberOfCandidatesPerIon = PropertyManager.DEFAULTS.createInstanceWithDefaults(NumberOfCandidatesPerIon.class);
         massAccuracyMS2ppm = PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class).allowedMassDeviation.getPpm();
         isotopeSettings = PropertyManager.DEFAULTS.createInstanceWithDefaults(IsotopeMs2Settings.class);
         formulaSearchDBs = List.of();
-        FormulaSettings settings  = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class);
+        FormulaSettings settings = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class);
         enforcedFormulaConstraints = settings.getEnforcedAlphabet().toString();
         fallbackFormulaConstraints = settings.getFallbackAlphabet().toString();
         detectableElements = settings.getAutoDetectionElements().stream().map(Element::getSymbol).collect(Collectors.toList());
 
         ilpTimeout = PropertyManager.DEFAULTS.createInstanceWithDefaults(Timeout.class);
         useHeuristic = PropertyManager.DEFAULTS.createInstanceWithDefaults(UseHeuristic.class);
+    }
+
+    @JsonIgnore
+    @Override
+    public Map<String, String> asConfigMap() {
+        HashMap<String, String> map = new HashMap<>();
+        map.put("UseHeuristic.mzToUseHeuristic", String.valueOf(useHeuristic.mzToUseHeuristic));
+        map.put("UseHeuristic.mzToUseHeuristicOnly", String.valueOf(useHeuristic.mzToUseHeuristicOnly));
+
+        map.put("Timeout.secondsPerInstance", String.valueOf(ilpTimeout.getNumberOfSecondsPerInstance()));
+        map.put("Timeout.secondsPerTree", String.valueOf(ilpTimeout.getNumberOfSecondsPerDecomposition()));
+
+        map.put("FormulaSettings.enforced", enforcedFormulaConstraints);
+        map.put("FormulaSettings.detectable", String.join(",", detectableElements));
+        map.put("FormulaSettings.fallback", fallbackFormulaConstraints);
+
+        map.put("FormulaSearchDB", formulaSearchDBs.stream().map(DataSource::name).collect(Collectors.joining(",")));
+
+        map.put("NumberOfCandidates", String.valueOf(numberOfCandidates));
+        map.put("NumberOfCandidatesPerIon", String.valueOf(numberOfCandidatesPerIon));
+        map.put("AlgorithmProfile", profile.name());
+        return Collections.unmodifiableMap(map);
     }
 }
