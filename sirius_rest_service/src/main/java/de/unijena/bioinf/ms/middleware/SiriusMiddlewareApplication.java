@@ -55,6 +55,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
         if (Arrays.stream(args).noneMatch(s -> s.equalsIgnoreCase("rest"))) {
             SiriusCLIApplication.main(args);
         } else {
+            System.setProperty(APP_TYPE_PROPERTY_KEY, "SERVICE");
             //todo convert to a native spring based approach
             ApplicationCore.DEFAULT_LOGGER.info("Init AppCore");
             try {

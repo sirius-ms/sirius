@@ -38,6 +38,8 @@ import java.util.stream.Stream;
 
 
 public class SiriusCLIApplication {
+
+    public static final String APP_TYPE_PROPERTY_KEY = "de.unijena.bioinf.sirius.apptype";
     protected static Run RUN = null;
     protected static boolean successfulParsed;
 
@@ -45,6 +47,7 @@ public class SiriusCLIApplication {
     protected static long t1;
 
     public static void main(String[] args) {
+        System.setProperty(APP_TYPE_PROPERTY_KEY, "CLI");
         if (TIME)
             t1 = System.currentTimeMillis();
         try {
@@ -59,7 +62,7 @@ public class SiriusCLIApplication {
         }
     }
 
-    public static void measureTime(String message){
+    public static void measureTime(String message) {
         if (TIME) {
             long t2 = System.currentTimeMillis();
             System.err.println("==> " + message + " - " + (t2 - t1) / 1000d);
@@ -106,7 +109,7 @@ public class SiriusCLIApplication {
             measureTime("Start Parse args");
             successfulParsed = RUN.parseArgs(args);
             measureTime("Parse args Done!");
-            if (successfulParsed){
+            if (successfulParsed) {
                 measureTime("Compute");
                 RUN.compute();
                 measureTime("Compute DONE!");
