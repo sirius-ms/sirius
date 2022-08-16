@@ -117,7 +117,10 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
     }
 
     private <S extends Ms2Experiment> List<S> experimentFromCompound(Compound compound) {
-        if (compound.getSpectrum().stream().anyMatch(s -> s.getType().equals("MFE"))) {
+        //ms1 only data
+        if (compound.getSpectrum().stream().noneMatch(s -> s.getMSDetails().getScanType().equals("ProductIon"))) {
+            return experimentFromMS1OnlyCompound(compound);
+        }else if (compound.getSpectrum().stream().anyMatch(s -> s.getType().equals("MFE"))) { //MFE data
             return experimentFromMFECompound(compound);
         } else {
             return experimentFromRawCompound(compound);
@@ -149,10 +152,23 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
         return siriusCompounds;
     }
 
+    private <S extends Ms2Experiment> List<S> experimentFromMS1OnlyCompound(Compound compound) {
+        MutableMs2Experiment exp = new MutableMs2Experiment();
+        Spectrum ms = compound.getSpectrum().stream()
+                .filter(s -> s.getMSDetails().getScanType().equals("Scan"))
+                .filter(s -> s.mzOfInterest != null)
+                .findFirst().orElseThrow(() -> new IllegalArgumentException("No spectrum (neither MS1 nor MS/MS) with precursor information (MzOfInterest) found for compound at rt " + compound.location.rt));
+
+        exp.setPrecursorIonType(ms.getMSDetails().p.equals("-") ? PrecursorIonType.unknownNegative() : PrecursorIonType.unknownPositive());
+        exp.setIonMass(ms.mzOfInterest.getMz().doubleValue());
+        return List.of(experimentFromCompound(compound, exp));
+    }
+
     private <S extends Ms2Experiment> List<S> experimentFromRawCompound(Compound compound) {
         MutableMs2Experiment exp = new MutableMs2Experiment();
 
-        Spectrum s = compound.getSpectrum().stream().filter(spec -> spec.getMSDetails().getScanType().equals("ProductIon")).findFirst().orElseThrow(() -> new IllegalArgumentException("No MS/MS spectrum found for compound at rt " + compound.location.rt));
+        Spectrum s = compound.getSpectrum().stream().filter(spec -> spec.getMSDetails().getScanType().equals("ProductIon")).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("No MS/MS spectrum found for compound at rt " + compound.location.rt));
         exp.setPrecursorIonType(s.getMSDetails().p.equals("-") ? PrecursorIonType.unknownNegative() : PrecursorIonType.unknownPositive());
         exp.setIonMass(s.mzOfInterest.getMz().doubleValue());
 
