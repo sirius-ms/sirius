@@ -20,8 +20,12 @@
 
 package de.unijena.bioinf.ms.middleware.compute.model.tools;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.Map;
 
 /**
  * User/developer friendly parameter subset for the CANOPUS tool
@@ -29,10 +33,15 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public class Canopus {
-    /**
-     * Just a placeholder
-     */
-    boolean enabled = true;
+public class Canopus extends Tool<CanopusOptions> {
+    public Canopus() {
+        super(CanopusOptions.class);
+    }
 
+
+    @JsonIgnore
+    @Override
+    public Map<String, String> asConfigMap() {
+        return Map.of();
+    }
 }

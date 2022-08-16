@@ -56,7 +56,6 @@ public class Jobs {
     public static SwingJobManager MANAGER(){
         return (SwingJobManager) SiriusJobs.getGlobalJobManager();
     }
-    private static final AtomicInteger COMPUTATION_COUNTER = new AtomicInteger(0);
 
     private static final PropertyChangeListener BACKGROUND_RUN_LISTENER = evt -> {
         if (BackgroundRuns.ACTIVE_RUNS_PROPERTY.equals(evt.getPropertyName())) {
@@ -220,7 +219,7 @@ public class Jobs {
         BackgroundRuns.BackgroundRunJob<GuiProjectSpaceManager, InstanceBean> job =
                 BackgroundRuns.makeBackgroundRun(command, compoundsToProcess, MF.ps());
 
-        return submit(job, COMPUTATION_COUNTER.incrementAndGet() + ": " + (description == null ? "" : description),
+        return submit(job, job.getRunId() + ": " + (description == null ? "" : description),
                 "Computation");
     }
     public static void cancelAllRuns() {

@@ -27,8 +27,8 @@ import java.awt.*;
 public class ActFormulaIDConfigPanel extends ActivatableConfigPanel<FormulaIDConfigPanel> {
 
 
-    public ActFormulaIDConfigPanel(Dialog owner, java.util.List<InstanceBean> ecs) {
-        super("SIRIUS", Icons.SIRIUS_32, false, () -> new FormulaIDConfigPanel(owner, ecs));
+    public ActFormulaIDConfigPanel(Dialog owner, java.util.List<InstanceBean> ecs, boolean ms2) {
+        super("SIRIUS", Icons.SIRIUS_32, false, () -> new FormulaIDConfigPanel(owner, ecs, ms2));
     }
 
     @Override

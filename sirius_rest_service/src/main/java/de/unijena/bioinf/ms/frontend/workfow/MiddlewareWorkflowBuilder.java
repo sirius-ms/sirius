@@ -30,8 +30,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-//todo
-public class MiddlewareWorkflowBuilder<R extends RootOptions<?, ?, ?>> extends WorkflowBuilder<R> {
+public class MiddlewareWorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> extends WorkflowBuilder<R> {
     public MiddlewareWorkflowBuilder(@NotNull R rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, InstanceBufferFactory<?> bufferFactory) throws IOException {
         super(rootOptions, configOptionLoader, bufferFactory);
     }
@@ -40,7 +39,7 @@ public class MiddlewareWorkflowBuilder<R extends RootOptions<?, ?, ?>> extends W
     @Override
     protected Object[] standaloneTools() {
         ArrayList<Object> it = new ArrayList<>(Arrays.asList(super.standaloneTools()));
-        it.add(new MiddlewareAppOptions());
+        it.add(new MiddlewareAppOptions<>());
         return it.toArray(Object[]::new);
     }
 }
