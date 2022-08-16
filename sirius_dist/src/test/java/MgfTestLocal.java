@@ -18,14 +18,14 @@ public class MgfTestLocal {
         TestMethods.isDirExisting(absPath + "sirius_cli/src/test/temp_results/mgf_temp_output/0_laudanosine_FEATURE_1/fingerid".replace("/", sep));
         TestMethods.isDirExisting(absPath + "sirius_cli/src/test/temp_results/mgf_temp_output/0_laudanosine_FEATURE_1/fingerprints".replace("/", sep));
 
-//        TestMethods.isDirNotEmpty(Paths.get(absPath + "sirius_cli/src/test/temp_results/mgf_temp_output/0_laudanosine_FEATURE_1/canopus".replace("/", sep)));
-//        TestMethods.isDirNotEmpty(Paths.get(absPath + "sirius_cli/src/test/temp_results/mgf_temp_output/0_laudanosine_FEATURE_1/canopus_npc".replace("/", sep)));
-//        TestMethods.isDirNotEmpty(Paths.get(absPath + "sirius_cli/src/test/temp_results/mgf_temp_output/0_laudanosine_FEATURE_1/fingerid".replace("/", sep)));
-//        TestMethods.isDirNotEmpty(Paths.get(absPath + "sirius_cli/src/test/temp_results/mgf_temp_output/0_laudanosine_FEATURE_1/fingerprints".replace("/", sep)));
-//
-//        TestMethods.areContentsEqual(absPath + "sirius_cli/src/test/temp_results/mgf_temp_output/0_laudanosine_FEATURE_1/canopus".replace("/", sep),
-//                absPath + "sirius_cli/src/test/temp_results/mgf_temp_output/0_laudanosine_FEATURE_1/canopus_npc".replace("/", sep),
-//                absPath + "sirius_cli/src/test/temp_results/mgf_temp_output/0_laudanosine_FEATURE_1/fingerprints".replace("/", sep));
+        TestMethods.isDirNotEmpty(Paths.get(absPath + "sirius_cli/src/test/temp_results/mgf_temp_output/0_laudanosine_FEATURE_1/canopus".replace("/", sep)));
+        TestMethods.isDirNotEmpty(Paths.get(absPath + "sirius_cli/src/test/temp_results/mgf_temp_output/0_laudanosine_FEATURE_1/canopus_npc".replace("/", sep)));
+        TestMethods.isDirNotEmpty(Paths.get(absPath + "sirius_cli/src/test/temp_results/mgf_temp_output/0_laudanosine_FEATURE_1/fingerid".replace("/", sep)));
+        TestMethods.isDirNotEmpty(Paths.get(absPath + "sirius_cli/src/test/temp_results/mgf_temp_output/0_laudanosine_FEATURE_1/fingerprints".replace("/", sep)));
+
+        TestMethods.areContentsEqual(absPath + "sirius_cli/src/test/temp_results/mgf_temp_output/0_laudanosine_FEATURE_1/canopus".replace("/", sep),
+                absPath + "sirius_cli/src/test/temp_results/mgf_temp_output/0_laudanosine_FEATURE_1/canopus_npc".replace("/", sep),
+                absPath + "sirius_cli/src/test/temp_results/mgf_temp_output/0_laudanosine_FEATURE_1/fingerprints".replace("/", sep));
 
         int rank_count = 3;
         int table_feature = 1;
