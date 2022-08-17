@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.compute.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ms.middleware.compute.model.tools.*;
@@ -30,7 +31,9 @@ import lombok.Setter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Object to submit a job to be executed by SIRIUS
@@ -93,6 +96,8 @@ public class JobSubmission {
      */
     Canopus canopusParas;
 
+    //todo passatutto api.
+
     /**
      * As an alternative to the object based parameters, this map allows to store key value pairs
      * of ALL SIRIUS parameters. All possible parameters can be retrieved from SIRIUS via the respective endpoint.
@@ -118,5 +123,12 @@ public class JobSubmission {
             j.setConfigMap(configMap);
         }
         return j;
+    }
+
+
+    @JsonIgnore
+    public List<Tool<?>> getEnabledTools() {
+        return Stream.of(formulaIdParas, zodiacParas, fingerprintPredictionParas, structureDbSearchParas, canopusParas)
+                .filter(Objects::nonNull).filter(Tool::isEnabled).collect(Collectors.toList());
     }
 }

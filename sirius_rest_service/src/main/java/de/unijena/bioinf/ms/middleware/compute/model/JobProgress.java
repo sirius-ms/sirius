@@ -59,7 +59,11 @@ public class JobProgress {
      */
     Long maxProgress;
     /**
-     * Progress information, warnings and errors.
+     * Progress information and warnings.
      */
     String message;
+    /**
+     * Error message if the job did not finish successfully failed.
+     */
+    String errorMessage;
 }

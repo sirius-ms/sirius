@@ -21,10 +21,14 @@
 package de.unijena.bioinf.ms.middleware.compute.model.tools;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.fingerid.annotations.FormulaResultThreshold;
+import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.Map;
 
 /**
  * User/developer friendly parameter subset for the CSI:FingerID Fingerprint tool
@@ -32,11 +36,22 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class FingerprintPrediction {
+public class FingerprintPrediction extends Tool<FingerprintOptions> {
+
 
         /**
          * If true, an adaptive soft threshold will be applied to only compute Fingerprints for promising formula candidates
          * Enabling is highly recommended.
          */
         boolean useScoreThreshold = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaResultThreshold.class).useThreshold();
+
+        public FingerprintPrediction() {
+                super(FingerprintOptions.class);
+        }
+
+        @JsonIgnore
+        @Override
+        public Map<String, String> asConfigMap() {
+                return Map.of("FormulaResultThreshold", String.valueOf(useScoreThreshold));
+        }
 }
