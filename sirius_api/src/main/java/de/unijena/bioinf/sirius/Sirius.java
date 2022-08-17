@@ -544,7 +544,7 @@ public class Sirius {
      * @param ion      ionization mode (might be a Charge)
      * @return spectrum containing the theoretical isotope pattern of this compound
      */
-    public Spectrum<Peak> simulateIsotopePattern(MolecularFormula compound, Ionization ion) {
+    public SimpleSpectrum simulateIsotopePattern(MolecularFormula compound, Ionization ion) {
         return getMs1Analyzer().getPatternGenerator().simulatePattern(compound, ion);
     }
 
@@ -556,7 +556,7 @@ public class Sirius {
      * @param numberOfPeaks number of peaks in simulated pattern
      * @return spectrum containing the theoretical isotope pattern of this compound
      */
-    public Spectrum<Peak> simulateIsotopePattern(MolecularFormula compound, Ionization ion, int numberOfPeaks) {
+    public SimpleSpectrum simulateIsotopePattern(MolecularFormula compound, Ionization ion, int numberOfPeaks) {
         IsotopePatternGenerator gen = getMs1Analyzer().getPatternGenerator();
         gen.setMaximalNumberOfPeaks(numberOfPeaks);
         return gen.simulatePattern(compound, ion);
