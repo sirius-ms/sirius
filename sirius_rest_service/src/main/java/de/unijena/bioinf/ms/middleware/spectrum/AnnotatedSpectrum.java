@@ -19,62 +19,103 @@
 
 package de.unijena.bioinf.ms.middleware.spectrum;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.SimplePeak;
+import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.Iterator;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class AnnotatedSpectrum implements OrderedSpectrum<Peak> {
+    private Integer mslevel = null;
+    private CollisionEnergy collisionEnergy = null;
+    private AnnotatedPeak[] peaks;
 
-    protected double[] masses;
-    protected double[] intensities;
-    protected HashMap<Integer, PeakAnnotation> peakAnnotations;
-
-    public AnnotatedSpectrum(double[] masses, double[] intensities, HashMap<Integer, PeakAnnotation> peakAnnotations) {
-        this.masses = masses;
-        this.intensities = intensities;
-        this.peakAnnotations = peakAnnotations;
+    public AnnotatedSpectrum(Spectrum<Peak> spec) {
+        this(Spectrums.copyMasses(spec), Spectrums.copyIntensities(spec));
     }
 
+    public AnnotatedSpectrum(double[] masses, double[] intensities) {
+        this(masses, intensities, null);
+    }
+
+    public AnnotatedSpectrum(double[] masses, double[] intensities, @Nullable PeakAnnotation[] peakAnnotations) {
+        peaks = new AnnotatedPeak[masses.length];
+
+        if (peakAnnotations != null) {
+            for (int i = 0; i < masses.length; i++)
+                peaks[i] = new AnnotatedPeak(masses[i], intensities[i], peakAnnotations[i]);
+        } else {
+            for (int i = 0; i < masses.length; i++)
+                peaks[i] = new AnnotatedPeak(masses[i], intensities[i], null);
+        }
+    }
+
+    public AnnotatedPeak[] getPeaks() {
+        return peaks;
+    }
+
+    public void setPeaks(AnnotatedPeak[] peaks) {
+        this.peaks = peaks;
+    }
+
+    @JsonIgnore
     public double[] getMasses() {
-        return masses;
+        return Arrays.stream(peaks).mapToDouble(AnnotatedPeak::getMass).toArray();
     }
 
+    @JsonIgnore
     public double[] getIntensities() {
-        return intensities;
+        return Arrays.stream(peaks).mapToDouble(AnnotatedPeak::getIntensity).toArray();
     }
 
     @Override
+    @JsonIgnore
     public double getMzAt(int index) {
-        return masses[index];
+        return peaks[index].getMass();
     }
 
     @Override
+    @JsonIgnore
     public double getIntensityAt(int index) {
-        return intensities[index];
+        return peaks[index].getMass();
     }
 
+    @JsonIgnore
+    public PeakAnnotation getPeakAnnotationAt(int index) {
+        return peaks[index].getPeakAnnotation();
+    }
+
+
     @Override
+    @JsonIgnore
     public Peak getPeakAt(int index) {
-        return new SimplePeak(masses[index], intensities[index]);
+        return peaks[index];
     }
 
     @Override
+    @JsonIgnore
     public int size() {
-        return masses.length;
+        return peaks.length;
     }
 
     @NotNull
     @Override
+    @JsonIgnore
     public Iterator<Peak> iterator() {
-        return new Iterator<Peak>() {
-            int index=0;
+        return new Iterator<>() {
+            int index = 0;
+
             @Override
             public boolean hasNext() {
-                return index < masses.length;
+                return index < peaks.length;
             }
 
             @Override
@@ -82,5 +123,35 @@ public class AnnotatedSpectrum implements OrderedSpectrum<Peak> {
                 return getPeakAt(index++);
             }
         };
+    }
+
+    @Override
+    @JsonIgnore
+    public boolean isEmpty() {
+        return OrderedSpectrum.super.isEmpty();
+    }
+
+    @Override
+    public CollisionEnergy getCollisionEnergy() {
+        return collisionEnergy;
+    }
+
+    @Override
+    public int getMsLevel() {
+        return mslevel;
+    }
+
+    public void setMslevel(int mslevel) {
+        this.mslevel = mslevel;
+    }
+
+    public void setCollisionEnergy(CollisionEnergy collisionEnergy) {
+        this.collisionEnergy = collisionEnergy;
+    }
+
+    @Override
+    @JsonIgnore
+    public double getMaxIntensity() {
+        return OrderedSpectrum.super.getMaxIntensity();
     }
 }
