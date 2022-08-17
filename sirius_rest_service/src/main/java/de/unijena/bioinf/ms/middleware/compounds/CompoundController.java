@@ -24,7 +24,6 @@ import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.SpectrumFileSource;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
@@ -57,7 +56,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -220,10 +218,10 @@ public class CompoundController extends BaseApiController {
     private MsData asCompoundMsData(Instance instance) {
         return instance.loadCompoundContainer(Ms2Experiment.class)
                 .getAnnotation(Ms2Experiment.class).map(exp -> new MsData(
-                        opt(exp.getMergedMs1Spectrum(), this::asSpectrum).orElse(null),
+                        opt(exp.getMergedMs1Spectrum(), s -> new AnnotatedSpectrum((Spectrum<Peak>) s)).orElse(null),
                         null,
-                        exp.getMs1Spectra().stream().map(this::asSpectrum).collect(Collectors.toList()),
-                        exp.getMs2Spectra().stream().map(this::asSpectrum).collect(Collectors.toList()))).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        exp.getMs1Spectra().stream().map(AnnotatedSpectrum::new).collect(Collectors.toList()),
+                        exp.getMs2Spectra().stream().map(AnnotatedSpectrum::new).collect(Collectors.toList()))).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                         "Compound with ID '" + instance + "' has no input Data!"));
     }
 
@@ -241,10 +239,6 @@ public class CompoundController extends BaseApiController {
 
     private <S, T> Optional<T> opt(S input, Function<S, T> convert) {
         return Optional.ofNullable(input).map(convert);
-    }
-
-    private AnnotatedSpectrum asSpectrum(Spectrum<Peak> spec) {
-        return new AnnotatedSpectrum(Spectrums.copyMasses(spec), Spectrums.copyIntensities(spec), new HashMap<>());
     }
 }
 
