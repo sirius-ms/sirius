@@ -26,11 +26,12 @@ import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
+import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "asService", aliases = {"rest", "REST"}, description = "EXPERIMENTAL/UNSTABLE: Starts SIRIUS as a background (REST) service that can be requested via a REST-API",  versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
-public class MiddlewareAppOptions implements StandaloneTool<MiddlewareAppOptions.Flow> {
+@CommandLine.Command(name = "asService", aliases = {"rest", "REST"}, description = "EXPERIMENTAL/UNSTABLE: Starts SIRIUS as a background (REST) service that can be requested via a REST-API", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
+public class MiddlewareAppOptions<I extends Instance, P extends ProjectSpaceManager<I>> implements StandaloneTool<MiddlewareAppOptions.Flow<I, P>> {
 
     @CommandLine.Option(names = {"--port", "-p"}, description = "Specify the port on which the SIRIUS REST Service should run (Default: 8080).", defaultValue = "8080")
     private void setPort(int port) {
@@ -46,11 +47,9 @@ public class MiddlewareAppOptions implements StandaloneTool<MiddlewareAppOptions
 
     }
 
-
     @Override
-    public Flow makeWorkflow(RootOptions<?,?,?> rootOptions, ParameterConfig config) {
-        return new Flow((RootOptions<ProjectSpaceManager, PreprocessingJob<ProjectSpaceManager>, ?>) rootOptions, config);
-
+    public Flow<I, P> makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
+        return new Flow<>((RootOptions<I, P, PreprocessingJob<P>, ?>) rootOptions, config);
     }
 
     @Override
@@ -58,13 +57,13 @@ public class MiddlewareAppOptions implements StandaloneTool<MiddlewareAppOptions
         return super.hashCode();
     }
 
-    public static class Flow implements Workflow {
+    public static class Flow<I extends Instance, P extends ProjectSpaceManager<I>> implements Workflow {
 
-        private final PreprocessingJob<ProjectSpaceManager> preproJob;
+        private final PreprocessingJob<P> preproJob;
         private final ParameterConfig config;
 
 
-        private Flow(RootOptions<ProjectSpaceManager, PreprocessingJob<ProjectSpaceManager> ,?> opts, ParameterConfig config) {
+        private Flow(RootOptions<I, P, PreprocessingJob<P>, ?> opts, ParameterConfig config) {
             this.preproJob = opts.makeDefaultPreprocessingJob();
             this.config = config;
         }

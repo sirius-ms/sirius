@@ -20,20 +20,24 @@
 
 package de.unijena.bioinf.ms.middleware.compute.model.tools;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.elgordo.InjectElGordoCompounds;
+import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * User/developer friendly parameter subset for the CSI:FingerID structure db search tool.
  */
 @Getter
 @Setter
-public class StructureDbSearch {
+public class StructureDbSearch extends Tool<FingerblastOptions> {
     //todo make custom database support
     /**
      * Structure databases to search in
@@ -49,7 +53,17 @@ public class StructureDbSearch {
     boolean tagLipids;
 
     public StructureDbSearch() {
+        super(FingerblastOptions.class);
         structureSearchDBs = List.of(DataSource.BIO);
         tagLipids = PropertyManager.DEFAULTS.createInstanceWithDefaults(InjectElGordoCompounds.class).value;
+    }
+
+    @JsonIgnore
+    @Override
+    public Map<String, String> asConfigMap() {
+        return Map.of(
+                "InjectElGordoCompounds", String.valueOf(tagLipids),
+                "StructureSearchDB", structureSearchDBs.stream().map(DataSource::name).collect(Collectors.joining(","))
+        );
     }
 }

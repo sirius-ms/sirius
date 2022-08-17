@@ -78,9 +78,11 @@ public class SiriusGUIApplication extends SiriusCLIApplication {
 
 
         final Splash splash = Arrays.stream(args).anyMatch(it -> it.equalsIgnoreCase("gui")) ? new Splash() : null;
+
         if (splash == null) {
             SiriusCLIApplication.main(args);
         } else {
+            System.setProperty(APP_TYPE_PROPERTY_KEY, "GUI");
             final @NotNull Supplier<ProjectSpaceConfiguration> dc = ProjectSpaceManager.DEFAULT_CONFIG;
             ProjectSpaceManager.DEFAULT_CONFIG = () -> {
                 final ProjectSpaceConfiguration config = dc.get();

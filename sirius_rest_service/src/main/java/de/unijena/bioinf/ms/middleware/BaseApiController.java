@@ -33,7 +33,7 @@ public class BaseApiController {
         this.context = context;
     }
 
-    protected ProjectSpaceManager projectSpace(String pid) {
+    protected ProjectSpaceManager<?> projectSpace(String pid) {
         return context.getProjectSpace(pid).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no project space with name '" + pid + "'"));
     }
 
@@ -41,15 +41,15 @@ public class BaseApiController {
         return loadInstance(projectSpace(pid), cid);
     }
 
-    protected Instance loadInstance(ProjectSpaceManager ps, String cid) {
-        return ps.newInstanceFromCompound(parseCID(ps, cid));
+    protected Instance loadInstance(ProjectSpaceManager<?> ps, String cid) {
+        return ps.getInstanceFromCompound(parseCID(ps, cid));
     }
 
     protected CompoundContainerId parseCID(String pid, String cid) {
         return parseCID(projectSpace(pid), cid);
     }
 
-    protected CompoundContainerId parseCID(ProjectSpaceManager ps, String cid) {
+    protected CompoundContainerId parseCID(ProjectSpaceManager<?> ps, String cid) {
         return ps.projectSpace().findCompound(cid).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no Compound with ID '" + cid + "' in project with name '" + ps.projectSpace().getLocation() + "'"));
     }
 
