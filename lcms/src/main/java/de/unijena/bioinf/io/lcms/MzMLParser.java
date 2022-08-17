@@ -106,14 +106,17 @@ public class MzMLParser implements LCMSParser {
             for (String sid : um.getSpectrumIDs()) {
                 final Spectrum spectrum = um.getSpectrumById(sid);
                 Polarity polarity = Polarity.UNKNOWN;
-                int msLevel = 1;
+                Integer msLevel = null;
                 boolean centroided=true;
+                final Set<CVParam> skipList = new HashSet<>();
                 for (CVParam cvParam : spectrum.getCvParam()) {
                     switch (cvParam.getAccession()) {
                         case "MS:1000129":
+                        case "MS:1000076":
                             polarity = Polarity.NEGATIVE;
                             break;
                         case "MS:1000130":
+                        case "MS:1000077":
                             polarity = Polarity.POSITIVE;
                             break;
                         case "MS:1000511":
@@ -125,8 +128,25 @@ public class MzMLParser implements LCMSParser {
                         case "MS:1000128":
                             centroided = false;
                             break;
+                        // add to skiplist
+                        case "MS:1000804":
+                            skipList.add(cvParam);
+                            break;
                     }
                 }
+
+                if (!skipList.isEmpty()){
+                    LoggerFactory.getLogger(getClass()).debug("Spectrum with ID '" + sid  + "' contains parameters that indicate non Mass Spectrometry data (e.g. EMR spectra). Skipping! Parameters: " + skipList.stream().map(CVParam::getAccession).collect(Collectors.joining(", ")) );
+                    continue;
+                }
+                if (msLevel == null && polarity == Polarity.UNKNOWN){
+                    LoggerFactory.getLogger(getClass()).warn("Spectrum with ID '" + sid  + "' does neither contain mslevel nor polarity information. Spectrum is likely to not be an Mass Spectrum. Skipping this entry." + System.lineSeparator() + "Spectrum information: " + spectrum.getCvParam().stream().map(CVParam::toString).collect(Collectors.joining(System.lineSeparator())));
+                    continue;
+                }
+
+                if (msLevel == null)
+                    msLevel = 1;
+
 
                 long retentionTimeMillis = 0L;
                 if (!spectrum.getScanList().getScan().isEmpty()) {
