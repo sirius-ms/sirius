@@ -23,6 +23,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
@@ -31,8 +32,9 @@ import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.middleware.BaseApiController;
-import de.unijena.bioinf.ms.middleware.SiriusContext;
+import de.unijena.bioinf.ms.middleware.compute.model.ComputeContext;
 import de.unijena.bioinf.ms.middleware.formulas.model.*;
 import de.unijena.bioinf.ms.middleware.spectrum.AnnotatedSpectrum;
 import de.unijena.bioinf.projectspace.FormulaResult;
@@ -40,6 +42,7 @@ import de.unijena.bioinf.projectspace.FormulaResultId;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidateNumber;
+import de.unijena.bioinf.sirius.Sirius;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.LoggerFactory;
@@ -60,9 +63,12 @@ import java.util.stream.Collectors;
 @Tag(name = "Formula Results", description = "Access results for all formula candidates of a given compound (aka feature).")
 public class FormulaController extends BaseApiController {
 
+    private final ComputeContext computeContext;
+
     @Autowired
-    public FormulaController(SiriusContext context) {
-        super(context);
+    public FormulaController(ComputeContext computeContext) {
+        super(computeContext.siriusContext);
+        this.computeContext = computeContext;
     }
 
     //todo add order by parameter?
@@ -70,9 +76,10 @@ public class FormulaController extends BaseApiController {
     /**
      * List of all FormulaResultContainers available for this compound/feature with minimal information.
      * Can be enriched with an optional results overview.
-     * @param projectId project-space to read from.
-     * @param compoundId compound/feature the formula result belongs to.
-     * @param resultOverview add ResultOverview to the FormulaResultContainers
+     *
+     * @param projectId        project-space to read from.
+     * @param compoundId       compound/feature the formula result belongs to.
+     * @param resultOverview   add ResultOverview to the FormulaResultContainers
      * @param formulaCandidate add extended formula candidate information to the FormulaResultContainers
      * @return All FormulaResultContainers of this compound/feature with.
      */
@@ -84,7 +91,8 @@ public class FormulaController extends BaseApiController {
         Instance instance = loadInstance(projectId, compoundId);
         return instance.loadFormulaResults().stream().map(SScored::getCandidate).map(fr -> {
             FormulaResultContainer formulaResultContainer = new FormulaResultContainer(fr.getId());
-            if (resultOverview) fr.getAnnotation(FormulaScoring.class).ifPresent(fs -> formulaResultContainer.setResultOverview(new ResultOverview(fs)));
+            if (resultOverview)
+                fr.getAnnotation(FormulaScoring.class).ifPresent(fs -> formulaResultContainer.setResultOverview(new ResultOverview(fs)));
             if (formulaCandidate) formulaResultContainer.setCandidate(FormulaCandidate.of(fr));
             return formulaResultContainer;
         }).collect(Collectors.toList());
@@ -93,22 +101,24 @@ public class FormulaController extends BaseApiController {
     /**
      * FormulaResultContainers for the given 'formulaId' with minimal information.
      * Can be enriched with an optional results overview and formula candidate information.
-     * @param projectId project-space to read from.
-     * @param compoundId compound/feature the formula result belongs to.
-     * @param formulaId identifier of the requested formula result
-     * @param resultOverview add ResultOverview to the FormulaResultContainer
+     *
+     * @param projectId        project-space to read from.
+     * @param compoundId       compound/feature the formula result belongs to.
+     * @param formulaId        identifier of the requested formula result
+     * @param resultOverview   add ResultOverview to the FormulaResultContainer
      * @param formulaCandidate add extended formula candidate information to the FormulaResultContainer
-     * @return  FormulaResultContainers of this compound/feature with.
+     * @return FormulaResultContainers of this compound/feature with.
      */
     @GetMapping(value = "/formulas/{formulaId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public FormulaResultContainer getFormulaResult(@PathVariable String projectId, @PathVariable String compoundId, @PathVariable String formulaId,
                                                    @RequestParam(defaultValue = "true") boolean resultOverview,
                                                    @RequestParam(defaultValue = "true") boolean formulaCandidate
-                                                   ) {
+    ) {
         Instance instance = loadInstance(projectId, compoundId);
         return instance.loadFormulaResult(parseFID(instance, formulaId), FormulaScoring.class).map(fr -> {
             FormulaResultContainer formulaResultContainerObject = new FormulaResultContainer(fr.getId());
-            if (resultOverview) fr.getAnnotation(FormulaScoring.class).ifPresent(fs -> formulaResultContainerObject.setResultOverview(new ResultOverview(fs)));
+            if (resultOverview)
+                fr.getAnnotation(FormulaScoring.class).ifPresent(fs -> formulaResultContainerObject.setResultOverview(new ResultOverview(fs)));
             if (formulaCandidate) formulaResultContainerObject.setCandidate(FormulaCandidate.of(fr));
             return formulaResultContainerObject;
         }).orElse(null);
@@ -117,14 +127,15 @@ public class FormulaController extends BaseApiController {
     /**
      * List of StructureCandidates the given 'formulaId' with minimal information.
      * StructureCandidates can be enriched with molecular fingerprint, structure database links and pubmed ids,
-     * @param projectId project-space to read from.
-     * @param compoundId compound/feature the formula result belongs to.
-     * @param formulaId identifier of the requested formula result
+     *
+     * @param projectId   project-space to read from.
+     * @param compoundId  compound/feature the formula result belongs to.
+     * @param formulaId   identifier of the requested formula result
      * @param fingerprint add molecular fingerprint to StructureCandidates
-     * @param dbLinks add dbLinks to StructureCandidates
-     * @param pubMedIds add PubMedIds (citation count) to StructureCandidates
-     * @param topK retrieve only the top k StructureCandidates
-     * @return  FormulaResultContainers of this compound/feature with specified extensions.
+     * @param dbLinks     add dbLinks to StructureCandidates
+     * @param pubMedIds   add PubMedIds (citation count) to StructureCandidates
+     * @param topK        retrieve only the top k StructureCandidates
+     * @return FormulaResultContainers of this compound/feature with specified extensions.
      */
     @GetMapping(value = "/formulas/{formulaId}/structures", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<StructureCandidate> getStructureCandidates(@PathVariable String projectId, @PathVariable String compoundId, @PathVariable String formulaId,
@@ -171,12 +182,13 @@ public class FormulaController extends BaseApiController {
     /**
      * Best Scoring StructureCandidate over all molecular formular resutls that belong to the specified
      * compound/feature (compoundId).
-     * @param projectId project-space to read from.
-     * @param compoundId compound/feature the formula result belongs to.
+     *
+     * @param projectId   project-space to read from.
+     * @param compoundId  compound/feature the formula result belongs to.
      * @param fingerprint add molecular fingerprint to StructureCandidates
-     * @param dbLinks add dbLinks to StructureCandidates
-     * @param pubMedIds add PubMedIds (citation count) to StructureCandidates
-     * @return  Best scoring FormulaResultContainers of this compound/feature with specified extensions.
+     * @param dbLinks     add dbLinks to StructureCandidates
+     * @param pubMedIds   add PubMedIds (citation count) to StructureCandidates
+     * @return Best scoring FormulaResultContainers of this compound/feature with specified extensions.
      */
     @GetMapping(value = "/top-structure", produces = MediaType.APPLICATION_JSON_VALUE)
     public StructureCandidate getTopStructureCandidate(@PathVariable String projectId, @PathVariable String compoundId, @RequestParam(defaultValue = "false") boolean fingerprint, @RequestParam(defaultValue = "false") boolean dbLinks, @RequestParam(defaultValue = "false") boolean pubMedIds) {
@@ -207,9 +219,10 @@ public class FormulaController extends BaseApiController {
     /**
      * Returns fragmentation tree (SIRIUS) for the given formula result identifier
      * This tree is used to rank formula candidates (treeScore).
-     * @param projectId project-space to read from.
+     *
+     * @param projectId  project-space to read from.
      * @param compoundId compound/feature the formula result belongs to.
-     * @param formulaId identifier of the requested formula result
+     * @param formulaId  identifier of the requested formula result
      * @return Fragmentation Tree
      */
     @GetMapping(value = "/formulas/{formulaId}/tree", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -221,23 +234,29 @@ public class FormulaController extends BaseApiController {
     /**
      * Returns simulated isotope pattern (SIRIUS) for the given formula result identifier.
      * This simulated isotope pattern is used to rank formula candidates (treeScore).
-     * @param projectId project-space to read from.
+     *
+     * @param projectId  project-space to read from.
      * @param compoundId compound/feature the formula result belongs to.
-     * @param formulaId identifier of the requested formula result
+     * @param formulaId  identifier of the requested formula result
      * @return Simulated isotope pattern
      */
-    @Deprecated
     @GetMapping(value = "/formulas/{formulaId}/isotope-pattern", produces = MediaType.APPLICATION_JSON_VALUE)
     public AnnotatedSpectrum getSimulatedIsotopePattern(@PathVariable String projectId, @PathVariable String compoundId, @PathVariable String formulaId) {
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "NOT YET IMPLEMENTED");
+        Instance instance = loadInstance(projectId, compoundId);
+        Sirius sirius = ApplicationCore.SIRIUS_PROVIDER.sirius(instance.loadCompoundContainer(FinalConfig.class).getAnnotationOrThrow(FinalConfig.class).config.getConfigValue("AlgorithmProfile"));
+        Optional<FormulaResult> fResult = instance.loadFormulaResult(parseFID(instance, formulaId), FTree.class);
+        return fResult.map(FormulaResult::getId).map(id -> sirius.simulateIsotopePattern(
+                        id.getMolecularFormula(), id.getIonType().getIonization())).map(AnnotatedSpectrum::new)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Isotope Pattern for '" + idString(projectId, compoundId, formulaId) + "' not found!"));
     }
 
     /**
      * Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier
      * This fingerprint is used to perfom structure database search and predict compound classes.
-     * @param projectId project-space to read from.
+     *
+     * @param projectId  project-space to read from.
      * @param compoundId compound/feature the formula result belongs to.
-     * @param formulaId identifier of the requested formula result
+     * @param formulaId  identifier of the requested formula result
      * @return probabilistic fingerprint predicted by CSI:FingerID
      */
     @GetMapping(value = "/formulas/{formulaId}/fingerprint", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -250,9 +269,10 @@ public class FormulaController extends BaseApiController {
 
     /**
      * All predicted compound classes (CANOPUS) from ClassyFire and NPC and their probabilities,
-     * @param projectId project-space to read from.
+     *
+     * @param projectId  project-space to read from.
      * @param compoundId compound/feature the formula result belongs to.
-     * @param formulaId identifier of the requested formula result
+     * @param formulaId  identifier of the requested formula result
      * @return Predicted compound classes
      */
     @GetMapping(value = "/formulas/{formulaId}/canopus-predictions", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -266,9 +286,10 @@ public class FormulaController extends BaseApiController {
     /**
      * Best matching compound classes,
      * Set of the highest scoring compound classes CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
-     * @param projectId project-space to read from.
+     *
+     * @param projectId  project-space to read from.
      * @param compoundId compound/feature the formula result belongs to.
-     * @param formulaId identifier of the requested formula result
+     * @param formulaId  identifier of the requested formula result
      * @return Best matching Predicted compound classes
      */
     @GetMapping(value = "/formulas/{formulaId}/best-canopus-predictions", produces = MediaType.APPLICATION_JSON_VALUE)
