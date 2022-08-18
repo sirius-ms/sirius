@@ -56,7 +56,11 @@ import java.io.IOException;
 public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
     public static final String DONT_ASK_CLOSE_KEY = "de.unijena.bioinf.sirius.mainframe.close.dontAskAgain";
     public static final String COMPOUND_BUFFER_KEY = "de.unijena.bioinf.sirius.gui.instanceBuffer";
+    private final Splash splash;
 
+    public GuiAppOptions(@Nullable Splash splash) {
+        this.splash = splash;
+    }
 
     @CommandLine.Option(names = {"--compound-buffer"}, description = "Number of compounds that will be cached in Memory by the GUI. A larger buffer may improve loading times of views that display many results. A smaller buffer reduces the memory maximal consumption of the GUI.", defaultValue = "10")
     public void setInitialInstanceBuffer(int instanceBuffer) {
@@ -70,8 +74,6 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
     }
 
     public class Flow implements Workflow {
-        private final Splash splash = new Splash();
-
         private final PreprocessingJob<GuiProjectSpaceManager> preproJob;
         private final ParameterConfig config;
 
