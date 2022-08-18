@@ -19,14 +19,16 @@
 
 package de.unijena.bioinf.ms.middleware;
 
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ms.annotations.PrintCitations;
+import de.unijena.bioinf.ms.frontend.BackgroundRuns;
 import de.unijena.bioinf.ms.frontend.Run;
 import de.unijena.bioinf.ms.frontend.SiriusCLIApplication;
+import de.unijena.bioinf.ms.frontend.SiriusGUIApplication;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.middleware.MiddlewareAppOptions;
-import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
 import de.unijena.bioinf.ms.frontend.workfow.MiddlewareWorkflowBuilder;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
@@ -52,12 +54,14 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
     }
 
     public static void main(String[] args) {
-        if (Arrays.stream(args).noneMatch(s -> s.equalsIgnoreCase("rest"))) {
-            SiriusCLIApplication.main(args);
-        } else {
+        ApplicationCore.DEFAULT_LOGGER.info("Init AppCore");
+        PropertyManager.setProperty("de.unijena.bioinf.sirius.springSupport", "true");
+        if (Arrays.stream(args).anyMatch(it -> it.equalsIgnoreCase("rest"))) {
             System.setProperty(APP_TYPE_PROPERTY_KEY, "SERVICE");
+            SiriusJobs.enforceClassLoaderGlobally(Thread.currentThread().getContextClassLoader());
+
             //todo convert to a native spring based approach
-            ApplicationCore.DEFAULT_LOGGER.info("Init AppCore");
+            ;
             try {
                 Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                     ApplicationCore.DEFAULT_LOGGER.info("CLI shut down hook: SIRIUS is cleaning up threads and shuts down...");
@@ -70,36 +74,51 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                     }
                 }));
 
+                PropertyManager.setProperty("de.unijena.bioinf.sirius.BackgroundRuns.autoremove", "false");
                 final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
-                rootOptions = new CLIRootOptions<>(configOptionLoader, new ProjectSpaceManagerFactory.Default());
+
+                final ProjectSpaceManagerFactory<?, ?> psf = new ProjectSpaceManagerFactory.Default();
+                /*if (Arrays.stream(args).anyMatch(it -> it.equalsIgnoreCase("gui"))) {
+                    psf = new GuiProjectSpaceManagerFactory();
+                } else {
+                    psf = new ProjectSpaceManagerFactory.Default();
+                }*/
+
+
+                rootOptions = new CLIRootOptions<>(configOptionLoader, psf);
                 if (RUN != null)
                     throw new IllegalStateException("Application can only run Once!");
                 measureTime("init Run");
-                RUN = new Run(new MiddlewareWorkflowBuilder<>(rootOptions, configOptionLoader, new SimpleInstanceBuffer.Factory()));
+                RUN = new Run(new MiddlewareWorkflowBuilder<>(rootOptions, configOptionLoader, BackgroundRuns.getBufferFactory()));
                 measureTime("Start Parse args");
                 boolean b = RUN.parseArgs(args);
                 measureTime("Parse args Done!");
                 if (b) {
+                    // decides whether the app runs infinitely
                     WebApplicationType webType = WebApplicationType.NONE;
-                    if (RUN.getFlow() instanceof MiddlewareAppOptions.Flow) //run rest service
+                    if (RUN.getFlow() instanceof MiddlewareAppOptions.Flow) //run rest service (infinitely)
                         webType = WebApplicationType.SERVLET;
+
                     measureTime("Configure Boot Environment");
                     //configure boot app
                     final SpringApplicationBuilder appBuilder = new SpringApplicationBuilder(SiriusMiddlewareApplication.class)
                             .web(webType)
                             .headless(true)
+//                            .headless(!(psf instanceof GuiProjectSpaceManagerFactory))
                             .bannerMode(Banner.Mode.OFF);
                     measureTime("Start Workflow");
                     appContext = appBuilder.run(args);
 //                    appContext.close();
 
                     measureTime("Workflow DONE!");
-                }else {
+                } else {
                     System.exit(0); //todo real error codes
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }else {
+            SiriusGUIApplication.main(args);
         }
     }
 

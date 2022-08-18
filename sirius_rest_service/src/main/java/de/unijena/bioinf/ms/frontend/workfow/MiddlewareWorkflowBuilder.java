@@ -19,18 +19,19 @@
 
 package de.unijena.bioinf.ms.frontend.workfow;
 
+import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.middleware.MiddlewareAppOptions;
 import de.unijena.bioinf.ms.frontend.workflow.InstanceBufferFactory;
-import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
+import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class MiddlewareWorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> extends WorkflowBuilder<R> {
+public class MiddlewareWorkflowBuilder<R extends RootOptions<?, ?, PreprocessingJob<? extends ProjectSpaceManager<?>>,?>> extends GuiWorkflowBuilder<R> {
     public MiddlewareWorkflowBuilder(@NotNull R rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, InstanceBufferFactory<?> bufferFactory) throws IOException {
         super(rootOptions, configOptionLoader, bufferFactory);
     }

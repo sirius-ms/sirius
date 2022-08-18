@@ -35,16 +35,16 @@ launch4j{
 }
 
 distImage {
-    dependsOn getParent().tasks.getByName('extractRuntimeImageHeadless')
+    dependsOn getParent().tasks.getByName('extractRuntimeImageFX')
     dependsOn  getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar')
 
     inputDir = getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar').outputs.files.singleFile.toPath().getParent().toFile()
-    runtimeImageDirectory = getParent().tasks.getByName('extractRuntimeImageHeadless').outputs.files.singleFile
+    runtimeImageDirectory = getParent().tasks.getByName('extractRuntimeImageFX').outputs.files.singleFile
     imageName = 'sirius-rest'
     mainClass = mainClassName
     mainJarName = getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar').outputs.files.singleFile.getName()
     winConsole = true
-    macPackageName = 'SIRIUS-headless-rest'
+    macPackageName = 'SIRIUS-rest'
 }
 distImage.dependsOn getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar')
 distribution.dependsOn 'distImageZip'
@@ -56,15 +56,15 @@ publishing {
         siriusMS(org.gradle.api.publish.maven.MavenPublication) {
             artifactId = "$name"
             groupId = "$group"
-            artifact source: "${distImage.getImageDir().absolutePath}.zip", classifier: "$osName-headless-rest", extension: 'zip'
+            artifact source: "${distImage.getImageDir().absolutePath}.zip", classifier: "$osName-rest", extension: 'zip'
 //            if (!OS.isLinux())
 //                artifact source: "${OS.isMacOsX() ? distImage.getImageDir().absolutePath.replace('.app', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}", classifier: "$osName-headless", extension: installerNameType
         }
         sirius(org.gradle.api.publish.maven.MavenPublication) {
             artifactId = "$name"
             groupId = "$group"
-            artifact source: "${distImage.getImageDir().absolutePath}.zip", classifier: "$osName-headless-rest", extension: 'zip'
-            artifact source: "${distImage.getImageDir().absolutePath}.zip.sha256", classifier: "$osName-headless-rest", extension: 'zip.sha256'
+            artifact source: "${distImage.getImageDir().absolutePath}.zip", classifier: "$osName-rest", extension: 'zip'
+            artifact source: "${distImage.getImageDir().absolutePath}.zip.sha256", classifier: "$osName-rest", extension: 'zip.sha256'
             /*if (!OS.isLinux()) {
                 artifact source: "${OS.isMacOsX() ? distImage.getImageDir().absolutePath.replace('.app', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}", classifier: "$osName-headless", extension: installerNameType
                 artifact source: "${OS.isMacOsX() ? distImage.getImageDir().absolutePath.replace('.app', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}.sha256", classifier: "$osName-headless", extension: "${installerNameType}.sha256"
