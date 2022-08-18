@@ -43,6 +43,10 @@ public class SiriusJobs {
         replace(instanceCreator.createJobManager(cpuThreads));
     }
 
+    public static synchronized void enforceClassLoaderGlobally(@NotNull final ClassLoader enforcedClassloader){
+        setJobManagerFactory((cores) -> new JobManager(cores, Math.min(cores, 4), enforcedClassloader));
+    }
+    
     private synchronized static void replace(JobManager jobManager) {
         final JobManager oldManager = globalJobManager;
         globalJobManager = jobManager;
