@@ -9,7 +9,6 @@ import de.unijena.bioinf.ms.frontend.utils.Progressbar.ProgressbarDefaultCalcula
 import de.unijena.bioinf.ms.frontend.utils.Progressbar.ProgressbarDefaultVisualizer;
 import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,12 +21,13 @@ import picocli.CommandLine.Option;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.Callable;
 
 
-@Command(name = "generateAutocompletion", description = " [WIP] <STANDALONE> generates an Autocompletion-Script with all subcommands",
-    mixinStandardHelpOptions = true)
+@Command(name = "install-autocompletion", description = "<INSTALL> generates and installs an Autocompletion-Script with all subcommands.",
+        mixinStandardHelpOptions = true)
 public class AutoCompletionScript implements Callable<Integer> {
 
     /**
@@ -35,6 +35,14 @@ public class AutoCompletionScript implements Callable<Integer> {
      */
     @ArgGroup()
     public Installationtype install = new Installationtype();
+    @Option(names = {"--location", "-l",}, description = "Target directory to store the script file. DEFAULT is the current working directory. Directory must exist.")
+    public void setScriptFile(Path scriptDir) {
+        this.scriptFile = scriptDir.resolve(NAME);
+    }
+
+    public Path scriptFile = Path.of(System.getProperty("user.dir")).resolve(NAME); //current working dir
+
+
 
     /**
      *  type of the current OS
@@ -45,7 +53,6 @@ public class AutoCompletionScript implements Callable<Integer> {
     private final HashSet<String> aliases = new HashSet<>();
     private final HashSet<Integer> removedDefinitions = new HashSet<>();
     private static final String NAME = "SiriusLinux_completion";
-    private static final Path PATH = Path.of(String.format("./scripts/%s", NAME));
     private CommandLine commandline;
     private boolean validDeclaration;
     private ProgressVisualizer progressbar;
@@ -69,34 +76,35 @@ public class AutoCompletionScript implements Callable<Integer> {
         findAliases(commandline);
         addAliasesEdgeCases();
         String s = AutoComplete.bash("sirius", commandline);
-        Files.writeString(PATH, s);
-        s = formatScript();
-        Files.writeString(PATH, s);
+        Files.writeString(scriptFile, s);
+        s = formatScript(scriptFile);
+        Files.writeString(scriptFile, s);
         this.progressbar.stop();
-        System.out.printf("AutocompletionScript created successfully at %s%n", PATH);
-        if (install.toInstall()) installScript(s, OS);
+        System.out.printf("AutocompletionScript created successfully at %s%n", scriptFile);
+        if (install.toInstall()) installScript(scriptFile, OS);
         System.exit(0);
         return 1;
     }
 
     /**
      * calls the necessary function for the Script installation on different OS
-     * @param Script the Script to be installed
-     * @param OS the current Operating System - Possibilities: {"Linux", "Mac", "Windows", "Solaris"}
+     *
+     * @param script the Script to be installed
+     * @param OS     the current Operating System - Possibilities: {"Linux", "Mac", "Windows", "Solaris"}
      */
-    private void installScript(final String Script, final String OS) {
+    private void installScript(final Path script, final String OS) {
         switch (OS) {
             case "Linux":
-                installScriptLinux(Script);
+                installScriptLinux(script);
                 break;
             case "Mac":
-                installScriptMac(Script);
+                installScriptMac(script);
                 break;
             case "Windows":
-                installScriptWindows(Script);
+                installScriptWindows(script);
                 break;
             case "Solaris":
-                installScriptSolaris(Script);
+                installScriptSolaris(script);
                 break;
             default:
                 throw new UnknownOSException(String.format("OS %s is not supported!", OS));
@@ -105,46 +113,59 @@ public class AutoCompletionScript implements Callable<Integer> {
 
     /**
      * installs the Script for any bash-based terminals
-     * @param Script the Script to be installed
-     * @param FolderPath Absolute Path to the installation File (e.g. "~/.bash_profile")
+     * @param script the Script to be installed
+     * @param installationConfig Absolute Path to the installation config File (e.g. "~/.bashrc")
      */
-    private void UnixinstallScript(String Script, String FolderPath) {
+    private void UnixinstallScript(Path script, Path installationConfig) {
         if (this.install.permInstall()) {
-            boolean successful = AutoCompletionScript.executeBashCommand("cd ./scripts; for f in $(find . -name \"*_completion\"); do line=\". $(pwd)/$f\"; grep \"$line\" "+ FolderPath +" || echo \"$line\" >> ~/.bash_profile; done; source ~/.bash_profile");
-            if (successful) System.out.println("Script installed. Pleases restart the terminal if the Autocompletion does not work");
-            else throw new RuntimeException("Unable to install CompletionScript");
+            List<String> content = Arrays.asList( // check if file exists to not crash bashrc is sirius is deleted
+                    "# SIRIUS autocompletion support",
+                    "if [ -f \"" + script.toAbsolutePath() + "\" ]; then",
+                    ". \"" + script.toAbsolutePath() + "\"" ,
+                    "fi"
+            );
+
+            try {
+                Files.write(installationConfig, content, StandardOpenOption.APPEND);
+                System.out.println("Script installed. Pleases restart the terminal if the Autocompletion does not work");
+            } catch (IOException e) {
+                throw new RuntimeException("Unable to install CompletionScript", e);
+            }
+
         }
-        else AutoCompletionScript.executeBashCommand("cd ./scripts; . *_completion");
+        //run this also for permanent installation to make terminal restart obsolete
+        AutoCompletionScript.executeBashCommand(". " + scriptFile.toAbsolutePath());
+        //todo @lukas this does not work. It sources to the newly created bash an not to the one the user is currently using...
     }
 
     /**
-     * installs the given Script on a typical Linux machine using ~/.bash_profile
+     * installs the given Script on a typical Linux machine
      */
-    private void installScriptLinux(String script) {
-        UnixinstallScript(script, "~/.bash_profile");
+    private void installScriptLinux(Path script) {
+        UnixinstallScript(script,  Path.of(System.getProperty("user.home")).resolve(".bashrc"));
     }
 
     /**
      * installs the given Script on a typical Windows machine (not supported!)
      */
-    private void installScriptWindows(String script) {
+    private void installScriptWindows(Path script) {
         //TODO Windows installation Script
         throw new RuntimeException("Autocompletion under Windows is not supported by default");
     }
 
     /**
-     * installs the given Script in a macOS machine using ~./zprofile
+     * installs the given Script in a macOS machine
      */
-    private void installScriptMac(String script) {
-        UnixinstallScript(script, "~/.zprofile");
+    private void installScriptMac(Path script) {
+        UnixinstallScript(script, Path.of(System.getProperty("user.home")).resolve(".zshrc"));
     }
 
     /**
-     * installs the given Script on a typical Solaris machine using ~/.bash_profile
+     * installs the given Script on a typical Solaris machine
      */
-    private void installScriptSolaris(String script) {
+    private void installScriptSolaris(Path script) {
         // same as Linux
-        UnixinstallScript(script, "~/.bash_profile");
+        UnixinstallScript(script,  Path.of(System.getProperty("user.home")).resolve(".bashrc"));
     }
 
     /**
@@ -198,11 +219,11 @@ public class AutoCompletionScript implements Callable<Integer> {
      * @return the modified Script
      * @throws IOException if the File is unreadable
      */
-    private @NotNull String formatScript() throws IOException {
+    private @NotNull String formatScript(Path scriptFile) throws IOException {
         this.progressbar = new ProgressbarDefaultVisualizer(System.out, new ProgressbarDefaultCalculator(5));
         this.progressbar.start();
         StringBuilder output = new StringBuilder();
-        BufferedReader reader = new BufferedReader(new FileReader(String.valueOf(PATH)));
+        BufferedReader reader = new BufferedReader(new FileReader(String.valueOf(scriptFile)));
         String line;
         HashSet<Integer> removed = new HashSet<>();
         String functionstatus = null;
@@ -335,7 +356,7 @@ public class AutoCompletionScript implements Callable<Integer> {
      * @return if the function for the alias should be removed
      */
     private boolean isvalidsubalias(String alias) {
-                return false;
+        return false;
 
         //TODO Ambiguous - non Deterministic?
         /*
@@ -465,6 +486,7 @@ class Installationtype {
 
     /**
      * Changes the installationtype to the given Parameter
+     *
      * @param installationtype valid are: {null, temporary, permanent}
      * @return successfull change of the installationtype
      */
