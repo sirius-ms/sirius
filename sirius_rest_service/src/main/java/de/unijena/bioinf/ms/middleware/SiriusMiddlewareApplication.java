@@ -57,12 +57,16 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
 
     public static void main(String[] args) {
         System.setProperty("de.unijena.bioinf.sirius.springSupport", "true");
-        if (Arrays.stream(args).anyMatch(it -> it.equalsIgnoreCase("rest"))) {
+        //run gui if not parameter ist given, to get rid of a second launcher
+        if (args == null || args.length == 0)
+            args = new String[]{"gui"};
+
+        if (Arrays.stream(args).noneMatch(it -> it.equalsIgnoreCase("gui"))) {
             System.setProperty(APP_TYPE_PROPERTY_KEY, "SERVICE");
             SiriusJobs.enforceClassLoaderGlobally(Thread.currentThread().getContextClassLoader());
+            ApplicationCore.DEFAULT_LOGGER.info("Starting Application Core");
 
             //todo convert to a native spring based approach
-            ;
             try {
                 Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                     ApplicationCore.DEFAULT_LOGGER.info("CLI shut down hook: SIRIUS is cleaning up threads and shuts down...");
@@ -106,7 +110,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                     //configure boot app
                     final SpringApplicationBuilder appBuilder = new SpringApplicationBuilder(SiriusMiddlewareApplication.class)
                             .web(webType)
-                            .headless(true)
+                            .headless(webType.equals(WebApplicationType.NONE))
 //                            .headless(!(psf instanceof GuiProjectSpaceManagerFactory))
                             .bannerMode(Banner.Mode.OFF);
                     measureTime("Start Workflow");
