@@ -9,6 +9,7 @@ import de.unijena.bioinf.ms.frontend.utils.Progressbar.ProgressbarDefaultCalcula
 import de.unijena.bioinf.ms.frontend.utils.Progressbar.ProgressbarDefaultVisualizer;
 import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +58,7 @@ public class AutoCompletionScript implements Callable<Integer> {
     public Integer call() throws IOException, UnknownOSException {
         System.setProperty("de.unijena.bioinf.ms.propertyLocations", "sirius_frontend.build.properties");
         FingerIDProperties.sirius_guiVersion();
-        final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
+        final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader(PropertyManager.DEFAULTS);
         WorkflowBuilder<CLIRootOptions<ProjectSpaceManager>> builder = new WorkflowBuilder<>(new CLIRootOptions<>(configOptionLoader, new ProjectSpaceManagerFactory.Default()), configOptionLoader, new SimpleInstanceBuffer.Factory());
         builder.initRootSpec();
         if (install.toInstall() && this.OS == null) this.OS = detectOS();
@@ -75,7 +76,6 @@ public class AutoCompletionScript implements Callable<Integer> {
         this.progressbar.stop();
         System.out.printf("AutocompletionScript created successfully at %s%n", PATH);
         if (install.toInstall()) installScript(s, OS);
-        System.exit(0);
         return 1;
     }
 
