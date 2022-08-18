@@ -61,7 +61,12 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
         if (args == null || args.length == 0)
             args = new String[]{"gui"};
 
-        if (Arrays.stream(args).noneMatch(it -> it.equalsIgnoreCase("gui"))) {
+        if (Arrays.stream(args).anyMatch(it ->
+                it.equalsIgnoreCase("asService") ||
+                it.equalsIgnoreCase("rest") ||
+                it.equalsIgnoreCase("-h") ||
+                it.equalsIgnoreCase("--help")
+        )) {
             System.setProperty(APP_TYPE_PROPERTY_KEY, "SERVICE");
             SiriusJobs.enforceClassLoaderGlobally(Thread.currentThread().getContextClassLoader());
             ApplicationCore.DEFAULT_LOGGER.info("Starting Application Core");
