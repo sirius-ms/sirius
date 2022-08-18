@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.frontend;
 
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.ms.annotations.PrintCitations;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -51,6 +52,11 @@ public class SiriusCLIApplication {
         if (TIME)
             t1 = System.currentTimeMillis();
         try {
+            // The spring app classloader seems not to be correctly inherited to sub thread
+            // So we need to ensure that the apache.configuration2 libs gets access otherwise.
+            if (PropertyManager.getBoolean("de.unijena.bioinf.sirius.springSupport", false))
+                SiriusJobs.enforceClassLoaderGlobally(Thread.currentThread().getContextClassLoader());
+
             configureShutDownHook(shutdownWebservice());
             measureTime("Start Run method");
             run(args, () -> {

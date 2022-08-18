@@ -28,6 +28,7 @@ import de.unijena.bioinf.ms.middleware.compute.model.tools.Tool;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -42,6 +43,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @Configuration
+@Slf4j
 public class ComputeContext {
 
     public final SiriusContext siriusContext;
@@ -63,6 +65,7 @@ public class ComputeContext {
             BackgroundRuns.BackgroundRunJob<P, I> run = BackgroundRuns.runCommand(commandList, compounds, psm);
             return extractJobId(run, progress, command);
         } catch (Exception e) {
+            log.error("Cannot create Job Command!", e);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot create Job Command!", e);
         }
     }
@@ -141,6 +144,8 @@ public class ComputeContext {
         p.setState(runJob.getState());
 
         JobProgressEvent evt = runJob.currentProgress();
+        if (evt == null)
+            evt = new JobProgressEvent(runJob);
         p.setIndeterminate(!evt.isDetermined());
         p.setCurrentProgress(evt.getProgress());
         p.setMaxProgress(evt.getMaxValue());
@@ -169,23 +174,28 @@ public class ComputeContext {
         List<String> configTool = new ArrayList<>();
         configTool.add("config");
         makeCombinedConfigMap(jobSubmission).forEach((k, v) -> {
-            configTool.add("--" + k);
-            configTool.add(v);
+            configTool.add("--" + k + "=" + v);
         });
 
         return configTool;
     }
 
     protected Map<String, String> makeCombinedConfigMap(JobSubmission jobSubmission) {
-        Map<String, String> combined = new HashMap<>(jobSubmission.getConfigMap());
+        Map<String, String> combined = new HashMap<>();
+        if (jobSubmission.getConfigMap() != null)
+            combined.putAll(jobSubmission.getConfigMap());
+
         if (jobSubmission.getEnforcedAdducts() != null)
-            combined.put("AdductSettings.enforced", String.join(",", jobSubmission.getEnforcedAdducts()));
+            combined.put("AdductSettings.enforced", jobSubmission.getEnforcedAdducts().isEmpty() ? "," :
+                    String.join(",", jobSubmission.getEnforcedAdducts()));
 
         if (jobSubmission.getDetectableAdducts() != null)
-            combined.put("AdductSettings.detectable", String.join(",", jobSubmission.getDetectableAdducts()));
+            combined.put("AdductSettings.detectable", jobSubmission.getDetectableAdducts().isEmpty() ? "," :
+                    String.join(",", jobSubmission.getDetectableAdducts()));
 
         if (jobSubmission.getFallbackAdducts() != null)
-            combined.put("AdductSettings.fallback", String.join(",", jobSubmission.getFallbackAdducts()));
+            combined.put("AdductSettings.fallback", jobSubmission.getFallbackAdducts().isEmpty() ? "," :
+                    String.join(",", jobSubmission.getFallbackAdducts()));
 
         jobSubmission.getEnabledTools().stream().map(Tool::asConfigMap).forEach(combined::putAll);
 

@@ -77,9 +77,8 @@ public class SiriusGUIApplication extends SiriusCLIApplication {
         }
 
 
-        final Splash splash = Arrays.stream(args).anyMatch(it -> it.equalsIgnoreCase("gui")) ? new Splash() : null;
 
-        if (splash == null) {
+        if (Arrays.stream(args).noneMatch(it -> it.equalsIgnoreCase("gui"))) {
             SiriusCLIApplication.main(args);
         } else {
             System.setProperty(APP_TYPE_PROPERTY_KEY, "GUI");
@@ -102,7 +101,14 @@ public class SiriusGUIApplication extends SiriusCLIApplication {
                         ApplicationCore.DEFAULT_LOGGER.info("Starting Application Core");
                         updateProgress(0, 7, 1, "Starting Application Core...");
                         measureTime("Init Swing Job Manager");
-                        SiriusJobs.setJobManagerFactory((cpuThreads) -> new SwingJobManager(Math.min(defaultThreadNumber(), cpuThreads), Math.min(PropertyManager.getNumberOfThreads(), 4)));
+                        // The spring app classloader seems not to be correctly inherited to sub thread
+                        // So we need to ensure that the apache.configuration2 libs gets access otherwise.
+                        final boolean springSupport = PropertyManager.getBoolean("de.unijena.bioinf.sirius.springSupport", false);
+                        SiriusJobs.setJobManagerFactory((cpuThreads) -> new SwingJobManager(
+                                Math.min(defaultThreadNumber(), cpuThreads),
+                                Math.min(PropertyManager.getNumberOfThreads(), 4),
+                                springSupport ? Thread.currentThread().getContextClassLoader() : null
+                        ));
                         ApplicationCore.DEFAULT_LOGGER.info("Swing Job MANAGER initialized! " + SiriusJobs.getGlobalJobManager().getCPUThreads() + " : " + SiriusJobs.getGlobalJobManager().getIOThreads());
                         updateProgress(0, 7, 2, "Configure shutdown hooks...");
 
@@ -120,14 +126,14 @@ public class SiriusGUIApplication extends SiriusCLIApplication {
                             final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
                             CLIRootOptions rootOptions = new CLIRootOptions<>(configOptionLoader, new GuiProjectSpaceManagerFactory());
                             updateProgress(0, 7, 4, "Firing up SIRIUS... ");
-                            removePropertyChangeListener(splash);
-                            return new GuiWorkflowBuilder<>(rootOptions, configOptionLoader, BackgroundRuns.getBufferFactory(), splash);
+//                            removePropertyChangeListener(splash);
+                            return new GuiWorkflowBuilder<>(rootOptions, configOptionLoader, BackgroundRuns.getBufferFactory());
                         });
                         return null;
                     }
                 };
 
-                j.addPropertyChangeListener(splash);
+//                j.addPropertyChangeListener(splash);
                 j.call();
             } catch (Exception e){
                 e.printStackTrace();

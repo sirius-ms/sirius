@@ -53,7 +53,7 @@ public class Zodiac extends Tool<ZodiacOptions> {
      * thresholdFilter = Defines the proportion of edges of the complete network which will be ignored.
      * minLocalConnections = Minimum number of compounds to which at least one candidate per compound must be connected to.
      */
-    ZodiacEdgeFilterThresholds edgeFilterThresholds;
+    ZodiacEdgeFilterThresholds edgeFilterThresholds = PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacEdgeFilterThresholds.class);
 
     /**
      * iterations: "Number of epochs to run the Gibbs sampling. When multiple Markov chains are computed, all chains' iterations sum up to this value."
