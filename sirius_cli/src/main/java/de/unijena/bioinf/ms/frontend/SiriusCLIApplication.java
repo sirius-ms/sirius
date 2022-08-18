@@ -24,6 +24,7 @@ import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.ms.annotations.PrintCitations;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
+import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
 import de.unijena.bioinf.ms.frontend.workflow.WorkFlowSupplier;
@@ -35,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.stream.Stream;
 
 
@@ -48,6 +50,9 @@ public class SiriusCLIApplication {
     protected static long t1;
 
     public static void main(String[] args) {
+        runMain(args, List.of());
+    }
+    public static void runMain(String[] args, List<StandaloneTool<?>> injectTools) {
         System.setProperty(APP_TYPE_PROPERTY_KEY, "CLI");
         if (TIME)
             t1 = System.currentTimeMillis();
@@ -61,7 +66,7 @@ public class SiriusCLIApplication {
             measureTime("Start Run method");
             run(args, () -> {
                 final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader(PropertyManager.DEFAULTS);
-                return new WorkflowBuilder<>(new CLIRootOptions<>(configOptionLoader, new ProjectSpaceManagerFactory.Default()), configOptionLoader, new SimpleInstanceBuffer.Factory());
+                return new WorkflowBuilder<>(new CLIRootOptions<>(configOptionLoader, new ProjectSpaceManagerFactory.Default()), configOptionLoader, new SimpleInstanceBuffer.Factory(), injectTools);
             });
         } finally {
             System.exit(0);
