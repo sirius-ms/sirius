@@ -60,7 +60,7 @@ public class SiriusCLIApplication {
             configureShutDownHook(shutdownWebservice());
             measureTime("Start Run method");
             run(args, () -> {
-                final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
+                final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader(PropertyManager.DEFAULTS);
                 return new WorkflowBuilder<>(new CLIRootOptions<>(configOptionLoader, new ProjectSpaceManagerFactory.Default()), configOptionLoader, new SimpleInstanceBuffer.Factory());
             });
         } finally {
