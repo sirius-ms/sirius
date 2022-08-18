@@ -37,7 +37,7 @@ import java.util.function.Consumer;
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  * */
-@CommandLine.Command(name = "canopus", aliases = {"compound-classes","C"}, description = "<COMPOUND_TOOL> Predict compound categories for each compound individually based on its predicted molecular fingerprint (CSI:FingerID) using CANOPUS.", versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true, showDefaultValues = true)
+@CommandLine.Command(name = "canopus", aliases = {"compound-classes"}, description = "<COMPOUND_TOOL> Predict compound categories for each compound individually based on its predicted molecular fingerprint (CSI:FingerID) using CANOPUS.", versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true, showDefaultValues = true)
 public class CanopusOptions implements ToolChainOptions<CanopusSubToolJob, InstanceJob.Factory<CanopusSubToolJob>> {
     protected final DefaultParameterConfigLoader defaultConfigOptions;
 
