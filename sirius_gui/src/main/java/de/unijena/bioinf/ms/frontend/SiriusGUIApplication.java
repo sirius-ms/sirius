@@ -55,12 +55,13 @@ import java.util.function.Supplier;
 public class SiriusGUIApplication extends SiriusCLIApplication {
 
     public static void main(String[] args) {
+        System.setProperty(APP_TYPE_PROPERTY_KEY, "GUI");
         //run gui if not parameter ist given, to get rid of a second launcher
         if (args == null || args.length == 0)
             args = new String[]{"gui"};
 
         if (Arrays.stream(args).noneMatch(it -> it.equalsIgnoreCase("gui")) ) {
-            SiriusCLIApplication.main(args);
+            SiriusCLIApplication.runMain(args, List.of(new GuiAppOptions(null))); //inject for help message
         } else {
             {
                 Path propsFile = Workspace.siriusPropsFile;
