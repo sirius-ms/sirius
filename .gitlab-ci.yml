@@ -68,7 +68,7 @@ buildGUI:
 testCLI:
   stage: test
   script:
-    - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius login --token $SIRIUS_TOKEN
+    - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
     - gradle :sirius_dist:sirius_cli_single_os:distImageTest
   cache:
     key: "$CI_COMMIT_REF_NAME"
@@ -88,7 +88,7 @@ testCLI:
 testGUI:
   stage: test
   script:
-    - ./sirius_dist/sirius_gui_single_os/build/distributions/sirius/bin/sirius login --token $SIRIUS_TOKEN
+    - ./sirius_dist/sirius_gui_single_os/build/distributions/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
     - gradle :sirius_dist:sirius_gui_single_os:distImageTest
   cache:
     key: "$CI_COMMIT_REF_NAME"
