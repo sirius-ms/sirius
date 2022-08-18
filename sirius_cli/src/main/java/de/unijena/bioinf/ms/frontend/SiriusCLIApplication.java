@@ -54,7 +54,7 @@ public class SiriusCLIApplication {
         try {
             // The spring app classloader seems not to be correctly inherited to sub thread
             // So we need to ensure that the apache.configuration2 libs gets access otherwise.
-            if (PropertyManager.getBoolean("de.unijena.bioinf.sirius.springSupport", false))
+            if (Boolean.parseBoolean(System.getProperty("de.unijena.bioinf.sirius.springSupport", "false")))
                 SiriusJobs.enforceClassLoaderGlobally(Thread.currentThread().getContextClassLoader());
 
             configureShutDownHook(shutdownWebservice());

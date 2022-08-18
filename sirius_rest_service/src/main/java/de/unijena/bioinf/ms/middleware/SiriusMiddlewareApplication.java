@@ -28,8 +28,9 @@ import de.unijena.bioinf.ms.frontend.SiriusGUIApplication;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.ms.frontend.subtools.gui.GuiAppOptions;
 import de.unijena.bioinf.ms.frontend.subtools.middleware.MiddlewareAppOptions;
-import de.unijena.bioinf.ms.frontend.workfow.MiddlewareWorkflowBuilder;
+import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import de.unijena.bioinf.projectspace.SiriusProjectSpace;
@@ -42,6 +43,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 
 @SpringBootApplication
 public class SiriusMiddlewareApplication extends SiriusCLIApplication implements CommandLineRunner {
@@ -54,14 +56,17 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
     }
 
     public static void main(String[] args) {
-        ApplicationCore.DEFAULT_LOGGER.info("Init AppCore");
-        PropertyManager.setProperty("de.unijena.bioinf.sirius.springSupport", "true");
-        if (Arrays.stream(args).anyMatch(it -> it.equalsIgnoreCase("rest"))) {
+        System.setProperty("de.unijena.bioinf.sirius.springSupport", "true");
+        //run gui if not parameter ist given, to get rid of a second launcher
+        if (args == null || args.length == 0)
+            args = new String[]{"gui"};
+
+        if (Arrays.stream(args).noneMatch(it -> it.equalsIgnoreCase("gui"))) {
             System.setProperty(APP_TYPE_PROPERTY_KEY, "SERVICE");
             SiriusJobs.enforceClassLoaderGlobally(Thread.currentThread().getContextClassLoader());
+            ApplicationCore.DEFAULT_LOGGER.info("Starting Application Core");
 
             //todo convert to a native spring based approach
-            ;
             try {
                 Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                     ApplicationCore.DEFAULT_LOGGER.info("CLI shut down hook: SIRIUS is cleaning up threads and shuts down...");
@@ -89,10 +94,12 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                 if (RUN != null)
                     throw new IllegalStateException("Application can only run Once!");
                 measureTime("init Run");
-                RUN = new Run(new MiddlewareWorkflowBuilder<>(rootOptions, configOptionLoader, BackgroundRuns.getBufferFactory()));
+                RUN = new Run(new WorkflowBuilder<>(rootOptions, configOptionLoader, BackgroundRuns.getBufferFactory(),
+                        List.of(new GuiAppOptions(null), new MiddlewareAppOptions<>())));
                 measureTime("Start Parse args");
                 boolean b = RUN.parseArgs(args);
                 measureTime("Parse args Done!");
+
                 if (b) {
                     // decides whether the app runs infinitely
                     WebApplicationType webType = WebApplicationType.NONE;
@@ -103,7 +110,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                     //configure boot app
                     final SpringApplicationBuilder appBuilder = new SpringApplicationBuilder(SiriusMiddlewareApplication.class)
                             .web(webType)
-                            .headless(true)
+                            .headless(webType.equals(WebApplicationType.NONE))
 //                            .headless(!(psf instanceof GuiProjectSpaceManagerFactory))
                             .bannerMode(Banner.Mode.OFF);
                     measureTime("Start Workflow");
