@@ -385,11 +385,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
 
         if (csiPredictConfigs != null && csiPredictConfigs.isToolSelected()) {
             toolCommands.add(csiPredictConfigs.content.toolCommand());
-            int i = configCommand.indexOf("--AdductSettings.fallback");
-            if (i >= 0) {
-                configCommand.remove(i);
-                configCommand.remove(i);
-            }
+            configCommand.removeIf(i -> i.startsWith("--AdductSettings.fallback"));
             configCommand.addAll(csiPredictConfigs.asParameterList());
         }
 

@@ -31,7 +31,7 @@ import picocli.CommandLine;
 import java.util.List;
 import java.util.function.Consumer;
 
-@CommandLine.Command(name = "passatutto", aliases = {"P"}, description = "<COMPOUND_TOOL> Compute a decoy spectra based on the fragmentation trees of the given input spectra. If no molecular formula is provided in the input, the top scoring computed formula is used.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
+@CommandLine.Command(name = "passatutto", description = "<COMPOUND_TOOL> Compute a decoy spectra based on the fragmentation trees of the given input spectra. If no molecular formula is provided in the input, the top scoring computed formula is used.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class PassatuttoOptions implements ToolChainOptions<PassatuttoSubToolJob, InstanceJob.Factory<PassatuttoSubToolJob>> {
 
     protected final DefaultParameterConfigLoader defaultConfigOptions;

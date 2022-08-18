@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-@CommandLine.Command(name = "fingerprint", aliases = {"T"}, description = "<COMPOUND_TOOL> Predict molecular fingerprint from MS/MS and fragmentation trees for each compound Individually using CSI:FingerID fingerprint prediction.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
+@CommandLine.Command(name = "fingerprint", description = "<COMPOUND_TOOL> Predict molecular fingerprint from MS/MS and fragmentation trees for each compound Individually using CSI:FingerID fingerprint prediction.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class FingerprintOptions implements ToolChainOptions<FingerprintSubToolJob, InstanceJob.Factory<FingerprintSubToolJob>> {
     protected final DefaultParameterConfigLoader defaultConfigOptions;
 
