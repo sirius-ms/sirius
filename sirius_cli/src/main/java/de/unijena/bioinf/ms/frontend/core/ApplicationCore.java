@@ -91,7 +91,6 @@ public abstract class ApplicationCore {
 
     //creating
     static {
-        System.out.println("============>");
         if (TIME)
             t1 = System.currentTimeMillis();
         measureTime("Start AppCore");
