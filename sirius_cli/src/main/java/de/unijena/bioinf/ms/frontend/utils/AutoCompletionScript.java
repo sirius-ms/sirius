@@ -9,7 +9,7 @@ import de.unijena.bioinf.ms.frontend.utils.Progressbar.ProgressbarDefaultCalcula
 import de.unijena.bioinf.ms.frontend.utils.Progressbar.ProgressbarDefaultVisualizer;
 import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
