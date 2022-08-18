@@ -58,7 +58,7 @@ public class AutoCompletionScript implements Callable<Integer> {
         System.setProperty("de.unijena.bioinf.ms.propertyLocations", "sirius_frontend.build.properties");
         FingerIDProperties.sirius_guiVersion();
         final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
-        WorkflowBuilder<CLIRootOptions<ProjectSpaceManager>> builder = new WorkflowBuilder<>(new CLIRootOptions<>(configOptionLoader, new ProjectSpaceManagerFactory.Default()), configOptionLoader, new SimpleInstanceBuffer.Factory());
+        WorkflowBuilder<?> builder = new WorkflowBuilder<>(new CLIRootOptions<>(configOptionLoader, new ProjectSpaceManagerFactory.Default()), configOptionLoader, new SimpleInstanceBuffer.Factory());
         builder.initRootSpec();
         if (install.toInstall() && this.OS == null) this.OS = detectOS();
         if (install.toInstall()) System.out.println("Detected OS as " + OS);
