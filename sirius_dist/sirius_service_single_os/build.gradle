@@ -1,3 +1,5 @@
+import edu.sc.seis.launch4j.tasks.Launch4jLibraryTask
+
 buildscript {
     repositories {
         maven { url "https://plugins.gradle.org/m2/" }
@@ -34,17 +36,28 @@ launch4j{
     jar = getLibraryDir() + "\\" + getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar').outputs.files.singleFile.getName()
 }
 
+//additional GUI win launcher
+task createGuiExe(type: Launch4jLibraryTask) {
+    outfile = 'sirius-gui.exe'
+    fileDescription = 'SIRIUS graphical user interface'
+    headerType = "gui"
+    cmdLine = "gui"
+}
+
 distImage {
     dependsOn getParent().tasks.getByName('extractRuntimeImageFX')
     dependsOn  getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar')
 
     inputDir = getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar').outputs.files.singleFile.toPath().getParent().toFile()
     runtimeImageDirectory = getParent().tasks.getByName('extractRuntimeImageFX').outputs.files.singleFile
-    imageName = 'sirius-rest'
+    imageName = 'sirius'
     mainClass = mainClassName
     mainJarName = getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar').outputs.files.singleFile.getName()
     winConsole = true
-    macPackageName = 'SIRIUS-rest'
+    macPackageName = 'SIRIUS-service'
+    if (OS.isWindows()) { //HACK additional windows launchers are imported from launch4j, this is just fake to register it for the start menu. must be a valid path but file must not exists
+        launchers = ["sirius-gui": "${createGuiExe.outfile}"]
+    }
 }
 distImage.dependsOn getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar')
 distribution.dependsOn 'distImageZip'
@@ -56,15 +69,15 @@ publishing {
         siriusMS(org.gradle.api.publish.maven.MavenPublication) {
             artifactId = "$name"
             groupId = "$group"
-            artifact source: "${distImage.getImageDir().absolutePath}.zip", classifier: "$osName-rest", extension: 'zip'
+            artifact source: "${distImage.getImageDir().absolutePath}.zip", classifier: "$osName-service", extension: 'zip'
 //            if (!OS.isLinux())
 //                artifact source: "${OS.isMacOsX() ? distImage.getImageDir().absolutePath.replace('.app', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}", classifier: "$osName-headless", extension: installerNameType
         }
         sirius(org.gradle.api.publish.maven.MavenPublication) {
             artifactId = "$name"
             groupId = "$group"
-            artifact source: "${distImage.getImageDir().absolutePath}.zip", classifier: "$osName-rest", extension: 'zip'
-            artifact source: "${distImage.getImageDir().absolutePath}.zip.sha256", classifier: "$osName-rest", extension: 'zip.sha256'
+            artifact source: "${distImage.getImageDir().absolutePath}.zip", classifier: "$osName-service", extension: 'zip'
+            artifact source: "${distImage.getImageDir().absolutePath}.zip.sha256", classifier: "$osName-service", extension: 'zip.sha256'
             /*if (!OS.isLinux()) {
                 artifact source: "${OS.isMacOsX() ? distImage.getImageDir().absolutePath.replace('.app', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}", classifier: "$osName-headless", extension: installerNameType
                 artifact source: "${OS.isMacOsX() ? distImage.getImageDir().absolutePath.replace('.app', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}.sha256", classifier: "$osName-headless", extension: "${installerNameType}.sha256"
