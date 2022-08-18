@@ -28,8 +28,9 @@ import de.unijena.bioinf.ms.frontend.SiriusGUIApplication;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.ms.frontend.subtools.gui.GuiAppOptions;
 import de.unijena.bioinf.ms.frontend.subtools.middleware.MiddlewareAppOptions;
-import de.unijena.bioinf.ms.frontend.workfow.MiddlewareWorkflowBuilder;
+import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import de.unijena.bioinf.projectspace.SiriusProjectSpace;
@@ -42,6 +43,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 
 @SpringBootApplication
 public class SiriusMiddlewareApplication extends SiriusCLIApplication implements CommandLineRunner {
@@ -54,8 +56,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
     }
 
     public static void main(String[] args) {
-        ApplicationCore.DEFAULT_LOGGER.info("Init AppCore");
-        PropertyManager.setProperty("de.unijena.bioinf.sirius.springSupport", "true");
+        System.setProperty("de.unijena.bioinf.sirius.springSupport", "true");
         if (Arrays.stream(args).anyMatch(it -> it.equalsIgnoreCase("rest"))) {
             System.setProperty(APP_TYPE_PROPERTY_KEY, "SERVICE");
             SiriusJobs.enforceClassLoaderGlobally(Thread.currentThread().getContextClassLoader());
@@ -89,10 +90,12 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                 if (RUN != null)
                     throw new IllegalStateException("Application can only run Once!");
                 measureTime("init Run");
-                RUN = new Run(new MiddlewareWorkflowBuilder<>(rootOptions, configOptionLoader, BackgroundRuns.getBufferFactory()));
+                RUN = new Run(new WorkflowBuilder<>(rootOptions, configOptionLoader, BackgroundRuns.getBufferFactory(),
+                        List.of(new GuiAppOptions(null), new MiddlewareAppOptions<>())));
                 measureTime("Start Parse args");
                 boolean b = RUN.parseArgs(args);
                 measureTime("Parse args Done!");
+
                 if (b) {
                     // decides whether the app runs infinitely
                     WebApplicationType webType = WebApplicationType.NONE;
