@@ -32,6 +32,7 @@ import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.Instance;
+import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import org.apache.commons.text.translate.CsvTranslators;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +43,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Standalone-Tool to export spectra to mgf format.
@@ -56,20 +58,32 @@ public class MgfExporterWorkflow implements Workflow {
     public MgfExporterWorkflow(PreprocessingJob<? extends Iterable<Instance>> ppj, MgfExporterOptions options, ParameterConfig config) {
         outputPath = options.output;
         Deviation mergeMs2Deviation = new Deviation(options.ppmDev);
-        mgfWriter = new MgfWriter(options.writeMs1, options.mergeMs2, mergeMs2Deviation,true);
+        mgfWriter = new MgfWriter(options.writeMs1, options.mergeMs2, mergeMs2Deviation, true);
         this.ppj = ppj;
         this.quantPath = Optional.ofNullable(options.quantTable).map(File::toPath);
     }
 
-    
+
     @Override
     public void run() {
         try {
             final Iterable<Instance> ps = SiriusJobs.getGlobalJobManager().submitJob(ppj).awaitResult();
+            final boolean zeroIndex;
+            if (ps instanceof ProjectSpaceManager) {
+                zeroIndex = ((ProjectSpaceManager<Instance>) ps).projectSpace().getMinIndex().orElse(1) <= 0;
+            } else {
+                final AtomicInteger minIndex = new AtomicInteger(Integer.MAX_VALUE);
+                ps.forEach(i -> minIndex.set(Math.min(minIndex.get(),i.getID().getCompoundIndex())));
+                zeroIndex = minIndex.get() <= 0;
+            }
+
+            if (zeroIndex)
+                LoggerFactory.getLogger("Index value 0 found (old project-space format). Using index + 1 as Feature ID to be compatible with GNPS FBMN.");
+
             try (final BufferedWriter writer = Files.newBufferedWriter(outputPath)) {
-                for (Instance inst : ps){
+                for (Instance inst : ps) {
                     try {
-                        mgfWriter.write(writer, inst.getExperiment());
+                        mgfWriter.write(writer, inst.getExperiment(), String.valueOf(zeroIndex ? inst.getID().getCompoundIndex() + 1 : inst.getID().getCompoundIndex()));
                     } catch (IOException e) {
                         throw e;
                     } catch (Exception e) {
@@ -80,11 +94,11 @@ public class MgfExporterWorkflow implements Workflow {
                     }
                 }
             }
-            quantPath.ifPresent(path-> {
+            quantPath.ifPresent(path -> {
                 try {
-                    writeQuantifiactionTable(ps, path);
+                    writeQuantifiactionTable(ps, path, zeroIndex);
                 } catch (IOException e) {
-                    LoggerFactory.getLogger(MgfExporterWorkflow.class).error(e.getMessage(),e);
+                    LoggerFactory.getLogger(MgfExporterWorkflow.class).error(e.getMessage(), e);
                 }
             });
         } catch (ExecutionException e) {
@@ -94,22 +108,16 @@ public class MgfExporterWorkflow implements Workflow {
         }
     }
 
-    private void writeQuantifiactionTable(Iterable<Instance> ps, Path path) throws IOException {
+    private void writeQuantifiactionTable(Iterable<Instance> ps, Path path, boolean zeroIndex) throws IOException {
         final HashMap<String, QuantInfo> compounds = new HashMap<>();
         final Set<String> sampleNames = new HashSet<>();
 
         try (BufferedWriter bw = FileUtils.getWriter(path.toFile())) {
             for (Instance i : ps) {
                 final Ms2Experiment experiment = i.getExperiment();
-                getQuantificationTable(i, experiment).ifPresent(quant->{
-                    for (int j=0; j < quant.length(); ++j) sampleNames.add(quant.getName(j));
-                    String id;
-                    if (compounds.containsKey(experiment.getName())) {
-                        LoggerFactory.getLogger(MgfExporterWorkflow.class).warn("Features with duplicate names detected: '" + experiment.getName() + "'. Use directory name instead.");
-                        id = i.getID().getDirectoryName();
-                    } else {
-                        id = experiment.getName();
-                    }
+                getQuantificationTable(i, experiment).ifPresent(quant -> {
+                    for (int j = 0; j < quant.length(); ++j) sampleNames.add(quant.getName(j));
+                    String id = String.valueOf(zeroIndex ? i.getID().getCompoundIndex() + 1 : i.getID().getCompoundIndex());
                     compounds.put(id, new QuantInfo(
                             experiment.getIonMass(),
                             experiment.getAnnotation(RetentionTime.class).orElse(new RetentionTime(0d)).getRetentionTimeInSeconds() / 60d, //use min
@@ -126,7 +134,7 @@ public class MgfExporterWorkflow implements Workflow {
             CsvTranslators.CsvEscaper escaper = new CsvTranslators.CsvEscaper();
             for (String sample : sampleNameList) {
                 bw.write(",");
-                escaper.translate(sample,bw);
+                escaper.translate(sample, bw);
             }
             bw.newLine();
             for (String compoundId : compoundNames) {
@@ -152,7 +160,7 @@ public class MgfExporterWorkflow implements Workflow {
         }
         if (lcms.isEmpty()) {
             Quantification quant = experiment.getAnnotationOrNull(Quantification.class);
-            if (quant!=null) lcms = new LCMSPeakInformation(quant.asQuantificationTable());
+            if (quant != null) lcms = new LCMSPeakInformation(quant.asQuantificationTable());
         }
         return lcms.isEmpty() ? Optional.empty() : Optional.of(lcms.getQuantificationTable());
     }
