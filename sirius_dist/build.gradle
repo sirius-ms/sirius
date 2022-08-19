@@ -455,7 +455,8 @@ subprojects {
 
         doFirst{
             String abs_path = project.projectDir.toString().split('sirius_frontend')[0]
-            String cli_or_gui = project.name.toString()
+            // automatically adjust for gui_single_os, cli_single_os or service_single_os
+            String build_type = project.name.toString()
             String sirius_exec
             String sep
 
@@ -467,9 +468,9 @@ subprojects {
             }
 
             if (project.OS.isWindows()) {
-                sirius_exec = abs_path + 'sirius_frontend\\sirius_dist\\' + cli_or_gui + '\\build\\distributions\\sirius\\sirius.exe'
+                sirius_exec = abs_path + 'sirius_frontend\\sirius_dist\\' + build_type + '\\build\\distributions\\sirius\\sirius.exe'
             } else if (project.OS.isLinux()) {
-                sirius_exec = abs_path + 'sirius_frontend/sirius_dist/' + cli_or_gui + '/build/distributions/sirius/bin/sirius'
+                sirius_exec = abs_path + 'sirius_frontend/sirius_dist/' + build_type + '/build/distributions/sirius/bin/sirius'
             } else {
                 sirius_exec = abs_path + 'sirius.app'+sep+'Contents'+sep+'MacOS'+sep+'sirius'
             }

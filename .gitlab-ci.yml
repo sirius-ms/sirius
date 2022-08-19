@@ -18,6 +18,7 @@ stages:
 #  - build-gui
   - publish
 
+
 before_script:
   - dpkg-reconfigure -p critical ca-certificates
   - eval `ssh-agent -s`
@@ -26,6 +27,7 @@ before_script:
   - chmod 700 ~/.ssh
   - echo "$GITLAB_GITHUB_SIRIUS_PUBLIC_KEY" >> ~/.ssh/id_ed25519.pub
   - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+
 
 buildCLI:
   stage: build
@@ -56,6 +58,25 @@ buildGUI:
   artifacts:
     paths:
       - ./sirius_dist/sirius_gui_single_os/build/distributions/sirius
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - master
+      - master-dist-tests
+      - stable
+
+
+buildAPI:
+  stage: build
+  script:
+    - gradle :sirius_dist:sirius_service_single_os:distImage
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  artifacts:
+    paths:
+      - ./sirius_dist/sirius_service_single_os/build/distributions/sirius
   tags:
     - kubernetes
   only:
@@ -96,6 +117,26 @@ testGUI:
   needs: [buildGUI]
   dependencies:
     - buildGUI
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - master
+      - master-dist-tests
+      - stable
+
+
+testAPI:
+  stage: test
+  script:
+    - ./sirius_dist/sirius_service_single_os/build/distributions/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
+    - gradle :sirius_dist:sirius_service_single_os:distImageTest
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  needs: [buildAPI]
+  dependencies:
+    - buildAPI
   tags:
     - kubernetes
   only:
@@ -148,25 +189,48 @@ publishGUI:
       - master-dist-tests
       - stable
 
-#push to github for multiOS build
-pushToGitHub:
-  stage: publish
-  script:
-    - git config --global user.email "${GITLAB_GITHUB_SIRIUS_USERNAME}"
-    - git config --global user.name "boeckergitlab"
-    - git remote show origin
-    - git remote set-url --push origin git@github.com:boecker-lab/sirius.git
-    - git remote show origin
-#todo  re-insert before merge to master
-#    - git push --follow-tags origin HEAD:$CI_COMMIT_REF_NAME
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: push
-  needs: [testCLI, testGUI]
-  tags:
-    - kubernetes
-  only:
-    refs:
-      - stable
-      - master-dist-tests
-      - master
+
+#publishAPI:
+#  variables:
+#    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+#  stage: publish
+#  script:
+#    - cd sirius_dist/sirius_gui_single_os
+#    - gradle clean artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
+#  cache:
+#    key: "$CI_COMMIT_REF_NAME"
+#    policy: push
+#  needs: [buildAPI, testAPI]
+#  dependencies:
+#    - buildAPI
+#  tags:
+#    - kubernetes
+#  only:
+#    refs:
+#      - master
+#      - master-dist-tests
+#      - stable
+
+
+##push to github for multiOS build
+#pushToGitHub:
+#  stage: publish
+#  script:
+#    - git config --global user.email "${GITLAB_GITHUB_SIRIUS_USERNAME}"
+#    - git config --global user.name "boeckergitlab"
+#    - git remote show origin
+#    - git remote set-url --push origin git@github.com:boecker-lab/sirius.git
+#    - git remote show origin
+##todo  re-insert before merge to master
+##    - git push --follow-tags origin HEAD:$CI_COMMIT_REF_NAME
+#  cache:
+#    key: "$CI_COMMIT_REF_NAME"
+#    policy: push
+#  needs: [testCLI, testGUI, testAPI]
+#  tags:
+#    - kubernetes
+#  only:
+#    refs:
+#      - stable
+#      - master-dist-tests
+#      - master
