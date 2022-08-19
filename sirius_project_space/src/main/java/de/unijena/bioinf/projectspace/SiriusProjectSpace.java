@@ -72,12 +72,31 @@ public class SiriusProjectSpace implements IterableWithSize<CompoundContainerId>
         this.configuration = configuration;
         this.ioProvider = ioProvider;
         this.ids = new HashMap<>();
-        this.compoundCounter = new AtomicInteger(-1);
+        this.compoundCounter = new AtomicInteger(0);
         this.projectSpaceListeners = new ConcurrentLinkedQueue<>();
         this.projectSpaceProperties = new ConcurrentHashMap<>();
         this.compoundListeners = new ConcurrentLinkedQueue<>();
         this.formulaResultListener = new ConcurrentLinkedQueue<>();
     }
+
+    public OptionalInt getMinIndex(){
+        idLock.readLock().lock();
+        try {
+            return ids.values().stream().mapToInt(CompoundContainerId::getCompoundIndex).min();
+        }finally {
+            idLock.readLock().unlock();
+        }
+    }
+
+    public OptionalInt getMaxIndex(){
+        idLock.readLock().lock();
+        try {
+            return ids.values().stream().mapToInt(CompoundContainerId::getCompoundIndex).max();
+        }finally {
+            idLock.readLock().unlock();
+        }
+    }
+
 
     public Path getLocation() {
         return ioProvider.getLocation();
@@ -105,7 +124,7 @@ public class SiriusProjectSpace implements IterableWithSize<CompoundContainerId>
         idLock.readLock().lock();
         try {
             ids.clear();
-            maxIndex = -1;
+            maxIndex = 0;
             // if compression format definition does not exist in ps, use null to let IOProvider decide which
             // CompressionFormat represents the pre CompressionFormat times configuration
             ioProvider.setCompressionFormat(getProjectSpaceProperty(CompressionFormat.class).orElse(null));
