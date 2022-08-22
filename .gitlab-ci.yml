@@ -13,9 +13,6 @@ stages:
   - prepare
   - build
   - test
-#  - build-cli
-#  - build-multi-cli
-#  - build-gui
   - publish
 
 
@@ -44,7 +41,6 @@ buildCLI:
   only:
     refs:
       - master
-      - master-dist-tests
       - stable
 
 
@@ -63,7 +59,6 @@ buildGUI:
   only:
     refs:
       - master
-      - master-dist-tests
       - stable
 
 
@@ -82,7 +77,6 @@ buildAPI:
   only:
     refs:
       - master
-      - master-dist-tests
       - stable
 
 
@@ -102,7 +96,6 @@ testCLI:
   only:
     refs:
       - master
-      - master-dist-tests
       - stable
 
 
@@ -122,7 +115,6 @@ testGUI:
   only:
     refs:
       - master
-      - master-dist-tests
       - stable
 
 
@@ -142,7 +134,6 @@ testAPI:
   only:
     refs:
       - master
-      - master-dist-tests
       - stable
 
 
@@ -164,7 +155,6 @@ publishCLI:
   only:
     refs:
       - master
-      - master-dist-tests
       - stable
 
 
@@ -189,47 +179,23 @@ publishGUI:
       - master-dist-tests
       - stable
 
-publishAPI:
-  variables:
-    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+#push to github to build for multiple OSs
+pushToGitHub:
   stage: publish
   script:
-    - cd sirius_dist/sirius_gui_single_os
-    - gradle clean artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
+    - git config --global user.email "${GITLAB_GITHUB_SIRIUS_USERNAME}"
+    - git config --global user.name "boeckergitlab"
+    - git remote show origin
+    - git remote set-url --push origin git@github.com:boecker-lab/sirius.git
+    - git remote show origin
+    - git push --follow-tags origin HEAD:$CI_COMMIT_REF_NAME
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
-  needs: [buildAPI, testAPI]
-  dependencies:
-    - buildAPI
+  needs: [testCLI, testGUI, testAPI]
   tags:
     - kubernetes
   only:
     refs:
-      - master
-      - master-dist-tests
       - stable
-
-
-##push to github for multiOS build
-#pushToGitHub:
-#  stage: publish
-#  script:
-#    - git config --global user.email "${GITLAB_GITHUB_SIRIUS_USERNAME}"
-#    - git config --global user.name "boeckergitlab"
-#    - git remote show origin
-#    - git remote set-url --push origin git@github.com:boecker-lab/sirius.git
-#    - git remote show origin
-##todo  re-insert before merge to master
-##    - git push --follow-tags origin HEAD:$CI_COMMIT_REF_NAME
-#  cache:
-#    key: "$CI_COMMIT_REF_NAME"
-#    policy: push
-#  needs: [testCLI, testGUI, testAPI]
-#  tags:
-#    - kubernetes
-#  only:
-#    refs:
-#      - stable
-#      - master-dist-tests
-#      - master
+      - master
