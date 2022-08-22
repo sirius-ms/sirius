@@ -24,16 +24,19 @@ import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
-import net.sf.jniinchi.*;
+import io.github.dan2097.jnainchi.InchiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.openscience.cdk.ChemFile;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.inchi.InChIGenerator;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
+import org.openscience.cdk.inchi.InChIToStructure;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.io.ISimpleChemObjectReader;
 import org.openscience.cdk.io.ReaderFactory;
+import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.tools.manipulator.ChemFileManipulator;
@@ -45,6 +48,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.function.Function;
 
 import static de.unijena.bioinf.ChemistryBase.chem.InChIs.*;
 import static de.unijena.bioinf.ChemistryBase.chem.SmilesU.*;
@@ -52,88 +56,110 @@ import static de.unijena.bioinf.ChemistryBase.chem.SmilesU.*;
 
 public class InChISMILESUtils {
 
-    public static InChI getStandardInchi(InChI inChI) {
-        String inchi = inChI.in3D;
-        String sinchi = getStandardInchi(inChI.in3D);
-        if (inchi.equals(sinchi)) return inChI;
-        String newKey = inchi2inchiKey(sinchi);
-        return newInChI(newKey, sinchi);
+    public static <X extends Throwable> InChIGeneratorFactory getInChIGeneratorFactoryOrThrow() throws RuntimeException {
+        return getInChIGeneratorFactoryOrThrow(c -> new RuntimeException("Error when loading CDK InChIGenerator instance.", c));
     }
 
-    private static String getStandardInchi(String inChI) {
-        if (isStandardInchi(inChI)) {
-            return inChI;
-        } else {
-            return getStdInchi(inChI);
+    public static <X extends Throwable> InChIGeneratorFactory getInChIGeneratorFactoryOrThrow(Function<CDKException, ? extends X> exceptionSupplier) throws X {
+        try {
+            return InChIGeneratorFactory.getInstance();
+        } catch (CDKException e) {
+            throw exceptionSupplier.apply(e);
         }
     }
 
     public static String inchi2inchiKey(String inchi) {
+        final InChI in = getInchiWithKeyOrThrow(inchi);
+        return in == null ? null : in.key;
+    }
 
-        //todo isotopes in inchiKey14 bug removed with latest version 2.2?
+    public static InChI getInchiWithKeyOrThrow(String inchi) {
+        return getInchiWithKeyOrThrow(inchi, e -> new RuntimeException("Error when creating CDK Objects from InChI String.", e));
+    }
+
+    public static <X extends Throwable> InChI getInchiWithKeyOrThrow(String inchi, Function<CDKException, ? extends X> exceptionSupplier) throws X {
         try {
-            if (inchi==null) throw new NullPointerException("Given InChI is null");
-            if (inchi.isEmpty()) throw new IllegalArgumentException("Empty string given as InChI");
-            JniInchiOutputKey key = JniInchiWrapper.getInchiKey(inchi);
-            if(key.getReturnStatus() == INCHI_KEY.OK) {
-                return key.getKey();
-            } else {
-                throw new RuntimeException("Error while creating InChIKey: " + key.getReturnStatus());
-            }
-        } catch (JniInchiException e) {
-            throw new RuntimeException(e);
+            return getInchiWithKey(inchi);
+        } catch (CDKException e) {
+            throw exceptionSupplier.apply(e);
         }
     }
 
-    private static String getStdInchi(String inchi) {
-        try {
-            if (inchi==null) throw new NullPointerException("Given InChI is null");
-            if (inchi.isEmpty()) throw new IllegalArgumentException("Empty string given as InChI");
-
-            JniInchiInputInchi inputInchi = new JniInchiInputInchi(inchi);
-            JniInchiStructure structure = JniInchiWrapper.getStructureFromInchi(inputInchi);
-            JniInchiInput input = new JniInchiInput(structure);
-            JniInchiOutput output = JniInchiWrapper.getStdInchi(input);
-            if(output.getReturnStatus() == INCHI_RET.WARNING) {
-                LoggerFactory.getLogger(InChISMILESUtils.class).warn("Warning issued while computing standard InChI: " + output.getMessage());
-                return output.getInchi();
-            } else if(output.getReturnStatus() == INCHI_RET.OKAY) {
-                return output.getInchi();
-            } else {
-                throw new RuntimeException("Error while computing standard InChI: " + output.getReturnStatus()
-                        +"\nError message: "+output.getMessage());
-            }
-        } catch (JniInchiException e) {
-            throw new RuntimeException(e);
-        }
+    public static InChI getInchiWithKey(String inchi) throws CDKException {
+        return getInchi(getAtomContainerFromInchi(inchi));
     }
 
+    //    NEWPSOFF/DoNotAddH/SNon
     public static InChI getInchi(IAtomContainer atomContainer) throws CDKException {
-        //todo does getInChIGenerator need any specific options!?!?!?
+        // this will create a standard inchi, see: https://egonw.github.io/cdkbook/inchi.html
         InChIGenerator inChIGenerator = InChIGeneratorFactory.getInstance().getInChIGenerator(atomContainer);
-
-        String inchi = inChIGenerator.getInchi();
-        if (inchi==null) return null;
-        String key = inChIGenerator.getInchiKey();
-        return newInChI(key, inchi);
+        InchiStatus state = inChIGenerator.getStatus();
+        if (state != InchiStatus.ERROR) {
+            if (state == InchiStatus.WARNING)
+                LoggerFactory.getLogger(InChISMILESUtils.class).error("Error while parsing atom container: '" + atomContainer.getID() + "'\n-> " + inChIGenerator.getMessage());
+            String inchi = inChIGenerator.getInchi();
+            if (inchi == null) return null;
+            if (!isStandardInchi(inchi))
+                throw new IllegalStateException("Non standard Inchi was created ('" + inchi + "'), which is not expected behaviour. Please submit a bug report!");
+            String key = inChIGenerator.getInchiKey();
+            return newInChI(key, inchi);
+        } else {
+            throw new CDKException("Error while creating InChI. State: '" + state + "'. Message: '" + inChIGenerator.getMessage() + "'.");
+        }
     }
 
     public static String get2DSmiles(IAtomContainer atomContainer) throws CDKException {
-        return  SmilesGenerator.unique().create(atomContainer); //Unique - canonical SMILES string, different atom ordering produces the same* SMILES. No isotope or stereochemistry encoded.
+        return SmilesGenerator.unique().create(atomContainer); //Unique - canonical SMILES string, different atom ordering produces the same* SMILES. No isotope or stereochemistry encoded.
     }
 
     public static String getSmiles(IAtomContainer atomContainer) throws CDKException {
-        return  SmilesGenerator.unique().create(atomContainer); //Absolute - canonical SMILES string, different atom ordering produces the same SMILES. Isotope and stereochemistry is encoded.
+        return SmilesGenerator.unique().create(atomContainer); //Absolute - canonical SMILES string, different atom ordering produces the same SMILES. Isotope and stereochemistry is encoded.
     }
+
+    public static IAtomContainer getAtomContainerFromInchi(String inchi) throws CDKException {
+        return getAtomContainerFromInchi(inchi, false);
+    }
+
+    public static IAtomContainer getAtomContainerFromInchi(String inchi, boolean lazyErrorHandling) throws CDKException {
+        if (inchi == null) throw new NullPointerException("Given InChI is null");
+        if (inchi.isEmpty()) throw new IllegalArgumentException("Empty string given as InChI");
+        final InChIToStructure structureGenerator = InChIGeneratorFactory.getInstance().
+                getInChIToStructure(inchi, SilentChemObjectBuilder.getInstance());
+        InchiStatus state = structureGenerator.getStatus();
+        if (state != InchiStatus.ERROR) {
+            if (state == InchiStatus.WARNING)
+                LoggerFactory.getLogger(InChISMILESUtils.class).error("Error while parsing InChI:\n'" + inchi + "'\n-> " + structureGenerator.getMessage());
+            return structureGenerator.getAtomContainer();
+        } else {
+            if (lazyErrorHandling) {
+                LoggerFactory.getLogger(InChISMILESUtils.class).error("Error while parsing InChI:\n'" + inchi + "'\n-> " + structureGenerator.getMessage());
+                final IAtomContainer a = structureGenerator.getAtomContainer();
+                if (a != null) return a;
+            }
+            throw new CDKException("Error while creating AtomContainer. State: '" + state + "'. Message: '" + structureGenerator.getMessage() + "'.");
+        }
+    }
+
+
+    public static IAtomContainer getAtomContainerFromSmiles(String smiles) throws CDKException {
+        if (smiles == null) throw new NullPointerException("Given Smiles is null");
+        if (smiles.isEmpty()) throw new IllegalArgumentException("Empty string given as Smiles");
+        //todo do we need to do any processing?!?
+        SmilesParser smilesParser = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+        IAtomContainer iAtomContainer = smilesParser.parseSmiles(smiles);
+        return iAtomContainer;
+    }
+
 
     /**
      * IMPORTANT: CDK is very picky with new-lines. for multi-line formats it seems to be important to have a new-line character after last line (and maybe one at first?)
+     *
      * @param someStructureFormat input can be SMILES or Inchi or String contained in a .mol-file
      * @return
      */
     public static IAtomContainer getAtomContainer(String someStructureFormat) throws CDKException, IOException {
         if (isInchi(someStructureFormat)) {
-            return InChIGeneratorFactory.getInstance().getInChIToStructure(someStructureFormat, DefaultChemObjectBuilder.getInstance()).getAtomContainer();
+            return getAtomContainerFromInchi(someStructureFormat);
         } else if (someStructureFormat.contains("\n")) {
             //it is a structure format from some file
             ReaderFactory readerFactory = new ReaderFactory();
@@ -141,24 +167,24 @@ public class InChISMILESUtils {
             ISimpleChemObjectReader reader = readerFactory.createReader(in);
 //            MDLV2000Reader reader = new MDLV2000Reader();
 //            reader.setReader(in);
-            if (reader==null) {
+            if (reader == null) {
                 in.close();
                 //try with another new-line
                 someStructureFormat += "\n";
                 in = new BufferedInputStream(new ByteArrayInputStream(someStructureFormat.getBytes(StandardCharsets.UTF_8)));
                 reader = readerFactory.createReader(in);
             }
-            if (reader==null) {
+            if (reader == null) {
                 in.close();
                 throw new IOException("No reader found for given format");
-            }else if (reader.accepts(ChemFile.class)) {
+            } else if (reader.accepts(ChemFile.class)) {
                 ChemFile cfile = new ChemFile();
                 cfile = reader.read(cfile);
                 List<IAtomContainer> atomContainerList = ChemFileManipulator.getAllAtomContainers(cfile);
 
-                if (atomContainerList.size()>1){
+                if (atomContainerList.size() > 1) {
                     throw new IOException("Multiple structures in input");
-                } else if (atomContainerList.size()==0){
+                } else if (atomContainerList.size() == 0) {
                     throw new IOException("Could not parse any structure");
                 }
                 return atomContainerList.get(0);
@@ -168,38 +194,19 @@ public class InChISMILESUtils {
             }
         } else {
             //assume SMILES
-            //todo do we need to do any processing?!?
-            SmilesParser smilesParser = new SmilesParser(DefaultChemObjectBuilder.getInstance());
-            IAtomContainer iAtomContainer = smilesParser.parseSmiles(someStructureFormat);
-            return iAtomContainer;
+            return getAtomContainerFromSmiles(someStructureFormat);
         }
     }
 
-    public static IAtomContainer getAtomContainer(Smiles smiles) throws CDKException {
-        SmilesParser smilesParser = new SmilesParser(DefaultChemObjectBuilder.getInstance());
-        IAtomContainer iAtomContainer = smilesParser.parseSmiles(smiles.smiles);
-        return iAtomContainer;
+    public static IAtomContainer getAtomContainer(@NotNull Smiles smiles) throws CDKException {
+
+        return getAtomContainerFromSmiles(smiles.smiles);
     }
+
 
     /**
      * IMPORTANT: CDK is very picky with new-lines. for multi-line formats it seems to be important to have a new-line character after last line (and maybe one at first?)
-     * @param someStructureFormat input can be SMILES or Inchi or String contained in a .mol-file
-     * @return
-     */
-    public static InChI getInchiAndInchiKey(String someStructureFormat) throws CDKException, IOException {
-        if (isInchi(someStructureFormat)) {
-            if (!isStandardInchi(someStructureFormat)) {
-                someStructureFormat = getStdInchi(someStructureFormat);
-            }
-            String key = inchi2inchiKey(someStructureFormat);
-            return newInChI(key, someStructureFormat);
-        } else {
-            return getInchi(getAtomContainer(someStructureFormat));
-        }
-    }
-
-    /**
-     * IMPORTANT: CDK is very picky with new-lines. for multi-line formats it seems to be important to have a new-line character after last line (and maybe one at first?)
+     *
      * @param someStructureFormat input can be SMILES or Inchi or String contained in a .mol-file
      * @return
      */
@@ -214,16 +221,16 @@ public class InChISMILESUtils {
     public static MolecularFormula formulaFromSmiles(String smiles) throws InvalidSmilesException, UnknownElementException {
         SmilesParser smilesParser = new SmilesParser(DefaultChemObjectBuilder.getInstance());
         IAtomContainer iAtomContainer = smilesParser.parseSmiles(smiles);
-        if (iAtomContainer==null) return null;
+        if (iAtomContainer == null) return null;
         String s = MolecularFormulaManipulator.getString(MolecularFormulaManipulator.getMolecularFormula(iAtomContainer));
-        if (s==null) return null;
+        if (s == null) return null;
         int formalCharge = getFormalChargeFromSmiles(smiles);
         MolecularFormula formula = MolecularFormula.parse(s);
-        if (formalCharge==0) return formula;
-        else if (formalCharge<0){
-            return formula.add(MolecularFormula.parse(String.valueOf(Math.abs(formalCharge)+"H")));
+        if (formalCharge == 0) return formula;
+        else if (formalCharge < 0) {
+            return formula.add(MolecularFormula.parse(String.valueOf(Math.abs(formalCharge) + "H")));
         } else {
-            return formula.subtract(MolecularFormula.parse(String.valueOf(formalCharge+"H")));
+            return formula.subtract(MolecularFormula.parse(String.valueOf(formalCharge + "H")));
         }
     }
 
@@ -239,12 +246,12 @@ public class InChISMILESUtils {
 //    System.out.println(i.extractFormula().formatByHill());
 //    System.out.println(i.key);
 
-    String s = "C(C(/O)=C/C=C1(CC2(/C(\\C(=O)1)=C/C=CC=2)))([O-])=O";
-    s = stripStereoCentres(s);
-    s = stripDoubleBondGeometry(s);
-    Smiles smiles = new Smiles(s);
+        String s = "C(C(/O)=C/C=C1(CC2(/C(\\C(=O)1)=C/C=CC=2)))([O-])=O";
+        s = stripStereoCentres(s);
+        s = stripDoubleBondGeometry(s);
+        Smiles smiles = new Smiles(s);
         System.out.println(get2DSmiles(smiles));
         System.out.println(get2DSmilesByTextReplace("C(C(/O)=C/C=C1(CC2(/C(\\C(=O)1)=C/C=CC=2)))([O-])=O"));
-}
+    }
 
 }
