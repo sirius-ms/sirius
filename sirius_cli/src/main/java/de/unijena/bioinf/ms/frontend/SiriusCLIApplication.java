@@ -46,7 +46,7 @@ public class SiriusCLIApplication {
     protected static Run RUN = null;
     protected static boolean successfulParsed;
 
-    protected static final boolean TIME = true;
+    protected static final boolean TIME = false;
     protected static long t1;
 
     public static void main(String[] args) {
