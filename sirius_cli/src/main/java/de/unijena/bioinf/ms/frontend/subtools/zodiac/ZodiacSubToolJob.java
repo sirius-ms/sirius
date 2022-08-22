@@ -70,7 +70,8 @@ public class ZodiacSubToolJob extends DataSetJob {
     double forcedCandidatesPerIonizationRatio;
 
     public ZodiacSubToolJob(ZodiacOptions cliOptions, @NotNull JobSubmitter jobSubmitter) {
-        super(in -> in.loadCompoundContainer().hasResults(), jobSubmitter); //check whether the compound has formula results or not
+        super(in -> in.loadCompoundContainer().hasResults() && !in.getExperiment().getMs2Spectra().isEmpty(),
+                jobSubmitter); //check whether the compound has formula results or not
         this.cliOptions = cliOptions;
     }
 
@@ -81,11 +82,12 @@ public class ZodiacSubToolJob extends DataSetJob {
 
     @Override
     protected void computeAndAnnotateResult(@NotNull List<Instance> instances) throws Exception {
-        LoggerFactory.getLogger(ZodiacSubToolJob.class).info("START ZODIAC JOB");
-        final Map<Ms2Experiment, List<FormulaResult>> input = instances.stream().distinct().collect(Collectors.toMap(
-                Instance::getExperiment,
-                in -> in.loadFormulaResults(List.of(SiriusScore.class), FormulaScoring.class, FTree.class).stream().map(SScored::getCandidate).collect(Collectors.toList())
-        ));
+        logInfo("START ZODIAC JOB");
+        final Map<Ms2Experiment, List<FormulaResult>> input = instances.stream()
+                .distinct().collect(Collectors.toMap(
+                        Instance::getExperiment,
+                        in -> in.loadFormulaResults(List.of(SiriusScore.class), FormulaScoring.class, FTree.class).stream().map(SScored::getCandidate).collect(Collectors.toList())
+                ));
 
         //remove instances from input which don't have a single FTree
         instances = instances.stream().filter(i -> !input.get(i.getExperiment()).isEmpty()).collect(Collectors.toList());
@@ -100,18 +102,18 @@ public class ZodiacSubToolJob extends DataSetJob {
 
         // TODO: we might want to do that for SIRIUS
         checkForInterruption();
-        updateProgress(Math.round(.02 * maxProgress),"Use caching of formulas.");
+        updateProgress(Math.round(.02 * maxProgress), "Use caching of formulas.");
 
         {
-            HashMap<MolecularFormula,MolecularFormula> formulaMap = new HashMap<>();
+            HashMap<MolecularFormula, MolecularFormula> formulaMap = new HashMap<>();
             for (List<FTree> trees : ms2ExperimentToTreeCandidates.values()) {
                 for (FTree tree : trees) {
                     for (Fragment f : tree) {
-                        formulaMap.putIfAbsent(f.getFormula(),f.getFormula());
-                        f.setFormula(formulaMap.get(f.getFormula()),f.getIonization());
+                        formulaMap.putIfAbsent(f.getFormula(), f.getFormula());
+                        f.setFormula(formulaMap.get(f.getFormula()), f.getIonization());
                     }
                     for (Loss l : tree.losses()) {
-                        formulaMap.putIfAbsent(l.getFormula(),l.getFormula());
+                        formulaMap.putIfAbsent(l.getFormula(), l.getFormula());
                         l.setFormula(formulaMap.get(l.getFormula()));
                     }
                 }
@@ -119,14 +121,14 @@ public class ZodiacSubToolJob extends DataSetJob {
         }
 //        logInfo();
         checkForInterruption();
-        updateProgress(Math.round(.03 * maxProgress),"Caching done.");
+        updateProgress(Math.round(.03 * maxProgress), "Caching done.");
 
         maxCandidatesAt300 = settings.getAnnotationOrThrow(ZodiacNumberOfConsideredCandidatesAt300Mz.class).value;
         maxCandidatesAt800 = settings.getAnnotationOrThrow(ZodiacNumberOfConsideredCandidatesAt800Mz.class).value;
         forcedCandidatesPerIonizationRatio = settings.getAnnotationOrThrow(ZodiacRatioOfConsideredCandidatesPerIonization.class).value;
 
         //annotate compound quality at limit number of candidates
-       logInfo("TREES LOADED.");
+        logInfo("TREES LOADED.");
         TreeQualityEvaluator treeQualityEvaluator = new TreeQualityEvaluator(0.8, 5);
         for (Map.Entry<Ms2Experiment, List<FTree>> ms2ExperimentListEntry : ms2ExperimentToTreeCandidates.entrySet()) {
             checkForInterruption();
@@ -162,7 +164,7 @@ public class ZodiacSubToolJob extends DataSetJob {
         ZodiacEdgeFilterThresholds edgeFilterThresholds = settings.getAnnotationOrThrow(ZodiacEdgeFilterThresholds.class);
         ZodiacRunInTwoSteps zodiacRunInTwoSteps = settings.getAnnotationOrThrow(ZodiacRunInTwoSteps.class);
         ZodiacClusterCompounds clusterEnabled = settings.getAnnotationOrThrow(ZodiacClusterCompounds.class);
-        LoggerFactory.getLogger(ZodiacSubToolJob.class).info("Cluster enabled? " + clusterEnabled.value);
+        logInfo("Cluster enabled? " + clusterEnabled.value);
         //node scoring
         NodeScorer[] nodeScorers;
         List<LibraryHit> anchors = null;
@@ -219,7 +221,7 @@ public class ZodiacSubToolJob extends DataSetJob {
         checkForInterruption();
         //todo FINISH ZODIAC Progress
         //todo clustering disabled. Evaluate if it might help at any point?
-        LoggerFactory.getLogger(ZodiacSubToolJob.class).info("RUN ZODIAC");
+        logInfo("RUN ZODIAC");
         final ZodiacResultsWithClusters clusterResults = submitSubJob(
                 zodiac.makeComputeJob(zodiacEpochs.iterations, zodiacEpochs.burnInPeriod, zodiacEpochs.numberOfMarkovChains))
                 .awaitResult();

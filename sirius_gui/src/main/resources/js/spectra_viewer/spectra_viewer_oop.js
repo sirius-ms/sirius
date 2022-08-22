@@ -311,11 +311,10 @@ class SpectrumPlot extends Base {
 
     static resetColor(self, peakData) {
         if (peakData !== undefined) {
-            let precursor = self.spectrum.peaks[self.mzsSize-1].formula;
             if (self.spectrum.name.includes("MS1")) {
                 return (Object.keys(peakData.peakMatches).length !== 0) ? "peak_matched peak" : "peak_1 peak";
             } else {
-                if (self.structureView && ("structureInformation" in peakData || peakData.formula === precursor)) {
+                if (self.structureView && "structureInformation" in peakData ) {
                     return "peak_2 peak_structInfo peak";
                 } else {
                     return ("formula" in peakData) ? "peak_2 peak" : "peak_1 peak";
@@ -782,25 +781,27 @@ class MirrorPlot extends Base {
         let diff_bands = this.diffArea.append('g').attr("id", "diff_bands");
         // difference ruler: y0=point away from horizontal line, y1=point on the horizontal line
         function plotDiffRuler(self, data, mzs, mzsSize, id, y0, y1) {
-            let ruler = self.diffArea.select(id);
-            const num = id.split('_')[1];
-            ruler.selectAll()
-                .data(data)
-                .enter()
-                .append("line")
-                    .attr("class", "vertical_ruler diff_ruler")
-                    .attr("id", function(d, i) { return "v"+num+"_ruler"+i; })
-                    .attr("x1", function(d) { return self.x(d.mz); })
-                    .attr("y1", y0)
-                    .attr("x2", function(d) { return self.x(d.mz); })
-                    .attr("y2", y1);
-            ruler.append("line")
-                    .attr("class", "horizontal_ruler diff_ruler")
-                    .attr("id", "h"+num+"_ruler")
-                    .attr("x1", self.x(mzs[0]))
-                    .attr("y1", y1)
-                    .attr("x2", self.x(mzs[mzsSize-1]))
-                    .attr("y2", y1);
+            if (mzsSize > 1) {
+                let ruler = self.diffArea.select(id);
+                const num = id.split('_')[1];
+                ruler.selectAll()
+                    .data(data)
+                    .enter()
+                    .append("line")
+                        .attr("class", "vertical_ruler diff_ruler")
+                        .attr("id", function(d, i) { return "v"+num+"_ruler"+i; })
+                        .attr("x1", function(d) { return self.x(d.mz); })
+                        .attr("y1", y0)
+                        .attr("x2", function(d) { return self.x(d.mz); })
+                        .attr("y2", y1);
+                ruler.append("line")
+                        .attr("class", "horizontal_ruler diff_ruler")
+                        .attr("id", "h"+num+"_ruler")
+                        .attr("x1", self.x(mzs[0]))
+                        .attr("y1", y1)
+                        .attr("x2", self.x(mzs[mzsSize-1]))
+                        .attr("y2", y1);
+            }
         };
         // difference label
         function plotDiffLabels(self, mzs, mzsSize, id, y) {
