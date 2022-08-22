@@ -3,6 +3,7 @@ dependencies() {
     annotationProcessor project(':default_properties:processor')
     compile project(':chemistry_base')
     compile project(':io')
+    compile project(':chemical_db_oss:chemdb_utils_oss')
     testCompile project(":io")
 
     compile "org.openscience.cdk:cdk-bundle:$cdk_version"
