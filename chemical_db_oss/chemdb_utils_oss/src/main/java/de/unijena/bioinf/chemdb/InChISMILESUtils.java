@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
+import io.github.dan2097.jnainchi.InchiFlag;
 import io.github.dan2097.jnainchi.InchiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.openscience.cdk.ChemFile;
@@ -92,11 +93,11 @@ public class InChISMILESUtils {
     //    NEWPSOFF/DoNotAddH/SNon
     public static InChI getInchi(IAtomContainer atomContainer) throws CDKException {
         // this will create a standard inchi, see: https://egonw.github.io/cdkbook/inchi.html
-        InChIGenerator inChIGenerator = InChIGeneratorFactory.getInstance().getInChIGenerator(atomContainer);
+        InChIGenerator inChIGenerator = InChIGeneratorFactory.getInstance().getInChIGenerator(atomContainer, InchiFlag.SNon); //suppress Omitted undefined stereo
         InchiStatus state = inChIGenerator.getStatus();
         if (state != InchiStatus.ERROR) {
             if (state == InchiStatus.WARNING)
-                LoggerFactory.getLogger(InChISMILESUtils.class).error("Error while parsing atom container: '" + atomContainer.getID() + "'\n-> " + inChIGenerator.getMessage());
+                LoggerFactory.getLogger(InChISMILESUtils.class).error("Warning while parsing atom container: '" + atomContainer.getTitle() + "'\n-> " + inChIGenerator.getMessage());
             String inchi = inChIGenerator.getInchi();
             if (inchi == null) return null;
             if (!isStandardInchi(inchi))
