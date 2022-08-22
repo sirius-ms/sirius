@@ -24,7 +24,6 @@ import com.google.common.collect.Iterators;
 import de.unijena.bioinf.ChemistryBase.exceptions.InvalidInputData;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Warning;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.lcms.InMemoryStorage;
@@ -72,7 +71,7 @@ public abstract class AbstractMzParser implements Parser<Ms2Experiment> {
                 final FragmentedIon ion = ions.next();
                 AdductResolver.resolve(instance, ion);
                 Feature feature = instance.makeFeature(sample, ion, false);
-                MutableMs2Experiment experiment = feature.toMsExperiment(sample.run.getIdentifier() + "_" + String.valueOf(counter++)).mutate();
+                MutableMs2Experiment experiment = feature.toMsExperiment(String.valueOf(++counter)).mutate();
                 new Ms2Validator().validate(experiment, Warning.Logger, true);
                 return experiment;
             } else {
