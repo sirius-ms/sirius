@@ -271,7 +271,7 @@ public class FixedFingerprinter {
                 LoggerFactory.getLogger(FixedFingerprinter.class).warn("Fix non-standard InChI '" + inchi + "'");
                 final InChIToStructure structureGenerator = InChIGeneratorFactory.getInstance().getInChIToStructure(inchi, SilentChemObjectBuilder.getInstance());
                 IAtomContainer m = structureGenerator.getAtomContainer();
-                inchi = InChIs.inchi2d(InChIGeneratorFactory.getInstance().getInChIGenerator(m).getInchi());
+                inchi = InChISMILESUtils.getInchi(m).in2D;
             } catch (CDKException e) {
                 LoggerFactory.getLogger(FixedFingerprinter.class).warn(e.getMessage());
             }
