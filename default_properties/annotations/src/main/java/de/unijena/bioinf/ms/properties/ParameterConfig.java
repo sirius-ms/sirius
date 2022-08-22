@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.ms.properties;
 
-import com.google.common.primitives.Primitives;
 import org.apache.commons.configuration2.*;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.lang3.ArrayUtils;
@@ -524,7 +523,7 @@ public final class ParameterConfig {
             } else if (fType.isArray()) {
                 Class<?> elementType = fType.getComponentType();
                 if (elementType.isPrimitive()) {
-                    objectValue = (T) ArrayUtils.toPrimitive(convertToCollection(Primitives.wrap(elementType), stringValue));
+                    objectValue = (T) ArrayUtils.toPrimitive(convertToCollection(wrapPrimitive(elementType), stringValue));
                 } else {
                     objectValue = (T) convertToCollection(elementType, stringValue);
                 }
@@ -620,5 +619,18 @@ public final class ParameterConfig {
             }
             typeMap.put(typeParameter[i], actualTypeArgument[i]);
         }
+    }
+
+    public static <T> Class<T> wrapPrimitive(Class<T> type) {
+        if (type == int.class) return (Class<T>) Integer.class;
+        if (type == float.class) return (Class<T>) Float.class;
+        if (type == byte.class) return (Class<T>) Byte.class;
+        if (type == double.class) return (Class<T>) Double.class;
+        if (type == long.class) return (Class<T>) Long.class;
+        if (type == char.class) return (Class<T>) Character.class;
+        if (type == boolean.class) return (Class<T>) Boolean.class;
+        if (type == short.class) return (Class<T>) Short.class;
+        if (type == void.class) return (Class<T>) Void.class;
+        return type;
     }
 }
