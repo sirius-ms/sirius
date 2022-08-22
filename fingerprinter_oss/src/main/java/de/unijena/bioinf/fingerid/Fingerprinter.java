@@ -23,9 +23,10 @@ package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
+import de.unijena.bioinf.chemdb.InChISMILESUtils;
 import de.unijena.bioinf.fingerid.fingerprints.ShortestPathFingerprinter;
 import de.unijena.bioinf.fingerid.fingerprints.*;
-import net.sf.jniinchi.INCHI_RET;
+import io.github.dan2097.jnainchi.InchiStatus;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.fingerprint.*;
@@ -207,26 +208,13 @@ public class Fingerprinter {
         return inchi;
     }
 
-    public IAtomContainer convertInchi2Mol(String inchi) throws CDKException {
-        if (inchi == null) throw new NullPointerException("Given InChI is null");
-        if (inchi.isEmpty()) throw new IllegalArgumentException("Empty string given as InChI");
-        final InChIToStructure converter = factory.getInChIToStructure(inchi, DefaultChemObjectBuilder.getInstance());
-        if (converter.getReturnStatus() == INCHI_RET.OKAY) return converter.getAtomContainer();       else if (converter.getReturnStatus()==INCHI_RET.WARNING) {
-            LoggerFactory.getLogger(Fingerprinter.class).warn(converter.getMessage());
-            return converter.getAtomContainer();
-        }
-        else {
-            LoggerFactory.getLogger(Fingerprinter.class).error("Error while parsing InChI:\n'" + inchi +"'\n-> " + converter.getMessage());
-            final IAtomContainer a = converter.getAtomContainer();
-            if (a!=null) return a;
-            else throw new CDKException(converter.getMessage());
-        }
-    }
-
     public List<IFingerprinter> getFingerprinters() {
         return Collections.unmodifiableList(fingerprinters);
     }
 
+    public IAtomContainer convertInchi2Mol(String inchi) throws CDKException {
+        return InChISMILESUtils.getAtomContainerFromInchi(inchi,true);
+    }
     public IAtomContainer convertInchi2Mol(String inchi, boolean is3D) throws CDKException {
         if (!is3D) inchi = convert3Dto2DInchi(inchi);
         return convertInchi2Mol(inchi);
