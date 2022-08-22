@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.frontend.workflow;
 
+import com.google.common.collect.Streams;
 import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.subtools.*;
 import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
@@ -38,6 +39,7 @@ import de.unijena.bioinf.ms.frontend.subtools.similarity.SimilarityMatrixOptions
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.summaries.SummaryOptions;
 import de.unijena.bioinf.ms.frontend.subtools.zodiac.ZodiacOptions;
+import de.unijena.bioinf.ms.frontend.utils.AutoCompletionScript;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -70,7 +72,7 @@ import java.util.stream.Stream;
  * On the other hand I do not think it is performance critical.
  */
 
-public class WorkflowBuilder<R extends RootOptions<?,?,?,?>> {
+public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
 
     private final InstanceBufferFactory<?> bufferFactory;
     //root
@@ -97,6 +99,7 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?,?>> {
     public final ExportPredictionsOptions exportPredictions;
     public final MgfExporterOptions mgfExporterOptions;
     public final FTreeExporterOptions ftreeExporterOptions;
+    public final AutoCompletionScript autocompleteOptions;
 
     //preprocessing, project-space providing tool, pre-project-space tool
     public final LcmsAlignOptions lcmsAlignOptions = new LcmsAlignOptions();
@@ -104,10 +107,17 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?,?>> {
     //toolchain subtools
     protected final Map<Class<? extends ToolChainOptions<?, ?>>, ToolChainOptions<?, ?>> toolChainTools;
 
+    protected final @NotNull List<StandaloneTool<?>> additionalTools;
+
     public WorkflowBuilder(@NotNull R rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, InstanceBufferFactory<?> bufferFactory) throws IOException {
+        this(rootOptions, configOptionLoader, bufferFactory, List.of());
+    }
+
+    public WorkflowBuilder(@NotNull R rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, InstanceBufferFactory<?> bufferFactory, @NotNull List<StandaloneTool<?>> additionalTools) throws IOException {
         this.bufferFactory = bufferFactory;
         this.rootOptions = rootOptions;
         this.configOptionLoader = configOptionLoader;
+        this.additionalTools = additionalTools;
 
         toolChainTools = Map.of(
                 SiriusOptions.class, new SiriusOptions(configOptionLoader),
@@ -121,12 +131,13 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?,?>> {
         customDBOptions = new CustomDBOptions();
         projectSpaceOptions = new ProjecSpaceOptions();
         similarityMatrixOptions = new SimilarityMatrixOptions();
-        decompOptions =  new DecompOptions();
+        decompOptions = new DecompOptions();
         mgfExporterOptions = new MgfExporterOptions();
         ftreeExporterOptions = new FTreeExporterOptions();
         summaryOptions = new SummaryOptions();
         exportPredictions = new ExportPredictionsOptions();
         loginOptions = new LoginOptions();
+        autocompleteOptions = new AutoCompletionScript();
     }
 
     public void initRootSpec() {
@@ -152,7 +163,11 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?,?>> {
     }
 
     protected Object[] standaloneTools() {
-        return new Object[]{projectSpaceOptions, customDBOptions, similarityMatrixOptions, decompOptions, mgfExporterOptions, ftreeExporterOptions, exportPredictions, loginOptions};
+        return Streams.concat(
+                Stream.of(projectSpaceOptions, customDBOptions, similarityMatrixOptions, decompOptions, mgfExporterOptions, ftreeExporterOptions, exportPredictions),
+                additionalTools.stream(), Stream.of(loginOptions, autocompleteOptions)
+        ).toArray(Object[]::new);
+
     }
 
     protected Map<Class<? extends ToolChainOptions>, CommandLine.Model.CommandSpec> configureChainTools(CommandLine.Model.CommandSpec... postProcessors) {

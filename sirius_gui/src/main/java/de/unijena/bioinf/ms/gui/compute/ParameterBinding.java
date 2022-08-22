@@ -47,8 +47,7 @@ public class ParameterBinding extends HashMap<String, Supplier<String>> {
                 if ("~true".equalsIgnoreCase(value)){
                     out.add("--" + k);
                 }else if (!"~false".equalsIgnoreCase(value)){
-                    out.add("--" + k);
-                    out.add(value);
+                    out.add("--" + k + "=" + value);
                 }//skip if it is boolean and false
             }
         });

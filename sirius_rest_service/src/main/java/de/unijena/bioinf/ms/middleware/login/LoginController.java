@@ -40,8 +40,8 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import static com.hp.hpl.jena.vocabulary.RSS.url;
-
+//todo set active subscription
+//todo accept terms
 @RestController
 @RequestMapping(value = "/api/account")
 @Tag(name = "Login and Account", description = "Perform signIn, signOut and signUp. Get tokens and account information.")
@@ -102,27 +102,6 @@ public class LoginController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not Logged in. Please log in to retrieve subscriptions."));
     }
 
-
-    /**
-     * Request a long-lived refresh token for the account currently logged in (keep it save).
-     *
-     * @return refresh_token in JWT bearer format.
-     */
-    @Deprecated
-    @PostMapping(value = "/request-token", produces = MediaType.APPLICATION_JSON_VALUE)
-    public String requestRefreshToken() {
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "NOT YET IMPLEMENTED");
-    }
-
-    /**
-     * Invalidate a long-lived refresh token for the account currently logged in.
-     */
-    @Deprecated
-    @PostMapping(value = "/invalidate-token", produces = MediaType.APPLICATION_JSON_VALUE)
-    public void invalidateRefreshToken() {
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "NOT YET IMPLEMENTED");
-    }
-
     /**
      * Get SignUp URL (For signUp via web browser)
      */
@@ -135,7 +114,6 @@ public class LoginController {
     /**
      * Open SignUp window in system browser and return signUp link.
      */
-    @Deprecated
     @GetMapping(value = "/signUp", produces = MediaType.APPLICATION_JSON_VALUE)
     public String signUp() throws URISyntaxException {
         URI path = getSignUpURL();
