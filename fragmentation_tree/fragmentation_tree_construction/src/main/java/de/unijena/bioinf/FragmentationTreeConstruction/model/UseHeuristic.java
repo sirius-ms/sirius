@@ -29,6 +29,11 @@ public class UseHeuristic implements Ms2ExperimentAnnotation {
     public final int mzToUseHeuristic;
     public final int mzToUseHeuristicOnly;
 
+    private UseHeuristic() {
+        this(0,0);
+    }
+
+
     private UseHeuristic(int mzToUseHeuristic, int mzToUseHeuristicOnly) {
         this.mzToUseHeuristic = mzToUseHeuristic;
         this.mzToUseHeuristicOnly = mzToUseHeuristicOnly;
