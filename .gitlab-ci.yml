@@ -29,42 +29,42 @@ before_script:
   - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
 
 
-#buildCLI:
-#  stage: build
-#  script:
-#    - gradle :sirius_dist:sirius_cli_single_os:distImage
-#  cache:
-#    key: "$CI_COMMIT_REF_NAME"
-#    policy: push
-#  artifacts:
-#    paths:
-#      - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius
-#  tags:
-#    - kubernetes
-#  only:
-#    refs:
-#      - master
-#      - master-dist-tests
-#      - stable
-#
-#
-#buildGUI:
-#  stage: build
-#  script:
-#    - gradle :sirius_dist:sirius_gui_single_os:distImage
-#  cache:
-#    key: "$CI_COMMIT_REF_NAME"
-#    policy: push
-#  artifacts:
-#    paths:
-#      - ./sirius_dist/sirius_gui_single_os/build/distributions/sirius
-#  tags:
-#    - kubernetes
-#  only:
-#    refs:
-#      - master
-#      - master-dist-tests
-#      - stable
+buildCLI:
+  stage: build
+  script:
+    - gradle :sirius_dist:sirius_cli_single_os:distImage
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  artifacts:
+    paths:
+      - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - master
+      - master-dist-tests
+      - stable
+
+
+buildGUI:
+  stage: build
+  script:
+    - gradle :sirius_dist:sirius_gui_single_os:distImage
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  artifacts:
+    paths:
+      - ./sirius_dist/sirius_gui_single_os/build/distributions/sirius
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - master
+      - master-dist-tests
+      - stable
 
 
 buildAPI:
@@ -86,44 +86,44 @@ buildAPI:
       - stable
 
 
-#testCLI:
-#  stage: test
-#  script:
-#    - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
-#    - gradle :sirius_dist:sirius_cli_single_os:distImageTest
-#  cache:
-#    key: "$CI_COMMIT_REF_NAME"
-#    policy: push
-#  needs: [buildCLI]
-#  dependencies:
-#    - buildCLI
-#  tags:
-#    - kubernetes
-#  only:
-#    refs:
-#      - master
-#      - master-dist-tests
-#      - stable
-#
-#
-#testGUI:
-#  stage: test
-#  script:
-#    - ./sirius_dist/sirius_gui_single_os/build/distributions/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
-#    - gradle :sirius_dist:sirius_gui_single_os:distImageTest
-#  cache:
-#    key: "$CI_COMMIT_REF_NAME"
-#    policy: push
-#  needs: [buildGUI]
-#  dependencies:
-#    - buildGUI
-#  tags:
-#    - kubernetes
-#  only:
-#    refs:
-#      - master
-#      - master-dist-tests
-#      - stable
+testCLI:
+  stage: test
+  script:
+    - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
+    - gradle :sirius_dist:sirius_cli_single_os:distImageTest
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  needs: [buildCLI]
+  dependencies:
+    - buildCLI
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - master
+      - master-dist-tests
+      - stable
+
+
+testGUI:
+  stage: test
+  script:
+    - ./sirius_dist/sirius_gui_single_os/build/distributions/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
+    - gradle :sirius_dist:sirius_gui_single_os:distImageTest
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  needs: [buildGUI]
+  dependencies:
+    - buildGUI
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - master
+      - master-dist-tests
+      - stable
 
 
 testAPI:
@@ -146,49 +146,48 @@ testAPI:
       - stable
 
 
-#publishCLI:
-#  variables:
-#    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-#  stage: publish
-#  script:
-#    - cd sirius_dist/sirius_cli_single_os
-#    - gradle clean artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
-#  cache:
-#    key: "$CI_COMMIT_REF_NAME"
-#    policy: push
-#  needs: [buildCLI, testCLI]
-#  dependencies:
-#    - buildCLI
-#  tags:
-#    - kubernetes
-#  only:
-#    refs:
-#      - master
-#      - master-dist-tests
-#      - stable
-#
-#
-#publishGUI:
-#  variables:
-#    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-#  stage: publish
-#  script:
-#    - cd sirius_dist/sirius_gui_single_os
-#    - gradle clean artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
-#  cache:
-#    key: "$CI_COMMIT_REF_NAME"
-#    policy: push
-#  needs: [buildGUI, testGUI]
-#  dependencies:
-#    - buildGUI
-#  tags:
-#    - kubernetes
-#  only:
-#    refs:
-#      - master
-#      - master-dist-tests
-#      - stable
+publishCLI:
+  variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  stage: publish
+  script:
+    - cd sirius_dist/sirius_cli_single_os
+    - gradle clean artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  needs: [buildCLI, testCLI]
+  dependencies:
+    - buildCLI
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - master
+      - master-dist-tests
+      - stable
 
+
+publishGUI:
+  variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  stage: publish
+  script:
+    - cd sirius_dist/sirius_gui_single_os
+    - gradle clean artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  needs: [buildGUI, testGUI]
+  dependencies:
+    - buildGUI
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - master
+      - master-dist-tests
+      - stable
 
 publishAPI:
   variables:
