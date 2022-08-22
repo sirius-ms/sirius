@@ -21,9 +21,6 @@
 
 package de.unijena.bioinf.ms.gui.fingerid;
 
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.Sets;
-import com.google.common.primitives.Ints;
 import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.aromaticity.ElectronDonation;
 import org.openscience.cdk.exception.CDKException;
@@ -39,6 +36,7 @@ import org.openscience.cdk.smiles.smarts.parser.SMARTSParser;
 import org.openscience.cdk.smiles.smarts.parser.TokenMgrError;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -334,9 +332,11 @@ public class FasterSmartsQueryTool {
                 }
             }
         } else {
-            mappings = FluentIterable.from(Ullmann.findSubstructure(query).matchAll(atomContainer))
-                    .filter(new SmartsStereoMatch(query, atomContainer)).toList();
+            mappings = Ullmann.findSubstructure(query).matchAll(atomContainer).stream()
+                    .filter(new SmartsStereoMatch(query, atomContainer)).collect(Collectors.toList());
         }
+
+        SmartsStereoMatch s = new SmartsStereoMatch(query, atomContainer);
 
         return !mappings.isEmpty();
     }
@@ -360,7 +360,7 @@ public class FasterSmartsQueryTool {
     public List<List<Integer>> getMatchingAtoms() {
         List<List<Integer>> matched = new ArrayList<List<Integer>>(mappings.size());
         for (int[] mapping : mappings)
-            matched.add(Ints.asList(mapping));
+            matched.add(Arrays.stream(mapping).boxed().collect(Collectors.toList()));
         return matched;
     }
 
@@ -373,12 +373,12 @@ public class FasterSmartsQueryTool {
      */
     public List<List<Integer>> getUniqueMatchingAtoms() {
         List<List<Integer>> matched = new ArrayList<List<Integer>>(mappings.size());
-        Set<BitSet> atomSets = Sets.newHashSetWithExpectedSize(mappings.size());
+        Set<BitSet> atomSets = new HashSet<>(mappings.size());
         for (int[] mapping : mappings) {
             BitSet atomSet = new BitSet();
             for (int x : mapping)
                 atomSet.set(x);
-            if (atomSets.add(atomSet)) matched.add(Ints.asList(mapping));
+            if (atomSets.add(atomSet)) matched.add(Arrays.stream(mapping).boxed().collect(Collectors.toList()));
         }
         return matched;
     }
