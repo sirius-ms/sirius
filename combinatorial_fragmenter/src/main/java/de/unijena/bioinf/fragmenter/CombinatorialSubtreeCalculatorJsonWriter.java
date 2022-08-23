@@ -3,11 +3,13 @@ package de.unijena.bioinf.fragmenter;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
+import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
+import de.unijena.bioinf.chemdb.InChISMILESUtils;
 import org.jetbrains.annotations.NotNull;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.inchi.InChIGenerator;
@@ -110,14 +112,16 @@ public class CombinatorialSubtreeCalculatorJsonWriter {
 
         MolecularGraph molecule = subtreeCalc.getMolecule();
         SmilesGenerator smiGen = new SmilesGenerator(SmiFlavor.Generic);
-        InChIGenerator inchiGen = InChIGeneratorFactory.getInstance().getInChIGenerator(molecule.getMolecule());
+        InChI inChI = InChISMILESUtils.getInchi(molecule.getMolecule());
+        Objects.requireNonNull(inChI);
         int[] atomOrder = new int[molecule.natoms];
+
 
         // some general informations:
         jsonGenerator.writeStringField("molecularFormula", molecule.getFormula().toString());
         jsonGenerator.writeStringField("smiles", smiGen.create(molecule.getMolecule(), atomOrder));
-        jsonGenerator.writeStringField("inchi", inchiGen.getInchi());
-        jsonGenerator.writeStringField("inchiKey", inchiGen.getInchiKey());
+        jsonGenerator.writeStringField("inchi", inChI.in3D);
+        jsonGenerator.writeStringField("inchiKey", inChI.key);
         jsonGenerator.writeStringField("method", subtreeCalc.getMethodName());
         jsonGenerator.writeNumberField("score", subtreeCalc.getScore());
         jsonGenerator.writeNumberField("explainedPeaks", subtreeCalc.getSubtree().getNodes().stream().filter(x->!x.fragment.isInnerNode()).count());
