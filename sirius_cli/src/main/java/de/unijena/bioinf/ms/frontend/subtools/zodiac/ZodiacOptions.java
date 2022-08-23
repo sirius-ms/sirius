@@ -46,7 +46,7 @@ import java.util.function.Consumer;
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-@CommandLine.Command(name = "zodiac", aliases = {"rerank-formulas","Z"}, description = "<DATASET_TOOL> Identify Molecular formulas of all compounds in a dataset together using ZODIAC.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
+@CommandLine.Command(name = "zodiac", aliases = {"rerank-formulas"}, description = "<DATASET_TOOL> Identify Molecular formulas of all compounds in a dataset together using ZODIAC.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class ZodiacOptions implements ToolChainOptions<ZodiacSubToolJob, DataSetJob.Factory<ZodiacSubToolJob>> {
     protected final DefaultParameterConfigLoader defaultConfigOptions;
 

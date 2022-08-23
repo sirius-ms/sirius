@@ -62,7 +62,9 @@ public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements 
     protected Instance compute() throws Exception {
         updateProgress(0);
         checkForInterruption();
-        checkInput();
+        if (checkInput())
+            return input;
+
         final boolean hasResults = isAlreadyComputed(input);
         updateProgress(1);
 
@@ -101,12 +103,20 @@ public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements 
         return super.identifier() + " | " + (input != null ? input.toString() : "<Awaiting Instance>");
     }
 
-    protected void checkInput() {
+    /**
+     * Check if the input is valid for computation. May be overwritten by implementations for additional checks.
+     * @return false if input data is fine and true if data should be skipped gently. IllegalArgumentException is thrown
+     * if the input check needs to cause job failure
+     */
+    protected boolean checkInput() {
         if (input == null)
             throw new IllegalArgumentException("No Input available! Maybe a previous job could not provide the needed results due to failure.");
         if (needsMs2())
-            if (input.getExperiment().getMs2Spectra().isEmpty())
-                throw new IllegalArgumentException("Input contains no non empty MS/MS spectrum but MS/MS data is mandatory for this job.");
+            if (input.getExperiment().getMs2Spectra().isEmpty()){
+                logInfo("Input contains no non empty MS/MS spectrum but MS/MS data is mandatory for this job. Skipping Instance!");
+                return true;
+            }
+        return false;
     }
 
     protected Class<? extends DataAnnotation>[] compoundComponentsToClear() {

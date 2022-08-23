@@ -107,6 +107,28 @@ distGuiLinux64:
       - "**/*.{java,gradle,properties,yml,tex,png,ico,json,xml,html,csv,tsv,py}"
       - "**/src/main/java/**/*"
 
+distRestLinux64:
+  variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  stage: build
+  script:
+    - cd sirius_dist/sirius_service_single_os
+    - gradle clean artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - master
+      - stable
+    # stupid there is no exclude if only specific type was changed, so we have to use some heuristic to exclude README only changes
+    # from pipeline
+    changes:
+      - "**/*.{java,gradle,properties,yml,tex,png,ico,json,xml,html,csv,tsv,py}"
+      - "**/src/main/java/**/*"
+
 #push to github for multiOS build
 pushToGitHub:
   stage: publish

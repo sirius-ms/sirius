@@ -59,14 +59,14 @@ public class Sirius extends Tool<SiriusOptions> {
     /**
      * Number of formula candidates to keep as result list (Formula Candidates).
      */
-    NumberOfCandidates numberOfCandidates;
+    int numberOfCandidates;
     /**
      * Use this parameter if you want to force SIRIUS to report at least
      * NumberOfCandidatesPerIon results per ionization.
      * if <= 0, this parameter will have no effect and just the top
      * NumberOfCandidates results will be reported.
      */
-    NumberOfCandidatesPerIon numberOfCandidatesPerIon;
+    int numberOfCandidatesPerIon;
     /**
      * Maximum allowed mass accuracy. Only molecular formulas within this mass window are considered.
      */
@@ -82,7 +82,7 @@ public class Sirius extends Tool<SiriusOptions> {
      * <p>
      * IGNORE: Ignore that there might be isotope patterns in MS/MS
      */
-    IsotopeMs2Settings isotopeSettings;
+    IsotopeMs2Settings.Strategy isotopeMs2Settings;
 
     /**
      * List Structure database to extract molecular formulas from to reduce formula search space.
@@ -131,10 +131,10 @@ public class Sirius extends Tool<SiriusOptions> {
     public Sirius() {
         super(SiriusOptions.class);
         profile = Instrument.QTOF;
-        numberOfCandidates = PropertyManager.DEFAULTS.createInstanceWithDefaults(NumberOfCandidates.class);
-        numberOfCandidatesPerIon = PropertyManager.DEFAULTS.createInstanceWithDefaults(NumberOfCandidatesPerIon.class);
+        numberOfCandidates = PropertyManager.DEFAULTS.createInstanceWithDefaults(NumberOfCandidates.class).value;
+        numberOfCandidatesPerIon = PropertyManager.DEFAULTS.createInstanceWithDefaults(NumberOfCandidatesPerIon.class).value;
         massAccuracyMS2ppm = PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class).allowedMassDeviation.getPpm();
-        isotopeSettings = PropertyManager.DEFAULTS.createInstanceWithDefaults(IsotopeMs2Settings.class);
+        isotopeMs2Settings = PropertyManager.DEFAULTS.createInstanceWithDefaults(IsotopeMs2Settings.class).value;
         formulaSearchDBs = List.of();
         FormulaSettings settings = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class);
         enforcedFormulaConstraints = settings.getEnforcedAlphabet().toString();
@@ -158,6 +158,8 @@ public class Sirius extends Tool<SiriusOptions> {
         map.put("FormulaSettings.enforced", enforcedFormulaConstraints);
         map.put("FormulaSettings.detectable", String.join(",", detectableElements));
         map.put("FormulaSettings.fallback", fallbackFormulaConstraints);
+
+        map.put("IsotopeMs2Settings", isotopeMs2Settings.name());
 
         map.put("FormulaSearchDB", formulaSearchDBs.stream().map(DataSource::name).collect(Collectors.joining(",")));
 

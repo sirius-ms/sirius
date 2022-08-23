@@ -27,6 +27,7 @@ import de.unijena.bioinf.ms.middleware.compute.model.tools.*;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import lombok.Getter;
 import lombok.Setter;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -102,6 +103,7 @@ public class JobSubmission {
      * As an alternative to the object based parameters, this map allows to store key value pairs
      * of ALL SIRIUS parameters. All possible parameters can be retrieved from SIRIUS via the respective endpoint.
      */
+    @Nullable
     Map<String, String> configMap;
 
     public static JobSubmission createDefaultInstance(boolean includeConfigMap) {
