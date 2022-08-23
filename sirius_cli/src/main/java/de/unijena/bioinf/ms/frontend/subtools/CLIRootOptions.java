@@ -21,7 +21,9 @@ package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
+import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.*;
@@ -199,10 +201,14 @@ public class CLIRootOptions<I extends Instance, M extends ProjectSpaceManager<I>
             });
 
 
-            try {
-                space.checkAndFixDataFiles(NetUtils.checkThreadInterrupt(Thread.currentThread()));
-            } catch (TimeoutException | InterruptedException e) {
-                LoggerFactory.getLogger(getClass()).warn("Could not check Fingerprint version on Project creation. " + e.getMessage());
+            if (ApplicationCore.WEB_API.getAuthService().isLoggedIn() && ApplicationCore.WEB_API.getActiveSubscription() != null) {
+                try {
+                    space.checkAndFixDataFiles(NetUtils.checkThreadInterrupt(Thread.currentThread()));
+                } catch (TimeoutException | InterruptedException e) {
+                    LoggerFactory.getLogger(getClass()).warn("Could not check Fingerprint version on Project creation. " + e.getMessage());
+                } catch (Exception e) {
+                    LoggerFactory.getLogger(getClass()).error("Could not check Fingerprint version on Project creation due to an unknown error!",e);
+                }
             }
 
             return space;

@@ -46,7 +46,7 @@ import java.util.function.Consumer;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 
-@Command(name = "formula", aliases = {"tree", "sirius", "F"}, description = "<COMPOUND_TOOL> Identify molecular formula for each compound individually using fragmentation trees and isotope patterns.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false)
+@Command(name = "formula", aliases = {"tree", "sirius" }, description = "<COMPOUND_TOOL> Identify molecular formula for each compound individually using fragmentation trees and isotope patterns.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false)
 public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, InstanceJob.Factory<SiriusSubToolJob>> {
     protected final DefaultParameterConfigLoader defaultConfigOptions;
 
