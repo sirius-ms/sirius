@@ -97,7 +97,7 @@ public class InChISMILESUtils {
         InchiStatus state = inChIGenerator.getStatus();
         if (state != InchiStatus.ERROR) {
             if (state == InchiStatus.WARNING)
-                LoggerFactory.getLogger(InChISMILESUtils.class).error("Warning while parsing atom container: '" + atomContainer.getTitle() + "'\n-> " + inChIGenerator.getMessage());
+                LoggerFactory.getLogger(InChISMILESUtils.class).error("Warning while reading AtomContainer: '" + atomContainer.getTitle() + "'\n-> " + inChIGenerator.getMessage());
             String inchi = inChIGenerator.getInchi();
             if (inchi == null) return null;
             if (!isStandardInchi(inchi))
@@ -129,7 +129,7 @@ public class InChISMILESUtils {
         InchiStatus state = structureGenerator.getStatus();
         if (state != InchiStatus.ERROR) {
             if (state == InchiStatus.WARNING)
-                LoggerFactory.getLogger(InChISMILESUtils.class).error("Error while parsing InChI:\n'" + inchi + "'\n-> " + structureGenerator.getMessage());
+                LoggerFactory.getLogger(InChISMILESUtils.class).error("Warning while parsing InChI:\n'" + inchi + "'\n-> " + structureGenerator.getMessage());
             return structureGenerator.getAtomContainer();
         } else {
             if (lazyErrorHandling) {
@@ -139,6 +139,10 @@ public class InChISMILESUtils {
             }
             throw new CDKException("Error while creating AtomContainer. State: '" + state + "'. Message: '" + structureGenerator.getMessage() + "'.");
         }
+    }
+
+    public static InChI getInchiFromSmiles(String smiles) throws CDKException {
+        return getInchi(getAtomContainerFromSmiles(smiles));
     }
 
 
