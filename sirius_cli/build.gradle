@@ -50,6 +50,7 @@ dependencies {
     }
     api "com.gurobi:gurobi-jar:$gurobi_version"
 
+    implementation group: 'commons-io', name: 'commons-io', version: '2.11.0'
 }
 
 artifactory {
@@ -69,5 +70,3 @@ artifactory {
         }
     }
 }
-
-

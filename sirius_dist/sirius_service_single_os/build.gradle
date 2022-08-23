@@ -17,6 +17,8 @@ ext['jna.version'] = '5.4.0'
 
 dependencies {
     compile project(':sirius_rest_service')
+    implementation 'org.junit.jupiter:junit-jupiter:5.8.2'
+    testCompile project(':sirius_dist').sourceSets.test.output //needed for the TestLocal tests
 }
 
 configurations.all {
