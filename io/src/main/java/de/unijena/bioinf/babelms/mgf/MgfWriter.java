@@ -26,6 +26,7 @@ import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.babelms.DataWriter;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -54,8 +55,11 @@ public class MgfWriter implements DataWriter<Ms2Experiment> {
 
     @Override
     public void write(BufferedWriter writer, Ms2Experiment data) throws IOException {
+        write(writer, data, data.getName());
+    }
+
+    public void write(BufferedWriter writer, Ms2Experiment data, @NotNull String featureId) throws IOException {
         List<String> additionalInfo = createAdditionalInfo(data);
-        String id = data.getName();
         double mass = data.getIonMass();
         int charge = data.getPrecursorIonType().getCharge();
         String adduct = data.getPrecursorIonType().isIonizationUnknown() ? null : data.getPrecursorIonType().toString();
@@ -65,20 +69,20 @@ public class MgfWriter implements DataWriter<Ms2Experiment> {
             final Spectrum<Peak> mergedMs1 = data.getMergedMs1Spectrum();
             final boolean hasMerged = (mergedMs1 != null && mergedMs1.size() > 0);
             if (hasMerged) {
-                writeMs1(writer, data.getMergedMs1Spectrum(), id, mass, charge, adduct, true, additionalInfo);
+                writeMs1(writer, data.getMergedMs1Spectrum(), featureId, mass, charge, adduct, true, additionalInfo);
             }
 
             for (Spectrum spec : data.getMs1Spectra()) {
-                writeMs1(writer, spec, id, mass, charge, adduct, false, hasMerged ? null : additionalInfo);
+                writeMs1(writer, spec, featureId, mass, charge, adduct, false, hasMerged ? null : additionalInfo);
             }
 
         }
         if (mergedMs2) {
             Ms2Spectrum mergedMs2 = mergeMs2Spectra(data);
-            writeMs2(writer, mergedMs2, id, mass, charge, adduct, writeMs1 ? null : additionalInfo);
+            writeMs2(writer, mergedMs2, featureId, mass, charge, adduct, writeMs1 ? null : additionalInfo);
         } else {
             for (Ms2Spectrum spec : data.getMs2Spectra()) {
-                writeMs2(writer, spec, id, mass, charge, adduct, writeMs1 ? null : additionalInfo);
+                writeMs2(writer, spec, featureId, mass, charge, adduct, writeMs1 ? null : additionalInfo);
             }
         }
     }
@@ -109,11 +113,11 @@ public class MgfWriter implements DataWriter<Ms2Experiment> {
     }
 
 
-    private void writeMs1(BufferedWriter writer, Spectrum<Peak> spec, String name, double precursorMass, int charge, String adduct, boolean isMergedSpectrum, List<String> additionalInfos) throws IOException {
+    private void writeMs1(BufferedWriter writer, Spectrum<Peak> spec, String featureId, double precursorMass, int charge, String adduct, boolean isMergedSpectrum, List<String> additionalInfos) throws IOException {
         if (spec != null) {
             writer.write("BEGIN IONS");
             writer.newLine();
-            writer.write("FEATURE_ID=" + name);
+            writer.write("FEATURE_ID=" + featureId);
             writer.newLine();
             writer.write("PEPMASS=" + String.valueOf(precursorMass));
             writer.newLine();
@@ -142,11 +146,11 @@ public class MgfWriter implements DataWriter<Ms2Experiment> {
         }
     }
 
-    private void writeMs2(BufferedWriter writer, Ms2Spectrum spec, String name, double precursorMass, int charge, String adduct, List<String> additionalInfos) throws IOException {
+    private void writeMs2(BufferedWriter writer, Ms2Spectrum spec, String featureId, double precursorMass, int charge, String adduct, List<String> additionalInfos) throws IOException {
         if (spec != null) { //don't filter empty spectra. this might destroy mapping
             writer.write("BEGIN IONS");
             writer.newLine();
-            writer.write("FEATURE_ID=" + name);
+            writer.write("FEATURE_ID=" + featureId);
             writer.newLine();
             writer.write("PEPMASS=" + String.valueOf(precursorMass));
             writer.newLine();

@@ -43,29 +43,6 @@ import java.util.*;
 import java.util.function.Supplier;
 
 public class SiriusConfigUtils {
-    //this is for Spring Boot support
-    private static ClassLoader ENFORCED_CLASSLOADER = null;
-
-    public static ClassLoader getEnforcedClassloader() {
-        return ENFORCED_CLASSLOADER;
-    }
-
-    public static void setEnforcedClassloader(ClassLoader enforcedClassloader) {
-        ENFORCED_CLASSLOADER = enforcedClassloader;
-    }
-
-    private static <R> R withECL(Supplier<R> doWith) {
-        if (ENFORCED_CLASSLOADER == null)
-            return doWith.get();
-
-        final ClassLoader old = Thread.currentThread().getContextClassLoader();
-        try {
-            Thread.currentThread().setContextClassLoader(ENFORCED_CLASSLOADER);
-            return doWith.get();
-        } finally {
-            Thread.currentThread().setContextClassLoader(old);
-        }
-    }
 
 
     private static ReadWriteSynchronizer getSynchronizer() {
@@ -92,47 +69,34 @@ public class SiriusConfigUtils {
     }
 
     public static @NotNull PropertiesConfiguration newConfiguration(@Nullable File file) {
-        return withECL(() -> {
-            PropertiesConfiguration c;
-            if (System.getProperties().contains("de.unijena.bioinf.ms.cpHack")) {
-                c = new PropertiesConfiguration();
-            } else {
-                try {
-                    c = new FileBasedConfigurationBuilder<>(PropertiesConfiguration.class).configure(makeConfigProps(file)).getConfiguration();
-                } catch (ConfigurationException e) {
-                    System.err.println("WARNING: Error during PropertiesConfiguration initialization");
-                    e.printStackTrace();
-                    c = new PropertiesConfiguration();
-                }
-            }
-            c.setSynchronizer(getSynchronizer());
-            return c;
-        });
+        PropertiesConfiguration c;
+        try {
+            c = new FileBasedConfigurationBuilder<>(PropertiesConfiguration.class).configure(makeConfigProps(file)).getConfiguration();
+        } catch (ConfigurationException e) {
+            System.err.println("WARNING: Error during PropertiesConfiguration initialization");
+            e.printStackTrace();
+            c = new PropertiesConfiguration();
+        }
+        c.setSynchronizer(getSynchronizer());
+        return c;
     }
 
     public static @NotNull PropertiesConfiguration newConfiguration(@NotNull PropertyFileWatcher watcher) {
-        return withECL(() -> {
-            PropertiesConfiguration c;
-            if (System.getProperties().contains("de.unijena.bioinf.ms.cpHack")) {
-                c = new PropertiesConfiguration();
-            } else {
-                try {
-                    ReloadingFileBasedConfigurationBuilder<PropertiesConfiguration> builder =
-                            new ReloadingFileBasedConfigurationBuilder<>(PropertiesConfiguration.class)
-                                    .configure(makeConfigProps(watcher.getFile().toFile()));
-                    watcher.setController(builder.getReloadingController());
-                    c = builder.getConfiguration();
+        PropertiesConfiguration c;
+        try {
+            ReloadingFileBasedConfigurationBuilder<PropertiesConfiguration> builder =
+                    new ReloadingFileBasedConfigurationBuilder<>(PropertiesConfiguration.class)
+                            .configure(makeConfigProps(watcher.getFile().toFile()));
+            watcher.setController(builder.getReloadingController());
+            c = builder.getConfiguration();
 
-                } catch (ConfigurationException e) {
-                    System.err.println("WARNING: Error during PropertiesConfiguration initialization with auto reloading");
-                    e.printStackTrace();
-                    c = new PropertiesConfiguration();
-                }
-            }
-            c.setSynchronizer(getSynchronizer());
-            return c;
-        });
-
+        } catch (ConfigurationException e) {
+            System.err.println("WARNING: Error during PropertiesConfiguration initialization with auto reloading");
+            e.printStackTrace();
+            c = new PropertiesConfiguration();
+        }
+        c.setSynchronizer(getSynchronizer());
+        return c;
     }
 
 
@@ -168,25 +132,22 @@ public class SiriusConfigUtils {
     }
 
     public static PropertiesConfiguration makeConfigFromStream(@NotNull final String resource, @Nullable PropertiesConfigurationLayout layout) {
-        return withECL(() -> {
-            final PropertiesConfiguration config = newConfiguration();
-            try (InputStream input = PropertyManager.class.getResourceAsStream("/" + resource)) {
-                if (input != null) {
-                    if (layout != null) {
-                        layout.load(config, new InputStreamReader(input));
-                    } else {
-                        new FileHandler(config).load(input);
-                    }
+        final PropertiesConfiguration config = newConfiguration();
+        try (InputStream input = PropertyManager.class.getResourceAsStream("/" + resource)) {
+            if (input != null) {
+                if (layout != null) {
+                    layout.load(config, new InputStreamReader(input));
+                } else {
+                    new FileHandler(config).load(input);
                 }
-
-            } catch (ConfigurationException | IOException e) {
-                System.err.println("Could not load properties from " + resource);
-                e.printStackTrace();
             }
 
-            return config;
-        });
+        } catch (ConfigurationException | IOException e) {
+            System.err.println("Could not load properties from " + resource);
+            e.printStackTrace();
+        }
 
+        return config;
     }
 
     public static PropertiesConfiguration makeConfigFromStream(@NotNull final InputStream input) throws ConfigurationException {
