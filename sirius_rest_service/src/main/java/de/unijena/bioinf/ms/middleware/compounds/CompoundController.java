@@ -81,7 +81,7 @@ public class CompoundController extends BaseApiController {
      * @return CompoundIds with additional annotations and MS/MS data (if specified).
      */
     @GetMapping(value = "/compounds", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<CompoundId> getCompounds(@PathVariable String projectId, @RequestParam(required = false) boolean topAnnotation, @RequestParam(required = false) boolean msData) {
+    public List<CompoundId> getCompounds(@PathVariable String projectId, @RequestParam(required = false, defaultValue = "false") boolean topAnnotation, @RequestParam(required = false, defaultValue = "false") boolean msData) {
         LoggerFactory.getLogger(CompoundController.class).info("Started collecting compounds...");
         final ProjectSpaceManager<?> space = projectSpace(projectId);
 
