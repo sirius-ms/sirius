@@ -33,12 +33,12 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class AnnotatedSpectrum implements OrderedSpectrum<Peak> {
-    private Integer mslevel = null;
-    private CollisionEnergy collisionEnergy = null;
+public class AnnotatedSpectrum {
+    @Nullable private Integer mslevel = null;
+    @Nullable private CollisionEnergy collisionEnergy = null;
     private AnnotatedPeak[] peaks;
 
-    public AnnotatedSpectrum(Spectrum<Peak> spec) {
+    public AnnotatedSpectrum(@NotNull Spectrum<Peak> spec) {
         this(Spectrums.copyMasses(spec), Spectrums.copyIntensities(spec));
     }
 
@@ -47,8 +47,15 @@ public class AnnotatedSpectrum implements OrderedSpectrum<Peak> {
     }
 
     public AnnotatedSpectrum(double[] masses, double[] intensities, @Nullable PeakAnnotation[] peakAnnotations) {
-        peaks = new AnnotatedPeak[masses.length];
+        if (masses == null)
+            throw new IllegalArgumentException("Masses are Null but must be non Null.");
+        if (intensities == null)
+            throw new IllegalArgumentException("Intensities are Null but must be non Null.");
 
+        if (masses.length != intensities.length)
+            throw new IllegalArgumentException("Masses and Intensities do not have same length but must have.");
+
+        peaks = new AnnotatedPeak[masses.length];
         if (peakAnnotations != null) {
             for (int i = 0; i < masses.length; i++)
                 peaks[i] = new AnnotatedPeak(masses[i], intensities[i], peakAnnotations[i]);
@@ -76,13 +83,11 @@ public class AnnotatedSpectrum implements OrderedSpectrum<Peak> {
         return Arrays.stream(peaks).mapToDouble(AnnotatedPeak::getIntensity).toArray();
     }
 
-    @Override
     @JsonIgnore
     public double getMzAt(int index) {
         return peaks[index].getMass();
     }
 
-    @Override
     @JsonIgnore
     public double getIntensityAt(int index) {
         return peaks[index].getMass();
@@ -94,20 +99,17 @@ public class AnnotatedSpectrum implements OrderedSpectrum<Peak> {
     }
 
 
-    @Override
     @JsonIgnore
     public Peak getPeakAt(int index) {
         return peaks[index];
     }
 
-    @Override
     @JsonIgnore
     public int size() {
         return peaks.length;
     }
 
     @NotNull
-    @Override
     @JsonIgnore
     public Iterator<Peak> iterator() {
         return new Iterator<>() {
@@ -125,33 +127,31 @@ public class AnnotatedSpectrum implements OrderedSpectrum<Peak> {
         };
     }
 
-    @Override
     @JsonIgnore
     public boolean isEmpty() {
-        return OrderedSpectrum.super.isEmpty();
+        return peaks.length == 0;
     }
 
-    @Override
+    @Nullable
     public CollisionEnergy getCollisionEnergy() {
         return collisionEnergy;
     }
 
-    @Override
-    public int getMsLevel() {
+    @Nullable
+    public Integer getMsLevel() {
         return mslevel;
     }
 
-    public void setMslevel(int mslevel) {
+    public void setMslevel(@Nullable Integer mslevel) {
         this.mslevel = mslevel;
     }
 
-    public void setCollisionEnergy(CollisionEnergy collisionEnergy) {
+    public void setCollisionEnergy(@Nullable CollisionEnergy collisionEnergy) {
         this.collisionEnergy = collisionEnergy;
     }
 
-    @Override
     @JsonIgnore
     public double getMaxIntensity() {
-        return OrderedSpectrum.super.getMaxIntensity();
+        return Arrays.stream(peaks).mapToDouble(AnnotatedPeak::getIntensity).max().orElse(Double.NaN);
     }
 }
