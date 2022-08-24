@@ -212,7 +212,7 @@ public class CompoundController extends BaseApiController {
                         return cSum;
 
                     });
-        }).orElse(null);
+        }).orElseGet(CompoundAnnotation::new);
     }
 
     private MsData asCompoundMsData(Instance instance) {
