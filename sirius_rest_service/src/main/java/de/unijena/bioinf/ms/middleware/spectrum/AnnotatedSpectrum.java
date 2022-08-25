@@ -33,8 +33,12 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class AnnotatedSpectrum {
-    @Nullable private Integer mslevel = null;
+public class AnnotatedSpectrum implements OrderedSpectrum<Peak> {
+    /**
+     * MS level of the measured spectrum.
+     * Artificial spectra with no msLevel (e.g. Simulated Isotope patterns) use 0
+     */
+    @Nullable private int msLevel = 0;
     @Nullable private CollisionEnergy collisionEnergy = null;
     private AnnotatedPeak[] peaks;
 
@@ -83,11 +87,13 @@ public class AnnotatedSpectrum {
         return Arrays.stream(peaks).mapToDouble(AnnotatedPeak::getIntensity).toArray();
     }
 
+    @Override
     @JsonIgnore
     public double getMzAt(int index) {
         return peaks[index].getMass();
     }
 
+    @Override
     @JsonIgnore
     public double getIntensityAt(int index) {
         return peaks[index].getMass();
@@ -99,17 +105,20 @@ public class AnnotatedSpectrum {
     }
 
 
+    @Override
     @JsonIgnore
     public Peak getPeakAt(int index) {
         return peaks[index];
     }
 
+    @Override
     @JsonIgnore
     public int size() {
         return peaks.length;
     }
 
     @NotNull
+    @Override
     @JsonIgnore
     public Iterator<Peak> iterator() {
         return new Iterator<>() {
@@ -127,6 +136,7 @@ public class AnnotatedSpectrum {
         };
     }
 
+    @Override
     @JsonIgnore
     public boolean isEmpty() {
         return peaks.length == 0;
@@ -137,13 +147,18 @@ public class AnnotatedSpectrum {
         return collisionEnergy;
     }
 
-    @Nullable
-    public Integer getMsLevel() {
-        return mslevel;
+    @Override
+    public int getMsLevel() {
+        return msLevel;
     }
 
-    public void setMslevel(@Nullable Integer mslevel) {
-        this.mslevel = mslevel;
+    public void setMsLevel(int msLevel) {
+        this.msLevel = msLevel;
+    }
+
+    @JsonIgnore
+    public boolean hasMsLevel(){
+        return getMsLevel() > 0;
     }
 
     public void setCollisionEnergy(@Nullable CollisionEnergy collisionEnergy) {
