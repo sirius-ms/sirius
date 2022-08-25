@@ -25,6 +25,8 @@ import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * Identifier created by the SIRIUS Nightsky API for a newly created Job.
  * Object can be enriched with Job status/progress information ({@link JobProgress}) and/or Job command information.
@@ -48,4 +50,11 @@ public class JobId {
      */
     @Nullable
     JobProgress progress;
+
+    /**
+     * List of compound ids that are affected by this job.
+     * If this job is creating compounds (e.g. data import jobs) this value will be 0 until the jobs has finished
+     */
+    @Nullable
+    List<String> affectedCompoundIds;
 }

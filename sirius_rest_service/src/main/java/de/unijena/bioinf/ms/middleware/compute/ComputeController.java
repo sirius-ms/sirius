@@ -49,15 +49,17 @@ public class ComputeController extends BaseApiController {
      * @param projectId      project-space to run jobs on
      * @param includeState   include {@link de.unijena.bioinf.ms.middleware.compute.model.JobProgress} states.
      * @param includeCommand include job commands.
+     * @param includeAffectedCompounds include list of compound ids affected by this job (if available)
      */
 
     @GetMapping(value = "/projects/{projectId}/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public List<JobId> getJobs(@PathVariable String projectId,
                                @RequestParam(required = false, defaultValue = "false") boolean includeState,
-                               @RequestParam(required = false, defaultValue = "false") boolean includeCommand
+                               @RequestParam(required = false, defaultValue = "false") boolean includeCommand,
+                               @RequestParam(required = false, defaultValue = "false") boolean includeAffectedCompounds
     ) {
-        return computeContext.getJobs(projectSpace(projectId), includeState, includeCommand);
+        return computeContext.getJobs(projectSpace(projectId), includeState, includeCommand, includeAffectedCompounds);
     }
 
     /**
@@ -67,14 +69,16 @@ public class ComputeController extends BaseApiController {
      * @param jobId          of the job to be returned
      * @param includeState   include {@link de.unijena.bioinf.ms.middleware.compute.model.JobProgress} state.
      * @param includeCommand include job command.
+     * @param includeAffectedCompounds include list of compound ids affected by this job (if available)
      */
     @GetMapping(value = "/projects/{projectId}/jobs/{jobId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public JobId getJob(@PathVariable String projectId, @PathVariable String jobId,
                         @RequestParam(required = false, defaultValue = "true") boolean includeState,
-                        @RequestParam(required = false, defaultValue = "false") boolean includeCommand
+                        @RequestParam(required = false, defaultValue = "false") boolean includeCommand,
+                        @RequestParam(required = false, defaultValue = "false") boolean includeAffectedCompounds
     ) {
-        return computeContext.getJob(projectSpace(projectId), jobId, includeState, includeCommand);
+        return computeContext.getJob(projectSpace(projectId), jobId, includeState, includeCommand, includeAffectedCompounds);
     }
 
     /**
@@ -84,14 +88,16 @@ public class ComputeController extends BaseApiController {
      * @param jobSubmission  configuration of the job that will be submitted of the job to be returned
      * @param includeState   include {@link de.unijena.bioinf.ms.middleware.compute.model.JobProgress} state.
      * @param includeCommand include job command.
+     * @param includeAffectedCompounds include list of compound ids affected by this job (if available)
      */
     @PostMapping(value = "/projects/{projectId}/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.ACCEPTED)
     public JobId startJob(@PathVariable String projectId, @RequestBody JobSubmission jobSubmission,
                           @RequestParam(required = false, defaultValue = "true") boolean includeState,
-                          @RequestParam(required = false, defaultValue = "true") boolean includeCommand
+                          @RequestParam(required = false, defaultValue = "true") boolean includeCommand,
+                          @RequestParam(required = false, defaultValue = "false") boolean includeAffectedCompounds
     ) {
-        return computeContext.createAndSubmitJob(projectSpace(projectId), jobSubmission, includeState, includeCommand);
+        return computeContext.createAndSubmitJob(projectSpace(projectId), jobSubmission, includeState, includeCommand, includeAffectedCompounds);
     }
 
     /**
@@ -110,7 +116,7 @@ public class ComputeController extends BaseApiController {
                           @PathVariable String jobId,
                           @RequestParam(required = false, defaultValue = "true") boolean cancelIfRunning,
                           @RequestParam(required = false, defaultValue = "true") boolean awaitDeletion) {
-        computeContext.deleteJob(projectSpace(projectId), jobId, false, false, cancelIfRunning, awaitDeletion);
+        computeContext.deleteJob(projectSpace(projectId), jobId, false, false, false, cancelIfRunning, awaitDeletion);
     }
 
     /**
