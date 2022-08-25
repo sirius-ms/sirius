@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.gui.compute.jjobs;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.ms.frontend.BackgroundRuns;
+import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.actions.ShowJobsDialogAction;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.logging.TextAreaJJobContainer;
@@ -37,11 +38,10 @@ import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
@@ -53,7 +53,7 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
  * 3. Allows to manage task execution in Swing and JFX GUI threads.
  */
 public class Jobs {
-    public static SwingJobManager MANAGER(){
+    public static SwingJobManager MANAGER() {
         return (SwingJobManager) SiriusJobs.getGlobalJobManager();
     }
 
@@ -216,12 +216,17 @@ public class Jobs {
     }
 
     public static TextAreaJJobContainer<Boolean> runCommand(@Nullable List<String> command, List<InstanceBean> compoundsToProcess, @Nullable String description) throws IOException {
+        return runCommand(command, compoundsToProcess, null, description);
+    }
+
+    public static TextAreaJJobContainer<Boolean> runCommand(@Nullable List<String> command, List<InstanceBean> compoundsToProcess,  @Nullable InputFilesOptions input, @Nullable String description) throws IOException {
         BackgroundRuns.BackgroundRunJob<GuiProjectSpaceManager, InstanceBean> job =
-                BackgroundRuns.makeBackgroundRun(command, compoundsToProcess, MF.ps());
+                BackgroundRuns.makeBackgroundRun(command, compoundsToProcess, input, MF.ps());
 
         return submit(job, job.getRunId() + ": " + (description == null ? "" : description),
                 "Computation");
     }
+
     public static void cancelAllRuns() {
         BackgroundRuns.cancelAllRuns();
     }

@@ -23,6 +23,7 @@ package de.unijena.bioinf.ms.middleware.compute.model;
 import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.jjobs.JobStateEvent;
 import de.unijena.bioinf.ms.frontend.BackgroundRuns;
+import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.middleware.SiriusContext;
 import de.unijena.bioinf.ms.middleware.compute.model.tools.Tool;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
@@ -35,6 +36,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import picocli.CommandLine;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -53,28 +55,66 @@ public class ComputeContext {
         this.siriusContext = siriusContext;
     }
 
-    public <I extends Instance, P extends ProjectSpaceManager<I>> JobId createAndSubmitJob(P psm, JobSubmission jobSubmission, boolean progress, boolean command) {
-        List<CompoundContainerId> compounds = new ArrayList<>(jobSubmission.compoundIds.size());
-        for (String cid : jobSubmission.compoundIds) {
-            compounds.add(psm.projectSpace().findCompound(cid).orElseThrow(() ->
-                    new ResponseStatusException(HttpStatus.NO_CONTENT, "Compound with id '" + cid + "' does not exist!'. No job has been started!")));
+    public <I extends Instance, P extends ProjectSpaceManager<I>> JobId createAndSubmitJob(P psm, JobSubmission jobSubmission, boolean progress, boolean command, boolean effectedCompounds) {
+        List<CompoundContainerId> compounds = null;
+
+        if (jobSubmission.compoundIds != null && !jobSubmission.compoundIds.isEmpty()) {
+            compounds = new ArrayList<>(jobSubmission.compoundIds.size());
+            for (String cid : jobSubmission.compoundIds) {
+                compounds.add(psm.projectSpace().findCompound(cid).orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.NO_CONTENT, "Compound with id '" + cid + "' does not exist!'. No job has been started!")));
+            }
         }
 
         try {
             List<String> commandList = makeCommand(jobSubmission);
             BackgroundRuns.BackgroundRunJob<P, I> run = BackgroundRuns.runCommand(commandList, compounds, psm);
-            return extractJobId(run, progress, command);
+            return extractJobId(run, progress, command, effectedCompounds);
         } catch (Exception e) {
             log.error("Cannot create Job Command!", e);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot create Job Command!", e);
         }
     }
 
-    public JobId deleteJob(String jobId, boolean progress, boolean command, boolean cancelIfRunning, boolean awaitDeletion) {
-        return deleteJob(null, jobId, progress, command, cancelIfRunning, awaitDeletion);
+    public <I extends Instance, P extends ProjectSpaceManager<I>> JobId createAndSubmitJob(P psm, List<String> commandList, @Nullable Iterable<I> instances, @Nullable InputFilesOptions toImport, boolean progress, boolean command, boolean effectedCompounds) {
+        try {
+            BackgroundRuns.BackgroundRunJob<P, I> run = BackgroundRuns.runCommand(commandList, instances, toImport, psm);
+            return extractJobId(run, progress, command, effectedCompounds);
+        } catch (Exception e) {
+            log.error("Cannot create Job Command!", e);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot create Job Command!", e);
+        }
     }
 
-    public JobId deleteJob(@Nullable ProjectSpaceManager<?> psm, String jobId, boolean progress, boolean command, boolean cancelIfRunning, boolean awaitDeletion) {
+    public <I extends Instance, P extends ProjectSpaceManager<I>> JobId createAndSubmitImportJob(P psm,
+                                                                                                 List<String> inputPaths,
+                                                                                                 boolean allowMs1OnlyData,
+                                                                                                 boolean ignoreFormulas,
+                                                                                                 boolean alignLCMSRuns,
+                                                                                                 boolean progress,
+                                                                                                 boolean command,
+                                                                                                 boolean effectedCompounds) {
+        InputFilesOptions inputFiles = new InputFilesOptions();
+        inputFiles.msInput = new InputFilesOptions.MsInput();
+        inputFiles.msInput.setAllowMS1Only(allowMs1OnlyData);
+        inputFiles.msInput.setIgnoreFormula(ignoreFormulas);
+        inputFiles.msInput.setInputPath(inputPaths.stream().map(Path::of).collect(Collectors.toList()));
+
+        alignLCMSRuns = alignLCMSRuns && inputFiles.msInput.msParserfiles.keySet().stream()
+                .anyMatch(p -> p.getFileName().toString().toLowerCase().endsWith("mzml")
+                        || p.getFileName().toString().toLowerCase().endsWith("mzxml"));
+        System.out.println("Alignment: " + alignLCMSRuns);
+
+        return createAndSubmitJob(psm, alignLCMSRuns ? List.of("lcms-align") : List.of("project-space"),
+                null, inputFiles, progress, command, effectedCompounds);
+    }
+
+
+    public JobId deleteJob(String jobId, boolean progress, boolean command, boolean effectedCompounds, boolean cancelIfRunning, boolean awaitDeletion) {
+        return deleteJob(null, jobId, progress, command, effectedCompounds, cancelIfRunning, awaitDeletion);
+    }
+
+    public JobId deleteJob(@Nullable ProjectSpaceManager<?> psm, String jobId, boolean progress, boolean command, boolean effectedCompounds, boolean cancelIfRunning, boolean awaitDeletion) {
         BackgroundRuns.BackgroundRunJob<?, ?> j = getJob(psm, jobId);
         if (j.isFinished()) {
             BackgroundRuns.removeRun(j.getRunId());
@@ -93,7 +133,7 @@ public class ComputeContext {
                 });
             }
         }
-        return extractJobId(j, progress, command);
+        return extractJobId(j, progress, command, effectedCompounds);
     }
 
     public BackgroundRuns.BackgroundRunJob<?, ?> getJob(@Nullable ProjectSpaceManager<?> psm, String jobId) {
@@ -112,31 +152,40 @@ public class ComputeContext {
         }
     }
 
-    public JobId getJob(@Nullable ProjectSpaceManager<?> psm, String jobId, boolean progress, boolean command) {
-        return extractJobId(getJob(psm, jobId), progress, command);
+    public JobId getJob(@Nullable ProjectSpaceManager<?> psm, String jobId, boolean progress, boolean command, boolean effectedCompounds) {
+        return extractJobId(getJob(psm, jobId), progress, command, effectedCompounds);
     }
 
-    public List<JobId> getJobs(boolean progress, boolean command) {
-        return getJobs(null, progress, command);
+    public List<JobId> getJobs(boolean progress, boolean command, boolean effectedCompounds) {
+        return getJobs(null, progress, command, effectedCompounds);
     }
 
-    public List<JobId> getJobs(@Nullable ProjectSpaceManager<?> psm, boolean progress, boolean command) {
+    public List<JobId> getJobs(@Nullable ProjectSpaceManager<?> psm, boolean progress, boolean command, boolean effectedCompounds) {
         return BackgroundRuns.getActiveRunIdMap().values().stream()
                 .filter(j -> psm == null || psm.equals(j.getProject()))
-                .map(j -> extractJobId(j, progress, command))
+                .map(j -> extractJobId(j, progress, command, effectedCompounds))
                 .collect(Collectors.toList());
     }
 
 
-    protected JobId extractJobId(BackgroundRuns.BackgroundRunJob<?, ?> runJob, boolean progress, boolean command) {
+    protected JobId extractJobId(BackgroundRuns.BackgroundRunJob<?, ?> runJob, boolean progress, boolean command, boolean effectedCompounds) {
         JobId id = new JobId();
         id.setId(String.valueOf(runJob.getRunId()));
         if (command)
             id.setCommand(runJob.getCommand());
         if (progress)
             id.setProgress(extractProgress(runJob));
+        if (effectedCompounds)
+            id.setAffectedCompoundIds(extractEffectedCompounds(runJob));
 
         return id;
+    }
+
+    private List<String> extractEffectedCompounds(BackgroundRuns.BackgroundRunJob<?, ?> runJob) {
+
+        if (runJob.getInstanceIds() == null || runJob.getInstanceIds().isEmpty())
+            return List.of();
+        return runJob.getInstanceIds().stream().map(CompoundContainerId::getDirectoryName).collect(Collectors.toList());
     }
 
     protected JobProgress extractProgress(BackgroundRuns.BackgroundRunJob<?, ?> runJob) {
