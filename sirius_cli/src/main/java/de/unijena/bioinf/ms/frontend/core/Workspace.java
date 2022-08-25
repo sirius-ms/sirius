@@ -36,6 +36,8 @@ public class Workspace {
     public static final Path customProfileFile;
     public static final Path versionFile;
 
+    public static final Path runConfigDir;
+
     static {
         try {
             System.setProperty("de.unijena.bioinf.ms.propertyLocations", "sirius_frontend.build.properties");
@@ -87,6 +89,9 @@ public class Workspace {
             siriusPropsFile = WORKSPACE.resolve("sirius.properties");
             customProfileFile = WORKSPACE.resolve("custom.config");
             versionFile = WORKSPACE.resolve("version");
+            runConfigDir = WORKSPACE.resolve("run-configs");
+
+            Files.createDirectories(runConfigDir);
         } catch (Exception e) {
             System.err.println("Workspace Core STATIC Block Error!");
             e.printStackTrace(System.err);
