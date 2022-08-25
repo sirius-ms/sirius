@@ -53,7 +53,7 @@ public class JobId {
 
     /**
      * List of compound ids that are affected by this job.
-     * If this job is creating compounds (e.g. data import jobs) this value will be 0 until the jobs has finished
+     * If this job is creating compounds (e.g. data import jobs) this value will be NULL until the jobs has finished
      */
     @Nullable
     List<String> affectedCompoundIds;
