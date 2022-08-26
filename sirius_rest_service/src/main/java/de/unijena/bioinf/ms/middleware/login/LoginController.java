@@ -57,6 +57,7 @@ public class LoginController {
      */
     @PostMapping(value = "/login", produces = MediaType.APPLICATION_JSON_VALUE)
     public AccountInfo login(@RequestBody AccountCredentials credentials,
+                             @RequestParam boolean acceptTerms,
                              @RequestParam(required = false, defaultValue = "false") boolean failWhenLoggedIn,
                              @RequestParam(required = false, defaultValue = "false") boolean includeSubs
     ) throws IOException, ExecutionException, InterruptedException {
@@ -68,6 +69,8 @@ public class LoginController {
                 as.logout();
         }
         as.login(credentials.getUsername(), credentials.getPassword());
+        if (acceptTerms)
+            ApplicationCore.WEB_API.acceptTermsAndRefreshToken();
         return getAccountInfo(includeSubs);
     }
 
