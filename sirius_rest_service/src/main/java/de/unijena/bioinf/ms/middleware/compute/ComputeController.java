@@ -127,11 +127,11 @@ public class ComputeController extends BaseApiController {
      */
     @PostMapping(value = "/projects/{projectId}/jobs-from-config", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public JobId startJob(@PathVariable String projectId, @RequestParam String jobConfigName, @RequestBody List<String> compoundIds,
-                          @RequestParam(required = false) @Nullable Boolean recompute,
-                          @RequestParam(required = false, defaultValue = "true") boolean includeState,
-                          @RequestParam(required = false, defaultValue = "true") boolean includeCommand,
-                          @RequestParam(required = false, defaultValue = "false") boolean includeAffectedCompounds
+    public JobId startJobFromConfig(@PathVariable String projectId, @RequestParam String jobConfigName, @RequestBody List<String> compoundIds,
+                                    @RequestParam(required = false) @Nullable Boolean recompute,
+                                    @RequestParam(required = false, defaultValue = "true") boolean includeState,
+                                    @RequestParam(required = false, defaultValue = "true") boolean includeCommand,
+                                    @RequestParam(required = false, defaultValue = "false") boolean includeAffectedCompounds
     ) {
         final JobSubmission js = getJobConfig(jobConfigName, true);
         js.setCompoundIds(compoundIds);
