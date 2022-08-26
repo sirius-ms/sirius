@@ -21,6 +21,8 @@
 package de.unijena.bioinf.ms.middleware.compute.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ms.middleware.compute.model.tools.*;
@@ -41,6 +43,8 @@ import java.util.stream.Stream;
  */
 @Getter
 @Setter
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class JobSubmission {
     /**
      * Compounds that should be the input for this Job

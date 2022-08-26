@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.compute;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.frontend.core.Workspace;
@@ -182,6 +183,7 @@ public class ComputeController extends BaseApiController {
     @ResponseStatus(HttpStatus.OK)
     public List<JobSubmission> getJobConfigs(@RequestParam(required = false, defaultValue = "false") boolean includeConfigMap) {
         final ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         try {
             List<JobSubmission> js = FileUtils.listAndClose(Workspace.runConfigDir, s -> s.filter(Files::isRegularFile).map(config -> {
                 try (InputStream inputStream = Files.newInputStream(config)) {
@@ -223,7 +225,8 @@ public class ComputeController extends BaseApiController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Job-config with name '" + name + "' does not exist.");
 
         try (InputStream s = Files.newInputStream(config)) {
-            JobSubmission js = new ObjectMapper().readValue(s, JobSubmission.class);
+            JobSubmission js = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                    .readValue(s, JobSubmission.class);
             if (!includeConfigMap) js.setConfigMap(null);
             return js;
 
@@ -234,13 +237,13 @@ public class ComputeController extends BaseApiController {
     }
 
     /**
-     * Request job configuration with given name.
+     * Add new job configuration with given name.
      *
      * @param name      name of the job-config to add
      * @param jobConfig to add
      * @return Probably modified name of the config (to ensure filesystem path compatibility).
      */
-    @PostMapping(value = "/job-configs/{name}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/job-configs/{name}", produces = MediaType.TEXT_PLAIN_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public String postJobConfig(@PathVariable String name, @RequestBody JobSubmission jobConfig, @RequestParam(required = false, defaultValue = "false") boolean overrideExisting) {
         name = name.replaceAll("\\W+", "_");
@@ -255,7 +258,7 @@ public class ComputeController extends BaseApiController {
         jobConfig.setCompoundIds(null);
 
         try (OutputStream s = Files.newOutputStream(config)) {
-            new ObjectMapper().writeValue(s, jobConfig);
+            new ObjectMapper().writerWithDefaultPrettyPrinter().writeValue(s, jobConfig);
             return name;
         } catch (IOException e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected Error when reading default config file.", e);
