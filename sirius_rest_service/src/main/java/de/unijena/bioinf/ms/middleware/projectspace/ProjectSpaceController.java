@@ -103,7 +103,7 @@ public class ProjectSpaceController extends BaseApiController {
         ProjectSpaceId pid = context.createProjectSpace(projectId, Path.of(pathToProject));
         ProjectSpaceManager<?> space = projectSpace(projectId);
         if (inputFiles != null) {
-            JobId id = computeContext.createAndSubmitJob(space, List.of("project-space"),
+            JobId id = computeContext.createAndSubmitJob(space, List.of("project-space", "--keep-open"),
                     null, inputFiles, true, true, true);
             if (awaitImport){
                 try {

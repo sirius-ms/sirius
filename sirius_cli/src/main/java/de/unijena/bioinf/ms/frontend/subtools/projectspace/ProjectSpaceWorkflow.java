@@ -208,7 +208,8 @@ public class ProjectSpaceWorkflow implements Workflow, ProgressSupport {
                 } catch (ExecutionException e) {
                     LoggerFactory.getLogger(getClass()).error("Error when filtering Project(s)!", e);
                 } finally {
-                    space.close();
+                    if (!projecSpaceOptions.keepProjectOpen)
+                        space.close();
                 }
             }
         } catch (IOException e) {

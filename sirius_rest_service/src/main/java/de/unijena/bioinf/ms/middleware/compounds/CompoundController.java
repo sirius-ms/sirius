@@ -129,7 +129,7 @@ public class CompoundController extends BaseApiController {
                         || p.getFileName().toString().toLowerCase().endsWith("mzxml"));
         System.out.println("Alignment: " + alignLCMSRuns);
 
-        return computeContext.createAndSubmitJob(projectSpace(projectId), alignLCMSRuns ? List.of("lcms-align") : List.of("project-space"),
+        return computeContext.createAndSubmitJob(projectSpace(projectId), alignLCMSRuns ? List.of("lcms-align") : List.of("project-space", "--keep-open"),
                 null, inputFiles, true, true, true);
     }
 
