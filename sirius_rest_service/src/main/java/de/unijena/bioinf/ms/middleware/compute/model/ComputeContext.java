@@ -123,7 +123,14 @@ public class ComputeContext {
                 j.cancel();
             if (awaitDeletion) {
                 j.getResult(); //use state-lock to ensure that state is update when deleting cancelled job.
-                j.withStateLockDo(() ->  BackgroundRuns.removeRun(j.getRunId()));
+//                j.withStateLockDo(() ->  BackgroundRuns.removeRun(j.getRunId()));
+//                j.setState(cancelIfRunning ? JJob.JobState.CANCELED : JJob.JobState.DONE);
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    //ignore
+                }
+                BackgroundRuns.removeRun(j.getRunId());
             } else {
                 j.addPropertyChangeListener(JobStateEvent.JOB_STATE_EVENT, evt -> {
                     if (evt instanceof JobStateEvent) {
