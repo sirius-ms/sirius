@@ -20,9 +20,6 @@
 
 package de.unijena.bioinf.ms.middleware.login.model;
 
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.JsonIdentityReference;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.webapi.Tokens;
@@ -33,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 
 @Getter
 @Setter
@@ -45,9 +43,9 @@ public class AccountInfo {
     String gravatarURL;
     List<Subscription> subscriptions;
 
-    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "sid")
-    @JsonIdentityReference(alwaysAsId = true)
-    Subscription activeSubscription;
+//    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class)
+//    @JsonIdentityReference(alwaysAsId = true)
+    String activeSubscriptionId;
 
 
     public static AccountInfo of(AuthService.Token token, @Nullable Subscription activeSubscription, boolean includeSubscription) {
@@ -58,8 +56,9 @@ public class AccountInfo {
         Tokens.getUserImage(token).map(URI::toString).ifPresent(ai::setGravatarURL);
         if (includeSubscription) {
             ai.setSubscriptions(Tokens.getSubscriptions(token));
-            ai.setActiveSubscription(Tokens.getActiveSubscription(ai.getSubscriptions(),
-                    activeSubscription== null ? null : activeSubscription.getSid()));
+            ai.setActiveSubscriptionId(
+                    Optional.ofNullable(Tokens.getActiveSubscription(ai.getSubscriptions(),
+                    activeSubscription== null ? null : activeSubscription.getSid())).map(Subscription::getSid).orElse(null));
         }
         return ai;
     }
