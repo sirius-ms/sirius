@@ -132,6 +132,9 @@ public class ComputeContext {
                             BackgroundRuns.removeRun(jj.getRunId());
                     }
                 });
+                //may already have been finished during listener registration
+                if (j.isFinished())
+                    BackgroundRuns.removeRun(j.getRunId());
             }
         }
         return extractJobId(j, progress, command, effectedCompounds);
