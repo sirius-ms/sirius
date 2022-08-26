@@ -54,7 +54,7 @@ public class FBCandidateFingerprintSerializer implements ComponentSerializer<For
                 List<Fingerprint> fps = new ArrayList<>();
                 try (DataInputStream dis = new DataInputStream(br)) {
                     TShortArrayList shorts = new TShortArrayList(2000); //use it to reconstruct the array
-                    while (dis.available() > 0 && (numC == null || fps.size() < numC.value)) {
+                    while (dis.available() > 0 && (numC == null || numC.value <= 0 || fps.size() < numC.value)) {
                         short value = dis.readShort();
                         if (value < 0) {
                             fps.add(new ArrayFingerprint(fingerIdData.getFingerprintVersion(), shorts.toArray()));
