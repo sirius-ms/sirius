@@ -55,6 +55,10 @@ public class ProjecSpaceOptions implements StandaloneTool<ProjectSpaceWorkflow> 
     @CommandLine.Option(names = {"--merge-compounds-cosine"}, description = "Merge compounds which have the same spectra and m/z into one. The criteria for merging can be specified with --merge-compounds-cosine and --merge-compounds-rtdiff.")
     Double mergeCompoundsCosine;
 
+    @CommandLine.Option(names = {"--keep-open"},
+            description = "Keeps project space open (e.g. when running as Background Job)", hidden = true)
+    boolean keepProjectOpen = false;
+
     @CommandLine.Option(names = {"--merge-compounds-rtdiff"}, description = "Merge compounds which have the same spectra and m/z into one. The criteria for merging can be specified with --merge-compounds-cosine and --merge-compounds-rtdiff. Retention time difference for merging is either specified in seconds, or by adding a unit after the number (e.g., '5 min'")
     private void setMergeCompoundsRtDiff(String txt) {
         Matcher m = TMUNIT.matcher(txt);
