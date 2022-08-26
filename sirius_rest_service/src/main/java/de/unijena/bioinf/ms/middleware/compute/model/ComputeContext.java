@@ -123,6 +123,7 @@ public class ComputeContext {
                 j.cancel();
             if (awaitDeletion) {
                 j.getResult();
+                BackgroundRuns.removeRun(j.getRunId());
             } else {
                 j.addPropertyChangeListener(JobStateEvent.JOB_STATE_EVENT, evt -> {
                     if (evt instanceof JobStateEvent) {
