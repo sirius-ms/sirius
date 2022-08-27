@@ -41,7 +41,6 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 //todo set active subscription
-//todo accept terms
 @RestController
 @RequestMapping(value = "/api/account")
 @Tag(name = "Login and Account", description = "Perform signIn, signOut and signUp. Get tokens and account information.")
@@ -96,6 +95,16 @@ public class LoginController {
     }
 
     /**
+     * Check if a user is logged in.
+     *
+     * @return true if the user is logged in
+     */
+    @GetMapping(value = "/isLoggedIn", produces = MediaType.APPLICATION_JSON_VALUE)
+    public boolean isLoggedIn() {
+        return ApplicationCore.WEB_API.getAuthService().isLoggedIn();
+    }
+
+    /**
      * Get available subscriptions of the account currently logged in. Fails if not logged in.
      */
     @GetMapping(value = "/subscriptions", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -108,21 +117,21 @@ public class LoginController {
     /**
      * Get SignUp URL (For signUp via web browser)
      */
-    @GetMapping(value = "/signUpURL", produces = MediaType.APPLICATION_JSON_VALUE)
-    public URI getSignUpURL() throws URISyntaxException {
-        return ApplicationCore.WEB_API.getSignUpURL();
+    @GetMapping(value = "/signUpURL", produces = MediaType.TEXT_PLAIN_VALUE)
+    public String getSignUpURL() throws URISyntaxException {
+        return ApplicationCore.WEB_API.getSignUpURL().toString();
     }
 
 
     /**
      * Open SignUp window in system browser and return signUp link.
      */
-    @GetMapping(value = "/signUp", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/signUp", produces = MediaType.TEXT_PLAIN_VALUE)
     public String signUp() throws URISyntaxException {
-        URI path = getSignUpURL();
+        String path = getSignUpURL();
         try {
             if (Desktop.isDesktopSupported()) {
-                Desktop.getDesktop().browse(path);
+                Desktop.getDesktop().browse(URI.create(path));
             } else {
                 String message = "Could not detect system browser to open URL. Try visit Page Manually: " + path;
                 LoggerFactory.getLogger(getClass()).error("Desktop NOT supported: " + message);
