@@ -19,6 +19,13 @@ stages:
   - publish
 
 
+### TODO publishSiriusMSPublicationToMavenLocal statt distImage
+# für tests entzippen
+# per call und token in das Artifactory hochladen
+# https://www.jfrog.com/confluence/display/RTF4X/Artifactory+REST+API
+# deploy pom.xml und das zip File
+
+
 before_script:
   - dpkg-reconfigure -p critical ca-certificates
   - eval `ssh-agent -s`
@@ -86,6 +93,7 @@ buildAPI:
       - stable
 
 
+
 testCLI:
   stage: test
   script:
@@ -145,6 +153,8 @@ testAPI:
       - master-dist-tests
       - stable
 
+# ARTIFACTORY_USERNAME und ARTIFACTORY_TOKEN für API publish nutzen
+#
 
 publishCLI:
   variables:
@@ -152,7 +162,7 @@ publishCLI:
   stage: publish
   script:
     - cd sirius_dist/sirius_cli_single_os
-    - gradle clean artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
+    - artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -174,7 +184,7 @@ publishGUI:
   stage: publish
   script:
     - cd sirius_dist/sirius_gui_single_os
-    - gradle clean artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
+    - artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -194,8 +204,8 @@ publishAPI:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   stage: publish
   script:
-    - cd sirius_dist/sirius_gui_single_os
-    - gradle clean artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
+    - cd sirius_dist/sirius_service_single_os
+    - artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
