@@ -28,6 +28,8 @@ import de.unijena.bioinf.ms.rest.model.JobWithPredictor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Optional;
+
 public class CovtreeJob extends JobWithPredictor<CovtreeJobOutput> {
 
     protected String covtree;
@@ -50,7 +52,7 @@ public class CovtreeJob extends JobWithPredictor<CovtreeJobOutput> {
         this(null, update.getStateEnum());
         setJobId(update.getJobId());
         setErrorMessage(update.getErrorMessage());
-        setCovtree(update.getData().getCovtree());
+        Optional.ofNullable(update.getData()).map(CovtreeJobOutput::getCovtree).ifPresent(this::setCovtree);
     }
 
     public CovtreeJob(String workerPrefix, long lockedByWorker) {
