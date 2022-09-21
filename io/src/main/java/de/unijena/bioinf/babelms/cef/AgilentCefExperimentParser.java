@@ -117,27 +117,33 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
     }
 
     private <S extends Ms2Experiment> List<S> experimentFromCompound(Compound compound) {
-        //ms1 only data
-        if (compound.getSpectrum().stream().noneMatch(s -> s.getMSDetails().getScanType().equals("ProductIon"))) {
-            return experimentFromMS1OnlyCompound(compound);
-        }else if (compound.getSpectrum().stream().anyMatch(s -> s.getType().equals("MFE"))) { //MFE data
+
+        if (compound.getSpectrum().stream().anyMatch(s -> s.getType().equalsIgnoreCase("MFE") || s.getType().equalsIgnoreCase("FBF"))) { //MFE/FBF data
             return experimentFromMFECompound(compound);
+        } else if (compound.getSpectrum().stream().noneMatch(s -> s.getMSDetails().getScanType().equals("ProductIon"))) { //ms1 only data from raw format
+            return experimentFromMS1OnlyCompound(compound);
         } else {
             return experimentFromRawCompound(compound);
         }
     }
 
-    private static final Pattern PEAK_MATCHER = Pattern.compile("^\\d+M.*|\\+\\d+$");
+    private static final Pattern UNSUPPORTED_IONTYPE_MATCHER = Pattern.compile("^\\d+M.*");
+    private static final Pattern ISOTOPE_PEAK_MATCHER = Pattern.compile("\\+\\d+$");
 
     private <S extends Ms2Experiment> List<S> experimentFromMFECompound(Compound compound) {
-        final Spectrum mfe = compound.getSpectrum().stream().filter(s -> s.getType().equals("MFE"))
-                .findAny().orElseThrow(() -> new IllegalArgumentException("Compound must contain a MFE spectrum to be parsed as MFE spectrum!"));
+        final Spectrum mfe = compound.getSpectrum().stream()
+                .filter(s ->
+                        s.getType().equalsIgnoreCase("MFE") || s.getType().equalsIgnoreCase("FBF")
+                ).findAny().orElseThrow(() -> new IllegalArgumentException("Compound must contain a MFE/FBF spectrum to be parsed as MFE/FBF spectrum!"));
 
         List<S> siriusCompounds = new ArrayList<>();
 
         mfe.msPeaks.getP().stream().filter(p -> {
-            if (PEAK_MATCHER.matcher(p.getS()).find()) {
-                LoggerFactory.getLogger(getClass()).warn("Skipping potential precursor at `" + p.getX() + "Da` (and corresponding MS/MS) due to an unsupported ion type '" + p.getS() + "'.)");
+            if (UNSUPPORTED_IONTYPE_MATCHER.matcher(p.getS()).find()) {
+                LoggerFactory.getLogger(getClass()).warn("Skipping potential precursor at '" + p.getX() + "Da' (and corresponding MS/MS) due to an unsupported ion type '" + p.getS() + "'.");
+                return false;
+            } else if (ISOTOPE_PEAK_MATCHER.matcher(p.getS()).find()) {
+                LoggerFactory.getLogger(getClass()).debug("Skipping isotope peak during precursor search '" + p.getX() + "Da' ('" + p.getS() + "')."); //todo to debug
                 return false;
             } else {
                 return true;
@@ -185,7 +191,7 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
         List<SimpleSpectrum> ms1Spectra = new ArrayList<>();
         List<MutableMs2Spectrum> ms2Spectra = new ArrayList<>();
         for (Spectrum spec : compound.getSpectrum()) {
-            if (spec.type.equals("MFE")) {
+            if (spec.type.equalsIgnoreCase("MFE") || spec.type.equalsIgnoreCase("FBF")) {
                 // ignore was already handled beforehand.
             } else if (spec.getMSDetails().getScanType().equals("Scan")) {
                 ms1Spectra.add(makeMs1Spectrum(spec));
@@ -198,6 +204,16 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
                 LoggerFactory.getLogger(getClass()).warn("Spectrum of type '" + s.map(Spectrum::getType).orElse("N/A")
                         + "' with precursor mass '" + s.map(Spectrum::getMzOfInterest).map(MzOfInterest::getMz).map(BigDecimal::doubleValue).map(String::valueOf).orElse("N/A")
                         + "' is either not supported or it does not correspond to a supported precursor. Skipping this spectrum.");
+            }
+        }
+
+        if (ms1Spectra.isEmpty()) { //if empty use MFE and FBF spectra
+            for (Spectrum spec : compound.getSpectrum()) {
+                if (spec.getMSDetails().getScanType().equals("Scan")) {
+                    ms1Spectra.add(makeMs1Spectrum(spec));
+                    if (!exp.hasAnnotation(RetentionTime.class))
+                        parseRT(compound, spec).ifPresent(rt -> exp.addAnnotation(RetentionTime.class, rt));
+                }
             }
         }
 
