@@ -21,7 +21,6 @@ package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
-import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
@@ -123,7 +122,7 @@ public class CLIRootOptions<I extends Instance, M extends ProjectSpaceManager<I>
         PropertyManager.DEFAULTS.changeConfig("PrintCitations", String.valueOf(!noCitations)); //this is a bit hacky
     }
 
-    @Option(names = {"--no-project-check"}, description = "Do not write summary files to the project-space", order = 300, hidden = true)
+    @Option(names = {"--no-project-check"}, description = "Disable compatibility check for the project-space.", order = 300, hidden = true)
     private void setSkipProjectCheck(boolean noProjectCheck) throws Exception {
         PropertyManager.setProperty("de.unijena.bioinf.sirius.project-check", String.valueOf(noProjectCheck)); //this is a bit hacky
     }
@@ -173,7 +172,7 @@ public class CLIRootOptions<I extends Instance, M extends ProjectSpaceManager<I>
 
             final SiriusProjectSpace psTmp;
             if (Files.notExists(psOpts.outputProjectLocation)) {
-                psTmp = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createNewProjectSpace(psOpts.outputProjectLocation);
+                psTmp = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createNewProjectSpace(psOpts.outputProjectLocation, !psOpts.isNoCompression());
             } else {
                 psTmp = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(psOpts.outputProjectLocation);
             }
