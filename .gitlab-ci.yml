@@ -39,13 +39,14 @@ before_script:
 buildCLI:
   stage: build
   script:
-    - gradle :sirius_dist:sirius_cli_single_os:distImage
+    - gradle :sirius_dist:sirius_cli_single_os:publishSiriusMSPublicationToMavenLocal
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
   artifacts:
     paths:
       - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius
+      - ./sirius_dist/sirius_cli_single_os/build/publications/siriusMS
   tags:
     - kubernetes
   only:
@@ -58,13 +59,14 @@ buildCLI:
 buildGUI:
   stage: build
   script:
-    - gradle :sirius_dist:sirius_gui_single_os:distImage
+    - gradle :sirius_dist:sirius_gui_single_os:publishSiriusMSPublicationToMavenLocal
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
   artifacts:
     paths:
       - ./sirius_dist/sirius_gui_single_os/build/distributions/sirius
+      - ./sirius_dist/sirius_gui_single_os/build/publications/siriusMS
   tags:
     - kubernetes
   only:
@@ -77,13 +79,14 @@ buildGUI:
 buildAPI:
   stage: build
   script:
-    - gradle :sirius_dist:sirius_service_single_os:distImage
+    - gradle :sirius_dist:sirius_service_single_os:publishSiriusMSPublicationToMavenLocal
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
   artifacts:
     paths:
       - ./sirius_dist/sirius_service_single_os/build/distributions/sirius
+      - ./sirius_dist/sirius_service_single_os/build/publications/siriusMS
   tags:
     - kubernetes
   only:
@@ -156,69 +159,69 @@ testAPI:
 # ARTIFACTORY_USERNAME und ARTIFACTORY_TOKEN für API publish nutzen
 #
 
-publishCLI:
-  variables:
-    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-  stage: publish
-  script:
-    - cd sirius_dist/sirius_cli_single_os
-    - gradle artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: push
-  needs: [buildCLI, testCLI]
-  dependencies:
-    - buildCLI
-  tags:
-    - kubernetes
-  only:
-    refs:
-      - master
-      - master-dist-tests
-      - stable
-
-
-publishGUI:
-  variables:
-    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-  stage: publish
-  script:
-    - cd sirius_dist/sirius_gui_single_os
-    - gradle artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: push
-  needs: [buildGUI, testGUI]
-  dependencies:
-    - buildGUI
-  tags:
-    - kubernetes
-  only:
-    refs:
-      - master
-      - master-dist-tests
-      - stable
-
-publishAPI:
-  variables:
-    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-  stage: publish
-  script:
-    - cd sirius_dist/sirius_service_single_os
-    - gradle artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: push
-  needs: [buildAPI, testAPI]
-  dependencies:
-    - buildAPI
-  tags:
-    - kubernetes
-  only:
-    refs:
-      - master
-      - master-dist-tests
-      - stable
+#publishCLI:
+#  variables:
+#    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+#  stage: publish
+#  script:
+#    - cd sirius_dist/sirius_cli_single_os
+#    - gradle artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
+#  cache:
+#    key: "$CI_COMMIT_REF_NAME"
+#    policy: push
+#  needs: [buildCLI, testCLI]
+#  dependencies:
+#    - buildCLI
+#  tags:
+#    - kubernetes
+#  only:
+#    refs:
+#      - master
+#      - master-dist-tests
+#      - stable
+#
+#
+#publishGUI:
+#  variables:
+#    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+#  stage: publish
+#  script:
+#    - cd sirius_dist/sirius_gui_single_os
+#    - gradle artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
+#  cache:
+#    key: "$CI_COMMIT_REF_NAME"
+#    policy: push
+#  needs: [buildGUI, testGUI]
+#  dependencies:
+#    - buildGUI
+#  tags:
+#    - kubernetes
+#  only:
+#    refs:
+#      - master
+#      - master-dist-tests
+#      - stable
+#
+#publishAPI:
+#  variables:
+#    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+#  stage: publish
+#  script:
+#    - cd sirius_dist/sirius_service_single_os
+#    - gradle artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
+#  cache:
+#    key: "$CI_COMMIT_REF_NAME"
+#    policy: push
+#  needs: [buildAPI, testAPI]
+#  dependencies:
+#    - buildAPI
+#  tags:
+#    - kubernetes
+#  only:
+#    refs:
+#      - master
+#      - master-dist-tests
+#      - stable
 
 
 ##push to github for multiOS build
