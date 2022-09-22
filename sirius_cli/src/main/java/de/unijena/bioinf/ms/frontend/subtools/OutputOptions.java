@@ -45,6 +45,13 @@ public class OutputOptions {
         return projectSpaceFilenameFormatter;
     }
 
+    @CommandLine.Option(names = "--no-compression", description = {"Does not use compressed project-space format (not recommended) when creating the project-space. If an existing project-space is opened this parameter has no effect."}, order = 225)
+    private boolean noCompression = false;
+
+    public boolean isNoCompression() {
+        return noCompression;
+    }
+
     @CommandLine.Option(names = "--update-fingerprint-version", description = {"Updates Fingerprint versions of the input project to the one used by this SIRIUS version.","WARNING: All Fingerprint related results (CSI:FingerID, CANOPUS) will be lost!"}, order = 230)
     private boolean updateFingerprints;
 
