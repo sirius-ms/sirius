@@ -12,8 +12,8 @@ plugins {
 
 ext {
     // version for bundeled JRE
-    jre_version = '17.0.2'//'15.0.6'
-    zulu_jre_version = '17.32.13'//'15.38.17'
+    jre_version = '17.0.4'//'15.0.6'
+    zulu_jre_version = '17.36.17'//'15.38.17'
     jre_major = zulu_jre_version.split("[.]")[0]
 
     OS = DefaultNativePlatform.currentOperatingSystem
