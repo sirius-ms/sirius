@@ -20,7 +20,9 @@
 package de.unijena.bioinf.ms.middleware;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
+import de.unijena.bioinf.ms.frontend.BackgroundRuns;
 import de.unijena.bioinf.ms.frontend.SiriusCLIApplication;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.middleware.projectspace.model.ProjectSpaceId;
@@ -69,8 +71,10 @@ public class SiriusContext implements DisposableBean {
         ApplicationCore.DEFAULT_LOGGER.info("SIRIUS is cleaning up threads and shuts down...");
 
         //todo make cleanup nice with beans
-        //todo maybe close jobs???
-        LoggerFactory.getLogger(SiriusMiddlewareApplication.class).warn("TODO: Cancel jobs If implemented!");
+        if (BackgroundRuns.hasActiveComputations()){
+            LoggerFactory.getLogger(SiriusMiddlewareApplication.class).info("Cancelling running Background Jobs...");
+            BackgroundRuns.getActiveRuns().iterator().forEachRemaining(JJob::cancel);
+        }
 
         try {
             ApplicationCore.WEB_API.shutdown();
