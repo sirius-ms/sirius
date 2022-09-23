@@ -1039,7 +1039,7 @@ public class BayesianScoringUtils {
         final MolecularFormula formula;
         final List<FingerprintCandidate> candidatesListToFill;
 
-        public LookupStructuresAndFingerprintsByFormulaJob(@NotNull AbstractChemicalDatabase chemdb, MolecularFormula formula, List<FingerprintCandidate> candidatesListToFill) {
+        public LookupStructuresAndFingerprintsByFormulaJob(@NotNull AbstractChemicalDatabase chemdb, @NotNull MolecularFormula formula, List<FingerprintCandidate> candidatesListToFill) {
             super(JobType.REMOTE);
             this.chemdb = chemdb;
             this.formula = formula;

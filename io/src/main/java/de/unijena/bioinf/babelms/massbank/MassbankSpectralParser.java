@@ -90,7 +90,7 @@ public class MassbankSpectralParser extends SpectralParser {
 
                 String msLevel = metaInfo.get(AC_MASS_SPECTROMETRY_MS_TYPE.k());
                 if ((msLevel == null && (metaInfo.containsKey(MS_FOCUSED_ION_PRECURSOR_MZ.k()))) ||
-                        (msLevel != null && !"MS".equalsIgnoreCase(msLevel))) { // we have MSn
+                        (msLevel != null && (!"MS".equalsIgnoreCase(msLevel)) && !"MS1".equalsIgnoreCase(msLevel))) { // we have MSn
                     spectrum = new MutableMs2Spectrum(
                             spectrum,
                             parsePrecursorMZ(metaInfo).orElseThrow(() -> new IOException("Could not parse '" + MS_FOCUSED_ION_PRECURSOR_MZ.k() + "':'" + metaInfo.get(MS_FOCUSED_ION_PRECURSOR_MZ.k()) + "' OR '" + CH_EXACT_MASS.k() + "':'" + metaInfo.get(CH_EXACT_MASS.k()) + "'.")),
