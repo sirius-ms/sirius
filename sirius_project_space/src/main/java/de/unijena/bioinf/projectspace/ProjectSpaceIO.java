@@ -120,6 +120,10 @@ public class ProjectSpaceIO {
     }
 
     public SiriusProjectSpace createNewProjectSpace(Path path) throws IOException {
+        return createNewProjectSpace(path, true);
+    }
+
+    public SiriusProjectSpace createNewProjectSpace(Path path, boolean compressed) throws IOException {
         final SiriusProjectSpace space;
         if (isZipProjectSpace(path)) {
             if (path.getParent() != null && Files.notExists(path.getParent()))
@@ -135,7 +139,8 @@ public class ProjectSpaceIO {
                 Files.createDirectories(path);
             }
             space = new SiriusProjectSpace(configuration, new PathProjectSpaceIOProvider(path));
-            space.setProjectSpaceProperty(CompressionFormat.class, space.ioProvider.getCompressionFormat());
+            if (compressed)
+                space.setProjectSpaceProperty(CompressionFormat.class, space.ioProvider.getCompressionFormat());
         }
 
         space.open();
@@ -159,9 +164,12 @@ public class ProjectSpaceIO {
 
 
     public SiriusProjectSpace createTemporaryProjectSpace() throws IOException {
+        return createTemporaryProjectSpace(true);
+    }
+
+    public SiriusProjectSpace createTemporaryProjectSpace(boolean compressed) throws IOException {
         final Path tempFile = createTmpProjectSpaceLocation();
-        //todo use compressed ps as default
-        final SiriusProjectSpace space = createNewProjectSpace(tempFile);
+        final SiriusProjectSpace space = createNewProjectSpace(tempFile, compressed);
         space.addProjectSpaceListener(new TemporaryProjectSpaceCleanUp(tempFile));
         space.open();
         return space;
