@@ -135,4 +135,8 @@ public class WebJJob<I, O, R, ID> extends WaiterJJob<R> implements InputJJob<I,R
     public Optional<Integer> getJobCountingHash(){
         return Optional.ofNullable(countingHash);
     }
+
+    public long getSubmissionTime() {
+        return submissionTime;
+    }
 }
