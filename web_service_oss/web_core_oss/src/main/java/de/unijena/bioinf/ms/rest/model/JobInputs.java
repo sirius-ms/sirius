@@ -147,4 +147,9 @@ public class JobInputs {
     public boolean hasJobs(){
         return hasCanopusJobs() || hasFingerprintJobs() || hasCovtreeJobs();
     }
+
+    @JsonIgnore
+    public int size(){
+        return fingerprintJobInputs.size() + canopusJobInputs.size() + covtreeJobInputs.size();
+    }
 }

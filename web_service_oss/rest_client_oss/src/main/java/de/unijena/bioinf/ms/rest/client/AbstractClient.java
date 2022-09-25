@@ -27,6 +27,7 @@ import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.client.utils.HTTPSupplier;
 import de.unijena.bioinf.ms.rest.model.SecurityService;
+import de.unijena.bioinf.rest.HttpErrorResponseException;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.*;
 import org.apache.http.client.HttpClient;
