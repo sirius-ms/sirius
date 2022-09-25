@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.client.AbstractCsiClient;
 import de.unijena.bioinf.ms.rest.model.JobId;
 import de.unijena.bioinf.ms.rest.model.JobInputs;
@@ -46,7 +47,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class JobsClient extends AbstractCsiClient {
-    private static final  int[] limits = new int[]{500,500,500,500};
+    private static final  int[] limits = new int[]{
+            PropertyManager.getInteger("de.unijena.bioinf.sirius.http.job.fingerprint.limit", 500),
+            PropertyManager.getInteger("de.unijena.bioinf.sirius.http.job.canopus.limit", 500),
+            PropertyManager.getInteger("de.unijena.bioinf.sirius.http.job.covtree.limit", 500),
+            PropertyManager.getInteger("de.unijena.bioinf.sirius.http.job.ftree.limit", 500)};
     @SafeVarargs
     public JobsClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest>... requestDecorator) {
         super(serverUrl, requestDecorator);
