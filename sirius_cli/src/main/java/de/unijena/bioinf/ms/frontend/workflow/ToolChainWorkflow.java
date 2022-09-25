@@ -30,6 +30,7 @@ import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstIterProvider;
 import de.unijena.bioinf.projectspace.Instance;
+import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -90,6 +91,8 @@ public class ToolChainWorkflow implements Workflow, ProgressSupport {
     @Override
     public void run() {
         try {
+            StopWatch w = new StopWatch();
+            w.start();
             checkForCancellation();
             // prepare input
             preprocessingJob.addJobProgressListener(evt -> {
@@ -144,7 +147,7 @@ public class ToolChainWorkflow implements Workflow, ProgressSupport {
                 submitter = bufferFactory.create(bufferSize, iteratorSource.iterator(), instanceJobChain, progressSupport);
                 submitter.start(true);
             }
-            LOG.info("Workflow has been finished!");
+            LOG.info("Workflow has been finished in " + w);
 
             checkForCancellation();
             if (postprocessingJob != null) {

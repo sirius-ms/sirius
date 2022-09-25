@@ -28,7 +28,7 @@ import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.webapi.Tokens;
-import de.unijena.bioinf.webapi.rest.ProxyManager;
+import de.unijena.bioinf.rest.ProxyManager;
 import org.jdesktop.swingx.JXTitledSeparator;
 
 import javax.swing.*;
