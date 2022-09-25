@@ -22,7 +22,7 @@ package de.unijena.bioinf.ms.gui.webView;
 
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
-import de.unijena.bioinf.webapi.rest.ProxyManager;
+import de.unijena.bioinf.rest.ProxyManager;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.web.WebView;
