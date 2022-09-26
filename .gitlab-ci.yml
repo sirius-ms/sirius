@@ -36,125 +36,135 @@ before_script:
   - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
 
 
-buildCLI:
+testArtifactory:
   stage: build
   script:
-    - gradle :sirius_dist:sirius_cli_single_os:publishSiriusMSPublicationToMavenLocal
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: push
-  artifacts:
-    paths:
-      - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius
-      - ./sirius_dist/sirius_cli_single_os/build/publications/siriusMS
-  tags:
-    - kubernetes
+    - jf rt ping
   only:
     refs:
       - master
       - master-dist-tests
       - stable
 
-
-buildGUI:
-  stage: build
-  script:
-    - gradle :sirius_dist:sirius_gui_single_os:publishSiriusMSPublicationToMavenLocal
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: push
-  artifacts:
-    paths:
-      - ./sirius_dist/sirius_gui_single_os/build/distributions/sirius
-      - ./sirius_dist/sirius_gui_single_os/build/publications/siriusMS
-  tags:
-    - kubernetes
-  only:
-    refs:
-      - master
-      - master-dist-tests
-      - stable
-
-
-buildAPI:
-  stage: build
-  script:
-    - gradle :sirius_dist:sirius_service_single_os:publishSiriusMSPublicationToMavenLocal
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: push
-  artifacts:
-    paths:
-      - ./sirius_dist/sirius_service_single_os/build/distributions/sirius
-      - ./sirius_dist/sirius_service_single_os/build/publications/siriusMS
-  tags:
-    - kubernetes
-  only:
-    refs:
-      - master
-      - master-dist-tests
-      - stable
-
-
-
-testCLI:
-  stage: test
-  script:
-    - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
-    - gradle :sirius_dist:sirius_cli_single_os:distImageTest
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: push
-  needs: [buildCLI]
-  dependencies:
-    - buildCLI
-  tags:
-    - kubernetes
-  only:
-    refs:
-      - master
-      - master-dist-tests
-      - stable
-
-
-testGUI:
-  stage: test
-  script:
-    - ./sirius_dist/sirius_gui_single_os/build/distributions/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
-    - gradle :sirius_dist:sirius_gui_single_os:distImageTest
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: push
-  needs: [buildGUI]
-  dependencies:
-    - buildGUI
-  tags:
-    - kubernetes
-  only:
-    refs:
-      - master
-      - master-dist-tests
-      - stable
-
-
-testAPI:
-  stage: test
-  script:
-    - ./sirius_dist/sirius_service_single_os/build/distributions/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
-    - gradle :sirius_dist:sirius_service_single_os:distImageTest
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: push
-  needs: [buildAPI]
-  dependencies:
-    - buildAPI
-  tags:
-    - kubernetes
-  only:
-    refs:
-      - master
-      - master-dist-tests
-      - stable
+#buildCLI:
+#  stage: build
+#  script:
+#    - gradle :sirius_dist:sirius_cli_single_os:publishSiriusMSPublicationToMavenLocal
+#  cache:
+#    key: "$CI_COMMIT_REF_NAME"
+#    policy: push
+#  artifacts:
+#    paths:
+#      - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius
+#      - ./sirius_dist/sirius_cli_single_os/build/publications/siriusMS
+#  tags:
+#    - kubernetes
+#  only:
+#    refs:
+#      - master
+#      - master-dist-tests
+#      - stable
+#
+#
+#buildGUI:
+#  stage: build
+#  script:
+#    - gradle :sirius_dist:sirius_gui_single_os:publishSiriusMSPublicationToMavenLocal
+#  cache:
+#    key: "$CI_COMMIT_REF_NAME"
+#    policy: push
+#  artifacts:
+#    paths:
+#      - ./sirius_dist/sirius_gui_single_os/build/distributions/sirius
+#      - ./sirius_dist/sirius_gui_single_os/build/publications/siriusMS
+#  tags:
+#    - kubernetes
+#  only:
+#    refs:
+#      - master
+#      - master-dist-tests
+#      - stable
+#
+#
+#buildAPI:
+#  stage: build
+#  script:
+#    - gradle :sirius_dist:sirius_service_single_os:publishSiriusMSPublicationToMavenLocal
+#  cache:
+#    key: "$CI_COMMIT_REF_NAME"
+#    policy: push
+#  artifacts:
+#    paths:
+#      - ./sirius_dist/sirius_service_single_os/build/distributions/sirius
+#      - ./sirius_dist/sirius_service_single_os/build/publications/siriusMS
+#  tags:
+#    - kubernetes
+#  only:
+#    refs:
+#      - master
+#      - master-dist-tests
+#      - stable
+#
+#
+#
+#testCLI:
+#  stage: test
+#  script:
+#    - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
+#    - gradle :sirius_dist:sirius_cli_single_os:distImageTest
+#  cache:
+#    key: "$CI_COMMIT_REF_NAME"
+#    policy: push
+#  needs: [buildCLI]
+#  dependencies:
+#    - buildCLI
+#  tags:
+#    - kubernetes
+#  only:
+#    refs:
+#      - master
+#      - master-dist-tests
+#      - stable
+#
+#
+#testGUI:
+#  stage: test
+#  script:
+#    - ./sirius_dist/sirius_gui_single_os/build/distributions/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
+#    - gradle :sirius_dist:sirius_gui_single_os:distImageTest
+#  cache:
+#    key: "$CI_COMMIT_REF_NAME"
+#    policy: push
+#  needs: [buildGUI]
+#  dependencies:
+#    - buildGUI
+#  tags:
+#    - kubernetes
+#  only:
+#    refs:
+#      - master
+#      - master-dist-tests
+#      - stable
+#
+#
+#testAPI:
+#  stage: test
+#  script:
+#    - ./sirius_dist/sirius_service_single_os/build/distributions/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
+#    - gradle :sirius_dist:sirius_service_single_os:distImageTest
+#  cache:
+#    key: "$CI_COMMIT_REF_NAME"
+#    policy: push
+#  needs: [buildAPI]
+#  dependencies:
+#    - buildAPI
+#  tags:
+#    - kubernetes
+#  only:
+#    refs:
+#      - master
+#      - master-dist-tests
+#      - stable
 
 # ARTIFACTORY_USERNAME und ARTIFACTORY_TOKEN für API publish nutzen
 #
@@ -165,7 +175,7 @@ testAPI:
 #  stage: publish
 #  script:
 #    - cd sirius_dist/sirius_cli_single_os
-#    - gradle artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
+#    - curl -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_TOKEN -X PUT "http://localhost:8081/artifactory/dist/de/unijena/bioinf/ms/siriusMS/file.txt" -T Desktop/myNewFile.txt
 #  cache:
 #    key: "$CI_COMMIT_REF_NAME"
 #    policy: push
