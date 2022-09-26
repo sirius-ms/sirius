@@ -40,6 +40,8 @@ testArtifactory:
   stage: build
   script:
     - jf rt ping
+  tags:
+    - kubernetes
   only:
     refs:
       - master
