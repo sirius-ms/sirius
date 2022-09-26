@@ -24,11 +24,7 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.WaiterJJob;
-import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.ms.rest.model.JobId;
-import de.unijena.bioinf.ms.rest.model.JobInputs;
-import de.unijena.bioinf.ms.rest.model.JobTable;
-import de.unijena.bioinf.ms.rest.model.JobUpdate;
+import de.unijena.bioinf.ms.rest.model.*;
 import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
@@ -47,6 +43,9 @@ import java.util.stream.Collectors;
 final class WebJobWatcher { //todo rename to RestJobWatcher
     private static final int INIT_WAIT_TIME = 100;
     private static final int STAY_AT_INIT_TIME = 3;
+
+    private static List<JobState> RUNNING_AND_FINISHED = List.of(JobState.SUBMITTED, JobState.DONE, JobState.CRASHED, JobState.CANCELED);
+    private static List<JobState> FINISHED = List.of(JobState.DONE, JobState.CRASHED, JobState.CANCELED);
 
     private final Map<JobId, RestWebJJob<?, ?, ?>> waitingJobs = new ConcurrentHashMap<>();
     private final Set<SubmissionWaiterJJob<?, ?, ?>> jobsToSubmit = Collections.newSetFromMap(new ConcurrentHashMap<>());
@@ -253,20 +252,21 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
                     }
 
                     final Set<JobId> toRemove = new HashSet<>();
+                    final Set<JobId> toReset = new HashSet<>();
                     {
                         final Map<JobId, Integer> countingHashes = new HashMap<>();
 
                         final Map<JobId, RestWebJJob<?, ?, ?>> waitingJobsSnap = new HashMap<>();
-                        final List<JobUpdate<?>> finished;
+                        final List<JobUpdate<?>> runningAndFinished;
 
                         synchronized (waitingJobs) {
-                            finished = NetUtils.tryAndWait(
-                                    () -> api.getFinishedJobs(waitingJobs.keySet().stream().map(id -> id.jobTable).collect(Collectors.toSet()))
+                            runningAndFinished = NetUtils.tryAndWait(
+                                    () -> api.getJobsByState(waitingJobs.keySet().stream().map(id -> id.jobTable).collect(Collectors.toSet()), RUNNING_AND_FINISHED) //get finished and running jobs
                                             .values().stream().flatMap(Collection::stream).collect(Collectors.toCollection(LinkedList::new)),
                                     this::checkForInterruption
                             );
 
-                            finished.forEach(j -> {
+                            runningAndFinished.forEach(j -> {
                                 JobId id = j.getGlobalId();
                                 waitingJobsSnap.put(id, waitingJobs.get(id));
                             });
@@ -277,9 +277,9 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
 //                        System.out.println("Number of jobs retrieved: " + finished.size());
 
                         try {
-                            if (!finished.isEmpty()) {
+                            if (!runningAndFinished.isEmpty()) {
                                 //update, find orphans and notify finished jobs
-                                for (JobUpdate<?> up : finished) {
+                                for (JobUpdate<?> up : runningAndFinished) {
                                     checkForInterruption();
                                     try {
                                         final JobId gid = up.getGlobalId();
@@ -288,9 +288,17 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
                                             logWarn("Job \"" + up.getGlobalId().toString() + "\" was found on the server but is unknown locally. Deleting it to prevent dangling jobs!");
                                             toRemove.add(up.getGlobalId());
                                         } else {
-                                            job.getJobCountingHash().ifPresent(h -> countingHashes.put(gid, h));
                                             job.update(up);
-                                            toRemove.add(job.getJobId());
+                                            if (up.getState() > de.unijena.bioinf.ms.rest.model.JobState.FETCHED.ordinal()) {
+                                                job.getJobCountingHash().ifPresent(h -> countingHashes.put(gid, h));
+                                                toRemove.add(job.getJobId());
+                                            } else if (up.getState() == de.unijena.bioinf.ms.rest.model.JobState.FETCHED.ordinal()) {
+                                                if (job.checkRunningTimeout()) {
+                                                    logWarn("Web Job with Id '" + up.getGlobalId() + "' has been fetched by a worker but takes longer than expected. Maybe the worker died during processing. Try to reset and recompute!");
+                                                    toReset.add(job.getJobId());
+                                                    job.reset();
+                                                }
+                                            }
                                         }
                                     } catch (Exception e) {
                                         logWarn("Could not update Job", e);
@@ -302,7 +310,7 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
 
                             //add canceled jobs to removal
 
-                            final int finishedOnly = toRemove.size();
+//                            final int finishedOnly = toRemove.size();
                             waitingJobs.forEach((k, v) -> {
                                 if (v.isFinished()) {
                                     toRemove.add(k);
@@ -315,6 +323,10 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
                                 // not in sync because it may take some time and is not needed since jobwatcher is singlethreaded
                                 NetUtils.tryAndWait(() -> api.deleteJobs(toRemove, countingHashes), this::checkForInterruption);
                                 toRemove.forEach(waitingJobs::remove);
+                            }
+                            if (!toReset.isEmpty()){
+                                NetUtils.tryAndWait(() -> api.resetJobs(toReset), this::checkForInterruption);
+                                logWarn("Resetting " + toReset.size() + "jobs due to unexpected long computations time!");
                             }
                         }
                     }
