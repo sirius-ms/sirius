@@ -54,6 +54,12 @@ public class SiriusCLIApplication {
     }
     public static void runMain(String[] args, List<StandaloneTool<?>> injectTools) {
         System.setProperty(APP_TYPE_PROPERTY_KEY, "CLI");
+        {
+            List<String> argsl = List.of(args);
+            int i = argsl.indexOf("--workspace");
+            if (i >= 0)
+                System.setProperty("de.unijena.bioinf.sirius.ws.location", args[i+1].replace("'","").replace("\"",""));
+        }
         if (TIME)
             t1 = System.currentTimeMillis();
         try {

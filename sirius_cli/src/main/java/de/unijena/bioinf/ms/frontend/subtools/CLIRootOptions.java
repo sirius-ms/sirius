@@ -106,7 +106,7 @@ public class CLIRootOptions<I extends Instance, M extends ProjectSpaceManager<I>
 
     private Integer instanceBuffer = null;
 
-    @Option(names = {"--workspace", "-w"}, description = "Specify sirius workspace location. This is the directory for storing Property files, logs, databases and caches.  This is NOT for the project-space that stores the results! Default is $USER_HOME/.sirius-<MINOR_VERSION>", order = 30)
+    @Option(names = {"--workspace"}, description = "Specify sirius workspace location. This is the directory for storing Property files, logs, databases and caches.  This is NOT for the project-space that stores the results! Default is $USER_HOME/.sirius-<MINOR_VERSION>", order = 30)
     public void setWorkspace(File ws) {
         PropertyManager.setProperty("de.unijena.bioinf.sirius.ws.location", ws == null ? null : ws.getAbsolutePath());
     }
