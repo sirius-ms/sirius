@@ -53,7 +53,9 @@ public class Workspace {
             final Path DEFAULT_WORKSPACE = Paths.get(home).resolve(defaultFolderName);
             final Map<String, String> env = System.getenv();
 
-            String ws = PropertyManager.getProperty("de.unijena.bioinf.sirius.ws.location");
+            String ws = System.getProperty("de.unijena.bioinf.sirius.ws.location"); //todo dirty hack make cli parsing work correclty
+            if (ws == null)
+                ws = PropertyManager.getProperty("de.unijena.bioinf.sirius.ws.location");
             if (ws == null)
                 ws = env.get("SIRIUS_WORKSPACE");
             if (ws != null) {
