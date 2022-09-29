@@ -37,6 +37,7 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.DialogHeader;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
+import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
 import de.unijena.bioinf.ms.gui.logging.TextAreaJJobContainer;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
@@ -334,6 +335,11 @@ public class DatabaseDialog extends JDialog {
 
         protected void runImportJob(@NotNull List<Path> source) {
             try {
+                Path p = Path.of(configPanel.dbLocationField.getFilePath());
+                if (Files.isRegularFile(p) || FileUtils.listAndClose(p, s -> s.findAny().isPresent())){
+                    new WarningDialog(this, "Illegal DB location. DB location must either not exist or be an empty directory.");
+                    return;
+                }
                 List<String> command = new ArrayList<>();
                 command.add(configPanel.toolCommand());
                 command.addAll(configPanel.asParameterList());
