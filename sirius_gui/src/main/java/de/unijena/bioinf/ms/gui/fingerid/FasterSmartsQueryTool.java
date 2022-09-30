@@ -21,7 +21,6 @@
 
 package de.unijena.bioinf.ms.gui.fingerid;
 
-import com.google.common.collect.FluentIterable;
 import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.aromaticity.ElectronDonation;
 import org.openscience.cdk.exception.CDKException;
@@ -332,17 +331,13 @@ public class FasterSmartsQueryTool {
                     mappings.add(new int[]{i});
                 }
             }
-        //todo remove this backport wen doing full merge with master
         } else {
-            mappings = FluentIterable.from(Ullmann.findSubstructure(query).matchAll(atomContainer))
-                    .filter(new SmartsStereoMatch(query, atomContainer)).toList();
-        }
-        /*} else {
             mappings = Ullmann.findSubstructure(query).matchAll(atomContainer).stream()
                     .filter(new SmartsStereoMatch(query, atomContainer)).collect(Collectors.toList());
         }
 
-        SmartsStereoMatch s = new SmartsStereoMatch(query, atomContainer);*/
+        SmartsStereoMatch s = new SmartsStereoMatch(query, atomContainer);
+
         return !mappings.isEmpty();
     }
     /**
