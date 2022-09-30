@@ -13,4 +13,6 @@ dependencies {
     // jason marshalling
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version:"2.9.5"
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:"2.9.5"
+    compile "org.apache.httpcomponents:httpclient:$httpclient_version"
+    compile 'org.apache.httpcomponents:httpasyncclient:4.1.5'
 }
