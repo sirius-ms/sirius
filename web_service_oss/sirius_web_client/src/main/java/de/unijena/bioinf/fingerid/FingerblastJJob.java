@@ -35,10 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -59,6 +56,8 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
     // input data
     private Ms2Experiment experiment;
     private List<FingerIdResult> idResult;
+
+    List<WebJJob<CovtreeJobInput, ?, BayesnetScoring, ?>> covtreeJobs = new ArrayList<>();
 
     public FingerblastJJob(@NotNull CSIPredictor predictor) {
         this(predictor, null);
@@ -156,6 +155,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
                                 predictor.csiWebAPI.submitCovtreeJob(fingeridInput.getMolecularFormula(), predictor.predictorType),
                         this::checkForInterruption);
                 blastJob.addRequiredJob(covTreeJob);
+                covtreeJobs.add(covTreeJob);
             }
 
             blastJob.addRequiredJob(formulaJobs.get(i));
@@ -206,6 +206,18 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
         logDebug("CSI:FingerID structure DB Search DONE!");
         //in linked maps values() collection is not a set -> so we have to make that distinct
         return annotationJJobs.values().stream().distinct().collect(Collectors.toList());
+    }
+
+    @Override
+    public void cancel(boolean mayInterruptIfRunning) {
+        super.cancel(mayInterruptIfRunning);
+        covtreeJobs.forEach(c -> c.cancel(mayInterruptIfRunning));
+    }
+
+    @Override
+    protected void cleanup() {
+        super.cleanup();
+        covtreeJobs = null;
     }
 
     @Override
