@@ -3,12 +3,16 @@ package de.unijena.bioinf.ms.frontend.utils;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
+import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
+import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.utils.Progressbar.ProgressVisualizer;
 import de.unijena.bioinf.ms.frontend.utils.Progressbar.ProgressbarDefaultCalculator;
 import de.unijena.bioinf.ms.frontend.utils.Progressbar.ProgressbarDefaultVisualizer;
 import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
+import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
+import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import org.jetbrains.annotations.NotNull;
@@ -19,14 +23,16 @@ import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.security.InvalidParameterException;
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
@@ -35,7 +41,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 @Command(name = "install-autocompletion", description = "<INSTALL> generates and installs an Autocompletion-Script with " +
         "all subcommands. Default installation is for the current user", mixinStandardHelpOptions = true)
-public class AutoCompletionScript implements Callable<Integer> {
+public class AutoCompletionScript implements StandaloneTool<Workflow> {
 
     /**
      * type of installation of the Autocompletion Script
@@ -602,6 +608,17 @@ public class AutoCompletionScript implements Callable<Integer> {
         return success;
     }
 
+    @Override
+    public Workflow makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
+        return () -> {
+            try {
+                call();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        };
+    }
+
     /**
      * Exception for detection of an Unknown OS
      */
@@ -611,6 +628,8 @@ public class AutoCompletionScript implements Callable<Integer> {
         }
     }
 }
+
+
 
 /**
  * class for determining the type of installation for the AutocompletionScript
