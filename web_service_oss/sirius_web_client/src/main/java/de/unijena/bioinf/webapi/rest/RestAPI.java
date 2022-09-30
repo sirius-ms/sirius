@@ -43,7 +43,7 @@ import de.unijena.bioinf.fingerid.FingerprintWebResultConverter;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.ms.rest.client.HttpErrorResponseException;
+import de.unijena.bioinf.rest.HttpErrorResponseException;
 import de.unijena.bioinf.ms.rest.client.account.AccountClient;
 import de.unijena.bioinf.ms.rest.client.canopus.CanopusClient;
 import de.unijena.bioinf.ms.rest.client.chemdb.ChemDBClient;
@@ -68,6 +68,8 @@ import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.ms.rest.model.license.SubscriptionConsumables;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.webapi.WebJJob;
+import de.unijena.bioinf.rest.ConnectionError;
+import de.unijena.bioinf.rest.ProxyManager;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.webapi.AbstractWebAPI;
 import de.unijena.bioinf.webapi.Tokens;
@@ -346,16 +348,20 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
         return ProxyManager.applyClient(client -> jobsClient.postJobs(submission, client), JOB_SUBMITTER_CLIENT_ID);
     }
 
-    public List<JobUpdate<?>> getFinishedJobs(JobTable jobTable) throws IOException {
-        return getFinishedJobs(EnumSet.of(jobTable)).get(jobTable);
+    public List<JobUpdate<?>> getJobsByState(JobTable jobTable, List<JobState> statesToInclude) throws IOException {
+        return getJobsByState(EnumSet.of(jobTable), statesToInclude).get(jobTable);
     }
 
-    public EnumMap<JobTable, List<JobUpdate<?>>> getFinishedJobs(Collection<JobTable> jobTablesToCheck) throws IOException {
-        return ProxyManager.applyClient(client -> jobsClient.getFinishedJobs(jobTablesToCheck, client), JOB_WATCHER_CLIENT_ID);
+    public EnumMap<JobTable, List<JobUpdate<?>>> getJobsByState(Collection<JobTable> jobTablesToCheck, List<JobState> statesToInclude) throws IOException {
+        return ProxyManager.applyClient(client -> jobsClient.getJobsByStates(jobTablesToCheck, statesToInclude, client), JOB_WATCHER_CLIENT_ID);
     }
 
     public void deleteJobs(Collection<JobId> jobsToDelete, Map<JobId, Integer> countingHashes) throws IOException {
         ProxyManager.consumeClient(client -> jobsClient.deleteJobs(jobsToDelete, countingHashes, client), JOB_WATCHER_CLIENT_ID);
+    }
+
+    public void resetJobs(Collection<JobId> jobsToDelete) throws IOException {
+        ProxyManager.consumeClient(client -> jobsClient.resetJobs(jobsToDelete, client), JOB_WATCHER_CLIENT_ID);
     }
 
     public void deleteClientAndJobs() throws IOException {
@@ -379,7 +385,6 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
             }
         });
     }
-
     //endregion
 
     //region Canopus
@@ -440,7 +445,7 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
             WebJobWatcher.SubmissionWaiterJJob<CovtreeJobInput, CovtreeJobOutput, BayesnetScoring> callback =
                     jobWatcher.submitAndWatchJob(input, JobTable.JOBS_COVTREE, (i, id) ->
                             new RestWebJJob<>(id, i, new CovtreeWebResultConverter(fpVersion, performances)));
-            return  callback.awaitResult();
+            return callback.awaitResult();
         } catch (ExecutionException e) {
             throw new IOException(e);
         }
