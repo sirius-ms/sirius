@@ -33,6 +33,7 @@ import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JobProgressEvent;
+import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import de.unijena.bioinf.jjobs.JobProgressMerger;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
@@ -85,10 +86,19 @@ public class InstanceImporter {
         return new ImportInstancesJJob(files);
     }
 
-    public void doImport(InputFilesOptions projectInput) throws ExecutionException {
+    public List<CompoundContainerId> doImport(InputFilesOptions projectInput, JobProgressEventListener listener) throws ExecutionException {
         if (projectInput == null)
-            return;
-        SiriusJobs.getGlobalJobManager().submitJob(makeImportJJob(projectInput)).awaitResult();
+            return null;
+        final ImportInstancesJJob j = makeImportJJob(projectInput);
+        j.addJobProgressListener(listener);
+        List<CompoundContainerId> cids = SiriusJobs.getGlobalJobManager().submitJob(j).awaitResult();
+        j.removeJobProgressListener(listener);
+        return cids;
+    }
+    public List<CompoundContainerId> doImport(InputFilesOptions projectInput) throws ExecutionException {
+        if (projectInput == null)
+            return null;
+        return SiriusJobs.getGlobalJobManager().submitJob(makeImportJJob(projectInput)).awaitResult();
     }
 
     public class ImportInstancesJJob extends BasicJJob<List<CompoundContainerId>> {

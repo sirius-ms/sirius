@@ -23,7 +23,7 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.webapi.rest.ProxyManager;
+import de.unijena.bioinf.rest.ProxyManager;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;

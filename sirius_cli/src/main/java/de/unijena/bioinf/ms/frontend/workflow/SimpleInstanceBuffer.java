@@ -25,6 +25,7 @@ import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.Instance;
+import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -33,6 +34,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -51,6 +53,9 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
     private final AtomicBoolean isCanceled = new AtomicBoolean(false);
 
     private final JobProgressMerger progressSupport;
+    //stats
+    StopWatch w = null;
+    AtomicInteger instanceComputed = null;
 
     public SimpleInstanceBuffer(int bufferSize, @NotNull Iterator<? extends Instance> instances, @NotNull List<InstanceJob.Factory<?>> tasks, @Nullable DataSetJob.Factory<?> dependJobFactory, @NotNull JobProgressMerger progressSupport, JobSubmitter jobSubmitter) {
         this.bufferSize = bufferSize < 1 ? Integer.MAX_VALUE : bufferSize;
@@ -71,9 +76,24 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
 
     @Override
     public void start(final boolean invalidate) throws InterruptedException {
+        int lastCheck = 0;
+        instanceComputed = new AtomicInteger(0);
+        w = new StopWatch();
+        w.start();
+
         try {
             while (instances.hasNext()) {
                 checkForCancellation();
+
+                { // calculate current throughput
+                    final int snap = instanceComputed.get();
+                    if ((snap - lastCheck) > 10) {
+                        System.out.println("########################################");
+                        System.out.println("## Computed " + snap + " instances. Current throughput: " + String.format("%,.2f", (snap / (w.getTime() / 1000d / 60d))) + " instances/minute");
+                        System.out.println("########################################");
+                        lastCheck = snap;
+                    }
+                }
 
                 lock.lock();
                 try {
@@ -133,6 +153,10 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
                 LoggerFactory.getLogger(getClass()).debug("ToolChain collector Job '" + it.identifier() + "' finished with state '" + it.getState() + "' on instance '" + it.instance.getID() + "'", e);
             }
         });
+
+        System.out.println("########################################");
+        System.out.println("## Computed " + instanceComputed.get() + " instances in " + w + "(" + String.format("%,.2f", (instanceComputed.get() / (w.getTime() / 1000d / 60d))) + " instances/minute).");
+        System.out.println("########################################");
     }
 
     @Override
@@ -186,6 +210,7 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
             lock.lock();
             try {
                 runningInstances.remove(this);
+                instanceComputed.incrementAndGet();
                 isFull.signalAll();
             } finally {
                 lock.unlock();

@@ -21,7 +21,6 @@ package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
-import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
@@ -33,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
@@ -106,7 +106,11 @@ public class CLIRootOptions<I extends Instance, M extends ProjectSpaceManager<I>
 
     private Integer instanceBuffer = null;
 
-    @Option(names = {"--workspace", "-w"}, description = "Specify sirius workspace location. This is the directory for storing Property files, logs, databases and caches.  This is NOT for the project-space that stores the results! Default is $USER_HOME/.sirius-<MINOR_VERSION>", order = 30, hidden = true)
+    @Option(names = {"--workspace"}, description = "Specify sirius workspace location. This is the directory for storing Property files, logs, databases and caches.  This is NOT for the project-space that stores the results! Default is $USER_HOME/.sirius-<MINOR_VERSION>", order = 30)
+    public void setWorkspace(File ws) {
+        PropertyManager.setProperty("de.unijena.bioinf.sirius.ws.location", ws == null ? null : ws.getAbsolutePath());
+    }
+
     public Files workspace; //todo change in application core
 
     @Option(names = "--recompute", descriptionKey = "RecomputeResults", description = "Recompute results of ALL tools where results are already present. Per default already present results will be preserved and the instance will be skipped for the corresponding Task/Tool", order = 100)
@@ -123,7 +127,7 @@ public class CLIRootOptions<I extends Instance, M extends ProjectSpaceManager<I>
         PropertyManager.DEFAULTS.changeConfig("PrintCitations", String.valueOf(!noCitations)); //this is a bit hacky
     }
 
-    @Option(names = {"--no-project-check"}, description = "Do not write summary files to the project-space", order = 300, hidden = true)
+    @Option(names = {"--no-project-check"}, description = "Disable compatibility check for the project-space.", order = 300, hidden = true)
     private void setSkipProjectCheck(boolean noProjectCheck) throws Exception {
         PropertyManager.setProperty("de.unijena.bioinf.sirius.project-check", String.valueOf(noProjectCheck)); //this is a bit hacky
     }
@@ -173,7 +177,7 @@ public class CLIRootOptions<I extends Instance, M extends ProjectSpaceManager<I>
 
             final SiriusProjectSpace psTmp;
             if (Files.notExists(psOpts.outputProjectLocation)) {
-                psTmp = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createNewProjectSpace(psOpts.outputProjectLocation);
+                psTmp = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createNewProjectSpace(psOpts.outputProjectLocation, !psOpts.isNoCompression());
             } else {
                 psTmp = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(psOpts.outputProjectLocation);
             }
@@ -207,7 +211,7 @@ public class CLIRootOptions<I extends Instance, M extends ProjectSpaceManager<I>
                 } catch (TimeoutException | InterruptedException e) {
                     LoggerFactory.getLogger(getClass()).warn("Could not check Fingerprint version on Project creation. " + e.getMessage());
                 } catch (Exception e) {
-                    LoggerFactory.getLogger(getClass()).error("Could not check Fingerprint version on Project creation due to an unknown error!",e);
+                    LoggerFactory.getLogger(getClass()).error("Could not check Fingerprint version on Project creation due to an unknown error!", e);
                 }
             }
 

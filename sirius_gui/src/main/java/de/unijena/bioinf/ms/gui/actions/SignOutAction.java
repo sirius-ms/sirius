@@ -23,7 +23,7 @@ import de.unijena.bioinf.ChemistryBase.utils.ExFunctions;
 import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.webapi.rest.ProxyManager;
+import de.unijena.bioinf.rest.ProxyManager;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;

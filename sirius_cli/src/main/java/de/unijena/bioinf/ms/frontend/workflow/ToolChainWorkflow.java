@@ -30,6 +30,7 @@ import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstIterProvider;
 import de.unijena.bioinf.projectspace.Instance;
+import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -37,6 +38,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -48,6 +50,14 @@ public class ToolChainWorkflow implements Workflow, ProgressSupport {
     private final PreprocessingJob<?> preprocessingJob;
     private final PostprocessingJob<?> postprocessingJob;
     private final InstanceBufferFactory<?> bufferFactory;
+
+    public PreprocessingJob<?> getPreprocessingJob() {
+        return preprocessingJob;
+    }
+
+    public PostprocessingJob<?> getPostprocessingJob() {
+        return postprocessingJob;
+    }
 
     protected List<Object> toolchain;
 
@@ -81,23 +91,31 @@ public class ToolChainWorkflow implements Workflow, ProgressSupport {
     @Override
     public void run() {
         try {
+            StopWatch w = new StopWatch();
+            w.start();
             checkForCancellation();
             // prepare input
+            preprocessingJob.addJobProgressListener(evt -> {
+                progressSupport.setEstimatedGlobalMaximum(evt.getMaxDelta() * (toolchain.size() + 2));
+                progressSupport.progressChanged(evt);
+            });
+
             Iterable<? extends Instance> iteratorSource = SiriusJobs.getGlobalJobManager().submitJob(preprocessingJob).awaitResult();
             int iteratorSourceSize = InstIterProvider.getResultSizeEstimate(iteratorSource);
-            System.out.println("Instance Estimate: " + iteratorSourceSize);
-            System.out.println("Toolchain Size: " + toolchain.size());
-            System.out.println("Max Progress: " + (toolchain.size()) * iteratorSourceSize * 100);
+//            System.out.println("Instance Estimate: " + iteratorSourceSize);
+//            System.out.println("Toolchain Size: " + toolchain.size());
+//            System.out.println("Max Progress: " + (toolchain.size()) * iteratorSourceSize * 100);
 
-            updateProgress((long) (toolchain.size()) * iteratorSourceSize * 100, 0);
+
+            progressSupport.setEstimatedGlobalMaximum(Optional.ofNullable(preprocessingJob.currentProgress())
+                    .map(JobProgressEvent::getMaxDelta).orElse(0L) + (long) (toolchain.size() + 1) * iteratorSourceSize * 100);
 
             // build toolchain
-            final List<InstanceJob.Factory<?>> instanceJobChain = new ArrayList<>(toolchain.size());
+            final List<InstanceJob.Factory<?>> instanceJobChain = new ArrayList<>(toolchain.size()+1);
             //job factory for job that add config annotations to an instance
             instanceJobChain.add(new InstanceJob.Factory<>(
                     (jj) -> new AddConfigsJob(parameters),
-                    (inst) -> {
-                    }
+                    (inst) -> {}
             ));
 
             // get buffer size
@@ -129,7 +147,7 @@ public class ToolChainWorkflow implements Workflow, ProgressSupport {
                 submitter = bufferFactory.create(bufferSize, iteratorSource.iterator(), instanceJobChain, progressSupport);
                 submitter.start(true);
             }
-            LOG.info("Workflow has been finished!");
+            LOG.info("Workflow has been finished in " + w);
 
             checkForCancellation();
             if (postprocessingJob != null) {

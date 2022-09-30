@@ -19,17 +19,18 @@
 
 package de.unijena.bioinf.ms.frontend.subtools;
 
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.utils.IterableWithSize;
 import de.unijena.bioinf.projectspace.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
-import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @CommandLine.Command(name = "background-computation", aliases = {"bc"}, versionProvider = Provide.Versions.class, sortOptions = false)
 public class ComputeRootOption<P extends ProjectSpaceManager<I>, I extends Instance> implements RootOptions<I, P, PreprocessingJob<Iterable<I>>, PostprocessingJob<?>> {
@@ -37,20 +38,31 @@ public class ComputeRootOption<P extends ProjectSpaceManager<I>, I extends Insta
     protected final P projectSpace;
     protected Iterable<I> instances;
 
-    protected InputFilesOptions inputFiles = null;
+    protected final InputFilesOptions inputFiles;
 
     public ComputeRootOption(@NotNull P projectSpace) {
-        this(projectSpace, (Iterable<I>) null);
+        this(projectSpace, (Iterable<I>) null, null);
 
     }
+
+    public ComputeRootOption(@NotNull P projectSpace, @NotNull InputFilesOptions inputFiles) {
+        this(projectSpace, null, inputFiles);
+    }
+
     public ComputeRootOption(@NotNull P projectSpace, @Nullable Iterable<I> instances) {
+        this(projectSpace, instances, null);
+    }
+
+    public ComputeRootOption(@NotNull P projectSpace, @Nullable Iterable<I> instances, @Nullable InputFilesOptions inputFiles) {
         this.projectSpace = projectSpace;
         this.instances = instances;
+        this.inputFiles = inputFiles;
     }
 
-    public ComputeRootOption(@NotNull P projectSpace, @NotNull List<CompoundContainerId> containerIds) {
+    public ComputeRootOption(@NotNull P projectSpace, @Nullable List<CompoundContainerId> containerIds) {
         this.projectSpace = projectSpace;
-        instances = new IterableWithSize<>() {
+
+        instances = containerIds != null ? new IterableWithSize<>() {
             @Override
             public int size() {
                 return containerIds.size();
@@ -61,7 +73,8 @@ public class ComputeRootOption<P extends ProjectSpaceManager<I>, I extends Insta
             public Iterator<I> iterator() {
                 return makeInstanceIterator(containerIds.iterator());
             }
-        };
+        } : null;
+        this.inputFiles = null;
     }
 
     /**
@@ -77,19 +90,9 @@ public class ComputeRootOption<P extends ProjectSpaceManager<I>, I extends Insta
         return inputFiles;
     }
 
-    public void setNonCompoundInput(Path... genericFiles) {
-        setNonCompoundInput(List.of(genericFiles));
-    }
-
-    public void setNonCompoundInput(List<Path> genericFiles) {
-        inputFiles = new InputFilesOptions();
-        Map<Path, Integer> map = genericFiles.stream().sequential().collect(Collectors.toMap(k -> k, k -> (int) k.toFile().length()));
-        inputFiles.msInput = new InputFilesOptions.MsInput(null, null, map);
-    }
-
     @Override
     public OutputOptions getOutput() {
-        throw new UnsupportedOperationException("Output parameters are not supported by this cli entry point.");
+        return new OutputOptions();
     }
 
     /**
@@ -101,8 +104,60 @@ public class ComputeRootOption<P extends ProjectSpaceManager<I>, I extends Insta
     public @NotNull PreprocessingJob<Iterable<I>> makeDefaultPreprocessingJob() {
         return new PreprocessingJob<>() {
             @Override
-            protected Iterable<I> compute() {
-                return instances;
+            protected Iterable<I> compute() throws Exception {
+                P space = getProjectSpace();
+                InputFilesOptions input = getInput();
+                if (space != null) {
+                    if (input != null) {
+                        InstanceImporter.ImportInstancesJJob job =
+                                new InstanceImporter(space, x -> true, x -> true, false, false)
+                                        .makeImportJJob(input);
+
+                        job.addJobProgressListener(evt -> updateProgress(evt.getMinValue(), evt.getMaxValue(), evt.getProgress(), evt.getMessage()));
+                        final List<CompoundContainerId> imported = SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
+
+                        if (imported != null && !imported.isEmpty()) {
+                            if (instances == null) {
+                                instances = new IterableWithSize<>() {
+                                    @Override
+                                    public int size() {
+                                        return imported.size();
+                                    }
+
+                                    @NotNull
+                                    @Override
+                                    public Iterator<I> iterator() {
+                                        return makeInstanceIterator(imported.iterator());
+                                    }
+                                };
+                            } else if (!(instances instanceof ProjectSpaceManager)) {
+                                if (instances instanceof IterableWithSize) {
+                                    final IterableWithSize<I> instOld = (IterableWithSize<I>) instances;
+                                    instances = new IterableWithSize<I>() {
+                                        @Override
+                                        public int size() {
+                                            return instOld.size() + imported.size();
+                                        }
+
+                                        @NotNull
+                                        @Override
+                                        public Iterator<I> iterator() {
+                                            return Iterators.concat(instOld.iterator(), makeInstanceIterator(imported.iterator()));
+                                        }
+                                    };
+                                } else {
+                                    LoggerFactory.getLogger(getClass()).warn("Combined iterator without size information. Calculating Progress might slow down computation.");
+                                    instances = Iterables.concat(instances, () -> makeInstanceIterator(imported.iterator()));
+                                }
+                            }
+                        }
+
+
+                    }
+                }
+                if (instances != null)
+                    return instances;
+                return space;
             }
         };
     }

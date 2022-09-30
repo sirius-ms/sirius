@@ -9,11 +9,14 @@ plugins {
     id 'org.gradle.crypto.checksum' version '1.4.0'
 }
 
+dependencies {
+    implementation 'org.junit.jupiter:junit-jupiter:5.8.2'
+}
 
 ext {
     // version for bundeled JRE
-    jre_version = '17.0.2'//'15.0.6'
-    zulu_jre_version = '17.32.13'//'15.38.17'
+    jre_version = '17.0.4.1'//'15.0.6'
+    zulu_jre_version = '17.36.17'//'15.38.17'
     jre_major = zulu_jre_version.split("[.]")[0]
 
     OS = DefaultNativePlatform.currentOperatingSystem
@@ -42,7 +45,7 @@ ext {
 
 task downloadJDKFX(type: Download) {
     String fname = "zulu${zulu_jre_version}-ca-fx-jdk${jre_version}-${zosName}_x64"
-    String ext = ".${OS.isWindows() ? 'zip' : 'tar.gz'}";
+    String ext = ".${OS.isWindows() ? 'zip' : 'tar.gz'}"
     project.ext.set("jdkfxPath", getBuildDir().toPath().resolve('tmp').resolve(fname).toFile())
 
 
@@ -245,7 +248,7 @@ subprojects {
             def errorCount = 0
             logger.lifecycle(System.lineSeparator() + "Checking for NULL values in Profile...")
             defaultProfile.keys().each { e ->
-                def v = defaultProfile.getProperty(e);
+                def v = defaultProfile.getProperty(e)
                 if (v == null || ((String) v).isEmpty()) {
                     logger.warn("${e} is NULL!")
                     errorCount++
@@ -438,6 +441,98 @@ subprojects {
     }
     distImage.shouldRunAfter downloadManual
 
+
+    task distImageTest(type: Test, group: 'distribution') {
+
+        useJUnitPlatform()
+        testClassesDirs = project(':sirius_dist').sourceSets.test.output
+        filter.includeTestsMatching('*Local')
+
+        testLogging{
+            outputs.upToDateWhen {false}
+            showStandardStreams = true
+        }
+
+        doFirst{
+            String abs_path = project.projectDir.toString().split('sirius_frontend')[0]
+            // automatically adjust for gui_single_os, cli_single_os or service_single_os
+            String build_type = project.name.toString()
+            String sirius_exec
+            String sep
+
+
+            if(project.OS.isWindows() || project.OS.isLinux() || project.OS.isMacOsX()){
+                sep = System.getProperty("file.separator")
+            } else {
+                throw new IllegalArgumentException("Could not determine the OS to build on")
+            }
+
+            if (project.OS.isWindows()) {
+                sirius_exec = abs_path + 'sirius_frontend\\sirius_dist\\' + build_type + '\\build\\distributions\\sirius\\sirius.exe'
+            } else if (project.OS.isLinux()) {
+                sirius_exec = abs_path + 'sirius_frontend/sirius_dist/' + build_type + '/build/distributions/sirius/bin/sirius'
+            } else {
+                sirius_exec = abs_path + 'sirius.app'+sep+'Contents'+sep+'MacOS'+sep+'sirius'
+            }
+
+            String temp_res_path = abs_path+'sirius_frontend'+sep+'sirius_cli'+sep+'src'+sep+'test'+sep+'temp_results'
+            String demo_path = abs_path+'sirius_frontend'+sep+'sirius_doc'+sep+'manual'+sep+'demo-data'+sep
+
+            mkdir temp_res_path
+            mkdir temp_res_path + sep + 'mgf_temp_output'
+            mkdir temp_res_path + sep + 'mgf_temp_summary'
+            mkdir temp_res_path + sep + 'txt_temp_output'
+            mkdir temp_res_path + sep + 'txt_temp_summary'
+            mkdir temp_res_path + sep + 'ms_temp_output'
+            mkdir temp_res_path + sep + 'ms_temp_summary'
+
+            temp_res_path = temp_res_path + sep
+
+            project.exec {
+                commandLine([sirius_exec,
+                             '--input', demo_path+'mgf'+sep+'laudanosine.mgf',
+                             '--output', temp_res_path+'mgf_temp_output',
+                             'formula', '-p', 'orbitrap', 'fingerprint', 'structure', 'compound-classes',
+                             'write-summaries', '--output', temp_res_path+'mgf_temp_summary'
+                ])
+            }
+
+            project.exec {
+                commandLine([sirius_exec,
+                             '-1', demo_path+'txt'+sep+'chelidonine_ms.txt',
+                             '-2', demo_path+'txt'+sep+'chelidonine_msms1.txt' + ',' + demo_path+'txt'+sep+'chelidonine_msms2.txt',
+                             '-z', '354.134704589844', '-o', temp_res_path+'txt_temp_output',
+                             'formula', '-p', 'orbitrap',
+                             'write-summaries', '--output', temp_res_path+'txt_temp_summary'
+                ])
+            }
+
+            project.exec {
+                commandLine([sirius_exec,
+                             '-o', temp_res_path+'ms_temp_output',
+                             '-i', demo_path+'ms'+sep+'Bicuculline.ms',
+                             '--ignore-formula', 'formula', '-p', 'orbitrap', '-c', '5',
+                             'fingerprint', 'structure', 'compound-classes',
+                             'write-summaries', '--output', temp_res_path+'ms_temp_summary'
+                ])
+            }
+        }
+        doLast{
+            String abs_path = project.projectDir.toString().split('sirius_frontend')[0]
+            String sep = System.getProperty("file.separator")
+            String temp_res_path = abs_path+'sirius_frontend'+sep+'sirius_cli'+sep+'src'+sep+'test'+sep+'temp_results'
+            project.delete(temp_res_path)
+        }
+    }
+
+
+    task distImageTestLocal(type: Test, group: 'distribution'){
+        dependsOn 'distImageTest'
+        dependsOn 'distImage'
+        tasks.findByName('distImageTest').mustRunAfter 'distImage'
+    }
+
+
     task signDistImage(dependsOn: distImage, group: 'distribution') {
 
         inputs.dir(distImage.outputDir)
@@ -517,6 +612,21 @@ subprojects {
     }
     distImageZip.mustRunAfter(signDistImage)
 
+    task distImageUnzip(type: Copy, group: 'distribution') {
+
+            String abs_path = project.projectDir.toString().split('sirius_dist')[0]
+
+            def zipFile = file(abs_path + 'sirius_dist/sirius_cli_single_os/build/distributions/sirius.zip')
+            def outputDir = file(abs_path + 'sirius_dist/sirius_cli_single_os/build/distributions/unzipped')
+
+            from zipTree(zipFile)
+            into outputDir
+
+        doLast{
+            print("unzip successful!")
+        }
+    }
+
     task distInstaller(type: AppInstaller, dependsOn: distImage, group: 'distribution') {
         distImg = distImage
         types = [installerNameType]
@@ -577,8 +687,8 @@ subprojects {
                     def c = ["$signtoolExe", "sign", "/debug", "/f", "${certFile}",
                              "/d", "Installer for the SIRIUS MS/MS analysis Software",
                              "/du", "https://bright-giant.com",
-                             "/p", "${findProperty('de.unijena.bioinf.WIN_INSTALLER_CERTIFICATE_PW')}", "/v", "/fd", "SHA256",
-                             "/tr", "\"${findProperty('de.unijena.bioinf.WIN_INSTALLER_CERTIFICATE_TIMESTAMP_URL')}\"", "/td", "SHA256", "$input"]
+                             "/p", "${findProperty('de.unijena.bioinf.build.WIN_INSTALLER_CERTIFICATE_PW')}", "/v", "/fd", "SHA256",
+                             "/tr", "\"${findProperty('de.unijena.bioinf.build.WIN_INSTALLER_CERTIFICATE_TIMESTAMP_URL')}\"", "/td", "SHA256", "$input"]
                     println(c)
                     project.exec {
                         commandLine(c)
@@ -598,7 +708,7 @@ subprojects {
         doLast {
             if (project.OS.isMacOsX()) {
                 def appleId = findProperty('de.unijena.bioinf.build.MACOS_APPLE_ID')
-                def appleIdPw = findProperty('de.unijena.bioinf.MACOS_APPLE_ID_PW')
+                def appleIdPw = findProperty('de.unijena.bioinf.build.MACOS_APPLE_ID_PW')
 
                 if (appleId != null && appleIdPw != null && !appleId.isBlank() && !appleIdPw.isBlank()) {
                     def pkg = Path.of(distImage.getImageDir().absolutePath.replace('.app', installerAppendix))

@@ -1,6 +1,6 @@
 apply plugin: 'java-library'
 dependencies {
-//    runtimeOnly group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version" //todo this should not be here but is needed for the ide
+    runtimeOnly group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version" //todo this should not be here but is needed for the ide
     api "info.picocli:picocli:$picocli_version"
     //internal
     api group: "de.unijena.bioinf.ms", name: "gibbs_sampling", version: "$siriusVersion"
@@ -50,6 +50,7 @@ dependencies {
     }
     api "com.gurobi:gurobi-jar:$gurobi_version"
 
+    implementation group: 'commons-io', name: 'commons-io', version: '2.11.0'
 }
 
 artifactory {
@@ -69,5 +70,3 @@ artifactory {
         }
     }
 }
-
-
