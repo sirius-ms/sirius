@@ -97,7 +97,7 @@ public class InChISMILESUtils {
         InchiStatus state = inChIGenerator.getStatus();
         if (state != InchiStatus.ERROR) {
             if (state == InchiStatus.WARNING)
-                LoggerFactory.getLogger(InChISMILESUtils.class).error("Warning while reading AtomContainer: '" + atomContainer.getTitle() + "'\n-> " + inChIGenerator.getMessage());
+                LoggerFactory.getLogger(InChISMILESUtils.class).debug("Warning while reading AtomContainer with title '" + atomContainer.getTitle() + "' -> " + inChIGenerator.getMessage());
             String inchi = inChIGenerator.getInchi();
             if (inchi == null) return null;
             if (!isStandardInchi(inchi))
