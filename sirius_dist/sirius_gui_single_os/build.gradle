@@ -1,8 +1,10 @@
 import edu.sc.seis.launch4j.tasks.Launch4jLibraryTask
 
 dependencies {
+    implementation 'org.junit.jupiter:junit-jupiter:5.8.2'
     implementation project(':sirius_gui')
     implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+    testCompile project(':sirius_dist').sourceSets.test.output //needed for the TestLocal tests
 }
 
 

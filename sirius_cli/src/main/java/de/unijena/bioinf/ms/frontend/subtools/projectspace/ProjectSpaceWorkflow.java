@@ -29,9 +29,7 @@ import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
-import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.jjobs.Partition;
+import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
@@ -54,12 +52,18 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class ProjectSpaceWorkflow implements Workflow {
+public class ProjectSpaceWorkflow implements Workflow, ProgressSupport {
+    protected final JobProgressMerger progressSupport = new JobProgressMerger(this);
 
 
     private final RootOptions<?, ?, ?, ?> rootOptions;
     private final ProjecSpaceOptions projecSpaceOptions;
     private final ParameterConfig config;
+    private List<CompoundContainerId> importedCompounds = null;
+
+    public List<CompoundContainerId> getImportedCompounds() {
+        return importedCompounds;
+    }
 
     public ProjectSpaceWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ProjecSpaceOptions projecSpaceOptions, ParameterConfig config) {
         this.rootOptions = rootOptions;
@@ -86,7 +90,7 @@ public class ProjectSpaceWorkflow implements Workflow {
                                 new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createTemporaryProjectSpace(),
                                 rootOptions.getOutput().getProjectSpaceFilenameFormatter());
                         InstanceImporter importer = new InstanceImporter(source, expFilter, cidFilter, projecSpaceOptions.move, rootOptions.getOutput().isUpdateFingerprints());
-                        importer.doImport(projectInput);
+                        importedCompounds = importer.doImport(projectInput, progressSupport);
                         move = true;
                     } else if (projectInput.msInput.projects.size() == 1) {
                         source = rootOptions.getSpaceManagerFactory().create(
@@ -127,10 +131,10 @@ public class ProjectSpaceWorkflow implements Workflow {
                     //get file and and preserve extension for compression
                     final Path outputLocation = rootOptions.getOutput().getOutputProjectLocation();
                     final String fileName = outputLocation.getFileName().toString();
-                    final Path parent = Files.isDirectory(outputLocation) ? outputLocation : outputLocation.getParent()!=null ? outputLocation.getParent() : new File(".").toPath();
+                    final Path parent = Files.isDirectory(outputLocation) ? outputLocation : outputLocation.getParent() != null ? outputLocation.getParent() : new File(".").toPath();
                     int idx = fileName.lastIndexOf('.');
 
-                    final String name = idx < 0 ? fileName : fileName.substring(0,idx);
+                    final String name = idx < 0 ? fileName : fileName.substring(0, idx);
                     final String ext = idx < 0 ? "" : fileName.substring(idx);
                     for (int i = 0; i < part.size(); i++) {
                         final Set<CompoundContainerId> p = new HashSet<>(part.get(i));
@@ -153,7 +157,7 @@ public class ProjectSpaceWorkflow implements Workflow {
                     if (move)
                         FileUtils.deleteRecursively(source.projectSpace().getLocation());
                 } catch (IOException | ExecutionException e) {
-                    LoggerFactory.getLogger(getClass()).error("Error when filtering and splitting Project(s)!",e);
+                    LoggerFactory.getLogger(getClass()).error("Error when filtering and splitting Project(s)!", e);
                 } finally {
                     if (source != null)
                         source.close();
@@ -176,8 +180,8 @@ public class ProjectSpaceWorkflow implements Workflow {
                     }
 
 
-                    new InstanceImporter(space, expFilter, cidFilter, projecSpaceOptions.move, rootOptions.getOutput().isUpdateFingerprints())
-                            .doImport(input);
+                    importedCompounds = new InstanceImporter(space, expFilter, cidFilter, projecSpaceOptions.move, rootOptions.getOutput().isUpdateFingerprints())
+                            .doImport(input, progressSupport);
 
 
                     if (projecSpaceOptions.repairScores) {
@@ -196,7 +200,7 @@ public class ProjectSpaceWorkflow implements Workflow {
                     }
 
                     if (projecSpaceOptions.mergeCompoundsTopK != null || projecSpaceOptions.mergeCompoundsCosine != null || projecSpaceOptions.mergeCompoundsRtDiff != null) {
-                        mergeCompounds(space,projecSpaceOptions);
+                        mergeCompounds(space, projecSpaceOptions);
                     }
 
                     // io intense filters are applied as last
@@ -204,7 +208,8 @@ public class ProjectSpaceWorkflow implements Workflow {
                 } catch (ExecutionException e) {
                     LoggerFactory.getLogger(getClass()).error("Error when filtering Project(s)!", e);
                 } finally {
-                    space.close();
+                    if (!projecSpaceOptions.keepProjectOpen)
+                        space.close();
                 }
             }
         } catch (IOException e) {
@@ -221,9 +226,9 @@ public class ProjectSpaceWorkflow implements Workflow {
         final CosineQueryUtils Q = new CosineQueryUtils(new IntensityWeightedSpectralAlignment(dev));
         final HashMap<Integer, List<Instance>> grouped = new HashMap<>();
         for (Instance instance : space) {
-            final double ionMass = instance.getID().getIonMass().orElseGet(()->instance.getExperiment().getIonMass());
+            final double ionMass = instance.getID().getIonMass().orElseGet(() -> instance.getExperiment().getIonMass());
             instance.getID().setIonMass(ionMass);
-            grouped.computeIfAbsent((int)Math.round(ionMass), (x)->new ArrayList<>()).add(instance);
+            grouped.computeIfAbsent((int) Math.round(ionMass), (x) -> new ArrayList<>()).add(instance);
         }
         final List<BasicJJob<Object>> jobs = new ArrayList<>();
         for (List<Instance> group : grouped.values()) {
@@ -232,42 +237,42 @@ public class ProjectSpaceWorkflow implements Workflow {
                 protected Object compute() throws Exception {
                     final ArrayList<HashSet<Instance>> buckets = new ArrayList<>();
                     int[] assignments = new int[group.size()];
-                    Arrays.fill(assignments,-1);
+                    Arrays.fill(assignments, -1);
                     int K = 0;
-                    for (int i=0; i < group.size(); ++i) {
+                    for (int i = 0; i < group.size(); ++i) {
                         final Instance left = group.get(i);
                         final double lm = left.getID().getIonMass().get();
                         Long rtLeft = null;
                         CosineQuerySpectrum leftExp = null;
-                        for (int j=i+1; j < group.size(); ++j) {
-                            if (assignments[j] >= 0 && assignments[i]>= 0)
+                        for (int j = i + 1; j < group.size(); ++j) {
+                            if (assignments[j] >= 0 && assignments[i] >= 0)
                                 continue;
                             final Instance right = group.get(j);
                             final double rm = right.getID().getIonMass().get();
-                            final double mzDiff = Math.abs(lm-rm);
+                            final double mzDiff = Math.abs(lm - rm);
                             Long rtRight = null;
                             CosineQuerySpectrum rightExp = null;
-                            if (mzDiff <= dev.absoluteFor(Math.max(lm,rm))) {
-                                if (rtLeft==null) {
-                                    rtLeft = left.getID().getRt().map(RetentionTime::getRetentionTimeInSeconds).orElseGet(()->left.getExperiment().getAnnotation(RetentionTime.class).map(RetentionTime::getRetentionTimeInSeconds).orElse(0d)).longValue();
+                            if (mzDiff <= dev.absoluteFor(Math.max(lm, rm))) {
+                                if (rtLeft == null) {
+                                    rtLeft = left.getID().getRt().map(RetentionTime::getRetentionTimeInSeconds).orElseGet(() -> left.getExperiment().getAnnotation(RetentionTime.class).map(RetentionTime::getRetentionTimeInSeconds).orElse(0d)).longValue();
                                 }
-                                rtRight = right.getID().getRt().map(RetentionTime::getRetentionTimeInSeconds).orElseGet(()->left.getExperiment().getAnnotation(RetentionTime.class).map(RetentionTime::getRetentionTimeInSeconds).orElse(0d)).longValue();
-                                if (Math.abs(rtLeft-rtRight) < rtDiff) {
+                                rtRight = right.getID().getRt().map(RetentionTime::getRetentionTimeInSeconds).orElseGet(() -> left.getExperiment().getAnnotation(RetentionTime.class).map(RetentionTime::getRetentionTimeInSeconds).orElse(0d)).longValue();
+                                if (Math.abs(rtLeft - rtRight) < rtDiff) {
                                     if (leftExp == null) {
-                                        leftExp = Q.createQueryWithIntensityTransformationNoLoss(Spectrums.from(new Ms2Preprocessor().preprocess(left.getExperiment()).getMergedPeaks()), lm, true );
+                                        leftExp = Q.createQueryWithIntensityTransformationNoLoss(Spectrums.from(new Ms2Preprocessor().preprocess(left.getExperiment()).getMergedPeaks()), lm, true);
                                     }
-                                    rightExp = Q.createQueryWithIntensityTransformationNoLoss(Spectrums.from(new Ms2Preprocessor().preprocess(right.getExperiment()).getMergedPeaks()), rm, true );
+                                    rightExp = Q.createQueryWithIntensityTransformationNoLoss(Spectrums.from(new Ms2Preprocessor().preprocess(right.getExperiment()).getMergedPeaks()), rm, true);
                                     final SpectralSimilarity spectralSimilarity = Q.cosineProduct(leftExp, rightExp);
-                                    if (spectralSimilarity.similarity >= cosine && spectralSimilarity.shardPeaks >= Math.min(6,Math.min(leftExp.size(),rightExp.size()))) {
+                                    if (spectralSimilarity.similarity >= cosine && spectralSimilarity.shardPeaks >= Math.min(6, Math.min(leftExp.size(), rightExp.size()))) {
                                         // merge both compounds
                                         int color = assignments[i];
                                         if (color < 0) color = assignments[j];
                                         if (color < 0) color = K++;
-                                        while (buckets.size()<=color) buckets.add(new HashSet<>());
+                                        while (buckets.size() <= color) buckets.add(new HashSet<>());
                                         buckets.get(color).add(left);
                                         buckets.get(color).add(right);
                                         assignments[i] = color;
-                                        assignments[j] =color;
+                                        assignments[j] = color;
                                     }
                                 }
                             }
@@ -277,13 +282,13 @@ public class ProjectSpaceWorkflow implements Workflow {
                     // pick for each bucket the top k compounds
                     HashSet<Instance> toDelete = new HashSet<>();
                     for (HashSet<Instance> bucket : buckets) {
-                        if (bucket.size()<=topK)
+                        if (bucket.size() <= topK)
                             continue;
                         final ArrayList<Instance> maydel = new ArrayList<>(bucket);
                         maydel.sort(Comparator.comparingDouble(
-                                x->-(x.loadCompoundContainer(LCMSPeakInformation.class).getAnnotation(LCMSPeakInformation.class).map(y->Arrays.stream(y.getQuantificationTable().getAsVector()).max().orElse(0d)).orElse(0d)))
+                                x -> -(x.loadCompoundContainer(LCMSPeakInformation.class).getAnnotation(LCMSPeakInformation.class).map(y -> Arrays.stream(y.getQuantificationTable().getAsVector()).max().orElse(0d)).orElse(0d)))
                         );
-                        for (int k=topK; k < maydel.size(); ++k) {
+                        for (int k = topK; k < maydel.size(); ++k) {
                             toDelete.add(maydel.get(k));
                         }
                     }
@@ -324,5 +329,30 @@ public class ProjectSpaceWorkflow implements Workflow {
                 LoggerFactory.getLogger(getClass()).error("Could not delete Instance with ID: " + id.getDirectoryName());
             }
         }
+    }
+
+    @Override
+    public void updateProgress(long min, long max, long progress, String shortInfo) {
+        progressSupport.updateConnectedProgress(min, max, progress, shortInfo);
+    }
+
+    @Override
+    public void addJobProgressListener(JobProgressEventListener listener) {
+        progressSupport.addPropertyChangeListener(listener);
+    }
+
+    @Override
+    public void removeJobProgressListener(JobProgressEventListener listener) {
+        progressSupport.removeProgress(listener);
+    }
+
+    @Override
+    public JobProgressEvent currentProgress() {
+        return progressSupport.currentConnectedProgress();
+    }
+
+    @Override
+    public JobProgressEvent currentCombinedProgress() {
+        return progressSupport.currentCombinedProgress();
     }
 }

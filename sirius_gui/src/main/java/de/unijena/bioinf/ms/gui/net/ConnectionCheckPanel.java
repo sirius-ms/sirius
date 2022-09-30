@@ -32,7 +32,7 @@ import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerWithCharge;
 import de.unijena.bioinf.webapi.Tokens;
-import de.unijena.bioinf.webapi.rest.ConnectionError;
+import de.unijena.bioinf.rest.ConnectionError;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +45,7 @@ import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static de.unijena.bioinf.webapi.rest.ConnectionError.Klass.*;
+import static de.unijena.bioinf.rest.ConnectionError.Klass.*;
 
 /**
  * Created by fleisch on 06.06.17.

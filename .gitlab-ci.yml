@@ -12,10 +12,9 @@ stages:
   - clean
   - prepare
   - build
-#  - build-cli
-#  - build-multi-cli
-#  - build-gui
+  - test
   - publish
+
 
 before_script:
   - dpkg-reconfigure -p critical ca-certificates
@@ -26,108 +25,180 @@ before_script:
   - echo "$GITLAB_GITHUB_SIRIUS_PUBLIC_KEY" >> ~/.ssh/id_ed25519.pub
   - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
 
-#clean:
-#  stage: clean
-#  script: gradle clean
-#  cache:
-#    key: "$CI_COMMIT_REF_NAME"
-#    policy: push
-#  tags:
-#    - gradle
 
-#todo re-enable doc build
-#doc:
-#  variables:
-#    GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/vol/software/jvm/zulu14.29.23-ca-fx-jdk14.0.2-linux_x64"
-#  stage: prepare
-#  script:
-#    - cd sirius_doc
-#    - gradle clean artifactoryPublish
-#  cache:
-#    key: "$CI_COMMIT_REF_NAME"
-#    policy: push
-#  tags:
-#    - artifactory
-#    - gradle
-#    - biber-latex
-#  only:
-#    refs:
-#      - master
-#      - stable
-#    # stupid there is no exclude if only specific type was changed, so we have to use some heuristic to exclude README only changes
-#    # from pipeline
-#    changes:
-#      - "sirius_doc/**/*"
-#      - "sirius_cli/src/main/resources/sirius_frontend.build.properties"
-#      - ".gitlab-ci.yml"
+buildCLI:
+  stage: build
+  script:
+    - gradle :sirius_dist:sirius_cli_single_os:distImage
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  artifacts:
+    paths:
+      - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - master
+      - stable
 
-distCliLinux64:
+
+buildGUI:
+  stage: build
+  script:
+    - gradle :sirius_dist:sirius_gui_single_os:distImage
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  artifacts:
+    paths:
+      - ./sirius_dist/sirius_gui_single_os/build/distributions/sirius
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - master
+      - stable
+
+
+buildAPI:
+  stage: build
+  script:
+    - gradle :sirius_dist:sirius_service_single_os:distImage
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  artifacts:
+    paths:
+      - ./sirius_dist/sirius_service_single_os/build/distributions/sirius
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - master
+      - stable
+
+
+testCLI:
+  stage: test
+  script:
+    - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
+    - gradle :sirius_dist:sirius_cli_single_os:distImageTest
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  needs: [buildCLI]
+  dependencies:
+    - buildCLI
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - master
+      - stable
+
+
+testGUI:
+  stage: test
+  script:
+    - ./sirius_dist/sirius_gui_single_os/build/distributions/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
+    - gradle :sirius_dist:sirius_gui_single_os:distImageTest
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  needs: [buildGUI]
+  dependencies:
+    - buildGUI
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - master
+      - stable
+
+
+testAPI:
+  stage: test
+  script:
+    - ./sirius_dist/sirius_service_single_os/build/distributions/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
+    - gradle :sirius_dist:sirius_service_single_os:distImageTest
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  needs: [buildAPI]
+  dependencies:
+    - buildAPI
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - master
+      - stable
+
+
+publishCLI:
   variables:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-  stage: build
+  stage: publish
   script:
     - cd sirius_dist/sirius_cli_single_os
     - gradle clean artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
+  needs: [buildCLI, testCLI]
+  dependencies:
+    - buildCLI
   tags:
     - kubernetes
   only:
     refs:
       - master
       - stable
-    # stupid there is no exclude if only specific type was changed, so we have to use some heuristic to exclude README only changes
-    # from pipeline
-    changes:
-      - "**/*.{java,gradle,properties,yml,tex,png,ico,json,xml,html,csv,tsv,py}"
-      - "**/src/main/java/**/*"
 
-distGuiLinux64:
+
+publishGUI:
   variables:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-  stage: build
+  stage: publish
   script:
     - cd sirius_dist/sirius_gui_single_os
     - gradle clean artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
+  needs: [buildGUI, testGUI]
+  dependencies:
+    - buildGUI
   tags:
     - kubernetes
   only:
     refs:
       - master
       - stable
-    # stupid there is no exclude if only specific type was changed, so we have to use some heuristic to exclude README only changes
-    # from pipeline
-    changes:
-      - "**/*.{java,gradle,properties,yml,tex,png,ico,json,xml,html,csv,tsv,py}"
-      - "**/src/main/java/**/*"
 
-distRestLinux64:
+publishAPI:
   variables:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-  stage: build
+  stage: publish
   script:
-    - cd sirius_dist/sirius_service_single_os
+    - cd sirius_dist/sirius_gui_single_os
     - gradle clean artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
+  needs: [buildAPI, testAPI]
+  dependencies:
+    - buildAPI
   tags:
     - kubernetes
   only:
     refs:
       - master
       - stable
-    # stupid there is no exclude if only specific type was changed, so we have to use some heuristic to exclude README only changes
-    # from pipeline
-    changes:
-      - "**/*.{java,gradle,properties,yml,tex,png,ico,json,xml,html,csv,tsv,py}"
-      - "**/src/main/java/**/*"
 
-#push to github for multiOS build
+#push to github to build for multiple OSs
 pushToGitHub:
   stage: publish
   script:
@@ -140,108 +211,10 @@ pushToGitHub:
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
+  needs: [testCLI, testGUI, testAPI]
   tags:
     - kubernetes
   only:
     refs:
       - stable
       - master
-#distCliWin64:
-#  variables:
-#    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-#  stage: build-cli
-#  needs: ["doc"]
-#  script:
-#    - $env:path
-#    - cd sirius_dist/sirius_cli_single_os
-#    - gradle.bat artifactoryPublish --refresh-dependencies
-#  cache:
-#    key: "$CI_COMMIT_REF_NAME"
-#    policy: push
-#  tags:
-#    - artifactory
-#    - gradle
-#    - windows64
-#  only:
-#    refs:
-#      - master
-#      - release-4
-#
-#distGuiWin64:
-#  variables:
-#    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-#  stage: build-gui
-#  script:
-#    - $env:path
-#    - cd sirius_dist/sirius_gui_single_os
-#    - gradle.bat clean artifactoryPublish --refresh-dependencies
-#  cache:
-#    key: "$CI_COMMIT_REF_NAME"
-#    policy: push
-#  tags:
-#    - artifactory
-#    - gradle
-#    - windows64
-#  only:
-#    refs:
-#      - master
-
-#distCliMacOSX:
-#  variables:
-#    GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/Users/ladmin/gitlab/zulu14.29.23-ca-fx-jdk14.0.2-macosx_x64"
-#  stage: build-cli
-#  needs: ["doc"]
-#  script:
-#    - cd sirius_dist/sirius_cli_single_os
-#    - /Users/ladmin/gitlab/gradle-6.6.1/bin/gradle artifactoryPublish --refresh-dependencies
-#  cache:
-#    key: "$CI_COMMIT_REF_NAME"
-#    policy: push
-#  tags:
-#    - artifactory
-#    - gradle
-#    - macosx
-#  only:
-#    refs:
-#      - master
-#      - release-4
-#
-#distGuiMacOX:
-#  variables:
-#    GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/Users/ladmin/gitlab/zulu14.29.23-ca-fx-jdk14.0.2-macosx_x64"
-#  stage: build-gui
-#  needs: ["distCliMacOSX","doc"]
-#  script:
-#    - cd sirius_dist/sirius_gui_single_os
-#    - /Users/ladmin/gitlab/gradle-6.6.1/bin/gradle artifactoryPublish --refresh-dependencies
-#  cache:
-#    key: "$CI_COMMIT_REF_NAME"
-#    policy: push
-#  tags:
-#    - artifactory
-#    - gradle
-#    - macosx
-#  only:
-#    refs:
-#      - master
-#      - release-4
-#
-#distCliMultiOS:
-#  variables:
-#    GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/vol/software/jvm/zulu14.29.23-ca-fx-jdk14.0.2-linux_x64"
-#  stage: build-multi-cli
-#  needs: ["distCliWin64","distCliMacOSX","distCliLinux64"]
-#  script:
-#    - cd sirius_dist/sirius_cli_multi_os
-#    - gradle artifactoryPublish --refresh-dependencies
-#  cache:
-#    key: "$CI_COMMIT_REF_NAME"
-#    policy: push
-#  tags:
-#    - artifactory
-#    - gradle
-#    - linux64
-#  only:
-#    refs:
-#      - master
-#      - release-4

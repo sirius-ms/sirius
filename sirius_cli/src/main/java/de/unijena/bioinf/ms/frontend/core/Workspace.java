@@ -36,6 +36,8 @@ public class Workspace {
     public static final Path customProfileFile;
     public static final Path versionFile;
 
+    public static final Path runConfigDir;
+
     static {
         try {
             System.setProperty("de.unijena.bioinf.ms.propertyLocations", "sirius_frontend.build.properties");
@@ -50,7 +52,12 @@ public class Workspace {
 
             final Path DEFAULT_WORKSPACE = Paths.get(home).resolve(defaultFolderName);
             final Map<String, String> env = System.getenv();
-            final String ws = env.get("SIRIUS_WORKSPACE");
+
+            String ws = System.getProperty("de.unijena.bioinf.sirius.ws.location"); //todo dirty hack make cli parsing work correclty
+            if (ws == null)
+                ws = PropertyManager.getProperty("de.unijena.bioinf.sirius.ws.location");
+            if (ws == null)
+                ws = env.get("SIRIUS_WORKSPACE");
             if (ws != null) {
                 Path wsDir = Paths.get(ws);
                 if (Files.isDirectory(wsDir)) {
@@ -87,6 +94,9 @@ public class Workspace {
             siriusPropsFile = WORKSPACE.resolve("sirius.properties");
             customProfileFile = WORKSPACE.resolve("custom.config");
             versionFile = WORKSPACE.resolve("version");
+            runConfigDir = WORKSPACE.resolve("run-configs");
+
+            Files.createDirectories(runConfigDir);
         } catch (Exception e) {
             System.err.println("Workspace Core STATIC Block Error!");
             e.printStackTrace(System.err);
