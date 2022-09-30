@@ -25,9 +25,10 @@ import de.unijena.bioinf.ChemistryBase.chem.InChIs;
 import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.BooleanFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
+import de.unijena.bioinf.chemdb.InChISMILESUtils;
 import de.unijena.bioinf.fingerid.Fingerprinter;
 import gnu.trove.set.hash.TIntHashSet;
-import net.sf.jniinchi.INCHI_RET;
+import io.github.dan2097.jnainchi.InchiStatus;
 import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.aromaticity.ElectronDonation;
 import org.openscience.cdk.exception.CDKException;
@@ -270,26 +271,19 @@ public class FixedFingerprinter {
                 LoggerFactory.getLogger(FixedFingerprinter.class).warn("Fix non-standard InChI '" + inchi + "'");
                 final InChIToStructure structureGenerator = InChIGeneratorFactory.getInstance().getInChIToStructure(inchi, SilentChemObjectBuilder.getInstance());
                 IAtomContainer m = structureGenerator.getAtomContainer();
-                inchi = InChIs.inchi2d(InChIGeneratorFactory.getInstance().getInChIGenerator(m).getInchi());
+                inchi = InChISMILESUtils.getInchi(m).in2D;
             } catch (CDKException e) {
                 LoggerFactory.getLogger(FixedFingerprinter.class).warn(e.getMessage());
             }
         }
-        if (inchi.isEmpty() || !inchi.startsWith("InChI=1S/")) {
+
+        if (inchi.isEmpty())
             throw new RuntimeException("Cannot parse InChI: " + __inchi);
-        }
-        if (!inchi.startsWith("InChI=1S/")) {
-            LoggerFactory.getLogger(FixedFingerprinter.class).warn("Non-standard InChI detected. This might result into inaccurate fingerprint computation! " + __inchi);
-        }
+        if (!inchi.startsWith("InChI=1S/"))
+            throw new RuntimeException("Non-standard InChI detected. Cannot parse InChI: " + __inchi);
+
         try {
-            final InChIToStructure structureGenerator = InChIGeneratorFactory.getInstance().getInChIToStructure(inchi, SilentChemObjectBuilder.getInstance());
-            final INCHI_RET returnStatus = structureGenerator.getReturnStatus();
-            if (returnStatus != INCHI_RET.OKAY) {
-                if (returnStatus==INCHI_RET.ERROR || returnStatus==INCHI_RET.FATAL || structureGenerator.getAtomContainer()==null)
-                    throw new RuntimeException("Cannot parse InChI: " + __inchi);
-                LoggerFactory.getLogger(FixedFingerprinter.class).warn("InChI parser returns a warning while parsing '" + __inchi + "': " + structureGenerator.getMessage() );
-            }
-            return structureGenerator.getAtomContainer();
+            return InChISMILESUtils.getAtomContainerFromInchi(inchi);
         } catch (CDKException e) {
             throw new RuntimeException("Cannot parse InChI: " + __inchi);
         }
