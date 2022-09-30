@@ -29,6 +29,9 @@ import de.unijena.bioinf.ms.rest.model.JobWithPredictor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+import java.util.Optional;
+
 public class CanopusJob extends JobWithPredictor<CanopusJobOutput> {
     protected String formula;
     protected byte[] fingerprint; // LITTLE ENDIAN BINARY ENCODED PLATT PROBABILITIES
@@ -42,7 +45,7 @@ public class CanopusJob extends JobWithPredictor<CanopusJobOutput> {
         this(null, update.getStateEnum());
         setJobId(update.getJobId());
         setErrorMessage(update.getErrorMessage());
-        setCompoundClasses(update.getData().compoundClasses);
+        Optional.ofNullable(update.getData()).map(s -> s.compoundClasses).ifPresent(this::setCompoundClasses);
     }
 
     public CanopusJob(String workerPrefix, String userID, String cid, @NotNull CanopusJobInput input) {
