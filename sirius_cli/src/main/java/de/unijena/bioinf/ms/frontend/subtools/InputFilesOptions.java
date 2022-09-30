@@ -25,6 +25,8 @@ import de.unijena.bioinf.projectspace.InstanceImporter;
 import picocli.CommandLine;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -54,13 +56,13 @@ public class InputFilesOptions {
 
 
     public static class MsInput {
-        public final Map<Path,Integer> msParserfiles, projects, unknownFiles;
+        public final Map<Path, Integer> msParserfiles, projects, unknownFiles;
 
         public MsInput() {
             this(new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>());
         }
 
-        public MsInput(Map<Path,Integer> msParserfiles, Map<Path,Integer> projects, Map<Path,Integer> unknownFiles) {
+        public MsInput(Map<Path, Integer> msParserfiles, Map<Path, Integer> projects, Map<Path, Integer> unknownFiles) {
             this.msParserfiles = msParserfiles;
             this.projects = projects;
             this.unknownFiles = unknownFiles;
@@ -76,9 +78,10 @@ public class InputFilesOptions {
         }
 
         @CommandLine.Option(names = {"--ignore-formula"}, description = "ignore given molecular formula if present in .ms or .mgf input files.", defaultValue = "false", order = 322)
-        public void setIgnoreFormula(boolean ignoreFormula){
+        public void setIgnoreFormula(boolean ignoreFormula) {
             this.ignoreFormula = ignoreFormula;
         }
+
         private boolean ignoreFormula;
 
         public boolean isIgnoreFormula() {
@@ -86,9 +89,10 @@ public class InputFilesOptions {
         }
 
         @CommandLine.Option(names = {"--allow-ms1-only"}, description = "Allow MS1 only data to be imported.", defaultValue = "false", order = 323)
-        public void setAllowMS1Only(boolean allowMS1Only){
+        public void setAllowMS1Only(boolean allowMS1Only) {
             this.allowMS1Only = allowMS1Only;
         }
+
         private boolean allowMS1Only;
 
         public boolean isAllowMS1Only() {
@@ -114,15 +118,17 @@ public class InputFilesOptions {
 
     public static class CsvInput {
         @CommandLine.Option(names = {"-1", "--ms1"}, description = "MS1 spectra files", paramLabel = "<ms1File>[,<ms1File>...]", order = 331)
-        protected void setMs1(String ms1Files){
+        protected void setMs1(String ms1Files) {
             this.ms1 = Arrays.stream(ms1Files.split(",")).map(File::new).collect(Collectors.toList());
         }
+
         public List<File> ms1;
 
         @CommandLine.Option(names = {"-2", "--ms2"}, description = "MS2 spectra files", required = true, paramLabel = "<ms2File>[,<ms2File>...]", order = 332)
-        protected void setMs2(String ms2Files){
+        protected void setMs2(String ms2Files) {
             this.ms2 = Arrays.stream(ms2Files.split(",")).map(File::new).collect(Collectors.toList());
         }
+
         public List<File> ms2;
 
         @CommandLine.Option(names = {"-z", "--parentmass", "--precursor", "--mz"}, description = "The mass of the parent ion for the specified ms2 spectra", required = true, order = 333)
@@ -141,5 +147,13 @@ public class InputFilesOptions {
         }
 
         public MolecularFormula formula = null;
+    }
+
+    public static InputFilesOptions createNonCompoundInput(List<Path> files) throws IOException {
+        InputFilesOptions input = new InputFilesOptions();
+        input.msInput = new InputFilesOptions.MsInput();
+        for (Path g : files)
+            input.msInput.unknownFiles.put(g, (int) Files.size(g));
+        return input;
     }
 }

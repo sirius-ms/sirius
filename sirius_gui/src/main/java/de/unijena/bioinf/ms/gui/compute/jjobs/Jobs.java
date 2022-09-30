@@ -219,12 +219,32 @@ public class Jobs {
         return runCommand(command, compoundsToProcess, null, description);
     }
 
-    public static TextAreaJJobContainer<Boolean> runCommand(@Nullable List<String> command, List<InstanceBean> compoundsToProcess,  @Nullable InputFilesOptions input, @Nullable String description) throws IOException {
+    public static TextAreaJJobContainer<Boolean> runCommand(@Nullable List<String> command, List<InstanceBean> compoundsToProcess, @Nullable InputFilesOptions input, @Nullable String description) throws IOException {
         BackgroundRuns.BackgroundRunJob<GuiProjectSpaceManager, InstanceBean> job =
                 BackgroundRuns.makeBackgroundRun(command, compoundsToProcess, input, MF.ps());
 
         return submit(job, job.getRunId() + ": " + (description == null ? "" : description),
                 "Computation");
+    }
+
+    public static LoadingBackroundTask<Boolean> runCommandAndLoad(@Nullable List<String> command,
+                                                                  List<InstanceBean> compoundsToProcess,
+                                                                  @Nullable InputFilesOptions input,
+                                                                  Window owner, String title, boolean indeterminateProgress
+    ) throws IOException {
+        BackgroundRuns.BackgroundRunJob<GuiProjectSpaceManager, InstanceBean> job =
+                BackgroundRuns.makeBackgroundRun(command, compoundsToProcess, input, MF.ps());
+        return runInBackgroundAndLoad(owner, title, indeterminateProgress, job);
+    }
+
+    public static LoadingBackroundTask<Boolean> runCommandAndLoad(@Nullable List<String> command,
+                                                                  List<InstanceBean> compoundsToProcess,
+                                                                  @Nullable InputFilesOptions input,
+                                                                  Dialog owner, String title, boolean indeterminateProgress
+    ) throws IOException {
+        BackgroundRuns.BackgroundRunJob<GuiProjectSpaceManager, InstanceBean> job =
+                BackgroundRuns.makeBackgroundRun(command, compoundsToProcess, input, MF.ps());
+        return runInBackgroundAndLoad(owner, title, indeterminateProgress, job);
     }
 
     public static void cancelAllRuns() {

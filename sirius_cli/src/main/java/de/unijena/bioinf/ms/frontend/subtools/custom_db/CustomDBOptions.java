@@ -45,9 +45,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 import java.nio.file.Path;
-import java.util.Comparator;
-import java.util.EnumSet;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -109,7 +107,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
         protected Boolean compute() throws Exception {
 
             if (location == null || location.isBlank() || input == null || input.msInput == null || input.msInput.unknownFiles.isEmpty()) {
-                logError("No input data given. Do nothing");
+                logWarn("No input data given. Do nothing");
                 return false;
             }
 
@@ -128,7 +126,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                     List.of(ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion().getUsedFingerprints()), VersionsInfo.CUSTOM_DATABASE_SCHEMA, null);
 
             CustomDatabase<?> db = CustomDatabase.createOrOpen(location, compression, settings);
-            addDBToProperties(db);
+            addDBToPropertiesIfNotExist(db);
 
             dbjob = db.importToDatabaseJob(
                     unknown.stream().map(Path::toFile).collect(Collectors.toList()),
@@ -150,11 +148,14 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
         }
     }
 
-    public static void addDBToProperties(@NotNull CustomDatabase<?> db){
-        List<CustomDatabase<?>> customs = SearchableDatabases.getCustomDatabases();
-        customs.add(db);
-        customs = customs.stream().distinct().sorted(Comparator.comparing(CustomDatabase::name)).collect(Collectors.toList());
-
-        SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(SearchableDatabases.PROP_KEY, customs.stream().map(CustomDatabase::storageLocation).collect(Collectors.joining(",")));
+    public static void addDBToPropertiesIfNotExist(@NotNull CustomDatabase<?> db) {
+        Set<CustomDatabase<?>> customs = new HashSet<>(SearchableDatabases.getCustomDatabases());
+        if (!customs.contains(db)) {
+            customs.add(db);
+            SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(SearchableDatabases.PROP_KEY, customs.stream()
+                    .sorted(Comparator.comparing(CustomDatabase::name))
+                    .map(CustomDatabase::storageLocation)
+                    .collect(Collectors.joining(",")));
+        }
     }
 }
