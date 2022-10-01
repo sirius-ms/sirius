@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 @RestController
-@RequestMapping(value = "/projects/{projectId}/gui")
+@RequestMapping(value = "/api/projects/{projectId}/gui")
 @Tag(name = "Graphical user Interface", description = "Open, control and close SIRIUS GUI on the specified project-space.")
 public class GuiController extends BaseApiController {
 

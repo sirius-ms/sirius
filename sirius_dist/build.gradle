@@ -15,8 +15,8 @@ dependencies {
 
 ext {
     // version for bundeled JRE
-    jre_version = '17.0.2'//'15.0.6'
-    zulu_jre_version = '17.32.13'//'15.38.17'
+    jre_version = '17.0.4.1'//'15.0.6'
+    zulu_jre_version = '17.36.17'//'15.38.17'
     jre_major = zulu_jre_version.split("[.]")[0]
 
     OS = DefaultNativePlatform.currentOperatingSystem
@@ -687,8 +687,8 @@ subprojects {
                     def c = ["$signtoolExe", "sign", "/debug", "/f", "${certFile}",
                              "/d", "Installer for the SIRIUS MS/MS analysis Software",
                              "/du", "https://bright-giant.com",
-                             "/p", "${findProperty('de.unijena.bioinf.WIN_INSTALLER_CERTIFICATE_PW')}", "/v", "/fd", "SHA256",
-                             "/tr", "\"${findProperty('de.unijena.bioinf.WIN_INSTALLER_CERTIFICATE_TIMESTAMP_URL')}\"", "/td", "SHA256", "$input"]
+                             "/p", "${findProperty('de.unijena.bioinf.build.WIN_INSTALLER_CERTIFICATE_PW')}", "/v", "/fd", "SHA256",
+                             "/tr", "\"${findProperty('de.unijena.bioinf.build.WIN_INSTALLER_CERTIFICATE_TIMESTAMP_URL')}\"", "/td", "SHA256", "$input"]
                     println(c)
                     project.exec {
                         commandLine(c)
@@ -708,7 +708,7 @@ subprojects {
         doLast {
             if (project.OS.isMacOsX()) {
                 def appleId = findProperty('de.unijena.bioinf.build.MACOS_APPLE_ID')
-                def appleIdPw = findProperty('de.unijena.bioinf.MACOS_APPLE_ID_PW')
+                def appleIdPw = findProperty('de.unijena.bioinf.build.MACOS_APPLE_ID_PW')
 
                 if (appleId != null && appleIdPw != null && !appleId.isBlank() && !appleIdPw.isBlank()) {
                     def pkg = Path.of(distImage.getImageDir().absolutePath.replace('.app', installerAppendix))
