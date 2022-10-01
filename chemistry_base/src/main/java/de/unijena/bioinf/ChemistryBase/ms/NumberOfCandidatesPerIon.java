@@ -26,7 +26,7 @@ import de.unijena.bioinf.ms.properties.DefaultProperty;
 /**
  * use this parameter if you want to force to report at least
  * numberOfResultsToKeepPerIonization results per ionization.
- * if <= 0, this parameter will have no effect and just the top
+ * if le 0, this parameter will have no effect and just the top
  * numberOfResultsToKeep results will be reported.
  * */
 @DefaultProperty

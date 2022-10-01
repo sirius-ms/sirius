@@ -40,6 +40,7 @@ trigger_sirius_frontend:
   trigger:
     project: bioinf-mit/ms/sirius_frontend
     strategy: depend
+    branch: $CI_COMMIT_REF_NAME
   only:
     refs:
       - master

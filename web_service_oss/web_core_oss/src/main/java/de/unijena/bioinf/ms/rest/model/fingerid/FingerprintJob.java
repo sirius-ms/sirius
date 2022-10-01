@@ -27,6 +27,8 @@ import de.unijena.bioinf.ms.rest.model.JobUpdate;
 import de.unijena.bioinf.ms.rest.model.JobWithPredictor;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Optional;
+
 public class FingerprintJob extends JobWithPredictor<FingerprintJobOutput> {
     protected String ms, tree;
     protected byte[] fingerprint; // LITTLE ENDIAN BINARY ENCODED PLATT PROBABILITIES
@@ -50,8 +52,12 @@ public class FingerprintJob extends JobWithPredictor<FingerprintJobOutput> {
         this(null, update.getStateEnum());
         setJobId(update.getJobId());
         setErrorMessage(update.getErrorMessage());
-        setFingerprint(update.getData().fingerprint);
-        setIokrVector(update.getData().iokrVector);
+        Optional.ofNullable(update.getData())
+                .ifPresent(d -> {
+                            setFingerprint(d.fingerprint);
+                            setIokrVector(d.iokrVector);
+                        }
+                );
     }
 
     //worker Constructor

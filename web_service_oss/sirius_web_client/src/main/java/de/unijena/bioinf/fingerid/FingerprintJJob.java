@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.ms.webapi.WebJJob;
 import de.unijena.bioinf.sirius.IdentificationResult;
@@ -49,6 +50,7 @@ public class FingerprintJJob extends BasicJJob<List<FingerIdResult>> {
     // input data
     private Ms2Experiment experiment;
     private List<FingerIdResult> idResult;
+    private Map<WebJJob<FingerprintJobInput, ?, FingerprintResult, ?>, FingerIdResult> predictionJobs = null;
 
     public FingerprintJJob(@NotNull CSIPredictor predictor) {
         this(predictor, null);
@@ -71,7 +73,7 @@ public class FingerprintJJob extends BasicJJob<List<FingerIdResult>> {
         this.idResult = formulaIDResults;
     }
 
-    
+
     public void setFingerIdResultInput(List<FingerIdResult> results) {
         notSubmittedOrThrow();
         this.idResult = results;
@@ -97,7 +99,7 @@ public class FingerprintJJob extends BasicJJob<List<FingerIdResult>> {
 
         logDebug("Submitting CSI:FingerID fingerprint prediction jobs.");
         final PredictorTypeAnnotation predictors = experiment.getAnnotationOrThrow(PredictorTypeAnnotation.class);
-        final Map<WebJJob<FingerprintJobInput, ?, FingerprintResult, ?>, FingerIdResult> predictionJobs = new LinkedHashMap<>(idResult.size());
+        predictionJobs = new LinkedHashMap<>(idResult.size());
 
         checkForInterruption();
 
@@ -117,6 +119,20 @@ public class FingerprintJJob extends BasicJJob<List<FingerIdResult>> {
         //in linked maps values() collection is not a set -> so we have to make that distinct
         return predictionJobs.values().stream().distinct().collect(Collectors.toList());
     }
+
+    @Override
+    public void cancel(boolean mayInterruptIfRunning) {
+        super.cancel(mayInterruptIfRunning);
+        if (predictionJobs != null)
+            predictionJobs.keySet().forEach(j -> j.cancel(mayInterruptIfRunning));
+    }
+
+    @Override
+    protected void cleanup() {
+        super.cleanup();
+        predictionJobs = null;
+    }
+
 
     @Override
     public String identifier() {
