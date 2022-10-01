@@ -31,7 +31,7 @@ import de.unijena.bioinf.sirius.SiriusCachedFactory;
 import de.unijena.bioinf.sirius.SiriusFactory;
 import de.unijena.bioinf.webapi.Tokens;
 import de.unijena.bioinf.webapi.WebAPI;
-import de.unijena.bioinf.webapi.rest.ProxyManager;
+import de.unijena.bioinf.rest.ProxyManager;
 import de.unijena.bioinf.webapi.rest.RestAPI;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;

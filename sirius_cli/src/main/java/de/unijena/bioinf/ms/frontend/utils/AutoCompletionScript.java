@@ -3,12 +3,16 @@ package de.unijena.bioinf.ms.frontend.utils;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
+import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
+import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.utils.Progressbar.ProgressVisualizer;
 import de.unijena.bioinf.ms.frontend.utils.Progressbar.ProgressbarDefaultCalculator;
 import de.unijena.bioinf.ms.frontend.utils.Progressbar.ProgressbarDefaultVisualizer;
 import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
+import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
+import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import org.jetbrains.annotations.NotNull;
@@ -20,65 +24,116 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.security.InvalidParameterException;
 import java.util.*;
-import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
-@Command(name = "install-autocompletion", description = "<INSTALL> generates and installs an Autocompletion-Script with all subcommands.",
-        mixinStandardHelpOptions = true)
-public class AutoCompletionScript implements Callable<Integer> {
+/**
+ * generates and installs an Autocompletion-Script with all subcommands
+ */
+@Command(name = "install-autocompletion", description = "<INSTALL> generates and installs an Autocompletion-Script with " +
+        "all subcommands. Default installation is for the current user", mixinStandardHelpOptions = true)
+public class AutoCompletionScript implements StandaloneTool<Workflow> {
 
     /**
      * type of installation of the Autocompletion Script
      */
     @ArgGroup()
     public Installationtype install = new Installationtype();
-    @Option(names = {"--location", "-l",}, description = "Target directory to store the script file. DEFAULT is the current working directory. Directory must exist.")
+
+    /**
+     * Sets the Path for the Scriptfile
+     */
+    @Option(names = {"--location", "-l"}, description = "Target directory to store the script file. " +
+            "DEFAULT is the current working directory. Directory must exist.")
     public void setScriptFile(Path scriptDir) {
         this.scriptFile = scriptDir.resolve(NAME);
     }
 
+    /**
+     * current version of sirius
+     */
+    public static final String version = PropertyManager.getProperty("de.unijena.bioinf.siriusFrontend.version");
+
+    /**
+     * Default path for the Script file is the current working directory
+     */
     public Path scriptFile = Path.of(System.getProperty("user.dir")).resolve(NAME); //current working dir
 
 
+    /**
+     * Alternative name for the sirius Application
+     */
+    @Option(names = {"--name", "-n"}, description = "Alternative name for the sirius Application", defaultValue = "sirius")
+    public String siriusName;
+    /**
+     * if the completion Script should be uninstalled
+     */
+    @Option(names = {"--uninstall", "-u"}, defaultValue = "false", description = "uninstalls the completionScript. " +
+            "Please add -g for global uninstallation")
+    public boolean uninstall;
 
     /**
      *  type of the current OS
      */
-    @Option(names = {"--OStype", "-o"}, description = "Overrides specification of the SystemOS. (Detected automatically per Default) Possibilities: {Linux, Mac, Solaris}")
+    @Option(names = {"--OStype", "-o"}, description = "Overrides specification of the SystemOS. " +
+            "(Detected automatically per Default) Possibilities: {Linux, Mac, Solaris}")
     public String OS;
+
+    /**
+     *  if true, ignores the version check when uninstalling
+     */
+    @Option(names = {"-i","--ignore-version"}, description = "ignores the version check while uninstalling the AutocompletionScript")
+    public boolean ignore_version;
     private boolean firstsirius = true;
     private final HashSet<String> aliases = new HashSet<>();
     private final HashSet<Integer> removedDefinitions = new HashSet<>();
-    private static final String NAME = "SiriusLinux_completion";
+    private static final String namePrefix = "SiriusLinux";
+    private static final String nameSuffix = "_completion.sh";
+    private static final String NAME = namePrefix+version+nameSuffix;
     private CommandLine commandline;
+    private static final String permInstallFirstLinePrefix = "# SIRIUS autocompletion support for ";
+    private static final String permInstallFirstLineSuffix = " - DO NOT REMOVE THIS COMMENT!";
+    private static final String permInstallFirstLine = permInstallFirstLinePrefix+NAME +permInstallFirstLineSuffix;
+    private static final String permInstallLastLine = "# End of SIRIUS Autocompletion - DO NOT REMOVE THIS COMMENT!";
     private boolean validDeclaration;
+    private final String globalinstallationpathname ="/etc/bash-completion.d/";
+    private final File installationfile = new File(globalinstallationpathname+NAME);
     private ProgressVisualizer progressbar;
     private boolean subvalidDeclaration;
+
     /**
      * generates a CompletionScript for the sirius Commandline instance.
      * @return returns 1 if execution was successful
+     * @throws IOException if file Accession is denied
+     * @throws UnknownOSException if the OS could not be recognised
+     * @throws InvalidParameterException if -u and -c are both declared
      */
-    public Integer call() throws IOException, UnknownOSException {
+    public Integer call() throws IOException, UnknownOSException, InvalidParameterException {
         System.setProperty("de.unijena.bioinf.ms.propertyLocations", "sirius_frontend.build.properties");
         FingerIDProperties.sirius_guiVersion();
         final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader(PropertyManager.DEFAULTS);
         WorkflowBuilder<?> builder = new WorkflowBuilder<>(new CLIRootOptions<>(configOptionLoader, new ProjectSpaceManagerFactory.Default()), configOptionLoader, new SimpleInstanceBuffer.Factory());
         builder.initRootSpec();
-        if (install.toInstall() && this.OS == null) this.OS = detectOS();
-        if (install.toInstall()) System.out.println("Detected OS as " + OS);
+        if((install.toInstall() || this.uninstall)&& this.OS == null) this.OS = detectOS();
+        if (install.toInstall() || this.uninstall) System.out.println("Detected OS as " + OS);
         commandline = new CommandLine(builder.getRootSpec());
         commandline.setCaseInsensitiveEnumValuesAllowed(true);
         commandline.registerConverter(DefaultParameter.class, new DefaultParameter.Converter());
+        if(this.uninstall) return uninstallScript() ?1:0;
         System.out.println("Creating AutocompletionScript");
+        if(this.ignore_version) throw new InvalidParameterException("--ignore-version is only applicable when uninstalling");
         findAliases(commandline);
         addAliasesEdgeCases();
-        String s = AutoComplete.bash("sirius", commandline);
+        String s = AutoComplete.bash(siriusName, commandline);
         Files.writeString(scriptFile, s);
         s = formatScript(scriptFile);
         Files.writeString(scriptFile, s);
@@ -90,11 +145,13 @@ public class AutoCompletionScript implements Callable<Integer> {
 
     /**
      * calls the necessary function for the Script installation on different OS
-     *
      * @param script the Script to be installed
      * @param OS     the current Operating System - Possibilities: {"Linux", "Mac", "Windows", "Solaris"}
+     * @throws IOException if file Accession is denied
+     * @throws UnknownOSException if the OS could not be recognised
+     * @throws InvalidParameterException if -u and -c are both declared
      */
-    private void installScript(final Path script, final String OS) {
+    private void installScript(final Path script, final String OS) throws IOException, InvalidParameterException, UnknownOSException {
         switch (OS) {
             case "Linux":
                 installScriptLinux(script);
@@ -113,59 +170,155 @@ public class AutoCompletionScript implements Callable<Integer> {
         }
     }
 
+    private boolean checkInstallationFolder() throws IOException {
+        AtomicBoolean successful = new AtomicBoolean(false);
+        File folder = new File(globalinstallationpathname);
+        if (!folder.isDirectory()) return false;
+        AtomicBoolean error = new AtomicBoolean(false);
+        Arrays.stream(folder.listFiles()).forEach(file -> {
+            if (file.getName().startsWith(namePrefix) && file.getName().endsWith(nameSuffix)) {
+                if (!file.delete()) error.set(true);
+                else successful.set(true);
+            }
+        });
+        if (error.get()) throw new IOException("File Accession Denied!");
+        return successful.get();
+    }
+
+    /**
+     * uninstalls the Script depending on the given Cli parameters
+     * @return true if the Script was uninstalled successfully
+     * @throws IOException if Accession is denied
+     * @throws InvalidParameterException if -c is decleared
+     */
+    private boolean uninstallScript() throws IOException, InvalidParameterException {
+        System.out.println("Uninstalling...");
+        if (!install.toInstall()) throw new InvalidParameterException("Please do not Declare -c");
+        AtomicBoolean successful = new AtomicBoolean(false);
+        Path rcPath = null;
+
+        // global uninstall
+        if(install.globalInstall()) {
+            if (ignore_version) successful.set(checkInstallationFolder());
+            if (!ignore_version && installationfile.getName().equals(NAME)) {
+                if (!(installationfile.delete())) throw new IOException("File Accession Denied!");
+                successful.set(true);
+            }
+        }
+
+        // search in bashrc/zshrc
+        if(OS.equals("Linux") || OS.equals("Solaris")) {
+            rcPath = Path.of(System.getProperty("user.home")).resolve(".bashrc");
+        }
+        else if (OS.equals("Mac")) {
+            rcPath = Path.of(System.getProperty("user.home")).resolve(".zshrc");
+        }
+
+        //local uninstall
+        if (rcPath != null && install.localInstall()) {
+            boolean removeLines = false;
+            String line;
+            StringBuilder output = new StringBuilder();
+            BufferedReader reader = new BufferedReader(new FileReader(String.valueOf(rcPath)));
+            while ((line = reader.readLine()) != null) {
+                if (line.equals(permInstallFirstLine) || (ignore_version && line.startsWith(permInstallFirstLinePrefix) && line.endsWith(permInstallFirstLineSuffix))) {
+                    removeLines = true;
+                    successful.set(true);
+                }
+                if (!removeLines) output.append(line).append("\n");
+                if (line.equals(permInstallLastLine)) removeLines = false;
+            }
+            Files.writeString(rcPath, output);
+        }
+
+        return successful.get();
+    }
+
+    /**
+     * main function for the Installation of the autocompletion
+     * @param installationConfig mostly .bashrc or .zshrc depending on the OS
+     * @param content Lines for the .bashrc / .zshrc file
+     * @param scriptPath Path to the generated Autocompletion-Script
+     * @throws IOException if Accession is denied
+     */
+    private void chooseInstallationPath(Path installationConfig, List<String> content, Path scriptPath) throws IOException {
+        AtomicBoolean installed = new AtomicBoolean(false);
+        //global installation
+        if (install.globalInstall()) {
+            File globaldirectory = new File(globalinstallationpathname);
+            if(!(globaldirectory.exists())) {
+                if (!(globaldirectory.mkdirs())) throw new IOException("Accession Denied. Please Execute with root permissions");
+            }
+            Files.copy(scriptPath, installationfile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            installed.set(true);
+            System.err.println("Installed at: " + installationfile.toPath());
+        }
+
+
+        // add to bashrc/zshrc alternatively
+        // check for previous installation first
+        {
+            String line;
+            BufferedReader reader = new BufferedReader(new FileReader(String.valueOf(installationConfig)));
+            while ((line = reader.readLine()) != null) {
+                if (line.equals(permInstallFirstLine)) installed.set(true);
+            }
+        }
+
+
+        if (!(installed.get()) && install.localInstall()) {
+            Files.write(installationConfig, content, StandardOpenOption.APPEND);
+            System.err.println("Installed at: " + installationConfig);
+        }
+    }
+
     /**
      * installs the Script for any bash-based terminals
      * @param script the Script to be installed
      * @param installationConfig Absolute Path to the installation config File (e.g. "~/.bashrc")
      */
-    private void UnixinstallScript(Path script, Path installationConfig) {
-        if (this.install.permInstall()) {
+    private void UnixinstallScript(Path script, Path installationConfig) throws IOException {
+        if (this.install.toInstall()) {
             List<String> content = Arrays.asList( // check if file exists to not crash bashrc is sirius is deleted
-                    "# SIRIUS autocompletion support",
+                    permInstallFirstLine,
                     "if [ -f \"" + script.toAbsolutePath() + "\" ]; then",
-                    ". \"" + script.toAbsolutePath() + "\"" ,
-                    "fi"
+                    ". \"" + script.toAbsolutePath() + "\"",
+                    "fi",
+                    permInstallLastLine
             );
 
-            try {
-                Files.write(installationConfig, content, StandardOpenOption.APPEND);
-                System.out.println("Script installed. Pleases restart the terminal if the Autocompletion does not work");
-            } catch (IOException e) {
-                throw new RuntimeException("Unable to install CompletionScript", e);
-            }
-
+            chooseInstallationPath(installationConfig, content, script.toAbsolutePath());
+            System.out.println("Script installed. Pleases open a new terminal or source the .bashrc" +
+                    " for the changes to take effect");
         }
-        //run this also for permanent installation to make terminal restart obsolete
-        AutoCompletionScript.executeBashCommand(". " + scriptFile.toAbsolutePath());
-        //todo @lukas this does not work. It sources to the newly created bash an not to the one the user is currently using...
     }
 
     /**
      * installs the given Script on a typical Linux machine
      */
-    private void installScriptLinux(Path script) {
+    private void installScriptLinux(Path script) throws IOException {
         UnixinstallScript(script,  Path.of(System.getProperty("user.home")).resolve(".bashrc"));
     }
 
     /**
      * installs the given Script on a typical Windows machine (not supported!)
      */
-    private void installScriptWindows(Path script) {
+    private void installScriptWindows(Path script) throws InvalidParameterException {
         //TODO Windows installation Script
-        throw new RuntimeException("Autocompletion under Windows is not supported by default");
+        throw new InvalidParameterException("Autocompletion under Windows is not supported by default");
     }
 
     /**
      * installs the given Script in a macOS machine
      */
-    private void installScriptMac(Path script) {
+    private void installScriptMac(Path script) throws IOException {
         UnixinstallScript(script, Path.of(System.getProperty("user.home")).resolve(".zshrc"));
     }
 
     /**
      * installs the given Script on a typical Solaris machine
      */
-    private void installScriptSolaris(Path script) {
+    private void installScriptSolaris(Path script) throws IOException {
         // same as Linux
         UnixinstallScript(script,  Path.of(System.getProperty("user.home")).resolve(".bashrc"));
     }
@@ -222,12 +375,11 @@ public class AutoCompletionScript implements Callable<Integer> {
      * @throws IOException if the File is unreadable
      */
     private @NotNull String formatScript(Path scriptFile) throws IOException {
-        this.progressbar = new ProgressbarDefaultVisualizer(System.out, new ProgressbarDefaultCalculator(5));
+        this.progressbar = new ProgressbarDefaultVisualizer<>(System.out, new ProgressbarDefaultCalculator(5));
         this.progressbar.start();
         StringBuilder output = new StringBuilder();
         BufferedReader reader = new BufferedReader(new FileReader(String.valueOf(scriptFile)));
         String line;
-        HashSet<Integer> removed = new HashSet<>();
         String functionstatus = null;
         while ((line = reader.readLine()) != null) {
             String[] words = line.split(" ");
@@ -254,7 +406,7 @@ public class AutoCompletionScript implements Callable<Integer> {
      */
     @Nullable
     private String getFunctionstatus(String line, String functionstatus, String[] words) {
-        if (functionstatus == null && words.length > 1 && Objects.equals(words[0], "function") && words[1].equals("_complete_sirius()")) {
+        if (functionstatus == null && words.length > 1 && Objects.equals(words[0], "function") && words[1].equals("_complete_"+siriusName+"()")) {
             functionstatus = "CompletionScriptFunction";
             progressbar.getCalculator().increaseProgress();
         } else if (Objects.equals(functionstatus, "CompletionScriptFunction") && line.equals("  # Find the longest sequence of subcommands and call the bash function for that subcommand.")) {
@@ -360,7 +512,6 @@ public class AutoCompletionScript implements Callable<Integer> {
     private boolean isvalidsubalias(String alias) {
         return false;
 
-        //TODO Ambiguous - non Deterministic?
         /*
         return (
                 alias.equals("A") || alias.equals("PS") //|| alias.equals("C")
@@ -387,7 +538,7 @@ public class AutoCompletionScript implements Callable<Integer> {
      * @return the modified line
      */
     private String formatSubcommandFunction(String line, String[] words) {
-        HashSet<String> subaliases = new HashSet(aliases);
+        HashSet<String> subaliases = new HashSet<>(aliases);
         aliases.forEach(alias -> {
             if (!isvalidsubalias(alias)) subaliases.remove(alias);
         });
@@ -457,6 +608,17 @@ public class AutoCompletionScript implements Callable<Integer> {
         return success;
     }
 
+    @Override
+    public Workflow makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
+        return () -> {
+            try {
+                call();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        };
+    }
+
     /**
      * Exception for detection of an Unknown OS
      */
@@ -467,45 +629,52 @@ public class AutoCompletionScript implements Callable<Integer> {
     }
 }
 
+
+
 /**
  * class for determining the type of installation for the AutocompletionScript
  */
 class Installationtype {
-    @Option(names = {"--temporary", "-t"}, defaultValue = "false",
-            description = "[Exclusive to -p] installs the Completionscript temporary")  private boolean temp;
-    @Option(names = {"--permanent", "-p"}, defaultValue = "false",
-            description = "[Exclusive to -t] installs the Completionscript permanently")  private boolean perm;
+    @Option(names = {"--global", "-g"}, defaultValue = "false",
+            description = "installs the Completionscript globally into /etc/bash-completion.d " +
+                    "(requires root permission and [bash-completion] (https://github.com/scop/bash-completion))")  private boolean global;
+    @Option(names = {"--cancelinstall", "-c"}, defaultValue = "false",
+            description = "does not install the Completionscript")  private boolean cancel;
 
     /**
      * returns true if any installation is required
      */
-    public boolean toInstall() {return (temp || perm);}
+    public boolean toInstall() {return (!cancel);}
 
     /**
-     * returns true if a permanent installation is required
+     * returns true if a local installation is required
      */
-    public boolean permInstall() {return perm;}
+    public boolean localInstall() {return !global && !cancel;}
 
+    /**
+     * returns true if a global installation is required
+     */
+    public boolean globalInstall() {return global;}
     /**
      * Changes the installationtype to the given Parameter
      *
-     * @param installationtype valid are: {null, temporary, permanent}
+     * @param installationtype valid are: {null, global, local}
      * @return successfull change of the installationtype
      */
     public boolean setInstallationtype(@Nullable String installationtype) {
         if (installationtype == null) {
-            this.temp = false;
-            this.perm = false;
+            this.global = false;
+            this.cancel = true;
             return true;
         }
-        if (installationtype.equals("temporary")) {
-            this.temp = true;
-            this.perm = false;
+        if (installationtype.equals("global")) {
+            this.global = true;
+            this.cancel = false;
             return true;
         }
-        if (installationtype.equals("permanent")) {
-            this.temp = false;
-            this.perm = true;
+        if (installationtype.equals("local")) {
+            this.global = false;
+            this.cancel = false;
             return true;
         }
         return false;

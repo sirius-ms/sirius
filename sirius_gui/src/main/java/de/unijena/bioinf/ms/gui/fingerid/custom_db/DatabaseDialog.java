@@ -23,13 +23,8 @@ import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.chemdb.DataSources;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
-import de.unijena.bioinf.jjobs.LoadingBackroundTask;
-import de.unijena.bioinf.ms.frontend.Run;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
-import de.unijena.bioinf.ms.frontend.subtools.ComputeRootOption;
-import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
-import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
-import de.unijena.bioinf.ms.frontend.workfow.GuiInstanceBufferFactory;
+import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.compute.DBSelectionList;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
@@ -38,13 +33,10 @@ import de.unijena.bioinf.ms.gui.dialogs.DialogHeader;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
-import de.unijena.bioinf.ms.gui.logging.TextAreaJJobContainer;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.JTextAreaDropImage;
 import de.unijena.bioinf.ms.gui.utils.ListAction;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
-import de.unijena.bioinf.ms.properties.PropertyManager;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
@@ -62,6 +54,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
@@ -302,25 +295,25 @@ public class DatabaseDialog extends JDialog {
 
             importButton.addActionListener(e -> {
                 dispose();
-                Path p = Jobs.runInBackgroundAndLoad(this, "Processing input Data...", () -> {
-                    Path f = FileUtils.newTempFile("custom-db-import", ".csv");
-                    try {
-                        Files.write(f, Arrays.asList(textArea.getText().split("\n")));
-                        return f;
-                    } catch (IOException ioException) {
-                        new StacktraceDialog(this, "Could not write input data to '" + f.toString() + "'.", ioException);
-                        return null;
-                    }
-                }).getResult();
-                if (p != null)
-                    runImportJob(List.of(p));
+                String t = textArea.getText();
+                runImportJob(null,
+                        t != null && !t.isBlank()
+                                ? Arrays.asList(t.split("\n"))
+                                : null
+                );
             });
 
             final DropTarget dropTarget = new DropTarget() {
                 @Override
                 public synchronized void drop(DropTargetDropEvent evt) {
                     dispose();
-                    runImportJob(DragAndDrop.getFileListFromDrop(evt).stream().map(File::toPath).collect(Collectors.toList()));
+                    String t = textArea.getText();
+                    runImportJob(
+                            DragAndDrop.getFileListFromDrop(evt).stream().map(File::toPath).collect(Collectors.toList()),
+                            t != null && !t.isBlank()
+                                    ? Arrays.asList(t.split("\n"))
+                                    : null
+                    );
                 }
             };
 
@@ -332,19 +325,59 @@ public class DatabaseDialog extends JDialog {
 
         }
 
-        protected void runImportJob(@NotNull List<Path> source) {
+        protected void runImportJob(@Nullable List<Path> sources, @Nullable List<String> stringSources) {
+            if (sources == null)
+                sources = new ArrayList<>();
             try {
+                Jobs.runInBackgroundAndLoad(this, "Checking output location...", () -> {
+                    Path p = Path.of(configPanel.dbLocationField.getFilePath());
+                    if (Files.exists(p)) {
+                        if (Files.isRegularFile(p))
+                            throw new IOException("Illegal DB location: Found a file but DB location must either not exist, be an empty directory or an existing custom db.");
+
+                        if (FileUtils.listAndClose(p, s -> s.findAny().isPresent()))
+                            try {
+                                return SearchableDatabases.loadCustomDatabaseFromLocation(p.toAbsolutePath().toString(), true);
+                            } catch (IOException ex) {
+                                throw new IOException("Illegal DB location: Found non empty directory that is not a valid custom db. To create a new DB location must not exist or be an empty directory.", ex);
+                            }
+                    }
+                    return null;
+                }).awaitResult();
+
+                if (stringSources != null && !stringSources.isEmpty()) {
+                    sources.add(Jobs.runInBackgroundAndLoad(this, "Processing string input Data...", () -> {
+                        Path f = FileUtils.newTempFile("custom-db-import", ".csv");
+                        try {
+                            Files.write(f, stringSources);
+                            return f;
+                        } catch (IOException ioException) {
+                            throw new IOException("Could not write input data to temp location '" + f + "'.", ioException);
+                        }
+                    }).awaitResult());
+                }
+
                 List<String> command = new ArrayList<>();
                 command.add(configPanel.toolCommand());
                 command.addAll(configPanel.asParameterList());
 
-                final TextAreaJJobContainer<Boolean> j = Jobs.runCommand(command, null, configPanel.toolCommand());
-                LoadingBackroundTask.connectToJob(this, "Importing into '" + configPanel.dbLocationField.getFilePath() + "'...", false, j);
+                Jobs.runCommandAndLoad(command, null,
+                                InputFilesOptions.createNonCompoundInput(sources), this,
+                                "Importing into '" + configPanel.dbLocationField.getFilePath() + "'...",
+                                false)
+                        .awaitResult();
+
                 whenCustomDbIsAdded(configPanel.dbLocationField.getFilePath());
-                //todo else some error message with pico cli output
+            } catch (ExecutionException ex) {
+                LoggerFactory.getLogger(getClass()).error("Error during Custom DB import.", ex);
+
+                if (ex.getCause() != null)
+                    new StacktraceDialog(this, ex.getCause().getMessage(), ex.getCause());
+                else
+                    new StacktraceDialog(this, "Unexpected error when importing custom DB!", ex);
             } catch (Exception e) {
-                LoggerFactory.getLogger(getClass()).error("Unexpected Error during Custom DB import.", e);
-                new StacktraceDialog(MF, "Unexpected Error during Custom DB import.", e);
+                LoggerFactory.getLogger(getClass()).error("Fatal Error during Custom DB import.", e);
+                new StacktraceDialog(MF, "Fatal Error during Custom DB import.", e);
             }
         }
     }

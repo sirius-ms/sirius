@@ -27,7 +27,7 @@ import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionCheckPanel;
 import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
-import de.unijena.bioinf.webapi.rest.ConnectionError;
+import de.unijena.bioinf.rest.ConnectionError;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
