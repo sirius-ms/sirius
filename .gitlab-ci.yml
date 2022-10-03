@@ -40,14 +40,10 @@ before_script:
 buildCLI:
   stage: build
   script:
-    - gradle :sirius_dist:sirius_cli_single_os:publishSiriusMSPublicationToMavenLocal
+    - curl -V
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
-  artifacts:
-    paths:
-      - ./sirius_dist/sirius_cli_single_os/build/distributions
-      - ./sirius_dist/sirius_cli_single_os/build/publications/siriusMS/pom-default.xml
   tags:
     - kubernetes
   only:
@@ -55,6 +51,25 @@ buildCLI:
       - master
       - master-dist-tests
       - stable
+
+#buildCLI:
+#  stage: build
+#  script:
+#    - gradle :sirius_dist:sirius_cli_single_os:publishSiriusMSPublicationToMavenLocal
+#  cache:
+#    key: "$CI_COMMIT_REF_NAME"
+#    policy: push
+#  artifacts:
+#    paths:
+#      - ./sirius_dist/sirius_cli_single_os/build/distributions
+#      - ./sirius_dist/sirius_cli_single_os/build/publications/siriusMS/pom-default.xml
+#  tags:
+#    - kubernetes
+#  only:
+#    refs:
+#      - master
+#      - master-dist-tests
+#      - stable
 #
 #
 #buildGUI:
@@ -98,24 +113,24 @@ buildCLI:
 #
 #
 #
-testCLI:
-  stage: test
-  script:
-    - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
-    - gradle :sirius_dist:sirius_cli_single_os:distImageTest
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: push
-  needs: [buildCLI]
-  dependencies:
-    - buildCLI
-  tags:
-    - kubernetes
-  only:
-    refs:
-      - master
-      - master-dist-tests
-      - stable
+#testCLI:
+#  stage: test
+#  script:
+#    - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
+#    - gradle :sirius_dist:sirius_cli_single_os:distImageTest
+#  cache:
+#    key: "$CI_COMMIT_REF_NAME"
+#    policy: push
+#  needs: [buildCLI]
+#  dependencies:
+#    - buildCLI
+#  tags:
+#    - kubernetes
+#  only:
+#    refs:
+#      - master
+#      - master-dist-tests
+#      - stable
 #
 #
 #testGUI:
@@ -160,25 +175,25 @@ testCLI:
 # ARTIFACTORY_USERNAME und ARTIFACTORY_TOKEN für API publish nutzen
 #
 
-publishCLI:
-  variables:
-    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-  stage: publish
-  script:
-    - curl -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_TOKEN -X PUT "https://bio.informatik.uni-jena.de:433/artifactory/dist/de/unijena/bioinf/ms/siriusMS/test/sirius.zip" -T sirius_dist/sirius_cli_single_os/build/distributions/sirius.zip
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: push
-  needs: [buildCLI, testCLI]
-  dependencies:
-    - buildCLI
-  tags:
-    - kubernetes
-  only:
-    refs:
-      - master
-      - master-dist-tests
-      - stable
+#publishCLI:
+#  variables:
+#    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+#  stage: publish
+#  script:
+#    - curl -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_TOKEN -X PUT "https://bio.informatik.uni-jena.de:433/artifactory/dist/de/unijena/bioinf/ms/siriusMS/test/sirius.zip" -T sirius_dist/sirius_cli_single_os/build/distributions/sirius.zip
+#  cache:
+#    key: "$CI_COMMIT_REF_NAME"
+#    policy: push
+#  needs: [buildCLI, testCLI]
+#  dependencies:
+#    - buildCLI
+#  tags:
+#    - kubernetes
+#  only:
+#    refs:
+#      - master
+#      - master-dist-tests
+#      - stable
 #
 #
 #publishGUI:
