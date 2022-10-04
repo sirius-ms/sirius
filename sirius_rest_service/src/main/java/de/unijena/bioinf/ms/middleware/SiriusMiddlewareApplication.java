@@ -123,6 +123,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
 //                    appContext.close();
 
                     measureTime("Workflow DONE!");
+                    System.err.println("SIRIUS Service started successfully!");
                 } else {
                     System.exit(0); //todo real error codes
                 }

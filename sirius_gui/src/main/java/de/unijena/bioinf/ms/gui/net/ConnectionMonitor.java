@@ -34,7 +34,7 @@ import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerType;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerWithCharge;
 import de.unijena.bioinf.webapi.Tokens;
-import de.unijena.bioinf.webapi.rest.ConnectionError;
+import de.unijena.bioinf.rest.ConnectionError;
 import org.jdesktop.beans.AbstractBean;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
