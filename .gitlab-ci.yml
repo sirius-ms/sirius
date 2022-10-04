@@ -37,32 +37,13 @@ before_script:
 
 
 
-buildCLI:
-  stage: build
-  script:
-    - curl -V
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: push
-  tags:
-    - kubernetes
-  only:
-    refs:
-      - master
-      - master-dist-tests
-      - stable
-
 #buildCLI:
 #  stage: build
 #  script:
-#    - gradle :sirius_dist:sirius_cli_single_os:publishSiriusMSPublicationToMavenLocal
+#    - curl -V
 #  cache:
 #    key: "$CI_COMMIT_REF_NAME"
 #    policy: push
-#  artifacts:
-#    paths:
-#      - ./sirius_dist/sirius_cli_single_os/build/distributions
-#      - ./sirius_dist/sirius_cli_single_os/build/publications/siriusMS/pom-default.xml
 #  tags:
 #    - kubernetes
 #  only:
@@ -70,6 +51,25 @@ buildCLI:
 #      - master
 #      - master-dist-tests
 #      - stable
+
+buildCLI:
+  stage: build
+  script:
+    - gradle :sirius_dist:sirius_cli_single_os:publishSiriusMSPublicationToMavenLocal
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  artifacts:
+    paths:
+      - ./sirius_dist/sirius_cli_single_os/build/distributions
+      - ./sirius_dist/sirius_cli_single_os/build/publications/siriusMS/pom-default.xml
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - master
+      - master-dist-tests
+      - stable
 #
 #
 #buildGUI:
@@ -113,24 +113,24 @@ buildCLI:
 #
 #
 #
-#testCLI:
-#  stage: test
-#  script:
-#    - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
-#    - gradle :sirius_dist:sirius_cli_single_os:distImageTest
-#  cache:
-#    key: "$CI_COMMIT_REF_NAME"
-#    policy: push
-#  needs: [buildCLI]
-#  dependencies:
-#    - buildCLI
-#  tags:
-#    - kubernetes
-#  only:
-#    refs:
-#      - master
-#      - master-dist-tests
-#      - stable
+testCLI:
+  stage: test
+  script:
+    - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
+    - gradle :sirius_dist:sirius_cli_single_os:distImageTest
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  needs: [buildCLI]
+  dependencies:
+    - buildCLI
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - master
+      - master-dist-tests
+      - stable
 #
 #
 #testGUI:
