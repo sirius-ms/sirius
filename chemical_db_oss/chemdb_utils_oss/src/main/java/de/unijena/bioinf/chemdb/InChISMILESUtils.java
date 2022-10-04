@@ -129,7 +129,7 @@ public class InChISMILESUtils {
         InchiStatus state = structureGenerator.getStatus();
         if (state != InchiStatus.ERROR) {
             if (state == InchiStatus.WARNING)
-                LoggerFactory.getLogger(InChISMILESUtils.class).error("Warning while parsing InChI:\n'" + inchi + "'\n-> " + structureGenerator.getMessage());
+                LoggerFactory.getLogger(InChISMILESUtils.class).debug("Warning while parsing InChI:\n'" + inchi + "'\n-> " + structureGenerator.getMessage());
             return structureGenerator.getAtomContainer();
         } else {
             if (lazyErrorHandling) {
