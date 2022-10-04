@@ -63,7 +63,7 @@ public class StructureCandidate {
      * PubMed IDs belonging to this structure candidate
      * OPTIONAL: needs to be added by parameter
      */
-    int pubmedIds;
+    int[] pubmedIds;
 
 
     public static StructureCandidate of(Scored<CompoundCandidate> can, FormulaScoring scorings, boolean includeDB, boolean includePubMed) {
@@ -97,7 +97,7 @@ public class StructureCandidate {
         if (pubMedIds != null) {
             sSum.setNumOfPubMedIds(pubMedIds.getNumberOfPubmedIDs());
             if (includePubMed)
-                sSum.setPubmedIds(pubMedIds.getNumberOfPubmedIDs());
+                sSum.setPubmedIds(pubMedIds.getCopyOfPubmedIDs());
         }
 
         if (includeDB)

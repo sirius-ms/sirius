@@ -23,11 +23,10 @@ package de.unijena.bioinf.ms.frontend;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.ms.frontend.subtools.ComputeRootOption;
+import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
-import de.unijena.bioinf.ms.frontend.workflow.InstanceBufferFactory;
-import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
-import de.unijena.bioinf.ms.frontend.workflow.Workflow;
-import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
+import de.unijena.bioinf.ms.frontend.subtools.projectspace.ProjectSpaceWorkflow;
+import de.unijena.bioinf.ms.frontend.workflow.*;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.Instance;
@@ -50,7 +49,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * It runs the tool through the command line parser to that we can profit from the CLI parameter validation.
  */
 public final class BackgroundRuns {
-    private static final AtomicBoolean AUTOREMOVE = new AtomicBoolean(PropertyManager.getBoolean("de.unijena.bioinf.sirius.BackgroundRuns.autoremove",true));
+    private static final AtomicBoolean AUTOREMOVE = new AtomicBoolean(PropertyManager.getBoolean("de.unijena.bioinf.sirius.BackgroundRuns.autoremove", true));
 
     private static final AtomicInteger RUN_COUNTER = new AtomicInteger(0);
 
@@ -95,7 +94,7 @@ public final class BackgroundRuns {
             return null;
 
         if (!j.isFinished())
-            throw new IllegalArgumentException("Job with ID '" +jobId+ "' is still Running! Only finished jobs can be removed.");
+            throw new IllegalArgumentException("Job with ID '" + jobId + "' is still Running! Only finished jobs can be removed.");
 
         ACTIVE_RUNS.remove(j.runId);
 
@@ -138,13 +137,21 @@ public final class BackgroundRuns {
     }
 
 
-    public static <P extends ProjectSpaceManager<I>, I extends Instance> BackgroundRunJob<P, I> makeBackgroundRun(List<String> command, Iterable<I> instances, P project) throws IOException {
-        Workflow computation = makeWorkflow(command, new ComputeRootOption<>(project, instances));
+    public static <P extends ProjectSpaceManager<I>, I extends Instance> BackgroundRunJob<P, I> makeBackgroundRun(List<String> command, @Nullable Iterable<I> instances, P project) throws IOException {
+        return makeBackgroundRun(command, instances, null, project);
+    }
+
+    public static <P extends ProjectSpaceManager<I>, I extends Instance> BackgroundRunJob<P, I> makeBackgroundRun(List<String> command, @Nullable Iterable<I> instances, @Nullable InputFilesOptions toImport, P project) throws IOException {
+        Workflow computation = makeWorkflow(command, new ComputeRootOption<>(project, instances, toImport));
         return new BackgroundRunJob<>(computation, project, instances, RUN_COUNTER.incrementAndGet(), String.join(" ", command));
     }
 
-    public static <P extends ProjectSpaceManager<I>, I extends Instance> BackgroundRunJob<P, I> runCommand(List<String> command, Iterable<I> instances, P project) throws IOException {
-        return SiriusJobs.getGlobalJobManager().submitJob(makeBackgroundRun(command, instances, project));
+    public static <P extends ProjectSpaceManager<I>, I extends Instance> BackgroundRunJob<P, I> runCommand(List<String> command, @Nullable Iterable<I> instances, P project) throws IOException {
+        return runCommand(command, instances, null, project);
+    }
+
+    public static <P extends ProjectSpaceManager<I>, I extends Instance> BackgroundRunJob<P, I> runCommand(List<String> command, @Nullable Iterable<I> instances, @Nullable InputFilesOptions toImport, P project) throws IOException {
+        return SiriusJobs.getGlobalJobManager().submitJob(makeBackgroundRun(command, instances, toImport, project));
     }
 
 
@@ -248,15 +255,24 @@ public final class BackgroundRuns {
         @Override
         protected void cleanup() {
             try {
-                logInfo("Unlocking Instances after Computation...");
-                if (instanceIds != null && !instanceIds.isEmpty())
+                if (instanceIds != null && !instanceIds.isEmpty()) {
+                    logInfo("Unlocking Instances after Computation...");
                     project.projectSpace().setFlags(CompoundContainerId.Flag.COMPUTING, false,
                             instanceIds.toArray(CompoundContainerId[]::new));
-                logInfo("All Instances unlocked!");
+                    logInfo("All Instances unlocked!");
+                } else if (computation instanceof ToolChainWorkflow) {
+                    logInfo("Collecting imported compounds...");
+                    Iterable<? extends Instance> instances = ((ToolChainWorkflow) computation).getPreprocessingJob().result();
+                    instanceIds = new ArrayList<>();
+                    instances.forEach(i -> instanceIds.add(i.getID()));
+                    logInfo("Imported compounds collected...");
+                } else if (computation instanceof ProjectSpaceWorkflow) {
+                    logInfo("Collecting imported compounds...");
+                    instanceIds = ((ProjectSpaceWorkflow) computation).getImportedCompounds();
+                    logInfo("Imported compounds collected...");
+                }
                 logInfo("Freeing up memory...");
                 computation = null;
-//                instanceIds = null;
-//                project = null;
                 System.gc(); //hint for the gc to collect som trash after computations
                 logInfo("Memory freed!");
             } finally {

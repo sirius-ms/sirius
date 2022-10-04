@@ -48,7 +48,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class CanopusSubToolJob extends InstanceJob {
-
+    private Map<FormulaResult, WebJJob<CanopusJobInput, ?, CanopusResult, ?>> jobs;
     public CanopusSubToolJob(JobSubmitter submitter) {
         super(submitter);
         asWEBSERVICE();
@@ -103,7 +103,7 @@ public class CanopusSubToolJob extends InstanceJob {
         updateProgress(25);
 
         // submit canopus jobs for Identification results that contain CSI:FingerID results
-        Map<FormulaResult, WebJJob<CanopusJobInput, ?, CanopusResult, ?>> jobs = res.stream().collect(Collectors.toMap(r -> r, ir -> buildAndSubmitRemote(ir, specHash)));
+        jobs = res.stream().collect(Collectors.toMap(r -> r, ir -> buildAndSubmitRemote(ir, specHash)));
         updateProgress(30);
 
 
@@ -126,6 +126,19 @@ public class CanopusSubToolJob extends InstanceJob {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public void cancel(boolean mayInterruptIfRunning) {
+        super.cancel(mayInterruptIfRunning);
+        if (jobs != null)
+            jobs.values().forEach(j -> j.cancel(mayInterruptIfRunning));
+    }
+
+    @Override
+    protected void cleanup() {
+        super.cleanup();
+        jobs = null;
     }
 
     @Override

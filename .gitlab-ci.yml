@@ -13,9 +13,6 @@ stages:
   - prepare
   - build
   - test
-#  - build-cli
-#  - build-multi-cli
-#  - build-gui
   - publish
 
 
@@ -238,8 +235,7 @@ testCLI:
 #      - master-dist-tests
 #      - stable
 
-
-##push to github for multiOS build
+#push to github to build for multiple OSs
 #pushToGitHub:
 #  stage: publish
 #  script:
@@ -248,8 +244,8 @@ testCLI:
 #    - git remote show origin
 #    - git remote set-url --push origin git@github.com:boecker-lab/sirius.git
 #    - git remote show origin
-##todo  re-insert before merge to master
-##    - git push --follow-tags origin HEAD:$CI_COMMIT_REF_NAME
+#    ##todo  re-insert before merge to master
+#    - git push --follow-tags origin HEAD:$CI_COMMIT_REF_NAME
 #  cache:
 #    key: "$CI_COMMIT_REF_NAME"
 #    policy: push
@@ -259,5 +255,4 @@ testCLI:
 #  only:
 #    refs:
 #      - stable
-#      - master-dist-tests
 #      - master

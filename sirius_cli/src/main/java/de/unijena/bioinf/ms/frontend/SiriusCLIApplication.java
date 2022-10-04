@@ -31,7 +31,7 @@ import de.unijena.bioinf.ms.frontend.workflow.WorkFlowSupplier;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
-import de.unijena.bioinf.webapi.rest.ProxyManager;
+import de.unijena.bioinf.rest.ProxyManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -54,6 +54,12 @@ public class SiriusCLIApplication {
     }
     public static void runMain(String[] args, List<StandaloneTool<?>> injectTools) {
         System.setProperty(APP_TYPE_PROPERTY_KEY, "CLI");
+        {
+            List<String> argsl = List.of(args);
+            int i = argsl.indexOf("--workspace");
+            if (i >= 0)
+                System.setProperty("de.unijena.bioinf.sirius.ws.location", args[i+1].replace("'","").replace("\"",""));
+        }
         if (TIME)
             t1 = System.currentTimeMillis();
         try {

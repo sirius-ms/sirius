@@ -1,9 +1,6 @@
 package de.unijena.bioinf.ms.frontend.utils.Progressbar;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.io.PrintStream;
-import java.security.InvalidParameterException;
 
 /**
  * class for a Progressbar instance.
@@ -32,12 +29,10 @@ public class ProgressbarDefaultVisualizer<ProgressbarCalc extends ProgressbarCal
     }
     /**
      * prints the current Progress of the Progressbar
-     * @return the current Progressbar
      */
     @Override
     public void visualizeProgress() {
         try {
-            int status = -1;
             while ((!thread.isInterrupted()) && calculator.getProgress() < calculator.getMaxsize()) {
                 for (int i = 0; i < this.DELAY / this.UPDATE; i++) {
                     output.print(printProgress());

@@ -37,10 +37,7 @@ import de.unijena.bioinf.ms.middleware.BaseApiController;
 import de.unijena.bioinf.ms.middleware.compute.model.ComputeContext;
 import de.unijena.bioinf.ms.middleware.formulas.model.*;
 import de.unijena.bioinf.ms.middleware.spectrum.AnnotatedSpectrum;
-import de.unijena.bioinf.projectspace.FormulaResult;
-import de.unijena.bioinf.projectspace.FormulaResultId;
-import de.unijena.bioinf.projectspace.FormulaScoring;
-import de.unijena.bioinf.projectspace.Instance;
+import de.unijena.bioinf.projectspace.*;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidateNumber;
 import de.unijena.bioinf.sirius.Sirius;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -243,7 +240,7 @@ public class FormulaController extends BaseApiController {
     @GetMapping(value = "/formulas/{formulaId}/isotope-pattern", produces = MediaType.APPLICATION_JSON_VALUE)
     public AnnotatedSpectrum getSimulatedIsotopePattern(@PathVariable String projectId, @PathVariable String compoundId, @PathVariable String formulaId) {
         Instance instance = loadInstance(projectId, compoundId);
-        Sirius sirius = ApplicationCore.SIRIUS_PROVIDER.sirius(instance.loadCompoundContainer(FinalConfig.class).getAnnotationOrThrow(FinalConfig.class).config.getConfigValue("AlgorithmProfile"));
+        Sirius sirius = ApplicationCore.SIRIUS_PROVIDER.sirius(instance.loadCompoundContainer(ProjectSpaceConfig.class).getAnnotationOrThrow(ProjectSpaceConfig.class).config.getConfigValue("AlgorithmProfile"));
         Optional<FormulaResult> fResult = instance.loadFormulaResult(parseFID(instance, formulaId), FTree.class);
         return fResult.map(FormulaResult::getId).map(id -> sirius.simulateIsotopePattern(
                         id.getMolecularFormula(), id.getIonType().getIonization())).map(AnnotatedSpectrum::new)
