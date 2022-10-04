@@ -92,6 +92,7 @@ public class CLIRootOptions<I extends Instance, M extends ProjectSpaceManager<I>
         SiriusJobs.setGlobalJobManager(numOfCores);
         if (instanceBuffer == null)
             setInitialInstanceBuffer(0);
+        LOG.info("Adjusted JobManager CPU threads to '" + SiriusJobs.getGlobalJobManager().getCPUThreads() + "' by command line.");
     }
 
     @Option(names = {"--instance-buffer", "--compound-buffer", "--initial-compound-buffer"}, defaultValue = "0", description = "Number of compounds that will be loaded into the Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all compounds immediately set it to -1. Default (numeric value 0): 3 x --cores. Note that for <DATASET_TOOLS> the compound buffer may have no effect because this tools may have to load compounds simultaneously into the memory.", order = 20)
