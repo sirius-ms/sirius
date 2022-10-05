@@ -3,7 +3,7 @@
 # https://github.com/gradle/gradle
 #image: gradle:alpine
 default:
-  image: git.bio.informatik.uni-jena.de:5050/bioinf-mit/docker-images/ubuntu-zulu-fx-gradle:22.04-15.42.15-6.9.2-11
+  image: git.bio.informatik.uni-jena.de:5050/bioinf-mit/docker-images/ubuntu-zulu-fx-gradle:22.04-15.42.15-6.9.2-12
 # Disable the Gradle daemon for Continuous Integration servers as correctness
 # is usually a priority over speed in CI environments. Using a fresh
 # runtime for each build is more reliable since the runtime is completely
@@ -37,10 +37,14 @@ before_script:
 buildCLI:
   stage: build
   script:
-    - curl -V
+    - gradle :sirius_dist:sirius_cli_single_os:publishSiriusMSPublicationToMavenLocal
+    - pwd
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
+  artifacts:
+    paths:
+      - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius
   tags:
     - kubernetes
   only:
@@ -48,25 +52,6 @@ buildCLI:
       - master
       - master-dist-tests
       - stable
-
-#buildCLI:
-#  stage: build
-#  script:
-#    - gradle :sirius_dist:sirius_cli_single_os:publishSiriusMSPublicationToMavenLocal
-#  cache:
-#    key: "$CI_COMMIT_REF_NAME"
-#    policy: push
-#  artifacts:
-#    paths:
-#      - ./sirius_dist/sirius_cli_single_os/build/distributions
-#      - ./sirius_dist/sirius_cli_single_os/build/publications/siriusMS/pom-default.xml
-#  tags:
-#    - kubernetes
-#  only:
-#    refs:
-#      - master
-#      - master-dist-tests
-#      - stable
 #
 #
 #buildGUI:
@@ -110,24 +95,24 @@ buildCLI:
 #
 #
 #
-#testCLI:
-#  stage: test
-#  script:
-#    - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
-#    - gradle :sirius_dist:sirius_cli_single_os:distImageTest
-#  cache:
-#    key: "$CI_COMMIT_REF_NAME"
-#    policy: push
-#  needs: [buildCLI]
-#  dependencies:
-#    - buildCLI
-#  tags:
-#    - kubernetes
-#  only:
-#    refs:
-#      - master
-#      - master-dist-tests
-#      - stable
+testCLI:
+  stage: test
+  script:
+    - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
+    - gradle :sirius_dist:sirius_cli_single_os:distImageTest
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  needs: [buildCLI]
+  dependencies:
+    - buildCLI
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - master
+      - master-dist-tests
+      - stable
 #
 #
 #testGUI:
