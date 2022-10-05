@@ -40,7 +40,7 @@ buildCLI:
     - gradle :sirius_dist:sirius_cli_single_os:publishSiriusMSPublicationToMavenLocal
     - cd ../../../..
     - ls -a
-    - cd build
+    - cd builds
     - ls -a
     - cd bioinf-mit
     - ls -a
