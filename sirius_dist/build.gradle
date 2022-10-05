@@ -432,7 +432,6 @@ subprojects {
             } else {
                 throw new IllegalArgumentException("Cannot determine operating system for build")
             }
-
             String script = sf.text
             templateBinding.forEach({ k, v -> script = script.replace("#$k#", v) })
             f.withWriter { it.write(script) }
