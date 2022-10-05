@@ -38,20 +38,12 @@ buildCLI:
   stage: build
   script:
     - gradle :sirius_dist:sirius_cli_single_os:publishSiriusMSPublicationToMavenLocal
-    - cd ../../../..
-    - ls -a
-    - cd builds
-    - ls -a
-    - cd bioinf-mit
-    - ls -a
-    - cd ms
+    - cd
+    - cd usr
     - ls -a
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
-  artifacts:
-    paths:
-      - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius
   tags:
     - kubernetes
   only:
