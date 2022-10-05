@@ -38,11 +38,14 @@ buildCLI:
   stage: build
   script:
     - gradle :sirius_dist:sirius_cli_single_os:publishSiriusMSPublicationToMavenLocal
-    - cd ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT
-    - ls
+    - ls ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
+#  artifacts:
+#    paths:
+#      - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius
+#      - ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT
   tags:
     - kubernetes
   only:
@@ -50,46 +53,48 @@ buildCLI:
       - master
       - master-dist-tests
       - stable
-#
-#
-#buildGUI:
-#  stage: build
-#  script:
-#    - gradle :sirius_dist:sirius_gui_single_os:publishSiriusMSPublicationToMavenLocal
-#  cache:
-#    key: "$CI_COMMIT_REF_NAME"
-#    policy: push
+
+
+buildGUI:
+  stage: build
+  script:
+    - gradle :sirius_dist:sirius_gui_single_os:publishSiriusMSPublicationToMavenLocal
+    - ls ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
 #  artifacts:
 #    paths:
 #      - ./sirius_dist/sirius_gui_single_os/build/distributions/sirius
-#      - ./sirius_dist/sirius_gui_single_os/build/publications/siriusMS
-#  tags:
-#    - kubernetes
-#  only:
-#    refs:
-#      - master
-#      - master-dist-tests
-#      - stable
-#
-#
-#buildAPI:
-#  stage: build
-#  script:
-#    - gradle :sirius_dist:sirius_service_single_os:publishSiriusMSPublicationToMavenLocal
-#  cache:
-#    key: "$CI_COMMIT_REF_NAME"
-#    policy: push
+#      - ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - master
+      - master-dist-tests
+      - stable
+
+
+buildAPI:
+  stage: build
+  script:
+    - gradle :sirius_dist:sirius_service_single_os:publishSiriusMSPublicationToMavenLocal
+    - ls ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
 #  artifacts:
 #    paths:
 #      - ./sirius_dist/sirius_service_single_os/build/distributions/sirius
-#      - ./sirius_dist/sirius_service_single_os/build/publications/siriusMS
-#  tags:
-#    - kubernetes
-#  only:
-#    refs:
-#      - master
-#      - master-dist-tests
-#      - stable
+#      - ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - master
+      - master-dist-tests
+      - stable
 #
 #
 #
