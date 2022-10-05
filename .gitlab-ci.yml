@@ -38,7 +38,14 @@ buildCLI:
   stage: build
   script:
     - gradle :sirius_dist:sirius_cli_single_os:publishSiriusMSPublicationToMavenLocal
-    - pwd
+    - cd ../../../..
+    - ls -a
+    - cd build
+    - ls -a
+    - cd bioinf-mit
+    - ls -a
+    - cd ms
+    - ls -a
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -95,24 +102,24 @@ buildCLI:
 #
 #
 #
-testCLI:
-  stage: test
-  script:
-    - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
-    - gradle :sirius_dist:sirius_cli_single_os:distImageTest
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: push
-  needs: [buildCLI]
-  dependencies:
-    - buildCLI
-  tags:
-    - kubernetes
-  only:
-    refs:
-      - master
-      - master-dist-tests
-      - stable
+#testCLI:
+#  stage: test
+#  script:
+#    - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
+#    - gradle :sirius_dist:sirius_cli_single_os:distImageTest
+#  cache:
+#    key: "$CI_COMMIT_REF_NAME"
+#    policy: push
+#  needs: [buildCLI]
+#  dependencies:
+#    - buildCLI
+#  tags:
+#    - kubernetes
+#  only:
+#    refs:
+#      - master
+#      - master-dist-tests
+#      - stable
 #
 #
 #testGUI:
