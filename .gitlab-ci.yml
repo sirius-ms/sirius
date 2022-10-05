@@ -38,7 +38,8 @@ buildCLI:
   stage: build
   script:
     - gradle :sirius_dist:sirius_cli_single_os:publishSiriusMSPublicationToMavenLocal
-    - find / -type d -name '.m2'
+    - cd ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT
+    - ls
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
