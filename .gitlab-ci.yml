@@ -42,10 +42,10 @@ buildCLI:
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
-#  artifacts:
-#    paths:
-#      - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius
-#      - ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT
+  artifacts:
+    paths:
+      - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius
+      - ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT
   tags:
     - kubernetes
   only:
@@ -55,60 +55,18 @@ buildCLI:
       - stable
 
 
-buildGUI:
-  stage: build
-  script:
-    - gradle :sirius_dist:sirius_gui_single_os:publishSiriusMSPublicationToMavenLocal
-    - ls ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: push
-#  artifacts:
-#    paths:
-#      - ./sirius_dist/sirius_gui_single_os/build/distributions/sirius
-#      - ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT
-  tags:
-    - kubernetes
-  only:
-    refs:
-      - master
-      - master-dist-tests
-      - stable
-
-
-buildAPI:
-  stage: build
-  script:
-    - gradle :sirius_dist:sirius_service_single_os:publishSiriusMSPublicationToMavenLocal
-    - ls ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: push
-#  artifacts:
-#    paths:
-#      - ./sirius_dist/sirius_service_single_os/build/distributions/sirius
-#      - ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT
-  tags:
-    - kubernetes
-  only:
-    refs:
-      - master
-      - master-dist-tests
-      - stable
-#
-#
-#
-#testCLI:
-#  stage: test
+#buildGUI:
+#  stage: build
 #  script:
-#    - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
-#    - gradle :sirius_dist:sirius_cli_single_os:distImageTest
+#    - gradle :sirius_dist:sirius_gui_single_os:publishSiriusMSPublicationToMavenLocal
+#    - ls ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT
 #  cache:
 #    key: "$CI_COMMIT_REF_NAME"
 #    policy: push
-#  needs: [buildCLI]
-#  dependencies:
-#    - buildCLI
+##  artifacts:
+##    paths:
+##      - ./sirius_dist/sirius_gui_single_os/build/distributions/sirius
+##      - ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT
 #  tags:
 #    - kubernetes
 #  only:
@@ -117,6 +75,48 @@ buildAPI:
 #      - master-dist-tests
 #      - stable
 #
+#
+#buildAPI:
+#  stage: build
+#  script:
+#    - gradle :sirius_dist:sirius_service_single_os:publishSiriusMSPublicationToMavenLocal
+#    - ls ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT
+#  cache:
+#    key: "$CI_COMMIT_REF_NAME"
+#    policy: push
+##  artifacts:
+##    paths:
+##      - ./sirius_dist/sirius_service_single_os/build/distributions/sirius
+##      - ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT
+#  tags:
+#    - kubernetes
+#  only:
+#    refs:
+#      - master
+#      - master-dist-tests
+#      - stable
+#
+#
+#
+testCLI:
+  stage: test
+  script:
+    - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
+    - gradle :sirius_dist:sirius_cli_single_os:distImageTest
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  needs: [buildCLI]
+  dependencies:
+    - buildCLI
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - master
+      - master-dist-tests
+      - stable
+
 #
 #testGUI:
 #  stage: test
@@ -160,25 +160,25 @@ buildAPI:
 # ARTIFACTORY_USERNAME und ARTIFACTORY_TOKEN für API publish nutzen
 #
 
-#publishCLI:
-#  variables:
-#    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-#  stage: publish
-#  script:
-#    - curl -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_TOKEN -X PUT "https://bio.informatik.uni-jena.de:433/artifactory/dist/de/unijena/bioinf/ms/siriusMS/test/sirius.zip" -T sirius_dist/sirius_cli_single_os/build/distributions/sirius.zip
-#  cache:
-#    key: "$CI_COMMIT_REF_NAME"
-#    policy: push
-#  needs: [buildCLI, testCLI]
-#  dependencies:
-#    - buildCLI
-#  tags:
-#    - kubernetes
-#  only:
-#    refs:
-#      - master
-#      - master-dist-tests
-#      - stable
+publishCLI:
+  variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  stage: publish
+  script:
+    - curl -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_TOKEN -X PUT "https://bio.informatik.uni-jena.de:433/artifactory/dist/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT/siriusMS-5.7.0-SNAPSHOT-linux64.zip" -T ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT/siriusMS-5.7.0-SNAPSHOT-linux64-headless.zip
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  needs: [buildCLI, testCLI]
+  dependencies:
+    - buildCLI
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - master
+      - master-dist-tests
+      - stable
 #
 #
 #publishGUI:
