@@ -38,14 +38,14 @@ buildCLI:
   stage: build
   script:
     - gradle :sirius_dist:sirius_cli_single_os:publishSiriusMSPublicationToMavenLocal
-    - ls ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT
+    - cd ../../../..
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
   artifacts:
     paths:
-      - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius
-      - ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT
+      - ./builds/bioinf-mit/ms/sirius_frontend/sirius_dist/sirius_cli_single_os/build/distributions/sirius
+      - ./root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT
   tags:
     - kubernetes
   only:
@@ -188,7 +188,8 @@ publishCLI:
 #    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
 #  stage: publish
 #  script:
-#    - curl -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_TOKEN -X PUT "https://bio.informatik.uni-jena.de:433/artifactory/dist/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT/siriusMS-5.7.0-SNAPSHOT-linux64.zip" -T ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT/siriusMS-5.7.0-SNAPSHOT-linux64.zip
+#    - cd ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT
+#    - curl -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_TOKEN -X PUT "https://bio.informatik.uni-jena.de:433/artifactory/dist/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT/siriusMS-5.7.0-SNAPSHOT-linux64.zip" -T siriusMS-5.7.0-SNAPSHOT-linux64.zip
 #  cache:
 #    key: "$CI_COMMIT_REF_NAME"
 #    policy: push
@@ -208,7 +209,8 @@ publishCLI:
 #    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
 #  stage: publish
 #  script:
-#    - curl -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_TOKEN -X PUT "https://bio.informatik.uni-jena.de:433/artifactory/dist/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT/siriusMS-5.7.0-SNAPSHOT-linux64-service.zip" -T ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT/siriusMS-5.7.0-SNAPSHOT-linux64-service.zip
+#    - cd ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT
+#    - curl -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_TOKEN -X PUT "https://bio.informatik.uni-jena.de:433/artifactory/dist/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT/siriusMS-5.7.0-SNAPSHOT-linux64-service.zip" -T siriusMS-5.7.0-SNAPSHOT-linux64-service.zip
 #  cache:
 #    key: "$CI_COMMIT_REF_NAME"
 #    policy: push
