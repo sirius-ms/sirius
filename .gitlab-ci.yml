@@ -37,9 +37,9 @@ before_script:
 buildCLI:
   stage: build
   script:
+    - gradle :sirius_dist:sirius_cli_single_os:publishSiriusMSPublicationToMavenLocal
     - mkdir maven_artifacts
     - mv ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT maven_artifacts
-    - gradle :sirius_dist:sirius_cli_single_os:publishSiriusMSPublicationToMavenLocal
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
