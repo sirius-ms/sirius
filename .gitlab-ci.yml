@@ -38,14 +38,14 @@ buildCLI:
   stage: build
   script:
     - gradle :sirius_dist:sirius_cli_single_os:publishSiriusMSPublicationToMavenLocal
-    - cd ../../../..
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
   artifacts:
     paths:
-      - ./builds/bioinf-mit/ms/sirius_frontend/sirius_dist/sirius_cli_single_os/build/distributions/sirius
-      - ./root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT
+      - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius
+      - ./../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT
+    expire_in: 1 day
   tags:
     - kubernetes
   only:
