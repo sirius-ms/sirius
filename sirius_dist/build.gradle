@@ -516,20 +516,20 @@ subprojects {
                 ])
             }
 
-            if (project.OS.isLinux()) {
-                project.exec {
-                    commandLine(['file', temp_res_path+'mgf_temp_output/1_laudanosine_FEATURE_1/canopus'])
-                }
-                project.exec {
-                    commandLine(['file', temp_res_path+'mgf_temp_output/1_laudanosine_FEATURE_1/canopus_npc'])
-                }
-                project.exec {
-                    commandLine(['file', temp_res_path+'mgf_temp_output/1_laudanosine_FEATURE_1/fingerprints'])
-                }
-                project.exec {
-                    commandLine(['file', temp_res_path+'mgf_temp_output/1_laudanosine_FEATURE_1/fingerid'])
-                }
-            }
+//            if (project.OS.isLinux()) {
+//                project.exec {
+//                    commandLine(['file', temp_res_path+'mgf_temp_output/1_laudanosine_FEATURE_1/canopus'])
+//                }
+//                project.exec {
+//                    commandLine(['file', temp_res_path+'mgf_temp_output/1_laudanosine_FEATURE_1/canopus_npc'])
+//                }
+//                project.exec {
+//                    commandLine(['file', temp_res_path+'mgf_temp_output/1_laudanosine_FEATURE_1/fingerprints'])
+//                }
+//                project.exec {
+//                    commandLine(['file', temp_res_path+'mgf_temp_output/1_laudanosine_FEATURE_1/fingerid'])
+//                }
+//            }
         }
         doLast{
             String abs_path = project.projectDir.toString().split('sirius_frontend')[0]
