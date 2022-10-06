@@ -37,6 +37,8 @@ before_script:
 buildCLI:
   stage: build
   script:
+    - mkdir maven_artifacts
+    - mv ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT maven_artifacts
     - gradle :sirius_dist:sirius_cli_single_os:publishSiriusMSPublicationToMavenLocal
   cache:
     key: "$CI_COMMIT_REF_NAME"
@@ -44,7 +46,7 @@ buildCLI:
   artifacts:
     paths:
       - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius
-      - ./../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT
+      - ./maven_artifacts/5.7.0-SNAPSHOT
     expire_in: 1 day
   tags:
     - kubernetes
@@ -165,7 +167,7 @@ publishCLI:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   stage: publish
   script:
-    - cd ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT
+    - cd maven_artifacts/5.7.0-SNAPSHOT
     - curl -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_TOKEN -X PUT "https://bio.informatik.uni-jena.de:433/artifactory/dist/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT/siriusMS-5.7.0-SNAPSHOT-linux64-headless.zip" -T siriusMS-5.7.0-SNAPSHOT-linux64-headless.zip
     - curl -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_TOKEN -X PUT "https://bio.informatik.uni-jena.de:433/artifactory/dist/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT/siriusMS-5.7.0-SNAPSHOT.pom" -T siriusMS-5.7.0-SNAPSHOT.pom
   cache:
