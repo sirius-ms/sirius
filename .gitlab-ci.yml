@@ -165,7 +165,7 @@ publishCLI:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   stage: publish
   script:
-    - curl -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_TOKEN -X PUT "https://bio.informatik.uni-jena.de:433/artifactory/dist/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT/siriusMS-5.7.0-SNAPSHOT-linux64.zip" -T ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT/siriusMS-5.7.0-SNAPSHOT-linux64-headless.zip
+    - curl -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_TOKEN -X PUT "https://bio.informatik.uni-jena.de:433/artifactory/dist/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT/siriusMS-5.7.0-SNAPSHOT-linux64-headless.zip" -T ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT/siriusMS-5.7.0-SNAPSHOT-linux64-headless.zip
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -186,8 +186,7 @@ publishCLI:
 #    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
 #  stage: publish
 #  script:
-#    - cd sirius_dist/sirius_gui_single_os
-#    - gradle artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
+#    - curl -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_TOKEN -X PUT "https://bio.informatik.uni-jena.de:433/artifactory/dist/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT/siriusMS-5.7.0-SNAPSHOT-linux64.zip" -T ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT/siriusMS-5.7.0-SNAPSHOT-linux64.zip
 #  cache:
 #    key: "$CI_COMMIT_REF_NAME"
 #    policy: push
