@@ -168,8 +168,8 @@ publishCLI:
   stage: publish
   script:
     - cd maven_artifacts/5.7.0-SNAPSHOT
-    - curl -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_TOKEN -X PUT "https://bio.informatik.uni-jena.de:433/artifactory/dist/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT/siriusMS-5.7.0-SNAPSHOT-linux64-headless.zip" -T siriusMS-5.7.0-SNAPSHOT-linux64-headless.zip
-    - curl -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_TOKEN -X PUT "https://bio.informatik.uni-jena.de:433/artifactory/dist/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT/siriusMS-5.7.0-SNAPSHOT.pom" -T siriusMS-5.7.0-SNAPSHOT.pom
+    - curl -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_TOKEN -X PUT "https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT/siriusMS-5.7.0-SNAPSHOT-linux64-headless.zip" -T siriusMS-5.7.0-SNAPSHOT-linux64-headless.zip
+    - curl -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_TOKEN -X PUT "https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/siriusMS/5.7.0-SNAPSHOT/siriusMS-5.7.0-SNAPSHOT.pom" -T siriusMS-5.7.0-SNAPSHOT.pom
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
