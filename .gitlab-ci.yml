@@ -49,7 +49,7 @@ buildCLI:
     paths:
       - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius
       - ./maven_artifacts/$VSNAP
-    expire_in: 1 day
+    expire_in: 3 days
   tags:
     - kubernetes
   only:
@@ -71,6 +71,7 @@ buildGUI:
     paths:
       - ./sirius_dist/sirius_gui_single_os/build/distributions/sirius
       - ./maven_artifacts/$VSNAP
+    expire_in: 3 days
   tags:
     - kubernetes
   only:
@@ -92,6 +93,7 @@ buildAPI:
     paths:
       - ./sirius_dist/sirius_service_single_os/build/distributions/sirius
       - ./maven_artifacts/$VSNAP
+    expire_in: 3 days
   tags:
     - kubernetes
   only:
