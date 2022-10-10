@@ -106,7 +106,7 @@ testCLI:
   script:
     - mkdir unzipped
     - unzip maven_artifacts/$VSNAP/siriusMS-$VSNAP-linux64-headless.zip -d unzipped
-    - ./unzipped/sirius_folder/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
+    - ./unzipped/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
     - gradle :sirius_dist:sirius_cli_single_os:distImageTestUnzipped
   cache:
     key: "$CI_COMMIT_REF_NAME"
