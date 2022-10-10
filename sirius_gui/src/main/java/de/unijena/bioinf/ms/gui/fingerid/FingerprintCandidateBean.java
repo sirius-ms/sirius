@@ -32,13 +32,10 @@ import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
-import net.sf.jniinchi.INCHI_RET;
 import org.jetbrains.annotations.NotNull;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.fingerprint.CircularFingerprinter;
-import org.openscience.cdk.inchi.InChIGeneratorFactory;
-import org.openscience.cdk.inchi.InChIToStructure;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IBond;
@@ -373,26 +370,6 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
             LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
         }
 
-    }
-
-    private IAtomContainer parseMoleculeFromInChi() {
-        try {
-            final InChIGeneratorFactory f = InChIGeneratorFactory.getInstance();
-            final InChIToStructure s = f.getInChIToStructure(candidate.getInchi().in2D, SilentChemObjectBuilder.getInstance());
-            if (s.getReturnStatus() == INCHI_RET.OKAY && (s.getReturnStatus() == INCHI_RET.OKAY || s.getReturnStatus() == INCHI_RET.WARNING)) {
-                AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(s.getAtomContainer());
-
-                return s.getAtomContainer();
-            } else {
-                LoggerFactory.getLogger(getClass()).warn("Cannot parse InChI: " + candidate.getInchi().in2D + " due to the following error: " + s.getMessage() + " Return code: " + s.getReturnStatus() + ", Return status: " + s.getReturnStatus().toString());
-                // try to parse smiles instead
-                return parseMoleculeFromSmiles();
-            }
-            // calculate xlogP
-        } catch (CDKException e) {
-            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
-            return parseMoleculeFromSmiles();
-        }
     }
 
     private IAtomContainer parseMoleculeFromSmiles() {
