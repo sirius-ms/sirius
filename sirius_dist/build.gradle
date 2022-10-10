@@ -441,8 +441,7 @@ subprojects {
     distImage.shouldRunAfter downloadManual
 
 
-    task distImageTest(type: Test, group: 'distribution') {
-
+    task distImageTestLocal(dependsOn: distImage, type: Test, group: 'distribution'){
         useJUnitPlatform()
         testClassesDirs = project(':sirius_dist').sourceSets.test.output
         filter.includeTestsMatching('*Local')
@@ -525,14 +524,7 @@ subprojects {
     }
 
 
-    task distImageTestLocal(type: Test, group: 'distribution'){
-        dependsOn 'distImageTest'
-        dependsOn 'distImage'
-        tasks.findByName('distImageTest').mustRunAfter 'distImage'
-    }
-
-
-    task distImageTestUnzipped(type: Test, group: 'distribution'){
+    task distImageTestCICD(type: Test, group: 'distribution'){
         useJUnitPlatform()
         testClassesDirs = project(':sirius_dist').sourceSets.test.output
         filter.includeTestsMatching('*Local')
@@ -544,15 +536,11 @@ subprojects {
 
         doFirst{
             String abs_path = project.projectDir.toString().split('sirius_frontend')[0]
-            // automatically adjust for gui_single_os, cli_single_os or service_single_os
-            String sirius_exec
-
-            sirius_exec = abs_path + 'sirius_frontend/unzipped/sirius/bin/sirius'
-
-            String temp_res_path = abs_path+'sirius_frontend/sirius_cli/src/test/temp_results'
-            String demo_path = abs_path+'sirius_frontend/sirius_doc/manual/demo-data/'
-
+            String sirius_exec = abs_path + 'sirius_frontend/unzipped/sirius/bin/sirius'
+            String temp_res_path = abs_path + 'sirius_frontend/sirius_cli/src/test/temp_results'
+            String demo_path = abs_path + 'sirius_frontend/sirius_doc/manual/demo-data/'
             String sep = System.getProperty("file.separator")
+
             mkdir temp_res_path
             mkdir temp_res_path + sep + 'mgf_temp_output'
             mkdir temp_res_path + sep + 'mgf_temp_summary'
@@ -594,8 +582,7 @@ subprojects {
         }
         doLast{
             String abs_path = project.projectDir.toString().split('sirius_frontend')[0]
-            String temp_res_path = abs_path+'sirius_frontend/sirius_cli/src/test/temp_results'
-            project.delete(temp_res_path)
+            project.delete(abs_path + 'sirius_frontend/sirius_cli/src/test/temp_results')
             project.delete(abs_path + 'sirius_frontend/unzipped')
         }
     }

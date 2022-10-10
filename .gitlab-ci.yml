@@ -107,7 +107,7 @@ testCLI:
     - mkdir unzipped
     - unzip maven_artifacts/$VSNAP/siriusMS-$VSNAP-linux64-headless.zip -d unzipped
     - ./unzipped/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
-    - gradle :sirius_dist:sirius_cli_single_os:distImageTestUnzipped
+    - gradle :sirius_dist:sirius_cli_single_os:distImageTestCICD
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -128,7 +128,7 @@ testGUI:
     - mkdir unzipped
     - unzip maven_artifacts/$VSNAP/siriusMS-$VSNAP-linux64.zip -d unzipped
     - ./unzipped/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
-    - gradle :sirius_dist:sirius_cli_single_os:distImageTestUnzipped
+    - gradle :sirius_dist:sirius_cli_single_os:distImageTestCICD
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -149,7 +149,7 @@ testAPI:
     - mkdir unzipped
     - unzip maven_artifacts/$VSNAP/siriusMS-$VSNAP-linux64-service.zip -d unzipped
     - ./unzipped/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
-    - gradle :sirius_dist:sirius_cli_single_os:distImageTestUnzipped
+    - gradle :sirius_dist:sirius_cli_single_os:distImageTestCICD
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
