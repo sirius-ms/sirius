@@ -44,6 +44,8 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.utils.ExFunctions;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import org.apache.http.HeaderElement;
+import org.apache.http.HeaderElementIterator;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
@@ -52,18 +54,19 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpHead;
+import org.apache.http.conn.ConnectionKeepAliveStrategy;
 import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
-import org.apache.http.impl.nio.client.HttpAsyncClients;
+import org.apache.http.message.BasicHeaderElementIterator;
+import org.apache.http.protocol.HTTP;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
@@ -74,7 +77,10 @@ import java.net.HttpURLConnection;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -184,6 +190,10 @@ public class ProxyManager {
 
     private static HttpClientConnectionManager connectionPoolManager(int maxTotal) {
         int maxPerRoute = Math.min(Math.max(1, SiriusJobs.getCPUThreads()), PropertyManager.getInteger("de.unijena.bioinf.sirius.http.maxRoute", 2));
+        return connectionPoolManager(maxPerRoute, maxTotal);
+    }
+
+    private static HttpClientConnectionManager connectionPoolManager(int maxPerRoute, int maxTotal) {
 //        System.out.println("Starting http Client with MaxPerRout=" + maxPerRoute + " / maxTotal=" + maxTotal + "(Threads=" + SiriusJobs.getCPUThreads() + ").");
         LoggerFactory.getLogger(ProxyManager.class).info("Starting http Client with MaxPerRout=" + maxPerRoute + " / maxTotal=" + maxTotal + "(Threads=" + SiriusJobs.getCPUThreads() + ").");
         PoolingHttpClientConnectionManager poolingConnManager = new PoolingHttpClientConnectionManager();
@@ -212,10 +222,12 @@ public class ProxyManager {
     private static Object getNoProxyClient(boolean async, boolean pooled) {
         Object builder = handleSSLValidation(async
                 ? HttpAsyncClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG)
-                : pooled
-                ? HttpClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG).setConnectionManager(connectionPoolManager())
-                : HttpClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG));
-        return async ? ((HttpAsyncClientBuilder) builder).build() : ((HttpClientBuilder) builder).build();
+                : HttpClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG).setConnectionManager(
+                        pooled ? connectionPoolManager() : connectionPoolManager(1, 1))
+        );
+        return async
+                ? ((HttpAsyncClientBuilder) builder).setKeepAliveStrategy(myStrategy).build()
+                : ((HttpClientBuilder) builder).setKeepAliveStrategy(myStrategy).build();
     }
 
     private static Object getSiriusProxyClient(boolean async, boolean pooled) {
@@ -242,17 +254,16 @@ public class ProxyManager {
 
         handleSSLValidation(builder);
 
-        return async ? ((HttpAsyncClientBuilder) builder).build() : ((HttpClientBuilder) builder).build();
-
+        return async
+                ? ((HttpAsyncClientBuilder) builder).setKeepAliveStrategy(myStrategy).build()
+                : ((HttpClientBuilder) builder).setKeepAliveStrategy(myStrategy).build();
     }
 
     private static Object getClientBuilderWithProxySettings(final String hostname, final int port, final String scheme, final String username, final String password, boolean async, boolean pooled) {
-        return decorateClientBuilderWithProxySettings(
-                async
-                        ? HttpAsyncClients.custom().setDefaultRequestConfig(DEFAULT_CONFIG)
-                        : pooled
-                        ? HttpClients.custom().setDefaultRequestConfig(DEFAULT_CONFIG).setConnectionManager(connectionPoolManager())
-                        : HttpClients.custom().setDefaultRequestConfig(DEFAULT_CONFIG),
+        return decorateClientBuilderWithProxySettings(async
+                        ? HttpAsyncClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG)
+                        : HttpClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG).setConnectionManager(
+                                pooled ? connectionPoolManager() : connectionPoolManager(1, 1)),
                 hostname, port, scheme, username, password);
     }
 
@@ -444,7 +455,7 @@ public class ProxyManager {
         reconnectLock.readLock().lock();
         try {
             doWithClient.accept(client(clientID));
-        }finally {
+        } finally {
             reconnectLock.readLock().unlock();
         }
     }
@@ -457,7 +468,7 @@ public class ProxyManager {
         reconnectLock.readLock().lock();
         try {
             return doWithClient.apply(ProxyManager.client(clientID));
-        }finally {
+        } finally {
             reconnectLock.readLock().unlock();
         }
     }
@@ -470,16 +481,16 @@ public class ProxyManager {
         reconnectLock.readLock().lock();
         try {
             return doWithClient.apply(ProxyManager.client(clientID));
-        }finally {
+        } finally {
             reconnectLock.readLock().unlock();
         }
     }
 
-    public static void withConnectionLock(Runnable runner){
+    public static void withConnectionLock(Runnable runner) {
         reconnectLock.writeLock().lock();
         try {
-           runner.run();
-        }finally {
+            runner.run();
+        } finally {
             reconnectLock.writeLock().unlock();
         }
     }
@@ -488,11 +499,32 @@ public class ProxyManager {
         reconnectLock.writeLock().lock();
         try {
             runner.run();
-        }finally {
+        } finally {
             reconnectLock.writeLock().unlock();
         }
     }
 
     private static final String POOL_CLIENT_ID = "POOL_CLIENT";
     private static ConcurrentHashMap<String, CloseableHttpClient> clients = new ConcurrentHashMap<>();
+
+    private static ConnectionKeepAliveStrategy myStrategy = (response, context) -> {
+        if (response != null) {
+            HeaderElementIterator it = new BasicHeaderElementIterator
+                    (response.headerIterator(HTTP.CONN_KEEP_ALIVE));
+            while (it.hasNext()) {
+                try {
+                    HeaderElement he = it.nextElement();
+                    String param = he.getName();
+                    String value = he.getValue();
+                    if (value != null && param.equalsIgnoreCase
+                            ("timeout")) {
+                        return Long.parseLong(value) * 1000;
+                    }
+                } catch (NumberFormatException e) {
+                    LoggerFactory.getLogger(ProxyManager.class).warn("Could not parse timout from header! Using default value.", e);
+                }
+            }
+        }
+        return PropertyManager.getInteger("de.unijena.bioinf.sirius.http.keepAlive", 15000);
+    };
 }
