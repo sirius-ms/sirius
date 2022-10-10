@@ -26,28 +26,22 @@ import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.chemdb.InChISMILESUtils;
 import de.unijena.bioinf.fingerid.fingerprints.ShortestPathFingerprinter;
 import de.unijena.bioinf.fingerid.fingerprints.*;
-import io.github.dan2097.jnainchi.InchiStatus;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.fingerprint.*;
-import org.openscience.cdk.inchi.InChIGeneratorFactory;
-import org.openscience.cdk.inchi.InChIToStructure;
 import org.openscience.cdk.interfaces.IAtomContainer;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
 public class Fingerprinter {
 
-    private final InChIGeneratorFactory factory;
     private final List<IFingerprinter> fingerprinters;
 
-    public Fingerprinter() throws CDKException {
-        factory = InChIGeneratorFactory.getInstance();
+    public Fingerprinter() {
         this.fingerprinters = createListOfFingerprints();
     }
 
-    public static Fingerprinter getForVersion(CdkFingerprintVersion version) throws CDKException {
+    public static Fingerprinter getForVersion(CdkFingerprintVersion version) {
         final List<IFingerprinter> fingerprinters = new ArrayList<>();
         for (int k=0; k < version.numberOfFingerprintTypesInUse(); ++k) {
             fingerprinters.add(getFingerprinter(version.getFingerprintTypeAt(k)));
@@ -55,8 +49,7 @@ public class Fingerprinter {
         return new Fingerprinter(fingerprinters);
     }
 
-    public Fingerprinter(List<IFingerprinter> fingerprinters) throws CDKException {
-        factory = InChIGeneratorFactory.getInstance();
+    public Fingerprinter(List<IFingerprinter> fingerprinters) {
         this.fingerprinters = fingerprinters;
     }
 

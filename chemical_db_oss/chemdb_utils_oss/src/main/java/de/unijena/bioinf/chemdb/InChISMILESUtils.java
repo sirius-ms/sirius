@@ -204,7 +204,6 @@ public class InChISMILESUtils {
     }
 
     public static IAtomContainer getAtomContainer(@NotNull Smiles smiles) throws CDKException {
-
         return getAtomContainerFromSmiles(smiles.smiles);
     }
 
