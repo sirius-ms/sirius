@@ -22,8 +22,8 @@ stages:
 # https://www.jfrog.com/confluence/display/RTF4X/Artifactory+REST+API
 # deploy pom.xml und das zip File
 
-variables:
-  VSNAP: 5.7.0-SNAPSHOT
+#variables:
+#  VSNAP: 5.7.0-SNAPSHOT
 
 before_script:
   - dpkg-reconfigure -p critical ca-certificates
@@ -33,8 +33,7 @@ before_script:
   - chmod 700 ~/.ssh
   - echo "$GITLAB_GITHUB_SIRIUS_PUBLIC_KEY" >> ~/.ssh/id_ed25519.pub
   - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
-
-
+  - echo "##vso[task.setvariable variable=VSNAP]$(head -2 sirius_cli/src/main/resources/sirius_frontend.build.properties | tail -1 | cut -d '=' -f 2)"
 
 buildCLI:
   stage: build
