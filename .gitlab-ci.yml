@@ -15,16 +15,6 @@ stages:
   - test
   - publish
 
-
-### publishSiriusMSPublicationToMavenLocal statt distImage
-# für tests entzippen
-# per call und token in das Artifactory hochladen
-# https://www.jfrog.com/confluence/display/RTF4X/Artifactory+REST+API
-# deploy pom.xml und das zip File
-
-#variables:
-#  VSNAP: 5.7.0-SNAPSHOT
-
 before_script:
   - dpkg-reconfigure -p critical ca-certificates
   - eval `ssh-agent -s`
@@ -35,10 +25,11 @@ before_script:
   - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
   - VSNAP=$(head -2 sirius_cli/src/main/resources/sirius_frontend.build.properties | tail -1 | cut -d '=' -f 2)
 
+
+
 buildCLI:
   stage: build
   script:
-    - echo $VSNAP
     - gradle :sirius_dist:sirius_cli_single_os:publishSiriusMSPublicationToMavenLocal
     - mkdir maven_artifacts
     - mv ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/$VSNAP maven_artifacts
