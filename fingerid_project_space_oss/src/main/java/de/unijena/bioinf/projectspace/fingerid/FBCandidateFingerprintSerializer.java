@@ -100,6 +100,11 @@ public class FBCandidateFingerprintSerializer implements ComponentSerializer<For
 
     @Override
     public void delete(ProjectWriter writer, FormulaResultId id) throws IOException {
-        writer.delete(FINGERBLAST_FPs.relFilePath(id));
+        writer.deleteIfExists(FINGERBLAST_FPs.relFilePath(id));
+    }
+
+    @Override
+    public void deleteAll(ProjectWriter writer) throws IOException {
+        writer.deleteIfExists(FINGERBLAST_FPs.relDir());
     }
 }

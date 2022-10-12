@@ -69,4 +69,9 @@ public class FormulaScoringSerializer implements ComponentSerializer<FormulaResu
     public void delete(ProjectWriter writer, FormulaResultId id) throws IOException {
         writer.deleteIfExists(SCORES.relFilePath(id));
     }
+
+    @Override
+    public void deleteAll(ProjectWriter writer) throws IOException {
+        writer.deleteIfExists(SCORES.relDir());
+    }
 }
