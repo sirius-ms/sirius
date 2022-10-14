@@ -21,7 +21,7 @@
 package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
+import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.annotations.StructureSearchDB;
 import de.unijena.bioinf.elgordo.InjectElGordoCompounds;
@@ -151,9 +151,8 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
                 // bayesnetScoring is null --> make a prepare job which computes the bayessian network (covTree) for the
                 // given molecular formula
                 blastJob = FingerblastSearchJJob.of(predictor, fingeridInput);
-                WebJJob<CovtreeJobInput, ?, BayesnetScoring, ?> covTreeJob = NetUtils.tryAndWait(() ->
-                                predictor.csiWebAPI.submitCovtreeJob(fingeridInput.getMolecularFormula(), predictor.predictorType),
-                        this::checkForInterruption);
+                WebJJob<CovtreeJobInput, ?, BayesnetScoring, ?> covTreeJob =
+                        predictor.csiWebAPI.submitCovtreeJob(fingeridInput.getMolecularFormula(), predictor.predictorType);
                 blastJob.addRequiredJob(covTreeJob);
                 covtreeJobs.add(covTreeJob);
             }
@@ -211,7 +210,8 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
     @Override
     public void cancel(boolean mayInterruptIfRunning) {
         super.cancel(mayInterruptIfRunning);
-        covtreeJobs.forEach(c -> c.cancel(mayInterruptIfRunning));
+        if (covtreeJobs != null)
+            covtreeJobs.forEach(c -> c.cancel(mayInterruptIfRunning));
     }
 
     @Override
