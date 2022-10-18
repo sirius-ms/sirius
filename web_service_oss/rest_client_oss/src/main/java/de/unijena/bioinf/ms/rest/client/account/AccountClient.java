@@ -23,11 +23,11 @@ package de.unijena.bioinf.ms.rest.client.account;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.ms.rest.client.AbstractClient;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpDelete;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.client5.http.config.RequestConfig;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 public class AccountClient extends AbstractClient {
@@ -72,7 +73,7 @@ public class AccountClient extends AbstractClient {
             execute(client, () -> {
                 HttpDelete delete = new HttpDelete(getBaseURI("/account/delete").build());
                 final int timeoutInSeconds = 8000;
-                delete.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
+                delete.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds, TimeUnit.SECONDS)/*.setSocketTimeout(timeoutInSeconds)*/.build());
                 return delete;
             });
             return true;
@@ -87,7 +88,8 @@ public class AccountClient extends AbstractClient {
             execute(client, () -> {
                 HttpPost post = new HttpPost(getBaseURI("/account/accept-terms").build());
                 final int timeoutInSeconds = 8000;
-                post.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
+                post.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds, TimeUnit.SECONDS)
+                        /*.setSocketTimeout(timeoutInSeconds)*/.build());
                 return post;
             });
             return true;

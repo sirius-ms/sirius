@@ -70,7 +70,7 @@ public class TrainingStructuresPerPredictor {
         return predictorTypeToInchiKeys2D.get(predictorType);
     }
 
-    public TrainingStructuresSet getTrainingStructuresSet(PredictorType predictorType, @Nullable WebAPI api) {
+    public TrainingStructuresSet getTrainingStructuresSet(PredictorType predictorType, @Nullable WebAPI<?> api) {
         if (api == null)
             return getTrainingStructuresSet(predictorType);
         else
