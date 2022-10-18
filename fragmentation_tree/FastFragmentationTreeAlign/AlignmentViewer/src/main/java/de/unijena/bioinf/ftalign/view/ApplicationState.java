@@ -27,6 +27,7 @@ import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.dot.FTDotReader;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
+import de.unijena.bioinf.chemdb.InChISMILESUtils;
 import de.unijena.bioinf.ftalign.StandardScoring;
 import de.unijena.bioinf.treealign.sparse.DPSparseTreeAlign;
 import org.openscience.cdk.ChemFile;
@@ -35,10 +36,8 @@ import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.fingerprint.KlekotaRothFingerprinter;
 import org.openscience.cdk.fingerprint.MACCSFingerprinter;
 import org.openscience.cdk.fingerprint.PubchemFingerprinter;
-import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IChemModel;
-import org.openscience.cdk.interfaces.IChemObjectBuilder;
 import org.openscience.cdk.interfaces.IChemSequence;
 import org.openscience.cdk.io.ISimpleChemObjectReader;
 import org.openscience.cdk.io.ReaderFactory;
@@ -232,9 +231,7 @@ public class ApplicationState {
                 final BufferedReader in2 = FileUtils.ensureBuffering(new FileReader(f));
                 final String line = in2.readLine();
                 if (line.startsWith("InChI")) {
-                    final InChIGeneratorFactory factory = InChIGeneratorFactory.getInstance();
-                    final IChemObjectBuilder cobj = DefaultChemObjectBuilder.getInstance();
-                    final IAtomContainer container = factory.getInChIToStructure(line, cobj).getAtomContainer();
+                    final IAtomContainer container = InChISMILESUtils.getAtomContainerFromInchi(line);
                     if (container != null)
                         molecules.put(f.getName().substring(0, f.getName().lastIndexOf('.')), container);
                     else System.err.println("Cannot parse " + f.getName());

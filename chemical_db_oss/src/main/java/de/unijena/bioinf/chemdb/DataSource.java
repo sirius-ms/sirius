@@ -43,7 +43,7 @@ public enum DataSource {
     MACONDA("Maconda", 1024, "maconda_id","maconda", "http://www.maconda.bham.ac.uk/contaminant.php?id=%d"),
     METACYC("Biocyc", 2048, "unique_id","biocyc", "http://biocyc.org/compound?orgid=META&id=%s"),
     GNPS("GNPS", 4096, "id","gnps", "https://gnps.ucsd.edu/ProteoSAFe/gnpslibraryspectrum.jsp?SpectrumID=%s"),
-    ZINCBIO("ZINC bio", 8192, "zinc_id","zincbio", "http://zinc.docking.org/substance/%s"),
+    ZINCBIO("ZINC bio", 8192, "zinc_id","zincbio", "http://zinc.docking.org/substances/%s"),
     TRAIN("Training Set", 16384, null, null, null), //not part of the PSQL database anymore but assigned for each predictor individually
     UNDP("Natural Products", 32768, "undp_id","unpd",  null),
     YMDB("YMDB", 65536, "ymdb_id","ymdb", "http://www.ymdb.ca/compounds/YMDB%d05"),

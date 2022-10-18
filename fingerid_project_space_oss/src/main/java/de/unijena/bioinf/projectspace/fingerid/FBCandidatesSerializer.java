@@ -158,6 +158,11 @@ public class FBCandidatesSerializer implements ComponentSerializer<FormulaResult
 
     @Override
     public void delete(ProjectWriter writer, FormulaResultId id) throws IOException {
-        writer.delete(FINGERBLAST.relFilePath(id));
+        writer.deleteIfExists(FINGERBLAST.relFilePath(id));
+    }
+
+    @Override
+    public void deleteAll(ProjectWriter writer) throws IOException {
+        writer.deleteIfExists(FINGERBLAST.relDir());
     }
 }

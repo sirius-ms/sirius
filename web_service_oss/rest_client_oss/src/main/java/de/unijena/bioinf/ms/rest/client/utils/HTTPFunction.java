@@ -20,7 +20,7 @@
 
 package de.unijena.bioinf.ms.rest.client.utils;
 
-import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
 
 import java.io.IOException;
 import java.net.URISyntaxException;

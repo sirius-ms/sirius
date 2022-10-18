@@ -24,7 +24,6 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.ms.webapi.WebJJob;
 import de.unijena.bioinf.sirius.IdentificationResult;
@@ -125,12 +124,12 @@ public class FingerprintJJob extends BasicJJob<List<FingerIdResult>> {
         super.cancel(mayInterruptIfRunning);
         if (predictionJobs != null)
             predictionJobs.keySet().forEach(j -> j.cancel(mayInterruptIfRunning));
+        predictionJobs = null;
     }
 
     @Override
     protected void cleanup() {
         super.cleanup();
-        predictionJobs = null;
     }
 
 
