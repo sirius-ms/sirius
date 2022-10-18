@@ -22,8 +22,6 @@
 
 package de.unijena.bioinf.fingerid.fingerprints;
 
-import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
-import de.unijena.bioinf.ChemistryBase.fp.ShortestPathProperty;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import org.openscience.cdk.CDKConstants;
 import org.openscience.cdk.exception.CDKException;
