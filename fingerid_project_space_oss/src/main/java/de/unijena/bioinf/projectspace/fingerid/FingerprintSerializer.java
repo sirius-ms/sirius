@@ -61,6 +61,11 @@ public class FingerprintSerializer implements ComponentSerializer<FormulaResultI
 
     @Override
     public void delete(ProjectWriter writer, FormulaResultId id) throws IOException {
-        writer.delete(FINGERPRINTS.relFilePath(id));
+        writer.deleteIfExists(FINGERPRINTS.relFilePath(id));
+    }
+
+    @Override
+    public void deleteAll(ProjectWriter writer) throws IOException {
+        writer.deleteIfExists(FINGERPRINTS.relDir());
     }
 }

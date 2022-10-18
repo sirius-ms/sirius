@@ -35,7 +35,6 @@ import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
-import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -79,20 +78,20 @@ public class SiriusProjectSpace implements IterableWithSize<CompoundContainerId>
         this.formulaResultListener = new ConcurrentLinkedQueue<>();
     }
 
-    public OptionalInt getMinIndex(){
+    public OptionalInt getMinIndex() {
         idLock.readLock().lock();
         try {
             return ids.values().stream().mapToInt(CompoundContainerId::getCompoundIndex).min();
-        }finally {
+        } finally {
             idLock.readLock().unlock();
         }
     }
 
-    public OptionalInt getMaxIndex(){
+    public OptionalInt getMaxIndex() {
         idLock.readLock().lock();
         try {
             return ids.values().stream().mapToInt(CompoundContainerId::getCompoundIndex).max();
-        }finally {
+        } finally {
             idLock.readLock().unlock();
         }
     }
@@ -469,7 +468,7 @@ public class SiriusProjectSpace implements IterableWithSize<CompoundContainerId>
         for (FormulaResultId fid : results)
             res.add(getFormulaResult(fid, comps.toArray(Class[]::new)));
 
-        return FormulaScoring.rankBy(res,scores,true);
+        return FormulaScoring.rankBy(res, scores, true);
     }
 
     @SafeVarargs
@@ -495,9 +494,56 @@ public class SiriusProjectSpace implements IterableWithSize<CompoundContainerId>
         }
     }
 
+
+    public final void deleteAllFormulaResults(@NotNull CompoundContainerId compoundId) throws IOException {
+        deleteFromAllFormulaResults(compoundId, getRegisteredFormulaResultComponents());
+    }
+
+    public final void deleteAllFormulaResults(@NotNull CompoundContainer compoundContainer) throws IOException {
+        deleteFromAllFormulaResults(compoundContainer, getRegisteredFormulaResultComponents());
+    }
+
+    public final void deleteFromAllFormulaResults(@NotNull final CompoundContainerId compoundId, Class<? extends DataAnnotation>... formulaResultsComponents) throws IOException {
+        deleteFromAllFormulaResults(null, compoundId, formulaResultsComponents);
+    }
+
+    public final void deleteFromAllFormulaResults(@NotNull CompoundContainer compoundContainer, Class<? extends DataAnnotation>... formulaResultsComponents) throws IOException {
+        deleteFromAllFormulaResults(compoundContainer, compoundContainer.getId(), formulaResultsComponents);
+    }
+
+    private final void deleteFromAllFormulaResults(@Nullable CompoundContainer cc, @NotNull final CompoundContainerId compoundId, Class<? extends DataAnnotation>... formulaResultsComponents) throws IOException {
+        if (!containsCompound(compoundId))
+            throw new IllegalArgumentException("Compound is not part of the project Space! ID: " + compoundId);
+
+        compoundId.containerLock.writeLock().lock();
+        try {
+            //do first in case tree are deleted
+            if (cc == null)
+                cc = getCompound(compoundId);
+
+            final ProjectWriter w = ioProvider.newWriter(this::getProjectSpaceProperty);
+            w.inDirectory(compoundId.getDirectoryName(), () -> {
+                for (Class k : formulaResultsComponents)
+                    configuration.getComponentSerializer(FormulaResult.class, k).deleteAll(w);
+                return true;
+            });
+
+
+            Set<Class<? extends DataAnnotation>> components = Set.of(formulaResultsComponents);
+            if (components.contains(FTree.class)) //tree removal means results removal
+                cc.results.clear();
+            cc.getResultsRO().values().forEach(resultId ->
+                    fireContainerListeners(formulaResultListener, new ContainerEvent<>(ContainerEvent.EventType.UPDATED, resultId, components)));
+
+        } finally {
+            compoundId.containerLock.writeLock().unlock();
+        }
+    }
+
     /**
-     *  Deletes annotations of FormulaResults.
-     *  Be careful results are defined by their
+     * Deletes annotations of FormulaResults.
+     * Be careful results are defined by their
+     *
      * @param resultId
      * @param components
      * @throws IOException if io error occurs

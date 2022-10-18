@@ -247,7 +247,7 @@ public final class AmqpAPI<WebChemDB extends AbstractChemicalDatabase> extends A
      * @throws IOException if something went wrong with the web query
      */
     @Override
-    public BayesnetScoring getBayesnetScoring(@NotNull PredictorType predictorType, @Nullable MolecularFormula formula) throws IOException {
+    public BayesnetScoring getBayesnetScoring(@NotNull PredictorType predictorType, @Nullable FingerIdData csi, @Nullable MolecularFormula formula) throws IOException {
         final MaskedFingerprintVersion fpVersion = getFingerIdData(predictorType).getFingerprintVersion();
         final PredictionPerformance[] performances = getFingerIdData(predictorType).getPerformances();
         try (BufferedReader br = new BufferedReader(new InputStreamReader(fingeridModels.getBayesnetScoringTree(predictorType, formula)

@@ -31,7 +31,8 @@ import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.EnumMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class AbstractWebAPI<D extends AbstractChemicalDatabase> implements WebAPI<D> {
 
@@ -48,52 +49,86 @@ public abstract class AbstractWebAPI<D extends AbstractChemicalDatabase> impleme
 
 
     //caches predictors so that we do not have to download the statistics and fingerprint info every time
-    private final EnumMap<PredictorType, StructurePredictor> fingerIdPredictors = new EnumMap<>(PredictorType.class);
+    private final Map<PredictorType, StructurePredictor> fingerIdPredictors = new ConcurrentHashMap<>();
 
-    public @NotNull StructurePredictor getStructurePredictor(@NotNull PredictorType type) throws IOException {
-        synchronized (fingerIdPredictors) {
-            if (!fingerIdPredictors.containsKey(type)) {
-                final CSIPredictor p = new CSIPredictor(type, this);
-                p.initialize();
-                fingerIdPredictors.put(type, p);
-            }
+
+    public @NotNull StructurePredictor getStructurePredictor(@NotNull PredictorType predictorType) throws IOException {
+        try {
+            return fingerIdPredictors.computeIfAbsent(predictorType, pt -> {
+                try {
+                    final CSIPredictor p = new CSIPredictor(pt, this);
+                    p.initialize();
+                    return p;
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        } catch (RuntimeException e) {
+            if (e.getCause() instanceof IOException)
+                throw (IOException) e.getCause();
+            throw e;
         }
-        return fingerIdPredictors.get(type);
     }
 
 
-    private final EnumMap<PredictorType, FingerIdData> fingerIdData = new EnumMap<>(PredictorType.class);
+    private final Map<PredictorType, FingerIdData> fingerIdData = new ConcurrentHashMap<>();
+
 
     public FingerIdData getFingerIdData(@NotNull PredictorType predictorType) throws IOException {
-        synchronized (fingerIdData) {
-            if (!fingerIdData.containsKey(predictorType))
-                fingerIdData.put(predictorType, getFingerIdDataUncached(predictorType));
+        try {
+            return fingerIdData.computeIfAbsent(predictorType, pt -> {
+                try {
+                    return getFingerIdDataUncached(pt);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        } catch (RuntimeException e) {
+            if (e.getCause() instanceof IOException)
+                throw (IOException) e.getCause();
+            throw e;
         }
-        return fingerIdData.get(predictorType);
     }
+
     protected abstract FingerIdData getFingerIdDataUncached(@NotNull PredictorType predictorType) throws IOException;
 
 
-    private final EnumMap<PredictorType, CanopusCfData> cfData = new EnumMap<>(PredictorType.class);
+    private final Map<PredictorType, CanopusCfData> cfData = new ConcurrentHashMap<>();
 
     public final CanopusCfData getCanopusCfData(@NotNull PredictorType predictorType) throws IOException {
-        synchronized (cfData) {
-            if (!cfData.containsKey(predictorType))
-                cfData.put(predictorType, getCanopusCfDataUncached(predictorType));
+        try {
+            return cfData.computeIfAbsent(predictorType, pt -> {
+                try {
+                    return getCanopusCfDataUncached(pt);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        } catch (RuntimeException e) {
+            if (e.getCause() instanceof IOException)
+                throw (IOException) e.getCause();
+            throw e;
         }
-        return cfData.get(predictorType);
     }
 
     protected abstract CanopusCfData getCanopusCfDataUncached(@NotNull PredictorType predictorType) throws IOException;
 
-    private final EnumMap<PredictorType, CanopusNpcData> npcData = new EnumMap<>(PredictorType.class);
+    private final Map<PredictorType, CanopusNpcData> npcData = new ConcurrentHashMap<>();
 
     public final CanopusNpcData getCanopusNpcData(@NotNull PredictorType predictorType) throws IOException {
-        synchronized (npcData) {
-            if (!npcData.containsKey(predictorType))
-                npcData.put(predictorType, getCanopusNpcDataUncached(predictorType));
+        try {
+            return npcData.computeIfAbsent(predictorType, pt -> {
+                try {
+                    return getCanopusNpcDataUncached(pt);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        } catch (RuntimeException e) {
+            if (e.getCause() instanceof IOException)
+                throw (IOException) e.getCause();
+            throw e;
         }
-        return npcData.get(predictorType);
     }
 
     protected abstract CanopusNpcData getCanopusNpcDataUncached(@NotNull PredictorType predictorType) throws IOException;

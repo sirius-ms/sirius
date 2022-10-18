@@ -31,15 +31,12 @@ import com.github.scribejava.core.oauth.OAuth20Service;
 import com.github.scribejava.core.revoke.TokenTypeHint;
 import com.github.scribejava.httpclient.apache.ApacheHttpClient;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
-import org.apache.http.Header;
-import org.apache.http.HeaderElement;
-import org.apache.http.ParseException;
-import org.apache.http.annotation.Contract;
-import org.apache.http.annotation.ThreadingBehavior;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
-import org.apache.http.message.BasicHeaderElement;
-import org.apache.http.message.BasicHeaderValueParser;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
+import org.apache.hc.core5.annotation.Contract;
+import org.apache.hc.core5.annotation.ThreadingBehavior;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HeaderElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -53,7 +50,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Supplier;
+
 
 public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Closeable {
 
@@ -250,17 +247,6 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
         }
 
         @Override
-        public HeaderElement[] getElements() throws ParseException {
-            String v = this.getValue();
-            if (v != null) {
-                // result intentionally not cached, it's probably not used again
-                String[] vs = v.split(" ");
-                return new HeaderElement[]{new BasicHeaderElement(vs[0], vs[1])};
-            }
-            return EMPTY_HEADER_ELEMENTS;
-        }
-
-        @Override
         public String getName() {
             return "Authorization";
         }
@@ -272,6 +258,11 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+        }
+
+        @Override
+        public boolean isSensitive() {
+            return true;
         }
     }
 
