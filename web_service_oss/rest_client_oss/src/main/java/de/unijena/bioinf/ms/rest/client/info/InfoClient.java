@@ -30,11 +30,11 @@ import de.unijena.bioinf.ms.rest.model.info.News;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.ms.rest.model.license.SubscriptionConsumables;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.utils.URIBuilder;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.core5.net.URIBuilder;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,6 +49,7 @@ import java.sql.Timestamp;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class InfoClient extends AbstractCsiClient {
     private static final String WEBAPI_VERSION_JSON = "/version.json";
@@ -68,7 +69,8 @@ public class InfoClient extends AbstractCsiClient {
                             .setParameter("siriusguiVersion", FingerIDProperties.sirius_guiVersion())
                             .setParameter("updateInfo", String.valueOf(includeUpdateInfo))
                             .build());
-                    get.setConfig(RequestConfig.custom().setConnectTimeout(8000).setSocketTimeout(8000).build());
+                    get.setConfig(RequestConfig.custom().setConnectTimeout(8, TimeUnit.SECONDS)
+                            /*.setSocketTimeout(8000)*/.build());
                     return get;
                 },
                 this::parseVersionInfo
@@ -124,7 +126,8 @@ public class InfoClient extends AbstractCsiClient {
                 () -> {
                     HttpGet get = new HttpGet(buildVersionSpecificWebapiURI(WEBAPI_WORKER_JSON).build());
                     final int timeoutInSeconds = 8000;
-                    get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
+                    get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds, TimeUnit.SECONDS)
+                            /*.setSocketTimeout(timeoutInSeconds)*/.build());
                     return get;
                 }, new TypeReference<>() {
                 }
