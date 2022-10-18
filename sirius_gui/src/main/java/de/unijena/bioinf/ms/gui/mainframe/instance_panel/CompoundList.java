@@ -62,7 +62,7 @@ public class CompoundList {
     private final Queue<ExperimentListChangeListener> listeners = new ConcurrentLinkedQueue<>();
 
     public CompoundList(@NotNull final GuiProjectSpaceManager ps) {
-        searchField = new SearchTextField();
+        searchField = new SearchTextField("Hit enter to search...");
         obsevableScource = new ObservableElementList<>(ps.INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class));
         sortedScource = new SortedList<>(obsevableScource, Comparator.comparing(b -> b.getID().getCompoundIndex()));
 

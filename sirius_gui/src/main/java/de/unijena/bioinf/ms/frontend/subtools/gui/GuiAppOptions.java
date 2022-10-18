@@ -44,6 +44,7 @@ import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidateFingerprintsTopK;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidatesTopK;
+import de.unijena.bioinf.webapi.rest.RestAPI;
 import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import picocli.CommandLine;
@@ -132,8 +133,9 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                     try {
                         int progress = 0;
                         int max = 7;
-                        updateProgress(0, max, progress++);
-//                        ApplicationCore.DEFAULT_LOGGER.info("Configuring CDK InChIGeneratorFactory...");
+                        updateProgress(0, max, progress++,"Init Connection pools");
+                        RestAPI.initConnectionPools();
+
                         updateProgress(0, max, progress++, "Configuring CDK InChIGeneratorFactory...");
                         InChIGeneratorFactory.getInstance();
 //                        ApplicationCore.DEFAULT_LOGGER.info("Initializing available DBs...");
