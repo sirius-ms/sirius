@@ -2,7 +2,7 @@
  *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
  *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
@@ -15,10 +15,10 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ChemistryBase.utils;
+package de.unijena.bioinf.rest;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
@@ -90,22 +90,34 @@ public class NetUtils {
 
     public static <R> R tryAndWait(NetSupplier<R> tryToDo, InterruptionCheck interrupted, long timeout) throws InterruptedException, TimeoutException {
         long waitTime = INIT_WAIT_TIME;
-        while (timeout > 0) {
-            try {
-                interrupted.check();
-                return tryToDo.get();
-            } catch (IOException retry) {
-                waitTime = (long) Math.min(waitTime * WAIT_TIME_MULTIPLIER, MAX_WAIT_TIME);
-                timeout -= waitTime;
+        try {
+            R a = tryToDo.get();
+            awakeAll();
+            return a;
+        } catch (IOException e) {
+            LOG.warn("Error when try to connect to Server. Try again in 0.2s \n Cause: " + e.getMessage());
+            LOG.debug("Error when try to connect to Server. Try again in 0.2s", e);
+            sleep(interrupted, 200);
+            while (timeout > 0) {
+                try {
+                    interrupted.check();
+                    ProxyManager.closeAllStaleConnections();
+                    R a = tryToDo.get();
+                    awakeAll();
+                    return a;
+                } catch (IOException retry) {
+                    waitTime = (long) Math.min(waitTime * WAIT_TIME_MULTIPLIER, MAX_WAIT_TIME);
+                    timeout -= waitTime;
 
-                if (DEBUG) {
-                    LOG.warn("Error when try to connect to Server. Try again in " + waitTime / 1000d + "s", retry);
-                } else {
-                    LOG.warn("Error when try to connect to Server. Try again in " + waitTime / 1000d + "s \n Cause: " + retry.getMessage());
-                    LOG.debug("Error when try to connect to Server. Try again in " + waitTime / 1000d + "s", retry);
+                    if (DEBUG) {
+                        LOG.warn("Error when try to connect to Server. Try again in " + waitTime / 1000d + "s", retry);
+                    } else {
+                        LOG.warn("Error when try to connect to Server. Try again in " + waitTime / 1000d + "s \n Cause: " + retry.getMessage());
+                        LOG.debug("Error when try to connect to Server. Try again in " + waitTime / 1000d + "s", retry);
+                    }
+
+                    sleep(interrupted, waitTime);
                 }
-
-                sleep(interrupted, waitTime);
             }
         }
         throw new TimeoutException("Stop trying because of Timeout!");
@@ -132,6 +144,13 @@ public class NetUtils {
         }
     }
 
+    public static void sleepNoRegistration(@NotNull final InterruptionCheck interrupted, long waitTime) throws InterruptedException {
+        for (long i = waitTime; i > 0; i -= TICK) {
+            interrupted.check();
+            Thread.sleep(Math.min(i, TICK));
+        }
+    }
+
     @FunctionalInterface
     public interface NetSupplier<R> {
         R get() throws InterruptedException, TimeoutException, IOException;
@@ -155,9 +174,11 @@ public class NetUtils {
         };
     }
 
-    public synchronized static void awakeAll() {
+    public static void awakeAll() {
         //iterator against concurrent modification exception
-        WAITERS.iterator().forEachRemaining(CountDownLatch::countDown);
+        synchronized (WAITERS){
+            WAITERS.iterator().forEachRemaining(CountDownLatch::countDown);
+        }
     }
 
 
