@@ -79,7 +79,7 @@ public class SiriusJobs {
     @NotNull
     public static JobManager getGlobalJobManager() {
         if (globalJobManager == null) {
-            setGlobalJobManager(PropertyManager.getNumberOfCores());
+            setGlobalJobManager(defaultThreadNumber());
             LoggerFactory.getLogger(SiriusJobs.class).info("Job manager successful initialized with " + globalJobManager.getCPUThreads() + " CPU thread(s) and " + globalJobManager.getIOThreads() + " IO thread(s).");
         }
         return globalJobManager;
@@ -120,5 +120,10 @@ public class SiriusJobs {
             }
         };
         return getGlobalJobManager().submitJob(t);
+    }
+
+    private static int defaultThreadNumber(){
+        int threadsAv = PropertyManager.getNumberOfThreads();
+        return Math.max(1, threadsAv <= 8 ? threadsAv - 2 : threadsAv - (int)(threadsAv * .2));
     }
 }

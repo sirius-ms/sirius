@@ -28,7 +28,7 @@ import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
-import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
+import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.fingerid.connection_pooling.PooledConnection;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.ms.amqp.client.jobs.AmqpWebJJob;

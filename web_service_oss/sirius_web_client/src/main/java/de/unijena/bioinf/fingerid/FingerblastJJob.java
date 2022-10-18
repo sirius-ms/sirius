@@ -21,7 +21,6 @@
 package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.annotations.StructureSearchDB;
 import de.unijena.bioinf.elgordo.InjectElGordoCompounds;
@@ -30,7 +29,9 @@ import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.ms.annotations.AnnotationJJob;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobInput;
+import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.webapi.WebJJob;
+import de.unijena.bioinf.rest.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -135,12 +136,15 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
                 ? new ConfidenceJJob(predictor, experiment)
                 : null;
 
+        final FingerIdData csi = NetUtils.tryAndWait(() -> predictor.csiWebAPI.getFingerIdData(predictor.predictorType)
+                , this::checkForInterruption);
+
         for (int i = 0; i < idResult.size(); i++) {
             final FingerIdResult fingeridInput = idResult.get(i);
 
             // fingerblast job: score candidate fingerprints against predicted fingerprint
             final BayesnetScoring bayesnetScoring = NetUtils.tryAndWait(() ->
-                            predictor.csiWebAPI.getBayesnetScoring(predictor.predictorType, fingeridInput.getMolecularFormula()),
+                            predictor.csiWebAPI.getBayesnetScoring(predictor.predictorType, csi, fingeridInput.getMolecularFormula()),
                     this::checkForInterruption);
 
 
@@ -151,9 +155,8 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
                 // bayesnetScoring is null --> make a prepare job which computes the bayessian network (covTree) for the
                 // given molecular formula
                 blastJob = FingerblastSearchJJob.of(predictor, fingeridInput);
-                WebJJob<CovtreeJobInput, ?, BayesnetScoring, ?> covTreeJob = NetUtils.tryAndWait(() ->
-                                predictor.csiWebAPI.submitCovtreeJob(fingeridInput.getMolecularFormula(), predictor.predictorType),
-                        this::checkForInterruption);
+                WebJJob<CovtreeJobInput, ?, BayesnetScoring, ?> covTreeJob =
+                        predictor.csiWebAPI.submitCovtreeJob(fingeridInput.getMolecularFormula(), predictor.predictorType);
                 blastJob.addRequiredJob(covTreeJob);
                 covtreeJobs.add(covTreeJob);
             }
@@ -211,7 +214,8 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
     @Override
     public void cancel(boolean mayInterruptIfRunning) {
         super.cancel(mayInterruptIfRunning);
-        covtreeJobs.forEach(c -> c.cancel(mayInterruptIfRunning));
+        if (covtreeJobs != null)
+            covtreeJobs.forEach(c -> c.cancel(mayInterruptIfRunning));
     }
 
     @Override

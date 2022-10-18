@@ -36,8 +36,6 @@ import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.NotNull;
 import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.exception.CDKException;
-import org.openscience.cdk.inchi.InChIGenerator;
-import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IChemFile;
 import org.openscience.cdk.interfaces.IChemModel;
@@ -76,7 +74,6 @@ public class CustomDatabaseImporter {
     private static final int molBufferSize = 1000;
 
     final protected ConcurrentLinkedQueue<FingerprintCalculator> freeFingerprinter = new ConcurrentLinkedQueue<>();
-    protected InChIGeneratorFactory inChIGeneratorFactory;
     protected SmilesGenerator smilesGen;
     protected SmilesParser smilesParser;
     protected CdkFingerprintVersion fingerprintVersion;
@@ -89,14 +86,10 @@ public class CustomDatabaseImporter {
         this.bufferSize = bufferSize;
         this.buffer = new ArrayList<>((int) (this.bufferSize * 1.25));
         this.moleculeBuffer = new ArrayList<>((int) (molBufferSize * 1.25));
-        try {
-            inChIGeneratorFactory = InChIGeneratorFactory.getInstance();
-            smilesGen = SmilesGenerator.generic().aromatic();
-            smilesParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
-            smilesParser.kekulise(true);
-        } catch (CDKException e) {
-            throw new RuntimeException(e);
-        }
+
+        smilesGen = SmilesGenerator.generic().aromatic();
+        smilesParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+        smilesParser.kekulise(true);
     }
 
     public void cancel() {
@@ -136,7 +129,7 @@ public class CustomDatabaseImporter {
             }
 
 
-            molecule = new Molecule(inChIGeneratorFactory.getInChIToStructure(str, SilentChemObjectBuilder.getInstance()).getAtomContainer());
+            molecule = new Molecule(InChISMILESUtils.getAtomContainerFromInchi(str));
         } else {
             if (!SmilesU.isConnected(str)) {
                 LoggerFactory.getLogger(getClass()).warn(
@@ -223,12 +216,11 @@ public class CustomDatabaseImporter {
         if (moleculeBuffer.size() > 0) {
             final ConcurrentHashMap<String, Comp> dict = new ConcurrentHashMap<>(moleculeBuffer.size());
             try {
-                final InChIGeneratorFactory icf = InChIGeneratorFactory.getInstance();
                 for (Molecule c : moleculeBuffer) {
                     checkCancellation();
                     final String inchi2d;
                     try {
-                        inchi2d = InChIs.inchi2d(icf.getInChIGenerator(c.container).getInchi());
+                        inchi2d = InChISMILESUtils.getInchi(c.container).in2D;
                         Comp comp = new Comp(inchi2d);
                         comp.molecule = c;
                         dict.put(inchi2d, comp);
@@ -236,7 +228,7 @@ public class CustomDatabaseImporter {
                         CustomDatabase.logger.error(e.getMessage(), e);
                     }
                 }
-            } catch (CDKException | IllegalArgumentException e) {
+            } catch (IllegalArgumentException e) {
                 CustomDatabase.logger.error(e.getMessage(), e);
             }
             moleculeBuffer.clear();
@@ -454,14 +446,13 @@ public class CustomDatabaseImporter {
         }
 
         protected FingerprintCandidate computeCompound(Molecule molecule) throws CDKException, IllegalArgumentException {
-            InChIGenerator gen = inChIGeneratorFactory.getInChIGenerator(molecule.container);
-            final InChI inchi = InChIs.newInChI(gen.getInchiKey(), gen.getInchi());
+            final InChI inchi = InChISMILESUtils.getInchi(molecule.container);
 
 
             if (molecule.smiles == null) {
                 LoggerFactory.getLogger(getClass()).warn("Computing fingerprint from non smiles input. NO standardization has happened!");
                 //eliminate 3d info to have a minial amount of standardization.
-                molecule.container = inChIGeneratorFactory.getInChIToStructure(inchi.in2D, SilentChemObjectBuilder.getInstance()).getAtomContainer();
+                molecule.container = InChISMILESUtils.getAtomContainerFromInchi(inchi.in2D);
                 molecule.smiles = new Smiles(smilesGen.create(molecule.container));
             }
 
