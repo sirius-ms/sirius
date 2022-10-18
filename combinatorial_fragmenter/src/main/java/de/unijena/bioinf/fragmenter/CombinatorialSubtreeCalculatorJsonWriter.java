@@ -12,8 +12,6 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
 import de.unijena.bioinf.chemdb.InChISMILESUtils;
 import org.jetbrains.annotations.NotNull;
 import org.openscience.cdk.exception.CDKException;
-import org.openscience.cdk.inchi.InChIGenerator;
-import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.smiles.SmiFlavor;

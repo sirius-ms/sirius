@@ -249,11 +249,12 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
             childFileSystemsLock.updateLock().lock();
             try {
                 final Path source = root.zipFS.getPath(relativeFromRoot);
+                final Path sourceAbs = root.resolveCurrentPath(relativeFromRoot);
                 final PathMatcher noZipExt = source.getFileSystem().getPathMatcher("glob:**{.ms, .tsv, .csv, .info, .config}");
 
                 if ((compressionFormat.getCompressedLevel() >= source.getNameCount())
                         || (isDir != null && !isDir && isOnCompressedLevel(source))
-                        || (isDir == null && isOnCompressedLevel(source) && (noZipExt.matches(source.getFileName()) || !FileUtils.isZipArchive(source)))
+                        || (isDir == null && isOnCompressedLevel(source) && (noZipExt.matches(source.getFileName()) || !FileUtils.isZipArchive(sourceAbs)))
                 ) {
                     return new ResolvedPath(root, source.toString());
                 } else {
@@ -381,16 +382,18 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
          * @throws IOException if IO Exception happens
          */
         private void removeFsIfEmpty(ResolvedPath rp) throws IOException {
-            if (!rp.fs.isDefault()) {
-                if (FileUtils.listAndClose(rp.fs.rootPath(), s -> s.findAny().isEmpty())) {
-                    rp.fs.lock.writeLock().lock();
-                    try {
-                        rp.fs.close();
-                        Optional<ResolvedPath> rpRoot = resolvePathRO(getRoot().relativize(getRoot().getFileSystem().getPath(rp.fs.location.toString())).toString(), false);
-                        if (rpRoot.isPresent())
-                            Files.deleteIfExists(rpRoot.get().getPath());
-                    } finally {
-                        rp.fs.lock.writeLock().unlock();
+            if (!rp.fs.isDefault()) { //if closed root has been removed
+                if (rp.fs.zipFS.isOpen()) {
+                    if (FileUtils.listAndClose(rp.fs.rootPath(), s -> s.findAny().isEmpty())) {
+                        rp.fs.lock.writeLock().lock();
+                        try {
+                            rp.fs.close();
+                            Optional<ResolvedPath> rpRoot = resolvePathRO(getRoot().relativize(getRoot().getFileSystem().getPath(rp.fs.location.toString())).toString(), false);
+                            if (rpRoot.isPresent())
+                                Files.deleteIfExists(rpRoot.get().getPath());
+                        } finally {
+                            rp.fs.lock.writeLock().unlock();
+                        }
                     }
                 }
             }
