@@ -100,6 +100,14 @@ public class SearchableDatabases {
         }
     }
 
+    public static @NotNull Optional<CustomDatabase<?>> getCustomDatabase(@NotNull String nameOrPath) {
+        Optional<CustomDatabase<?>> it = getCustomDatabaseByName(nameOrPath);
+        if (it.isEmpty())
+            it = getCustomDatabaseByPath(Path.of(nameOrPath));
+        return it;
+    }
+
+
     @NotNull
     public static CustomDatabase<?> getCustomDatabaseByPathOrThrow(@NotNull Path dbDir) {
         try {

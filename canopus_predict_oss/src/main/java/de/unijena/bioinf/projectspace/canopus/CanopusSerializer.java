@@ -81,7 +81,13 @@ public class CanopusSerializer implements ComponentSerializer<FormulaResultId, F
 
     @Override
     public void delete(ProjectWriter writer, FormulaResultId id) throws IOException {
-        writer.delete(CF.relFilePath(id));
-        writer.delete(NPC.relFilePath(id));
+        writer.deleteIfExists(CF.relFilePath(id));
+        writer.deleteIfExists(NPC.relFilePath(id));
+    }
+
+    @Override
+    public void deleteAll(ProjectWriter writer) throws IOException {
+        writer.deleteIfExists(CF.relDir());
+        writer.deleteIfExists(NPC.relDir());
     }
 }
