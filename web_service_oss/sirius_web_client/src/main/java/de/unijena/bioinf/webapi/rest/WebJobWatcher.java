@@ -388,7 +388,7 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
                                 waitingJobs.remove(j);
                             });
                         }, this::checkForInterruption);
-                        System.out.println("JobWatcher WEB: End remove jobs: " + toRemove.stream().map(JobId::toString).collect(Collectors.joining(",")));
+//                        System.out.println("JobWatcher WEB: End remove jobs: " + toRemove.stream().map(JobId::toString).collect(Collectors.joining(",")));
                     }
 
                     if (!toReset.isEmpty()) {
