@@ -173,7 +173,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             showCommand.addActionListener(e -> {
                 final String commandString = String.join(" ", makeCommand(new ArrayList<>()));
                 if (warnNoMethodIsSelected()) return;
-                new InfoDialog(owner, "Command:" + GuiUtils.formatToolTip(commandString)) {
+                new InfoDialog(owner, "Command", GuiUtils.formatToolTip(commandString), null) {
                     @Override
                     protected void decorateButtonPanel(JPanel boxedButtonPanel) {
                         JButton copyCommand = new JButton("Copy Command");
