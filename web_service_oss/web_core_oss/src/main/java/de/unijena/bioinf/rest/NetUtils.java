@@ -176,9 +176,9 @@ public class NetUtils {
 
     public static void awakeAll() {
         //iterator against concurrent modification exception
-        synchronized (WAITERS){
+//        synchronized (WAITERS){
             WAITERS.iterator().forEachRemaining(CountDownLatch::countDown);
-        }
+//        }
     }
 
 
