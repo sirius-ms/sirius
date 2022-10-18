@@ -212,7 +212,7 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
      */
     //uncached -> access via predictor
     default BayesnetScoring getBayesnetScoring(@NotNull PredictorType predictorType) throws IOException {
-        return getBayesnetScoring(predictorType, null);
+        return getBayesnetScoring(predictorType,  getFingerIdData(predictorType),null);
     }
 
     /**
@@ -222,7 +222,7 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
      * @throws IOException if something went wrong with the web query
      */
     //uncached -> access via predictor
-    BayesnetScoring getBayesnetScoring(@NotNull PredictorType predictorType, @Nullable MolecularFormula formula) throws IOException;
+    BayesnetScoring getBayesnetScoring(@NotNull PredictorType predictorType, FingerIdData csi, @Nullable MolecularFormula formula) throws IOException;
 
 
     //uncached -> access via predictor

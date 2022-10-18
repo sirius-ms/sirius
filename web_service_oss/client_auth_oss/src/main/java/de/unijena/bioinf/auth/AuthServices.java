@@ -20,11 +20,10 @@
 
 package de.unijena.bioinf.auth;
 
-import com.auth0.jwt.interfaces.DecodedJWT;
 import com.github.scribejava.apis.Auth0Api;
 import de.unijena.bioinf.babelms.utils.Base64;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
+import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
