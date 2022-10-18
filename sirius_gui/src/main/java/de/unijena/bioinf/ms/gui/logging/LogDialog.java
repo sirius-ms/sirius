@@ -34,7 +34,7 @@ public class LogDialog extends JDialog {
     private final TextAreaHandler handler;
 
     public LogDialog(Frame owner, boolean modal, Level loglevel, Logger... loggers) {
-        super((Frame) null, "Log", modal);
+        super(owner, "Log", modal);
 
         JTextArea textArea = new JTextArea();
         this.handler = new TextAreaHandler(textArea, loglevel);
@@ -51,6 +51,9 @@ public class LogDialog extends JDialog {
 
         lPanel = new LoggingPanel(handler);
         add(lPanel);
+
+        pack();
+        setLocationRelativeTo(getParent());
     }
 
     @Override

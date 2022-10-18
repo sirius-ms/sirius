@@ -43,7 +43,7 @@ dependencies {
     implementation("org.slf4j:jcl-over-slf4j:$slf4j_version")
     implementation("org.slf4j:jul-to-slf4j:$slf4j_version")
     //todo move back to logback if we have a real spring boot app later
-//    implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+    implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
 
 
     ////////////////////////////////////////////////////
@@ -99,7 +99,7 @@ configurations.all {
     it.exclude group: "log4j", module: "log4j"
     //replaced by jcl-over-slf4j
     it.exclude group: "commons-logging", module: "commons-logging"
-//    it.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    it.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
 //    it.exclude group: 'org.slf4j', module: 'logback-classic'
 }
 war {
