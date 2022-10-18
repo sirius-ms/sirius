@@ -22,6 +22,8 @@ package de.unijena.bioinf.ms.gui.logging;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -52,6 +54,15 @@ public class LoggingPanel extends JPanel {
         button.addActionListener(e -> handler.getArea().setText(""));
         JPanel buttonPane = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPane.add(button);
+
+        JButton copyCommand = new JButton("Copy Log");
+        copyCommand.setToolTipText("Copy Log to clipboard.");
+        copyCommand.addActionListener(evt -> {
+            StringSelection stringSelection = new StringSelection(handler.getArea().getText());
+            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            clipboard.setContents(stringSelection, null);
+        });
+        buttonPane.add(copyCommand);
 
         JPanel southPanel = new JPanel(new BorderLayout());
         southPanel.add(buttonPane, BorderLayout.EAST);

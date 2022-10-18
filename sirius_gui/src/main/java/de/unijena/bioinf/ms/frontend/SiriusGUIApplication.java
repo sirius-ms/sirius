@@ -106,7 +106,7 @@ public class SiriusGUIApplication extends SiriusCLIApplication {
                         // So we need to ensure that the apache.configuration2 libs gets access otherwise.
                         final boolean springSupport = Boolean.parseBoolean(System.getProperty("de.unijena.bioinf.sirius.springSupport", "false"));
                         SiriusJobs.setJobManagerFactory((cpuThreads) -> new SwingJobManager(
-                                Math.min(defaultThreadNumber(), cpuThreads),
+                                cpuThreads,
                                 Math.min(PropertyManager.getNumberOfThreads(), 4),
                                 springSupport ? Thread.currentThread().getContextClassLoader() : null
                         ));
@@ -145,10 +145,5 @@ public class SiriusGUIApplication extends SiriusCLIApplication {
                     System.exit(0);
             }
         }
-    }
-
-    public static int defaultThreadNumber(){
-        int threadsAv = PropertyManager.getNumberOfThreads();
-        return Math.max(1, threadsAv <= 8 ? threadsAv - 2 : threadsAv - threadsAv / 20);
     }
 }
