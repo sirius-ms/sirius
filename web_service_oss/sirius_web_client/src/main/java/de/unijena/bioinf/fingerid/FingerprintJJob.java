@@ -27,6 +27,7 @@ import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.ms.webapi.WebJJob;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,25 +46,27 @@ import java.util.stream.Collectors;
 public class FingerprintJJob extends BasicJJob<List<FingerIdResult>> {
     // structure Elucidator
     private final CSIPredictor predictor;
+    private final WebAPI<?> webAPI;
 
     // input data
     private Ms2Experiment experiment;
     private List<FingerIdResult> idResult;
     private Map<WebJJob<FingerprintJobInput, ?, FingerprintResult, ?>, FingerIdResult> predictionJobs = null;
 
-    public FingerprintJJob(@NotNull CSIPredictor predictor) {
-        this(predictor, null);
+    public FingerprintJJob(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI) {
+        this(predictor, webAPI, null);
     }
 
-    public FingerprintJJob(@NotNull CSIPredictor predictor, @Nullable Ms2Experiment experiment) {
-        this(predictor, experiment, null);
+    public FingerprintJJob(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI, @Nullable Ms2Experiment experiment) {
+        this(predictor, webAPI, experiment, null);
     }
 
-    public FingerprintJJob(@NotNull CSIPredictor predictor, @Nullable Ms2Experiment experiment, @Nullable List<FingerIdResult> preprocessed) {
+    public FingerprintJJob(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI, @Nullable Ms2Experiment experiment, @Nullable List<FingerIdResult> preprocessed) {
         super(JobType.WEBSERVICE);
         this.predictor = predictor;
         this.experiment = experiment;
         this.idResult = preprocessed;
+        this.webAPI = webAPI;
     }
 
     public void setInput(Ms2Experiment experiment, List<FingerIdResult> formulaIDResults) {
@@ -104,7 +107,7 @@ public class FingerprintJJob extends BasicJJob<List<FingerIdResult>> {
 
         for (FingerIdResult fingeridInput : idResult) {
             // prediction job: predict fingerprint
-            predictionJobs.put(predictor.csiWebAPI.submitFingerprintJob(
+            predictionJobs.put(webAPI.submitFingerprintJob(
                             new FingerprintJobInput(experiment, fingeridInput.getSourceTree(),
                                     UserDefineablePredictorType.toPredictorTypes(experiment.getPrecursorIonType(), predictors.value))),
                     new FingerIdResult(fingeridInput.getSourceTree()));
@@ -138,7 +141,7 @@ public class FingerprintJJob extends BasicJJob<List<FingerIdResult>> {
         return super.identifier() + " | " + experiment.getName() + "@" + experiment.getIonMass() + "m/z";
     }
 
-    public static FingerprintJJob of(@NotNull CSIPredictor predictor, @Nullable Ms2Experiment experiment, @NotNull List<? extends IdentificationResult<?>> formulaResults) {
-        return new FingerprintJJob(predictor, experiment, formulaResults.stream().map(FingerIdResult::new).collect(Collectors.toList()));
+    public static FingerprintJJob of(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI, @Nullable Ms2Experiment experiment, @NotNull List<? extends IdentificationResult<?>> formulaResults) {
+        return new FingerprintJJob(predictor, webAPI, experiment, formulaResults.stream().map(FingerIdResult::new).collect(Collectors.toList()));
     }
 }
