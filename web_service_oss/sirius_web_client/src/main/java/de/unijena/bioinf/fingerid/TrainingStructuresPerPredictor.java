@@ -22,6 +22,7 @@ package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
+import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +32,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class TrainingStructuresPerPredictor {
-
+    private static final Object lock = new Object();
     private static volatile TrainingStructuresPerPredictor singleton;
 
     private final Map<PredictorType, TrainingStructuresSet> predictorTypeToInchiKeys2D;
@@ -40,34 +41,38 @@ public class TrainingStructuresPerPredictor {
         predictorTypeToInchiKeys2D = new ConcurrentHashMap<>();
     }
 
-    public static synchronized TrainingStructuresPerPredictor getInstance() {
-        if (singleton==null){
-            singleton = new TrainingStructuresPerPredictor();
+    public static TrainingStructuresPerPredictor getInstance() {
+        if (singleton == null) {
+            synchronized (lock) {
+                if (singleton == null)
+                    singleton = new TrainingStructuresPerPredictor();
+            }
         }
         return singleton;
     }
 
     private TrainingStructuresSet addAvailablePredictorTypes(PredictorType predictorType, WebAPI<?> api) {
-        synchronized (predictorTypeToInchiKeys2D) {
-            if (!predictorTypeToInchiKeys2D.containsKey(predictorType)) {
-                try {
-                    InChI[] inchis = api.getTrainingStructures(predictorType).getTrainingStructures();
-                    TrainingStructuresSet trainingSet = new TrainingStructuresSet(inchis);
-                    addTrainingStructuresSet(predictorType, trainingSet);
-                } catch (Exception e) {
-                    LoggerFactory.getLogger(TrainingStructuresPerPredictor.class).error("Cannot retrieve training structures for predictor type " + predictorType + ".\nError is: " + e.getMessage());
-                    e.printStackTrace();
-                    addTrainingStructuresSet(predictorType, new TrainingStructuresSet(new InChI[]{}));
-                }
+        if (!predictorTypeToInchiKeys2D.containsKey(predictorType)) {
+            try {
+                InChI[] inchis = NetUtils.tryAndWait(() -> api.getTrainingStructures(predictorType)
+                        .getTrainingStructures(), NetUtils.checkThreadInterrupt(Thread.currentThread()));
+                TrainingStructuresSet trainingSet = new TrainingStructuresSet(inchis);
+                addTrainingStructuresSet(predictorType, trainingSet); //sync
+            } catch (Exception e) {
+                LoggerFactory.getLogger(TrainingStructuresPerPredictor.class).error("Cannot retrieve training structures for predictor type " + predictorType + ".\nError is: " + e.getMessage());
+                e.printStackTrace();
+                addTrainingStructuresSet(predictorType, new TrainingStructuresSet(new InChI[]{})); //sync
             }
         }
         return predictorTypeToInchiKeys2D.get(predictorType);
     }
 
     private TrainingStructuresSet addTrainingStructuresSet(PredictorType predictorType, TrainingStructuresSet trainingStructuresSet) {
-        if (predictorTypeToInchiKeys2D.containsKey(predictorType)) throw new IllegalArgumentException("PredictorType already known");
-        predictorTypeToInchiKeys2D.put(predictorType, trainingStructuresSet);
-        return predictorTypeToInchiKeys2D.get(predictorType);
+        synchronized (predictorTypeToInchiKeys2D) {
+            if (!predictorTypeToInchiKeys2D.containsKey(predictorType))
+                predictorTypeToInchiKeys2D.put(predictorType, trainingStructuresSet);
+            return predictorTypeToInchiKeys2D.get(predictorType);
+        }
     }
 
     public TrainingStructuresSet getTrainingStructuresSet(PredictorType predictorType, @Nullable WebAPI<?> api) {
@@ -80,7 +85,7 @@ public class TrainingStructuresPerPredictor {
 
     public TrainingStructuresSet getTrainingStructuresSet(@NotNull PredictorType predictorType) {
         TrainingStructuresSet trainingSet = predictorTypeToInchiKeys2D.get(predictorType);
-        if (trainingSet==null){
+        if (trainingSet == null) {
             throw new IllegalArgumentException("Unknown PredictorType: " + predictorType);
         }
         return trainingSet;
