@@ -433,35 +433,16 @@ public class ProxyManager {
 
     private static final ReadWriteLock reconnectLock = new ReentrantReadWriteLock();
 
-    private static JJob<Boolean> reconnectJob = null;
-    private static final Lock reconnectJobLock = new ReentrantLock();
-    public static void reconnect() { //run reconnection only once an await finishing if already running
-        if (reconnectJob == null || reconnectJob.isFinished()) {
-            reconnectJobLock.lock();
-            try {
-                if (reconnectJob == null || reconnectJob.isFinished()) {
-                    reconnectJob = SiriusJobs.runInBackground(() -> {
-                        final Map<String, Pair<CloseableHttpClient, PoolingHttpClientConnectionManager>> old;
-                        reconnectLock.writeLock().lock();
-                        try {
-                            old = clients;
-                            clients = new ConcurrentHashMap<>();
-                        } finally {
-                            reconnectLock.writeLock().unlock();
-                        }
-                        SiriusJobs.runInBackground(() -> close(old));
-                    });
-                }
-            } finally {
-                reconnectJobLock.unlock();
-            }
-        }
-
+    public static void reconnect() {
+        final Map<String, Pair<CloseableHttpClient, PoolingHttpClientConnectionManager>> old;
+        reconnectLock.writeLock().lock();
         try {
-            reconnectJob.awaitResult();
-        } catch (ExecutionException e) {
-            LoggerFactory.getLogger(ProxyManager.class).error("Error when resetting ConnectionManager. Try to recover.", e);
+            old = clients;
+            clients = new ConcurrentHashMap<>();
+        } finally {
+            reconnectLock.writeLock().unlock();
         }
+        SiriusJobs.runInBackground(() -> close(old));
     }
 
     private static JJob<Boolean> closeStaleConnections = null;
@@ -485,7 +466,6 @@ public class ProxyManager {
         } catch (ExecutionException e) {
             LoggerFactory.getLogger(ProxyManager.class).error("Error when CLosing stale connections. Try to recover.", e);
         }
-
     }
 //
     private static void closeStaleConnections() {
