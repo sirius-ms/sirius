@@ -22,10 +22,8 @@ package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
 import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
-import de.unijena.bioinf.webapi.rest.RestAPI;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
-
-import java.io.IOException;
+import de.unijena.bioinf.webapi.rest.RestAPI;
 
 /**
  * This is a dummmy for later IOKR integration
@@ -33,16 +31,11 @@ import java.io.IOException;
 public class IOKRPredictor extends AbstractStructurePredictor {
 
     protected IOKRPredictor(PredictorType predictorType, RestAPI api) {
-        super(predictorType, api);
+        super(predictorType);
     }
 
     @Override
     public FingerblastScoring<?> getPreparedFingerblastScorer(ParameterStore parameters) {
         return null;
-    }
-
-    @Override
-    public void refreshCacheDir() throws IOException {
-
     }
 }

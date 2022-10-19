@@ -22,15 +22,18 @@ package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
+import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
 import de.unijena.bioinf.confidence_score.CSICovarianceConfidenceScorer;
 import de.unijena.bioinf.confidence_score.svm.TrainedSVM;
-import de.unijena.bioinf.fingerid.blast.*;
+import de.unijena.bioinf.fingerid.blast.BayesnetScoringWithDynamicComputation;
+import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
+import de.unijena.bioinf.fingerid.blast.ScoringMethodFactory;
 import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.webapi.WebAPI;
-import de.unijena.bioinf.webapi.rest.RestAPI;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -45,17 +48,14 @@ public class CSIPredictor extends AbstractStructurePredictor {
     protected PredictionPerformance[] performances;
     protected volatile boolean initialized;
 
-    public CSIPredictor(PredictorType predictorType, WebAPI api) {
-        super(predictorType, api);
+    public CSIPredictor(PredictorType predictorType) {
+        super(predictorType);
         if (!UserDefineablePredictorType.CSI_FINGERID.contains(predictorType))
             throw new IllegalArgumentException("Illegal Predicortype for this object. CSI:FingerID positive and negative only.");
     }
 
     @Override
     public FingerblastScoring<?> getPreparedFingerblastScorer(ParameterStore parameters) {
-        /*if(!initialized) {
-            initialize();
-        }*/
         BayesnetScoringWithDynamicComputation scorer = (BayesnetScoringWithDynamicComputation) fingerblastScoring.getScoring();
         scorer.prepare(parameters);
         return scorer;
@@ -70,45 +70,53 @@ public class CSIPredictor extends AbstractStructurePredictor {
     }
 
 
-    @Override
-    public void refreshCacheDir() throws IOException {
-        database = csiWebAPI.getChemDB();
-        database.checkCache();
+    private WebWithCustomDatabase getAndRefreshDB(@NotNull final WebAPI<?> csiWebAPI) throws IOException {
+        WebWithCustomDatabase db = csiWebAPI.getChemDB();
+        db.checkCache();
+        return db;
     }
 
     public synchronized boolean isInitialized() {
         return initialized;
     }
 
-    public synchronized void initialize() throws IOException {
+    public synchronized void initialize(@NotNull final WebAPI<?> csiWebAPI) throws IOException {
         if (initialized)
             throw new IllegalStateException("Predictor is already initialized"); //maybe just skip
 
+        // do all web stuff first. if one fails we do not have an invalid object state and can just retry everything
         final FingerIdData fingeridData = csiWebAPI.getFingerIdData(predictorType);
+        final CSICovarianceConfidenceScorer<?> confidenceScorerTmp = makeConfidenceScorer(csiWebAPI,  fingeridData.getPerformances());
+        final TrainingStructuresSet trainingStructuresTMP = TrainingStructuresPerPredictor.getInstance()
+                .getTrainingStructuresSet(predictorType, csiWebAPI);
+        final WebWithCustomDatabase dbTmp = getAndRefreshDB(csiWebAPI);
+
+
+        //web requests done assign values
         performances = fingeridData.getPerformances();
         fpVersion = fingeridData.getFingerprintVersion();
-
         fingerblastScoring = new ScoringMethodFactory.BayesnetScoringWithDynamicComputationScoringMethod();
-        confidenceScorer = makeConfidenceScorer();
-
-        trainingStructures = TrainingStructuresPerPredictor.getInstance().getTrainingStructuresSet(predictorType, csiWebAPI);
-        refreshCacheDir();
+        confidenceScorer = confidenceScorerTmp;
+        trainingStructures = trainingStructuresTMP;
+        database = dbTmp;
         initialized = true;
     }
 
-    private CSICovarianceConfidenceScorer<?> makeConfidenceScorer() {
+    private CSICovarianceConfidenceScorer<?> makeConfidenceScorer(@NotNull final WebAPI<?> csiWebAPI, @NotNull final PredictionPerformance[] performances) throws IOException {
         try {
             final Map<String, TrainedSVM> confidenceSVMs = csiWebAPI.getTrainedConfidence(predictorType);
             if (confidenceSVMs == null || confidenceSVMs.isEmpty())
-                throw new IOException("WebAPI returned empty confidence SVMs");
+                throw new IllegalStateException("WebAPI returned empty confidence SVMs");
 
             ScoringMethodFactory.BayesnetScoringWithDynamicComputationScoringMethod cvs = new ScoringMethodFactory.BayesnetScoringWithDynamicComputationScoringMethod();
             if(cvs == null)
-                throw new IOException(("WebAPI returned no default bayesian network."));
+                throw new IllegalStateException(("WebAPI returned no default bayesian network."));
 
             final ScoringMethodFactory.CSIFingerIdScoringMethod csiScoring = new ScoringMethodFactory.CSIFingerIdScoringMethod(performances);
 
             return new CSICovarianceConfidenceScorer<>(confidenceSVMs, cvs, csiScoring);
+        } catch (IOException e) {
+            throw e;
         } catch (Exception e) {
             LoggerFactory.getLogger(getClass()).error("Error when loading confidence SVMs or the bayesian network. Confidence SCore will not be available!");
             LoggerFactory.getLogger(getClass()).debug("Error when loading confidence SVMs or the bayesian network.", e);
