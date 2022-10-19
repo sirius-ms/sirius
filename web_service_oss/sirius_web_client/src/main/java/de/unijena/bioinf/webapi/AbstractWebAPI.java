@@ -56,8 +56,8 @@ public abstract class AbstractWebAPI<D extends AbstractChemicalDatabase> impleme
         try {
             return fingerIdPredictors.computeIfAbsent(predictorType, pt -> {
                 try {
-                    final CSIPredictor p = new CSIPredictor(pt, this);
-                    p.initialize();
+                    final CSIPredictor p = new CSIPredictor(pt);
+                    p.initialize(this);
                     return p;
                 } catch (IOException e) {
                     throw new RuntimeException(e);
