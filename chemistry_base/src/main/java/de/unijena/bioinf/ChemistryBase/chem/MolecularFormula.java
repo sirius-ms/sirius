@@ -52,7 +52,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
             try {
                 Hydrogen = parse("H");
             } catch (UnknownElementException e) {
-                throw new RuntimeException();
+                throw new RuntimeException(e);
             }
         }
         return Hydrogen;
@@ -154,7 +154,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         try {
             return parse(text);
         } catch (UnknownElementException e) {
-            throw new RuntimeException();
+            throw new RuntimeException(e);
         }
     }
 
@@ -169,7 +169,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
 
 
     /**
-     * parse and execuutes return false if parsing failed and no execution happend
+     * parse and executors return false if parsing failed and no execution happend
      */
     public static boolean parseAndExecute(@NotNull final String textFormula, @Nullable Consumer<MolecularFormula> executeOrSkip) {
         try {
