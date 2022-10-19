@@ -21,6 +21,8 @@ package de.unijena.bioinf.ms.frontend.subtools.gui;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
+import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
+import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.SiriusCLIApplication;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -44,6 +46,7 @@ import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidateFingerprintsTopK;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidatesTopK;
+import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.webapi.rest.RestAPI;
 import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
@@ -132,7 +135,7 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                 protected Boolean compute() throws Exception {
                     try {
                         int progress = 0;
-                        int max = 7;
+                        int max = 8;
                         updateProgress(0, max, progress++,"Init Connection pools");
                         RestAPI.initConnectionPools();
 
@@ -153,6 +156,18 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                         updateProgress(0, max, progress++, "Checking Webservice connection...");
                         ConnectionMonitor.ConnectionCheck cc = MainFrame.MF.CONNECTION_MONITOR().checkConnection();
                         if (cc.isConnected()) {
+                            SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<>(JobType.TINY_BACKGROUND) {
+                                @Override
+                                protected Boolean compute() throws Exception {
+                                    System.out.println("Try preloading prediction models");
+                                    NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getFingerIdData(PredictorType.CSI_FINGERID_NEGATIVE), this::checkForInterruption);
+                                    NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getFingerIdData(PredictorType.CSI_FINGERID_POSITIVE), this::checkForInterruption);
+                                    System.out.println("Successfully preloaded prediction models!");
+
+                                    return Boolean.TRUE;
+                                }
+                            }).awaitResult();
+
                             try {
                                 ApplicationCore.DEFAULT_LOGGER.info("Checking for Update... ");
                                 @Nullable VersionsInfo versionInfo = ApplicationCore.WEB_API.getVersionInfo(true);

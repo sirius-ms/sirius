@@ -119,7 +119,7 @@ public class FingerblastSubToolJob extends InstanceJob {
 
         updateProgress(20);
         {
-            final FingerblastJJob job = new FingerblastJJob(csi, inst.getExperiment(), new ArrayList<>(formulaResultsMap.values()));
+            final FingerblastJJob job = new FingerblastJJob(csi, ApplicationCore.WEB_API, inst.getExperiment(), new ArrayList<>(formulaResultsMap.values()));
 
             checkForInterruption();
             // do computation and await results -> objects are already in formulaResultsMap
