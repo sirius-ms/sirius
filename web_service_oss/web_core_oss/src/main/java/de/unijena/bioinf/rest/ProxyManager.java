@@ -204,18 +204,6 @@ public class ProxyManager {
         return poolingConnManager;
     }
 
-/*    //todo test only
-    private static BasicHttpClientConnectionManager connectionBaseManager() {
-//        System.out.println("Starting http Client with MaxPerRout=" + maxPerRoute + " / maxTotal=" + maxTotal + "(Threads=" + SiriusJobs.getCPUThreads() + ").");
-//        LoggerFactory.getLogger(ProxyManager.class).info("Starting http Client with MaxPerRout=" + maxPerRoute + " / maxTotal=" + maxTotal + "(Threads=" + SiriusJobs.getCPUThreads() + ").");
-        BasicHttpClientConnectionManager base = new BasicHttpClientConnectionManager();
-        base.setSocketConfig(SocketConfig.custom()
-                .setSoTimeout(PropertyManager.getInteger("de.unijena.bioinf.sirius.http.socketTimeout", 15000), TimeUnit.MILLISECONDS)
-                .build());
-
-        return base;
-    }*/
-
     private static <B> B handleSSLValidation(@NotNull final B builder) {
         if (isSSLValidationDisabled()) {
             try {
