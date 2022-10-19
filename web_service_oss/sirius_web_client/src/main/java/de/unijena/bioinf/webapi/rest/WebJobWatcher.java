@@ -41,8 +41,9 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 final class WebJobWatcher { //todo rename to RestJobWatcher
-    private static final int INIT_WAIT_TIME = 100;
+    private static final int INIT_WAIT_TIME = 200;
     private static final int STAY_AT_INIT_TIME = 3;
+    private static final int MAX_SUBMIT_BATCH = 250;
 
     public static final String JOB_WATCHER_CLIENT_ID = "JOB_WATCHER";
     public static final String JOB_SUBMITTER_CLIENT_ID = "JOB_SUBMITTER";
@@ -58,9 +59,6 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
     private final Lock watcherJobLock = new ReentrantLock();
     private WebJobSubmitterJJob submitterJob = null;
     private final Lock submitterJobLock = new ReentrantLock();
-
-    private final Lock submissionLock = new ReentrantLock();
-
 
     private final AtomicBoolean isShutDown = new AtomicBoolean(false);
 
@@ -202,7 +200,8 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
                         if (!jobsToSubmit.isEmpty()) {
                             JobInputs jobSubmission = new JobInputs();
                             final Map<JobTable, List<? extends SubmissionWaiterJJob<?, ?, ?>>> subWaiterJobs = new HashMap<>();
-                            final List<SubmissionWaiterJJob<?, ?, ?>> js = new ArrayList<>(jobsToSubmit);
+                            final List<SubmissionWaiterJJob<?, ?, ?>> js = jobsToSubmit.size() < MAX_SUBMIT_BATCH
+                            ? new ArrayList<>(jobsToSubmit) : new ArrayList<>(jobsToSubmit).subList(0, MAX_SUBMIT_BATCH);
                             for (SubmissionWaiterJJob<?, ?, ?> s : js) {
                                 jobSubmission.addJobInput(s.input, s.table);
                                 ((List<SubmissionWaiterJJob<?, ?, ?>>) subWaiterJobs.computeIfAbsent(s.table, t -> new ArrayList<>())).add(s);
@@ -210,8 +209,7 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
 
                             // submission in sync with waitingJobs map
                             if (jobSubmission.hasJobs()) {
-                                submissionLock.lock();
-                                try {
+                                synchronized (waitingJobs){
 //                                    UUID uuid = UUID.randomUUID();
 //                                    System.out.println("JobSubmitter: Start submitting jobs to server: " + jobSubmission.size() + " | " + uuid);
 //                                    StopWatch w = new StopWatch();
@@ -240,8 +238,6 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
                                     js.forEach(jobsToSubmit::remove);
                                     lastSubmission.set(System.currentTimeMillis());
 //                                    System.out.println("JobSubmitter: LOCAL: remove from submit list DONE." + " | " + uuid);
-                                } finally {
-                                    submissionLock.unlock();
                                 }
                             }
                             return jobSubmission.hasJobs();
@@ -286,7 +282,7 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
         protected Boolean compute() throws Exception {
 
             long waitTime = INIT_WAIT_TIME;
-//            long emptyIterations = 0;
+            long emptyIterations = 0;
             checkForInterruption();
             while (!isShutDown.get()) {
                 try {
@@ -317,8 +313,7 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
                         final List<JobUpdate<?>> runningAndFinished;
 
 //                        System.out.println("JobWatcher WEB: Start get jobs");
-                        submissionLock.lock();
-                        try {
+                        synchronized (waitingJobs) {
                             runningAndFinished =
                                     api.getJobsByState( //get finished and running jobs
                                             waitingJobs.keySet().stream().map(id -> id.jobTable).collect(Collectors.toSet()), //only request listed jobs
@@ -327,9 +322,8 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
                                     ).values().stream().flatMap(Collection::stream).collect(Collectors.toCollection(LinkedList::new));
 
 //                            System.out.println("JobWatcher WEB: Stop get jobs1");
-                        } finally {
-                            submissionLock.unlock();
                         }
+
                         runningAndFinished.forEach(j -> {
                             JobId id = j.getGlobalId();
                             runningAndFinishedJobs.put(id, waitingJobs.get(id));
@@ -403,7 +397,7 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
 //                    checkForInterruption();
                     // if nothing was finished increase waiting time
                     // else set back to normal for fast reaction times
-                    /*if (toRemove.isEmpty()) {
+                    if (toRemove.isEmpty()) {
                         if (++emptyIterations > STAY_AT_INIT_TIME)
                             waitTime = (long) Math.min(waitTime * NetUtils.WAIT_TIME_MULTIPLIER, 1000);
                         logInfo("No prediction jobs finished. Try again in " + waitTime / 1000d + "s");
@@ -411,11 +405,11 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
                         emptyIterations = 0;
                         waitTime = INIT_WAIT_TIME;
 //                        logInfo("No prediction jobs finished. Try again in " + waitTime / 1000d + "s");
-                    }*/
+                    }
 
 
 //                    System.out.println("JobWatcher Start sleep: " + waitTime);
-                    NetUtils.sleepNoRegistration(this::checkForInterruption, waitTime);
+//                    NetUtils.sleepNoRegistration(this::checkForInterruption, 5 * waitTime);
 //                    Thread.currentThread().sleep(waitTime);
 //                    System.out.println("JobWatcher Stop sleep: " + waitTime);
 //
