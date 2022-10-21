@@ -283,6 +283,7 @@ subprojects {
                 '-XX:MaxRAMPercentage=85',
                 '-XX:+UseG1GC',
                 '-XX:+UseStringDeduplication',
+                '-XX:+ExitOnOutOfMemoryError',
                 '-Djava.library.path=.\\'
         ]
 
