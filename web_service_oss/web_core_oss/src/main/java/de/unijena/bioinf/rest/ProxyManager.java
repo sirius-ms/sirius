@@ -72,14 +72,15 @@ import java.util.function.Function;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class ProxyManager {
-    private static final RequestConfig DEFAULT_CONFIG = RequestConfig.custom()
-            //socket timeout is set on connection level
-            .setConnectTimeout(Timeout.of(PropertyManager.getInteger("de.unijena.bioinf.sirius.http.connectTimeout", 15000), TimeUnit.MILLISECONDS))
-            .setResponseTimeout(Timeout.of(PropertyManager.getInteger("de.unijena.bioinf.sirius.http.responseTimeout", 15000), TimeUnit.MILLISECONDS))
-            .setConnectionRequestTimeout(Timeout.of(PropertyManager.getInteger("de.unijena.bioinf.sirius.http.connectRequestTimeout", 15000), TimeUnit.MILLISECONDS))
-            .setDefaultKeepAlive(PropertyManager.getInteger("de.unijena.bioinf.sirius.http.keepAlive", 180000), TimeUnit.MILLISECONDS)
-            .setCookieSpec(StandardCookieSpec.IGNORE)
-            .build();
+    private static RequestConfig.Builder DEFAULT_CONFIG() {
+        return RequestConfig.custom()
+                //socket timeout is set on connection level
+                .setConnectTimeout(Timeout.of(PropertyManager.getInteger("de.unijena.bioinf.sirius.http.connectTimeout", 15000), TimeUnit.MILLISECONDS))
+                .setResponseTimeout(Timeout.of(PropertyManager.getInteger("de.unijena.bioinf.sirius.http.responseTimeout", 15000), TimeUnit.MILLISECONDS))
+                .setConnectionRequestTimeout(Timeout.of(PropertyManager.getInteger("de.unijena.bioinf.sirius.http.connectRequestTimeout", 15000), TimeUnit.MILLISECONDS))
+                .setDefaultKeepAlive(PropertyManager.getInteger("de.unijena.bioinf.sirius.http.keepAlive", 180000), TimeUnit.MILLISECONDS)
+                .setCookieSpec(StandardCookieSpec.IGNORE);
+    }
 
     public enum ProxyStrategy {SIRIUS, NONE}
 
@@ -231,8 +232,8 @@ public class ProxyManager {
 
     private static Object getNoProxyClientBuilder(boolean async) {
         Object builder = handleSSLValidation(async
-                ? HttpAsyncClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG)
-                : HttpClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG)
+                ? HttpAsyncClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG().build())
+                : HttpClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG().build())
         );
         return async
                 ? ((HttpAsyncClientBuilder) builder).setVersionPolicy(HttpVersionPolicy.FORCE_HTTP_1)
@@ -270,8 +271,8 @@ public class ProxyManager {
 
     private static Object getClientBuilderWithProxySettings(final String hostname, final int port, final String scheme, final String username, final String password, boolean async) {
         return decorateClientBuilderWithProxySettings(async
-                        ? HttpAsyncClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG)
-                        : HttpClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG),
+                        ? HttpAsyncClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG().build())
+                        : HttpClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG().build()),
                 hostname, port, scheme, username, password);
     }
 
@@ -404,7 +405,7 @@ public class ProxyManager {
     public static void disconnect() {
         boolean locked = false;
         try {
-            locked  = reconnectLock.writeLock().tryLock(5, TimeUnit.SECONDS);
+            locked = reconnectLock.writeLock().tryLock(5, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             LoggerFactory.getLogger(ProxyManager.class).warn("Waiting for connection lock was interrupted!");
         }
@@ -436,23 +437,32 @@ public class ProxyManager {
 
     public static void reconnect() {
         final Map<String, Pair<CloseableHttpClient, PoolingHttpClientConnectionManager>> old;
-        reconnectLock.writeLock().lock();
+        boolean locked = false;
         try {
+            locked = reconnectLock.writeLock().tryLock(30, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            LoggerFactory.getLogger(ProxyManager.class).warn("Unexpected interruption when waiting for reconnect lock!");
+        }
+        try {
+            if (!locked)
+                LoggerFactory.getLogger(ProxyManager.class).warn("Could not acquire lock during reconnect. Some connections might be killed during reconnect.");
             old = clients;
             clients = new ConcurrentHashMap<>();
         } finally {
-            reconnectLock.writeLock().unlock();
+            if (locked)
+                reconnectLock.writeLock().unlock();
         }
-        SiriusJobs.runInBackground(() -> close(old));
+        SiriusJobs.runInBackground(() -> close(old, CloseMode.IMMEDIATE));
     }
 
     public static void closeAllStaleConnections() {
         closeAllStaleConnections(5, TimeUnit.MILLISECONDS);
     }
+
     public static void closeAllStaleConnections(final long duration, final TimeUnit timeUnit) {
         reconnectLock.readLock().lock();
         try {
-             clients.forEach((k, v) -> closeStaleConnections(k, duration, timeUnit));
+            clients.forEach((k, v) -> closeStaleConnections(k, duration, timeUnit));
         } finally {
             reconnectLock.readLock().unlock();
         }

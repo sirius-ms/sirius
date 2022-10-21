@@ -29,7 +29,6 @@ import de.unijena.bioinf.chemdb.JSONReader;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
-import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.io.entity.InputStreamEntity;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +39,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class ChemDBClient extends StructureSearchClient {
     public static final int MAX_NUM_OF_INCHIS = 1000; //todo this should be requested from server!
@@ -65,10 +63,11 @@ public class ChemDBClient extends StructureSearchClient {
                     final HttpPost post = new HttpPost(buildVersionSpecificWebapiURI("/compounds").build());
                     post.setEntity(new InputStreamEntity(new ByteArrayInputStream(
                             new ObjectMapper().writeValueAsBytes(inChIs2d)), ContentType.APPLICATION_JSON));
-                    post.setConfig(RequestConfig.custom()
-//                            .setConnectTimeout(120, TimeUnit.SECONDS)
-                                    .setResponseTimeout(120, TimeUnit.SECONDS)
-                            .setContentCompressionEnabled(true).build());
+
+//                    post.setConfig(RequestConfig.custom()
+//                            .setConnectTimeout(PropertyManager.getInteger("de.unijena.bioinf.sirius.http.socketTimeout", 15000), TimeUnit.MILLISECONDS)
+//                            .setResponseTimeout(60, TimeUnit.SECONDS)
+//                            .setContentCompressionEnabled(true).build());
 
                     return post;
                 },
