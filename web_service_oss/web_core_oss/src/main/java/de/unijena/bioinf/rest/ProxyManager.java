@@ -446,33 +446,13 @@ public class ProxyManager {
         SiriusJobs.runInBackground(() -> close(old));
     }
 
-//    private static JJob<Boolean> closeStaleConnections = null;
-//    private static final Lock closeStaleConnectionsLock = new ReentrantLock();
-
-//    public static void closeAllStaleConnections() {
-//        if (closeStaleConnections == null || closeStaleConnections.isFinished()) {
-//            closeStaleConnectionsLock.lock();
-//            try {
-//                if (closeStaleConnections == null || closeStaleConnections.isFinished()) {
-//                    closeStaleConnections = SiriusJobs.runInBackground(() ->
-//                            clients.forEach((k, v) -> closeStaleConnections(k)));
-//                }
-//            } finally {
-//                closeStaleConnectionsLock.unlock();
-//            }
-//        }
-//
-//        try {
-//            closeStaleConnections.awaitResult();
-//        } catch (ExecutionException e) {
-//            LoggerFactory.getLogger(ProxyManager.class).error("Error when CLosing stale connections. Try to recover.", e);
-//        }
-//    }
-
     public static void closeAllStaleConnections() {
+        closeAllStaleConnections(5, TimeUnit.MILLISECONDS);
+    }
+    public static void closeAllStaleConnections(final long duration, final TimeUnit timeUnit) {
         reconnectLock.readLock().lock();
         try {
-             clients.forEach((k, v) -> closeStaleConnections(k));
+             clients.forEach((k, v) -> closeStaleConnections(k, duration, timeUnit));
         } finally {
             reconnectLock.readLock().unlock();
         }
