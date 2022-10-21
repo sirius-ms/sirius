@@ -69,6 +69,7 @@ import de.unijena.bioinf.ms.rest.model.license.SubscriptionConsumables;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.webapi.WebJJob;
 import de.unijena.bioinf.rest.ConnectionError;
+import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.rest.ProxyManager;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.webapi.AbstractWebAPI;
@@ -88,6 +89,8 @@ import java.net.URI;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 /**
@@ -144,11 +147,14 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
     }
 
 
-    public static void initConnectionPools(){
+    public static void initConnectionPools() {
         try {
-            ProxyManager.consumeClient(c -> {});
-            ProxyManager.consumeClient(c -> {}, WebJobWatcher.JOB_SUBMITTER_CLIENT_ID);
-            ProxyManager.consumeClient(c -> {}, WebJobWatcher.JOB_WATCHER_CLIENT_ID);
+            ProxyManager.consumeClient(c -> {
+            });
+            ProxyManager.consumeClient(c -> {
+            }, WebJobWatcher.JOB_SUBMITTER_CLIENT_ID);
+            ProxyManager.consumeClient(c -> {
+            }, WebJobWatcher.JOB_WATCHER_CLIENT_ID);
         } catch (IOException e) {
             LOG.error("Error when pre initializing connection managers. Try to ignore!", e);
         }
@@ -399,19 +405,10 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
     @Override
     public WebJJob<CanopusJobInput, ?, CanopusResult, ?> submitCanopusJob(CanopusJobInput input, @Nullable Integer countingHash) throws IOException {
         final MaskedFingerprintVersion version = getClassifierMaskedFingerprintVersion(input.predictor.toCharge());
-        try {
-            final WebJobWatcher.SubmissionWaiterJJob<CanopusJobInput, CanopusJobOutput, CanopusResult> callback =
-                    jobWatcher.submitAndWatchJob(input, JobTable.JOBS_CANOPUS, (i, id) ->
-                            new RestWebJJob<>(id, input, new CanopusWebResultConverter(version,
-                                    MaskedFingerprintVersion.allowAll(NPCFingerprintVersion.get()))));
-
-
-            RestWebJJob<CanopusJobInput, CanopusJobOutput, CanopusResult> job = callback.awaitResult();
-            job.setCountingHash(countingHash);
-            return job;
-        } catch (ExecutionException e) {
-            throw new IOException(e);
-        }
+        RestWebJJob<CanopusJobInput, CanopusJobOutput, CanopusResult> job = new RestWebJJob<>(input, new CanopusWebResultConverter(version,
+                MaskedFingerprintVersion.allowAll(NPCFingerprintVersion.get())));
+        job.setCountingHash(countingHash);
+        return jobWatcher.submitAndWatchJob(JobTable.JOBS_CANOPUS, job);
     }
 
     @Override
@@ -428,15 +425,8 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
     //region CSI:FingerID
     public WebJJob<FingerprintJobInput, ?, FingerprintResult, ?> submitFingerprintJob(FingerprintJobInput input) throws IOException {
         final MaskedFingerprintVersion version = getCDKMaskedFingerprintVersion(input.experiment.getPrecursorIonType().getCharge());
-        try {
-            WebJobWatcher.SubmissionWaiterJJob<FingerprintJobInput, FingerprintJobOutput, FingerprintResult> callback =
-                    jobWatcher.submitAndWatchJob(input, JobTable.JOBS_FINGERID, (in, id) ->
-                            new RestWebJJob<>(id, in, new FingerprintWebResultConverter(version)));
-
-            return callback.awaitResult();
-        } catch (ExecutionException e) {
-            throw new IOException(e);
-        }
+        return jobWatcher.submitAndWatchJob(JobTable.JOBS_FINGERID,
+                new RestWebJJob<>(input, new FingerprintWebResultConverter(version)));
     }
 
     @Override
@@ -446,19 +436,11 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
 
     // use via predictor/scoring method
     public WebJJob<CovtreeJobInput, ?, BayesnetScoring, ?> submitCovtreeJob(@NotNull MolecularFormula formula, @NotNull PredictorType predictorType) throws IOException {
-        final MaskedFingerprintVersion fpVersion = getFingerIdData(predictorType).getFingerprintVersion();
-        final PredictionPerformance[] performances = getFingerIdData(predictorType).getPerformances();
-        final CovtreeJobInput input = new CovtreeJobInput(formula.toString(), predictorType);
-        try {
-            WebJobWatcher.SubmissionWaiterJJob<CovtreeJobInput, CovtreeJobOutput, BayesnetScoring> callback =
-                    jobWatcher.submitAndWatchJob(input, JobTable.JOBS_COVTREE, (i, id) ->
-                            new RestWebJJob<>(id, i, new CovtreeWebResultConverter(fpVersion, performances)));
-            return callback.awaitResult();
-        } catch (ExecutionException e) {
-            throw new IOException(e);
-        }
+        FingerIdData csi = getFingerIdData(predictorType);
+        CovtreeJobInput input = new CovtreeJobInput(formula.toString(), predictorType);
+        return jobWatcher.submitAndWatchJob(JobTable.JOBS_COVTREE,
+                new RestWebJJob<>(input, new CovtreeWebResultConverter(csi.getFingerprintVersion(), csi.getPerformances())));
     }
-
 
     /**
      * @param predictorType pos or neg
@@ -496,4 +478,43 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
         return ProxyManager.applyClient(chemDBClient::getCDKFingerprintVersion);
     }
     //endregion
+
+
+    /**
+     * DO never user NetUtils.tryAndWait inside of batch processing.
+     *
+     * @param doWithApi
+     * @throws IOException
+     */
+    @Override
+    public void executeBatch(IOFunctions.BiIOConsumer<Clients, HttpClient> doWithApi) throws IOException {
+        ProxyManager.consumeClient(client -> {
+                doWithApi.accept(new Clients() {
+                    @Override
+                    public InfoClient serverInfoClient() {
+                        return serverInfoClient;
+                    }
+
+                    @Override
+                    public JobsClient jobsClient() {
+                        return jobsClient;
+                    }
+
+                    @Override
+                    public StructureSearchClient chemDBClient() {
+                        return chemDBClient;
+                    }
+
+                    @Override
+                    public FingerIdClient fingerprintClient() {
+                        return fingerprintClient;
+                    }
+
+                    @Override
+                    public CanopusClient canopusClient() {
+                        return canopusClient;
+                    }
+                }, client);
+        });
+    }
 }

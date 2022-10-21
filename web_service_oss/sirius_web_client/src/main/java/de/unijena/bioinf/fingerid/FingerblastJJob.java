@@ -139,21 +139,26 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
                 ? new ConfidenceJJob(predictor, experiment)
                 : null;
 
-        final FingerIdData csi = NetUtils.tryAndWait(() -> webAPI.getFingerIdData(predictor.predictorType)
-                , this::checkForInterruption);
+        final BayesnetScoring[] scorings = NetUtils.tryAndWait(() -> {
+            BayesnetScoring[] s = new BayesnetScoring[idResult.size()];
+            webAPI.executeBatch((api, client) -> {
+                final FingerIdData csi = api.fingerprintClient().getFingerIdData(predictor.predictorType, client);
+                for (int i = 0; i < idResult.size(); i++) {
+                    final FingerIdResult fingeridInput = idResult.get(i);
+                    // fingerblast job: score candidate fingerprints against predicted fingerprint
+                    s[i] = api.fingerprintClient().getCovarianceScoring(predictor.predictorType, csi.getFingerprintVersion(), fingeridInput.getMolecularFormula(), csi.getPerformances(), client);
+                }
+            });
+            return s;
+        }, this::checkForInterruption);
+
 
         for (int i = 0; i < idResult.size(); i++) {
             final FingerIdResult fingeridInput = idResult.get(i);
 
-            // fingerblast job: score candidate fingerprints against predicted fingerprint
-            final BayesnetScoring bayesnetScoring = NetUtils.tryAndWait(() ->
-                            webAPI.getBayesnetScoring(predictor.predictorType, csi, fingeridInput.getMolecularFormula()),
-                    this::checkForInterruption);
-
-
             final FingerblastSearchJJob blastJob;
-            if (bayesnetScoring != null) {
-                blastJob = FingerblastSearchJJob.of(predictor, bayesnetScoring, fingeridInput);
+            if (scorings[i] != null) {
+                blastJob = FingerblastSearchJJob.of(predictor, scorings[i], fingeridInput);
             } else {
                 // bayesnetScoring is null --> make a prepare job which computes the bayessian network (covTree) for the
                 // given molecular formula

@@ -25,19 +25,20 @@ import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.WaiterJJob;
 import de.unijena.bioinf.ms.rest.model.*;
 import de.unijena.bioinf.rest.NetUtils;
+import org.apache.commons.math3.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 final class WebJobWatcher { //todo rename to RestJobWatcher
@@ -52,7 +53,7 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
     private static List<JobState> FINISHED = List.of(JobState.DONE, JobState.CRASHED, JobState.CANCELED);
 
     private final Map<JobId, RestWebJJob<?, ?, ?>> waitingJobs = new ConcurrentHashMap<>();
-    private final Set<SubmissionWaiterJJob<?, ?, ?>> jobsToSubmit = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final Deque<Pair<JobTable, RestWebJJob<?, ?, ?>>> jobs = new ConcurrentLinkedDeque<>();
 
     private final RestAPI api;
     private WebJobWatcherJJob watcherJob = null;
@@ -68,23 +69,25 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
     }
 
 
-    public <I, O, R> SubmissionWaiterJJob<I, O, R> submitAndWatchJob(@NotNull final I jobInput, JobTable type, BiFunction<I, JobId, RestWebJJob<I, O, R>> jobBuilder) throws IOException {
-//        System.out.println("AddJob: Adding job!");
-        SubmissionWaiterJJob<I, O, R> waiter = new SubmissionWaiterJJob<>(type, jobInput, jobBuilder);
-        jobsToSubmit.add(waiter);
+    public <I, O, R> RestWebJJob<I, O, R> submitAndWatchJob(@NotNull JobTable type, @NotNull RestWebJJob<I, O, R> jobToSubmit) throws IOException {
+        if (isShutDown.get())
+            throw new IllegalStateException("WebJobWatcher has been shut down. No submissions possible");
+        //        System.out.println("AddJob: Adding job!");
+
+        jobs.add(Pair.create(type, jobToSubmit));
 //        System.out.println("AddJob: Adding job DONE!");
 
         checkSubmitterJob();
 
         //notifying is not an issue since non empty break is not notified like this.
-        synchronized (jobsToSubmit) {
+        synchronized (jobs) {
 //            System.out.println("AddJob :Wake up submitter!");
-            jobsToSubmit.notifyAll();
+            jobs.notifyAll();
 //            System.out.println("AddJob :Wake up submitter DONE!");
         }
 
         checkWatcherJob();
-        return waiter;
+        return jobToSubmit;
     }
 
     public void shutdown() {
@@ -117,7 +120,7 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
 
 
     private void checkWatcherJob() {
-        if (isShutDown.get()){
+        if (isShutDown.get()) {
             LoggerFactory.getLogger(getClass()).warn("Watcher is already shut Down! Pls create a new Instance!");
             return;
         }
@@ -133,7 +136,7 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
     }
 
     private void checkSubmitterJob() {
-        if (isShutDown.get()){
+        if (isShutDown.get()) {
             LoggerFactory.getLogger(getClass()).warn("Watcher is already shut Down! Pls create a new Instance!");
             return;
         }
@@ -145,24 +148,6 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
             } finally {
                 submitterJobLock.unlock();
             }
-        }
-    }
-
-    final class SubmissionWaiterJJob<I, O, R> extends WaiterJJob<RestWebJJob<I, O, R>> {
-        private final JobTable table;
-        private final I input;
-        private final BiFunction<I, JobId, RestWebJJob<I, O, R>> jobBuilder;
-
-        public SubmissionWaiterJJob(JobTable table, I jobInput, BiFunction<I, JobId, RestWebJJob<I, O, R>> jobBuilder) {
-            this.table = table;
-            this.input = jobInput;
-            this.jobBuilder = jobBuilder;
-        }
-
-        public synchronized void finishAndAddToWaitingJobs(JobId id) {
-            final RestWebJJob<I, O, R> j = jobBuilder.apply(input, id);
-            waitingJobs.put(id, j);
-            finish(j);
         }
     }
 
@@ -178,12 +163,12 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
             checkForInterruption();
             while (!isShutDown.get()) {
                 try {
-                    if (jobsToSubmit.isEmpty()) {
-                        while (jobsToSubmit.isEmpty()) {
-                            synchronized (jobsToSubmit) {
-                                if (jobsToSubmit.isEmpty()) { //while and timeout for self healing
+                    if (jobs.isEmpty()) {
+                        while (jobs.isEmpty()) {
+                            synchronized (jobs) {
+                                if (jobs.isEmpty()) { //while and timeout for self healing
 //                                    System.out.println("JobSubmitter: WEB: Start waiting in Submitter!");
-                                    jobsToSubmit.wait(10000);
+                                    jobs.wait(10000);
 //                                    System.out.println("JobSubmitter: WEB: Stop waiting in Submitter!");
                                 }
                             }
@@ -196,63 +181,63 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
                     }
 
                     checkForInterruption();
-                    boolean notify = NetUtils.tryAndWait(() -> {
-                        if (!jobsToSubmit.isEmpty()) {
-                            JobInputs jobSubmission = new JobInputs();
-                            final Map<JobTable, List<? extends SubmissionWaiterJJob<?, ?, ?>>> subWaiterJobs = new HashMap<>();
-                            final List<SubmissionWaiterJJob<?, ?, ?>> js = jobsToSubmit.size() < MAX_SUBMIT_BATCH
-                            ? new ArrayList<>(jobsToSubmit) : new ArrayList<>(jobsToSubmit).subList(0, MAX_SUBMIT_BATCH);
-                            for (SubmissionWaiterJJob<?, ?, ?> s : js) {
-                                jobSubmission.addJobInput(s.input, s.table);
-                                ((List<SubmissionWaiterJJob<?, ?, ?>>) subWaiterJobs.computeIfAbsent(s.table, t -> new ArrayList<>())).add(s);
-                            }
-
+                    if (!jobs.isEmpty()) {
+                        NetUtils.tryAndWait(() -> {
                             // submission in sync with waitingJobs map
+                            final JobInputs jobSubmission = new JobInputs();
+                            final Map<JobTable, List<RestWebJJob<?, ?, ?>>> subWaiterJobs = new HashMap<>();
+                            final Iterator<Pair<JobTable, RestWebJJob<?, ?, ?>>> jobsIt = jobs.iterator();
+                            while (jobsIt.hasNext() && jobSubmission.size() <= MAX_SUBMIT_BATCH) {
+                                Pair<JobTable, RestWebJJob<?, ?, ?>> j = jobsIt.next();
+                                if (j.getSecond().isFinished()) {
+                                    System.out.println("removing canceled/finished job instead of submitting it!");
+                                    jobsIt.remove();
+                                } else {
+                                    jobSubmission.addJobInput(j.getSecond().getInput(), j.getFirst());
+                                    subWaiterJobs.computeIfAbsent(j.getFirst(), t -> new ArrayList<>()).add(j.getSecond());
+                                }
+                            }
+//                            checkForInterruption(); //todo enable
                             if (jobSubmission.hasJobs()) {
-                                synchronized (waitingJobs){
-//                                    UUID uuid = UUID.randomUUID();
-//                                    System.out.println("JobSubmitter: Start submitting jobs to server: " + jobSubmission.size() + " | " + uuid);
-//                                    StopWatch w = new StopWatch();
-//                                    w.start();
+                                synchronized (waitingJobs) {
+                                    //                                    UUID uuid = UUID.randomUUID();
+                                    //                                    System.out.println("JobSubmitter: Start submitting jobs to server: " + jobSubmission.size() + " | " + uuid);
+                                    //                                    StopWatch w = new StopWatch();
+                                    //                                    w.start();
 
 
                                     //submit jobs
-//                                    System.out.println("JobSubmitter: WEB: submit to server start." + " | " + uuid);
+                                    //                                    System.out.println("JobSubmitter: WEB: submit to server start." + " | " + uuid);
 
                                     final EnumMap<JobTable, List<JobUpdate<?>>> submittedJobs = api.submitJobs(jobSubmission);
 
-//                                    System.out.println("JobSubmitter: WEB: submit to server DONE." + " | " + uuid);
+                                    //                                    System.out.println("JobSubmitter: WEB: submit to server DONE." + " | " + uuid);
                                     //add submitted jobs to waiting jobs
 
                                     submittedJobs.forEach((t, wss) -> {
-                                        Iterator<? extends SubmissionWaiterJJob<?, ?, ?>> it = subWaiterJobs.get(t).iterator();
+                                        Iterator<RestWebJJob<?, ?, ?>> it = subWaiterJobs.get(t).iterator();
                                         wss.forEach(j -> {
-                                            SubmissionWaiterJJob<?, ?, ?> wj = it.next();
-                                            wj.finishAndAddToWaitingJobs(j.getID());
+                                            final RestWebJJob<?, ?, ?> restJJ = it.next();
+                                            restJJ.submissionAck(j.getID());
+                                            waitingJobs.put(j.getID(), restJJ);
                                         });
                                     });
 
-//                                    System.out.println("JobSubmitter: LOCAL: add to watchlist DONE." + " | " + uuid);
+                                    //                                    System.out.println("JobSubmitter: LOCAL: add to watchlist DONE." + " | " + uuid);
 
-
-                                    js.forEach(jobsToSubmit::remove);
                                     lastSubmission.set(System.currentTimeMillis());
-//                                    System.out.println("JobSubmitter: LOCAL: remove from submit list DONE." + " | " + uuid);
+
+                                    for (int i = 0; i < jobSubmission.size(); i++)
+                                        jobs.removeFirst();
+                                    //                                    System.out.println("JobSubmitter: LOCAL: remove from submit list DONE." + " | " + uuid);
+                                    waitingJobs.notifyAll();
                                 }
                             }
-                            return jobSubmission.hasJobs();
-                        }
-                        return false;
+                            return jobSubmission;
+                        }, this::checkForInterruption);
 
-                    }, this::checkForInterruption);
-                    if (notify) {
-                        synchronized (waitingJobs) {
-//                            System.out.println("JobSubmitter: Start Wake up Watcher!");
-                            waitingJobs.notifyAll();
-//                            System.out.println("JobSubmitter: Stop Wake up Watcher!");
-                        }
                     }
-                } catch (InterruptedException e) {
+                } catch (TimeoutException | InterruptedException e) {
                     if (isShutDown.get())
                         return true;
                     logWarn("JobSubmitter thread was interrupted unexpectedly. Try to recover!");
@@ -261,14 +246,28 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
                     logError("Unexpected error in JobSubmitter thread. Try to recover!", e);
                 }
             }
-            logWarn("Close Job Submitter!");
+            logWarn("=====================> Close Job Submitter!");
             return true;
         }
 
         @Override
         protected void cleanup() {
             super.cleanup();
-            checkSubmitterJob();
+            try {
+                if (isShutDown.get()) {
+                    logDebug("Cancel pre submission jobs...");
+                    jobs.stream().map(Pair::getSecond).forEach(WaiterJJob::cancel); //this jobs are not submitted to the job manager and need no be canceled manually
+                    NetUtils.tryAndWait(() -> api.deleteJobs(waitingJobs.keySet(), Collections.emptyMap()),
+                            this::checkForInterruption, 4000);
+                    logDebug("Cancel  pre submission jobs Done!");
+                    jobs.clear();
+                    logDebug("Pre submission cleared!");
+                }
+            } catch (InterruptedException | TimeoutException e) {
+                logWarn("Failed to delete remote jobs from server!", e);
+            } finally {
+                checkSubmitterJob();
+            }
         }
     }
 
@@ -362,7 +361,7 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
                     }, this::checkForInterruption);
 
                     // add probably canceled or failed jobs to remove list
-                    waitingJobs.forEach((id,job) -> {
+                    waitingJobs.forEach((id, job) -> {
                         if (job.isUnSuccessfulFinished())
                             toRemove.add(id);
                     });
@@ -373,14 +372,7 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
 //                        System.out.println("JobWatcher WEB: Start remove jobs: " + toRemove.stream().map(JobId::toString).collect(Collectors.joining(",")));
                         NetUtils.tryAndWait(() -> {
                             api.deleteJobs(toRemove, countingHashes);
-                            toRemove.forEach(j -> {
-                                RestWebJJob<?, ?, ?> v = waitingJobs.get(j);
-//                                if (v == null)
-//                                    System.out.println("==> JOB '" + j.toString() + "' to remove does not exist in SIRIUS");
-//                                else if (!v.isFinished())
-//                                    System.out.println("==> JOB '" + j.toString() + "' to remove is NOT finished!!!!!!!!!!!");
-                                waitingJobs.remove(j);
-                            });
+                            toRemove.forEach(waitingJobs::remove);
                         }, this::checkForInterruption);
 //                        System.out.println("JobWatcher WEB: End remove jobs: " + toRemove.stream().map(JobId::toString).collect(Collectors.joining(",")));
                     }
@@ -422,7 +414,7 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
 //                    logWarn("Error during job watcher: " + e.getMessage() + " | Try reconnect");
 //                    System.out.println("Error during job watcher: " + e.getMessage() + " | Try reconnect");
 //                    ProxyManager.closeStaleConnections(RestAPI.JOB_WATCHER_CLIENT_ID);
-                } catch (InterruptedException e) {
+                } catch (TimeoutException | InterruptedException e) {
                     if (isShutDown.get())
                         return true;
                     logWarn("JobWatcher thread was interrupted unexpectedly. Try to recover!");
@@ -431,22 +423,23 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
                     logError("Unexpected error in JobWatcher thread. Try to recover!", e);
                 }
             }
-            logWarn("Close Job Watcher!");
+            logWarn("====================> Close Job Watcher!");
             return true;
         }
 
         @Override
         protected void cleanup() {
             super.cleanup();
-
             logDebug("Canceling WebWaiterJobs");
             try {
-                waitingJobs.values().forEach(WaiterJJob::cancel); //this jobs are not submitted to the job manager and need no be canceled manually
-                logDebug("Try to delete leftover jobs on web server...");
-                NetUtils.tryAndWait(() -> api.deleteJobs(waitingJobs.keySet(), Collections.emptyMap()),
-                        this::checkForInterruption, 4000);
-                logDebug("Job deletion Done!");
-                waitingJobs.clear();
+                if (isShutDown.get()) {
+                    waitingJobs.values().forEach(WaiterJJob::cancel); //this jobs are not submitted to the job manager and need no be canceled manually
+                    logDebug("Try to delete leftover jobs on web server...");
+                    NetUtils.tryAndWait(() -> api.deleteJobs(waitingJobs.keySet(), Collections.emptyMap()),
+                            this::checkForInterruption, 4000);
+                    logDebug("Job deletion Done!");
+                    waitingJobs.clear();
+                }
             } catch (InterruptedException | TimeoutException e) {
                 logWarn("Failed to delete remote jobs from server!", e);
             } finally {

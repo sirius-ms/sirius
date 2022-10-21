@@ -28,12 +28,17 @@ import org.jetbrains.annotations.Nullable;
 
 public class RestWebJJob<I, D, R> extends WebJJob<I, D, R, JobId> {
 
-    public RestWebJJob(@NotNull JobId jobId, @NotNull IOFunctions.IOFunction<D, R> outputConverter) {
+    public RestWebJJob(@NotNull IOFunctions.IOFunction<D, R> outputConverter) {
+        this(null, null, outputConverter);
+    }
+    public RestWebJJob(@Nullable JobId jobId, @NotNull IOFunctions.IOFunction<D, R> outputConverter) {
         this(jobId, null, outputConverter);
     }
 
-    public RestWebJJob(@NotNull JobId jobId, @Nullable I input, @NotNull IOFunctions.IOFunction<D, R> outputConverter) {
+    public RestWebJJob(@Nullable I input, @NotNull IOFunctions.IOFunction<D, R> outputConverter) {
+        this(null, input, outputConverter);
+    }
+    public RestWebJJob(@Nullable JobId jobId, @Nullable I input, @NotNull IOFunctions.IOFunction<D, R> outputConverter) {
         super(jobId, input, outputConverter);
-        basicAck();
     }
 }
