@@ -149,20 +149,6 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                         ConnectionMonitor.ConnectionCheck cc = MainFrame.MF.CONNECTION_MONITOR().checkConnection();
 
                         if (cc.isConnected() || cc.hasOnlyWarning()) {
-                            /*SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<>(JobType.TINY_BACKGROUND) {
-                                @Override
-                                protected Boolean compute() throws Exception {
-                                //        Path out = Path.of("/tmp/trainingStructures_" + predictorType.toChargeString() + ".tsv/");
-//        Files.write(out, Arrays.stream(trainingStructures.inchis).map(i -> i.key + "\t" + i.in3D).collect(Collectors.toList()));
-                                    System.out.println("Try preloading prediction models");
-                                    NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getStructurePredictor(PredictorType.CSI_FINGERID_NEGATIVE), this::checkForInterruption);
-                                    NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getStructurePredictor(PredictorType.CSI_FINGERID_POSITIVE), this::checkForInterruption);
-                                    System.out.println("Successfully preloaded prediction models!");
-
-                                    return Boolean.TRUE;
-                                }
-                            }).awaitResult();*/
-
                             try {
                                 ApplicationCore.DEFAULT_LOGGER.info("Checking for Update... ");
                                 @Nullable VersionsInfo versionInfo = ApplicationCore.WEB_API.getVersionInfo(true);
