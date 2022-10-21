@@ -136,9 +136,8 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                     try {
                         int progress = 0;
                         int max = 8;
-                        updateProgress(0, max, progress++,"Init Connection pools");
-                        RestAPI.initConnectionPools();
-
+//                        updateProgress(0, max, progress++,"Init Connection pools");
+//                        RestAPI.initConnectionPools();
                         updateProgress(0, max, progress++, "Configuring CDK InChIGeneratorFactory...");
                         InChIGeneratorFactory.getInstance();
 //                        ApplicationCore.DEFAULT_LOGGER.info("Initializing available DBs...");
@@ -155,18 +154,21 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
 //                        ApplicationCore.DEFAULT_LOGGER.info("Checking client version and webservice connection...");
                         updateProgress(0, max, progress++, "Checking Webservice connection...");
                         ConnectionMonitor.ConnectionCheck cc = MainFrame.MF.CONNECTION_MONITOR().checkConnection();
-                        if (cc.isConnected()) {
-                            SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<>(JobType.TINY_BACKGROUND) {
+
+                        if (cc.isConnected() || cc.hasOnlyWarning()) {
+                            /*SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<>(JobType.TINY_BACKGROUND) {
                                 @Override
                                 protected Boolean compute() throws Exception {
+                                //        Path out = Path.of("/tmp/trainingStructures_" + predictorType.toChargeString() + ".tsv/");
+//        Files.write(out, Arrays.stream(trainingStructures.inchis).map(i -> i.key + "\t" + i.in3D).collect(Collectors.toList()));
                                     System.out.println("Try preloading prediction models");
-                                    NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getFingerIdData(PredictorType.CSI_FINGERID_NEGATIVE), this::checkForInterruption);
-                                    NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getFingerIdData(PredictorType.CSI_FINGERID_POSITIVE), this::checkForInterruption);
+                                    NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getStructurePredictor(PredictorType.CSI_FINGERID_NEGATIVE), this::checkForInterruption);
+                                    NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getStructurePredictor(PredictorType.CSI_FINGERID_POSITIVE), this::checkForInterruption);
                                     System.out.println("Successfully preloaded prediction models!");
 
                                     return Boolean.TRUE;
                                 }
-                            }).awaitResult();
+                            }).awaitResult();*/
 
                             try {
                                 ApplicationCore.DEFAULT_LOGGER.info("Checking for Update... ");
