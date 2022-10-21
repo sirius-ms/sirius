@@ -20,13 +20,10 @@
 
 package de.unijena.bioinf.fingerid;
 
-import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
-import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.webapi.WebAPI;
+import org.apache.hc.client5.http.classic.HttpClient;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
@@ -53,12 +50,12 @@ class TrainingStructuresPerPredictor {
     }
 
 
-    TrainingStructuresSet getTrainingStructuresSet(PredictorType predictorType, @NotNull WebAPI<?> api) throws IOException {
+    TrainingStructuresSet getTrainingStructuresSet(PredictorType predictorType, @NotNull WebAPI.Clients api, @NotNull HttpClient client) throws IOException {
         try {
             return predictorTypeToInchiKeys2D.computeIfAbsent(predictorType, pt -> {
                 try {
                     return new TrainingStructuresSet(
-                            api.getTrainingStructures(predictorType).getTrainingStructures()
+                            api.fingerprintClient().getTrainingStructures(predictorType, client).getTrainingStructures()
                     );
                 } catch (IOException e) {
                     throw new RuntimeException(e);

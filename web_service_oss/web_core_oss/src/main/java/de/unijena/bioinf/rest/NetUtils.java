@@ -119,7 +119,7 @@ public class NetUtils {
                         }
                     }
                 }
-                ProxyManager.closeAllStaleConnections();
+//                ProxyManager.closeAllStaleConnections();
             }
         }
         throw new TimeoutException("Stop trying because of Timeout!");
@@ -145,6 +145,16 @@ public class NetUtils {
     @FunctionalInterface
     public interface NetRunnable {
         void run() throws InterruptedException, TimeoutException, IOException;
+    }
+
+    @FunctionalInterface
+    public interface NetConsumer<A> {
+        void run(A a) throws InterruptedException, TimeoutException, IOException;
+    }
+
+    @FunctionalInterface
+    public interface NetBiConsumer<A, B> {
+        void run(A a, B b) throws InterruptedException, TimeoutException, IOException;
     }
 
     @FunctionalInterface
