@@ -119,7 +119,10 @@ public class NetUtils {
                         }
                     }
                 }
-//                ProxyManager.closeAllStaleConnections();
+
+                interrupted.check();
+                if (IS_WAITING.get())
+                    ProxyManager.closeAllStaleConnections();
             }
         }
         throw new TimeoutException("Stop trying because of Timeout!");
