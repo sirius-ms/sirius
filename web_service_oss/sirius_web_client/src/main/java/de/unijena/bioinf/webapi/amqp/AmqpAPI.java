@@ -49,6 +49,7 @@ import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobOutput;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobInput;
+import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobOutput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.TrainingData;
@@ -59,9 +60,11 @@ import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.stores.model.CanopusClientDataStore;
 import de.unijena.bioinf.ms.stores.model.FingerIdClientDataStore;
 import de.unijena.bioinf.ms.webapi.WebJJob;
+import de.unijena.bioinf.rest.ConnectionError;
+import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.webapi.AbstractWebAPI;
-import de.unijena.bioinf.rest.ConnectionError;
+import org.apache.hc.client5.http.classic.HttpClient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -72,6 +75,7 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.util.Date;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
 public final class AmqpAPI<WebChemDB extends AbstractChemicalDatabase> extends AbstractWebAPI<WebChemDB> {
@@ -281,5 +285,11 @@ public final class AmqpAPI<WebChemDB extends AbstractChemicalDatabase> extends A
     public CdkFingerprintVersion getCDKChemDBFingerprintVersion() throws IOException {
         return new CdkFingerprintVersion(CdkFingerprintVersion.withECFP().getUsedFingerprints()); //todo DUMMY add to amqp api
     }
+
     //endregion
+
+    @Override
+    public void executeBatch(IOFunctions.BiIOConsumer<Clients, HttpClient> doWithApi) throws IOException {
+
+    }
 }
