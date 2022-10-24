@@ -33,6 +33,7 @@ import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.webapi.WebAPI;
+import org.apache.hc.client5.http.classic.HttpClient;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -76,6 +77,7 @@ public class CSIPredictor extends AbstractStructurePredictor {
         return db;
     }
 
+
     public synchronized boolean isInitialized() {
         return initialized;
     }
@@ -83,33 +85,34 @@ public class CSIPredictor extends AbstractStructurePredictor {
     public synchronized void initialize(@NotNull final WebAPI<?> csiWebAPI) throws IOException {
         if (initialized)
             throw new IllegalStateException("Predictor is already initialized"); //maybe just skip
+        //use batch to not request a new client from pool for each rest call
+        csiWebAPI.executeBatch((api, client) -> {
+            final FingerIdData fingeridData = api.fingerprintClient().getFingerIdData(predictorType, client);
+            final CSICovarianceConfidenceScorer<?> confidenceScorerTmp = makeConfidenceScorer(api, client, fingeridData.getPerformances());
+            final TrainingStructuresSet trainingStructuresTMP = TrainingStructuresPerPredictor.getInstance()
+                    .getTrainingStructuresSet(predictorType, api, client);
 
-        // do all web stuff first. if one fails we do not have an invalid object state and can just retry everything
-        final FingerIdData fingeridData = csiWebAPI.getFingerIdData(predictorType);
-        final CSICovarianceConfidenceScorer<?> confidenceScorerTmp = makeConfidenceScorer(csiWebAPI,  fingeridData.getPerformances());
-        final TrainingStructuresSet trainingStructuresTMP = TrainingStructuresPerPredictor.getInstance()
-                .getTrainingStructuresSet(predictorType, csiWebAPI);
-        final WebWithCustomDatabase dbTmp = getAndRefreshDB(csiWebAPI);
+            //web requests done assign values
+            performances = fingeridData.getPerformances();
+            fpVersion = fingeridData.getFingerprintVersion();
+            fingerblastScoring = new ScoringMethodFactory.BayesnetScoringWithDynamicComputationScoringMethod();
+            confidenceScorer = confidenceScorerTmp;
+            trainingStructures = trainingStructuresTMP;
+        });
 
-
-        //web requests done assign values
-        performances = fingeridData.getPerformances();
-        fpVersion = fingeridData.getFingerprintVersion();
-        fingerblastScoring = new ScoringMethodFactory.BayesnetScoringWithDynamicComputationScoringMethod();
-        confidenceScorer = confidenceScorerTmp;
-        trainingStructures = trainingStructuresTMP;
-        database = dbTmp;
+        database = getAndRefreshDB(csiWebAPI);
         initialized = true;
+        // do all web stuff first. if one fails we do not have an invalid object state and can just retry everything
     }
 
-    private CSICovarianceConfidenceScorer<?> makeConfidenceScorer(@NotNull final WebAPI<?> csiWebAPI, @NotNull final PredictionPerformance[] performances) throws IOException {
+    private CSICovarianceConfidenceScorer<?> makeConfidenceScorer(@NotNull final WebAPI.Clients api, @NotNull HttpClient client, @NotNull final PredictionPerformance[] performances) throws IOException {
         try {
-            final Map<String, TrainedSVM> confidenceSVMs = csiWebAPI.getTrainedConfidence(predictorType);
+            final Map<String, TrainedSVM> confidenceSVMs = api.fingerprintClient().getTrainedConfidence(predictorType, client);
             if (confidenceSVMs == null || confidenceSVMs.isEmpty())
                 throw new IllegalStateException("WebAPI returned empty confidence SVMs");
 
             ScoringMethodFactory.BayesnetScoringWithDynamicComputationScoringMethod cvs = new ScoringMethodFactory.BayesnetScoringWithDynamicComputationScoringMethod();
-            if(cvs == null)
+            if (cvs == null)
                 throw new IllegalStateException(("WebAPI returned no default bayesian network."));
 
             final ScoringMethodFactory.CSIFingerIdScoringMethod csiScoring = new ScoringMethodFactory.CSIFingerIdScoringMethod(performances);
