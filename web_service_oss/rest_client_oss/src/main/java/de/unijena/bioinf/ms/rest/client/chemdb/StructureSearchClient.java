@@ -36,7 +36,6 @@ import de.unijena.bioinf.ms.rest.client.AbstractCsiClient;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
-import org.apache.hc.client5.http.config.RequestConfig;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
@@ -47,7 +46,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 public class StructureSearchClient extends AbstractCsiClient {
 
@@ -118,10 +116,11 @@ public class StructureSearchClient extends AbstractCsiClient {
                     final HttpGet get = new HttpGet(buildVersionSpecificWebapiURI("/compounds/" + formula.toString())
                             .setParameter("dbfilter", String.valueOf(filter))
                             .build());
-                    get.setConfig(RequestConfig.custom()
-//                            .setConnectTimeout(120, TimeUnit.SECONDS)
-                            .setResponseTimeout(120, TimeUnit.SECONDS)
-                            .setContentCompressionEnabled(true).build());
+
+//                    get.setConfig(RequestConfig.custom()
+//                            .setConnectTimeout(PropertyManager.getInteger("de.unijena.bioinf.sirius.http.socketTimeout", 15000), TimeUnit.MILLISECONDS)
+//                            .setResponseTimeout(60, TimeUnit.SECONDS)
+//                            .setContentCompressionEnabled(true).build());
                     return get;
                 },
                 br -> {

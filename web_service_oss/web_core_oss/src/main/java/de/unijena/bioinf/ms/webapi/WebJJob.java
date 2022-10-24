@@ -36,7 +36,7 @@ public class WebJJob<I, O, R, ID> extends WaiterJJob<R> implements InputJJob<I, 
     public static long WEB_API_RUNNING_JOB_TIME_OUT = PropertyManager.getLong("de.unijena.bioinf.fingerid.web.job.timeout.running", 1000L * 60L * 5L); //default 5min
 
     protected I input;
-    protected final ID jobId;
+    protected volatile ID jobId;
     protected final IOFunctions.IOFunction<O, R> outputConverter;
 
     protected volatile de.unijena.bioinf.ms.rest.model.JobState serverState;
@@ -48,15 +48,16 @@ public class WebJJob<I, O, R, ID> extends WaiterJJob<R> implements InputJJob<I, 
 
     protected Long runningSince;
 
-    public WebJJob(@NotNull ID jobId, @NotNull IOFunctions.IOFunction<O, R> outputConverter) {
+    public WebJJob(@Nullable ID jobId, @NotNull IOFunctions.IOFunction<O, R> outputConverter) {
         this(jobId, null, outputConverter);
     }
 
-    public WebJJob(@NotNull ID jobId, @Nullable I input, @NotNull IOFunctions.IOFunction<O, R> outputConverter) {
+    public WebJJob(@Nullable ID jobId, @Nullable I input, @NotNull IOFunctions.IOFunction<O, R> outputConverter) {
         this.serverState = de.unijena.bioinf.ms.rest.model.JobState.INITIAL;
         this.outputConverter = outputConverter;
-        this.jobId = jobId;
         this.input = input;
+        if (jobId != null)
+            submissionAck(getJobId());
     }
 
 
@@ -84,10 +85,9 @@ public class WebJJob<I, O, R, ID> extends WaiterJJob<R> implements InputJJob<I, 
         this.input = input;
     }
 
+    //post submission update
     protected synchronized void updateTyped(@NotNull JobUpdate<O, ID> update) {
         updateState(update);
-        checkForTimeout();
-
         try {
             switch (serverState) {
                 case DONE:
@@ -99,13 +99,22 @@ public class WebJJob<I, O, R, ID> extends WaiterJJob<R> implements InputJJob<I, 
                 case CANCELED:
                     cancel();
                     break;
+                default:
+                    checkForTimeout();
             }
         } catch (IOException e) {
             crash(e);
         }
     }
 
-    public void basicAck() {
+    //pre submission update
+    public synchronized void submissionAck(@Nullable ID jobId) {
+        if (jobId == null && this.jobId == null)
+            crash(new IllegalStateException("WebJJob was confirmed to be submitted to server but has not received an ID!"));
+
+        if (jobId != null)
+            this.jobId = jobId;
+
         this.submissionTime = System.currentTimeMillis();
         setServerState(de.unijena.bioinf.ms.rest.model.JobState.SUBMITTED);
     }
