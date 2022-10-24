@@ -33,6 +33,7 @@ import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerType;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerWithCharge;
+import de.unijena.bioinf.rest.ProxyManager;
 import de.unijena.bioinf.webapi.Tokens;
 import de.unijena.bioinf.rest.ConnectionError;
 import org.jdesktop.beans.AbstractBean;
@@ -45,6 +46,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Closeable;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -136,6 +138,8 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
     private class CheckJob extends TinyBackgroundJJob<ConnectionCheck> {
         @Override
         protected ConnectionCheck compute() throws Exception {
+            ProxyManager.closeAllStaleConnections(3, TimeUnit.MINUTES);
+
             checkForInterruption();
             Multimap<ConnectionError.Klass, ConnectionError> errors = Multimaps.newSetMultimap(new HashMap<>(), LinkedHashSet::new);
 
@@ -181,6 +185,10 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
             checkForInterruption();
 
             ConnectionCheck result = new ConnectionCheck(errors, wl, ll);
+
+            if (result.isConnected() || result.hasOnlyWarning()) {
+                NetUtils.awakeAll();
+            }
 
             return result;
         }
