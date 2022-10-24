@@ -22,11 +22,7 @@ package de.unijena.bioinf.ms.rest.model.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.InChIs;
-//import net.sf.jniinchi.JniInchiException;
-//import net.sf.jniinchi.JniInchiOutputKey;
-//import net.sf.jniinchi.JniInchiWrapper;
 import de.unijena.bioinf.chemdb.InChISMILESUtils;
-import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -58,16 +54,10 @@ public class TrainingData {
                 if (tabs.length == 1) {
                     //no InChiKeys contained. Compute them.
                     inChI =  InChISMILESUtils.getInchiWithKeyOrThrow(tabs[0]);
-//                    String inchi = tabs[0];
-//                    String key = InChISMILESUtils.(inchi);
-//                    inChI = InChIs.newInChI(key, inchi);
                 } else {
                     inChI = InChIs.newInChI(tabs[0], tabs[1]);
                 }
                 inchis.add(inChI);
-//            } catch (JniInchiException ex) {
-//                LoggerFactory.getLogger(TrainingData.class).warn("Could not parse training structure InChI, skipping this entry");
-//            }
         }
         return new TrainingData(inchis);
     }
