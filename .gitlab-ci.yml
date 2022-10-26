@@ -224,23 +224,23 @@ publishAPI:
       - stable
 
 #push to github to build for multiple OSs
-#pushToGitHub:
-#  stage: publish
-#  script:
-#    - git config --global user.email "${GITLAB_GITHUB_SIRIUS_USERNAME}"
-#    - git config --global user.name "boeckergitlab"
-#    - git remote show origin
-#    - git remote set-url --push origin git@github.com:boecker-lab/sirius.git
-#    - git remote show origin
-#    ##todo  re-insert before merge to master
-#    - git push --follow-tags origin HEAD:$CI_COMMIT_REF_NAME
-#  cache:
-#    key: "$CI_COMMIT_REF_NAME"
-#    policy: push
-#  needs: [testCLI, testGUI, testAPI]
-#  tags:
-#    - kubernetes
-#  only:
-#    refs:
-#      - stable
-#      - master
+pushToGitHub:
+  stage: publish
+  script:
+    - git config --global user.email "${GITLAB_GITHUB_SIRIUS_USERNAME}"
+    - git config --global user.name "boeckergitlab"
+    - git remote show origin
+    - git remote set-url --push origin git@github.com:boecker-lab/sirius.git
+    - git remote show origin
+    ##todo  re-insert before merge to master
+    - git push --follow-tags origin HEAD:$CI_COMMIT_REF_NAME
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  needs: [testCLI, testGUI, testAPI]
+  tags:
+    - kubernetes
+  only:
+    refs:
+      - stable
+      - master
