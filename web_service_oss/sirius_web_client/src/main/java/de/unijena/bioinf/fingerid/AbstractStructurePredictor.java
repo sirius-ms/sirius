@@ -26,20 +26,16 @@ import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoringMethod;
 import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
-import de.unijena.bioinf.webapi.WebAPI;
-import de.unijena.bioinf.webapi.rest.RestAPI;
 
 public abstract class AbstractStructurePredictor implements StructurePredictor {
     protected final PredictorType predictorType;
-    protected final WebAPI csiWebAPI;
     protected WebWithCustomDatabase database;
     protected FingerblastScoringMethod<?> fingerblastScoring;
     protected ConfidenceScorer confidenceScorer;
     protected TrainingStructuresSet trainingStructures;
 
-    protected AbstractStructurePredictor(PredictorType predictorType, WebAPI api) {
+    protected AbstractStructurePredictor(PredictorType predictorType/*, WebAPI api*/) {
         this.predictorType = predictorType;
-        this.csiWebAPI = api;
     }
 
     public PredictorType getPredictorType() {
@@ -55,10 +51,6 @@ public abstract class AbstractStructurePredictor implements StructurePredictor {
     }
 
     public abstract FingerblastScoring<?> getPreparedFingerblastScorer(ParameterStore parameters);
-
-    public WebAPI getWebAPI() {
-        return csiWebAPI;
-    }
 
     public ConfidenceScorer getConfidenceScorer() {
         return confidenceScorer;
