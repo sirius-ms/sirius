@@ -35,6 +35,7 @@ import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignOptions;
 import de.unijena.bioinf.ms.frontend.subtools.login.LoginOptions;
 import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoOptions;
 import de.unijena.bioinf.ms.frontend.subtools.projectspace.ProjecSpaceOptions;
+import de.unijena.bioinf.ms.frontend.subtools.settings.SettingsOptions;
 import de.unijena.bioinf.ms.frontend.subtools.similarity.SimilarityMatrixOptions;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.summaries.SummaryOptions;
@@ -93,6 +94,7 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
     public final SimilarityMatrixOptions similarityMatrixOptions;
     public final DecompOptions decompOptions;
     public final LoginOptions loginOptions;
+    public final SettingsOptions settingsOptions;
 
     //postprocessing, project-space consuming tool, exporting tools,
     public final SummaryOptions summaryOptions;
@@ -137,6 +139,7 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
         summaryOptions = new SummaryOptions();
         exportPredictions = new ExportPredictionsOptions();
         loginOptions = new LoginOptions();
+        settingsOptions = new SettingsOptions();
         autocompleteOptions = new AutoCompletionScript();
     }
 
@@ -165,7 +168,7 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
     protected Object[] standaloneTools() {
         return Streams.concat(
                 Stream.of(projectSpaceOptions, customDBOptions, similarityMatrixOptions, decompOptions, mgfExporterOptions, ftreeExporterOptions, exportPredictions),
-                additionalTools.stream(), Stream.of(loginOptions, autocompleteOptions)
+                additionalTools.stream(), Stream.of(loginOptions, settingsOptions, autocompleteOptions)
         ).toArray(Object[]::new);
 
     }

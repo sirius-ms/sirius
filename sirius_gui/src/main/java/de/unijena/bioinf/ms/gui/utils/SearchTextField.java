@@ -19,6 +19,8 @@
 
 package de.unijena.bioinf.ms.gui.utils;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -30,11 +32,15 @@ public class SearchTextField extends TwoColumnPanel {
     public final PlaceholderTextField textField;
 
     public SearchTextField() {
+        this("Type to search...");
+    }
+
+    public SearchTextField(@Nullable String placeHolder) {
         super();
         setBorder(new EmptyBorder(0, 0, 0, 0));
         textField = new PlaceholderTextField();
-        textField.setPlaceholder("Hit enter to search...");
-        textField.setPreferredSize(new Dimension(100, textField.getPreferredSize().height));
+        textField.setPlaceholder(placeHolder);
+        textField.setPreferredSize(new Dimension(115, textField.getPreferredSize().height));
         add(new JLabel("Filter"), textField);
     }
 }

@@ -44,9 +44,9 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         dbLocationField.setEnabled(db == null);
 
 
-        getOptionDescriptionByName("location").ifPresent(it -> dbLocationField.setToolTipText(GuiUtils.formatToolTip(it)));
-        smalls.addNamed("Location", dbLocationField);
-        parameterBindings.put("location", dbLocationField::getFilePath);
+        getOptionDescriptionByName("import").ifPresent(it -> dbLocationField.setToolTipText(GuiUtils.formatToolTip(it)));
+        smalls.addNamed("import", dbLocationField);
+        parameterBindings.put("import", dbLocationField::getFilePath);
 
         final String buf = "buffer";
         bufferSize = makeGenericOptionSpinner(buf,
