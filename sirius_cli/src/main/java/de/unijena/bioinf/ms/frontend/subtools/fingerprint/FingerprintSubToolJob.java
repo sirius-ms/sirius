@@ -108,7 +108,7 @@ public class FingerprintSubToolJob extends InstanceJob {
         checkForInterruption();
 
         // prediction jobs: predict fingerprints via webservice
-        final FingerprintJJob fpPredictJob = submitSubJob(FingerprintJJob.of(csi, inst.getExperiment(), filteredResults));
+        final FingerprintJJob fpPredictJob = submitSubJob(FingerprintJJob.of(csi, ApplicationCore.WEB_API, inst.getExperiment(), filteredResults));
 
         updateProgress(35);
         List<FingerIdResult> result = fpPredictJob.awaitResult();
