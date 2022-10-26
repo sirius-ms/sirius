@@ -20,20 +20,15 @@
 
 package de.unijena.bioinf.fingerid;
 
-import de.unijena.bioinf.webapi.WebAPI;
 import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
 import de.unijena.bioinf.confidence_score.ConfidenceScorer;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoringMethod;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 
-import java.io.IOException;
-
 public interface StructurePredictor {
     PredictorType getPredictorType();
 
     FingerblastScoringMethod<?> getFingerblastScoring();
-
-    WebAPI getWebAPI();
 
     WebWithCustomDatabase getDatabase();
 
@@ -41,5 +36,4 @@ public interface StructurePredictor {
 
     TrainingStructuresSet getTrainingStructures();
 
-    void refreshCacheDir() throws IOException;
 }
