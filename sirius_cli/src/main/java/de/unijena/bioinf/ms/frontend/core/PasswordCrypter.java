@@ -81,6 +81,9 @@ public class PasswordCrypter {
 
     public static String decryptProp(String key, Properties prop) {
         String val = prop.getProperty(key);
+        if (val == null)
+            return null;
+
         try {
             return decrypt(val);
         } catch (GeneralSecurityException | IOException e) {
@@ -91,7 +94,7 @@ public class PasswordCrypter {
 
     public static void setEncryptetProp(String key, String value, Properties prop) {
         try {
-            prop.setProperty(key,encrypt(value));
+            prop.setProperty(key, value != null ? encrypt(value) : null);
         } catch (GeneralSecurityException | UnsupportedEncodingException e) {
             LoggerFactory.getLogger(PasswordCrypter.class).error("Could not encrypt property. Property not set", e);
         }

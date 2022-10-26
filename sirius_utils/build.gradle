@@ -7,7 +7,7 @@ dependencies {
 
 
     compile group: 'com.lexicalscope.jewelcli', name: 'jewelcli', version: '0.8.9'
-    compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+//    compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
 }
 
 repositories {

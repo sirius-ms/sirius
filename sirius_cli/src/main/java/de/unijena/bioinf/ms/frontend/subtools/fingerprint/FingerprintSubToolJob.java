@@ -22,7 +22,7 @@ package de.unijena.bioinf.ms.frontend.subtools.fingerprint;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
+import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.fingerid.*;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
@@ -108,7 +108,7 @@ public class FingerprintSubToolJob extends InstanceJob {
         checkForInterruption();
 
         // prediction jobs: predict fingerprints via webservice
-        final FingerprintJJob fpPredictJob = submitSubJob(FingerprintJJob.of(csi, inst.getExperiment(), filteredResults));
+        final FingerprintJJob fpPredictJob = submitSubJob(FingerprintJJob.of(csi, ApplicationCore.WEB_API, inst.getExperiment(), filteredResults));
 
         updateProgress(35);
         List<FingerIdResult> result = fpPredictJob.awaitResult();

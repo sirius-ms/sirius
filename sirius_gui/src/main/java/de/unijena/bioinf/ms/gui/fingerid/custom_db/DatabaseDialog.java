@@ -23,8 +23,8 @@ import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.chemdb.DataSources;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
-import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
+import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.gui.compute.DBSelectionList;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
@@ -39,6 +39,7 @@ import de.unijena.bioinf.ms.gui.utils.ListAction;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
+import picocli.CommandLine;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -156,23 +157,27 @@ public class DatabaseDialog extends JDialog {
             if (index < 0 || index >= dbList.getModel().getSize())
                 return;
             final String name = dbList.getModel().getElementAt(index);
-            final String msg = "Do you really want to delete the custom database '" + name + "'?";
+            final String msg = "Do you really want to remove the custom database (will not be deleted from disk)'" + name + "'?";
             if (new QuestionDialog(getOwner(), msg).isSuccess()) {
-                Jobs.runInBackgroundAndLoad(owner, "Deleting database '" + name + "'...", () -> {
-                    CustomDatabase<?> dbToRemove = customDatabases.get(name);
 
-                    List<CustomDatabase<?>> customs = customDatabases.values().stream().distinct()
-                            .sorted(Comparator.comparing(CustomDatabase::name))
-                            .collect(Collectors.toList());
-                    customs.remove(dbToRemove);
+                try {
+                    Jobs.runCommandAndLoad(Arrays.asList(
+                            CustomDBOptions.class.getAnnotation(CommandLine.Command.class).name(),
+                            "--remove", name), null, null, owner,
+                            "Deleting database '" + name + "'...", true)
+                            .awaitResult();
+                } catch (ExecutionException ex) {
+                    LoggerFactory.getLogger(getClass()).error("Error during Custom DB removal.", ex);
 
-                    dbToRemove.deleteDatabase();
-                    customDatabases.remove(name);
+                    if (ex.getCause() != null)
+                        new StacktraceDialog(this, ex.getCause().getMessage(), ex.getCause());
+                    else
+                        new StacktraceDialog(this, "Unexpected error when removing custom DB!", ex);
+                } catch (Exception ex2) {
+                    LoggerFactory.getLogger(getClass()).error("Fatal Error during Custom DB removal.", ex2);
+                    new StacktraceDialog(MF, "Fatal Error during Custom DB removal.", ex2);
+                }
 
-                    SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(SearchableDatabases.PROP_KEY, customs.stream().map(CustomDatabase::storageLocation).collect(Collectors.joining(",")));
-
-
-                });
                 final String[] dbs = Jobs.runInBackgroundAndLoad(owner, "Reloading DBs...", (Callable<List<CustomDatabase<?>>>) SearchableDatabases::getCustomDatabases).getResult()
                         .stream().map(CustomDatabase::name).toArray(String[]::new);
                 dbList.setListData(dbs);
