@@ -32,7 +32,6 @@ import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.fingerprint.CircularFingerprinter;
 import org.openscience.cdk.fingerprint.IBitFingerprint;
 import org.openscience.cdk.graph.matrix.AdjacencyMatrix;
-import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
@@ -64,7 +63,6 @@ class FingerprintVisualization {
             final String[] substructures = new String[fingerprinter.getSize()];
             final String[] smarts = new String[fingerprinter.getSize()];
             final List<String> compounds = Files.readAllLines(new File("compounds.csv").toPath(), Charset.forName("UTF-8"));
-            final InChIGeneratorFactory igf = InChIGeneratorFactory.getInstance();
             for (String aline : compounds) {
                 final String[] linetabs = aline.split("\t");
                 final String inchi = linetabs[2];

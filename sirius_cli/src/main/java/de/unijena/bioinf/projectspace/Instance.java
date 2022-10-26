@@ -239,22 +239,25 @@ public class Instance {
             deleteFormulaResults();
         } else {
             //update cache, load data from disc
-            List<FormulaResultId> rid = List.copyOf(loadCompoundContainer().getResultsRO().values());
+            loadCompoundContainer();
             //remove components from cached formula results
             formulaResultCache.forEach((k, v) -> List.of(components).forEach(v::removeAnnotation));
             //remove components from ALL formula results on disc
-            rid.forEach(v -> {
-                try {
-                    projectSpace().deleteFromFormulaResult(v, components);
-                } catch (IOException e) {
-                    LoggerFactory.getLogger(getClass()).error("Error when deleting result '" + v + "' from '" + getID() + "'.");
-                }
-            });
+            try {
+                projectSpace().deleteFromAllFormulaResults(compoundCache, components);
+            } catch (IOException e) {
+                LoggerFactory.getLogger(getClass()).error("Error when deleting results from '" + getID() + "'.");
+            }
         }
     }
 
     public synchronized void deleteFormulaResults() {
-        deleteFormulaResults((List<FormulaResultId>) null);
+        try {
+            clearFormulaResultsCache();
+            projectSpace().deleteAllFormulaResults(loadCompoundContainer());
+        } catch (IOException e) {
+            LoggerFactory.getLogger(getClass()).error("Error when deleting all results from '" + getID() + "'.");
+        }
     }
 
     public synchronized void deleteFormulaResults(@NotNull FormulaResultId... ridToRemove) {
@@ -262,10 +265,18 @@ public class Instance {
     }
 
     public synchronized void deleteFormulaResults(@Nullable Collection<FormulaResultId> ridToRemove) {
+        if (ridToRemove == null) {
+            deleteFormulaResults();
+            return;
+        }
         //load contain methods to ensure that it is available
-        List<FormulaResultId> rid = new ArrayList<>(loadCompoundContainer().getResultsRO().values());
-        if (ridToRemove != null)
-            rid.retainAll(new HashSet<>(ridToRemove));
+        Set<FormulaResultId> rid = new LinkedHashSet<>(loadCompoundContainer().getResultsRO().values());
+        if (ridToRemove.size() == rid.size() && rid.containsAll(ridToRemove)) {
+            deleteFormulaResults();
+            return;
+        }
+
+        rid.retainAll(new HashSet<>(ridToRemove));
 
         clearFormulaResultsCache();
 
