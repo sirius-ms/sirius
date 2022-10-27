@@ -25,7 +25,7 @@ import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.Tanimoto;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
+import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.*;
 import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
@@ -36,16 +36,19 @@ import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobSubmitter;
+import de.unijena.bioinf.jjobs.Partition;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
+import de.unijena.bioinf.projectspace.FormulaResult;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
-import de.unijena.bioinf.projectspace.FormulaResult;
+import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
+import org.apache.commons.math3.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -98,9 +101,9 @@ public class FingerblastSubToolJob extends InstanceJob {
         checkForInterruption();
 
         final @NotNull CSIPredictor csi = NetUtils.tryAndWait(() -> (CSIPredictor)
-                ApplicationCore.WEB_API.getStructurePredictor(
-                        inst.getExperiment().getAnnotationOrThrow(PredictorTypeAnnotation.class)
-                                .toPredictors(inst.getExperiment().getPrecursorIonType().getCharge()).iterator().next()),
+                        ApplicationCore.WEB_API.getStructurePredictor(
+                                inst.getExperiment().getAnnotationOrThrow(PredictorTypeAnnotation.class)
+                                        .toPredictors(inst.getExperiment().getPrecursorIonType().getCharge()).iterator().next()),
                 this::checkForInterruption);
 
         updateProgress(15);
@@ -116,7 +119,7 @@ public class FingerblastSubToolJob extends InstanceJob {
 
         updateProgress(20);
         {
-            final FingerblastJJob job = new FingerblastJJob(csi, inst.getExperiment(), new ArrayList<>(formulaResultsMap.values()));
+            final FingerblastJJob job = new FingerblastJJob(csi, ApplicationCore.WEB_API, inst.getExperiment(), new ArrayList<>(formulaResultsMap.values()));
 
             checkForInterruption();
             // do computation and await results -> objects are already in formulaResultsMap
@@ -128,24 +131,33 @@ public class FingerblastSubToolJob extends InstanceJob {
 
         {
             //calculate and annotate tanimoto scores
-            List<BasicJJob<Double>> tanimotoJobs = new ArrayList<>();
+            List<Pair<ProbabilityFingerprint, FingerprintCandidate>> tanimotoJobs = new ArrayList<>();
+            updateProgress(55);
             formulaResultsMap.values().stream().filter(it -> it.hasAnnotation(FingerprintResult.class) && it.hasAnnotation(FingerblastResult.class)).forEach(it -> {
                 final ProbabilityFingerprint fp = it.getPredictedFingerprint();
                 it.getFingerprintCandidates().stream().map(SScored::getCandidate).forEach(candidate ->
-                        tanimotoJobs.add(new BasicJJob<>() {
-                            @Override
-                            protected Double compute() {
-                                double t = Tanimoto.nonProbabilisticTanimoto(fp, candidate.getFingerprint());
-                                candidate.setTanimoto(t);
-                                return t;
-                            }
-                        })
+                        tanimotoJobs.add(Pair.create(fp, candidate))
                 );
             });
 
+            updateProgress(60);
             checkForInterruption();
 
-            submitSubJobsInBatchesByThreads(tanimotoJobs, SiriusJobs.getCPUThreads()).forEach(JJob::getResult);
+            List<BasicJJob<Boolean>> jobs = Partition.ofNumber(tanimotoJobs, 2 * SiriusJobs.getCPUThreads())
+                    .stream().map(l -> new BasicJJob<Boolean>(JobType.CPU) {
+                        @Override
+                        protected Boolean compute() {
+                            l.forEach(p -> p.getSecond().setTanimoto(
+                                    Tanimoto.nonProbabilisticTanimoto(p.getSecond().getFingerprint(), p.getFirst())));
+                            return Boolean.TRUE;
+                        }
+                    }).collect(Collectors.toList());
+
+            updateProgress(65);
+            jobs.forEach(this::submitJob);
+
+            updateProgress(70);
+            jobs.forEach(JJob::getResult);
 
             updateProgress(80);
             checkForInterruption();
