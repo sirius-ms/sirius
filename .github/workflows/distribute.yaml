@@ -651,5 +651,10 @@ jobs:
           allowUpdates: ${{ endsWith(steps.sirius_version.outputs.value, '-SNAPSHOT') }}
           draft: ${{ env.GITHUB_REF_SLUG == 'stable' && 'false' || 'true' }}
           token: ${{ secrets.GITHUB_TOKEN }}
+
+  trigger-client-api-build:
+    needs: [ release ]
+    runs-on: ubuntu-latest
+    steps:
       - name: Trigger Actions on sirius-client-openAPI
-        run: curl -X POST -H "Authorization:Bearer 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" -H "Accept:application/vnd.github.v3+json" https://api.github.com/repos/LukasScholz/sirius-client-openAPI/actions/workflows/updater.yml/dispatches -d '{"ref":"master"}'
+        run: curl -X POST -H "Authorization:Bearer ${{ secrets.CLIENT_API_REPO_TOKEN }}" -H "Accept:application/vnd.github.v3+json" ${{ secrets.CLIENT_API_REPO_URL }} -d '{"ref":"master"}'
