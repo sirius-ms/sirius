@@ -36,7 +36,6 @@ import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
 import org.apache.hc.core5.annotation.Contract;
 import org.apache.hc.core5.annotation.ThreadingBehavior;
 import org.apache.hc.core5.http.Header;
-import org.apache.hc.core5.http.HeaderElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -238,8 +237,6 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
 
     @Contract(threading = ThreadingBehavior.IMMUTABLE)
     private static class TokenHeader implements Header {
-        private static final HeaderElement[] EMPTY_HEADER_ELEMENTS = new HeaderElement[]{};
-
         private final IOFunctions.IOSupplier<String> tokenSupplier;
 
         private TokenHeader(IOFunctions.IOSupplier<String> tokenSupplier) {
