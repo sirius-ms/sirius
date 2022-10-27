@@ -373,7 +373,6 @@ subprojects {
                 //delete exes because they are write protected
                 project.delete {
                     delete fileTree(dir: appRootTarget, includes: ["*.exe"])
-                    delete fileTree(dir: libTarget, includes: libExcludeWin)
                 }
 
                 copy {
@@ -381,6 +380,10 @@ subprojects {
                         include("*.exe")
                     }
                     into(appRootTarget)
+                }
+
+                project.delete {
+                    delete fileTree(dir: libTarget, includes: libExcludeWin)
                 }
             }else if (OS.isMacOsX()){
                 project.delete {
