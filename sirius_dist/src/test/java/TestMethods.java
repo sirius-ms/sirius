@@ -62,7 +62,7 @@ public class TestMethods {
 
     public static void isDirExisting(String directory){
         File f = new File(directory);
-        if(!f.exists()) {
+        if(!f.exists() || !f.isDirectory()) {
             throw new RuntimeException("The "+directory+" folder does not exist or is not a folder!");
         }
     }

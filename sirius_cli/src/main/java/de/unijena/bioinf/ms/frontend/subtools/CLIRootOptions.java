@@ -20,7 +20,7 @@
 package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
+import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
