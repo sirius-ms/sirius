@@ -39,9 +39,9 @@ public class EpimetheusPanel extends JPanel implements PanelDescription {
         return "<html>"
                 +"<b>EPIMETHEUS - Substructure annotations</b>"
                 +"<br>"
-                + "CSI:FingerID db search results with Epimetheus substructure annotations for all molecular formulas that had been searched."
+                + "CSI:FingerID db search results Epimetheus substructure annotations (combinatorial fragmentation) for all molecular formulas that had been searched."
                 + "<br>"
-                + "For the selected candidate structure in the upper panel, the bottom panel shows the spectrum with Epimetheus substructure annotations."
+                + "For the selected candidate structure in the upper panel, the bottom panel shows the source spectrum annotated with substructures computed by combinatorial fragmentation (Epimetheus)."
                 + "</html>";
     }
 
