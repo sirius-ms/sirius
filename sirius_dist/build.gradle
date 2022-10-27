@@ -373,6 +373,7 @@ subprojects {
                 //delete exes because they are write protected
                 project.delete {
                     delete fileTree(dir: appRootTarget, includes: ["*.exe"])
+                    delete fileTree(dir: libTarget, includes: libExcludeWin)
                 }
 
                 copy {
@@ -381,19 +382,15 @@ subprojects {
                     }
                     into(appRootTarget)
                 }
+            }else if (OS.isMacOsX()){
+                project.delete {
+                    delete fileTree(dir: libTarget, includes: libExcludeMac)
+                }
+            }else if (OS.isLinux()){
+                project.delete {
+                    delete fileTree(dir: libTarget, includes: libExcludeLinux)
+                }
             }
-
-
-           /* if (launchers != null) {
-                launchers.forEach({ k, v ->
-                    copy {
-                        from(v)
-                        into(launcherTarget)
-                        rename(v.getName(), k)
-                    }
-                })
-            }
-*/
 
             def templateBinding = [
                     toolName : "SIRIUS",
@@ -599,8 +596,8 @@ subprojects {
                     def entitlementsFile = getRootProject().getProjectDir().toPath().resolve("dist").resolve("macos.entitlements").toFile()
                     def additionalLibs = [new File(distImage.getImageDir(), "Contents/runtime/Contents/MacOS/libjli.dylib")]
                     def jarNestedLibs = [
-                            FileSystems.newFileSystem(distImage.getImageDir().toPath().resolve("Contents").resolve("app").resolve("jni-inchi-0.8.jar"))
-                                    .getPath("META-INF/jniinchi/1.03_1/MAC-X86_64/JniInchi-1.03_1-MAC-X86_64")
+                            FileSystems.newFileSystem(distImage.getImageDir().toPath().resolve("Contents").resolve("app").resolve("jna-inchi-darwin-x86-64-1.1.jar"))
+                                    .getPath("darwin-x86-64/libjnainchi.dylib")
                     ]
 
                     getLogger().lifecycle("extract libs nested in the following jars ${Arrays.toString(jarNestedLibs)}")
