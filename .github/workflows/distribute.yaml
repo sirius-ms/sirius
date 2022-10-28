@@ -578,7 +578,16 @@ jobs:
       - uses: ncipollo/release-action@v1
         with:
           artifacts: "sirius_dist/build/tmp/artifacts/*/*"
-          body: "Prebuilt SIRIUS releases for all supported platforms. [Signed installers](https://github.com/bright-giant/sirius/releases) of this builds provided by [Bright Giant](https://bright-giant.com/) might be available [here](https://github.com/bright-giant/sirius/releases)."
+          body: |
+            ### Prebuilt SIRIUS releases for all supported platforms. 
+            Installers provided by [Bright Giant](https://github.com/bright-giant/sirius/releases/) are identical to the ones provided by the [Bökerlab](https://github.com/boecker-lab/sirius/releases) but are digitally signed which eases installation on Windows and MacOS.
+
+            Package names are made up as follows: `<App Name>-<Version>-<Operating System>-<Flavor>.<PackageType>`. Package types are either generic `.zip` archives or operating system specific installers (e.g. `.pkg` or `.msi`). The flavors describe builds with different features:
+            * no _Flavor_ suffix represents for the standard SIRIUS package that contains the Graphical User Interface (GUI) and the Command Line Tool (CLI)
+            * `headless` represents a command line only version that does not contain GUI relevant packages. It is smaller and does not need any GUI libraries installed on the users system (good for servers).
+            * `service` like standard but additionally contains the experimental _service mode_ of SIRIUS which allows to start SIRIUS as a background service that can be queried form scripting languages or as part of workflows. See the [online documentation](https://boecker-lab.github.io/docs.sirius.github.io/quick-start/#background-service---generic-sirius-api) for details.
+            
+            Changelog can be found [here](https://boecker-lab.github.io/docs.sirius.github.io/changelog/).
           name: "SIRIUS v${{ steps.sirius_version.outputs.value }}"
           tag: "v${{ steps.sirius_version.outputs.value }}"
           prerelease: ${{ endsWith(steps.sirius_version.outputs.value, '-SNAPSHOT') }}
