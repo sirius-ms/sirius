@@ -4,8 +4,9 @@
 
 *<span style="color: #808080;">Our methods are offered to the scientific community as freely available resources. (Re-)distribution of the
 methods, in whole or in part, for commercial purposes is prohibited.
-CSI:FingerID and CANOPUS web services hosted by the [Böcker group](https://bio.informatik.uni-jena.de/) are for non-commercial use only.
-For commercial users, the [Bright Giant GmbH](https://bright-giant.com) provides all related services.
+CSI:FingerID and CANOPUS web services hosted by the [Böcker group](https://bio.informatik.uni-jena.de/) are for academic research and education use only.
+Please review the [terms of service](https://bio.informatik.uni-jena.de/terms-of-service-fsu-csi) of the academic version for details.
+For non-academic users, the [Bright Giant GmbH](https://bright-giant.com) provides licenses amd all related services.
 We ask that users of our tools cite the corresponding papers in any resulting publications.</span>*
 
 Contact: ![](https://raw.githubusercontent.com/boecker-lab/sirius_frontend/release/manual/source/siriusMailtrans.png)
@@ -46,7 +47,7 @@ All (including previous) releases can be found [here](https://github.com/boecker
 For  Windows and MacOS, the installer version of SIRIUS (msi/pkg) should be preferred but might require administrator permissions.
 
 Since we do not pay Microsoft/Apple for certification, you might have to confirm that you want to trust "software from
-an unknown source" on Windows/MacOS when using the installers provided by us.
+an unknown source" on Windows/MacOS when using the installers provided by the Böcker group.
 Therefore, we highly recommend using the [**signed** installers](https://github.com/bright-giant/sirius/releases) provided by
 [Bright Giant](https://bright-giant.com) (also linked above).
 These installers ease the installation process by triggering no (or less) security issues of the respective OS.
