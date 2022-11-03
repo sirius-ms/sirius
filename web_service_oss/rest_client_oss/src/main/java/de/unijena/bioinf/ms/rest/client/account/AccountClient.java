@@ -28,6 +28,7 @@ import org.apache.hc.client5.http.classic.methods.HttpDelete;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
 import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -87,6 +88,7 @@ public class AccountClient extends AbstractClient {
         try {
             execute(client, () -> {
                 HttpPost post = new HttpPost(getBaseURI("/account/accept-terms").build());
+                post.setEntity(new StringEntity(""));
                 final int timeoutInSeconds = 8000;
                 post.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds, TimeUnit.SECONDS)
                         /*.setSocketTimeout(timeoutInSeconds)*/.build());
