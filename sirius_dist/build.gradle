@@ -381,19 +381,19 @@ subprojects {
                     }
                     into(appRootTarget)
                 }
-            }
 
-
-           /* if (launchers != null) {
-                launchers.forEach({ k, v ->
-                    copy {
-                        from(v)
-                        into(launcherTarget)
-                        rename(v.getName(), k)
-                    }
-                })
+                project.delete {
+                    delete fileTree(dir: libTarget, includes: libExcludeWin)
+                }
+            }else if (OS.isMacOsX()){
+                project.delete {
+                    delete fileTree(dir: libTarget, includes: libExcludeMac)
+                }
+            }else if (OS.isLinux()){
+                project.delete {
+                    delete fileTree(dir: libTarget, includes: libExcludeLinux)
+                }
             }
-*/
 
             def templateBinding = [
                     toolName : "SIRIUS",
@@ -433,7 +433,6 @@ subprojects {
             } else {
                 throw new IllegalArgumentException("Cannot determine operating system for build")
             }
-
             String script = sf.text
             templateBinding.forEach({ k, v -> script = script.replace("#$k#", v) })
             f.withWriter { it.write(script) }
@@ -443,8 +442,7 @@ subprojects {
     distImage.shouldRunAfter downloadManual
 
 
-    task distImageTest(type: Test, group: 'distribution') {
-
+    task distImageTestLocal(dependsOn: distImage, type: Test, group: 'distribution'){
         useJUnitPlatform()
         testClassesDirs = project(':sirius_dist').sourceSets.test.output
         filter.includeTestsMatching('*Local')
@@ -527,10 +525,67 @@ subprojects {
     }
 
 
-    task distImageTestLocal(type: Test, group: 'distribution'){
-        dependsOn 'distImageTest'
-        dependsOn 'distImage'
-        tasks.findByName('distImageTest').mustRunAfter 'distImage'
+    task distImageTestCICD(type: Test, group: 'distribution'){
+        useJUnitPlatform()
+        testClassesDirs = project(':sirius_dist').sourceSets.test.output
+        filter.includeTestsMatching('*Local')
+
+        testLogging{
+            outputs.upToDateWhen {false}
+            showStandardStreams = true
+        }
+
+        doFirst{
+            String abs_path = project.projectDir.toString().split('sirius_frontend')[0]
+            String sirius_exec = abs_path + 'sirius_frontend/unzipped/sirius/bin/sirius'
+            String temp_res_path = abs_path + 'sirius_frontend/sirius_cli/src/test/temp_results'
+            String demo_path = abs_path + 'sirius_frontend/sirius_doc/manual/demo-data/'
+            String sep = System.getProperty("file.separator")
+
+            mkdir temp_res_path
+            mkdir temp_res_path + sep + 'mgf_temp_output'
+            mkdir temp_res_path + sep + 'mgf_temp_summary'
+            mkdir temp_res_path + sep + 'txt_temp_output'
+            mkdir temp_res_path + sep + 'txt_temp_summary'
+            mkdir temp_res_path + sep + 'ms_temp_output'
+            mkdir temp_res_path + sep + 'ms_temp_summary'
+
+            temp_res_path = temp_res_path + sep
+
+            project.exec {
+                commandLine([sirius_exec,
+                             '--input', demo_path+'mgf'+sep+'laudanosine.mgf',
+                             '--output', temp_res_path+'mgf_temp_output',
+                             'formula', '-p', 'orbitrap', 'fingerprint', 'structure', 'compound-classes',
+                             'write-summaries', '--output', temp_res_path+'mgf_temp_summary'
+                ])
+            }
+
+            project.exec {
+                commandLine([sirius_exec,
+                             '-1', demo_path+'txt'+sep+'chelidonine_ms.txt',
+                             '-2', demo_path+'txt'+sep+'chelidonine_msms1.txt' + ',' + demo_path+'txt'+sep+'chelidonine_msms2.txt',
+                             '-z', '354.134704589844', '-o', temp_res_path+'txt_temp_output',
+                             'formula', '-p', 'orbitrap',
+                             'write-summaries', '--output', temp_res_path+'txt_temp_summary'
+                ])
+            }
+
+            project.exec {
+                commandLine([sirius_exec,
+                             '-o', temp_res_path+'ms_temp_output',
+                             '-i', demo_path+'ms'+sep+'Bicuculline.ms',
+                             '--ignore-formula', 'formula', '-p', 'orbitrap', '-c', '5',
+                             'fingerprint', 'structure', 'compound-classes',
+                             'write-summaries', '--output', temp_res_path+'ms_temp_summary'
+                ])
+            }
+        }
+        doLast{
+            String abs_path = project.projectDir.toString().split('sirius_frontend')[0]
+            project.delete(abs_path + 'sirius_frontend/sirius_cli/src/test/temp_results')
+            project.delete(abs_path + 'sirius_frontend/unzipped')
+        }
     }
 
 
@@ -544,8 +599,8 @@ subprojects {
                     def entitlementsFile = getRootProject().getProjectDir().toPath().resolve("dist").resolve("macos.entitlements").toFile()
                     def additionalLibs = [new File(distImage.getImageDir(), "Contents/runtime/Contents/MacOS/libjli.dylib")]
                     def jarNestedLibs = [
-                            FileSystems.newFileSystem(distImage.getImageDir().toPath().resolve("Contents").resolve("app").resolve("jni-inchi-0.8.jar"))
-                                    .getPath("META-INF/jniinchi/1.03_1/MAC-X86_64/JniInchi-1.03_1-MAC-X86_64")
+                            FileSystems.newFileSystem(distImage.getImageDir().toPath().resolve("Contents").resolve("app").resolve("jna-inchi-darwin-x86-64-1.1.jar"))
+                                    .getPath("darwin-x86-64/libjnainchi.dylib")
                     ]
 
                     getLogger().lifecycle("extract libs nested in the following jars ${Arrays.toString(jarNestedLibs)}")
@@ -613,20 +668,6 @@ subprojects {
     }
     distImageZip.mustRunAfter(signDistImage)
 
-    task distImageUnzip(type: Copy, group: 'distribution') {
-
-            String abs_path = project.projectDir.toString().split('sirius_dist')[0]
-
-            def zipFile = file(abs_path + 'sirius_dist/sirius_cli_single_os/build/distributions/sirius.zip')
-            def outputDir = file(abs_path + 'sirius_dist/sirius_cli_single_os/build/distributions/unzipped')
-
-            from zipTree(zipFile)
-            into outputDir
-
-        doLast{
-            print("unzip successful!")
-        }
-    }
 
     task distInstaller(type: AppInstaller, dependsOn: distImage, group: 'distribution') {
         distImg = distImage
