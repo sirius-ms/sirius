@@ -3,7 +3,7 @@
 # https://github.com/gradle/gradle
 #image: gradle:alpine
 default:
-  image: git.bio.informatik.uni-jena.de:5050/bioinf-mit/docker-images/ubuntu-zulu-fx-gradle:22.04-15.42.15-6.9.2-9
+  image: git.bio.informatik.uni-jena.de:5050/bioinf-mit/docker-images/ubuntu-zulu-fx-gradle:22.04-15.42.15-6.9.2-12
 # Disable the Gradle daemon for Continuous Integration servers as correctness
 # is usually a priority over speed in CI environments. Using a fresh
 # runtime for each build is more reliable since the runtime is completely
@@ -15,7 +15,6 @@ stages:
   - test
   - publish
 
-
 before_script:
   - dpkg-reconfigure -p critical ca-certificates
   - eval `ssh-agent -s`
@@ -24,67 +23,82 @@ before_script:
   - chmod 700 ~/.ssh
   - echo "$GITLAB_GITHUB_SIRIUS_PUBLIC_KEY" >> ~/.ssh/id_ed25519.pub
   - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+  - VSNAP=$(head -2 sirius_cli/src/main/resources/sirius_frontend.build.properties | tail -1 | cut -d '=' -f 2)
+
 
 
 buildCLI:
   stage: build
   script:
-    - gradle :sirius_dist:sirius_cli_single_os:distImage
+    - gradle :sirius_dist:sirius_cli_single_os:publishSiriusMSPublicationToMavenLocal
+    - mkdir maven_artifacts
+    - mv ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/$VSNAP maven_artifacts
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
   artifacts:
     paths:
-      - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius
+      - ./maven_artifacts/$VSNAP
+    expire_in: 3 days
   tags:
     - kubernetes
   only:
     refs:
       - master
+      - master-dist-tests
       - stable
-
 
 buildGUI:
   stage: build
   script:
-    - gradle :sirius_dist:sirius_gui_single_os:distImage
+    - gradle :sirius_dist:sirius_gui_single_os:publishSiriusMSPublicationToMavenLocal
+    - mkdir maven_artifacts
+    - mv ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/$VSNAP maven_artifacts
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
   artifacts:
     paths:
-      - ./sirius_dist/sirius_gui_single_os/build/distributions/sirius
+      - ./maven_artifacts/$VSNAP
+    expire_in: 3 days
   tags:
     - kubernetes
   only:
     refs:
       - master
+      - master-dist-tests
       - stable
-
 
 buildAPI:
   stage: build
   script:
-    - gradle :sirius_dist:sirius_service_single_os:distImage
+    - gradle :sirius_dist:sirius_service_single_os:publishSiriusMSPublicationToMavenLocal
+    - mkdir maven_artifacts
+    - mv ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/$VSNAP maven_artifacts
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
   artifacts:
     paths:
-      - ./sirius_dist/sirius_service_single_os/build/distributions/sirius
+      - ./maven_artifacts/$VSNAP
+    expire_in: 3 days
   tags:
     - kubernetes
   only:
     refs:
       - master
+      - master-dist-tests
       - stable
+
 
 
 testCLI:
   stage: test
   script:
-    - ./sirius_dist/sirius_cli_single_os/build/distributions/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
-    - gradle :sirius_dist:sirius_cli_single_os:distImageTest
+    - mkdir unzipped
+    - unzip maven_artifacts/$VSNAP/siriusMS-$VSNAP-linux64-headless.zip -d unzipped
+    - ./unzipped/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
+    - gradle :sirius_dist:sirius_cli_single_os:distImageTestCICD
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -96,14 +110,16 @@ testCLI:
   only:
     refs:
       - master
+      - master-dist-tests
       - stable
-
 
 testGUI:
   stage: test
   script:
-    - ./sirius_dist/sirius_gui_single_os/build/distributions/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
-    - gradle :sirius_dist:sirius_gui_single_os:distImageTest
+    - mkdir unzipped
+    - unzip maven_artifacts/$VSNAP/siriusMS-$VSNAP-linux64.zip -d unzipped
+    - ./unzipped/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
+    - gradle :sirius_dist:sirius_cli_single_os:distImageTestCICD
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -115,14 +131,16 @@ testGUI:
   only:
     refs:
       - master
+      - master-dist-tests
       - stable
-
 
 testAPI:
   stage: test
   script:
-    - ./sirius_dist/sirius_service_single_os/build/distributions/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
-    - gradle :sirius_dist:sirius_service_single_os:distImageTest
+    - mkdir unzipped
+    - unzip maven_artifacts/$VSNAP/siriusMS-$VSNAP-linux64-service.zip -d unzipped
+    - ./unzipped/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
+    - gradle :sirius_dist:sirius_cli_single_os:distImageTestCICD
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -134,7 +152,9 @@ testAPI:
   only:
     refs:
       - master
+      - master-dist-tests
       - stable
+
 
 
 publishCLI:
@@ -142,8 +162,9 @@ publishCLI:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   stage: publish
   script:
-    - cd sirius_dist/sirius_cli_single_os
-    - gradle clean artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
+    - cd maven_artifacts/$VSNAP
+    - curl -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_TOKEN -X PUT "https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/siriusMS/$VSNAP/siriusMS-$VSNAP-linux64-headless.zip" -T siriusMS-$VSNAP-linux64-headless.zip
+    - curl -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_TOKEN -X PUT "https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/siriusMS/$VSNAP/siriusMS-$VSNAP.pom" -T siriusMS-$VSNAP.pom
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -156,16 +177,17 @@ publishCLI:
     refs:
       - master-casmi
       - master
+      - master-dist-tests
       - stable
-
 
 publishGUI:
   variables:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   stage: publish
   script:
-    - cd sirius_dist/sirius_gui_single_os
-    - gradle clean artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
+    - cd maven_artifacts/$VSNAP
+    - curl -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_TOKEN -X PUT "https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/siriusMS/$VSNAP/siriusMS-$VSNAP-linux64.zip" -T siriusMS-$VSNAP-linux64.zip
+    - curl -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_TOKEN -X PUT "https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/siriusMS/$VSNAP/siriusMS-$VSNAP.pom" -T siriusMS-$VSNAP.pom
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -178,6 +200,7 @@ publishGUI:
     refs:
       - master-casmi
       - master
+      - master-dist-tests
       - stable
 
 publishAPI:
@@ -185,8 +208,9 @@ publishAPI:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   stage: publish
   script:
-    - cd sirius_dist/sirius_gui_single_os
-    - gradle clean artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
+    - cd maven_artifacts/$VSNAP
+    - curl -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_TOKEN -X PUT "https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/siriusMS/$VSNAP/siriusMS-$VSNAP-linux64-service.zip" -T siriusMS-$VSNAP-linux64-service.zip
+    - curl -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_TOKEN -X PUT "https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/siriusMS/$VSNAP/siriusMS-$VSNAP.pom" -T siriusMS-$VSNAP.pom
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -198,6 +222,7 @@ publishAPI:
   only:
     refs:
       - master
+      - master-dist-tests
       - stable
 
 #push to github to build for multiple OSs
@@ -209,6 +234,7 @@ pushToGitHub:
     - git remote show origin
     - git remote set-url --push origin git@github.com:boecker-lab/sirius.git
     - git remote show origin
+    ##todo  re-insert before merge to master
     - git push --follow-tags origin HEAD:$CI_COMMIT_REF_NAME
   cache:
     key: "$CI_COMMIT_REF_NAME"

@@ -42,7 +42,9 @@ ext {
     native_path = 'native'
 
     libExclude = ['gurobi-jar-*.jar', 'cplex-*.jar']
-
+    libExcludeMac = ["jna-inchi-darwin-aarch64-1.1.jar", "jna-inchi-linux-x86-64-1.1.jar", "jna-inchi-win32-x86-64-1.1.jar", "jna-inchi-linux-arm-1.1.jar", "jna-inchi-linux-x86-1.1.jar", "jna-inchi-win32-x86-1.1.jar"]
+    libExcludeWin = ["jna-inchi-darwin-aarch64-1.1.jar", "jna-inchi-darwin-x86-64-1.1.jar", "jna-inchi-linux-x86-64-1.1.jar", "jna-inchi-linux-arm-1.1.jar", "jna-inchi-linux-x86-1.1.jar", "jna-inchi-win32-x86-1.1.jar"]
+    libExcludeLinux = ["jna-inchi-darwin-aarch64-1.1.jar", "jna-inchi-darwin-x86-64-1.1.jar", "jna-inchi-win32-x86-64-1.1.jar", "jna-inchi-linux-arm-1.1.jar", "jna-inchi-linux-x86-1.1.jar", "jna-inchi-win32-x86-1.1.jar"]
 
     jetbrains_version = "22.0.0"
 
