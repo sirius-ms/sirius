@@ -400,12 +400,12 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             configCommand.addAll(canopusConfigPanel.asParameterList());
         }
 
-        final List<String> command = new ArrayList<>();
-        configCommand.add("--RecomputeResults");
-        configCommand.add(String.valueOf(recomputeBox.isSelected()));
+        List<String> command = new ArrayList<>();
+        configCommand.add("--RecomputeResults=" + recomputeBox.isSelected());
 
         command.addAll(configCommand);
         command.addAll(toolCommands);
+        command = command.stream().map(s -> s.replaceAll("\\s+","")).collect(Collectors.toList());
         return command;
     }
 
