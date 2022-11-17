@@ -46,6 +46,9 @@ public class LcmsAlignOptions implements PreprocessingTool<LcmsAlignSubToolJob> 
         return workflow;
     }
 
+    @CommandLine.Option(names={"--statistics"}, required = false, hidden = true)
+    public File statistics;
+
     @CommandLine.Option(names = {"--workflow","-w"})
     public void setWorkflow(File filename) {
         if (filename==null) {

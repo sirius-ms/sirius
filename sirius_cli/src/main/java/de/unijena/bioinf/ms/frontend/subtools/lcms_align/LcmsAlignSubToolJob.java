@@ -19,12 +19,15 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.lcms_align;
 
+import com.fasterxml.jackson.core.JsonEncoding;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.MappingJsonFactory;
+import com.google.common.collect.Iterators;
 import de.unijena.bioinf.ChemistryBase.exceptions.InvalidInputData;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ChemistryBase.ms.CompoundQuality;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.MultipleSources;
-import de.unijena.bioinf.ChemistryBase.ms.SpectrumFileSource;
+import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Warning;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.workflows.LCMSWorkflow;
@@ -40,9 +43,9 @@ import de.unijena.bioinf.lcms.*;
 import de.unijena.bioinf.lcms.align.Aligner;
 import de.unijena.bioinf.lcms.align.Aligner2;
 import de.unijena.bioinf.lcms.align.Cluster;
-import de.unijena.bioinf.model.lcms.ConsensusFeature;
-import de.unijena.bioinf.model.lcms.IonConnection;
-import de.unijena.bioinf.model.lcms.LCMSRun;
+import de.unijena.bioinf.lcms.ionidentity.AdductResolver;
+import de.unijena.bioinf.lcms.quality.Quality;
+import de.unijena.bioinf.model.lcms.*;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
@@ -51,6 +54,7 @@ import de.unijena.bioinf.networks.MolecularNetwork;
 import de.unijena.bioinf.networks.NetworkNode;
 import de.unijena.bioinf.networks.serialization.ConnectionTable;
 import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.sirius.validation.Ms2Validator;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 import org.apache.commons.math3.distribution.RealDistribution;
 import org.slf4j.LoggerFactory;
@@ -80,18 +84,50 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager<?>
     @Override
     protected ProjectSpaceManager<?> compute() throws Exception {
         importedCompounds.clear();
-        final ArrayList<BasicJJob<?>> jobs = new ArrayList<>();
         final LCMSProccessingInstance i = new LCMSProccessingInstance();
+        if (options.statistics!=null) i.trackStatistics();
 
         final Optional<LCMSWorkflow> workflow = options.getWorkflow();
         if (workflow.isPresent()) {
-            return computeWorkflow(workflow.get());
+            return computeWorkflow(i, workflow.get());
+        } else {
+            LoggerFactory.getLogger(LcmsAlignSubToolJob.class).info("No workflow specified. Use 'default' workflow: mixed-mode with alignment.");
+            final List<Path> files = input.msInput.msParserfiles.keySet().stream().sorted().collect(Collectors.toList());
+            return computeMixedWorkflow(i, files, true);
         }
-        LoggerFactory.getLogger(LcmsAlignSubToolJob.class).warn("No workflow specified. Use 'default' workflow: mixed-mode with alignment.");
 
 
         //i.setDetectableIonTypes(PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class).getDetectable());
-        final List<Path> files = input.msInput.msParserfiles.keySet().stream().sorted().collect(Collectors.toList());
+
+    }
+
+    /*
+     * @Markus: can we implement that in a nicer way?
+     */
+    public File getWorkingDirectory() {
+        if (input != null && input.msInput.getRawInputFiles().size()==1) {
+            return input.msInput.getRawInputFiles().get(0).toFile();
+        } else return new File(".");
+    }
+
+    private ProjectSpaceManager computeWorkflow(LCMSProccessingInstance i, LCMSWorkflow lcmsWorkflow) throws IOException {
+        if (lcmsWorkflow instanceof PooledMs2Workflow) {
+            return computePooledWorkflow(i,(PooledMs2Workflow) lcmsWorkflow);
+        } else if (lcmsWorkflow instanceof MixedWorkflow) {
+            return computeMixedWorkflow(i,(MixedWorkflow) lcmsWorkflow);
+        } else if (lcmsWorkflow instanceof RemappingWorkflow) {
+            return computeRemappingWorkflow(i,(RemappingWorkflow) lcmsWorkflow);
+        } else throw new IllegalArgumentException("Unknown workflow: " + lcmsWorkflow.getClass().getName());
+    }
+
+    private ProjectSpaceManager computeMixedWorkflow(LCMSProccessingInstance i, MixedWorkflow lcmsWorkflow) throws IOException {
+        final File dir = getWorkingDirectory();
+        final List<Path> files = Arrays.stream(lcmsWorkflow.getFiles()).map(x->new File(dir, x).toPath()).collect(Collectors.toList());
+        return computeMixedWorkflow(i, files, lcmsWorkflow.isAlign());
+    }
+
+    private ProjectSpaceManager computeMixedWorkflow(LCMSProccessingInstance i, List<Path> files, boolean align ) throws IOException {
+        final ArrayList<BasicJJob<?>> jobs = new ArrayList<>();
         updateProgress(0, files.size(), 1, "Parse LC/MS runs");
         AtomicInteger counter = new AtomicInteger(0);
         for (Path f : files) {
@@ -107,6 +143,17 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager<?>
                         storage.dropBuffer();
                         final int c = counter.incrementAndGet();
                         LcmsAlignSubToolJob.this.updateProgress(0, files.size(), c, "Parse LC/MS runs");
+                        if (!align) {
+                            Iterator<FragmentedIon> ions = Iterators.filter(sample.ions.iterator(), i -> i != null && Math.abs(i.getChargeState()) <= 1 && i.getMsMsQuality().betterThan(Quality.BAD));
+                            while (ions.hasNext()) {
+                                final FragmentedIon ion = ions.next();
+                                AdductResolver.resolve(i, ion);
+                                Feature feature = i.makeFeature(sample, ion, false);
+                                MutableMs2Experiment experiment = feature.toMsExperiment(sample.run.getIdentifier() + "_" + String.valueOf(counter.incrementAndGet())).mutate();
+                                new Ms2Validator().validate(experiment, Warning.Logger, true);
+                                importCompound(space, experiment);
+                            }
+                        }
                     } catch (Throwable e) {
                         LoggerFactory.getLogger(LcmsAlignSubToolJob.class).error("Error while parsing file '" + f + "': " + e.getMessage());
                         if (!(e instanceof InvalidInputData)) {
@@ -119,8 +166,9 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager<?>
                 }
             }));
         }
-        MultipleSources sourcelocation = MultipleSources.leastCommonAncestor(input.getAllFilesStream().map(Path::toFile).toArray(File[]::new));
         for (BasicJJob<?> j : jobs) j.takeResult();
+        if (align) {
+        MultipleSources sourcelocation = MultipleSources.leastCommonAncestor(files.stream().map(Path::toFile).toArray(File[]::new));
         i.getMs2Storage().backOnDisc();
         i.getMs2Storage().dropBuffer();
 
@@ -129,30 +177,17 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager<?>
             return space;
         }
 
-        Cluster alignment = i.alignAndGapFilling(this);
-        updateProgress(0, 2, 0, "Assign adducts.");
-        i.detectAdductsWithGibbsSampling(alignment);
-        updateProgress(0, 2, 1, "Merge features.");
-        alignment = alignment.deleteDuplicateRows();
-        return importIntoProjectSpace(i,alignment,sourcelocation);
+            Cluster alignment = i.alignAndGapFilling(this);
+            updateProgress(0, 2, 0, "Assign adducts.");
+            i.detectAdductsWithGibbsSampling(alignment);
+            updateProgress(0, 2, 1, "Merge features.");
+            alignment = alignment.deleteDuplicateRows();
+            return importIntoProjectSpace(i,alignment,sourcelocation);
+        }
+        return space;
     }
 
-    private ProjectSpaceManager<?> computeWorkflow(LCMSWorkflow lcmsWorkflow) {
-        if (lcmsWorkflow instanceof PooledMs2Workflow) {
-            return computePooledWorkflow((PooledMs2Workflow) lcmsWorkflow);
-        } else if (lcmsWorkflow instanceof MixedWorkflow) {
-            return computeMixedWorkflow((MixedWorkflow) lcmsWorkflow);
-        } else if (lcmsWorkflow instanceof RemappingWorkflow) {
-            return computeRemappingWorkflow((RemappingWorkflow) lcmsWorkflow);
-        } else throw new IllegalArgumentException("Unknown workflow: " + lcmsWorkflow.getClass().getName());
-    }
-
-    private ProjectSpaceManager<?> computeMixedWorkflow(MixedWorkflow lcmsWorkflow) {
-        return null;
-    }
-
-    private ProjectSpaceManager<?> computePooledWorkflow(PooledMs2Workflow lcmsWorkflow) {
-        final LCMSProccessingInstance instance = new LCMSProccessingInstance();
+    private ProjectSpaceManager<?> computePooledWorkflow(LCMSProccessingInstance instance, PooledMs2Workflow lcmsWorkflow) {
         // read all files
         final JobManager jm = SiriusJobs.getGlobalJobManager();
         final ProcessedSample[] ms2Samples = Arrays.stream(lcmsWorkflow.getPooledMs2()).map(filename->jm.submitJob(processRunJob(instance,filename))).collect(Collectors.toList()).stream().map(JJob::takeResult).toArray(ProcessedSample[]::new);
@@ -177,8 +212,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager<?>
     }
 
 
-    private ProjectSpaceManager<?> computeRemappingWorkflow(RemappingWorkflow lcmsWorkflow) {
-        final LCMSProccessingInstance instance = new LCMSProccessingInstance();
+    private ProjectSpaceManager computeRemappingWorkflow(LCMSProccessingInstance instance, RemappingWorkflow lcmsWorkflow) {
         // read all files
         final JobManager jm = SiriusJobs.getGlobalJobManager();
         final ProcessedSample[] ms1Samples = Arrays.stream(lcmsWorkflow.getFiles()).map(filename->jm.submitJob(processRunJob(instance,filename))).collect(Collectors.toList()).stream().map(JJob::takeResult).toArray(ProcessedSample[]::new);
@@ -208,7 +242,19 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager<?>
         return space;
     }
 
-    private ProjectSpaceManager<?> importIntoProjectSpace(LCMSProccessingInstance i, Cluster alignment, MultipleSources sourcelocation) {
+    private void importCompound(ProjectSpaceManager<?> space, MutableMs2Experiment experiment) {
+            if (isInvalidExp(experiment)){
+                LoggerFactory.getLogger(getClass()).warn("Skipping invalid experiment '" + experiment.getName() + "'.");
+                return;
+            }
+
+            materializeProperties(experiment);
+
+            final Instance compound = space.newCompoundWithUniqueId(experiment);
+            importedCompounds.add(compound.getID());
+    }
+
+    private ProjectSpaceManager importIntoProjectSpace(LCMSProccessingInstance i, Cluster alignment, MultipleSources sourcelocation) {
         final ConsensusFeature[] consensusFeatures = i.makeConsensusFeatures(alignment);
         logInfo(consensusFeatures.length + "Feature left after merging.");
 
@@ -217,6 +263,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager<?>
         updateProgress(0, consensusFeatures.length, 0, "Write project space.");
         int progress=0;
         final HashMap<ConsensusFeature, CompoundContainerId> feature2compoundId = new HashMap<>();
+        List<LCMSCompoundSummary> allSummaries = new ArrayList<>();
         for (int K=0; K  < consensusFeatures.length; ++K) {
             final ConsensusFeature feature = consensusFeatures[K];
             final Ms2Experiment experiment = feature.toMs2Experiment();
@@ -235,14 +282,19 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager<?>
                 indizes.sort(Comparator.comparingDouble(lcmsPeakInformation::getIntensityOf));
                 Collections.reverse(indizes);
                 boolean badPeakShape = true;
+                LCMSCompoundSummary bestSummary = null;
                 for (int k=0; k < Math.min(indizes.size(),5); ++k) {
                     final CoelutingTraceSet traceSet = lcmsPeakInformation.getTracesFor(k).get();
                     LCMSCompoundSummary summary = new LCMSCompoundSummary(traceSet, traceSet.getIonTrace(), experiment);
+                    if (bestSummary==null || summary.points() > bestSummary.points())
+                        bestSummary = summary;
+
                     if (summary.peakQuality.ordinal() > LCMSCompoundSummary.Quality.LOW.ordinal()) {
                         badPeakShape = false;
                         break;
                     }
                 }
+                allSummaries.add(bestSummary);
                 if (badPeakShape) {
                     experiment.setAnnotation(CompoundQuality.class, experiment.getAnnotation(CompoundQuality.class).orElse(new CompoundQuality()).updateQuality(CompoundQuality.CompoundQualityFlag.BadPeakShape));
                 }
@@ -266,6 +318,17 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager<?>
             feature2compoundId.put(feature, compound.getID());
             updateProgress(0, consensusFeatures.length, ++progress, "Write project space.");
         }
+        if (i.getInternalStatistics().isPresent()) {
+            i.getInternalStatistics().get().collectFromSummary(allSummaries);
+            try (final JsonGenerator generator = new MappingJsonFactory().createGenerator(options.statistics, JsonEncoding.UTF8)) {
+                generator.writeObject(i.getInternalStatistics().get());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+
+
         // add connection tables
         {
             final MolecularNetwork.NetworkBuilder network = new MolecularNetwork.NetworkBuilder();
@@ -317,7 +380,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager<?>
                 try {
                     final MemoryFileStorage storage = new MemoryFileStorage();
                     System.out.println("parse file " + filename);
-                    LCMSRun run = LCMSParsing.parseRun(new File(filename), storage);
+                    LCMSRun run = LCMSParsing.parseRun(new File(getWorkingDirectory(), filename), storage);
                     System.out.println("Start processing");
                     final ProcessedSample pr = instance.addSample(run, storage, false);
                     System.out.println("Finish processing");
