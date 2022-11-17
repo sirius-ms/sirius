@@ -36,6 +36,7 @@ import java.util.*;
 class Edge {
 
     public double debugScoreIntra = 0f, debugScoreExtra = 0f;
+    public CorrelationGroup[] correlationGroups;
 
     public Edge reverse() {
         final Edge e = new Edge(to,from,type,toType,fromType);
@@ -45,6 +46,7 @@ class Edge {
         //
         e.debugScoreIntra = debugScoreIntra;
         e.debugScoreExtra = debugScoreExtra;
+        e.correlationGroups = correlationGroups;
         return e;
     }
 
@@ -71,6 +73,10 @@ class Edge {
 
     public float assignmentProbability() {
         return (float)(from.assignment.probability(fromType) * to.assignment.probability(toType));
+    }
+
+    public double[] calculateIntraSampleCorrelation() {
+        return Arrays.stream(this.correlationGroups).mapToDouble(CorrelationGroup::getCorrelation).toArray();
     }
 
     enum Type {
