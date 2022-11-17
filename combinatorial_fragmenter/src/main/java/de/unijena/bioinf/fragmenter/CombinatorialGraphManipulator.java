@@ -5,14 +5,11 @@ import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
-import de.unijena.bioinf.babelms.dot.Graph;
 import org.openscience.cdk.exception.CDKException;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
-import java.util.Optional;
 import java.util.function.Predicate;
 
 /**
@@ -116,11 +113,11 @@ public class CombinatorialGraphManipulator {
     }
 
     public static int[][] computeEcfpsUpTo(MolecularGraph graph, int diameter) {
-        CircularFingerprinter fingerprinter=null;
-        if (diameter==0) fingerprinter = new CircularFingerprinter(CircularFingerprinter.CLASS_ECFP0);
-        if (diameter==2) fingerprinter = new CircularFingerprinter(CircularFingerprinter.CLASS_ECFP2);
-        if (diameter==4) fingerprinter = new CircularFingerprinter(CircularFingerprinter.CLASS_ECFP4);
-        if (diameter==6) fingerprinter = new CircularFingerprinter(CircularFingerprinter.CLASS_ECFP6);
+        CircularFingerprinterMod fingerprinter=null;
+        if (diameter==0) fingerprinter = new CircularFingerprinterMod(CircularFingerprinterMod.CLASS_ECFP0);
+        if (diameter==2) fingerprinter = new CircularFingerprinterMod(CircularFingerprinterMod.CLASS_ECFP2);
+        if (diameter==4) fingerprinter = new CircularFingerprinterMod(CircularFingerprinterMod.CLASS_ECFP4);
+        if (diameter==6) fingerprinter = new CircularFingerprinterMod(CircularFingerprinterMod.CLASS_ECFP6);
         if (fingerprinter==null) throw new IllegalArgumentException("Unsupported diameter: "+ diameter);
         try {
             fingerprinter.calculate(graph.molecule);
@@ -134,11 +131,11 @@ public class CombinatorialGraphManipulator {
     }
 
     public static int[] computeEcfps(MolecularGraph graph, int diameter) {
-        CircularFingerprinter fingerprinter=null;
-        if (diameter==0) fingerprinter = new CircularFingerprinter(CircularFingerprinter.CLASS_ECFP0);
-        if (diameter==2) fingerprinter = new CircularFingerprinter(CircularFingerprinter.CLASS_ECFP2);
-        if (diameter==4) fingerprinter = new CircularFingerprinter(CircularFingerprinter.CLASS_ECFP4);
-        if (diameter==6) fingerprinter = new CircularFingerprinter(CircularFingerprinter.CLASS_ECFP6);
+        CircularFingerprinterMod fingerprinter=null;
+        if (diameter==0) fingerprinter = new CircularFingerprinterMod(CircularFingerprinterMod.CLASS_ECFP0);
+        if (diameter==2) fingerprinter = new CircularFingerprinterMod(CircularFingerprinterMod.CLASS_ECFP2);
+        if (diameter==4) fingerprinter = new CircularFingerprinterMod(CircularFingerprinterMod.CLASS_ECFP4);
+        if (diameter==6) fingerprinter = new CircularFingerprinterMod(CircularFingerprinterMod.CLASS_ECFP6);
         if (fingerprinter==null) throw new IllegalArgumentException("Unsupported diameter: "+ diameter);
         try {
             fingerprinter.calculate(graph.molecule);
