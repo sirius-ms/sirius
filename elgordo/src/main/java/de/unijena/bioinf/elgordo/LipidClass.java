@@ -40,8 +40,8 @@ public enum LipidClass {
     MGDG(2, Galactosylglycerol, def("+").losses("C6H11O6", "C6H13O7").acyl("", "C6H11O6", "C6H13O7", "C3H5O").def("[M+NH3+H]+").def("[M+Na]+").done(), "O(C1C(O)C(O)C(O)C(CO)O1)CC(OR2)(COR1)", "Glycosyldiradylglycerol", "LMGL0501AA00"),
     DGDG(2, Digalactosyldiacylglycerol, def("+").losses("C12H21O11", "C12H23O12").acyl("", "H2O", "C3H5O").def("[M+NH3+H]+").def("[M+Na]+").done(), "C(OC1C(O)C(O)C(O)C(COC2C(O)C(O)C(O)C(CO)O2)O1)C(OR1)(COR2)", "Glycosyldiradylglycerol", "LMGL0501AD00"),
 
-    SQDG(2, Sulfoquinovosylglycerols, def("+").losses("C6H10O7S", "C6H12O8S").acyl("", "H2O", "C3H5O").acylFragments("").def("[M+NH3+H]+").done(), "C(COC1C(O)C(O)C(O)C(CS(O)(=O)=O)O1)(OR2)COR1", "Sulfoquinovosyldiacylglycerol", null),
-    SQMG(1, Sulfoquinovosylglycerols, null, "C(COC1C(O)C(O)C(O)C(CS(O)(=O)=O)O1)(O)COR1", "Sulfoquinovosylmonoacylglycerol", null),
+    SQDG(2, Sulfoquinovosylglycerols, def("+").losses("C6H10O7S", "C6H12O8S").acyl("", "H2O", "C3H5O").acylFragments("").def("[M+NH3+H]+").def("-").fragments("H2SO3","HSO3", "CH4SO3","CH4O2S"). losses("C6H10O7S", "C6H12O8S").acyl("").acylFragments("", "H2O").done(), "C(COC1C(O)C(O)C(O)C(CS(O)(=O)=O)O1)(OR2)COR1", "Sulfoquinovosyldiacylglycerol", null),
+    SQMG(1, Sulfoquinovosylglycerols, def("-").fragments("H2SO3","HSO3", "CH4SO3","CH4O2S").acyl("").acylFragments("", "H2O").done(), "C(COC1C(O)C(O)C(O)C(CS(O)(=O)=O)O1)(O)COR1", "Sulfoquinovosylmonoacylglycerol", null),
 
     PC(2, Glycerophosphocholines, def("+").fragments("C2H5O4P", "C5H14NO4P", "C5H13NO").losses("C3H9N", "C5H14NO4P").alkyl("", "H", "H2O").acyl("", "H2O").plasmalogenFragment("C21H39O").
             def("[M+H]+").def("[M+Na]+").adductSwitch().acyl(parseOrNull("C3H9N").negate(), MolecularFormula.parseOrThrow("C3H9N").negate().add(parseOrNull("H2O")))
