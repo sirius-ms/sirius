@@ -88,7 +88,7 @@ public class MolecularGraph {
     }
 
     private void calculateMorganIndex() {
-        final CircularFingerprinter circularFingerprinter = new CircularFingerprinter(CircularFingerprinter.CLASS_ECFP2);
+        final CircularFingerprinterMod circularFingerprinter = new CircularFingerprinterMod(CircularFingerprinterMod.CLASS_ECFP2);
         circularFingerprinter.storeIdentitesPerIteration=true;
         try {
             circularFingerprinter.calculate(molecule);
