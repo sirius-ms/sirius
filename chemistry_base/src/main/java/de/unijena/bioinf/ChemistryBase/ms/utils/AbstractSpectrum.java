@@ -49,13 +49,17 @@ public abstract class AbstractSpectrum<T extends Peak> implements AnnotatedSpect
 
     protected  <T extends Peak, S extends Spectrum<T>> AbstractSpectrum(S immutable) {
         Annotations<SpectrumAnnotation> anno = new Annotations<>();
-        try {//add annotations if available
-            final Annotated<SpectrumAnnotation> a = (Annotated<SpectrumAnnotation>) immutable;
-            anno = a.annotations().clone();
-        } catch (ClassCastException ignored) {
-            //ignored
-        } finally {
-            annotations = anno;
+        if (immutable instanceof Annotated) {
+            try {//add annotations if available
+                final Annotated<SpectrumAnnotation> a = (Annotated<SpectrumAnnotation>) immutable;
+                anno = a.annotations().clone();
+            } catch (ClassCastException ignored) {
+                //ignored
+            } finally {
+                annotations = anno;
+            }
+        } else {
+            annotations=new Annotations<>();
         }
     }
 
