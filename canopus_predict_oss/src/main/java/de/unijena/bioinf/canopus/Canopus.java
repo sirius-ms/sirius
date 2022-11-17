@@ -546,7 +546,7 @@ public class Canopus {
                 int parent = b.readInt();
                 String name = b.readUTF();
                 String desc = b.readUTF();
-                klasses[i] = new ClassyfireProperty(id, name, desc, parent, 0); // TODO: fix priority
+                klasses[i] = new ClassyfireProperty(id, name, desc, parent, 0, 0f); // TODO: fix priority
             }
 
             final ClassyFireFingerprintVersion version = new ClassyFireFingerprintVersion(klasses);
