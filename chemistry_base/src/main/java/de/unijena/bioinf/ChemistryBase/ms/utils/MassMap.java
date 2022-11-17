@@ -2,10 +2,7 @@ package de.unijena.bioinf.ChemistryBase.ms.utils;
 
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class MassMap<T> {
 
@@ -47,6 +44,18 @@ public class MassMap<T> {
         }
         return results;
     }
+    public List<Map.Entry<Double,T>> retrieveAllEntries(double key, Deviation deviation) {
+        return retrieveAllEntries(key, deviation.absoluteFor(key));
+    }
+    public List<Map.Entry<Double,T>> retrieveAllEntries(double key, double deviation) {
+        final ArrayList<Map.Entry<Double,T>> results = new ArrayList<>();
+        final double left = key-deviation, right = key+deviation;
+        final long lk = (int)(left*blowupFactor), rk = (int)(right*blowupFactor);
+        for (long i=lk; i <= rk; ++i) {
+            retrieveFromEntries(results, left, right, i);
+        }
+        return results;
+    }
     public Optional<T> retrieveClosest(double key, Deviation deviation) {
         return retrieveClosest(key, deviation.absoluteFor(key));
     }
@@ -59,6 +68,19 @@ public class MassMap<T> {
             best = retrieveFrom(key, left, right, i, best, bestDistance);
         }
         return best==null ? Optional.empty() : Optional.of(best.value);
+    }
+    public Optional<Map.Entry<Double,T>> retrieveClosestEntry(double key, Deviation deviation) {
+        return retrieveClosestEntry(key, deviation.absoluteFor(key));
+    }
+    public Optional<Map.Entry<Double,T>> retrieveClosestEntry(double key, double deviation) {
+        Entry<T> best = null;
+        double bestDistance = Double.POSITIVE_INFINITY;
+        final double left = key-deviation, right = key+deviation;
+        final long lk = (int)(left*blowupFactor), rk = (int)(right*blowupFactor);
+        for (long i=lk; i <= rk; ++i) {
+            best = retrieveFrom(key, left, right, i, best, bestDistance);
+        }
+        return best==null ? Optional.empty() : Optional.of(best);
     }
 
     private Entry<T> retrieveFrom(double key, double left, double right, long i, Entry<T> best, double bestDistance) {
@@ -85,16 +107,42 @@ public class MassMap<T> {
             e = e.successor;
         }
     }
+    private void retrieveFromEntries(ArrayList<Map.Entry<Double,T>> results, double left, double right, long lk) {
+        Entry<T> e = map.get(lk);
+        while (e!=null) {
+            if (e.key >= left && e.key <= right) {
+                results.add(e);
+            }
+            e = e.successor;
+        }
+    }
 
-    private static class Entry<T> {
+    private static class Entry<T> implements Map.Entry<Double, T> {
         private final double key;
-        private final T value;
+        private T value;
         private Entry<T> successor;
 
         public Entry(double key, T entry) {
             this.key = key;
             this.value = entry;
             this.successor = null;
+        }
+
+        @Override
+        public Double getKey() {
+            return key;
+        }
+
+        @Override
+        public T getValue() {
+            return value;
+        }
+
+        @Override
+        public T setValue(T value) {
+            T oldValue = this.value;
+            this.value = value;
+            return oldValue;
         }
     }
 }
