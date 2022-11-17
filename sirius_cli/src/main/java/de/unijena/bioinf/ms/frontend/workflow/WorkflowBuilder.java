@@ -31,6 +31,7 @@ import de.unijena.bioinf.ms.frontend.subtools.export.tables.ExportPredictionsOpt
 import de.unijena.bioinf.ms.frontend.subtools.export.trees.FTreeExporterOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
+import de.unijena.bioinf.ms.frontend.subtools.harvester.HarvesterOptions;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignOptions;
 import de.unijena.bioinf.ms.frontend.subtools.login.LoginOptions;
 import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoOptions;
@@ -98,6 +99,7 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
 
     //postprocessing, project-space consuming tool, exporting tools,
     public final SummaryOptions summaryOptions;
+    public final HarvesterOptions harvesterOptions;
     public final ExportPredictionsOptions exportPredictions;
     public final MgfExporterOptions mgfExporterOptions;
     public final FTreeExporterOptions ftreeExporterOptions;
@@ -137,6 +139,7 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
         mgfExporterOptions = new MgfExporterOptions();
         ftreeExporterOptions = new FTreeExporterOptions();
         summaryOptions = new SummaryOptions();
+        harvesterOptions = new HarvesterOptions();
         exportPredictions = new ExportPredictionsOptions();
         loginOptions = new LoginOptions();
         settingsOptions = new SettingsOptions();
@@ -149,6 +152,7 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
             throw new IllegalStateException("Root spec already initialized");
 
         final CommandLine.Model.CommandSpec summarySpec = forAnnotatedObjectWithSubCommands(summaryOptions);
+        final CommandLine.Model.CommandSpec harvesterSpec = forAnnotatedObjectWithSubCommands(harvesterOptions);
 
         // define execution order and dependencies of different Subtools
         final Map<Class<? extends ToolChainOptions>, CommandLine.Model.CommandSpec> chainToolSpecs = configureChainTools(summarySpec);
@@ -158,10 +162,10 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
         Object[] standaloneTools = standaloneTools();
 
         final CommandLine.Model.CommandSpec configSpec = forAnnotatedObjectWithSubCommands(configOptionLoader.asCommandSpec(),
-                Stream.concat(Stream.concat(Stream.of(lcmsAlignSpec), chainToolSpecs.values().stream()), Stream.concat(Arrays.stream(standaloneTools), Stream.of(summarySpec))).toArray());
+                Stream.concat(Stream.concat(Stream.of(lcmsAlignSpec), chainToolSpecs.values().stream()), Stream.concat(Arrays.stream(standaloneTools), Stream.of(summarySpec, harvesterSpec))).toArray());
 
         rootSpec = forAnnotatedObjectWithSubCommands(this.rootOptions,
-                Stream.concat(Stream.concat(Stream.concat(Stream.of(configSpec), Stream.of(standaloneTools())), Stream.of(summarySpec, lcmsAlignSpec)), chainToolSpecs.values().stream()).toArray()
+                Stream.concat(Stream.concat(Stream.concat(Stream.of(configSpec), Stream.of(standaloneTools())), Stream.of(summarySpec, lcmsAlignSpec, harvesterSpec)), chainToolSpecs.values().stream()).toArray()
         );
     }
 
