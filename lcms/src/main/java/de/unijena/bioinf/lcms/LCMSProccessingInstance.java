@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.lcms;
 
+import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
@@ -51,6 +52,7 @@ import de.unijena.bioinf.model.lcms.*;
 import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
 import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
 import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
+import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
@@ -61,8 +63,12 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class LCMSProccessingInstance {
+
+    protected InternalStatistics internalStatistics;
+
     protected HashMap<ProcessedSample, SpectrumStorage> storages;
     protected List<ProcessedSample> samples;
     protected MemoryFileStorage ms2Storage;
@@ -114,6 +120,14 @@ public class LCMSProccessingInstance {
 
     }
 
+    public Optional<InternalStatistics> getInternalStatistics() {
+        return Optional.ofNullable(internalStatistics);
+    }
+
+    public void trackStatistics() {
+        this.internalStatistics = new InternalStatistics();
+    }
+
     public CoelutingTraceSet getTraceset(ProcessedSample sample, FragmentedIon ion) {
         return new TraceConverter(sample, ion).asLCMSSubtrace();
     }
@@ -141,7 +155,7 @@ public class LCMSProccessingInstance {
             final SimpleSpectrum spec = merged.spectrumAt(k).finishMerging();
             final Quality quality = merged.spectrumAt(k).getQuality(spec);
             if (quality.betterThan(bestQuality)) bestQuality = quality;
-            final SimpleSpectrum spec2 = Spectrums.extractMostIntensivePeaks(spec, 8, 100);
+            final SimpleSpectrum spec2 = Spectrums.extractMostIntensivePeaks(spec, 8, 50);
             toMerge[k] = spec2;
             final Scan someScan = merged.spectrumAt(k).getScans().get(0);
             final Scan scan = new Scan(id, someScan.getPolarity(),peak.getRetentionTimeAt(segment.getApexIndex()),merged.energyAt(k),spec.size(), Spectrums.calculateTIC(spec), true, someScan.getPrecursor());
@@ -150,7 +164,27 @@ public class LCMSProccessingInstance {
         }
         SimpleSpectrum mergedAll = Spectrums.mergeSpectra(new Deviation(10), true, false, Arrays.asList(toMerge));
         final FragmentedIon ion = new FragmentedIon(scans[0].getPolarity(), scans,energies, new CosineQueryUtils(new IntensityWeightedSpectralAlignment(new Deviation(20))).createQueryWithIntensityTransformationNoLoss(mergedAll, merged.getPrecursor().getMass(), true), bestQuality, peak, segment, merged.getAllScans().toArray(Scan[]::new));
+        if (internalStatistics!=null) trackMs2Statistics(sample, merged, ion);
         return ion;
+    }
+
+    private void trackMs2Statistics(ProcessedSample sample, MergedSpectrumWithCollisionEnergies merged, FragmentedIon ion) {
+        final CosineQueryUtils utils = new CosineQueryUtils(new IntensityWeightedSpectralAlignment(new Deviation(10)));
+        final Ms2CosineSegmenter segmenter = new Ms2CosineSegmenter();
+        for (MergedSpectrum spec : merged.getSpectra()){
+            final List<Scan> scans = spec.getScans();
+            final List<Ms2CosineSegmenter.CosineQuery> transformed = scans.stream().map(x->segmenter.prepareForCosine(sample, x)).collect(Collectors.toList());
+            for (int i=0; i < scans.size(); ++i) {
+                internalStatistics.retentionTimeWindow.add(sample.getMs2IsolationWindowOrLearnDefault(scans.get(i), this).getWindowWidth());
+                for (int j = 0; j < i; ++j) {
+                    final SpectralSimilarity cosine = transformed.get(i).cosine(transformed.get(j));
+                    internalStatistics.msmsMergedCosines.add(cosine.similarity);
+                }
+            }
+        }
+        internalStatistics.numberOfPeaksPerMSMs.add(ion.getMsMs().size());
+        internalStatistics.msmsEntropy.add(ion.getMsMs().entropy());
+
     }
 
     /**
@@ -259,6 +293,30 @@ public class LCMSProccessingInstance {
             other[0] += count;
             return true;
         });
+        if (internalStatistics!=null) {
+            final float N = ncompounds[0];
+            internalStatistics.hplus = Math.max(0,selectedIonTypeCounter.get(PrecursorIonType.fromString("[M+H]+").getIonization())) / N;
+            internalStatistics.potassium = Math.max(0,selectedIonTypeCounter.get(PrecursorIonType.fromString("[M+K]+").getIonization())) / N;
+            internalStatistics.sodium = Math.max(0,selectedIonTypeCounter.get(PrecursorIonType.fromString("[M+Na]+").getIonization())) / N;
+            internalStatistics.waterLoss = (Math.max(0,possibleIonTypeCounter.get(PrecursorIonType.fromString("[M-H2O+H]+"))) + Math.max(0,possibleIonTypeCounter.get(PrecursorIonType.fromString("[M-H4O2+H]+")))) / N;
+            internalStatistics.ammonium = Math.max(0,possibleIonTypeCounter.get(PrecursorIonType.fromString("[M+NH3+H]+"))) / N;
+            Set<PrecursorIonType> common = new HashSet<>(Arrays.asList(
+               PrecursorIonType.getPrecursorIonType("[M+H]+"),
+                    PrecursorIonType.getPrecursorIonType("[M+K]+"),
+                    PrecursorIonType.getPrecursorIonType("[M+Na]+"),
+                    PrecursorIonType.getPrecursorIonType("[M-H2O+H]+"),
+                    PrecursorIonType.getPrecursorIonType("[M-H4O2+H]+"),
+                    PrecursorIonType.getPrecursorIonType("[M+NH3+H]+"),
+                    PrecursorIonType.getPrecursorIonType("[M+?]+")
+            ));
+            possibleIonTypeCounter.forEachEntry((key,count)->{
+                if (!common.contains(key)) {
+                    internalStatistics.strangeAdducts += count;
+                }
+                return true;
+            });
+            internalStatistics.strangeAdducts /= N;
+        }
         System.out.printf("Multiple possibilities: %d times (%.2f %%)\n", ncompounds[0]-other[0], (ncompounds[0]-other[0]+0d)*100.0d/ncompounds[0] );
 
         /*try {
@@ -266,7 +324,7 @@ public class LCMSProccessingInstance {
         } catch (IOException e) {
             e.printStackTrace();
         }*/
-
+        if (internalStatistics!=null) network.collectStatistics(internalStatistics);
         return network;
     }
 
@@ -616,16 +674,65 @@ public class LCMSProccessingInstance {
         double numberOfFeatures = cluster.getFeatures().length;
         cluster = cluster.deleteRowsWithNoMsMs();
         cluster = cluster.deleteRowsWithNoIsotopes();
+        if (internalStatistics!=null) collectAlignmentStatistics(cluster, numberOfFeatures - cluster.getFeatures().length);
+
+
         double numberOfFeatures2 = cluster.getFeatures().length;
         System.out.println("Remove " + (100d - 100d*numberOfFeatures2/numberOfFeatures ) +  " % of the data due to low quality. There are " + cluster.getFeatures().length + " features in total."); System.out.flush();
         if (samples.size()>=50) cluster = cluster.deleteRowsWithTooFewEntries(4);
         int after = cluster.getFeatures().length;
         System.out.println("Done."); System.out.flush();
         System.out.println("Total number of features is " + cluster.getFeatures().length);
-
+        if (internalStatistics!=null) collectFeatureStatistics(Arrays.stream(cluster.getFeatures()).flatMap(x->x.getFeatures().values().stream()).toArray(FragmentedIon[]::new));
         return cluster;
 
 
+    }
+
+    private void collectFeatureStatistics(FragmentedIon[] ions) {
+        HashMap<ChromatographicPeak,Integer> peaks = new HashMap<>();
+        for (FragmentedIon ion : ions) {
+            if (ion.isCompound()) {
+                internalStatistics.numberOfCorrelatedPeaksPerFeature.add(
+                        ion.getAdducts().size() + ion.getInSourceFragments().size()
+                );
+                internalStatistics.precursorMasses.add(ion.getMass());
+                if (ion.getMass()>1000) internalStatistics.numberOfPeaksWithMassAbove1000++;
+                internalStatistics.chimericPollution.add(ion.getChimericPollution());
+                internalStatistics.numberOfIsotopePeaksPerFeature.add(ion.getIsotopes().size());
+                ion.getIsotopes().forEach(x -> internalStatistics.isotopicCorrelation.add(x.getCorrelation()));
+                internalStatistics.featureWidths.add(ion.getSegment().retentionTimeWidth());
+                internalStatistics.featureFWHM.add(ion.getSegment().fwhm());
+                internalStatistics.featureHeights.add(ion.getSegment().getApexIntensity());
+                final Range<Integer> integerRange = ion.getSegment().calculateFWHM(0.25);
+                internalStatistics.scanPointsPerFeaturesAt25.add(integerRange.upperEndpoint()-integerRange.lowerEndpoint()+1);
+                if (peaks.containsKey(ion.getPeak())) {
+                    internalStatistics.segmentsPerPeak.add(ion.getPeak().segments.size());
+                }
+                peaks.compute(ion.getPeak(), (key, value)->value==null ? 1 : value+1);
+            }
+        }
+        peaks.forEach((k,v)->internalStatistics.msmsPerPeak.add(v));
+    }
+
+    private void collectAlignmentStatistics(Cluster cluster, double deletedFeatures) {
+        final double n = this.samples.size();
+        internalStatistics.numberOfFeatures=cluster.getFeatures().length;
+        for (AlignedFeatures f : cluster.getFeatures()) {
+            final FragmentedIon[] xs = f.getFeatures().values().toArray(FragmentedIon[]::new);
+            long maximum = 0L;
+            for (int i=0; i < xs.length; ++i) {
+                for (int j=0; j < i; ++j) {
+                    final long ret = Math.abs(xs[i].getRetentionTime() - xs[j].getRetentionTime());
+                    internalStatistics.retentionTimeShift.add((float)ret);
+                    maximum = Math.max(maximum, ret);
+                }
+            }
+            internalStatistics.numberOfSamplesPerFeature.add(f.getFeatures().size());
+            internalStatistics.ratioOfSamplesPerFeature.add(f.getFeatures().size()/n);
+            if (xs.length>1) internalStatistics.maximumRetentionTimeShiftPerFeature.add((float)maximum);
+        }
+        internalStatistics.deletedFeatures = (float)(deletedFeatures/(cluster.getFeatures().length + deletedFeatures));
     }
 
 
