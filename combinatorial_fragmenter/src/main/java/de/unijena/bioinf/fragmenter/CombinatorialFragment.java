@@ -26,8 +26,14 @@ public class CombinatorialFragment {
     protected MolecularFormula formula; // --> in general, with hydrogens!!
     protected final boolean innerNode;
 
+    protected CombinatorialFragment inverse;
+
     public CombinatorialFragment(MolecularGraph parent, BitSet bitset, BitSet disconnectedRings){
         this(parent, bitset, null, disconnectedRings);
+    }
+
+    public CombinatorialFragment getInverse() {
+        return inverse;
     }
 
     public CombinatorialFragment(MolecularGraph parent, BitSet bitset, MolecularFormula formula, BitSet disconnectedRings, boolean isInnerNode, float peakIntensity) {
