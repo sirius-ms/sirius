@@ -23,6 +23,7 @@ package de.unijena.bioinf.ChemistryBase.fp;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import gnu.trove.list.array.TIntArrayList;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
@@ -41,9 +42,15 @@ import java.util.regex.Pattern;
 public class CdkFingerprintVersion extends FingerprintVersion {
 
 
+    public static void main(String[] args) {
+        System.out.println(CdkFingerprintVersion.getDefault().getOffsetFor(USED_FINGERPRINTS.INSILICO));
+    }
+
     private final long fastCompareFlag;
     private final MolecularProperty[] properties;
     private final USED_FINGERPRINTS[] usedFingerprints;
+
+    private static int[] topIndizes;
 
     public USED_FINGERPRINTS[] getUsedFingerprints() {
         return usedFingerprints;
@@ -152,8 +159,7 @@ public class CdkFingerprintVersion extends FingerprintVersion {
 
         BIOSMARTS(6, 283, false, true),
         RINGSYSTEMS(7, 463, false, true),
-        INSILICO(8, 4329, false, true)
-        ;
+        INSILICO(8, 5847, false, true);
 
         public final int defaultPosition, length;
         /*
@@ -327,6 +333,15 @@ public class CdkFingerprintVersion extends FingerprintVersion {
             }
         }
 
+        final TIntArrayList topIndizesList = new TIntArrayList();
+        try (final BufferedReader r = FileUtils.ensureBuffering(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/fingerprints/fingerprint_selection_indizes.txt")))) {
+            String line = null;
+            while ((line = r.readLine()) != null) {
+                topIndizesList.add(Integer.parseInt(line));
+            }
+        }
+        topIndizes = topIndizesList.toArray();
+
         int offset=0;
         for (int k=0; k < DEFAULT_PROPERTIES.length; ++k) {
             int length = EXTENDED_SETUP[k].length;
@@ -337,6 +352,15 @@ public class CdkFingerprintVersion extends FingerprintVersion {
 
     public static MolecularProperty[] getDefaultPropertiesFor(USED_FINGERPRINTS uf) {
         return DEFAULT_PROPERTIES[uf.defaultPosition];
+    }
+
+    public static MaskedFingerprintVersion getTopProperties(int desiredNumberOfProperties) {
+        MaskedFingerprintVersion.Builder builder = MaskedFingerprintVersion.buildMaskFor(getDefault());
+        builder.disableAll();
+        for (int i=0; i < Math.min(topIndizes.length, desiredNumberOfProperties); ++i) {
+            builder.enable(topIndizes[i]);
+        }
+        return builder.toMask();
     }
 
 
