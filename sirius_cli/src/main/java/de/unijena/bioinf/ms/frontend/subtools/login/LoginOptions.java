@@ -323,12 +323,12 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
             Subscription sub = null;
             @NotNull List<Subscription> subs = Tokens.getSubscriptions(token);
             if (sid != null)
-                sub = Tokens.getActiveSubscription(subs, sid, false);
+                sub = Tokens.getActiveSubscription(subs, sid, null, false);
             if (sub == null) {
                 if (sid != null)
                     LoggerFactory.getLogger(getClass()).debug("Could not find subscription with sid '"
                             + sid + "'. Trying to find fallback");
-                sub = Tokens.getActiveSubscription(subs);
+                sub = Tokens.getActiveSubscription(subs, Tokens.getDefaultSubscriptionID(token));
             }
             ApplicationCore.WEB_API.changeActiveSubscription(sub);
 
