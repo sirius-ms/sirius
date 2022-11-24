@@ -43,7 +43,6 @@ import de.unijena.bioinf.fingerid.FingerprintWebResultConverter;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.rest.HttpErrorResponseException;
 import de.unijena.bioinf.ms.rest.client.account.AccountClient;
 import de.unijena.bioinf.ms.rest.client.canopus.CanopusClient;
 import de.unijena.bioinf.ms.rest.client.chemdb.ChemDBClient;
@@ -57,10 +56,8 @@ import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobOutput;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobInput;
-import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobOutput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
-import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobOutput;
 import de.unijena.bioinf.ms.rest.model.fingerid.TrainingData;
 import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
@@ -69,7 +66,7 @@ import de.unijena.bioinf.ms.rest.model.license.SubscriptionConsumables;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.webapi.WebJJob;
 import de.unijena.bioinf.rest.ConnectionError;
-import de.unijena.bioinf.rest.NetUtils;
+import de.unijena.bioinf.rest.HttpErrorResponseException;
 import de.unijena.bioinf.rest.ProxyManager;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.webapi.AbstractWebAPI;
@@ -87,10 +84,7 @@ import javax.annotation.concurrent.ThreadSafe;
 import java.io.IOException;
 import java.net.URI;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 /**
@@ -272,7 +266,7 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
                                 "your access_token. If the problem persists contact support."
                         , ConnectionError.Klass.LICENSE));
 
-            @Nullable Subscription sub = Tokens.getActiveSubscription(subs);
+            @Nullable Subscription sub = Tokens.getActiveSubscription(subs, Tokens.getDefaultSubscriptionID(token));
             if (sub == null)
                 return Optional.of(new ConnectionError(53,
                         "Could not determine an active subscription, but there are'"

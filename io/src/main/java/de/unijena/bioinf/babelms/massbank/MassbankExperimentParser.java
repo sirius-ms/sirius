@@ -75,7 +75,10 @@ public class MassbankExperimentParser extends MassbankSpectralParser implements 
             fields.getField(CH_SMILES.k()).map(Smiles::new).ifPresent(exp::annotate);
             fields.getField(PK_SPLASH.k()).map(Splash::new).ifPresent(exp::annotate);
             parseRetentionTime(fields).ifPresent(exp::annotate);
-            fields.getField(AC_INSTRUMENT.k()).map(MsInstrumentation::getBestFittingInstrument).ifPresent(exp::annotate);
+            fields.getField(AC_INSTRUMENT.k()).map(MsInstrumentation::getBestFittingInstrument).ifPresent(i -> exp.setAnnotation(MsInstrumentation.class,i));
+            if (!exp.hasAnnotation(MsInstrumentation.class) || MsInstrumentation.Unknown.equals(exp.getAnnotation(MsInstrumentation.class).orElse(null)))
+                fields.getField(AC_INSTRUMENT_TYPE.k()).map(MsInstrumentation::getBestFittingInstrument)
+                        .ifPresent(i -> exp.setAnnotation(MsInstrumentation.class,i));
         } else {
             LoggerFactory.getLogger(getClass()).warn("Cannot find additional meta data fields. Experiment might be incomplete!");
         }
