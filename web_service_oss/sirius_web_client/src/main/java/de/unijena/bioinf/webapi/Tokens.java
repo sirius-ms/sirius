@@ -33,11 +33,14 @@ import org.jetbrains.annotations.Nullable;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class Tokens {
     public static final String ACTIVE_SUBSCRIPTION_KEY = "de.unijena.bioinf.sirius.security.subscription";
+    public static final String DEFAULT_SUB_KEY = "defaultSubscription";
+
 
     @NotNull
     public static Boolean isUserEmailVerified(@Nullable AuthService.Token token) {
@@ -82,11 +85,20 @@ public class Tokens {
 
     @NotNull
     public static List<Term> getAcceptedTerms(@Nullable AuthService.Token token) {
-        return parseATClaim(token, "https://bright-giant.com/app_metadata")
-                .map(Claim::asMap)
+        return getAppMetaData(token)
                 .map(m -> (List<String>) m.get("acceptedTerms"))
                 .map(t -> t.stream().map(Term::of).collect(Collectors.toList()))
                 .orElse(List.of());
+    }
+
+    public static Optional<Map<String, Object>> getAppMetaData(@Nullable AuthService.Token token){
+        return parseATClaim(token, "https://bright-giant.com/app_metadata")
+                .map(Claim::asMap);
+    }
+
+    public static Optional<Map<String, Object>> getUserMetaData(@Nullable AuthService.Token token){
+        return parseATClaim(token, "https://bright-giant.com/user_metadata")
+                .map(Claim::asMap);
     }
 
     @NotNull
@@ -120,41 +132,52 @@ public class Tokens {
     }
 
     @Nullable
-    public static Subscription getActiveSubscription(@NotNull List<Subscription> subs) {
-        return getActiveSubscription(subs, PropertyManager.getProperty(ACTIVE_SUBSCRIPTION_KEY));
+    public static Subscription getActiveSubscription(@NotNull List<Subscription> subs, @Nullable String defaultSid) {
+        return getActiveSubscription(subs, PropertyManager.getProperty(ACTIVE_SUBSCRIPTION_KEY), defaultSid);
     }
 
     @Nullable
-    public static Subscription getActiveSubscription(@NotNull List<Subscription> subs, @Nullable String sid) {
-        return getActiveSubscription(subs, sid, true);
+    public static Subscription getActiveSubscription(@NotNull List<Subscription> subs, @Nullable String sid, @Nullable String defaultSid) {
+        return getActiveSubscription(subs, sid, defaultSid, true);
     }
 
     @Nullable
-    public static Subscription getActiveSubscription(@NotNull List<Subscription> subs, @Nullable String sid, boolean useFallback) {
+    public static Subscription getActiveSubscription(@NotNull List<Subscription> subs, @Nullable String sid, @Nullable String defaultSid, boolean useFallback) {
         Subscription sub = null;
         if (sid != null && !sid.isBlank()) {
             sub = subs.stream().filter(s -> s.getSid().equals(sid)).findFirst()
                     .orElse(null);
         }
+
+        if (sub == null && defaultSid != null && !defaultSid.isBlank()){
+            sub = subs.stream().filter(s -> s.getSid().equals(defaultSid)).findFirst()
+                    .orElse(null);
+        }
+
         if (sub == null && useFallback)
             sub = subs.stream().findFirst().orElse(null);
 
         return sub;
     }
 
-    public static Subscription getActiveSubscription(@Nullable AuthService.Token token, @Nullable String sid, boolean useFallback) {
-        return getActiveSubscription(getSubscriptions(token), sid, useFallback);
+    public static Subscription getActiveSubscription(@Nullable AuthService.Token token, @Nullable String sid, @Nullable String defaultSid, boolean useFallback) {
+        return getActiveSubscription(getSubscriptions(token), sid, defaultSid, useFallback);
     }
 
     @Nullable
     public static Subscription getActiveSubscription(@Nullable AuthService.Token token, @Nullable String sid) {
-        return getActiveSubscription(getSubscriptions(token), sid);
+        return getActiveSubscription(getSubscriptions(token), sid, getDefaultSubscriptionID(token));
 
     }
 
     @Nullable
     public static Subscription getActiveSubscription(@Nullable AuthService.Token token) {
-        return getActiveSubscription(getSubscriptions(token));
+        return getActiveSubscription(getSubscriptions(token), getDefaultSubscriptionID(token));
+    }
+
+    @Nullable
+    public static String getDefaultSubscriptionID(@Nullable AuthService.Token token){
+        return getUserMetaData(token).map(m -> (String) m.get(DEFAULT_SUB_KEY)).orElse(null);
     }
 
     public static boolean hasSubscriptions(AuthService.Token token) {
