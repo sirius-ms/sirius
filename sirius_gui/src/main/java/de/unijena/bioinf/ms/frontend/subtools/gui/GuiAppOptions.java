@@ -21,8 +21,6 @@ package de.unijena.bioinf.ms.frontend.subtools.gui;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
-import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
-import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.SiriusCLIApplication;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -46,8 +44,6 @@ import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidateFingerprintsTopK;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidatesTopK;
-import de.unijena.bioinf.rest.NetUtils;
-import de.unijena.bioinf.webapi.rest.RestAPI;
 import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import picocli.CommandLine;

@@ -20,7 +20,6 @@
 package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.ms.gui.login.UserLoginDialog;
 import de.unijena.bioinf.ms.gui.login.UserPasswordResetDialog;
 
 import javax.swing.*;
@@ -31,7 +30,7 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class PasswdResetAction extends AbstractAction {
+public class PasswdResetAction extends AbstractUserPortalAction {
 
     public PasswdResetAction() {
         super("Reset Password");
@@ -39,6 +38,12 @@ public class PasswdResetAction extends AbstractAction {
     }
 
     @Override
+    String path() {
+        return "auth/reset/";
+    }
+
+    @Override
+    @Deprecated(forRemoval = true) //todo use super method instead
     public synchronized void actionPerformed(ActionEvent e) {
         boolean r = new UserPasswordResetDialog(MF, ApplicationCore.WEB_API.getAuthService()).hasPerformedReset();
         firePropertyChange("pwd-reset", false, r);
