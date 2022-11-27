@@ -330,6 +330,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                             + sid + "'. Trying to find fallback");
                 sub = Tokens.getActiveSubscription(subs, Tokens.getDefaultSubscriptionID(token));
             }
+            SiriusProperties.SIRIUS_PROPERTIES_FILE().setProperty(Tokens.ACTIVE_SUBSCRIPTION_KEY, sub.getSid());
             ApplicationCore.WEB_API.changeActiveSubscription(sub);
 
             //check connection
