@@ -20,32 +20,29 @@
 package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.ms.gui.login.UserPasswordResetDialog;
+import de.unijena.bioinf.ms.gui.login.SubscriptionDialog;
+import de.unijena.bioinf.webapi.Tokens;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.util.List;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class PasswdResetAction extends AbstractUserPortalAction {
+public class SelectActiveSubscriptionAction extends AbstractAction {
 
-    public PasswdResetAction() {
-        super("Reset Password");
-        putValue(Action.SHORT_DESCRIPTION, "Open password reset dialog.");
+    public SelectActiveSubscriptionAction() {
+        super("Change Subscription");
+        putValue(Action.SHORT_DESCRIPTION, "Specify subscription that shall be used for computations (active subscription). Might also change the Web Service host.");
     }
 
     @Override
-    String path() {
-        return "auth/reset/";
-    }
-
-    @Override
-    @Deprecated(forRemoval = true) //todo use super method instead
     public synchronized void actionPerformed(ActionEvent e) {
-        boolean r = new UserPasswordResetDialog(MF, ApplicationCore.WEB_API.getAuthService()).hasPerformedReset();
-        firePropertyChange("pwd-reset", false, r);
+        boolean r = new SubscriptionDialog(MF, true, ApplicationCore.WEB_API.getAuthService().getToken().map(Tokens::getSubscriptions).orElse(List.of())).hasPerformedChange();
+        if (r)
+            firePropertyChange("change-sub", null, ApplicationCore.WEB_API.getActiveSubscription());
     }
 }
