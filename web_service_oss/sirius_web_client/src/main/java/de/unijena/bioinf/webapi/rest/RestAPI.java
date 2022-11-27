@@ -122,8 +122,8 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
     public RestAPI(@NotNull AuthService authService, @Nullable Subscription activeSubscription) {
         super(authService);
         IOFunctions.IOConsumer<HttpUriRequest> subsDeco = (req) -> {
-            if (this.activeSubscription != null)
-                req.addHeader("SUBSCRIPTION", this.activeSubscription.getSid());
+            if (getActiveSubscription() != null)
+                req.addHeader("SUBSCRIPTION", getActiveSubscription().getSid());
         };
 
         this.accountClient = new AccountClient(
