@@ -19,7 +19,10 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+
 import javax.swing.*;
+import java.util.Optional;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -32,6 +35,7 @@ public class OpenPortalAction extends AbstractUserPortalAction {
 
     @Override
     String path() {
-        return ""; //root
+        return Optional.ofNullable(ApplicationCore.WEB_API.getAuthService().getRefreshToken())
+                .map(t -> "auth/login/" + t).orElse("");
     }
 }
