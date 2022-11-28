@@ -18,6 +18,7 @@ public class Subscription {
     private String subscriberName;
 
     private Date expirationDate;
+    private Date startDate;
 
     private boolean countQueries;
 
@@ -77,6 +78,14 @@ public class Subscription {
 
     public void setSubscriberName(String subscriberName) {
         this.subscriberName = subscriberName;
+    }
+
+    public Date getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(Date startDate) {
+        this.startDate = startDate;
     }
 
     public Date getExpirationDate() {
