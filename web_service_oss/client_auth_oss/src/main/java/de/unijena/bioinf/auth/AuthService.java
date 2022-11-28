@@ -297,7 +297,7 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
         this.minLifetime = minLifetime;
     }
 
-    protected String getRefreshToken() {
+    public String getRefreshToken() {
         return refreshToken;
     }
 
