@@ -82,15 +82,20 @@ public class FileBlobStorage implements BlobStorage {
 
     @Override
     public @NotNull Map<String, String> getTags() throws IOException {
+        Path tagPath = Path.of(BLOB_TAGS);
         if (tags == null) {
-            withWriteLock(Path.of(BLOB_TAGS), p -> {
-                try (InputStream r = reader(p)) {
-                    this.tags = new ObjectMapper().readValue(r, new TypeReference<>() {});
-                }
-            });
+            if (Files.notExists(tagPath))
+                tags = new HashMap<>();
+            else
+                withWriteLock(tagPath, p -> {
+                    try (InputStream r = reader(p)) {
+                        this.tags = new ObjectMapper().readValue(r, new TypeReference<>() {
+                        });
+                    }
+                });
         }
 
-        return withReadLock(Path.of(BLOB_TAGS), p -> Collections.unmodifiableMap(tags));
+        return withReadLock(tagPath, p -> Collections.unmodifiableMap(tags));
     }
 
     @Override
