@@ -81,6 +81,7 @@ public enum Format {
 //    public static final String TAG_COMPRESSION = "chemdb-compression";
     public static final String TAG_DATE = "chemdb-date";
     public static final String TAG_FLAVOR = "chemdb-flavor";
+    public static final String TAG_FP_ID = "chemdb-fp-id";
 
     public static final String BLOB_SETTINGS = "SETTINGS";
     public static final String BLOB_FORMULAS = "formulas";
