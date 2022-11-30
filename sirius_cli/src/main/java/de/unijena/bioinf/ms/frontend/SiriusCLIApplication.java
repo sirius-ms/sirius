@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.frontend;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.ms.annotations.PrintCitations;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -101,7 +103,11 @@ public class SiriusCLIApplication {
                 e.printStackTrace();
             } finally {
                 try {
-                    AuthServices.writeRefreshToken(ApplicationCore.WEB_API.getAuthService(), ApplicationCore.TOKEN_FILE, true);
+                    AuthService as = ApplicationCore.WEB_API.getAuthService();
+                    if (as.isLoggedIn())
+                        AuthServices.writeRefreshToken(ApplicationCore.WEB_API.getAuthService(), ApplicationCore.TOKEN_FILE, true);
+                    else
+                        Files.deleteIfExists(ApplicationCore.TOKEN_FILE);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }finally {

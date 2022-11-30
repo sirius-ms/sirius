@@ -20,12 +20,16 @@
 package de.unijena.bioinf.ms.middleware;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.auth.AuthService;
+import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
+import de.unijena.bioinf.ms.annotations.PrintCitations;
 import de.unijena.bioinf.ms.frontend.BackgroundRuns;
 import de.unijena.bioinf.ms.frontend.SiriusCLIApplication;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.middleware.projectspace.model.ProjectSpaceId;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceIO;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
@@ -100,7 +104,17 @@ public class SiriusContext implements DisposableBean {
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
-            ProxyManager.disconnect();
+            try {
+                AuthService as = ApplicationCore.WEB_API.getAuthService();
+                if (as.isLoggedIn())
+                    AuthServices.writeRefreshToken(ApplicationCore.WEB_API.getAuthService(), ApplicationCore.TOKEN_FILE, true);
+                else
+                    Files.deleteIfExists(ApplicationCore.TOKEN_FILE);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }finally {
+                ProxyManager.disconnect();
+            }
         }
     }
 
