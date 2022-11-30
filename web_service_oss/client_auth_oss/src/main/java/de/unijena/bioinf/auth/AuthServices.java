@@ -88,6 +88,10 @@ public class AuthServices {
     }
 
     public static void writeRefreshToken(@NotNull AuthService service, @NotNull Path refreshTokenFile) throws IOException {
+        writeRefreshToken(service,refreshTokenFile,false);
+    }
+
+    public static void writeRefreshToken(@NotNull AuthService service, @NotNull Path refreshTokenFile, final boolean ignoreMissing) throws IOException {
         if (!service.needsLogin()) {
             if (service.getRefreshToken() != null) {
                 writeRefreshToken(service.getRefreshToken(), refreshTokenFile);
@@ -95,7 +99,8 @@ public class AuthServices {
                 LoggerFactory.getLogger(AuthServices.class).warn("Cannot write refresh token. Given Service seems to rely on client credentials flow, so  refresh token is obsolete. Skipping!");
             }
         } else {
-            throw new LoginException(new IllegalStateException("Cannot save refresh token if user is not logged in."));
+            if (!ignoreMissing)
+                throw new LoginException(new IllegalStateException("Cannot save refresh token if user is not logged in."));
         }
     }
 
