@@ -61,7 +61,6 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
     private Token token;
 
 
-
     protected final ReadWriteLock tokenLock = new ReentrantReadWriteLock();
 
     private int minLifetime = 900000;
@@ -85,21 +84,25 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
 
     public AuthService(@NotNull OAuth20Service service, @Nullable String refreshToken) {
         this.service = service;
+        tokenLock.writeLock().lock();
         try {
             if (refreshToken != null)
                 setTokens(requestAccessTokenRefreshFlow(refreshToken));
         } catch (Exception e) {
             LoggerFactory.getLogger(getClass()).error("Error when using given refresh_token. Not logged in. Re-login with PW Flow might be necessary", e);
             logout();
+        } finally {
+            tokenLock.writeLock().unlock();
         }
     }
 
 
     private void setTokens(@Nullable Token token) {
-        this.token = token;
-        if (this.token != null)
-            if (this.token.getSource().getRefreshToken() != null)
+        if (token != null) {
+            if (token.getSource().getRefreshToken() != null)
                 this.refreshToken = token.getSource().getRefreshToken(); //replace with fresh token if available
+            this.token = token;
+        }
     }
 
     private static OAuth20Service buildService(@NotNull DefaultApi20 authAPI, @NotNull String clientID, @Nullable String clientSecret, @Nullable CloseableHttpAsyncClient client) {
@@ -319,22 +322,16 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
     }
 
     public String getRefreshTokenForQuickReuse() throws IOException, ExecutionException, InterruptedException {
-        final String r = getRefreshToken();
-        if (r == null)
-            return null;
-
         tokenLock.writeLock().lock();
         try {
+            final String r = getRefreshToken();
+            if (r == null)
+                return null;
             setTokens(requestAccessTokenRefreshFlow(r)); //get a fat one
+            return r;
         } finally {
             tokenLock.writeLock().unlock();
         }
-
-        OAuth2AccessToken thin = service.refreshAccessToken(r, "offline_access openid license:thin"); //request thin token
-        if (thin == null || thin.getRefreshToken() == null)
-            return null;
-
-        return thin.getRefreshToken();
     }
 
     public URI signUpURL(URI redirectUrl) {
