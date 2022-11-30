@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.frontend;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.ms.annotations.PrintCitations;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -99,9 +100,16 @@ public class SiriusCLIApplication {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } finally {
-                ProxyManager.disconnect();
-                if (successfulParsed && PropertyManager.DEFAULTS.createInstanceWithDefaults(PrintCitations.class).value)
-                    ApplicationCore.BIBTEX.citeToSystemErr();
+                try {
+                    AuthServices.writeRefreshToken(ApplicationCore.WEB_API.getAuthService(), ApplicationCore.TOKEN_FILE, true);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }finally {
+                    ProxyManager.disconnect();
+                    if (successfulParsed && PropertyManager.DEFAULTS.createInstanceWithDefaults(PrintCitations.class).value)
+                        ApplicationCore.BIBTEX.citeToSystemErr();
+                }
+
             }
         }));
     }
