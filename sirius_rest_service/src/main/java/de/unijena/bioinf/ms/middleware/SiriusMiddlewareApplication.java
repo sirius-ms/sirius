@@ -26,6 +26,7 @@ import de.unijena.bioinf.ms.frontend.Run;
 import de.unijena.bioinf.ms.frontend.SiriusCLIApplication;
 import de.unijena.bioinf.ms.frontend.SiriusGUIApplication;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.frontend.core.Workspace;
 import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.gui.GuiAppOptions;
@@ -36,9 +37,12 @@ import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import de.unijena.bioinf.projectspace.SiriusProjectSpace;
 import org.springframework.boot.Banner;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.boot.context.ApplicationPidFileWriter;
+import org.springframework.boot.web.context.WebServerPortFileWriter;
 import org.springframework.context.ConfigurableApplicationContext;
 
 import java.io.IOException;
@@ -116,12 +120,13 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                     final SpringApplicationBuilder appBuilder = new SpringApplicationBuilder(SiriusMiddlewareApplication.class)
                             .web(webType)
                             .headless(webType.equals(WebApplicationType.NONE))
-//                            .headless(!(psf instanceof GuiProjectSpaceManagerFactory))
                             .bannerMode(Banner.Mode.OFF);
-                    measureTime("Start Workflow");
-                    appContext = appBuilder.run(args);
-//                    appContext.close();
 
+                    measureTime("Start Workflow");
+                    SpringApplication app = appBuilder.application();
+                    app.addListeners(new ApplicationPidFileWriter(Workspace.WORKSPACE.resolve("sirius.pid").toFile()));
+                    app.addListeners(new WebServerPortFileWriter(Workspace.WORKSPACE.resolve("sirius.port").toFile()));
+                    appContext = app.run(args);
                     measureTime("Workflow DONE!");
                     System.err.println("SIRIUS Service started successfully!");
                 } else {
