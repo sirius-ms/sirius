@@ -117,7 +117,7 @@ public class LoginController {
     /**
      * Get SignUp URL (For signUp via web browser)
      */
-    @GetMapping(value = "/signUpURL", produces = MediaType.TEXT_PLAIN_VALUE)
+    @GetMapping(value = "/signUpURL", produces =  MediaType.TEXT_PLAIN_VALUE + ";charset=UTF-8") //specify utf-8 because some generated clients have problems if not specified explicitly
     public String getSignUpURL() throws URISyntaxException {
         return ApplicationCore.WEB_API.getSignUpURL().toString();
     }
@@ -126,7 +126,7 @@ public class LoginController {
     /**
      * Open SignUp window in system browser and return signUp link.
      */
-    @GetMapping(value = "/signUp", produces = MediaType.TEXT_PLAIN_VALUE)
+    @GetMapping(value = "/signUp", produces = MediaType.TEXT_PLAIN_VALUE + ";charset=UTF-8") //specify utf-8 because some generated clients have problems if not specified explicitly
     public String signUp() throws URISyntaxException {
         String path = getSignUpURL();
         try {
