@@ -112,7 +112,7 @@ function update(data_changed=false) {
     drawNodeAnnots();
     drawLinks(root);
     scaleToFit();
-    d3.select('#collapse_button').style('opacity', 0);
+    d3.select('#collapse_button').style('visibility', 'hidden');
     if (data_changed){
         // apply zoom to new links/nodes etc.
         zoom_base.call(zoom.transform, currentZoom);
@@ -253,11 +253,13 @@ function handleClick(){
                     .attr('tr_x', collapse_x).attr('tr_y', collapse_y)
                     .attr('transform', 'translate(' + collapse_x + ',' + collapse_y
                           + ')')
-                    .style('opacity', 1);
+                    .style('visibility', 'visible');
             }
             // move this node
             nodeToMove = clickedNode;
             // visualize source/target of move with line
+            // TODO: when edit-mode is reenabled, a solution for opacity has to be found,
+            // as this property is not usable from zulu-17 (jfx) on
             d3.select(clickedNode).style('opacity', 0.45);
             d3.select('svg').append('line')
                 .attr('id', 'moveLine')
@@ -278,11 +280,11 @@ function handleClick(){
             else
                 mode = modes[0];
             moveNode(nodeToMove, clickedNode, mode);
-            d3.select(nodeToMove).style('opacity', 1);
+            d3.select(nodeToMove).style('visibility', 'visible');
             nodeToMove = null;
             d3.selectAll('#moveLine').remove();
             d3.selectAll('#moveLabel').remove();
-            d3.select('#collapse_button').style('opacity', 0);
+            d3.select('#collapse_button').style('visibility', 'hidden');
         }
     }
 }
@@ -351,14 +353,15 @@ function popupOpen(d) {
         open_left = popup_width + 10; // 10 -> cursor offset
     if (d3.event.clientY > height - popup_height)
         open_above = popup_height + 10; // 10 -> cursor offset
-    popup_div.style('opacity', 1);
+    if (popupStrings.length > 0)        // empty popups look ugly
+        popup_div.style('visibility', 'visible');
     popup_div.html(popupStrings.join('<br>'))
         .style('left', (d3.event.clientX - open_left + 10) + 'px')
         .style('top', (d3.event.clientY - open_above + 10) + 'px');
 }
 
 function popupClose(d) {
-    popup_div.style('opacity', 0);
+    popup_div.style('visibility', 'hidden');
 }
 
 function formatAnnot(id, value) {
@@ -994,21 +997,21 @@ function colorCode(variant, scheme) {
 
 function toggleNodeLabels(state) {
     d3.selectAll('.node_label')
-        .style('opacity', state ? 1 : 0);
+        .style('visibility', state ? 'visible' : 'hidden');
 }
 
 function toggleEdgeLabels(state) {
     svg.selectAll('.link_text')
-        .style('opacity', state?1:0);
+        .style('visibility', state ? 'visible' : 'hidden');
     if (edge_label_boxes){
         svg.selectAll('.link_text_bg')
-            .style('opacity', state?1:0);
+            .style('visibility', state ? 'visible' : 'hidden');
     }
 }
 
 function toggleColorBar(state) {
-    svg.select('#cb').style('opacity', state ? 100 : 0);
-    svg.select('#cb_label').style('opacity', state ? 100 : 0);
+    svg.select('#cb').style('visibility', state ? 'visible' : 'hidden');
+    svg.select('#cb_label').style('visibility', state ? 'visible' : 'hidden');
 }
 
 // generates d3 tree layout calculating node coordinates
@@ -1372,7 +1375,7 @@ function drawLinks(root) {
         link.selectAll('.link_text_bg')
             .style('fill', 'white')
             .style('stroke', 'black')
-            .style('opacity', 1)
+            .style('visibility', 'visible')
             .attr('bbox', function (d) { return d3.select(this).node().
                                          parentNode.children[2].getBBox();})
             .attr('x', function (d) { return d3.select(this).node().
@@ -1387,7 +1390,7 @@ function drawLinks(root) {
                                            .height;});
     } else{
         link.selectAll('.link_text_bg')
-            .style('opacity', 0);
+            .style('visibility', 'hidden');
     }
 }
 
@@ -1552,7 +1555,6 @@ svg = d3.select('body').append('svg')
 zoom_base = svg.append('rect')
     .attr('id', 'zoom_base')
     .style('opacity', 0)
-    .style('stroke', 'green')
     .style('fill', 'white')
     .attr('x', 0)
     .attr('y', -margin_top);
@@ -1562,7 +1564,7 @@ scale_base = svg.append('g')
 
 popup_div = d3.select('body').append('div')
     .attr('class', 'popup')
-    .style('opacity', 0)
+    .style('visibility', 'hidden')
     .style('position', 'absolute')
     .style('pointer-events', 'none');
 
@@ -1593,7 +1595,7 @@ function adjustCollapseButton(){
 }
 collapse_button = svg.append('g')
     .attr('id', 'collapse_button')
-    .style('opacity', 0);
+    .style('visibility', 'hidden');
 collapse_button.append('rect')
     .attr('width', 0).attr('height', 0)
     .style('fill', 'white')
