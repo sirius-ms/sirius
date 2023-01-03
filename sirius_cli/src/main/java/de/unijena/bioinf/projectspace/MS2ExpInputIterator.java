@@ -19,7 +19,9 @@
 
 package de.unijena.bioinf.projectspace;
 
+import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
@@ -135,8 +137,11 @@ public class MS2ExpInputIterator implements InstIterProvider {
                     } else if (experiment.getMolecularFormula() != null && experiment.getMolecularFormula().numberOf("D") > 0) {
                         LOG.warn("Deuterium Formula found in: " + experiment.getName() + " Instance will be Ignored.");
                     } else {
-                        if (ignoreFormula)
+                        if (ignoreFormula) {
                             experiment.setMolecularFormula(null);
+                            experiment.removeAnnotation(InChI.class);
+                            experiment.removeAnnotation(Smiles.class);
+                        }
                         instances.add(experiment);
                         return currentExperimentIterator;
                     }
