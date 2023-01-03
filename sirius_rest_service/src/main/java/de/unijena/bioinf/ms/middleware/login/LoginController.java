@@ -63,7 +63,7 @@ public class LoginController {
         AuthService as = ApplicationCore.WEB_API.getAuthService();
         if (!as.needsLogin()) {
             if (failWhenLoggedIn)
-                throw new ResponseStatusException(HttpStatus.METHOD_NOT_ALLOWED, "Already logged in. PLeas logout first or use 'failWhenLoggedIn=false'.");
+                throw new ResponseStatusException(HttpStatus.METHOD_NOT_ALLOWED, "Already logged in. Please logout first or use 'failWhenLoggedIn=false'.");
             else
                 as.logout();
         }
