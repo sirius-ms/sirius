@@ -43,6 +43,7 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
     public boolean matches(InstanceBean item) {
         double mz = item.getIonMass();
         double rt = item.getID().getRt().map(RetentionTime::getRetentionTimeInSeconds).orElse(Double.NaN);
+        double confidence = item.getID().getConfidenceScore().orElse(Double.NaN);
         if ((mz < filterModel.getCurrentMinMz()) ||
                 (filterModel.isMaxMzFilterActive() && mz > filterModel.getCurrentMaxMz())) {
             return false;
@@ -50,6 +51,12 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
         if (!Double.isNaN(rt)) {
             if ((rt < filterModel.getCurrentMinRt()) ||
                     (filterModel.isMaxRtFilterActive() && rt > filterModel.getCurrentMaxRt())) {
+                return false;
+            }
+        }
+        if (!Double.isNaN(confidence)) {
+            if ((confidence < filterModel.getCurrentMinConfidence()) ||
+                    (filterModel.isMaxConfidenceFilterActive() && confidence > filterModel.getCurrentMaxConfidence())){
                 return false;
             }
         }

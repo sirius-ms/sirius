@@ -49,7 +49,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
 
     final SearchTextField searchField;
     final JTextField searchFieldDialogCopy;
-    final JSpinner minMzSpinner, maxMzSpinner, minRtSpinner, maxRtSpinner;
+    final JSpinner minMzSpinner, maxMzSpinner, minRtSpinner, maxRtSpinner, minConfidenceSpinner, maxConfidenceSpinner;
     //    final PrecursorIonTypeSelector adductSelector;
     public final JCheckboxListPanel<PrecursorIonType> adductOptions;
     JButton discard, apply, reset;
@@ -89,10 +89,17 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         minRtSpinner = makeSpinner(filterModel.getCurrentMinRt(), filterModel.getMinRt(), filterModel.getMaxRt(), 10);
         smallParameters.addNamed("minimum RT in sec: ", minRtSpinner);
         maxRtSpinner = makeSpinner(filterModel.getCurrentMaxRt(), filterModel.getMinRt(), filterModel.getMaxRt(), 10);
-        smallParameters.addNamed("minimum RT in sec ", maxRtSpinner);
+        smallParameters.addNamed("maximum RT in sec: ", maxRtSpinner);
         ((JSpinner.DefaultEditor) maxRtSpinner.getEditor()).getTextField().setFormatterFactory(new MaxDoubleAsInfinityTextFormatterFactory((SpinnerNumberModel) maxRtSpinner.getModel(), filterModel.getMaxRt()));
 
         ensureCompatibleBounds(minRtSpinner, maxRtSpinner);
+
+        minConfidenceSpinner = makeSpinner(filterModel.getCurrentMinConfidence(), filterModel.getMinConfidence(), filterModel.getMaxConfidence(), .05);
+        smallParameters.addNamed("minimum Confidence: ", minConfidenceSpinner);
+        maxConfidenceSpinner = makeSpinner(filterModel.getCurrentMaxConfidence(), filterModel.getMinConfidence(), filterModel.getMaxConfidence(), .05);
+        smallParameters.addNamed("maximum Confidence: ", maxConfidenceSpinner);
+
+        ensureCompatibleBounds(minConfidenceSpinner, maxConfidenceSpinner);
 
 
         //peak shape filter
@@ -114,8 +121,6 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
                 peakShape[i].setSelected(filterModel.getPeakShapeQuality(i));
             }
             smallParameters.add(group);
-
-
         }
 
         //lipid filter
@@ -220,6 +225,8 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         filterModel.setCurrentMaxMz(getMaxMz());
         filterModel.setCurrentMinRt(getMinRt());
         filterModel.setCurrentMaxRt(getMaxRt());
+        filterModel.setCurrentMinConfidence(getMinConfidence());
+        filterModel.setCurrentMaxConfidence(getMaxConfidence());
         filterModel.setAdducts(new HashSet<>(adductOptions.checkBoxList.getCheckedItems()));
 
         for (int k = 0; k < peakShape.length; ++k) {
@@ -293,6 +300,8 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         maxMzSpinner.setValue(filterModel.getMaxMz());
         minRtSpinner.setValue(filterModel.getMinRt());
         maxRtSpinner.setValue(filterModel.getMaxRt());
+        minConfidenceSpinner.setValue(filterModel.getMinConfidence());
+        maxConfidenceSpinner.setValue(filterModel.getMaxConfidence());
     }
 
     public double getMinMz() {
@@ -310,6 +319,16 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
     public double getMaxRt() {
         return getDoubleValue(maxRtSpinner);
     }
+
+    public double getMinConfidence() {
+        return getDoubleValue(minConfidenceSpinner);
+    }
+
+    public double getMaxConfidence() {
+        return getDoubleValue(maxConfidenceSpinner);
+    }
+
+
 
     public double getDoubleValue(JSpinner spinner) {
         return ((SpinnerNumberModel)spinner.getModel()).getNumber().doubleValue();
