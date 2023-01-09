@@ -27,6 +27,7 @@ import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.elgordo.LipidSpecies;
 import de.unijena.bioinf.fingerid.annotations.FormulaResultThreshold;
 import de.unijena.bioinf.jjobs.BasicJJob;
@@ -107,7 +108,7 @@ public class FingerprintPreprocessingJJob<S extends FormulaScore> extends BasicJ
         // This is important because zodiac can create different scores for adducts that correspond to the same tree
 
         // skip if there is a single candidate with lipid annotation (El gordo)
-        if(idResult.size() != 1 || !idResult.get(0).getTree().hasAnnotation(LipidSpecies.class)) {
+        if (idResult.size() != 1 || !idResult.get(0).getTree().hasAnnotation(LipidSpecies.class)) {
             logDebug("Expanding Identification Results for different Adducts.");
             final PossibleAdducts adducts;
             if (experiment.getPrecursorIonType().isIonizationUnknown()) {
@@ -122,15 +123,18 @@ public class FingerprintPreprocessingJJob<S extends FormulaScore> extends BasicJ
             final Set<MolecularFormula> neutralFormulas = new HashSet<>();
             for (IdentificationResult<S> ir : idResult)
                 neutralFormulas.add(ir.getMolecularFormula());
+            final Set<MolecularFormula> ws = experiment.getAnnotation(Whiteset.class).map(Whiteset::getNeutralFormulas).orElse(null);
             for (IdentificationResult<S> ir : idResult) {
                 if (ir.getPrecursorIonType().hasNeitherAdductNorInsource()) {
                     for (PrecursorIonType ionType : adducts) {
                         if (!ionType.equals(ir.getTree().getAnnotationOrThrow(PrecursorIonType.class)) && new IonTreeUtils().isResolvable(ir.getTree(), ionType)) {
                             try {
                                 IdentificationResult<S> newIr = IdentificationResult.withPrecursorIonType(ir, ionType, false);
-                                newIr.getTree().setAnnotation(IonTreeUtils.ExpandedAdduct.class, IonTreeUtils.ExpandedAdduct.EXPANDED);
-                                if (newIr.getTree().numberOfVertices() >= 3 && (neutralFormulas.add(newIr.getMolecularFormula())))
-                                    ionTypes.put(newIr, ir);
+                                if (ws == null || ws.contains(newIr.getMolecularFormula())) {
+                                    newIr.getTree().setAnnotation(IonTreeUtils.ExpandedAdduct.class, IonTreeUtils.ExpandedAdduct.EXPANDED);
+                                    if (newIr.getTree().numberOfVertices() >= 3 && (neutralFormulas.add(newIr.getMolecularFormula())))
+                                        ionTypes.put(newIr, ir);
+                                }
                             } catch (IllegalArgumentException e) {
                                 logError("Error with instance " + getExperiment().getName() + " and formula " + ir.getMolecularFormula() + " and ion type " + ionType);
                                 throw e;
@@ -157,7 +161,7 @@ public class FingerprintPreprocessingJJob<S extends FormulaScore> extends BasicJ
 
             idResult.sort(Collections.reverseOrder()); //descending
             addedIdentificationResults = ionTypes;
-        }else {
+        } else {
             logDebug("Skip Expanding Identification Results for different Adducts due to existing El Gordo Result.");
         }
 
