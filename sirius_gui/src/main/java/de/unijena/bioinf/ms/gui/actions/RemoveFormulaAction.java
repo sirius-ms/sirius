@@ -26,11 +26,16 @@ package de.unijena.bioinf.ms.gui.actions;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.ChemistryBase.chem.InChI;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.Smiles;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -71,10 +76,31 @@ public class RemoveFormulaAction extends AbstractAction {
                 int progress = 0;
                 updateProgress(0, 100, progress++, "Loading Compounds...");
                 final List<InstanceBean> toModify = new ArrayList<>(MF.getCompoundList().getCompoundListSelectionModel().getSelected());
-                updateProgress(0, toModify.size(), progress++, "Removing " + (progress-1) + "/" + toModify.size() );
+                updateProgress(0, toModify.size(), progress++, "Removing " + (progress - 1) + "/" + toModify.size());
                 for (InstanceBean instance : toModify) {
-                    instance.set().setMolecularFormula(null).apply();
-                    updateProgress(0, toModify.size(), progress++, "Removing " + (progress-1) + "/" + toModify.size() );
+                    final MolecularFormula mf = instance.getExperiment().getMolecularFormula();
+                    if (mf != null) {
+                        instance.set().setMolecularFormula(null).apply();
+
+                        boolean modified = false;
+                        if (instance.getExperiment().hasAnnotation(Whiteset.class)) {
+                            @NotNull Whiteset whiteset = instance.getExperiment().getAnnotationOrThrow(Whiteset.class);
+                            if (whiteset.getNeutralFormulas().size() == 1 && whiteset.getNeutralFormulas().contains(mf)) {
+                                instance.getExperiment().removeAnnotation(Whiteset.class);
+                                modified = true;
+                            }
+                        }
+
+                        if (instance.getExperiment().removeAnnotation(InChI.class) != null)
+                            modified = true;
+
+                        if (instance.getExperiment().removeAnnotation(Smiles.class) != null)
+                            modified = true;
+
+                        if (modified)
+                            instance.updateExperiment();
+                    }
+                    updateProgress(0, toModify.size(), progress++, "Removing " + (progress - 1) + "/" + toModify.size());
                 }
                 return null;
             }
