@@ -34,6 +34,7 @@ import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.Parser;
+import de.unijena.bioinf.babelms.utils.ParserUtils;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -480,6 +481,9 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             fields = null;
             config = null;
             compoundName = null;
+
+            //validate
+            ParserUtils.checkMolecularFormula(exp);
         }
 
         private String[][] strings2arrays(List<List<String>> ms1Comments) {
