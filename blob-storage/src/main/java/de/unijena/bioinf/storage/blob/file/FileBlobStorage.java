@@ -82,7 +82,7 @@ public class FileBlobStorage implements BlobStorage {
 
     @Override
     public @NotNull Map<String, String> getTags() throws IOException {
-        Path tagPath = Path.of(BLOB_TAGS);
+        Path tagPath = root.resolve(BLOB_TAGS);
         if (tags == null) {
             if (Files.notExists(tagPath))
                 tags = new HashMap<>();
