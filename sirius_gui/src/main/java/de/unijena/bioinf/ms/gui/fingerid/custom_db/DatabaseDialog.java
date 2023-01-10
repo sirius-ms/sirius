@@ -25,7 +25,6 @@ import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
-import de.unijena.bioinf.ms.gui.compute.DBSelectionList;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.configs.Icons;
@@ -217,7 +216,7 @@ public class DatabaseDialog extends JDialog {
                 content.setText("<html>Custom database. Containing "
                         + c.getStatistics().getCompounds() + " compounds with " + c.getStatistics().getFormulas()
                         + " different molecular formulas." +
-                        ((c.getSettings().isInheritance() ? "<br>This database will also include all compounds from '" + DataSources.getDataSourcesFromBitFlags(c.getFilterFlag()).stream().filter(n -> !DBSelectionList.BLACK_LIST.contains(n)).collect(Collectors.joining("', '")) + "'." : "")
+                        ((c.getSettings().isInheritance() ? "<br>This database will also include all compounds from '" + DataSources.getDataSourcesFromBitFlags(c.getFilterFlag()).stream().filter(n -> !SearchableDatabases.NON_SLECTABLE_LIST.contains(n)).collect(Collectors.joining("', '")) + "'." : "")
                                 + (c.needsUpgrade() ? "<br><b>This database schema is outdated. You have to upgrade the database before you can use it.</b>" : "") + "</html>"));
             } else {
                 content.setText("Empty custom database.");
