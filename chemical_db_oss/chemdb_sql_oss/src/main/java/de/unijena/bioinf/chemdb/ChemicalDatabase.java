@@ -57,7 +57,7 @@ public class ChemicalDatabase implements AbstractChemicalDatabase, PooledDB<Conn
     public final static String REF_MAPPING_TABLE_SUFFIX = PropertyManager.getProperty("de.unijena.bioinf.chemdb.scheme.references.mapping.suffix", null, "_mapping_id_inchi_key");
     public final static String PUBCHEM_SCHEME = PropertyManager.getProperty("de.unijena.bioinf.chemdb.scheme.pubchem", null, "pubchem");
     public final static String DEFAULT_SCHEME = PropertyManager.getProperty("de.unijena.bioinf.chemdb.scheme.default", null, "public");
-    public final static String FINGERPRINT_ID = PropertyManager.getProperty("de.unijena.bioinf.chemdb.fingerprint.id", null, "3");
+    public final static String FINGERPRINT_ID = PropertyManager.getProperty("de.unijena.bioinf.chemdb.fingerprint.id", null, "4");
 
 
     public final static String STRUCTURES_TABLE = DEFAULT_SCHEME + ".structures";

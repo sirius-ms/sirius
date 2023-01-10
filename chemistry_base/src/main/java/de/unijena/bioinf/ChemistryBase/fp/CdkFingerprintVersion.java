@@ -44,6 +44,7 @@ public class CdkFingerprintVersion extends FingerprintVersion {
 
     public static void main(String[] args) {
         System.out.println(CdkFingerprintVersion.getDefault().getOffsetFor(USED_FINGERPRINTS.INSILICO));
+        System.out.println(CdkFingerprintVersion.getDefault().size());
     }
 
     private final long fastCompareFlag;
