@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.chemdb.DataSource;
+import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
@@ -30,7 +31,6 @@ import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -89,9 +89,7 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
     List<CustomDataSources.Source> allButInsilico = null;
     private List<CustomDataSources.Source> allButInsilico(){
        if (allButInsilico == null){
-           allButInsilico = CustomDataSources.getSourcesFromNames(
-                   Arrays.stream(DataSource.valuesNoALLNoMINES()).map(DataSource::realName)
-                           .filter(s -> !DBSelectionList.BLACK_LIST.contains(s)).collect(Collectors.toList()));
+           allButInsilico = SearchableDatabases.getNonInSilicoSelectableSources();
        }
        return allButInsilico;
 
