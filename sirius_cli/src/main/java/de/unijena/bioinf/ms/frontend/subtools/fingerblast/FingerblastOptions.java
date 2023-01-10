@@ -56,7 +56,7 @@ public class FingerblastOptions implements ToolChainOptions<FingerblastSubToolJo
     }
 
     @Option(names = {"-d", "--database", "--db"}, descriptionKey = "StructureSearchDB", paramLabel = DataSourceCandidates.PATAM_LABEL, completionCandidates = DataSourceCandidates.class,
-            description = {"Search structure in the union of the given databases. If no database is given 'ALL' internal databases are used.", DataSourceCandidates.VALID_DATA_STRING})
+            description = {"Search structure in the union of the given databases. If no database is given the default database(s) are used.", DataSourceCandidates.VALID_DATA_STRING})
     public void setDatabase(DefaultParameter dbList) throws Exception {
         defaultConfigOptions.changeOption("StructureSearchDB", dbList);
     }
