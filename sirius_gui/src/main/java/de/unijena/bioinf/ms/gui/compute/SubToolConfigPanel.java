@@ -24,14 +24,13 @@ import org.jetbrains.annotations.NotNull;
 import picocli.CommandLine;
 
 import javax.swing.*;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.Optional;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 public abstract class SubToolConfigPanel<C> extends ConfigPanel {
-    //todo if we decide to use the GUI longer we could think about creating panel from annotated classes
     protected final Class<C> annotatedClass;
     private final CommandLine.Command command;
 
@@ -84,11 +83,31 @@ public abstract class SubToolConfigPanel<C> extends ConfigPanel {
         } else {
             fname = name;
         }
+        return collectOptions(new ArrayList<>(), annotatedClass).stream().filter(opt -> Arrays.asList(opt.names())
+                .contains(fname)).findFirst();
+    }
 
-        return Stream.concat(
-                Stream.of(annotatedClass.getMethods()).filter(m -> m.isAnnotationPresent(CommandLine.Option.class)).map(m -> m.getAnnotation(CommandLine.Option.class)),
-                Stream.of(annotatedClass.getFields()).filter(f -> f.isAnnotationPresent(CommandLine.Option.class)).map(f -> f.getAnnotation(CommandLine.Option.class))
-        ).filter(opt -> Arrays.asList(opt.names()).contains(fname)).findFirst();
+    protected List<CommandLine.Option> collectOptions(final List<CommandLine.Option> options, Class<?> annotatedClass) {
+        Stream.concat(
+                Stream.of(annotatedClass.getDeclaredMethods()).filter(m -> m.isAnnotationPresent(CommandLine.Option.class)).map(m -> m.getAnnotation(CommandLine.Option.class)),
+                Stream.of(annotatedClass.getDeclaredFields()).filter(f -> f.isAnnotationPresent(CommandLine.Option.class)).map(f -> f.getAnnotation(CommandLine.Option.class))
+        ).forEach(options::add);
+
+        Arrays.stream(annotatedClass.getDeclaredFields()).filter(f -> f.isAnnotationPresent(CommandLine.ArgGroup.class))
+                .forEach(field -> {
+                    final Type genType = field.getGenericType();
+                    if (genType instanceof ParameterizedType) {
+                        final Type[] types = ((ParameterizedType) genType).getActualTypeArguments();
+                        if (types.length > 0)
+                            collectOptions(options, (Class<?>) types[0]);
+                        else
+                            collectOptions(options, field.getType());
+                    } else {
+                        collectOptions(options, (Class<?>) genType);
+                    }
+                });
+
+        return options;
     }
 
     public Optional<String[]> getOptionDescriptionByName(String name) {
@@ -121,10 +140,11 @@ public abstract class SubToolConfigPanel<C> extends ConfigPanel {
         return box;
     }
 
-    public  JCheckBox makeGenericOptionCheckBox(String text, String optionKey){
-        return makeGenericOptionCheckBox(text, optionKey,false);
+    public JCheckBox makeGenericOptionCheckBox(String text, String optionKey) {
+        return makeGenericOptionCheckBox(text, optionKey, false);
     }
-    public  JCheckBox makeGenericOptionCheckBox(String text, String optionKey, boolean selected){
+
+    public JCheckBox makeGenericOptionCheckBox(String text, String optionKey, boolean selected) {
         JCheckBox checkBox = new JCheckBox(text, selected);
         parameterBindings.put(optionKey, () -> "~" + checkBox.isSelected());
         getOptionDescriptionByName(optionKey).ifPresent(it -> checkBox.setToolTipText(GuiUtils.formatToolTip(it)));
