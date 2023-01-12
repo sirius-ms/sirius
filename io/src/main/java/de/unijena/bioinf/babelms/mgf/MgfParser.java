@@ -28,6 +28,7 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.babelms.SpectralParser;
+import de.unijena.bioinf.babelms.utils.ParserUtils;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
@@ -394,9 +395,11 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
             } else break;
         }
 
-        if (!additionalFields.isEmpty()) {
+        ParserUtils.checkMolecularFormula(exp);
+
+        if (!additionalFields.isEmpty())
             exp.setAnnotation(AdditionalFields.class, additionalFields);
-        }
+
         exp.setAnnotation(SpectrumFileSource.class, new SpectrumFileSource(source));
         return exp;
     }
