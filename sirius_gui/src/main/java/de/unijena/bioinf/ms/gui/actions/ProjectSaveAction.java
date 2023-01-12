@@ -55,8 +55,6 @@ public class ProjectSaveAction extends AbstractAction {
         jfc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
         jfc.setAcceptAllFileFilterUsed(false);
         jfc.addChoosableFileFilter(new ProjectDirectoryFilter());
-        jfc.addChoosableFileFilter(new ProjectArchivedFilter());
-
 
         while (true) {
             final int state = jfc.showDialog(MF, "Save As");
@@ -67,8 +65,6 @@ public class ProjectSaveAction extends AbstractAction {
             if (jfc.getFileFilter() instanceof ProjectArchivedFilter)
                 if (!selFile.getName().endsWith(".sirius"))
                     selFile = new File(selFile.getParentFile(),selFile.getName() + ".sirius");
-
-
 
             if (!selFile.exists() || selFile.isDirectory() && Objects.requireNonNull(selFile.list()).length == 0) {
                 SiriusProperties.

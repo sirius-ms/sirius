@@ -26,7 +26,6 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.rest.ProxyManager;
 import de.unijena.bioinf.webapi.Tokens;
@@ -73,7 +72,7 @@ public class SubscriptionDialog extends JDialog {
         init(subs);
     }
 
-    private JComboBox<Subscription> comboBox4;
+    private JComboBox<Subscription> comboBox;
 
 
     Action applyAction;
@@ -99,9 +98,11 @@ public class SubscriptionDialog extends JDialog {
 
     private void init(List<Subscription> subs) {
         setLayout(new BorderLayout());
-        comboBox4 = new JComboBox<>(subs.toArray(Subscription[]::new));
-        comboBox4.setRenderer(new SubscriptionHTMLRenderer(350));
-        add(comboBox4, BorderLayout.CENTER);
+        comboBox = new JComboBox<>(subs.toArray(Subscription[]::new));
+        comboBox.setRenderer(new SubscriptionHTMLRenderer(350));
+        comboBox.setMaximumSize(new Dimension(comboBox.getMaximumSize().width, 200));
+        comboBox.setMaximumRowCount(5);
+        add(comboBox, BorderLayout.CENTER);
 
         //============= SOUTH =================
         cancelAction = new AbstractAction() {
@@ -120,7 +121,7 @@ public class SubscriptionDialog extends JDialog {
                 Jobs.runInBackgroundAndLoad(SubscriptionDialog.this, "Changing Subscription...", () -> {
                     try {
                         ProxyManager.withConnectionLock((ExFunctions.Runnable) () -> {
-                            Subscription sub = (Subscription) comboBox4.getSelectedItem();
+                            Subscription sub = (Subscription) comboBox.getSelectedItem();
                             SiriusProperties.SIRIUS_PROPERTIES_FILE().setProperty(Tokens.ACTIVE_SUBSCRIPTION_KEY, sub.getSid());
                             ApplicationCore.WEB_API.changeActiveSubscription(sub);
                             ProxyManager.reconnect();

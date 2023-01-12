@@ -19,15 +19,20 @@
 
 package de.unijena.bioinf.projectspace;
 
+import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Warning;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.jjobs.JobProgressMerger;
 import de.unijena.bioinf.jjobs.ProgressInputStream;
 import de.unijena.bioinf.sirius.Sirius;
+import de.unijena.bioinf.sirius.validation.Ms1Validator;
+import de.unijena.bioinf.sirius.validation.Ms2Validator;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -135,8 +140,16 @@ public class MS2ExpInputIterator implements InstIterProvider {
                     } else if (experiment.getMolecularFormula() != null && experiment.getMolecularFormula().numberOf("D") > 0) {
                         LOG.warn("Deuterium Formula found in: " + experiment.getName() + " Instance will be Ignored.");
                     } else {
-                        if (ignoreFormula)
+                        if (ignoreFormula) {
                             experiment.setMolecularFormula(null);
+                            experiment.removeAnnotation(InChI.class);
+                            experiment.removeAnnotation(Smiles.class);
+                        }
+                        if (experiment.getMs2Spectra().isEmpty()){
+                            new Ms1Validator().validate(experiment, Warning.Logger, true);
+                        } else {
+                            new Ms2Validator().validate(experiment, Warning.Logger, true);
+                        }
                         instances.add(experiment);
                         return currentExperimentIterator;
                     }
