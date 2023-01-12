@@ -139,6 +139,9 @@ public class ProjectSpaceIO {
                 Files.createDirectories(path);
             }
             space = new SiriusProjectSpace(configuration, new PathProjectSpaceIOProvider(path));
+            if (configuration.hasProjectSpacePropertyRegistered(VersionInfo.class))
+                space.setProjectSpaceProperty(VersionInfo.class, new VersionInfo(PropertyManager.getProperty("de.unijena.bioinf.siriusFrontend.version")));
+
             if (compressed)
                 space.setProjectSpaceProperty(CompressionFormat.class, space.ioProvider.getCompressionFormat());
         }
