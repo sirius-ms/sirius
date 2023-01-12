@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.chemdb;
 
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.chemdb.custom.OutdatedDBExeption;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -33,14 +34,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class SearchableDatabases {
+    public final static Set<String> NON_SLECTABLE_LIST = Set.of(DataSource.ADDITIONAL.realName, DataSource.TRAIN.realName, DataSource.LIPID.realName(), DataSource.ALL.realName, DataSource.ALL_BUT_INSILICO.realName,
+            DataSource.PUBCHEMANNOTATIONBIO.realName, DataSource.PUBCHEMANNOTATIONDRUG.realName, DataSource.PUBCHEMANNOTATIONFOOD.realName, DataSource.PUBCHEMANNOTATIONSAFETYANDTOXIC.realName,
+            DataSource.SUPERNATURAL.realName
+    );
+
     //todo should be configurable
     public static final String WEB_CACHE_DIR = "web-cache"; //cache directory for all remote (web) dbs
     public static final String CUSTOM_DB_DIR = "custom";
@@ -50,7 +53,7 @@ public class SearchableDatabases {
     }
 
     @NotNull
-    public static Path getCustomDatabaseDirectory(){
+    public static Path getCustomDatabaseDirectory() {
         return getDatabaseDirectory().resolve(CUSTOM_DB_DIR);
     }
 
@@ -195,11 +198,22 @@ public class SearchableDatabases {
         throw new OutdatedDBExeption("DB '" + db.name() + "' is outdated (DB-Version: " + db.getDatabaseVersion() + " vs. ReqVersion: " + VersionsInfo.CUSTOM_DATABASE_SCHEMA + ") . PLease reimport the structures. ");
     }
 
-    public static SearchableDatabase getAllDb() {
-        return getDatabaseByNameOrThrow(DataSource.ALL.name());
+    public static List<SearchableDatabase> getAllSelectableDbs() {
+        return getAvailableDatabases().stream().
+                filter(db -> !NON_SLECTABLE_LIST.contains(db.name()))
+                .collect(Collectors.toList());
     }
 
-    public static SearchableDatabase getBioDb() {
-        return getDatabaseByNameOrThrow(DataSource.BIO.name());
+    public static List<SearchableDatabase> getNonInSilicoSelectableDbs() {
+        return Arrays.stream(DataSource.valuesNoALLNoMINES()).map(DataSource::realName)
+                .filter(s -> !NON_SLECTABLE_LIST.contains(s))
+                .map(SearchableDatabases::getDatabase).flatMap(Optional::stream)
+                .collect(Collectors.toList());
+    }
+
+    public static List<CustomDataSources.Source> getNonInSilicoSelectableSources() {
+        return CustomDataSources.getSourcesFromNames(
+                Arrays.stream(DataSource.valuesNoALLNoMINES()).map(DataSource::realName)
+                        .filter(s -> !NON_SLECTABLE_LIST.contains(s)).collect(Collectors.toList()));
     }
 }

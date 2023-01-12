@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.chemdb.annotations;
 
+import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
@@ -69,6 +70,11 @@ public abstract class SearchableDBAnnotation implements Ms2ExperimentAnnotation 
     }
 
     public static List<SearchableDatabase> makeDB(@NotNull String names) {
+        if (names.equalsIgnoreCase(DataSource.ALL.realName) || names.equalsIgnoreCase(DataSource.ALL.name()))
+            return SearchableDatabases.getAllSelectableDbs();
+        if (names.equalsIgnoreCase(DataSource.ALL_BUT_INSILICO.realName) || names.equalsIgnoreCase(DataSource.ALL_BUT_INSILICO.name()))
+            return SearchableDatabases.getNonInSilicoSelectableDbs();
+
         return Arrays.stream(names.trim().split("\\s*,\\s*"))
                 .map(SearchableDatabases::getDatabase).flatMap(Optional::stream).distinct().collect(Collectors.toList());
     }
