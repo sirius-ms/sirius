@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.DataSources;
+import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
@@ -30,15 +31,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class DBSelectionList extends JCheckBoxList<CustomDataSources.Source> {
-    public final static Set<String> BLACK_LIST = Set.of(DataSource.ADDITIONAL.realName, DataSource.TRAIN.realName, DataSource.LIPID.realName(), DataSource.ALL.realName, DataSource.ALL_BUT_INSILICO.realName,
-            DataSource.PUBCHEMANNOTATIONBIO.realName, DataSource.PUBCHEMANNOTATIONDRUG.realName, DataSource.PUBCHEMANNOTATIONFOOD.realName, DataSource.PUBCHEMANNOTATIONSAFETYANDTOXIC.realName,
-            DataSource.SUPERNATURAL.realName
-    );
+
 
     public DBSelectionList() {
         this(true);
@@ -49,7 +46,7 @@ public class DBSelectionList extends JCheckBoxList<CustomDataSources.Source> {
 
     public DBSelectionList(@Nullable String descriptionKey, boolean includeCustom) {
         this(descriptionKey, CustomDataSources.sourcesStream().
-                filter(db -> !BLACK_LIST.contains(db.name())).
+                filter(db -> !SearchableDatabases.NON_SLECTABLE_LIST.contains(db.name())).
                 filter(db -> includeCustom || !db.isCustomSource()).sorted(Comparator.comparing(CustomDataSources.Source::name)).
                 collect(Collectors.toList()));
     }

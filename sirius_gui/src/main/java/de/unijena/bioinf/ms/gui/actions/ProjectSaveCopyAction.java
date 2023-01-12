@@ -57,9 +57,7 @@ public class ProjectSaveCopyAction extends AbstractAction {
         jfc.setCurrentDirectory(PropertyManager.getFile(SiriusProperties.DEFAULT_SAVE_FILE_PATH));
         jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         jfc.setAcceptAllFileFilterUsed(false);
-        jfc.addChoosableFileFilter(new ProjectArchivedFilter());
         jfc.addChoosableFileFilter(new ProjectDirectoryFilter());
-//        jfc.setApproveButtonText("Export");
 
         File selectedFile = null;
 

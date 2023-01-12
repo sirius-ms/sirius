@@ -40,6 +40,9 @@ public class CompoundFilterModel implements SiriusPCS {
     private double currentMinRt;
     private double currentMaxRt;
 
+    private double currentMinConfidence;
+    private double currentMaxConfidence;
+
     //
     private boolean[] peakShapeQualities = new boolean[]{true,true,true};
 
@@ -54,9 +57,12 @@ public class CompoundFilterModel implements SiriusPCS {
     private final double minRt;
     private final double maxRt;
 
+    private final double minConfidence;
+    private final double maxConfidence;
+
 
     public CompoundFilterModel() {
-        this(0, 5000d, 0, 10000d);
+        this(0, 5000d, 0, 10000d, 0, 1d);
     }
 
 
@@ -67,17 +73,23 @@ public class CompoundFilterModel implements SiriusPCS {
      * @param maxMz
      * @param minRt
      * @param maxRt
+     * @param minConfidence
+     * @param maxConfidence
      */
-    public CompoundFilterModel(double minMz, double maxMz, double minRt, double maxRt) {
+    public CompoundFilterModel(double minMz, double maxMz, double minRt, double maxRt, double minConfidence, double maxConfidence) {
         this.currentMinMz = minMz;
         this.currentMaxMz = maxMz;
         this.currentMinRt = minRt;
         this.currentMaxRt = maxRt;
+        this.currentMinConfidence = minConfidence;
+        this.currentMaxConfidence = maxConfidence;
 
         this.minMz = minMz;
         this.maxMz = maxMz;
         this.minRt = minRt;
         this.maxRt = maxRt;
+        this.minConfidence = minConfidence;
+        this.maxConfidence = maxConfidence;
     }
 
     public void fireUpdateCompleted() {
@@ -185,13 +197,47 @@ public class CompoundFilterModel implements SiriusPCS {
         return maxRt;
     }
 
+    public double getCurrentMaxConfidence() {
+        return currentMaxConfidence;
+    }
+
+    public void setCurrentMaxConfidence(double currentMaxConfidence) {
+        if (currentMaxConfidence > maxConfidence) throw new IllegalArgumentException("current value out of range: "+ currentMaxConfidence);
+        double oldValue = this.currentMaxConfidence;
+        this.currentMaxConfidence = currentMaxConfidence;
+        pcs.firePropertyChange("setMaxConfidence", oldValue, currentMaxConfidence);
+
+    }
+
+    public double getCurrentMinConfidence() {
+        return currentMinConfidence;
+    }
+
+    public void setCurrentMinConfidence(double currentMinConfidence) {
+        if (currentMinConfidence < minConfidence) throw new IllegalArgumentException("current value out of range: "+ currentMinConfidence);
+        double oldValue = this.currentMinConfidence;
+        this.currentMinConfidence = currentMinConfidence;
+        pcs.firePropertyChange("setMinConfidence", oldValue, currentMinConfidence);
+
+    }
+
+    public double getMinConfidence() {
+        return minConfidence;
+    }
+
+    public double getMaxConfidence() {
+        return maxConfidence;
+    }
+
     /**
      * filter options are active. that means selected values differ from absolute min/max
-     * @return
+     * @return true if active and false if not.
      */
     public boolean isActive(){
         if (currentMinMz != minMz || currentMaxMz != maxMz ||
-                currentMinRt != minRt || currentMaxRt != maxRt) return true;
+                currentMinRt != minRt || currentMaxRt != maxRt ||
+                currentMinConfidence != minConfidence || currentMaxConfidence != maxConfidence
+        ) return true;
         if (!adducts.isEmpty()) return true;
         if (isPeakShapeFilterEnabled() || isLipidFilterEnabled()) return true;
 
@@ -205,6 +251,11 @@ public class CompoundFilterModel implements SiriusPCS {
     public boolean isMaxRtFilterActive() {
         return currentMaxRt != maxRt;
     }
+
+    public boolean isMaxConfidenceFilterActive() {
+        return currentMaxConfidence != maxConfidence;
+    }
+
 
     public void setAdducts(Set<PrecursorIonType> adducts) {
         this.adducts = adducts;
@@ -225,11 +276,12 @@ public class CompoundFilterModel implements SiriusPCS {
         setCurrentMaxMz(maxMz);
         setCurrentMinRt(minRt);
         setCurrentMaxRt(maxRt);
+        setCurrentMaxConfidence(maxConfidence);
+        setCurrentMinConfidence(minConfidence);
         Arrays.fill(peakShapeQualities,true);
         lipidFilter = LipidFilter.KEEP_ALL_COMPOUNDS;
         adducts = Set.of();
     }
-
 
     public enum LipidFilter {
         KEEP_ALL_COMPOUNDS, ANY_LIPID_CLASS_DETECTED, NO_LIPID_CLASS_DETECTED
