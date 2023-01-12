@@ -234,6 +234,7 @@ public class InstanceImporter {
             List<String> globalFiles = sourceReader.listFiles("*").stream()
                     .filter(p -> !p.equals(PSLocations.FORMAT) &&
                             !p.equals(PSLocations.COMPRESSION) &&
+                            !p.equals(PSLocations.VERSION) &&
                             !p.equals(SummaryLocations.COMPOUND_SUMMARY_ADDUCTS) &&
                             !p.equals(SummaryLocations.COMPOUND_SUMMARY) &&
                             !p.equals(SummaryLocations.FORMULA_SUMMARY) &&
