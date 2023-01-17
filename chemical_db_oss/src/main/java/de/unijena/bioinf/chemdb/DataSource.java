@@ -53,6 +53,9 @@ public enum DataSource {
     ADDITIONAL("additional", 524288,  null,null,null, 0, false), //proably mostly training structures, but maybe more.
     SUPERNATURAL("SuperNatural", 1048576,  "id", "supernatural", "http://bioinf-applied.charite.de/supernatural_new/index.php?site=compound_search&start=0&supplier=all&tox=any&classification=all&compound_input=true&sn_id=%s"),
     COCONUT("COCONUT", 2097152,  "id", "coconut", "https://coconut.naturalproducts.net/compound/coconut_id/%s"),
+
+    BloodExposome("Blood Exposome", 4194304,  "pubchem_cid", "coconut", "https://bloodexposome.org/#/description?qcid=%s"), //todo correct uri? //todo cite ...new Publication("Barupal DK and Fiehn O, Generating the Blood Exposome Database Using a Comprehensive Text Mining and Database Fusion Approach. Environ Health Perspect. 2019", "10.1289/EHP4713"))
+    TeroMol("TeroMOL", 8388608,  "pubchem_cid", "teromol", "http://terokit.qmclab.com/molecule.html?MolId=%s"), //todo correct uri? //todo cite new Publication("Zeng T et al.,Chemotaxonomic Investigation of Plant Terpenoids with an Established Database (TeroMOL). New Phytol. 2022", "10.1111/nph.18133"))
     PUBCHEMANNOTATIONBIO("PubChem class - bio and metabolites", 16777216,  null,null,null, 0, false), //2**24; Pubchem Annotations now have a separate flag
     PUBCHEMANNOTATIONDRUG("PubChem class - drug", 33554432,  null,null,null, 0, false),
     PUBCHEMANNOTATIONSAFETYANDTOXIC("PubChem class - safety and toxic", 67108864,  null,null,null, 0, false),
