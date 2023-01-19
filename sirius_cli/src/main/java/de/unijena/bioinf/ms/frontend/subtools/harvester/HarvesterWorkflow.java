@@ -50,7 +50,7 @@ import de.unijena.bioinf.projectspace.*;
 import de.unijena.bioinf.sirius.Ms2Preprocessor;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
-import de.unijena.bioinf.sirius.elementdetection.FluorineDetector;
+//import de.unijena.bioinf.sirius.elementdetection.FluorineDetector;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.set.hash.TIntHashSet;
 import gnu.trove.set.hash.TShortHashSet;
@@ -229,6 +229,7 @@ public class HarvesterWorkflow extends PostprocessingJob<Boolean> implements Wor
             }
         }
         if (options.fluorinePath!=null) {
+            /*
             final double fl = new FluorineDetector().decisionScore(input);
             if (fl >= 0) {
                 final AdditionalFields add = experiment.getAnnotation(AdditionalFields.class, AdditionalFields::new);
@@ -241,6 +242,8 @@ public class HarvesterWorkflow extends PostprocessingJob<Boolean> implements Wor
                 }
                 oneofboth=true;
             }
+
+             */
         }
         return oneofboth;
     }
