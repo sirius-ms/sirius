@@ -5,6 +5,9 @@ plugins {
     id "com.jfrog.artifactory" version "4.25.1"
 }
 
+wrapper{
+    gradleVersion = '6.9.3'
+}
 
 //Global Properties
 ext {
