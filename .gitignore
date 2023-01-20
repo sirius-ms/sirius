@@ -2,6 +2,7 @@
 .gradle
 gradle
 !gradle/wrapper/gradle-wrapper.properties
+!gradle/gradle-wrapper.jar
 build/
 !**/src/main/**/build/
 !**/src/test/**/build/
