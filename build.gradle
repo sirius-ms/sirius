@@ -20,6 +20,12 @@ plugins {
     id "de.undercouch.download" version "4.1.1"
 }
 
+//this task is used to update the gradle wrapper properties to a new version
+// it also ensures that wrapper scripts and gradle-wrapper.jar are updates if necessary
+wrapper{
+    gradleVersion = '6.9.3'
+}
+
 //Global Properties
 ext {
     //version for external libraries
