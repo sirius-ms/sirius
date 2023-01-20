@@ -19,7 +19,7 @@ buildLinux64:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   stage: build-publish
   script:
-    - gradle clean artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
+    - ./gradlew clean artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
