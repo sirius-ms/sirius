@@ -30,7 +30,7 @@ before_script:
 buildCLI:
   stage: build
   script:
-    - gradle :sirius_dist:sirius_cli_single_os:publishSiriusMSPublicationToMavenLocal
+    - ./gradlew :sirius_dist:sirius_cli_single_os:publishSiriusMSPublicationToMavenLocal
     - mkdir maven_artifacts
     - mv ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/$VSNAP maven_artifacts
   cache:
@@ -50,7 +50,7 @@ buildCLI:
 buildGUI:
   stage: build
   script:
-    - gradle :sirius_dist:sirius_gui_single_os:publishSiriusMSPublicationToMavenLocal
+    - ./gradlew :sirius_dist:sirius_gui_single_os:publishSiriusMSPublicationToMavenLocal
     - mkdir maven_artifacts
     - mv ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/$VSNAP maven_artifacts
   cache:
@@ -70,7 +70,7 @@ buildGUI:
 buildAPI:
   stage: build
   script:
-    - gradle :sirius_dist:sirius_service_single_os:publishSiriusMSPublicationToMavenLocal
+    - ./gradlew :sirius_dist:sirius_service_single_os:publishSiriusMSPublicationToMavenLocal
     - mkdir maven_artifacts
     - mv ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/$VSNAP maven_artifacts
   cache:
@@ -95,7 +95,7 @@ testCLI:
     - mkdir unzipped
     - unzip maven_artifacts/$VSNAP/siriusMS-$VSNAP-linux64-headless.zip -d unzipped
     - ./unzipped/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
-    - gradle :sirius_dist:sirius_cli_single_os:distImageTestCICD
+    - ./gradlew :sirius_dist:sirius_cli_single_os:distImageTestCICD
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -115,7 +115,7 @@ testGUI:
     - mkdir unzipped
     - unzip maven_artifacts/$VSNAP/siriusMS-$VSNAP-linux64.zip -d unzipped
     - ./unzipped/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
-    - gradle :sirius_dist:sirius_cli_single_os:distImageTestCICD
+    - ./gradlew :sirius_dist:sirius_cli_single_os:distImageTestCICD
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -135,7 +135,7 @@ testAPI:
     - mkdir unzipped
     - unzip maven_artifacts/$VSNAP/siriusMS-$VSNAP-linux64-service.zip -d unzipped
     - ./unzipped/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
-    - gradle :sirius_dist:sirius_cli_single_os:distImageTestCICD
+    - ./gradlew :sirius_dist:sirius_cli_single_os:distImageTestCICD
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
