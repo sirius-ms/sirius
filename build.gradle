@@ -5,6 +5,8 @@ plugins {
     id "com.jfrog.artifactory" version "4.25.1"
 }
 
+//this task is used to update the gradle wrapper properties to a new version
+// it also ensures that wrapper scripts and gradle-wrapper.jar are updates if necessary
 wrapper{
     gradleVersion = '6.9.3'
 }
