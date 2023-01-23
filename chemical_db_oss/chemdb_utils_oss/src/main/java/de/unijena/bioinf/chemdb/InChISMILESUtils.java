@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
+import de.unijena.bioinf.babelms.utils.SmilesUCdk;
 import io.github.dan2097.jnainchi.InchiFlag;
 import io.github.dan2097.jnainchi.InchiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +42,6 @@ import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.tools.manipulator.ChemFileManipulator;
-import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
@@ -223,19 +223,7 @@ public class InChISMILESUtils {
     }
 
     public static MolecularFormula formulaFromSmiles(String smiles) throws InvalidSmilesException, UnknownElementException {
-        SmilesParser smilesParser = new SmilesParser(DefaultChemObjectBuilder.getInstance());
-        IAtomContainer iAtomContainer = smilesParser.parseSmiles(smiles);
-        if (iAtomContainer == null) return null;
-        String s = MolecularFormulaManipulator.getString(MolecularFormulaManipulator.getMolecularFormula(iAtomContainer));
-        if (s == null) return null;
-        int formalCharge = getFormalChargeFromSmiles(smiles);
-        MolecularFormula formula = MolecularFormula.parse(s);
-        if (formalCharge == 0) return formula;
-        else if (formalCharge < 0) {
-            return formula.add(MolecularFormula.parse(String.valueOf(Math.abs(formalCharge) + "H")));
-        } else {
-            return formula.subtract(MolecularFormula.parse(String.valueOf(formalCharge + "H")));
-        }
+        return SmilesUCdk.formulaFromSmiles(smiles);
     }
 
 
