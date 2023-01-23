@@ -87,6 +87,7 @@ public class ProjectSpaceManager<I extends Instance> implements IterableWithSize
         //configure ProjectSpaceProperties
         config.defineProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSPropertySerializer());
         config.defineProjectSpaceProperty(CompressionFormat.class, new CompressionFormat.Serializer());
+        config.defineProjectSpaceProperty(VersionInfo.class, new VersionInfo.Serializer());
         //configure compound container
         config.registerContainer(CompoundContainer.class, new CompoundContainerSerializer());
         config.registerComponent(CompoundContainer.class, ProjectSpaceConfig.class, new ProjectSpaceConfigSerializer());
