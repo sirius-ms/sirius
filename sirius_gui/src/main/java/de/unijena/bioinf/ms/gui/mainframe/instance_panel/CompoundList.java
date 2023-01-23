@@ -53,7 +53,7 @@ public class CompoundList {
     final JButton openFilterPanelButton;
     final CompoundFilterModel compoundFilterModel;
     final ObservableElementList<InstanceBean> obsevableScource;
-    final SortedList<InstanceBean> sortedScource;
+    final SortedList<InstanceBean> sortedSource;
     final EventList<InstanceBean> compoundList;
     final DefaultEventSelectionModel<InstanceBean> compountListSelectionModel;
     final BackgroundJJobMatcheEditor<InstanceBean> backgroundFilterMatcher;
@@ -64,7 +64,7 @@ public class CompoundList {
     public CompoundList(@NotNull final GuiProjectSpaceManager ps) {
         searchField = new SearchTextField("Hit enter to search...");
         obsevableScource = new ObservableElementList<>(ps.INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class));
-        sortedScource = new SortedList<>(obsevableScource, Comparator.comparing(b -> b.getID().getCompoundIndex()));
+        sortedSource = new SortedList<>(obsevableScource, Comparator.comparing(b -> b.getID().getCompoundIndex()));
 
         //filters
         BasicEventList<MatcherEditor<InstanceBean>> listOfFilters = new BasicEventList<>();
@@ -82,7 +82,7 @@ public class CompoundList {
         compositeMatcherEditor.setMode(CompositeMatcherEditor.AND);
         compoundListMatchEditor = new MatcherEditorWithOptionalInvert<>(compositeMatcherEditor);
         backgroundFilterMatcher = new BackgroundJJobMatcheEditor<>(compoundListMatchEditor);
-        FilterList<InstanceBean> filterList = new FilterList<>(sortedScource, backgroundFilterMatcher);
+        FilterList<InstanceBean> filterList = new FilterList<>(sortedSource, backgroundFilterMatcher);
         compoundList = GlazedListsSwing.swingThreadProxyList(filterList);
 
         //filter dialog
@@ -116,7 +116,7 @@ public class CompoundList {
     }
 
     public void orderBy(@NotNull final Comparator<InstanceBean> comp) {
-        sortedScource.setComparator(comp);
+        sortedSource.setComparator(comp);
     }
 
     public boolean isFilterInverted() {
