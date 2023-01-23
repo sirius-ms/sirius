@@ -23,6 +23,7 @@ package de.unijena.bioinf.fingerid.blast;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.exceptions.InsufficientDataException;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.chemdb.ChemicalDatabase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -130,6 +131,10 @@ public class BayesianNetworkFromDirectoryProvider implements BayesianNetworkScor
 
     @Override
     public BayesnetScoring getDefaultScoring() throws IOException {
+        return getDefaultScoring(false);
+    }
+
+    public BayesnetScoring getDefaultScoring(boolean parallel) throws IOException {
         if (defaultScoring!=null) return defaultScoring;
         Path scoringPath = getDefaultScoringPath();
         lock.readLock().lock();
@@ -142,7 +147,12 @@ public class BayesianNetworkFromDirectoryProvider implements BayesianNetworkScor
             lock.writeLock().unlock();
             return defaultScoring;
         } else {
-            BayesnetScoring scoring = bayesianScoringUtils.computeDefaultScoring(chemDB);
+            BayesnetScoring scoring;
+            if (parallel) {
+                scoring = SiriusJobs.getGlobalJobManager().submitJob(bayesianScoringUtils.makeDefaultScoringJob(chemDB)).takeResult();
+            } else {
+                scoring = bayesianScoringUtils.computeDefaultScoring(chemDB);
+            }
             lock.writeLock().lock();
             if (defaultScoring!=null) {
                 lock.writeLock().unlock();
