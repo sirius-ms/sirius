@@ -34,6 +34,8 @@ import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.LoginException;
 import de.unijena.bioinf.canopus.CanopusResult;
+import de.unijena.bioinf.chemdb.AbstractChemicalDatabase;
+import de.unijena.bioinf.chemdb.FilteredChemicalDB;
 import de.unijena.bioinf.chemdb.RESTDatabase;
 import de.unijena.bioinf.confidence_score.svm.TrainedSVM;
 import de.unijena.bioinf.fingerid.CanopusWebResultConverter;
@@ -92,7 +94,7 @@ import java.util.function.Supplier;
  */
 
 @ThreadSafe
-public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
+public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabase>> {
     private static final Logger LOG = LoggerFactory.getLogger(RestAPI.class);
 
     private final WebJobWatcher jobWatcher = new WebJobWatcher(this);
@@ -378,17 +380,17 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
     //endregion
 
     //region ChemDB
-    public void consumeStructureDB(long filter, @Nullable BlobStorage cacheDir, IOFunctions.IOConsumer<RESTDatabase> doWithClient) throws IOException {
+    public void consumeStructureDB(long filter, @Nullable BlobStorage cacheDir, IOFunctions.IOConsumer<FilteredChemicalDB<RESTDatabase>> doWithClient) throws IOException {
         ProxyManager.consumeClient(client -> {
-            try (RESTDatabase restDB = new RESTDatabase(cacheDir, filter, chemDBClient, client)) {
+            try (FilteredChemicalDB<RESTDatabase> restDB = new FilteredChemicalDB<>(new RESTDatabase(cacheDir, chemDBClient, client), filter)) {
                 doWithClient.accept(restDB);
             }
         });
     }
 
-    public <T> T applyStructureDB(long filter, @Nullable BlobStorage cacheDir, IOFunctions.IOFunction<RESTDatabase, T> doWithClient) throws IOException {
+    public <T> T applyStructureDB(long filter, @Nullable BlobStorage cacheDir, IOFunctions.IOFunction<FilteredChemicalDB<RESTDatabase>, T> doWithClient) throws IOException {
         return ProxyManager.applyClient(client -> {
-            try (RESTDatabase restDB = new RESTDatabase(cacheDir, filter, chemDBClient, client)) {
+            try (FilteredChemicalDB<RESTDatabase> restDB =  new FilteredChemicalDB<>(new RESTDatabase(cacheDir, chemDBClient, client), filter)) {
                 return doWithClient.apply(restDB);
             }
         });
