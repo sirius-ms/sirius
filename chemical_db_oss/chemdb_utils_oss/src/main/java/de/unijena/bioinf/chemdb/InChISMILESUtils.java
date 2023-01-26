@@ -69,31 +69,31 @@ public class InChISMILESUtils {
         }
     }
 
-    public static String inchi2inchiKey(String inchi) {
-        final InChI in = getInchiWithKeyOrThrow(inchi);
+    public static String inchi2inchiKey(String inchi, boolean keepStereoInformation) {
+        final InChI in = getInchiWithKeyOrThrow(inchi, keepStereoInformation);
         return in == null ? null : in.key;
     }
 
-    public static InChI getInchiWithKeyOrThrow(String inchi) {
-        return getInchiWithKeyOrThrow(inchi, e -> new RuntimeException("Error when creating CDK Objects from InChI String.", e));
+    public static InChI getInchiWithKeyOrThrow(String inchi, boolean keepStereoInformation) {
+        return getInchiWithKeyOrThrow(inchi, keepStereoInformation, e -> new RuntimeException("Error when creating CDK Objects from InChI String.", e));
     }
 
-    public static <X extends Throwable> InChI getInchiWithKeyOrThrow(String inchi, Function<CDKException, ? extends X> exceptionSupplier) throws X {
+    public static <X extends Throwable> InChI getInchiWithKeyOrThrow(String inchi, boolean keepStereoInformation, Function<CDKException, ? extends X> exceptionSupplier) throws X {
         try {
-            return getInchiWithKey(inchi);
+            return getInchiWithKey(inchi, keepStereoInformation);
         } catch (CDKException e) {
             throw exceptionSupplier.apply(e);
         }
     }
 
-    public static InChI getInchiWithKey(String inchi) throws CDKException {
-        return getInchi(getAtomContainerFromInchi(inchi));
+    public static InChI getInchiWithKey(String inchi, boolean keepStereoInformation) throws CDKException {
+        return getInchi(getAtomContainerFromInchi(inchi), keepStereoInformation);
     }
 
     //    NEWPSOFF/DoNotAddH/SNon
-    public static InChI getInchi(IAtomContainer atomContainer) throws CDKException {
+    public static InChI getInchi(IAtomContainer atomContainer, boolean keepStereoInformation) throws CDKException {
         // this will create a standard inchi, see: https://egonw.github.io/cdkbook/inchi.html
-        InChIGenerator inChIGenerator = InChIGeneratorFactory.getInstance().getInChIGenerator(atomContainer, InchiFlag.SNon); //suppress Omitted undefined stereo
+        InChIGenerator inChIGenerator = InChIGeneratorFactory.getInstance().getInChIGenerator(atomContainer, keepStereoInformation ? new InchiFlag[0] : new InchiFlag[]{InchiFlag.SNon}); //suppress Omitted undefined stereo unless keepStereoInformation is true
         InchiStatus state = inChIGenerator.getStatus();
         if (state != InchiStatus.ERROR) {
             if (state == InchiStatus.WARNING)
@@ -141,8 +141,8 @@ public class InChISMILESUtils {
         }
     }
 
-    public static InChI getInchiFromSmiles(String smiles) throws CDKException {
-        return getInchi(getAtomContainerFromSmiles(smiles));
+    public static InChI getInchiFromSmiles(String smiles, boolean keepStereoInformation) throws CDKException {
+        return getInchi(getAtomContainerFromSmiles(smiles), keepStereoInformation);
     }
 
 
@@ -257,6 +257,9 @@ public class InChISMILESUtils {
         Smiles smiles = new Smiles(s);
         System.out.println(get2DSmiles(smiles));
         System.out.println(get2DSmilesByTextReplace("C(C(/O)=C/C=C1(CC2(/C(\\C(=O)1)=C/C=CC=2)))([O-])=O"));
+
+        System.out.println(getInchiWithKeyOrThrow("InChI=1S/C20H24O9/c1-7-4-10(21)13(23)17(3)9(7)5-11-18-6-28-20(27,16(17)18)12(22)8(2)19(18,26)14(24)15(25)29-11/h4,9,11-14,16,22-24,26-27H,2,5-6H2,1,3H3/t9-,11+,12+,13+,14-,16+,17+,18+,19-,20-/m0/s1", true).in3D);
+        System.out.println(getInchiWithKeyOrThrow("InChI=1S/C20H24O9/c1-7-4-10(21)13(23)17(3)9(7)5-11-18-6-28-20(27,16(17)18)12(22)8(2)19(18,26)14(24)15(25)29-11/h4,9,11-14,16,22-24,26-27H,2,5-6H2,1,3H3/t9-,11+,12+,13+,14-,16+,17+,18+,19-,20-/m0/s1", false).in3D);
     }
 
 }

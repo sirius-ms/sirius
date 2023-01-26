@@ -56,6 +56,8 @@ public enum DataSource {
 
     BloodExposome("Blood Exposome", 4194304,  "pubchem_cid", "coconut", "https://bloodexposome.org/#/description?qcid=%s"), //todo correct uri? //todo cite ...new Publication("Barupal DK and Fiehn O, Generating the Blood Exposome Database Using a Comprehensive Text Mining and Database Fusion Approach. Environ Health Perspect. 2019", "10.1289/EHP4713"))
     TeroMol("TeroMOL", 8388608,  "pubchem_cid", "teromol", "http://terokit.qmclab.com/molecule.html?MolId=%s"), //todo correct uri? //todo cite new Publication("Zeng T et al.,Chemotaxonomic Investigation of Plant Terpenoids with an Established Database (TeroMOL). New Phytol. 2022", "10.1111/nph.18133"))
+
+    LOTUS("LOTUS", 16777216,  "id", "lotus", "https://lotus.naturalproducts.net/search/simple/%s"), //links to search using wikidata id. LOTUS id seems to be temporary!
     PUBCHEMANNOTATIONBIO("PubChem class - bio and metabolites", 16777216,  null,null,null, 0, false), //2**24; Pubchem Annotations now have a separate flag
     PUBCHEMANNOTATIONDRUG("PubChem class - drug", 33554432,  null,null,null, 0, false),
     PUBCHEMANNOTATIONSAFETYANDTOXIC("PubChem class - safety and toxic", 67108864,  null,null,null, 0, false),
