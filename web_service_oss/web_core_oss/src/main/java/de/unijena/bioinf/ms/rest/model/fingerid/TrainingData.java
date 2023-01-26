@@ -57,7 +57,7 @@ public class TrainingData {
                 InChI inChI;
                 if (tabs.length == 1) {
                     //no InChiKeys contained. Compute them.
-                    inChI =  InChISMILESUtils.getInchiWithKeyOrThrow(tabs[0]);
+                    inChI =  InChISMILESUtils.getInchiWithKeyOrThrow(tabs[0], false);
 //                    String inchi = tabs[0];
 //                    String key = InChISMILESUtils.(inchi);
 //                    inChI = InChIs.newInChI(key, inchi);
