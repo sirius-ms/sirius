@@ -28,12 +28,20 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class ChemDBs {
+    public static boolean notInFilter(long entityBits, long filterBits) {
+        return !inFilter(entityBits,filterBits);
+    }
+
     public static boolean inFilter(long entityBits, long filterBits) {
         return filterBits == 0 || (entityBits & filterBits) != 0;
     }
 
     public static <T> Predicate<T> inFilter(Function<T, Long> bitProvider, long filterBits) {
         return t -> inFilter(bitProvider.apply(t),filterBits);
+    }
+
+    public static <T> Predicate<T> notInFilter(Function<T, Long> bitProvider, long filterBits) {
+        return t -> notInFilter(bitProvider.apply(t),filterBits);
     }
 
     public static boolean containsFormula(MolecularFormula[] sortedByMass, MolecularFormula query){
