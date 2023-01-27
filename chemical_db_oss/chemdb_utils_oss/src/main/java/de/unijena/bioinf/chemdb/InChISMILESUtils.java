@@ -70,6 +70,7 @@ public class InChISMILESUtils {
     }
 
     public static String inchi2inchiKey(String inchi, boolean keepStereoInformation) {
+        //todo by converting first to atom container and then retrieving the key, the inchi may be altered and so the inchi key. Should only concern 3D information. May happens for undefined stereo centers.
         final InChI in = getInchiWithKeyOrThrow(inchi, keepStereoInformation);
         return in == null ? null : in.key;
     }
@@ -93,11 +94,11 @@ public class InChISMILESUtils {
     //    NEWPSOFF/DoNotAddH/SNon
     public static InChI getInchi(IAtomContainer atomContainer, boolean keepStereoInformation) throws CDKException {
         // this will create a standard inchi, see: https://egonw.github.io/cdkbook/inchi.html
-        InChIGenerator inChIGenerator = InChIGeneratorFactory.getInstance().getInChIGenerator(atomContainer, keepStereoInformation ? new InchiFlag[0] : new InchiFlag[]{InchiFlag.SNon}); //suppress Omitted undefined stereo unless keepStereoInformation is true
+        InChIGenerator inChIGenerator = InChIGeneratorFactory.getInstance().getInChIGenerator(atomContainer, keepStereoInformation ? new InchiFlag[0] : new InchiFlag[]{InchiFlag.SNon}); //removing stereoInformation produces much less warnings, including 'Omitted undefined stereo'
         InchiStatus state = inChIGenerator.getStatus();
         if (state != InchiStatus.ERROR) {
             if (state == InchiStatus.WARNING)
-                LoggerFactory.getLogger(InChISMILESUtils.class).error("Warning while reading AtomContainer: '" + atomContainer.getTitle() + "'\n-> " + inChIGenerator.getMessage());
+                LoggerFactory.getLogger(InChISMILESUtils.class).warn("Warning while reading AtomContainer: '" + atomContainer.getTitle() + "'\n-> " + inChIGenerator.getMessage());
             String inchi = inChIGenerator.getInchi();
             if (inchi == null) return null;
             if (!isStandardInchi(inchi))
@@ -258,8 +259,43 @@ public class InChISMILESUtils {
         System.out.println(get2DSmiles(smiles));
         System.out.println(get2DSmilesByTextReplace("C(C(/O)=C/C=C1(CC2(/C(\\C(=O)1)=C/C=CC=2)))([O-])=O"));
 
-        System.out.println(getInchiWithKeyOrThrow("InChI=1S/C20H24O9/c1-7-4-10(21)13(23)17(3)9(7)5-11-18-6-28-20(27,16(17)18)12(22)8(2)19(18,26)14(24)15(25)29-11/h4,9,11-14,16,22-24,26-27H,2,5-6H2,1,3H3/t9-,11+,12+,13+,14-,16+,17+,18+,19-,20-/m0/s1", true).in3D);
-        System.out.println(getInchiWithKeyOrThrow("InChI=1S/C20H24O9/c1-7-4-10(21)13(23)17(3)9(7)5-11-18-6-28-20(27,16(17)18)12(22)8(2)19(18,26)14(24)15(25)29-11/h4,9,11-14,16,22-24,26-27H,2,5-6H2,1,3H3/t9-,11+,12+,13+,14-,16+,17+,18+,19-,20-/m0/s1", false).in3D);
+//        System.out.println(getInchiWithKeyOrThrow("InChI=1S/C20H24O9/c1-7-4-10(21)13(23)17(3)9(7)5-11-18-6-28-20(27,16(17)18)12(22)8(2)19(18,26)14(24)15(25)29-11/h4,9,11-14,16,22-24,26-27H,2,5-6H2,1,3H3/t9-,11+,12+,13+,14-,16+,17+,18+,19-,20-/m0/s1", true).in3D);
+//        System.out.println(getInchiWithKeyOrThrow("InChI=1S/C20H24O9/c1-7-4-10(21)13(23)17(3)9(7)5-11-18-6-28-20(27,16(17)18)12(22)8(2)19(18,26)14(24)15(25)29-11/h4,9,11-14,16,22-24,26-27H,2,5-6H2,1,3H3/t9-,11+,12+,13+,14-,16+,17+,18+,19-,20-/m0/s1", false).in3D);
+//
+//
+//        System.out.println("InChI=1S/2C2H4O2.Mg/c2*1-2(3)4;/h2*1H3,(H,3,4);/q;;+2/p-2");
+//        System.out.println(getInchiWithKeyOrThrow("InChI=1S/2C2H4O2.Mg/c2*1-2(3)4;/h2*1H3,(H,3,4);/q;;+2/p-2", false).in3D);
+//        System.out.println(getInchiWithKeyOrThrow("InChI=1S/2C2H4O2.Mg/c2*1-2(3)4;/h2*1H3,(H,3,4);/q;;+2/p-2", true).in3D);
+//
+//
+//        String inchi = "InChI=1S/C5H9/c1-4-5(2)3/h4H,1H2,2-3H3";
+//        System.out.println(inchi);
+//        System.out.println(getInchiWithKeyOrThrow(inchi, false).in3D);
+//        System.out.println(getInchiWithKeyOrThrow(inchi, true).in3D);
+//
+//        inchi = "InChI=1S/C18H32N8O4/c19-10-14(27)25-8-3-6-13(25)16(29)24-11(4-1-7-23-18(21)22)17(30)26-9-2-5-12(26)15(20)28/h11-13H,1-10,19H2,(H2,20,28)(H,24,29)(H4,21,22,23)";
+//        System.out.println(inchi);
+//        System.out.println(getInchiWithKeyOrThrow(inchi, false).in3D);
+//        System.out.println(getInchiWithKeyOrThrow(inchi, true).in3D);
+//
+//        inchi = "InChI=1S/C4H8N2S4.Zn/c7-3(8)5-1-2-6-4(9)10;/h1-2H2,(H2,5,7,8)(H2,6,9,10);/q;+2/p-2";
+//        System.out.println(inchi);
+//        System.out.println(getInchiWithKeyOrThrow(inchi, false).in3D);
+//        System.out.println(getInchiWithKeyOrThrow(inchi, true).in3D);
+//
+//        inchi = "InChI=1S/C30H46O4.Na/c1-25(2)21-8-11-30(7)23(28(21,5)10-9-22(25)32)20(31)16-18-19-17-27(4,24(33)34)13-12-26(19,3)14-15-29(18,30)6;/h16,19,21-23,32H,8-15,17H2,1-7H3,(H,33,34);/q;+1/p-1/t19-,21-,22-,23+,26+,27-,28-,29+,30+;/m0./s1";
+//        System.out.println(inchi);
+//        System.out.println(getInchiWithKeyOrThrow(inchi, false).in3D);
+//        System.out.println(getInchiWithKeyOrThrow(inchi, true).in3D);
+
+        String inchi = "InChI=1S/C32H47N3O10S/c1-2-3-9-14-23(36)15-10-6-4-5-7-12-17-27(26(37)16-11-8-13-18-29(39)40)46-22-25(31(43)34-21-30(41)42)35-28(38)20-19-24(33)32(44)45/h3-12,15,17,23-27,36-37H,2,13-14,16,18-22,33H2,1H3,(H,34,43)(H,35,38)(H,39,40)(H,41,42)(H,44,45)/b6-4-,7-5?,9-3-,11-8-,15-10+,17-12?/t23-,24-,25-,26+,27-/m0/s1";
+        System.out.println(inchi);
+        System.out.println(getInchiWithKeyOrThrow(inchi, false).in3D);
+        System.out.println(getInchiWithKeyOrThrow(inchi, false).key);
+        System.out.println(getInchiWithKeyOrThrow(inchi, true).in3D);
+        System.out.println(getInchiWithKeyOrThrow(inchi, true).key);
+
+        LoggerFactory.getLogger(InChISMILESUtils.class).error("Column '%s' is missing", new String[0]);
     }
 
 }
