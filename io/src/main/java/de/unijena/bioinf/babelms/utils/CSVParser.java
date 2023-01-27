@@ -86,6 +86,7 @@ public class CSVParser {
                      column.append(c);
                  }
             }
+            columns.add(column.toString());
             return columns.toArray(new String[0]);
         }
     }
