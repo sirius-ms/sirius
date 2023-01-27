@@ -51,7 +51,7 @@ import java.util.*;
 
 import static de.unijena.bioinf.ChemistryBase.chem.InChIs.newInChI;
 
-public class ChemicalDatabase implements AbstractChemicalDatabase, PooledDB<Connection> {
+public class ChemicalDatabase implements FilterableChemicalDatabase, PooledDB<Connection> {
     public final static String REF_SCHEME = PropertyManager.getProperty("de.unijena.bioinf.chemdb.scheme.references", null, "ref");
     //REF_MAPPING_TABLE_SUFFIX is included for compatibility reasons all recent database version should contain a VIEW ref.xxx_mapping_id_inchi_key that combines InChIKeys of non-standardized and standardized structures
     public final static String REF_MAPPING_TABLE_SUFFIX = PropertyManager.getProperty("de.unijena.bioinf.chemdb.scheme.references.mapping.suffix", null, "_mapping_id_inchi_key");
@@ -65,7 +65,7 @@ public class ChemicalDatabase implements AbstractChemicalDatabase, PooledDB<Conn
     public final static String SYNONYMS_TABLE = PUBCHEM_SCHEME + ".synonyms";
     public final static String PUBCHEM_REF_TABLE = REF_SCHEME + ".pubchem";
 
-    private static final int DEFAULT_SQL_CAPACITY = 5;
+    public static final int DEFAULT_SQL_CAPACITY = 5;
     protected static final Logger log = LoggerFactory.getLogger(ChemicalDatabase.class);
 
     static {
@@ -118,6 +118,9 @@ public class ChemicalDatabase implements AbstractChemicalDatabase, PooledDB<Conn
             this.username = PropertyManager.getProperty("de.unijena.bioinf.fingerid.chemical_db.username");
         if (password == null)
             this.password = PropertyManager.getProperty("de.unijena.bioinf.fingerid.chemical_db.password");
+
+        if (host == null || host.isBlank() || username == null || username.isBlank() || password == null || password.isBlank())
+            throw new IllegalArgumentException("No valid credentials available to connect to SQL DB");
     }
     /**
      * initialize a chemical database connection using the given authentification values
@@ -263,7 +266,7 @@ public class ChemicalDatabase implements AbstractChemicalDatabase, PooledDB<Conn
     }
 
     private static final String CONTAINS_FORMULA_FILTERED = "SELECT EXISTS(SELECT * FROM formulas WHERE formula = ? AND (flags & %s) != 0)";
-    public boolean containsFormula(MolecularFormula formula, long filter) throws ChemicalDatabaseException {
+    public boolean containsFormula(long filter, MolecularFormula formula) throws ChemicalDatabaseException {
         return containsFormula(formula,String.format(CONTAINS_FORMULA_FILTERED, filter));
     }
 
