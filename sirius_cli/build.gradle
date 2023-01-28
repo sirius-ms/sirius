@@ -41,6 +41,8 @@ dependencies {
 
     api group: 'org.jbibtex', name: 'jbibtex', version: '1.0.17'
 
+    api ("de.unijena.bioinf.ms:ft_cbc:$siriusVersion")
+
     api ("de.unijena.bioinf.ms:ft_cplex:$siriusVersion"){
         exclude group: "cplex", module: "cplex"
     }

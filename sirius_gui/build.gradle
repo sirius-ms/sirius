@@ -2,7 +2,15 @@ import com.github.jk1.license.filter.LicenseBundleNormalizer
 
 plugins {
     id "com.github.kkdad.dependency-license-report" version "1.14.2"
+    id 'org.openjfx.javafxplugin' version '0.0.13'
 }
+mainClassName = "de.unijena.bioinf.ms.frontend.SiriusGUIApplication"
+
+javafx {
+    version = "$targetCompatibility"
+    modules = [ 'javafx.controls', 'javafx.swing', 'javafx.web' ]
+}
+
 apply plugin: 'java-library'
 licenseReport {
     // Set output directory for the report data.
@@ -49,7 +57,6 @@ ext['jna.version'] = '5.4.0'
 dependencies {
 //project
     api project(':sirius_cli')
-//    implementation "de.unijena.bioinf.ms:ft_glpk:$siriusVersion"
 //    implementation "org.slf4j:slf4j-jdk14:$slf4j_version"
 
 //internal
@@ -78,6 +85,10 @@ dependencies {
 //    api 'com.kitfox.svg:svg-salamander:1.0'
     api 'org.apache.xmlgraphics:batik-rasterizer:1.14'
     api 'org.apache.xmlgraphics:fop:2.7'
+
+//    api 'org.openjfx:javafx:17.0.2'
+//    api 'org.openjfx:javafx-web:17.0.2'
+//    api 'org.openjfx:javafx-swing:17.0.2'
 
 }
 
