@@ -23,13 +23,14 @@ distImage {
 }
 
 distribution.dependsOn 'signDistImage'
-distribution.dependsOn 'signDistInstaller'
 if (project.OS.isMacOsX())
     distribution.dependsOn 'macNotarize'
 distribution.dependsOn 'createChecksums'
 distribution.dependsOn 'distImageZip'
-if (!OS.isLinux())
+if (!OS.isLinux()) {
+    distribution.dependsOn 'signDistInstaller'
     distribution.dependsOn 'distInstaller'
+}
 
 
 publishing {

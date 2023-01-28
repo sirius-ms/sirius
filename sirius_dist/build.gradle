@@ -1,3 +1,4 @@
+import org.gradle.api.tasks.Internal
 import org.gradle.crypto.checksum.Checksum
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 
@@ -970,31 +971,41 @@ abstract class AppImage extends DefaultTask {
 }
 
 abstract class AppInstaller extends DefaultTask {
-    AppImage distImg
-    String[] types
-    File licenseFile
+    public AppImage distImg
+    public String[] types
+    public File licenseFile
 
 
-    boolean winDirChooser = true
-    boolean winMenu = true
-    String winMenuGroup = null
-    boolean winShortcut
-    boolean winPerUserInstall = false
-    String winUpdateUUID = null
+    public boolean winDirChooser = true
+    public boolean winMenu = true
+    public String winMenuGroup = null
+    public boolean winShortcut
+    public boolean winPerUserInstall = false
+    public String winUpdateUUID = null
 
 
     /*--linux-menu-group <menu-group-name>
           Menu group this application is placed in*/
-    String[] linuxMenuGroup = null
+    public String[] linuxMenuGroup = null
     /* --linux-package-deps
           Required packages or capabilities for the application*/
-    String[] packageDeps = null
+    public String[] packageDeps = null
     /*--linux-shortcut
           Creates a shortcut for the application*/
-    boolean linuxShortcut = false
+    public boolean linuxShortcut = false
     /*--linux-deb-maintainer <email address>
           Maintainer for .deb package*/
-    String debPackageMaintaner = null
+    public String debPackageMaintaner = null
+
+    @InputDirectory
+    File getInputDire() {
+        return distImg.getImageDir()
+    }
+
+    @OutputFile
+    File getOutputFile() {
+        return distImg.outputDir.toPath().resolve(distImg.imageName + project.installerAppendix).toFile()
+    }
 
     @TaskAction
     def execute() {
@@ -1007,6 +1018,7 @@ abstract class AppInstaller extends DefaultTask {
         }
     }
 
+    @Internal
     String getAppName() {
         return (appName != null && !appName.isBlank()) ? appName : distImg.imageName
     }
