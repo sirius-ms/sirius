@@ -4,14 +4,14 @@ dependencies {
     implementation 'org.junit.jupiter:junit-jupiter:5.8.2'
     implementation project(':sirius_gui')
     implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
-    testCompile project(':sirius_dist').sourceSets.test.output //needed for the TestLocal tests
+    testImplementation project(':sirius_dist').sourceSets.test.output //needed for the TestLocal tests
 }
 
 
 /*################### Environment variables ################### */
 mainClassName = "de.unijena.bioinf.ms.frontend.SiriusGUIApplication"
 
-launch4j{
+launch4j {
     mainClassName = project.mainClassName
     jar = getLibraryDir() + "\\" + getRootProject().getChildProjects().get('sirius_gui').tasks.getByName('jar').outputs.files.singleFile.getName()
 }
@@ -32,7 +32,8 @@ distImage {
     mainJarName = getRootProject().getChildProjects().get('sirius_gui').tasks.getByName('jar').outputs.files.singleFile.getName()
     winConsole = true
     macPackageName = 'SIRIUS'
-    if (OS.isWindows()) { //HACK additional windows launchers are imported from launch4j, this is just fake to register it for the start menu. must be a valid path but file must not exists
+    if (OS.isWindows()) {
+        //HACK additional windows launchers are imported from launch4j, this is just fake to register it for the start menu. must be a valid path but file must not exists
         launchers = ["sirius-gui": "${createGuiExe.outfile}"]
     }
 }
@@ -65,7 +66,7 @@ publishing {
             groupId = "$group"
             artifact source: "${distImage.getImageDir().absolutePath}.zip", classifier: osName, extension: 'zip'
             artifact source: "${distImage.getImageDir().absolutePath}.zip.sha256", classifier: osName, extension: 'zip.sha256'
-            if (!OS.isLinux()){
+            if (!OS.isLinux()) {
                 artifact source: "${OS.isMacOsX() ? distImage.getImageDir().absolutePath.replace('.app', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}", classifier: osName, extension: installerNameType
                 artifact source: "${OS.isMacOsX() ? distImage.getImageDir().absolutePath.replace('.app', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}.sha256", classifier: osName, extension: "${installerNameType}.sha256"
             }
