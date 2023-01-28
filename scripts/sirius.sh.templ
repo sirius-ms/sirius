@@ -59,6 +59,11 @@ CLASSPATH="#classPath#"
 # Determine the Java command to use to start the JVM.
 JAVACMD="#javaCommand#"
 
+# fallback to java in path
+if [ ! -f "$JAVACMD" ]; then
+    JAVACMD="java"
+fi
+
 # Main class to run the app
 MAIN_CLASS="#mainClass#"
 
