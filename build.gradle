@@ -88,9 +88,7 @@ allprojects {
     apply plugin: 'maven-publish'
     apply plugin: 'idea'
 
-
-    sourceCompatibility = 13
-    targetCompatibility = 15
+    targetCompatibility = 17
 
     compileJava.options.encoding = "UTF-8"
     compileTestJava.options.encoding = "UTF-8"
