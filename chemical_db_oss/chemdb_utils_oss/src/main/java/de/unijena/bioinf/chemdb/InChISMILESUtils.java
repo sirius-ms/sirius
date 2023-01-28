@@ -31,13 +31,19 @@ import org.openscience.cdk.ChemFile;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.InvalidSmilesException;
+import org.openscience.cdk.graph.ConnectivityChecker;
 import org.openscience.cdk.inchi.InChIGenerator;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import org.openscience.cdk.inchi.InChIToStructure;
+import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.io.ISimpleChemObjectReader;
 import org.openscience.cdk.io.ReaderFactory;
+import org.openscience.cdk.isomorphism.Pattern;
+import org.openscience.cdk.isomorphism.matchers.QueryAtomContainer;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
+import org.openscience.cdk.smarts.Smarts;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.tools.manipulator.ChemFileManipulator;
@@ -50,6 +56,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.StreamSupport;
 
 import static de.unijena.bioinf.ChemistryBase.chem.InChIs.*;
 import static de.unijena.bioinf.ChemistryBase.chem.SmilesU.*;
@@ -240,6 +247,96 @@ public class InChISMILESUtils {
         }
     }
 
+    /**
+     * strips some salts and solvent. If only one connected component remains, it is returned. Else null.
+     * @param atomContainer
+     * @return
+     */
+    public static IAtomContainer getMainConnectedComponentOrNull(IAtomContainer atomContainer, boolean adjustForRemovedChargesIfPossible) {
+        if (atomContainer == null || atomContainer.getAtomCount()==0) return atomContainer;
+//        Cl,Br,I]
+//[Li,Na,K,Ca,Mg]
+//[O,N]
+
+
+        String smarts = "[Cl,Na,I,Br,K,Ca,Mg,Li,O,N]";
+        QueryAtomContainer query = new QueryAtomContainer(DefaultChemObjectBuilder.getInstance());
+            if (!Smarts.parse(query, smarts))
+                throw new IllegalArgumentException("Could not parse SMARTS: " +
+                        smarts + "\n" +
+                        Smarts.getLastErrorMesg() + "\n" +
+                        Smarts.getLastErrorLocation());
+        Pattern pattern = Pattern.findIdentical(query);
+
+        //no need to prepare target molecule with rings and  aromaticity
+
+        if (ConnectivityChecker.isConnected(atomContainer)) return atomContainer;
+
+        IAtomContainerSet fragments = ConnectivityChecker.partitionIntoMolecules(atomContainer);
+        int fragmentCount = fragments.getAtomContainerCount();
+
+        int mainComponentIdx = -1;
+        int removedCharge = 0;
+        for (int i = 0; i < fragmentCount; i++) {
+             IAtomContainer f = fragments.getAtomContainer(i);
+            if (!pattern.matches(f)) {
+                if (mainComponentIdx>=0) {
+                    LoggerFactory.getLogger(InChISMILESUtils.class).warn("Molecule has more than one main connected component.");
+                    return null; //more than one component after removal of salts
+                }
+                mainComponentIdx = i;
+            } else {
+                removedCharge += StreamSupport.stream(f.atoms().spliterator(), false).mapToInt(IAtom::getFormalCharge).sum();
+            }
+        }
+
+
+        IAtomContainer main = fragments.getAtomContainer(mainComponentIdx);
+
+        if (!adjustForRemovedChargesIfPossible || removedCharge == 0) return main;
+
+        int posCharges = 0;
+        int negCharges =0;
+        for (IAtom atom : main.atoms()) {
+            int charge = atom.getFormalCharge();
+                if (charge < 0) negCharges += charge;
+                if (charge > 0) posCharges += charge;
+        }
+
+        if (removedCharge < 0 && posCharges == -removedCharge) {
+            removeAllPositiveChargesIfPossible(main);
+        } else if (negCharges == -removedCharge) {
+            removeAllNegativeChargesIfPossible(main);
+        } else {
+            //don't know which charges to remove.
+            LoggerFactory.getLogger(InChISMILESUtils.class).warn("Cannot remove charges from main connected component");
+            return null;
+        }
+
+        return main;
+    }
+
+    private static void removeAllPositiveChargesIfPossible(IAtomContainer atomContainer) {
+        removeChargesIfPossible(atomContainer, true, false);
+    }
+
+    private static void removeAllNegativeChargesIfPossible(IAtomContainer atomContainer) {
+        removeChargesIfPossible(atomContainer, false, true);
+    }
+
+    private static void removeChargesIfPossible(IAtomContainer atomContainer, boolean removePositiveCharges, boolean removeNegativeCharges) {
+        for (IAtom atom : atomContainer.atoms()) {
+            if (atom.getFormalCharge()<0 && removeNegativeCharges){
+                atom.setImplicitHydrogenCount(atom.getImplicitHydrogenCount()-atom.getFormalCharge());
+                atom.setFormalCharge(0);
+            }
+            else if (atom.getFormalCharge()>0 && removePositiveCharges) {
+                int adjustment = atom.getImplicitHydrogenCount()-atom.getFormalCharge();
+                atom.setImplicitHydrogenCount(Math.max(0, adjustment));
+                atom.setFormalCharge(Math.max(0, -adjustment));
+            }
+        }
+    }
 
     public static void main(String... args) throws CDKException, IOException {
         //todo remove after testing
@@ -288,14 +385,46 @@ public class InChISMILESUtils {
 //        System.out.println(getInchiWithKeyOrThrow(inchi, false).in3D);
 //        System.out.println(getInchiWithKeyOrThrow(inchi, true).in3D);
 
-        String inchi = "InChI=1S/C32H47N3O10S/c1-2-3-9-14-23(36)15-10-6-4-5-7-12-17-27(26(37)16-11-8-13-18-29(39)40)46-22-25(31(43)34-21-30(41)42)35-28(38)20-19-24(33)32(44)45/h3-12,15,17,23-27,36-37H,2,13-14,16,18-22,33H2,1H3,(H,34,43)(H,35,38)(H,39,40)(H,41,42)(H,44,45)/b6-4-,7-5?,9-3-,11-8-,15-10+,17-12?/t23-,24-,25-,26+,27-/m0/s1";
-        System.out.println(inchi);
-        System.out.println(getInchiWithKeyOrThrow(inchi, false).in3D);
-        System.out.println(getInchiWithKeyOrThrow(inchi, false).key);
-        System.out.println(getInchiWithKeyOrThrow(inchi, true).in3D);
-        System.out.println(getInchiWithKeyOrThrow(inchi, true).key);
+//        String inchi = "InChI=1S/C32H47N3O10S/c1-2-3-9-14-23(36)15-10-6-4-5-7-12-17-27(26(37)16-11-8-13-18-29(39)40)46-22-25(31(43)34-21-30(41)42)35-28(38)20-19-24(33)32(44)45/h3-12,15,17,23-27,36-37H,2,13-14,16,18-22,33H2,1H3,(H,34,43)(H,35,38)(H,39,40)(H,41,42)(H,44,45)/b6-4-,7-5?,9-3-,11-8-,15-10+,17-12?/t23-,24-,25-,26+,27-/m0/s1";
+//        System.out.println(inchi);
+//        System.out.println(getInchiWithKeyOrThrow(inchi, false).in3D);
+//        System.out.println(getInchiWithKeyOrThrow(inchi, false).key);
+//        System.out.println(getInchiWithKeyOrThrow(inchi, true).in3D);
+//        System.out.println(getInchiWithKeyOrThrow(inchi, true).key);
+//
+//        LoggerFactory.getLogger(InChISMILESUtils.class).error("Column '%s' is missing", new String[0]);
 
-        LoggerFactory.getLogger(InChISMILESUtils.class).error("Column '%s' is missing", new String[0]);
+
+
+//        String smiles = "";
+        s = "C[NH+](C)(C).[Cl-]";
+        printAndStripSalt(s);
+
+        s = "C[N+]1=C2C=C(N)C=CC2=CC2=C1C=C(N)C=C2.NC1=CC2=NC3=C(C=CC(N)=C3)C=C2C=C1";
+        printAndStripSalt(s);
+        s = "COC1CC(OC2CC(C3OC(C)(O)C(C)CC3C)OC2C2(C)CCC(C3(C)CCC4(CC(O)C(C)C(C(C)C5OC(O)(CC(=O)[O-])C(C)C(OC)C5OC)O4)O3)O2)OC(C)C1OC.[NH4+]" ;
+        printAndStripSalt(s);
+        s = "CC(=O)O.CCNC(=O)C1CCCN1C(=O)C(CCCNC(=N)N)NC(=O)C(CC(C)C)NC(=O)C(CC1=CNC2=C1C=CC=C2)NC(=O)C(CC1=CC=C(O)C=C1)NC(=O)C(CO)NC(=O)C(CC1=CNC2=C1C=CC=C2)NC(=O)C(CC1=CNC=N1)NC(=O)C1CCC(=O)N1";
+        printAndStripSalt(s);
+        s = "CC(O)C(=O)O.CCOC1=CC2=C(N)C3=C(C=C(N)C=C3)N=C2C=C1.O";
+        printAndStripSalt(s);
+        s = "CCCCCCCCCCCCCC[N+](C)(C)CC1=CC=CC=C1.O.O";
+        printAndStripSalt(s);
+        s = "O=NN([O-])C1=CC=CC=C1.[NH4+]";
+        printAndStripSalt(s);
+        s = "CC(C)(COP(=O)([O-])OP(=O)([O-])OCC1OC(N2C=NC3=C2N=CN=C3N)C(O)C1OP(=O)([O-])O)C(O)C(=O)NCCC(=O)NCCS.O.O.[Li+].[Li+].[Li+]";
+        printAndStripSalt(s);
+        s = "C[N+](C)(C)CCO.[OH-]";
+        printAndStripSalt(s);
+
+
+    }
+
+    private static void printAndStripSalt(String s) throws CDKException {
+        System.out.println("input "+ s);
+        IAtomContainer atomContainer = getAtomContainerFromSmiles(s);
+        atomContainer = getMainConnectedComponentOrNull(atomContainer, true);
+        System.out.println(atomContainer==null?"":getSmiles(atomContainer));
     }
 
 }
