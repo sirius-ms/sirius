@@ -40,6 +40,10 @@ set DEFAULT_JVM_OPTS=#jvmOpts#
 set JAVA_EXE=%APP_HOME%\runtime\bin\java.exe
 set MAIN_CLASS="#mainClass#"
 
+if not exist "%JAVA_EXE%" (
+    set JAVA_EXE=java.exe
+)
+
 if exist "%JAVA_EXE%" goto execute
 
 echo.
