@@ -29,7 +29,7 @@ wrapper{
 //Global Properties
 ext {
     //version for external libraries
-    slf4j_version = '1.7.36'
+    slf4j_version = '2.0.6'
     jjobs_version = '0.9.35'
     json_version = '1.0' //todo move to gson
     json_impl_version = "1.0.4" //todo move to gson
@@ -39,7 +39,7 @@ ext {
     picocli_version = '4.6.3'//'3.9.5'
 
     glpk_lib_version = '4.60'
-    clp_lib_version = '2.10'
+    cbc_lib_version = '2.10.8'
 
     //locations of runtime libraries
     //jre path relative tu app home
@@ -48,9 +48,26 @@ ext {
     native_path = 'native'
 
     libExclude = ['gurobi-jar-*.jar', 'cplex-*.jar']
-    libExcludeMac = ["jna-inchi-darwin-aarch64-1.1.jar", "jna-inchi-linux-x86-64-1.1.jar", "jna-inchi-win32-x86-64-1.1.jar", "jna-inchi-linux-arm-1.1.jar", "jna-inchi-linux-x86-1.1.jar", "jna-inchi-win32-x86-1.1.jar"]
-    libExcludeWin = ["jna-inchi-darwin-aarch64-1.1.jar", "jna-inchi-darwin-x86-64-1.1.jar", "jna-inchi-linux-x86-64-1.1.jar", "jna-inchi-linux-arm-1.1.jar", "jna-inchi-linux-x86-1.1.jar", "jna-inchi-win32-x86-1.1.jar"]
-    libExcludeLinux = ["jna-inchi-darwin-aarch64-1.1.jar", "jna-inchi-darwin-x86-64-1.1.jar", "jna-inchi-win32-x86-64-1.1.jar", "jna-inchi-linux-arm-1.1.jar", "jna-inchi-linux-x86-1.1.jar", "jna-inchi-win32-x86-1.1.jar"]
+    libExcludeMac = [
+            "jna-inchi-darwin-aarch64-1.1.jar", "jna-inchi-linux-x86-64-1.1.jar", "jna-inchi-win32-x86-64-1.1.jar",
+            "jna-inchi-linux-arm-1.1.jar", "jna-inchi-linux-x86-1.1.jar", "jna-inchi-win32-x86-1.1.jar",
+            "cbc-java-jni-linux-x86-64-2.10.8-SNAPSHOT.jar", "cbc-java-jni-win-x86-64-2.10.8-SNAPSHOT.jar",
+            "cbc-java-linux-x86-64-2.10.8-SNAPSHOT.jar", "cbc-java-win-x86-64-2.10.8-SNAPSHOT.jar",
+    ]
+
+    libExcludeWin = [
+            "jna-inchi-darwin-aarch64-1.1.jar", "jna-inchi-darwin-x86-64-1.1.jar", "jna-inchi-linux-x86-64-1.1.jar",
+            "jna-inchi-linux-arm-1.1.jar", "jna-inchi-linux-x86-1.1.jar", "jna-inchi-win32-x86-1.1.jar",
+            "cbc-java-jni-linux-x86-64-2.10.8-SNAPSHOT.jar", "cbc-java-jni-mac-x86-64-2.10.8-SNAPSHOT.jar",
+            "cbc-java-linux-x86-64-2.10.8-SNAPSHOT.jar", "cbc-java-mac-x86-64-2.10.8-SNAPSHOT.jar",
+    ]
+    libExcludeLinux = [
+            "jna-inchi-darwin-aarch64-1.1.jar", "jna-inchi-darwin-x86-64-1.1.jar", "jna-inchi-win32-x86-64-1.1.jar",
+            "jna-inchi-linux-arm-1.1.jar", "jna-inchi-linux-x86-1.1.jar", "jna-inchi-win32-x86-1.1.jar",
+            "cbc-java-jni-mac-x86-64-2.10.8-SNAPSHOT.jar", "cbc-java-jni-win-x86-64-2.10.8-SNAPSHOT.jar",
+            "cbc-java-mac-x86-64-2.10.8-SNAPSHOT.jar", "cbc-java-win-x86-64-2.10.8-SNAPSHOT.jar",
+    ]
+
 
     jetbrains_version = "22.0.0"
 
