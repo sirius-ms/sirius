@@ -1,7 +1,5 @@
-import org.gradle.api.tasks.Internal
 import org.gradle.crypto.checksum.Checksum
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
-
 import java.nio.file.*
 import java.util.stream.Collectors
 
@@ -105,53 +103,6 @@ task createRuntimeImgs(dependsOn: [extractJDKFX]) {
         }
     }
 }
-
-
-task downloadGLPK(type: Download) {
-    project.ext.set("glpkPath", getBuildDir().toPath().resolve('glpk').toFile())
-    String fname = "glpk-${project.glpk_lib_version}.zip"
-
-    src "https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/glpk/$fname"
-    dest getBuildDir().toPath().resolve('tmp').resolve(fname).toFile()
-    onlyIfModified true
-    overwrite false
-    retries 2
-    doLast {
-        if (!state.getUpToDate()) {
-            copy {
-                getLogger().lifecycle("Unpacking GLPK...")
-                from zipTree(outputs.files.singleFile)
-                into buildDir
-            }
-        } else {
-            getLogger().lifecycle("Unpacking GLPK SKIPPED")
-        }
-    }
-}
-
-task downloadCLP(type: Download) {
-    project.ext.set("clpPath", getBuildDir().toPath().resolve('clp').toFile())
-    String fname = "clp_cbc-${project.clp_lib_version}.zip"
-
-    src "https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/clp/$fname"
-    dest getBuildDir().toPath().resolve('tmp').resolve(fname).toFile()
-    onlyIfModified true
-    overwrite false
-    retries 2
-    doLast {
-        if (!state.getUpToDate()) {
-            copy {
-                getLogger().lifecycle("Unpacking CPL...")
-                from zipTree(outputs.files.singleFile)
-                into buildDir
-
-            }
-        } else {
-            getLogger().lifecycle("Unpacking CPL SKIPPED")
-        }
-    }
-}
-
 
 task downloadRuntimeImageFX(type: Download) {
     String fname = "zulu${zulu_jre_version}-ca-fx-jre${jre_version}-${zosName}_x64${project.OS.isWindows() ? ".zip" : ".tar.gz"}"
@@ -302,7 +253,7 @@ subprojects {
 
 
     task distImage(type: AppImage, group: 'distribution') {
-        dependsOn installDist, downloadCLP/*,downloadManual, downloadGLPK*/
+        dependsOn installDist/*, downloadCLP,downloadManual, downloadGLPK*/
         if (OS.isWindows())
             dependsOn createAllExecutables
 
@@ -351,15 +302,6 @@ subprojects {
             project.delete {
                 delete fileTree(dir: libTarget, includes: libExclude)
             }
-
-            copy {
-                from("${glpkPath}/$nativeLibs/") {
-                    include('libglpk.so.40')
-                    include('libglpk_java.so')
-                }
-                from("${clpPath}/$nativeLibs/")
-                into(nativeLibsTarget)
-            }
             copy {
                 from("${rootDir}") {
                     include('COPYING.txt')
@@ -386,6 +328,7 @@ subprojects {
                 project.delete {
                     delete fileTree(dir: libTarget, includes: libExcludeWin)
                 }
+
             }else if (OS.isMacOsX()){
                 project.delete {
                     delete fileTree(dir: libTarget, includes: libExcludeMac)
@@ -393,6 +336,7 @@ subprojects {
             }else if (OS.isLinux()){
                 project.delete {
                     delete fileTree(dir: libTarget, includes: libExcludeLinux)
+                    delete appRootTarget.toPath().resolve("lib/libapplauncher.so").toFile()
                 }
             }
 
@@ -408,20 +352,20 @@ subprojects {
                 sf = file("${rootDir}/scripts/sirius.sh.templ")
                 templateBinding.shell = "sh"
                 templateBinding.classPath = "\\\"\$JAR_HOME/*\\\":\\\"\$GUROBI_HOME/lib/gurobi.jar\\\":\\\"\$CPLEX_HOME/lib/cplex.jar\\\""
-                templateBinding.jvmOpts = "${Arrays.stream(jArgs).collect(Collectors.joining(' '))} -Djava.library.path=\\\"\$GUROBI_HOME/lib\\\":\\\"\$CPLEX_HOME/bin/x86-64_linux\\\":\\\"\$APP_HOME/lib/native\\\":\\\"\$APP_HOME/lib/runtime/lib\\\""
+                templateBinding.jvmOpts = "${Arrays.stream(jArgs).collect(Collectors.joining(' '))} -Djava.library.path=\\\"\$GUROBI_HOME/lib\\\":\\\"\$CPLEX_HOME/bin/x86-64_linux\\\":\\\"\$APP_HOME/lib/runtime/lib\\\""
                 templateBinding.javaCommand = "\$APP_HOME/lib/runtime/bin/java"
-                templateBinding.libraryPathKey = "LD_LIBRARY_PATH"
-                templateBinding.libraryPathVal = "\$GUROBI_HOME/lib:\$CPLEX_HOME/bin/x86-64_linux:\$APP_HOME/lib/native:\$APP_HOME/lib/runtime/lib:\$APP_HOME/lib/runtime/lib/server:\$LD_LIBRARY_PATH"
+//                templateBinding.libraryPathKey = "LD_LIBRARY_PATH"
+//                templateBinding.libraryPathVal = "\$GUROBI_HOME/lib:\$CPLEX_HOME/bin/x86-64_linux:\$APP_HOME/lib/native:\$APP_HOME/lib/runtime/lib:\$APP_HOME/lib/runtime/lib/server:\$LD_LIBRARY_PATH"
                 templateBinding.jarHome = "\$APP_HOME/lib/app"
             } else if (OS.isMacOsX()) {
                 f = file("$appRootTarget/MacOS/sirius")
                 sf = file("${rootDir}/scripts/sirius.sh.templ")
                 templateBinding.shell = "zsh"
                 templateBinding.classPath = "\\\"\$JAR_HOME/*\\\":\\\"\$GUROBI_HOME/lib/gurobi.jar\\\":\\\"\$CPLEX_HOME/lib/cplex.jar\\\""
-                templateBinding.jvmOpts = "${Arrays.stream(jArgs).collect(Collectors.joining(' '))} -Djava.library.path=\\\"\$GUROBI_HOME/lib\\\":\\\"\$CPLEX_HOME/bin/x86-64_linux\\\":\\\"\$APP_HOME/native\\\":\\\"\$APP_HOME/runtime/Contents/Home/lib\\\""
+                templateBinding.jvmOpts = "${Arrays.stream(jArgs).collect(Collectors.joining(' '))} -Djava.library.path=\\\"\$GUROBI_HOME/lib\\\":\\\"\$CPLEX_HOME/bin/x86-64_linux\\\":\\\"\$APP_HOME/runtime/Contents/Home/lib\\\""
                 templateBinding.javaCommand = "\$APP_HOME/runtime/Contents/Home/bin/java"
-                templateBinding.libraryPathKey = "DYLD_LIBRARY_PATH"
-                templateBinding.libraryPathVal = "\$GUROBI_HOME/lib:\$CPLEX_HOME/bin/x86-64_osx:\$APP_HOME/native:\$APP_HOME/runtime/Contents/Home/lib:\$APP_HOME/runtime/Contents/Home/lib/server:\$DYLD_LIBRARY_PATH"
+//                templateBinding.libraryPathKey = "DYLD_LIBRARY_PATH"
+//                templateBinding.libraryPathVal = "\$GUROBI_HOME/lib:\$CPLEX_HOME/bin/x86-64_osx:\$APP_HOME/native:\$APP_HOME/runtime/Contents/Home/lib:\$APP_HOME/runtime/Contents/Home/lib/server:\$DYLD_LIBRARY_PATH"
                 templateBinding.jarHome = "\$APP_HOME/app"
             } else if (OS.isWindows()) {
                 f = file("$appRootTarget/sirius.bat")
