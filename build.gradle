@@ -51,21 +51,21 @@ ext {
     libExcludeMac = [
             "jna-inchi-darwin-aarch64-1.1.jar", "jna-inchi-linux-x86-64-1.1.jar", "jna-inchi-win32-x86-64-1.1.jar",
             "jna-inchi-linux-arm-1.1.jar", "jna-inchi-linux-x86-1.1.jar", "jna-inchi-win32-x86-1.1.jar",
-            "cbc-java-jni-linux-x86-64-2.10.8-SNAPSHOT.jar", "cbc-java-jni-win-x86-64-2.10.8-SNAPSHOT.jar",
-            "cbc-java-linux-x86-64-2.10.8-SNAPSHOT.jar", "cbc-java-win-x86-64-2.10.8-SNAPSHOT.jar",
+            "cbc-java-jni-linux-x86-64-*.jar", "cbc-java-jni-win-x86-64-*.jar",
+            "cbc-java-linux-x86-64-*.jar", "cbc-java-win-x86-64-*.jar",
     ]
 
     libExcludeWin = [
             "jna-inchi-darwin-aarch64-1.1.jar", "jna-inchi-darwin-x86-64-1.1.jar", "jna-inchi-linux-x86-64-1.1.jar",
             "jna-inchi-linux-arm-1.1.jar", "jna-inchi-linux-x86-1.1.jar", "jna-inchi-win32-x86-1.1.jar",
-            "cbc-java-jni-linux-x86-64-2.10.8-SNAPSHOT.jar", "cbc-java-jni-mac-x86-64-2.10.8-SNAPSHOT.jar",
-            "cbc-java-linux-x86-64-2.10.8-SNAPSHOT.jar", "cbc-java-mac-x86-64-2.10.8-SNAPSHOT.jar",
+            "cbc-java-jni-linux-x86-64-*.jar", "cbc-java-jni-mac-x86-64-*.jar",
+            "cbc-java-linux-x86-64-*.jar", "cbc-java-mac-x86-64-*.jar",
     ]
     libExcludeLinux = [
             "jna-inchi-darwin-aarch64-1.1.jar", "jna-inchi-darwin-x86-64-1.1.jar", "jna-inchi-win32-x86-64-1.1.jar",
             "jna-inchi-linux-arm-1.1.jar", "jna-inchi-linux-x86-1.1.jar", "jna-inchi-win32-x86-1.1.jar",
-            "cbc-java-jni-mac-x86-64-2.10.8-SNAPSHOT.jar", "cbc-java-jni-win-x86-64-2.10.8-SNAPSHOT.jar",
-            "cbc-java-mac-x86-64-2.10.8-SNAPSHOT.jar", "cbc-java-win-x86-64-2.10.8-SNAPSHOT.jar",
+            "cbc-java-jni-mac-x86-64-*.jar", "cbc-java-jni-win-x86-64-*.jar",
+            "cbc-java-mac-x86-64-*.jar", "cbc-java-win-x86-64-*.jar",
     ]
 
 
