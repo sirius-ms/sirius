@@ -251,7 +251,7 @@ subprojects {
         messagesBundledJreError = "Could not Load bundled JRE."
     }
 
-
+    //todo create switch to build with an without JRE
     task distImage(type: AppImage, group: 'distribution') {
         dependsOn installDist/*, downloadCLP,downloadManual, downloadGLPK*/
         if (OS.isWindows())
@@ -299,9 +299,8 @@ subprojects {
                 throw new RuntimeException("Could not detect OS for packaging!")
             }
 
-            project.delete {
-                delete fileTree(dir: libTarget, includes: libExclude)
-            }
+            delete fileTree(dir: libTarget, include: libExclude)
+
             copy {
                 from("${rootDir}") {
                     include('COPYING.txt')
@@ -313,10 +312,8 @@ subprojects {
 
 
             if (OS.isWindows()) {
-                //delete exes because they are write protected
-                project.delete {
-                    delete fileTree(dir: appRootTarget, includes: ["*.exe"])
-                }
+                //delete exes because they are write protected an cannot be ovewritten
+                delete fileTree(dir: appRootTarget, include: "*.exe")
 
                 copy {
                     from("${buildDir}/launch4j") {
@@ -325,19 +322,13 @@ subprojects {
                     into(appRootTarget)
                 }
 
-                project.delete {
-                    delete fileTree(dir: libTarget, includes: libExcludeWin)
-                }
+                delete fileTree(dir: libTarget, include: libExcludeWin)
 
-            }else if (OS.isMacOsX()){
-                project.delete {
-                    delete fileTree(dir: libTarget, includes: libExcludeMac)
-                }
-            }else if (OS.isLinux()){
-                project.delete {
-                    delete fileTree(dir: libTarget, includes: libExcludeLinux)
-                    delete appRootTarget.toPath().resolve("lib/libapplauncher.so").toFile()
-                }
+            } else if (OS.isMacOsX()) {
+                delete fileTree(dir: libTarget, include: libExcludeMac)
+            } else if (OS.isLinux()) {
+                delete fileTree(dir: libTarget, include: libExcludeLinux)
+                delete appRootTarget.toPath().resolve("lib/libapplauncher.so").toFile()
             }
 
             def templateBinding = [
@@ -387,17 +378,17 @@ subprojects {
     distImage.shouldRunAfter downloadManual
 
 
-    task distImageTestLocal(dependsOn: distImage, type: Test, group: 'distribution'){
+    task distImageTestLocal(dependsOn: distImage, type: Test, group: 'distribution') {
         useJUnitPlatform()
         testClassesDirs = project(':sirius_dist').sourceSets.test.output
         filter.includeTestsMatching('*Local')
 
-        testLogging{
-            outputs.upToDateWhen {false}
+        testLogging {
+            outputs.upToDateWhen { false }
             showStandardStreams = true
         }
 
-        doFirst{
+        doFirst {
             String abs_path = project.projectDir.toString().split('sirius_frontend')[0]
             // automatically adjust for gui_single_os, cli_single_os or service_single_os
             String build_type = project.name.toString()
@@ -405,7 +396,7 @@ subprojects {
             String sep
 
 
-            if(project.OS.isWindows() || project.OS.isLinux() || project.OS.isMacOsX()){
+            if (project.OS.isWindows() || project.OS.isLinux() || project.OS.isMacOsX()) {
                 sep = System.getProperty("file.separator")
             } else {
                 throw new IllegalArgumentException("Could not determine the OS to build on")
@@ -416,11 +407,11 @@ subprojects {
             } else if (project.OS.isLinux()) {
                 sirius_exec = abs_path + 'sirius_frontend/sirius_dist/' + build_type + '/build/distributions/sirius/bin/sirius'
             } else {
-                sirius_exec = abs_path + 'sirius.app'+sep+'Contents'+sep+'MacOS'+sep+'sirius'
+                sirius_exec = abs_path + 'sirius.app' + sep + 'Contents' + sep + 'MacOS' + sep + 'sirius'
             }
 
-            String temp_res_path = abs_path+'sirius_frontend'+sep+'sirius_cli'+sep+'src'+sep+'test'+sep+'temp_results'
-            String demo_path = abs_path+'sirius_frontend'+sep+'sirius_doc'+sep+'manual'+sep+'demo-data'+sep
+            String temp_res_path = abs_path + 'sirius_frontend' + sep + 'sirius_cli' + sep + 'src' + sep + 'test' + sep + 'temp_results'
+            String demo_path = abs_path + 'sirius_frontend' + sep + 'sirius_doc' + sep + 'manual' + sep + 'demo-data' + sep
 
             mkdir temp_res_path
             mkdir temp_res_path + sep + 'mgf_temp_output'
@@ -434,53 +425,53 @@ subprojects {
 
             project.exec {
                 commandLine([sirius_exec,
-                             '--input', demo_path+'mgf'+sep+'laudanosine.mgf',
-                             '--output', temp_res_path+'mgf_temp_output',
+                             '--input', demo_path + 'mgf' + sep + 'laudanosine.mgf',
+                             '--output', temp_res_path + 'mgf_temp_output',
                              'formula', '-p', 'orbitrap', 'fingerprint', 'structure', 'compound-classes',
-                             'write-summaries', '--output', temp_res_path+'mgf_temp_summary'
+                             'write-summaries', '--output', temp_res_path + 'mgf_temp_summary'
                 ])
             }
 
             project.exec {
                 commandLine([sirius_exec,
-                             '-1', demo_path+'txt'+sep+'chelidonine_ms.txt',
-                             '-2', demo_path+'txt'+sep+'chelidonine_msms1.txt' + ',' + demo_path+'txt'+sep+'chelidonine_msms2.txt',
-                             '-z', '354.134704589844', '-o', temp_res_path+'txt_temp_output',
+                             '-1', demo_path + 'txt' + sep + 'chelidonine_ms.txt',
+                             '-2', demo_path + 'txt' + sep + 'chelidonine_msms1.txt' + ',' + demo_path + 'txt' + sep + 'chelidonine_msms2.txt',
+                             '-z', '354.134704589844', '-o', temp_res_path + 'txt_temp_output',
                              'formula', '-p', 'orbitrap',
-                             'write-summaries', '--output', temp_res_path+'txt_temp_summary'
+                             'write-summaries', '--output', temp_res_path + 'txt_temp_summary'
                 ])
             }
 
             project.exec {
                 commandLine([sirius_exec,
-                             '-o', temp_res_path+'ms_temp_output',
-                             '-i', demo_path+'ms'+sep+'Bicuculline.ms',
+                             '-o', temp_res_path + 'ms_temp_output',
+                             '-i', demo_path + 'ms' + sep + 'Bicuculline.ms',
                              '--ignore-formula', 'formula', '-p', 'orbitrap', '-c', '5',
                              'fingerprint', 'structure', 'compound-classes',
-                             'write-summaries', '--output', temp_res_path+'ms_temp_summary'
+                             'write-summaries', '--output', temp_res_path + 'ms_temp_summary'
                 ])
             }
         }
-        doLast{
+        doLast {
             String abs_path = project.projectDir.toString().split('sirius_frontend')[0]
             String sep = System.getProperty("file.separator")
-            String temp_res_path = abs_path+'sirius_frontend'+sep+'sirius_cli'+sep+'src'+sep+'test'+sep+'temp_results'
+            String temp_res_path = abs_path + 'sirius_frontend' + sep + 'sirius_cli' + sep + 'src' + sep + 'test' + sep + 'temp_results'
             project.delete(temp_res_path)
         }
     }
 
 
-    task distImageTestCICD(type: Test, group: 'distribution'){
+    task distImageTestCICD(type: Test, group: 'distribution') {
         useJUnitPlatform()
         testClassesDirs = project(':sirius_dist').sourceSets.test.output
         filter.includeTestsMatching('*Local')
 
-        testLogging{
-            outputs.upToDateWhen {false}
+        testLogging {
+            outputs.upToDateWhen { false }
             showStandardStreams = true
         }
 
-        doFirst{
+        doFirst {
             String abs_path = project.projectDir.toString().split('sirius_frontend')[0]
             String sirius_exec = abs_path + 'sirius_frontend/unzipped/sirius/bin/sirius'
             String temp_res_path = abs_path + 'sirius_frontend/sirius_cli/src/test/temp_results'
@@ -499,34 +490,34 @@ subprojects {
 
             project.exec {
                 commandLine([sirius_exec,
-                             '--input', demo_path+'mgf'+sep+'laudanosine.mgf',
-                             '--output', temp_res_path+'mgf_temp_output',
+                             '--input', demo_path + 'mgf' + sep + 'laudanosine.mgf',
+                             '--output', temp_res_path + 'mgf_temp_output',
                              'formula', '-p', 'orbitrap', 'fingerprint', 'structure', 'compound-classes',
-                             'write-summaries', '--output', temp_res_path+'mgf_temp_summary'
+                             'write-summaries', '--output', temp_res_path + 'mgf_temp_summary'
                 ])
             }
 
             project.exec {
                 commandLine([sirius_exec,
-                             '-1', demo_path+'txt'+sep+'chelidonine_ms.txt',
-                             '-2', demo_path+'txt'+sep+'chelidonine_msms1.txt' + ',' + demo_path+'txt'+sep+'chelidonine_msms2.txt',
-                             '-z', '354.134704589844', '-o', temp_res_path+'txt_temp_output',
+                             '-1', demo_path + 'txt' + sep + 'chelidonine_ms.txt',
+                             '-2', demo_path + 'txt' + sep + 'chelidonine_msms1.txt' + ',' + demo_path + 'txt' + sep + 'chelidonine_msms2.txt',
+                             '-z', '354.134704589844', '-o', temp_res_path + 'txt_temp_output',
                              'formula', '-p', 'orbitrap',
-                             'write-summaries', '--output', temp_res_path+'txt_temp_summary'
+                             'write-summaries', '--output', temp_res_path + 'txt_temp_summary'
                 ])
             }
 
             project.exec {
                 commandLine([sirius_exec,
-                             '-o', temp_res_path+'ms_temp_output',
-                             '-i', demo_path+'ms'+sep+'Bicuculline.ms',
+                             '-o', temp_res_path + 'ms_temp_output',
+                             '-i', demo_path + 'ms' + sep + 'Bicuculline.ms',
                              '--ignore-formula', 'formula', '-p', 'orbitrap', '-c', '5',
                              'fingerprint', 'structure', 'compound-classes',
-                             'write-summaries', '--output', temp_res_path+'ms_temp_summary'
+                             'write-summaries', '--output', temp_res_path + 'ms_temp_summary'
                 ])
             }
         }
-        doLast{
+        doLast {
             String abs_path = project.projectDir.toString().split('sirius_frontend')[0]
             project.delete(abs_path + 'sirius_frontend/sirius_cli/src/test/temp_results')
             project.delete(abs_path + 'sirius_frontend/unzipped')
@@ -635,7 +626,8 @@ subprojects {
             def source
             def target
             if (project.OS.isMacOsX()) {
-                def macInstallerIdentity = findProperty('de.unijena.bioinf.build.MACOS_IDENTITY_ID') //just to check whether a certificate was given
+                def macInstallerIdentity = findProperty('de.unijena.bioinf.build.MACOS_IDENTITY_ID')
+                //just to check whether a certificate was given
                 if (macInstallerIdentity != null && !macInstallerIdentity.isBlank()) {
                     source = Path.of(distImage.getImageDir().absolutePath.replace('.app', installerAppendix))
                     target = Path.of(distImage.getImageDir().absolutePath.replace('.app', "-SIGNED") + installerAppendix)
@@ -659,9 +651,9 @@ subprojects {
                 if (certFile != null && !certFile.isBlank() && file(certFile).exists()) {
                     def searchPaths = [Path.of("${System.getenv("SystemDrive")}\\").resolve("Program Files (x86)").resolve("Windows Kits"), Path.of("${System.getenv("SystemDrive")}\\").resolve("Program Files").resolve("Windows Kits")]
                     getLogger().lifecycle("Searching recursively for signtool.exe in ${searchPaths}")
-                    def signtoolExe = searchPaths.stream().filter({p -> Files.exists(p)}).flatMap({ p -> Files.walk(p) })
+                    def signtoolExe = searchPaths.stream().filter({ p -> Files.exists(p) }).flatMap({ p -> Files.walk(p) })
                             .filter({ p -> p.getFileName().toString().equalsIgnoreCase('signtool.exe') })
-                            .findAny().orElseThrow({new FileNotFoundException("Could not find signtool.exe!")})
+                            .findAny().orElseThrow({ new FileNotFoundException("Could not find signtool.exe!") })
                             .toAbsolutePath().toString()
 
                     getLogger().lifecycle("Testing  signtool.exe found in '$signtoolExe'")
@@ -992,7 +984,7 @@ abstract class AppInstaller extends DefaultTask {
                 paras += ['--win-shortcut']
             if (winPerUserInstall)
                 paras += ['--win-per-user-install']
-            if (winUpdateUUID !=  null && !winUpdateUUID.isBlank())
+            if (winUpdateUUID != null && !winUpdateUUID.isBlank())
                 paras += ['--win-upgrade-uuid', "$winUpdateUUID"]
         } else if (project.OS.isMacOsX()) {
 
