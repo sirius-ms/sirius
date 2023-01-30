@@ -44,8 +44,41 @@ cd "`dirname \"$PRG\"`/.." >/dev/null
 APP_HOME="`pwd -P`"
 cd "$SAVED" >/dev/null
 
+#configure java library path
+JAVA_LIBRARY_PATH="#javaLibPath#"
+if [ -z ${CONDA_PREFIX+x} ] && [ -n "$CONDA_PREFIX" ]; then
+  if [ -z ${JAVA_LIBRARY_PATH+x} ] && [ -n "$JAVA_LIBRARY_PATH" ]; then
+    JAVA_LIBRARY_PATH="$JAVA_LIBRARY_PATH:$CONDA_PREFIX/lib"
+  else
+    JAVA_LIBRARY_PATH="$CONDA_PREFIX/lib"
+  fi
+fi
+
+if [ -z ${GUROBI_HOME+x} ] && [ -n "$GUROBI_HOME" ]; then
+  if [ -z ${JAVA_LIBRARY_PATH+x} ] && [ -n "$JAVA_LIBRARY_PATH" ]; then
+    JAVA_LIBRARY_PATH="$JAVA_LIBRARY_PATH:$GUROBI_HOME#gurobiHome#"
+  else
+    JAVA_LIBRARY_PATH="$GUROBI_HOME#gurobiHome#"
+  fi
+fi
+
+if [ -z ${CPLEX_HOME+x} ] && [ -n "$CPLEX_HOME" ]; then
+  if [ -z ${JAVA_LIBRARY_PATH+x} ] && [ -n "$JAVA_LIBRARY_PATH" ]; then
+    JAVA_LIBRARY_PATH="$JAVA_LIBRARY_PATH:$CPLEX_HOME#cplexHome#"
+  else
+    JAVA_LIBRARY_PATH="$CPLEX_HOME#cplexHome#"
+  fi
+fi
+
 # Add default JVM options here. You can also use JAVA_OPTS and SIRIUS_OPTS to pass JVM options to this script.
 DEFAULT_JVM_OPTS="#jvmOpts#"
+if [ -z ${JAVA_LIBRARY_PATH+x} ] && [ -n "$JAVA_LIBRARY_PATH" ]; then
+  if [ -z ${DEFAULT_JVM_OPTS+x} ] && [ -n "$DEFAULT_JVM_OPTS" ]; then
+    DEFAULT_JVM_OPTS="$DEFAULT_JVM_OPTS  -Djava.library.path=$JAVA_LIBRARY_PATH"
+  else
+    DEFAULT_JVM_OPTS="-Djava.library.path=$JAVA_LIBRARY_PATH"
+  fi
+fi
 
 # Native library path
 #export #libraryPathKey#="#libraryPathVal#"
@@ -61,18 +94,18 @@ JAVACMD="#javaCommand#"
 
 # fallback to java in path
 if [ ! -f "$JAVACMD" ]; then
-    JAVACMD="java"
+  JAVACMD="java"
 fi
 
 # Main class to run the app
 MAIN_CLASS="#mainClass#"
 
 # Escape application args
-save () {
-    for i do printf %s\\n "$i" | sed "s/'/'\\\\''/g;1s/^/'/;\$s/\$/' \\\\/" ; done
-    echo " "
+save() {
+  for i; do printf %s\\n "$i" | sed "s/'/'\\\\''/g;1s/^/'/;\$s/\$/' \\\\/"; done
+  echo " "
 }
-APP_ARGS=`save "$@"`
+APP_ARGS=$(save "$@")
 
 # Collect all arguments for the java command, following the shell quoting and substitution rules
 eval set -- "$DEFAULT_JVM_OPTS" "$JAVA_OPTS" "$SIRIUS_OPTS" -classpath "$CLASSPATH" "$MAIN_CLASS" "$APP_ARGS"
