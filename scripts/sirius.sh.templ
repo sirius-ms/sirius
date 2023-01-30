@@ -20,12 +20,6 @@
 #  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
 ##############################################################################
 
-##############################################################################
-##
-##  #toolName# start up script for UN*X
-##
-##############################################################################
-
 # Attempt to set APP_HOME
 # Resolve links: $0 may be a link
 PRG="$0"
@@ -117,6 +111,4 @@ APP_ARGS=$(save "$@")
 
 # Collect all arguments for the java command, following the shell quoting and substitution rules
 eval set -- "$DEFAULT_JVM_OPTS" "$JAVA_OPTS" "$SIRIUS_OPTS" -classpath "$CLASSPATH" "$MAIN_CLASS" "$APP_ARGS"
-echo "##### Starting SIRIUS with following javaCommand"
-echo "$JAVACMD" "$@"
 exec "$JAVACMD" "$@"
