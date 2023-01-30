@@ -46,32 +46,32 @@ cd "$SAVED" >/dev/null
 
 #configure java library path
 JAVA_LIBRARY_PATH="#javaLibPath#"
-if [ -z ${LD_RUN_PATH+x} ] && [ -n "$LD_RUN_PATH" ]; then
-  if [ -z ${JAVA_LIBRARY_PATH+x} ] && [ -n "$JAVA_LIBRARY_PATH" ]; then
+if [ -n "$LD_RUN_PATH" ]; then
+  if [ -n "$JAVA_LIBRARY_PATH" ]; then
     JAVA_LIBRARY_PATH="$JAVA_LIBRARY_PATH:$LD_RUN_PATH"
   else
     JAVA_LIBRARY_PATH="$LD_RUN_PATH"
   fi
 fi
 
-if [ -z ${CONDA_PREFIX+x} ] && [ -n "$CONDA_PREFIX" ]; then
-  if [ -z ${JAVA_LIBRARY_PATH+x} ] && [ -n "$JAVA_LIBRARY_PATH" ]; then
+if [ -n "$CONDA_PREFIX" ]; then
+  if [ -n "$JAVA_LIBRARY_PATH" ]; then
     JAVA_LIBRARY_PATH="$JAVA_LIBRARY_PATH:$CONDA_PREFIX/lib"
   else
     JAVA_LIBRARY_PATH="$CONDA_PREFIX/lib"
   fi
 fi
 
-if [ -z ${GUROBI_HOME+x} ] && [ -n "$GUROBI_HOME" ]; then
-  if [ -z ${JAVA_LIBRARY_PATH+x} ] && [ -n "$JAVA_LIBRARY_PATH" ]; then
+if [ -n "$GUROBI_HOME" ]; then
+  if [ -n "$JAVA_LIBRARY_PATH" ]; then
     JAVA_LIBRARY_PATH="$JAVA_LIBRARY_PATH:$GUROBI_HOME#gurobiHome#"
   else
     JAVA_LIBRARY_PATH="$GUROBI_HOME#gurobiHome#"
   fi
 fi
 
-if [ -z ${CPLEX_HOME+x} ] && [ -n "$CPLEX_HOME" ]; then
-  if [ -z ${JAVA_LIBRARY_PATH+x} ] && [ -n "$JAVA_LIBRARY_PATH" ]; then
+if [ -n "$CPLEX_HOME" ]; then
+  if [ -n "$JAVA_LIBRARY_PATH" ]; then
     JAVA_LIBRARY_PATH="$JAVA_LIBRARY_PATH:$CPLEX_HOME#cplexHome#"
   else
     JAVA_LIBRARY_PATH="$CPLEX_HOME#cplexHome#"
@@ -80,9 +80,9 @@ fi
 
 # Add default JVM options here. You can also use JAVA_OPTS and SIRIUS_OPTS to pass JVM options to this script.
 DEFAULT_JVM_OPTS="#jvmOpts#"
-if [ -z ${JAVA_LIBRARY_PATH+x} ] && [ -n "$JAVA_LIBRARY_PATH" ]; then
-  if [ -z ${DEFAULT_JVM_OPTS+x} ] && [ -n "$DEFAULT_JVM_OPTS" ]; then
-    DEFAULT_JVM_OPTS="$DEFAULT_JVM_OPTS  -Djava.library.path=$JAVA_LIBRARY_PATH"
+if [ -n "$JAVA_LIBRARY_PATH" ]; then
+  if [ -n "$DEFAULT_JVM_OPTS" ]; then
+    DEFAULT_JVM_OPTS="$DEFAULT_JVM_OPTS -Djava.library.path=$JAVA_LIBRARY_PATH"
   else
     DEFAULT_JVM_OPTS="-Djava.library.path=$JAVA_LIBRARY_PATH"
   fi
