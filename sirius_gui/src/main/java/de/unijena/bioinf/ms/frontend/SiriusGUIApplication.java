@@ -55,6 +55,9 @@ import java.util.function.Supplier;
 public class SiriusGUIApplication extends SiriusCLIApplication {
 
     public static void main(String[] args) {
+        System.out.println("JAVA_LIBRARY_PATH: " + System.getProperty("java.library.path"));
+        System.out.println("CONDA_PREFIX: " + System.getenv("CONDA_PREFIX"));
+        System.out.println("PREFIX: " + System.getenv("PREFIX"));
         System.setProperty(APP_TYPE_PROPERTY_KEY, "GUI");
         //run gui if not parameter ist given, to get rid of a second launcher
         if (args == null || args.length == 0)
