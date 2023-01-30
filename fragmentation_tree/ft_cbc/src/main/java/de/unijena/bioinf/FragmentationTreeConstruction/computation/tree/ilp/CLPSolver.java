@@ -54,6 +54,7 @@ public class CLPSolver extends AbstractSolver {
             try {
                 new CLPModel_JNI(0,0);
             } catch (Throwable e) {
+                LoggerFactory.getLogger(getClass()).error("Error loading CBC!", e);
                 throw new ILPSolverException(e);
             }
         }
