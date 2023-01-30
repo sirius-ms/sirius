@@ -4,7 +4,7 @@ import java.nio.file.*
 import java.util.stream.Collectors
 
 plugins {
-    id 'edu.sc.seis.launch4j' version '2.5.1'
+    id 'edu.sc.seis.launch4j' version '2.5.4'
     id 'org.gradle.crypto.checksum' version '1.4.0'
 }
 
@@ -244,8 +244,8 @@ subprojects {
         classpath = ["app\\*", "%GUROBI_HOME%\\lib\\gurobi.jar", "%CPLEX_HOME%\\lib\\cplex.jar"]
         libraryDir = "app"
 
-        jdkPreference = "preferJre"
-        jreMinVersion = "13"
+        jdkPreference = "preferJdk"
+//        jreMinVersion = "13"
         bundledJre64Bit = true
         jreRuntimeBits = "64"
         messagesBundledJreError = "Could not Load bundled JRE."
