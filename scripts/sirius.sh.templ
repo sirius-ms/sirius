@@ -46,6 +46,14 @@ cd "$SAVED" >/dev/null
 
 #configure java library path
 JAVA_LIBRARY_PATH="#javaLibPath#"
+if [ -z ${LD_RUN_PATH+x} ] && [ -n "$LD_RUN_PATH" ]; then
+  if [ -z ${JAVA_LIBRARY_PATH+x} ] && [ -n "$JAVA_LIBRARY_PATH" ]; then
+    JAVA_LIBRARY_PATH="$JAVA_LIBRARY_PATH:$LD_RUN_PATH"
+  else
+    JAVA_LIBRARY_PATH="$LD_RUN_PATH"
+  fi
+fi
+
 if [ -z ${CONDA_PREFIX+x} ] && [ -n "$CONDA_PREFIX" ]; then
   if [ -z ${JAVA_LIBRARY_PATH+x} ] && [ -n "$JAVA_LIBRARY_PATH" ]; then
     JAVA_LIBRARY_PATH="$JAVA_LIBRARY_PATH:$CONDA_PREFIX/lib"
