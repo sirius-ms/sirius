@@ -155,11 +155,9 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
 
                 int charge = Integer.parseInt(m.group(1));
                 if (charge == 0){
-                    charge = 1;
+                    charge = m.group(1).strip().startsWith("-") ? -1 : 1;
                     LoggerFactory.getLogger(MgfParser.class).warn("Charge value of 0 found. Changing value to Single charged under consideration of the given ion mode.");
                 }
-                if("-".equals(m.group(2)))
-                    charge = -charge;
 
                 if (spec.spectrum.getIonization() == null || spec.spectrum.getIonization().getCharge() != charge)
                     spec.spectrum.setIonization(new Charge(charge));
