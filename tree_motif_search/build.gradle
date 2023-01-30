@@ -24,6 +24,4 @@ dependencies {
     compile project(':default_properties:annotations')
     compile project(':chemistry_base')
     compile project(':fragmentation_tree:fragmentation_tree_construction')
-    compile project(':fragmentation_tree:ft_cplex')
-    compile project(':fragmentation_tree:ft_gurobi')
 }

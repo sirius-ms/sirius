@@ -31,6 +31,7 @@ dependencies {
 
     compile group: 'cpdetector', name: 'cpdetector', version:  '1.04'
 //    compile 'javax.xml.bind:jaxb-api:2.3.1' //also needed by jmzl but not exclusively
-    compile 'org.glassfish.jaxb:jaxb-core:2.3.0.1' //also needed by jmzl but not exclusively
+
+//    compile 'org.glassfish.jaxb:jaxb-core:2.3.0.1' //also needed by jmzl but not exclusively
     compile 'org.glassfish.jaxb:jaxb-runtime:2.3.3'
 }

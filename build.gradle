@@ -26,9 +26,10 @@ ext {
     fingeridVersion = props.getProperty('de.unijena.bioinf.fingerid.version')
     //version for external libraries
     jjobs_version = '0.9.35'
-    slf4j_version = '1.7.36'
+    slf4j_version = '2.0.6'
     gson_version = "2.8.6"//'2.6.2'
     math3_version = '3.6.1'
+    cbc_version = props.getProperty('de.unijena.bioinf.sirius.build.cbc_version')
     glpk_version = props.getProperty('de.unijena.bioinf.sirius.build.glpk_version')
     gurobi_version = props.getProperty('de.unijena.bioinf.sirius.build.gurobi_version')
     cplex_version = props.getProperty('de.unijena.bioinf.sirius.build.cplex_version')
@@ -104,7 +105,6 @@ allprojects {
                 password = project.findProperty('de.unijena.bioinf.build.artifactory.password')
             }
         }
-
 
         maven {
             url "https://www.xypron.de/repository" //glpk repo
