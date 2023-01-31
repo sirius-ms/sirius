@@ -341,14 +341,6 @@ public class InChISMILESUtils {
     public static void main(String... args) throws CDKException, IOException {
         //todo remove after testing
 
-//    System.out.println(formulaFromSmiles("CCCCCCCCCCCCCCCCCC(=O)OC[C@H](COP(=O)(O)OCC[N+](C)(C)C)O").formatByHill());
-//    System.out.println(InChIs.newInChI(null,"InChI=1S/C26H55NO7P/c1-5-6-7-8-9-10-11-12-13-14-15-16-17-18-19-20-26(29)32-23-25(28)24-34-35(30,31)33-22-21-27(2,3)4/h25,28H,5-24H2,1-4H3,(H,30,31)/t25-/m1/s1").extractFormula().formatByHill());
-//    System.out.println(inchi2inchiKey("InChI=1S/C26H55NO7P/c1-5-6-7-8-9-10-11-12-13-14-15-16-17-18-19-20-26(29)32-23-25(28)24-34-35(30,31)33-22-21-27(2,3)4/h25,28H,5-24H2,1-4H3,(H,30,31)/t25-/m1/s1"));
-//    InChI i = getInchiAndInchiKey("CCCCCCCCCCCCCCCCCC(=O)OC[C@H](COP(=O)(O)OCC[N+](C)(C)C)O");
-//    System.out.println(i.in3D);
-//    System.out.println(i.extractFormula().formatByHill());
-//    System.out.println(i.key);
-
         String s = "C(C(/O)=C/C=C1(CC2(/C(\\C(=O)1)=C/C=CC=2)))([O-])=O";
         s = stripStereoCentres(s);
         s = stripDoubleBondGeometry(s);
@@ -356,75 +348,10 @@ public class InChISMILESUtils {
         System.out.println(get2DSmiles(smiles));
         System.out.println(get2DSmilesByTextReplace("C(C(/O)=C/C=C1(CC2(/C(\\C(=O)1)=C/C=CC=2)))([O-])=O"));
 
-//        System.out.println(getInchiWithKeyOrThrow("InChI=1S/C20H24O9/c1-7-4-10(21)13(23)17(3)9(7)5-11-18-6-28-20(27,16(17)18)12(22)8(2)19(18,26)14(24)15(25)29-11/h4,9,11-14,16,22-24,26-27H,2,5-6H2,1,3H3/t9-,11+,12+,13+,14-,16+,17+,18+,19-,20-/m0/s1", true).in3D);
-//        System.out.println(getInchiWithKeyOrThrow("InChI=1S/C20H24O9/c1-7-4-10(21)13(23)17(3)9(7)5-11-18-6-28-20(27,16(17)18)12(22)8(2)19(18,26)14(24)15(25)29-11/h4,9,11-14,16,22-24,26-27H,2,5-6H2,1,3H3/t9-,11+,12+,13+,14-,16+,17+,18+,19-,20-/m0/s1", false).in3D);
-//
-//
-//        System.out.println("InChI=1S/2C2H4O2.Mg/c2*1-2(3)4;/h2*1H3,(H,3,4);/q;;+2/p-2");
-//        System.out.println(getInchiWithKeyOrThrow("InChI=1S/2C2H4O2.Mg/c2*1-2(3)4;/h2*1H3,(H,3,4);/q;;+2/p-2", false).in3D);
-//        System.out.println(getInchiWithKeyOrThrow("InChI=1S/2C2H4O2.Mg/c2*1-2(3)4;/h2*1H3,(H,3,4);/q;;+2/p-2", true).in3D);
-//
-//
-//        String inchi = "InChI=1S/C5H9/c1-4-5(2)3/h4H,1H2,2-3H3";
-//        System.out.println(inchi);
-//        System.out.println(getInchiWithKeyOrThrow(inchi, false).in3D);
-//        System.out.println(getInchiWithKeyOrThrow(inchi, true).in3D);
-//
-//        inchi = "InChI=1S/C18H32N8O4/c19-10-14(27)25-8-3-6-13(25)16(29)24-11(4-1-7-23-18(21)22)17(30)26-9-2-5-12(26)15(20)28/h11-13H,1-10,19H2,(H2,20,28)(H,24,29)(H4,21,22,23)";
-//        System.out.println(inchi);
-//        System.out.println(getInchiWithKeyOrThrow(inchi, false).in3D);
-//        System.out.println(getInchiWithKeyOrThrow(inchi, true).in3D);
-//
-//        inchi = "InChI=1S/C4H8N2S4.Zn/c7-3(8)5-1-2-6-4(9)10;/h1-2H2,(H2,5,7,8)(H2,6,9,10);/q;+2/p-2";
-//        System.out.println(inchi);
-//        System.out.println(getInchiWithKeyOrThrow(inchi, false).in3D);
-//        System.out.println(getInchiWithKeyOrThrow(inchi, true).in3D);
-//
-//        inchi = "InChI=1S/C30H46O4.Na/c1-25(2)21-8-11-30(7)23(28(21,5)10-9-22(25)32)20(31)16-18-19-17-27(4,24(33)34)13-12-26(19,3)14-15-29(18,30)6;/h16,19,21-23,32H,8-15,17H2,1-7H3,(H,33,34);/q;+1/p-1/t19-,21-,22-,23+,26+,27-,28-,29+,30+;/m0./s1";
-//        System.out.println(inchi);
-//        System.out.println(getInchiWithKeyOrThrow(inchi, false).in3D);
-//        System.out.println(getInchiWithKeyOrThrow(inchi, true).in3D);
-
-//        String inchi = "InChI=1S/C32H47N3O10S/c1-2-3-9-14-23(36)15-10-6-4-5-7-12-17-27(26(37)16-11-8-13-18-29(39)40)46-22-25(31(43)34-21-30(41)42)35-28(38)20-19-24(33)32(44)45/h3-12,15,17,23-27,36-37H,2,13-14,16,18-22,33H2,1H3,(H,34,43)(H,35,38)(H,39,40)(H,41,42)(H,44,45)/b6-4-,7-5?,9-3-,11-8-,15-10+,17-12?/t23-,24-,25-,26+,27-/m0/s1";
-//        System.out.println(inchi);
-//        System.out.println(getInchiWithKeyOrThrow(inchi, false).in3D);
-//        System.out.println(getInchiWithKeyOrThrow(inchi, false).key);
-//        System.out.println(getInchiWithKeyOrThrow(inchi, true).in3D);
-//        System.out.println(getInchiWithKeyOrThrow(inchi, true).key);
-//
-//        LoggerFactory.getLogger(InChISMILESUtils.class).error("Column '%s' is missing", new String[0]);
 
 
 
-//        String smiles = "";
-        s = "C[NH+](C)(C).[Cl-]";
-        printAndStripSalt(s);
 
-        s = "C[N+]1=C2C=C(N)C=CC2=CC2=C1C=C(N)C=C2.NC1=CC2=NC3=C(C=CC(N)=C3)C=C2C=C1";
-        printAndStripSalt(s);
-        s = "COC1CC(OC2CC(C3OC(C)(O)C(C)CC3C)OC2C2(C)CCC(C3(C)CCC4(CC(O)C(C)C(C(C)C5OC(O)(CC(=O)[O-])C(C)C(OC)C5OC)O4)O3)O2)OC(C)C1OC.[NH4+]" ;
-        printAndStripSalt(s);
-        s = "CC(=O)O.CCNC(=O)C1CCCN1C(=O)C(CCCNC(=N)N)NC(=O)C(CC(C)C)NC(=O)C(CC1=CNC2=C1C=CC=C2)NC(=O)C(CC1=CC=C(O)C=C1)NC(=O)C(CO)NC(=O)C(CC1=CNC2=C1C=CC=C2)NC(=O)C(CC1=CNC=N1)NC(=O)C1CCC(=O)N1";
-        printAndStripSalt(s);
-        s = "CC(O)C(=O)O.CCOC1=CC2=C(N)C3=C(C=C(N)C=C3)N=C2C=C1.O";
-        printAndStripSalt(s);
-        s = "CCCCCCCCCCCCCC[N+](C)(C)CC1=CC=CC=C1.O.O";
-        printAndStripSalt(s);
-        s = "O=NN([O-])C1=CC=CC=C1.[NH4+]";
-        printAndStripSalt(s);
-        s = "CC(C)(COP(=O)([O-])OP(=O)([O-])OCC1OC(N2C=NC3=C2N=CN=C3N)C(O)C1OP(=O)([O-])O)C(O)C(=O)NCCC(=O)NCCS.O.O.[Li+].[Li+].[Li+]";
-        printAndStripSalt(s);
-        s = "C[N+](C)(C)CCO.[OH-]";
-        printAndStripSalt(s);
-
-
-    }
-
-    private static void printAndStripSalt(String s) throws CDKException {
-        System.out.println("input "+ s);
-        IAtomContainer atomContainer = getAtomContainerFromSmiles(s);
-        atomContainer = getMainConnectedComponentOrNull(atomContainer, true);
-        System.out.println(atomContainer==null?"":getSmiles(atomContainer));
     }
 
 }
