@@ -609,9 +609,9 @@ jobs:
           TXT_OUTPUT="${TEMP_DIR}/txt_temp_output"
           TXT_SUMMARY="${TEMP_DIR}/txt_temp_summary"
           case "$OSTYPE" in
-            darwin*) SIRIUS="./sirius_dist/sirius_gui_single_os/build/distributions/sirius.app/Contents/MacOS/sirius" ;;
-            linux*) SIRIUS="./sirius_dist/sirius_gui_single_os/build/distributions/sirius/bin/sirius" ;;
-            msys*) SIRIUS="./sirius_dist/sirius_gui_single_os/build/distributions/sirius/sirius.exe" ;;
+            darwin*) SIRIUS="./sirius_dist/sirius_gui_multi_os/build/distributions/sirius.app/Contents/MacOS/sirius" ;;
+            linux*) SIRIUS="./sirius_dist/sirius_gui_multi_os/build/distributions/sirius/bin/sirius" ;;
+            msys*) SIRIUS="./sirius_dist/sirius_gui_multi_os/build/distributions/sirius/sirius.exe" ;;
             *) echo "Error: Could not find OS."; exit 1 ;;
           esac
           ${SIRIUS} login --user-env SIRIUS_USER --password-env SIRIUS_PW
