@@ -121,3 +121,6 @@ distTar.dependsOn('launch4j')
 distTar.dependsOn('createGuiExe')
 installDist.dependsOn('launch4j')
 installDist.dependsOn('createGuiExe')
+distribution.dependsOn 'distZip'
+//distribution.dependsOn 'distTar'
+distribution.dependsOn 'createChecksums'
