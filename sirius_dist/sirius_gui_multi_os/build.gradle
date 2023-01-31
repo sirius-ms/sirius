@@ -4,6 +4,12 @@ import java.util.stream.Collectors
 
 apply plugin: "application"
 
+ext {
+    libDir = findProperty("sirius.build.location.lib")
+    includeWinStarter = !findProperty("build.sirius.starter.remove.win")
+    includeIxStarter = !findProperty("build.sirius.starter.remove.ix")
+}
+
 dependencies {
     implementation project(':sirius_gui')
     implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
@@ -29,8 +35,11 @@ launch4j {
     dontWrapJar = true
     bundledJrePath = null
     bundledJre64Bit = false
-    classpath = ["lib\\*", "%GUROBI_HOME%\\lib\\gurobi.jar", "%CPLEX_HOME%\\lib\\cplex.jar"]
-    libraryDir = "lib"
+    classpath = [(libDir == null ? "lib" : libDir) + "\\*",
+                 "%GUROBI_HOME%\\lib\\gurobi.jar",
+                 "%CPLEX_HOME%\\lib\\cplex.jar"
+    ]
+    libraryDir = libDir == null ? "lib" : libDir
     jdkPreference = "preferJdk"
     jreMinVersion = "13"
 }
@@ -49,40 +58,50 @@ startScripts {
     defaultJvmOpts = application.applicationDefaultJvmArgs
 
     doLast {
-        def templateBinding = [
-                toolName : "SIRIUS",
-                mainClass: mainClassName
-        ]
+
 
         // writer sh script
-        def sf = file("${rootDir}/scripts/sirius.sh.templ")
-        templateBinding.shell = "sh"
-        templateBinding.classPath = "\\\"\$JAR_HOME/*\\\":\\\"\$GUROBI_HOME/lib/gurobi.jar\\\":\\\"\$CPLEX_HOME/lib/cplex.jar\\\""
-        templateBinding.javaLibPath = "\"\""
-        templateBinding.gurobiHome = "/lib"
-        templateBinding.cplexHome = "/bin/x86-64_linux"
-        templateBinding.jvmOpts = "${application.applicationDefaultJvmArgs.stream().collect(Collectors.joining(' '))}"
-        templateBinding.javaCommand = "\$APP_HOME/lib/runtime/bin/java"
-        templateBinding.jarHome = "\$APP_HOME/lib"
+        if (includeIxStarter) {
+            def templateBinding = [
+                    toolName : "SIRIUS",
+                    mainClass: mainClassName
+            ]
+            def sf = file("${rootDir}/scripts/sirius.sh.templ")
+            templateBinding.shell = "sh"
+            templateBinding.classPath = "\\\"\$JAR_HOME/*\\\":\\\"\$GUROBI_HOME/lib/gurobi.jar\\\":\\\"\$CPLEX_HOME/lib/cplex.jar\\\""
+            templateBinding.javaLibPath = "\"\""
+            templateBinding.gurobiHome = "/lib"
+            templateBinding.cplexHome = "/bin/x86-64_linux"
+            templateBinding.jvmOpts = "${application.applicationDefaultJvmArgs.stream().collect(Collectors.joining(' '))}"
+            templateBinding.javaCommand = "\$APP_HOME/lib/runtime/bin/java"
+            templateBinding.jarHome = libDir == null ? "\$APP_HOME/lib" : libDir
 
-        String script = sf.text
-        templateBinding.forEach({ k, v -> script = script.replace("#$k#", v) })
-        unixScript.withWriter { it.write(script) }
-        unixScript.setExecutable(true, false)
-        unixScript.renameTo(unixScript.path + '.sh')
+            String script = sf.text
+            templateBinding.forEach({ k, v -> script = script.replace("#$k#", v) })
+            unixScript.withWriter { it.write(script) }
+            unixScript.setExecutable(true, false)
+            unixScript.renameTo(unixScript.path + '.sh')
+        }
 
-        // write bat
-        sf = file("${rootDir}/scripts/sirius.bat.templ")
-        templateBinding.classPath = "%JAR_HOME%\\*"
-        templateBinding.jvmOpts = "${application.applicationDefaultJvmArgs.stream().map({ s -> '"' + s + '"' }).collect(Collectors.joining(" "))}"
-        templateBinding.jarHome = "%APP_HOME%\\app"
-        templateBinding.gurobiJar = "%GUROBI_HOME%\\lib\\gurobi.jar"
-        templateBinding.cplexJar = "%CPLEX_HOME%\\lib\\cplex.jar"
+        if (includeWinStarter) {
+//reset binding and create windows bat
+            def templateBinding = [
+                    toolName : "SIRIUS",
+                    mainClass: mainClassName
+            ]
+            // write bat
+            def sf = file("${rootDir}/scripts/sirius.bat.templ")
+            templateBinding.classPath = "%JAR_HOME%\\*"
+            templateBinding.jvmOpts = "${application.applicationDefaultJvmArgs.stream().map({ s -> '"' + s + '"' }).collect(Collectors.joining(" "))}"
+            templateBinding.jarHome = libDir == null ? "\$APP_HOME/lib" : libDir
+            templateBinding.gurobiJar = "%GUROBI_HOME%\\lib\\gurobi.jar"
+            templateBinding.cplexJar = "%CPLEX_HOME%\\lib\\cplex.jar"
 
-        script = sf.text
-        templateBinding.forEach({ k, v -> script = script.replace("#$k#", v) })
-        windowsScript.withWriter { it.write(script) }
-        windowsScript.setExecutable(true, false)
+            script = sf.text
+            templateBinding.forEach({ k, v -> script = script.replace("#$k#", v) })
+            windowsScript.withWriter { it.write(script) }
+            windowsScript.setExecutable(true, false)
+        }
     }
 }
 
@@ -99,11 +118,15 @@ distributions {
                 exclude 'cbc-java-mac-*.jar'
 
             into('bin') {
-                from("${buildDir}/launch4j") {
-                    include("*.exe")
+                if (includeWinStarter) {
+                    from("${buildDir}/launch4j") {
+                        include("*.exe")
+                    }
                 }
-                from("${rootDir}/scripts"){
-                    include 'sirius-gui.sh'
+                if (includeIxStarter) {
+                    from("${rootDir}/scripts") {
+                        include 'sirius-gui.sh'
+                    }
                 }
 
             }
