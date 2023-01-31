@@ -759,7 +759,7 @@ subprojects {
     }
 
     task createChecksums(type: Checksum) {
-        mustRunAfter('distImageZip', 'distInstaller', 'macNotarize', 'signDistImage', 'signDistInstaller')
+        mustRunAfter('distImageZip', 'distInstaller', 'macNotarize', 'signDistImage', 'signDistInstaller', 'distZip', 'distTar')
         inputFiles.setFrom(fileTree(dir: "$buildDir/distributions", includes: ['*.zip', '*.pkg', '*.deb', '*.msi']))
         outputDirectory.set(file("$buildDir/distributions"))
         checksumAlgorithm.set(Checksum.Algorithm.SHA256)
