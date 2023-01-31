@@ -700,10 +700,10 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           retention-days: 1
-          name: "sirius-${{ steps.sirius_version.outputs.value }}-MultiOS-x86-64"
+          name: "sirius-${{ steps.sirius_version.outputs.value }}-multiOS-x86-64"
           path: |
-            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.zip
-            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.sha256
+            sirius_dist/sirius_gui_multi_os/build/distributions/*.zip
+            sirius_dist/sirius_gui_multi_os/build/distributions/*.sha256
 
 #  distMulti:
 #    needs: distCLI
