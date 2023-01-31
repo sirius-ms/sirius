@@ -1,0 +1,123 @@
+import edu.sc.seis.launch4j.tasks.Launch4jLibraryTask
+
+import java.util.stream.Collectors
+
+apply plugin: "application"
+
+dependencies {
+    implementation project(':sirius_gui')
+    implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+}
+mainClassName = "de.unijena.bioinf.ms.frontend.SiriusGUIApplication"
+
+application {
+    mainClass = project.mainClassName
+    applicationDefaultJvmArgs = ['-Xms1G',
+                                 '-XX:MaxRAMPercentage=85',
+                                 '-XX:+UseG1GC',
+                                 '-XX:+UseStringDeduplication',
+                                 '-XX:+ExitOnOutOfMemoryError']
+    executableDir = 'bin'
+    application.applicationName = 'sirius'
+}
+
+
+launch4j {
+    mainClassName = project.mainClassName
+    jar = getLibraryDir() + "\\" + getRootProject().getChildProjects().get('sirius_gui').tasks.getByName('jar').outputs.files.singleFile.getName()
+    jvmOptions = application.applicationDefaultJvmArgs
+    dontWrapJar = true
+    bundledJrePath = null
+    bundledJre64Bit = false
+    classpath = ["lib\\*", "%GUROBI_HOME%\\lib\\gurobi.jar", "%CPLEX_HOME%\\lib\\cplex.jar"]
+    libraryDir = "lib"
+    jdkPreference = "preferJdk"
+    jreMinVersion = "13"
+}
+
+//additional GUI win launcher
+task createGuiExe(type: Launch4jLibraryTask) {
+    outfile = 'sirius-gui.exe'
+    fileDescription = 'SIRIUS graphical user interface'
+    headerType = "gui"
+    cmdLine = "gui"
+}
+
+
+startScripts {
+    applicationName = "sirius"
+    defaultJvmOpts = application.applicationDefaultJvmArgs
+
+    doLast {
+        def templateBinding = [
+                toolName : "SIRIUS",
+                mainClass: mainClassName
+        ]
+
+        // writer sh script
+        def sf = file("${rootDir}/scripts/sirius.sh.templ")
+        templateBinding.shell = "sh"
+        templateBinding.classPath = "\\\"\$JAR_HOME/*\\\":\\\"\$GUROBI_HOME/lib/gurobi.jar\\\":\\\"\$CPLEX_HOME/lib/cplex.jar\\\""
+        templateBinding.javaLibPath = "\"\""
+        templateBinding.gurobiHome = "/lib"
+        templateBinding.cplexHome = "/bin/x86-64_linux"
+        templateBinding.jvmOpts = "${application.applicationDefaultJvmArgs.stream().collect(Collectors.joining(' '))}"
+        templateBinding.javaCommand = "\$APP_HOME/lib/runtime/bin/java"
+        templateBinding.jarHome = "\$APP_HOME/lib"
+
+        String script = sf.text
+        templateBinding.forEach({ k, v -> script = script.replace("#$k#", v) })
+        unixScript.withWriter { it.write(script) }
+        unixScript.setExecutable(true, false)
+        unixScript.renameTo(unixScript.path + '.sh')
+
+        // write bat
+        sf = file("${rootDir}/scripts/sirius.bat.templ")
+        templateBinding.classPath = "%JAR_HOME%\\*"
+        templateBinding.jvmOpts = "${application.applicationDefaultJvmArgs.stream().map({ s -> '"' + s + '"' }).collect(Collectors.joining(" "))}"
+        templateBinding.jarHome = "%APP_HOME%\\app"
+        templateBinding.gurobiJar = "%GUROBI_HOME%\\lib\\gurobi.jar"
+        templateBinding.cplexJar = "%CPLEX_HOME%\\lib\\cplex.jar"
+
+        script = sf.text
+        templateBinding.forEach({ k, v -> script = script.replace("#$k#", v) })
+        windowsScript.withWriter { it.write(script) }
+        windowsScript.setExecutable(true, false)
+    }
+}
+
+distributions {
+    main {
+        contents {
+            exclude 'gurobi-jar-*.jar'
+            exclude 'cplex-*.jar'
+            if ((findProperty("build.sirius.native.remove.win")))
+                exclude 'cbc-java-win-*.jar'
+            if ((findProperty("build.sirius.native.remove.linux")))
+                exclude 'cbc-java-linux-*.jar'
+            if ((findProperty("build.sirius.native.remove.mac")))
+                exclude 'cbc-java-mac-*.jar'
+
+            into('bin') {
+                from("${buildDir}/launch4j") {
+                    include("*.exe")
+                }
+                from("${rootDir}/scripts"){
+                    include 'sirius-gui.sh'
+                }
+
+            }
+
+            from("${rootDir}") {
+                include('COPYING.txt')
+                include('LICENSE.txt')
+            }
+        }
+    }
+}
+distZip.dependsOn('launch4j')
+distZip.dependsOn('createGuiExe')
+distTar.dependsOn('launch4j')
+distTar.dependsOn('createGuiExe')
+installDist.dependsOn('launch4j')
+installDist.dependsOn('createGuiExe')
