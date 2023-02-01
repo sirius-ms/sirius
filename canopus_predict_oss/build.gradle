@@ -59,7 +59,6 @@ distributions {
         contents {
             into('lib') {
                 from("build/install/${project.name}/lib")
-                from("${project.glpkPath}/l64/")
             }
 
             into('bin') {
