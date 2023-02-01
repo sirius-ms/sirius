@@ -31,20 +31,18 @@ application {
 }
 
 
-launch4j {
+createExe {
     mainClassName = project.mainClassName
+    libraryDir = libDir == null ? "lib" : libDir
     jar = getLibraryDir() + "\\" + getRootProject().getChildProjects().get('sirius_gui').tasks.getByName('jar').outputs.files.singleFile.getName()
     jvmOptions = application.applicationDefaultJvmArgs
     dontWrapJar = true
-    bundledJrePath = null
-    bundledJre64Bit = false
+    bundledJrePath = "java"
     classpath = [(libDir == null ? "lib" : libDir) + "\\*",
                  "%GUROBI_HOME%\\lib\\gurobi.jar",
                  "%CPLEX_HOME%\\lib\\cplex.jar"
     ]
-    libraryDir = libDir == null ? "lib" : libDir
     jdkPreference = "preferJdk"
-    jreMinVersion = "13"
 }
 
 //additional GUI win launcher
