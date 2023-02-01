@@ -71,7 +71,6 @@ distributions {
         }
 
     }
-    linux64DistZip.dependsOn ':downloadGLPK'
 
     getTasksByName("linux64DistTar", false).each {it.setEnabled(false)}
     getTasksByName("linux64DistTar", false).each { it.setEnabled(false)}
