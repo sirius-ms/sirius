@@ -5,7 +5,7 @@ import java.util.stream.Collectors
 apply plugin: "application"
 
 ext {
-    libDir = findProperty("sirius.build.location.lib")
+    libDir = findProperty("build.sirius.location.lib")
     includeWinStarter = !findProperty("build.sirius.starter.remove.win")
     includeIxStarter = !findProperty("build.sirius.starter.remove.ix")
     excludeNativeWin = findProperty("build.sirius.native.remove.win")
