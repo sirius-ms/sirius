@@ -8,6 +8,9 @@ ext {
     libDir = findProperty("sirius.build.location.lib")
     includeWinStarter = !findProperty("build.sirius.starter.remove.win")
     includeIxStarter = !findProperty("build.sirius.starter.remove.ix")
+    excludeNativeWin = findProperty("build.sirius.native.remove.win")
+    excludeNativeLinux = findProperty("build.sirius.native.remove.linux")
+    excludeNativeMac = findProperty("build.sirius.native.remove.mac")
 }
 
 dependencies {
@@ -58,8 +61,6 @@ startScripts {
     defaultJvmOpts = application.applicationDefaultJvmArgs
 
     doLast {
-
-
         // writer sh script
         if (includeIxStarter) {
             def templateBinding = [
@@ -69,7 +70,7 @@ startScripts {
             def sf = file("${rootDir}/scripts/sirius.sh.templ")
             templateBinding.shell = "sh"
             templateBinding.classPath = "\\\"\$JAR_HOME/*\\\":\\\"\$GUROBI_HOME/lib/gurobi.jar\\\":\\\"\$CPLEX_HOME/lib/cplex.jar\\\""
-            templateBinding.javaLibPath = "\"\""
+            templateBinding.javaLibPath = ""
             templateBinding.gurobiHome = "/lib"
             templateBinding.cplexHome = "/bin/x86-64_linux"
             templateBinding.jvmOpts = "${application.applicationDefaultJvmArgs.stream().collect(Collectors.joining(' '))}"
@@ -81,6 +82,8 @@ startScripts {
             unixScript.withWriter { it.write(script) }
             unixScript.setExecutable(true, false)
             unixScript.renameTo(unixScript.path + '.sh')
+        } else{
+            delete(unixScript)
         }
 
         if (includeWinStarter) {
@@ -97,10 +100,12 @@ startScripts {
             templateBinding.gurobiJar = "%GUROBI_HOME%\\lib\\gurobi.jar"
             templateBinding.cplexJar = "%CPLEX_HOME%\\lib\\cplex.jar"
 
-            script = sf.text
+            String script = sf.text
             templateBinding.forEach({ k, v -> script = script.replace("#$k#", v) })
             windowsScript.withWriter { it.write(script) }
             windowsScript.setExecutable(true, false)
+        } else{
+            delete(windowsScript)
         }
     }
 }
@@ -110,11 +115,11 @@ distributions {
         contents {
             exclude 'gurobi-jar-*.jar'
             exclude 'cplex-*.jar'
-            if ((findProperty("build.sirius.native.remove.win")))
+            if (excludeNativeWin)
                 exclude 'cbc-java-win-*.jar'
-            if ((findProperty("build.sirius.native.remove.linux")))
+            if (excludeNativeLinux)
                 exclude 'cbc-java-linux-*.jar'
-            if ((findProperty("build.sirius.native.remove.mac")))
+            if (excludeNativeMac)
                 exclude 'cbc-java-mac-*.jar'
 
             into('bin') {
