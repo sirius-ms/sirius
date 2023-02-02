@@ -8,6 +8,7 @@ ext {
     libDir = findProperty("build.sirius.location.lib")
     includeWinStarter = !findProperty("build.sirius.starter.remove.win")
     includeIxStarter = !findProperty("build.sirius.starter.remove.ix")
+    launch4jJDK = !findProperty("build.sirius.starter.jdk.win")
     excludeNativeWin = findProperty("build.sirius.native.remove.win")
     excludeNativeLinux = findProperty("build.sirius.native.remove.linux")
     excludeNativeMac = findProperty("build.sirius.native.remove.mac")
@@ -37,12 +38,15 @@ createExe {
     jar = getLibraryDir() + "\\" + getRootProject().getChildProjects().get('sirius_gui').tasks.getByName('jar').outputs.files.singleFile.getName()
     jvmOptions = application.applicationDefaultJvmArgs
     dontWrapJar = true
-    bundledJrePath = "java"
+    bundledJrePath = launch4jJDK
+    bundledJre64Bit = true
     classpath = [(libDir == null ? "lib" : libDir) + "\\*",
                  "%GUROBI_HOME%\\lib\\gurobi.jar",
                  "%CPLEX_HOME%\\lib\\cplex.jar"
     ]
     jdkPreference = "preferJdk"
+    jreMinVersion = null
+    jreMaxVersion = null
 }
 
 //additional GUI win launcher
