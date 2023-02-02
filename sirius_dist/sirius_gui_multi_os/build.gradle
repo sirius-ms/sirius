@@ -8,7 +8,7 @@ ext {
     libDir = findProperty("build.sirius.location.lib")
     includeWinStarter = !findProperty("build.sirius.starter.remove.win")
     includeIxStarter = !findProperty("build.sirius.starter.remove.ix")
-    launch4jJDK = !findProperty("build.sirius.starter.jdk.win")
+    launch4jJDK = findProperty("build.sirius.starter.jdk.win")
     excludeNativeWin = findProperty("build.sirius.native.remove.win")
     excludeNativeLinux = findProperty("build.sirius.native.remove.linux")
     excludeNativeMac = findProperty("build.sirius.native.remove.mac")
