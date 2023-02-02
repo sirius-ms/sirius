@@ -837,13 +837,35 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     }
 
     public FGraph performGraphReduction(FGraph fragments, double lowerbound) {
-        if(reduction==null) return fragments;
-        for (SiriusPlugin plugin : siriusPlugins.values()) {
-            if (plugin.isGraphReductionForbidden(fragments)) {
-                return fragments;
+        boolean reduce=true;
+         if(reduction==null) reduce=false;
+         else {
+             for (SiriusPlugin plugin : siriusPlugins.values()) {
+                 if (plugin.isGraphReductionForbidden(fragments)) {
+                     reduce=false;
+                     break;
+                 }
+             }
+         }
+         if (reduce)
+            return reduction.reduce(fragments, lowerbound);
+         else {
+             return removeNegativeInfinityEdges(fragments,lowerbound);
+         }
+    }
+
+    private FGraph removeNegativeInfinityEdges(FGraph fragments, double lowerbound) {
+        final ArrayList<Loss> todelete = new ArrayList<>();
+         for (Loss l : fragments.losses()) {
+            if (Double.isInfinite(l.getWeight())) {
+                if (l.getWeight()>0) {
+                    LoggerFactory.getLogger(FragmentationPatternAnalysis.class).warn("We do not support edges with infinite score. Delete edge " + l + ", even though it has positive infinite score.");
+                }
+                todelete.add(l);
             }
         }
-        return reduction.reduce(fragments, lowerbound);
+         for (Loss l : todelete) fragments.deleteLoss(l);
+         return fragments;
     }
 
     /*
