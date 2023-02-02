@@ -377,6 +377,7 @@ public class BayesnetScoringBuilder {
     }
 
     public BayesnetScoring buildScoring(){
+        long time = System.currentTimeMillis();
         FingerprintVersion fpVersion = predicted[0].getFingerprintVersion();
 
         TIntObjectHashMap<BayesnetScoring.AbstractCorrelationTreeNode> nodes = parseTree(covTreeEdges, fpVersion);
@@ -394,6 +395,8 @@ public class BayesnetScoringBuilder {
         if (hasCycles(forests, fpVersion)){
             throw new RuntimeException("bayes net contains cycles");
         }
+        long time2 = System.currentTimeMillis();
+        LoggerFactory.getLogger(BayesnetScoringBuilder.class).warn("Build scoring took " + (time2-time)  + " ms." );
 
         return getNewInstance(nodes, nodeList, forests, alpha, fpVersion, performances, allowOnlyNegativeScores);
 
