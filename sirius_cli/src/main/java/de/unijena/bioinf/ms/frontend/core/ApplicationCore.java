@@ -206,7 +206,9 @@ public abstract class ApplicationCore {
 
 
             PropertyManager.setProperty("de.unijena.bioinf.sirius.versionString", (version != null) ? "SIRIUS " + version : "SIRIUS <Version Unknown>");
-            DEFAULT_LOGGER.info("You run " + VERSION_STRING());
+            String arch = System.getProperty("os.arch").toLowerCase();
+            String os = System.getProperty("os.name").toLowerCase();
+            DEFAULT_LOGGER.info("You run " + VERSION_STRING() + " on " + os + "_" + arch);
             DEFAULT_LOGGER.info("You run SIRIUS in '" + APP_TYPE + "' mode." );
 
 
