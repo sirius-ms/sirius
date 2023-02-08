@@ -1,0 +1,8 @@
+com.fasterxml.jackson:jackson-bom:2.14.2|https://github.com/FasterXML/jackson-bom|The Apache Software License, Version 2.0|http://www.apache.org/licenses/LICENSE-2.0.txt
+colt:colt:1.2.0|https://dst.lbl.gov/ACSSoftware/colt/index.html|Colt License Agreement|https://dst.lbl.gov/ACSSoftware/colt/license.html
+com.panayotis:JavaPlot:1.0|https://javaplot.yot.is/|GNU Lesser General Public License v3.0|https://www.gnu.org/licenses/lgpl-3.0
+com.squareup.okio:okio:3.0.0|https://github.com/square/okio/|The Apache Software License, Version 2.0|http://www.apache.org/licenses/LICENSE-2.0.txt
+org.json:json:1.0|https://github.com/stleary/JSON-java|Public Domain|
+org.mozilla.intl:chardet:1.0|https://www-archive.mozilla.org/projects/intl/chardet.html|Public Domain|
+tw.edu.ntu.csie:libsvm:3.20|https://www.csie.ntu.edu.tw/~cjlin/libsvm/|The 3-Clause BSD License|https://opensource.org/licenses/BSD-3-Clause
+xml-apis:xml-apis:2.0.2||Apache Software License, Version 1.1|http://www.apache.org/licenses/LICENSE-1.1
