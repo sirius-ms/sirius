@@ -205,6 +205,7 @@ distTar.dependsOn 'generateLicenseReport'
 distTar.dependsOn('createGuiExe')
 installDist.dependsOn('launch4j')
 installDist.dependsOn('createGuiExe')
+installDist.dependsOn('generateLicenseReport')
 distribution.dependsOn 'distZip'
 //distribution.dependsOn 'distTar'
 distribution.dependsOn 'createChecksums'
