@@ -11,8 +11,8 @@ dependencies {
     // maven version number parsing
     compile group: 'org.apache.maven', name: 'maven-artifact', version: '3.5.0'
     // jason marshalling
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version:"2.13.4"
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:"2.13.4"
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version:"$jackson_version"
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:"$jackson_version"
     compile "org.apache.httpcomponents.client5:httpclient5:$httpclient_version"
 //    compile "org.apache.httpcomponents5:httpasyncclient5:$httpclient_version"
 }

@@ -1,5 +1,6 @@
 version =  parent.fingeridVersion
 dependencies {
     compile project(":blob-storage")
+    compile project(':fingerid_base_oss')
     compile group: 'org.apache.commons', name: 'commons-compress', version: "1.21"
 }

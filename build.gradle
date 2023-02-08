@@ -27,7 +27,8 @@ ext {
     //version for external libraries
     jjobs_version = '0.9.35'
     slf4j_version = '2.0.6'
-    gson_version = "2.8.6"//'2.6.2'
+    gson_version = "2.8.9"//'2.6.2'
+    jackson_version = '2.14.2'
     math3_version = '3.6.1'
     cbc_version = props.getProperty('de.unijena.bioinf.sirius.build.cbc_version')
     glpk_version = props.getProperty('de.unijena.bioinf.sirius.build.glpk_version')
@@ -42,7 +43,7 @@ ext {
     //todo wenn wir die inhouse clis auch ind das frontend moven haben wir keinerlei distribution zeug mehr in sirius
     glpk_lib_version = '4.60'
 
-    commons_email_version = '1.4'
+    commons_email_version = '1.5'
     oshi_version = '6.1.5'
     json_version = '1.0'
     json_impl_version = "1.0.4"

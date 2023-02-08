@@ -13,6 +13,7 @@ dependencies {
     compile ('uk.ac.ebi.jmzml:jmzml:1.7.11') {
         exclude group: 'uk.ac.ebi.pride.architectural', module: 'pride-logging' //pom dependency that does not work
         exclude group: 'uk.ac.ebi.pride.architectural', module: 'pride-xml-handling' //pom dependency that does not work
+        exclude group: 'commons-codec', module: 'commons-codec' //pom dependency that does not work
         exclude group: 'net.sourceforge.cpdetector', module: 'cpdetector'
 
     }
@@ -29,7 +30,8 @@ dependencies {
     } //jmzml dep. from excluded pom dep
 
 
-    compile group: 'cpdetector', name: 'cpdetector', version:  '1.04'
+    compile group: 'commons-codec', name: 'commons-codec', version:  '1.15'
+    compile group: 'com.github.jiangxincode', name: 'cpdetector', version:  '1.0.10'
 //    compile 'javax.xml.bind:jaxb-api:2.3.1' //also needed by jmzl but not exclusively
 
 //    compile 'org.glassfish.jaxb:jaxb-core:2.3.0.1' //also needed by jmzl but not exclusively
