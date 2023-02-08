@@ -180,15 +180,6 @@ allprojects {
 
 subprojects {
     apply plugin: 'application'
-
-
-    task listDependecies {
-        group = 'reporting'
-        doLast {
-            project.configurations.implementation.resolvedConfiguration.resolvedArtifacts.stream().map({ i -> i.getModuleVersion()..toString() })
-                    .sorted().forEach({ i -> println(i) })
-        }
-    }
 }
 
 
