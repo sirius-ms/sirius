@@ -38,11 +38,20 @@ public class ChromatogramBuilder {
     protected final Deviation dev;
     protected final ChromatogramCache cache;
 
+    protected boolean trimEdges=true;
 
     public ChromatogramBuilder(ProcessedSample sample) {
         this.sample = sample;
         this.dev = new Deviation(20);
         this.cache = new ChromatogramCache();
+    }
+
+    public boolean isTrimEdges() {
+        return trimEdges;
+    }
+
+    public void setTrimEdges(boolean trimEdges) {
+        this.trimEdges = trimEdges;
     }
 
     public Optional<ChromatographicPeak> detectExact(Scan startingPoint, double mz) {
@@ -237,7 +246,7 @@ public class ChromatogramBuilder {
             return Optional.empty(); // just noise
         }
 
-        concat.trimEdges();
+        if (trimEdges) concat.trimEdges();
         // if scanPoint is removed during trimming, this is not a real chromatogram
         if (concat.getScanPointForScanId(scanPoint.getScanNumber())==null) return Optional.empty();
 
