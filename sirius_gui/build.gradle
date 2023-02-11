@@ -1,20 +1,10 @@
-plugins {
-    id 'org.openjfx.javafxplugin' version '0.0.13'
-}
-mainClassName = "de.unijena.bioinf.ms.frontend.SiriusGUIApplication"
-
-javafx {
-    version = "$targetCompatibility"
-    modules = [ 'javafx.controls', 'javafx.swing', 'javafx.web' ]
-}
-
 apply plugin: 'java-library'
-ext['jna.version'] = '5.4.0'
+
+mainClassName = "de.unijena.bioinf.ms.frontend.SiriusGUIApplication"
 
 dependencies {
 //project
     api project(':sirius_cli')
-//    implementation "org.slf4j:slf4j-jdk14:$slf4j_version"
 
 //internal
     api "de.unijena.bioinf:jjobs-swing:$jjobs_version"
@@ -39,22 +29,16 @@ dependencies {
 
     api 'com.glazedlists:glazedlists:1.11.0'
 
-//    api 'com.kitfox.svg:svg-salamander:1.0'
-    api 'org.apache.xmlgraphics:batik-rasterizer:1.14'
+    api 'org.apache.xmlgraphics:batik-rasterizer:1.16'
     api 'org.apache.xmlgraphics:fop:2.7'
 
-//    api 'org.openjfx:javafx:17.0.2'
-//    api 'org.openjfx:javafx-web:17.0.2'
-//    api 'org.openjfx:javafx-swing:17.0.2'
-
+    if (excludeJFX)
+        for (m in javaFX_modules) //define jfx as compile only, so that we can decide during build to either package for one or all platforms.
+            compileOnly "org.openjfx:$m:$targetCompatibility.+:${siriusTargetPlatform.jfxClassifier().get()}"
+    else
+        for (m in javaFX_modules) //define jfx as compile only, so that we can decide during build to either package for one or all platforms.
+           implementation "org.openjfx:$m:$targetCompatibility.+:${siriusTargetPlatform.jfxClassifier().get()}"
 }
-
-//this includes compileOnly dependencies like the ILP solver jars to the idea provided scope.
-/*idea {
-    module {
-        scopes.RUNTIME.plus += [configurations.compileOnly]
-    }
-}*/
 
 artifactory {
     contextUrl = 'https://bio.informatik.uni-jena.de/repository/'

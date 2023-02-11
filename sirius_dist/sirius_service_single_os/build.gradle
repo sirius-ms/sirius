@@ -33,7 +33,7 @@ mainClassName = 'org.springframework.boot.loader.JarLauncher'
 
 /*################### Jar build Stuff ################### */
 
-launch4j{
+launch4j {
     mainClassName = project.mainClassName
     jar = getLibraryDir() + "\\" + getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar').outputs.files.singleFile.getName()
 }
@@ -45,19 +45,26 @@ task createGuiExe(type: Launch4jLibraryTask) {
     headerType = "gui"
     cmdLine = "gui"
 }
+createGuiExe.dependsOn 'launch4j'
+
 
 distImage {
-    dependsOn getParent().tasks.getByName('extractRuntimeImageFX')
     dependsOn  getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar')
 
-    inputDir = getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar').outputs.files.singleFile.toPath().getParent().toFile()
+    if (includeJreFX){
+        dependsOn getParent().tasks.getByName('extractRuntimeImageFX')
+    }else {
+        mkdir(runtimeImageDirectory = getParent().tasks.getByName('extractRuntimeImageFX').outputs.files.singleFile)
+    }
     runtimeImageDirectory = getParent().tasks.getByName('extractRuntimeImageFX').outputs.files.singleFile
+
+    inputDir = getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar').outputs.files.singleFile.toPath().getParent().toFile()
     imageName = 'sirius'
     mainClass = mainClassName
     mainJarName = getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar').outputs.files.singleFile.getName()
     winConsole = true
     macPackageName = 'SIRIUS-service'
-    if (OS.isWindows()) { //HACK additional windows launchers are imported from launch4j, this is just fake to register it for the start menu. must be a valid path but file must not exists
+    if (siriusTargetPlatform.isWin()) { //HACK additional windows launchers are imported from launch4j, this is just fake to register it for the start menu. must be a valid path but file must not exists
         launchers = ["sirius-gui": "${createGuiExe.outfile}"]
     }
 }
@@ -71,17 +78,17 @@ publishing {
             artifactId = "$name"
             groupId = "$group"
             artifact source: "${distImage.getImageDir().absolutePath}.zip", classifier: "$osName-service", extension: 'zip'
-//            if (!OS.isLinux())
-//                artifact source: "${OS.isMacOsX() ? distImage.getImageDir().absolutePath.replace('.app', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}", classifier: "$osName-headless", extension: installerNameType
+//            if (!siriusTargetPlatform.isLinux())
+//                artifact source: "${siriusTargetPlatform.isMac() ? distImage.getImageDir().absolutePath.replace('.app', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}", classifier: "$osName-headless", extension: installerNameType
         }
         sirius(org.gradle.api.publish.maven.MavenPublication) {
             artifactId = "$name"
             groupId = "$group"
             artifact source: "${distImage.getImageDir().absolutePath}.zip", classifier: "$osName-service", extension: 'zip'
             artifact source: "${distImage.getImageDir().absolutePath}.zip.sha256", classifier: "$osName-service", extension: 'zip.sha256'
-            /*if (!OS.isLinux()) {
-                artifact source: "${OS.isMacOsX() ? distImage.getImageDir().absolutePath.replace('.app', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}", classifier: "$osName-headless", extension: installerNameType
-                artifact source: "${OS.isMacOsX() ? distImage.getImageDir().absolutePath.replace('.app', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}.sha256", classifier: "$osName-headless", extension: "${installerNameType}.sha256"
+            /*if (!siriusTargetPlatform.isLinux()) {
+                artifact source: "${siriusTargetPlatform.isMac() ? distImage.getImageDir().absolutePath.replace('.app', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}", classifier: "$osName-headless", extension: installerNameType
+                artifact source: "${siriusTargetPlatform.isMac() ? distImage.getImageDir().absolutePath.replace('.app', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}.sha256", classifier: "$osName-headless", extension: "${installerNameType}.sha256"
             }*/
         }
     }
