@@ -5,7 +5,6 @@ buildscript {
     repositories {
         maven { url "https://plugins.gradle.org/m2/" }
         mavenCentral()
-        jcenter()
     }
     dependencies {
 //        classpath 'edu.sc.seis.gradle:launch4j:2.4.9'
@@ -22,8 +21,8 @@ plugins {
 
 //this task is used to update the gradle wrapper properties to a new version
 // it also ensures that wrapper scripts and gradle-wrapper.jar are updates if necessary
-wrapper{
-    gradleVersion = '6.9.3'
+wrapper {
+    gradleVersion = '7.6'
 }
 
 //Global Properties
@@ -41,33 +40,21 @@ ext {
     glpk_lib_version = '4.60'
     cbc_lib_version = '2.10.8'
 
+
+    siriusTargetPlatform = SiriusPlatform.fromDescriptor(project.findProperty('de.unijena.bioinf.build.sirius.platform') as String)
+    javaFX_modules = ['javafx-base', 'javafx-controls', 'javafx-swing', 'javafx-web', 'javafx-graphics', 'javafx-fxml', 'javafx-media']
+
     //locations of runtime libraries
     //jre path relative tu app home
     jre_path = 'zulu'
     lib_path = 'lib'
     native_path = 'native'
 
-    libExclude = ['gurobi-jar-*.jar', 'cplex-*.jar']
-    libExcludeMac = [
-            "jna-inchi-darwin-aarch64-1.1.jar", "jna-inchi-linux-x86-64-1.1.jar", "jna-inchi-win32-x86-64-1.1.jar",
-            "jna-inchi-linux-arm-1.1.jar", "jna-inchi-linux-x86-1.1.jar", "jna-inchi-win32-x86-1.1.jar",
-            "cbc-java-jni-linux-x86-64-*.jar", "cbc-java-jni-win-x86-64-*.jar",
-            "cbc-java-linux-x86-64-*.jar", "cbc-java-win-x86-64-*.jar",
-    ]
-
-    libExcludeWin = [
-            "jna-inchi-darwin-aarch64-1.1.jar", "jna-inchi-darwin-x86-64-1.1.jar", "jna-inchi-linux-x86-64-1.1.jar",
-            "jna-inchi-linux-arm-1.1.jar", "jna-inchi-linux-x86-1.1.jar", "jna-inchi-win32-x86-1.1.jar",
-            "cbc-java-jni-linux-x86-64-*.jar", "cbc-java-jni-mac-x86-64-*.jar",
-            "cbc-java-linux-x86-64-*.jar", "cbc-java-mac-x86-64-*.jar",
-    ]
-    libExcludeLinux = [
-            "jna-inchi-darwin-aarch64-1.1.jar", "jna-inchi-darwin-x86-64-1.1.jar", "jna-inchi-win32-x86-64-1.1.jar",
-            "jna-inchi-linux-arm-1.1.jar", "jna-inchi-linux-x86-1.1.jar", "jna-inchi-win32-x86-1.1.jar",
-            "cbc-java-jni-mac-x86-64-*.jar", "cbc-java-jni-win-x86-64-*.jar",
-            "cbc-java-mac-x86-64-*.jar", "cbc-java-win-x86-64-*.jar",
-    ]
-
+    libDir = findProperty("build.sirius.location.lib")
+    includeJreFX = Boolean.getBoolean(findProperty("build.sirius.starter.jdk.include") ?: 'false')
+    launch4jJDKPath = findProperty("build.sirius.starter.jdk.location")
+    excludeCbcNative = findProperty("build.sirius.native.cbc.exclude")
+    excludeJFX = Boolean.getBoolean(findProperty("build.sirius.native.openjfx.exclude") ?: 'false') || includeJreFX
 
     jetbrains_version = "22.0.0"
 
@@ -75,6 +62,7 @@ ext {
     cplex_version = '12.7.1'
 //    cplex_version = '20.1.0'
     gurobi_version = '9.1.1'
+    cbc_version = '2.10.8'
 
     logger.lifecycle('reading build properties file...')
     props = new Properties()
@@ -103,7 +91,6 @@ allprojects {
     apply plugin: "com.jfrog.artifactory"
     apply plugin: 'java'
     apply plugin: 'maven-publish'
-    apply plugin: 'idea'
 
     targetCompatibility = 17
 
@@ -135,11 +122,6 @@ allprojects {
         maven {
             url "https://repo1.maven.org/maven2/" //glazed lists
         }
-        /*maven {
-            url "https://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo/" //cpdetector no gpl
-            metadataSources { artifact() }
-        }*/
-
     }
 
     dependencies {
@@ -154,10 +136,6 @@ allprojects {
         implementation "org.slf4j:slf4j-api:$slf4j_version"
 
         testImplementation group: 'junit', name: 'junit', version: '4.12'
-
-        // intellij seems to ignore other scopes than compile so we need to have this here and remove it before distribution
-//        implemetation "com.gurobi:gurobi-jar:9.1.1"
-//        implemetation "cplex:cplex:12.7.1"
     }
 
     //there are some outdated incompatible trove dependencies in some libs.
