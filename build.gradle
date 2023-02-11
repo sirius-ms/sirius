@@ -43,6 +43,8 @@ ext {
     cbc_lib_version = '2.10.8'
 
     siriusTargetPlatform = SiriusPlatform.fromDescriptor(project.findProperty('build.sirius.platform') ?: "${DefaultNativePlatform.getCurrentOperatingSystem().getName()}-${DefaultNativePlatform.getCurrentArchitecture().getName()}")
+    System.out.println("----> Following platform detected: " + siriusTargetPlatform)
+
     javaFX_modules = ['javafx-base', 'javafx-controls', 'javafx-swing', 'javafx-web', 'javafx-graphics', 'javafx-fxml', 'javafx-media']
 
     //locations of runtime libraries
@@ -52,10 +54,15 @@ ext {
     native_path = 'native'
 
     libDir = findProperty("build.sirius.location.lib")
+    System.out.println("----> LibDir: " + libDir)
     includeJreFX = Boolean.getBoolean(findProperty("build.sirius.starter.jdk.include") ?: 'false')
+    System.out.println("----> includeJreFX: " + includeJreFX)
     launch4jJDKPath = findProperty("build.sirius.starter.jdk.location")
+    System.out.println("----> launch4jJDKPath: " + launch4jJDKPath)
     excludeCbcNative = findProperty("build.sirius.native.cbc.exclude")
+    System.out.println("----> excludeCbcNative: " + excludeCbcNative)
     excludeJFX = Boolean.getBoolean(findProperty("build.sirius.native.openjfx.exclude") ?: 'false') || includeJreFX
+    System.out.println("----> excludeJFX: " + excludeJFX)
 
     jetbrains_version = "22.0.0"
 
