@@ -22,6 +22,4 @@ dependencies() {
     compile project(":fragmentation_tree:FastFragmentationTreeAlign:FastTreeAlign")
     compile "net.sf.jopt-simple:jopt-simple:4.8"
     compile project(':io')
-//            "de.unijena.bioinf:BabelMs:1.0-SNAPSHOT",
-//            "de.unijena.bioinf:GraphUtils:1.0"
 }
