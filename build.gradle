@@ -1,5 +1,7 @@
 import java.nio.file.Files
 import java.nio.file.StandardOpenOption
+import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
+
 
 buildscript {
     repositories {
@@ -40,8 +42,7 @@ ext {
     glpk_lib_version = '4.60'
     cbc_lib_version = '2.10.8'
 
-
-    siriusTargetPlatform = SiriusPlatform.fromDescriptor(project.findProperty('de.unijena.bioinf.build.sirius.platform') as String)
+    siriusTargetPlatform = SiriusPlatform.fromDescriptor(project.findProperty('build.sirius.platform') ?: "${DefaultNativePlatform.getCurrentOperatingSystem().getName()}-${DefaultNativePlatform.getCurrentArchitecture().getName()}")
     javaFX_modules = ['javafx-base', 'javafx-controls', 'javafx-swing', 'javafx-web', 'javafx-graphics', 'javafx-fxml', 'javafx-media']
 
     //locations of runtime libraries
