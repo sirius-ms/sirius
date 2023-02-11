@@ -31,7 +31,7 @@ before_script:
 buildCLI:
   stage: build
   script:
-    - ./gradlew :sirius_dist:sirius_cli_single_os:publishSiriusMSPublicationToMavenLocal
+    - ./gradlew :sirius_dist:sirius_cli_single_os:publishSiriusMSPublicationToMavenLocal -P "build.sirius.starter.jdk.include=true"
     - mkdir maven_artifacts
     - mv ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/$VSNAP maven_artifacts
   cache:
@@ -51,7 +51,7 @@ buildCLI:
 buildGUI:
   stage: build
   script:
-    - ./gradlew :sirius_dist:sirius_gui_single_os:publishSiriusMSPublicationToMavenLocal
+    - ./gradlew :sirius_dist:sirius_gui_single_os:publishSiriusMSPublicationToMavenLocal -P "build.sirius.starter.jdk.include=true"
     - mkdir maven_artifacts
     - mv ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/$VSNAP maven_artifacts
   cache:
@@ -71,7 +71,7 @@ buildGUI:
 buildAPI:
   stage: build
   script:
-    - ./gradlew :sirius_dist:sirius_service_single_os:publishSiriusMSPublicationToMavenLocal
+    - ./gradlew :sirius_dist:sirius_service_single_os:publishSiriusMSPublicationToMavenLocal -P "build.sirius.starter.jdk.include=true"
     - mkdir maven_artifacts
     - mv ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/$VSNAP maven_artifacts
   cache:
