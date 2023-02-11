@@ -303,15 +303,18 @@ subprojects {
             f.withWriter { it.write(script) }
             f.setExecutable(true, false)
 
-            project.exec {
-                System.out.println("----> DistImage")
-                commandLine(["ls", "-lah", "$appRootTarget"])
-            }
+            println("----> DistImage")
+            appRootTarget.list().each {println it}
+            println()
+            println("----> DistImage bin")
+            launcherTarget.list().each {println it}
+            println()
+            println("----> DistImage lib")
+            new File(appRootTarget, 'lib').list().each {println it}
+            println()
+            println("----> DistImage runtime")
+            runtimeTarget.list().each {println it}
 
-            project.exec {
-                System.out.println("----> DistImage runtime")
-                commandLine(["ls", "-lah", "$runtimeTarget"])
-            }
         }
     }
 
@@ -467,7 +470,7 @@ subprojects {
         inputs.dir(distImage.outputDir)
         doLast {
             if (siriusTargetPlatform.isMac()) {
-                def signID = findProperty("de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID")
+                def signID = project.findProperty("de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID")
                 if (signID != null && !signID.isBlank()) {
                     def entitlementsFile = getRootProject().getProjectDir().toPath().resolve("dist").resolve("macos.entitlements").toFile()
                     def additionalLibs = [new File(distImage.getImageDir(), "Contents/runtime/Contents/MacOS/libjli.dylib")]
@@ -563,7 +566,7 @@ subprojects {
             def source
             def target
             if (siriusTargetPlatform.isMac()) {
-                def macInstallerIdentity = findProperty('de.unijena.bioinf.build.MACOS_IDENTITY_ID')
+                def macInstallerIdentity = project.findProperty('de.unijena.bioinf.build.MACOS_IDENTITY_ID')
                 //just to check whether a certificate was given
                 if (macInstallerIdentity != null && !macInstallerIdentity.isBlank()) {
                     source = Path.of(distImage.getImageDir().absolutePath.replace('.app', installerAppendix))
@@ -583,7 +586,7 @@ subprojects {
                 }
             } else if (siriusTargetPlatform.isWin()) {
                 def input = distImage.getImageDir().absolutePath + installerAppendix
-                def certFile = findProperty('de.unijena.bioinf.build.WIN_INSTALLER_CERTIFICATE_FILE')
+                def certFile = project.findProperty('de.unijena.bioinf.build.WIN_INSTALLER_CERTIFICATE_FILE')
                 getLogger().lifecycle("Cert File location to use: '$certFile'")
                 if (certFile != null && !certFile.isBlank() && file(certFile).exists()) {
                     def searchPaths = [Path.of("${System.getenv("SystemDrive")}\\").resolve("Program Files (x86)").resolve("Windows Kits"), Path.of("${System.getenv("SystemDrive")}\\").resolve("Program Files").resolve("Windows Kits")]
@@ -623,8 +626,8 @@ subprojects {
         inputs.dir(distImage.outputDir)
         doLast {
             if (siriusTargetPlatform.isMac()) {
-                def appleId = findProperty('de.unijena.bioinf.build.MACOS_APPLE_ID')
-                def appleIdPw = findProperty('de.unijena.bioinf.build.MACOS_APPLE_ID_PW')
+                def appleId = project.findProperty('de.unijena.bioinf.build.MACOS_APPLE_ID')
+                def appleIdPw = project.findProperty('de.unijena.bioinf.build.MACOS_APPLE_ID_PW')
 
                 if (appleId != null && appleIdPw != null && !appleId.isBlank() && !appleIdPw.isBlank()) {
                     def pkg = Path.of(distImage.getImageDir().absolutePath.replace('.app', installerAppendix))
