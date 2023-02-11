@@ -1,12 +1,17 @@
 apply plugin: 'java-library'
 dependencies {
-    api group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version" //todo this should not be here but is needed for the ide
+    // wrong place START (should be in dist) but IDEA does not recognize dependency from no code modules //todo find alternative
+    implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+    implementation("de.unijena.bioinf.cbc-java:cbc-java-jni:$cbc_version:${siriusTargetPlatform.jenaClassifier}")
+    implementation("de.unijena.bioinf.cbc-java:cbc-java-native:$cbc_version:${siriusTargetPlatform.jenaClassifier}")
+    // wrong place END
+
+
     api "info.picocli:picocli:$picocli_version"
     //internal
     api group: "de.unijena.bioinf.ms", name: "gibbs_sampling", version: "$siriusVersion"
 
-//    implementation group: "de.unijena.bioinf.ms", name: "zodiac_project_space", version: "$siriusVersion"
-    api (group: "de.unijena.bioinf.ms", name: "sirius_api", version: "$siriusVersion"){
+    api(group: "de.unijena.bioinf.ms", name: "sirius_api", version: "$siriusVersion") {
         exclude group: "cplex", module: "cplex"
         exclude group: "com.gurobi", module: "gurobi-jar"
     }
@@ -19,7 +24,6 @@ dependencies {
     api group: "de.unijena.bioinf.ms", name: "passatutto", version: "$siriusVersion"
     api group: "de.unijena.bioinf.ms", name: "passatutto_project_space", version: "$siriusVersion"
     api group: "de.unijena.bioinf.ms", name: "networks", version: "$siriusVersion"
-//    api group: "de.unijena.bioinf.ms", name: "fingerid_db_oss", version: "$fingeridVersion"
     api group: "de.unijena.bioinf.ms", name: "fingerprinter_oss", version: "$fingeridVersion"
     api group: "de.unijena.bioinf.ms", name: "fingerblast_oss", version: "$fingeridVersion"
     api group: "de.unijena.bioinf.ms", name: "chemdb_rest_oss", version: "$fingeridVersion"
@@ -40,21 +44,12 @@ dependencies {
     api group: 'de.isas.mztab', name: 'jmztabm-io', version: "$mztabm_version"
 
     api group: 'org.jbibtex', name: 'jbibtex', version: '1.0.17'
+    api group: 'commons-io', name: 'commons-io', version: '2.11.0'
 
-    api ("de.unijena.bioinf.ms:ft_cbc:$siriusVersion")
-
-    api ("de.unijena.bioinf.ms:ft_cplex:$siriusVersion"){
-        exclude group: "cplex", module: "cplex"
-    }
-    //specify cplex version to use with IDE (has not effect on distributed version.)
-    api group: 'cplex', name: 'cplex', version: "$cplex_version"
-
-    api ("de.unijena.bioinf.ms:ft_gurobi:$siriusVersion"){
-        exclude group: "com.gurobi", module: "gurobi-jar"
-    }
-    api "com.gurobi:gurobi-jar:$gurobi_version"
-
-    implementation group: 'commons-io', name: 'commons-io', version: '2.11.0'
+    //ilp solver support
+    api("de.unijena.bioinf.ms:ft_cbc:$siriusVersion")
+    api("de.unijena.bioinf.ms:ft_cplex:$siriusVersion")
+    api("de.unijena.bioinf.ms:ft_gurobi:$siriusVersion")
 }
 
 artifactory {

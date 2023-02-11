@@ -20,19 +20,19 @@ ext {
 
     OS = DefaultNativePlatform.currentOperatingSystem
 
-    if (OS.isLinux()) {
+    if (siriusTargetPlatform.isLinux()) {
         nativeLibs = 'l64'
         osName = 'linux64'
         zosName = 'linux'
         installerNameType = 'deb'
         installerAppendix = "_${version}-1_amd64.$installerNameType"
-    } else if (OS.isWindows()) {
+    } else if (siriusTargetPlatform.isWin()) {
         nativeLibs = 'w64'
         osName = 'win64'
         zosName = 'win'
         installerNameType = 'msi'
         installerAppendix = "-${version.replace('-SNAPSHOT', '')}.$installerNameType"
-    } else if (OS.isMacOsX()) {
+    } else if (siriusTargetPlatform.isMac()) {
         nativeLibs = 'osx'
         osName = 'osx64'
         zosName = 'macosx'
@@ -41,71 +41,8 @@ ext {
     }
 }
 
-
-task downloadJDKFX(type: Download) {
-    String fname = "zulu${zulu_jre_version}-ca-fx-jdk${jre_version}-${zosName}_x64"
-    String ext = ".${OS.isWindows() ? 'zip' : 'tar.gz'}"
-    project.ext.set("jdkfxPath", getBuildDir().toPath().resolve('tmp').resolve(fname).toFile())
-
-
-    src "https://bio.informatik.uni-jena.de/repository/list/ext-release-local/zulu/jdk/${zulu_jre_version}/${fname + ext}"
-    dest getBuildDir().toPath().resolve('tmp').resolve(fname + ext).toFile()
-    onlyIfModified true
-    overwrite false
-}
-
-task extractJDKFX(dependsOn: downloadJDKFX) {
-    def s = downloadJDKFX.outputs.files.singleFile
-    outputs.file(jdkfxPath)
-    doLast {
-        if (OS.isWindows()) {
-            copy {
-                from zipTree(s)
-                into buildDir.toPath().resolve('tmp').toFile()
-            }
-        } else {
-            exec { commandLine(['tar', 'zxf', s.absolutePath, '-C', buildDir.toPath().resolve('tmp').toString()]) }
-        }
-    }
-
-}
-
-task createRuntimeImgs(dependsOn: [extractJDKFX]) {
-    String[] baseModules = ['java.sql', 'java.logging', 'jdk.jsobject', 'java.xml', 'jdk.xml.dom', 'java.datatransfer',
-                            'java.naming', 'java.prefs', 'java.instrument', 'java.desktop']
-    //todo can we get rid of beans to remove java.desktop
-    String[] fxModules = baseModules +
-            ['java.desktop', 'javafx.base', 'javafx.web', 'javafx.graphics', 'javafx.swing', 'javafx.controls']
-    String[] bootModules = baseModules +
-            ['java.management']
-
-    File jlinkfx = jdkfxPath.toPath().resolve('bin').resolve(OS.isWindows() ? 'jlink.exe' : 'jlink').toFile()
-
-    File outFX = buildDir.toPath().resolve('runtime').resolve("${jlinkfx.toPath().getParent().getParent().getFileName().toString().replace("jdk", "jre")}").toFile()
-    File outheadl = Paths.get(outFX.absolutePath.replace('-fx-', '-')).toFile()
-    File outboot = Paths.get(outFX.absolutePath.replace('-fx-', '-headless-boot-')).toFile()
-    outputs.files(outFX, outheadl, outboot)
-
-    String[] args = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages']
-
-    doLast {
-        exec {
-            String[] c = [jlinkfx.absolutePath, '--add-modules', "${baseModules.join(',')}", '--output', outheadl.absolutePath]
-            commandLine(c + args)
-        }
-        exec {
-            String[] c = [jlinkfx.absolutePath, '--add-modules', "${fxModules.join(',')}", '--output', outFX.absolutePath]
-            commandLine(c + args)
-        }
-        exec {
-            String[] c = [jlinkfx.absolutePath, '--add-modules', "${bootModules.join(',')}", '--output', outboot.absolutePath]
-            commandLine(c + args)
-        }
-    }
-}
-
 task downloadRuntimeImageFX(type: Download) {
-    String fname = "zulu${zulu_jre_version}-ca-fx-jre${jre_version}-${zosName}_x64${project.OS.isWindows() ? ".zip" : ".tar.gz"}"
+    String fname = "zulu${zulu_jre_version}-ca-fx-jre${jre_version}-${zosName}_x64${siriusTargetPlatform.isWin() ? ".zip" : ".tar.gz"}"
 
     src "https://cdn.azul.com/zulu/bin/${fname}"
     dest getBuildDir().toPath().resolve('runtime').resolve(fname).toFile()
@@ -118,7 +55,7 @@ task extractRuntimeImageFX(type: ExtractRuntime, dependsOn: downloadRuntimeImage
 }
 
 task downloadRuntimeImageHeadless(type: Download) {
-    String fname = "zulu${zulu_jre_version}-ca-jre${jre_version}-${zosName}_x64${project.OS.isWindows() ? ".zip" : ".tar.gz"}"
+    String fname = "zulu${zulu_jre_version}-ca-jre${jre_version}-${zosName}_x64${siriusTargetPlatform.isWin() ? ".zip" : ".tar.gz"}"
 
     src "https://cdn.azul.com/zulu/bin/${fname}"
     dest getBuildDir().toPath().resolve('runtime').resolve(fname).toFile()
@@ -130,20 +67,23 @@ task extractRuntimeImageHeadless(type: ExtractRuntime, dependsOn: downloadRuntim
     inputArchive = downloadRuntimeImageHeadless.dest
 }
 
-task downloadManual(type: Download, group: 'documentation') {
-    String manualName = "manual-$version-manual.pdf"
-    src "https://bio.informatik.uni-jena.de/repository/${version.toString().endsWith('-SNAPSHOT') ? 'dist-snapshot-local' : 'dist-release-local'}/de/unijena/bioinf/ms/manual/$version/$manualName"
-    dest buildDir.toPath().resolve("manual/$manualName").toFile()
-    onlyIfModified true
-    overwrite false
-}
-
-
 subprojects {
     apply plugin: 'edu.sc.seis.launch4j'
 
     jar {
         enabled = false
+    }
+    //remove dependencies that should not be in build
+    configurations.each { conf ->
+        SiriusPlatform.allBut(siriusTargetPlatform).stream()
+                .map { it.inchiClassifier() }.flatMap { it.stream() }
+                .forEach { conf.exclude(group: "io.github.dan2097", module: "jna-inchi-$it") }
+        if (excludeCbcNative)
+            conf.exclude(group: "de.unijena.bioinf.cbc-java", module: "cbc-java-native")
+
+        //remove commercial solver -> given at runtime
+        conf.exclude group: "com.gurobi", module: "gurobi-jar"
+        conf.exclude group: "cplex", module: "cplex"
     }
 
     //###################################### Start Default values ##########################################
@@ -240,9 +180,9 @@ subprojects {
         ]
 
         dontWrapJar = true
-        bundledJrePath = "./runtime"
-        classpath = ["app\\*", "%GUROBI_HOME%\\lib\\gurobi.jar", "%CPLEX_HOME%\\lib\\cplex.jar"]
-        libraryDir = "app"
+        bundledJrePath = launch4jJDKPath != null ? launch4jJDKPath : "./runtime"
+        classpath = [(libDir == null ? "app" : libDir) + "\\*", "%GUROBI_HOME%\\lib\\gurobi.jar", "%CPLEX_HOME%\\lib\\cplex.jar"]
+        libraryDir = libDir == null ? "app" : libDir
 
         jdkPreference = "preferJdk"
         jreMinVersion = "13"
@@ -253,8 +193,8 @@ subprojects {
 
     //todo create switch to build with an without JRE
     task distImage(type: AppImage, group: 'distribution') {
-        dependsOn installDist/*, downloadCLP,downloadManual, downloadGLPK*/
-        if (OS.isWindows())
+        dependsOn installDist
+        if (siriusTargetPlatform.isWin())
             dependsOn createAllExecutables
 
         jpackagerBin = Paths.get(System.getProperty("java.home")).resolve('bin').resolve(OS.isWindows() ? 'jpackage.exe' : 'jpackage').toFile()
@@ -264,70 +204,57 @@ subprojects {
 
         String[] jArgs = [
                 '-Xms1G',
-//                '-Xmx4G',
                 '-XX:MaxRAMPercentage=85',
                 '-XX:+UseG1GC',
                 '-XX:+UseStringDeduplication'
         ]
 
         doLast {
-            File nativeLibsTarget
             File appRootTarget
             File launcherTarget
-            File libTarget
+            File runtimeTarget
             File resourceTarget
-            if (OS.isLinux()) {
+            if (siriusTargetPlatform.isLinux()) {
                 appRootTarget = outputDir.toPath().resolve(imageName).toFile()
-                nativeLibsTarget = appRootTarget.toPath().resolve("lib/native").toFile()
                 launcherTarget = appRootTarget.toPath().resolve("bin").toFile()
-                libTarget = appRootTarget.toPath().resolve("lib/app").toFile()
+                runtimeTarget = appRootTarget.toPath().resolve("lib/runtime").toFile()
                 resourceTarget = appRootTarget
-            } else if (OS.isWindows()) {
+            } else if (siriusTargetPlatform.isWin()) {
                 appRootTarget = outputDir.toPath().resolve(imageName).toFile()
-                nativeLibsTarget = appRootTarget
                 launcherTarget = appRootTarget
-                libTarget = appRootTarget.toPath().resolve("app").toFile()
+                runtimeTarget = appRootTarget.toPath().resolve("runtime").toFile()
                 resourceTarget = appRootTarget
-            } else if (OS.isMacOsX()) {
+            } else if (siriusTargetPlatform.isMac()) {
                 appRootTarget = outputDir.toPath().resolve("${imageName}.app/Contents").toFile()
-                nativeLibsTarget = appRootTarget.toPath().resolve("native").toFile()
                 launcherTarget = appRootTarget.toPath().resolve("MacOS").toFile()
-                libTarget = appRootTarget.toPath().resolve("app").toFile()
+                runtimeTarget = appRootTarget.toPath().resolve("runtime").toFile()
                 resourceTarget = appRootTarget.toPath().resolve("Resources").toFile()
 
             } else {
                 throw new RuntimeException("Could not detect OS for packaging!")
             }
 
-            delete fileTree(dir: libTarget, include: libExclude)
-
             copy {
                 from("${rootDir}") {
                     include('COPYING.txt')
                     include('LICENSE.txt')
                 }
-                from(downloadManual.outputs.files.singleFile)
                 into(resourceTarget)
             }
 
+            if(!includeJreFX)
+                delete runtimeTarget
 
-            if (OS.isWindows()) {
+            if (siriusTargetPlatform.isWin()) {
                 //delete exes because they are write protected an cannot be ovewritten
-                delete fileTree(dir: appRootTarget, include: "*.exe")
-
+                delete fileTree(dir: launcherTarget, include: "*.exe")
                 copy {
                     from("${buildDir}/launch4j") {
                         include("*.exe")
                     }
                     into(appRootTarget)
                 }
-
-                delete fileTree(dir: libTarget, include: libExcludeWin)
-
-            } else if (OS.isMacOsX()) {
-                delete fileTree(dir: libTarget, include: libExcludeMac)
-            } else if (OS.isLinux()) {
-                delete fileTree(dir: libTarget, include: libExcludeLinux)
+            } else if (siriusTargetPlatform.isLinux()) {
                 delete appRootTarget.toPath().resolve("lib/libapplauncher.so").toFile()
             }
 
@@ -338,38 +265,34 @@ subprojects {
 
             def f
             def sf
-            if (OS.isLinux()) {
+            if (siriusTargetPlatform.isLinux()) {
                 f = file("$appRootTarget/bin/sirius")
                 sf = file("${rootDir}/scripts/sirius.sh.templ")
                 templateBinding.shell = "sh"
                 templateBinding.classPath = "\\\"\$JAR_HOME/*\\\":\\\"\$GUROBI_HOME/lib/gurobi.jar\\\":\\\"\$CPLEX_HOME/lib/cplex.jar\\\""
-                templateBinding.javaLibPath = "\$APP_HOME/lib/runtime/lib"
+                templateBinding.javaLibPath = ""//includeJreFX ? "\$APP_HOME/lib/runtime/lib" : ""
                 templateBinding.gurobiHome = "/lib"
                 templateBinding.cplexHome = "/bin/x86-64_linux"
                 templateBinding.jvmOpts = "${Arrays.stream(jArgs).collect(Collectors.joining(' '))}"
                 templateBinding.javaCommand = "\$APP_HOME/lib/runtime/bin/java"
-//                templateBinding.libraryPathKey = "LD_LIBRARY_PATH"
-//                templateBinding.libraryPathVal = "\$GUROBI_HOME/lib:\$CPLEX_HOME/bin/x86-64_linux:\$APP_HOME/lib/native:\$APP_HOME/lib/runtime/lib:\$APP_HOME/lib/runtime/lib/server:\$LD_LIBRARY_PATH"
-                templateBinding.jarHome = "\$APP_HOME/lib/app"
-            } else if (OS.isMacOsX()) {
+                templateBinding.jarHome = libDir == null ? "\$APP_HOME/lib/app" : libDir
+            } else if (siriusTargetPlatform.isMac()) {
                 f = file("$appRootTarget/MacOS/sirius")
                 sf = file("${rootDir}/scripts/sirius.sh.templ")
                 templateBinding.shell = "zsh"
                 templateBinding.classPath = "\\\"\$JAR_HOME/*\\\":\\\"\$GUROBI_HOME/lib/gurobi.jar\\\":\\\"\$CPLEX_HOME/lib/cplex.jar\\\""
-                templateBinding.javaLibPath = "\$APP_HOME/runtime/Contents/Home/lib"
+                templateBinding.javaLibPath = ""//includeJreFX ? "\$APP_HOME/runtime/Contents/Home/lib" : ""
                 templateBinding.gurobiHome = "/lib"
                 templateBinding.cplexHome = "/bin/x86-64_osx"
                 templateBinding.jvmOpts = "${Arrays.stream(jArgs).collect(Collectors.joining(' '))}"
                 templateBinding.javaCommand = "\$APP_HOME/runtime/Contents/Home/bin/java"
-//                templateBinding.libraryPathKey = "DYLD_LIBRARY_PATH"
-//                templateBinding.libraryPathVal = "\$GUROBI_HOME/lib:\$CPLEX_HOME/bin/x86-64_osx:\$APP_HOME/native:\$APP_HOME/runtime/Contents/Home/lib:\$APP_HOME/runtime/Contents/Home/lib/server:\$DYLD_LIBRARY_PATH"
-                templateBinding.jarHome = "\$APP_HOME/app"
-            } else if (OS.isWindows()) {
+                templateBinding.jarHome = libDir == null ?  "\$APP_HOME/app" : libDir
+            } else if (siriusTargetPlatform.isWin()) {
                 f = file("$appRootTarget/sirius.bat")
                 sf = file("${rootDir}/scripts/sirius.bat.templ")
                 templateBinding.classPath = "%JAR_HOME%\\*"
                 templateBinding.jvmOpts = "${Arrays.stream(jArgs).map({ s -> '"' + s + '"' }).collect(Collectors.joining(" "))}"
-                templateBinding.jarHome = "%APP_HOME%\\app"
+                templateBinding.jarHome =  libDir == null ? "%APP_HOME%\\app" : libDir
                 templateBinding.gurobiJar = "%GUROBI_HOME%\\lib\\gurobi.jar"
                 templateBinding.cplexJar = "%CPLEX_HOME%\\lib\\cplex.jar"
             } else {
@@ -381,8 +304,6 @@ subprojects {
             f.setExecutable(true, false)
         }
     }
-    distImage.shouldRunAfter downloadManual
-
 
     task distImageTestLocal(dependsOn: distImage, type: Test, group: 'distribution') {
         useJUnitPlatform()
@@ -535,7 +456,7 @@ subprojects {
 
         inputs.dir(distImage.outputDir)
         doLast {
-            if (project.OS.isMacOsX()) {
+            if (siriusTargetPlatform.isMac()) {
                 def signID = findProperty("de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID")
                 if (signID != null && !signID.isBlank()) {
                     def entitlementsFile = getRootProject().getProjectDir().toPath().resolve("dist").resolve("macos.entitlements").toFile()
@@ -586,9 +507,9 @@ subprojects {
                 } else {
                     println "Could not find ID for signing. APP image will not be signed!"
                 }
-            } else if (project.OS.isWindows()) {
+            } else if (siriusTargetPlatform.isWin()) {
                 println "Image signing not needed on Windows"
-            } else if (project.OS.isLinux()) {
+            } else if (siriusTargetPlatform.isLinux()) {
                 println "Image signing not yet implemented for Linux"
             }
         }
@@ -631,7 +552,7 @@ subprojects {
         doLast {
             def source
             def target
-            if (project.OS.isMacOsX()) {
+            if (siriusTargetPlatform.isMac()) {
                 def macInstallerIdentity = findProperty('de.unijena.bioinf.build.MACOS_IDENTITY_ID')
                 //just to check whether a certificate was given
                 if (macInstallerIdentity != null && !macInstallerIdentity.isBlank()) {
@@ -650,7 +571,7 @@ subprojects {
                 } else {
                     getLogger().warn("Could not find apple identity for signign installer. Skipping signing step")
                 }
-            } else if (project.OS.isWindows()) {
+            } else if (siriusTargetPlatform.isWin()) {
                 def input = distImage.getImageDir().absolutePath + installerAppendix
                 def certFile = findProperty('de.unijena.bioinf.build.WIN_INSTALLER_CERTIFICATE_FILE')
                 getLogger().lifecycle("Cert File location to use: '$certFile'")
@@ -682,7 +603,7 @@ subprojects {
                 } else {
                     getLogger().warn("Could not find certificate file for signign installer. Skipping signing step")
                 }
-            } else if (project.OS.isLinux()) {
+            } else if (siriusTargetPlatform.isLinux()) {
                 println "Installer signing not yet implemented for Linux"
             }
         }
@@ -691,7 +612,7 @@ subprojects {
     task macNotarize(dependsOn: signDistInstaller, group: 'distribution') {
         inputs.dir(distImage.outputDir)
         doLast {
-            if (project.OS.isMacOsX()) {
+            if (siriusTargetPlatform.isMac()) {
                 def appleId = findProperty('de.unijena.bioinf.build.MACOS_APPLE_ID')
                 def appleIdPw = findProperty('de.unijena.bioinf.build.MACOS_APPLE_ID_PW')
 
@@ -778,20 +699,20 @@ abstract class ExtractRuntime extends DefaultTask {
 
     @OutputDirectory
     def getOutputDir() {
-        return new File(inputArchive.absolutePath.replace((project.OS.isWindows() ? '.zip' : '.tar.gz'), ''))
+        return new File(inputArchive.absolutePath.replace((project.siriusTargetPlatform.isWin() ? '.zip' : '.tar.gz'), ''))
     }
 
     @TaskAction
     def execute() {
         //stupid hack to delete write protected files on nix
         getLogger().lifecycle("Unpacking runtime image $inputArchive...")
-        if (project.OS.isWindows()) {
+        if (project.siriusTargetPlatform.isWin()) {
             getOutputDir().deleteDir()
             project.copy {
                 from project.zipTree(inputArchive)
                 into getOutputDir().getParentFile()
             }
-        } else if (project.OS.isLinux()) {
+        } else if (project.siriusTargetPlatform.isLinux()) {
             project.exec { commandLine(['rm', '-rf', getOutputDir().absolutePath]) }
             project.exec { commandLine(['tar', 'zxf', inputArchive.absolutePath, '-C', getOutputDir().getParentFile().absolutePath]) }
 //            project.exec { commandLine(['unzip', '-q', inputArchive.absolutePath, '-d', getOutputDir().getParentFile().absolutePath]) }
@@ -834,14 +755,14 @@ abstract class AppImage extends DefaultTask {
     AppImage() {
         imageName = project.name
         jvmArgs = []
-        version = project.OS.isLinux() ? project.version : project.version.replace('-SNAPSHOT', '')
+        version = project.siriusTargetPlatform.isLinux() ? project.version : project.version.replace('-SNAPSHOT', '')
         winConsole = false
         inputDir = project.tasks.getByName('installDist').outputs.files.singleFile.toPath().resolve('lib').toFile()
     }
 
     @OutputDirectory
     File getImageDir() {
-        return outputDir.toPath().resolve(project.OS.isMacOsX() ? "${imageName}.app" : imageName).toFile()
+        return outputDir.toPath().resolve(project.siriusTargetPlatform.isMac() ? "${imageName}.app" : imageName).toFile()
     }
 
     @TaskAction
@@ -895,15 +816,15 @@ abstract class AppImage extends DefaultTask {
 
 
         def iconDir = project.getRootProject().rootDir.toPath().resolve('icons')
-        if (project.OS.isWindows()) {
+        if (project.siriusTargetPlatform.isWin()) {
             paras += ["--icon", "${iconDir.resolve('sirius-icon.ico').toString()}"]
             if (winConsole)
                 paras += ['--win-console']
-        } else if (project.OS.isMacOsX()) {
+        } else if (project.siriusTargetPlatform.isMac()) {
             paras += ["--icon", "${iconDir.resolve('sirius-icon.icns').toString()}"]
             if (macPackageName != null && !macPackageName.isBlank())
                 paras += ['--mac-package-name', "\"$macPackageName\""]
-        } else if (project.OS.isLinux()) {
+        } else if (project.siriusTargetPlatform.isLinux()) {
             paras += ["--icon", "${iconDir.resolve('sirius-icon.png').toString()}"]
         } else {
             throw new IllegalArgumentException("Could not determine the OS to build on")
@@ -979,7 +900,7 @@ abstract class AppInstaller extends DefaultTask {
         ]
 
 
-        if (project.OS.isWindows()) {
+        if (project.siriusTargetPlatform.isWin()) {
             if (winDirChooser)
                 paras += ['--win-dir-chooser'/*, winDirChooser ? '1' : '0'*/]
             if (winMenu)
@@ -992,9 +913,9 @@ abstract class AppInstaller extends DefaultTask {
                 paras += ['--win-per-user-install']
             if (winUpdateUUID != null && !winUpdateUUID.isBlank())
                 paras += ['--win-upgrade-uuid', "$winUpdateUUID"]
-        } else if (project.OS.isMacOsX()) {
+        } else if (project.siriusTargetPlatform.isMac()) {
 
-        } else if (project.OS.isLinux()) {
+        } else if (project.siriusTargetPlatform.isLinux()) {
             if (linuxShortcut)
                 paras += ['--linux-shortcut']
             if (debPackageMaintaner != null && !debPackageMaintaner.isBlank())
