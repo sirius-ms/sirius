@@ -1,27 +1,24 @@
 import com.github.jk1.license.filter.LicenseBundleNormalizer
 import com.github.jk1.license.render.InventoryMarkdownReportRenderer
 import edu.sc.seis.launch4j.tasks.Launch4jLibraryTask
-import com.github.jk1.license.filter.LicenseBundleNormalizer
-import com.github.jk1.license.render.*
 
 import java.util.stream.Collectors
+buildscript {
+    repositories {
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:2.6.8")
+    }
+}
 
 plugins {
     id "com.github.kkdad.dependency-license-report" version "1.16.6"
 }
 
-
 apply plugin: "application"
-
-ext {
-    libDir = findProperty("build.sirius.location.lib")
-    includeWinStarter = !findProperty("build.sirius.starter.remove.win")
-    includeIxStarter = !findProperty("build.sirius.starter.remove.ix")
-    launch4jJDK = findProperty("build.sirius.starter.jdk.win")
-    excludeNativeWin = findProperty("build.sirius.native.remove.win")
-    excludeNativeLinux = findProperty("build.sirius.native.remove.linux")
-    excludeNativeMac = findProperty("build.sirius.native.remove.mac")
-}
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
 
 licenseReport {
     // Set output directory for the report data.
@@ -64,10 +61,13 @@ licenseReport {
 }
 
 dependencies {
-    implementation project(':sirius_gui')
-    implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+    implementation project(':sirius_rest_service')
+    for (m in javaFX_modules) // add (native) javaFX dependencies to build
+        implementation "org.openjfx:$m:$targetCompatibility.+:${siriusTargetPlatform.jfxClassifier().get()}"
 }
-mainClassName = "de.unijena.bioinf.ms.frontend.SiriusGUIApplication"
+
+mainClassName = 'org.springframework.boot.loader.JarLauncher'
+//mainClassName = "de.unijena.bioinf.ms.frontend.SiriusGUIApplication"
 
 application {
     mainClass = project.mainClassName
@@ -77,18 +77,19 @@ application {
                                  '-XX:+UseStringDeduplication',
                                  '-XX:+ExitOnOutOfMemoryError']
     executableDir = 'bin'
-    application.applicationName = 'sirius'
+    applicationName = 'sirius'
 }
 
 
-createExe {
+launch4j {
     mainClassName = project.mainClassName
     libraryDir = libDir == null ? "lib" : libDir
-    jar = getLibraryDir() + "\\" + getRootProject().getChildProjects().get('sirius_gui').tasks.getByName('jar').outputs.files.singleFile.getName()
+//    jar = getLibraryDir() + "\\" + getRootProject().getChildProjects().get('sirius_gui').tasks.getByName('jar').outputs.files.singleFile.getName()
+    jar = getLibraryDir() + "\\" + getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar').outputs.files.singleFile.getName()
     jvmOptions = application.applicationDefaultJvmArgs
     dontWrapJar = true
-    bundledJrePath = launch4jJDK
-    bundledJre64Bit = true
+    bundledJrePath = launch4jJDKPath != null ? launch4jJDKPath : "../runtime"
+//    bundledJre64Bit = true
     classpath = [(libDir == null ? "lib" : libDir) + "\\*",
                  "%GUROBI_HOME%\\lib\\gurobi.jar",
                  "%CPLEX_HOME%\\lib\\cplex.jar"
@@ -105,6 +106,8 @@ task createGuiExe(type: Launch4jLibraryTask) {
     headerType = "gui"
     cmdLine = "gui"
 }
+createGuiExe.dependsOn 'launch4j'
+
 
 
 startScripts {
@@ -113,7 +116,7 @@ startScripts {
 
     doLast {
         // writer sh script
-        if (includeIxStarter) {
+        if (!siriusTargetPlatform.isWin()) {
             def templateBinding = [
                     toolName : "SIRIUS",
                     mainClass: mainClassName
@@ -132,13 +135,12 @@ startScripts {
             templateBinding.forEach({ k, v -> script = script.replace("#$k#", v) })
             unixScript.withWriter { it.write(script) }
             unixScript.setExecutable(true, false)
-            unixScript.renameTo(unixScript.path + '.sh')
         } else{
             delete(unixScript)
         }
 
-        if (includeWinStarter) {
-//reset binding and create windows bat
+        if (siriusTargetPlatform.isWin()) {
+            //reset binding and create windows bat
             def templateBinding = [
                     toolName : "SIRIUS",
                     mainClass: mainClassName
@@ -164,29 +166,17 @@ startScripts {
 distributions {
     main {
         contents {
-            exclude 'gurobi-jar-*.jar'
-            exclude 'cplex-*.jar'
-            if (excludeNativeWin)
-                exclude 'cbc-java-win-*.jar'
-            if (excludeNativeLinux)
-                exclude 'cbc-java-linux-*.jar'
-            if (excludeNativeMac)
-                exclude 'cbc-java-mac-*.jar'
-
+            exclude "${buildDir}/lib/*"
+            into('lib') {
+                from getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar').outputs.files.singleFile.getParent()
+            }
             into('bin') {
-                if (includeWinStarter) {
+                if (siriusTargetPlatform.isWin()) {
                     from("${buildDir}/launch4j") {
                         include("*.exe")
                     }
                 }
-                if (includeIxStarter) {
-                    from("${rootDir}/scripts") {
-                        include 'sirius-gui.sh'
-                    }
-                }
-
             }
-
             from("${rootDir}") {
                 include('COPYING.txt')
                 include('LICENSE.txt')
@@ -197,6 +187,8 @@ distributions {
         }
     }
 }
+
+installDist.dependsOn getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar')
 distZip.dependsOn 'generateLicenseReport'
 distZip.dependsOn('launch4j')
 distZip.dependsOn('createGuiExe')
