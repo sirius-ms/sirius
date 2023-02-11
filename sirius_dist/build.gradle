@@ -302,6 +302,16 @@ subprojects {
             templateBinding.forEach({ k, v -> script = script.replace("#$k#", v) })
             f.withWriter { it.write(script) }
             f.setExecutable(true, false)
+
+            project.exec {
+                System.out.println("----> DistImage")
+                commandLine(["ls", "-lah", "$appRootTarget"])
+            }
+
+            project.exec {
+                System.out.println("----> DistImage runtime")
+                commandLine(["ls", "-lah", "$runtimeTarget"])
+            }
         }
     }
 
@@ -779,6 +789,7 @@ abstract class AppImage extends DefaultTask {
 
     def buildCommand(String[] parameters) {
         if (project.OS.isWindows()) {
+            getLogger().lifecycle("${jpackagerBin.absolutePath} ${parameters.join(' ')}")
             //because windows command line sucks!
             List<String> c = parameters as List
             c.add(0, "\"${jpackagerBin.absolutePath}\"")
