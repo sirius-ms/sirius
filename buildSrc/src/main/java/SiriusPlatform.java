@@ -19,6 +19,8 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
+import org.slf4j.LoggerFactory;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -83,10 +85,8 @@ public enum SiriusPlatform {
     }
 
     public static SiriusPlatform fromDescriptor(String platformDescriptor) {
-        if (platformDescriptor == null || platformDescriptor.isBlank()) {
-            platformDescriptor = "${DefaultNativePlatform.currentOperatingSystem.name}_${DefaultNativePlatform.getCurrentArchitecture().toString()}";
-//            log.warn("No architecture given, using current system architecture: " + platformDescriptor);
-        }
+        LoggerFactory.getLogger(SiriusPlatform.class).info("Parsing following descriptor: " + platformDescriptor);
+        System.out.println("----> Parsing following platform descriptor: " + platformDescriptor);
         platformDescriptor = platformDescriptor.toLowerCase();
 
         if (platformDescriptor.contains("win")) {
