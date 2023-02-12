@@ -90,14 +90,24 @@ dependencies {
     testImplementation group: 'junit', name: 'junit', version: '4.12'
 }
 
-configurations.each {
+configurations.each {Configuration conf ->
     //replaced by log4j-over-slf4j
-    it.exclude group: "log4j", module: "log4j"
+    conf.exclude group: "log4j", module: "log4j"
     //replaced by jcl-over-slf4j
-    it.exclude group: "commons-logging", module: "commons-logging"
-    it.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    conf.exclude group: "commons-logging", module: "commons-logging"
+    conf.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
 //    it.exclude group: 'org.slf4j', module: 'logback-classic'
+    SiriusPlatform.allBut(siriusTargetPlatform).stream()
+            .map { it.inchiClassifier() }.flatMap { it.stream() }
+            .forEach { conf.exclude(group: "io.github.dan2097", module: "jna-inchi-$it") }
+    if (excludeCbcNative)
+        conf.exclude(group: "de.unijena.bioinf.cbc-java", module: "cbc-java-native")
+
+    //remove commercial solver -> given at runtime
+    conf.exclude group: "com.gurobi", module: "gurobi-jar"
+    conf.exclude group: "cplex", module: "cplex"
 }
+
 war {
     enabled = false
 }

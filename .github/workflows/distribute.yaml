@@ -180,12 +180,6 @@ jobs:
         run: |
           rm -r sirius_cli/src/test/temp_results
 
-#      - name: Upload multiOS Source
-#        uses: actions/upload-artifact@v2
-#        with:
-#          name: "sirius-${{ steps.sirius_version.outputs.value }}-${{ runner.os }}-x86-64-headless-img"
-#          path: sirius_dist/sirius_cli_single_os/build/distributions/${{ runner.os == 'macOS' && 'sirius.app' || 'sirius' }}/
-
       - name: Upload Distributions
         uses: actions/upload-artifact@v2
         with:

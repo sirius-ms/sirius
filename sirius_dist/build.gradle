@@ -191,7 +191,6 @@ subprojects {
         messagesBundledJreError = "Could not Load bundled JRE."
     }
 
-    //todo create switch to build with an without JRE
     task distImage(type: AppImage, group: 'distribution') {
         dependsOn installDist
         if (siriusTargetPlatform.isWin())
