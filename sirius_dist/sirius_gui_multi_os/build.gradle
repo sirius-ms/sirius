@@ -3,6 +3,7 @@ import com.github.jk1.license.render.InventoryMarkdownReportRenderer
 import edu.sc.seis.launch4j.tasks.Launch4jLibraryTask
 
 import java.util.stream.Collectors
+
 buildscript {
     repositories {
         maven { url "https://plugins.gradle.org/m2/" }
@@ -16,6 +17,7 @@ plugins {
     id "com.github.kkdad.dependency-license-report" version "1.16.6"
 }
 
+//apply plugin: "distribution"
 apply plugin: "application"
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
@@ -48,7 +50,7 @@ licenseReport {
     // Set custom report renderer, implementing ReportRenderer.
     // Yes, you can write your own to support any format necessary.
 //    renderers = [new XmlReportRenderer('third-party-libs.xml', 'Back-End Libraries')]
-    renderers = [/*new InventoryHtmlReportRenderer(), */new InventoryMarkdownReportRenderer('licenses.md', "SIRIUS license information", new File(rootDir, "license-overrides.txt"))]
+    renderers = [/*new InventoryHtmlReportRenderer(), */ new InventoryMarkdownReportRenderer('licenses.md', "SIRIUS license information", new File(rootDir, "license-overrides.txt"))]
 
     // Set importers to import any external dependency information, i.e. from npm.
     // Custom importer should implement DependencyDataImporter interface.
@@ -109,7 +111,6 @@ task createGuiExe(type: Launch4jLibraryTask) {
 createGuiExe.dependsOn 'launch4j'
 
 
-
 startScripts {
     applicationName = "sirius"
     defaultJvmOpts = application.applicationDefaultJvmArgs
@@ -128,14 +129,14 @@ startScripts {
             templateBinding.gurobiHome = "/lib"
             templateBinding.cplexHome = "/bin/x86-64_linux"
             templateBinding.jvmOpts = "${application.applicationDefaultJvmArgs.stream().collect(Collectors.joining(' '))}"
-            templateBinding.javaCommand = "\$APP_HOME/lib/runtime/bin/java"
+            templateBinding.javaCommand = "\$APP_HOME/runtime/bin/java"
             templateBinding.jarHome = libDir == null ? "\$APP_HOME/lib" : libDir
 
             String script = sf.text
             templateBinding.forEach({ k, v -> script = script.replace("#$k#", v) })
             unixScript.withWriter { it.write(script) }
             unixScript.setExecutable(true, false)
-        } else{
+        } else {
             delete(unixScript)
         }
 
@@ -157,20 +158,20 @@ startScripts {
             templateBinding.forEach({ k, v -> script = script.replace("#$k#", v) })
             windowsScript.withWriter { it.write(script) }
             windowsScript.setExecutable(true, false)
-        } else{
+        } else {
             delete(windowsScript)
         }
     }
 }
 
 distributions {
-    main {
+    sirius {
         contents {
-            exclude "${buildDir}/lib/*"
             into('lib') {
-                from getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar').outputs.files.singleFile.getParent()
+                from("${getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar').outputs.files.singleFile.getParent()}")
             }
             into('bin') {
+                from startScripts
                 if (siriusTargetPlatform.isWin()) {
                     from("${buildDir}/launch4j") {
                         include("*.exe")
@@ -181,23 +182,30 @@ distributions {
                 include('COPYING.txt')
                 include('LICENSE.txt')
             }
-            from("${buildDir}/reports/dependency-license"){
+            from("${buildDir}/reports/dependency-license") {
                 include('licenses.md')
+            }
+            if (includeJreFX){
+                into('runtime'){
+                    from getParent().tasks.getByName('extractRuntimeImageFX')
+                }
             }
         }
     }
 }
 
-installDist.dependsOn getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar')
-distZip.dependsOn 'generateLicenseReport'
-distZip.dependsOn('launch4j')
-distZip.dependsOn('createGuiExe')
-distTar.dependsOn('launch4j')
-distTar.dependsOn 'generateLicenseReport'
-distTar.dependsOn('createGuiExe')
-installDist.dependsOn('launch4j')
-installDist.dependsOn('createGuiExe')
-installDist.dependsOn('generateLicenseReport')
-distribution.dependsOn 'distZip'
-//distribution.dependsOn 'distTar'
+installSiriusDist.dependsOn getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar')
+siriusDistZip.dependsOn 'generateLicenseReport'
+siriusDistZip.dependsOn('launch4j')
+siriusDistZip.dependsOn('createGuiExe')
+siriusDistTar.dependsOn('launch4j')
+siriusDistTar.dependsOn 'generateLicenseReport'
+siriusDistTar.dependsOn('createGuiExe')
+installSiriusDist.dependsOn('launch4j')
+installSiriusDist.dependsOn('createGuiExe')
+installSiriusDist.dependsOn('generateLicenseReport')
+if (includeJreFX)
+    installSiriusDist.dependsOn getParent().tasks.getByName('extractRuntimeImageFX')
+distribution.dependsOn 'siriusDistZip'
+//distribution.dependsOn 'siriusDistTar'
 distribution.dependsOn 'createChecksums'
