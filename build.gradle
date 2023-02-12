@@ -42,7 +42,10 @@ ext {
     glpk_lib_version = '4.60'
     cbc_lib_version = '2.10.8'
 
-    siriusTargetPlatform = SiriusPlatform.fromDescriptor(project.findProperty('build.sirius.platform') ?: "${DefaultNativePlatform.getCurrentOperatingSystem().getName()}-${DefaultNativePlatform.getCurrentArchitecture().getName()}")
+    siriusTargetPlatform = SiriusPlatform.fromDescriptor((
+            project.findProperty('build.sirius.platform') ?:
+                    "${DefaultNativePlatform.getCurrentOperatingSystem().getName()}-${DefaultNativePlatform.getCurrentArchitecture().getName()}"
+    ) as String)
     System.out.println("----> Following platform detected: " + siriusTargetPlatform)
 
     javaFX_modules = ['javafx-base', 'javafx-controls', 'javafx-swing', 'javafx-web', 'javafx-graphics', 'javafx-fxml', 'javafx-media']
@@ -55,7 +58,7 @@ ext {
 
     libDir = project.findProperty("build.sirius.location.lib")
     System.out.println("----> LibDir: " + libDir)
-    includeJreFX =  Boolean.getBoolean((project.findProperty("build.sirius.starter.jdk.include") ?: "false") as String)
+    includeJreFX = Boolean.getBoolean((project.findProperty("build.sirius.starter.jdk.include") ?: "false") as String)
     System.out.println("----> includeJreFX: " + includeJreFX)
     launch4jJDKPath = project.findProperty("build.sirius.starter.jdk.location")
     System.out.println("----> launch4jJDKPath: " + launch4jJDKPath)
