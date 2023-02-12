@@ -79,7 +79,6 @@ application {
                                  '-XX:+UseStringDeduplication',
                                  '-XX:+ExitOnOutOfMemoryError']
     executableDir = 'bin'
-    applicationName = 'sirius'
 }
 
 
