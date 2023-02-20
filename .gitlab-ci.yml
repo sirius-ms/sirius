@@ -46,7 +46,6 @@ buildCLI:
   only:
     refs:
       - master
-      - master-dist-tests
       - stable
 
 buildGUI:
@@ -67,7 +66,6 @@ buildGUI:
   only:
     refs:
       - master
-      - master-dist-tests
       - stable
 
 buildAPI:
@@ -88,7 +86,6 @@ buildAPI:
   only:
     refs:
       - master
-      - master-dist-tests
       - stable
 
 
@@ -111,7 +108,6 @@ testCLI:
   only:
     refs:
       - master
-      - master-dist-tests
       - stable
 
 testGUI:
@@ -132,7 +128,6 @@ testGUI:
   only:
     refs:
       - master
-      - master-dist-tests
       - stable
 
 testAPI:
@@ -153,7 +148,6 @@ testAPI:
   only:
     refs:
       - master
-      - master-dist-tests
       - stable
 
 
@@ -176,9 +170,7 @@ publishCLI:
     - kubernetes
   only:
     refs:
-      - master-casmi
       - master
-      - master-dist-tests
       - stable
 
 publishGUI:
@@ -199,9 +191,7 @@ publishGUI:
     - kubernetes
   only:
     refs:
-      - master-casmi
       - master
-      - master-dist-tests
       - stable
 
 publishAPI:
@@ -223,7 +213,6 @@ publishAPI:
   only:
     refs:
       - master
-      - master-dist-tests
       - stable
 
 #push to github to build for multiple OSs
@@ -235,7 +224,6 @@ pushToGitHub:
     - git remote show origin
     - git remote set-url --push origin git@github.com:boecker-lab/sirius.git
     - git remote show origin
-    ##todo  re-insert before merge to master
     - git push --follow-tags origin HEAD:$CI_COMMIT_REF_NAME
   cache:
     key: "$CI_COMMIT_REF_NAME"
@@ -245,6 +233,5 @@ pushToGitHub:
     - kubernetes
   only:
     refs:
-      - master-casmi
       - stable
       - master
