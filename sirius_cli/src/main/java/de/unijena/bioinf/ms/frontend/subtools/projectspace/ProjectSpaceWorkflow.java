@@ -19,20 +19,13 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.projectspace;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
-import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
-import de.unijena.bioinf.canopus.CanopusResult;
-import de.unijena.bioinf.chemdb.CompoundCandidate;
-import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
@@ -41,19 +34,15 @@ import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
-import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.projectspace.*;
-import de.unijena.bioinf.projectspace.canopus.CanopusCfDataProperty;
 import de.unijena.bioinf.sirius.Ms2Preprocessor;
 import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
 import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
 import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
-import gnu.trove.list.array.TShortArrayList;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -175,15 +164,6 @@ public class ProjectSpaceWorkflow implements Workflow, ProgressSupport {
                 }
             } else {
                 final ProjectSpaceManager<?> space = rootOptions.getProjectSpace();
-                //// temp /////
-                if (projecSpaceOptions.classyfireInjection!=null) {
-                    injectClassyfire(space,projecSpaceOptions);
-                }
-                if (projecSpaceOptions.fixTopFormula) {
-                    fixTopFormula(space,projecSpaceOptions);
-                }
-
-                ///////////////
                 try {
                     InputFilesOptions input = rootOptions.getInput();
 
@@ -235,107 +215,6 @@ public class ProjectSpaceWorkflow implements Workflow, ProgressSupport {
         } catch (IOException e) {
             LoggerFactory.getLogger(getClass()).error("Error when closing Project(s)!", e);
         }
-    }
-
-    private void fixTopFormula(ProjectSpaceManager<?> space, ProjecSpaceOptions projecSpaceOptions) throws IOException {
-        for (Instance i : space) {
-            final List<? extends SScored<FormulaResult, ? extends FormulaScore>> hits = i.loadFormulaResults(FBCandidates.class, CanopusResult.class);
-            double besthit = hits.stream().mapToDouble(x->x.getCandidate().getAnnotation(FBCandidates.class).map(y->Optional.ofNullable(y.getTopHitScore()).map(z->z.scoreIfNa(Double.NEGATIVE_INFINITY)).orElse(Double.NEGATIVE_INFINITY)).orElse(Double.NEGATIVE_INFINITY)).max().orElse(Double.NEGATIVE_INFINITY);
-            List<FormulaResult> toDelete = new ArrayList<>();
-            boolean foundCorrectHit = false;
-            for (SScored<FormulaResult, ? extends FormulaScore> hit : hits) {
-                final Optional<FBCandidates> fb = hit.getCandidate().getAnnotation(FBCandidates.class);
-                final double mztheoretical = hit.getCandidate().getId().getIonType().neutralMassToPrecursorMass(hit.getCandidate().getId().getMolecularFormula().getMass());
-                final double mzexact = i.getExperiment().getIonMass();
-                final double diff = Math.abs(mztheoretical-mzexact);
-                boolean tooLarge = diff >= 5e-4;
-                if (fb.isPresent() && Optional.ofNullable(fb.get().getTopHitScore()).map(z->z.scoreIfNa(Double.NEGATIVE_INFINITY)).orElse(Double.NEGATIVE_INFINITY)>= besthit) {
-                    if (tooLarge) {
-                        System.out.println("Wrong molecular formula for " + i.getID().toString() + " with formula is " + hit.getCandidate().getId() + " and difference is " + diff);
-                        foundCorrectHit = false;
-                    } else {
-                        foundCorrectHit = true;
-                        System.out.println("Delete all other molecular formulas");
-                    }
-                }
-                if (tooLarge) {
-                    toDelete.add(hit.getCandidate());
-                }
-            }
-            if (foundCorrectHit) {
-                i.deleteFormulaResults(toDelete.stream().map(FormulaResult::getId).toArray(FormulaResultId[]::new));
-            }
-
-
-        }
-    }
-
-    private void injectClassyfire(ProjectSpaceManager<?> space, ProjecSpaceOptions projecSpaceOptions) throws IOException {
-        final HashMap<String, ArrayFingerprint> classyfirePos = new HashMap<>(), classyfireNeg = new HashMap<>();
-        final Optional<CanopusCfDataProperty> classy = space.getProjectSpaceProperty(CanopusCfDataProperty.class);
-        if (classy.isEmpty()) {
-            LoggerFactory.getLogger(ProjectSpaceWorkflow.class).warn("No ClassyFire version information available. Run CANOPUS first.");
-            return;
-        }
-        ClassyFireFingerprintVersion Vpos = classy.get().getPositive().getClassyFireFingerprintVersion();
-        MaskedFingerprintVersion VMpos = classy.get().getPositive().getFingerprintVersion(), VMneg = classy.get().getNegative().getFingerprintVersion(); ;
-        final HashMap<String, Short> name2indexPos = new HashMap<>(), name2indexNeg = new HashMap<>();
-        for (int k=0; k < Vpos.size(); ++k) {
-            name2indexPos.put(Vpos.getMolecularProperty(k).getName(), (short)k);
-        }
-        try (final BufferedReader br = FileUtils.getReader(projecSpaceOptions.classyfireInjection)){
-            String line;
-            while ((line=br.readLine())!=null) {
-                String[] tab = line.split("\t");
-                String key = tab[0];
-                final TShortArrayList indizes = new TShortArrayList();
-                for (int k = 1; k < tab.length; ++k) {
-                    Short v = name2indexPos.get(tab[k]);
-                    if (v != null) {
-                        indizes.add(v);
-                    }
-                }
-                if (indizes.size() > 0) {
-                    classyfirePos.put(key.substring(0, 14), new ArrayFingerprint(Vpos, indizes.toArray()));
-                }
-            }
-        }
-        // now iterate project space
-        for (Instance i : space) {
-            final List<? extends SScored<FormulaResult, ? extends FormulaScore>> hits = i.loadFormulaResults(FBCandidates.class, CanopusResult.class);
-            for (SScored<FormulaResult, ? extends FormulaScore> hit : hits) {
-                final FormulaResult candidate = hit.getCandidate();
-                final Optional<FBCandidates> fb = candidate.getAnnotation(FBCandidates.class);
-                final Optional<CanopusResult> cres = candidate.getAnnotation(CanopusResult.class);
-                if (fb.isPresent() && cres.isPresent()) {
-                    boolean dirty = false;
-                    for (Scored<CompoundCandidate> result : fb.get().getResults()) {
-                        final CompoundCandidate cc = result.getCandidate();
-                        if (classyfirePos.containsKey(cc.getInchiKey2D())) {
-                            final ArrayFingerprint FPTruth = VMpos.mask(classyfirePos.get(cc.getInchiKey2D()));
-                            final ProbabilityFingerprint fp = cres.get().getCanopusFingerprint();
-                            final double tanimoto = Tanimoto.fastTanimoto(FPTruth, fp);
-                            cc.getMutableLinks().removeIf(key->key.name.startsWith("CANOPUS"));
-                            int tan = (int)Math.round(tanimoto*100);
-                            cc.getMutableLinks().add(new DBLink(String.format(Locale.US, "CANOPUS[ %d %% ]:(%d)", tan, tan), null));
-
-                            final ClassyfireProperty primaryClass = Vpos.getPrimaryClass(fp);
-                            if (FPTruth.isSet(Vpos.getIndexOfMolecularProperty(primaryClass))) {
-                                String pr = primaryClass.getName();
-                                cc.getMutableLinks().add(new DBLink(String.format(Locale.US, "CANOPUS[ %s ]:(%s)", pr,pr),null));
-                            }
-                            dirty = true;
-                        }
-                    }
-                    if (dirty) {
-                        i.updateFormulaResult(candidate, FBCandidates.class);
-                        System.out.println("UPDATE " + candidate.getId().toString());
-                    }
-                }
-            }
-        }
-
-
     }
 
     private void mergeCompounds(ProjectSpaceManager<?> space, ProjecSpaceOptions projecSpaceOptions) {
