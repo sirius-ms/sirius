@@ -82,6 +82,12 @@ public class InChISMILESUtils {
         return in == null ? null : in.key;
     }
 
+    public static InChI getStandardInchiIfNonStandard(InChI inChI, boolean keepStereoInformation) {
+        String inchi = inChI.in3D;
+        if (isStandardInchi(inchi)) return inChI;
+        return getInchiWithKeyOrThrow(inchi, keepStereoInformation);
+    }
+
     public static InChI getInchiWithKeyOrThrow(String inchi, boolean keepStereoInformation) {
         return getInchiWithKeyOrThrow(inchi, keepStereoInformation, e -> new RuntimeException("Error when creating CDK Objects from InChI String.", e));
     }
@@ -98,13 +104,21 @@ public class InChISMILESUtils {
         return getInchi(getAtomContainerFromInchi(inchi), keepStereoInformation);
     }
 
-    //    NEWPSOFF/DoNotAddH/SNon
+    public static InChI getInchiWithKey(String inchi, boolean keepStereoInformation, boolean logWarning) throws CDKException {
+        return getInchi(getAtomContainerFromInchi(inchi), keepStereoInformation, logWarning);
+    }
+
     public static InChI getInchi(IAtomContainer atomContainer, boolean keepStereoInformation) throws CDKException {
+        return getInchi(atomContainer, keepStereoInformation, true);
+    }
+
+    //    NEWPSOFF/DoNotAddH/SNon
+    public static InChI getInchi(IAtomContainer atomContainer, boolean keepStereoInformation, boolean logWarning) throws CDKException {
         // this will create a standard inchi, see: https://egonw.github.io/cdkbook/inchi.html
         InChIGenerator inChIGenerator = InChIGeneratorFactory.getInstance().getInChIGenerator(atomContainer, keepStereoInformation ? new InchiFlag[0] : new InchiFlag[]{InchiFlag.SNon}); //removing stereoInformation produces much less warnings, including 'Omitted undefined stereo'
         InchiStatus state = inChIGenerator.getStatus();
         if (state != InchiStatus.ERROR) {
-            if (state == InchiStatus.WARNING)
+            if (logWarning && (state == InchiStatus.WARNING))
                 LoggerFactory.getLogger(InChISMILESUtils.class).warn("Warning while reading AtomContainer: '" + atomContainer.getTitle() + "'\n-> " + inChIGenerator.getMessage());
             String inchi = inChIGenerator.getInchi();
             if (inchi == null) return null;
