@@ -237,7 +237,8 @@ public class ProjecSpaceOptions implements StandaloneTool<ProjectSpaceWorkflow> 
     //// temp /////
     @CommandLine.Option(
             names={"--classyfire"},
-            description = {"add ClassyFire annotations to csi results"}
+            description = {"add ClassyFire annotations to csi results"},
+            hidden = true
     )
     public File classyfireInjection;
 
