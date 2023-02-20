@@ -43,7 +43,6 @@ import java.util.Set;
 public class CandidateListView extends ActionListDetailView<FingerprintCandidateBean, Set<FormulaResultBean>, StructureList> {
 
     private FilterRangeSlider<StructureList,FingerprintCandidateBean, Set<FormulaResultBean>> logPSlider;
-    private FilterRangeSlider<StructureList,FingerprintCandidateBean, Set<FormulaResultBean>> taxonomicScoreSlider;
     private FilterRangeSlider<StructureList,FingerprintCandidateBean, Set<FormulaResultBean>> tanimotoSlider;
     private DBFilterPanel dbFilterPanel;
     private LipidLabel lipidLabel;
@@ -72,14 +71,11 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
         tb.setLayout(new WrapLayout(FlowLayout.LEFT, 0, 0));
 
         logPSlider = new FilterRangeSlider<>(source, source.logPStats);
-        taxonomicScoreSlider = new FilterRangeSlider<>(source, source.taxonomicScoreStats);
         tanimotoSlider = new FilterRangeSlider<>(source, source.tanimotoStats, true);
 
         dbFilterPanel = new DBFilterPanel(source);
         dbFilterPanel.toggle();
 
-        tb.add(new NameFilterRangeSlider("bio_score:", taxonomicScoreSlider));
-        tb.addSeparator();
         tb.add(new NameFilterRangeSlider("XLogP:", logPSlider));
         tb.addSeparator();
         tb.add(new NameFilterRangeSlider("Similarity:", tanimotoSlider));
@@ -112,7 +108,6 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
     protected EventList<MatcherEditor<FingerprintCandidateBean>> getSearchFieldMatchers() {
         return GlazedLists.eventListOf(
                 new CandidateStringMatcherEditor(searchField.textField)
-                ,new MinMaxMatcherEditor<>(taxonomicScoreSlider, (baseList, element) -> baseList.add(element.getTaxonomicScore().orElse(0d)))
                 ,new MinMaxMatcherEditor<>(logPSlider, (baseList, element) -> baseList.add(element.getXLogPOrNull()))
                 ,new MinMaxMatcherEditor<>(tanimotoSlider, (baseList, element) -> baseList.add(element.getTanimotoScore()))
                , new DatabaseFilterMatcherEditor(dbFilterPanel)

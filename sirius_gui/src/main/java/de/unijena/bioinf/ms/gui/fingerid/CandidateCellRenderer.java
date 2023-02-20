@@ -38,7 +38,6 @@ import java.text.AttributedCharacterIterator;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * Created by fleisch on 16.05.17.
@@ -209,24 +208,13 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             if (candidate == null || candidate.candidate == null) return;
 
             for (DatabaseLabel label : candidate.labels) {
-                final TextLayout tlayout = new TextLayout(label.name(), dbPanelFont, new FontRenderContext(null, true, true));
+                final TextLayout tlayout = new TextLayout(label.name(), dbPanelFont, new FontRenderContext(null, false, false));
                 final Rectangle2D r = tlayout.getBounds();
                 final int X = (int) r.getWidth() + 2 * DB_LABEL_PADDING + 6;
                 final int Y = (int) r.getHeight() + 2 * DB_LABEL_PADDING + 6;
 
                 add(new DatabaseLabelPanel(label, X, Y, dbPanelFont));
             }
-
-            //todo remove
-            candidate.getTaxonomicSpecies().ifPresent(l -> {
-                DatabaseLabel label = new DatabaseLabel("taxonInfo", "Organism - " + l, new String[0], new Rectangle(0, 0, 0, 0));
-                final TextLayout tlayout = new TextLayout(label.name(), dbPanelFont, new FontRenderContext(null, true, true));
-                final Rectangle2D r = tlayout.getBounds();
-                final int X = (int) r.getWidth() + 2 * DB_LABEL_PADDING + 6;
-                final int Y = (int) r.getHeight() + 2 * DB_LABEL_PADDING + 6;
-
-                add(new DatabaseLabelPanel(label, X, Y, dbPanelFont));
-            });
         }
     }
 
@@ -244,12 +232,10 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
 
         private Color color() {
             CustomDataSources.Source s = CustomDataSources.getSourceFromName(label.sourceName);
-            if (label.sourceName.equals("taxonInfo")) return Color.magenta;
             if (s == null) return Colors.DB_UNKNOWN;
             if (s.isCustomSource()) return Colors.DB_CUSTOM;
             if (s.name().equals(DataSource.TRAIN.realName)) return Colors.DB_TRAINING;
             if (s.name().startsWith(DataSource.LIPID.realName)) return Colors.DB_ELGORDO;
-
             return label.values.length == 0 || s.URI() == null ? Colors.DB_UNLINKED : Colors.DB_LINKED;
         }
 
@@ -314,39 +300,6 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
         }
     }
 
-    public class BioScorePanel extends JPanel {
-
-        private double bioScore;
-        private final DecimalFormat format = new DecimalFormat("#0.00");
-        private Font font;
-
-        public BioScorePanel() {
-            this.bioScore = Double.NaN;
-            setPreferredSize(new Dimension(128, 20));
-            Map<TextAttribute, Object> map = new HashMap<TextAttribute, Object>();
-            map.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
-            map.put(TextAttribute.WEIGHT, TextAttribute.WEIGHT_BOLD);
-            font = nameFont.deriveFont(map);
-        }
-
-        @Override
-        public void paintComponent(Graphics g) {
-            ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            if (Double.isNaN(bioScore)) return;
-            g.setFont(font);
-            int widthB = g.getFontMetrics().stringWidth("bio_score: ");
-            g.drawString("bio_score:", 0, 14);
-            g.setFont(nameFont);
-            g.drawString(format.format(bioScore), widthB, 14);
-        }
-
-        public void setBioScore(double bioScore) {
-            this.bioScore = bioScore;
-            repaint();
-        }
-    }
-
-
     public class ScoreLabel extends JPanel {
 
         private double score;
@@ -384,7 +337,6 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
 
         protected JLabel inchi, agreements;
         protected XLogPLabel xlogP;
-        protected BioScorePanel bioP;
         protected ScoreLabel scoreL;
         protected FingerprintView ag;
         protected JPanel agpanel;
@@ -396,17 +348,12 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             setBorder(new EmptyBorder(5, 2, 2, 2));
 
             final JPanel namePanel = new JPanel(new BorderLayout());
-            final JPanel scorePanel = new JPanel(new BorderLayout());
             inchi = new JLabel("", SwingConstants.LEFT);
             inchi.setFont(nameFont);
             xlogP = new XLogPLabel();
-            bioP = new BioScorePanel();
-            scorePanel.setOpaque(false);
-            scorePanel.add(bioP, BorderLayout.WEST);
-            scorePanel.add(xlogP, BorderLayout.EAST);
             namePanel.setOpaque(false);
             namePanel.add(inchi, BorderLayout.WEST);
-            namePanel.add(scorePanel, BorderLayout.EAST);
+            namePanel.add(xlogP, BorderLayout.EAST);
             add(namePanel);
 
 
@@ -448,7 +395,6 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             inchi.setText(value.candidate.getInchi().key2D());
             databasePanel.setCompound(value);
             xlogP.setLogP(value.candidate.getXlogp());
-            bioP.setBioScore(Optional.ofNullable(value.candidate.getTaxonomicScore()).orElse(Double.NaN));
             scoreL.setScore(value.getScore());
             ag.agreement = null;
 

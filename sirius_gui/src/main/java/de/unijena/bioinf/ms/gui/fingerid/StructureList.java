@@ -47,9 +47,6 @@ import java.util.function.Function;
  */
 public class StructureList extends ActionList<FingerprintCandidateBean, Set<FormulaResultBean>> implements ActiveElementChangedListener<FormulaResultBean, InstanceBean> {
     public final DoubleListStats csiScoreStats;
-
-    public final DoubleListStats taxonomicScoreStats;
-
     public final DoubleListStats logPStats;
     public final DoubleListStats tanimotoStats;
 
@@ -63,7 +60,6 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
         super(FingerprintCandidateBean.class, strategy);
 
         csiScoreStats = new DoubleListStats();
-        taxonomicScoreStats = new DoubleListStats();
         logPStats = new DoubleListStats();
         tanimotoStats = new DoubleListStats();
         topLevelSelectionModel = elementListSelectionModel;
@@ -101,7 +97,6 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
 
                     Jobs.runEDTAndWait(() -> {
                             csiScoreStats.reset();
-                            taxonomicScoreStats.reset();
                             logPStats.reset();
                             tanimotoStats.reset();
                             loadAll.set(loadAllCandidates);
@@ -161,7 +156,6 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
                                                                 emChache.add(c);
                                                                 csiScoreStats.addValue(c.getScore());
                                                                 Optional.ofNullable(c.getXLogPOrNull()).ifPresent(logPStats::addValue);
-                                                                taxonomicScoreStats.addValue(c.getTaxonomicScore().orElse(0d));
                                                                 Double tm = c.getTanimotoScore();
                                                                 tanimotoStats.addValue(tm == null ? Double.NaN : tm);
                                                             }

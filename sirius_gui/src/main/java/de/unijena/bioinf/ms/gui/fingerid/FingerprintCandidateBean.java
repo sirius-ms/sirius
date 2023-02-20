@@ -148,7 +148,6 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         return (CSIPredictor) ApplicationCore.WEB_API.getStructurePredictor(adduct.getCharge() > 0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_POSITIVE);
     }*/
 
-
     public DatabaseLabel[] getLabels() {
         return labels;
     }
@@ -190,16 +189,8 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         return candidate;
     }
 
-    public long getMergedDBFlags() {
+    public long getMergedDBFlags(){
         return CustomDataSources.getDBFlagsFromNames(getFingerprintCandidate().getLinkedDatabases().keySet());
-    }
-
-    public Optional<Double> getTaxonomicScore() {
-        return Optional.ofNullable(candidate.getTaxonomicScore());
-    }
-
-    public Optional<String> getTaxonomicSpecies() {
-        return Optional.ofNullable(candidate.getTaxonomicSpecies());
     }
 
     public String getMolecularFormula() {
