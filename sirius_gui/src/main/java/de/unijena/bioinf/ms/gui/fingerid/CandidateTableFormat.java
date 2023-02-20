@@ -45,8 +45,6 @@ public class CandidateTableFormat extends SiriusTableFormat<FingerprintCandidate
             "XLogP",
             "InChIKey",
             "Lipid Class",
-            "bio_score",
-            "Species",
             "Best"
     };
 
@@ -77,9 +75,6 @@ public class CandidateTableFormat extends SiriusTableFormat<FingerprintCandidate
         if (column == col++) return result.candidate.getXlogp();
         if (column == col++) return result.candidate.getInchi().key;
         if (column == col++) return result.candidate.getLinks().stream().filter(l -> l.name.equals(DataSource.LIPID.realName)).map(l -> l.id).collect(Collectors.joining(","));
-        if (column == col++) return result.getTaxonomicScore().orElse(Double.NaN);
-        if (column == col++) return result.getTaxonomicSpecies().orElse("");
-
         if (column == col) return isBest.apply(result);
 
         throw new IllegalStateException();
