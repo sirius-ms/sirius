@@ -20,32 +20,38 @@
 package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.ms.gui.login.UserPasswordResetDialog;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ExecutionException;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class PasswdResetAction extends AbstractUserPortalAction {
-
-    public PasswdResetAction() {
-        super("Reset Password");
-        putValue(Action.SHORT_DESCRIPTION, "Open password reset dialog.");
+public class OpenPortalAction extends AbstractUserPortalAction {
+    public OpenPortalAction() {
+        super("Manage Account");
+        putValue(Action.SHORT_DESCRIPTION, "Manage your user account in the User Portal.");
     }
 
     @Override
     String path() {
-        return "auth/reset/";
-    }
+        return Jobs.runInBackgroundAndLoad(MF, () -> {
+            try {
+                String it = ApplicationCore.WEB_API.getAuthService().getRefreshTokenForQuickReuse();
+                if (it != null)
+                    return "auth/login/" + URLEncoder.encode(it, StandardCharsets.UTF_8);
+            } catch (IOException | ExecutionException | InterruptedException e) {
+                LoggerFactory.getLogger(getClass()).warn("Error when requesting token for quick reuse! You might have to re-login in the browser.",e);
+            }
+            return "";
+        }).getResult();
 
-    @Override
-    @Deprecated(forRemoval = true) //todo use super method instead
-    public synchronized void actionPerformed(ActionEvent e) {
-        boolean r = new UserPasswordResetDialog(MF, ApplicationCore.WEB_API.getAuthService()).hasPerformedReset();
-        firePropertyChange("pwd-reset", false, r);
     }
 }
