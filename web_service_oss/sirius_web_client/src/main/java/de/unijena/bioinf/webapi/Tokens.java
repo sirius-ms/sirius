@@ -62,6 +62,10 @@ public class Tokens {
         return parseIDClaim(token, "email").map(Claim::asString);
     }
 
+    public static @NotNull Optional<String> getUsername(@Nullable AuthService.@Nullable Token token) {
+        return parseIDClaim(token, "name").map(Claim::asString);
+    }
+
     private static Optional<Claim> parseATClaim(@Nullable AuthService.Token token, @NotNull String key) {
         if (token == null)
             return Optional.empty();
