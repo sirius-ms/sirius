@@ -95,8 +95,6 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
 
     AuthService getAuthService();
 
-    URI getSignUpURL() throws URISyntaxException;
-
     boolean deleteAccount();
 
     void acceptTermsAndRefreshToken() throws LoginException;

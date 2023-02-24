@@ -34,7 +34,6 @@ import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.LoginException;
 import de.unijena.bioinf.canopus.CanopusResult;
-import de.unijena.bioinf.chemdb.AbstractChemicalDatabase;
 import de.unijena.bioinf.chemdb.FilteredChemicalDB;
 import de.unijena.bioinf.chemdb.RESTDatabase;
 import de.unijena.bioinf.confidence_score.svm.TrainedSVM;
@@ -158,10 +157,6 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
 
     public RestAPI(@NotNull AuthService authService, @NotNull AuthService.Token token) {
         this(authService, Tokens.getActiveSubscription(token));
-    }
-
-    public URI getSignUpURL() {
-        return getAuthService().signUpURL(accountClient.getSignUpRedirectURL());
     }
 
     @Override
