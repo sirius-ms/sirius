@@ -19,7 +19,10 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
+import de.unijena.bioinf.auth.UserPortal;
+
 import javax.swing.*;
+import java.net.URI;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -31,7 +34,7 @@ public class SignUpAction extends AbstractUserPortalAction {
     }
 
     @Override
-    String path() {
-        return "auth/register/";
+    URI path() {
+        return UserPortal.signUpURL();
     }
 }
