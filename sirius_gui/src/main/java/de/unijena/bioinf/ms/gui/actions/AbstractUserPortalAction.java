@@ -22,13 +22,11 @@ package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.net.URI;
-import java.util.Objects;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
@@ -45,15 +43,12 @@ public abstract class AbstractUserPortalAction extends AbstractAction {
         super(name, icon);
     }
 
-    abstract String path();
+    abstract URI path();
 
     @Override
     public synchronized void actionPerformed(ActionEvent e) {
         try {
-            GuiUtils.openURL(URI.create(Objects.requireNonNull(
-                    PropertyManager.getProperty("de.unijena.bioinf.sirius.web.portal"),
-                    "User Portal URL is NULL!"
-            ) + path()), "Manage Account", true);
+            GuiUtils.openURL(path(), "Open User Portal", true);
         } catch (Exception ex2) {
             LoggerFactory.getLogger(getClass()).error("Could not Open User Portal in System Browser", ex2);
             new ExceptionDialog(MF, "Could not Open User Portal in System Browser: " + ex2.getMessage());

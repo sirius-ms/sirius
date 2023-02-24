@@ -19,15 +19,13 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
+import de.unijena.bioinf.auth.UserPortal;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import org.slf4j.LoggerFactory;
+import de.unijena.bioinf.webapi.Tokens;
 
 import javax.swing.*;
-import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.concurrent.ExecutionException;
+import java.net.URI;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
@@ -41,17 +39,9 @@ public class OpenPortalAction extends AbstractUserPortalAction {
     }
 
     @Override
-    String path() {
-        return Jobs.runInBackgroundAndLoad(MF, () -> {
-            try {
-                String it = ApplicationCore.WEB_API.getAuthService().getRefreshTokenForQuickReuse();
-                if (it != null)
-                    return "auth/login/" + URLEncoder.encode(it, StandardCharsets.UTF_8);
-            } catch (IOException | ExecutionException | InterruptedException e) {
-                LoggerFactory.getLogger(getClass()).warn("Error when requesting token for quick reuse! You might have to re-login in the browser.",e);
-            }
-            return "";
-        }).getResult();
-
+    URI path() {
+        return Jobs.runInBackgroundAndLoad(MF, () -> ApplicationCore.WEB_API.getAuthService().getToken()
+                .flatMap(Tokens::getUsername)
+                .map(UserPortal::signInURL).orElse(UserPortal.signInURL())).getResult();
     }
 }

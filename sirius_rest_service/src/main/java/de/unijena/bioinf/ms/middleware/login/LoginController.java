@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.middleware.login;
 
 import de.unijena.bioinf.auth.AuthService;
+import de.unijena.bioinf.auth.UserPortal;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.middleware.login.model.AccountCredentials;
 import de.unijena.bioinf.ms.middleware.login.model.AccountInfo;
@@ -36,18 +37,20 @@ import org.springframework.web.server.ResponseStatusException;
 import java.awt.*;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-//todo set active subscription
 @RestController
 @RequestMapping(value = "/api/account")
 @Tag(name = "Login and Account", description = "Perform signIn, signOut and signUp. Get tokens and account information.")
 public class LoginController {
+    //todo change subscription
+    private static final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     /**
-     * Login into SIRIUS web services.
+     * Login into SIRIUS web services and activate default subscription if available.
      *
      * @param credentials      used to log in.
      * @param failWhenLoggedIn if true request fails if an active login already exists.
@@ -60,17 +63,27 @@ public class LoginController {
                              @RequestParam(required = false, defaultValue = "false") boolean failWhenLoggedIn,
                              @RequestParam(required = false, defaultValue = "false") boolean includeSubs
     ) throws IOException, ExecutionException, InterruptedException {
-        AuthService as = ApplicationCore.WEB_API.getAuthService();
-        if (!as.needsLogin()) {
-            if (failWhenLoggedIn)
-                throw new ResponseStatusException(HttpStatus.METHOD_NOT_ALLOWED, "Already logged in. Please logout first or use 'failWhenLoggedIn=false'.");
-            else
-                as.logout();
+        lock.writeLock().lock();
+        try {
+            AuthService as = ApplicationCore.WEB_API.getAuthService();
+            if (!as.needsLogin()) {
+                if (failWhenLoggedIn)
+                    throw new ResponseStatusException(HttpStatus.METHOD_NOT_ALLOWED, "Already logged in. Please logout first or use 'failWhenLoggedIn=false'.");
+                else
+                    as.logout();
+            }
+            as.login(credentials.getUsername(), credentials.getPassword());
+
+            // enable default subscription
+            ApplicationCore.WEB_API.changeActiveSubscription(Tokens.getActiveSubscription(as.getToken().orElseThrow()));
+
+            // if there is no sub available accept-terms will fail
+            if (acceptTerms && ApplicationCore.WEB_API.getActiveSubscription() != null)
+                ApplicationCore.WEB_API.acceptTermsAndRefreshToken();
+            return getAccountInfo(includeSubs);
+        } finally {
+            lock.writeLock().unlock();
         }
-        as.login(credentials.getUsername(), credentials.getPassword());
-        if (acceptTerms)
-            ApplicationCore.WEB_API.acceptTermsAndRefreshToken();
-        return getAccountInfo(includeSubs);
     }
 
     /**
@@ -78,7 +91,12 @@ public class LoginController {
      */
     @PostMapping(value = "/logout", produces = MediaType.APPLICATION_JSON_VALUE)
     public void logout() {
-        ApplicationCore.WEB_API.getAuthService().logout();
+        lock.writeLock().lock();
+        try {
+            ApplicationCore.WEB_API.getAuthService().logout();
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     /**
@@ -89,9 +107,14 @@ public class LoginController {
      */
     @GetMapping(value = "/", produces = MediaType.APPLICATION_JSON_VALUE)
     public AccountInfo getAccountInfo(@RequestParam(required = false, defaultValue = "false") boolean includeSubs) {
-        return ApplicationCore.WEB_API.getAuthService()
-                .getToken().map(t -> AccountInfo.of(t, ApplicationCore.WEB_API.getActiveSubscription(), includeSubs))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not Logged in. Please log in to retrieve account information."));
+        lock.readLock().lock();
+        try {
+            return ApplicationCore.WEB_API.getAuthService()
+                    .getToken().map(t -> AccountInfo.of(t, ApplicationCore.WEB_API.getActiveSubscription(), includeSubs))
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not Logged in. Please log in to retrieve account information."));
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     /**
@@ -101,7 +124,12 @@ public class LoginController {
      */
     @GetMapping(value = "/isLoggedIn", produces = MediaType.APPLICATION_JSON_VALUE)
     public boolean isLoggedIn() {
-        return ApplicationCore.WEB_API.getAuthService().isLoggedIn();
+        lock.readLock().lock();
+        try {
+            return ApplicationCore.WEB_API.getAuthService().isLoggedIn();
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     /**
@@ -109,40 +137,61 @@ public class LoginController {
      */
     @GetMapping(value = "/subscriptions", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<Subscription> getSubscriptions() {
-        return ApplicationCore.WEB_API.getAuthService()
-                .getToken().map(Tokens::getSubscriptions)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not Logged in. Please log in to retrieve subscriptions."));
+        lock.readLock().lock();
+        try {
+            return ApplicationCore.WEB_API.getAuthService()
+                    .getToken().map(Tokens::getSubscriptions)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not Logged in. Please log in to retrieve subscriptions."));
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     /**
      * Get SignUp URL (For signUp via web browser)
      */
-    @GetMapping(value = "/signUpURL", produces =  MediaType.TEXT_PLAIN_VALUE + ";charset=UTF-8") //specify utf-8 because some generated clients have problems if not specified explicitly
-    public String getSignUpURL() throws URISyntaxException {
-        return ApplicationCore.WEB_API.getSignUpURL().toString();
+    @GetMapping(value = "/signUpURL", produces = MediaType.TEXT_PLAIN_VALUE + ";charset=UTF-8")
+    //specify utf-8 because some generated clients have problems if not specified explicitly
+    public String getSignUpURL() {
+        return UserPortal.signUpURL().toString();
     }
 
 
     /**
      * Open SignUp window in system browser and return signUp link.
      */
-    @GetMapping(value = "/signUp", produces = MediaType.TEXT_PLAIN_VALUE + ";charset=UTF-8") //specify utf-8 because some generated clients have problems if not specified explicitly
-    public String signUp() throws URISyntaxException {
-        String path = getSignUpURL();
+    @GetMapping(value = "/signUp", produces = MediaType.TEXT_PLAIN_VALUE + ";charset=UTF-8")
+    //specify utf-8 because some generated clients have problems if not specified explicitly
+    public String signUp() {
+        URI uri = UserPortal.signUpURL();
+        openInBrowser(uri);
+        return uri.toString();
+    }
+
+    /**
+     * Open User portal in browser. If user is logged in SIRIUS tries to transfer the login state to the browser.
+     */
+    @GetMapping(value = "/openPortal")
+    public void openPortal() {
+        openInBrowser(ApplicationCore.WEB_API.getAuthService().getToken()
+                .flatMap(Tokens::getUsername)
+                .map(UserPortal::signInURL).orElse(UserPortal.signInURL()));
+    }
+
+    private void openInBrowser(URI uri) {
         try {
             if (Desktop.isDesktopSupported()) {
-                Desktop.getDesktop().browse(URI.create(path));
+                Desktop.getDesktop().browse(uri);
             } else {
-                String message = "Could not detect system browser to open URL. Try visit Page Manually: " + path;
+                String message = "Could not detect system browser to open URL. Try visit Page Manually: " + uri;
                 LoggerFactory.getLogger(getClass()).error("Desktop NOT supported: " + message);
 
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, message);
             }
         } catch (IOException e) {
-            String message = "Could not Open URL in System Browser. Try visit Page Manually: " + path;
+            String message = "Could not Open URL in System Browser. Try visit Page Manually: " + uri;
             LoggerFactory.getLogger(getClass()).error(message, e);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, message);
         }
-        return path.toString();
     }
 }
