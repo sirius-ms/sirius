@@ -16,14 +16,17 @@ public class CSVParser {
 
     private final Character EscapeChar;
 
+    private final boolean ForceParsing;
+
     public CSVParser(char separator) {
-        this(separator, null, null);
+        this(separator, null, null, false);
     }
 
-    public CSVParser(char separator, Character quoteChar, Character escapeChar) {
+    public CSVParser(char separator, Character quoteChar, Character escapeChar, boolean forceParsing) {
         Separator = separator;
         QuoteChar = quoteChar;
         EscapeChar = escapeChar;
+        ForceParsing = forceParsing;
     }
 
     public Iterator<String[]> parse(BufferedReader reader) throws IOException {
@@ -67,24 +70,42 @@ public class CSVParser {
             List<String> columns = new ArrayList<>();
             StringBuilder column = new StringBuilder();
             boolean inQuoteMode = false;
-            boolean inEscapeMode = false;
             for (int i = 0; i < currentLine.length(); i++) {
                  char c = currentLine.charAt(i);
-                 if (inEscapeMode){
-                     column.append(c);
-                 } else if ((escapeChar != null) && c == escapeChar){
-                     inEscapeMode = true;
-                 } else if ((quoteChar != null) && c == quoteChar){
-                     inQuoteMode = !inQuoteMode;
-                 } else if (inQuoteMode) {
-                     column.append(c);
-                 } else if (c == separator){
+                if ((escapeChar != null) && c == escapeChar){
+                    if (i == currentLine.length() -1){
+                        if (((escapeChar == quoteChar) && inQuoteMode) || ForceParsing) {
+                            columns.add(column.toString());
+                            return columns.toArray(new String[0]);
+                        } else {
+                            throw new RuntimeException("Line ends with escape character: "+currentLine);
+                        }
+                    }
+                    char next_c = currentLine.charAt(i+1);
+                    if (escapeChar == quoteChar) {
+                        //for some weird files double quoteChar means escaped quoteChar
+                        if (next_c == quoteChar) {
+                            //only escape quoteChar, nothing else!
+                            column.append(next_c);
+                            ++i;
+                        } else {
+                            inQuoteMode = !inQuoteMode;
+                        }
+                    } else {
+                        column.append(next_c);
+                        ++i;
+                    }
+                } else if ((quoteChar != null) && c == quoteChar){
+                    inQuoteMode = !inQuoteMode;
+                } else if (inQuoteMode) {
+                    column.append(c);
+                } else if (c == separator){
                     //start new column
-                     columns.add(column.toString());
-                     column = new StringBuilder();
-                 } else {
-                     column.append(c);
-                 }
+                    columns.add(column.toString());
+                    column = new StringBuilder();
+                } else {
+                    column.append(c);
+                }
             }
             columns.add(column.toString());
             return columns.toArray(new String[0]);
