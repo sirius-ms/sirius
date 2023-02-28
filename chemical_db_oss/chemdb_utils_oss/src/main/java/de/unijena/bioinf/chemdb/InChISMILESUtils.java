@@ -101,6 +101,7 @@ public class InChISMILESUtils {
     }
 
     public static InChI getInchiWithKey(String inchi, boolean keepStereoInformation) throws CDKException {
+        //todo this sometimes seems to produce a different InChI key than simultaneously generating InChI plus InChIKey from a SMILES. Does this only happen with q-charges? E.g. 'CC1CCC2C(=CCCC2(C)C)C1(C)CCC(C)=CCN3[CH][NH+](C)[C]4[N][CH][N][C](N)[C]34'
         return getInchi(getAtomContainerFromInchi(inchi), keepStereoInformation);
     }
 
