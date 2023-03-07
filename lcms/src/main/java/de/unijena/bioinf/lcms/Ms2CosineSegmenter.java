@@ -178,6 +178,12 @@ public class Ms2CosineSegmenter {
                     ms2Segment = segment.get();
                 }
                 if (ms2Segment!=null){
+
+                    if (ms2Segment.isNoise()) {
+                        LoggerFactory.getLogger(Ms2CosineSegmenter.class).warn("MS2 scan shot into the noise. Reject it.");
+                        continue;
+                    }
+
                     ++numberOfInside;
                     // check if it is within FHWM25%
                     TIntObjectHashMap<ArrayList<Scan>> map;
