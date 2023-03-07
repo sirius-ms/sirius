@@ -565,6 +565,7 @@ public class LCMSProccessingInstance {
             }
             for (FragmentedIon ion : sample.ions) {
                 for (ChromatographicPeak.Segment s : ion.getPeak().getSegments().values()) {
+                    if (s.isNoise()) continue;
                     if (!allSegments.contains(s)) {
                         final GapFilledIon newIon = new GapFilledIon(Polarity.of(ion.getPolarity()), ion.getPeak(), s, ion);
                         fitPeakShape(sample, newIon);

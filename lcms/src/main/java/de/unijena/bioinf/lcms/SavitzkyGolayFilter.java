@@ -3,6 +3,7 @@ package de.unijena.bioinf.lcms;
 import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 public class SavitzkyGolayFilter {
 
@@ -177,6 +178,48 @@ public class SavitzkyGolayFilter {
         this.inverseMatrix = inverseMatrix;
         this.windowSize = vandermondeMatrix.length;
         this.polynomialDegree = vandermondeMatrix[0].length-1;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SavitzkyGolayFilter that = (SavitzkyGolayFilter) o;
+        return polynomialDegree == that.polynomialDegree && windowSize == that.windowSize;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(polynomialDegree, windowSize);
+    }
+
+    public double[] applyExtended(double[] values) {
+        final double[] result = new double[values.length];
+        final int n = (windowSize-1)/2;
+        final double[] bufferA = new double[polynomialDegree+1], bufferB = new double[windowSize];
+        // apply to the first n datapoints
+        final double[] bufferC = new double[windowSize];
+        System.arraycopy(values, 0, bufferC, n, bufferC.length-n);
+        for (int k=0; k < n; ++k) bufferC[k] = values[0];
+
+        matvecmul(inverseMatrix, bufferC, 0, bufferA);
+        MatrixUtils.matmul(vandermondeMatrix, bufferA, bufferB);
+        System.arraycopy(bufferB,0,result,0,n+1);
+        // apply to everything in between
+        for (int j=0; j < values.length-windowSize; ++j) {
+            result[j + n] = dot(inverseMatrix[0], values, j);
+        }
+        // apply to the last n datapoints
+
+        System.arraycopy(values, values.length-n, bufferC, 0, n);
+        for (int k=n; k < bufferC.length; ++k) bufferC[k] = values[values.length-1];
+
+        int k = values.length-windowSize;
+        matvecmul(inverseMatrix, bufferC, 0, bufferA);
+        MatrixUtils.matmul(vandermondeMatrix, bufferA, bufferB);
+        System.arraycopy(bufferB,n,result,k+n,n+1);
+        return result;
+
     }
 
     public double[] apply(double[] values) {

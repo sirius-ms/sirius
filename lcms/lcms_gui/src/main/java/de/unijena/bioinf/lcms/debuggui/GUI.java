@@ -43,13 +43,10 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
     SavitzkyGolayFilter[] filters = new SavitzkyGolayFilter[]{
             SavitzkyGolayFilter.Window1Polynomial1,
             SavitzkyGolayFilter.Window2Polynomial2,
-            SavitzkyGolayFilter.Window32Polynomial2,
-            SavitzkyGolayFilter.Window3Polynomial3,
+            SavitzkyGolayFilter.Window3Polynomial2,
             SavitzkyGolayFilter.Window4Polynomial2,
-            SavitzkyGolayFilter.Window4Polynomial3,
             SavitzkyGolayFilter.Window8Polynomial2,
             SavitzkyGolayFilter.Window16Polynomial2,
-            SavitzkyGolayFilter.Window32Polynomial2,
             SavitzkyGolayFilter.Window32Polynomial3
     };
 
@@ -255,7 +252,7 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
 
     public static void main(String[] args) {
 
-        final File mzxmlFile = new File("/home/kaidu/analysis/lcms/examples/E_M27_posPFP_01.mzml");
+        final File mzxmlFile = new File("/home/kaidu/data/raw/polluted_citrus/G79625_1x_RH6_01_18974.mzML");
                 //new File("/home/kaidu/analysis/lcms/examples").listFiles()[0];
         InMemoryStorage storage= new InMemoryStorage();
         final LCMSProccessingInstance i = new LCMSProccessingInstance();
@@ -288,19 +285,36 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
         --offset;
         if (offset<0) offset = sample.ions.size()+offset;
         specViewer.ion = sample.ions.get(offset);
+        refr();
         specViewer.repaint();
     }
     private void nextIon() {
         ++offset;
         if (offset >= sample.ions.size()) offset = 0;
         specViewer.ion = sample.ions.get(offset);
+        refr();
         specViewer.repaint();
     }
     private void jumpTo(int offset) {
         this.offset = offset;
         if (offset >= sample.ions.size()) offset = 0;
         specViewer.ion = sample.ions.get(offset);
+        refr();
         specViewer.repaint();
+    }
+
+    public void refr() {
+        MutableChromatographicPeak peak = specViewer.ion.getPeak();
+        final double[] intensities = new double[peak.numberOfScans()];
+        for (int k=0; k <intensities.length; ++k) {
+            intensities[k] = peak.getIntensityAt(k);
+        }
+        final SavitzkyGolayFilter prpf = Extrema.getProposedFilter3(intensities);
+        for (int k=0; k < filters.length; ++k) {
+            if (filters[k].equals(prpf)) {
+                this.filterBox.setSelectedIndex(k);
+            }
+        }
     }
 
     private void info() {

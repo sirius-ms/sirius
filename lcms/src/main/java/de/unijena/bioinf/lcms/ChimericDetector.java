@@ -62,7 +62,8 @@ public class ChimericDetector {
     public List<Chimeric> searchChimerics(ProcessedSample sample, Scan ms1Scan, Precursor precursor, ChromatographicPeak ms1Feature) {
         final Optional<ChromatographicPeak.Segment> segment = ms1Feature.getSegmentForScanId(ms1Scan.getIndex());
         if (segment.isEmpty()) {
-            throw new IllegalArgumentException("MS1 feature does not contain MS1 scan");
+            Optional<ChromatographicPeak> detectedFeature = sample.builder.detect(ms1Scan,precursor.getMass(), isolationWindow);
+            throw new IllegalArgumentException("MS1 feature does not contain MS1 scan: " + precursor.getMass() + " @ " + precursor.getIntensity() + " at " + ms1Scan.getIndex() + " (" + ms1Scan.getRetentionTime() + " rt)");
         }
         SimpleSpectrum scan = sample.storage.getScan(ms1Scan);
         final double from = precursor.getMass() - isolationWindow.getLeftOffset();
