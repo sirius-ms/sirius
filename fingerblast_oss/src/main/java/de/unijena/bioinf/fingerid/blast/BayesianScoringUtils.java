@@ -214,6 +214,25 @@ public class BayesianScoringUtils {
         return scoring;
     }
 
+    public MasterJJob<BayesnetScoring> makeDefaultScoringJob(ChemicalDatabase sqlChemDb) throws ChemicalDatabaseException {
+        return new BasicMasterJJob<BayesnetScoring>(JJob.JobType.CPU) {
+            @Override
+            protected BayesnetScoring compute() throws Exception {
+                Log.warn("retrieve fingerprints");
+                long startTime = System.currentTimeMillis();
+                List<FingerprintCandidate>  candidates = getFingerprints(DATABASE_FLAG_FOR_TREE_TOPOLOGY_COMP, sqlChemDb);
+                long endTime = System.currentTimeMillis();
+                Log.warn("retrieving "+candidates.size()+" structures took " + (endTime - startTime) / 1000 + " seconds");
+                try {
+                    List<int[]> alist = computeTreeTopologyOrThrowParallel(candidates, MIN_NUM_INFORMATIVE_PROPERTIES_DEFAULT_SCORING, this, this.jobManager.getCPUThreads());
+                    return estimateScoringDefaultScoring(alist);
+                } catch (InsufficientDataException e) {
+                    throw new RuntimeException("Insufficient data to compute topology of default Bayesian Network Scoring", e);
+                }
+            }
+        };
+    }
+
 
     /**
      * Computes the Bayesian Network Scoring specific for this molecular formula. Use createScoringComputationJob instead which allows parallelization
@@ -354,11 +373,11 @@ public class BayesianScoringUtils {
      * @return list of edges of between molecular properties. Only properties from masedFingerprint version used but saved with absolute indices
      */
     private List<int[]> computeDefaultTreeTopology(ChemicalDatabase sqlChemDB) throws ChemicalDatabaseException {
-        Log.debug("retrieve fingerprints");
+        Log.warn("retrieve fingerprints");
         long startTime = System.currentTimeMillis();
         List<FingerprintCandidate>  candidates = getFingerprints(DATABASE_FLAG_FOR_TREE_TOPOLOGY_COMP, sqlChemDB);
         long endTime = System.currentTimeMillis();
-        Log.debug("retrieving "+candidates.size()+" structures took " + (endTime - startTime) / 1000 + " seconds");
+        Log.warn("retrieving "+candidates.size()+" structures took " + (endTime - startTime) / 1000 + " seconds");
         try {
             return computeTreeTopologyOrThrow(candidates, MIN_NUM_INFORMATIVE_PROPERTIES_DEFAULT_SCORING);
         } catch (InsufficientDataException e) {
@@ -381,7 +400,7 @@ public class BayesianScoringUtils {
         List<Fingerprint> maskedFingerprints = candidates.stream().map(c-> maskedFingerprintVersion.mask(c.getFingerprint())).collect(Collectors.toList());
         MutualInformationAndIndices mutualInformationAndIndices = mutualInfoBetweenProperties(maskedFingerprints, 1.0, minNumInformativeProperties);
         long endTime = System.currentTimeMillis();
-        Log.debug("computing mutual info took "+(endTime-startTime)/1000+" seconds");
+        Log.warn("computing mutual info took "+(endTime-startTime)/1000+" seconds");
         startTime = endTime;
 
         //edges are absolute indices
@@ -392,7 +411,7 @@ public class BayesianScoringUtils {
         //don't append properties to tree which are not informative. This are added as 'unconnected' nodes in BayesnetScoring anyways
 
         endTime = System.currentTimeMillis();
-        Log.debug("computing spanning tree  took "+(endTime-startTime)/1000+" seconds");
+        Log.warn("computing spanning tree  took "+(endTime-startTime)/1000+" seconds");
         return edges;
 
     }
@@ -538,7 +557,7 @@ public class BayesianScoringUtils {
         final List<FingerprintCandidate> keys;
         try {
             keys = sqlChemDB.useConnection(connection -> {
-                connection.connection.setNetworkTimeout(Runnable::run,300000);
+                connection.connection.setNetworkTimeout(Runnable::run,3000000);
                 final List<FingerprintCandidate> k = new ArrayList<>();
                 try (PreparedStatement st = connection.connection.prepareStatement(String.format("SELECT s.inchi_key_1, s.inchi, f.fingerprint FROM structures s INNER JOIN fingerprints f ON s.inchi_key_1=f.inchi_key_1 AND s.flags&%d>0 AND f.fp_id=%s", mask, ChemicalDatabase.FINGERPRINT_ID))) {
                     try (ResultSet set = st.executeQuery()) {

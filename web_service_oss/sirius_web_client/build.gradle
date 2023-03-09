@@ -22,9 +22,9 @@ version =  parent.fingeridVersion
 
 dependencies {
     annotationProcessor project(':default_properties:processor')
-    compile project(":web_service_oss:amqp_client_oss")
+//    compile project(":web_service_oss:amqp_client_oss")
     compile project(":web_service_oss:rest_client_oss")
-    compile project(':chemical_db_oss:chemdb_amqp_oss')
+//    compile project(':chemical_db_oss:chemdb_amqp_oss')
     compile project(':chemical_db_oss:chemdb_rest_oss')
     compile project(':chemical_db_oss:chemdb_utils_oss')
     compile project(':fingerprinter_oss')

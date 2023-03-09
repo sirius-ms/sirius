@@ -80,6 +80,49 @@ import java.util.Locale;
  */
 public final class SmartsGen {
 
+    public final static String ATOM_LABELING_LEVEL = "SmartsGen$Label_LEVEL";
+
+    public String generateShortest(int[] atomIndizes) {
+        int minDegree = Integer.MAX_VALUE;
+        for (int m : atomIndizes) minDegree = Math.min(minDegree, deg[m]);
+        String bestFound = null;
+        for (int i=0; i <  atomIndizes.length; ++i) {
+            final int index = atomIndizes[i];
+            if (deg[index]<=minDegree) {
+                final int[] copy = atomIndizes.clone();
+                copy[0] = index;
+                copy[i] = atomIndizes[0];
+                String sm = generate(copy);
+                if (bestFound==null || sm.length()<bestFound.length()) {
+                    bestFound = sm;
+                }
+            }
+        }
+        return bestFound;
+    }
+
+    public enum Level {
+        GENERIC, ELEMENT, WITH_AROMATICITY, EXACT, WITH_HYDROGEN;
+
+        public boolean useBrackets() {
+            return this==ELEMENT || this==EXACT;
+        }
+
+        public boolean isExact() {
+            return this==EXACT;
+        }
+
+        public boolean useAtomicNumber() {
+            return this==ELEMENT;
+        }
+
+        public boolean useGenericLabel() {
+            return this==GENERIC;
+        }
+    }
+
+    private final Level[] atomLevel;
+
     // molecule being selected over
     private final IAtomContainer mol;
 
@@ -88,7 +131,7 @@ public final class SmartsGen {
     private final int[] deg;
 
     // SMARTS atom and bond expressions
-    private final String[] aexprExact, aexprInexact;
+    private final String[] aexprExact;
     private final String[] bexpr;
 
     // SMARTS traversal/generation
@@ -113,7 +156,6 @@ public final class SmartsGen {
         this.atomAdj = new int[numAtoms][4];
         this.bondAdj = new int[numAtoms][4];
         this.aexprExact = new String[numAtoms];
-        this.aexprInexact = new String[numAtoms];
         this.bexpr = new String[numBonds];
         this.avisit = new int[numAtoms];
         this.rbnds = new int[numBonds];
@@ -146,32 +188,50 @@ public final class SmartsGen {
 
             deg[begIdx]++;
             deg[endIdx]++;
+
         }
+        atomLevel = new Level[numAtoms];
+        Arrays.fill(atomLevel,Level.WITH_AROMATICITY);
+    }
+
+    public void setLevel(Level level) {
+        Arrays.fill(atomLevel, level);
+    }
+
+    public void setLevel(int atomIdx, Level level) {
+        atomLevel[atomIdx] = level;
+    }
+
+    public void setLevel(IAtom atom, Level level) {
+        for (int i=0; i < atomLevel.length; ++i) {
+            if (mol.getAtom(i)==atom) {
+                atomLevel[i]=level;
+                return;
+            }
+        }
+        throw new IllegalArgumentException("Atom " + atom + " is not part of the atom container");
     }
 
     /**
      * Generate a SMARTS for the substructure formed of the provided
      * atoms.
      *
-     * @param atomIndizesExact atom indezes that should be mapped exactly
-     * @param atomIndizesInexact atom indizes that should be mapped by element
+     * @param atomIdxs atom indizes to generate SMARTS from
      * @return SMARTS, null if an empty array is passed
      */
-    public String generate(int[] atomIndizesExact, int[] atomIndizesInexact) {
-        final TIntHashSet atomIndizesExactSet = new TIntHashSet(atomIndizesExact);
-        final TIntHashSet atomIndizesInexactSet = new TIntHashSet(atomIndizesInexact);
-        final int[] atomIdxs = new int[atomIndizesExactSet.size()+atomIndizesInexactSet.size()];
-        {
-            int k=0;
-            for (int index : atomIndizesExactSet.toArray()) atomIdxs[k++] = index;
-            for (int index : atomIndizesInexactSet.toArray()) atomIdxs[k++] = index;
-            Arrays.sort(atomIdxs);
+    public String generate(int[] atomIdxs) {
+        //Arrays.sort(atomIdxs);
+
+        for (int i=0; i < atomLevel.length; ++i) {
+            Level level = mol.getAtom(i).getProperty(ATOM_LABELING_LEVEL,Level.class);
+            if (level!=null) {
+                atomLevel[i] = level;
+            }
         }
 
-
         // special case
-        if (atomIdxs.length == 1 && atomIndizesExact.length>0) {
-            return encodeAtomExpr(atomIdxs[0], true);
+        if (atomIdxs.length == 1) {
+            return encodeAtomExpr(atomIdxs[0]);
         }
 
         // initialize traversal information
@@ -195,15 +255,14 @@ public final class SmartsGen {
         // pre-generate atom expressions
         for (IAtom a : mol.atoms()) {
             final int atomIdx = a.getIndex();
-            this.aexprExact[atomIdx] = encodeAtomExpr(atomIdx, true);
-            this.aexprInexact[atomIdx] = encodeAtomExpr(atomIdx, false);
+            this.aexprExact[atomIdx] = encodeAtomExpr(atomIdx);
         }
         // second pass builds the expression
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < atomIdxs.length; i++) {
             if (avisit[atomIdxs[i]] < 0) {
                 if (i > 0) sb.append('.');
-                encodeExpr(atomIdxs[i], -1, sb, atomIndizesExactSet);
+                encodeExpr(atomIdxs[i], -1, sb);
             }
         }
 
@@ -240,9 +299,11 @@ public final class SmartsGen {
      * @param bprev previous bond
      * @param sb    destition to write SMARTS to
      */
-    private void encodeExpr(int idx, int bprev, StringBuilder sb, TIntHashSet encodeExact) {
+    private void encodeExpr(int idx, int bprev, StringBuilder sb) {
         avisit[idx] = numVisit++;
-        sb.append(encodeExact.contains(idx) ? aexprExact[idx] : aexprInexact[idx]);
+
+
+        sb.append(aexprExact[idx] );
         final int d = deg[idx];
 
         int remain = d;
@@ -277,19 +338,20 @@ public final class SmartsGen {
                     rbnds[bidx] != 0)
                 continue; // ignored
             remain--;
-            if (avisit[nbr] == 0) {
+            if (avisit[nbr] == 0) { // if I am next to an peripher atom
+                /*
                 if (!encodeExact.contains(idx) || mol.getAtom(nbr).isAromatic()) {
                     // peripheral bond
                     if (remain > 0) sb.append('(');
                     sb.append(bexpr[bidx]);
-                    sb.append(mol.getAtom(nbr).isAromatic() ? 'a' : '*');
+                    sb.append((mol.getAtom(nbr).isAromatic() && bexpr[bidx].equals(":")) ? 'a' : '*');
                     if (remain > 0) sb.append(')');
                 }
-
+                 */
             } else {
                 if (remain > 0) sb.append('(');
                 sb.append(bexpr[bidx]);
-                encodeExpr(nbr, bidx, sb, encodeExact);
+                encodeExpr(nbr, bidx, sb);
                 if (remain > 0) sb.append(')');
             }
         }
@@ -327,15 +389,20 @@ public final class SmartsGen {
      * @param atmIdx atom index
      * @return SMARTS atom expression
      */
-    private String encodeAtomExpr(int atmIdx, boolean exact) {
-        boolean complex = exact;
+    private String encodeAtomExpr(int atmIdx) {
         final IAtom atom = mol.getAtom(atmIdx);
+
+        Level level = atomLevel[atmIdx];
+
+        boolean useBrackets = level.useBrackets();
+        boolean useNumber = level.useAtomicNumber();
+        boolean useGenericLabel = level.useGenericLabel();
 
         StringBuilder sb = new StringBuilder();
 
         switch (atom.getAtomicNumber()) {
             case 0:  // *
-                sb.append('*');
+                useGenericLabel=true;
                 break;
             case 5:  // B
             case 6:  // C
@@ -347,17 +414,22 @@ public final class SmartsGen {
             case 17: // Cl
             case 35: // Br
             case 53: // I
-                sb.append(atom.isAromatic() ? atom.getSymbol().toLowerCase(Locale.ROOT)
-                        : atom.getSymbol());
                 break;
             default:
-                complex = true;
-                sb.append(atom.isAromatic() ? atom.getSymbol().toLowerCase(Locale.ROOT)
-                        : atom.getSymbol());
-                break;
+                useNumber=true;
+                useBrackets=true;
+        }
+        if (useNumber) {
+            sb.append('#').append(atom.getAtomicNumber().toString());
+        } else if (useGenericLabel) {
+            if (atom.isAromatic()) sb.append('a');
+            else sb.append('*');
+        } else {
+            if (atom.isAromatic()) sb.append(atom.getSymbol().toLowerCase(Locale.ROOT));
+            else sb.append(atom.getSymbol());
         }
 
-        if (exact) {
+        if (level.isExact()) {
 
             int hcount = atom.getImplicitHydrogenCount();
             int valence = hcount;
@@ -385,8 +457,6 @@ public final class SmartsGen {
             } else {
                 sb.append('H').append(hcount);
             }
-            //sb.append('v').append(valence);
-            //sb.append('X').append(connections);
         }
 
         Integer chg = atom.getFormalCharge();
@@ -398,12 +468,10 @@ public final class SmartsGen {
             else sb.append('-');
             int abs = Math.abs(chg);
             if (abs > 1) sb.append(abs);
-            complex = true;
-        } else if (exact) {
-            //sb.append("+0");
+            useBrackets = true;
         }
 
-        return complex ? '[' + sb.toString() + ']' : sb.toString();
+        return useBrackets ? '[' + sb.toString() + ']' : sb.toString();
     }
 
     /**
@@ -424,13 +492,17 @@ public final class SmartsGen {
         boolean aArom = mol.getAtom(beg).isAromatic() && mol.getAtom(end).isAromatic();
         switch (bond.getOrder()) {
             case SINGLE:
-                if (bArom) {
-                    return aArom ? "" : ":";
-                } else {
-                    return aArom ? "-" : "";
-                }
+                if (aArom && bArom) {
+                    if (bond.isAromatic())
+                        return ":";
+                    else return "-";
+                } else return "";
             case DOUBLE:
-                return bArom ? "" : "=";
+                if (aArom && bArom) {
+                    if (bond.isAromatic())
+                        return ":";
+                    else return "=";
+                } else return "=";
             case TRIPLE:
                 return "#";
             default:

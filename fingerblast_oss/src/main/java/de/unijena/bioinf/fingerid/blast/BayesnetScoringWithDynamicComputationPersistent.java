@@ -63,6 +63,10 @@ public class BayesnetScoringWithDynamicComputationPersistent implements Fingerbl
         }
     }
 
+    public BayesianNetworkScoringProvider getBayesianNetworkScoringProvider() {
+        return bayesianNetworkScoringProvider;
+    }
+
     protected BayesnetScoring getCurrentScoring() {
         return currentScoring;
     }

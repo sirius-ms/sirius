@@ -28,6 +28,7 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.babelms.SpectralParser;
+import de.unijena.bioinf.babelms.utils.ParserUtils;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
@@ -154,11 +155,9 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
 
                 int charge = Integer.parseInt(m.group(1));
                 if (charge == 0){
-                    charge = 1;
+                    charge = m.group(1).strip().startsWith("-") ? -1 : 1;
                     LoggerFactory.getLogger(MgfParser.class).warn("Charge value of 0 found. Changing value to Single charged under consideration of the given ion mode.");
                 }
-                if("-".equals(m.group(2)))
-                    charge = -charge;
 
                 if (spec.spectrum.getIonization() == null || spec.spectrum.getIonization().getCharge() != charge)
                     spec.spectrum.setIonization(new Charge(charge));
@@ -394,9 +393,11 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
             } else break;
         }
 
-        if (!additionalFields.isEmpty()) {
+        ParserUtils.checkMolecularFormula(exp);
+
+        if (!additionalFields.isEmpty())
             exp.setAnnotation(AdditionalFields.class, additionalFields);
-        }
+
         exp.setAnnotation(SpectrumFileSource.class, new SpectrumFileSource(source));
         return exp;
     }

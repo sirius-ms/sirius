@@ -28,6 +28,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.data.DataSource;
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.InvalidException;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Warning;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -37,6 +38,7 @@ import org.apache.commons.math3.util.Pair;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class Ms2Validator extends Ms1Validator {
 
@@ -54,6 +56,7 @@ public class Ms2Validator extends Ms1Validator {
         checkIonization(warn, repair, input);
         checkMergedMs1(warn, repair, input);
         checkIonMass(warn, repair, input);
+        checkMolecularFormula(warn, repair, input);
         correctCollisionEnergy(warn, repair, input);
         return true;
     }
@@ -384,6 +387,31 @@ public class Ms2Validator extends Ms1Validator {
                     if (Math.abs(s.getPrecursorMz() - parentMz) > 0.1d) {
                         final MutableMs2Spectrum t = new MutableMs2Spectrum(s, parentMz, s.getCollisionEnergy(), 2);
                         input.getMs2Spectra().set(i, t);
+                    }
+                }
+            }
+        }
+    }
+
+    protected void checkMolecularFormula(Warning warn, boolean repair, MutableMs2Experiment input) {
+        MolecularFormula mf = input.getMolecularFormula();
+        if (mf != null) {
+            Whiteset ws = input.getAnnotation(Whiteset.class).orElse(null);
+            if (ws == null || ws.isEmpty() || ws.getNeutralFormulas().isEmpty()) {
+                warn.warn("Adding missing formula candidate constrains for preset molecular formula.");
+                input.setAnnotation(Whiteset.class, Whiteset.ofNeutralizedFormulas(List.of(mf)));
+            } else {
+                if (ws.getNeutralFormulas().size() != 1 || !ws.getNeutralFormulas().iterator().next().equals(mf)) {
+                    String warning = nameOf(input) + ": Preset molecular formula '" + mf
+                            + "' does not match formula candidate constrains {"
+                            + ws.getNeutralFormulas().stream().map(MolecularFormula::toString).collect(Collectors.joining(", "))
+                            + "}.";
+                    if (repair) {
+                        warn.warn(warning + " Correcting constrains.");
+                        input.setAnnotation(Whiteset.class, Whiteset.ofNeutralizedFormulas(List.of(mf)));
+                    } else {
+                        warn.warn(warning + " No correction requested!.");
+
                     }
                 }
             }

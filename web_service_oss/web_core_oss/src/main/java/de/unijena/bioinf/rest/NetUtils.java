@@ -2,7 +2,7 @@
  *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
  *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
@@ -15,10 +15,10 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ChemistryBase.utils;
+package de.unijena.bioinf.rest;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
@@ -28,17 +28,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class NetUtils {
-    private static final Set<CountDownLatch> WAITERS = Collections.newSetFromMap(new ConcurrentHashMap<>());
     public static final Logger LOG = LoggerFactory.getLogger(NetUtils.class);
     public final static boolean DEBUG = PropertyManager.getBoolean("de.unijena.bioinf.ms.rest.DEBUG", false);
+
+    private static final AtomicBoolean IS_WAITING = new AtomicBoolean(false);
 
     public static void tryAndWaitAsJJob(NetRunnable tryToDo) {
         tryAndWaitAsJJob(() -> {
@@ -93,8 +90,14 @@ public class NetUtils {
         while (timeout > 0) {
             try {
                 interrupted.check();
-                return tryToDo.get();
+                R a = tryToDo.get();
+                awakeAll();
+                return a;
             } catch (IOException retry) {
+                synchronized (IS_WAITING) {
+                    IS_WAITING.set(true);
+                }
+
                 waitTime = (long) Math.min(waitTime * WAIT_TIME_MULTIPLIER, MAX_WAIT_TIME);
                 timeout -= waitTime;
 
@@ -105,7 +108,21 @@ public class NetUtils {
                     LOG.debug("Error when try to connect to Server. Try again in " + waitTime / 1000d + "s", retry);
                 }
 
-                sleep(interrupted, waitTime);
+                if (IS_WAITING.get()) {
+                    for (long i = waitTime; i > 0; i -= TICK) {
+                        interrupted.check();
+                        if (IS_WAITING.get()) {
+                            synchronized (IS_WAITING) {
+                                if (IS_WAITING.get())
+                                    IS_WAITING.wait(TICK);
+                            }
+                        }
+                    }
+                }
+
+                interrupted.check();
+                if (IS_WAITING.get())
+                    ProxyManager.closeAllStaleConnections();
             }
         }
         throw new TimeoutException("Stop trying because of Timeout!");
@@ -116,19 +133,10 @@ public class NetUtils {
     public static final float WAIT_TIME_MULTIPLIER = 2;
     public static final int TICK = 1000; //1 sek. without interruption check
 
-    public static void sleep(@NotNull final InterruptionCheck interrupted, long waitTime) throws InterruptedException {
+    public static void sleepNoRegistration(@NotNull final InterruptionCheck interrupted, long waitTime) throws InterruptedException {
         for (long i = waitTime; i > 0; i -= TICK) {
             interrupted.check();
-            final CountDownLatch waiter = new CountDownLatch(1);
-            try {
-                WAITERS.add(waiter);
-                if (waiter.await(Math.min(i, TICK), TimeUnit.MILLISECONDS)){
-                    LOG.info("Stop waiting due to external interruption.");
-                    return;
-                }
-            } finally {
-                WAITERS.remove(waiter);
-            }
+            Thread.sleep(Math.min(i, TICK));
         }
     }
 
@@ -140,6 +148,16 @@ public class NetUtils {
     @FunctionalInterface
     public interface NetRunnable {
         void run() throws InterruptedException, TimeoutException, IOException;
+    }
+
+    @FunctionalInterface
+    public interface NetConsumer<A> {
+        void run(A a) throws InterruptedException, TimeoutException, IOException;
+    }
+
+    @FunctionalInterface
+    public interface NetBiConsumer<A, B> {
+        void run(A a, B b) throws InterruptedException, TimeoutException, IOException;
     }
 
     @FunctionalInterface
@@ -155,10 +173,12 @@ public class NetUtils {
         };
     }
 
-    public synchronized static void awakeAll() {
-        //iterator against concurrent modification exception
-        WAITERS.iterator().forEachRemaining(CountDownLatch::countDown);
+    public static void awakeAll() {
+        if (IS_WAITING.getAndSet(false)) {
+            synchronized (IS_WAITING) {
+                IS_WAITING.notifyAll();
+                LOG.warn("Recovered connection successfully and woke up waiting threads.");
+            }
+        }
     }
-
-
 }

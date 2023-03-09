@@ -23,10 +23,10 @@ package de.unijena.bioinf.storage.blob.minio;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import io.minio.*;
 import io.minio.errors.*;
-import io.minio.messages.DeleteObject;
 import io.minio.messages.Item;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
@@ -50,6 +50,8 @@ public class MinIoS3BlobStorage implements BlobStorage {
         this.minioClient = client;
         this.bucketName = bucketName;
         init();
+        if (PropertyManager.getBoolean("de.unijena.bioinf.stores.minio.trace", null, false))
+            minioClient.traceOn(System.out);
     }
 
     private void init() {

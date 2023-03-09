@@ -85,7 +85,7 @@ public class AdductSwitchLossScorer implements LossScorer<Object> {
         {
             //here, we have some kind of adduct switch or a child fragment of an adduct switch fragment
             MolecularFormula F = loss.getFormula();
-            if (F.isEmpty()) return Double.NEGATIVE_INFINITY;
+            if (!loss.isArtificial() && F.isEmpty()) return Double.NEGATIVE_INFINITY;
 
             if (sourceIon.equals(targetIon)){
                 //this is a child fragment of a adduct switch fragment

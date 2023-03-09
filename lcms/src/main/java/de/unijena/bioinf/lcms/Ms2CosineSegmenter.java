@@ -178,6 +178,12 @@ public class Ms2CosineSegmenter {
                     ms2Segment = segment.get();
                 }
                 if (ms2Segment!=null){
+
+                    if (ms2Segment.isNoise()) {
+                        LoggerFactory.getLogger(Ms2CosineSegmenter.class).warn("MS2 scan shot into the noise. Reject it.");
+                        continue;
+                    }
+
                     ++numberOfInside;
                     // check if it is within FHWM25%
                     TIntObjectHashMap<ArrayList<Scan>> map;
@@ -333,22 +339,24 @@ public class Ms2CosineSegmenter {
                 FragmentedIon ms2Ion = instance.createMs2Ion(sample, merged, entry.getKey(), left);
                 final HashSet<ChromatographicPeak> chimerics = new HashSet<>();
                 double chimericPollution = 0d;
+                double chimericPollutionRelative = 0d;
                 for (Scan s : merged.getAllScans()) {
                     intensityAfterPrecursor.add(intensityAfterPrecursor(sample.storage.getScan(s),merged.spectrumAt(0).getPrecursor().getMass()));
                     for (Ms2Scan t : entry.getValue()) {
                         if (t.ms2Scan.getIndex()==s.getIndex()) {
                             chimerics.addAll(t.chimerics);
+                            chimericPollutionRelative = Math.max(chimericPollutionRelative, t.chimericPollution / t.precursorIntensity);
                             chimericPollution = Math.max(chimericPollution,t.chimericPollution);
                         }
                     }
                 }
                 ms2Ion.setChimerics(new ArrayList<>(chimerics));
-                ms2Ion.setChimericPollution(chimericPollution);
+                ms2Ion.setChimericPollution(chimericPollutionRelative);
                 ms2Ion.getAdditionalInfos().addAll(rejectedMsMs);
                 rejectedMsMs.clear();
                 ms2Ion.getAdditionalInfos().addAll(joinedSegments);
                 joinedSegments.clear();
-                if (chimericPollution>=0.33) {
+                if (chimericPollutionRelative>=0.50) {
                     ms2Ion.setMs2Quality(Quality.BAD);
                 }
                 ms2Ion.setIntensityAfterPrecursor(Statistics.robustAverage(intensityAfterPrecursor.toArray()));

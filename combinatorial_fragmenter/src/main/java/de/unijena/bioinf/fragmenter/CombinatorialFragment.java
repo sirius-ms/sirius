@@ -26,8 +26,14 @@ public class CombinatorialFragment {
     protected MolecularFormula formula; // --> in general, with hydrogens!!
     protected final boolean innerNode;
 
+    protected CombinatorialFragment inverse;
+
     public CombinatorialFragment(MolecularGraph parent, BitSet bitset, BitSet disconnectedRings){
         this(parent, bitset, null, disconnectedRings);
+    }
+
+    public CombinatorialFragment getInverse() {
+        return inverse;
     }
 
     public CombinatorialFragment(MolecularGraph parent, BitSet bitset, MolecularFormula formula, BitSet disconnectedRings, boolean isInnerNode, float peakIntensity) {
@@ -206,7 +212,10 @@ public class CombinatorialFragment {
                 peripherie.add(b.getAtom(0).getIndex());
             }
         }
-        return extr.generate(atoms.toArray(), peripherie.toArray());
+        extr.setLevel(SmartsGen.Level.EXACT);
+        for (int a : peripherie.toArray()) extr.setLevel(a, SmartsGen.Level.GENERIC);
+        atoms.addAll(peripherie);
+        return extr.generate(atoms.toArray());
     }
 
     public float getPeakIntensity() {
@@ -229,7 +238,7 @@ public class CombinatorialFragment {
         }
     }
 
-    public HashMap<String, String> getAllSMARTS() {
+    public HashMap<String, String> getAllSMARTS(boolean keepAromaticRingsIntact, boolean addCutEdges) {
 
         int k=0;
         for (IAtom a : parent.molecule.atoms()) {
@@ -237,21 +246,30 @@ public class CombinatorialFragment {
         }
 
         ArrayList<IAtomContainer> mols = new ArrayList<>();
-        mols.addAll(Arrays.asList(extractSubstructures(Arrays.stream(this.getAtoms()).mapToInt(IAtom::getIndex).toArray())));
+        mols.addAll(Arrays.asList(extractSubstructures(Arrays.stream(this.getAtoms()).mapToInt(IAtom::getIndex).toArray(),keepAromaticRingsIntact, addCutEdges,false)));
         final HashSet<IAtom> loss = new HashSet<>();
         for (IAtom a : parent.molecule.atoms()) loss.add(a);
         for (IAtom a : this.getAtoms()) loss.remove(a);
-        mols.addAll(Arrays.asList(extractSubstructures(loss.stream().mapToInt(IAtom::getIndex).toArray())));
+        mols.addAll(Arrays.asList(extractSubstructures(loss.stream().mapToInt(IAtom::getIndex).toArray(),keepAromaticRingsIntact, addCutEdges,true)));
         final SmilesGenerator smi = SmilesGenerator.unique();
         final SmartsGen extr = new SmartsGen(parent.molecule);
         final HashMap<String, String> map = new HashMap<>();
         for (IAtomContainer m : mols) {
+            extr.setLevel(SmartsGen.Level.EXACT);
             try {
                 final String smiles = smi.create(m);
                 final TIntArrayList xs = new TIntArrayList();
-                for (IAtom a : m.atoms()) xs.add(((Integer)a.getProperty("PID")).intValue());
-                final String smarts = extr.generate(xs.toArray(), new int[0]);
-                map.put(smiles, smarts);
+                for (IAtom a : m.atoms()) {
+                    final int pid = a.getProperty("PID", Integer.class);
+                    xs.add(pid);
+                    if (a.getProperty(SmartsGen.ATOM_LABELING_LEVEL)!=null) {
+                        extr.setLevel(pid, a.getProperty(SmartsGen.ATOM_LABELING_LEVEL));
+                    } else if (!a.getSymbol().equals("C")) {
+                        extr.setLevel(pid, SmartsGen.Level.WITH_AROMATICITY);
+                    }
+                }
+                final String smarts = extr.generateShortest(xs.toArray());
+                if (smarts != null) map.put(smiles, smarts);
 
             } catch (CDKException e) {
                 LoggerFactory.getLogger(CombinatorialFragment.class).warn(e.getMessage());
@@ -274,7 +292,10 @@ public class CombinatorialFragment {
                 peripherie.add(b.getAtom(0).getIndex());
             }
         }
-        return extr.generate(atoms.toArray(), peripherie.toArray());
+        extr.setLevel(SmartsGen.Level.EXACT);
+        for (int a : peripherie.toArray()) extr.setLevel(a, SmartsGen.Level.GENERIC);
+        atoms.addAll(peripherie);
+        return extr.generate(atoms.toArray());
     }
 
     public String toUniqueSMILES() {
@@ -321,13 +342,19 @@ public class CombinatorialFragment {
         return losses.toArray(IAtomContainer[]::new);
     }
 
-    private IAtomContainer[] extractSubstructures(int[] atomids) {
+    private IAtomContainer[] extractSubstructures(int[] atomids, boolean keepAromaticRingsIntact, boolean addCutEdges, boolean isLoss) {
         Set<IAtom> atoms = Arrays.stream(atomids).mapToObj(parent.molecule::getAtom).collect(Collectors.toSet());
+        final BitSet visited = new BitSet(parent.molecule.getAtomCount());
+        final Set<IAtom> orig = new HashSet<>(atoms);
         IAtom[] todo = atoms.toArray(IAtom[]::new);
-        final TIntArrayList indizes = new TIntArrayList();
+        final TIntHashSet indizes = new TIntHashSet();
+        final TIntHashSet cutIndizes = new TIntHashSet();
         ArrayList<IAtomContainer> losses = new ArrayList<>();
         for (IAtom a : todo) {
-            indizes.clearQuick();
+            indizes.clear();
+            cutIndizes.clear();
+            visited.clear();
+            visited.set(a.getIndex());
             if (atoms.remove(a)) {
                 indizes.add(a.getIndex());
                 ArrayList<IAtom> stack = new ArrayList<>();
@@ -336,20 +363,49 @@ public class CombinatorialFragment {
                     final IAtom b = stack.remove(stack.size() - 1);
                     for (IBond bond : b.bonds()) {
                         for (IAtom neighbour : bond.atoms()) {
-                            if (atoms.remove(neighbour)) {
+                            if (!visited.get(neighbour.getIndex()) && (atoms.remove(neighbour) || (keepAromaticRingsIntact && b.isAromatic() && a.isAromatic() && neighbour.isAromatic()))) {
                                 stack.add(neighbour);
                                 indizes.add(neighbour.getIndex());
+                                visited.set(neighbour.getIndex());
+                            } else if (addCutEdges && orig.contains(a) && !orig.contains(neighbour)) {
+                                cutIndizes.add(neighbour.getIndex());
                             }
                         }
                     }
                 }
+                //////////////////////////////////////////////////
                 try {
-                    losses.add(AtomContainerManipulator.extractSubstructure(parent.molecule, indizes.toArray()));
+                    final IAtomContainer m = extractSubstructureAndMark(parent.molecule, indizes.toArray(), cutIndizes);
+                    losses.add(m);
                 } catch (CloneNotSupportedException e) {
                     throw new RuntimeException(e);
                 }
             }
         }
         return losses.toArray(IAtomContainer[]::new);
+    }
+    public static IAtomContainer extractSubstructureAndMark(IAtomContainer atomContainer, int[] atomIndices, TIntHashSet atomIndizesToMark)
+            throws CloneNotSupportedException {
+        IAtomContainer substructure = (IAtomContainer) atomContainer.clone();
+        int numberOfAtoms = substructure.getAtomCount();
+        IAtom[] atoms = new IAtom[numberOfAtoms];
+        for (int atomIndex = 0; atomIndex < numberOfAtoms; atomIndex++) {
+            atoms[atomIndex] = substructure.getAtom(atomIndex);
+        }
+
+        Arrays.sort(atomIndices);
+        for (int index = 0; index < numberOfAtoms; index++) {
+            if (Arrays.binarySearch(atomIndices, index) < 0) {
+                if (atomIndizesToMark.contains(index)) {
+                    IAtom atom = atoms[index];
+                    atom.setProperty(SmartsGen.ATOM_LABELING_LEVEL, SmartsGen.Level.ELEMENT);
+                } else {
+                    IAtom atom = atoms[index];
+                    substructure.removeAtom(atom);
+                }
+            }
+        }
+
+        return substructure;
     }
 }

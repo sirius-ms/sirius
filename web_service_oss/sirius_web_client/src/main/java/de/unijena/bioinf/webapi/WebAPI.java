@@ -42,6 +42,11 @@ import de.unijena.bioinf.fingerid.StructurePredictor;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
+import de.unijena.bioinf.ms.rest.client.canopus.CanopusClient;
+import de.unijena.bioinf.ms.rest.client.chemdb.StructureSearchClient;
+import de.unijena.bioinf.ms.rest.client.fingerid.FingerIdClient;
+import de.unijena.bioinf.ms.rest.client.info.InfoClient;
+import de.unijena.bioinf.ms.rest.client.jobs.JobsClient;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
@@ -54,8 +59,9 @@ import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.ms.rest.model.license.SubscriptionConsumables;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.webapi.WebJJob;
+import de.unijena.bioinf.rest.ConnectionError;
 import de.unijena.bioinf.storage.blob.BlobStorage;
-import de.unijena.bioinf.webapi.rest.ConnectionError;
+import org.apache.hc.client5.http.classic.HttpClient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -88,8 +94,6 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
     }
 
     AuthService getAuthService();
-
-    URI getSignUpURL() throws URISyntaxException;
 
     boolean deleteAccount();
 
@@ -204,7 +208,6 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
     // use via predictor/scoring method
     WebJJob<CovtreeJobInput, ?, BayesnetScoring, ?> submitCovtreeJob(@NotNull MolecularFormula formula, @NotNull PredictorType predictorType) throws IOException;
 
-
     /**
      * @param predictorType pos or neg
      * @return Default (non formula specific) {@link BayesnetScoring} for the given {@link PredictorType}
@@ -212,7 +215,7 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
      */
     //uncached -> access via predictor
     default BayesnetScoring getBayesnetScoring(@NotNull PredictorType predictorType) throws IOException {
-        return getBayesnetScoring(predictorType, null);
+        return getBayesnetScoring(predictorType,  getFingerIdData(predictorType),null);
     }
 
     /**
@@ -222,7 +225,7 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
      * @throws IOException if something went wrong with the web query
      */
     //uncached -> access via predictor
-    BayesnetScoring getBayesnetScoring(@NotNull PredictorType predictorType, @Nullable MolecularFormula formula) throws IOException;
+    BayesnetScoring getBayesnetScoring(@NotNull PredictorType predictorType, FingerIdData csi, @Nullable MolecularFormula formula) throws IOException;
 
 
     //uncached -> access via predictor
@@ -260,4 +263,13 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
     String getChemDbDate();
 
     //endregion
+
+    void executeBatch(IOFunctions.BiIOConsumer<Clients, HttpClient> doWithApi) throws IOException;
+    interface Clients {
+        InfoClient serverInfoClient();
+        JobsClient jobsClient();
+        StructureSearchClient chemDBClient();
+        FingerIdClient fingerprintClient();
+        CanopusClient canopusClient();
+    }
 }

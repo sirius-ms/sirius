@@ -23,16 +23,19 @@ package de.unijena.bioinf.ms.rest.client;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
-import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
+import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.client.utils.HTTPSupplier;
 import de.unijena.bioinf.ms.rest.model.SecurityService;
+import de.unijena.bioinf.rest.HttpErrorResponseException;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.*;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.HttpRequest;
+import org.apache.hc.core5.net.URIBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -41,7 +44,6 @@ import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
@@ -92,19 +94,18 @@ public abstract class AbstractClient {
         return serverUrl.get();
     }
 
-    protected void isSuccessful(HttpResponse response, HttpRequest sourceRequest) throws IOException {
-        final StatusLine status = response.getStatusLine();
+    protected void isSuccessful(ClassicHttpResponse response, HttpRequest sourceRequest) throws IOException {
 
-        if (status.getStatusCode() >= 400) {
+        if (response.getCode() >= 400) {
             final String content = response.getEntity() != null ? IOUtils.toString(getIn(response, sourceRequest)) : "No Content";
-            throw new HttpErrorResponseException(status.getStatusCode(), status.getReasonPhrase(),
+            throw new HttpErrorResponseException(response.getCode(), response.getReasonPhrase(),
                     Optional.ofNullable(response.getFirstHeader("WWW-Authenticate")).map(Header::getValue).orElse("NULL"), content);
         }
     }
 
 
     //region http request execution API
-    public <T> T executeWithResponse(@NotNull HttpClient client, @NotNull final HTTPSupplier<?> makeRequest, IOFunctions.IOFunction<HttpResponse, T> respHandling) throws IOException {
+    public <T> T executeWithResponse(@NotNull HttpClient client, @NotNull final HTTPSupplier<? extends HttpUriRequest> makeRequest, IOFunctions.IOFunction<ClassicHttpResponse, T> respHandling) throws IOException {
         try {
             return executeWithResponse(client, makeRequest.get(), respHandling);
         } catch (URISyntaxException e) {
@@ -112,8 +113,8 @@ public abstract class AbstractClient {
         }
     }
 
-    public <T> T executeWithResponse(@NotNull HttpClient client, @NotNull final HttpUriRequest request, IOFunctions.IOFunction<HttpResponse, T> respHandling) throws IOException {
-            return respHandling.apply(client.execute(request));
+    public <T> T executeWithResponse(@NotNull HttpClient client, @NotNull final HttpUriRequest request, IOFunctions.IOFunction<ClassicHttpResponse, T> respHandling) throws IOException {
+            return respHandling.apply((ClassicHttpResponse) client.execute(request));
     }
 
     public <T> T execute(@NotNull HttpClient client, @NotNull final HttpUriRequest request, IOFunctions.IOFunction<BufferedReader, T> respHandling) throws IOException {
@@ -134,7 +135,7 @@ public abstract class AbstractClient {
         });
     }
 
-    public <T> T execute(@NotNull HttpClient client, @NotNull final HTTPSupplier<?> makeRequest, IOFunctions.IOFunction<BufferedReader, T> respHandling) throws IOException {
+    public <T> T execute(@NotNull HttpClient client, @NotNull final HTTPSupplier<? extends HttpUriRequest> makeRequest, IOFunctions.IOFunction<BufferedReader, T> respHandling) throws IOException {
         try {
             return execute(client, makeRequest.get(), respHandling);
         } catch (URISyntaxException e) {
@@ -142,7 +143,7 @@ public abstract class AbstractClient {
         }
     }
 
-    public void execute(@NotNull HttpClient client, @NotNull final HTTPSupplier<?> makeRequest) throws IOException {
+    public void execute(@NotNull HttpClient client, @NotNull final HTTPSupplier<? extends HttpUriRequest> makeRequest) throws IOException {
         execute(client, makeRequest, (br) -> true);
     }
 
@@ -154,11 +155,11 @@ public abstract class AbstractClient {
         return execute(client, request, r -> r != null ? new ObjectMapper().readValue(r, tr) : null);
     }
 
-    public <T, R extends TypeReference<T>> T executeFromJson(@NotNull HttpClient client, @NotNull final HTTPSupplier<?> makeRequest, R tr) throws IOException {
+    public <T, R extends TypeReference<T>> T executeFromJson(@NotNull HttpClient client, @NotNull final HTTPSupplier<? extends HttpUriRequest> makeRequest, R tr) throws IOException {
         return execute(client, makeRequest, r -> r != null ? new ObjectMapper().readValue(r, tr) : null);
     }
 
-    public <T> T executeFromStream(@NotNull HttpClient client, @NotNull final HTTPSupplier<?> makeRequest, IOFunctions.IOFunction<InputStream, T> respHandling) throws IOException {
+    public <T> T executeFromStream(@NotNull HttpClient client, @NotNull final HTTPSupplier<? extends HttpUriRequest> makeRequest, IOFunctions.IOFunction<InputStream, T> respHandling) throws IOException {
         try {
             return executeFromStream(client, makeRequest.get(), respHandling);
         } catch (URISyntaxException e) {
@@ -170,7 +171,7 @@ public abstract class AbstractClient {
         for (IOFunctions.IOConsumer<HttpUriRequest> requestDecorator : requestDecorators)
             requestDecorator.accept(request);
 
-        HttpResponse response = client.execute(request);
+        ClassicHttpResponse response = (ClassicHttpResponse) client.execute(request);
         isSuccessful(response, request);
         if (response.getEntity() != null) {
             try (final InputStream stream = response.getEntity().getContent()) {
@@ -180,7 +181,7 @@ public abstract class AbstractClient {
         return null;
     }
 
-    public <T> T executeFromByteBuffer(@NotNull HttpClient client, @NotNull final HTTPSupplier<?> makeRequest, IOFunctions.IOFunction<ByteBuffer, T> respHandling, int bufferSize) throws IOException {
+    public <T> T executeFromByteBuffer(@NotNull HttpClient client, @NotNull final HTTPSupplier<? extends HttpUriRequest> makeRequest, IOFunctions.IOFunction<ByteBuffer, T> respHandling, int bufferSize) throws IOException {
         try {
             return executeFromByteBuffer(client, makeRequest.get(), respHandling, bufferSize);
         } catch (URISyntaxException e) {
@@ -198,10 +199,10 @@ public abstract class AbstractClient {
     }
 
     @NotNull
-    protected Reader getIn(HttpResponse response, HttpRequest sourceRequest) throws IOException {
+    protected Reader getIn(ClassicHttpResponse response, HttpRequest sourceRequest) throws IOException {
         final HttpEntity entity = response.getEntity();
-        Charset charset = ContentType.getOrDefault(entity).getCharset();
-        charset = charset == null ? StandardCharsets.UTF_8 : charset;
+        String charset = entity.getContentEncoding();
+        charset = charset == null ? StandardCharsets.UTF_8.name() : charset;
         if (!DEBUG_CONNECTION) {
             if (entity == null)
                 throw new NullPointerException("Cannot extract content from NULL entity");
@@ -209,19 +210,19 @@ public abstract class AbstractClient {
         } else {
             System.out.println("##### Request DEBUG information #####S");
             System.out.println("----- Source Request");
-            System.out.println("Request URL: '" + sourceRequest.getRequestLine().getUri() + "'");
-            for (Header header : sourceRequest.getAllHeaders())
+            System.out.println("Request URL: '" + sourceRequest.getRequestUri() + "'");
+            for (Header header : sourceRequest.getHeaders())
                 System.out.println("Request Header: '" + header.getName() + "':'" + header.getValue() + "'");
 
             System.out.println("----- Response");
             System.out.println("Content encoding: '" + charset + "'");
             System.out.println("Used Content encoding: '" + (entity == null ? "<ENTITY NULL>" : entity.getContentEncoding()) + "'");
             System.out.println("Content Type: '" + (entity == null ? "<ENTITY NULL>" : entity.getContentType()) + "'");
-            System.out.println("Response Return Code: '" + response.getStatusLine().getStatusCode() + "'");
-            System.out.println("Response Reason Phrase: '" + response.getStatusLine().getReasonPhrase() + "'");
-            System.out.println("Response Protocol Version: '" + response.getStatusLine().getProtocolVersion().toString() + "'");
+            System.out.println("Response Return Code: '" + response.getCode() + "'");
+            System.out.println("Response Reason Phrase: '" + response.getReasonPhrase() + "'");
+//            System.out.println("Response Protocol Version: '" + response.getStatusLine().getProtocolVersion().toString() + "'");
             System.out.println("Response Locale: '" + response.getLocale().toString() + "'");
-            for (Header header : response.getAllHeaders())
+            for (Header header : response.getHeaders())
                 System.out.println("Request Header: '" + header.getName() + "':'" + header.getValue() + "'");
             System.out.println("----- Content");
 
