@@ -24,30 +24,23 @@ package de.unijena.bioinf.fingerid;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.chemdb.InChISMILESUtils;
-import de.unijena.bioinf.fingerid.fingerprints.ShortestPathFingerprinter;
 import de.unijena.bioinf.fingerid.fingerprints.*;
-import io.github.dan2097.jnainchi.InchiStatus;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.fingerprint.*;
-import org.openscience.cdk.inchi.InChIGeneratorFactory;
-import org.openscience.cdk.inchi.InChIToStructure;
 import org.openscience.cdk.interfaces.IAtomContainer;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
 public class Fingerprinter {
 
-    private final InChIGeneratorFactory factory;
     private final List<IFingerprinter> fingerprinters;
 
-    public Fingerprinter() throws CDKException {
-        factory = InChIGeneratorFactory.getInstance();
+    public Fingerprinter() {
         this.fingerprinters = createListOfFingerprints();
     }
 
-    public static Fingerprinter getForVersion(CdkFingerprintVersion version) throws CDKException {
+    public static Fingerprinter getForVersion(CdkFingerprintVersion version) {
         final List<IFingerprinter> fingerprinters = new ArrayList<>();
         for (int k=0; k < version.numberOfFingerprintTypesInUse(); ++k) {
             fingerprinters.add(getFingerprinter(version.getFingerprintTypeAt(k)));
@@ -55,8 +48,7 @@ public class Fingerprinter {
         return new Fingerprinter(fingerprinters);
     }
 
-    public Fingerprinter(List<IFingerprinter> fingerprinters) throws CDKException {
-        factory = InChIGeneratorFactory.getInstance();
+    public Fingerprinter(List<IFingerprinter> fingerprinters) {
         this.fingerprinters = fingerprinters;
     }
 
@@ -68,7 +60,7 @@ public class Fingerprinter {
             case PUBCHEM: return new PubchemFingerprinter(DefaultChemObjectBuilder.getInstance());
             case KLEKOTA_ROTH: return new KlekotaRothFingerprinter();
             case ECFP: return new ECFPFingerprinter();
-            case SHORTEST_PATH: return new ShortestPathFingerprinter();
+            case INSILICO: return new InsilicoFingerprinter();
             case BIOSMARTS: return new BiosmartsFingerprinter();
             case RINGSYSTEMS: return new RingsystemFingerprinter();
             default: throw new IllegalArgumentException();
@@ -88,7 +80,7 @@ public class Fingerprinter {
             case "spheres": return new SphericalFingerprint();
             case "ecfp": return new ECFPFingerprinter();
             case "biosmarts": return new BiosmartsFingerprinter();
-            case "shortest_paths": return new ShortestPathFingerprinter();
+            case "insilico": return new InsilicoFingerprinter();
             case "ringsystems": return new RingsystemFingerprinter();
             default: try {
                 return getFingerprinter(CdkFingerprintVersion.USED_FINGERPRINTS.valueOf(name.toUpperCase()));

@@ -21,7 +21,6 @@
 package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.annotations.StructureSearchDB;
 import de.unijena.bioinf.elgordo.InjectElGordoCompounds;
@@ -30,15 +29,15 @@ import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.ms.annotations.AnnotationJJob;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobInput;
+import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.webapi.WebJJob;
+import de.unijena.bioinf.rest.NetUtils;
+import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -46,6 +45,7 @@ import java.util.stream.Collectors;
 // this is done by the respective subtooljobs in the frontend
 public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
     public static final boolean enableConfidence = useConfidenceScore();
+    private final WebAPI<?> webAPI;
 
     private static boolean useConfidenceScore() {
         boolean useIt = PropertyManager.getBoolean("de.unijena.bioinf.fingerid.confidence", true);
@@ -60,19 +60,22 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
     private Ms2Experiment experiment;
     private List<FingerIdResult> idResult;
 
-    public FingerblastJJob(@NotNull CSIPredictor predictor) {
-        this(predictor, null);
+    List<WebJJob<CovtreeJobInput, ?, BayesnetScoring, ?>> covtreeJobs = new ArrayList<>();
+
+    public FingerblastJJob(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI) {
+        this(predictor, webAPI, null);
     }
 
-    public FingerblastJJob(@NotNull CSIPredictor predictor, @Nullable Ms2Experiment experiment) {
-        this(predictor, experiment, null);
+    public FingerblastJJob(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI, @Nullable Ms2Experiment experiment) {
+        this(predictor, webAPI, experiment, null);
     }
 
-    public FingerblastJJob(@NotNull CSIPredictor predictor, @Nullable Ms2Experiment experiment, @Nullable List<FingerIdResult> idResult) {
+    public FingerblastJJob(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI, @Nullable Ms2Experiment experiment, @Nullable List<FingerIdResult> idResult) {
         super(JobType.SCHEDULER);
         this.predictor = predictor;
         this.experiment = experiment;
         this.idResult = idResult;
+        this.webAPI = webAPI;
     }
 
     public void setInput(Ms2Experiment experiment, List<FingerIdResult> idResult) {
@@ -136,26 +139,34 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
                 ? new ConfidenceJJob(predictor, experiment)
                 : null;
 
+        final BayesnetScoring[] scorings = NetUtils.tryAndWait(() -> {
+            BayesnetScoring[] s = new BayesnetScoring[idResult.size()];
+            webAPI.executeBatch((api, client) -> {
+                final FingerIdData csi = api.fingerprintClient().getFingerIdData(predictor.predictorType, client);
+                for (int i = 0; i < idResult.size(); i++) {
+                    final FingerIdResult fingeridInput = idResult.get(i);
+                    // fingerblast job: score candidate fingerprints against predicted fingerprint
+                    s[i] = api.fingerprintClient().getCovarianceScoring(predictor.predictorType, csi.getFingerprintVersion(), fingeridInput.getMolecularFormula(), csi.getPerformances(), client);
+                }
+            });
+            return s;
+        }, this::checkForInterruption);
+
+
         for (int i = 0; i < idResult.size(); i++) {
             final FingerIdResult fingeridInput = idResult.get(i);
 
-            // fingerblast job: score candidate fingerprints against predicted fingerprint
-            final BayesnetScoring bayesnetScoring = NetUtils.tryAndWait(() ->
-                            predictor.csiWebAPI.getBayesnetScoring(predictor.predictorType, fingeridInput.getMolecularFormula()),
-                    this::checkForInterruption);
-
-
             final FingerblastSearchJJob blastJob;
-            if (bayesnetScoring != null) {
-                blastJob = FingerblastSearchJJob.of(predictor, bayesnetScoring, fingeridInput);
+            if (scorings[i] != null) {
+                blastJob = FingerblastSearchJJob.of(predictor, scorings[i], fingeridInput);
             } else {
                 // bayesnetScoring is null --> make a prepare job which computes the bayessian network (covTree) for the
                 // given molecular formula
                 blastJob = FingerblastSearchJJob.of(predictor, fingeridInput);
-                WebJJob<CovtreeJobInput, ?, BayesnetScoring, ?> covTreeJob = NetUtils.tryAndWait(() ->
-                                predictor.csiWebAPI.submitCovtreeJob(fingeridInput.getMolecularFormula(), predictor.predictorType),
-                        this::checkForInterruption);
+                WebJJob<CovtreeJobInput, ?, BayesnetScoring, ?> covTreeJob =
+                        webAPI.submitCovtreeJob(fingeridInput.getMolecularFormula(), predictor.predictorType);
                 blastJob.addRequiredJob(covTreeJob);
+                covtreeJobs.add(covTreeJob);
             }
 
             blastJob.addRequiredJob(formulaJobs.get(i));
@@ -206,6 +217,19 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
         logDebug("CSI:FingerID structure DB Search DONE!");
         //in linked maps values() collection is not a set -> so we have to make that distinct
         return annotationJJobs.values().stream().distinct().collect(Collectors.toList());
+    }
+
+    @Override
+    public void cancel(boolean mayInterruptIfRunning) {
+        super.cancel(mayInterruptIfRunning);
+        if (covtreeJobs != null)
+            covtreeJobs.forEach(c -> c.cancel(mayInterruptIfRunning));
+    }
+
+    @Override
+    protected void cleanup() {
+        super.cleanup();
+        covtreeJobs = null;
     }
 
     @Override

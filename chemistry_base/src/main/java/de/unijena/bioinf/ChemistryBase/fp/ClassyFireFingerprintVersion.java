@@ -107,7 +107,7 @@ public class ClassyFireFingerprintVersion extends FingerprintVersion {
             while ((line=br.readLine())!=null) {
                 String[] tbs = line.split("\t");
                 final int id = Integer.parseInt(tbs[1]);
-                properties.put(id, new ClassyfireProperty(id, tbs[0], tbs[3], Integer.parseInt(tbs[2]), Integer.parseInt(tbs[4])));
+                properties.put(id, new ClassyfireProperty(id, tbs[0], tbs[3], Integer.parseInt(tbs[2]), Integer.parseInt(tbs[4]), Float.parseFloat(tbs[5])));
             }
         } finally {
             if (fr!=null) fr.close();

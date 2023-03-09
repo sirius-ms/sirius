@@ -26,12 +26,11 @@ import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.JSONReader;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.InputStreamEntity;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.entity.InputStreamEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,7 +63,11 @@ public class ChemDBClient extends StructureSearchClient {
                     final HttpPost post = new HttpPost(buildVersionSpecificWebapiURI("/compounds").build());
                     post.setEntity(new InputStreamEntity(new ByteArrayInputStream(
                             new ObjectMapper().writeValueAsBytes(inChIs2d)), ContentType.APPLICATION_JSON));
-                    post.setConfig(RequestConfig.custom().setSocketTimeout(120000).setConnectTimeout(120000).setContentCompressionEnabled(true).build());
+
+//                    post.setConfig(RequestConfig.custom()
+//                            .setConnectTimeout(PropertyManager.getInteger("de.unijena.bioinf.sirius.http.socketTimeout", 15000), TimeUnit.MILLISECONDS)
+//                            .setResponseTimeout(60, TimeUnit.SECONDS)
+//                            .setContentCompressionEnabled(true).build());
 
                     return post;
                 },

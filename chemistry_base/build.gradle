@@ -20,12 +20,13 @@
 
 version =  parent.siriusVersion
 dependencies {
+    compile 'net.sf.trove4j:core:3.1.0'
     annotationProcessor project(':default_properties:processor')
     compile project(':default_properties:annotations')
     //internal
     compile group: 'de.unijena.bioinf', name: 'GraphUtils', version:"$graphUtils_version"
     //external
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:"2.9.5"
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:"$jackson_version"
     compile group: 'org.apache.commons', name: 'commons-compress', version: "1.21"
 
 }

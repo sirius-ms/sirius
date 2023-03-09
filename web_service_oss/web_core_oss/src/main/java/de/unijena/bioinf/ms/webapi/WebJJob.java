@@ -31,11 +31,12 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Optional;
 
-public class WebJJob<I, O, R, ID> extends WaiterJJob<R> implements InputJJob<I,R> {
+public class WebJJob<I, O, R, ID> extends WaiterJJob<R> implements InputJJob<I, R> {
     public static long WEB_API_JOB_TIME_OUT = PropertyManager.getLong("de.unijena.bioinf.fingerid.web.job.timeout", 1000L * 60L * 60L); //default 1h
+    public static long WEB_API_RUNNING_JOB_TIME_OUT = PropertyManager.getLong("de.unijena.bioinf.fingerid.web.job.timeout.running", 1000L * 60L * 5L); //default 5min
 
     protected I input;
-    protected final ID jobId;
+    protected volatile ID jobId;
     protected final IOFunctions.IOFunction<O, R> outputConverter;
 
     protected volatile de.unijena.bioinf.ms.rest.model.JobState serverState;
@@ -45,15 +46,18 @@ public class WebJJob<I, O, R, ID> extends WaiterJJob<R> implements InputJJob<I,R
     @Nullable
     public Integer countingHash;
 
-    public WebJJob(@NotNull ID jobId, @NotNull IOFunctions.IOFunction<O, R> outputConverter) {
+    protected Long runningSince;
+
+    public WebJJob(@Nullable ID jobId, @NotNull IOFunctions.IOFunction<O, R> outputConverter) {
         this(jobId, null, outputConverter);
     }
 
-    public WebJJob(@NotNull ID jobId, @Nullable I input, @NotNull IOFunctions.IOFunction<O, R> outputConverter) {
+    public WebJJob(@Nullable ID jobId, @Nullable I input, @NotNull IOFunctions.IOFunction<O, R> outputConverter) {
         this.serverState = de.unijena.bioinf.ms.rest.model.JobState.INITIAL;
         this.outputConverter = outputConverter;
-        this.jobId = jobId;
         this.input = input;
+        if (jobId != null)
+            submissionAck(getJobId());
     }
 
 
@@ -61,6 +65,12 @@ public class WebJJob<I, O, R, ID> extends WaiterJJob<R> implements InputJJob<I,R
         return jobId;
     }
 
+
+    public void reset() {
+        setServerState(de.unijena.bioinf.ms.rest.model.JobState.SUBMITTED);
+        errorMessage = null;
+        runningSince = null;
+    }
 
     public WebJJob<I, O, R, ID> update(JobUpdate<?, ID> message) {
         updateTyped((JobUpdate<O, ID>) message);
@@ -75,10 +85,9 @@ public class WebJJob<I, O, R, ID> extends WaiterJJob<R> implements InputJJob<I,R
         this.input = input;
     }
 
+    //post submission update
     protected synchronized void updateTyped(@NotNull JobUpdate<O, ID> update) {
         updateState(update);
-        checkForTimeout();
-
         try {
             switch (serverState) {
                 case DONE:
@@ -90,13 +99,22 @@ public class WebJJob<I, O, R, ID> extends WaiterJJob<R> implements InputJJob<I,R
                 case CANCELED:
                     cancel();
                     break;
+                default:
+                    checkForTimeout();
             }
         } catch (IOException e) {
             crash(e);
         }
     }
 
-    public void basicAck() {
+    //pre submission update
+    public synchronized void submissionAck(@Nullable ID jobId) {
+        if (jobId == null && this.jobId == null)
+            crash(new IllegalStateException("WebJJob was confirmed to be submitted to server but has not received an ID!"));
+
+        if (jobId != null)
+            this.jobId = jobId;
+
         this.submissionTime = System.currentTimeMillis();
         setServerState(de.unijena.bioinf.ms.rest.model.JobState.SUBMITTED);
     }
@@ -115,6 +133,8 @@ public class WebJJob<I, O, R, ID> extends WaiterJJob<R> implements InputJJob<I,R
 
     public boolean updateState(@NotNull final JobUpdate<O, ID> update) {
         checkIdOrThrow(update);
+        if (runningSince == null && update.getState() == de.unijena.bioinf.ms.rest.model.JobState.FETCHED.ordinal())
+            runningSince = System.currentTimeMillis();
         if (serverState != update.getStateEnum()) {
             setServerState(update.getStateEnum());
             errorMessage = update.getErrorMessage();
@@ -132,7 +152,18 @@ public class WebJJob<I, O, R, ID> extends WaiterJJob<R> implements InputJJob<I,R
         this.countingHash = countingHash;
     }
 
-    public Optional<Integer> getJobCountingHash(){
+    public Optional<Integer> getJobCountingHash() {
         return Optional.ofNullable(countingHash);
+    }
+
+    public long getSubmissionTime() {
+        return submissionTime;
+    }
+
+    //true if timedout
+    public boolean checkRunningTimeout() {
+        if (runningSince == null)
+            return false;
+        return (System.currentTimeMillis() - runningSince) > WEB_API_RUNNING_JOB_TIME_OUT;
     }
 }
