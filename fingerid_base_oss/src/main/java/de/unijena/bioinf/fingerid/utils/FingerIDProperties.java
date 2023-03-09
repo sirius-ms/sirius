@@ -23,6 +23,7 @@ package de.unijena.bioinf.fingerid.utils;
 
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * All version numbers are directly taken from the build. So there is no more redundant data. Note that version a.b.c-SNAPSHOT lower than a.b.c
@@ -60,12 +61,13 @@ public class FingerIDProperties {
         return  PropertyManager.getProperty("de.unijena.bioinf.siriusFrontend.version");
     }
 
-    public static String gcsChemDBName() {
-        return PropertyManager.getProperty("de.unijena.bioinf.chemdb.gcs.name");
-    }
-
     public static String gcsChemDBFlavor() {
         return PropertyManager.getProperty("de.unijena.bioinf.chemdb.gcs.flavor", null, "default");
+    }
+
+    @Nullable
+    public static String gcsChemDBFpId() {
+        return PropertyManager.getProperty("de.unijena.bioinf.chemdb.fingerprint.id", null, null);
     }
 
     public static String defaultChemDBBucket(){

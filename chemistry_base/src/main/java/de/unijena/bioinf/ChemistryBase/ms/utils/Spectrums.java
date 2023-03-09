@@ -799,6 +799,39 @@ public class Spectrums {
         return intens;
     }
 
+    public static <P extends Peak,S extends Spectrum<P>>  SimpleSpectrum getCleanedSpectrumByDeletingClosePeaks(S spectrum, Deviation dev ) {
+        final Spectrum<P> intensityOrderedSpectrum = getIntensityOrderedSpectrum(spectrum);
+        final byte[] state = new byte[spectrum.size()];
+        for (int k=0; k < intensityOrderedSpectrum.size(); ++k) {
+            final double mass = intensityOrderedSpectrum.getMzAt(k);
+            final double delta = dev.absoluteFor(mass);
+            int i=getFirstPeakGreaterOrEqualThan(spectrum, mass-delta);
+            int hi=i;
+            int j=i;
+            final double to = mass+delta;
+            for (; j < spectrum.size(); ++j) {
+                if (spectrum.getMzAt(j)>to) break;
+                if (spectrum.getIntensityAt(j)>spectrum.getIntensityAt(hi)) {
+                    hi=j;
+                }
+            }
+            if (state[hi]==0) {
+                for (int x=i; x < j; ++x ) {
+                    state[x]=-1; // delete
+                }
+                state[hi] = 1;
+            }
+        }
+        final SimpleMutableSpectrum buffer = new SimpleMutableSpectrum();
+        for (int k=0; k < state.length; ++k) {
+            if (state[k]==1) {
+                buffer.addPeak(spectrum.getMzAt(k), spectrum.getIntensityAt(k));
+            }
+        }
+        return new SimpleSpectrum(buffer);
+
+    }
+
     public static <P extends Peak,S extends Spectrum<P>> SimpleSpectrum extractMostIntensivePeaks(S spectrum, int numberOfPeaksPerMassWindow, double slidingWindowWidth) {
         if (spectrum.isEmpty()) return Spectrums.empty();
         final Spectrum<? extends Peak> spec = getIntensityOrderedSpectrum(spectrum);

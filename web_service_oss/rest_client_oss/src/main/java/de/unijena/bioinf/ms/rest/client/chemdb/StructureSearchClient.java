@@ -33,10 +33,9 @@ import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.FormulaCandidate;
 import de.unijena.bioinf.chemdb.JSONReader;
 import de.unijena.bioinf.ms.rest.client.AbstractCsiClient;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
@@ -117,7 +116,11 @@ public class StructureSearchClient extends AbstractCsiClient {
                     final HttpGet get = new HttpGet(buildVersionSpecificWebapiURI("/compounds/" + formula.toString())
                             .setParameter("dbfilter", String.valueOf(filter))
                             .build());
-                    get.setConfig(RequestConfig.custom().setSocketTimeout(120000).setConnectTimeout(120000).setContentCompressionEnabled(true).build());
+
+//                    get.setConfig(RequestConfig.custom()
+//                            .setConnectTimeout(PropertyManager.getInteger("de.unijena.bioinf.sirius.http.socketTimeout", 15000), TimeUnit.MILLISECONDS)
+//                            .setResponseTimeout(60, TimeUnit.SECONDS)
+//                            .setContentCompressionEnabled(true).build());
                     return get;
                 },
                 br -> {

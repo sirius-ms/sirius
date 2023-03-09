@@ -38,21 +38,23 @@ public interface AbstractChemicalDatabase extends Closeable, Cloneable, SearchSt
 
     /**
      * Search for molecular formulas in the database
-     * @param mass exact mass of the ion
+     *
+     * @param mass      exact mass of the ion
      * @param deviation allowed mass deviation
-     * @param ionType adduct of the ion
+     * @param ionType   adduct of the ion
      * @return list of formula candidates which theoretical mass (+ adduct mass) is within the given mass window
      */
     List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException;
 
     /**
      * Search for molecular formulas in the database
-     * @param mass exact mass of the ion
+     *
+     * @param mass      exact mass of the ion
      * @param deviation allowed mass deviation
-     * @param ionTypes allowed adducts of the ion
+     * @param ionTypes  allowed adducts of the ion
      * @return list of formula candidates which theoretical mass (+ adduct mass) is within the given mass window
      */
-    default List<List<FormulaCandidate>> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType[] ionTypes)  throws ChemicalDatabaseException {
+    default List<List<FormulaCandidate>> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType[] ionTypes) throws ChemicalDatabaseException {
         ArrayList<List<FormulaCandidate>> candidates = new ArrayList<>(ionTypes.length);
         for (PrecursorIonType type : ionTypes)
             candidates.add(lookupMolecularFormulas(mass, deviation, type));
@@ -62,22 +64,13 @@ public interface AbstractChemicalDatabase extends Closeable, Cloneable, SearchSt
     boolean containsFormula(MolecularFormula formula) throws ChemicalDatabaseException;
 
 
-        /**
-         * Lookup structures by the given molecular formula. This method will NOT add database links to these structures
-         * @param formula
-         * @return
-         */
-        List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws ChemicalDatabaseException;
-
     /**
-     * Lookup structures and corresponding fingerprints
-     * by the given molecular formula. This method will NOT add database links to these structures
+     * Lookup structures by the given molecular formula. This method will NOT add database links to these structures
+     *
      * @param formula
      * @return
      */
-    default List<FingerprintCandidate> lookupStructuresAndFingerprintsByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
-        return lookupStructuresAndFingerprintsByFormula(formula, new ArrayList<>());
-    }
+    List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws ChemicalDatabaseException;
 
     List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException;
 
@@ -89,7 +82,7 @@ public interface AbstractChemicalDatabase extends Closeable, Cloneable, SearchSt
 
     default Fingerprint lookupFingerprintByInChI(InChI inchi) throws ChemicalDatabaseException {
         final List<FingerprintCandidate> xs = lookupFingerprintsByInchis(Collections.singleton(inchi.key2D()));
-        if (xs.size()>0) return xs.get(0).getFingerprint();
+        if (xs.size() > 0) return xs.get(0).getFingerprint();
         else return null;
     }
 
@@ -98,9 +91,9 @@ public interface AbstractChemicalDatabase extends Closeable, Cloneable, SearchSt
     /**
      * Returns Date of the represented structure database.
      * Override this method in remote database implementations to return the correct date.
+     *
      * @return Date of the represented structure database
      */
 
     String getChemDbDate() throws ChemicalDatabaseException;
-
 }

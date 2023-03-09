@@ -31,9 +31,9 @@ import de.unijena.bioinf.ms.rest.client.chemdb.ChemDBClient;
 import de.unijena.bioinf.ms.rest.client.chemdb.StructureSearchClient;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.storage.blob.file.FileBlobStorage;
-import org.apache.http.client.HttpClient;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,17 +44,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class RESTDatabase implements AbstractChemicalDatabase {
+public class RESTDatabase implements FilterableChemicalDatabase {
     static {
         FingerIDProperties.fingeridFullVersion();
     }
 
     private final HttpClient client;
-    private final boolean closeCLient = false;
+    private final boolean closeClient = false;
 
     private StructureSearchClient chemDBClient;
     protected final ChemDBFileCache cache;
-    protected long filter;
 
 
     public static BlobStorage defaultCache() {
@@ -72,12 +71,11 @@ public class RESTDatabase implements AbstractChemicalDatabase {
         }
     }
 
-    public RESTDatabase(@Nullable BlobStorage cacheDir, long filter, @NotNull StructureSearchClient chemDBClient, @NotNull HttpClient client) {
-        this(cacheDir, filter, chemDBClient, client, false);
+    public RESTDatabase(@Nullable BlobStorage cacheDir, @NotNull StructureSearchClient chemDBClient, @NotNull HttpClient client) {
+        this(cacheDir, chemDBClient, client, false);
     }
 
-    public RESTDatabase(@Nullable BlobStorage cacheDir, long filter, @NotNull StructureSearchClient chemDBClient, @NotNull HttpClient client, boolean closeClient) {
-        this.filter = filter;
+    public RESTDatabase(@Nullable BlobStorage cacheDir, @NotNull StructureSearchClient chemDBClient, @NotNull HttpClient client, boolean closeClient) {
         this.chemDBClient = chemDBClient;
         this.client = client;
         this.cache = new ChemDBFileCache(cacheDir != null ? cacheDir : defaultCache(), new SearchStructureByFormula() {
@@ -96,29 +94,29 @@ public class RESTDatabase implements AbstractChemicalDatabase {
 
     // closes clients
 
-    public RESTDatabase(long filter, @NotNull AuthService authService) {
-        this(filter, URI.create(FingerIDProperties.siriusFallbackWebHost()), authService);
+    public RESTDatabase(@NotNull AuthService authService) {
+        this(URI.create(FingerIDProperties.siriusFallbackWebHost()), authService);
     }
 
-    public RESTDatabase(long filter) {
-        this(filter, URI.create(FingerIDProperties.siriusFallbackWebHost()));
+    public RESTDatabase() {
+        this(URI.create(FingerIDProperties.siriusFallbackWebHost()));
     }
 
-    public RESTDatabase(long filter, @NotNull URI serverURL) {
-        this(RESTDatabase.defaultCache(), filter, new ChemDBClient(serverURL), HttpClients.createDefault(), true);
+    public RESTDatabase(@NotNull URI serverURL) {
+        this(RESTDatabase.defaultCache(), new ChemDBClient(serverURL), HttpClients.createDefault(), true);
     }
 
-    public RESTDatabase(long filter, @NotNull URI serverURL, @NotNull AuthService authService) {
-        this(RESTDatabase.defaultCache(), filter, new ChemDBClient(serverURL, authService), HttpClients.createDefault(), true);
+    public RESTDatabase(@NotNull URI serverURL, @NotNull AuthService authService) {
+        this(RESTDatabase.defaultCache(), new ChemDBClient(serverURL, authService), HttpClients.createDefault(), true);
     }
 
-    public RESTDatabase(long filter, @NotNull StructureSearchClient chemDBClient) {
-        this(RESTDatabase.defaultCache(), filter, chemDBClient, HttpClients.createDefault(), true);
+    public RESTDatabase(@NotNull StructureSearchClient chemDBClient) {
+        this(RESTDatabase.defaultCache(), chemDBClient, HttpClients.createDefault(), true);
     }
 
 
     @Override
-    public List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
+    public List<FormulaCandidate> lookupMolecularFormulas(long filter, double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
         try {
             return chemDBClient.getFormulas(mass, deviation, ionType, filter, client);
         } catch (IOException e) {
@@ -127,15 +125,16 @@ public class RESTDatabase implements AbstractChemicalDatabase {
     }
 
     @Override
-    public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
+    public List<CompoundCandidate> lookupStructuresByFormula(long filter, MolecularFormula formula) throws ChemicalDatabaseException {
         final ArrayList<CompoundCandidate> candidates = new ArrayList<>();
-        for (CompoundCandidate c : lookupStructuresAndFingerprintsByFormula(formula))
+        for (CompoundCandidate c : lookupStructuresAndFingerprintsByFormula(filter, formula))
             candidates.add(new CompoundCandidate(c));
         return candidates;
     }
 
+
     @Override
-    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
+    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(long filter, MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
         fingerprintCandidates.addAll(cache.lookupStructuresAndFingerprintsByFormula(formula, filter));
         return fingerprintCandidates;
     }
@@ -195,8 +194,13 @@ public class RESTDatabase implements AbstractChemicalDatabase {
     }
 
     @Override
+    public boolean containsFormula(long filter, MolecularFormula formula) throws ChemicalDatabaseException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public void close() {
-        if (closeCLient && client != null && client instanceof CloseableHttpClient) {
+        if (closeClient && client != null && client instanceof CloseableHttpClient) {
             try {
                 ((CloseableHttpClient)client).close();
             } catch (IOException e) {

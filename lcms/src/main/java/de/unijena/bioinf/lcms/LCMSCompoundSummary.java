@@ -55,6 +55,10 @@ public class LCMSCompoundSummary {
         checkMs2();
     }
 
+    public int points() {
+        return peakQuality.ordinal() + isotopeQuality.ordinal() + adductQuality.ordinal() + ms2Quality.ordinal();
+    }
+
     private void checkAdducts() {
         adductCheck = new ArrayList<>();
         HashSet<PrecursorIonType> possibleIonTypes;

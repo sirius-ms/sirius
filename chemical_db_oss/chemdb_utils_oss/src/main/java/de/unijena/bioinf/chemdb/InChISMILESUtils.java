@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
+import de.unijena.bioinf.babelms.utils.SmilesUCdk;
 import io.github.dan2097.jnainchi.InchiFlag;
 import io.github.dan2097.jnainchi.InchiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +48,6 @@ import org.openscience.cdk.smarts.Smarts;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.tools.manipulator.ChemFileManipulator;
-import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
@@ -105,22 +105,14 @@ public class InChISMILESUtils {
         return getInchi(getAtomContainerFromInchi(inchi), keepStereoInformation);
     }
 
-    public static InChI getInchiWithKey(String inchi, boolean keepStereoInformation, boolean logWarning) throws CDKException {
-        return getInchi(getAtomContainerFromInchi(inchi), keepStereoInformation, logWarning);
-    }
-
-    public static InChI getInchi(IAtomContainer atomContainer, boolean keepStereoInformation) throws CDKException {
-        return getInchi(atomContainer, keepStereoInformation, true);
-    }
-
     //    NEWPSOFF/DoNotAddH/SNon
-    public static InChI getInchi(IAtomContainer atomContainer, boolean keepStereoInformation, boolean logWarning) throws CDKException {
+    public static InChI getInchi(IAtomContainer atomContainer, boolean keepStereoInformation) throws CDKException {
         // this will create a standard inchi, see: https://egonw.github.io/cdkbook/inchi.html
         InChIGenerator inChIGenerator = InChIGeneratorFactory.getInstance().getInChIGenerator(atomContainer, keepStereoInformation ? new InchiFlag[0] : new InchiFlag[]{InchiFlag.SNon}); //removing stereoInformation produces much less warnings, including 'Omitted undefined stereo'
         InchiStatus state = inChIGenerator.getStatus();
         if (state != InchiStatus.ERROR) {
-            if (logWarning && (state == InchiStatus.WARNING))
-                LoggerFactory.getLogger(InChISMILESUtils.class).warn("Warning while reading AtomContainer: '" + atomContainer.getTitle() + "'\n-> " + inChIGenerator.getMessage());
+            if (state == InchiStatus.WARNING)
+                LoggerFactory.getLogger(InChISMILESUtils.class).debug("Warning while reading AtomContainer with title '" + atomContainer.getTitle() + "' -> " + inChIGenerator.getMessage());
             String inchi = inChIGenerator.getInchi();
             if (inchi == null) return null;
             if (!isStandardInchi(inchi))
@@ -152,7 +144,7 @@ public class InChISMILESUtils {
         InchiStatus state = structureGenerator.getStatus();
         if (state != InchiStatus.ERROR) {
             if (state == InchiStatus.WARNING)
-                LoggerFactory.getLogger(InChISMILESUtils.class).error("Warning while parsing InChI:\n'" + inchi + "'\n-> " + structureGenerator.getMessage());
+                LoggerFactory.getLogger(InChISMILESUtils.class).debug("Warning while parsing InChI:\n'" + inchi + "'\n-> " + structureGenerator.getMessage());
             return structureGenerator.getAtomContainer();
         } else {
             if (lazyErrorHandling) {
@@ -227,7 +219,6 @@ public class InChISMILESUtils {
     }
 
     public static IAtomContainer getAtomContainer(@NotNull Smiles smiles) throws CDKException {
-
         return getAtomContainerFromSmiles(smiles.smiles);
     }
 
@@ -247,19 +238,7 @@ public class InChISMILESUtils {
     }
 
     public static MolecularFormula formulaFromSmiles(String smiles) throws InvalidSmilesException, UnknownElementException {
-        SmilesParser smilesParser = new SmilesParser(DefaultChemObjectBuilder.getInstance());
-        IAtomContainer iAtomContainer = smilesParser.parseSmiles(smiles);
-        if (iAtomContainer == null) return null;
-        String s = MolecularFormulaManipulator.getString(MolecularFormulaManipulator.getMolecularFormula(iAtomContainer));
-        if (s == null) return null;
-        int formalCharge = getFormalChargeFromSmiles(smiles);
-        MolecularFormula formula = MolecularFormula.parse(s);
-        if (formalCharge == 0) return formula;
-        else if (formalCharge < 0) {
-            return formula.add(MolecularFormula.parse(String.valueOf(Math.abs(formalCharge) + "H")));
-        } else {
-            return formula.subtract(MolecularFormula.parse(String.valueOf(formalCharge + "H")));
-        }
+        return SmilesUCdk.formulaFromSmiles(smiles);
     }
 
     /**
@@ -362,11 +341,6 @@ public class InChISMILESUtils {
         Smiles smiles = new Smiles(s);
         System.out.println(get2DSmiles(smiles));
         System.out.println(get2DSmilesByTextReplace("C(C(/O)=C/C=C1(CC2(/C(\\C(=O)1)=C/C=CC=2)))([O-])=O"));
-
-
-
-
-
     }
 
 }

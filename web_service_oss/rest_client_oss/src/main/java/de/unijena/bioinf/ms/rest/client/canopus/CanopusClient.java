@@ -30,12 +30,12 @@ import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobOutput;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.InputStreamEntity;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.entity.InputStreamEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,8 +72,7 @@ public class CanopusClient extends AbstractCsiClient {
         return executeFromJson(client,
                 () -> {
                     final HttpPost post = new HttpPost(buildVersionSpecificWebapiURI("/canopus/" + CID + "/jobs").build());
-                    post.setEntity(new InputStreamEntity(new ByteArrayInputStream(
-                            new ObjectMapper().writeValueAsBytes(input))));
+                    post.setEntity(new InputStreamEntity(new ByteArrayInputStream(new ObjectMapper().writeValueAsBytes(input)), ContentType.APPLICATION_JSON));
                     post.setHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
                     return post;
                 }, new TypeReference<>() {

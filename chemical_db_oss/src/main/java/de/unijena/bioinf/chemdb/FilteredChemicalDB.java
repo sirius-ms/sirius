@@ -24,51 +24,66 @@ import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
-// this class is just a workaround to preserve support for old api of the internal csi Fingerid tools and should not
-// be used for new code
-@Deprecated
-public class FilteredChemicalDB implements AbstractChemicalDatabase, Cloneable {
+
+public class FilteredChemicalDB<DB extends AbstractChemicalDatabase> implements AbstractChemicalDatabase {
 
 
     private long filter = DataSource.ALL.flag();
-    private final ChemicalDatabase wrappedDB;
+    private final DB wrappedDB;
 
-    public FilteredChemicalDB() throws ChemicalDatabaseException {
-        super();
-        wrappedDB = new ChemicalDatabase();
+
+    public FilteredChemicalDB(DB db, long filter) {
+        this(db);
+        setFilterFlag(filter);
     }
 
-    public FilteredChemicalDB(ChemicalDatabase db) {
+    public FilteredChemicalDB(DB db) {
         wrappedDB = db;
     }
 
-    public long getBioFilter() {
+    public long getFilterFlag() {
         return filter;
     }
 
-    public void setBioFilter(long filter) {
+    public void setFilterFlag(long filter) {
         this.filter = filter;
     }
 
     @Override
     public List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
-        return wrappedDB.lookupMolecularFormulas(filter, mass, deviation, ionType);
+        if (wrappedDB instanceof FilterableChemicalDatabase)
+            return ((FilterableChemicalDatabase) wrappedDB).lookupMolecularFormulas(filter, mass, deviation, ionType);
+
+        return wrappedDB.lookupMolecularFormulas(mass, deviation, ionType).stream()
+                .filter(ChemDBs.inFilter((it) -> it.bitset, filter)).collect(Collectors.toList());
+
     }
 
     @Override
     public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
-        return wrappedDB.lookupStructuresByFormula(filter, formula);
+        if (wrappedDB instanceof FilterableChemicalDatabase)
+            return ((FilterableChemicalDatabase) wrappedDB).lookupStructuresByFormula(filter, formula);
+
+        return wrappedDB.lookupStructuresByFormula(formula).stream()
+                .filter(ChemDBs.inFilter((it) -> it.bitset, filter)).collect(Collectors.toList());
     }
 
 
     @Override
     public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
-        return wrappedDB.lookupStructuresAndFingerprintsByFormula(filter, formula, fingerprintCandidates);
+        if (wrappedDB instanceof FilterableChemicalDatabase)
+            return ((FilterableChemicalDatabase) wrappedDB).lookupStructuresAndFingerprintsByFormula(filter, formula, fingerprintCandidates);
+
+        wrappedDB.lookupStructuresAndFingerprintsByFormula(formula, fingerprintCandidates);
+        fingerprintCandidates.removeIf(ChemDBs.notInFilter((it) -> it.bitset, filter));
+        return fingerprintCandidates;
     }
 
     @Override
@@ -106,19 +121,19 @@ public class FilteredChemicalDB implements AbstractChemicalDatabase, Cloneable {
         wrappedDB.close();
     }
 
-    public FilteredChemicalDB clone(){
-        FilteredChemicalDB clone = new FilteredChemicalDB(wrappedDB.clone()); //todo maybe we should not clone wrapped db here
-        clone.setBioFilter(filter);
-        return clone;
-    }
-
-    public ChemicalDatabase getWrappedDB() {
+    public DB getWrappedDB() {
         return wrappedDB;
     }
 
     @Override
     public boolean containsFormula(MolecularFormula formula) throws ChemicalDatabaseException {
-        throw new UnsupportedOperationException();
+        if (wrappedDB instanceof FilterableChemicalDatabase)
+            return ((FilterableChemicalDatabase) wrappedDB).containsFormula(filter, formula);
+
+        LoggerFactory.getLogger(getClass()).warn("Filtered containsFormula not natively supported by wrappedDB ("
+                + wrappedDB.getClass().getSimpleName() + "). Might be slower than expected!");
+
+        return wrappedDB.containsFormula(formula) && !lookupStructuresByFormula(formula).isEmpty();
     }
 
     @Override

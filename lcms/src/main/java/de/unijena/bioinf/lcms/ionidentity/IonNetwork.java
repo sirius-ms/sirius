@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.lcms.CorrelatedPeakDetector;
+import de.unijena.bioinf.lcms.InternalStatistics;
 import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.lcms.align.AlignedFeatures;
@@ -48,6 +49,17 @@ public class IonNetwork {
     public IonNetwork() {
         this.nodes = new ArrayList<>();
         signalIntensities = new TFloatArrayList();
+    }
+
+    public void collectStatistics(InternalStatistics statistics) {
+        for (IonNode node : nodes) {
+            for (Edge e : node.neighbours) {
+                if (e.from.mz < e.to.mz) {
+                    statistics.interFeatureCorrelation.add(e.calculateInterSampleCorrelation(0d)[2]);
+                    statistics.intraFeatureCorrelation.add(e.calculateIntraSampleCorrelation());
+                }
+            }
+        }
     }
 
     public void deleteSingletons() {
@@ -342,7 +354,8 @@ public class IonNetwork {
         //final double weighted = interSampleCorrelationScore[0]*interSampleCorrelationScore[3];
         final double scoreExtra = edge.calculateEdgeScore(signalThreshold);
         edge.debugScoreExtra = scoreExtra;
-        edge.score = (float)(intraSampleCorrelationScore+ scoreExtra);//(float)(intraSampleCorrelationScore + weighted);
+        edge.correlationGroups = p.getValue().stream().map(x->x.correlation).toArray(CorrelationGroup[]::new);
+        edge.score = (float)(intraSampleCorrelationScore+ scoreExtra);//(float)// (intraSampleCorrelationScore + weighted);
     }
 
     private static class Link {

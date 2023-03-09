@@ -51,7 +51,7 @@ public class FingerIdDataSerializer implements ComponentSerializer<ProjectSpaceC
 
     @Override
     public void delete(ProjectWriter writer, ProjectSpaceContainerId id) throws IOException {
-        writer.delete(FINGERID_CLIENT_DATA);
-        writer.delete(FINGERID_CLIENT_DATA_NEG);
+        writer.deleteIfExists(FINGERID_CLIENT_DATA);
+        writer.deleteIfExists(FINGERID_CLIENT_DATA_NEG);
     }
 }

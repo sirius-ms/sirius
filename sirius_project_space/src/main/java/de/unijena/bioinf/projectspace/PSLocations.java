@@ -23,5 +23,6 @@ package de.unijena.bioinf.projectspace;
 public interface PSLocations {
     String
             FORMAT = ".format",
+            VERSION = ".version",
             COMPRESSION = ".compression";
 }

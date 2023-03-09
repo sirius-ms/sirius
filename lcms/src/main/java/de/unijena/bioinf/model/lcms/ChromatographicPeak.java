@@ -131,6 +131,8 @@ public interface ChromatographicPeak {
         protected final int startIndex, endIndex, apex;
         protected final int fwhmStart, fwhmEnd;
 
+        protected boolean noise;
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -144,7 +146,7 @@ public interface ChromatographicPeak {
             return Objects.hash(peak, apex);
         }
 
-        Segment(ChromatographicPeak peak, int startIndex, int apex, int endIndex) {
+        Segment(ChromatographicPeak peak, int startIndex, int apex, int endIndex, boolean noise) {
             this.peak = peak;
             this.startIndex = startIndex;
             this.endIndex = endIndex;
@@ -152,6 +154,11 @@ public interface ChromatographicPeak {
             final Range<Integer> fwhm = calculateFWHM(0.5);
             this.fwhmEnd = fwhm.upperEndpoint();
             this.fwhmStart = fwhm.lowerEndpoint();
+            this.noise = noise;
+        }
+
+        public boolean isNoise() {
+            return noise;
         }
 
         void setMinMaxScanIndex(int[] scanIndex, int surrounding) {

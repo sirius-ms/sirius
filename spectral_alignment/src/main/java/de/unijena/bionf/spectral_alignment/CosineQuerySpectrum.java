@@ -107,4 +107,17 @@ public class CosineQuerySpectrum implements Spectrum<Peak> {
     public Iterator<Peak> iterator() {
         return spectrum.iterator();
     }
+
+    public double entropy() {
+        double entropy = 0d;
+        double sum=0d;
+        for (int i=0; i < spectrum.size(); ++i) {
+            sum += spectrum.getIntensityAt(i);
+        }
+        for (int i=0; i < spectrum.size(); ++i) {
+            double j = spectrum.getIntensityAt(i)/sum;
+            entropy -= j*Math.log(j);
+        }
+        return entropy;
+    }
 }

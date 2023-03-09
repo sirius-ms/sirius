@@ -59,7 +59,6 @@ distributions {
         contents {
             into('lib') {
                 from("build/install/${project.name}/lib")
-                from("${project.glpkPath}/l64/")
             }
 
             into('bin') {
@@ -71,7 +70,6 @@ distributions {
         }
 
     }
-    linux64DistZip.dependsOn ':downloadGLPK'
 
     getTasksByName("linux64DistTar", false).each {it.setEnabled(false)}
     getTasksByName("linux64DistTar", false).each { it.setEnabled(false)}

@@ -199,7 +199,7 @@ public abstract class AbstractSpectralAlignment {
 
     }
 
-    private int backtraceAndCountMatchedPeaks(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right, MatchesMatrix backtrace, int imax, int jmax, double maxScore){
+    protected int backtraceAndCountMatchedPeaks(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right, MatchesMatrix backtrace, int imax, int jmax, double maxScore){
         //todo take only one best match. should result in same number of peaks!?!?
         int i = imax;
         int j = jmax;
@@ -243,7 +243,7 @@ public abstract class AbstractSpectralAlignment {
     protected abstract double maxAllowedDifference(double mz);
 
 
-    private static class MatchesMatrix {
+    protected static class MatchesMatrix {
         private int leftN, rightN;
         TIntHashSet pairedIndexSet;
 

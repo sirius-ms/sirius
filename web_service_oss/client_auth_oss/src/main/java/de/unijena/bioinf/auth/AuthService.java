@@ -31,15 +31,11 @@ import com.github.scribejava.core.oauth.OAuth20Service;
 import com.github.scribejava.core.revoke.TokenTypeHint;
 import com.github.scribejava.httpclient.apache.ApacheHttpClient;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
-import org.apache.http.Header;
-import org.apache.http.HeaderElement;
-import org.apache.http.ParseException;
-import org.apache.http.annotation.Contract;
-import org.apache.http.annotation.ThreadingBehavior;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
-import org.apache.http.message.BasicHeaderElement;
-import org.apache.http.message.BasicHeaderValueParser;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
+import org.apache.hc.core5.annotation.Contract;
+import org.apache.hc.core5.annotation.ThreadingBehavior;
+import org.apache.hc.core5.http.Header;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -47,21 +43,27 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Date;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Supplier;
+import java.util.function.Consumer;
+
 
 public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Closeable {
-
     private OAuth20Service service;
 
     @Nullable
     private String refreshToken;
+    @Nullable
     private Token token;
+
+    // we could add even more such hooks in the future
+    private final LinkedHashSet<Consumer<AuthService>> postRefreshHooks = new LinkedHashSet<>();
+
+    public LinkedHashSet<Consumer<AuthService>> postRefreshHooks() {
+        return postRefreshHooks;
+    }
 
 
     protected final ReadWriteLock tokenLock = new ReentrantReadWriteLock();
@@ -69,27 +71,58 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
     private int minLifetime = 900000;
 
 
-    public AuthService(@NotNull DefaultApi20 authAPI, @NotNull String clientID) {
-        this(authAPI, clientID, null);
+    @SafeVarargs
+    public AuthService(@NotNull DefaultApi20 authAPI, @NotNull String clientID, Consumer<AuthService>... postRefreshHooks) {
+        this(authAPI, clientID, null, postRefreshHooks);
     }
 
-    public AuthService(@NotNull DefaultApi20 authAPI, @NotNull String clientID, @Nullable CloseableHttpAsyncClient client) {
-        this(authAPI, clientID, null, null, client);
+    @SafeVarargs
+    public AuthService(@NotNull DefaultApi20 authAPI, @NotNull String clientID, @Nullable CloseableHttpAsyncClient client, Consumer<AuthService>... postRefreshHooks) {
+        this(authAPI, clientID, null, null, client, postRefreshHooks);
     }
 
-    public AuthService(@NotNull DefaultApi20 authAPI, @NotNull String clientID, @Nullable String clientSecret, @Nullable String refreshToken) {
-        this(authAPI, clientID, clientSecret, refreshToken, null);
+    @SafeVarargs
+    public AuthService(@NotNull DefaultApi20 authAPI, @NotNull String clientID, @Nullable String clientSecret, @Nullable String refreshToken, Consumer<AuthService>... postRefreshHooks) {
+        this(authAPI, clientID, clientSecret, refreshToken, null, postRefreshHooks);
     }
 
-    public AuthService(@NotNull DefaultApi20 authAPI, @NotNull String clientID, @Nullable String clientSecret, @Nullable String refreshToken, @Nullable CloseableHttpAsyncClient client) {
-        this(buildService(authAPI, clientID, clientSecret, client), refreshToken);
+    @SafeVarargs
+    public AuthService(@NotNull DefaultApi20 authAPI, @NotNull String clientID, @Nullable String clientSecret, @Nullable String refreshToken, @Nullable CloseableHttpAsyncClient client, Consumer<AuthService>... postRefreshHooks) {
+        this(buildService(authAPI, clientID, clientSecret, client), refreshToken, postRefreshHooks);
     }
 
-    public AuthService(@NotNull OAuth20Service service, @Nullable String refreshToken) {
-        this.refreshToken = refreshToken;
+    @SafeVarargs
+    public AuthService(@NotNull OAuth20Service service, @Nullable String refreshToken, Consumer<AuthService>... postRefreshHooks) {
         this.service = service;
+        if (postRefreshHooks != null && postRefreshHooks.length > 0)
+            this.postRefreshHooks.addAll(List.of(postRefreshHooks));
+        tokenLock.writeLock().lock();
+        try {
+            if (refreshToken != null)
+                setTokens(requestAccessTokenRefreshFlow(refreshToken));
+        } catch (Exception e) {
+            LoggerFactory.getLogger(getClass()).error("Error when using given refresh_token. Not logged in. Re-login with PW Flow might be necessary", e);
+            logout();
+        } finally {
+            tokenLock.writeLock().unlock();
+        }
     }
 
+
+    private void setTokens(@Nullable Token token) {
+        if (token != null) {
+            this.token = token;
+            if (token.getSource().getRefreshToken() != null) {
+                this.refreshToken = token.getSource().getRefreshToken(); //replace with fresh token if available
+                postRefreshHooks.forEach(it -> it.accept(this));
+            }
+
+        } else {
+            this.token = null;
+            this.refreshToken = null;
+            postRefreshHooks.forEach(it -> it.accept(this));
+        }
+    }
 
     private static OAuth20Service buildService(@NotNull DefaultApi20 authAPI, @NotNull String clientID, @Nullable String clientSecret, @Nullable CloseableHttpAsyncClient client) {
         ServiceBuilder b = new ServiceBuilder(clientID);
@@ -125,8 +158,12 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
         return new Token((OpenIdOAuth2AccessToken) service.refreshAccessToken(refreshToken));
     }
 
+    private Token requestAccessTokenRefreshFlow(@NotNull String refreshToken) throws IOException, ExecutionException, InterruptedException {
+        return new Token((OpenIdOAuth2AccessToken) service.refreshAccessToken(refreshToken));
+    }
+
     protected Token requestAccessTokenPasswordFlow(String username, String password) throws IOException, ExecutionException, InterruptedException {
-        return new Token((OpenIdOAuth2AccessToken) service.getAccessTokenPasswordGrant(username, password, "offline_access openid")); //request token and new refresh token
+        return new Token((OpenIdOAuth2AccessToken) service.getAccessTokenPasswordGrant(username, password, "offline_access openid license:thin license:full")); // license:full request token and new refresh token
     }
 
     /**
@@ -136,12 +173,12 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
      * @return true if the refresh token is not NULL and valid.
      */
     protected boolean isRefreshTokenValid() {
-        if (refreshToken == null || refreshToken.isBlank())
+        if (!hasRefreshToken())
             return false;
 
         tokenLock.writeLock().lock();
         try {
-            token = requestAccessTokenRefreshFlow();
+            setTokens(requestAccessTokenRefreshFlow());
         } catch (IOException | InterruptedException | ExecutionException e) {
             LoggerFactory.getLogger(getClass()).warn("Error when refreshing access_token with current refresh_token.", e);
             return false;
@@ -149,6 +186,10 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
             tokenLock.writeLock().unlock();
         }
         return true;
+    }
+
+    protected boolean hasRefreshToken() {
+        return refreshToken != null && !refreshToken.isBlank();
     }
 
     /**
@@ -197,11 +238,11 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
             try {
                 if (force || needsRefreshRaw()) {
                     if (hasClientSecret()) {
-                        token = requestAccessTokenClientFlow(); //todo add email or openID scope?
+                        setTokens(requestAccessTokenClientFlow());
                     } else {
-                        if (refreshToken == null || refreshToken.isBlank())
+                        if (!hasRefreshToken())
                             throw new LoginException(new NullPointerException("Refresh token is null or empty!"));
-                        token = requestAccessTokenRefreshFlow();
+                        setTokens(requestAccessTokenRefreshFlow());
                     }
                 }
             } catch (IOException | InterruptedException | ExecutionException e) {
@@ -216,18 +257,16 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
     public void login(String username, String password) throws IOException, ExecutionException, InterruptedException {
         tokenLock.writeLock().lock();
         try {
-            token = requestAccessTokenPasswordFlow(username, password);
-            refreshToken = token.getSource().getRefreshToken();
+            setTokens(requestAccessTokenPasswordFlow(username, password));
         } finally {
             tokenLock.writeLock().unlock();
         }
     }
 
-    public void login(String refreshToken) throws IOException {
+    public void login(String refreshToken) throws IOException, ExecutionException, InterruptedException {
         tokenLock.writeLock().lock();
         try {
-            this.refreshToken = refreshToken;
-            refreshIfNeeded();
+            setTokens(requestAccessTokenRefreshFlow(refreshToken));
         } finally {
             tokenLock.writeLock().unlock();
         }
@@ -241,23 +280,10 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
 
     @Contract(threading = ThreadingBehavior.IMMUTABLE)
     private static class TokenHeader implements Header {
-        private static final HeaderElement[] EMPTY_HEADER_ELEMENTS = new HeaderElement[]{};
-
         private final IOFunctions.IOSupplier<String> tokenSupplier;
 
         private TokenHeader(IOFunctions.IOSupplier<String> tokenSupplier) {
             this.tokenSupplier = tokenSupplier;
-        }
-
-        @Override
-        public HeaderElement[] getElements() throws ParseException {
-            String v = this.getValue();
-            if (v != null) {
-                // result intentionally not cached, it's probably not used again
-                String[] vs = v.split(" ");
-                return new HeaderElement[]{new BasicHeaderElement(vs[0], vs[1])};
-            }
-            return EMPTY_HEADER_ELEMENTS;
         }
 
         @Override
@@ -272,6 +298,11 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+        }
+
+        @Override
+        public boolean isSensitive() {
+            return true;
         }
     }
 
@@ -294,8 +325,7 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
                 }
             }
 
-            token = null;
-            refreshToken = null;
+            setTokens(null);
         } finally {
             tokenLock.writeLock().unlock();
         }

@@ -80,7 +80,7 @@ import java.util.zip.CRC32;
  * @cdk.module     standard
  * @cdk.githash
  */
-class CircularFingerprinter extends AbstractFingerprinter implements IFingerprinter {
+public class CircularFingerprinterMod extends AbstractFingerprinter implements IFingerprinter {
 
     // ------------ constants ------------
 
@@ -151,7 +151,7 @@ class CircularFingerprinter extends AbstractFingerprinter implements IFingerprin
     /**
      * Default constructor: uses the ECFP6 type.
      */
-    public CircularFingerprinter() {
+    public CircularFingerprinterMod() {
         this(CLASS_ECFP6);
     }
 
@@ -162,7 +162,7 @@ class CircularFingerprinter extends AbstractFingerprinter implements IFingerprin
      *
      * @param classType one of CLASS_ECFP{n} or CLASS_FCFP{n}
      */
-    public CircularFingerprinter(int classType) {
+    public CircularFingerprinterMod(int classType) {
         this(classType, 1024);
     }
 
@@ -174,7 +174,7 @@ class CircularFingerprinter extends AbstractFingerprinter implements IFingerprin
      * @param classType one of CLASS_ECFP{n} or CLASS_FCFP{n}
      * @param len size of folded (binary) fingerprint                  
      */
-    public CircularFingerprinter(int classType, int len) {
+    public CircularFingerprinterMod(int classType, int len) {
         if (classType < 1 || classType > 8)
             throw new IllegalArgumentException("Invalid classType specified: " + classType);
         this.classType = classType;

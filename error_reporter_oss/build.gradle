@@ -25,8 +25,8 @@ dependencies {
     compile group: 'org.apache.commons', name: 'commons-email', version: "$commons_email_version"
     compile group: 'com.github.oshi', name: 'oshi-core', version: "$oshi_version"
     // json marshalling
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version:"2.9.5"
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:"2.9.5"
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version:"$jackson_version"
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:"$jackson_version"
 }
 
 

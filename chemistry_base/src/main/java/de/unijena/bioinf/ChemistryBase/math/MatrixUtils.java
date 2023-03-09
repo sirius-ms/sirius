@@ -216,6 +216,26 @@ public class MatrixUtils {
         return unflatVector(vector, M);
     }
 
+    public static long[] flatMatrix(long[][] matrix, long[] values) {
+        int offset = 0;
+        long[][] var3 = matrix;
+        int var4 = matrix.length;
+
+        for(int var5 = 0; var5 < var4; ++var5) {
+            long[] m = var3[var5];
+            System.arraycopy(m, 0, values, offset, m.length);
+            offset += m.length;
+        }
+
+        return values;
+    }
+    public static long[] flatMatrix(long[][] matrix) {
+        int count = 0;
+        for (long[] m : matrix) count += m.length;
+        final long[] values = new long[count];
+        return flatMatrix(matrix, values);
+    }
+
     public static double[] flatMatrix(double[][] matrix, double[] values) {
         int offset = 0;
         for (double[] m : matrix) {
@@ -560,6 +580,44 @@ public class MatrixUtils {
             }
         };
     }
+    public static BasicMasterJJob<float[][]> parallelizeSymmetricMatrixComputation(float[][] matrix, MatrixComputationFunction function) {
+        return new BasicMasterJJob<float[][]>(JJob.JobType.CPU) {
+            @Override
+            protected float[][] compute() throws Exception {
+
+                final int middle = matrix.length/2;
+                for (int row=0; row < middle; ++row) {
+                    final int ROW = row;
+                    submitSubJob(new BasicJJob<Object>() {
+                        @Override
+                        protected Object compute() throws Exception {
+                            for (int i=0; i <= ROW; ++i) {
+                                matrix[ROW][i] = matrix[i][ROW] = (float)function.compute(ROW, i);
+                            }
+                            int row2 = matrix.length-ROW-1;
+                            for (int i=0; i <= row2; ++i) {
+                                matrix[row2][i] = matrix[i][row2] = (float)function.compute(row2, i);
+                            }
+                            return true;
+                        }
+                    });
+                }
+                if (matrix.length % 2 != 0) {
+                    submitSubJob(new BasicJJob<Object>() {
+                        @Override
+                        protected Object compute() throws Exception {
+                            for (int k=0; k <= middle; ++k) {
+                                matrix[middle][k] = matrix[k][middle] = (float)function.compute(middle,k);
+                            }
+                            return true;
+                        }
+                    });
+                }
+                awaitAllSubJobs();
+                return matrix;
+            }
+        };
+    }
     // I >= J
     public static BasicMasterJJob<Object> parallelizeSymmetricMatrixComputation(int size, GenericMatrixComputationFunction function) {
         return new BasicMasterJJob<Object>(JJob.JobType.CPU) {
@@ -860,6 +918,20 @@ public class MatrixUtils {
 
     public static interface IntComparator {
         public int compare(int a, int b);
+    }
+
+    public static <T> int[] argsort(int size, IntComparator comparator) {
+        int[] indizes = new int[size];
+        fillIndizes(indizes);
+        argsort(indizes, (i,j)->comparator.compare(i,j));
+        return indizes;
+    }
+
+    public static <T> int[] argsort(T[] values, Comparator<T> comp) {
+        int[] indizes = new int[values.length];
+        fillIndizes(indizes);
+        argsort(indizes, (i,j)->comp.compare(values[i],values[j]));
+        return indizes;
     }
 
     public static int[] argsort(int[] values) {

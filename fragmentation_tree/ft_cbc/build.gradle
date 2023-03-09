@@ -1,0 +1,4 @@
+dependencies {
+    implementation project(':fragmentation_tree:fragmentation_tree_construction')
+    implementation ("de.unijena.bioinf.cbc-java:cbc-java:${cbc_version}")
+}

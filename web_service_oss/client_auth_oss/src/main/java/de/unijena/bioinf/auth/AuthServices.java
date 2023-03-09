@@ -20,11 +20,10 @@
 
 package de.unijena.bioinf.auth;
 
-import com.auth0.jwt.interfaces.DecodedJWT;
 import com.github.scribejava.apis.Auth0Api;
 import de.unijena.bioinf.babelms.utils.Base64;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
+import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -35,6 +34,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.function.Consumer;
 
 public class AuthServices {
     private AuthServices() {
@@ -53,7 +53,21 @@ public class AuthServices {
             LoggerFactory.getLogger(AuthServices.class).warn("Could not read refresh token from file! (re)login might be needed!", e);
         }
 
-        return createDefault(audience, rToken, client);
+        return createDefault(audience, rToken, client, as -> {
+            if (as.hasRefreshToken()) {
+                try {
+                    writeRefreshToken(as, refreshTokenFile);
+                } catch (IOException e) {
+                    LoggerFactory.getLogger(AuthServices.class).warn("Error when writing refresh token. Login might not be persistent. You probably have to re-login next time", e);
+                }
+            } else {
+                try {
+                    clearRefreshToken(refreshTokenFile);
+                } catch (IOException e) {
+                    LoggerFactory.getLogger(AuthServices.class).warn("Error when try to remove refresh token. Token might still be present at '" + refreshTokenFile + "'. Please remove the file manually to ensure that your are logged out!", e);
+                }
+            }
+        });
     }
 
     public static AuthService createDefault(@NotNull URI audienceURI, @Nullable CloseableHttpAsyncClient client) throws MalformedURLException {
@@ -69,11 +83,12 @@ public class AuthServices {
         return createDefault(audienceFromURI(audienceURI), rToken, client);
     }
 
-    protected static AuthService createDefault(@NotNull String audience, @Nullable String rToken, @Nullable CloseableHttpAsyncClient client) throws MalformedURLException {
+    @SafeVarargs
+    protected static AuthService createDefault(@NotNull String audience, @Nullable String rToken, @Nullable CloseableHttpAsyncClient client, Consumer<AuthService>... postRefreshHooks) throws MalformedURLException {
         return new AuthService(createDefaultApi(audience),
                 PropertyManager.getProperty("de.unijena.bioinf.sirius.security.clientID"),
                 PropertyManager.getProperty("de.unijena.bioinf.sirius.security.clientSecret"),
-                rToken, client);
+                rToken, client, postRefreshHooks);
     }
 
     public static Auth0Api createDefaultApi(@NotNull URI audienceURI) {
@@ -89,6 +104,10 @@ public class AuthServices {
     }
 
     public static void writeRefreshToken(@NotNull AuthService service, @NotNull Path refreshTokenFile) throws IOException {
+        writeRefreshToken(service, refreshTokenFile, false);
+    }
+
+    public static void writeRefreshToken(@NotNull AuthService service, @NotNull Path refreshTokenFile, final boolean ignoreMissing) throws IOException {
         if (!service.needsLogin()) {
             if (service.getRefreshToken() != null) {
                 writeRefreshToken(service.getRefreshToken(), refreshTokenFile);
@@ -96,7 +115,8 @@ public class AuthServices {
                 LoggerFactory.getLogger(AuthServices.class).warn("Cannot write refresh token. Given Service seems to rely on client credentials flow, so  refresh token is obsolete. Skipping!");
             }
         } else {
-            throw new LoginException(new IllegalStateException("Cannot save refresh token if user is not logged in."));
+            if (!ignoreMissing)
+                throw new LoginException(new IllegalStateException("Cannot save refresh token if user is not logged in."));
         }
     }
 

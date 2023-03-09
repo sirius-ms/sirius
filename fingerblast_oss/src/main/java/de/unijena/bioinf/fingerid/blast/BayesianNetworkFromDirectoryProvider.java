@@ -23,6 +23,7 @@ package de.unijena.bioinf.fingerid.blast;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.exceptions.InsufficientDataException;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
+import de.unijena.bioinf.chemdb.AbstractChemicalDatabase;
 import de.unijena.bioinf.chemdb.ChemicalDatabase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +42,7 @@ public class BayesianNetworkFromDirectoryProvider implements BayesianNetworkScor
 
     private final static String filePrefix = "bayesianScoring_";
     private final static String fileSuffix = "";
-    private final ChemicalDatabase chemDB;
+    private final AbstractChemicalDatabase chemDB;
 
     private final ReadWriteLock lock;
 
@@ -49,7 +50,7 @@ public class BayesianNetworkFromDirectoryProvider implements BayesianNetworkScor
 
     private final boolean autoSaveComputedScorings;
 
-    public BayesianNetworkFromDirectoryProvider(Path scoringDirectory, BayesianScoringUtils bayesianScoringUtils, ChemicalDatabase chemDB, boolean autoSaveComputedScorings) {
+    public BayesianNetworkFromDirectoryProvider(Path scoringDirectory, BayesianScoringUtils bayesianScoringUtils, AbstractChemicalDatabase chemDB, boolean autoSaveComputedScorings) {
         this.lock = new ReentrantReadWriteLock();
         if (!Files.exists(scoringDirectory))
             throw new IllegalArgumentException("Directory does not exist, please create first: " + scoringDirectory);
@@ -61,7 +62,7 @@ public class BayesianNetworkFromDirectoryProvider implements BayesianNetworkScor
         this.chemDB = chemDB;
     }
 
-    public BayesianNetworkFromDirectoryProvider(Path scoringDirectory, BayesianScoringUtils bayesianScoringUtils, ChemicalDatabase chemDB) {
+    public BayesianNetworkFromDirectoryProvider(Path scoringDirectory, BayesianScoringUtils bayesianScoringUtils, AbstractChemicalDatabase chemDB) {
         this(scoringDirectory, bayesianScoringUtils, chemDB, true);
     }
 
@@ -142,7 +143,9 @@ public class BayesianNetworkFromDirectoryProvider implements BayesianNetworkScor
             lock.writeLock().unlock();
             return defaultScoring;
         } else {
-            BayesnetScoring scoring = bayesianScoringUtils.computeDefaultScoring(chemDB);
+            if (! (chemDB instanceof ChemicalDatabase))
+                throw new UnsupportedOperationException("Default scoring can only be computed with SQL based chemDB");
+            BayesnetScoring scoring = bayesianScoringUtils.computeDefaultScoring((ChemicalDatabase) chemDB);
             lock.writeLock().lock();
             if (defaultScoring!=null) {
                 lock.writeLock().unlock();

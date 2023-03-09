@@ -162,12 +162,14 @@ public class MzMLParser implements LCMSParser {
                 Precursor precursor = null;
                 double collisionEnergy = Double.NaN;
                 if (msLevel > 1) {
-                    precursor = spectrum.getPrecursorList().getPrecursor().get(0);
-                    collisionEnergy = precursor.getActivation().getCvParam().stream().filter(cv -> cv.getAccession().equals("MS:1000045"))
-                            .findFirst().map(cv -> Double.parseDouble(cv.getValue())).orElse(0d);
-
-
-
+                    if (spectrum.getPrecursorList()==null || spectrum.getPrecursorList().getPrecursor()==null || spectrum.getPrecursorList().getPrecursor().isEmpty()) {
+                        precursor = null;
+                        LoggerFactory.getLogger(MzMLParser.class).warn("No precursor given for MS/MS spectra");
+                    } else {
+                        precursor = spectrum.getPrecursorList().getPrecursor().get(0);
+                        collisionEnergy = precursor.getActivation().getCvParam().stream().filter(cv -> cv.getAccession().equals("MS:1000045"))
+                                .findFirst().map(cv -> Double.parseDouble(cv.getValue())).orElse(0d);
+                    }
                 }
 
                 double[] mzArray = null;

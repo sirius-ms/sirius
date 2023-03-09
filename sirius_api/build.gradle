@@ -26,8 +26,6 @@ dependencies {
     compile project(':isotope_pattern:isotope_pattern_analysis')
     compile project(':isotope_pattern:sirius_isotopes')
     compile project(':fragmentation_tree:fragmentation_tree_construction')
-    compile project(':fragmentation_tree:ft_cplex')
-    compile project(':fragmentation_tree:ft_gurobi')
     compile project(':utils')
     compile project(':spectral_alignment')
     compile project(':elgordo')

@@ -20,7 +20,5 @@
 
 dependencies() {
     compile project(':fragmentation_tree:fragmentation_tree_construction')
-    compile project(':fragmentation_tree:ft_cplex')
-    compile project(':fragmentation_tree:ft_gurobi')
     compile project(':isotope_pattern:isotope_pattern_analysis')
 }

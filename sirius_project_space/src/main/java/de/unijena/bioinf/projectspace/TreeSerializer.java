@@ -62,15 +62,14 @@ public class TreeSerializer implements ComponentSerializer<FormulaResultId, Form
     @Override
     public void delete(ProjectWriter writer, FormulaResultId id) throws IOException {
         //delete trees
-        writer.inDirectory(TREES.relDir(), () -> {
-            writer.deleteIfExists(TREES.fileName(id));
-            return true;
-        });
+        writer.deleteIfExists(TREES.relFilePath(id));
+        writer.deleteIfExists(SPECTRA.relFilePath(id));
+    }
 
-        //delete annotated spectra
-        writer.inDirectory(SPECTRA.relDir(), () -> {
-            writer.deleteIfExists(SPECTRA.fileName(id));
-            return true;
-        });
+    @Override
+    public void deleteAll(ProjectWriter writer) throws IOException {
+        //delete trees
+        writer.deleteIfExists(TREES.relDir());
+        writer.deleteIfExists(SPECTRA.relDir());
     }
 }

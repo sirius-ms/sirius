@@ -175,6 +175,8 @@ public class CombinatorialFragmenter {
         BitSet nbitset = ((BitSet)F.bitset.clone());
         nbitset.andNot(bitset);
         final CombinatorialFragment b = new CombinatorialFragment(F.parent, nbitset, F.disconnectedRings);
+        a.inverse = b;
+        b.inverse = a;
         return new CombinatorialFragment[]{a,b};
     }
 
@@ -203,6 +205,8 @@ public class CombinatorialFragmenter {
         BitSet nbitset = ((BitSet)F.bitset.clone());
         nbitset.andNot(bitset);
         final CombinatorialFragment b = new CombinatorialFragment(F.parent, nbitset, disc);
+        a.inverse = b;
+        b.inverse = a;
         return new CombinatorialFragment[]{a,b};
     }
 }
