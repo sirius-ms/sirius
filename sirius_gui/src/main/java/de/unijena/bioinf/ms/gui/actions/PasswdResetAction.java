@@ -20,14 +20,9 @@
 package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.auth.UserPortal;
-import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.ms.gui.login.UserPasswordResetDialog;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
 import java.net.URI;
-
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -42,12 +37,5 @@ public class PasswdResetAction extends AbstractUserPortalAction {
     @Override
     URI path() {
         return UserPortal.pwResetURL();
-    }
-
-    @Override
-    @Deprecated(forRemoval = true) //todo use super method instead
-    public synchronized void actionPerformed(ActionEvent e) {
-        boolean r = new UserPasswordResetDialog(MF, ApplicationCore.WEB_API.getAuthService()).hasPerformedReset();
-        firePropertyChange("pwd-reset", false, r);
     }
 }

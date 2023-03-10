@@ -58,13 +58,7 @@ import java.util.stream.Collectors;
 
 @CommandLine.Command(name = "login", description = "<STANDALONE> Allows a user to login for SIRIUS Webservices (e.g. CSI:FingerID or CANOPUS) and securely store a personal access token.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> {
-
-    // RESET Account password
-    @CommandLine.Option(names = "--reset-password",
-            description = {"Delete stored refresh/access token (re-login required to use webservices)"})
-    protected String emailToReset;
-
-    // DELETE Account
+    // DELETE Token
     @CommandLine.Option(names = {"--logout", "--clear"},
             description = {"Logout. Deletes stored refresh and access token (re-login required to use webservices again)."})
     protected boolean clearLogin;
@@ -188,19 +182,6 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                 }
                 return;
             }
-
-            if (emailToReset != null) {
-                try {
-                    if (!emailToReset.contains("@"))
-                        throw new IllegalArgumentException("'" + emailToReset + "' id not a valid email address! No password reset request sent.");
-                    ApplicationCore.WEB_API.getAuthService().sendPasswordReset(emailToReset);
-                    System.out.println("Password reset request sent to '" + emailToReset + "'.");
-                } catch (IOException | ExecutionException | InterruptedException e) {
-                    LoggerFactory.getLogger(getClass()).error("Error when sending password reset request.", e);
-                }
-                return;
-            }
-
 
             if (login != null) {
                 AuthService service = ApplicationCore.WEB_API.getAuthService();
