@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.middleware.login;
 
 import de.unijena.bioinf.auth.AuthService;
+import de.unijena.bioinf.auth.UserPortal;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.middleware.login.model.AccountCredentials;
 import de.unijena.bioinf.ms.middleware.login.model.AccountInfo;
@@ -118,8 +119,8 @@ public class LoginController {
      * Get SignUp URL (For signUp via web browser)
      */
     @GetMapping(value = "/signUpURL", produces =  MediaType.TEXT_PLAIN_VALUE + ";charset=UTF-8") //specify utf-8 because some generated clients have problems if not specified explicitly
-    public String getSignUpURL() throws URISyntaxException {
-        return ApplicationCore.WEB_API.getSignUpURL().toString();
+    public String getSignUpURL() {
+        return UserPortal.signUpURL().toString();
     }
 
 
