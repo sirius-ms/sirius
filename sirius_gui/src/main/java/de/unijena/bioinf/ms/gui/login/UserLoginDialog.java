@@ -31,6 +31,7 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.DialogHeader;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.utils.ActionJLabel;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.webView.WebviewHTMLTextJPanel;
@@ -137,6 +138,9 @@ public class UserLoginDialog extends JDialog {
         TwoColumnPanel center = new TwoColumnPanel();
         center.addNamed("Email", username);
         center.addNamed("Password", password);
+        JPanel flow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
+        flow.add(new ActionJLabel("Forgot your Password?", SiriusActions.RESET_PWD.getInstance()));
+        center.add(null,  flow, 0, true);
 
         if (PropertyManager.getBoolean("de.unijena.bioinf.webservice.login.terms", false))
             addTermsPanel(center);
