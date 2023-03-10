@@ -77,7 +77,6 @@ public enum SiriusActions {
     SIGN_UP(SignUpAction.class),
     MANAGE_ACCOUNT(OpenPortalAction.class),
     RESET_PWD(PasswdResetAction.class),
-    DELETE_ACCOUNT(AccountDeleteAction.class),
     SELECT_SUBSCRIPTION(SelectActiveSubscriptionAction.class),
     ACCEPT_TERMS(AcceptTermsAction.class),
 

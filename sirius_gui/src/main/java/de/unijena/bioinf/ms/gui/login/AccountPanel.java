@@ -45,7 +45,7 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 public class AccountPanel extends JPanel {
     private final AuthService service;
     private JLabel userIconLabel, userInfoLabel;
-    private JButton login, reset, create, changeSub;
+    private JButton login, create, changeSub;
     private ToolbarButton refresh;
 
     public AccountPanel(AuthService service) {
@@ -94,13 +94,11 @@ public class AccountPanel extends JPanel {
 
 
         //south
-        reset = new JButton(SiriusActions.RESET_PWD.getInstance());
         create = new JButton();
         login = new JButton();
         changeSub = new JButton(SiriusActions.SELECT_SUBSCRIPTION.getInstance());
         Box buttons = Box.createHorizontalBox();
         buttons.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        buttons.add(reset);
         buttons.add(create);
         buttons.add(Box.createHorizontalGlue());
         buttons.add(changeSub);
