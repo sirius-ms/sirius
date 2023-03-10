@@ -220,7 +220,7 @@ public class CustomDatabaseImporter {
                     checkCancellation();
                     final String inchi2d;
                     try {
-                        inchi2d = InChISMILESUtils.getInchi(c.container).in2D;
+                        inchi2d = InChISMILESUtils.getInchi(c.container, false).in2D;
                         Comp comp = new Comp(inchi2d);
                         comp.molecule = c;
                         dict.put(inchi2d, comp);
@@ -446,7 +446,7 @@ public class CustomDatabaseImporter {
         }
 
         protected FingerprintCandidate computeCompound(Molecule molecule) throws CDKException, IllegalArgumentException {
-            final InChI inchi = InChISMILESUtils.getInchi(molecule.container);
+            final InChI inchi = InChISMILESUtils.getInchi(molecule.container, false);
 
 
             if (molecule.smiles == null) {
