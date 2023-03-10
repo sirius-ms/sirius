@@ -179,12 +179,6 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
     }
 
     @Override
-    public boolean deleteAccount() {
-        return ProxyManager.doWithClient(accountClient::deleteAccount);
-    }
-
-
-    @Override
     public void shutdown() throws IOException {
         jobWatcher.shutdown();
         super.shutdown();

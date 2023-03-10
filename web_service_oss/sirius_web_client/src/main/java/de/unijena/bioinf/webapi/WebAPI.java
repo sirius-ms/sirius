@@ -95,8 +95,6 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
 
     AuthService getAuthService();
 
-    boolean deleteAccount();
-
     void acceptTermsAndRefreshToken() throws LoginException;
 
     void changeActiveSubscription(Subscription activeSubscription);
