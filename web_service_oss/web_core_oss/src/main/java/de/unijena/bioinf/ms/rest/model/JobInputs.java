@@ -27,7 +27,6 @@ import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
 import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -36,11 +35,11 @@ import java.util.Map;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JobInputs {
-    private List<FingerprintJobInput.StringInput> fingerprintJobInputs = new ArrayList<>();
+    private List<FingerprintJobInput> fingerprintJobInputs = new ArrayList<>();
     private List<CanopusJobInput> canopusJobInputs = new ArrayList<>();
     private List<CovtreeJobInput> covtreeJobInputs = new ArrayList<>();
 
-    public List<FingerprintJobInput.StringInput> getFingerprintJobInputs() {
+    public List<FingerprintJobInput> getFingerprintJobInputs() {
         return fingerprintJobInputs;
     }
 
@@ -49,17 +48,17 @@ public class JobInputs {
         return fingerprintJobInputs != null && !fingerprintJobInputs.isEmpty();
     }
 
-    public void setFingerprintJobInputs(List<FingerprintJobInput.StringInput> fingerprintJobInputs) {
+    public void setFingerprintJobInputs(List<FingerprintJobInput> fingerprintJobInputs) {
         this.fingerprintJobInputs = fingerprintJobInputs;
     }
 
     @JsonIgnore
-    public void addFingerprintJobInput(FingerprintJobInput.StringInput fingerprintJobInput) {
+    public void addFingerprintJobInput(FingerprintJobInput fingerprintJobInput) {
         addFingerprintJobInputs(List.of(fingerprintJobInput));
     }
 
     @JsonIgnore
-    public void addFingerprintJobInputs(List<FingerprintJobInput.StringInput> fingerprintJobInputs) {
+    public void addFingerprintJobInputs(List<FingerprintJobInput> fingerprintJobInputs) {
         if (this.fingerprintJobInputs == null)
             this.fingerprintJobInputs = new ArrayList<>();
         this.fingerprintJobInputs.addAll(fingerprintJobInputs);
@@ -126,20 +125,16 @@ public class JobInputs {
     }
     @JsonIgnore
     public void addJobInput(Object jobInput, JobTable type) {
-        try {
-            switch (type) {
-                case JOBS_FINGERID:
-                    addFingerprintJobInput(((FingerprintJobInput)jobInput).asStringInput());
-                    break;
-                case JOBS_CANOPUS:
-                    addCanopusJobInput((CanopusJobInput) jobInput);
-                    break;
-                case JOBS_COVTREE:
-                    addCovtreeJobInput((CovtreeJobInput) jobInput);
-                    break;
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        switch (type) {
+            case JOBS_FINGERID:
+                addFingerprintJobInput(((FingerprintJobInput)jobInput));
+                break;
+            case JOBS_CANOPUS:
+                addCanopusJobInput((CanopusJobInput) jobInput);
+                break;
+            case JOBS_COVTREE:
+                addCovtreeJobInput((CovtreeJobInput) jobInput);
+                break;
         }
     }
 

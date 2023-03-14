@@ -379,7 +379,7 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
 
     public <T> T applyStructureDB(long filter, @Nullable BlobStorage cacheDir, IOFunctions.IOFunction<FilteredChemicalDB<RESTDatabase>, T> doWithClient) throws IOException {
         return ProxyManager.applyClient(client -> {
-            try (FilteredChemicalDB<RESTDatabase> restDB =  new FilteredChemicalDB<>(new RESTDatabase(cacheDir, chemDBClient, client), filter)) {
+            try (FilteredChemicalDB<RESTDatabase> restDB = new FilteredChemicalDB<>(new RESTDatabase(cacheDir, chemDBClient, client), filter)) {
                 return doWithClient.apply(restDB);
             }
         });
@@ -409,7 +409,7 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
 
     //region CSI:FingerID
     public WebJJob<FingerprintJobInput, ?, FingerprintResult, ?> submitFingerprintJob(FingerprintJobInput input) throws IOException {
-        final MaskedFingerprintVersion version = getCDKMaskedFingerprintVersion(input.experiment.getPrecursorIonType().getCharge());
+        final MaskedFingerprintVersion version = getCDKMaskedFingerprintVersion(input.predictors.iterator().next().toCharge());
         return jobWatcher.submitAndWatchJob(JobTable.JOBS_FINGERID,
                 new RestWebJJob<>(input, new FingerprintWebResultConverter(version)));
     }
@@ -474,32 +474,32 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
     @Override
     public void executeBatch(IOFunctions.BiIOConsumer<Clients, HttpClient> doWithApi) throws IOException {
         ProxyManager.consumeClient(client -> {
-                doWithApi.accept(new Clients() {
-                    @Override
-                    public InfoClient serverInfoClient() {
-                        return serverInfoClient;
-                    }
+            doWithApi.accept(new Clients() {
+                @Override
+                public InfoClient serverInfoClient() {
+                    return serverInfoClient;
+                }
 
-                    @Override
-                    public JobsClient jobsClient() {
-                        return jobsClient;
-                    }
+                @Override
+                public JobsClient jobsClient() {
+                    return jobsClient;
+                }
 
-                    @Override
-                    public StructureSearchClient chemDBClient() {
-                        return chemDBClient;
-                    }
+                @Override
+                public StructureSearchClient chemDBClient() {
+                    return chemDBClient;
+                }
 
-                    @Override
-                    public FingerIdClient fingerprintClient() {
-                        return fingerprintClient;
-                    }
+                @Override
+                public FingerIdClient fingerprintClient() {
+                    return fingerprintClient;
+                }
 
-                    @Override
-                    public CanopusClient canopusClient() {
-                        return canopusClient;
-                    }
-                }, client);
+                @Override
+                public CanopusClient canopusClient() {
+                    return canopusClient;
+                }
+            }, client);
         });
     }
 }
