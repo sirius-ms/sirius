@@ -24,6 +24,8 @@ package de.unijena.bioinf.babelms.json;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.data.JDKDocument;
@@ -42,7 +44,7 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 
-public class FTJsonWriter {
+public class FTJsonWriter extends JsonSerializer<FTree> {
 
 
     private DescriptorRegistry registry = DescriptorRegistry.getInstance();
@@ -225,4 +227,8 @@ public class FTJsonWriter {
         else return ionPerFragment.get(vertex);
     }
 
+    @Override
+    public void serialize(FTree value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+        tree2json(value, null, gen);
+    }
 }

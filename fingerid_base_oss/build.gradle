@@ -25,6 +25,8 @@ dependencies {
     annotationProcessor project(':default_properties:processor')
     compile project(':utils')
     compile project(':chemistry_base')
+    compile project(':preprocessing')
+    compile project(':sirius_api')
 
     compile group: "net.iharder", name: "base64", version: "2.3.8"
 }
