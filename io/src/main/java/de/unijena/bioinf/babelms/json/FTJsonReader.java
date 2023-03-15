@@ -52,7 +52,8 @@ import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Iterator;
 
-public class FTJsonReader extends JsonDeserializer<FTree> implements Parser<FTree> {
+public class FTJsonReader implements Parser<FTree> {
+
     /*
     TODO: currently, only Peak and Ionization are parsed from input
      */
@@ -63,8 +64,8 @@ public class FTJsonReader extends JsonDeserializer<FTree> implements Parser<FTre
         this.formulaCache = new HashMap<>();
     }
 
-    public FTJsonReader(@Nullable HashMap<String, MolecularFormula> formulaCache) {
-        this.formulaCache = formulaCache == null ? new HashMap<>() : formulaCache;
+    public FTJsonReader(@Nullable  HashMap<String, MolecularFormula> formulaCache) {
+        this.formulaCache = formulaCache==null ? new HashMap<>()  : formulaCache;
     }
 
     public MolecularFormula formula(String formula) {
@@ -313,10 +314,4 @@ public class FTJsonReader extends JsonDeserializer<FTree> implements Parser<FTre
         }
     }
 
-    @Override
-    public FTree deserialize(JsonParser jsonParser, DeserializationContext
-            deserializationContext) throws IOException, JsonProcessingException {
-        final JsonNode rootNode = new ObjectMapper().readTree(jsonParser);
-        return treeFromJson(rootNode, new JacksonDocument(), null);
-    }
 }

@@ -28,9 +28,9 @@ public class InputFeatures {
     public final FTree tree;
     public final SimpleSpectrum spectrum;
     public final SimpleSpectrum neutralizedSpectrum;
-    public final double precursorMz;
+    public final Double precursorMz;
 
-    public InputFeatures(FTree tree, SimpleSpectrum spectrum, SimpleSpectrum neutralizedSpectrum, double precursorMz) {
+    public InputFeatures(FTree tree, SimpleSpectrum spectrum, SimpleSpectrum neutralizedSpectrum, Double precursorMz) {
         this.tree = tree;
         this.spectrum = spectrum;
         this.neutralizedSpectrum = neutralizedSpectrum;
