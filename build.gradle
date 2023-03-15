@@ -30,7 +30,7 @@ wrapper {
 //Global Properties
 ext {
     //version for external libraries
-    slf4j_version = '2.0.6'
+    slf4j_version = '1.7.36'
     jjobs_version = '0.9.35'
     json_version = '1.0' //todo move to gson
     json_impl_version = "1.0.4" //todo move to gson
