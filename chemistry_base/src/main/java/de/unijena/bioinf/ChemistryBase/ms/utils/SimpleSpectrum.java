@@ -52,7 +52,11 @@ public class SimpleSpectrum extends BasicSpectrum<Peak> implements OrderedSpectr
 
 	@JsonIgnore
 	protected int hash = 0;
-	
+
+	private SimpleSpectrum() {
+		super(new double[0], new double[0]);
+	}
+
 	public SimpleSpectrum(double[] masses, double[] intensities) {
 		this(new ArrayWrapperSpectrum(masses, intensities));
 	}

@@ -26,8 +26,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
-import de.unijena.bioinf.babelms.json.FTJsonReader;
-import de.unijena.bioinf.babelms.json.FTJsonWriter;
+import de.unijena.bioinf.babelms.json.FTreeDeserializer;
+import de.unijena.bioinf.babelms.json.FTreeSerializer;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.client.AbstractCsiClient;
 import de.unijena.bioinf.ms.rest.model.*;
@@ -61,8 +61,8 @@ public class JobsClient extends AbstractCsiClient {
         postJobMapper = new ObjectMapper();
         postJobMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         SimpleModule m = new SimpleModule();
-        m.addSerializer(FTree.class, new FTJsonWriter());
-        m.addDeserializer(FTree.class, new FTJsonReader());
+        m.addSerializer(FTree.class, new FTreeSerializer());
+        m.addDeserializer(FTree.class, new FTreeDeserializer());
         postJobMapper.registerModule(m);
     }
 

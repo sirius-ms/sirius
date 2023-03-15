@@ -18,22 +18,19 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.fingerid;
+package de.unijena.bioinf.babelms.json;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 
-public class InputFeatures {
+import java.io.IOException;
 
-    public final FTree tree;
-    public final SimpleSpectrum spectrum;
-    public final SimpleSpectrum neutralizedSpectrum;
-    public final Double precursorMz;
+public class FTreeSerializer extends JsonSerializer<FTree> {
 
-    public InputFeatures(FTree tree, SimpleSpectrum spectrum, SimpleSpectrum neutralizedSpectrum, Double precursorMz) {
-        this.tree = tree;
-        this.spectrum = spectrum;
-        this.neutralizedSpectrum = neutralizedSpectrum;
-        this.precursorMz = precursorMz;
+    @Override
+    public void serialize(FTree fragments, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
+        new FTJsonWriter().tree2json(fragments, null, jsonGenerator);
     }
 }
