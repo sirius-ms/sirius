@@ -5,9 +5,6 @@ import com.google.common.collect.Streams;
 import de.unijena.bioinf.storage.db.NoSQLDatabase;
 import de.unijena.bioinf.storage.db.NoSQLFilter;
 import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.dizitart.no2.IndexType;
-import org.dizitart.no2.objects.Index;
-import org.dizitart.no2.objects.Indices;
 import org.dizitart.no2.objects.ObjectFilter;
 import org.dizitart.no2.objects.filters.ObjectFilters;
 import org.junit.Test;
@@ -28,10 +25,9 @@ import static org.junit.Assert.assertTrue;
 
 public class NitriteDatabaseTest {
 
-    @Indices({
-            @Index(value = "name", type = IndexType.Unique)
-    })
     private static class NitriteTestEntry extends NitritePOJO {
+
+        public static final Index[] index = {new Index("name", IndexType.UNIQUE)};
 
         public String name;
 
@@ -50,14 +46,6 @@ public class NitriteDatabaseTest {
 
         public void setName(String name) {
             this.name = name;
-        }
-
-        @Override
-        public String toString() {
-            return "NitriteTestEntry{" +
-                    "id=" + id +
-                    ", name='" + name + '\'' +
-                    '}';
         }
 
     }

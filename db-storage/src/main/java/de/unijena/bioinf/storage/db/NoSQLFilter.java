@@ -1,5 +1,6 @@
 package de.unijena.bioinf.storage.db;
 
+import javax.validation.constraints.NotNull;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
@@ -23,7 +24,7 @@ public class NoSQLFilter {
         public String field;
         public Object[] values;
 
-        public FieldFilterElement(FilterType filterType, String field, Object... values) {
+        public FieldFilterElement(@NotNull FilterType filterType, @NotNull String field, Object... values) {
             super(filterType);
             this.field = field;
             this.values = values;

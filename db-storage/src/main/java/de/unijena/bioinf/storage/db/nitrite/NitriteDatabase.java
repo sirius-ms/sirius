@@ -2,15 +2,17 @@ package de.unijena.bioinf.storage.db.nitrite;
 
 import de.unijena.bioinf.storage.db.NoSQLDatabase;
 import de.unijena.bioinf.storage.db.NoSQLFilter;
+import de.unijena.bioinf.storage.db.NoSQLPOJO;
 import org.apache.commons.lang3.tuple.Pair;
-import org.dizitart.no2.FindOptions;
-import org.dizitart.no2.Nitrite;
+import org.dizitart.no2.*;
 import org.dizitart.no2.objects.ObjectFilter;
 import org.dizitart.no2.objects.ObjectRepository;
 import org.dizitart.no2.objects.filters.ObjectFilters;
 
+import javax.validation.constraints.NotNull;
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -36,12 +38,59 @@ public class NitriteDatabase implements NoSQLDatabase<ObjectFilter>, Closeable, 
     private boolean isClosed = false;
 
     @SafeVarargs
-    public NitriteDatabase(Path file, Class<? extends NitritePOJO>... classes) {
+    public NitriteDatabase(@NotNull Path file, Class<? extends NitritePOJO>... classes) {
         this.file = file;
         this.db = Nitrite.builder().filePath(file.toFile()).compressed().openOrCreate();
 
         for (Class<? extends NitritePOJO> clazz : classes) {
-            this.repositories.put(clazz, this.db.getRepository(clazz));
+            ObjectRepository<? extends NitritePOJO> repository = this.db.getRepository(clazz);
+            this.repositories.put(clazz, repository);
+            Collection<Index> repoIndices = repository.listIndices();
+            try {
+                Field indexField = clazz.getField("index");
+                List<Index> toDrop = new ArrayList<>();
+                List<NoSQLPOJO.Index> toBuild = new ArrayList<>();
+                for (NoSQLPOJO.Index index : (NoSQLPOJO.Index[]) indexField.get(null)) {
+                    found:
+                    {
+                        for (Index repoIndex : repoIndices) {
+                            if (Objects.equals(repoIndex.getField(), index.getField())) {
+                                IndexType repoType = repoIndex.getIndexType();
+                                NoSQLPOJO.IndexType iType = index.getType();
+                                if ((repoType == IndexType.Unique && iType != NoSQLPOJO.IndexType.UNIQUE) ||
+                                        (repoType == IndexType.NonUnique && iType != NoSQLPOJO.IndexType.NON_UNIQUE) ||
+                                        (repoType == IndexType.Fulltext && iType != NoSQLPOJO.IndexType.FULL_TEXT)) {
+                                    toDrop.add(repoIndex);
+                                    toBuild.add(index);
+                                }
+                                break found;
+                            }
+                        }
+                        toBuild.add(index);
+                    }
+                }
+
+                for (Index index : toDrop) {
+                    repository.dropIndex(index.getField());
+                }
+
+                for (NoSQLPOJO.Index index : toBuild) {
+                    switch (index.getType()) {
+                        case UNIQUE:
+                            repository.createIndex(index.getField(), IndexOptions.indexOptions(IndexType.Unique));
+                            break;
+                        case NON_UNIQUE:
+                            repository.createIndex(index.getField(), IndexOptions.indexOptions(IndexType.NonUnique));
+                            break;
+                        case FULL_TEXT:
+                            repository.createIndex(index.getField(), IndexOptions.indexOptions(IndexType.Fulltext));
+                            break;
+                    }
+                }
+
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
