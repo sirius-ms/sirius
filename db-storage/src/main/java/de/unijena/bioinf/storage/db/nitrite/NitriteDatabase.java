@@ -287,6 +287,15 @@ public class NitriteDatabase implements NoSQLDatabase<ObjectFilter>, Closeable, 
         });
     }
 
+    public <T, L, R> Iterable<T> join(Class<T> clazz, Iterable<L> left, Iterable<R> right, String localField, String foreignField, String targetField) {
+        Lookup lookup = new Lookup();
+        lookup.setLocalField(localField);
+        lookup.setForeignField(foreignField);
+        lookup.setTargetField(targetField);
+
+        return ((org.dizitart.no2.objects.Cursor<L>) left).join((org.dizitart.no2.objects.Cursor<R>) right, lookup, clazz);
+    }
+
     @Override
     public <T> int count(NoSQLFilter filter, Class<T> clazz) throws IOException {
         return this.read(() -> {

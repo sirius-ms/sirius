@@ -5,6 +5,7 @@ import com.google.common.collect.Streams;
 import de.unijena.bioinf.storage.db.NoSQLDatabase;
 import de.unijena.bioinf.storage.db.NoSQLFilter;
 import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.dizitart.no2.NitriteId;
 import org.dizitart.no2.objects.ObjectFilter;
 import org.dizitart.no2.objects.filters.ObjectFilters;
 import org.junit.Test;
@@ -40,12 +41,36 @@ public class NitriteDatabaseTest {
             this.name = name;
         }
 
-        public String getName() {
-            return name;
+    }
+
+    private static class NitriteChildTestEntry extends NitritePOJO {
+
+        public static final Index[] index = {new Index("name", IndexType.NON_UNIQUE)};
+
+        public String name;
+
+        public NitriteId parentId;
+
+        public NitriteChildTestEntry() { super(); }
+
+        public NitriteChildTestEntry(String name, NitriteId parentId) {
+            super();
+            this.name = name;
+            this.parentId = parentId;
         }
 
-        public void setName(String name) {
-            this.name = name;
+    }
+
+    private static class NitriteFamilyTestEntry extends NitritePOJO {
+
+        public static final Index[] index = {new Index("name", IndexType.UNIQUE)};
+
+        public String name;
+
+        public List<NitriteChildTestEntry> children;
+
+        public NitriteFamilyTestEntry() {
+            super();
         }
 
     }
@@ -163,6 +188,53 @@ public class NitriteDatabaseTest {
             assertTrue("remove name == C", EqualsBuilder.reflectionEquals(inMid, ascFindAllDel2, false, null, true));
 
         }
+    }
+
+    @Test
+    public void testJoin() throws IOException {
+
+        Path file = Files.createTempFile("nitrite-test", "");
+        file.toFile().deleteOnExit();
+
+        NitriteTestEntry parent = new NitriteTestEntry("parent");
+
+        try (NitriteDatabase db = new NitriteDatabase(file, NitriteTestEntry.class, NitriteChildTestEntry.class)) {
+
+            db.insert(parent);
+
+            List<NitriteChildTestEntry> children = new ArrayList<>(Arrays.asList(
+                    new NitriteChildTestEntry("A", parent.id),
+                    new NitriteChildTestEntry("B", parent.id),
+                    new NitriteChildTestEntry("C", parent.id)
+            ));
+
+            db.insertAll(children);
+
+            Iterable<NitriteTestEntry> outParent = db.findAll(NitriteTestEntry.class);
+            Iterable<NitriteChildTestEntry> outChildren = db.findAll(NitriteChildTestEntry.class);
+
+            assertEquals("1 parent", 1, Lists.newArrayList(outParent).size());
+            assertTrue("parent okay", EqualsBuilder.reflectionEquals(parent, outParent.iterator().next(), false, null, true));
+
+            assertTrue("children okay", EqualsBuilder.reflectionEquals(
+                    Lists.newArrayList(children),
+                    Lists.newArrayList(outChildren), false, null, true
+            ));
+
+            List<NitriteFamilyTestEntry> results = Lists.newArrayList(db.join(NitriteFamilyTestEntry.class, outParent, outChildren, "id", "parentId", "children"));
+
+            assertEquals("1 joined parent", 1, results.size());
+
+            assertEquals("joined parent okay", Lists.newArrayList(outParent).get(0).id, results.get(0).id);
+            assertEquals("joined parent okay", Lists.newArrayList(outParent).get(0).name, results.get(0).name);
+
+            assertTrue("joined children okay", EqualsBuilder.reflectionEquals(
+                    Lists.newArrayList(outChildren),
+                    results.get(0).children, false, null, true
+            ));
+
+        }
+
     }
 
     @Test

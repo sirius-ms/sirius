@@ -2,6 +2,7 @@ package de.unijena.bioinf.storage.db.nitrite;
 
 import com.esotericsoftware.reflectasm.FieldAccess;
 import de.unijena.bioinf.storage.db.NoSQLPOJO;
+import org.apache.commons.lang3.ClassUtils;
 import org.dizitart.no2.Document;
 import org.dizitart.no2.NitriteId;
 import org.dizitart.no2.mapper.Mappable;
@@ -10,7 +11,13 @@ import org.dizitart.no2.objects.Id;
 import org.dizitart.no2.objects.InheritIndices;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 @InheritIndices
 public abstract class NitritePOJO extends NoSQLPOJO implements Mappable {
@@ -35,7 +42,12 @@ public abstract class NitritePOJO extends NoSQLPOJO implements Mappable {
         try {
             for (Field field : access.getFields()) {
                 field.setAccessible(true);
-                document.put(field.getName(), field.get(this));
+                if (field.getType() == NitriteId.class) {
+                    NitriteId value = (NitriteId) field.get(this);
+                    document.put(field.getName(), (value != null) ? value.getIdValue() : null);
+                } else {
+                    document.put(field.getName(), field.get(this));
+                }
             }
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
@@ -44,19 +56,39 @@ public abstract class NitritePOJO extends NoSQLPOJO implements Mappable {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void read(NitriteMapper mapper, Document document) {
         if (document != null) {
             FieldAccess access = FieldAccess.get(getClass());
             try {
-                this.id = NitriteId.createId((Long) document.get("id"));
                 for (Field field : access.getFields()) {
-                    if (field.getName().equals("id")) {
-                        continue;
-                    }
                     field.setAccessible(true);
-                    field.set(this, document.get(field.getName()));
+                    if (field.getType() == NitriteId.class) {
+                        field.set(this, NitriteId.createId((Long) document.get(field.getName())));
+                    } else if (field.getType() == List.class) {
+                        Type generic = ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
+                        Collection<Document> source = (Collection<Document>) document.get(field.getName());
+                        List target = new ArrayList<>();
+                        for (Document src : source) {
+                            if (generic instanceof Class && ClassUtils.getAllInterfaces((Class<?>) generic).contains(Mappable.class)) {
+                                Mappable t = (Mappable) ((Class<?>) generic).getDeclaredConstructor().newInstance();
+                                t.read(mapper, src);
+                                target.add(t);
+                            } else {
+                                target.add(src);
+                            }
+                        }
+                        field.set(this, target);
+                    } else if (ClassUtils.getAllInterfaces(field.getType()).contains(List.class)) {
+                        Collection source = (Collection) document.get(field.getName());
+                        List target = (List) field.getType().getDeclaredConstructor().newInstance();
+                        target.addAll(source);
+                        field.set(this, target);
+                    } else {
+                        field.set(this, document.get(field.getName()));
+                    }
                 }
-            } catch (IllegalAccessException e) {
+            } catch (IllegalAccessException | NoSuchMethodException | InstantiationException | InvocationTargetException e) {
                 throw new RuntimeException(e);
             }
         }

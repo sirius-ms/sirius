@@ -35,6 +35,8 @@ public interface NoSQLDatabase<F> {
 
     <T> Iterable<T> findAll(Class<T> clazz, int offset, int pageSize, String sortField, SortOrder sortOrder) throws IOException;
 
+    <T, L, R> Iterable<T> join(Class<T> clazz, Iterable<L> left, Iterable<R> right, String localField, String foreignField, String targetField);
+
     <T> int count(NoSQLFilter filter, Class<T> clazz) throws IOException;
 
     <T> int count(NoSQLFilter filter, Class<T> clazz, int offset, int pageSize) throws IOException;
