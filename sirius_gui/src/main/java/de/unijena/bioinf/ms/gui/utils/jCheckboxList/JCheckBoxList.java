@@ -116,8 +116,8 @@ public class JCheckBoxList<E> extends JList<CheckBoxListItem<E>> {
         }
     }
 
-    private void refresh() {
-        fireSelectionValueChanged(0, getModel().getSize(), false);
+    public void refresh() {
+        fireSelectionValueChanged(getSelectionModel().getMinSelectionIndex(), getSelectionModel().getMaxSelectionIndex(), false);
         revalidate();
         repaint();
     }
