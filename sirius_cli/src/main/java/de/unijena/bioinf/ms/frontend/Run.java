@@ -61,7 +61,7 @@ public class Run extends ApplicationCore {
         flow.run();
     }
 
-    public boolean isWorkflowDefined(){
+    public boolean isWorkflowDefined() {
         return flow != null;
     }
 
@@ -69,7 +69,9 @@ public class Run extends ApplicationCore {
     public boolean parseArgs(String[] args) {
         if (args == null || args.length < 1)
             args = new String[]{"--help"};
-        logger.info("Running with following arguments: " + Arrays.toString(args));
+
+        if (!List.of(args).contains("login") && !List.of(args).contains("password") && !List.of(args).contains("pwd"))
+            logger.info("Running with following arguments: " + Arrays.toString(args));
         final CommandLine commandline = new CommandLine(builder.getRootSpec());
         commandline.setCaseInsensitiveEnumValuesAllowed(true);
         commandline.registerConverter(DefaultParameter.class, new DefaultParameter.Converter());
