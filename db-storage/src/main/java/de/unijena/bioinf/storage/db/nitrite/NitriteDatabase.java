@@ -40,6 +40,13 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class NitriteDatabase implements NoSQLDatabase<ObjectFilter>, Closeable, AutoCloseable {
 
+    // Prevent illegal reflective access warnings
+    static {
+        if (!NitriteDatabase.class.getModule().isNamed()) {
+            ClassLoader.class.getModule().addOpens(ClassLoader.class.getPackageName(), NitriteDatabase.class.getModule());
+        }
+    }
+
     protected Path file;
 
     // NITRITE
@@ -107,8 +114,9 @@ public class NitriteDatabase implements NoSQLDatabase<ObjectFilter>, Closeable, 
                             break;
                     }
                 }
-
-            } catch (NoSuchFieldException | IllegalAccessException e) {
+            } catch (NoSuchFieldException e) {
+                // that's okay, no index in this case
+            } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
         }

@@ -30,6 +30,7 @@ import org.dizitart.no2.mapper.NitriteMapper;
 import org.dizitart.no2.objects.Id;
 import org.dizitart.no2.objects.InheritIndices;
 
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
@@ -40,7 +41,7 @@ import java.util.Collection;
 import java.util.List;
 
 @InheritIndices
-public abstract class NitritePOJO extends NoSQLPOJO implements Mappable {
+public abstract class NitritePOJO extends NoSQLPOJO implements Mappable, Serializable {
 
     @Id
     protected NitriteId id;
