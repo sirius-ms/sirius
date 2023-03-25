@@ -40,11 +40,11 @@ public class SettingsOptions implements StandaloneTool<SettingsOptions.SettingsW
     ProxyProperties proxyProperties;
 
     private static class Property {
-        @CommandLine.Option(names = "--key, -k", required = true,
+        @CommandLine.Option(names = {"--key", "-k"}, required = true,
                 description = "Property Key",
                 order = 201)
         String key;
-        @CommandLine.Option(names = "--value, -v", required = true,
+        @CommandLine.Option(names = {"--value", "-v"}, required = true,
                 description = "Property Value",
                 order = 211)
         String value;
