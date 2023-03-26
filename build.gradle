@@ -59,13 +59,13 @@ ext {
     libDir = project.findProperty("build.sirius.location.lib")
     System.out.println("----> LibDir: " + libDir)
     includeJreFX = Boolean.getBoolean((project.findProperty("build.sirius.starter.jdk.include") ?: "false") as String)
-    System.out.println("----> includeJreFX: " + includeJreFX)
+    System.out.println("----> includeJreFX:  ${includeJreFX} | ${project.findProperty("build.sirius.starter.jdk.include")}")
     launch4jJDKPath = project.findProperty("build.sirius.starter.jdk.location")
-    System.out.println("----> launch4jJDKPath: " + launch4jJDKPath)
+    System.out.println("----> launch4jJDKPath:  ${launch4jJDKPath}")
     excludeCbcNative = project.findProperty("build.sirius.native.cbc.exclude")
     System.out.println("----> excludeCbcNative: " + excludeCbcNative)
     excludeJFX = Boolean.getBoolean((project.findProperty("build.sirius.native.openjfx.exclude") ?: "false") as String)
-    System.out.println("----> excludeJFX: " + excludeJFX)
+    System.out.println("----> excludeJFX: ${excludeJFX} | ${project.findProperty("build.sirius.native.openjfx.exclude")}")
 
     jetbrains_version = "22.0.0"
 
