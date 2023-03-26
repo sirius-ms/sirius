@@ -185,7 +185,7 @@ subprojects {
         libraryDir = libDir == null ? "app" : libDir
 
         jdkPreference = "preferJdk"
-        jreMinVersion = "13"
+        jreMinVersion = null
         bundledJre64Bit = true
         jreRuntimeBits = "64"
         messagesBundledJreError = "Could not Load bundled JRE."
