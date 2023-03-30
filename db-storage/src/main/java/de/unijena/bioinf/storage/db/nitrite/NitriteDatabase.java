@@ -315,13 +315,9 @@ public class NitriteDatabase implements NoSQLDatabase<ObjectFilter>, Closeable, 
         });
     }
 
-    public <T, L, R> Iterable<T> join(Class<T> clazz, Iterable<L> left, Iterable<R> right, String localField, String foreignField, String targetField) {
-        Lookup lookup = new Lookup();
-        lookup.setLocalField(localField);
-        lookup.setForeignField(foreignField);
-        lookup.setTargetField(targetField);
-
-        return ((org.dizitart.no2.objects.Cursor<L>) left).join((org.dizitart.no2.objects.Cursor<R>) right, lookup, clazz);
+    public <T, P, C> Iterable<T> joinChildren(Class<T> clazz, Class<P> parentClass, Class<C> childClass, Iterable<P> parents, String foreignField, String targetField) {
+        org.dizitart.no2.objects.Cursor<P> parentCursor = (org.dizitart.no2.objects.Cursor<P>) parents;
+        return new NitriteJoinedIterable<T, P, C>(clazz, parentClass, childClass, parentCursor, foreignField, targetField, this);
     }
 
     @Override
