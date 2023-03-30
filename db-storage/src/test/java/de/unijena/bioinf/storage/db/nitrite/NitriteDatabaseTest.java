@@ -110,8 +110,24 @@ public class NitriteDatabaseTest {
                     new NoSQLFilter().lte("a", 42),
                     new NoSQLFilter().text("a", "foo"),
                     new NoSQLFilter().regex("a", "foo"),
-                    new NoSQLFilter().in("a", 42, "foo"),
-                    new NoSQLFilter().notIn("a", 42, "foo"),
+                    new NoSQLFilter().inByte("a", (byte) 12, (byte) 42),
+                    new NoSQLFilter().inShort("a", (short) 12, (short) 42),
+                    new NoSQLFilter().inInt("a", 12, 42),
+                    new NoSQLFilter().inLong("a", 12L, 42L),
+                    new NoSQLFilter().inFloat("a", 12f, 42f),
+                    new NoSQLFilter().inDouble("a", 12d, 42d),
+                    new NoSQLFilter().inChar("a", 't', 'f'),
+                    new NoSQLFilter().inBool("a", true, false),
+                    new NoSQLFilter().in("a", "foo", "bar"),
+                    new NoSQLFilter().notInByte("a", (byte) 12, (byte) 42),
+                    new NoSQLFilter().notInShort("a", (short) 12, (short) 42),
+                    new NoSQLFilter().notInInt("a", 12, 42),
+                    new NoSQLFilter().notInLong("a", 12L, 42L),
+                    new NoSQLFilter().notInFloat("a", 12f, 42f),
+                    new NoSQLFilter().notInDouble("a", 12d, 42d),
+                    new NoSQLFilter().notInChar("a", 't', 'f'),
+                    new NoSQLFilter().notInBool("a", true, false),
+                    new NoSQLFilter().notIn("a", "foo", "bar"),
                     // CONJUGATE FILTERS
                     new NoSQLFilter().not().eq("a", 42),
                     new NoSQLFilter().and().eq("a", 42).gt("a", 42).gte("a", 42),
@@ -133,8 +149,24 @@ public class NitriteDatabaseTest {
                     ObjectFilters.lte("a", 42),
                     ObjectFilters.text("a", "foo"),
                     ObjectFilters.regex("a", "foo"),
-                    ObjectFilters.in("a", 42, "foo"),
-                    ObjectFilters.notIn("a", 42, "foo"),
+                    ObjectFilters.in("a", (byte) 12, (byte) 42),
+                    ObjectFilters.in("a", (short) 12, (short) 42),
+                    ObjectFilters.in("a", 12, 42),
+                    ObjectFilters.in("a", 12L, 42L),
+                    ObjectFilters.in("a", 12f, 42f),
+                    ObjectFilters.in("a", 12d, 42d),
+                    ObjectFilters.in("a", 't', 'f'),
+                    ObjectFilters.in("a", true, false),
+                    ObjectFilters.in("a", "foo", "bar"),
+                    ObjectFilters.notIn("a", (byte) 12, (byte) 42),
+                    ObjectFilters.notIn("a", (short) 12, (short) 42),
+                    ObjectFilters.notIn("a", 12, 42),
+                    ObjectFilters.notIn("a", 12L, 42L),
+                    ObjectFilters.notIn("a", 12f, 42f),
+                    ObjectFilters.notIn("a", 12d, 42d),
+                    ObjectFilters.notIn("a", 't', 'f'),
+                    ObjectFilters.notIn("a", true, false),
+                    ObjectFilters.notIn("a", "foo", "bar"),
                     // CONJUGATE FILTERS
                     ObjectFilters.not(ObjectFilters.eq("a", 42)),
                     ObjectFilters.and(ObjectFilters.eq("a", 42), ObjectFilters.gt("a", 42), ObjectFilters.gte("a", 42)),
@@ -236,12 +268,7 @@ public class NitriteDatabaseTest {
             assertEquals("1 parent", 1, Lists.newArrayList(outParent).size());
             assertTrue("parent okay", EqualsBuilder.reflectionEquals(parent, outParent.iterator().next(), false, null, true));
 
-            assertTrue("children okay", EqualsBuilder.reflectionEquals(
-                    Lists.newArrayList(children),
-                    Lists.newArrayList(outChildren), false, null, true
-            ));
-
-            List<NitriteFamilyTestEntry> results = Lists.newArrayList(db.join(NitriteFamilyTestEntry.class, outParent, outChildren, "id", "parentId", "children"));
+            List<NitriteFamilyTestEntry> results = Lists.newArrayList(db.joinChildren(NitriteFamilyTestEntry.class, NitriteTestEntry.class, NitriteChildTestEntry.class, outParent, "parentId", "children"));
 
             assertEquals("1 joined parent", 1, results.size());
 
