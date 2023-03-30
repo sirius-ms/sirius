@@ -35,10 +35,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.*;
 
 @InheritIndices
 public abstract class NitritePOJO extends NoSQLPOJO implements Mappable, Serializable {
@@ -57,6 +55,7 @@ public abstract class NitritePOJO extends NoSQLPOJO implements Mappable, Seriali
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Document write(NitriteMapper mapper) {
         Document document = new Document();
         FieldAccess access = FieldAccess.get(getClass());
@@ -66,6 +65,18 @@ public abstract class NitritePOJO extends NoSQLPOJO implements Mappable, Seriali
                 if (field.getType() == NitriteId.class) {
                     NitriteId value = (NitriteId) field.get(this);
                     document.put(field.getName(), (value != null) ? value.getIdValue() : null);
+                } else if (field.getType() == Collection.class || ClassUtils.getAllInterfaces(field.getType()).contains(Collection.class)) {
+                    Type generic = ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
+                    if (generic instanceof Class && ClassUtils.getAllInterfaces((Class<?>) generic).contains(Mappable.class)) {
+                        List<Document> target = new ArrayList<>();
+                        Collection<Mappable> source = (Collection<Mappable>) field.get(this);
+                        for (Mappable src : source) {
+                            target.add(src.write(mapper));
+                        }
+                        document.put(field.getName(), target);
+                    } else {
+                        document.put(field.getName(), field.get(this));
+                    }
                 } else {
                     document.put(field.getName(), field.get(this));
                 }
@@ -86,25 +97,37 @@ public abstract class NitritePOJO extends NoSQLPOJO implements Mappable, Seriali
                     field.setAccessible(true);
                     if (field.getType() == NitriteId.class) {
                         field.set(this, NitriteId.createId((Long) document.get(field.getName())));
-                    } else if (field.getType() == List.class) {
+                    } else if (field.getType() == Collection.class || ClassUtils.getAllInterfaces(field.getType()).contains(Collection.class)) {
                         Type generic = ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
-                        Collection<Document> source = (Collection<Document>) document.get(field.getName());
-                        List target = new ArrayList<>();
-                        for (Document src : source) {
-                            if (generic instanceof Class && ClassUtils.getAllInterfaces((Class<?>) generic).contains(Mappable.class)) {
+                        if (generic instanceof Class && ClassUtils.getAllInterfaces((Class<?>) generic).contains(Mappable.class)) {
+                            Collection<Mappable> target;
+                            if (field.getType() == List.class) {
+                                target = new ArrayList<>();
+                            } else if (field.getType() == BlockingDeque.class) {
+                                target = new LinkedBlockingDeque<>();
+                            } else if (field.getType() == BlockingQueue.class) {
+                                target = new LinkedBlockingQueue<>();
+                            } else if (field.getType() == Deque.class || field.getType() == Queue.class) {
+                                target = new ArrayDeque<>();
+                            } else if (field.getType() == Set.class) {
+                                target = new HashSet<>();
+                            } else if (field.getType() == SortedSet.class) {
+                                target = new TreeSet<>();
+                            } else if (field.getType() == TransferQueue.class) {
+                                target = new LinkedTransferQueue<>();
+                            } else {
+                                target = (Collection<Mappable>) field.getType().getDeclaredConstructor().newInstance();
+                            }
+                            Collection<Document> source = (Collection<Document>) document.get(field.getName());
+                            for (Document src : source) {
                                 Mappable t = (Mappable) ((Class<?>) generic).getDeclaredConstructor().newInstance();
                                 t.read(mapper, src);
                                 target.add(t);
-                            } else {
-                                target.add(src);
                             }
+                            field.set(this, target);
+                        } else {
+                            field.set(this, document.get(field.getName()));
                         }
-                        field.set(this, target);
-                    } else if (ClassUtils.getAllInterfaces(field.getType()).contains(List.class)) {
-                        Collection source = (Collection) document.get(field.getName());
-                        List target = (List) field.getType().getDeclaredConstructor().newInstance();
-                        target.addAll(source);
-                        field.set(this, target);
                     } else {
                         field.set(this, document.get(field.getName()));
                     }
