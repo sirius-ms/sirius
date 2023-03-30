@@ -22,6 +22,7 @@ package de.unijena.bioinf.storage.db;
 
 import javax.validation.constraints.NotNull;
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.Deque;
 
 public class NoSQLFilter {
@@ -106,8 +107,128 @@ public class NoSQLFilter {
         return this;
     }
 
+    public NoSQLFilter inByte(String field, byte... values) {
+        Object[] objects = new Object[values.length];
+        for (int i = 0; i < values.length; i++) {
+            objects[i] = values[i];
+        }
+        this.filterChain.addLast(new FieldFilterElement(FilterType.IN, field, objects));
+        return this;
+    }
+
+    public NoSQLFilter inShort(String field, short... values) {
+        Object[] objects = new Object[values.length];
+        for (int i = 0; i < values.length; i++) {
+            objects[i] = values[i];
+        }
+        this.filterChain.addLast(new FieldFilterElement(FilterType.IN, field, objects));
+        return this;
+    }
+
+    public NoSQLFilter inInt(String field, int... values) {
+        this.filterChain.addLast(new FieldFilterElement(FilterType.IN, field, Arrays.stream(values).boxed().toArray()));
+        return this;
+    }
+
+    public NoSQLFilter inLong(String field, long... values) {
+        this.filterChain.addLast(new FieldFilterElement(FilterType.IN, field, Arrays.stream(values).boxed().toArray()));
+        return this;
+    }
+
+    public NoSQLFilter inFloat(String field, float... values) {
+        Object[] objects = new Object[values.length];
+        for (int i = 0; i < values.length; i++) {
+            objects[i] = values[i];
+        }
+        this.filterChain.addLast(new FieldFilterElement(FilterType.IN, field, objects));
+        return this;
+    }
+
+    public NoSQLFilter inDouble(String field, double... values) {
+        this.filterChain.addLast(new FieldFilterElement(FilterType.IN, field, Arrays.stream(values).boxed().toArray()));
+        return this;
+    }
+
+    public NoSQLFilter inBool(String field, boolean... values) {
+        Object[] objects = new Object[values.length];
+        for (int i = 0; i < values.length; i++) {
+            objects[i] = values[i];
+        }
+        this.filterChain.addLast(new FieldFilterElement(FilterType.IN, field, objects));
+        return this;
+    }
+
+    public NoSQLFilter inChar(String field, char... values) {
+        Object[] objects = new Object[values.length];
+        for (int i = 0; i < values.length; i++) {
+            objects[i] = values[i];
+        }
+        this.filterChain.addLast(new FieldFilterElement(FilterType.IN, field, objects));
+        return this;
+    }
+
     public NoSQLFilter in(String field, Object... values) {
         this.filterChain.addLast(new FieldFilterElement(FilterType.IN, field, values));
+        return this;
+    }
+
+    public NoSQLFilter notInByte(String field, byte... values) {
+        Object[] objects = new Object[values.length];
+        for (int i = 0; i < values.length; i++) {
+            objects[i] = values[i];
+        }
+        this.filterChain.addLast(new FieldFilterElement(FilterType.NOT_IN, field, objects));
+        return this;
+    }
+
+    public NoSQLFilter notInShort(String field, short... values) {
+        Object[] objects = new Object[values.length];
+        for (int i = 0; i < values.length; i++) {
+            objects[i] = values[i];
+        }
+        this.filterChain.addLast(new FieldFilterElement(FilterType.NOT_IN, field, objects));
+        return this;
+    }
+
+    public NoSQLFilter notInInt(String field, int... values) {
+        this.filterChain.addLast(new FieldFilterElement(FilterType.NOT_IN, field, Arrays.stream(values).boxed().toArray()));
+        return this;
+    }
+
+    public NoSQLFilter notInLong(String field, long... values) {
+        this.filterChain.addLast(new FieldFilterElement(FilterType.NOT_IN, field, Arrays.stream(values).boxed().toArray()));
+        return this;
+    }
+
+    public NoSQLFilter notInFloat(String field, float... values) {
+        Object[] objects = new Object[values.length];
+        for (int i = 0; i < values.length; i++) {
+            objects[i] = values[i];
+        }
+        this.filterChain.addLast(new FieldFilterElement(FilterType.NOT_IN, field, objects));
+        return this;
+    }
+
+    public NoSQLFilter notInDouble(String field, double... values) {
+        this.filterChain.addLast(new FieldFilterElement(FilterType.NOT_IN, field, Arrays.stream(values).boxed().toArray()));
+        return this;
+    }
+
+    public NoSQLFilter notInBool(String field, boolean... values) {
+        Object[] objects = new Object[values.length];
+        for (int i = 0; i < values.length; i++) {
+            objects[i] = values[i];
+        }
+        this.filterChain.addLast(new FieldFilterElement(FilterType.NOT_IN, field, objects));
+        return this;
+    }
+
+    public NoSQLFilter notInChar(String field, char... values) {
+        Object[] objects = new Object[values.length];
+        for (int i = 0; i < values.length; i++) {
+            objects[i] = values[i];
+        }
+        this.filterChain.addLast(new FieldFilterElement(FilterType.NOT_IN, field, objects));
         return this;
     }
 
