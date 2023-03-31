@@ -55,7 +55,9 @@ public interface NoSQLDatabase<F> {
 
     <T> Iterable<T> findAll(Class<T> clazz, int offset, int pageSize, String sortField, SortOrder sortOrder) throws IOException;
 
-    public <T, P, C> Iterable<T> joinChildren(Class<T> clazz, Class<P> parentClass, Class<C> childClass, Iterable<P> parents, String foreignField, String targetField);
+    <T, P, C> Iterable<T> joinAllChildren(Class<T> clazz, Class<P> parentClass, Class<C> childClass, Iterable<P> parents, String foreignField, String targetField);
+
+    <T, P, C> Iterable<T> joinChildren(Class<T> clazz, Class<P> parentClass, Class<C> childClass, NoSQLFilter childFilter, Iterable<P> parents, String foreignField, String targetField);
 
     <T> int count(NoSQLFilter filter, Class<T> clazz) throws IOException;
 

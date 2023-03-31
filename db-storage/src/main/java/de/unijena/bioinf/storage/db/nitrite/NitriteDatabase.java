@@ -315,9 +315,14 @@ public class NitriteDatabase implements NoSQLDatabase<ObjectFilter>, Closeable, 
         });
     }
 
-    public <T, P, C> Iterable<T> joinChildren(Class<T> clazz, Class<P> parentClass, Class<C> childClass, Iterable<P> parents, String foreignField, String targetField) {
+    public <T, P, C> Iterable<T> joinAllChildren(Class<T> clazz, Class<P> parentClass, Class<C> childClass, Iterable<P> parents, String foreignField, String targetField) {
         org.dizitart.no2.objects.Cursor<P> parentCursor = (org.dizitart.no2.objects.Cursor<P>) parents;
-        return new NitriteJoinedIterable<T, P, C>(clazz, parentClass, childClass, parentCursor, foreignField, targetField, this);
+        return new NitriteJoinedIterable<>(clazz, parentClass, childClass, parentCursor, foreignField, targetField, this);
+    }
+
+    public <T, P, C> Iterable<T> joinChildren(Class<T> clazz, Class<P> parentClass, Class<C> childClass, NoSQLFilter childFilter, Iterable<P> parents, String foreignField, String targetField) {
+        org.dizitart.no2.objects.Cursor<P> parentCursor = (org.dizitart.no2.objects.Cursor<P>) parents;
+        return new NitriteFilteredJoinedIterable<>(clazz, parentClass, childClass, childFilter, parentCursor, foreignField, targetField, this);
     }
 
     @Override

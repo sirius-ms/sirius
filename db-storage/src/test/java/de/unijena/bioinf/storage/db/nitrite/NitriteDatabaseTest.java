@@ -264,11 +264,12 @@ public class NitriteDatabaseTest {
 
             Iterable<NitriteTestEntry> outParent = db.findAll(NitriteTestEntry.class);
             Iterable<NitriteChildTestEntry> outChildren = db.findAll(NitriteChildTestEntry.class);
+            Iterable<NitriteChildTestEntry> outChildrenF = db.find(new NoSQLFilter().or().eq("name", "A").eq("name", "B"), NitriteChildTestEntry.class);
 
             assertEquals("1 parent", 1, Lists.newArrayList(outParent).size());
             assertTrue("parent okay", EqualsBuilder.reflectionEquals(parent, outParent.iterator().next(), false, null, true));
 
-            List<NitriteFamilyTestEntry> results = Lists.newArrayList(db.joinChildren(NitriteFamilyTestEntry.class, NitriteTestEntry.class, NitriteChildTestEntry.class, outParent, "parentId", "children"));
+            List<NitriteFamilyTestEntry> results = Lists.newArrayList(db.joinAllChildren(NitriteFamilyTestEntry.class, NitriteTestEntry.class, NitriteChildTestEntry.class, outParent, "parentId", "children"));
 
             assertEquals("1 joined parent", 1, results.size());
 
@@ -280,6 +281,27 @@ public class NitriteDatabaseTest {
                     results.get(0).children, false, null, true
             ));
 
+            results = Lists.newArrayList(db.joinChildren(NitriteFamilyTestEntry.class, NitriteTestEntry.class, NitriteChildTestEntry.class, new NoSQLFilter().or().eq("name", "A").eq("name", "B"), outParent, "parentId", "children"));
+
+            assertEquals("1 joined filtered parent", 1, results.size());
+
+            assertEquals("joined filtered parent okay", Lists.newArrayList(outParent).get(0).id, results.get(0).id);
+            assertEquals("joined filtered parent okay", Lists.newArrayList(outParent).get(0).name, results.get(0).name);
+
+            List<NitriteChildTestEntry> foo = Lists.newArrayList(outChildrenF);
+            List<NitriteChildTestEntry> bar = Lists.newArrayList(results.get(0).children);
+
+            System.out.println(foo);
+            System.out.println(bar);
+
+            assertTrue("joined filtered children okay", EqualsBuilder.reflectionEquals(
+                    Lists.newArrayList(outChildrenF),
+                    results.get(0).children, false, null, true
+            ));
+
+            results = Lists.newArrayList(db.joinChildren(NitriteFamilyTestEntry.class, NitriteTestEntry.class, NitriteChildTestEntry.class, new NoSQLFilter().and().eq("name", "A").eq("name", "B"), outParent, "parentId", "children"));
+
+            assertEquals("0 joined filtered parent", 0, results.size());
         }
 
     }
