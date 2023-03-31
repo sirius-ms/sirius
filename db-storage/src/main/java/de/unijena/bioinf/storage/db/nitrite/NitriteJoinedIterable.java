@@ -31,13 +31,14 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class NitriteJoinedIterable<T, P, C> implements Iterable<T> {
 
     private final Class<T> clazz;
     private final Class<P> parentClass;
     private final Class<C> childClass;
-    private final Set<NitriteId> parents;
+    private final Set<Long> parents;
     private final String foreignField;
     private final String targetField;
 
@@ -47,7 +48,7 @@ public class NitriteJoinedIterable<T, P, C> implements Iterable<T> {
         this.clazz = clazz;
         this.parentClass = parentClass;
         this.childClass = childClass;
-        this.parents = parents.idSet();
+        this.parents = parents.idSet().stream().mapToLong(NitriteId::getIdValue).boxed().collect(Collectors.toSet());
         this.foreignField = foreignField;
         this.targetField = targetField;
         this.database = database;
@@ -67,12 +68,12 @@ public class NitriteJoinedIterable<T, P, C> implements Iterable<T> {
         private final Class<T> clazz;
         private final Class<P> parentClass;
         private final Class<C> childClass;
-        private final Iterator<NitriteId> parents;
+        private final Iterator<Long> parents;
         private final String foreignField;
         private final String targetField;
         private final NitriteDatabase database;
 
-        public JoinedIterator(Class<T> clazz, Class<P> parentClass, Class<C> childClass, Set<NitriteId> parents, String foreignField, String targetField, NitriteDatabase database) {
+        public JoinedIterator(Class<T> clazz, Class<P> parentClass, Class<C> childClass, Set<Long> parents, String foreignField, String targetField, NitriteDatabase database) {
             this.clazz = clazz;
             this.parentClass = parentClass;
             this.childClass = childClass;
@@ -90,7 +91,7 @@ public class NitriteJoinedIterable<T, P, C> implements Iterable<T> {
         @Override
         public T next() {
             try {
-                long id = parents.next().getIdValue();
+                long id = parents.next();
                 Iterable<P> parent = database.find(new NoSQLFilter().eq("id", id), parentClass);
                 Iterable<C> children = database.find(new NoSQLFilter().eq(foreignField, id), childClass);
 
