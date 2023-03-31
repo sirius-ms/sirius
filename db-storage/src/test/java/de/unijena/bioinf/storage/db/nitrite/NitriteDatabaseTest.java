@@ -20,7 +20,8 @@
 
 package de.unijena.bioinf.storage.db.nitrite;
 
-import com.google.api.client.util.Lists;
+
+import com.google.common.collect.Lists;
 import com.google.common.collect.Streams;
 import de.unijena.bioinf.storage.db.NoSQLDatabase;
 import de.unijena.bioinf.storage.db.NoSQLFilter;
@@ -45,6 +46,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class NitriteDatabaseTest {
+
+    static {
+        if (!EqualsBuilder.class.getModule().isNamed()) {
+            ClassLoader.class.getModule().addOpens(ArrayList.class.getPackageName(), EqualsBuilder.class.getModule());
+        }
+    }
 
     private static class NitriteTestEntry extends NitritePOJO {
 
@@ -288,12 +295,6 @@ public class NitriteDatabaseTest {
             assertEquals("joined filtered parent okay", Lists.newArrayList(outParent).get(0).id, results.get(0).id);
             assertEquals("joined filtered parent okay", Lists.newArrayList(outParent).get(0).name, results.get(0).name);
 
-            List<NitriteChildTestEntry> foo = Lists.newArrayList(outChildrenF);
-            List<NitriteChildTestEntry> bar = Lists.newArrayList(results.get(0).children);
-
-            System.out.println(foo);
-            System.out.println(bar);
-
             assertTrue("joined filtered children okay", EqualsBuilder.reflectionEquals(
                     Lists.newArrayList(outChildrenF),
                     results.get(0).children, false, null, true
@@ -312,7 +313,7 @@ public class NitriteDatabaseTest {
         Path file = Files.createTempFile("nitrite-test", "");
         file.toFile().deleteOnExit();
 
-        List<NitriteTestEntry> entries = Lists.newArrayList(IntStream.range(0, 100).mapToObj((int num) -> new NitriteTestEntry(Integer.toString(num))).collect(Collectors.toList()));
+        List<NitriteTestEntry> entries = IntStream.range(0, 100).mapToObj((int num) -> new NitriteTestEntry(Integer.toString(num))).collect(Collectors.toList());
 
         try (NitriteDatabase db = new NitriteDatabase(file, NitriteTestEntry.class)) {
             List<Callable<Void>> jobs = entries.stream().map((NitriteTestEntry entry) -> (Callable<Void>) () -> {
