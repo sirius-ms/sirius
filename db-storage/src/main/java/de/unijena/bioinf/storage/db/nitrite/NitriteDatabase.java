@@ -51,7 +51,7 @@ public class NitriteDatabase implements NoSQLDatabase<ObjectFilter>, Closeable, 
 
     // NITRITE
     private final Nitrite db;
-    private final Map<Class<? extends NitritePOJO>, ObjectRepository<?>> repositories = Collections.synchronizedMap(new HashMap<>());
+    private final Map<Class<?>, ObjectRepository<?>> repositories = Collections.synchronizedMap(new HashMap<>());
 
     // LOCKS
     private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
@@ -64,13 +64,12 @@ public class NitriteDatabase implements NoSQLDatabase<ObjectFilter>, Closeable, 
     // STATE
     private boolean isClosed = false;
 
-    @SafeVarargs
-    public NitriteDatabase(@NotNull Path file, Class<? extends NitritePOJO>... classes) {
+    public NitriteDatabase(@NotNull Path file, Class<?>... classes) {
         this.file = file;
         this.db = Nitrite.builder().filePath(file.toFile()).compressed().openOrCreate();
 
-        for (Class<? extends NitritePOJO> clazz : classes) {
-            ObjectRepository<? extends NitritePOJO> repository = this.db.getRepository(clazz);
+        for (Class<?> clazz : classes) {
+            ObjectRepository<?> repository = this.db.getRepository(clazz);
             this.repositories.put(clazz, repository);
             Collection<Index> repoIndices = repository.listIndices();
             try {
