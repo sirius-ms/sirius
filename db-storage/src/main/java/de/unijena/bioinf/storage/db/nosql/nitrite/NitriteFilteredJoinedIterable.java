@@ -18,9 +18,9 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.storage.db.nitrite;
+package de.unijena.bioinf.storage.db.nosql.nitrite;
 
-import de.unijena.bioinf.storage.db.NoSQLFilter;
+import de.unijena.bioinf.storage.db.nosql.Filter;
 import org.dizitart.no2.Document;
 import org.dizitart.no2.Lookup;
 import org.dizitart.no2.NitriteId;
@@ -43,14 +43,14 @@ public class NitriteFilteredJoinedIterable<T, P, C> implements Iterable<T> {
     private final Class<T> clazz;
     private final Class<P> parentClass;
     private final Class<C> childClass;
-    private final NoSQLFilter childFilter;
+    private final Filter childFilter;
     private final Set<Long> parents;
     private final String foreignField;
     private final String targetField;
 
     private final NitriteDatabase database;
 
-    public NitriteFilteredJoinedIterable(Class<T> clazz, Class<P> parentClass, Class<C> childClass, NoSQLFilter childFilter, Cursor<P> parents, String foreignField, String targetField, NitriteDatabase database) {
+    public NitriteFilteredJoinedIterable(Class<T> clazz, Class<P> parentClass, Class<C> childClass, Filter childFilter, Cursor<P> parents, String foreignField, String targetField, NitriteDatabase database) {
         this.clazz = clazz;
         this.parentClass = parentClass;
         this.childClass = childClass;
@@ -75,14 +75,14 @@ public class NitriteFilteredJoinedIterable<T, P, C> implements Iterable<T> {
         private final Class<T> clazz;
         private final Class<P> parentClass;
         private final Class<C> childClass;
-        private final NoSQLFilter childFilter;
+        private final Filter childFilter;
         private final Iterator<Long> parents;
         private final String foreignField;
         private final String targetField;
         private final NitriteDatabase database;
         private T next;
 
-        public FilteredJoinedIterator(Class<T> clazz, Class<P> parentClass, Class<C> childClass, NoSQLFilter childFilter, Set<Long> parents, String foreignField, String targetField, NitriteDatabase database) {
+        public FilteredJoinedIterator(Class<T> clazz, Class<P> parentClass, Class<C> childClass, Filter childFilter, Set<Long> parents, String foreignField, String targetField, NitriteDatabase database) {
             this.clazz = clazz;
             this.parentClass = parentClass;
             this.childClass = childClass;
@@ -133,8 +133,8 @@ public class NitriteFilteredJoinedIterable<T, P, C> implements Iterable<T> {
                 T result = null;
                 while (result == null && parents.hasNext()) {
                     long id = parents.next();
-                    Iterable<P> parent = database.find(new NoSQLFilter().eq("id", id), parentClass);
-                    NoSQLFilter cFilter = new NoSQLFilter().and().eq(foreignField, id);
+                    Iterable<P> parent = database.find(new Filter().eq("id", id), parentClass);
+                    Filter cFilter = new Filter().and().eq(foreignField, id);
                     cFilter.filterChain.addAll(childFilter.filterChain);
                     Cursor<C> children = (Cursor<C>) database.find(cFilter, childClass);
                     if (children.size() == 0) {

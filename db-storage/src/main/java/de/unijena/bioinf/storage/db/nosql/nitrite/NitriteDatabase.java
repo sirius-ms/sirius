@@ -18,11 +18,12 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.storage.db.nitrite;
+package de.unijena.bioinf.storage.db.nosql.nitrite;
 
-import de.unijena.bioinf.storage.db.NoSQLDatabase;
-import de.unijena.bioinf.storage.db.NoSQLFilter;
-import de.unijena.bioinf.storage.db.NoSQLPOJO;
+import de.unijena.bioinf.storage.db.nosql.Database;
+import de.unijena.bioinf.storage.db.nosql.Filter;
+import de.unijena.bioinf.storage.db.nosql.Index;
+import de.unijena.bioinf.storage.db.nosql.IndexType;
 import org.apache.commons.lang3.tuple.Pair;
 import org.dizitart.no2.*;
 import org.dizitart.no2.objects.ObjectFilter;
@@ -30,7 +31,6 @@ import org.dizitart.no2.objects.ObjectRepository;
 import org.dizitart.no2.objects.filters.ObjectFilters;
 
 import javax.validation.constraints.NotNull;
-import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
@@ -38,7 +38,7 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class NitriteDatabase implements NoSQLDatabase<ObjectFilter>, Closeable, AutoCloseable {
+public class NitriteDatabase implements Database<Document, ObjectFilter> {
 
     // Prevent illegal reflective access warnings
     static {
@@ -64,6 +64,11 @@ public class NitriteDatabase implements NoSQLDatabase<ObjectFilter>, Closeable, 
     // STATE
     private boolean isClosed = false;
 
+    public NitriteDatabase(@NotNull Path file) {
+        this.file = file;
+        this.db = Nitrite.builder().filePath(file.toFile()).compressed().openOrCreate();
+    }
+
     public NitriteDatabase(@NotNull Path file, Class<?>... classes) {
         this.file = file;
         this.db = Nitrite.builder().filePath(file.toFile()).compressed().openOrCreate();
@@ -71,21 +76,21 @@ public class NitriteDatabase implements NoSQLDatabase<ObjectFilter>, Closeable, 
         for (Class<?> clazz : classes) {
             ObjectRepository<?> repository = this.db.getRepository(clazz);
             this.repositories.put(clazz, repository);
-            Collection<Index> repoIndices = repository.listIndices();
+            Collection<org.dizitart.no2.Index> repoIndices = repository.listIndices();
             try {
                 Field indexField = clazz.getField("index");
-                List<Index> toDrop = new ArrayList<>();
-                List<NoSQLPOJO.Index> toBuild = new ArrayList<>();
-                for (NoSQLPOJO.Index index : (NoSQLPOJO.Index[]) indexField.get(null)) {
+                List<org.dizitart.no2.Index> toDrop = new ArrayList<>();
+                List<Index> toBuild = new ArrayList<>();
+                for (Index index : (Index[]) indexField.get(null)) {
                     found:
                     {
-                        for (Index repoIndex : repoIndices) {
+                        for (org.dizitart.no2.Index repoIndex : repoIndices) {
                             if (Objects.equals(repoIndex.getField(), index.getField())) {
-                                IndexType repoType = repoIndex.getIndexType();
-                                NoSQLPOJO.IndexType iType = index.getType();
-                                if ((repoType == IndexType.Unique && iType != NoSQLPOJO.IndexType.UNIQUE) ||
-                                        (repoType == IndexType.NonUnique && iType != NoSQLPOJO.IndexType.NON_UNIQUE) ||
-                                        (repoType == IndexType.Fulltext && iType != NoSQLPOJO.IndexType.FULL_TEXT)) {
+                                org.dizitart.no2.IndexType repoType = repoIndex.getIndexType();
+                                IndexType iType = index.getType();
+                                if ((repoType == org.dizitart.no2.IndexType.Unique && iType != IndexType.UNIQUE) ||
+                                        (repoType == org.dizitart.no2.IndexType.NonUnique && iType != IndexType.NON_UNIQUE) ||
+                                        (repoType == org.dizitart.no2.IndexType.Fulltext && iType != IndexType.FULL_TEXT)) {
                                     toDrop.add(repoIndex);
                                     toBuild.add(index);
                                 }
@@ -96,20 +101,20 @@ public class NitriteDatabase implements NoSQLDatabase<ObjectFilter>, Closeable, 
                     }
                 }
 
-                for (Index index : toDrop) {
+                for (org.dizitart.no2.Index index : toDrop) {
                     repository.dropIndex(index.getField());
                 }
 
-                for (NoSQLPOJO.Index index : toBuild) {
+                for (Index index : toBuild) {
                     switch (index.getType()) {
                         case UNIQUE:
-                            repository.createIndex(index.getField(), IndexOptions.indexOptions(IndexType.Unique));
+                            repository.createIndex(index.getField(), IndexOptions.indexOptions(org.dizitart.no2.IndexType.Unique));
                             break;
                         case NON_UNIQUE:
-                            repository.createIndex(index.getField(), IndexOptions.indexOptions(IndexType.NonUnique));
+                            repository.createIndex(index.getField(), IndexOptions.indexOptions(org.dizitart.no2.IndexType.NonUnique));
                             break;
                         case FULL_TEXT:
-                            repository.createIndex(index.getField(), IndexOptions.indexOptions(IndexType.Fulltext));
+                            repository.createIndex(index.getField(), IndexOptions.indexOptions(org.dizitart.no2.IndexType.Fulltext));
                             break;
                     }
                 }
@@ -243,7 +248,7 @@ public class NitriteDatabase implements NoSQLDatabase<ObjectFilter>, Closeable, 
     }
 
     @Override
-    public <T> Iterable<T> find(NoSQLFilter filter, Class<T> clazz) throws IOException {
+    public <T> Iterable<T> find(Filter filter, Class<T> clazz) throws IOException {
         return this.read(() -> {
             ObjectRepository<T> repo = this.getRepository(clazz);
             ObjectFilter of = getFilter(filter);
@@ -252,7 +257,7 @@ public class NitriteDatabase implements NoSQLDatabase<ObjectFilter>, Closeable, 
     }
 
     @Override
-    public <T> Iterable<T> find(NoSQLFilter filter, Class<T> clazz, int offset, int pageSize) throws IOException {
+    public <T> Iterable<T> find(Filter filter, Class<T> clazz, int offset, int pageSize) throws IOException {
         return this.read(() -> {
             ObjectRepository<T> repo = this.getRepository(clazz);
             ObjectFilter of = getFilter(filter);
@@ -261,7 +266,7 @@ public class NitriteDatabase implements NoSQLDatabase<ObjectFilter>, Closeable, 
     }
 
     @Override
-    public <T> Iterable<T> find(NoSQLFilter filter, Class<T> clazz, String sortField, SortOrder sortOrder) throws IOException {
+    public <T> Iterable<T> find(Filter filter, Class<T> clazz, String sortField, SortOrder sortOrder) throws IOException {
         return this.read(() -> {
             ObjectRepository<T> repo = this.getRepository(clazz);
             ObjectFilter of = getFilter(filter);
@@ -270,7 +275,7 @@ public class NitriteDatabase implements NoSQLDatabase<ObjectFilter>, Closeable, 
     }
 
     @Override
-    public <T> Iterable<T> find(NoSQLFilter filter, Class<T> clazz, int offset, int pageSize, String sortField, SortOrder sortOrder) throws IOException {
+    public <T> Iterable<T> find(Filter filter, Class<T> clazz, int offset, int pageSize, String sortField, SortOrder sortOrder) throws IOException {
         return this.read(() -> {
             ObjectRepository<T> repo = this.getRepository(clazz);
             ObjectFilter of = getFilter(filter);
@@ -319,13 +324,13 @@ public class NitriteDatabase implements NoSQLDatabase<ObjectFilter>, Closeable, 
         return new NitriteJoinedIterable<>(clazz, parentClass, childClass, parentCursor, foreignField, targetField, this);
     }
 
-    public <T, P, C> Iterable<T> joinChildren(Class<T> clazz, Class<P> parentClass, Class<C> childClass, NoSQLFilter childFilter, Iterable<P> parents, String foreignField, String targetField) {
+    public <T, P, C> Iterable<T> joinChildren(Class<T> clazz, Class<P> parentClass, Class<C> childClass, Filter childFilter, Iterable<P> parents, String foreignField, String targetField) {
         org.dizitart.no2.objects.Cursor<P> parentCursor = (org.dizitart.no2.objects.Cursor<P>) parents;
         return new NitriteFilteredJoinedIterable<>(clazz, parentClass, childClass, childFilter, parentCursor, foreignField, targetField, this);
     }
 
     @Override
-    public <T> int count(NoSQLFilter filter, Class<T> clazz) throws IOException {
+    public <T> int count(Filter filter, Class<T> clazz) throws IOException {
         return this.read(() -> {
             ObjectRepository<T> repo = this.getRepository(clazz);
             ObjectFilter of = getFilter(filter);
@@ -334,7 +339,7 @@ public class NitriteDatabase implements NoSQLDatabase<ObjectFilter>, Closeable, 
     }
 
     @Override
-    public <T> int count(NoSQLFilter filter, Class<T> clazz, int offset, int pageSize) throws IOException {
+    public <T> int count(Filter filter, Class<T> clazz, int offset, int pageSize) throws IOException {
         return this.read(() -> {
             ObjectRepository<T> repo = this.getRepository(clazz);
             ObjectFilter of = getFilter(filter);
@@ -374,7 +379,7 @@ public class NitriteDatabase implements NoSQLDatabase<ObjectFilter>, Closeable, 
     }
 
     @Override
-    public <T> int removeAll(NoSQLFilter filter, Class<T> clazz) throws IOException {
+    public <T> int removeAll(Filter filter, Class<T> clazz) throws IOException {
         return this.write(() -> {
             ObjectRepository<T> repo = this.getRepository(clazz);
             ObjectFilter of = getFilter(filter);
@@ -382,7 +387,7 @@ public class NitriteDatabase implements NoSQLDatabase<ObjectFilter>, Closeable, 
         });
     }
 
-    private ObjectFilter[] getAllFilterChildren(Deque<NoSQLFilter.FilterElement> filterChain) {
+    private ObjectFilter[] getAllFilterChildren(Deque<Filter.FilterElement> filterChain) {
         List<ObjectFilter> children = new ArrayList<>();
         while (!filterChain.isEmpty()) {
             ObjectFilter next = getFilter(filterChain);
@@ -392,11 +397,11 @@ public class NitriteDatabase implements NoSQLDatabase<ObjectFilter>, Closeable, 
         return children.toArray(arr);
     }
 
-    private ObjectFilter getFilter(Deque<NoSQLFilter.FilterElement> filterChain) {
+    private ObjectFilter getFilter(Deque<Filter.FilterElement> filterChain) {
         if (filterChain.isEmpty()) {
             return ObjectFilters.ALL;
         }
-        NoSQLFilter.FilterElement element = filterChain.pop();
+        Filter.FilterElement element = filterChain.pop();
         switch (element.filterType) {
             case AND:
                 return ObjectFilters.and(getAllFilterChildren(filterChain));
@@ -406,52 +411,52 @@ public class NitriteDatabase implements NoSQLDatabase<ObjectFilter>, Closeable, 
                 return ObjectFilters.not(getFilter(filterChain));
             case EQ:
                 return ObjectFilters.eq(
-                        ((NoSQLFilter.FieldFilterElement) element).field,
-                        ((NoSQLFilter.FieldFilterElement) element).values[0]
+                        ((Filter.FieldFilterElement) element).field,
+                        ((Filter.FieldFilterElement) element).values[0]
                 );
             case GT:
                 return ObjectFilters.gt(
-                        ((NoSQLFilter.FieldFilterElement) element).field,
-                        ((NoSQLFilter.FieldFilterElement) element).values[0]
+                        ((Filter.FieldFilterElement) element).field,
+                        ((Filter.FieldFilterElement) element).values[0]
                 );
             case GTE:
                 return ObjectFilters.gte(
-                        ((NoSQLFilter.FieldFilterElement) element).field,
-                        ((NoSQLFilter.FieldFilterElement) element).values[0]
+                        ((Filter.FieldFilterElement) element).field,
+                        ((Filter.FieldFilterElement) element).values[0]
                 );
             case LT:
                 return ObjectFilters.lt(
-                        ((NoSQLFilter.FieldFilterElement) element).field,
-                        ((NoSQLFilter.FieldFilterElement) element).values[0]
+                        ((Filter.FieldFilterElement) element).field,
+                        ((Filter.FieldFilterElement) element).values[0]
                 );
             case LTE:
                 return ObjectFilters.lte(
-                        ((NoSQLFilter.FieldFilterElement) element).field,
-                        ((NoSQLFilter.FieldFilterElement) element).values[0]
+                        ((Filter.FieldFilterElement) element).field,
+                        ((Filter.FieldFilterElement) element).values[0]
                 );
             case TEXT:
                 return ObjectFilters.text(
-                        ((NoSQLFilter.FieldFilterElement) element).field,
-                        (String) ((NoSQLFilter.FieldFilterElement) element).values[0]
+                        ((Filter.FieldFilterElement) element).field,
+                        (String) ((Filter.FieldFilterElement) element).values[0]
                 );
             case REGEX:
                 return ObjectFilters.regex(
-                        ((NoSQLFilter.FieldFilterElement) element).field,
-                        (String) ((NoSQLFilter.FieldFilterElement) element).values[0]
+                        ((Filter.FieldFilterElement) element).field,
+                        (String) ((Filter.FieldFilterElement) element).values[0]
                 );
             case IN:
                 return ObjectFilters.in(
-                        ((NoSQLFilter.FieldFilterElement) element).field,
-                        ((NoSQLFilter.FieldFilterElement) element).values
+                        ((Filter.FieldFilterElement) element).field,
+                        ((Filter.FieldFilterElement) element).values
                 );
             case NOT_IN:
                 return ObjectFilters.notIn(
-                        ((NoSQLFilter.FieldFilterElement) element).field,
-                        ((NoSQLFilter.FieldFilterElement) element).values
+                        ((Filter.FieldFilterElement) element).field,
+                        ((Filter.FieldFilterElement) element).values
                 );
             case ELEM_MATCH:
                 return ObjectFilters.elemMatch(
-                        ((NoSQLFilter.FieldFilterElement) element).field,
+                        ((Filter.FieldFilterElement) element).field,
                         getFilter(filterChain)
                 );
         }
@@ -459,7 +464,7 @@ public class NitriteDatabase implements NoSQLDatabase<ObjectFilter>, Closeable, 
     }
 
     @Override
-    public ObjectFilter getFilter(NoSQLFilter filter) {
+    public ObjectFilter getFilter(Filter filter) {
         return getFilter(new ArrayDeque<>(filter.filterChain));
     }
 

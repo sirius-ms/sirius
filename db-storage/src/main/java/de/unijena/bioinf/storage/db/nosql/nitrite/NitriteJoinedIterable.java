@@ -18,9 +18,9 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.storage.db.nitrite;
+package de.unijena.bioinf.storage.db.nosql.nitrite;
 
-import de.unijena.bioinf.storage.db.NoSQLFilter;
+import de.unijena.bioinf.storage.db.nosql.Filter;
 import org.dizitart.no2.Lookup;
 import org.dizitart.no2.NitriteId;
 import org.dizitart.no2.RecordIterable;
@@ -92,8 +92,8 @@ public class NitriteJoinedIterable<T, P, C> implements Iterable<T> {
         public T next() {
             try {
                 long id = parents.next();
-                Iterable<P> parent = database.find(new NoSQLFilter().eq("id", id), parentClass);
-                Iterable<C> children = database.find(new NoSQLFilter().eq(foreignField, id), childClass);
+                Iterable<P> parent = database.find(new Filter().eq("id", id), parentClass);
+                Iterable<C> children = database.find(new Filter().eq(foreignField, id), childClass);
 
                 Lookup lookup = new Lookup();
                 lookup.setLocalField("id");

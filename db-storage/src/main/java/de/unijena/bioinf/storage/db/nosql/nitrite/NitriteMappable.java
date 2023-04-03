@@ -1,4 +1,4 @@
-package de.unijena.bioinf.storage.db.nitrite;
+package de.unijena.bioinf.storage.db.nosql.nitrite;
 
 import com.esotericsoftware.reflectasm.FieldAccess;
 import org.apache.commons.lang3.ClassUtils;

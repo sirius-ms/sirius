@@ -18,12 +18,13 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.storage.db;
+package de.unijena.bioinf.storage.db.nosql;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collection;
 
-public interface NoSQLDatabase<F> {
+public interface Database<DocType, FilterType> extends Closeable, AutoCloseable {
 
     enum SortOrder {
         ASCENDING, DESCENDING
@@ -39,13 +40,13 @@ public interface NoSQLDatabase<F> {
 
     <T> int upsertAll(Collection<T> objects) throws IOException;
 
-    <T> Iterable<T> find(NoSQLFilter filter, Class<T> clazz) throws IOException;
+    <T> Iterable<T> find(Filter filter, Class<T> clazz) throws IOException;
 
-    <T> Iterable<T> find(NoSQLFilter filter, Class<T> clazz, int offset, int pageSize) throws IOException;
+    <T> Iterable<T> find(Filter filter, Class<T> clazz, int offset, int pageSize) throws IOException;
 
-    <T> Iterable<T> find(NoSQLFilter filter, Class<T> clazz, String sortField, SortOrder sortOrder) throws IOException;
+    <T> Iterable<T> find(Filter filter, Class<T> clazz, String sortField, SortOrder sortOrder) throws IOException;
 
-    <T> Iterable<T> find(NoSQLFilter filter, Class<T> clazz, int offset, int pageSize, String sortField, SortOrder sortOrder) throws IOException;
+    <T> Iterable<T> find(Filter filter, Class<T> clazz, int offset, int pageSize, String sortField, SortOrder sortOrder) throws IOException;
 
     <T> Iterable<T> findAll(Class<T> clazz) throws IOException;
 
@@ -57,11 +58,11 @@ public interface NoSQLDatabase<F> {
 
     <T, P, C> Iterable<T> joinAllChildren(Class<T> clazz, Class<P> parentClass, Class<C> childClass, Iterable<P> parents, String foreignField, String targetField);
 
-    <T, P, C> Iterable<T> joinChildren(Class<T> clazz, Class<P> parentClass, Class<C> childClass, NoSQLFilter childFilter, Iterable<P> parents, String foreignField, String targetField);
+    <T, P, C> Iterable<T> joinChildren(Class<T> clazz, Class<P> parentClass, Class<C> childClass, Filter childFilter, Iterable<P> parents, String foreignField, String targetField);
 
-    <T> int count(NoSQLFilter filter, Class<T> clazz) throws IOException;
+    <T> int count(Filter filter, Class<T> clazz) throws IOException;
 
-    <T> int count(NoSQLFilter filter, Class<T> clazz, int offset, int pageSize) throws IOException;
+    <T> int count(Filter filter, Class<T> clazz, int offset, int pageSize) throws IOException;
 
     <T> int countAll(Class<T> clazz) throws IOException;
 
@@ -69,9 +70,9 @@ public interface NoSQLDatabase<F> {
 
     <T> int removeAll(Collection<T> objects) throws IOException;
 
-    <T> int removeAll(NoSQLFilter filter, Class<T> clazz) throws IOException;
+    <T> int removeAll(Filter filter, Class<T> clazz) throws IOException;
 
-    F getFilter(NoSQLFilter filter);
+    FilterType getFilter(Filter filter);
 
 
 }

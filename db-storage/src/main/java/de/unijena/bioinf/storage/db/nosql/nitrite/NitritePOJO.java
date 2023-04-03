@@ -18,37 +18,27 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.storage.db;
+package de.unijena.bioinf.storage.db.nosql.nitrite;
 
-import javax.validation.constraints.NotNull;
+import de.unijena.bioinf.storage.db.nosql.POJO;
+import org.dizitart.no2.NitriteId;
+import org.dizitart.no2.objects.Id;
+import org.dizitart.no2.objects.InheritIndices;
 
-public abstract class NoSQLPOJO {
+@InheritIndices
+public abstract class NitritePOJO extends POJO implements NitriteMappable, NitriteWriteString {
 
-    public static final Index[] index = {};
+    @Id
+    protected NitriteId id;
 
-    public enum IndexType {
-        UNIQUE, NON_UNIQUE, FULL_TEXT
+    public NitritePOJO() {}
+
+    public NitriteId getId() {
+        return id;
     }
 
-    public static class Index {
-
-        private final String field;
-
-        private final IndexType type;
-
-        public Index(@NotNull String field, @NotNull IndexType type) {
-            this.field = field;
-            this.type = type;
-        }
-
-        public String getField() {
-            return field;
-        }
-
-        public IndexType getType() {
-            return type;
-        }
-
+    public void setId(NitriteId id) {
+        this.id = id;
     }
 
 }
