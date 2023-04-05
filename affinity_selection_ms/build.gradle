@@ -3,13 +3,15 @@ plugins {
 }
 
 group 'de.unijena.bioinf.ms'
-version '4.14.0-SNAPSHOT'
-
-repositories {
-    mavenCentral()
-}
+version = parent.siriusVersion
 
 dependencies {
+    compile project(':chemistry_base')
+    compile "org.openscience.cdk:cdk-bundle:$cdk_version"
+
+    testCompile project(':chemistry_base')
+    testCompile "org.openscience.cdk:cdk-bundle:$cdk_version"
+
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
 }
