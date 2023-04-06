@@ -18,14 +18,14 @@ public class BinEntropyCalculator extends EntropyCalculator{
         int numBins = (int) Math.ceil((maxMoleculeMass - minMoleculeMass) / binSize);
         double adjustedBinSize = (maxMoleculeMass - minMoleculeMass) / numBins;
 
-        double[] lowerBounds = new double[numBins];
-        double[] upperBounds = new double[numBins];
+        this.lowerBounds = new double[numBins];
+        this.upperBounds = new double[numBins];
 
-        lowerBounds[0] = minMoleculeMass;
-        upperBounds[numBins-1] = maxMoleculeMass;
+        this.lowerBounds[0] = minMoleculeMass;
+        this.upperBounds[numBins-1] = maxMoleculeMass;
         for(int i = 1; i < numBins; i++){
-            lowerBounds[i] = minMoleculeMass + i * adjustedBinSize;
-            upperBounds[i-1] = lowerBounds[i] - 1 / this.blowupFactor;
+            this.lowerBounds[i] = minMoleculeMass + i * adjustedBinSize;
+            this.upperBounds[i-1] = this.lowerBounds[i] - 1 / this.blowupFactor;
         }
     }
 
