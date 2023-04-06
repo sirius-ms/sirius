@@ -28,7 +28,7 @@ import java.util.Deque;
 public class Filter {
 
     public enum FilterType {
-        AND, OR, NOT, EQ, GT, GTE, LT, LTE, TEXT, REGEX, IN, NOT_IN, ELEM_MATCH
+        AND, OR, END, NOT, EQ, GT, GTE, LT, LTE, TEXT, REGEX, IN, NOT_IN, ELEM_MATCH
     }
 
     public static class FilterElement {
@@ -64,6 +64,11 @@ public class Filter {
 
     public Filter or() {
         this.filterChain.addLast(new FilterElement(FilterType.OR));
+        return this;
+    }
+
+    public Filter end() {
+        this.filterChain.addLast(new FilterElement(FilterType.END));
         return this;
     }
 
