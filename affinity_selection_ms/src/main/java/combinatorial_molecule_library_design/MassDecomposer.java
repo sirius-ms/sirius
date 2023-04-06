@@ -33,7 +33,9 @@ public class MassDecomposer {
             for(int m = 0; m <= mass; m++){
                 int sum = 0;
                 for(int x : this.bbMasses[n-1]){
-                    sum = sum + numMols[previousRow][m-x];
+                    if(m - x >= 0) {
+                        sum = sum + numMols[previousRow][m - x];
+                    }
                 }
                 numMols[currentRow][m] = sum;
             }
@@ -50,5 +52,12 @@ public class MassDecomposer {
             numMolsInTotal = numMolsInTotal + this.numberOfMoleculesForIntegerMass(m);
         }
         return numMolsInTotal;
+    }
+
+    public static void main(String[] args){
+        double[][] bbMasses = new double[][]{{2,3,7,10}, {2,3,7,10}, {2,3,7,10}, {2,3,7,10}};
+        double blowupFactor = 1.0;
+        MassDecomposer decomposer = new MassDecomposer(bbMasses, blowupFactor);
+        System.out.println(decomposer.numberOfMoleculesForIntegerMass(10));
     }
 }
