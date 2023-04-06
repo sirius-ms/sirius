@@ -41,4 +41,9 @@ public abstract class NitritePOJO extends POJO implements NitriteMappable, Nitri
         this.id = id;
     }
 
+    @Override
+    public String toString() {
+        return this.writeString();
+    }
+
 }
