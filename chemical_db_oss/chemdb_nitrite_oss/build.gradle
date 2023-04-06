@@ -1,0 +1,10 @@
+dependencies {
+    //project
+    implementation project(':chemical_db_oss')
+    implementation project(':chemical_db_oss:chemdb_blob_oss')
+    implementation project(':db-storage')
+
+    // external
+    implementation 'org.dizitart:nitrite:3.4.2'
+    implementation project(path: ':chemical_db_oss:chemdb_blob_oss')
+}
