@@ -21,37 +21,81 @@
 package de.unijena.bioinf.storage.db.nosql.nitrite;
 
 import de.unijena.bioinf.storage.db.nosql.Filter;
+import it.unimi.dsi.fastutil.longs.LongArraySet;
+import it.unimi.dsi.fastutil.longs.LongConsumer;
+import it.unimi.dsi.fastutil.longs.LongIterator;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import org.dizitart.no2.Lookup;
 import org.dizitart.no2.NitriteId;
 import org.dizitart.no2.RecordIterable;
 import org.dizitart.no2.objects.Cursor;
+import org.dizitart.no2.objects.Id;
 
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class NitriteJoinedIterable<T, P, C> implements Iterable<T> {
 
-    private final Class<T> clazz;
-    private final Class<P> parentClass;
-    private final Class<C> childClass;
-    private final Set<Long> parents;
-    private final String foreignField;
-    private final String targetField;
+    protected final Class<T> clazz;
+    protected final Class<P> parentClass;
+    protected final Class<C> childClass;
+    protected LongSet parents;
+    protected final String foreignField;
+    protected final String targetField;
 
-    private final NitriteDatabase database;
+    protected final NitriteDatabase database;
 
-    public NitriteJoinedIterable(Class<T> clazz, Class<P> parentClass, Class<C> childClass, Cursor<P> parents, String foreignField, String targetField, NitriteDatabase database) {
+    public static <T, P, C> NitriteJoinedIterable<T, P, C> newInstance(Class<T> clazz, Class<P> parentClass, Class<C> childClass, Iterable<P> parents, String foreignField, String targetField, NitriteDatabase database) {
+        NitriteJoinedIterable<T, P, C> iterable = new NitriteJoinedIterable<>(clazz, parentClass, childClass, foreignField, targetField, database);
+        iterable.initParentIds(parents);
+        return iterable;
+    }
+
+    protected NitriteJoinedIterable(Class<T> clazz, Class<P> parentClass, Class<C> childClass, String foreignField, String targetField, NitriteDatabase database) {
         this.clazz = clazz;
         this.parentClass = parentClass;
         this.childClass = childClass;
-        this.parents = parents.idSet().stream().mapToLong(NitriteId::getIdValue).boxed().collect(Collectors.toSet());
         this.foreignField = foreignField;
         this.targetField = targetField;
         this.database = database;
+    }
+
+    protected void initParentIds(Iterable<P> parents) {
+        if (parents instanceof Cursor) {
+            this.parents = new LongArraySet(((Cursor<P>) parents).size());
+            ((Cursor<P>) parents).idSet().stream().mapToLong(NitriteId::getIdValue).forEach((LongConsumer) this.parents::add);
+        } else if (parents instanceof org.dizitart.no2.Cursor) {
+            this.parents = new LongArraySet(((org.dizitart.no2.Cursor) parents).size());
+            ((org.dizitart.no2.Cursor) parents).idSet().stream().mapToLong(NitriteId::getIdValue).forEach((LongConsumer) this.parents::add);
+        } else {
+            this.parents = new LongArraySet();
+            StreamSupport.stream(parents.spliterator(), false).mapToLong(p -> {
+                try {
+                    if (p instanceof NitritePOJO) {
+                        return ((NitritePOJO) p).getId().getIdValue();
+                    } else {
+                        for (Field field : p.getClass().getDeclaredFields()) {
+                            if (field.isAnnotationPresent(Id.class)) {
+                                field.setAccessible(true);
+                                Object fieldValue = field.get(p);
+                                if (fieldValue instanceof NitriteId) {
+                                    return ((NitriteId) fieldValue).getIdValue();
+                                } else if (fieldValue instanceof Long) {
+                                    return (long) fieldValue;
+                                }
+                            }
+                        }
+                        throw new RuntimeException("Object has no id.");
+                    }
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+            }).forEach((LongConsumer) this.parents::add);
+        }
     }
 
     @NotNull
@@ -63,17 +107,17 @@ public class NitriteJoinedIterable<T, P, C> implements Iterable<T> {
         return new JoinedIterator(clazz, parentClass, childClass, parents, foreignField, targetField, database);
     }
 
-    private class JoinedIterator implements Iterator<T> {
+    protected class JoinedIterator implements Iterator<T> {
 
-        private final Class<T> clazz;
-        private final Class<P> parentClass;
-        private final Class<C> childClass;
-        private final Iterator<Long> parents;
-        private final String foreignField;
-        private final String targetField;
-        private final NitriteDatabase database;
+        protected final Class<T> clazz;
+        protected final Class<P> parentClass;
+        protected final Class<C> childClass;
+        protected LongIterator parents;
+        protected final String foreignField;
+        protected final String targetField;
+        protected final NitriteDatabase database;
 
-        public JoinedIterator(Class<T> clazz, Class<P> parentClass, Class<C> childClass, Set<Long> parents, String foreignField, String targetField, NitriteDatabase database) {
+        public JoinedIterator(Class<T> clazz, Class<P> parentClass, Class<C> childClass, LongSet parents, String foreignField, String targetField, NitriteDatabase database) {
             this.clazz = clazz;
             this.parentClass = parentClass;
             this.childClass = childClass;
@@ -91,7 +135,7 @@ public class NitriteJoinedIterable<T, P, C> implements Iterable<T> {
         @Override
         public T next() {
             try {
-                long id = parents.next();
+                long id = parents.nextLong();
                 Iterable<P> parent = database.find(new Filter().eq("id", id), parentClass);
                 Iterable<C> children = database.find(new Filter().eq(foreignField, id), childClass);
 

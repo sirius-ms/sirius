@@ -20,12 +20,14 @@
 
 package de.unijena.bioinf.storage.db.nosql.nitrite;
 
+import com.google.common.collect.Iterables;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import de.unijena.bioinf.storage.db.nosql.Index;
 import de.unijena.bioinf.storage.db.nosql.IndexType;
 import org.apache.commons.lang3.tuple.Pair;
 import org.dizitart.no2.*;
+import org.dizitart.no2.filters.Filters;
 import org.dizitart.no2.objects.ObjectFilter;
 import org.dizitart.no2.objects.ObjectRepository;
 import org.dizitart.no2.objects.filters.ObjectFilters;
@@ -38,7 +40,7 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class NitriteDatabase implements Database<Document, ObjectFilter> {
+public class NitriteDatabase implements Database<Document, ObjectFilter, org.dizitart.no2.Filter> {
 
     // Prevent illegal reflective access warnings
     static {
@@ -51,6 +53,9 @@ public class NitriteDatabase implements Database<Document, ObjectFilter> {
 
     // NITRITE
     private final Nitrite db;
+
+    private final Map<String, NitriteCollection> collections = Collections.synchronizedMap(new HashMap<>());
+
     private final Map<Class<?>, ObjectRepository<?>> repositories = Collections.synchronizedMap(new HashMap<>());
 
     // LOCKS
@@ -64,64 +69,88 @@ public class NitriteDatabase implements Database<Document, ObjectFilter> {
     // STATE
     private boolean isClosed = false;
 
-    public NitriteDatabase(@NotNull Path file) {
+    public NitriteDatabase(@NotNull Path file, Map<String, Index[]> collections) {
         this.file = file;
         this.db = Nitrite.builder().filePath(file.toFile()).compressed().openOrCreate();
+        initCollections(collections);
+    }
+
+    public NitriteDatabase(@NotNull Path file, Map<String, Index[]> collections, Class<?>... classes) {
+        this.file = file;
+        this.db = Nitrite.builder().filePath(file.toFile()).compressed().openOrCreate();
+        initCollections(collections);
+        initRepositories(classes);
     }
 
     public NitriteDatabase(@NotNull Path file, Class<?>... classes) {
         this.file = file;
         this.db = Nitrite.builder().filePath(file.toFile()).compressed().openOrCreate();
+        initRepositories(classes);
+    }
 
+    private void initCollections(Map<String, Index[]> collections) {
+        for (String name : collections.keySet()) {
+            NitriteCollection collection = this.db.getCollection(name);
+            this.collections.put(name, collection);
+            initIndex(collections.get(name), collection);
+        }
+    }
+
+    private void initRepositories(Class<?>[] classes) {
         for (Class<?> clazz : classes) {
             ObjectRepository<?> repository = this.db.getRepository(clazz);
             this.repositories.put(clazz, repository);
-            Collection<org.dizitart.no2.Index> repoIndices = repository.listIndices();
             try {
                 Field indexField = clazz.getField("index");
-                List<org.dizitart.no2.Index> toDrop = new ArrayList<>();
-                List<Index> toBuild = new ArrayList<>();
-                for (Index index : (Index[]) indexField.get(null)) {
-                    found:
-                    {
-                        for (org.dizitart.no2.Index repoIndex : repoIndices) {
-                            if (Objects.equals(repoIndex.getField(), index.getField())) {
-                                org.dizitart.no2.IndexType repoType = repoIndex.getIndexType();
-                                IndexType iType = index.getType();
-                                if ((repoType == org.dizitart.no2.IndexType.Unique && iType != IndexType.UNIQUE) ||
-                                        (repoType == org.dizitart.no2.IndexType.NonUnique && iType != IndexType.NON_UNIQUE) ||
-                                        (repoType == org.dizitart.no2.IndexType.Fulltext && iType != IndexType.FULL_TEXT)) {
-                                    toDrop.add(repoIndex);
-                                    toBuild.add(index);
-                                }
-                                break found;
-                            }
-                        }
-                        toBuild.add(index);
-                    }
-                }
-
-                for (org.dizitart.no2.Index index : toDrop) {
-                    repository.dropIndex(index.getField());
-                }
-
-                for (Index index : toBuild) {
-                    switch (index.getType()) {
-                        case UNIQUE:
-                            repository.createIndex(index.getField(), IndexOptions.indexOptions(org.dizitart.no2.IndexType.Unique));
-                            break;
-                        case NON_UNIQUE:
-                            repository.createIndex(index.getField(), IndexOptions.indexOptions(org.dizitart.no2.IndexType.NonUnique));
-                            break;
-                        case FULL_TEXT:
-                            repository.createIndex(index.getField(), IndexOptions.indexOptions(org.dizitart.no2.IndexType.Fulltext));
-                            break;
-                    }
-                }
+                Index[] indices = (Index[]) indexField.get(null);
+                initIndex(indices, repository);
             } catch (NoSuchFieldException e) {
                 // that's okay, no index in this case
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
+            }
+        }
+    }
+
+    private <Repo extends PersistentCollection<?>> void initIndex(Index[] indices, Repo repository) {
+        Collection<org.dizitart.no2.Index> repoIndices = repository.listIndices();
+        List<org.dizitart.no2.Index> toDrop = new ArrayList<>();
+        List<Index> toBuild = new ArrayList<>();
+        for (Index index : indices) {
+            found:
+            {
+                for (org.dizitart.no2.Index repoIndex : repoIndices) {
+                    if (Objects.equals(repoIndex.getField(), index.getField())) {
+                        org.dizitart.no2.IndexType repoType = repoIndex.getIndexType();
+                        IndexType iType = index.getType();
+                        if ((repoType == org.dizitart.no2.IndexType.Unique && iType != IndexType.UNIQUE) ||
+                                (repoType == org.dizitart.no2.IndexType.NonUnique && iType != IndexType.NON_UNIQUE) ||
+                                (repoType == org.dizitart.no2.IndexType.Fulltext && iType != IndexType.FULL_TEXT)) {
+                            toDrop.add(repoIndex);
+                            toBuild.add(index);
+                        }
+                        break found;
+                    }
+                }
+                toBuild.add(index);
+            }
+        }
+
+        for (org.dizitart.no2.Index index : toDrop) {
+            repository.dropIndex(index.getField());
+        }
+
+        for (Index index : toBuild) {
+            switch (index.getType()) {
+                case UNIQUE:
+                    repository.createIndex(index.getField(), IndexOptions.indexOptions(org.dizitart.no2.IndexType.Unique));
+                    break;
+                case NON_UNIQUE:
+                    repository.createIndex(index.getField(), IndexOptions.indexOptions(org.dizitart.no2.IndexType.NonUnique));
+                    break;
+                case FULL_TEXT:
+                    repository.createIndex(index.getField(), IndexOptions.indexOptions(org.dizitart.no2.IndexType.Fulltext));
+                    break;
             }
         }
     }
@@ -192,16 +221,25 @@ public class NitriteDatabase implements Database<Document, ObjectFilter> {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> Pair<T[], ObjectRepository<T>> getRepository(Collection<T> objects) throws IOException {
-        if (objects.isEmpty()) {
+    private <T> Pair<T[], ObjectRepository<T>> getRepository(Iterable<T> objects) throws IOException {
+        Collection<T> collection = new ArrayList<>();
+        Iterables.addAll(collection, objects);
+        if (collection.isEmpty()) {
             return null;
         }
-        T[] arr = (T[]) objects.toArray();
+        T[] arr = (T[]) collection.toArray();
         Class<T> clazz = (Class<T>) arr[0].getClass();
         if (!this.repositories.containsKey(clazz)) {
             throw new IOException(clazz + " is not registered.");
         }
         return Pair.of(arr, (ObjectRepository<T>) this.repositories.get(clazz));
+    }
+
+    private NitriteCollection getCollection(String name) throws IOException {
+        if (!this.collections.containsKey(name)) {
+            throw new IOException(name + " is not registered.");
+        }
+        return this.collections.get(name);
     }
 
     @Override
@@ -214,13 +252,30 @@ public class NitriteDatabase implements Database<Document, ObjectFilter> {
     }
 
     @Override
-    public <T> int insertAll(Collection<T> objects) throws IOException {
+    public <T> int insertAll(Iterable<T> objects) throws IOException {
         return this.write(() -> {
             Pair<T[], ObjectRepository<T>> pair = this.getRepository(objects);
             if (pair == null) {
                 return 0;
             }
             return pair.getRight().insert(pair.getLeft()).getAffectedCount();
+        });
+    }
+
+    @Override
+    public int insert(String collectionName, Document document) throws IOException {
+        return this.write(() -> {
+            NitriteCollection collection = this.getCollection(collectionName);
+            return collection.insert(document).getAffectedCount();
+        });
+    }
+
+    @Override
+    public int insertAll(String collectionName, Iterable<Document> documents) throws IOException {
+        return this.write(() -> {
+            NitriteCollection collection = this.getCollection(collectionName);
+            Document[] docs = Iterables.toArray(documents, Document.class);
+            return collection.insert(docs).getAffectedCount();
         });
     }
 
@@ -233,7 +288,7 @@ public class NitriteDatabase implements Database<Document, ObjectFilter> {
     }
 
     @Override
-    public <T> int upsertAll(Collection<T> objects) throws IOException {
+    public <T> int upsertAll(Iterable<T> objects) throws IOException {
         return this.write(() -> {
             Pair<T[], ObjectRepository<T>> pair = this.getRepository(objects);
             if (pair == null) {
@@ -248,10 +303,46 @@ public class NitriteDatabase implements Database<Document, ObjectFilter> {
     }
 
     @Override
+    public int upsert(String collectionName, Document document) throws IOException {
+        return this.write(() -> {
+            NitriteCollection collection = this.getCollection(collectionName);
+            return collection.update(document, true).getAffectedCount();
+        });
+    }
+
+    @Override
+    public int upsertAll(String collectionName, Iterable<Document> documents) throws IOException {
+        return this.write(() -> {
+            NitriteCollection collection = this.getCollection(collectionName);
+            int count = 0;
+            for (Document doc : documents) {
+                count += collection.update(doc, true).getAffectedCount();
+            }
+            return count;
+        });
+    }
+
+    @Override
+    public <T> T getById(long id, Class<T> clazz) throws IOException {
+        return this.read(() -> {
+            ObjectRepository<T> repo = this.getRepository(clazz);
+            return repo.getById(NitriteId.createId(id));
+        });
+    }
+
+    @Override
+    public Document getById(String collectionName, long id) throws IOException {
+        return this.read(() -> {
+            NitriteCollection collection = this.getCollection(collectionName);
+            return collection.getById(NitriteId.createId(id));
+        });
+    }
+
+    @Override
     public <T> Iterable<T> find(Filter filter, Class<T> clazz) throws IOException {
         return this.read(() -> {
             ObjectRepository<T> repo = this.getRepository(clazz);
-            ObjectFilter of = getFilter(filter);
+            ObjectFilter of = getObjectFilter(filter);
             return repo.find(of);
         });
     }
@@ -260,7 +351,7 @@ public class NitriteDatabase implements Database<Document, ObjectFilter> {
     public <T> Iterable<T> find(Filter filter, Class<T> clazz, int offset, int pageSize) throws IOException {
         return this.read(() -> {
             ObjectRepository<T> repo = this.getRepository(clazz);
-            ObjectFilter of = getFilter(filter);
+            ObjectFilter of = getObjectFilter(filter);
             return repo.find(of, FindOptions.limit(offset, pageSize));
         });
     }
@@ -269,7 +360,7 @@ public class NitriteDatabase implements Database<Document, ObjectFilter> {
     public <T> Iterable<T> find(Filter filter, Class<T> clazz, String sortField, SortOrder sortOrder) throws IOException {
         return this.read(() -> {
             ObjectRepository<T> repo = this.getRepository(clazz);
-            ObjectFilter of = getFilter(filter);
+            ObjectFilter of = getObjectFilter(filter);
             return repo.find(of, FindOptions.sort(sortField, (sortOrder == SortOrder.ASCENDING) ? org.dizitart.no2.SortOrder.Ascending : org.dizitart.no2.SortOrder.Descending));
         });
     }
@@ -278,8 +369,44 @@ public class NitriteDatabase implements Database<Document, ObjectFilter> {
     public <T> Iterable<T> find(Filter filter, Class<T> clazz, int offset, int pageSize, String sortField, SortOrder sortOrder) throws IOException {
         return this.read(() -> {
             ObjectRepository<T> repo = this.getRepository(clazz);
-            ObjectFilter of = getFilter(filter);
+            ObjectFilter of = getObjectFilter(filter);
             return repo.find(of, FindOptions.sort(sortField, (sortOrder == SortOrder.ASCENDING) ? org.dizitart.no2.SortOrder.Ascending : org.dizitart.no2.SortOrder.Descending).thenLimit(offset, pageSize));
+        });
+    }
+
+    @Override
+    public Iterable<Document> find(String collectionName, Filter filter) throws IOException {
+        return this.read(() -> {
+            NitriteCollection collection = this.getCollection(collectionName);
+            org.dizitart.no2.Filter f = getFilter(filter);
+            return collection.find(f);
+        });
+    }
+
+    @Override
+    public Iterable<Document> find(String collectionName, Filter filter, int offset, int pageSize) throws IOException {
+        return this.read(() -> {
+            NitriteCollection collection = this.getCollection(collectionName);
+            org.dizitart.no2.Filter f = getFilter(filter);
+            return collection.find(f, FindOptions.limit(offset, pageSize));
+        });
+    }
+
+    @Override
+    public Iterable<Document> find(String collectionName, Filter filter, String sortField, SortOrder sortOrder) throws IOException {
+        return this.read(() -> {
+            NitriteCollection collection = this.getCollection(collectionName);
+            org.dizitart.no2.Filter f = getFilter(filter);
+            return collection.find(f, FindOptions.sort(sortField, (sortOrder == SortOrder.ASCENDING) ? org.dizitart.no2.SortOrder.Ascending : org.dizitart.no2.SortOrder.Descending));
+        });
+    }
+
+    @Override
+    public Iterable<Document> find(String collectionName, Filter filter, int offset, int pageSize, String sortField, SortOrder sortOrder) throws IOException {
+        return this.read(() -> {
+            NitriteCollection collection = this.getCollection(collectionName);
+            org.dizitart.no2.Filter f = getFilter(filter);
+            return collection.find(f, FindOptions.sort(sortField, (sortOrder == SortOrder.ASCENDING) ? org.dizitart.no2.SortOrder.Ascending : org.dizitart.no2.SortOrder.Descending).thenLimit(offset, pageSize));
         });
     }
 
@@ -319,22 +446,66 @@ public class NitriteDatabase implements Database<Document, ObjectFilter> {
         });
     }
 
-    public <T, P, C> Iterable<T> joinAllChildren(Class<T> clazz, Class<P> parentClass, Class<C> childClass, Iterable<P> parents, String foreignField, String targetField) {
-        org.dizitart.no2.objects.Cursor<P> parentCursor = (org.dizitart.no2.objects.Cursor<P>) parents;
-        return new NitriteJoinedIterable<>(clazz, parentClass, childClass, parentCursor, foreignField, targetField, this);
+    @Override
+    public Iterable<Document> findAll(String collectionName) throws IOException {
+        return this.read(() -> {
+            NitriteCollection collection = this.getCollection(collectionName);
+            return collection.find();
+        });
     }
 
-    public <T, P, C> Iterable<T> joinChildren(Class<T> clazz, Class<P> parentClass, Class<C> childClass, Filter childFilter, Iterable<P> parents, String foreignField, String targetField) {
-        org.dizitart.no2.objects.Cursor<P> parentCursor = (org.dizitart.no2.objects.Cursor<P>) parents;
-        return new NitriteFilteredJoinedIterable<>(clazz, parentClass, childClass, childFilter, parentCursor, foreignField, targetField, this);
+    @Override
+    public Iterable<Document> findAll(String collectionName, int offset, int pageSize) throws IOException {
+        return this.read(() -> {
+            NitriteCollection collection = this.getCollection(collectionName);
+            return collection.find(FindOptions.limit(offset, pageSize));
+        });
+    }
+
+    @Override
+    public Iterable<Document> findAll(String collectionName, String sortField, SortOrder sortOrder) throws IOException {
+        return this.read(() -> {
+            NitriteCollection collection = this.getCollection(collectionName);
+            return collection.find(
+                    FindOptions.sort(sortField, (sortOrder == SortOrder.ASCENDING) ? org.dizitart.no2.SortOrder.Ascending : org.dizitart.no2.SortOrder.Descending)
+            );
+        });
+    }
+
+    @Override
+    public Iterable<Document> findAll(String collectionName, int offset, int pageSize, String sortField, SortOrder sortOrder) throws IOException {
+        return this.read(() -> {
+            NitriteCollection collection = this.getCollection(collectionName);
+            return collection.find(
+                    FindOptions.sort(sortField, (sortOrder == SortOrder.ASCENDING) ? org.dizitart.no2.SortOrder.Ascending : org.dizitart.no2.SortOrder.Descending).thenLimit(offset, pageSize)
+            );
+        });
+    }
+
+    public <T, P, C> Iterable<T> joinAllChildren(Class<T> clazz, Class<P> parentClass, Class<C> childClass, Iterable<P> parents, String foreignField, String targetField) {
+        return NitriteJoinedIterable.newInstance(clazz, parentClass, childClass, parents, foreignField, targetField, this);
+    }
+
+    public <T, P, C> Iterable<T> joinChildren(Class<T> clazz, Class<P> parentClass, Class<C> childClass, Filter childFilter, Iterable<P> parents, String foreignField, String targetField) throws IOException {
+        return NitriteFilteredJoinedIterable.newInstance(clazz, parentClass, childClass, childFilter, parents, foreignField, targetField, this);
+    }
+
+    @Override
+    public Iterable<Document> joinAllChildren(String parentCollectionName, String childCollectionName, Iterable<Document> parents, String foreignField, String targetField) {
+        return NitriteJoinedDocumentIterable.newInstance(parentCollectionName, childCollectionName, parents, foreignField, targetField, this);
+    }
+
+    @Override
+    public Iterable<Document> joinChildren(String parentCollectionName, String childCollectionName, Filter childFilter, Iterable<Document> parents, String foreignField, String targetField) throws IOException {
+        return NitriteFilteredJoinedDocumentIterable.newInstance(parentCollectionName, childCollectionName, childFilter, parents, foreignField, targetField, this);
     }
 
     @Override
     public <T> int count(Filter filter, Class<T> clazz) throws IOException {
         return this.read(() -> {
             ObjectRepository<T> repo = this.getRepository(clazz);
-            ObjectFilter of = getFilter(filter);
-            return repo.find(of).totalCount();
+            ObjectFilter of = getObjectFilter(filter);
+            return repo.find(of).size();
         });
     }
 
@@ -342,8 +513,8 @@ public class NitriteDatabase implements Database<Document, ObjectFilter> {
     public <T> int count(Filter filter, Class<T> clazz, int offset, int pageSize) throws IOException {
         return this.read(() -> {
             ObjectRepository<T> repo = this.getRepository(clazz);
-            ObjectFilter of = getFilter(filter);
-            return repo.find(of, FindOptions.limit(offset, pageSize)).totalCount();
+            ObjectFilter of = getObjectFilter(filter);
+            return repo.find(of, FindOptions.limit(offset, pageSize)).size();
         });
     }
 
@@ -356,6 +527,32 @@ public class NitriteDatabase implements Database<Document, ObjectFilter> {
     }
 
     @Override
+    public int count(String collectionName, Filter filter) throws IOException {
+        return this.read(() -> {
+            NitriteCollection collection = this.getCollection(collectionName);
+            org.dizitart.no2.Filter f = getFilter(filter);
+            return collection.find(f).size();
+        });
+    }
+
+    @Override
+    public int count(String collectionName, Filter filter, int offset, int pageSize) throws IOException {
+        return this.read(() -> {
+            NitriteCollection collection = this.getCollection(collectionName);
+            org.dizitart.no2.Filter f = getFilter(filter);
+            return collection.find(f, FindOptions.limit(offset, pageSize)).size();
+        });
+    }
+
+    @Override
+    public int countAll(String collectionName) throws IOException {
+        return this.read(() -> {
+            NitriteCollection collection = this.getCollection(collectionName);
+            return collection.find().totalCount();
+        });
+    }
+
+    @Override
     public <T> int remove(T object) throws IOException {
         return this.write(() -> {
             ObjectRepository<T> repo = this.getRepository(object);
@@ -364,7 +561,7 @@ public class NitriteDatabase implements Database<Document, ObjectFilter> {
     }
 
     @Override
-    public <T> int removeAll(Collection<T> objects) throws IOException {
+    public <T> int removeAll(Iterable<T> objects) throws IOException {
         return this.write(() -> {
             Pair<T[], ObjectRepository<T>> pair = this.getRepository(objects);
             if (pair == null) {
@@ -382,33 +579,65 @@ public class NitriteDatabase implements Database<Document, ObjectFilter> {
     public <T> int removeAll(Filter filter, Class<T> clazz) throws IOException {
         return this.write(() -> {
             ObjectRepository<T> repo = this.getRepository(clazz);
-            ObjectFilter of = getFilter(filter);
+            ObjectFilter of = getObjectFilter(filter);
             return repo.remove(of).getAffectedCount();
         });
     }
 
-    private ObjectFilter[] getAllFilterChildren(Deque<Filter.FilterElement> filterChain) {
+    @Override
+    public int remove(String collectionName, Document document) throws IOException {
+        return this.write(() -> {
+            NitriteCollection collection = this.getCollection(collectionName);
+            return collection.remove(document).getAffectedCount();
+        });
+    }
+
+    @Override
+    public int removeAll(String collectionName, Iterable<Document> documents) throws IOException {
+        return this.write(() -> {
+            NitriteCollection collection = this.getCollection(collectionName);
+            int count = 0;
+            for (Document doc : documents) {
+                count += collection.remove(doc).getAffectedCount();
+            }
+            return count;
+        });
+    }
+
+    @Override
+    public int removeAll(String collectionName, Filter filter) throws IOException {
+        return this.write(() -> {
+            NitriteCollection collection = this.getCollection(collectionName);
+            org.dizitart.no2.Filter f = getFilter(filter);
+            return collection.remove(f).getAffectedCount();
+        });
+    }
+
+    private ObjectFilter[] getAllObjectFilterChildren(Deque<Filter.FilterElement> filterChain) {
         List<ObjectFilter> children = new ArrayList<>();
         while (!filterChain.isEmpty()) {
-            ObjectFilter next = getFilter(filterChain);
+            ObjectFilter next = getObjectFilter(filterChain);
+            if (next == ObjectFilters.ALL) {
+                break;
+            }
             children.add(next);
         }
         ObjectFilter[] arr = new ObjectFilter[children.size()];
         return children.toArray(arr);
     }
 
-    private ObjectFilter getFilter(Deque<Filter.FilterElement> filterChain) {
+    private ObjectFilter getObjectFilter(Deque<Filter.FilterElement> filterChain) {
         if (filterChain.isEmpty()) {
             return ObjectFilters.ALL;
         }
         Filter.FilterElement element = filterChain.pop();
         switch (element.filterType) {
             case AND:
-                return ObjectFilters.and(getAllFilterChildren(filterChain));
+                return ObjectFilters.and(getAllObjectFilterChildren(filterChain));
             case OR:
-                return ObjectFilters.or(getAllFilterChildren(filterChain));
+                return ObjectFilters.or(getAllObjectFilterChildren(filterChain));
             case NOT:
-                return ObjectFilters.not(getFilter(filterChain));
+                return ObjectFilters.not(getObjectFilter(filterChain));
             case EQ:
                 return ObjectFilters.eq(
                         ((Filter.FieldFilterElement) element).field,
@@ -457,15 +686,98 @@ public class NitriteDatabase implements Database<Document, ObjectFilter> {
             case ELEM_MATCH:
                 return ObjectFilters.elemMatch(
                         ((Filter.FieldFilterElement) element).field,
-                        getFilter(filterChain)
+                        getObjectFilter(filterChain)
                 );
         }
         return ObjectFilters.ALL;
     }
 
-    @Override
-    public ObjectFilter getFilter(Filter filter) {
-        return getFilter(new ArrayDeque<>(filter.filterChain));
+    private org.dizitart.no2.Filter[] getAllFilterChildren(Deque<Filter.FilterElement> filterChain) {
+        List<org.dizitart.no2.Filter> children = new ArrayList<>();
+        while (!filterChain.isEmpty()) {
+            org.dizitart.no2.Filter next = getFilter(filterChain);
+            if (next == Filters.ALL) {
+                break;
+            }
+            children.add(next);
+        }
+        org.dizitart.no2.Filter[] arr = new org.dizitart.no2.Filter[children.size()];
+        return children.toArray(arr);
     }
 
+    private org.dizitart.no2.Filter getFilter(Deque<Filter.FilterElement> filterChain) {
+        if (filterChain.isEmpty()) {
+            return Filters.ALL;
+        }
+        Filter.FilterElement element = filterChain.pop();
+        switch (element.filterType) {
+            case AND:
+                return Filters.and(getAllFilterChildren(filterChain));
+            case OR:
+                return Filters.or(getAllFilterChildren(filterChain));
+            case NOT:
+                return Filters.not(getFilter(filterChain));
+            case EQ:
+                return Filters.eq(
+                        ((Filter.FieldFilterElement) element).field,
+                        ((Filter.FieldFilterElement) element).values[0]
+                );
+            case GT:
+                return Filters.gt(
+                        ((Filter.FieldFilterElement) element).field,
+                        ((Filter.FieldFilterElement) element).values[0]
+                );
+            case GTE:
+                return Filters.gte(
+                        ((Filter.FieldFilterElement) element).field,
+                        ((Filter.FieldFilterElement) element).values[0]
+                );
+            case LT:
+                return Filters.lt(
+                        ((Filter.FieldFilterElement) element).field,
+                        ((Filter.FieldFilterElement) element).values[0]
+                );
+            case LTE:
+                return Filters.lte(
+                        ((Filter.FieldFilterElement) element).field,
+                        ((Filter.FieldFilterElement) element).values[0]
+                );
+            case TEXT:
+                return Filters.text(
+                        ((Filter.FieldFilterElement) element).field,
+                        (String) ((Filter.FieldFilterElement) element).values[0]
+                );
+            case REGEX:
+                return Filters.regex(
+                        ((Filter.FieldFilterElement) element).field,
+                        (String) ((Filter.FieldFilterElement) element).values[0]
+                );
+            case IN:
+                return Filters.in(
+                        ((Filter.FieldFilterElement) element).field,
+                        ((Filter.FieldFilterElement) element).values
+                );
+            case NOT_IN:
+                return Filters.notIn(
+                        ((Filter.FieldFilterElement) element).field,
+                        ((Filter.FieldFilterElement) element).values
+                );
+            case ELEM_MATCH:
+                return Filters.elemMatch(
+                        ((Filter.FieldFilterElement) element).field,
+                        getFilter(filterChain)
+                );
+        }
+        return Filters.ALL;
+    }
+
+    @Override
+    public ObjectFilter getObjectFilter(Filter filter) {
+        return getObjectFilter(new ArrayDeque<>(filter.filterChain));
+    }
+
+    @Override
+    public org.dizitart.no2.Filter getFilter(Filter filter) {
+        return getFilter(new ArrayDeque<>(filter.filterChain));
+    }
 }

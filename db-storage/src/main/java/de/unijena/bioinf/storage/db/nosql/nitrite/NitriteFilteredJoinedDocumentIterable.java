@@ -26,67 +26,57 @@ import it.unimi.dsi.fastutil.longs.LongConsumer;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import org.dizitart.no2.Document;
 import org.dizitart.no2.Lookup;
+import org.dizitart.no2.NitriteId;
 import org.dizitart.no2.RecordIterable;
-import org.dizitart.no2.objects.Cursor;
 
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.stream.StreamSupport;
 
 import static org.dizitart.no2.Document.createDocument;
 
-public class NitriteFilteredJoinedIterable<T, P, C> extends NitriteJoinedIterable<T, P, C> {
+public class NitriteFilteredJoinedDocumentIterable extends NitriteJoinedDocumentIterable {
 
     protected final Filter childFilter;
 
-    public static <T, P, C> NitriteFilteredJoinedIterable<T, P, C> newInstance(Class<T> clazz, Class<P> parentClass, Class<C> childClass, Filter childFilter, Iterable<P> parents, String foreignField, String targetField, NitriteDatabase database) throws IOException {
-        NitriteFilteredJoinedIterable<T, P, C> iterable = new NitriteFilteredJoinedIterable<>(clazz, parentClass, childClass, childFilter, foreignField, targetField, database);
+    public static NitriteFilteredJoinedDocumentIterable newInstance(String parentCollection, String childCollection, Filter childFilter, Iterable<Document> parents, String foreignField, String targetField, NitriteDatabase database) throws IOException {
+        NitriteFilteredJoinedDocumentIterable iterable = new NitriteFilteredJoinedDocumentIterable(parentCollection, childCollection, childFilter, foreignField, targetField, database);
         iterable.initParentIds(parents);
 
-        try {
-            Iterable<C> objectCursor = database.find(childFilter, childClass);
-            Field field = objectCursor.getClass().getDeclaredField("cursor");
-            field.setAccessible(true);
-            org.dizitart.no2.Cursor docCursor = (org.dizitart.no2.Cursor) field.get(objectCursor);
+        org.dizitart.no2.Cursor docCursor = (org.dizitart.no2.Cursor) database.find(childCollection, childFilter);
+        Document projection = createDocument(foreignField, null);
+        RecordIterable<Document> documents = docCursor.project(projection);
+        LongSet pIds = new LongArraySet(documents.size());
+        StreamSupport.stream(documents.spliterator(), false).mapToLong(doc -> (Long) doc.get(foreignField)).forEach((LongConsumer) pIds::add);
 
-            Document projection = createDocument(foreignField, null);
-            RecordIterable<Document> documents = docCursor.project(projection);
-            LongSet pIds = new LongArraySet(documents.size());
-            StreamSupport.stream(documents.spliterator(), false).mapToLong(doc -> (Long) doc.get(foreignField)).forEach((LongConsumer) pIds::add);
-
-            iterable.parents.retainAll(pIds);
-
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
+        iterable.parents.retainAll(pIds);
 
         return iterable;
     }
 
-    protected NitriteFilteredJoinedIterable(Class<T> clazz, Class<P> parentClass, Class<C> childClass, Filter childFilter, String foreignField, String targetField, NitriteDatabase database) {
-        super(clazz, parentClass, childClass, foreignField, targetField, database);
+    protected NitriteFilteredJoinedDocumentIterable(String parentCollection, String childCollection, Filter childFilter, String foreignField, String targetField, NitriteDatabase database) {
+        super(parentCollection, childCollection, foreignField, targetField, database);
         this.childFilter = childFilter;
     }
 
     @NotNull
     @Override
-    public Iterator<T> iterator() {
+    public Iterator<Document> iterator() {
         if (this.parents.isEmpty()) {
             return Collections.emptyIterator();
         }
-        return new FilteredJoinedIterator(clazz, parentClass, childClass, childFilter, parents, foreignField, targetField, database);
+        return new FilteredJoinedDocumentIterator(parentCollection, childCollection, childFilter, parents, foreignField, targetField, database);
     }
 
-    protected class FilteredJoinedIterator extends JoinedIterator {
+    protected static class FilteredJoinedDocumentIterator extends JoinedDocumentIterator {
 
         private final Filter childFilter;
-        private T next;
+        private Document next;
 
-        public FilteredJoinedIterator(Class<T> clazz, Class<P> parentClass, Class<C> childClass, Filter childFilter, LongSet parents, String foreignField, String targetField, NitriteDatabase database) {
-            super(clazz, parentClass, childClass, parents, foreignField, targetField, database);
+        public FilteredJoinedDocumentIterator(String parentCollection, String childCollection, Filter childFilter, LongSet parents, String foreignField, String targetField, NitriteDatabase database) {
+            super(parentCollection, childCollection, parents, foreignField, targetField, database);
             this.childFilter = childFilter;
             this.next = null;
         }
@@ -100,34 +90,34 @@ public class NitriteFilteredJoinedIterable<T, P, C> extends NitriteJoinedIterabl
         }
 
         @Override
-        public T next() {
+        public Document next() {
             if (next == null) {
                 next = advance();
             }
-            T result = next;
+            Document result = next;
             next = null;
             return result;
         }
 
-        public T advance() {
+        public Document advance() {
             try {
-                T result = null;
+                Document result = null;
                 while (result == null && parents.hasNext()) {
                     long id = parents.nextLong();
-                    Iterable<P> parent = database.find(new Filter().eq("id", id), parentClass);
-                    Filter cFilter = new Filter().and().eq(foreignField, id);
+                    Iterable<Document> parent = database.find(parentCollection, new Filter().eq("_id", id));
+                    Filter cFilter = new Filter().and().or().eq(foreignField, id).eq(foreignField, NitriteId.createId(id)).end();
                     cFilter.filterChain.addAll(childFilter.filterChain);
-                    Cursor<C> children = (Cursor<C>) database.find(cFilter, childClass);
+                    org.dizitart.no2.Cursor children = (org.dizitart.no2.Cursor) database.find(childCollection, cFilter);
                     if (children.size() == 0) {
                         continue;
                     }
 
                     Lookup lookup = new Lookup();
-                    lookup.setLocalField("id");
+                    lookup.setLocalField("_id");
                     lookup.setForeignField(foreignField);
                     lookup.setTargetField(targetField);
 
-                    RecordIterable<T> res = ((Cursor<P>) parent).join(children, lookup, clazz);
+                    RecordIterable<Document> res = ((org.dizitart.no2.Cursor) parent).join(children, lookup);
                     result = res.firstOrDefault();
                 }
                 return result;
