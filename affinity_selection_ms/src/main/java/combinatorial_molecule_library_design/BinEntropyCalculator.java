@@ -3,11 +3,12 @@ package combinatorial_molecule_library_design;
 
 public class BinEntropyCalculator extends EntropyCalculator{
 
-    private double blowupFactor;
-    private double[] lowerBounds;
-    private double[] upperBounds;
+    private final double blowupFactor;
+    private final double[] lowerBounds;
+    private final double[] upperBounds;
     private int[] distribution;
 
+    // it is assumed that the building block masses are sorted
     public BinEntropyCalculator(double[][] bbMasses, double blowupFactor, double binSize){
         super(bbMasses);
         this.blowupFactor = blowupFactor;
@@ -21,7 +22,7 @@ public class BinEntropyCalculator extends EntropyCalculator{
         this.lowerBounds = new double[numBins];
         this.upperBounds = new double[numBins];
 
-        this.lowerBounds[0] = minMoleculeMass;
+        this.lowerBounds[0] = minMoleculeMass;  // todo: maybe add some offset for the lower bound because it is possible to forget some molecules
         this.upperBounds[numBins-1] = maxMoleculeMass;
         for(int i = 1; i < numBins; i++){
             this.lowerBounds[i] = minMoleculeMass + i * adjustedBinSize;
