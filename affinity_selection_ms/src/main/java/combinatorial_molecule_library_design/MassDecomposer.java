@@ -2,8 +2,8 @@ package combinatorial_molecule_library_design;
 
 public class MassDecomposer {
 
-    private int[][] bbMasses;
-    private double blowupFactor;
+    private final int[][] bbMasses;
+    private final double blowupFactor;
 
     public MassDecomposer(double[][] bbMasses, double blowupFactor){
         // Transform the masses of the building blocks into integer masses using the blowup factor:
@@ -25,7 +25,7 @@ public class MassDecomposer {
 
         // Loop:
         // For each n = 1,...,bbMasses.length and m = 0,...,mass
-        // compute numMols[n mod 2,m] := number of strings with length n (first n building blocks) and mass m.
+        // compute numMols[n mod 2][m] := number of strings with length n (first n building blocks) and mass m.
         for(int n = 1; n <= this.bbMasses.length; n++){
             int currentRow = n % 2;
             int previousRow = (n-1) % 2;
@@ -47,17 +47,14 @@ public class MassDecomposer {
     public int numberOfMoleculesForInterval(double lowerBound, double upperBound){
         int transformedLowerBound = (int) (this.blowupFactor * lowerBound);
         int transformedUpperBound = (int) (this.blowupFactor * upperBound);
-        int numMolsInTotal = 0;
-        for(int m = transformedLowerBound; m <= transformedUpperBound; m++){
-            numMolsInTotal = numMolsInTotal + this.numberOfMoleculesForIntegerMass(m);
-        }
-        return numMolsInTotal;
+        return this.numberOfMoleculesForInterval(transformedLowerBound, transformedUpperBound);
     }
 
-    public static void main(String[] args){
-        double[][] bbMasses = new double[][]{{2,3,7,10}, {2,3,7,10}, {2,3,7,10}, {2,3,7,10}};
-        double blowupFactor = 1.0;
-        MassDecomposer decomposer = new MassDecomposer(bbMasses, blowupFactor);
-        System.out.println(decomposer.numberOfMoleculesForIntegerMass(10));
+    public int numberOfMoleculesForInterval(int transformedLowerBound, int transformedUpperBound){
+        int numMolsInInterval = 0;
+        for(int m = transformedLowerBound; m <= transformedUpperBound; m++){
+            numMolsInInterval += this.numberOfMoleculesForIntegerMass(m);
+        }
+        return numMolsInInterval;
     }
 }
