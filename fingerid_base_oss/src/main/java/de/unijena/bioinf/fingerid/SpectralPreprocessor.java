@@ -38,12 +38,19 @@ import java.util.Comparator;
 public class SpectralPreprocessor {
     private Sirius analyzer;
 
+    private final boolean modifySpectrum;
+
     public SpectralPreprocessor() {
         this(new Sirius());
     }
 
     public SpectralPreprocessor(Sirius analyzer) {
+        this(analyzer,true);
+    }
+
+    public SpectralPreprocessor(Sirius analyzer, boolean modifySpectrum) {
         this.analyzer = analyzer;
+        this.modifySpectrum = modifySpectrum;
     }
 
 
@@ -90,7 +97,7 @@ public class SpectralPreprocessor {
         final Deviation dev = new Deviation(10);
         input.getMergedPeaks().sort(Comparator.comparingDouble(Peak::getMass));
         FragmentAnnotation<Ms2IsotopePattern> isoPat = tree.getFragmentAnnotationOrNull(Ms2IsotopePattern.class);
-        if (isoPat!=null) {
+        if (modifySpectrum && isoPat!=null) {
             TIntHashSet toDelete = new TIntHashSet();
             final Spectrum<ProcessedPeak> spec = Spectrums.wrap(input.getMergedPeaks());
             for (Fragment f : tree) {
@@ -126,18 +133,22 @@ public class SpectralPreprocessor {
         IonMode proton = (IonMode) (precursorIonType.getCharge() > 0 ? PrecursorIonType.getPrecursorIonType("[M+H]+").getIonization() : PrecursorIonType.getPrecursorIonType("[M-H]-").getIonization());
         if (ion.equals(proton)) proton=null;
         final SimpleMutableSpectrum mutableSpectrum = new SimpleMutableSpectrum(input.getMergedPeaks().size());
-        final double intensityThreshold = Math.min(0.01, minInt/4d);
-        for (ProcessedPeak pk : input.getMergedPeaks()) {
-            if (pk.isSynthetic() && pk==input.getParentPeak())
-                continue; // we do that later
-            if (pk.getIntensity() < intensityThreshold) {
-                continue;
+        if (modifySpectrum) {
+            final double intensityThreshold = Math.min(0.01, minInt/4d);
+            for (ProcessedPeak pk : input.getMergedPeaks()) {
+                if (pk.isSynthetic() && pk==input.getParentPeak())
+                    continue; // we do that later
+                if (pk.getIntensity() < intensityThreshold) {
+                    continue;
+                }
+                if (!decomposer.formulaIterator(pk.getMass(), ion, dev, constraints).hasNext() && (proton==null || !decomposer.formulaIterator(pk.getMass(), proton, dev, constraints).hasNext())) {
+                    continue; // not a single decomposition...
+                }
+                final double recalibratedMass = recalibration.recalibrate(pk);
+                mutableSpectrum.addPeak(recalibratedMass, pk.getRelativeIntensity());
             }
-            if (!decomposer.formulaIterator(pk.getMass(), ion, dev, constraints).hasNext() && (proton==null || !decomposer.formulaIterator(pk.getMass(), proton, dev, constraints).hasNext())) {
-                continue; // not a single decomposition...
-            }
-            final double recalibratedMass = recalibration.recalibrate(pk);
-            mutableSpectrum.addPeak(recalibratedMass, pk.getRelativeIntensity());
+        } else {
+            for (ProcessedPeak  pk : input.getMergedPeaks()) mutableSpectrum.addPeak(pk);
         }
         // renormalize spectrum
         Spectrums.normalize(mutableSpectrum, Normalization.Max(1d));
