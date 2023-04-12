@@ -24,6 +24,7 @@ import de.unijena.bioinf.ms.middleware.SiriusContext;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.info.License;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -43,17 +44,20 @@ public class SwaggerConfig {
     }
 
     private Info apiInfo() {
+        License l = new License();
+        l.setUrl("https://www.gnu.org/licenses/agpl-3.0.txt");
+        l.setName("GNU Affero General Public License v3.0");
+        l.setIdentifier("AGPL-3.0-only");
         return new Info()
 
                 .title("SIRIUS Nightsky API")
                 .description(
-                        "REST API that provides the full functionality of SIRIUS and its web services as background service. " +
-                        "It is intended as entry-point for scripting languages and software integration SDKs."
+                        "OpenAPI REST API that provides the full functionality of SIRIUS and its web services as background service. " +
+                                "It is intended as entry-point for scripting languages and software integration SDKs." +
+                                "The provided OpenAPI specification allows to autogenerate clients for different programming languages."
                 )
 //                .termsOfServiceUrl("https://bio.informatik.uni-jena.de/software/sirius/")
-//                .license("GNU General Public License v3.0")
-//                .licenseUrl("https://github.com/boecker-lab/sirius_frontend/blob/release-4.4/LICENSE.txt")
-                .version("v" + context.getApiVersion()+ " on " + ApplicationCore.VERSION_STRING());
-
+                .license(l)
+                .version(context.getApiVersion());
     }
 }
