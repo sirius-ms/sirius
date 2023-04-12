@@ -18,7 +18,12 @@ public class MassDecomposer {
         }
     }
 
-    private int numberOfMoleculesForIntegerMass(int mass){
+    public MassDecomposer(int[][] bbMasses, double blowupFactor){
+        this.bbMasses = bbMasses;
+        this.blowupFactor = blowupFactor;
+    }
+
+    public int numberOfMoleculesForIntegerMass(int mass){
         // Initialisation:
         int[][] numMols = new int[2][mass+1];
         numMols[0][0] = 1;  // only the empty string has mass 0
