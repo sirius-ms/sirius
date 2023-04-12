@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.ms.middleware.configuration;
 
-import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.middleware.SiriusContext;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
