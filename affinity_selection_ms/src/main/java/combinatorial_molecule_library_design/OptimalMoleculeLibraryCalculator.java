@@ -32,7 +32,10 @@ public class OptimalMoleculeLibraryCalculator {
         // - during this method, save the best combination of BB subsets which has the current best entropy
         // INITIALISATION:
         BitSet[] currentBuildingBlockSubsets = new BitSet[this.bbMasses.length];
-        for(int i = 0; i < this.bbMasses.length; i++) currentBuildingBlockSubsets[i].set(0);
+        for(int i = 0; i < this.bbMasses.length; i++){
+            currentBuildingBlockSubsets[i] = new BitSet(this.bbMasses[i].length);
+            currentBuildingBlockSubsets[i].set(0);
+        }
 
         // LOOP:
         while(this.nextCombination(currentBuildingBlockSubsets)){
@@ -99,5 +102,22 @@ public class OptimalMoleculeLibraryCalculator {
 
     public double getMaximalEntropy(){
         return this.entropy;
+    }
+
+
+    public static void main(String[] args){
+        double[][] bbMasses = new double[][]{{87.0320284,97.052763844,113.084063972,137.058911844,147.068413908,163.063328528,186.07931294},{57.021463716,71.03711378,97.052763844,99.068413908,101.047678464,128.058577496,129.042593084}, {96.057514876,122.016792936,152.998141428,164.047344116,166.037842052}};
+        for(double[] bbMassArray : bbMasses){
+            for(double x : bbMassArray){
+                System.out.print(x+" ");
+            }
+            System.out.println();
+        }
+
+        OptimalMoleculeLibraryCalculator optimalMoleculeLibraryCalculator = new OptimalMoleculeLibraryCalculator(bbMasses, 1000, 0.001);
+        optimalMoleculeLibraryCalculator.computeOptimalBuildingBlockSubsets();
+        for(BitSet bitset : optimalMoleculeLibraryCalculator.getOptimalBuildingBlockSubsets()){
+            System.out.println(bitset);
+        }
     }
 }

@@ -22,11 +22,13 @@ public class BinEntropyCalculator extends EntropyCalculator{
         this.lowerBounds = new double[numBins];
         this.upperBounds = new double[numBins];
 
-        this.lowerBounds[0] = minMoleculeMass;  // todo: maybe add some offset for the lower bound because it is possible to forget some molecules
-        this.upperBounds[numBins-1] = maxMoleculeMass;
-        for(int i = 1; i < numBins; i++){
-            this.lowerBounds[i] = minMoleculeMass + i * adjustedBinSize;
-            this.upperBounds[i-1] = this.lowerBounds[i] - 1 / this.blowupFactor;
+        if(minMoleculeMass != maxMoleculeMass) {
+            this.lowerBounds[0] = minMoleculeMass;  // todo: maybe add some offset for the lower bound because it is possible to forget some molecules
+            this.upperBounds[numBins - 1] = maxMoleculeMass;
+            for (int i = 1; i < numBins; i++) {
+                this.lowerBounds[i] = minMoleculeMass + i * adjustedBinSize;
+                this.upperBounds[i - 1] = this.lowerBounds[i] - 1 / this.blowupFactor;
+            }
         }
     }
 
@@ -51,6 +53,7 @@ public class BinEntropyCalculator extends EntropyCalculator{
 
     @Override
     public double computeEntropy() {
+        if(this.lowerBounds.length == 0) return 0;
         // For each bin, compute the number of molecules those mass is contained in the bin:
         MassDecomposer decomposer = new MassDecomposer(this.bbMasses, this.blowupFactor);
         this.distribution = new int[this.getNumberOfBins()];
