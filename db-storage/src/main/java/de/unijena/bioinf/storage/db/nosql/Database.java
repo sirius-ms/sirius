@@ -23,7 +23,7 @@ package de.unijena.bioinf.storage.db.nosql;
 import java.io.Closeable;
 import java.io.IOException;
 
-public interface Database<DocType, ObjectFilterType, FilterType> extends Closeable, AutoCloseable {
+public interface Database<DocType> extends Closeable, AutoCloseable {
 
     enum SortOrder {
         ASCENDING, DESCENDING
@@ -115,8 +115,8 @@ public interface Database<DocType, ObjectFilterType, FilterType> extends Closeab
 
     int removeAll(String collectionName, Filter filter) throws IOException;
 
-    ObjectFilterType getObjectFilter(Filter filter);
+    <ObjectFilterType> ObjectFilterType getObjectFilter(Filter filter);
 
-    FilterType getFilter(Filter filter);
+    <FilterType> FilterType getFilter(Filter filter);
 
 }

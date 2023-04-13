@@ -40,7 +40,7 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class NitriteDatabase implements Database<Document, ObjectFilter, org.dizitart.no2.Filter> {
+public class NitriteDatabase implements Database<Document> {
 
     // Prevent illegal reflective access warnings
     static {
@@ -772,11 +772,13 @@ public class NitriteDatabase implements Database<Document, ObjectFilter, org.diz
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public ObjectFilter getObjectFilter(Filter filter) {
         return getObjectFilter(new ArrayDeque<>(filter.filterChain));
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public org.dizitart.no2.Filter getFilter(Filter filter) {
         return getFilter(new ArrayDeque<>(filter.filterChain));
     }
