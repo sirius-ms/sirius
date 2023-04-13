@@ -18,29 +18,72 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.chemdb;
+package de.unijena.bioinf.chemdb.nitrite;
 
+import com.google.common.primitives.Ints;
 import com.google.common.primitives.Shorts;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
+import de.unijena.bioinf.chemdb.*;
 import org.dizitart.no2.Document;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
-public class Deserializer {
+public class NitriteSerializer implements NoSQLSerializer<Document> {
 
-    public static FormulaCandidate deserializeFormula(Document document, PrecursorIonType ionType) {
+    @SuppressWarnings("ConstantConditions")
+    @Override
+    public Document serializeFormula(MolecularFormula formula, long bitset) {
+        return Document
+                .createDocument("formula", formula.toString())
+                .put("mass", formula.getMass())
+                .put("bitset", bitset);
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    @Override
+    public <C extends CompoundCandidate> Document serializeCompoundAndFingerprint(MolecularFormula formula, C candidate) {
+        PubmedLinks pubmedIds = candidate.getPubmedIDs();
+        List<DBLink> links = candidate.getLinks();
+        Document doc = Document
+                .createDocument("formula", formula.toString())
+                .put("mass", formula.getMass())
+                .put("inchi", candidate.getInchi().in3D)
+                .put("inchikey", candidate.getInchi().key)
+                .put("smiles", candidate.getSmiles())
+                .put("name", candidate.getName())
+                .put("player", candidate.getpLayer())
+                .put("qlayer", candidate.getqLayer())
+                .put("bitset", candidate.getBitset())
+                .put("xlogp", candidate.getXlogp())
+                .put("pubmedIds", pubmedIds == null ? null : Ints.asList(pubmedIds.getCopyOfPubmedIDs()))
+                .put("links", links == null ? null : links.stream().map(l -> Document.createDocument("name", l.name).put("id", l.id)).collect(Collectors.toList()));
+
+        if (candidate instanceof FingerprintCandidate) {
+            FingerprintCandidate fp = (FingerprintCandidate) candidate;
+            doc.put("indizes", Shorts.asList(fp.getFingerprint().toIndizesArray()));
+        }
+
+        return doc;
+    }
+
+
+    @Override
+    public FormulaCandidate deserializeFormula(Document document, PrecursorIonType ionType) {
         String formula = (String) document.getOrDefault("formula", null);
-        long flags = (long) document.getOrDefault("flags", 0);
+        long bitset = (long) document.getOrDefault("bitset", 0);
 
-        return new FormulaCandidate(MolecularFormula.parseOrThrow(formula), ionType, flags);
+        return new FormulaCandidate(MolecularFormula.parseOrThrow(formula), ionType, bitset);
     }
 
     @SuppressWarnings("unchecked")
-    public static CompoundCandidate deserializeCompound(Document document) {
+    @Override
+    public CompoundCandidate deserializeCompound(Document document) {
         String inchi = (String) document.getOrDefault("inchi", null);
         String inchiKey = (String) document.getOrDefault("inchikey", null);
         String smiles = (String) document.getOrDefault("smiles", null);
@@ -64,18 +107,19 @@ public class Deserializer {
         );
     }
 
-    public static InChI deserializeInchi(Document document) {
+    @Override
+    public InChI deserializeInchi(Document document) {
         String inchi = (String) document.getOrDefault("inchi", null);
         String inchiKey = (String) document.getOrDefault("inchikey", null);
-        return new InChI(inchi, inchiKey);
+        return new InChI(inchiKey, inchi);
     }
 
     @SuppressWarnings("unchecked")
-    public static FingerprintCandidate deserializeFingerprint(Document document, FingerprintVersion version) {
+    @Override
+    public FingerprintCandidate deserializeFingerprint(Document document, FingerprintVersion version) {
         CompoundCandidate c = deserializeCompound(document);
-        List<Short> indizes = (List<Short>) document.getOrDefault("indizes", null);
+        List<Short> indizes = (List<Short>) document.getOrDefault("indizes", new ArrayList<>());
         return new FingerprintCandidate(c, new ArrayFingerprint(version, Shorts.toArray(indizes)));
     }
-
 
 }
