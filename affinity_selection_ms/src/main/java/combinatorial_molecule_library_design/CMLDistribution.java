@@ -21,7 +21,11 @@ public abstract class CMLDistribution {
     }
 
     public int[] computeNumMoleculesPerBin(){
-        MassDecomposer massDecomposer = new MassDecomposer(this.bbMasses, this.blowupFactor);
+        return this.computeNumMoleculesPerBin(this.bbMasses);
+    }
+
+    public int[] computeNumMoleculesPerBin(double[][] bbMasses){
+        MassDecomposer massDecomposer = new MassDecomposer(bbMasses, this.blowupFactor);
         this.numMoleculesPerBin = new int[this.binEdges.length - 1];
         for(int binIdx = 0; binIdx < this.numMoleculesPerBin.length - 1; binIdx++){
             int transformedLowerBound = (int) (this.blowupFactor * this.binEdges[binIdx]);
