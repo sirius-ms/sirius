@@ -11,9 +11,11 @@ public class EquidistantBinDistribution extends CMLDistribution{
 
         // Case: minMoleculeMass == maxMoleculeMass =: x
         // --> all molecules in the library have the same mass and fall into one bin [x, x]
-        double lengthOfInterval = this.getMaxMoleculeMass() - this.getMinMoleculeMass();
+        double minMoleculeMass = this.getMinMoleculeMass();
+        double maxMoleculeMass = this.getMaxMoleculeMass();
+        double lengthOfInterval = maxMoleculeMass - minMoleculeMass;
         if(lengthOfInterval == 0){
-            this.binEdges = new double[]{this.getMinMoleculeMass(), this.getMaxMoleculeMass()};
+            this.binEdges = new double[]{minMoleculeMass, maxMoleculeMass};
             this.binSize = 0;
         }else{
             // We have to adjust the binSize in order to get bins of equal width:
@@ -22,8 +24,8 @@ public class EquidistantBinDistribution extends CMLDistribution{
 
             // Compute the bin edges:
             this.binEdges = new double[numBins + 1];
-            this.binEdges[0] = this.getMinMoleculeMass();
-            this.binEdges[numBins] = this.getMaxMoleculeMass();
+            this.binEdges[0] = minMoleculeMass;
+            this.binEdges[numBins] = maxMoleculeMass;
             for(int i = 1; i < numBins; i++){
                 this.binEdges[i] = this.binEdges[i-1] + this.binSize;
             }
