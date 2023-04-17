@@ -3,6 +3,8 @@ package combinatorial_molecule_library_design;
 public class MassDecomposer {
 
     private final int[][] bbMasses;
+    private int[][] numMols;
+    private boolean isComputed;
 
     public MassDecomposer(double[][] bbMasses, double blowupFactor){
         // Transform the masses of the building blocks into integer masses using the blowup factor:
@@ -14,45 +16,59 @@ public class MassDecomposer {
                 this.bbMasses[i][j] = (int) (blowupFactor * bbMasses[i][j]);
             }
         }
+        this.isComputed = false;
     }
 
     public MassDecomposer(int[][] bbMasses){
         this.bbMasses = bbMasses;
+        this.isComputed = false;
     }
 
     public int numberOfMoleculesForIntegerMass(int mass){
-        // Initialisation:
-        int[][] numMols = new int[2][mass+1];
-        numMols[0][0] = 1;  // only the empty string has mass 0
-
-        // Loop:
-        // For each i = 1,...,bbMasses.length and m = 0,...,mass
-        // compute numMols[i][m] := number of strings s_1...s_i (first i building blocks) and mass m.
-        int currentRow = 0;
-        int previousRow = 1;
-        int helperReferenceVariable = 0;
-        for(int i = 1; i <= this.bbMasses.length; i++){
-            helperReferenceVariable = currentRow;
-            currentRow = previousRow;
-            previousRow = helperReferenceVariable;
-
-            for(int m = 0; m <= mass; m++){
-                int sum = 0;
-                for(int x : this.bbMasses[i-1]){
-                    if(m - x >= 0) {
-                        sum = sum + numMols[previousRow][m - x];
+        if(this.isComputed){
+            if (mass >= this.numMols[0].length) {
+                // Create bigger matrix that can be used to compute this.numMols[this.bbMasses.length][mass]:
+                int[][] copyNumMols = new int[this.bbMasses.length + 1][mass + 1];
+                for (int i = 0; i < this.numMols.length; i++) {
+                    for (int j = 0; j < this.numMols[0].length; j++) {
+                        copyNumMols[i][j] = this.numMols[i][j];
                     }
                 }
-                numMols[currentRow][m] = sum;
+
+                // Determine the startMass for computing the rest of the matrix:
+                int startMass = this.numMols[0].length;
+                this.numMols = copyNumMols;
+                this.computeMatrix(startMass);
             }
+        }else{
+            this.numMols = new int[this.bbMasses.length + 1][mass + 1];
+            this.numMols[0][0] = 1;
+            this.computeMatrix(0);
+            this.isComputed = true;
         }
-        return numMols[currentRow][mass];
+        return this.numMols[this.bbMasses.length][mass];
     }
 
+    private void computeMatrix(int startMass){
+        // At this point, the matrix 'numMols' is already initialised and
+        // in general, the entries for i = 0,...,this.bbMasses.length and m = 0,...,startMass-1 are already computed.
+        for(int i = 1; i <= this.bbMasses.length; i++){
+            for(int m = startMass; m < this.numMols[0].length; m++){
+                // numMols[i,m] := number of strings s_1...s_i with mass m
+                int sum = 0;
+                for(int x : this.bbMasses[i-1]){
+                    if(m - x >= 0){
+                        sum = sum + this.numMols[i-1][m-x];
+                    }
+                }
+                this.numMols[i][m] = sum;
+            }
+        }
+    }
 
     public int numberOfMoleculesForInterval(int lowerBound, int upperBound){
         int numMolsInInterval = 0;
-        for(int m = lowerBound; m <= upperBound; m++){
+        for(int m = upperBound; m >= lowerBound; m--){
             numMolsInInterval = numMolsInInterval + this.numberOfMoleculesForIntegerMass(m);
         }
         return numMolsInInterval;
