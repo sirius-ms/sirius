@@ -6,11 +6,11 @@ public class MassDecomposer {
     private int[][] numMols;
     private boolean isComputed;
 
-    public MassDecomposer(double[][] bbMasses, double blowupFactor){
+    public MassDecomposer(double[][] bbMasses, double blowupFactor) {
         // Transform the masses of the building blocks into integer masses using the blowup factor:
         this.bbMasses = new int[bbMasses.length][];
 
-        for(int i = 0; i < bbMasses.length; i++) {
+        for (int i = 0; i < bbMasses.length; i++) {
             this.bbMasses[i] = new int[bbMasses[i].length];
             for (int j = 0; j < bbMasses[i].length; j++) {
                 this.bbMasses[i][j] = (int) (blowupFactor * bbMasses[i][j]);
@@ -19,13 +19,13 @@ public class MassDecomposer {
         this.isComputed = false;
     }
 
-    public MassDecomposer(int[][] bbMasses){
+    public MassDecomposer(int[][] bbMasses) {
         this.bbMasses = bbMasses;
         this.isComputed = false;
     }
 
-    public int numberOfMoleculesForIntegerMass(int mass){
-        if(this.isComputed){
+    public int numberOfMoleculesForIntegerMass(int mass) {
+        if (this.isComputed) {
             if (mass >= this.numMols[0].length) {
                 // Create bigger matrix that can be used to compute this.numMols[this.bbMasses.length][mass]:
                 int[][] copyNumMols = new int[this.bbMasses.length + 1][mass + 1];
@@ -40,7 +40,7 @@ public class MassDecomposer {
                 this.numMols = copyNumMols;
                 this.computeMatrix(startMass);
             }
-        }else{
+        } else {
             this.numMols = new int[this.bbMasses.length + 1][mass + 1];
             this.numMols[0][0] = 1;
             this.computeMatrix(0);
@@ -49,16 +49,16 @@ public class MassDecomposer {
         return this.numMols[this.bbMasses.length][mass];
     }
 
-    private void computeMatrix(int startMass){
+    private void computeMatrix(int startMass) {
         // At this point, the matrix 'numMols' is already initialised and
         // in general, the entries for i = 0,...,this.bbMasses.length and m = 0,...,startMass-1 are already computed.
-        for(int i = 1; i <= this.bbMasses.length; i++){
-            for(int m = startMass; m < this.numMols[0].length; m++){
+        for (int i = 1; i <= this.bbMasses.length; i++) {
+            for (int m = startMass; m < this.numMols[0].length; m++) {
                 // numMols[i,m] := number of strings s_1...s_i with mass m
                 int sum = 0;
-                for(int x : this.bbMasses[i-1]){
-                    if(m - x >= 0){
-                        sum = sum + this.numMols[i-1][m-x];
+                for (int x : this.bbMasses[i - 1]) {
+                    if (m - x >= 0) {
+                        sum = sum + this.numMols[i - 1][m - x];
                     }
                 }
                 this.numMols[i][m] = sum;
@@ -66,11 +66,19 @@ public class MassDecomposer {
         }
     }
 
-    public int numberOfMoleculesForInterval(int lowerBound, int upperBound){
-        int numMolsInInterval = 0;
-        for(int m = upperBound; m >= lowerBound; m--){
-            numMolsInInterval = numMolsInInterval + this.numberOfMoleculesForIntegerMass(m);
+    public int numberOfMoleculesForInterval(int lowerBound, int upperBound) {
+        int numMolInInterval = this.numberOfMoleculesForIntegerMass(upperBound);
+        for(int m = lowerBound; m < upperBound; m++){
+            numMolInInterval += this.numMols[this.bbMasses.length][m];
         }
-        return numMolsInInterval;
+        return numMolInInterval;
+    }
+
+    public int[][] getBbMasses() {
+        return this.bbMasses;
+    }
+
+    public int[][] getNumMols(){
+        return this.numMols;
     }
 }
