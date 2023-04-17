@@ -3,11 +3,9 @@ package combinatorial_molecule_library_design;
 public class MassDecomposer {
 
     private final int[][] bbMasses;
-    private final double blowupFactor;
 
     public MassDecomposer(double[][] bbMasses, double blowupFactor){
         // Transform the masses of the building blocks into integer masses using the blowup factor:
-        this.blowupFactor = blowupFactor;
         this.bbMasses = new int[bbMasses.length][];
 
         for(int i = 0; i < bbMasses.length; i++) {
@@ -18,9 +16,8 @@ public class MassDecomposer {
         }
     }
 
-    public MassDecomposer(int[][] bbMasses, double blowupFactor){
+    public MassDecomposer(int[][] bbMasses){
         this.bbMasses = bbMasses;
-        this.blowupFactor = blowupFactor;
     }
 
     public int numberOfMoleculesForIntegerMass(int mass){
@@ -29,15 +26,19 @@ public class MassDecomposer {
         numMols[0][0] = 1;  // only the empty string has mass 0
 
         // Loop:
-        // For each n = 1,...,bbMasses.length and m = 0,...,mass
-        // compute numMols[n mod 2][m] := number of strings with length n (first n building blocks) and mass m.
-        for(int n = 1; n <= this.bbMasses.length; n++){
-            int currentRow = n % 2;
-            int previousRow = (n-1) % 2;
+        // For each i = 1,...,bbMasses.length and m = 0,...,mass
+        // compute numMols[i][m] := number of strings s_1...s_i (first i building blocks) and mass m.
+        int currentRow = 0;
+        int previousRow = 1;
+        int helperReferenceVariable = 0;
+        for(int i = 1; i <= this.bbMasses.length; i++){
+            helperReferenceVariable = currentRow;
+            currentRow = previousRow;
+            previousRow = helperReferenceVariable;
 
             for(int m = 0; m <= mass; m++){
                 int sum = 0;
-                for(int x : this.bbMasses[n-1]){
+                for(int x : this.bbMasses[i-1]){
                     if(m - x >= 0) {
                         sum = sum + numMols[previousRow][m - x];
                     }
@@ -45,20 +46,14 @@ public class MassDecomposer {
                 numMols[currentRow][m] = sum;
             }
         }
-
-        return numMols[this.bbMasses.length % 2][mass];
+        return numMols[currentRow][mass];
     }
 
-    public int numberOfMoleculesForInterval(double lowerBound, double upperBound){
-        int transformedLowerBound = (int) (this.blowupFactor * lowerBound);
-        int transformedUpperBound = (int) (this.blowupFactor * upperBound);
-        return this.numberOfMoleculesForInterval(transformedLowerBound, transformedUpperBound);
-    }
 
-    public int numberOfMoleculesForInterval(int transformedLowerBound, int transformedUpperBound){
+    public int numberOfMoleculesForInterval(int lowerBound, int upperBound){
         int numMolsInInterval = 0;
-        for(int m = transformedLowerBound; m <= transformedUpperBound; m++){
-            numMolsInInterval += this.numberOfMoleculesForIntegerMass(m);
+        for(int m = lowerBound; m <= upperBound; m++){
+            numMolsInInterval = numMolsInInterval + this.numberOfMoleculesForIntegerMass(m);
         }
         return numMolsInInterval;
     }
