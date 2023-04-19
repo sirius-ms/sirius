@@ -1,7 +1,7 @@
 apply plugin: 'java-library'
 dependencies {
     // wrong place START (should be in dist) but IDEA does not recognize dependency from no code modules //todo find alternative
-    implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+    implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "2.0.+"
     implementation("de.unijena.bioinf.cbc-java:cbc-java-jni:$cbc_version:${siriusTargetPlatform.jenaClassifier().orElseThrow()}")
     implementation("de.unijena.bioinf.cbc-java:cbc-java-native:$cbc_version:${siriusTargetPlatform.jenaClassifier().orElseThrow()}")
     // wrong place END
