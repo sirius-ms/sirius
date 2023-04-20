@@ -20,6 +20,9 @@
 package de.unijena.bioinf.ms.gui.ms_viewer;
 
 import java.util.HashMap;
+import java.util.Properties;
+
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import javafx.concurrent.Worker;
 import de.unijena.bioinf.ms.gui.webView.WebViewPanel;
 import netscape.javascript.JSObject;
@@ -43,6 +46,13 @@ public class WebViewSpectraViewer extends WebViewPanel {
                 // after bridges are queued to load, we have to wait (again)
                 webView.getEngine().getLoadWorker().stateProperty().addListener((ov, oldState, newState) -> {
                         if (newState == Worker.State.SUCCEEDED) {
+                            final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
+                            final String theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
+                            if (!theme.equals("Dark")) {
+                                webView.getEngine().executeScript("var fg_color = 'black';");
+                            } else {
+                                webView.getEngine().executeScript("var fg_color = '#bbb';");
+                            }
                             webView.getEngine().executeScript("var main = new Main();");
                         }
                     });

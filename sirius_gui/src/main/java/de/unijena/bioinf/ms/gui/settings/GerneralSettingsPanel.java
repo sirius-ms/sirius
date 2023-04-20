@@ -47,6 +47,10 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
     final JSpinner scalingSpinner;
     final int scaling;
 
+    final String theme;
+
+    final JComboBox<String> themeBox;
+
     final FileChooserPanel db;
     final JComboBox<String> solver;
     private boolean restartRequired = false;
@@ -57,6 +61,14 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         super();
         this.props = properties;
         add(new JXTitledSeparator("Graphical User Interface"));
+
+        theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
+        String[] themes = new String[]{"Light", "Dark", "Classic"};
+        themeBox = new JComboBox<>(themes);
+        themeBox.setSelectedItem(theme);
+        themeBox.setToolTipText("Set theme of the Graphical User Interface");
+        addNamed("UI Theme", themeBox);
+
         scaling = Integer.parseInt(props.getProperty("sun.java2d.uiScale", System.getProperty("sun.java2d.uiScale", "1")));
 
         SpinnerNumberModel model = new SpinnerNumberModel(scaling, 1, 5, 1);
@@ -106,6 +118,11 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
 
     @Override
     public void saveProperties() {
+        String selectedTheme = (String) themeBox.getSelectedItem();
+        if (!theme.equals(selectedTheme)) {
+            props.setProperty("de.unijena.bioinf.sirius.ui.theme", selectedTheme);
+            restartRequired = true;
+        }
         props.setProperty("de.unijena.bioinf.sirius.treebuilder.solvers", (String) solver.getSelectedItem());
         props.setProperty("de.unijena.bioinf.sirius.ui.allowMs1Only", String.valueOf(allowMS1Only.isSelected()));
 //        props.setProperty("de.unijena.bioinf.sirius.treebuilder.timeout", treeTimeout.getNumber().toString());

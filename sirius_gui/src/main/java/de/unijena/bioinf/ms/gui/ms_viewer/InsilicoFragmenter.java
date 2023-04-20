@@ -6,12 +6,13 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.fragmenter.*;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import org.openscience.cdk.depict.DepictionGenerator;
+import org.openscience.cdk.renderer.color.UniColor;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Optional;
 
@@ -88,7 +89,7 @@ public class InsilicoFragmenter {
             checkForInterruption();
 
             DepictionGenerator gen = new DepictionGenerator();
-            String svg = gen.withAromaticDisplay().withAtomColors().depict(graph.getMolecule()).toSvgStr();
+            String svg = gen.withAromaticDisplay().withAtomColors(new UniColor(Colors.FOREGROUND)).withBackgroundColor(Colors.BACKGROUND).depict(graph.getMolecule()).toSvgStr();
             checkForInterruption();
             return new Result(json, svg);
         }

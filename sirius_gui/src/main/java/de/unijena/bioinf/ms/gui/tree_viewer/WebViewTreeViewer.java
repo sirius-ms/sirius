@@ -19,15 +19,39 @@
 
 package de.unijena.bioinf.ms.gui.tree_viewer;
 
+import de.unijena.bioinf.ftalign.CommonLossScoring;
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.webView.WebViewPanel;
+
+import java.util.Arrays;
+import java.util.Properties;
+
 /*
 NOTE: first create new WebViewTreeViewer, then add all JS resources (addJS);
 finally load() (only once!)
 */
 public class WebViewTreeViewer extends WebViewPanel implements TreeViewerBrowser{
-	
+
+    protected final String COMMON_LOSS_VAR;
+
+    public WebViewTreeViewer() {
+        super();
+        StringBuilder buf = new StringBuilder("var common_losses = [");
+        Arrays.stream(CommonLossScoring.LOSSES).limit(CommonLossScoring.LOSSES.length - 1).forEach(l -> buf.append("\"").append(l).append("\", "));
+        buf.append("\"").append(CommonLossScoring.LOSSES[CommonLossScoring.LOSSES.length - 1]).append("\"];");
+        COMMON_LOSS_VAR = buf.toString();
+    }
+
     public void loadTree(String json_tree) {
         cancelTasks();
+        // START HACK: TreeViewerConnector does not seem to work! set common losses and theme as JS variables!
+        executeJS(COMMON_LOSS_VAR);
+        final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
+        final String theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
+        if (theme.equals("Dark")) {
+            executeJS("var theme = 'elegant-dark';");
+        }
+        // END HACK
         executeJS("loadJSONTree('" + json_tree.replaceAll("(\\r\\n|\\r|\\n)", " ")
                 + "')");
     }

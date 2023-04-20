@@ -171,7 +171,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
                     b = 2;
                 } else {
                     b = 1;
-                    g.setColor(Color.BLACK);
+                    g.setColor(Colors.FOREGROUND);
                 }
 
                 g.fillRect((CELL_SIZE * col) + reduction - b, (CELL_SIZE * row) + reduction - b, (CELL_SIZE - reduction - reduction) + b + b, (CELL_SIZE - reduction - reduction) + b + b);
@@ -261,7 +261,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             label.rect.setBounds(rx, ry, w, h);
             g.setColor(color);
             g.fillRoundRect(2, 2, w, h, 4, 4);
-            g.setColor(Color.BLACK);
+            g.setColor(Colors.FOREGROUND);
             g.drawRoundRect(2, 2, w, h, 4, 4);
             g.setColor(color.equals(Colors.DB_CUSTOM) ? Color.BLACK : Color.WHITE);
             g.drawString(label.name(), 2 + (w - tw) / 2, h - (h - th) / 2);

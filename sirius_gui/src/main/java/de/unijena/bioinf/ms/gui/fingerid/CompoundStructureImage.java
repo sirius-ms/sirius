@@ -20,11 +20,11 @@
 package de.unijena.bioinf.ms.gui.fingerid;
 
 import de.unijena.bioinf.ms.gui.configs.Fonts;
+import de.unijena.bioinf.ms.gui.utils.ThemedAtomColors;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.layout.StructureDiagramGenerator;
 import org.openscience.cdk.renderer.AtomContainerRenderer;
-import org.openscience.cdk.renderer.color.CDK2DAtomColors;
 import org.openscience.cdk.renderer.font.AWTFontManager;
 import org.openscience.cdk.renderer.generators.BasicSceneGenerator;
 import org.openscience.cdk.renderer.generators.IGenerator;
@@ -80,7 +80,7 @@ class CompoundStructureImage extends JPanel {
         renderer.getRenderer2DModel().set(StandardGenerator.Highlighting.class,
                 highlightStyle);
         renderer.getRenderer2DModel().set(StandardGenerator.AtomColor.class,
-                new CDK2DAtomColors());
+                new ThemedAtomColors());
         setVisible(true);
     }
 
