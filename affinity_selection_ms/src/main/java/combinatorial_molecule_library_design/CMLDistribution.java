@@ -2,53 +2,59 @@ package combinatorial_molecule_library_design;
 
 /**
  * An object of this class CMLDistribution enables the computation of the distribution of the molecular masses
- * over the mass range for each combinatorial molecule library.<br>
+ * over the mass range for each combinatorial molecule library.
  * This distribution is computed by splitting the mass range of interest into several bins and
- * computing the number of molecules for each bin.
+ * computing the number of molecules for each bin using an object of class {@link MassDecomposer}.<br>
  * Because the binning procedure can differ (e.g. equidistant bins, bins of different sizes),
- * this class declared as abstract.
+ * this class is declared as abstract.
  */
 public abstract class CMLDistribution {
 
-    private final double[][] bbMasses;
-    private final double blowupFactor;
-    protected double[] binEdges;
-    private int[] numMoleculesPerBin;
+    private final int[][] bbMasses;
+    private int[] binEdges;
+    protected int[] numMoleculesPerBin;
 
     public CMLDistribution(double[][] bbMasses, double blowupFactor){
+        this.bbMasses = MassDecomposer.convertBBMassesToInteger(bbMasses, blowupFactor);
+    }
+
+    public CMLDistribution(int[][] bbMasses){
         this.bbMasses = bbMasses;
-        this.blowupFactor = blowupFactor;
     }
 
     public int[] computeNumMoleculesPerBin(){
         return this.computeNumMoleculesPerBin(this.bbMasses);
     }
 
-    public int[] computeNumMoleculesPerBin(double[][] bbMasses){
-        MassDecomposer massDecomposer = new MassDecomposer(bbMasses, this.blowupFactor);
+    public int[] computeNumMoleculesPerBin(int[][] bbMasses){
+        MassDecomposer massDecomposer = new MassDecomposer(bbMasses);
         this.numMoleculesPerBin = new int[this.binEdges.length - 1];
-        for(int binIdx = 0; binIdx < this.numMoleculesPerBin.length - 1; binIdx++){
-            int transformedLowerBound = (int) (this.blowupFactor * this.binEdges[binIdx]);
-            int transformedUpperBound = (int) (this.blowupFactor * this.binEdges[binIdx + 1]);
-            this.numMoleculesPerBin[binIdx] = massDecomposer.numberOfMoleculesForInterval(transformedLowerBound, transformedUpperBound - 1);
+
+        for(int binIdx = this.numMoleculesPerBin.length-1; binIdx > 0; binIdx--){
+            int lowerBound = this.binEdges[binIdx] + 1;
+            int upperBound = this.binEdges[binIdx + 1];
+            this.numMoleculesPerBin[binIdx] = massDecomposer.numberOfMoleculesForInterval(lowerBound, upperBound);
         }
-        this.numMoleculesPerBin[this.numMoleculesPerBin.length - 1] = massDecomposer.
-                numberOfMoleculesForInterval((int) (this.blowupFactor * this.binEdges[this.binEdges.length - 2]), (int) (this.blowupFactor * this.binEdges[this.binEdges.length - 1]));
+        this.numMoleculesPerBin[0] = massDecomposer.numberOfMoleculesForInterval(this.binEdges[0], this.binEdges[1]);
         return this.numMoleculesPerBin;
     }
 
-    public double getMinMoleculeMass(){
+    public int[] computeNumMoleculesPerBin(double[][] bbMasses, double blowupFactor){
+        return this.computeNumMoleculesPerBin(MassDecomposer.convertBBMassesToInteger(bbMasses, blowupFactor));
+    }
+
+    public int getMinMoleculeMass(){
         // It is assumed that the bbMasses are sorted in increasing order:
-        double minMass = 0;
+        int minMass = 0;
         for(int idx = 0; idx < this.bbMasses.length; idx++) {
             minMass = minMass + this.bbMasses[idx][0];
         }
         return minMass;
     }
 
-    public double getMaxMoleculeMass(){
+    public int getMaxMoleculeMass(){
         // It is assumed that the bbMasses are sorted in increasing order:
-        double maxMass = 0;
+        int maxMass = 0;
         for(int idx = 0; idx < this.bbMasses.length; idx++){
             int maxBBMassIdx = this.bbMasses[idx].length - 1;
             maxMass = maxMass + this.bbMasses[idx][maxBBMassIdx];
@@ -56,16 +62,8 @@ public abstract class CMLDistribution {
         return maxMass;
     }
 
-    public double[][] getBbMasses(){
+    public int[][] getBbMasses(){
         return this.bbMasses;
-    }
-
-    public double getBlowupFactor(){
-        return this.blowupFactor;
-    }
-
-    public double[] getBinEdges(){
-        return this.binEdges;
     }
 
     public int[] getNumMoleculesPerBin(){
