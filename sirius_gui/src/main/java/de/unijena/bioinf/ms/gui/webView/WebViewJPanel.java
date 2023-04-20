@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.webView;
 
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
@@ -38,6 +39,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.LinkedList;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.FutureTask;
 
 public class WebViewJPanel extends JFXPanel {
@@ -74,6 +77,15 @@ public class WebViewJPanel extends JFXPanel {
                     }
                 }
             });
+            final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
+            final String theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
+            if (!theme.equals("Dark")) {
+                this.webView.getEngine().setUserStyleSheetLocation(
+                        getClass().getResource("/sirius/" + "style.css").toExternalForm());
+            } else {
+                this.webView.getEngine().setUserStyleSheetLocation(
+                        getClass().getResource("/sirius/" + "style-dark.css").toExternalForm());
+            }
             this.setScene(new Scene(this.webView));
         });
     }

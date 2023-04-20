@@ -50,7 +50,8 @@ class Base {
             .attr("id", "xLabel")
             .attr("x", this.w/2)
             .attr("y", this.h + this.margin.top + 20)
-            .text("m/z");
+            .text("m/z")
+            .style("fill", fg_color);
         // Y label
         this.svg.append("text")
             .attr("class", "label spectrum_label")
@@ -58,7 +59,8 @@ class Base {
             .attr("transform", "rotate(-90)")
             .attr("y", -40)
             .attr("x", -this.h/2)
-            .text("Relative Intensity");
+            .text("Relative Intensity")
+            .style("fill", fg_color);
 
         this.svg.selectAll(".label").attr("visibility", "hidden");
         //tooltip
@@ -762,7 +764,8 @@ class MirrorPlot extends Base {
                 .attr("id", function(d, i) { return "intensity"+i; })
                 .attr("x", function(d) { return self.x(d.mz); })
                 .attr("y", function(d) { return self.y1(d.intensity)-5; })
-                .text(function(d) { return d.mz.toFixed(self.decimal_place).toString(); });
+                .text(function(d) { return d.mz.toFixed(self.decimal_place).toString(); })
+                .style("fill", fg_color);
         this.intensityArea.selectAll()
             .data(this.spectrum2.peaks)
             .enter()
@@ -771,7 +774,8 @@ class MirrorPlot extends Base {
                 .attr("id", function(d, i) { return "intensity"+(i+self.mzs1Size); })
                 .attr("x", function(d) { return self.x(d.mz); })
                 .attr("y", function(d) { return (self.y2(d.intensity)+15<self.h/2+28) ? self.h/2+28 : self.y2(d.intensity)+15; })
-                .text(function(d) { return d.mz.toFixed(self.decimal_place).toString(); });
+                .text(function(d) { return d.mz.toFixed(self.decimal_place).toString(); })
+                .style("fill", fg_color);
     }
     //difference viewer
     showDifference() {
@@ -793,14 +797,16 @@ class MirrorPlot extends Base {
                         .attr("x1", function(d) { return self.x(d.mz); })
                         .attr("y1", y0)
                         .attr("x2", function(d) { return self.x(d.mz); })
-                        .attr("y2", y1);
+                        .attr("y2", y1)
+                        .style("stroke", fg_color);
                 ruler.append("line")
                         .attr("class", "horizontal_ruler diff_ruler")
                         .attr("id", "h"+num+"_ruler")
                         .attr("x1", self.x(mzs[0]))
                         .attr("y1", y1)
                         .attr("x2", self.x(mzs[mzsSize-1]))
-                        .attr("y2", y1);
+                        .attr("y2", y1)
+                        .style("stroke", fg_color);
             }
         };
         // difference label
@@ -817,7 +823,8 @@ class MirrorPlot extends Base {
                     .attr("id", "diff_label"+(i-1))
                     .attr("x", self.x(x_text))
                     .attr("y", y)
-                    .text(diff.toString());
+                    .text(diff.toString())
+                    .style("fill", fg_color);
             }
         };
         plotDiffRuler(self, self.spectrum1.peaks, self.mzs1, self.mzs1Size, "#ruler_1", 10, 0);
@@ -833,7 +840,8 @@ class MirrorPlot extends Base {
                 .attr("x1", function(d) { return self.x(d.mz)-5; })
                 .attr("y1", function(d) { return self.y1(d.intensity) })
                 .attr("x2", function(d) { return self.x(d.mz)+6; }) // because the peak width is 2px
-                .attr("y2", function(d) { return self.y1(d.intensity) });
+                .attr("y2", function(d) { return self.y1(d.intensity) })
+                .style("stroke", fg_color);
     }
 
     plot() {

@@ -24,11 +24,11 @@ package de.unijena.bioinf.ms.gui.utils;
  * 06.10.16.
  */
 
-import de.unijena.bioinf.ms.gui.configs.Colors;
-import de.unijena.bioinf.ms.gui.configs.Fonts;
+import com.formdev.flatlaf.FlatDarculaLaf;
+import com.formdev.flatlaf.FlatIntelliJLaf;
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
-import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.webView.WebViewBrowserDialog;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
@@ -40,9 +40,9 @@ import javax.swing.plaf.nimbus.AbstractRegionPainter;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.net.URI;
 import java.util.List;
+import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -69,36 +69,36 @@ public class GuiUtils {
         return g2d.getFontMetrics(font);
     }
     public static void initUI() {
-        //load nimbus look and feel, before mainframe is built
-        try {
-            //improve rendering?
-            Fonts.initFonts();
-            //todo stupid scaling is useless :/
-            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    UIManager.setLookAndFeel(info.getClassName());
-                    UIManager.put("nimbusOrange", Colors.ICON_GREEN);
-//                    System.out.println(UIManager.getColor("nimbusBase"));
-//                    System.out.println(UIManager.getColor("nimbusBlueGrey"));
-//                    System.out.println(UIManager.getColor("control"));
+        final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
+        final String theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
 
-                    try {
-                        Constructor c = Class.forName("SiriusStyleFactory").getConstructor(String.class);
-                        c.newInstance("mini"); // regular, mini, small or large
-                    } catch (ExceptionInInitializerError eiie) {
-                        //
-                    } catch (LinkageError le) {
-                        //
-                    } catch (ClassNotFoundException cnfe) {
-                        //
-                    }
-
+        switch (theme) {
+            case "Dark":
+                try {
+                    UIManager.setLookAndFeel(new FlatDarculaLaf());
                     break;
+                } catch (UnsupportedLookAndFeelException e) {
+                    e.printStackTrace();
                 }
-            }
-        } catch (Exception e) {
-            LoggerFactory.getLogger(GuiUtils.class).error("Error when configuring Nimbus look and feel!", e);
-            // If Nimbus is not available, you can set the GUI to another look and feel.
+            case "Light":
+                try {
+                    UIManager.setLookAndFeel(new FlatIntelliJLaf());
+                    break;
+                } catch (UnsupportedLookAndFeelException e) {
+                    e.printStackTrace();
+                }
+            case "Classic":
+            default:
+                try {
+                    for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                        if ("Nimbus".equals(info.getName())) {
+                            UIManager.setLookAndFeel(info.getClassName());
+                            break;
+                        }
+                    }
+                } catch (Exception e) {
+                    LoggerFactory.getLogger(GuiUtils.class).error("Error when configuring look and feel!", e);
+                }
         }
 
         //nicer times for tooltips

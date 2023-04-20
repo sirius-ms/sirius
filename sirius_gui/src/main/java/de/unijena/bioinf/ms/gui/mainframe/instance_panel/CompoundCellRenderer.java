@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
 
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -60,9 +61,9 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
 
 		selectedBackground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].background");
 		selectedForeground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].textForeground");
-		evenBackground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\".background");
+		evenBackground = Colors.LIST_EVEN_BACKGROUND;
 		disableBackground = UIManager.getColor("ComboBox.background");
-		unevenBackground = new Color(213, 227, 238);
+		unevenBackground = Colors.LIST_UNEVEN_BACKGROUND;
 		activatedForeground = UIManager.getColor("List.foreground");
 		deactivatedForeground = Color.GRAY;
 	}

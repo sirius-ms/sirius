@@ -32,6 +32,8 @@ dependencies {
     api 'org.apache.xmlgraphics:batik-rasterizer:1.16'
     api 'org.apache.xmlgraphics:fop:2.7'
 
+    api 'com.formdev:flatlaf:3.1'
+
     if (excludeJFX)
         for (m in javaFX_modules) //define jfx as compile only, so that we can decide during build to either package for one or all platforms.
             compileOnly "org.openjfx:$m:$targetCompatibility.+:${siriusTargetPlatform.jfxClassifier().get()}"

@@ -24,8 +24,13 @@ package de.unijena.bioinf.ms.gui.configs;
  * 11.10.16.
  */
 
+import com.formdev.flatlaf.FlatDarculaLaf;
+import com.formdev.flatlaf.FlatIntelliJLaf;
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+
 import javax.swing.*;
 import java.awt.*;
+import java.util.Properties;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -38,14 +43,22 @@ public abstract class Colors {
     public final static Color ICON_RED = new Color(204, 71, 41);
     public final static Color ICON_YELLOW = new Color(255, 204, 0);
 
-    public final static Color LIST_SELECTED_BACKGROUND = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].background");
-    public final static Color LIST_SELECTED_FOREGROUND = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].textForeground");
-    public final static Color LIST_EVEN_BACKGROUND = Color.WHITE;
+    public final static Color GRADIENT_GREEN;
+    public final static Color GRADIENT_RED;
+    public final static Color GRADIENT_YELLOW;
+
+    public final static Color FOREGROUND;
+
+    public final static Color BACKGROUND;
+
+    public final static Color LIST_SELECTED_BACKGROUND;
+    public final static Color LIST_SELECTED_FOREGROUND;
+    public final static Color LIST_EVEN_BACKGROUND;
     public final static Color LIST_DISABLED_BACKGROUND = UIManager.getColor("ComboBox.background");
-    public final static Color LIST_UNEVEN_BACKGROUND = new Color(213, 227, 238);
+    public final static Color LIST_UNEVEN_BACKGROUND;
     public final static Color LIST_ACTIVATED_FOREGROUND = UIManager.getColor("List.foreground");
     public final static Color LIST_DEACTIVATED_FOREGROUND = Color.GRAY;
-    public final static Color LIST_LIGHT_GREEN = new Color(161, 217, 155);
+    public final static Color LIST_LIGHT_GREEN;
     public final static Color LIST_SELECTED_GREEN = new Color(49, 163, 84);
 
     public final static Color DB_LINKED = new Color(155, 166, 219);
@@ -55,6 +68,123 @@ public abstract class Colors {
     public final static Color DB_UNKNOWN = new Color(178,34,34);
     public final static Color DB_ELGORDO = ICON_BLUE;
 
-    public final static Color CLASSIFIER_MAIN = new Color(0xe5f5e0);
-    public final static Color CLASSIFIER_OTHER = new Color(0xdeebf7);
+    public final static Color CLASSIFIER_MAIN;
+    public final static Color CLASSIFIER_OTHER;
+
+    static {
+        final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
+        final String theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
+
+        Color listSelectedBg, listSelectedFg, listEvenBg, listUnevenBg, listLightGreen, gradientGreen, gradientRed,
+                gradientYellow, fg, bg, classifierMain, classifierOther;
+
+        switch (theme) {
+            case "Dark":
+                try {
+                    UIManager.setLookAndFeel(new FlatDarculaLaf());
+                    Color accent = UIManager.getColor("Component.accentColor");
+                    float[] c = new float[4];
+                    accent.getComponents(c);
+                    Color darkAccent = new Color(c[0], c[1], c[2], 0.15f * c[3]);
+
+                    UIManager.put("TabbedPane.selectedBackground", darkAccent);
+                    UIManager.put("ComboBox:\"ComboBox.listRenderer\"[Selected].background", accent);
+                    UIManager.put("ComboBox:\"ComboBox.listRenderer\"[Selected].textForeground", Color.WHITE);
+
+                    fg = new Color(187, 187, 187);
+                    bg = new Color(0x3c3f41);
+
+                    listSelectedBg = accent;
+                    listSelectedFg = Color.WHITE;
+                    listEvenBg = new Color(0x3c3f41);
+                    listUnevenBg = darkAccent;
+                    listLightGreen = new Color(49, 163, 84, 100);
+
+                    gradientGreen = new Color(0, 134, 34);
+                    gradientRed = new Color(143, 50, 29);
+                    gradientYellow = new Color(128, 102, 0);
+
+                    classifierMain =  new Color(49, 163, 84, 100);
+                    classifierOther = darkAccent;
+                    break;
+                } catch (UnsupportedLookAndFeelException e) {
+                    e.printStackTrace();
+                }
+            case "Light":
+                try {
+                    UIManager.setLookAndFeel(new FlatIntelliJLaf());
+                    Color accent = UIManager.getColor("Component.accentColor");
+                    float[] c = new float[4];
+                    accent.getComponents(c);
+
+                    UIManager.put("TabbedPane.selectedBackground", new Color(c[0], c[1], c[2], 0.15f * c[3]));
+                    UIManager.put("ComboBox:\"ComboBox.listRenderer\"[Selected].background", accent);
+                    UIManager.put("ComboBox:\"ComboBox.listRenderer\"[Selected].textForeground", Color.WHITE);
+
+                    fg = Color.BLACK;
+                    bg = Color.WHITE;
+
+                    listSelectedBg = accent;
+                    listSelectedFg = Color.WHITE;
+                    listEvenBg = Color.WHITE;
+                    listUnevenBg = new Color(213, 227, 238);
+                    listLightGreen = new Color(161, 217, 155);
+
+                    gradientGreen = new Color(0, 191, 48);
+                    gradientRed = new Color(204, 71, 41);
+                    gradientYellow = new Color(255, 204, 0);
+
+                    classifierMain = new Color(0xe5f5e0);
+                    classifierOther = new Color(0xdeebf7);
+                    break;
+                } catch (UnsupportedLookAndFeelException e) {
+                    e.printStackTrace();
+                }
+            case "Classic":
+            default:
+                try {
+                    for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                        if ("Nimbus".equals(info.getName())) {
+                            UIManager.setLookAndFeel(info.getClassName());
+                            break;
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                fg = Color.BLACK;
+                bg = Color.WHITE;
+
+                listSelectedBg = new Color(38, 117, 191);
+                listSelectedFg = Color.WHITE;
+                listEvenBg = Color.WHITE;
+                listUnevenBg = new Color(213, 227, 238);
+                listLightGreen = new Color(161, 217, 155);
+
+                gradientGreen = new Color(0, 191, 48);
+                gradientRed = new Color(204, 71, 41);
+                gradientYellow = new Color(255, 204, 0);
+
+                classifierMain = new Color(0xe5f5e0);
+                classifierOther = new Color(0xdeebf7);
+        }
+
+        FOREGROUND = fg;
+        BACKGROUND = bg;
+
+        LIST_SELECTED_BACKGROUND = listSelectedBg;
+        LIST_SELECTED_FOREGROUND = listSelectedFg;
+        LIST_EVEN_BACKGROUND = listEvenBg;
+        LIST_UNEVEN_BACKGROUND = listUnevenBg;
+        LIST_LIGHT_GREEN = listLightGreen;
+
+        GRADIENT_GREEN = gradientGreen;
+        GRADIENT_RED = gradientRed;
+        GRADIENT_YELLOW = gradientYellow;
+
+        CLASSIFIER_MAIN = classifierMain;
+        CLASSIFIER_OTHER = classifierOther;
+    }
+
 }

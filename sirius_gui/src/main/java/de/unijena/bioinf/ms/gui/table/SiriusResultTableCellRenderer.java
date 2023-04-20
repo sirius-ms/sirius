@@ -92,9 +92,11 @@ public class SiriusResultTableCellRenderer extends DefaultTableCellRenderer {
             setHorizontalAlignment(SwingConstants.CENTER);
         }
 
+        setFont(table.getFont());
+        setValue(this.value);
         setToolTipText(GuiUtils.formatToolTip(Math.min(getFontMetrics(getFont()).stringWidth(this.value), GuiUtils.toolTipWidth), this.value));
 
-        return super.getTableCellRendererComponent(table, this.value, isSelected, hasFocus, row, column);
+        return this;
     }
 
     @Override

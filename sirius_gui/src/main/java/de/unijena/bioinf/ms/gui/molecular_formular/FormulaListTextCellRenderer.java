@@ -71,9 +71,9 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
 
         selectedBackground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].background");
         selectedForeground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].textForeground");
-        evenBackground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\".background");
+        evenBackground = Colors.LIST_EVEN_BACKGROUND;
         disableBackground = UIManager.getColor("ComboBox.background");
-        unevenBackground = new Color(213, 227, 238);
+        unevenBackground = Colors.LIST_UNEVEN_BACKGROUND;
         activatedForeground = UIManager.getColor("List.foreground");
         deactivatedForeground = Color.GRAY;
     }

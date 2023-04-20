@@ -300,17 +300,17 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
             final int boxwidth = Math.max(classBox.width,typeBox.width)+2*PADDING;
             final int boxheight = classBox.height+2*PADDING+GAP_TOP;
             g.fillRoundRect(0, typeBox.height, boxwidth, boxheight, 4, 4);
-            g.setColor(Color.BLACK);
+            g.setColor(Colors.FOREGROUND);
             g.drawRoundRect(0, typeBox.height, boxwidth, boxheight, 4, 4);
             g.setColor(color);
             final int gap = (boxwidth-typeBox.width)/2;
             g.drawRect(gap, typeBox.height,typeBox.width,Math.min(typeBox.height,classBox.height));
             g.setFont(classFont);
-            g.setColor(Color.BLACK);
+            g.setColor(Colors.FOREGROUND);
             g.drawString(klass.getName(), PADDING, classBox.height+typeBox.height+PADDING+GAP_TOP);
 
             g.setFont(typeFont);
-            g.setColor(Color.BLACK);
+            g.setColor(Colors.FOREGROUND);
             g.drawString(type, gap, typeBox.height+GAP_TOP);
 
         }
@@ -385,17 +385,17 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
             final int boxwidth = Math.max(classBox.width,typeBox.width)+2*PADDING;
             final int boxheight = classBox.height+2*PADDING+GAP_TOP;
             g.fillRoundRect(0, typeBox.height, boxwidth, boxheight, 4, 4);
-            g.setColor(Color.BLACK);
+            g.setColor(Colors.FOREGROUND);
             g.drawRoundRect(0, typeBox.height, boxwidth, boxheight, 4, 4);
             g.setColor(color);
             final int gap = (boxwidth-typeBox.width)/2;
             g.drawRect(gap, typeBox.height,typeBox.width,Math.min(typeBox.height,classBox.height));
             g.setFont(classFont);
-            g.setColor(Color.BLACK);
+            g.setColor(Colors.FOREGROUND);
             g.drawString(property.name, PADDING, classBox.height+typeBox.height+PADDING+GAP_TOP);
 
             g.setFont(typeFont);
-            g.setColor(Color.BLACK);
+            g.setColor(Colors.FOREGROUND);
             g.drawString(property.level.name, gap, typeBox.height+GAP_TOP);
 
         }
