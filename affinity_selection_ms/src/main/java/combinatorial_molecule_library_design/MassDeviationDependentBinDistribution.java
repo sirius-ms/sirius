@@ -1,48 +1,64 @@
 package combinatorial_molecule_library_design;
 
+import org.xmlcml.euclid.IntArray;
+
 import java.util.ArrayList;
 
 public class MassDeviationDependentBinDistribution extends CMLDistribution{
 
-    private double ppm;
+    private double relDev;
 
     public MassDeviationDependentBinDistribution(double[][] bbMasses, double blowupFactor, double ppm) {
         super(bbMasses, blowupFactor);
-        this.ppm = ppm;
+        this.relDev = ppm * 1e-6;
+        this.binEdges = this.computeBinEdges();
+    }
 
-        // Case: minMoleculeMass == maxMoleculeMass
-        double minMoleculeMass = this.getMinMoleculeMass();
-        double maxMoleculeMass = this.getMaxMoleculeMass();
-        if(minMoleculeMass == maxMoleculeMass){
-            this.binEdges = new double[]{minMoleculeMass, maxMoleculeMass};
-        }else{
-            double relDev = ppm / Math.pow(10, 6);
-            ArrayList<Double> binEdges = new ArrayList<>();
-            binEdges.add(minMoleculeMass);
+    public MassDeviationDependentBinDistribution(int[][] bbMasses, double ppm){
+        super(bbMasses);
+        this.relDev = ppm * 1e-6;
+        this.binEdges = this.computeBinEdges();
+    }
 
-            double previousBinEdge = minMoleculeMass;
-            double nextBinEdge = (previousBinEdge * (1 + relDev)) / (1 - relDev);
-            while(nextBinEdge <= maxMoleculeMass){
-                binEdges.add(nextBinEdge);
-                previousBinEdge = nextBinEdge;
-                nextBinEdge = (previousBinEdge * (1 + relDev)) / (1 - relDev);
-            }
+    private int[] computeBinEdges(){
+        // Initialisation:
+        int minMoleculeMass = this.getMinMoleculeMass();
+        int maxMoleculeMass = this.getMaxMoleculeMass();
+        if(minMoleculeMass == maxMoleculeMass) return new int[]{minMoleculeMass, maxMoleculeMass};
 
-            // Now, we know: previousBinEdge <= maxMoleculeMass and nextBinEdge > maxMoleculeMass
-            // We want to equally distribute the space between previousBinEdge to maxMoleculeMass over the other bins.
-            int numBins = binEdges.size() - 1;
-            double additionalSpacePerBin = (maxMoleculeMass - previousBinEdge) / numBins;
+        // Compute the bin edges in the integer range [minMoleculeMass, maxMoleculeMass]:
+        ArrayList<Integer> binEdges = new ArrayList<>();
+        binEdges.add(minMoleculeMass);
 
-            this.binEdges = new double[binEdges.size()];
-            this.binEdges[0] = binEdges.get(0);
-            this.binEdges[numBins] = maxMoleculeMass;
-            for(int i = 1; i < numBins; i++){
-                this.binEdges[i] = binEdges.get(i) + i * additionalSpacePerBin;
-            }
+        double nextBinFactor = (1 + this.relDev) / (1 - this.relDev);
+        int previousBinEdge = minMoleculeMass;
+        int nextBinEdge = (int) (previousBinEdge * nextBinFactor);
+        while(nextBinEdge <= maxMoleculeMass) {
+            binEdges.add(nextBinEdge);
+            previousBinEdge = nextBinEdge;
+            nextBinEdge = (int) (previousBinEdge * nextBinFactor);
         }
+        /* There are two cases:
+         * - previousBinEdge = maxMoleculeMass:
+         * ------> Finish!
+         * - previousBinEdge < maxMoleculeMass
+         * ------> The bin sizes have to be adjusted corresponding to the difference maxMoleculeMass - previousBinEdge
+         */
+        int numBins = binEdges.size() - 1;
+        int diff = maxMoleculeMass - previousBinEdge;
+        if(diff > 0){ // previousBinEdge < maxMoleculeMass and the bin widths have to be adjusted equally!
+            // todo: add the rest from above to bottom
+        }
+        int[] binEdgesArray = new int[binEdges.size()];
+        for(int i = 0; i < binEdges.size(); i++) binEdgesArray[i] = binEdges.get(i);
+        return binEdgesArray;
     }
 
     public double getPpm(){
-        return this.ppm;
+        return this.relDev * 1e6;
+    }
+
+    public double getRelDeviation(){
+        return this.relDev;
     }
 }

@@ -11,7 +11,7 @@ package combinatorial_molecule_library_design;
 public abstract class CMLDistribution {
 
     private final int[][] bbMasses;
-    private int[] binEdges;
+    protected int[] binEdges;
     protected int[] numMoleculesPerBin;
 
     public CMLDistribution(double[][] bbMasses, double blowupFactor){
