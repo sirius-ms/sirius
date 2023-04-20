@@ -7,15 +7,7 @@ public class MassDecomposer {
     private boolean isComputed;
 
     public MassDecomposer(double[][] bbMasses, double blowupFactor) {
-        // Transform the masses of the building blocks into integer masses using the blowup factor:
-        this.bbMasses = new int[bbMasses.length][];
-
-        for (int i = 0; i < bbMasses.length; i++) {
-            this.bbMasses[i] = new int[bbMasses[i].length];
-            for (int j = 0; j < bbMasses[i].length; j++) {
-                this.bbMasses[i][j] = (int) (blowupFactor * bbMasses[i][j]);
-            }
-        }
+        this.bbMasses = convertBBMassesToInteger(bbMasses, blowupFactor);
         this.isComputed = false;
     }
 
@@ -78,7 +70,23 @@ public class MassDecomposer {
         return this.bbMasses;
     }
 
-    public int[][] getNumMols(){
+    public int[][] getNumMoleculesMatrix(){
         return this.numMols;
+    }
+
+    public int[] getNumMolecules(){
+        return this.numMols[this.bbMasses.length];
+    }
+
+    public static int[][] convertBBMassesToInteger(double[][] bbMasses, double blowupFactor){
+        // Transform the masses of the building blocks into integer masses using the blowup factor:
+        int[][] intBBMasses = new int[bbMasses.length][];
+        for (int i = 0; i < bbMasses.length; i++) {
+            intBBMasses[i] = new int[bbMasses[i].length];
+            for (int j = 0; j < bbMasses[i].length; j++) {
+                intBBMasses[i][j] = (int) (blowupFactor * bbMasses[i][j]);
+            }
+        }
+        return intBBMasses;
     }
 }
