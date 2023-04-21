@@ -205,8 +205,8 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 	private Color innerBlue, outerBlue, plusZeroPeak, isotopePeak, defaultPeak, importantPeak, unimportantPeak, markedPeak, backgroundColor, defaultColor;
 
 	private void initColors(){
-		innerBlue = new Color(218,230,248);    //infoBox innere Farbe
-		outerBlue = new Color(80,136,220);     //infoBox aeussere Farbe
+		innerBlue = Colors.LIST_UNEVEN_BACKGROUND;    //infoBox innere Farbe
+		outerBlue = Colors.FOREGROUND;     //infoBox aeussere Farbe
 
 		plusZeroPeak = new Color(9,27,195);   //Farbe monoiso.Peak
 		isotopePeak = Colors.ICON_BLUE;//new Color(86,174,108);    //Farbe Isotopenpeak
@@ -215,15 +215,18 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 		importantPeak = Colors.ICON_GREEN; //new Color(240,59,32	);           //Peak der hervorgehoben werden soll
 //		importantPeak = new Color(168,0,255);
 		markedPeak = new Color(254,178,76);       //Peak wurde mit der Maus markiert
-		unimportantPeak = new Color(175,184,226); //Peak soll mehr oder weniger ausgeblendet werden
-		defaultPeak = Color.black;                //jeder Peak ohne spezielle Eigenschaft
+
+		float[] c = new float[4];
+		Colors.FOREGROUND.getComponents(c);
+		unimportantPeak = new Color(c[0], c[1], c[2], 0.1f * c[3]); //Peak soll mehr oder weniger ausgeblendet werden
+		defaultPeak = Colors.FOREGROUND;                //jeder Peak ohne spezielle Eigenschaft
 
 
 //		noisePeak = new Color(175,184,226);
 //		signalPeak = Color.BLACK;
 
-		backgroundColor = Color.WHITE;         //Farbe fuer das Panel
-		defaultColor = Color.BLACK;            //Grundfarbe fuer Achsen usw.
+		backgroundColor = Colors.BACKGROUND;         //Farbe fuer das Panel
+		defaultColor = Colors.FOREGROUND;            //Grundfarbe fuer Achsen usw.
 	}
 
 	public void addMSViewerPanelListener(MSViewerPanelListener listener){
