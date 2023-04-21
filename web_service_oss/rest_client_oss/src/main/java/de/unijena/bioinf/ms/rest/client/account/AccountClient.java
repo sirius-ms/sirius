@@ -39,6 +39,11 @@ import java.net.URISyntaxException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
+/**
+ * @deprecated user Browser based {@link de.unijena.bioinf.auth.UserPortal} for Account management instead
+ * Still needed to accept terms and conditions within SIRIUS
+ */
+@Deprecated
 public class AccountClient extends AbstractClient {
     private final AuthService authService;
     private final String versionSuffix;

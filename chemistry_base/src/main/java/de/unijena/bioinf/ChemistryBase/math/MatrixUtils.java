@@ -658,6 +658,18 @@ public class MatrixUtils {
         };
     }
 
+    public static float[] boolean2float(boolean[] detected) {
+        final float[] xs = new float[detected.length];
+        for (int k=0; k < detected.length; ++k) xs[k] = (detected[k] ? 1f : 0f);
+        return xs;
+    }
+
+    public static float[] short2float(short[] distanceFromApex) {
+        final float[] xs = new float[distanceFromApex.length];
+        for (int k=0; k < distanceFromApex.length; ++k) xs[k] = (distanceFromApex[k]);
+        return xs;
+    }
+
     public interface GenericMatrixComputationFunction {
         /*
         updates the value in the matrix for A[I][j] and A[J][I]
