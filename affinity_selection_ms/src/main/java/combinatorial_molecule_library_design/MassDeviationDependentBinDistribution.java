@@ -1,7 +1,5 @@
 package combinatorial_molecule_library_design;
 
-import org.xmlcml.euclid.IntArray;
-
 import java.util.ArrayList;
 
 public class MassDeviationDependentBinDistribution extends CMLDistribution{
