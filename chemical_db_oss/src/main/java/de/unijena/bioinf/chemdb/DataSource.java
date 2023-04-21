@@ -34,8 +34,9 @@ public enum DataSource {
     BIO("Bio Database", makeBIOFLAG(), null, null, null, null), //todo make distinction to normal databases more clear
     PUBCHEM("PubChem", 2, "compound_id","pubchem", "https://pubchem.ncbi.nlm.nih.gov/compound/%s", new Publication("Kim S et al., PubChem in 2021: new data content and improved web interfaces. Nucleic Acids Res. 2021", "10.1093/nar/gkaa971")),
     MESH("MeSH", 4, "compound_id", "hasmesh", "http://www.ncbi.nlm.nih.gov/mesh/%s", null),
-    HMDB("HMDB", 8, "hmdb_id", "hmdb", "http://www.hmdb.ca/metabolites/HMDB%07d", new Publication("Wishart DS, Guo AC, Oler E, et al., HMDB 5.0: the Human Metabolome Database for 2022. Nucleic Acids Res. 2022", "10.1093/nar/gkab1062")),
-    KNAPSACK("KNApSAcK", 16, "knapsack_id", "knapsack", "http://kanaya.naist.jp/knapsack_jsp/information.jsp?word=C%08d", new Publication("Nakamura Y. et al, KNApSAcK Metabolite Activity Database for retrieving the relationships between metabolites and biological activities. Plant Cell Physiol.  2014", "10.1093/pcp/pct176")),
+    HMDB("HMDB", 8, "hmdb_id", "hmdb", "http://www.hmdb.ca/metabolites/%s", new Publication("Wishart DS, Guo AC, Oler E, et al., HMDB 5.0: the Human Metabolome Database for 2022. Nucleic Acids Res. 2022", "10.1093/nar/gkab1062")),
+    //Knapsack maps via inchikey, now using COCONUT as source // http://www.knapsackfamily.com/knapsack_core/result.php?sname=INCHIKEY&word=JLJLRLWOEMWYQK-BKYUDGNBNA-N
+    KNAPSACK("KNApSAcK", 16, "inchi_key", "knapsack", "http://www.knapsackfamily.com/knapsack_core/result.php?sname=INCHIKEY&word=%s", new Publication("Nakamura Y. et al, KNApSAcK Metabolite Activity Database for retrieving the relationships between metabolites and biological activities. Plant Cell Physiol.  2014", "10.1093/pcp/pct176")),
     CHEBI("CHEBI", 32, "chebi_id","chebi", "https://www.ebi.ac.uk/chebi/searchId.do?chebiId=%s", new Publication("Hastings J et al., ChEBI in 2016: Improved services and an expanding collection of metabolites. Nucleic Acids Res. 2016", "10.1093/nar/gkv1031")),
     PUBMED("PubMed", 64, null, null, null, null),
     KEGG("KEGG", 256, "kegg_id","kegg", "http://www.kegg.jp/dbget-bin/www_bget?cpd:%s", new Publication("Kanehisa M and Goto S, KEGG: Kyoto Encyclopedia of Genes and Genomes. Nucleic Acids Res. 2000.", "10.1093/nar/28.1.27")),
@@ -46,7 +47,7 @@ public enum DataSource {
     ZINCBIO("ZINC bio", 8192, "zinc_id","zincbio", "http://zinc.docking.org/substances/%s",new Publication("Sterling Tand Irwin JJ, ZINC 15 - Ligand Discovery for Everyone. J Chem Inf Model. 2015", "10.1021/acs.jcim.5b00559")),
     TRAIN("Training Set", 16384, null, null, null, null), //not part of the PSQL database anymore but assigned for each predictor individually //todo but we still need that flag, right?
     UNDP("Natural Products", 32768, "undp_id","unpd",  null, new Publication("Gu J et al., Use of Natural Products as Chemical Library for Drug Discovery and Network Pharmacology. PLOS ONE. 2013", "10.1371/journal.pone.0062839")),
-    YMDB("YMDB", 65536, "ymdb_id","ymdb", "http://www.ymdb.ca/compounds/YMDB%d05", new Publication("Ramirez-Gaona M et al., YMDB 2.0: a significantly expanded version of the yeast metabolome database. Nucleic Acids Res. 2017", "10.1093/nar/gkw1058")),
+    YMDB("YMDB", 65536, "ymdb_id","ymdb", "http://www.ymdb.ca/compounds/%s", new Publication("Ramirez-Gaona M et al., YMDB 2.0: a significantly expanded version of the yeast metabolome database. Nucleic Acids Res. 2017", "10.1093/nar/gkw1058")),
     PLANTCYC("Plantcyc", 131072, "unique_id","plantcyc",  "http://pmn.plantcyc.org/compound?orgid=PLANT&id=%s", new Publication("Hawkins C et al., Plant Metabolic Network 15: A resource of genome-wide metabolism databases for 126 plants and algae. J Integr Plant Biol. 2021", "10.1111/jipb.13163")),
     NORMAN("NORMAN", 262144,  "id","norman", null, new Publication("Taha HM et al., The NORMAN Suspect List Exchange (NORMAN-SLE): facilitating European and worldwide collaboration on suspect screening in high resolution mass spectrometry. Environ Sci Eur. 2022", "10.1186/s12302-022-00680-6")),
     //this is currently only interesting for internal testing.
@@ -57,12 +58,16 @@ public enum DataSource {
     BloodExposome("Blood Exposome", 4194304,  "pubchem_cid", "coconut", "https://bloodexposome.org/#/description?qcid=%s",new Publication("Barupal DK and Fiehn O, Generating the Blood Exposome Database Using a Comprehensive Text Mining and Database Fusion Approach. Environ Health Perspect. 2019", "10.1289/EHP4713")), //todo correct uri? //todo cite ...new Publication("Barupal DK and Fiehn O, Generating the Blood Exposome Database Using a Comprehensive Text Mining and Database Fusion Approach. Environ Health Perspect. 2019", "10.1289/EHP4713"))
     TeroMol("TeroMOL", 8388608,  "pubchem_cid", "teromol", "http://terokit.qmclab.com/molecule.html?MolId=%s", new Publication("Zeng T et al.,Chemotaxonomic Investigation of Plant Terpenoids with an Established Database (TeroMOL). New Phytol. 2022", "10.1111/nph.18133")), //todo correct uri? //todo cite new Publication("Zeng T et al.,Chemotaxonomic Investigation of Plant Terpenoids with an Established Database (TeroMOL). New Phytol. 2022", "10.1111/nph.18133"))
 
-    LOTUS("LOTUS", 16777216,  "id", "lotus", "https://lotus.naturalproducts.net/search/simple/%s", null), //TODO Publication!! //links to search using wikidata id. LOTUS id seems to be temporary!
-
     PUBCHEMANNOTATIONBIO("PubChem class - bio and metabolites", 16777216,  null,null,null, 0, false, new Publication("Kim S et al., PubChem in 2021: new data content and improved web interfaces. Nucleic Acids Res. 2021", "10.1093/nar/gkaa971")), //2**24; Pubchem Annotations now have a separate flag
     PUBCHEMANNOTATIONDRUG("PubChem class - drug", 33554432,  null,null,null, 0, false, new Publication("Kim S et al., PubChem in 2021: new data content and improved web interfaces. Nucleic Acids Res. 2021", "10.1093/nar/gkaa971")),
     PUBCHEMANNOTATIONSAFETYANDTOXIC("PubChem class - safety and toxic", 67108864,  null,null,null, 0, false, new Publication("Kim S et al., PubChem in 2021: new data content and improved web interfaces. Nucleic Acids Res. 2021", "10.1093/nar/gkaa971")),
     PUBCHEMANNOTATIONFOOD("PubChem class - food", 134217728,  null,null,null, 0, false, new Publication("Kim S et al., PubChem in 2021: new data content and improved web interfaces. Nucleic Acids Res. 2021", "10.1093/nar/gkaa971")),
+
+    LOTUS("LOTUS", 268435456,  "id", "lotus", "https://lotus.naturalproducts.net/search/simple/%s", null), //TODO Publication!! //links to search using wikidata id. LOTUS id seems to be temporary!
+    FoodDB("FoodDB", 536870912, "foodDB_id", "foodDB", null, null),//todo
+    MiMeDB("MiMeDB", 1073741824, "mimeDB_id", "mimeDB", null, null),//todo
+
+
 
     LIPID("Lipid", 4294967296L, null, null, "https://www.lipidmaps.org/databases/lmsd/%s", null), //flag for  El Gordo/Lipid candidates //todo no citation for lipid maps, since we only link to it, but we do not really use its structures, right?
 /*"https://www.lipidmaps.org/rest/compound/abbrev/%s/all/txt"*/ //todo we need to add lipid maps Ids to Chemical DB
