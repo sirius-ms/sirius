@@ -61,17 +61,11 @@ public class FingerIdClient extends AbstractCsiClient {
     }
 
     public JobUpdate<FingerprintJobOutput> postJobs(final FingerprintJobInput input, HttpClient client) throws IOException {
-        //check predictor compatibility
-        final int c = input.experiment.getPrecursorIonType().getCharge();
-        for (PredictorType type : input.predictors)
-            if (!type.isValid(c))
-                throw new IllegalArgumentException("Predictor " + type.name() + " is not compatible with charge " + c + ".");
-
         return executeFromJson(client,
                 () -> {
                     final HttpPost post = new HttpPost(buildVersionSpecificWebapiURI("/fingerid/" + CID + "/fp-jobs").build());
                     post.setEntity(new InputStreamEntity(new ByteArrayInputStream(
-                            new ObjectMapper().writeValueAsBytes(input.asStringInput())), ContentType.APPLICATION_JSON));
+                            new ObjectMapper().writeValueAsBytes(input)), ContentType.APPLICATION_JSON));
                     post.addHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
 
                     return post;

@@ -747,6 +747,24 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         return new ImmutableMolecularFormula(getTableSelection(), nrs);
     }
 
+    /**
+     * returns a new molecular formula in which the amount of each element
+     * is divided with the given scalar. Throws an exception if
+     * division is not possible without remainer.
+     */
+    public MolecularFormula divide(int scalar) {
+        if (scalar == 1) return this;
+        if (scalar == 0)
+            throw new IllegalArgumentException("Division by zero not possible");
+        final short[] nrs = Arrays.copyOf(buffer(), buffer().length);
+        for (int i = 0; i < nrs.length; ++i) {
+            if (nrs[i] % scalar != 0)
+                throw new IllegalArgumentException(toString() + " cannot be divided by " + scalar);
+            nrs[i] /= scalar;
+        }
+        return new ImmutableMolecularFormula(getTableSelection(), nrs);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null) return false;

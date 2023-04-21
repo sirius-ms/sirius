@@ -99,7 +99,7 @@ public class UserPortal {
     }
 
     public static String pwResetPath() {
-        return "auth/reset/";
+        return "auth/reset-password/";
     }
 
     public static String signInPath() {
