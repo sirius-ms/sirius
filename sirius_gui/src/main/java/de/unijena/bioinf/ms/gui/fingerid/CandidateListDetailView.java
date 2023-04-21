@@ -283,7 +283,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
                             try {
                                 //todo remove if lipid maps is added to our pubchem copy
                                 List<String> lmIds = ProxyManager.applyClient(client -> {
-                                    URI uri = URI.create(String.format(Locale.US, "https://www.lipidmaps.org/rest/compound/inchi_key/%s/lm_id", URLEncoder.encode(InChISMILESUtils.inchi2inchiKey(candidate.candidate.getInchi().in3D), StandardCharsets.UTF_8)));
+                                    URI uri = URI.create(String.format(Locale.US, "https://www.lipidmaps.org/rest/compound/inchi_key/%s/lm_id", URLEncoder.encode(InChISMILESUtils.inchi2inchiKey(candidate.candidate.getInchi().in3D, true), StandardCharsets.UTF_8)));
                                     HttpGet get = new HttpGet(uri);
                                     return client.execute(get, r -> {
                                         List<String> ids = new ArrayList<>();
