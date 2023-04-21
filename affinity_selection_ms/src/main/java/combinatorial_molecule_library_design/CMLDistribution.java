@@ -30,6 +30,7 @@ public abstract class CMLDistribution {
         MassDecomposer massDecomposer = new MassDecomposer(bbMasses);
         this.numMoleculesPerBin = new int[this.binEdges.length - 1];
 
+        // The bin edges are separating the interval into these bins: [],(],(],...,(]
         for(int binIdx = this.numMoleculesPerBin.length-1; binIdx > 0; binIdx--){
             int lowerBound = this.binEdges[binIdx] + 1;
             int upperBound = this.binEdges[binIdx + 1];
