@@ -104,15 +104,16 @@ public class FingerprintJJob extends BasicJJob<List<FingerIdResult>> {
         predictionJobs = new LinkedHashMap<>(idResult.size());
 
         checkForInterruption();
-
-        for (FingerIdResult fingeridInput : idResult) {
-            // prediction job: predict fingerprint
-            predictionJobs.put(webAPI.submitFingerprintJob(
-                            new FingerprintJobInput(experiment, fingeridInput.getSourceTree(),
-                                    UserDefineablePredictorType.toPredictorTypes(experiment.getPrecursorIonType(), predictors.value))),
-                    new FingerIdResult(fingeridInput.getSourceTree()));
+        {
+            final SpectralPreprocessor spectralPreprocessor = new SpectralPreprocessor();
+            for (FingerIdResult fingeridInput : idResult) {
+                // prediction job: predict fingerprint
+                predictionJobs.put(webAPI.submitFingerprintJob(new FingerprintJobInput(
+                        spectralPreprocessor.extractInputFeatures(fingeridInput.getSourceTree(), experiment),
+                        UserDefineablePredictorType.toPredictorTypes(experiment.getPrecursorIonType(), predictors.value)
+                )), new FingerIdResult(fingeridInput.getSourceTree()));
+            }
         }
-
         checkForInterruption();
 
         logDebug("CSI:FingerID fingerprint predictions DONE!");

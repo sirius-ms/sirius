@@ -95,8 +95,6 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
 
     AuthService getAuthService();
 
-    boolean deleteAccount();
-
     void acceptTermsAndRefreshToken() throws LoginException;
 
     void changeActiveSubscription(Subscription activeSubscription);
@@ -189,10 +187,6 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
     //endregion
 
     //region CSI:FingerID
-    default WebJJob<FingerprintJobInput, ?, FingerprintResult, ?> submitFingerprintJob(final Ms2Experiment experiment, final FTree ftree, @NotNull EnumSet<PredictorType> types) throws IOException {
-        return submitFingerprintJob(new FingerprintJobInput(experiment, ftree, types));
-    }
-
     WebJJob<FingerprintJobInput, ?, FingerprintResult, ?> submitFingerprintJob(FingerprintJobInput input) throws IOException;
 
     @NotNull

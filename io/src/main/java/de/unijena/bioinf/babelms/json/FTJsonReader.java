@@ -21,7 +21,12 @@
 
 package de.unijena.bioinf.babelms.json;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.HashMultimap;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
@@ -91,7 +96,8 @@ public class FTJsonReader implements Parser<FTree> {
         return treeFromJson(docRoot, json, source);
     }
 
-    public FTree treeFromJson(@NotNull final JsonNode docRoot, @NotNull final JacksonDocument json, @Nullable URI source) throws IOException {
+    public FTree treeFromJson(@NotNull final JsonNode docRoot, @NotNull final JacksonDocument json,
+                              @Nullable URI source) throws IOException {
         final DescriptorRegistry registry = DescriptorRegistry.getInstance();
         double score = 0d;
         double scoreBoost = 0d;
@@ -103,9 +109,9 @@ public class FTJsonReader implements Parser<FTree> {
         final TIntIntHashMap treeFragmentIdToIdMap = new TIntIntHashMap();
         for (int k = 0; k < fragments.size(); ++k) {
             final JsonNode fragment = fragments.get(k);
-            final int id = (int)json.getIntFromDictionary(fragment, "id");
+            final int id = (int) json.getIntFromDictionary(fragment, "id");
             final MolecularFormula vertex = MolecularFormula.parseOrThrow(json.getStringFromDictionary(fragment, "molecularFormula"));
-            final Ionization vertexIon = PrecursorIonType.getPrecursorIonType(json.getStringFromDictionary(fragment,"ion")).getIonization();
+            final Ionization vertexIon = PrecursorIonType.getPrecursorIonType(json.getStringFromDictionary(fragment, "ion")).getIonization();
 //            fragmentByFormulaMap.put(vertex, new Object[]{fragment, vertexIon});
             fragmentByFormulaMap.put(vertex, new FragmentInfo(id, vertex, vertexIon, fragment));
             fragmentByIdMap.put(id, new FragmentInfo(id, vertex, vertexIon, fragment));
@@ -121,7 +127,7 @@ public class FTJsonReader implements Parser<FTree> {
 //        final HashMultimap<MolecularFormula, MolecularFormula> edges = HashMultimap.create();
 //        final HashMultimap<FragmentInfo, FragmentInfo> edges = HashMultimap.create();
         final HashMultimap<Integer, Integer> edges = HashMultimap.create();
-        final JsonNode losses = json.getListFromDictionary(docRoot,"losses");
+        final JsonNode losses = json.getListFromDictionary(docRoot, "losses");
         for (int k = 0; k < losses.size(); ++k) {
             final JsonNode loss = losses.get(k);
 
@@ -129,7 +135,7 @@ public class FTJsonReader implements Parser<FTree> {
             try {
                 final JsonNode lossSource = loss.get("source");
                 final JsonNode lossTarget = loss.get("target");
-                if (lossSource.isIntegralNumber() && lossTarget.isIntegralNumber()){
+                if (lossSource.isIntegralNumber() && lossTarget.isIntegralNumber()) {
                     final int a = loss.get("source").asInt();
                     final int b = loss.get("target").asInt();
                     final FragmentInfo bInfo = fragmentByIdMap.get(b);
@@ -250,12 +256,13 @@ public class FTJsonReader implements Parser<FTree> {
         return tree;
     }
 
-    private FragmentInfo getRootInfo(JsonNode rootElement, HashMap<MolecularFormula, FragmentInfo> fragmentByFormulaMap, TIntObjectHashMap<FragmentInfo> fragmentByIdMap) {
+    private FragmentInfo getRootInfo(JsonNode
+                                             rootElement, HashMap<MolecularFormula, FragmentInfo> fragmentByFormulaMap, TIntObjectHashMap<FragmentInfo> fragmentByIdMap) {
         try {
-            if (rootElement.isIntegralNumber()){
+            if (rootElement.isIntegralNumber()) {
                 final int id = rootElement.asInt();
-                FragmentInfo fragmentInfo  = fragmentByIdMap.get(id);
-                if (fragmentInfo==null) throw new RuntimeException("Cannot determine root fragment");
+                FragmentInfo fragmentInfo = fragmentByIdMap.get(id);
+                if (fragmentInfo == null) throw new RuntimeException("Cannot determine root fragment");
                 return fragmentInfo;
             }
         } catch (UnsupportedOperationException e) {
@@ -265,14 +272,14 @@ public class FTJsonReader implements Parser<FTree> {
         //this is for backwards compatibility, from now on we use ids to map
         final MolecularFormula f = formula(rootElement.asText());
         final FragmentInfo rInfo = fragmentByFormulaMap.get(f);
-        if (rInfo==null) throw new RuntimeException("Cannot determine root fragment");
+        if (rInfo == null) throw new RuntimeException("Cannot determine root fragment");
 
         return rInfo;
     }
 
     public static String[] getKeyArray(JsonNode object) {
         final String[] fields = new String[object.size()];
-        int k=0;
+        int k = 0;
         for (Iterator<String> fname = object.fieldNames(); fname.hasNext(); ) {
             fields[k++] = fname.next();
         }

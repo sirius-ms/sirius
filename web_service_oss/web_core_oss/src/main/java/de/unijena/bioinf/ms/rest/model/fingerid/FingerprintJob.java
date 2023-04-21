@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Optional;
 
 public class FingerprintJob extends JobWithPredictor<FingerprintJobOutput> {
-    protected String ms, tree;
+    protected byte[] inputJson;
     protected byte[] fingerprint; // LITTLE ENDIAN BINARY ENCODED PLATT PROBABILITIES
     protected byte[] iokrVector; // LITTLE ENDIAN BINARY ENCODED PLATT PROBABILITIES
 
@@ -39,12 +39,11 @@ public class FingerprintJob extends JobWithPredictor<FingerprintJobOutput> {
         this(null, null, null);
     }
 
-    public FingerprintJob(String workerPrefix, String userID, String cid, @NotNull String ms, @NotNull String jsonTree, long predictorBits) {
+    public FingerprintJob(String workerPrefix, String userID, String cid, byte[] inputJson, long predictorBits) {
         this(workerPrefix, JobState.SUBMITTED);
+        this.inputJson = inputJson;
         setUserID(userID);
         setCid(cid);
-        setMs(ms);
-        setTree(jsonTree);
         setPredictors(predictorBits);
     }
 
@@ -90,20 +89,12 @@ public class FingerprintJob extends JobWithPredictor<FingerprintJobOutput> {
         this.fingerprint = fingerprints;
     }
 
-    public String getMs() {
-        return ms;
+    public byte[] getInputJson() {
+        return inputJson;
     }
 
-    public void setMs(String ms) {
-        this.ms = ms;
-    }
-
-    public String getTree() {
-        return tree;
-    }
-
-    public void setTree(String jsonTree) {
-        this.tree = jsonTree;
+    public void setInputJson(byte[] inputJson) {
+        this.inputJson = inputJson;
     }
 
     @Override

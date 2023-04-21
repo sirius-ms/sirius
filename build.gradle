@@ -26,7 +26,7 @@ ext {
     fingeridVersion = props.getProperty('de.unijena.bioinf.fingerid.version')
     //version for external libraries
     jjobs_version = '0.9.35'
-    slf4j_version = '2.0.6'
+    slf4j_version = '1.7.36'
     gson_version = "2.8.9"//'2.6.2'
     jackson_version = '2.14.2'
     math3_version = '3.6.1'
@@ -82,31 +82,6 @@ allprojects {
                 artifact()
             }
         }
-
-        maven {
-            url "https://bio.informatik.uni-jena.de/repository/libs-release-local-private/"
-            metadataSources {
-                mavenPom()
-                artifact()
-            }
-            credentials {               // Optional resolver credentials (leave out to use anonymous resolution)
-                username = project.findProperty('de.unijena.bioinf.build.artifactory.username')
-                password = project.findProperty('de.unijena.bioinf.build.artifactory.password')
-            }
-        }
-
-        maven {
-            url "https://bio.informatik.uni-jena.de/repository/libs-snapshot-local-private/"
-            metadataSources {
-                mavenPom()
-                artifact()
-            }
-            credentials {               // Optional resolver credentials (leave out to use anonymous resolution)
-                username = project.findProperty('de.unijena.bioinf.build.artifactory.username')
-                password = project.findProperty('de.unijena.bioinf.build.artifactory.password')
-            }
-        }
-
         maven {
             url "https://www.xypron.de/repository" //glpk repo
         }
@@ -117,10 +92,6 @@ allprojects {
             url "http://eulergui.sourceforge.net/maven2/" //FTAlign stuff
             allowInsecureProtocol = true
         }
-        /*maven{
-            url "https://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo/" //cpdetector no gpl
-            metadataSources { artifact() }
-        }*/
     }
 
     dependencies {

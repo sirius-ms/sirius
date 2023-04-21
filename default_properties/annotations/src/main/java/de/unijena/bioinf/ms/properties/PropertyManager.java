@@ -360,7 +360,17 @@ public class PropertyManager {
     public static void loadSiriusCredentials() {
         final String path = getProperty("de.unijena.bioinf.ms.credentials.path", null, "$USER_HOME/sirius.credentials").replace("$USER_HOME", System.getProperty("user.home"));
         try (InputStream in = Files.newInputStream(Paths.get(path))) {
-            addPropertiesFromStream((isB64Credentials() ? Base64.getDecoder().wrap(in) : in), path);
+            PropertiesConfiguration config = SiriusConfigUtils.newConfiguration();
+            new FileHandler(config).load((isB64Credentials() ? Base64.getDecoder().wrap(in) : in));
+            List<Configuration> props = PROPERTIES.getConfigurations();
+            List<String> names = PROPERTIES.getConfigurationNameList();
+            names.forEach(PROPERTIES::removeConfiguration);
+
+            PROPERTIES.addConfiguration(config, path);
+            Iterator<Configuration> pit = props.iterator();
+            Iterator<String> nit = names.iterator();
+            while (pit.hasNext())
+                PROPERTIES.addConfiguration(pit.next(), nit.next());
         } catch (IOException | ConfigurationException e) {
             LoggerFactory.getLogger(PropertyManager.class).error("Could not load Sirius Credentials from: " + path, e);
         }
