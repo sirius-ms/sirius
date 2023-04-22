@@ -574,7 +574,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         if (recal.tree.getTreeWeight() >= tree.getTreeWeight()) {
             finalTree = builder == finalBuilder ? recal : finalBuilder.computeTree().withTimeLimit(Math.min(restTimeSec(), secsPerTree)).solve(pin, graph);
             checkForInterruption();
-            //todo this is a workaround to prevent null trees if ILP solver fails.
+            //this is to prevent null trees in case the ILP solver fails.
             if (finalTree == null || finalTree.tree == null) {
                 // TODO: why is tree score != ILP score? Or is this an error in ILP?
                 // check that
@@ -592,7 +592,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             checkForInterruption();
             finalTree = finalBuilder.computeTree().withTimeLimit(Math.min(restTimeSec(), secsPerTree)).solve(pin, origGraph);
             checkForInterruption();
-            //todo this is a workaround to prevent null trees if ILP solver fails.
+            //this is to prevent null trees in case the ILP solver fails.
             if (finalTree == null || finalTree.tree == null) {
                 logWarn("Recalibrated ILP tree is null for '" + input.getExperimentInformation().getName() + "'. Falling back to the heuristic tree. Please submit a bug report with the input data of this instance and this error message.");
                 finalTree = recal;
