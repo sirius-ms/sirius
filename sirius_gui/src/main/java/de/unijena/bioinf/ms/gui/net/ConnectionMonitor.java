@@ -138,7 +138,7 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
     private class CheckJob extends TinyBackgroundJJob<ConnectionCheck> {
         @Override
         protected ConnectionCheck compute() throws Exception {
-            ProxyManager.closeAllStaleConnections(3, TimeUnit.MINUTES);
+            ProxyManager.closeAllStaleConnections();
 
             checkForInterruption();
             Multimap<ConnectionError.Klass, ConnectionError> errors = Multimaps.newSetMultimap(new HashMap<>(), LinkedHashSet::new);

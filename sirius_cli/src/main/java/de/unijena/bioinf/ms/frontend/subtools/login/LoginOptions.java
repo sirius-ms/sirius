@@ -214,7 +214,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                     AuthService service = AuthServices.createDefault(
                             URI.create(SiriusProperties.getProperty("de.unijena.bioinf.sirius.security.audience")),
                             ApplicationCore.TOKEN_FILE,
-                            ProxyManager.getSirirusHttpAsyncClient());
+                            ProxyManager.createSirirusHttpClient());
                     final AuthService.Token token = service.getToken().orElseThrow(() -> new IllegalStateException("Not logged in! Please log in to select a license!"));
                     determineAndCheckActiveSubscription(token);
                     if (showProfile)
@@ -223,15 +223,11 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                     throw new RuntimeException(e);
                 }
             } else if (showProfile) {
-                try {
                     AuthService service = AuthServices.createDefault(
                             URI.create(SiriusProperties.getProperty("de.unijena.bioinf.sirius.security.audience")),
                             ApplicationCore.TOKEN_FILE,
-                            ProxyManager.getSirirusHttpAsyncClient());
+                            ProxyManager.createSirirusHttpClient());
                     showProfile(service.getToken().orElse(null));
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
             }
 
             if (showLicense)
