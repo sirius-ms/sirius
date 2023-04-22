@@ -30,53 +30,47 @@ import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobOutput;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
-import org.apache.hc.client5.http.classic.HttpClient;
-import org.apache.hc.client5.http.classic.methods.HttpGet;
-import org.apache.hc.client5.http.classic.methods.HttpPost;
-import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
-import org.apache.hc.core5.http.ContentType;
-import org.apache.hc.core5.http.io.entity.InputStreamEntity;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
 
 public class CanopusClient extends AbstractCsiClient {
 
     @SafeVarargs
-    public CanopusClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest>... requestDecorators) {
+    public CanopusClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<Request.Builder>... requestDecorators) {
         super(serverUrl, requestDecorators);
     }
 
-    public CanopusCfData getCfData(PredictorType predictorType, HttpClient client) throws IOException {
+    public CanopusCfData getCfData(PredictorType predictorType, OkHttpClient client) throws IOException {
         return executeDataRequest(predictorType, client, "/canopus/cf-data", CanopusCfData::read);
     }
 
-    public CanopusNpcData getNpcData(PredictorType predictorType, HttpClient client) throws IOException {
+    public CanopusNpcData getNpcData(PredictorType predictorType, OkHttpClient client) throws IOException {
         return executeDataRequest(predictorType, client, "/canopus/npc-data", CanopusNpcData::read);
     }
 
-    private <T> T executeDataRequest(PredictorType predictorType, HttpClient client, String path, IOFunctions.IOFunction<BufferedReader, T> respHandling) throws IOException {
+    private <T> T executeDataRequest(PredictorType predictorType, OkHttpClient client, String path, IOFunctions.IOFunction<BufferedReader, T> respHandling) throws IOException {
         return execute(client,
-                () -> new HttpGet(buildVersionSpecificWebapiURI(path)
-                        .setParameter("predictor", predictorType.toBitsAsString())
-                        .build()),
+                () -> new Request.Builder().url(buildVersionSpecificWebapiURI(path)
+                        .addQueryParameter("predictor", predictorType.toBitsAsString())
+                        .build()).get(),
                 respHandling
         );
     }
 
-    public JobUpdate<CanopusJobOutput> postJobs(final CanopusJobInput input, HttpClient client) throws IOException {
+    public JobUpdate<CanopusJobOutput> postJobs(final CanopusJobInput input, OkHttpClient client) throws IOException {
         return executeFromJson(client,
-                () -> {
-                    final HttpPost post = new HttpPost(buildVersionSpecificWebapiURI("/canopus/" + CID + "/jobs").build());
-                    post.setEntity(new InputStreamEntity(new ByteArrayInputStream(new ObjectMapper().writeValueAsBytes(input)), ContentType.APPLICATION_JSON));
-                    post.setHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
-                    return post;
-                }, new TypeReference<>() {
-                }
+                () -> new Request.Builder()
+                            .url(buildVersionSpecificWebapiURI("/canopus/" + CID + "/jobs").build())
+                            .post(RequestBody.create(new ObjectMapper().writeValueAsBytes(input), APPLICATION_JSON))
+                            /*.addHeader("Content-Type", APPLICATION_JSON.type())*/
+                , new TypeReference<>() {}
         );
     }
 }

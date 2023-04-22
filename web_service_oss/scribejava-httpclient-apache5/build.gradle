@@ -20,7 +20,7 @@
 
 dependencies {
 
-    compile "org.apache.httpcomponents.client5:httpclient5:$httpclient_version"
-    compile 'com.github.scribejava:scribejava-apis:8.3.2'
+    implementation "org.apache.httpcomponents.client5:httpclient5:$httpclient_version"
+    implementation 'com.github.scribejava:scribejava-apis:8.3.3'
 //    compile 'com.github.scribejava:scribejava-httpclient-apache:8.3.1'
 }

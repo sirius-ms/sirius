@@ -31,24 +31,19 @@ import de.unijena.bioinf.babelms.json.FTreeSerializer;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.client.AbstractCsiClient;
 import de.unijena.bioinf.ms.rest.model.*;
-import org.apache.hc.client5.http.classic.HttpClient;
-import org.apache.hc.client5.http.classic.methods.HttpGet;
-import org.apache.hc.client5.http.classic.methods.HttpPatch;
-import org.apache.hc.client5.http.classic.methods.HttpPost;
-import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
-import org.apache.hc.core5.http.ContentType;
-import org.apache.hc.core5.http.io.entity.InputStreamEntity;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class JobsClient extends AbstractCsiClient {
-    private static final  int[] limits = new int[]{
+    private static final int[] limits = new int[]{
             PropertyManager.getInteger("de.unijena.bioinf.sirius.http.job.fingerprint.limit", 500),
             PropertyManager.getInteger("de.unijena.bioinf.sirius.http.job.canopus.limit", 500),
             PropertyManager.getInteger("de.unijena.bioinf.sirius.http.job.covtree.limit", 500),
@@ -56,7 +51,7 @@ public class JobsClient extends AbstractCsiClient {
 
     private final ObjectMapper postJobMapper;
     @SafeVarargs
-    public JobsClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest>... requestDecorator) {
+    public JobsClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<Request.Builder>... requestDecorator) {
         super(serverUrl, requestDecorator);
         postJobMapper = new ObjectMapper();
         postJobMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
@@ -66,73 +61,75 @@ public class JobsClient extends AbstractCsiClient {
         postJobMapper.registerModule(m);
     }
 
-    public EnumMap<JobTable, List<JobUpdate<?>>> getJobs(Collection<JobTable> jobTablesToCheck, @NotNull HttpClient client) throws IOException {
+    public EnumMap<JobTable, List<JobUpdate<?>>> getJobs(Collection<JobTable> jobTablesToCheck, @NotNull OkHttpClient client) throws IOException {
         return executeFromJson(client,
-                () -> new HttpGet(buildVersionSpecificWebapiURI("/jobs/" + CID)
-                        .setParameter("limits", jobTablesToCheck.stream().sorted().map(s -> limits[s.ordinal()]).map(String::valueOf).collect(Collectors.joining(",")))
-                        .setParameter("types", jobTablesToCheck.stream().sorted().map(JobTable::name).collect(Collectors.joining(",")))
-                        .build()),
-                new TypeReference<>() {}
+                () -> new Request.Builder().url(buildVersionSpecificWebapiURI("/jobs/" + CID)
+                        .addQueryParameter("limits", jobTablesToCheck.stream().sorted().map(s -> limits[s.ordinal()]).map(String::valueOf).collect(Collectors.joining(",")))
+                        .addQueryParameter("types", jobTablesToCheck.stream().sorted().map(JobTable::name).collect(Collectors.joining(",")))
+                        .build()).get(),
+                new TypeReference<>() {
+                }
         );
     }
 
 
-    public EnumMap<JobTable, List<JobUpdate<?>>> getJobsByStates(Collection<JobTable> jobTablesToCheck, List<JobState> statesToInclude, @NotNull HttpClient client) throws IOException {
+    public EnumMap<JobTable, List<JobUpdate<?>>> getJobsByStates(Collection<JobTable> jobTablesToCheck, List<JobState> statesToInclude, @NotNull OkHttpClient client) throws IOException {
         return executeFromJson(client,
-                () -> new HttpGet(buildVersionSpecificWebapiURI("/jobs-state/" + CID)
-                        .setParameter("limits", jobTablesToCheck.stream().sorted().map(s -> limits[s.ordinal()]).map(String::valueOf).collect(Collectors.joining(",")))
-                        .setParameter("types", jobTablesToCheck.stream().sorted().map(JobTable::name).collect(Collectors.joining(",")))
-                        .setParameter("states", statesToInclude.stream().sorted().map(JobState::name).collect(Collectors.joining(",")))
-                        .build()),
-                new TypeReference<>() {}
+                () -> new Request.Builder().url(buildVersionSpecificWebapiURI("/jobs-state/" + CID)
+                        .addQueryParameter("limits", jobTablesToCheck.stream().sorted().map(s -> limits[s.ordinal()]).map(String::valueOf).collect(Collectors.joining(",")))
+                        .addQueryParameter("types", jobTablesToCheck.stream().sorted().map(JobTable::name).collect(Collectors.joining(",")))
+                        .addQueryParameter("states", statesToInclude.stream().sorted().map(JobState::name).collect(Collectors.joining(",")))
+                        .build()).get(),
+                new TypeReference<>() {
+                }
         );
     }
 
 
-
-    public EnumMap<JobTable, List<JobUpdate<?>>> postJobs(JobInputs submission, @NotNull HttpClient client) throws IOException {
+    public EnumMap<JobTable, List<JobUpdate<?>>> postJobs(JobInputs submission, @NotNull OkHttpClient client) throws IOException {
         return executeFromJson(client,
-                () -> {
-                    HttpPost post = new HttpPost(buildVersionSpecificWebapiURI("/jobs/" + CID).build());
-                    post.setEntity(new InputStreamEntity(new ByteArrayInputStream(
-                            postJobMapper.writeValueAsBytes(submission)), ContentType.APPLICATION_JSON));
-                    return post;
-                },
-                new TypeReference<>() {}
+                () -> new Request.Builder()
+                        .url(buildVersionSpecificWebapiURI("/jobs/" + CID).build())
+                        .post(RequestBody.create(
+                                new ObjectMapper()
+                                        .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+                                        .writeValueAsBytes(submission), APPLICATION_JSON)
+                        ), new TypeReference<>() {}
         );
     }
 
     /**
      * Unregisters Client and deletes all its jobs on server
      */
-    public void deleteAllJobs(@NotNull HttpClient client) throws IOException {
-        execute(client, () -> new HttpPatch(buildVersionSpecificWebapiURI("/jobs/" + CID + "/delete").build()));
+    public void deleteAllJobs(@NotNull OkHttpClient client) throws IOException {
+        execute(client, () ->  new Request.Builder()
+                .url(buildVersionSpecificWebapiURI("/jobs/" + CID + "/delete").build())
+                .patch(RequestBody.create(new byte[]{})));
     }
 
 
-    public void deleteJobs(Collection<JobId> jobsToDelete, Map<JobId, Integer> countingHashes, @NotNull HttpClient client) throws IOException {
+    public void deleteJobs(Collection<JobId> jobsToDelete, Map<JobId, Integer> countingHashes, @NotNull OkHttpClient client) throws IOException {
         execute(client, () -> {
             Map<String, String> body = new HashMap<>();
             body.put("jobs", new ObjectMapper().writeValueAsString(jobsToDelete));
             if (countingHashes != null && !countingHashes.isEmpty()) //add client sided counting if available
                 body.put("countingHashes", new ObjectMapper().writeValueAsString(countingHashes));
 
-            HttpPatch patch = new HttpPatch(buildVersionSpecificWebapiURI("/jobs/" + CID + "/delete").build());
-            patch.setEntity(new InputStreamEntity(new ByteArrayInputStream(
-                    new ObjectMapper().writeValueAsBytes(body)), ContentType.APPLICATION_JSON));
-            return patch;
+            return new Request.Builder()
+                    .url(buildVersionSpecificWebapiURI("/jobs/" + CID + "/delete").build())
+                    .patch(RequestBody.create(
+                            new ObjectMapper().writeValueAsBytes(body), APPLICATION_JSON));
         });
     }
 
-    public void resetJobs(Collection<JobId> jobsToReset, @NotNull HttpClient client) throws IOException {
+    public void resetJobs(Collection<JobId> jobsToReset, @NotNull OkHttpClient client) throws IOException {
         execute(client, () -> {
             Map<JobTable, List<Long>> body = new HashMap<>();
             jobsToReset.forEach(j -> body.computeIfAbsent(j.jobTable, i -> new ArrayList<>()).add(j.jobId));
 
-            HttpPatch patch = new HttpPatch(buildVersionSpecificWebapiURI("/jobs/" + CID + "/reset").build());
-            patch.setEntity(new InputStreamEntity(new ByteArrayInputStream(
-                    new ObjectMapper().writeValueAsBytes(body)), ContentType.APPLICATION_JSON));
-            return patch;
+            return new Request.Builder()
+                    .url(buildVersionSpecificWebapiURI("/jobs/" + CID + "/reset").build())
+                    .patch(RequestBody.create(new ObjectMapper().writeValueAsBytes(body), APPLICATION_JSON));
         });
     }
 }

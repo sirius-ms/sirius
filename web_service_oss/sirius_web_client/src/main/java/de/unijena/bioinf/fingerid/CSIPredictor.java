@@ -33,7 +33,7 @@ import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.webapi.WebAPI;
-import org.apache.hc.client5.http.classic.HttpClient;
+import okhttp3.OkHttpClient;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -105,7 +105,7 @@ public class CSIPredictor extends AbstractStructurePredictor {
         // do all web stuff first. if one fails we do not have an invalid object state and can just retry everything
     }
 
-    private CSICovarianceConfidenceScorer<?> makeConfidenceScorer(@NotNull final WebAPI.Clients api, @NotNull HttpClient client, @NotNull final PredictionPerformance[] performances) throws IOException {
+    private CSICovarianceConfidenceScorer<?> makeConfidenceScorer(@NotNull final WebAPI.Clients api, @NotNull OkHttpClient client, @NotNull final PredictionPerformance[] performances) throws IOException {
         try {
             final Map<String, TrainedSVM> confidenceSVMs = api.fingerprintClient().getTrainedConfidence(predictorType, client);
             if (confidenceSVMs == null || confidenceSVMs.isEmpty())
