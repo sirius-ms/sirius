@@ -179,7 +179,7 @@ public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListen
 
             ApplicationCore.WEB_API.getAuthService().reconnectService(
                     AuthServices.createDefaultApi(host),
-                    ProxyManager.getSirirusHttpAsyncClient()); //load new proxy data from service.
+                    ProxyManager.createSirirusHttpClient()); //load new proxy data from service.
 
             ProxyManager.enforceGlobalProxySetting(); //update global proxy stuff for Webview.
 
@@ -198,23 +198,20 @@ public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListen
 
 
     public static void main(String[] args) {
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                } catch (ClassNotFoundException | InstantiationException | IllegalAccessException |
-                         UnsupportedLookAndFeelException ex) {
-                    ex.printStackTrace();
-                }
-
-                JFrame frame = new JFrame("Testing");
-                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                frame.add(new NetworkSettingsPanel(SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties()));
-                frame.pack();
-                frame.setLocationRelativeTo(null);
-                frame.setVisible(true);
+        EventQueue.invokeLater(() -> {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException |
+                     UnsupportedLookAndFeelException ex) {
+                ex.printStackTrace();
             }
+
+            JFrame frame = new JFrame("Testing");
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.add(new NetworkSettingsPanel(SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties()));
+            frame.pack();
+            frame.setLocationRelativeTo(null);
+            frame.setVisible(true);
         });
     }
 }

@@ -256,7 +256,7 @@ public abstract class ApplicationCore {
 
             TOKEN_FILE = WORKSPACE.resolve(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.tokenFile", null, ".rtoken"));
 
-            AuthService service = AuthServices.createDefault(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.audience"), TOKEN_FILE, ProxyManager.getSirirusHttpAsyncClient());
+            AuthService service = AuthServices.createDefault(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.audience"), TOKEN_FILE, ProxyManager.createSirirusHttpClient());
             Subscription sub = null; //web connection
             try {
                 sub = NetUtils.tryAndWait(() -> service.getToken().map(Tokens::getActiveSubscription).orElse(null),
