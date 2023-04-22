@@ -21,18 +21,17 @@
 package de.unijena.bioinf.auth;
 
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import org.apache.hc.core5.net.URIBuilder;
+import okhttp3.HttpUrl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 public class UserPortal {
-    public boolean isConfigured(){
+    public boolean isConfigured() {
         try {
             URI.create(PropertyManager.getProperty("de.unijena.bioinf.sirius.web.portal"));
             return true;
@@ -41,31 +40,20 @@ public class UserPortal {
             return false;
         }
     }
-    public static URIBuilder baseURLBuilder() {
-        try {
-            return new URIBuilder(PropertyManager.getProperty("de.unijena.bioinf.sirius.web.portal"));
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException(e);
-        }
+
+    public static HttpUrl.Builder baseURLBuilder() {
+        return new HttpUrl.Builder().host(PropertyManager.getProperty("de.unijena.bioinf.sirius.web.portal"));
     }
 
     public static URI baseURL() {
-        try {
-            return baseURLBuilder().build();
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException(e);
-        }
+        return baseURLBuilder().build().uri();
     }
 
 
     public static URI withPath(@Nullable final String path) {
         if (path == null || path.isBlank())
             return baseURL();
-        try {
-            return baseURLBuilder().setPath(path).build();
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException(e);
-        }
+        return baseURLBuilder().addPathSegments(path).build().uri();
     }
 
     public static URI signUpURL() {
@@ -75,15 +63,12 @@ public class UserPortal {
     public static URI signInURL() {
         return signInURL(null);
     }
+
     public static URI signInURL(@Nullable String username) {
-        try {
-            URIBuilder b = baseURLBuilder().setPath(signInPath());
-            if (username != null && !username.isBlank())
-                b.setParameter("username", username);
-            return b.build();
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException(e);
-        }
+        HttpUrl.Builder b = baseURLBuilder().addPathSegments(signInPath());
+        if (username != null && !username.isBlank())
+            b.addQueryParameter("username", username);
+        return b.build().uri();
     }
 
     public static URI openWithTokenURL(@NotNull String quickReuseToken) {

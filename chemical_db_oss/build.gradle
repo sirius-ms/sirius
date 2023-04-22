@@ -30,7 +30,7 @@ dependencies {
     compile project(':io')
 
     // REST
-    compile "org.apache.httpcomponents.client5:httpclient5:$httpclient_version"
+//    compile "org.apache.httpcomponents.client5:httpclient5:$httpclient_version"
 
     // external
 //	compile group: 'javax.json', name: 'javax.json-api', version:"$json_version"
