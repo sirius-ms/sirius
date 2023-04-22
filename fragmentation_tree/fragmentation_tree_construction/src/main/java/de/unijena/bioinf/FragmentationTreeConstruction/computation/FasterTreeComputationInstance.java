@@ -301,7 +301,11 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             submitSubJob(recalibrationJob);
             recalibrationJobs.add(recalibrationJob);
         }
-        final ExactResult[] recalibrated = extractTopResults(recalibrationJobs.stream().map(JJob::takeResult).sorted(Collections.reverseOrder()).collect(Collectors.toList()), numberOfResultsToKeep, numberOfResultsToKeepPerIonization).toArray(ExactResult[]::new);
+        final ExactResult[] recalibrated = extractTopResults(recalibrationJobs.stream()
+                .map(JJob::takeResult)
+                .sorted(Collections.reverseOrder())
+                .collect(Collectors.toList()), numberOfResultsToKeep, numberOfResultsToKeepPerIonization)
+                .toArray(ExactResult[]::new);
         final double[] originalScores = new double[recalibrated.length];
         for (int k = 0; k < recalibrated.length; ++k) originalScores[k] = recalibrated[k].score;
         final ExactJob[] beautify = new ExactJob[recalibrated.length];
@@ -566,15 +570,18 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         checkForInterruption();
         final TreeBuilder.Result recal = builder.computeTree().withTimeLimit(Math.min(restTimeSec(), secsPerTree)).solve(pin, graph);
         checkForInterruption();
-        final TreeBuilder.Result finalTree;
+        TreeBuilder.Result finalTree;
         if (recal.tree.getTreeWeight() >= tree.getTreeWeight()) {
             finalTree = builder == finalBuilder ? recal : finalBuilder.computeTree().withTimeLimit(Math.min(restTimeSec(), secsPerTree)).solve(pin, graph);
             checkForInterruption();
-            if (finalTree.tree == null) {
+            //todo this is a workaround to prevent null trees if ILP solver fails.
+            if (finalTree == null || finalTree.tree == null) {
                 // TODO: why is tree score != ILP score? Or is this an error in ILP?
                 // check that
                 TreeBuilder.Result solve = analyzer.getTreeBuilder().computeTree().withTimeLimit(Math.min(restTimeSec(), secsPerTree)).solve(pin, graph);
-                throw new RuntimeException("Recalibrated tree is null for " + input.getExperimentInformation().getName() + ". Error in ILP? Without score constraint the result is = optimal = " + solve.isOptimal + ", score = " + (solve.tree == null ? "NULL" : solve.tree.getTreeWeight()) + " with score of uncalibrated tree is " + recal.tree.getTreeWeight());
+                logWarn("Recalibrated tree is null for " + input.getExperimentInformation().getName() + ". Error in ILP? Without score constraint the result is = optimal = " + solve.isOptimal + ", score = " + (solve.tree == null ? "NULL" : solve.tree.getTreeWeight()) + " with score of uncalibrated tree is " + recal.tree.getTreeWeight()
+                        + ". Falling back to the heuristic tree. Please submit a bug report with the input data of this instance and this error message.");
+                finalTree = recal;
             }
             finalTree.tree.setAnnotation(SpectralRecalibration.class, rec);
             analyzer.makeTreeReleaseReady(pin, graph, finalTree.tree, finalTree.mapping);
@@ -585,6 +592,11 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             checkForInterruption();
             finalTree = finalBuilder.computeTree().withTimeLimit(Math.min(restTimeSec(), secsPerTree)).solve(pin, origGraph);
             checkForInterruption();
+            //todo this is a workaround to prevent null trees if ILP solver fails.
+            if (finalTree == null || finalTree.tree == null) {
+                logWarn("Recalibrated ILP tree is null for '" + input.getExperimentInformation().getName() + "'. Falling back to the heuristic tree. Please submit a bug report with the input data of this instance and this error message.");
+                finalTree = recal;
+            }
             finalTree.tree.setAnnotation(SpectralRecalibration.class, SpectralRecalibration.none());
             analyzer.makeTreeReleaseReady(pin, origGraph, finalTree.tree, finalTree.mapping);
         }
