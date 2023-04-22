@@ -22,8 +22,8 @@ package de.unijena.bioinf.ms.rest.client;
 
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
-import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
-import org.apache.hc.core5.net.URIBuilder;
+import okhttp3.HttpUrl;
+import okhttp3.Request;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,19 +34,21 @@ import java.util.function.Supplier;
 public abstract class AbstractCsiClient extends AbstractClient {
     protected static final String API_ROOT = "/api";
 
-    protected AbstractCsiClient(@Nullable URI serverUrl, IOFunctions.@NotNull IOConsumer<HttpUriRequest>... requestDecorators) {
+    @SafeVarargs
+    protected AbstractCsiClient(@Nullable URI serverUrl, IOFunctions.IOConsumer<Request.Builder>... requestDecorators) {
         super(serverUrl, requestDecorators);
     }
 
-    protected AbstractCsiClient(@NotNull Supplier<URI> serverUrl, IOFunctions.@NotNull IOConsumer<HttpUriRequest>... requestDecorators) {
+    @SafeVarargs
+    protected AbstractCsiClient(@NotNull Supplier<URI> serverUrl, IOFunctions.IOConsumer<Request.Builder>... requestDecorators) {
         super(serverUrl, requestDecorators);
     }
 
-    protected AbstractCsiClient(@Nullable URI serverUrl, @NotNull List<IOFunctions.IOConsumer<HttpUriRequest>> requestDecorators) {
+    protected AbstractCsiClient(@Nullable URI serverUrl, @NotNull List<IOFunctions.IOConsumer<Request.Builder>> requestDecorators) {
         super(serverUrl, requestDecorators);
     }
 
-    protected AbstractCsiClient(@NotNull Supplier<URI> serverUrl, @NotNull List<IOFunctions.IOConsumer<HttpUriRequest>> requestDecorators) {
+    protected AbstractCsiClient(@NotNull Supplier<URI> serverUrl, @NotNull List<IOFunctions.IOConsumer<Request.Builder>> requestDecorators) {
         super(serverUrl, requestDecorators);
     }
 
@@ -57,7 +59,7 @@ public abstract class AbstractCsiClient extends AbstractClient {
         return new StringBuilder(API_ROOT);
     }
 
-    protected URIBuilder buildWebapiURI(@Nullable final String path) {
+    protected HttpUrl.Builder buildWebapiURI(@Nullable final String path) {
         StringBuilder pathBuilder = getWebAPIBasePath();
 
         if (path != null && !path.isEmpty()) {
@@ -70,12 +72,12 @@ public abstract class AbstractCsiClient extends AbstractClient {
         return getBaseURI(pathBuilder.toString());
     }
 
-    protected URIBuilder buildVersionSpecificWebapiURI(@Nullable String path) {
+    protected HttpUrl.Builder buildVersionSpecificWebapiURI(@Nullable String path) {
         return buildWebapiURI(path);
     }
 
     @Override
-    public URIBuilder getBaseURI(@Nullable String path) {
+    public HttpUrl.Builder getBaseURI(@Nullable String path) {
 //        if (getServerUrl() == null)
 //            throw new NullPointerException("Service URL is null. This might be caused by a missing login.");
 

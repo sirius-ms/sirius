@@ -33,9 +33,8 @@ import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.FormulaCandidate;
 import de.unijena.bioinf.chemdb.JSONReader;
 import de.unijena.bioinf.ms.rest.client.AbstractCsiClient;
-import org.apache.hc.client5.http.classic.HttpClient;
-import org.apache.hc.client5.http.classic.methods.HttpGet;
-import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
@@ -61,12 +60,12 @@ public class StructureSearchClient extends AbstractCsiClient {
 
 
     @SafeVarargs
-    public StructureSearchClient(URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest>... requestDecorators) {
+    public StructureSearchClient(URI serverUrl, @NotNull IOFunctions.IOConsumer<Request.Builder>... requestDecorators) {
         this(serverUrl, true, requestDecorators);
     }
 
     @SafeVarargs
-    public StructureSearchClient(URI serverUrl, boolean cacheFpVersion, @NotNull IOFunctions.IOConsumer<HttpUriRequest>... requestDecorators) {
+    public StructureSearchClient(URI serverUrl, boolean cacheFpVersion, @NotNull IOFunctions.IOConsumer<Request.Builder>... requestDecorators) {
         super(serverUrl, requestDecorators);
         this.cacheFpVersion = cacheFpVersion;
     }
@@ -74,25 +73,27 @@ public class StructureSearchClient extends AbstractCsiClient {
     /**
      * gives you the Fingerprint version used by CSI:FingerID
      */
-    public CdkFingerprintVersion getCDKFingerprintVersion(HttpClient client) throws IOException {
+    public CdkFingerprintVersion getCDKFingerprintVersion(OkHttpClient client) throws IOException {
         if (!cacheFpVersion || fpVersion == null) {
             fpVersion = new CdkFingerprintVersion(
-                    executeFromJson(client, () -> new HttpGet(buildVersionSpecificWebapiURI("/usedfingerprints").build()), new TypeReference<>() {
+                    executeFromJson(client, () -> new Request.Builder()
+                            .url(buildVersionSpecificWebapiURI("/usedfingerprints").build())
+                            .get(), new TypeReference<>() {
                     })
             );
         }
         return fpVersion;
     }
 
-    public List<FormulaCandidate> getFormulas(double mass, Deviation deviation, PrecursorIonType ionType, long filter, HttpClient client) throws IOException {
+    public List<FormulaCandidate> getFormulas(double mass, Deviation deviation, PrecursorIonType ionType, long filter, OkHttpClient client) throws IOException {
         return execute(client,
-                () -> new HttpGet(buildVersionSpecificWebapiURI("/formulasdb")
-                        .setParameter("mass", String.valueOf(mass))
-                        .setParameter("ppm", String.valueOf(deviation.getPpm()))
-                        .setParameter("ion", ionType.toString())
-                        .setParameter("dbfilter", String.valueOf(filter))
-                        .setParameter("charge", Integer.toString(ionType.getCharge()))
-                        .build()),
+                () -> new Request.Builder().url(buildVersionSpecificWebapiURI("/formulasdb")
+                        .addQueryParameter("mass", String.valueOf(mass))
+                        .addQueryParameter("ppm", String.valueOf(deviation.getPpm()))
+                        .addQueryParameter("ion", ionType.toString())
+                        .addQueryParameter("dbfilter", String.valueOf(filter))
+                        .addQueryParameter("charge", Integer.toString(ionType.getCharge()))
+                        .build()).get(),
                 br -> {
                     final ArrayList<FormulaCandidate> candidates = new ArrayList<>();
                     //todo replace with jackson
@@ -106,23 +107,15 @@ public class StructureSearchClient extends AbstractCsiClient {
         );
     }
 
-    public List<FingerprintCandidate> getCompounds(@NotNull MolecularFormula formula, long filter, HttpClient client) throws IOException {
+    public List<FingerprintCandidate> getCompounds(@NotNull MolecularFormula formula, long filter, OkHttpClient client) throws IOException {
         return getCompounds(formula, filter, getCDKFingerprintVersion(client), client);
     }
 
-    public List<FingerprintCandidate> getCompounds(@NotNull MolecularFormula formula, long filter, @NotNull CdkFingerprintVersion fpVersion, HttpClient client) throws IOException {
+    public List<FingerprintCandidate> getCompounds(@NotNull MolecularFormula formula, long filter, @NotNull CdkFingerprintVersion fpVersion, OkHttpClient client) throws IOException {
         return execute(client,
-                () -> {
-                    final HttpGet get = new HttpGet(buildVersionSpecificWebapiURI("/compounds/" + formula.toString())
-                            .setParameter("dbfilter", String.valueOf(filter))
-                            .build());
-
-//                    get.setConfig(RequestConfig.custom()
-//                            .setConnectTimeout(PropertyManager.getInteger("de.unijena.bioinf.sirius.http.socketTimeout", 15000), TimeUnit.MILLISECONDS)
-//                            .setResponseTimeout(60, TimeUnit.SECONDS)
-//                            .setContentCompressionEnabled(true).build());
-                    return get;
-                },
+                () ->  new Request.Builder().url(buildVersionSpecificWebapiURI("/compounds/" + formula)
+                            .addQueryParameter("dbfilter", String.valueOf(filter))
+                            .build()).get(),
                 br -> {
                     try (CloseableIterator<FingerprintCandidate> fciter = new JSONReader().readFingerprints(fpVersion, br)) {
                         final ArrayList<FingerprintCandidate> compounds = new ArrayList<>(100);
@@ -140,9 +133,10 @@ public class StructureSearchClient extends AbstractCsiClient {
      * @return Date string
      * @throws IOException if http query or Json marshaling fails
      */
-    public String getChemDbDate(HttpClient client) throws IOException {
+    public String getChemDbDate(OkHttpClient client) throws IOException {
         if (chemDbDateCache == null) {
-            chemDbDateCache = executeFromStream(client, () -> new HttpGet(buildVersionSpecificWebapiURI("/structure-db-date").build()),
+            chemDbDateCache = executeFromStream(client,
+                    () -> new Request.Builder().url(buildVersionSpecificWebapiURI("/structure-db-date").build()).get(),
                     r -> new BufferedReader(new InputStreamReader(r, StandardCharsets.UTF_8)).lines().findFirst().orElse(null));
         }
         return chemDbDateCache;

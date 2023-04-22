@@ -23,20 +23,15 @@ package de.unijena.bioinf.ms.rest.client.account;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.ms.rest.client.AbstractClient;
-import org.apache.hc.client5.http.classic.HttpClient;
-import org.apache.hc.client5.http.classic.methods.HttpDelete;
-import org.apache.hc.client5.http.classic.methods.HttpPost;
-import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
-import org.apache.hc.client5.http.config.RequestConfig;
-import org.apache.hc.core5.http.io.entity.StringEntity;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 /**
@@ -49,64 +44,22 @@ public class AccountClient extends AbstractClient {
     private final String versionSuffix;
 
     @SafeVarargs
-    public AccountClient(@Nullable URI serverUrl, @Nullable String versionSuffix, @NotNull AuthService authService, IOFunctions.@NotNull IOConsumer<HttpUriRequest>... requestDecorators) {
+    public AccountClient(@Nullable URI serverUrl, @Nullable String versionSuffix, @NotNull AuthService authService, IOFunctions.@NotNull IOConsumer<Request.Builder>... requestDecorators) {
         this(() -> serverUrl, versionSuffix, authService, requestDecorators);
-
     }
 
     @SafeVarargs
-    public AccountClient(@NotNull Supplier<URI> serverUrl, @Nullable String versionSuffix, @NotNull AuthService authService, IOFunctions.@NotNull IOConsumer<HttpUriRequest>... requestDecorators) {
+    public AccountClient(@NotNull Supplier<URI> serverUrl, @Nullable String versionSuffix, @NotNull AuthService authService, IOFunctions.@NotNull IOConsumer<Request.Builder>... requestDecorators) {
         super(serverUrl, requestDecorators);
         this.authService = authService;
         this.versionSuffix = versionSuffix;
     }
 
-
-    /**
-     * Redirect URI for native Auth0 signup (no user portal involved)
-     * @return The redirect URI
-     */
-    public URI getSignUpRedirectURL() {
+    public boolean acceptTerms(@NotNull OkHttpClient client) {
         try {
-            return getBaseURI("/account/signUp").build();
-        } catch (URISyntaxException x) {
-            throw new IllegalArgumentException(x.getMessage(), x);
-        }
-    }
-
-    /**
-     * URI for Native Auth0 signup (no user portal involved)
-     * @return The signup URI with parameters
-     */
-    public URI getSignUpURL() {
-        return authService.signUpURL(getSignUpRedirectURL());
-    }
-
-    public boolean deleteAccount(@NotNull HttpClient client) {
-        try {
-            execute(client, () -> {
-                HttpDelete delete = new HttpDelete(getBaseURI("/account/delete").build());
-                final int timeoutInSeconds = 8000;
-                delete.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds, TimeUnit.SECONDS)/*.setSocketTimeout(timeoutInSeconds)*/.build());
-                return delete;
-            });
-            return true;
-        } catch (IOException e) {
-            LoggerFactory.getLogger(getClass()).warn("Error when deleting user account: " + e.getMessage());
-            return false;
-        }
-    }
-
-    public boolean acceptTerms(@NotNull HttpClient client) {
-        try {
-            execute(client, () -> {
-                HttpPost post = new HttpPost(getBaseURI("/account/accept-terms").build());
-                post.setEntity(new StringEntity(""));
-                final int timeoutInSeconds = 8000;
-                post.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds, TimeUnit.SECONDS)
-                        /*.setSocketTimeout(timeoutInSeconds)*/.build());
-                return post;
-            });
+            execute(client, () -> new Request.Builder()
+                    .url(getBaseURI("/account/accept-terms").build())
+                    .post(RequestBody.create(new byte[]{})));
             return true;
         } catch (IOException e) {
             LoggerFactory.getLogger(getClass()).warn("Error when accepting terms: " + e.getMessage());

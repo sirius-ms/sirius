@@ -39,37 +39,35 @@ import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobOutput;
 import de.unijena.bioinf.ms.rest.model.fingerid.TrainingData;
-import org.apache.hc.client5.http.classic.HttpClient;
-import org.apache.hc.client5.http.classic.methods.HttpGet;
-import org.apache.hc.client5.http.classic.methods.HttpPost;
-import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
-import org.apache.hc.core5.http.ContentType;
-import org.apache.hc.core5.http.io.entity.InputStreamEntity;
-import org.apache.hc.core5.net.URIBuilder;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
 
 public class FingerIdClient extends AbstractCsiClient {
     @SafeVarargs
-    public FingerIdClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest>... requestDecorators) {
+    public FingerIdClient(@Nullable URI serverUrl,
+                          @NotNull IOFunctions.IOConsumer<Request.Builder>... requestDecorators
+    ) {
         super(serverUrl, requestDecorators);
     }
 
-    public JobUpdate<FingerprintJobOutput> postJobs(final FingerprintJobInput input, HttpClient client) throws IOException {
+    public JobUpdate<FingerprintJobOutput> postJobs(@NotNull final FingerprintJobInput input,
+                                                    @NotNull OkHttpClient client
+    ) throws IOException {
         return executeFromJson(client,
-                () -> {
-                    final HttpPost post = new HttpPost(buildVersionSpecificWebapiURI("/fingerid/" + CID + "/fp-jobs").build());
-                    post.setEntity(new InputStreamEntity(new ByteArrayInputStream(
-                            new ObjectMapper().writeValueAsBytes(input)), ContentType.APPLICATION_JSON));
-                    post.addHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
-
-                    return post;
-                }, new TypeReference<>() {}
+                () -> new Request.Builder()
+                        .url(buildVersionSpecificWebapiURI("/fingerid/" + CID + "/fp-jobs").build())
+                        .post(RequestBody.create(
+                                new ObjectMapper().writeValueAsBytes(input), APPLICATION_JSON))
+                    , new TypeReference<>() {
+                }
         );
     }
 
@@ -80,54 +78,64 @@ public class FingerIdClient extends AbstractCsiClient {
      * @return prediction model
      * @throws IOException if http response parsing fails
      */
-    public FingerIdData getFingerIdData(PredictorType predictorType, HttpClient client) throws IOException {
+    public FingerIdData getFingerIdData(@NotNull PredictorType predictorType,
+                                        @NotNull OkHttpClient client
+    ) throws IOException {
         return execute(client,
-                () -> new HttpGet(buildVersionSpecificWebapiURI("/fingerid/data")
-                        .setParameter("predictor", predictorType.toBitsAsString())
+                () -> new Request.Builder().get().url(buildVersionSpecificWebapiURI("/fingerid/data")
+                        .addQueryParameter("predictor", predictorType.toBitsAsString())
                         .build()),
                 FingerIdData::read
         );
     }
 
 
-    public JobUpdate<CovtreeJobOutput> postCovtreeJobs(final CovtreeJobInput input, HttpClient client) throws IOException {
+    public JobUpdate<CovtreeJobOutput> postCovtreeJobs(@NotNull final CovtreeJobInput input,
+                                                       @NotNull OkHttpClient client
+    ) throws IOException {
         return executeFromJson(client,
-                () -> {
-                    final HttpPost post = new HttpPost(buildVersionSpecificWebapiURI("/fingerid/" + CID + "/covtree-jobs").build());
-                    post.setEntity(new InputStreamEntity(new ByteArrayInputStream(
-                            new ObjectMapper().writeValueAsBytes(input)), ContentType.APPLICATION_JSON));
-                    post.addHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
-                    return post;
-                }, new TypeReference<>() {}
+                () -> new Request.Builder()
+                        .url(buildVersionSpecificWebapiURI("/fingerid/" + CID + "/covtree-jobs").build())
+                        .post(RequestBody.create(new ObjectMapper().writeValueAsBytes(input), APPLICATION_JSON)),
+                new TypeReference<>() {
+                }
         );
     }
 
 
-    public BayesnetScoring getCovarianceScoring(@NotNull PredictorType predictorType, @NotNull FingerprintVersion fpVersion, @Nullable MolecularFormula formula, @NotNull PredictionPerformance[] performances, @NotNull HttpClient client) throws IOException {
+    public BayesnetScoring getCovarianceScoring(@NotNull PredictorType predictorType,
+                                                @NotNull FingerprintVersion fpVersion,
+                                                @Nullable MolecularFormula formula,
+                                                @NotNull PredictionPerformance[] performances,
+                                                @NotNull OkHttpClient client
+    ) throws IOException {
         return execute(client,
                 () -> {
-                    final URIBuilder u = buildVersionSpecificWebapiURI("/fingerid/covariancetree")
-                            .setParameter("predictor", predictorType.toBitsAsString());
+                    HttpUrl.Builder u = buildVersionSpecificWebapiURI("/fingerid/covariancetree")
+                            .addQueryParameter("predictor", predictorType.toBitsAsString());
                     if (formula != null)
-                        u.setParameter("formula", formula.toString());
-                    return new HttpGet(u.build());
+                        u.addQueryParameter("formula", formula.toString());
+                    return new Request.Builder().get().url(u.build());
                 }, br -> BayesnetScoringBuilder.readScoring(br, fpVersion, BayesianScoringUtils.calculatePseudoCount(performances), BayesianScoringUtils.allowOnlyNegativeScores)
         );
     }
 
 
-    public Map<String, TrainedSVM> getTrainedConfidence(@NotNull final PredictorType predictorType, HttpClient client) throws IOException {
+    public Map<String, TrainedSVM> getTrainedConfidence(@NotNull final PredictorType predictorType,
+                                                        @NotNull OkHttpClient client
+    ) throws IOException {
         return execute(client,
-                () -> new HttpGet(buildVersionSpecificWebapiURI("/fingerid/confidence")
-                        .setParameter("predictor", predictorType.toBitsAsString())
+                () -> new Request.Builder().get().url(buildVersionSpecificWebapiURI("/fingerid/confidence")
+                        .addQueryParameter("predictor", predictorType.toBitsAsString())
                         .build()),
                 TrainedSVM::readSVMs
         );
     }
 
-    public TrainingData getTrainingStructures(PredictorType predictorType, HttpClient client) throws IOException {
+    public TrainingData getTrainingStructures(@NotNull PredictorType predictorType, @NotNull OkHttpClient client) throws IOException {
         return execute(client,
-                () -> new HttpGet(buildVersionSpecificWebapiURI("/fingerid/trainingstructures").setParameter("predictor", predictorType.toBitsAsString()).build()),
+                () -> new Request.Builder().get().url(buildVersionSpecificWebapiURI("/fingerid/trainingstructures")
+                        .addQueryParameter("predictor", predictorType.toBitsAsString()).build()),
                 TrainingData::readTrainingData
         );
     }
