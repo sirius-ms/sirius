@@ -84,7 +84,7 @@ dependencies {
 //    implementation 'io.micrometer:micrometer-core'
 //    implementation 'io.micrometer:micrometer-registry-prometheus'
     //must match minio version
-    implementation 'com.squareup.okhttp3:okhttp:4.8.1'
+    implementation 'com.squareup.okhttp3:okhttp:4.10.0'
 
 
     testImplementation group: 'junit', name: 'junit', version: '4.12'
