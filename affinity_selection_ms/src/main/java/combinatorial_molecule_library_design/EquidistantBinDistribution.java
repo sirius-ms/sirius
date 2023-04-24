@@ -18,8 +18,8 @@ public class EquidistantBinDistribution extends CMLDistribution{
 
     private int[] computeBinEdges(){
         // Initialisation:
-        int minMoleculeMass = this.getMinMoleculeMass();
-        int maxMoleculeMass = this.getMaxMoleculeMass();
+        int minMoleculeMass = CMLUtils.getMinMoleculeMass(this.getBbMasses());
+        int maxMoleculeMass = CMLUtils.getMaxMoleculeMass(this.getBbMasses());
         int lengthOfInterval = maxMoleculeMass - minMoleculeMass + 1;
         int numBins = lengthOfInterval / this.binSize;
         int rest = lengthOfInterval - numBins * this.binSize;

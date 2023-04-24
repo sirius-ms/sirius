@@ -15,7 +15,7 @@ public abstract class CMLDistribution {
     protected int[] numMoleculesPerBin;
 
     public CMLDistribution(double[][] bbMasses, double blowupFactor){
-        this.bbMasses = MassDecomposer.convertBBMassesToInteger(bbMasses, blowupFactor);
+        this.bbMasses = CMLUtils.convertBBMassesToInteger(bbMasses, blowupFactor);
     }
 
     public CMLDistribution(int[][] bbMasses){
@@ -41,27 +41,9 @@ public abstract class CMLDistribution {
     }
 
     public int[] computeNumMoleculesPerBin(double[][] bbMasses, double blowupFactor){
-        return this.computeNumMoleculesPerBin(MassDecomposer.convertBBMassesToInteger(bbMasses, blowupFactor));
+        return this.computeNumMoleculesPerBin(CMLUtils.convertBBMassesToInteger(bbMasses, blowupFactor));
     }
 
-    public int getMinMoleculeMass(){
-        // It is assumed that the bbMasses are sorted in increasing order:
-        int minMass = 0;
-        for(int idx = 0; idx < this.bbMasses.length; idx++) {
-            minMass = minMass + this.bbMasses[idx][0];
-        }
-        return minMass;
-    }
-
-    public int getMaxMoleculeMass(){
-        // It is assumed that the bbMasses are sorted in increasing order:
-        int maxMass = 0;
-        for(int idx = 0; idx < this.bbMasses.length; idx++){
-            int maxBBMassIdx = this.bbMasses[idx].length - 1;
-            maxMass = maxMass + this.bbMasses[idx][maxBBMassIdx];
-        }
-        return maxMass;
-    }
 
     public int[][] getBbMasses(){
         return this.bbMasses;
