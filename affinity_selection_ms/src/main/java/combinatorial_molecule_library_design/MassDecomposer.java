@@ -7,7 +7,7 @@ public class MassDecomposer {
     private boolean isComputed;
 
     public MassDecomposer(double[][] bbMasses, double blowupFactor) {
-        this.bbMasses = convertBBMassesToInteger(bbMasses, blowupFactor);
+        this.bbMasses = CMLUtils.convertBBMassesToInteger(bbMasses, blowupFactor);
         this.isComputed = false;
     }
 
@@ -78,15 +78,4 @@ public class MassDecomposer {
         return this.numMols[this.bbMasses.length];
     }
 
-    public static int[][] convertBBMassesToInteger(double[][] bbMasses, double blowupFactor){
-        // Transform the masses of the building blocks into integer masses using the blowup factor:
-        int[][] intBBMasses = new int[bbMasses.length][];
-        for (int i = 0; i < bbMasses.length; i++) {
-            intBBMasses[i] = new int[bbMasses[i].length];
-            for (int j = 0; j < bbMasses[i].length; j++) {
-                intBBMasses[i][j] = (int) (blowupFactor * bbMasses[i][j]);
-            }
-        }
-        return intBBMasses;
-    }
 }
