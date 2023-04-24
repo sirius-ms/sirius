@@ -50,10 +50,6 @@ public class SettingsOptions implements StandaloneTool<SettingsOptions.SettingsW
         String value;
     }
 
-    enum ProxyScheme {http, https}
-
-    ;
-
     private static class ProxyProperties {
         @CommandLine.Option(names = "--proxy", required = true,
                 description = "Define proxy settings.",
@@ -67,10 +63,7 @@ public class SettingsOptions implements StandaloneTool<SettingsOptions.SettingsW
                 description = "Proxy port.",
                 order = 321)
         int port;
-        @CommandLine.Option(names = "--scheme", defaultValue = "http",
-                description = "Proxy scheme.",
-                order = 331)
-        ProxyScheme scheme;
+
         @CommandLine.ArgGroup(exclusive = false)
         Credentials credentials;
     }
@@ -112,7 +105,6 @@ public class SettingsOptions implements StandaloneTool<SettingsOptions.SettingsW
 
                 SiriusProperties.SIRIUS_PROPERTIES_FILE().setProperty("de.unijena.bioinf.sirius.proxy.hostname", proxyProperties.hostname);
                 SiriusProperties.SIRIUS_PROPERTIES_FILE().setProperty("de.unijena.bioinf.sirius.proxy.port", String.valueOf(proxyProperties.port));
-                SiriusProperties.SIRIUS_PROPERTIES_FILE().setProperty("de.unijena.bioinf.sirius.proxy.scheme", proxyProperties.scheme.name());
 
                 //credentials
                 if (proxyProperties.credentials != null) {

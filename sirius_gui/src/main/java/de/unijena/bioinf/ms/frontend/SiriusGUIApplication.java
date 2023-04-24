@@ -63,6 +63,18 @@ public class SiriusGUIApplication extends SiriusCLIApplication {
         if (Arrays.stream(args).noneMatch(it -> it.equalsIgnoreCase("gui")) ) {
             SiriusCLIApplication.runMain(args, List.of(new GuiAppOptions(null))); //inject for help message
         } else {
+            ApplicationCore.DEFAULT_LOGGER.info("Starting Application Core");
+            measureTime("Init Swing Job Manager");
+            // The spring app classloader seems not to be correctly inherited to sub thread
+            // So we need to ensure that the apache.configuration2 libs gets access otherwise.
+            final boolean springSupport = Boolean.parseBoolean(System.getProperty("de.unijena.bioinf.sirius.springSupport", "false"));
+            SiriusJobs.setJobManagerFactory((cpuThreads) -> new SwingJobManager(
+                    cpuThreads,
+                    Math.min(PropertyManager.getNumberOfThreads(), 4),
+                    springSupport ? Thread.currentThread().getContextClassLoader() : null
+            ));
+            ApplicationCore.DEFAULT_LOGGER.info("Swing Job MANAGER initialized! " + SiriusJobs.getGlobalJobManager().getCPUThreads() + " : " + SiriusJobs.getGlobalJobManager().getIOThreads());
+
             {
                 Path propsFile = Workspace.siriusPropsFile;
                 //override VM defaults from OS
@@ -99,18 +111,8 @@ public class SiriusGUIApplication extends SiriusCLIApplication {
                 TinyBackgroundJJob<Object> j = new TinyBackgroundJJob<>() {
                     @Override
                     protected Object compute() throws Exception {
-                        ApplicationCore.DEFAULT_LOGGER.info("Starting Application Core");
-                        updateProgress(0, 7, 1, "Starting Application Core...");
-                        measureTime("Init Swing Job Manager");
-                        // The spring app classloader seems not to be correctly inherited to sub thread
-                        // So we need to ensure that the apache.configuration2 libs gets access otherwise.
-                        final boolean springSupport = Boolean.parseBoolean(System.getProperty("de.unijena.bioinf.sirius.springSupport", "false"));
-                        SiriusJobs.setJobManagerFactory((cpuThreads) -> new SwingJobManager(
-                                cpuThreads,
-                                Math.min(PropertyManager.getNumberOfThreads(), 4),
-                                springSupport ? Thread.currentThread().getContextClassLoader() : null
-                        ));
-                        ApplicationCore.DEFAULT_LOGGER.info("Swing Job MANAGER initialized! " + SiriusJobs.getGlobalJobManager().getCPUThreads() + " : " + SiriusJobs.getGlobalJobManager().getIOThreads());
+//                        updateProgress(0, 7, 1, "Starting Application Core...");
+
                         updateProgress(0, 7, 2, "Configure shutdown hooks...");
 
                         measureTime("Setting GUI Instance Buffer factory");
