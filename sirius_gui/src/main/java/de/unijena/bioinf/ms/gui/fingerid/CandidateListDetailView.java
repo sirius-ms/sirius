@@ -401,15 +401,29 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
             final FingerprintCandidateBean candidate = getModel().getElementAt(index);
             final Rectangle relativeRect = getCellBounds(index, index);
 
+            //check location of substructure squares
             final FingerprintAgreement ag = candidate.substructures;
             if (ag != null) {
                 int[] rowcol = calculateAgreementIndex(ag, relativeRect, point);
                 if (rowcol != null) {
                     OptionalInt in = candidate.substructures.indexAt(rowcol[0], rowcol[1]);
-                    if (in.isPresent())
+                    if (in.isPresent()) {
+                        //todo separate detection of clickable components. This is too slow and hacky.
+                        setCursor(new Cursor(Cursor.HAND_CURSOR));
                         return candidate.candidate.getFingerprint().getFingerprintVersion().getMolecularProperty(in.getAsInt()).getDescription() + "  (" + prob.format(candidate.getPlatts().getProbability(in.getAsInt())) + " %)";
+                    }
+
                 }
             }
+            //check location of data sources
+             DatabaseLabel databaseLabel = Arrays.stream(candidate.labels).filter(dl -> dl.contains(point)).findFirst().orElse(null);
+            if (databaseLabel != null) {
+                if (databaseLabel.hasLinks()) setCursor(new Cursor(Cursor.HAND_CURSOR));
+                return databaseLabel.getToolTipOrNull();
+            }
+
+            //no tooltip or clickable component
+            setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
             return null;
         }
     }
