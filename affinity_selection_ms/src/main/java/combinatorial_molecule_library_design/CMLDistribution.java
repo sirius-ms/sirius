@@ -44,13 +44,16 @@ public abstract class CMLDistribution {
         return this.computeNumMoleculesPerBin(CMLUtils.convertBBMassesToInteger(bbMasses, blowupFactor));
     }
 
-
     public int[][] getBbMasses(){
         return this.bbMasses;
     }
 
     public int[] getNumMoleculesPerBin(){
         return this.numMoleculesPerBin;
+    }
+
+    public int[] getBinEdges(){
+        return this.binEdges;
     }
 
 }
