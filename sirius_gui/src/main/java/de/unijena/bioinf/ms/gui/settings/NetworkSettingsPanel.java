@@ -48,12 +48,11 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
  */
 public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListener, SettingsPanel {
     private Properties props;
-    private JCheckBox useCredentials, sslValidation, systemBrowser;
+    private JCheckBox useCredentials, sslValidation;
     private JComboBox<ProxyManager.ProxyStrategy> useProxy;
     private TwoColumnPanel cred;
     private JTextField proxyHost, proxyUser;
     private JSpinner proxyPort;
-    private JComboBox<String> proxyScheme;
     private JPasswordField pw;
 
     private JTextField webserverURL;
@@ -66,31 +65,21 @@ public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListen
     }
 
     private void buildPanel() {
-//        add(new JXTitledSeparator("Webservice"));
         webserverURL = new JTextField(Optional.ofNullable(ApplicationCore.WEB_API.getActiveSubscription()).map(Subscription::getServiceUrl).orElse("<No subscription active>"));
         addNamed("Web service URL", webserverURL);
         webserverURL.setEditable(false);
         webserverURL.setToolTipText(GuiUtils.formatToolTip("URL is provided via your active subscription and cannot be changed manually. You need to be logged in to see the URL."));
-
 
         sslValidation = new JCheckBox();
         sslValidation.setText("Enable SSL Validation:");
         sslValidation.setSelected(Boolean.parseBoolean(props.getProperty("de.unijena.bioinf.sirius.security.sslValidation", "true")));
         add(sslValidation);
 
-        systemBrowser = new JCheckBox();
-        systemBrowser.setText("Use System Browser for SignUp:");
-        systemBrowser.setSelected(Boolean.parseBoolean(props.getProperty("de.unijena.bioinf.sirius.ui.signUp.systemBrowser", "false")));
-        systemBrowser.setToolTipText(GuiUtils.formatToolTip("If selected, the system browser instead of SIRIUS' internal browser will be used for SignUp (account creation)."
-                + "If a proxy server is configured this selection will be ignored and the system browser will always be used."));
-        add(systemBrowser);
-
         add(new JXTitledSeparator("Proxy Configuration"));
         useProxy = new JComboBox<>(ProxyManager.ProxyStrategy.values());
         useProxy.setSelectedItem(ProxyManager.getStrategyByName(props.getProperty("de.unijena.bioinf.sirius.proxy")));
         useProxy.addActionListener(this);
         add(new JLabel("Use Proxy Server"), useProxy);
-
 
         proxyHost = new JTextField();
         proxyHost.setText(props.getProperty("de.unijena.bioinf.sirius.proxy.hostname"));
@@ -100,9 +89,6 @@ public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListen
         proxyPort.setEditor(new JSpinner.NumberEditor(proxyPort, "#"));
         proxyPort.setValue(Integer.valueOf(props.getProperty("de.unijena.bioinf.sirius.proxy.port")));
         add(new JLabel("Proxy Port:"), proxyPort);
-        proxyScheme = new JComboBox<>(new String[]{"http", "https"});
-        proxyScheme.setSelectedItem(props.getProperty("de.unijena.bioinf.sirius.proxy.scheme"));
-        add(new JLabel("Proxy Scheme:"), proxyScheme);
 
         //############# Credentials Stuff ########################
 
@@ -149,7 +135,6 @@ public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListen
         boolean local = useProxy.getSelectedItem().equals(ProxyManager.ProxyStrategy.SIRIUS);
         proxyHost.setEnabled(local);
         proxyPort.setEnabled(local);
-        proxyScheme.setEnabled(local);
 
         useCredentials.setEnabled(local);
         proxyUser.setEnabled(useCredentials.isSelected() && local);
@@ -159,12 +144,10 @@ public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListen
     @Override
     public void saveProperties() {
         props.setProperty("de.unijena.bioinf.sirius.security.sslValidation", String.valueOf(sslValidation.isSelected()));
-        props.setProperty("de.unijena.bioinf.sirius.ui.signUp.systemBrowser", String.valueOf(systemBrowser.isSelected()));
         props.setProperty("de.unijena.bioinf.sirius.proxy", String.valueOf(useProxy.getSelectedItem()));
         props.setProperty("de.unijena.bioinf.sirius.proxy.credentials", String.valueOf(useCredentials.isSelected()));
         props.setProperty("de.unijena.bioinf.sirius.proxy.hostname", String.valueOf(proxyHost.getText()).trim());
         props.setProperty("de.unijena.bioinf.sirius.proxy.port", String.valueOf(proxyPort.getValue()).trim());
-        props.setProperty("de.unijena.bioinf.sirius.proxy.scheme", (String) proxyScheme.getSelectedItem());
         props.setProperty("de.unijena.bioinf.sirius.proxy.user", proxyUser.getText());
         PasswordCrypter.setEncryptetProp("de.unijena.bioinf.sirius.proxy.pw", String.valueOf(pw.getPassword()), props);
     }
