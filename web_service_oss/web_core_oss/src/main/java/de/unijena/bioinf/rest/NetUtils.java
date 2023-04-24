@@ -102,10 +102,10 @@ public class NetUtils {
                 timeout -= waitTime;
 
                 if (DEBUG) {
-                    LOG.warn("Error when try to connect to Server. Try again in " + waitTime / 1000d + "s", retry);
+                    LOG.warn("Request to Server failed! Try again in " + waitTime / 1000d + "s", retry);
                 } else {
-                    LOG.warn("Error when try to connect to Server. Try again in " + waitTime / 1000d + "s \n Cause: " + retry.getMessage());
-                    LOG.debug("Error when try to connect to Server. Try again in " + waitTime / 1000d + "s", retry);
+                    LOG.warn("Request to Server failed! Try again in " + waitTime / 1000d + "s \n Exception: "+ retry.getClass().getSimpleName() + " | Cause: " + retry.getMessage());
+                    LOG.debug("Request to Server failed! Try again in " + waitTime / 1000d + "s", retry);
                 }
 
                 if (IS_WAITING.get()) {

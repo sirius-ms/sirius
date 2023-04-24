@@ -565,23 +565,20 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         analyzer.performDecomposition(pin);
         checkForInterruption();
         analyzer.performPeakScoring(pin);
-        final FGraph graph = analyzer.buildGraph(pin, decomp);
+        final FGraph graph = analyzer.buildGraph(pin, decomp); //todo should we not use ne decomposition from pin?
         graph.addAnnotation(SpectralRecalibration.class, rec);
         checkForInterruption();
         final TreeBuilder.Result recal = builder.computeTree().withTimeLimit(Math.min(restTimeSec(), secsPerTree)).solve(pin, graph);
         checkForInterruption();
-        TreeBuilder.Result finalTree;
+        final TreeBuilder.Result finalTree;
         if (recal.tree.getTreeWeight() >= tree.getTreeWeight()) {
             finalTree = builder == finalBuilder ? recal : finalBuilder.computeTree().withTimeLimit(Math.min(restTimeSec(), secsPerTree)).solve(pin, graph);
             checkForInterruption();
-            //this is to prevent null trees in case the ILP solver fails.
-            if (finalTree == null || finalTree.tree == null) {
+            if (finalTree.tree == null) {
                 // TODO: why is tree score != ILP score? Or is this an error in ILP?
                 // check that
                 TreeBuilder.Result solve = analyzer.getTreeBuilder().computeTree().withTimeLimit(Math.min(restTimeSec(), secsPerTree)).solve(pin, graph);
-                logWarn("Recalibrated tree is null for " + input.getExperimentInformation().getName() + ". Error in ILP? Without score constraint the result is = optimal = " + solve.isOptimal + ", score = " + (solve.tree == null ? "NULL" : solve.tree.getTreeWeight()) + " with score of uncalibrated tree is " + recal.tree.getTreeWeight()
-                        + ". Falling back to the heuristic tree. Please submit a bug report with the input data of this instance and this error message.");
-                finalTree = recal;
+                throw new RuntimeException("Recalibrated tree is null for " + input.getExperimentInformation().getName() + ". Error in ILP? Without score constraint the result is = optimal = " + solve.isOptimal + ", score = " + (solve.tree == null ? "NULL" : solve.tree.getTreeWeight()) + " with score of uncalibrated tree is " + recal.tree.getTreeWeight());
             }
             finalTree.tree.setAnnotation(SpectralRecalibration.class, rec);
             analyzer.makeTreeReleaseReady(pin, graph, finalTree.tree, finalTree.mapping);
@@ -592,11 +589,6 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             checkForInterruption();
             finalTree = finalBuilder.computeTree().withTimeLimit(Math.min(restTimeSec(), secsPerTree)).solve(pin, origGraph);
             checkForInterruption();
-            //this is to prevent null trees in case the ILP solver fails.
-            if (finalTree == null || finalTree.tree == null) {
-                logWarn("Recalibrated ILP tree is null for '" + input.getExperimentInformation().getName() + "'. Falling back to the heuristic tree. Please submit a bug report with the input data of this instance and this error message.");
-                finalTree = recal;
-            }
             finalTree.tree.setAnnotation(SpectralRecalibration.class, SpectralRecalibration.none());
             analyzer.makeTreeReleaseReady(pin, origGraph, finalTree.tree, finalTree.mapping);
         }
