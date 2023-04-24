@@ -55,17 +55,17 @@ public enum DataSource {
     SUPERNATURAL("SuperNatural", 1048576,  "id", "supernatural", "http://bioinf-applied.charite.de/supernatural_new/index.php?site=compound_search&start=0&supplier=all&tox=any&classification=all&compound_input=true&sn_id=%s", new Publication("Gallo K et al., SuperNatural 3.0-a database of natural products and natural product-based derivatives. Nucleic Acids Res. 2022.", "10.1093/nar/gkac1008")), //todo this is the new Publication. But dataase version is still SUpernatural II. the link also changed for the new version.
     COCONUT("COCONUT", 2097152,  "id", "coconut", "https://coconut.naturalproducts.net/compound/coconut_id/%s", new Publication("Sorokina M et al., COCONUT online: Collection of Open Natural Products database. J Cheminf. 2021", "10.1186/s13321-020-00478-9")),
 
-    BloodExposome("Blood Exposome", 4194304,  "pubchem_cid", "coconut", "https://bloodexposome.org/#/description?qcid=%s",new Publication("Barupal DK and Fiehn O, Generating the Blood Exposome Database Using a Comprehensive Text Mining and Database Fusion Approach. Environ Health Perspect. 2019", "10.1289/EHP4713")), //todo correct uri? //todo cite ...new Publication("Barupal DK and Fiehn O, Generating the Blood Exposome Database Using a Comprehensive Text Mining and Database Fusion Approach. Environ Health Perspect. 2019", "10.1289/EHP4713"))
-    TeroMol("TeroMOL", 8388608,  "pubchem_cid", "teromol", "http://terokit.qmclab.com/molecule.html?MolId=%s", new Publication("Zeng T et al.,Chemotaxonomic Investigation of Plant Terpenoids with an Established Database (TeroMOL). New Phytol. 2022", "10.1111/nph.18133")), //todo correct uri? //todo cite new Publication("Zeng T et al.,Chemotaxonomic Investigation of Plant Terpenoids with an Established Database (TeroMOL). New Phytol. 2022", "10.1111/nph.18133"))
+    BloodExposome("Blood Exposome", 4194304,  "pubchem_cid", "bloodexposome", "https://bloodexposome.org/#/description?qcid=%s", new Publication("Barupal DK and Fiehn O, Generating the Blood Exposome Database Using a Comprehensive Text Mining and Database Fusion Approach. Environ Health Perspect. 2019", "10.1289/EHP4713")),
+    TeroMol("TeroMOL", 8388608,  "pubchem_cid", "teromol", "http://terokit.qmclab.com/molecule.html?MolId=%s", new Publication("Zeng T et al.,Chemotaxonomic Investigation of Plant Terpenoids with an Established Database (TeroMOL). New Phytol. 2022", "10.1111/nph.18133")),
 
     PUBCHEMANNOTATIONBIO("PubChem class - bio and metabolites", 16777216,  null,null,null, 0, false, new Publication("Kim S et al., PubChem in 2021: new data content and improved web interfaces. Nucleic Acids Res. 2021", "10.1093/nar/gkaa971")), //2**24; Pubchem Annotations now have a separate flag
     PUBCHEMANNOTATIONDRUG("PubChem class - drug", 33554432,  null,null,null, 0, false, new Publication("Kim S et al., PubChem in 2021: new data content and improved web interfaces. Nucleic Acids Res. 2021", "10.1093/nar/gkaa971")),
     PUBCHEMANNOTATIONSAFETYANDTOXIC("PubChem class - safety and toxic", 67108864,  null,null,null, 0, false, new Publication("Kim S et al., PubChem in 2021: new data content and improved web interfaces. Nucleic Acids Res. 2021", "10.1093/nar/gkaa971")),
     PUBCHEMANNOTATIONFOOD("PubChem class - food", 134217728,  null,null,null, 0, false, new Publication("Kim S et al., PubChem in 2021: new data content and improved web interfaces. Nucleic Acids Res. 2021", "10.1093/nar/gkaa971")),
 
-    LOTUS("LOTUS", 268435456,  "id", "lotus", "https://lotus.naturalproducts.net/search/simple/%s", null), //TODO Publication!! //links to search using wikidata id. LOTUS id seems to be temporary!
-    FoodDB("FoodDB", 536870912, "foodDB_id", "foodDB", null, null),//todo
-    MiMeDB("MiMeDB", 1073741824, "mimeDB_id", "mimeDB", null, null),//todo
+    LOTUS("LOTUS", 268435456,  "id", "lotus", "https://lotus.naturalproducts.net/search/simple/%s", new Publication("Rutz A et al., The LOTUS initiative for open knowledge management in natural products research. eLife. 2022", "10.7554/eLife.70780")),
+    FoodDB("FooDB", 536870912, "fooddb_id", "foodDB", "https://foodb.ca/compounds/%s", new Publication("www.foodb.ca", null)),//todo not published yet?
+    MiMeDB("MiMeDB", 1073741824, "mimeDB_id", "mimeDB", "https://mimedb.org/metabolites/%s", new Publication("Wishart DS et al., MiMeDB: the Human Microbial Metabolome Database. Nucleic Acids Res. 2023", "10.1093/nar/gkac868")),//todo
 
 
 
