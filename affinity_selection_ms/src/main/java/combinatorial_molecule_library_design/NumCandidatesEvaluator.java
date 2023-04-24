@@ -16,7 +16,7 @@ public class NumCandidatesEvaluator implements CMLEvaluator{
 
     @Override
     public double evaluate(int[][] bbMasses) {
-        double averageNumCandidatesPerMass = CMLUtils.getAverageNumCandidatesPerMass(bbMasses);
+        double averageNumCandidatesPerMass = CMLUtils.getAverageNumCandidatesPerMass(bbMasses, this.relDev);
         int totalNumMolecules = CMLUtils.getTotalNumberOfMolecules(bbMasses);
         return totalNumMolecules - numCandidatesNormalization.normalize(averageNumCandidatesPerMass);
     }
