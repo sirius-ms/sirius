@@ -166,5 +166,13 @@ public enum DataSource {
             this.citationText = citationText;
             this.doi = doi;
         }
+
+        public String getCitationText() {
+            return citationText;
+        }
+
+        public String getDoi() {
+            return doi;
+        }
     }
 }
