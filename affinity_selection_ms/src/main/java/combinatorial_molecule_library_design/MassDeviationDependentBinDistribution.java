@@ -22,15 +22,15 @@ public class MassDeviationDependentBinDistribution extends CMLDistribution{
         // Initialisation:
         int minMoleculeMass = CMLUtils.getMinMoleculeMass(this.getBbMasses());
         int maxMoleculeMass = CMLUtils.getMaxMoleculeMass(this.getBbMasses());
-        if(minMoleculeMass == maxMoleculeMass) return new int[]{minMoleculeMass, maxMoleculeMass};
 
         // Compute the bin edges in the integer range [minMoleculeMass, maxMoleculeMass]:
-        ArrayList<Integer> binEdges = new ArrayList<>();
-        binEdges.add(minMoleculeMass);
-
         double nextBinFactor = this.relDev < 1 ? (1 + this.relDev) / (1 - this.relDev) : (1 + 2 * this.relDev); // stability
         int previousBinEdge = minMoleculeMass;
         int nextBinEdge = (int) (previousBinEdge * nextBinFactor);
+        if(maxMoleculeMass < nextBinEdge) return new int[]{minMoleculeMass, maxMoleculeMass};
+
+        ArrayList<Integer> binEdges = new ArrayList<>();
+        binEdges.add(minMoleculeMass);
         while(nextBinEdge <= maxMoleculeMass) {
             binEdges.add(nextBinEdge);
             previousBinEdge = nextBinEdge;
