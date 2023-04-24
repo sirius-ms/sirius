@@ -58,7 +58,7 @@ public class AccountClient extends AbstractClient {
     public boolean acceptTerms(@NotNull OkHttpClient client) {
         try {
             execute(client, () -> new Request.Builder()
-                    .url(getBaseURI("/account/accept-terms").build())
+                    .url(getBaseURI("account/accept-terms").build())
                     .post(RequestBody.create(new byte[]{})));
             return true;
         } catch (IOException e) {
@@ -71,6 +71,6 @@ public class AccountClient extends AbstractClient {
     protected String makeVersionContext() {
         if (versionSuffix == null || versionSuffix.isBlank())
             return "";
-        return "/" + versionSuffix;
+        return versionSuffix;
     }
 }

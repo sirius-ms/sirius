@@ -42,7 +42,12 @@ public class UserPortal {
     }
 
     public static HttpUrl.Builder baseURLBuilder() {
-        return new HttpUrl.Builder().host(PropertyManager.getProperty("de.unijena.bioinf.sirius.web.portal"));
+        try {
+            return HttpUrl.parse(PropertyManager.getProperty("de.unijena.bioinf.sirius.web.portal"))
+                    .newBuilder();
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Could not part User portal URL: " + PropertyManager.getProperty("de.unijena.bioinf.sirius.web.portal"));
+        }
     }
 
     public static URI baseURL() {
