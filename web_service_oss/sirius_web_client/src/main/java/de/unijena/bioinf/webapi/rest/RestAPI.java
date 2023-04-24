@@ -83,7 +83,6 @@ import javax.annotation.concurrent.ThreadSafe;
 import java.io.IOException;
 import java.net.URI;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 /**
@@ -137,20 +136,6 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
 
         if (activeSubscription != null)
             changeActiveSubscription(activeSubscription);
-    }
-
-
-    public static void initConnectionPools() {
-        try {
-            ProxyManager.consumeClient(c -> {
-            });
-            ProxyManager.consumeClient(c -> {
-            }, WebJobWatcher.JOB_SUBMITTER_CLIENT_ID);
-            ProxyManager.consumeClient(c -> {
-            }, WebJobWatcher.JOB_WATCHER_CLIENT_ID);
-        } catch (IOException e) {
-            LOG.error("Error when pre initializing connection managers. Try to ignore!", e);
-        }
     }
 
     public RestAPI(@NotNull AuthService authService, @NotNull AuthService.Token token) {

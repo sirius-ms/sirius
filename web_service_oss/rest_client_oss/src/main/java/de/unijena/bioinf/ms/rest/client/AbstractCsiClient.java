@@ -78,14 +78,14 @@ public abstract class AbstractCsiClient extends AbstractClient {
 
     @Override
     public HttpUrl.Builder getBaseURI(@Nullable String path) {
-//        if (getServerUrl() == null)
-//            throw new NullPointerException("Service URL is null. This might be caused by a missing login.");
+        if (getServerUrl() == null)
+            throw new NullPointerException("Service URL is null. This might be caused by a missing login.");
 
         return super.getBaseURI(path);
     }
 
     protected String makeVersionContext() {
-        return "/v" + FingerIDProperties.fingeridMinorVersion();
+        return "v" + FingerIDProperties.fingeridMinorVersion();
     }
     //endregion
 

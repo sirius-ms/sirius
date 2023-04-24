@@ -146,10 +146,10 @@ public class ProxyManager {
 //        System.out.println("Starting http Client with MaxPerRout=" + maxPerRoute + " / maxTotal=" + maxTotal + "(Threads=" + SiriusJobs.getCPUThreads() + ").");
         LoggerFactory.getLogger(ProxyManager.class).info("Starting http Client with MaxPerRout=" + maxPerRoute + " / maxTotal=" + maxTotal + "(Threads=" + SiriusJobs.getCPUThreads() + ").");
         ConnectionPool pool = new ConnectionPool(
-                PropertyManager.getInteger("de.unijena.bioinf.sirius.http.maxIdle", 5),
+                PropertyManager.getInteger("de.unijena.bioinf.sirius.http.maxIdle", 3),
                 PropertyManager.getInteger("de.unijena.bioinf.sirius.http.keepAlive", 180000), TimeUnit.MILLISECONDS);
 
-        Dispatcher dispatcher = new Dispatcher(/*SiriusJobs.getGlobalJobManager().getDefaultCacheThreadPool()*/); //todo use sirius executor service
+        Dispatcher dispatcher = new Dispatcher(SiriusJobs.getGlobalJobManager().getDefaultCacheThreadPool());
         dispatcher.setMaxRequests(maxTotal);
         dispatcher.setMaxRequestsPerHost(maxPerRoute);
 
@@ -159,17 +159,10 @@ public class ProxyManager {
     private static OkHttpClient.Builder decorateWithDefaultSettings(OkHttpClient.Builder builder) {
         //todo check timeouts
         return builder.connectTimeout(PropertyManager.getInteger("de.unijena.bioinf.sirius.http.connectTimeout", 15000), TimeUnit.MILLISECONDS)
-//                .callTimeout()
-//                .readTimeout()
+                .readTimeout(PropertyManager.getInteger("de.unijena.bioinf.sirius.http.readTimeout", 15000), TimeUnit.MILLISECONDS)
+                .writeTimeout(PropertyManager.getInteger("de.unijena.bioinf.sirius.http.writeTimeout", 15000), TimeUnit.MILLISECONDS)
+                .callTimeout(PropertyManager.getInteger("de.unijena.bioinf.sirius.http.callTimeout", 0), TimeUnit.MILLISECONDS)
                 .cookieJar(CookieJar.NO_COOKIES);
-
-//        return RequestConfig.custom()
-//                //socket timeout is set on connection level
-//                .setConnectTimeout(Timeout.of()
-//                .setResponseTimeout(Timeout.of(PropertyManager.getInteger("de.unijena.bioinf.sirius.http.responseTimeout", 15000), TimeUnit.MILLISECONDS))
-//                .setConnectionRequestTimeout(Timeout.of(PropertyManager.getInteger("de.unijena.bioinf.sirius.http.connectRequestTimeout", 15000), TimeUnit.MILLISECONDS))
-//                .setDefaultKeepAlive(PropertyManager.getInteger("de.unijena.bioinf.sirius.http.keepAlive", 180000), TimeUnit.MILLISECONDS)
-//                .setCookieSpec(StandardCookieSpec.IGNORE);
     }
 
     @NotNull
@@ -208,9 +201,6 @@ public class ProxyManager {
     private static OkHttpClient.Builder decorateWithProxySettings(final OkHttpClient.Builder builder) {
         final String hostName = PropertyManager.getProperty("de.unijena.bioinf.sirius.proxy.hostname");
         final int port = Integer.parseInt(PropertyManager.getProperty("de.unijena.bioinf.sirius.proxy.port"));
-        final String scheme = PropertyManager.getProperty("de.unijena.bioinf.sirius.proxy.scheme");
-        //todo handle scheme
-
 
         if (Boolean.getBoolean(PropertyManager.getProperty("de.unijena.bioinf.sirius.proxy.credentials"))) {
             return decorateWithProxySettings(builder,
@@ -235,7 +225,7 @@ public class ProxyManager {
                     .header("Proxy-Authorization", credential)
                     .build();
         };
-
+        //todo allow socks proxy?
         Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(hostname, port));
 
         builder.proxy(proxy);
@@ -317,7 +307,6 @@ public class ProxyManager {
             LoggerFactory.getLogger(ProxyManager.class).debug("Response Code: " + code);
 
             LoggerFactory.getLogger(ProxyManager.class).debug("Response Message: " + response.message());
-//            LoggerFactory.getLogger(ProxyManager.class).debug("Protocol Version: " + response.getProtocolVersion());
             if (code != HttpURLConnection.HTTP_OK) {
                 LoggerFactory.getLogger(ProxyManager.class).warn("Error Response code: " + response.message() + " " + code);
                 return Optional.of(new ConnectionError(103,
@@ -439,6 +428,8 @@ public class ProxyManager {
         reconnectLock.readLock().lock();
         try {
             doWithClient.accept(client(clientID));
+        } catch (IOException e){
+            throw new SiriusHttpException(clientID, e);
         } finally {
             reconnectLock.readLock().unlock();
         }
@@ -465,6 +456,8 @@ public class ProxyManager {
         reconnectLock.readLock().lock();
         try {
             return doWithClient.apply(ProxyManager.client(clientID));
+        } catch (IOException e){
+            throw new SiriusHttpException(clientID, e);
         } finally {
             reconnectLock.readLock().unlock();
         }

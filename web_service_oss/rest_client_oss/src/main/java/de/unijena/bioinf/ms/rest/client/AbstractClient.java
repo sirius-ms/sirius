@@ -30,6 +30,7 @@ import de.unijena.bioinf.rest.HttpErrorResponseException;
 import de.unijena.bioinf.rest.NetUtils;
 import okhttp3.*;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -46,7 +47,7 @@ public abstract class AbstractClient {
     public static final boolean DEBUG_CONNECTION = PropertyManager.getBoolean("de.unijena.bioinf.webapi.DEBUG_CONNECTION", false);
     protected static final String CID = SecurityService.generateSecurityToken();
 
-    public static final MediaType APPLICATION_JSON =  MediaType.parse(com.google.common.net.MediaType.JSON_UTF_8.type());
+    public static final MediaType APPLICATION_JSON =  MediaType.parse("application/json;charset=UTF-8");
 
     static {
         if (NetUtils.DEBUG)
@@ -238,26 +239,23 @@ public abstract class AbstractClient {
     //region PathBuilderMethods
     public HttpUrl.Builder getBaseURI(@Nullable String path) {
 
-        if (path == null)
-            path = "";
-
         HttpUrl.Builder b;
         if (NetUtils.DEBUG) {
             b = new HttpUrl.Builder().scheme("http").host("localhost").port(8080);
         } else {
-            URI serverUrl = getServerUrl();
+            HttpUrl serverUrl = HttpUrl.get(getServerUrl());
             if (serverUrl == null)
                 throw new NullPointerException("Server URL is null!");
-            b = new HttpUrl.Builder()
-                    .scheme(serverUrl.getScheme())
-                    .host(serverUrl.getHost())
-                    .port(serverUrl.getPort())
-                    .addEncodedPathSegment(serverUrl.getRawPath());
-            path = makeVersionContext() + path;
+
+            b = serverUrl.newBuilder();
+
+            String v = makeVersionContext();
+            if (v != null && !v.isBlank())
+                b.addPathSegments(StringUtils.strip(v, "/"));
         }
 
-        if (!path.isEmpty())
-            b = b.addPathSegments(path);
+        if (path != null && !path.isBlank())
+            b.addPathSegments(StringUtils.strip(path, "/"));
 
         return b;
     }
