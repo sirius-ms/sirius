@@ -19,6 +19,8 @@
 
 package de.unijena.bioinf.ms.gui.fingerid;
 
+import de.unijena.bioinf.chemdb.DataSources;
+
 import java.awt.*;
 
 public class DatabaseLabel implements Comparable<DatabaseLabel> {
@@ -48,5 +50,24 @@ public class DatabaseLabel implements Comparable<DatabaseLabel> {
     @Override
     public int compareTo(DatabaseLabel o) {
         return sourceName.compareTo(o.sourceName);
+    }
+
+    public boolean contains(Point point) {
+        return rect.contains(point);
+    }
+
+    public String getToolTipOrNull() {
+        return DataSources.getSourceFromName(name()).map(ds -> ds.publication).map(pub -> {
+            String citation = pub.getCitationText();
+            String doi = pub.getDoi();
+            if (citation == null) return null;
+            if (doi == null) return citation;
+            return citation+"\ndoi: "+doi;
+        }).orElse(null);
+    }
+
+    public boolean hasLinks() {
+        return DataSources.getSourceFromName(name()).map(s ->
+            !(values == null || values.length == 0 || s.URI == null)).orElse(false);
     }
 }
