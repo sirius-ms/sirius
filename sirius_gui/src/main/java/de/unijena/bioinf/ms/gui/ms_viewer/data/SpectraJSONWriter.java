@@ -20,10 +20,12 @@
 
 package de.unijena.bioinf.ms.gui.ms_viewer.data;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
@@ -45,199 +47,267 @@ public class SpectraJSONWriter{
 		// Peak matches *between* two spectra
 
 		int index1, index2;
-		JsonObject matchMetadata;
+		ObjectNode matchMetadata;
 
-		public PeakMatch(int index1, int index2, JsonObject matchMetadata){
+		public PeakMatch(int index1, int index2, ObjectNode matchMetadata){
 			this.index1 = index1;
 			this.index2 = index2;
 			this.matchMetadata = matchMetadata;
 		}
 
 		public PeakMatch(int index1, int index2){
-			this(index1, index2, new JsonObject());
+			this(index1, index2, JsonNodeFactory.instance.objectNode());
 		}
 	}
 
 	// DEBUG: for testing, MSViewerDataModel class should probably be removed
 	@Deprecated
 	public String spectrumJSONString(MSViewerDataModel dmodel){
-		JsonObject spectrum = spectrum2json(dmodel);
-		final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-		return gson.toJson(spectrum);
+		ObjectNode spectrum = spectrum2json(dmodel);
+		final ObjectMapper objectMapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
+		try {
+			return objectMapper.writeValueAsString(spectrum);
+		} catch (JsonProcessingException e) {
+			throw new RuntimeException("Error generating JSON", e);
+		}
 	}
 
 	// MS1 vs. simulated MS1 isotope pattern (mirror)
 	public String ms1MirrorJSON(@NotNull SiriusIsotopePattern siriusIsotopePattern, Deviation ms1MassDiffDev) {
 		SimpleSpectrum spectrum = new SimpleSpectrum(siriusIsotopePattern.spectrum);
-		JsonObject spectra = ms1MirrorIsotope(spectrum, siriusIsotopePattern.simulatedPattern);
-		annotatePeakMatches(spectra.get("spectra").getAsJsonArray(), matchPeaks(siriusIsotopePattern.simulatedPattern, spectrum, ms1MassDiffDev));
-		final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-		return gson.toJson(spectra);
+		ObjectNode spectra = ms1MirrorIsotope(spectrum, siriusIsotopePattern.simulatedPattern);
+		annotatePeakMatches(spectra.withArray("spectra"), matchPeaks(siriusIsotopePattern.simulatedPattern, spectrum, ms1MassDiffDev));
+		final ObjectMapper objectMapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
+		try {
+			return objectMapper.writeValueAsString(spectra);
+		} catch (JsonProcessingException e) {
+			throw new RuntimeException("Error generating JSON", e);
+		}
 	}
 
 	// MS1 spectrum (single)
 	public String ms1JSON(@NotNull SimpleSpectrum spectrum, @Nullable SimpleSpectrum extractedIsotopePattern, Deviation ms1MassDiffDev){
-        JsonObject spectra;
-        if (extractedIsotopePattern != null && !extractedIsotopePattern.isEmpty()){
-            spectra = ms1MirrorIsotope(spectrum, extractedIsotopePattern);
-            annotatePeakMatches(spectra.get("spectra").getAsJsonArray(), matchPeaks(extractedIsotopePattern, spectrum, ms1MassDiffDev));
-            spectra.get("spectra").getAsJsonArray().remove(1); // remove Isotope spectrum, peak matches are left
-        } else
-            spectra = jsonSpectraMs1(spectrum, "MS1");
-		final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-		return gson.toJson(spectra);
+		ObjectNode spectra;
+		if (extractedIsotopePattern != null && !extractedIsotopePattern.isEmpty()){
+			spectra = ms1MirrorIsotope(spectrum, extractedIsotopePattern);
+			annotatePeakMatches(spectra.withArray("spectra"), matchPeaks(extractedIsotopePattern, spectrum, ms1MassDiffDev));
+			spectra.withArray("spectra").remove(1); // remove Isotope spectrum, peak matches are left
+		} else
+			spectra = jsonSpectraMs1(spectrum, "MS1");
+		final ObjectMapper objectMapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
+		try {
+			return objectMapper.writeValueAsString(spectra);
+		} catch (JsonProcessingException e) {
+			throw new RuntimeException("Error generating JSON", e);
+		}
 	}
 
 	// MS2 spectrum w/o FragmentationTree
 	public String ms2JSON(Ms2Experiment experiment, MutableMs2Spectrum spectrum) {
-		JsonObject spectra = jsonSpectraMs2(experiment, spectrum, "MS2");
-		final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-		return gson.toJson(spectra);
+		ObjectNode spectra = jsonSpectraMs2(experiment, spectrum, "MS2");
+		final ObjectMapper objectMapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
+		try {
+			return objectMapper.writeValueAsString(spectra);
+		} catch (JsonProcessingException e) {
+			throw new RuntimeException("Error generating JSON", e);
+		}
 	}
 
 	// MS2 Spectrum with FragmentationTree (single)
 	public String ms2JSON(Ms2Experiment experiment, MutableMs2Spectrum spectrum, FTree tree) {
 		Fragment[] fragments = annotate(spectrum, tree);
-		JsonObject jSpectrum = ms2Annotated(experiment, spectrum, fragments);
+		ObjectNode jSpectrum = ms2Annotated(experiment, spectrum, fragments);
 		annotatePeakPairs(jSpectrum, tree, fragments);
-		final JsonObject j = new JsonObject();
-		JsonArray spectra = new JsonArray();
+		final ObjectNode j = JsonNodeFactory.instance.objectNode();
+		ArrayNode spectra = JsonNodeFactory.instance.arrayNode();
 		spectra.add(jSpectrum);
-		j.add("spectra", spectra);
-		final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-		return gson.toJson(j);
+		j.set("spectra", spectra);
+		final ObjectMapper objectMapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
+		try {
+			return objectMapper.writeValueAsString(j);
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 	// MS2 Spectrum with FragmentationTree (single) MERGED
 	public String ms2JSON(Ms2Experiment experiment, FTree tree) {
-		final JsonArray jPeaks = ms2JsonPeaks(experiment, tree);
-		final JsonObject jSpectrum = new JsonObject();
-		jSpectrum.addProperty("name", "MS2 merged");
-		jSpectrum.addProperty("parentmass", experiment.getIonMass());
-		final JsonObject spectrumMetadata = new JsonObject(); // TODO
-		jSpectrum.add("spectrumMetadata", spectrumMetadata);
-		final JsonObject j = new JsonObject();
-		jSpectrum.add("peaks", jPeaks);
-		JsonArray spectra = new JsonArray();
+		final ArrayNode jPeaks = ms2JsonPeaks(experiment, tree);
+		final ObjectNode jSpectrum = JsonNodeFactory.instance.objectNode();
+		jSpectrum.put("name", "MS2 merged");
+		jSpectrum.put("parentmass", experiment.getIonMass());
+		final ObjectNode spectrumMetadata = JsonNodeFactory.instance.objectNode(); // TODO
+		jSpectrum.set("spectrumMetadata", spectrumMetadata);
+		final ObjectNode j = JsonNodeFactory.instance.objectNode();
+		jSpectrum.set("peaks", jPeaks);
+		ArrayNode spectra = JsonNodeFactory.instance.arrayNode();
 		spectra.add(jSpectrum);
-		j.add("spectra", spectra);
-		final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-		return gson.toJson(j);
+		j.set("spectra", spectra);
+
+		final ObjectMapper objectMapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
+		try {
+			return objectMapper.writeValueAsString(j);
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
+
+		// Return null or a default value in case of an error
+		return null;
 	}
 
-	protected JsonObject ms1MirrorIsotope(SimpleSpectrum pattern1, SimpleSpectrum pattern2) {
-		final JsonObject j = new JsonObject();
-		JsonObject spectrum1 = spectrum2json(pattern1);
-		JsonObject spectrum2 = spectrum2json(pattern2);
-		spectrum1.addProperty("name", "MS1");
-		spectrum2.addProperty("name", "Sim. isotope pattern");
-		JsonArray spectra = new JsonArray();
+
+
+	protected ObjectNode ms1MirrorIsotope(SimpleSpectrum pattern1, SimpleSpectrum pattern2) {
+		final ObjectMapper objectMapper = new ObjectMapper();
+		final ObjectNode j = objectMapper.createObjectNode();
+
+		ObjectNode spectrum1 = spectrum2json(pattern1);
+		ObjectNode spectrum2 = spectrum2json(pattern2);
+		spectrum1.put("name", "MS1");
+		spectrum2.put("name", "Sim. isotope pattern");
+
+		ArrayNode spectra = objectMapper.createArrayNode();
 		spectra.add(spectrum1);
 		spectra.add(spectrum2);
-		j.add("spectra", spectra);
+
+		j.set("spectra", spectra);
+
 		return j;
 	}
 
-	protected JsonObject jsonSpectraMs1(Spectrum<? extends Peak> spectrum, String name){
-		final JsonObject j = new JsonObject();
-		JsonObject spectrum1 = spectrum2json(spectrum);
-		spectrum1.addProperty("name", name);
-		JsonArray spectra = new JsonArray();
+
+	protected ObjectNode jsonSpectraMs1(Spectrum<? extends Peak> spectrum, String name) {
+		final ObjectNode j = JsonNodeFactory.instance.objectNode();
+		ObjectNode spectrum1 = spectrum2json(spectrum);
+		spectrum1.put("name", name);
+		ArrayNode spectra = JsonNodeFactory.instance.arrayNode();
 		spectra.add(spectrum1);
-		j.add("spectra", spectra);
+		j.set("spectra", spectra);
 		return j;
 	}
 
-	protected JsonObject jsonSpectraMs2(Ms2Experiment experiment, Spectrum<? extends Peak> spectrum, String name){
-		final JsonObject j = new JsonObject();
-		JsonObject spectrum1 = spectrum2json(spectrum);
-		spectrum1.addProperty("name", name);
-		spectrum1.addProperty("parentmass", experiment.getIonMass());
-		JsonArray spectra = new JsonArray();
+	protected ObjectNode jsonSpectraMs2(Ms2Experiment experiment, Spectrum<? extends Peak> spectrum, String name){
+		final ObjectNode j = JsonNodeFactory.instance.objectNode();
+		ObjectNode spectrum1 = spectrum2json(spectrum);
+		spectrum1.put("name", name);
+		spectrum1.put("parentmass", experiment.getIonMass());
+		ArrayNode spectra = JsonNodeFactory.instance.arrayNode();
 		spectra.add(spectrum1);
-		j.add("spectra", spectra);
+		j.set("spectra", spectra);
 		return j;
 	}
 
-	protected JsonObject spectrum2json(Spectrum<? extends Peak> spectrum) {
-		final JsonObject jSpectrum = new JsonObject();
-		jSpectrum.addProperty("name", "");					  // TODO
-		final JsonObject spectrumMetadata = new JsonObject(); // TODO
-		jSpectrum.add("spectrumMetadata", spectrumMetadata);
-		double scale  = spectrum.getMaxIntensity();
-		final JsonArray peaks = new JsonArray();
-		for (int i = 0; i < spectrum.size(); i++){
-			JsonObject peak = new JsonObject();
-			peak.addProperty("mz", spectrum.getMzAt(i));
+	protected ObjectNode spectrum2json(Spectrum<? extends Peak> spectrum) {
+		final ObjectNode jSpectrum = JsonNodeFactory.instance.objectNode();
+
+		jSpectrum.put("name", "");
+
+		final ObjectNode spectrumMetadata = JsonNodeFactory.instance.objectNode();
+		jSpectrum.set("spectrumMetadata", spectrumMetadata);
+
+		double scale = spectrum.getMaxIntensity();
+		final ArrayNode peaks = JsonNodeFactory.instance.arrayNode();
+
+		for (int i = 0; i < spectrum.size(); i++) {
+			ObjectNode peak = JsonNodeFactory.instance.objectNode();
+			peak.put("mz", spectrum.getMzAt(i));
 			double intensity = spectrum.getIntensityAt(i);
-			peak.addProperty("intensity", intensity / scale);
-			JsonObject peakMetadata = new JsonObject(); // TODO
-			peakMetadata.addProperty("absoluteIntensity", intensity);
-			peak.add("peakMetadata", peakMetadata);
-			JsonArray peakPairs = new JsonArray(); // TODO
-			peak.add("peakPairs", peakPairs);
-			JsonObject peakMatches = new JsonObject();
-			peak.add("peakMatches", peakMatches);
+			peak.put("intensity", intensity / scale);
+
+			final ObjectNode peakMetadata = JsonNodeFactory.instance.objectNode();
+			peakMetadata.put("absoluteIntensity", intensity);
+			peak.set("peakMetadata", peakMetadata);
+
+			final ArrayNode peakPairs = JsonNodeFactory.instance.arrayNode();
+			peak.set("peakPairs", peakPairs);
+
+			final ObjectNode peakMatches = JsonNodeFactory.instance.objectNode();
+			peak.set("peakMatches", peakMatches);
+
 			peaks.add(peak);
 		}
-		jSpectrum.add("peaks", peaks);
+
+		jSpectrum.set("peaks", peaks);
+
 		return jSpectrum;
 	}
 
 	@Deprecated
-	protected JsonObject spectrum2json(MSViewerDataModel dmodel){
-		final JsonObject jSpectrum = new JsonObject();
-		jSpectrum.addProperty("name", "");					  // TODO
-		final JsonObject spectrumMetadata = new JsonObject(); // TODO
-		jSpectrum.add("spectrumMetadata", spectrumMetadata);
-		final JsonArray peaks = new JsonArray();
-		for (int i = 0; i < dmodel.getSize(); i++){
-			JsonObject peak = new JsonObject();
-			peak.addProperty("mz", dmodel.getMass(i));
-			peak.addProperty("intensity", dmodel.getRelativeIntensity(i));
-			JsonObject peakMetadata = new JsonObject(); // TODO
-			peakMetadata.addProperty("absoluteIntensity", dmodel.getAbsoluteIntensity(i));
-			peakMetadata.addProperty("formula", dmodel.getMolecularFormula(i));
-			peakMetadata.addProperty("ionization", dmodel.getIonization(i));
-			peak.add("peakMetadata", peakMetadata);
-			JsonArray peakPairs = new JsonArray(); // TODO
-			peak.add("peakPairs", peakPairs);
-			JsonObject peakMatches = new JsonObject();
-			peak.add("peakMatches", peakMatches);
+	protected ObjectNode spectrum2json(MSViewerDataModel dmodel) {
+		final ObjectMapper objectMapper = new ObjectMapper();
+		final ObjectNode jSpectrum = objectMapper.createObjectNode();
+
+		jSpectrum.put("name", "");
+
+		final ObjectNode spectrumMetadata = objectMapper.createObjectNode();
+		jSpectrum.set("spectrumMetadata", spectrumMetadata);
+
+		final ArrayNode peaks = objectMapper.createArrayNode();
+		for (int i = 0; i < dmodel.getSize(); i++) {
+			final ObjectNode peak = objectMapper.createObjectNode();
+			peak.put("mz", dmodel.getMass(i));
+			peak.put("intensity", dmodel.getRelativeIntensity(i));
+
+			final ObjectNode peakMetadata = objectMapper.createObjectNode();
+			peakMetadata.put("absoluteIntensity", dmodel.getAbsoluteIntensity(i));
+			peakMetadata.put("formula", dmodel.getMolecularFormula(i));
+			peakMetadata.put("ionization", dmodel.getIonization(i));
+			peak.set("peakMetadata", peakMetadata);
+
+			final ArrayNode peakPairs = objectMapper.createArrayNode();
+			peak.set("peakPairs", peakPairs);
+
+			final ObjectNode peakMatches = objectMapper.createObjectNode();
+			peak.set("peakMatches", peakMatches);
+
 			peaks.add(peak);
 		}
-		jSpectrum.add("peaks", peaks);
+
+		jSpectrum.set("peaks", peaks);
+
 		return jSpectrum;
 	}
 
 
-	protected JsonObject ms2Annotated(Ms2Experiment experiment, Spectrum<? extends Peak> spectrum, Fragment[] fragments) {
-		final JsonObject jSpectrum = new JsonObject();
-		jSpectrum.addProperty("name", getSpectrumName(spectrum, "MS2"));
-		jSpectrum.addProperty("parentmass", experiment.getIonMass());
-		final JsonObject spectrumMetadata = new JsonObject(); // TODO
-		jSpectrum.add("spectrumMetadata", spectrumMetadata);
-		double scale  = spectrum.getMaxIntensity();
-		final JsonArray peaks = new JsonArray();
-		for (int i = 0; i < spectrum.size(); i++){
-			JsonObject peak = new JsonObject();
-			peak.addProperty("mz", spectrum.getMzAt(i));
+	protected ObjectNode ms2Annotated(Ms2Experiment experiment, Spectrum<? extends Peak> spectrum, Fragment[] fragments) {
+		final ObjectMapper mapper = new ObjectMapper();
+		final ObjectNode jSpectrum = mapper.createObjectNode();
+
+		jSpectrum.put("name", getSpectrumName(spectrum, "MS2"));
+		jSpectrum.put("parentmass", experiment.getIonMass());
+
+		final ObjectNode spectrumMetadata = mapper.createObjectNode();
+		jSpectrum.set("spectrumMetadata", spectrumMetadata);
+
+		double scale = spectrum.getMaxIntensity();
+		final ArrayNode peaks = mapper.createArrayNode();
+		for (int i = 0; i < spectrum.size(); i++) {
+			final ObjectNode peak = mapper.createObjectNode();
+			peak.put("mz", spectrum.getMzAt(i));
 			double intensity = spectrum.getIntensityAt(i);
-			peak.addProperty("intensity", intensity / scale);
+			peak.put("intensity", intensity / scale);
 			Fragment fragment = fragments[i];
 			MolecularFormula formula;
-			if (fragment != null && (formula = fragment.getFormula()) != null)
-				peak.addProperty("formula", formula.toString());
-			JsonObject peakMetadata = new JsonObject();
-			peakMetadata.addProperty("absoluteIntensity", intensity);
-			peak.add("peakMetadata", peakMetadata);
-			JsonArray peakPairs = new JsonArray();
-			peak.add("peakPairs", peakPairs);
-			JsonObject peakMatches = new JsonObject(); // TODO
-			peak.add("peakMatches", peakMatches);
+			if (fragment != null && (formula = fragment.getFormula()) != null) {
+				peak.put("formula", formula.toString());
+			}
+
+			final ObjectNode peakMetadata = mapper.createObjectNode();
+			peakMetadata.put("absoluteIntensity", intensity);
+			peak.set("peakMetadata", peakMetadata);
+
+			final ArrayNode peakPairs = mapper.createArrayNode();
+			peak.set("peakPairs", peakPairs);
+
+			final ObjectNode peakMatches = mapper.createObjectNode();
+			peak.set("peakMatches", peakMatches);
+
 			peaks.add(peak);
 		}
-		jSpectrum.add("peaks", peaks);
+
+		jSpectrum.set("peaks", peaks);
+
 		return jSpectrum;
 	}
 
@@ -250,41 +320,44 @@ public class SpectraJSONWriter{
 	}
 
 	// PeakPairs ^= Losses in the fragmentation Tree
-	protected void annotatePeakPairs(JsonObject jSpectrum, FTree tree, Fragment[] fragments) {
+	protected void annotatePeakPairs(ObjectNode jSpectrum, FTree tree, Fragment[] fragments) {
 		Fragment u, v;
 		MolecularFormula lossFormula;
-		JsonArray peaks = jSpectrum.get("peaks").getAsJsonArray();
-		for (int ui = 0; ui < fragments.length; ++ui){
-			if ((u = fragments[ui]) == null)
+		ArrayNode peaks = (ArrayNode) jSpectrum.get("peaks");
+		for (int ui = 0; ui < fragments.length; ++ui) {
+			if ((u = fragments[ui]) == null) {
 				continue;
-			JsonArray uPairs = peaks.get(ui).getAsJsonObject().get("peakPairs").getAsJsonArray();
-			for (int vi = ui + 1; vi < fragments.length; ++vi){
-				if ((v = fragments[vi]) == null)
+			}
+			ArrayNode uPairs = (ArrayNode) peaks.get(ui).get("peakPairs");
+			for (int vi = ui + 1; vi < fragments.length; ++vi) {
+				if ((v = fragments[vi]) == null) {
 					continue;
-				JsonArray vPairs = peaks.get(vi).getAsJsonObject().get("peakPairs").getAsJsonArray();
+				}
+				ArrayNode vPairs = (ArrayNode) peaks.get(vi).get("peakPairs");
 				Loss loss;
-				try{
+				try {
 					loss = tree.getLoss(u, v);
-				} catch (IndexOutOfBoundsException e){
+				} catch (IndexOutOfBoundsException e) {
 					loss = null;
 				}
-				if (loss == null){
-					try{
+				if (loss == null) {
+					try {
 						// if fragments are always sorted by mass, this should be the correct order
 						loss = tree.getLoss(v, u);
-					} catch (IndexOutOfBoundsException e){
+					} catch (IndexOutOfBoundsException e) {
 						loss = null;
 					}
 				}
-				if (loss != null && (lossFormula = loss.getFormula()) != null){
-					JsonObject uPair = new JsonObject();
-					JsonObject vPair = new JsonObject();
-					uPair.addProperty("index", vi);
-					vPair.addProperty("index", ui);
-					JsonObject metadata = new JsonObject();
-					metadata.addProperty("formula", lossFormula.toString());
-					uPair.add("metadata", metadata);
-					vPair.add("metadata", metadata);
+				final ObjectMapper mapper = new ObjectMapper();
+				if (loss != null && (lossFormula = loss.getFormula()) != null) {
+					ObjectNode uPair = mapper.createObjectNode();
+					ObjectNode vPair = mapper.createObjectNode();
+					uPair.put("index", vi);
+					vPair.put("index", ui);
+					ObjectNode metadata = mapper.createObjectNode();
+					metadata.put("formula", lossFormula.toString());
+					uPair.set("metadata", metadata);
+					vPair.set("metadata", metadata);
 					uPairs.add(uPair);
 					vPairs.add(vPair);
 				}
@@ -293,27 +366,20 @@ public class SpectraJSONWriter{
 	}
 
 	// Peak matches *between* spectra
-	protected void annotatePeakMatches(JsonArray spectra, List<PeakMatch> matches) {
-		JsonArray pattern1Peaks = spectra.get(0).getAsJsonObject()
-			.get("peaks").getAsJsonArray();
-		JsonArray pattern2Peaks = spectra.get(1).getAsJsonObject()
-			.get("peaks").getAsJsonArray();
+	protected void annotatePeakMatches(ArrayNode spectra, List<PeakMatch> matches) {
+		final ObjectMapper mapper = new ObjectMapper();
+
+		ArrayNode pattern1Peaks = (ArrayNode) spectra.get(0).get("peaks");
+		ArrayNode pattern2Peaks = (ArrayNode) spectra.get(1).get("peaks");
 		for (PeakMatch m : matches) {
-			JsonObject p1Matches = pattern1Peaks.get(m.index1).getAsJsonObject()
-				.get("peakMatches").getAsJsonObject();
-			p1Matches.addProperty("index", m.index2);
-			p1Matches.add("metadata", new JsonObject());
-			JsonObject p2Matches = pattern2Peaks.get(m.index2).getAsJsonObject()
-				.get("peakMatches").getAsJsonObject();
-			p2Matches.addProperty("index", m.index1);
-			p2Matches.add("metadata", new JsonObject());
+			ObjectNode p1Matches = (ObjectNode) pattern1Peaks.get(m.index1).get("peakMatches");
+			p1Matches.put("index", m.index2);
+			p1Matches.set("metadata", mapper.createObjectNode());
+			ObjectNode p2Matches = (ObjectNode) pattern2Peaks.get(m.index2).get("peakMatches");
+			p2Matches.put("index", m.index1);
+			p2Matches.set("metadata", mapper.createObjectNode());
 		}
 	}
-
-	/*protected List<PeakMatch> matchPeaks(SiriusIsotopePattern siriusIsotopePattern, Deviation massDiffDev){
-		return matchPeaks(siriusIsotopePattern.simulatedPattern, siriusIsotopePattern.spectrum, massDiffDev);
-	}*/
-
 	protected List<PeakMatch> matchPeaks(Spectrum<?> spectrum,  Spectrum<?> patterm, Deviation massDiffDev){
 		List<PeakMatch> peakMatches = new LinkedList<>();
 		for (int i = 0; i < spectrum.size(); i++) {
@@ -324,22 +390,24 @@ public class SpectraJSONWriter{
 		return peakMatches;
 	}
 
-	protected JsonArray ms2JsonPeaks(Ms2Experiment experiment, FTree ftree) {
+	protected ArrayNode ms2JsonPeaks(Ms2Experiment experiment, FTree ftree) {
+		final ObjectMapper mapper = new ObjectMapper();
+
 		final Ms2Preprocessor preprocessor = new Ms2Preprocessor();
 		final ProcessedInput processedInput = preprocessor.preprocess(experiment);
 		List<ProcessedPeak> peaks = processedInput.getMergedPeaks();
-		final JsonArray jPeaks = new JsonArray();
+		final ArrayNode jPeaks = mapper.createArrayNode();
 		for (ProcessedPeak peak : peaks) {
-			JsonObject jPeak = new JsonObject();
-			jPeak.addProperty("mz", peak.getMass());
-			jPeak.addProperty("intensity", peak.getRelativeIntensity());
-			JsonObject jPeakMetadata = new JsonObject();
-			jPeakMetadata.addProperty("absoluteIntensity", peak.getIntensity());
-			jPeak.add("peakMetadata", jPeakMetadata);
-			JsonArray peakPairs = new JsonArray();
-			jPeak.add("peakPairs", peakPairs);
-			JsonObject peakMatches = new JsonObject();
-			jPeak.add("peakMatches", peakMatches);
+			ObjectNode jPeak = mapper.createObjectNode();
+			jPeak.put("mz", peak.getMass());
+			jPeak.put("intensity", peak.getRelativeIntensity());
+			ObjectNode jPeakMetadata = mapper.createObjectNode();
+			jPeakMetadata.put("absoluteIntensity", peak.getIntensity());
+			jPeak.set("peakMetadata", jPeakMetadata);
+			ArrayNode peakPairs = mapper.createArrayNode();
+			jPeak.set("peakPairs", peakPairs);
+			ObjectNode peakMatches = mapper.createObjectNode();
+			jPeak.set("peakMatches", peakMatches);
 			jPeaks.add(jPeak);
 		}
 		if (ftree != null){
@@ -348,11 +416,10 @@ public class SpectraJSONWriter{
 			for (Fragment f: ftree){
 				short i = f.getPeakId();
 				if (i >= 0){
-					JsonObject jPeak = jPeaks.get(i).getAsJsonObject();
+					ObjectNode jPeak = (ObjectNode) jPeaks.get(i);
 					MolecularFormula formula = f.getFormula();
 					if (formula != null)
-						jPeak.addProperty("formula", formula.toString()
-							+ " + " + f.getIonization().toString());
+						jPeak.put("formula", formula.toString() + " + " + f.getIonization().toString());
 					// deviation (from FTJsonWriter tree2json)
 					Deviation dev = ftree.getMassError(f);
 					if (f.isRoot() && dev.equals(Deviation.NULL_DEVIATION))
@@ -360,26 +427,26 @@ public class SpectraJSONWriter{
 					Deviation rdev = ftree.getRecalibratedMassError(f);
 					if (f.isRoot() && dev.equals(Deviation.NULL_DEVIATION))
 						rdev = ftree.getMassErrorTo(f, precursorMass);
-					jPeak.addProperty("massDeviationMz", dev.getAbsolute());
-					jPeak.addProperty("massDeviationPpm", dev.getPpm());
-					jPeak.addProperty("recalibratedMassDeviationMz", rdev.getAbsolute());
-					jPeak.addProperty("recalibratedMassDeviationPpm", rdev.getPpm());
-					JsonArray jPairs = jPeak.get("peakPairs").getAsJsonArray();
+					jPeak.put("massDeviationMz", dev.getAbsolute());
+					jPeak.put("massDeviationPpm", dev.getPpm());
+					jPeak.put("recalibratedMassDeviationMz", rdev.getAbsolute());
+					jPeak.put("recalibratedMassDeviationPpm", rdev.getPpm());
+					ArrayNode jPairs = (ArrayNode) jPeak.get("peakPairs");
 					for (Loss l : f.getIncomingEdges()){
 						short other_index = l.getSource().getPeakId();
 						if (other_index >= 0){
-							JsonObject pair = new JsonObject();
-							pair.addProperty("index", other_index);
-							pair.addProperty("formula", l.getFormula().toString());
+							ObjectNode pair = mapper.createObjectNode();
+							pair.put("index", other_index);
+							pair.put("formula", l.getFormula().toString());
 							jPairs.add(pair);
 						}
 					}
 					for (Loss l : f.getOutgoingEdges()){
 						short other_index = l.getTarget().getPeakId();
 						if (other_index >= 0){
-							JsonObject pair = new JsonObject();
-							pair.addProperty("index", other_index);
-							pair.addProperty("formula", l.getFormula().toString());
+							ObjectNode pair = mapper.createObjectNode();
+							pair.put("index", other_index);
+							pair.put("formula", l.getFormula().toString());
 							jPairs.add(pair);
 						}
 					}
@@ -438,7 +505,6 @@ public class SpectraJSONWriter{
             }
         }
 
-		// return new Pair<Fragment[], BitSet>(annotatedFormulas, isIsotopicPeak);
 		return annotatedFormulas;
     }
 
