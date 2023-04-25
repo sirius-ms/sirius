@@ -43,6 +43,7 @@ import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.rest.ProxyManager;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -285,22 +286,23 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
                                 //todo remove if lipid maps is added to our pubchem copy
                                 List<String> lmIds = ProxyManager.applyClient(client -> {
                                     URI uri = URI.create(String.format(Locale.US, "https://www.lipidmaps.org/rest/compound/inchi_key/%s/lm_id", URLEncoder.encode(InChISMILESUtils.inchi2inchiKey(candidate.candidate.getInchi().in3D), StandardCharsets.UTF_8)));
-
                                     Response r = client.newCall(new Request.Builder().url(uri.toURL()).build()).execute();
                                     List<String> ids = new ArrayList<>();
-                                    if (r.body() != null) {
-                                        try {
-                                            ObjectMapper mapper = new ObjectMapper();
-                                            mapper.enable(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT);
-                                            JsonNode array = mapper.readTree(r.body().charStream());
-                                            if (array != null && !array.isEmpty() && array.isArray()) {
-                                                array.forEach(node -> {
-                                                    if (node.has("lm_id"))
-                                                        ids.add(node.get("lm_id").asText(null));
-                                                });
+                                    try (ResponseBody body = r.body()) {
+                                        if (body != null) {
+                                            try {
+                                                ObjectMapper mapper = new ObjectMapper();
+                                                mapper.enable(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT);
+                                                JsonNode array = mapper.readTree(body.byteStream());
+                                                if (array != null && !array.isEmpty() && array.isArray()) {
+                                                    array.forEach(node -> {
+                                                        if (node.has("lm_id"))
+                                                            ids.add(node.get("lm_id").asText(null));
+                                                    });
+                                                }
+                                            } catch (Exception e) {
+                                                LoggerFactory.getLogger(getClass()).error("Error when parsing lipid maps response.", e);
                                             }
-                                        } catch (Exception e) {
-                                            LoggerFactory.getLogger(getClass()).error("Error when parsing lipid maps response.", e);
                                         }
                                     }
                                     return ids.stream().filter(Objects::nonNull).collect(Collectors.toList());
