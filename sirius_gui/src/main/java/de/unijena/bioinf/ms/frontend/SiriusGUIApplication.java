@@ -63,7 +63,6 @@ public class SiriusGUIApplication extends SiriusCLIApplication {
         if (Arrays.stream(args).noneMatch(it -> it.equalsIgnoreCase("gui")) ) {
             SiriusCLIApplication.runMain(args, List.of(new GuiAppOptions(null))); //inject for help message
         } else {
-            ApplicationCore.DEFAULT_LOGGER.info("Starting Application Core");
             measureTime("Init Swing Job Manager");
             // The spring app classloader seems not to be correctly inherited to sub thread
             // So we need to ensure that the apache.configuration2 libs gets access otherwise.
@@ -73,6 +72,7 @@ public class SiriusGUIApplication extends SiriusCLIApplication {
                     Math.min(PropertyManager.getNumberOfThreads(), 4),
                     springSupport ? Thread.currentThread().getContextClassLoader() : null
             ));
+            ApplicationCore.DEFAULT_LOGGER.info("Starting Application Core");
             ApplicationCore.DEFAULT_LOGGER.info("Swing Job MANAGER initialized! " + SiriusJobs.getGlobalJobManager().getCPUThreads() + " : " + SiriusJobs.getGlobalJobManager().getIOThreads());
 
             {
