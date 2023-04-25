@@ -64,7 +64,7 @@ public enum DataSource {
     PUBCHEMANNOTATIONFOOD("PubChem class - food", 134217728,  null,null,null, 0, false, new Publication("Kim S et al., PubChem in 2021: new data content and improved web interfaces. Nucleic Acids Res. 2021", "10.1093/nar/gkaa971")),
 
     LOTUS("LOTUS", 268435456,  "id", "lotus", "https://lotus.naturalproducts.net/search/simple/%s", new Publication("Rutz A et al., The LOTUS initiative for open knowledge management in natural products research. eLife. 2022", "10.7554/eLife.70780")),
-    FoodDB("FooDB", 536870912, "fooddb_id", "foodDB", "https://foodb.ca/compounds/%s", new Publication("www.foodb.ca", null)),//todo not published yet?
+    FooDB("FooDB", 536870912, "fooddb_id", "foodDB", "https://foodb.ca/compounds/%s", new Publication("www.foodb.ca", null)),//todo not published yet?
     MiMeDB("MiMeDB", 1073741824, "mimeDB_id", "mimeDB", "https://mimedb.org/metabolites/%s", new Publication("Wishart DS et al., MiMeDB: the Human Microbial Metabolome Database. Nucleic Acids Res. 2023", "10.1093/nar/gkac868")),//todo
 
 
