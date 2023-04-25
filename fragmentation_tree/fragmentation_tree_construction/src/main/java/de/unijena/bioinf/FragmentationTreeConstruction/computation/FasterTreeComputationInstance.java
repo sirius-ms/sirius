@@ -559,26 +559,31 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         pin.getExperimentInformation().setPrecursorIonType(tree.getAnnotation(PrecursorIonType.class).orElse(pin.getExperimentInformation().getPrecursorIonType()));
         pin.setAnnotation(TreeSizeScorer.TreeSizeBonus.class, pinput.getAnnotationOrNull(TreeSizeScorer.TreeSizeBonus.class));
         // we have to completely rescore the input...
-        //final DecompositionList l = new DecompositionList(Arrays.asList(pin.getAnnotationOrThrow(DecompositionList.class).find(tree.getRoot().getFormula())));
-        //pin.setAnnotation(DecompositionList.class, l);
         checkForInterruption();
         analyzer.performDecomposition(pin);
         checkForInterruption();
         analyzer.performPeakScoring(pin);
-        final FGraph graph = analyzer.buildGraph(pin, decomp); //todo should we not use ne decomposition from pin?
+        if (!pin.hasAnnotation(DecompositionList.class) || pin.getAnnotationOrThrow(DecompositionList.class).getDecompositions().isEmpty() || !pin.getAnnotationOrThrow(DecompositionList.class).getDecompositions().get(0).equals(decomp)){
+            logWarn("Could not recreate decomposiion during recalibration for " + input.getExperimentInformation().getName() + ". Falling back to non recalibrated tree.");
+            return new ExactResult(input, decomp, null, tree, tree.getTreeWeight());
+        }
+        final FGraph graph = analyzer.buildGraph(pin, decomp);
         graph.addAnnotation(SpectralRecalibration.class, rec);
         checkForInterruption();
         final TreeBuilder.Result recal = builder.computeTree().withTimeLimit(Math.min(restTimeSec(), secsPerTree)).solve(pin, graph);
         checkForInterruption();
-        final TreeBuilder.Result finalTree;
+        TreeBuilder.Result finalTree;
         if (recal.tree.getTreeWeight() >= tree.getTreeWeight()) {
             finalTree = builder == finalBuilder ? recal : finalBuilder.computeTree().withTimeLimit(Math.min(restTimeSec(), secsPerTree)).solve(pin, graph);
             checkForInterruption();
-            if (finalTree.tree == null) {
+            //this is to prevent null trees in case the ILP solver fails.
+            if (finalTree == null || finalTree.tree == null) {
                 // TODO: why is tree score != ILP score? Or is this an error in ILP?
                 // check that
                 TreeBuilder.Result solve = analyzer.getTreeBuilder().computeTree().withTimeLimit(Math.min(restTimeSec(), secsPerTree)).solve(pin, graph);
-                throw new RuntimeException("Recalibrated tree is null for " + input.getExperimentInformation().getName() + ". Error in ILP? Without score constraint the result is = optimal = " + solve.isOptimal + ", score = " + (solve.tree == null ? "NULL" : solve.tree.getTreeWeight()) + " with score of uncalibrated tree is " + recal.tree.getTreeWeight());
+                logWarn("Recalibrated tree is null for " + input.getExperimentInformation().getName() + ". Error in ILP? Without score constraint the result is = optimal = " + solve.isOptimal + ", score = " + (solve.tree == null ? "NULL" : solve.tree.getTreeWeight()) + " with score of uncalibrated tree is " + recal.tree.getTreeWeight()
+                        + ". Falling back to the heuristic tree. Please submit a bug report with the input data of this instance and this error message.");
+                finalTree = recal;
             }
             finalTree.tree.setAnnotation(SpectralRecalibration.class, rec);
             analyzer.makeTreeReleaseReady(pin, graph, finalTree.tree, finalTree.mapping);
@@ -589,16 +594,17 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             checkForInterruption();
             finalTree = finalBuilder.computeTree().withTimeLimit(Math.min(restTimeSec(), secsPerTree)).solve(pin, origGraph);
             checkForInterruption();
+            //this is to prevent null trees in case the ILP solver fails.
+            if (finalTree == null || finalTree.tree == null) {
+                logWarn("Recalibrated ILP tree is null for '" + input.getExperimentInformation().getName() + "'. Falling back to the heuristic tree. Please submit a bug report with the input data of this instance and this error message.");
+                finalTree = builder.computeTree().withTimeLimit(Math.min(restTimeSec(), secsPerTree)).solve(pin, origGraph);
+            }
             finalTree.tree.setAnnotation(SpectralRecalibration.class, SpectralRecalibration.none());
             analyzer.makeTreeReleaseReady(pin, origGraph, finalTree.tree, finalTree.mapping);
         }
         checkForInterruption();
         recalculateScore(pin, finalTree.tree, "recalibrate");
-        assert finalTree!=null;
         tick();
-        if (pin.getAnnotationOrThrow(DecompositionList.class).getDecompositions().size() <= 0) {
-            System.err.println("WTF? ");
-        }
         return new ExactResult(pin, pin.getAnnotationOrThrow(DecompositionList.class).getDecompositions().get(0), null, finalTree.tree, finalTree.tree.getTreeWeight());
     }
 
