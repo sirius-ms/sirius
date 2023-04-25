@@ -29,13 +29,13 @@ import de.unijena.bioinf.ms.rest.model.SecurityService;
 import de.unijena.bioinf.rest.HttpErrorResponseException;
 import de.unijena.bioinf.rest.NetUtils;
 import okhttp3.*;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
@@ -47,7 +47,7 @@ public abstract class AbstractClient {
     public static final boolean DEBUG_CONNECTION = PropertyManager.getBoolean("de.unijena.bioinf.webapi.DEBUG_CONNECTION", false);
     protected static final String CID = SecurityService.generateSecurityToken();
 
-    public static final MediaType APPLICATION_JSON =  MediaType.parse("application/json;charset=UTF-8");
+    public static final MediaType APPLICATION_JSON = MediaType.parse("application/json;charset=UTF-8");
 
     static {
         if (NetUtils.DEBUG)
@@ -92,9 +92,11 @@ public abstract class AbstractClient {
 
     protected void isSuccessful(Response response, Request sourceRequest) throws IOException {
         if (response.code() >= 400) {
-            final String content = response.body() != null ? IOUtils.toString(getIn(response, sourceRequest)) : "No Content";
-            throw new HttpErrorResponseException(response.code(), response.message(),
-                    Optional.ofNullable(response.header("WWW-Authenticate")).orElse("NULL"), content);
+            try (ResponseBody body = response.body()) {
+                final String content = body != null ? body.string() : "No Content";
+                throw new HttpErrorResponseException(response.code(), response.message(),
+                        Optional.ofNullable(response.header("WWW-Authenticate")).orElse("NULL"), content);
+            }
         }
     }
 
@@ -109,7 +111,7 @@ public abstract class AbstractClient {
     }
 
     public <T> T executeWithResponse(@NotNull OkHttpClient client, @NotNull final Request.Builder request, IOFunctions.IOFunction<Response, T> respHandling) throws IOException {
-            return respHandling.apply(client.newCall(request.build()).execute());
+        return respHandling.apply(client.newCall(request.build()).execute());
     }
 
     public <T> T execute(@NotNull OkHttpClient client, @NotNull final Request.Builder request, IOFunctions.IOFunction<BufferedReader, T> respHandling) throws IOException {
@@ -117,14 +119,12 @@ public abstract class AbstractClient {
             requestDecorator.accept(request);
         return executeWithResponse(client, request, response -> {
             isSuccessful(response, response.request());
-            if (response.body() != null) {
-                try (final BufferedReader reader = new BufferedReader(getIn(response, response.request()))) {
-                    return respHandling.apply(reader);
+            try (ResponseBody body = response.body()) {
+                if (body != null) {
+                    try (final BufferedReader reader = new BufferedReader(body.charStream())) {
+                        return respHandling.apply(reader);
+                    }
                 }
-            }
-            if (DEBUG_CONNECTION) {
-                LoggerFactory.getLogger(getClass()).warn("Entity return value was NULL: ");
-                getIn(response, response.request()).close();
             }
             return null;
         });
@@ -168,9 +168,9 @@ public abstract class AbstractClient {
 
         Response response = client.newCall(request.build()).execute();
         isSuccessful(response, response.request());
-        if (response.body() != null) {
-            try (final InputStream stream = response.body().byteStream()) {
-                return respHandling.apply(stream);
+        try (ResponseBody body = response.body()) {
+            if (body != null) {
+                return respHandling.apply(body.byteStream());
             }
         }
         return null;
@@ -193,45 +193,6 @@ public abstract class AbstractClient {
         });
     }
 
-    @NotNull
-    protected Reader getIn(Response response, Request sourceRequest) throws IOException {
-        ResponseBody entity = response.body();
-//        String charset = entity.getContentEncoding();
-//        charset = charset == null ? StandardCharsets.UTF_8.name() : charset;
-        if (!DEBUG_CONNECTION) {
-            if (entity == null)
-                throw new NullPointerException("Cannot extract content from NULL entity");
-            return entity.charStream();
-        } else {
-            System.out.println("##### Request DEBUG information #####S");
-            System.out.println("----- Source Request");
-            System.out.println("Request URL: '" + sourceRequest.url() + "'");
-            sourceRequest.headers().forEach(header -> System.out.println("Request Header: '" + header.getFirst() + "':'" + header.getSecond() + "'"));
-
-            System.out.println("----- Response");
-//            System.out.println("Content encoding: '" + charset + "'");
-//            System.out.println("Used Content encoding: '" + (entity == null ? "<ENTITY NULL>" : entity.getContentEncoding()) + "'");
-            System.out.println("Content Type: '" + (entity == null ? "<ENTITY NULL>" : entity.contentType()) + "'");
-            System.out.println("Response Return Code: '" + response.code() + "'");
-            System.out.println("Response Reason Phrase: '" + response.message() + "'");
-//            System.out.println("Response Protocol Version: '" + response.getStatusLine().getProtocolVersion().toString() + "'");
-//            System.out.println("Response Locale: '" + response.getLocale().toString() + "'");
-            response.headers().forEach(header -> System.out.println("Request Header: '" + header.getFirst() + "':'" + header.getSecond() + "'"));
-            System.out.println("----- Content");
-
-            final String content = (entity == null || entity.contentLength() <= 0) ? null : IOUtils.toString(entity.charStream());
-            if (content == null || content.isBlank())
-                System.out.println("<NO CONTENT>");
-            else
-                System.out.println(content);
-
-            System.out.println("#####################################");
-
-            return content == null ? new StringReader("") : new StringReader(content);
-        }
-
-
-    }
     //endregion
 
 
