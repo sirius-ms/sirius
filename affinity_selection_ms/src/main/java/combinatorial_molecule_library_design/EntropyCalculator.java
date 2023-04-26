@@ -15,20 +15,18 @@ public class EntropyCalculator implements CMLEvaluator {
     }
 
     // Method that computes the entropy of a given combinatorial molecule library considering only the masses:
-    // todo: renew normalization if possible
     @Override
     public double evaluate(int[][] bbMasses){
         int[] numMoleculesPerBin = this.cmlDist.computeNumMoleculesPerBin(bbMasses);
-        int totalNumMolecules = this.sum(numMoleculesPerBin);
+        int totalNumMolecules = this.sum(numMoleculesPerBin); // number of molecules in the interval defined by this.cmlDist!
 
-        double divisionByTotalNumMols = 1d / totalNumMolecules;
         double entropy = 0;
         for(int binIdx = 0; binIdx < numMoleculesPerBin.length; binIdx++){
-            double relFreq = numMoleculesPerBin[binIdx] * divisionByTotalNumMols;
-            double normalizedRelFreq = this.normalization.normalize(relFreq);
-            if(normalizedRelFreq > 0) entropy = entropy + normalizedRelFreq * Math.log(normalizedRelFreq);
+            double absFreq = numMoleculesPerBin[binIdx];
+            double normalizedAbsFreq = this.normalization.normalize(absFreq);
+            if(normalizedAbsFreq > 0) entropy = entropy + normalizedAbsFreq * Math.log(normalizedAbsFreq);
         }
-        return -entropy;
+        return totalNumMolecules > 0 ? - entropy / totalNumMolecules + Math.log(totalNumMolecules) : 0d;
     }
 
     private int sum(int[] a){
