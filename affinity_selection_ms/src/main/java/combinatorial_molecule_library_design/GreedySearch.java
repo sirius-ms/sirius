@@ -7,7 +7,7 @@ public class GreedySearch {
 
     private final int[][] bbMasses;
     private final CMLEvaluator cmlEvaluator;
-    private final int[][] minBBSetIndices;
+    private final int[][] minBBSetIndices; // contains in each row an array of bb-indices which cannot be removed!
     private final BitSet[] optimalBBs;
     private double optimalScore;
 
@@ -33,7 +33,28 @@ public class GreedySearch {
     }
 
     private ArrayList<BitSet[]> getChildren(BitSet[] node){
-        return null;
+        ArrayList<BitSet[]> children = new ArrayList<>();
+        for(int i = 0; i < node.length; i++){ // node.length = this.bbMasses.length
+            if(node[i].cardinality() > 1) {
+                int k = 0;
+                for(int j = node[i].nextSetBit(0); j >= 0; j = node[i].nextSetBit(j + 1)) {
+                    if(j != this.minBBSetIndices[i][k]){ // Is j the index of an essential bb?
+                        BitSet[] child = this.cloneBitSetArray(node);
+                        child[i].set(j, false);
+                        children.add(child);
+                    }else{
+                        k = k < this.minBBSetIndices[i].length - 1 ? k+1 : k;
+                    }
+                }
+            }
+        }
+        return children;
+    }
+
+    private BitSet[] cloneBitSetArray(BitSet[] bitSets){
+        BitSet[] clonedBitSets = new BitSet[bitSets.length];
+        for(int idx = 0; idx < bitSets.length; idx++) clonedBitSets[idx] = (BitSet) bitSets[idx].clone();
+        return clonedBitSets;
     }
 
     private int[][] bitSetArrayToBBMassMatrix(BitSet[] node){
