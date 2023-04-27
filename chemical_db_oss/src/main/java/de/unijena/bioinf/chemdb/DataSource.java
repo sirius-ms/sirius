@@ -65,12 +65,13 @@ public enum DataSource {
 
     LOTUS("LOTUS", 268435456,  "id", "lotus", "https://lotus.naturalproducts.net/search/simple/%s", new Publication("Rutz A et al., The LOTUS initiative for open knowledge management in natural products research. eLife. 2022", "10.7554/eLife.70780")),
     FooDB("FooDB", 536870912, "fooddb_id", "foodDB", "https://foodb.ca/compounds/%s", new Publication("www.foodb.ca", null)),//todo not published yet?
-    MiMeDB("MiMeDB", 1073741824, "mimeDB_id", "mimeDB", "https://mimedb.org/metabolites/%s", new Publication("Wishart DS et al., MiMeDB: the Human Microbial Metabolome Database. Nucleic Acids Res. 2023", "10.1093/nar/gkac868")),//todo
+    MiMeDB("MiMeDB", 1073741824, "mimeDB_id", "mimeDB", "https://mimedb.org/metabolites/%s", new Publication("Wishart DS et al., MiMeDB: the Human Microbial Metabolome Database. Nucleic Acids Res. 2023", "10.1093/nar/gkac868")),
+
+    LIPIDMAPS("LipidMaps", 2147483648L, "id", "lipidmaps", "https://www.lipidmaps.org/databases/lmsd/%s", new Publication("Sud M et al., LMSD: LIPID MAPS structure database. Nucleic Acids Res. 2006", "10.1093/nar/gkl838")),
+    LIPID("Lipid", 4294967296L, null, null, "https://www.lipidmaps.org/databases/lmsd/%s", null), //flag for  El Gordo/Lipid candidates
+/*"https://www.lipidmaps.org/rest/compound/abbrev/%s/all/txt"*/ //todo which is the correect query?
 
 
-
-    LIPID("Lipid", 4294967296L, null, null, "https://www.lipidmaps.org/databases/lmsd/%s", null), //flag for  El Gordo/Lipid candidates //todo no citation for lipid maps, since we only link to it, but we do not really use its structures, right?
-/*"https://www.lipidmaps.org/rest/compound/abbrev/%s/all/txt"*/ //todo we need to add lipid maps Ids to Chemical DB
     //everything with flags greater equal to 2**33 are databases of artificial structures.
     KEGGMINE("KEGG Mine", 8589934592L, null,null, null, 8589934592L | 256L, true, new Publication("Jeffryes JG et al., MINEs: Open access databases of computationally predicted enzyme promiscuity products for untargeted metabolomics. J Cheminf. 2015", "10.1186/s13321-015-0087-1")),
     ECOCYCMINE("EcoCyc Mine", 17179869184L, null,null, null, 17179869184L | 2048L, true, new Publication("Jeffryes JG et al., MINEs: Open access databases of computationally predicted enzyme promiscuity products for untargeted metabolomics. J Cheminf. 2015", "10.1186/s13321-015-0087-1")),
