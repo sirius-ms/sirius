@@ -8,19 +8,13 @@ public class GreedySearch {
     private final int[][] bbMasses;
     private final CMLEvaluator cmlEvaluator;
     private final int[][] minBBSetIndices; // contains in each row an array of bb-indices which cannot be removed!
-    private final BitSet[] optimalBBs;
+    private BitSet[] optimalBBs;
     private double optimalScore;
 
     public GreedySearch(int[][] bbMasses, int[][] minBBSetIndices, CMLEvaluator cmlEvaluator){
         this.bbMasses = bbMasses;
         this.cmlEvaluator = cmlEvaluator;
         this.minBBSetIndices = minBBSetIndices;
-
-        this.optimalBBs = new BitSet[this.bbMasses.length];
-        for(int i = 0; i < this.bbMasses.length; i++){
-            this.optimalBBs[i] = new BitSet(this.bbMasses[i].length);
-            this.optimalBBs[i].flip(0, this.bbMasses[i].length);
-        }
         this.optimalScore = Double.NEGATIVE_INFINITY;
     }
 
@@ -29,7 +23,36 @@ public class GreedySearch {
     }
 
     public int[][] computeOptimalBBs(){
-        return null;
+        // INIT:
+        // The starting point for the greedy search heuristic is the root representing all building blocks.
+        this.optimalBBs = new BitSet[this.bbMasses.length];
+        for(int i = 0; i < this.bbMasses.length; i++){
+            this.optimalBBs[i] = new BitSet(this.bbMasses[i].length);
+            this.optimalBBs[i].flip(0, this.bbMasses[i].length);
+        }
+        this.optimalScore = this.cmlEvaluator.evaluate(this.bbMasses);
+
+        // Now: traverse through the search graph as long as there is a direct child with better score
+        boolean isNewSolution = true;
+        while(isNewSolution){
+            isNewSolution = false;
+            ArrayList<BitSet[]> children = this.getChildren(this.optimalBBs);
+            for(BitSet[] child : children){
+                double score = this.evaluateNode(child);
+                if(score > this.optimalScore){
+                    this.optimalScore = score;
+                    this.optimalBBs = child;
+                    isNewSolution = true;
+                }
+            }
+        }
+
+        return this.bitSetArrayToBBMassMatrix(this.optimalBBs);
+    }
+
+    private double evaluateNode(BitSet[] node){
+        int[][] bbMassesSubset = this.bitSetArrayToBBMassMatrix(node);
+        return this.cmlEvaluator.evaluate(bbMassesSubset);
     }
 
     private ArrayList<BitSet[]> getChildren(BitSet[] node){
@@ -69,9 +92,4 @@ public class GreedySearch {
         }
         return bbMassesSubset;
     }
-
-
-
-
-
 }
