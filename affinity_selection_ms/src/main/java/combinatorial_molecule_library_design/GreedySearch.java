@@ -58,7 +58,16 @@ public class GreedySearch {
     }
 
     private int[][] bitSetArrayToBBMassMatrix(BitSet[] node){
-        return null;
+        int[][] bbMassesSubset = new int[this.bbMasses.length][];
+        for(int i = 0; i < this.bbMasses.length; i++){
+            bbMassesSubset[i] = new int[node[i].cardinality()];
+            int k = 0;
+            for(int j = node[i].nextSetBit(0); j >= 0; j = node[i].nextSetBit(j+1)){
+                bbMassesSubset[i][k] = this.bbMasses[i][j];
+                k++;
+            }
+        }
+        return bbMassesSubset;
     }
 
 
