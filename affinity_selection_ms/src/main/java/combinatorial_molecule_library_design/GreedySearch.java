@@ -61,7 +61,7 @@ public class GreedySearch {
             if(node[i].cardinality() > 1) {
                 int k = 0;
                 for(int j = node[i].nextSetBit(0); j >= 0; j = node[i].nextSetBit(j + 1)) {
-                    if(j != this.minBBSetIndices[i][k]){ // Is j the index of an essential bb?
+                    if(this.minBBSetIndices[i].length == 0 || j != this.minBBSetIndices[i][k]){ // Is j the index of an essential bb?
                         BitSet[] child = this.cloneBitSetArray(node);
                         child[i].set(j, false);
                         children.add(child);
@@ -91,5 +91,17 @@ public class GreedySearch {
             }
         }
         return bbMassesSubset;
+    }
+
+    public int[][] getOptimalBBMasses(){
+        return this.bitSetArrayToBBMassMatrix(this.optimalBBs);
+    }
+
+    public BitSet[] getOptimalBBBitSets(){
+        return this.optimalBBs;
+    }
+
+    public double getOptimalScore(){
+        return this.optimalScore;
     }
 }
