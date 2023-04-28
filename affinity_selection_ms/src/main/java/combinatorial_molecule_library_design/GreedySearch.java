@@ -7,7 +7,7 @@ public class GreedySearch {
 
     private final int[][] bbMasses;
     private final CMLEvaluator cmlEvaluator;
-    private final int[][] minBBSetIndices; // contains in each row an array of bb-indices which cannot be removed!
+    private final int[][] minBBSetIndices; // contains in each row an array of SORTED bb-indices which cannot be removed!
     private BitSet[] optimalBBs;
     private double optimalScore;
 
