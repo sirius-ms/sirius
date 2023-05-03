@@ -23,16 +23,14 @@ package de.unijena.bioinf.confidence_score.svm;
 
 
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.confidence_score.CombinedFeatureCreator;
 import de.unijena.bioinf.confidence_score.CombinedFeatureCreatorBIODISTANCE2TO5;
 import de.unijena.bioinf.confidence_score.CombinedFeatureCreatorBIODISTANCE6TO10;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
 import java.io.File;
-import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -46,18 +44,11 @@ public class SVMUtils {
     public static SVMScales loadScalesFromJson(File file) {
 
     try {
-        JsonReader jreader = Json.createReader(new FileReader(file));
-
-        JsonObject obj = jreader.readObject();
-
-
-
-
+        JsonNode obj = new ObjectMapper().readTree(file);
     //TODO: Load the JSON stuff here
     }catch (Exception e){
       e.printStackTrace();
     }
-
         return null;
     }
 

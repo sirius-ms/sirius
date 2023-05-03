@@ -1,0 +1,4 @@
+dependencies{
+    compile project(':blob-storage')
+    compile 'com.google.cloud:google-cloud-storage:1.118.0'
+}

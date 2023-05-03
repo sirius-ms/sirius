@@ -21,8 +21,8 @@
 package de.unijena.bioinf.ms.rest.client.chemdb;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
@@ -43,6 +43,7 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -96,12 +97,18 @@ public class StructureSearchClient extends AbstractCsiClient {
                         .build()).get(),
                 br -> {
                     final ArrayList<FormulaCandidate> candidates = new ArrayList<>();
-                    //todo replace with jackson
-                    JsonParser parser = new JsonParser();
-                    JsonElement elem = parser.parse(br);
-                    for (Map.Entry<String, JsonElement> pair : elem.getAsJsonObject().entrySet())
-                        for (Map.Entry<String, JsonElement> e : pair.getValue().getAsJsonObject().entrySet())
-                            MolecularFormula.parseAndExecute(e.getKey(), form -> candidates.add(new FormulaCandidate(form, ionType, e.getValue().getAsLong())));
+
+                    ObjectMapper mapper = new ObjectMapper();
+                    JsonNode rootNode = mapper.readTree(br);
+                    Iterator<Map.Entry<String, JsonNode>> iter = rootNode.fields();
+                    while (iter.hasNext()) {
+                        Map.Entry<String, JsonNode> pair = iter.next();
+                        Iterator<Map.Entry<String, JsonNode>> subIter = pair.getValue().fields();
+                        while (subIter.hasNext()) {
+                            Map.Entry<String, JsonNode> e = subIter.next();
+                            MolecularFormula.parseAndExecute(e.getKey(), form -> candidates.add(new FormulaCandidate(form, ionType, e.getValue().asLong())));
+                        }
+                    }
                     return candidates;
                 }
         );
@@ -113,9 +120,9 @@ public class StructureSearchClient extends AbstractCsiClient {
 
     public List<FingerprintCandidate> getCompounds(@NotNull MolecularFormula formula, long filter, @NotNull CdkFingerprintVersion fpVersion, OkHttpClient client) throws IOException {
         return execute(client,
-                () ->  new Request.Builder().url(buildVersionSpecificWebapiURI("/compounds/" + formula)
-                            .addQueryParameter("dbfilter", String.valueOf(filter))
-                            .build()).get(),
+                () -> new Request.Builder().url(buildVersionSpecificWebapiURI("/compounds/" + formula)
+                        .addQueryParameter("dbfilter", String.valueOf(filter))
+                        .build()).get(),
                 br -> {
                     try (CloseableIterator<FingerprintCandidate> fciter = new JSONReader().readFingerprints(fpVersion, br)) {
                         final ArrayList<FingerprintCandidate> compounds = new ArrayList<>(100);
