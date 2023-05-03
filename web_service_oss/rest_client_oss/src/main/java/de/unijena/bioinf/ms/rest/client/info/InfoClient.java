@@ -20,7 +20,9 @@
 
 package de.unijena.bioinf.ms.rest.client.info;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
@@ -36,10 +38,8 @@ import okhttp3.Request;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.URI;
@@ -71,44 +71,46 @@ public class InfoClient extends AbstractCsiClient {
         );
     }
 
-    //todo change to Jackson
     @Nullable
     private VersionsInfo parseVersionInfo(BufferedReader reader) {
         if (reader != null) {
-            try (final JsonReader r = Json.createReader(reader)) {
-                JsonObject o = r.readObject();
-                JsonObject gui = o.getJsonObject("SIRIUS GUI");
+            ObjectMapper mapper = new ObjectMapper();
+            try (final JsonParser parser = mapper.createParser(reader)){
+                final JsonNode o = mapper.readTree(parser);
 
-                final String version = gui.getString("version");
-                String database = o.getJsonObject("database").getString("version");
+                JsonNode gui = o.get("SIRIUS GUI");
+
+                final String version = gui.get("version").asText();
+                String database = o.get("database").get("version").asText();
 
                 boolean expired = true;
                 Timestamp accept = null;
                 Timestamp finish = null;
 
-                if (o.containsKey("expiry dates")) {
-                    JsonObject expiryInfo = o.getJsonObject("expiry dates");
-                    expired = expiryInfo.getBoolean("isExpired");
-                    if (expiryInfo.getBoolean("isAvailable")) {
-                        accept = Timestamp.valueOf(expiryInfo.getString("acceptJobs"));
-                        finish = Timestamp.valueOf(expiryInfo.getString("finishJobs"));
+                if (o.has("expiry dates")) {
+                    JsonNode expiryInfo = o.get("expiry dates");
+                    expired = expiryInfo.get("isExpired").asBoolean();
+                    if (expiryInfo.get("isAvailable").asBoolean()) {
+                        accept = Timestamp.valueOf(expiryInfo.get("acceptJobs").asText());
+                        finish = Timestamp.valueOf(expiryInfo.get("finishJobs").asText());
                     }
                 }
 
                 List<News> newsList = Collections.emptyList();
-                if (o.containsKey("news")) {
-                    final String newsJson = o.getJsonArray("news").toString();
-                    newsList = News.parseJsonNews(newsJson);
-                }
+                if (o.has("news"))
+                    newsList = News.parseJsonNews(o.get("news"));
+
                 VersionsInfo v = new VersionsInfo(version, database, expired, accept, finish, newsList);
 
-                if (gui.containsKey("latestVersion") && gui.getString("latestVersion") != null)
-                    v.setLatestSiriusVersion(new DefaultArtifactVersion(gui.getString("latestVersion")));
+                if (gui.has("latestVersion") && gui.get("latestVersion") != null)
+                    v.setLatestSiriusVersion(new DefaultArtifactVersion(gui.get("latestVersion").asText()));
 
-                if (gui.containsKey("latestVersionUrl"))
-                    v.setLatestSiriusLink(gui.getString("latestVersionUrl"));
+                if (gui.has("latestVersionUrl"))
+                    v.setLatestSiriusLink(gui.get("latestVersionUrl").asText());
 
                 return v;
+            } catch (IOException e) {
+                LoggerFactory.getLogger(getClass()).warn("Error when deserializing version information.", e);
             }
         }
         return null;

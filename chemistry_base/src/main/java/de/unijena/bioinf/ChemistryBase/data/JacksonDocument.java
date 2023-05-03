@@ -31,6 +31,10 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+/**
+ * Cam be replaced by writable version JSONDocument which is know based on jackson
+ */
+@Deprecated(forRemoval = true)
 public class JacksonDocument extends DataDocument<JsonNode, JsonNode, JsonNode> {
 
     public JsonNode fromReader(Reader r) throws IOException {

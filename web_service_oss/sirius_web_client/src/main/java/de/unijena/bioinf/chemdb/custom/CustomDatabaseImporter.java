@@ -47,7 +47,6 @@ import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
 import org.slf4j.LoggerFactory;
 
-import javax.json.JsonException;
 import java.io.*;
 import java.nio.file.Path;
 import java.util.*;
@@ -373,7 +372,7 @@ public class CustomDatabaseImporter {
                 if (alreadyExisting.isEmpty() && !finalList.isEmpty())
                     database.getStatistics().formulas().incrementAndGet();
             }
-        } catch (IOException | JsonException e) {
+        } catch (IOException e) {
             throw new IOException("Error while merging into: " + path, e);
         }
     }
