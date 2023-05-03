@@ -41,6 +41,7 @@ public class EntropyLikeCalculator implements CMLEvaluator{
             if(numMoleculesPerMass[mass] > 0){
                 newLowerBound = (int) (mass - this.relDev * mass);
                 newUpperBound = (int) (mass + this.relDev * mass);
+                if(newUpperBound > maxMoleculeMass) newUpperBound = maxMoleculeMass;
 
                 if(newLowerBound <= currentUpperBound){
                     for(int m = currentLowerBound; m < newLowerBound; m++) numCandidatesInWindow -= numMoleculesPerMass[m];
