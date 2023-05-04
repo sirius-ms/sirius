@@ -63,6 +63,14 @@ public class SiriusGUIApplication extends SiriusCLIApplication {
         if (Arrays.stream(args).noneMatch(it -> it.equalsIgnoreCase("gui")) ) {
             SiriusCLIApplication.runMain(args, List.of(new GuiAppOptions(null))); //inject for help message
         } else {
+            {
+                //todo duplicate with cli.
+                List<String> argsl = List.of(args);
+                int i = argsl.indexOf("--workspace");
+                if (i >= 0)
+                    System.setProperty("de.unijena.bioinf.sirius.ws.location", args[i+1].replace("'","").replace("\"",""));
+            }
+
             measureTime("Init Swing Job Manager");
             // The spring app classloader seems not to be correctly inherited to sub thread
             // So we need to ensure that the apache.configuration2 libs gets access otherwise.
