@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.settings;
 
+import de.unijena.bioinf.ChemistryBase.utils.ExFunctions;
 import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.PasswordCrypter;
@@ -30,6 +31,7 @@ import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.webapi.Tokens;
 import de.unijena.bioinf.rest.ProxyManager;
 import org.jdesktop.swingx.JXTitledSeparator;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -154,24 +156,28 @@ public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListen
 
     @Override
     public void reloadChanges() {
-        ProxyManager.withConnectionLock((Runnable) ()->{
-            ApplicationCore.WEB_API.changeActiveSubscription(null);
+        try {
+            ProxyManager.withConnectionLock((ExFunctions.Runnable) () -> {
+                ApplicationCore.WEB_API.changeActiveSubscription(null);
 
-            URI host = URI.create(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.audience"));
-            ProxyManager.reconnect();
+                URI host = URI.create(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.audience"));
+                ProxyManager.reconnect();
 
-            ApplicationCore.WEB_API.getAuthService().reconnectService(
-                    AuthServices.createDefaultApi(host),
-                    ProxyManager.createSirirusHttpClient()); //load new proxy data from service.
+                ProxyManager.consumeClient(c -> ApplicationCore.WEB_API.getAuthService()
+                        .reconnectService(AuthServices.createDefaultApi(host), c)); //load new proxy data from service.
 
-            ProxyManager.enforceGlobalProxySetting(); //update global proxy stuff for Webview.
+                ProxyManager.enforceGlobalProxySetting(); //update global proxy stuff for Webview.
 
-            ApplicationCore.WEB_API.changeActiveSubscription(
-                    ApplicationCore.WEB_API.getAuthService().getToken()
-                            .map(Tokens::getActiveSubscription).orElse(null));
-        });
+                ApplicationCore.WEB_API.changeActiveSubscription(
+                        ApplicationCore.WEB_API.getAuthService().getToken()
+                                .map(Tokens::getActiveSubscription).orElse(null));
+            });
 
-        MF.CONNECTION_MONITOR().checkConnectionInBackground();
+        } catch (Exception e) {
+            LoggerFactory.getLogger(getClass()).warn("Error when reconnecting after changing setting. Connections might have a unhealthy state. Please restart SIRIUS.", e);
+        }finally {
+            MF.CONNECTION_MONITOR().checkConnectionInBackground();
+        }
     }
 
     @Override
