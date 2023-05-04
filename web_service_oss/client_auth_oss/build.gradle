@@ -2,7 +2,6 @@ dependencies {
     compile project(':chemistry_base')
     compile project(':fingerid_base_oss')
     compile project(':io')
-//    compile project(':web_service_oss:scribejava-httpclient-apache5')
     compile 'com.github.scribejava:scribejava-apis:8.3.3'
     compile 'com.github.scribejava:scribejava-httpclient-okhttp:8.3.3'
     compile 'com.squareup.okhttp3:okhttp:4.10.0'
