@@ -22,6 +22,7 @@ package de.unijena.bioinf.ChemistryBase.utils;
 
 import org.apache.commons.lang3.time.StopWatch;
 
+import java.io.IOException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -38,7 +39,16 @@ public class Utils {
         w.start();
         R r = exec.apply(w);
         w.stop();
-        System.out.println(text + w.toString());
+        System.out.println(text + w);
+        return r;
+    }
+
+    public static <R> R withTimeRIo(String text, IOFunctions.IOFunction<StopWatch, R> exec) throws IOException {
+        StopWatch w = new StopWatch();
+        w.start();
+        R r = exec.apply(w);
+        w.stop();
+        System.out.println(text + w);
         return r;
     }
 

@@ -21,6 +21,7 @@
 package de.unijena.bioinf.webapi.rest;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.WaiterJJob;
 import de.unijena.bioinf.ms.rest.model.*;
@@ -42,9 +43,9 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 final class WebJobWatcher { //todo rename to RestJobWatcher
-    private static final int INIT_WAIT_TIME = 200;
+    private static final int INIT_WAIT_TIME = 25;
     private static final int STAY_AT_INIT_TIME = 3;
-    private static final int MAX_SUBMIT_BATCH = 250;
+    private static final int MAX_SUBMIT_BATCH = 240;
 
     public static final String JOB_WATCHER_CLIENT_ID = "JOB_WATCHER";
     public static final String JOB_SUBMITTER_CLIENT_ID = "JOB_SUBMITTER";
@@ -298,7 +299,6 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
                             runningAndFinishedUpdates =
                                     api.getJobsByState( //get finished and running jobs
                                             waitingJobs.keySet().stream().map(id -> id.jobTable).collect(Collectors.toSet()), //only request listed jobs
-//                                            Set.of(JobTable.JOBS_COVTREE, JobTable.JOBS_CANOPUS, JobTable.JOBS_FINGERID),
                                             RUNNING_AND_FINISHED
                                     ).values().stream().flatMap(Collection::stream).collect(Collectors.toCollection(LinkedList::new));
 

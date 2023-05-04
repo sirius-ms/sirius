@@ -92,11 +92,9 @@ public abstract class AbstractClient {
 
     protected void isSuccessful(Response response, Request sourceRequest) throws IOException {
         if (response.code() >= 400) {
-            try (ResponseBody body = response.body()) {
-                final String content = body != null ? body.string() : "No Content";
-                throw new HttpErrorResponseException(response.code(), response.message(),
-                        Optional.ofNullable(response.header("WWW-Authenticate")).orElse("NULL"), content);
-            }
+            throw new HttpErrorResponseException(response.code(), response.message(),
+                    Optional.ofNullable(response.header("WWW-Authenticate")).orElse("NULL"),
+                    response.request().method() + ": " + response.request().url(), "No Content");
         }
     }
 

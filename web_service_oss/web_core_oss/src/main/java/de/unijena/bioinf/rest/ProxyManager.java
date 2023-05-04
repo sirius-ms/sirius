@@ -37,11 +37,13 @@ import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
@@ -80,25 +82,22 @@ public class ProxyManager {
         return getProxyStrategy() == ProxyStrategy.NONE;
     }
 
-    // this method inits the proxy configuration at program start
-    public static OkHttpClient createSirirusHttpClient() {
-        return getSirirusHttpClient(false);
-    }
     private static OkHttpClient getSirirusHttpClient(boolean pooled) {
-        return getSirirusHttpClient(getProxyStrategy(), pooled);
+        if (pooled)
+            return decorateWithPoolSettings(getSirirusHttpClientBuilder(getProxyStrategy())).build();
+        return getSirirusHttpClient(1, 1, 1);
     }
 
-    private static OkHttpClient getSirirusHttpClient(ProxyStrategy strategy, boolean pooled) {
-        OkHttpClient.Builder b = getSirirusHttpClientBuilder(strategy);
-        if (pooled)
-            decorateWithPoolSettings(b);
-        else
-            decorateWithPoolSettings(1, 1, b);
+    private static OkHttpClient getSirirusHttpClient(int maxPerRoute, int maxTotal, int keeAlive) {
+        return getSirirusHttpClient(getProxyStrategy(), maxPerRoute, maxTotal, keeAlive);
+    }
+
+    private static OkHttpClient getSirirusHttpClient(ProxyStrategy strategy, int maxPerRoute, int maxTotal, int keeAlive) {
+        return decorateWithPoolSettings(maxPerRoute, maxTotal, keeAlive, getSirirusHttpClientBuilder(strategy)).build();
 //        b.setConnectionReuseStrategy((request, response, context) -> response.getCode() < 400);
 //        b.setConnectionManagerShared();
 //        b.disableAutomaticRetries();
 //        b.disableConnectionState()
-        return b.build();
     }
 
     private static OkHttpClient.Builder getSirirusHttpClientBuilder(ProxyStrategy strategy) {
@@ -133,21 +132,19 @@ public class ProxyManager {
     }
 
     private static OkHttpClient.Builder decorateWithPoolSettings(final OkHttpClient.Builder builder) {
-        // minus 2 because we have to dedicated connection for job submission and watching
-        return decorateWithPoolSettings(PropertyManager.getInteger("de.unijena.bioinf.sirius.http.maxTotal", 5) - 2, builder);
-    }
-
-    private static OkHttpClient.Builder decorateWithPoolSettings(int maxTotal, final OkHttpClient.Builder builder) {
         int maxPerRoute = Math.min(Math.max(1, SiriusJobs.getCPUThreads()), PropertyManager.getInteger("de.unijena.bioinf.sirius.http.maxRoute", 2));
-        return decorateWithPoolSettings(maxPerRoute, maxTotal, builder);
+        return decorateWithPoolSettings(maxPerRoute,
+                PropertyManager.getInteger("de.unijena.bioinf.sirius.http.maxTotal", 5),
+                PropertyManager.getInteger("de.unijena.bioinf.sirius.http.maxIdle", 3),
+                builder);
     }
 
-    private static OkHttpClient.Builder decorateWithPoolSettings(int maxPerRoute, int maxTotal, final OkHttpClient.Builder builder) {
-//        System.out.println("Starting http Client with MaxPerRout=" + maxPerRoute + " / maxTotal=" + maxTotal + "(Threads=" + SiriusJobs.getCPUThreads() + ").");
-        LoggerFactory.getLogger(ProxyManager.class).info("Starting http Client with MaxPerRout=" + maxPerRoute + " / maxTotal=" + maxTotal + "(Threads=" + SiriusJobs.getCPUThreads() + ").");
-        ConnectionPool pool = new ConnectionPool(
-                PropertyManager.getInteger("de.unijena.bioinf.sirius.http.maxIdle", 3),
-                PropertyManager.getInteger("de.unijena.bioinf.sirius.http.keepAlive", 180000), TimeUnit.MILLISECONDS);
+    private static OkHttpClient.Builder decorateWithPoolSettings(int maxPerRoute, int maxTotal, int keeAlive, final OkHttpClient.Builder builder) {
+
+        LoggerFactory.getLogger(ProxyManager.class).info("Starting http Client with MaxPerRoute=" + maxPerRoute + " / maxTotal=" + maxTotal + " (CPU-Threads=" + SiriusJobs.getCPUThreads() + ").");
+        ConnectionPool pool = new ConnectionPool(keeAlive,
+                PropertyManager.getInteger("de.unijena.bioinf.sirius.http.keepAlive", 180000),
+                TimeUnit.MILLISECONDS);
 
         Dispatcher dispatcher = new Dispatcher(SiriusJobs.getGlobalJobManager().getDefaultCacheThreadPool());
         dispatcher.setMaxRequests(maxTotal);
@@ -414,7 +411,18 @@ public class ProxyManager {
             throw new IllegalStateException("ProxyManager has already been closed! Use reconnect to re-enable!");
         reconnectLock.readLock().lock();
         try {
-            return clients.computeIfAbsent(clientID, k -> getSirirusHttpClient(getProxyStrategy(),POOL_CLIENT_ID.equals(k)));
+            return clients.computeIfAbsent(clientID, k -> getSirirusHttpClient(POOL_CLIENT_ID.equals(k)));
+        } finally {
+            reconnectLock.readLock().unlock();
+        }
+    }
+
+    public static void initClient(String clientID, int maxPerRoute, int maxTotal, int keeAlive) {
+        if (clients == null)
+            throw new IllegalStateException("ProxyManager has already been closed! Use reconnect to re-enable!");
+        reconnectLock.readLock().lock();
+        try {
+            clients.computeIfAbsent(clientID, k -> getSirirusHttpClient(maxPerRoute, maxTotal, keeAlive));
         } finally {
             reconnectLock.readLock().unlock();
         }
@@ -425,10 +433,11 @@ public class ProxyManager {
     }
 
     public static void consumeClient(IOFunctions.IOConsumer<OkHttpClient> doWithClient, String clientID) throws IOException {
+        checkTimeAndWait(clientID);
         reconnectLock.readLock().lock();
         try {
             doWithClient.accept(client(clientID));
-        } catch (IOException e){
+        } catch (IOException e) {
             throw new SiriusHttpException(clientID, e);
         } finally {
             reconnectLock.readLock().unlock();
@@ -440,6 +449,7 @@ public class ProxyManager {
     }
 
     public static <T> T doWithClient(Function<OkHttpClient, T> doWithClient, String clientID) {
+        checkTimeAndWait(clientID);
         reconnectLock.readLock().lock();
         try {
             return doWithClient.apply(ProxyManager.client(clientID));
@@ -453,10 +463,11 @@ public class ProxyManager {
     }
 
     public static <T> T applyClient(IOFunctions.IOFunction<OkHttpClient, T> doWithClient, String clientID) throws IOException {
+        checkTimeAndWait(clientID);
         reconnectLock.readLock().lock();
         try {
             return doWithClient.apply(ProxyManager.client(clientID));
-        } catch (IOException e){
+        } catch (IOException e) {
             throw new SiriusHttpException(clientID, e);
         } finally {
             reconnectLock.readLock().unlock();
@@ -483,4 +494,30 @@ public class ProxyManager {
 
     private static final String POOL_CLIENT_ID = "POOL_CLIENT";
     private static ConcurrentHashMap<String, OkHttpClient> clients = new ConcurrentHashMap<>();
+
+    private static final int requestPauseMillis = PropertyManager.getInteger("de.unijena.bioinf.sirius.http.requestPause", 125);
+    private static final AtomicLong lastCall = new AtomicLong(System.currentTimeMillis());
+
+    private static void checkTimeAndWait(String clientID) {
+            if (requestPauseMillis <= 0)
+                return;
+            if (!POOL_CLIENT_ID.equals(clientID))
+                return;
+
+            while (true) {
+                long wait;
+                synchronized (lastCall) {
+                    wait = (lastCall.get() + requestPauseMillis) - System.currentTimeMillis();
+                    if (wait <= 0) {
+                        lastCall.set(System.currentTimeMillis());
+                        break;
+                    }
+                }
+                try {
+                    Thread.sleep(wait);
+                } catch (InterruptedException ignored) {
+                }
+            }
+
+    }
 }
