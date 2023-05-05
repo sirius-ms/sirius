@@ -1,0 +1,11 @@
+dependencies {
+    //project
+    implementation project(':db-storage')
+    implementation project(':chemistry_base')
+    implementation project(':chemical_db_oss')
+    implementation project(':chemical_db_oss:chemdb_nitrite_oss')
+
+    // external
+    implementation 'org.dizitart:nitrite:3.4.2'
+    implementation 'it.unimi.dsi:fastutil:8.5.12'
+}
