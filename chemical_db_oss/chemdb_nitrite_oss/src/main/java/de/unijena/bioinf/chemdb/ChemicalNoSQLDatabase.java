@@ -36,6 +36,7 @@ public abstract class ChemicalNoSQLDatabase<DocType> implements AbstractChemical
                     new Index("name", IndexType.NON_UNIQUE),
                     new Index("inchikey", IndexType.NON_UNIQUE)
             }
+            // TODO what about compund/fingerprint being essentially the same!?
     );
 
     final protected Database<DocType> database;
