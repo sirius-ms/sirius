@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Quantification;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.QuantificationMeasure;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.QuantificationTable;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.mgf.MgfWriter;
@@ -125,6 +126,10 @@ public class MgfExporterWorkflow implements Workflow {
                     ));
                 });
             }
+
+            final String quatTypeSuffix = compounds.values().stream().findAny().map(QuantInfo::quants)
+                    .map(QuantificationTable::getMeasure).map(this::toQuantSuffix).orElse("");
+
             // now write data
             ArrayList<String> compoundNames = new ArrayList<>(compounds.keySet());
             Collections.sort(compoundNames);
@@ -134,7 +139,7 @@ public class MgfExporterWorkflow implements Workflow {
             CsvTranslators.CsvEscaper escaper = new CsvTranslators.CsvEscaper();
             for (String sample : sampleNameList) {
                 bw.write(",");
-                escaper.translate(sample, bw);
+                escaper.translate(sample + quatTypeSuffix, bw);
             }
             bw.newLine();
             for (String compoundId : compoundNames) {
@@ -165,6 +170,13 @@ public class MgfExporterWorkflow implements Workflow {
         return lcms.isEmpty() ? Optional.empty() : Optional.of(lcms.getQuantificationTable());
     }
 
+    private String toQuantSuffix(QuantificationMeasure m){
+        return switch (m) {
+            case APEX -> " Peak height";
+            case INTEGRAL, INTEGRAL_FWHMD -> " Peak area";
+        };
+    }
+
     private static class QuantInfo {
         final double ionMass;
         final double rt;
@@ -174,6 +186,18 @@ public class MgfExporterWorkflow implements Workflow {
             this.ionMass = ionMass;
             this.rt = rt;
             this.quants = quants;
+        }
+
+        public double ionMass() {
+            return ionMass;
+        }
+
+        public double rt() {
+            return rt;
+        }
+
+        public QuantificationTable quants() {
+            return quants;
         }
     }
 }
