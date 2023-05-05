@@ -26,6 +26,8 @@ import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.chemdb.ChemicalNoSQLDatabase;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
+import de.unijena.bioinf.chemdb.NoSQLSerializer;
+import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import de.unijena.bioinf.storage.db.nosql.nitrite.NitriteDatabase;
 import org.dizitart.no2.Document;
@@ -47,20 +49,25 @@ public class ChemicalNitriteDatabase extends ChemicalNoSQLDatabase<Document> {
 
     @Override
     public <C extends CompoundCandidate> void importCompoundsAndFingerprints(MolecularFormula key, Iterable<C> candidates) throws ChemicalDatabaseException  {
+        importCompoundsAndFingerprints(this.database, this.serializer, key, candidates);
+    }
+
+    public static <C extends CompoundCandidate, N extends NoSQLSerializer<Document>> void importCompoundsAndFingerprints(Database<Document> database, N serializer, MolecularFormula key, Iterable<C> candidates) throws ChemicalDatabaseException  {
         try {
-            this.database.insertAll(COMPOUND_COLLECTION, () -> StreamSupport.stream(candidates.spliterator(), false).map(c -> serializer.serializeCompoundAndFingerprint(key, c)).iterator());
+            database.insertAll(COMPOUND_COLLECTION, () -> StreamSupport.stream(candidates.spliterator(), false).map(c -> serializer.serializeCompoundAndFingerprint(key, c)).iterator());
             long bitset = StreamSupport.stream(candidates.spliterator(), false).map(CompoundCandidate::getBitset).reduce(0L, (a, b) -> a | b);
             synchronized (database) {
-                List<Document> fdocs = Lists.newArrayList(this.database.find(FORMULA_COLLECTION, new Filter().eq("formula", key.toString())));
+                List<Document> fdocs = Lists.newArrayList(database.find(FORMULA_COLLECTION, new Filter().eq("formula", key.toString())));
                 if (fdocs.size() > 0) {
                     for (Document fdoc : fdocs) {
                         fdoc.put("bitset", (long) fdoc.getOrDefault("bitset", 0L) | bitset);
-                        this.database.upsert(FORMULA_COLLECTION, fdoc);
+                        database.upsert(FORMULA_COLLECTION, fdoc);
                     }
                 } else {
-                    this.database.insert(FORMULA_COLLECTION, serializer.serializeFormula(key, bitset));
+                    database.insert(FORMULA_COLLECTION, serializer.serializeFormula(key, bitset));
                 }
-            }        } catch (IOException e) {
+            }
+        } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }
     }

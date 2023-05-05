@@ -20,13 +20,12 @@
 
 package de.unijena.bioinf.storage.db.nosql.nitrite;
 
-import de.unijena.bioinf.storage.db.nosql.POJO;
 import org.dizitart.no2.NitriteId;
 import org.dizitart.no2.objects.Id;
 import org.dizitart.no2.objects.InheritIndices;
 
 @InheritIndices
-public abstract class NitritePOJO extends POJO implements NitriteMappable, NitriteWriteString {
+public abstract class NitritePOJO implements NitriteMappable, NitriteWriteString {
 
     @Id
     protected NitriteId id;

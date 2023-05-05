@@ -21,12 +21,20 @@
 package de.unijena.bioinf.storage.db.nosql.nitrite;
 
 
+import com.fasterxml.jackson.core.*;
+import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Streams;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import de.unijena.bioinf.storage.db.nosql.Index;
 import de.unijena.bioinf.storage.db.nosql.IndexType;
+import gnu.trove.list.TDoubleList;
+import gnu.trove.list.array.TDoubleArrayList;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.doubles.DoubleList;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.dizitart.no2.Document;
 import org.dizitart.no2.NitriteId;
@@ -56,8 +64,6 @@ public class NitriteDatabaseTest {
 
     private static class NitriteTestEntry extends NitritePOJO implements NitriteWriteString {
 
-        public static final Index[] index = {new Index("name", IndexType.UNIQUE)};
-
         public String name;
 
         public NitriteTestEntry() {
@@ -71,9 +77,87 @@ public class NitriteDatabaseTest {
 
     }
 
-    private static class NitriteChildTestEntry extends NitritePOJO implements NitriteWriteString {
+    private static class NitriteNoPOJOTestEntry implements NitriteWriteString {
 
-        public static final Index[] index = {new Index("name", IndexType.NON_UNIQUE)};
+        public String name;
+        public DoubleList dlist;
+        public TDoubleList dtlist;
+        public double[] darr;
+
+        public NitriteNoPOJOTestEntry() {
+            super();
+        }
+
+        public NitriteNoPOJOTestEntry(String name, DoubleList dlist, TDoubleList dtlist, double[] darr) {
+            this.name = name;
+            this.dlist = dlist;
+            this.dtlist = dtlist;
+            this.darr = darr;
+        }
+    }
+
+    private static class TestSerializer extends JsonSerializer<NitriteNoPOJOTestEntry> {
+
+        @Override
+        public void serialize(NitriteNoPOJOTestEntry value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+            gen.writeStartObject();
+            gen.writeStringField("name", value.name + "_S");
+            gen.writeObjectField("dlist", value.dlist);
+            gen.writeObjectField("dtlist", value.dtlist.toArray());
+            gen.writeObjectField("darr", value.darr);
+            gen.writeEndObject();
+        }
+
+    }
+
+    private static class TestDeserializer extends JsonDeserializer<NitriteNoPOJOTestEntry> {
+
+        @Override
+        public NitriteNoPOJOTestEntry deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+            String name = null;
+            DoubleList dlist = null;
+            TDoubleList dtlist = null;
+            double[] darr = null;
+            JsonToken jsonToken = p.nextToken();
+            while (!jsonToken.isStructEnd()) {
+                if (jsonToken == JsonToken.FIELD_NAME) {
+                    String fieldName = p.currentName();
+                    switch (fieldName) {
+                        case "name":
+                            name = p.nextTextValue() + "_D";
+                            break;
+                        case "dlist":
+                            jsonToken = p.nextToken();
+                            dlist = new DoubleArrayList(p.readValueAs(double[].class));
+                            break;
+                        case "dtlist":
+                            jsonToken = p.nextToken();
+                            dtlist = new TDoubleArrayList(p.readValueAs(double[].class));
+                            break;
+                        case "darr":
+                            jsonToken = p.nextToken();
+                            darr = p.readValueAs(double[].class);
+                            break;
+                    }
+                }
+                jsonToken = p.nextToken();
+            }
+            return new NitriteNoPOJOTestEntry(name, dlist, dtlist, darr);
+        }
+
+    }
+
+    private static class TestModule extends SimpleModule {
+
+        public TestModule() {
+            super("test");
+
+            addSerializer(NitriteNoPOJOTestEntry.class, new TestSerializer());
+            addDeserializer(NitriteNoPOJOTestEntry.class, new TestDeserializer());
+        }
+    }
+
+    private static class NitriteChildTestEntry extends NitritePOJO implements NitriteWriteString {
 
         public String name;
 
@@ -91,8 +175,6 @@ public class NitriteDatabaseTest {
 
     private static class NitriteFamilyTestEntry extends NitritePOJO implements NitriteWriteString {
 
-        public static final Index[] index = {new Index("name", IndexType.UNIQUE)};
-
         public String name;
 
         public List<NitriteChildTestEntry> children;
@@ -108,7 +190,7 @@ public class NitriteDatabaseTest {
 
         Path file = Files.createTempFile("nitrite-test", "");
         file.toFile().deleteOnExit();
-        try (NitriteDatabase db = new NitriteDatabase(file)) {
+        try (NitriteDatabase db = new NitriteDatabase(file, new HashMap<>())) {
             Filter[] nof = {
                     // SIMPLE FILTERS
                     new Filter().eq("a", 42),
@@ -206,7 +288,7 @@ public class NitriteDatabaseTest {
 
         Path file = Files.createTempFile("nitrite-test", "");
         file.toFile().deleteOnExit();
-        try (NitriteDatabase db = new NitriteDatabase(file)) {
+        try (NitriteDatabase db = new NitriteDatabase(file, new HashMap<>())) {
             Filter[] nof = {
                     // SIMPLE FILTERS
                     new Filter().eq("a", 42),
@@ -304,7 +386,7 @@ public class NitriteDatabaseTest {
 
         Path file = Files.createTempFile("nitrite-test", "");
         file.toFile().deleteOnExit();
-        try (NitriteDatabase db = new NitriteDatabase(file, NitriteTestEntry.class)) {
+        try (NitriteDatabase db = new NitriteDatabase(file, Map.of(NitriteTestEntry.class, new Index[]{new Index("name", IndexType.UNIQUE)}))) {
             List<NitriteTestEntry> in = new ArrayList<>(Arrays.asList(
                     new NitriteTestEntry("A"),
                     new NitriteTestEntry("B"),
@@ -406,6 +488,23 @@ public class NitriteDatabaseTest {
     }
 
     @Test
+    public void testJackson() throws IOException {
+        Path file = Files.createTempFile("nitrite-test", "");
+        file.toFile().deleteOnExit();
+        try (NitriteDatabase db = new NitriteDatabase(file, Map.of(NitriteNoPOJOTestEntry.class, new Index[]{new Index("name", IndexType.UNIQUE)}), new TestModule())) {
+            NitriteNoPOJOTestEntry in = new NitriteNoPOJOTestEntry("A", DoubleList.of(1, 2, 3), new TDoubleArrayList(new double[]{1, 2, 3}), new double[]{1, 2, 3});
+            db.insert(in);
+            NitriteNoPOJOTestEntry[] out = Iterables.toArray(db.findAll(NitriteNoPOJOTestEntry.class), NitriteNoPOJOTestEntry.class);
+            assertEquals("jackson db size", 1, out.length);
+            assertEquals("jackson module used", in.name + "_S_D", out[0].name);
+            assertTrue("jackson fastutil", EqualsBuilder.reflectionEquals(in.dlist.toDoubleArray(), out[0].dlist.toDoubleArray()));
+            assertTrue("jackson trove", EqualsBuilder.reflectionEquals(in.dtlist, out[0].dtlist));
+            assertTrue("jackson primitive array", EqualsBuilder.reflectionEquals(in.darr, out[0].darr));
+        }
+
+    }
+
+    @Test
     public void testJoin() throws IOException {
 
         Path file = Files.createTempFile("nitrite-test", "");
@@ -413,7 +512,10 @@ public class NitriteDatabaseTest {
 
         NitriteTestEntry parent = new NitriteTestEntry("parent");
 
-        try (NitriteDatabase db = new NitriteDatabase(file, NitriteTestEntry.class, NitriteChildTestEntry.class)) {
+        try (NitriteDatabase db = new NitriteDatabase(file, Map.of(
+                NitriteTestEntry.class, new Index[]{new Index("name", IndexType.UNIQUE)},
+                NitriteChildTestEntry.class, new Index[]{new Index("name", IndexType.NON_UNIQUE)}
+        ))) {
 
             db.insert(parent);
 
@@ -563,7 +665,7 @@ public class NitriteDatabaseTest {
 
         List<NitriteTestEntry> entries = IntStream.range(0, 100).mapToObj((int num) -> new NitriteTestEntry(Integer.toString(num))).collect(Collectors.toList());
 
-        try (NitriteDatabase db = new NitriteDatabase(file, NitriteTestEntry.class)) {
+        try (NitriteDatabase db = new NitriteDatabase(file, Map.of(NitriteTestEntry.class, new Index[]{new Index("name", IndexType.UNIQUE)}))) {
             List<Callable<Void>> jobs = entries.stream().map((NitriteTestEntry entry) -> (Callable<Void>) () -> {
                 assertEquals("insert", 1, db.insert(entry));
                 return null;

@@ -27,11 +27,11 @@ import java.nio.file.Path;
 
 public class NoSQLChemDBs {
 
-    public static ChemicalNoSQLDatabase<?> getLocalChemDB(Path file) {
+    public static AbstractChemicalDatabase getLocalChemDB(Path file) {
         return new ChemicalNitriteDatabase(file);
     }
 
-    public static ChemicalNoSQLDatabase<?> getLocalChemDB(Path file, FingerprintVersion version) {
+    public static AbstractChemicalDatabase getLocalChemDB(Path file, FingerprintVersion version) {
         return new ChemicalNitriteDatabase(file, version);
     }
 

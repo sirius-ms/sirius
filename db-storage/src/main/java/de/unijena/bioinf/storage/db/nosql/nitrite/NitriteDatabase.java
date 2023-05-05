@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.storage.db.nosql.nitrite;
 
+import com.fasterxml.jackson.databind.Module;
 import com.google.common.collect.Iterables;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
@@ -34,7 +35,6 @@ import org.dizitart.no2.objects.filters.ObjectFilters;
 
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -71,21 +71,29 @@ public class NitriteDatabase implements Database<Document> {
 
     public NitriteDatabase(@NotNull Path file, Map<String, Index[]> collections) {
         this.file = file;
-        this.db = Nitrite.builder().filePath(file.toFile()).compressed().openOrCreate();
+        this.db = initDB(file);
         initCollections(collections);
     }
 
-    public NitriteDatabase(@NotNull Path file, Map<String, Index[]> collections, Class<?>... classes) {
+    public NitriteDatabase(@NotNull Path file, Map<String, Index[]> collections, Map<Class<?>, Index[]> repositories, Module... jacksonModules) {
         this.file = file;
-        this.db = Nitrite.builder().filePath(file.toFile()).compressed().openOrCreate();
+        this.db = initDB(file, jacksonModules);
         initCollections(collections);
-        initRepositories(classes);
+        initRepositories(repositories);
     }
 
-    public NitriteDatabase(@NotNull Path file, Class<?>... classes) {
+    public NitriteDatabase(@NotNull Path file, Map<Class<?>, Index[]> repositories, Module... jacksonModules) {
         this.file = file;
-        this.db = Nitrite.builder().filePath(file.toFile()).compressed().openOrCreate();
-        initRepositories(classes);
+        this.db = initDB(file, jacksonModules);
+        initRepositories(repositories);
+    }
+
+    private Nitrite initDB(Path file, Module... jacksonModules) {
+        NitriteBuilder builder = Nitrite.builder().filePath(file.toFile());
+        for (Module module : jacksonModules) {
+            builder = builder.registerModule(module);
+        }
+        return builder.compressed().openOrCreate();
     }
 
     private void initCollections(Map<String, Index[]> collections) {
@@ -96,19 +104,11 @@ public class NitriteDatabase implements Database<Document> {
         }
     }
 
-    private void initRepositories(Class<?>[] classes) {
-        for (Class<?> clazz : classes) {
+    private void initRepositories(Map<Class<?>, Index[]> repositories) {
+        for (Class<?> clazz : repositories.keySet()) {
             ObjectRepository<?> repository = this.db.getRepository(clazz);
             this.repositories.put(clazz, repository);
-            try {
-                Field indexField = clazz.getField("index");
-                Index[] indices = (Index[]) indexField.get(null);
-                initIndex(indices, repository);
-            } catch (NoSuchFieldException e) {
-                // that's okay, no index in this case
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
+            initIndex(repositories.get(clazz), repository);
         }
     }
 
