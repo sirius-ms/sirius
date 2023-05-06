@@ -171,7 +171,6 @@ subprojects {
 
         jvmOptions = [
                 '-Xms1G',
-//                '-Xmx4G',
                 '-XX:MaxRAMPercentage=85',
                 '-XX:+UseG1GC',
                 '-XX:+UseStringDeduplication',
@@ -201,14 +200,10 @@ subprojects {
         outputDir = buildDir.toPath().resolve('distributions').toFile()
         winConsole = true
 
-        String[] jArgs = [
-                '-Xms1G',
-                '-XX:MaxRAMPercentage=85',
-                '-XX:+UseG1GC',
-                '-XX:+UseStringDeduplication'
-        ]
 
         doLast {
+            if (!includeJreFX)
+                throw new IllegalArgumentException("OS specific App images need to include java runtime. Please run with `-P build.sirius.starter.jdk.include=true`")
             File appRootTarget
             File launcherTarget
             File runtimeTarget
@@ -272,7 +267,7 @@ subprojects {
                 templateBinding.javaLibPath = ""//includeJreFX ? "\$APP_HOME/lib/runtime/lib" : ""
                 templateBinding.gurobiHome = "/lib"
                 templateBinding.cplexHome = "/bin/x86-64_linux"
-                templateBinding.jvmOpts = "${Arrays.stream(jArgs).collect(Collectors.joining(' '))}"
+                templateBinding.jvmOpts = "${Arrays.stream(jvmArgs).collect(Collectors.joining(' '))}"
                 templateBinding.javaCommand = "\$APP_HOME/lib/runtime/bin/java"
                 templateBinding.jarHome = libDir == null ? "\$APP_HOME/lib/app" : libDir
             } else if (siriusTargetPlatform.isMac()) {
@@ -283,14 +278,14 @@ subprojects {
                 templateBinding.javaLibPath = ""//includeJreFX ? "\$APP_HOME/runtime/Contents/Home/lib" : ""
                 templateBinding.gurobiHome = "/lib"
                 templateBinding.cplexHome = "/bin/x86-64_osx"
-                templateBinding.jvmOpts = "${Arrays.stream(jArgs).collect(Collectors.joining(' '))}"
+                templateBinding.jvmOpts = "${Arrays.stream(jvmArgs).collect(Collectors.joining(' '))}"
                 templateBinding.javaCommand = "\$APP_HOME/runtime/Contents/Home/bin/java"
                 templateBinding.jarHome = libDir == null ?  "\$APP_HOME/app" : libDir
             } else if (siriusTargetPlatform.isWin()) {
                 f = file("$appRootTarget/sirius.bat")
                 sf = file("${rootDir}/scripts/sirius.bat.templ")
                 templateBinding.classPath = "%JAR_HOME%\\*"
-                templateBinding.jvmOpts = "${Arrays.stream(jArgs).map({ s -> '"' + s + '"' }).collect(Collectors.joining(" "))}"
+                templateBinding.jvmOpts = "${Arrays.stream(jvmArgs).map({ s -> '"' + s + '"' }).collect(Collectors.joining(" "))}"
                 templateBinding.jarHome =  libDir == null ? "%APP_HOME%\\app" : libDir
                 templateBinding.gurobiJar = "%GUROBI_HOME%\\lib\\gurobi.jar"
                 templateBinding.cplexJar = "%CPLEX_HOME%\\lib\\cplex.jar"
