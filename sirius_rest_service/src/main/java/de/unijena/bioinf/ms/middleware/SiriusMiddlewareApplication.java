@@ -92,12 +92,6 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                 final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
 
                 final ProjectSpaceManagerFactory<?, ?> psf = new ProjectSpaceManagerFactory.Default();
-                /*if (Arrays.stream(args).anyMatch(it -> it.equalsIgnoreCase("gui"))) {
-                    psf = new GuiProjectSpaceManagerFactory();
-                } else {
-                    psf = new ProjectSpaceManagerFactory.Default();
-                }*/
-
 
                 rootOptions = new CLIRootOptions<>(configOptionLoader, psf);
                 if (RUN != null)
