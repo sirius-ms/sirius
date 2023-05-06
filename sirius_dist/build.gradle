@@ -179,7 +179,6 @@ subprojects {
         ]
 
         dontWrapJar = true
-        bundledJrePath = launch4jJDKPath != null ? launch4jJDKPath : "./runtime"
         classpath = [(libDir == null ? "app" : libDir) + "\\*", "%GUROBI_HOME%\\lib\\gurobi.jar", "%CPLEX_HOME%\\lib\\cplex.jar"]
         libraryDir = libDir == null ? "app" : libDir
 
