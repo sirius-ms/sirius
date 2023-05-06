@@ -66,10 +66,14 @@ dependencies {
     implementation project(':sirius_rest_service')
     for (m in javaFX_modules) // add (native) javaFX dependencies to build
         implementation "org.openjfx:$m:$targetCompatibility.+:${siriusTargetPlatform.jfxClassifier().get()}"
+    //tests
+    implementation 'org.junit.jupiter:junit-jupiter:5.8.2'
+    testImplementation project(':sirius_dist').sourceSets.test.output //needed for the TestLocal tests
 }
 
 mainClassName = 'org.springframework.boot.loader.JarLauncher'
 //mainClassName = "de.unijena.bioinf.ms.frontend.SiriusGUIApplication"
+def mainJar = getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar').outputs.files.singleFile.getName()
 
 application {
     mainClass = project.mainClassName
@@ -85,8 +89,7 @@ application {
 launch4j {
     mainClassName = project.mainClassName
     libraryDir = libDir == null ? "lib" : libDir
-//    jar = getLibraryDir() + "\\" + getRootProject().getChildProjects().get('sirius_gui').tasks.getByName('jar').outputs.files.singleFile.getName()
-    jar = getLibraryDir() + "\\" + getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar').outputs.files.singleFile.getName()
+    jar = getLibraryDir() + "\\$mainJar"
     jvmOptions = application.applicationDefaultJvmArgs
     dontWrapJar = true
     bundledJrePath = launch4jJDKPath != null ? launch4jJDKPath : "../runtime"
@@ -208,3 +211,60 @@ if (includeJreFX)
 distribution.dependsOn 'siriusDistZip'
 //distribution.dependsOn 'siriusDistTar'
 distribution.dependsOn 'createChecksums'
+
+
+
+// OS specific packaging
+distImage {
+    dependsOn installSiriusDist
+    runtimeImageDirectory = installSiriusDist.outputs.files.singleFile.toPath().resolve("runtime").toFile()
+    inputDir = installSiriusDist.outputs.files.singleFile.toPath().resolve("lib").toFile()
+    imageName = 'sirius'
+    mainClass = mainClassName
+    jvmArgs = application.applicationDefaultJvmArgs
+    mainJarName = mainJar
+    winConsole = true
+    macPackageName = 'SIRIUS'
+    if (siriusTargetPlatform.isWin()) {
+        //HACK additional windows launchers are imported from launch4j, this is just fake to register it for the start menu. must be a valid path but file must not exists
+        launchers = ["sirius-gui": "${createGuiExe.outfile}"]
+    }
+}
+
+distInstaller {
+    linuxShortcut = true
+}
+
+distribution.dependsOn 'signDistImage'
+if (siriusTargetPlatform.isMac())
+    distribution.dependsOn 'macNotarize'
+distribution.dependsOn 'createChecksums'
+distribution.dependsOn 'distImageZip'
+if (!siriusTargetPlatform.isLinux()) {
+    distribution.dependsOn 'signDistInstaller'
+    distribution.dependsOn 'distInstaller'
+}
+
+publishing {
+    publications {
+        siriusMS(org.gradle.api.publish.maven.MavenPublication) {
+            artifactId = "$name"
+            groupId = "$group"
+            artifact source: "${distImage.getImageDir().absolutePath}.zip", classifier: osName, extension: 'zip'
+            if (!siriusTargetPlatform.isLinux())
+                artifact source: "${siriusTargetPlatform.isMac() ? distImage.getImageDir().absolutePath.replace('.app', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}", classifier: osName, extension: installerNameType
+        }
+        sirius(org.gradle.api.publish.maven.MavenPublication) {
+            artifactId = "$name"
+            groupId = "$group"
+            artifact source: "${distImage.getImageDir().absolutePath}.zip", classifier: osName, extension: 'zip'
+            artifact source: "${distImage.getImageDir().absolutePath}.zip.sha256", classifier: osName, extension: 'zip.sha256'
+            if (!siriusTargetPlatform.isLinux()) {
+                artifact source: "${siriusTargetPlatform.isMac() ? distImage.getImageDir().absolutePath.replace('.app', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}", classifier: osName, extension: installerNameType
+                artifact source: "${siriusTargetPlatform.isMac() ? distImage.getImageDir().absolutePath.replace('.app', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}.sha256", classifier: osName, extension: "${installerNameType}.sha256"
+            }
+        }
+    }
+}
+publishSiriusPublicationToMavenLocal.dependsOn 'distribution'
+publishSiriusMSPublicationToMavenLocal.dependsOn 'distribution'

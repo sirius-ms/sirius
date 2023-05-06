@@ -54,7 +54,7 @@ buildCLI:
 buildGUI:
   stage: build
   script:
-    - ./gradlew :sirius_dist:sirius_gui_single_os:publishSiriusMSPublicationToMavenLocal -P "build.sirius.native.openjfx.exclude=true" -P "build.sirius.starter.jdk.include=true"
+    - ./gradlew :sirius_dist:sirius_gui_dist:publishSiriusMSPublicationToMavenLocal -P "build.sirius.native.openjfx.exclude=true" -P "build.sirius.starter.jdk.include=true"
     - mkdir maven_artifacts
     - mv ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/$VSNAP maven_artifacts
   cache:
@@ -70,28 +70,6 @@ buildGUI:
     refs:
       - master
       - stable
-
-buildAPI:
-  stage: build
-  script:
-    - ./gradlew :sirius_dist:sirius_service_single_os:publishSiriusMSPublicationToMavenLocal -P "build.sirius.native.openjfx.exclude=true" -P "build.sirius.starter.jdk.include=true"
-    - mkdir maven_artifacts
-    - mv ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/$VSNAP maven_artifacts
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: push
-  artifacts:
-    paths:
-      - ./maven_artifacts/$VSNAP
-    expire_in: 3 days
-  tags:
-    - kubernetes
-  only:
-    refs:
-      - master
-      - stable
-
-
 
 testCLI:
   stage: test
@@ -133,28 +111,6 @@ testGUI:
       - master
       - stable
 
-testAPI:
-  stage: test
-  script:
-    - mkdir unzipped
-    - unzip maven_artifacts/$VSNAP/siriusMS-$VSNAP-linux64-service.zip -d unzipped
-    - ./unzipped/sirius/bin/sirius login --user-env SIRIUS_USER --password-env SIRIUS_PW
-    - ./gradlew :sirius_dist:sirius_cli_single_os:distImageTestCICD
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: push
-  needs: [buildAPI]
-  dependencies:
-    - buildAPI
-  tags:
-    - kubernetes
-  only:
-    refs:
-      - master
-      - stable
-
-
-
 publishCLI:
   variables:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false"
@@ -190,27 +146,6 @@ publishGUI:
   needs: [buildGUI, testGUI]
   dependencies:
     - buildGUI
-  tags:
-    - kubernetes
-  only:
-    refs:
-      - master
-      - stable
-
-publishAPI:
-  variables:
-    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-  stage: publish
-  script:
-    - cd maven_artifacts/$VSNAP
-    - curl -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_TOKEN -X PUT "https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/siriusMS/$VSNAP/siriusMS-$VSNAP-linux64-service.zip" -T siriusMS-$VSNAP-linux64-service.zip
-    - curl -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_TOKEN -X PUT "https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/siriusMS/$VSNAP/siriusMS-$VSNAP.pom" -T siriusMS-$VSNAP.pom
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: push
-  needs: [buildAPI, testAPI]
-  dependencies:
-    - buildAPI
   tags:
     - kubernetes
   only:
