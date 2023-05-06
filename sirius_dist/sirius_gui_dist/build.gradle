@@ -92,7 +92,7 @@ launch4j {
     jar = getLibraryDir() + "\\$mainJar"
     jvmOptions = application.applicationDefaultJvmArgs
     dontWrapJar = true
-    bundledJrePath = launch4jJDKPath != null ? launch4jJDKPath : "../runtime"
+    bundledJrePath = launch4jJDKPath != null ? launch4jJDKPath : "..\\runtime"
 //    bundledJre64Bit = true
     classpath = [(libDir == null ? "lib" : libDir) + "\\*",
                  "%GUROBI_HOME%\\lib\\gurobi.jar",
