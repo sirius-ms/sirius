@@ -375,7 +375,7 @@ jobs:
             ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.sha256
 
   release:
-    needs: [ distCLI, distGUI, distService]
+    needs: [ distCLI, distGUI]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
