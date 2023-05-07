@@ -169,6 +169,7 @@ subprojects {
         headerType = "console"
         outfile = "sirius.exe"
 
+        //todo replace
         jvmOptions = [
                 '-Xms1G',
                 '-XX:MaxRAMPercentage=85',
@@ -184,9 +185,11 @@ subprojects {
 
         jdkPreference = "preferJdk"
         jreMinVersion = null
+        jreMaxVersion = null
         bundledJre64Bit = true
         jreRuntimeBits = "64"
         messagesBundledJreError = "Could not Load bundled JRE."
+        bundledJrePath = launch4jJDKPath != null ? launch4jJDKPath : ".\\runtime"
     }
 
     task distImage(type: AppImage, group: 'distribution') {
