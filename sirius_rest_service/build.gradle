@@ -80,7 +80,7 @@ dependencies {
 
     testImplementation group: 'junit', name: 'junit', version: '4.12'
 }
-
+//todo use logback instead of java util logging! => needs support in jjobs
 configurations.each {Configuration conf ->
     //replaced by log4j-over-slf4j
     conf.exclude group: "log4j", module: "log4j"
@@ -97,6 +97,7 @@ configurations.each {Configuration conf ->
     //remove commercial solver -> given at runtime
     conf.exclude group: "com.gurobi", module: "gurobi-jar"
     conf.exclude group: "cplex", module: "cplex"
+//    conf.exclude group: "org.slf4j", module: "slf4j-jdk14"
 }
 
 war {
