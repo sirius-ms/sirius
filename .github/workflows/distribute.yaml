@@ -398,7 +398,7 @@ jobs:
           artifacts: "sirius_dist/build/tmp/artifacts/*/*"
           body: |
             ### Prebuilt SIRIUS releases for all supported platforms. 
-            Installers provided by [Bright Giant](https://github.com/bright-giant/sirius/releases/) are identical to the ones provided by the [Bökerlab](https://github.com/boecker-lab/sirius/releases) but are digitally signed which eases installation on Windows and MacOS.
+            Installers provided by [Bright Giant](https://github.com/bright-giant/sirius/releases/) are identical to the ones provided by the [Böckerlab](https://github.com/boecker-lab/sirius/releases) but are digitally signed which eases installation on Windows and MacOS.
 
             Package names are made up as follows: `<App Name>-<Version>-<Operating System>-<Flavor>.<PackageType>`. Package types are either generic `.zip` archives or operating system specific installers (e.g. `.pkg` or `.msi`). The flavors describe builds with different features:
             * no _Flavor_ suffix represents for the standard SIRIUS package that contains the Graphical User Interface (GUI) and the Command Line Tool (CLI)
