@@ -72,15 +72,6 @@ dependencies {
     implementation 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
-    // thymeleaf pages
-//    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-
-    // security
-//    implementation 'org.springframework.boot:spring-boot-starter-security'
-//    implementation 'org.springframework.security:spring-security-oauth2-resource-server'
-//    implementation 'org.springframework.security:spring-security-oauth2-jose'
-
-
 //    implementation 'io.micrometer:micrometer-core'
 //    implementation 'io.micrometer:micrometer-registry-prometheus'
     //must match minio version
@@ -122,27 +113,6 @@ bootJar {
     }
     launchScript()
 }
-
-/*
-task buildFrontend(type: Exec, group: 'build') {
-    //todo make conditional -> only if it doe not exists
-    workingDir "${getRootProject().projectDir}/frontend"
-    commandLine(['npm', 'run', 'build'])
-}
-
-task copyFrontend(type: Copy, group: 'build setup') {
-    dependsOn(buildFrontend)
-    from "${getRootProject().projectDir}/frontend/dist"
-    into "${getRootProject().projectDir}/middleware/build/resources/main/public"
-}
-bootJar.mustRunAfter(copyFrontend)
-
-task bootJarWithFrontend(group: 'build') {
-    dependsOn(copyFrontend)
-    dependsOn(bootJar)
-}
-*/
-
 
 artifactory {
     contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
