@@ -175,7 +175,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
             PropertyManager.DEFAULTS.changeConfig("PrintCitations", "FALSE");
             if (clearLogin) {
                 try {
-                    AuthServices.clearRefreshToken(ApplicationCore.TOKEN_FILE);
+                    AuthServices.clearRefreshToken(ApplicationCore.WEB_API.getAuthService(), ApplicationCore.TOKEN_FILE);
                     System.out.println("Token successfully removed. You are now logged out!");
                 } catch (IOException e) {
                     LoggerFactory.getLogger(getClass()).error("Error when clearing refresh token.", e);
