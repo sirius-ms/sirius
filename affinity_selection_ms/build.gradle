@@ -1,6 +1,7 @@
 dependencies {
     implementation project(':chemistry_base')
     implementation "org.openscience.cdk:cdk-bundle:$cdk_version"
+    implementation "args4j:args4j:2.32"
 
     testImplementation project(':chemistry_base')
     testImplementation "org.openscience.cdk:cdk-bundle:$cdk_version"
