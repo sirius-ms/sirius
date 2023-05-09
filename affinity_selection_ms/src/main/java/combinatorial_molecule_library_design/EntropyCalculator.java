@@ -35,4 +35,8 @@ public class EntropyCalculator implements CMLEvaluator {
         return sum;
     }
 
+    public CMLDistribution getCMLDistribution(){
+        return this.cmlDist;
+    }
+
 }

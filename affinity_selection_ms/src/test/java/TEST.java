@@ -1,35 +1,68 @@
-import combinatorial_molecule_library_design.EntropyCalculator;
-import combinatorial_molecule_library_design.EquidistantBinDistribution;
-import combinatorial_molecule_library_design.MassDecomposer;
-import combinatorial_molecule_library_design.MassDeviationDependentBinDistribution;
+import combinatorial_molecule_library_design.*;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.stream.Stream;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.ArrayList;
+
 
 public class TEST {
 
-    public static <T> String arrayToString(T[] array){
-        StringBuilder strBuilder = new StringBuilder();
-        for(T x : array) strBuilder.append(x).append(" ");
-        return strBuilder.toString();
+
+    public static double[][] readBBMasses(File bbMassesFile) throws IOException {
+        try(BufferedReader fileReader = Files.newBufferedReader(bbMassesFile.toPath())){
+            ArrayList<ArrayList<Double>> bbMassesList = new ArrayList<>();
+            fileReader.readLine(); // first row contains only the column names
+
+            String currentLine = fileReader.readLine();
+            while(currentLine != null && currentLine.length() > 0){
+                String[] row = currentLine.split("\t");
+                if(Integer.parseInt(row[0]) == 1){
+                    ArrayList<Double> newBBMasses = new ArrayList<>();
+                    bbMassesList.add(newBBMasses);
+                }
+                double bb_mass = Double.parseDouble(row[2]);
+                bbMassesList.get(bbMassesList.size()-1).add(bb_mass);
+                currentLine = fileReader.readLine();
+            }
+
+            double[][] bbMasses = new double[bbMassesList.size()][];
+            for(int idx = 0; idx < bbMassesList.size(); idx++){
+                bbMasses[idx] = doubleArrayListToDoubleArray(bbMassesList.get(idx));
+            }
+            return bbMasses;
+        }
     }
 
-    public static <T> void printArray(T[] array){
-         System.out.println(arrayToString(array));
+    public static double[] doubleArrayListToDoubleArray(ArrayList<Double> list){
+        double[] doubleArray = new double[list.size()];
+        for(int idx = 0; idx < doubleArray.length; idx++){
+            doubleArray[idx] = list.get(idx);
+        }
+        return doubleArray;
     }
+
+    public static void writeBinEdgesAndNumMolsPerBin(File outputFile, int[] binEdges, int[] numMolsPerBin) throws IOException {
+        try(BufferedWriter fileWriter = Files.newBufferedWriter(outputFile.toPath())){
+            fileWriter.write("lowerBound\tupperBound\t#mols");
+            fileWriter.newLine();
+
+            for(int binIdx = 0; binIdx < numMolsPerBin.length; binIdx++){
+                fileWriter.write(binEdges[binIdx]+"\t"+binEdges[binIdx+1]+"\t"+numMolsPerBin[binIdx]);
+                fileWriter.newLine();
+            }
+        }
+    }
+
     public static void main(String[] args){
-        double[][] bbMasses = new double[][]{{87.0320284, 97.052763844, 113.084063972, 137.058911844, 147.068413908, 163.063328528, 186.07931294},
-                {57.021463716, 71.03711378, 97.052763844, 99.068413908, 101.047678464, 128.058577496, 129.042593084},
-                {97.065339908, 123.024617968, 154.00596646, 165.055169148, 167.045667084}};
-        double blowupFactor = 1E5;
+        double[][] bbMasses = new double[][]{{1d},{1d},{1d}};
+        double blowupFactor = 1e6;
         double ppm = 5;
-        long timeStamp = System.currentTimeMillis();
-        MassDeviationDependentBinDistribution dist = new MassDeviationDependentBinDistribution(bbMasses, blowupFactor, ppm);
-        int[][] intBBMasses = dist.getBbMasses();
-        EntropyCalculator entropyCalc = new EntropyCalculator(dist, x -> x);
-        System.out.println(entropyCalc.evaluate(new int[][]{{intBBMasses[0][0]}, {intBBMasses[1][0]}, {intBBMasses[2][0]}}));
-        long timeNeeded = System.currentTimeMillis() - timeStamp;
-        System.out.println("The computation needed "+timeNeeded+"ms");
+        int[][] intBBMasses = CMLUtils.convertBBMassesToInteger(bbMasses, blowupFactor);
+
+        EntropyLikeCalculator calc = new EntropyLikeCalculator(ppm, blowupFactor);
+        System.out.println(calc.evaluate(intBBMasses));
     }
 }
