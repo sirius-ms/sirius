@@ -1,4 +1,4 @@
-package combinatorial_molecule_library_design;
+package de.unijena.bioinf.cmlDesign;
 
 /**
  * An object of this class CMLDistribution enables the computation of the distribution of the molecular masses

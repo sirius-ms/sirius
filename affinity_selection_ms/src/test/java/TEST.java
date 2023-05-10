@@ -1,4 +1,6 @@
 import combinatorial_molecule_library_design.*;
+import de.unijena.bioinf.cmlDesign.CMLUtils;
+import de.unijena.bioinf.cmlDesign.EntropyLikeCalculator;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

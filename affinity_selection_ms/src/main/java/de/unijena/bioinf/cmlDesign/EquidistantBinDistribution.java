@@ -1,4 +1,4 @@
-package combinatorial_molecule_library_design;
+package de.unijena.bioinf.cmlDesign;
 
 public class EquidistantBinDistribution extends CMLDistribution{
 

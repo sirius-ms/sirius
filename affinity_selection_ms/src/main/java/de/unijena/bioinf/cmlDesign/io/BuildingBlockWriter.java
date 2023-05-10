@@ -1,4 +1,4 @@
-package combinatorial_molecule_library_design.io;
+package de.unijena.bioinf.cmlDesign.io;
 
 import java.io.BufferedWriter;
 import java.io.File;

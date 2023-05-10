@@ -1,7 +1,7 @@
-package combinatorial_molecule_library_design;
+package de.unijena.bioinf.cmlDesign;
 
-import combinatorial_molecule_library_design.io.BuildingBlockReader;
-import combinatorial_molecule_library_design.io.BuildingBlockWriter;
+import de.unijena.bioinf.cmlDesign.io.BuildingBlockReader;
+import de.unijena.bioinf.cmlDesign.io.BuildingBlockWriter;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -164,11 +164,9 @@ public class CLI {
             System.out.println("The arguments were not set correctly.");
             e.printStackTrace();
             parser.printUsage(System.err);
-        } catch (CDKException e) {
+        } catch (CDKException | IOException e) {
             System.out.println("A problem occurred reading the file containing the building blocks.");
             e.printStackTrace();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
     }
 
