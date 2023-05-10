@@ -2,12 +2,17 @@ package combinatorial_molecule_library_design;
 
 import combinatorial_molecule_library_design.io.BuildingBlockReader;
 import combinatorial_molecule_library_design.io.BuildingBlockWriter;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.data.statistics.SimpleHistogramBin;
 import org.jfree.data.statistics.SimpleHistogramDataset;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.openscience.cdk.exception.CDKException;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.BitSet;
@@ -168,7 +173,29 @@ public class CLI {
     }
 
     private static void drawHistogram(int[] numMoleculesPerBin, int[] binEdges){
-        SimpleHistogramDataset dataset = new SimpleHistogramDataset( );
+        // Create the histogram:
+        SimpleHistogramDataset dataset = new SimpleHistogramDataset("Number of candidates");
+        dataset.setAdjustForBinSize(false);
+
+        SimpleHistogramBin bin = new SimpleHistogramBin(binEdges[0], binEdges[1], true, true);
+        bin.setItemCount(numMoleculesPerBin[0]);
+        dataset.addBin(bin);
+        for(int binIdx = 1; binIdx < numMoleculesPerBin.length; binIdx++){
+            bin = new SimpleHistogramBin(binEdges[binIdx], binEdges[binIdx+1], false, true);
+            bin.setItemCount(numMoleculesPerBin[binIdx]);
+            dataset.addBin(bin);
+        }
+
+        JFreeChart histogram = ChartFactory.createHistogram("Distribution of molecule mass", "mass",
+                "frequency", dataset);
+
+        // Create a frame containing the histogram:
+        JFrame frame = new JFrame("Molecule mass distribution of the combinatorial molecule library");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        ChartPanel chartPanel = new ChartPanel(histogram);
+        frame.add(chartPanel);
+        frame.pack();
+        frame.setVisible(true);
     }
 
 
