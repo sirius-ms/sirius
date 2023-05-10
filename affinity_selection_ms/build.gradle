@@ -17,7 +17,7 @@ test {
 
 task SimpleCLI_FatJar(type: Jar) {
     manifest {
-        attributes 'Main-Class': 'combinatorial_molecule_library_design.CLI'
+        attributes 'Main-Class': 'de.unijena.bioinf.cmlDesign.CLI'
     }
     archiveBaseName = "CMLEvaluator"
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
