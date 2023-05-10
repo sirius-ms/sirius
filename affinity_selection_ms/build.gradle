@@ -15,11 +15,21 @@ test {
     useJUnitPlatform()
 }
 
-task SimpleCLI_FatJar(type: Jar) {
+jar{
     manifest {
-        attributes 'Main-Class': 'de.unijena.bioinf.cmlDesign.CLI'
+        attributes('Main-Class': 'de.unijena.bioinf.cmlDesign.CLI')
     }
-    archiveBaseName = "CMLEvaluator"
-    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+}
+
+task SimpleCLI_FatJar(type: Jar) {
+    manifest.from jar.manifest
+    classifier = 'all'
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    } {
+        exclude "META-INF/*.SF"
+        exclude "META-inf/*.DSA"
+        exclude "META_INF/*.RSA"
+    }
     with jar
 }
