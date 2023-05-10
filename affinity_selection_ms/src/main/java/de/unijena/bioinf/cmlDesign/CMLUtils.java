@@ -1,4 +1,4 @@
-package combinatorial_molecule_library_design;
+package de.unijena.bioinf.cmlDesign;
 
 // For all utility methods in this class, notice that bbMasses has to be sorted in increasing order
 public class CMLUtils {

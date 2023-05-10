@@ -1,6 +1,4 @@
-import combinatorial_molecule_library_design.CMLUtils;
-import combinatorial_molecule_library_design.MassDecomposer;
-import combinatorial_molecule_library_design.MassDeviationDependentBinDistribution;
+import de.unijena.bioinf.cmlDesign.MassDeviationDependentBinDistribution;
 
 import java.io.*;
 
