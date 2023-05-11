@@ -25,6 +25,8 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.*;
+import de.unijena.bioinf.GibbsSampling.Zodiac;
+import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
@@ -38,7 +40,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class CanopusSummaryWriter implements Summarizer {
+public class CanopusSummaryWriter extends CandidateSummarizer {
 
     protected static class CanopusSummaryRow {
         private final ProbabilityFingerprint[] cfClassifications;
@@ -126,9 +128,17 @@ public class CanopusSummaryWriter implements Summarizer {
         }
     }
 
-    private final List<CanopusSummaryRow> rowsBySiriusScore = new ArrayList<>();
-    private final List<CanopusSummaryRow> rowsByCSIScore = new ArrayList<>();
+    private final List<CanopusSummaryRow> rowsBySiriusScoreAll;
+    private final List<CanopusSummaryRow> rowsBySiriusScore;
+    private final List<CanopusSummaryRow> rowsByCSIScore;
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+
+    public CanopusSummaryWriter(boolean writeTopHitGlobal, boolean writeTopHitWithAdductsGlobal, boolean writeFullGlobal) {
+        super(writeTopHitGlobal, writeTopHitWithAdductsGlobal, writeFullGlobal);
+        rowsByCSIScore = writeTopHitGlobal || writeTopHitWithAdductsGlobal ? new ArrayList<>() : null;
+        rowsBySiriusScore = writeTopHitGlobal || writeTopHitWithAdductsGlobal ? new ArrayList<>() : null;
+        rowsBySiriusScoreAll = writeFullGlobal ? new ArrayList<>() : null;
+    }
 
     @Override
     public List<Class<? extends DataAnnotation>> requiredFormulaResultAnnotations() {
@@ -138,13 +148,16 @@ public class CanopusSummaryWriter implements Summarizer {
     @Override
     public void addWriteCompoundSummary(ProjectWriter writer, @NotNull CompoundContainer exp, List<? extends SScored<FormulaResult, ? extends FormulaScore>> results) throws IOException {
         if (!results.isEmpty()) {
-            addToRows(rowsBySiriusScore, FormulaScoring.reRankBy(results, List.of(SiriusScore.class), true));
-            addToRows(rowsByCSIScore, FormulaScoring.reRankBy(results, List.of(TopCSIScore.class), true));
+            if (rowsBySiriusScore != null)
+                addToRows(rowsBySiriusScore, FormulaScoring.reRankBy(results, List.of(SiriusScore.class), true), false);
+            if (rowsByCSIScore != null)
+                addToRows(rowsByCSIScore, FormulaScoring.reRankBy(results, List.of(TopCSIScore.class, SiriusScore.class), true), false);
+            if (rowsBySiriusScoreAll != null)
+                addToRows(rowsBySiriusScoreAll, FormulaScoring.reRankBy(results, List.of(SiriusScore.class), true), true);
         }
-
     }
 
-    private void addToRows(List<CanopusSummaryRow> rows, List<? extends SScored<FormulaResult, ? extends FormulaScore>> results) {
+    private void addToRows(List<CanopusSummaryRow> rows, List<? extends SScored<FormulaResult, ? extends FormulaScore>> results, boolean all) {
         // sometimes we have multiple results with same score (adducts!). In this case, we list all of them in
         // a separate summary file
         int i = 0;
@@ -167,7 +180,7 @@ public class CanopusSummaryWriter implements Summarizer {
                 preForms.add(cid.getPrecursorFormula());
             });
             ++i;
-        } while (i < results.size() && results.get(i).getScoreObject().compareTo(hit.getScoreObject()) >= 0);
+        } while (i < results.size() && (results.get(i).getScoreObject().compareTo(hit.getScoreObject()) >= 0 || all));
         if (cfFingerprints.size() > 0) {
             lock.writeLock().lock();
             try {
@@ -189,9 +202,14 @@ public class CanopusSummaryWriter implements Summarizer {
     public void writeProjectSpaceSummary(ProjectWriter writer) throws IOException {
         lock.readLock().lock();
         try {
-            writer.table(SummaryLocations.CANOPUS_FORMULA_SUMMARY, HEADER, Iterators.capture(new IterateOverFormulas(rowsBySiriusScore)));
-            writer.table(SummaryLocations.CANOPUS_COMPOUND_SUMMARY, HEADER, Iterators.capture(new IterateOverFormulas(rowsByCSIScore)));
-            writer.table(SummaryLocations.CANOPUS_FOMRULA_SUMMARY_ADDUCTS, HEADER2, Iterators.capture(new IterateOverAdducts(rowsBySiriusScore)));
+            if (writeTopHitGlobal && rowsBySiriusScore != null)
+                writer.table(SummaryLocations.CANOPUS_FORMULA_SUMMARY, HEADER, Iterators.capture(new IterateOverFormulas(rowsBySiriusScore)));
+            if (writeTopHitGlobal && rowsByCSIScore != null)
+                writer.table(SummaryLocations.CANOPUS_COMPOUND_SUMMARY, HEADER, Iterators.capture(new IterateOverFormulas(rowsByCSIScore)));
+            if (writeTopHitWithAdductsGlobal && rowsBySiriusScore != null)
+                writer.table(SummaryLocations.CANOPUS_FOMRULA_SUMMARY_ADDUCTS, HEADER2, Iterators.capture(new IterateOverAdducts(rowsBySiriusScore)));
+            if (writeFullGlobal && rowsBySiriusScoreAll != null)
+                writer.table(SummaryLocations.CANOPUS_FOMRULA_SUMMARY_ALL, HEADER2, Iterators.capture(new IterateOverAdducts(rowsBySiriusScoreAll)));
         } finally {
             lock.readLock().unlock();
         }

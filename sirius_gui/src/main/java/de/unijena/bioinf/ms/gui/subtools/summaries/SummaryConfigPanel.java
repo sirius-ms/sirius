@@ -20,6 +20,11 @@ public class SummaryConfigPanel extends SubToolConfigPanel<SummaryOptions> {
         super(SummaryOptions.class);
 
         final TwoColumnPanel paras = new TwoColumnPanel();
+        paras.add(new JXTitledSeparator("Include project wide Summaries"));
+        paras.add(makeGenericOptionCheckBox("Top Hits", "top-hit-summary", true) );
+        paras.add(makeGenericOptionCheckBox("Top Hits with Adducts", "top-hit-adduct-summary"));
+        paras.add(makeGenericOptionCheckBox("All Hits", "full-summary"));
+
         paras.add(new JXTitledSeparator("Include prediction table"));
         paras.add(makeGenericOptionCheckBox("CANOPUS ClassyFire predictions", "classyfire"));
         paras.add(makeGenericOptionCheckBox("CANOPUS NPC predictions", "npc"));

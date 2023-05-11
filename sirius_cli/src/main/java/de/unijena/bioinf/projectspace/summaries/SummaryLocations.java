@@ -27,10 +27,13 @@ public interface SummaryLocations {
             //project level summaries
             FORMULA_SUMMARY = "formula_identifications.tsv",
             FORMULA_SUMMARY_ADDUCTS = "formula_identifications_adducts.tsv",
+            FORMULA_SUMMARY_ALL = "formula_identifications_all.tsv",
             COMPOUND_SUMMARY = "compound_identifications.tsv",
             COMPOUND_SUMMARY_ADDUCTS = "compound_identifications_adducts.tsv", // does this make much sense???
+            COMPOUND_SUMMARY_ALL = "compound_identifications_all.tsv", // does this make much sense???
             CANOPUS_FORMULA_SUMMARY = "canopus_formula_summary.tsv",
             CANOPUS_FOMRULA_SUMMARY_ADDUCTS = "canopus_formula_summary_adducts.tsv",
+            CANOPUS_FOMRULA_SUMMARY_ALL = "canopus_formula_summary_all.tsv",
             CANOPUS_COMPOUND_SUMMARY = "canopus_compound_summary.tsv",
 //            CANOPUS_COMPOUND_SUMMARY_ADDUCTS = "canopus_compound_summary_adducts.tsv", // does this make not much sense???
             PREDICTIONS = "predictions.tsv",

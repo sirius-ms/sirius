@@ -172,7 +172,7 @@ public class ProjectSpaceManager<I extends Instance> implements IterableWithSize
     public final I getInstanceFromCompound(CompoundContainerId id, Class<? extends DataAnnotation>... components) {
         I instance;
         synchronized (instanceCache) {
-             instance = (I) instanceCache.computeIfAbsent(id, i -> newInstanceFromCompound(id));
+            instance = (I) instanceCache.computeIfAbsent(id, i -> newInstanceFromCompound(id));
         }
         instance.loadCompoundContainer(components);
         return instance;
@@ -355,11 +355,11 @@ public class ProjectSpaceManager<I extends Instance> implements IterableWithSize
     }
 
     //region static helper
-    public static Summarizer[] defaultSummarizer() {
+    public static Summarizer[] defaultSummarizer(boolean writeTopHitGlobal, boolean writeTopHitWithAdductsGlobal, boolean writeFullGlobal) {
         return new Summarizer[]{
-                new FormulaSummaryWriter(),
-                new StructureSummaryWriter(),
-                new CanopusSummaryWriter(),
+                new FormulaSummaryWriter(writeTopHitGlobal, writeTopHitWithAdductsGlobal, writeFullGlobal),
+                new StructureSummaryWriter(writeTopHitGlobal, writeTopHitWithAdductsGlobal, writeFullGlobal),
+                new CanopusSummaryWriter(writeTopHitGlobal, writeTopHitWithAdductsGlobal, writeFullGlobal),
                 new MztabMExporter()
         };
     }
