@@ -141,31 +141,13 @@ public abstract class SubToolConfigPanel<C> extends ConfigPanel {
     }
 
     public JCheckBox makeGenericOptionCheckBox(String text, String optionKey) {
-        return makeGenericOptionCheckBox(text, optionKey, null);
+        return makeGenericOptionCheckBox(text, optionKey, false);
     }
 
-    public JCheckBox makeGenericOptionCheckBox(String text, String optionKey, Boolean selected) {
-        final CommandLine.Option o = getOptionByName(optionKey).orElse(getOptionByName(negate(optionKey)).orElse(null));
-
-        JCheckBox checkBox = new JCheckBox(text, selected != null ? selected
-                :Optional.ofNullable(o).map(CommandLine.Option::defaultValue).map(Boolean::parseBoolean).orElse(false));
-
+    public JCheckBox makeGenericOptionCheckBox(String text, String optionKey, boolean selected) {
+        JCheckBox checkBox = new JCheckBox(text, selected);
         parameterBindings.put(optionKey, () -> "~" + checkBox.isSelected());
-
-        if (o != null) {
-            checkBox.setToolTipText(GuiUtils.formatToolTip(o.description()));
-            if (o.negatable())
-                parameterBindings.put(negate(optionKey), () -> "~" + !checkBox.isSelected());
-        }
-
+        getOptionDescriptionByName(optionKey).ifPresent(it -> checkBox.setToolTipText(GuiUtils.formatToolTip(it)));
         return checkBox;
-    }
-
-    private static String negate(String optionKey) {
-        if (optionKey.startsWith("no-")) {
-            return optionKey.substring(3);
-        } else {
-            return "no-" + optionKey;
-        }
     }
 }

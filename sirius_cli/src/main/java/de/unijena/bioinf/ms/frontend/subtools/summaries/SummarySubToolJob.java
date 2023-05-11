@@ -88,7 +88,13 @@ public class SummarySubToolJob extends PostprocessingJob<Boolean> implements Wor
                 ids = idsTMP;
             }
 
-            SiriusProjectSpace.SummarizerJob job = project.projectSpace().makeSummarizerJob(options.location, options.compress, ids, ProjectSpaceManager.defaultSummarizer());
+            SiriusProjectSpace.SummarizerJob job = project.projectSpace()
+                    .makeSummarizerJob(options.location, options.compress, ids, ProjectSpaceManager
+                            .defaultSummarizer(
+                                    options.isTopHitSummary(),
+                                    options.isTopHitWithAdductsSummary(),
+                                    options.isFullSummary()
+                            ));
             job.addJobProgressListener(listener);
             SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
             job.removePropertyChangeListener(listener);
