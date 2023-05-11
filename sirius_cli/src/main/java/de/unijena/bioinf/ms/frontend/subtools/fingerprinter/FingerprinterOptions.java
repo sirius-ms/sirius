@@ -42,6 +42,6 @@ public class FingerprinterOptions implements StandaloneTool<FingerprinterWorkflo
 
     @Override
     public FingerprinterWorkflow makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
-        return new FingerprinterWorkflow(rootOptions, outputPath,charge,version);
+        return new FingerprinterWorkflow(rootOptions, outputPath, charge, version);
     }
 }

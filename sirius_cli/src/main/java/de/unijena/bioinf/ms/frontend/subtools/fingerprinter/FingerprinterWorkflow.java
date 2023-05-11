@@ -20,54 +20,56 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.fingerprinter;
 
-import de.unijena.bioinf.ChemistryBase.fp.*;
+import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.fingerid.fingerprints.FixedFingerprinter;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.jjobs.JobManager;
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.webapi.WebAPI;
-import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class FingerprinterWorkflow implements Workflow {
 
     private final Path outputFile;
-    private final RootOptions rootOptions;
+    private final RootOptions<?, ?, ?, ?> rootOptions;
 
     private final Path versionFile;
     private final int charge;
 
-    public FingerprinterWorkflow(RootOptions<?, ?, ?, ?> rootOptions, Path outputFile, int charge,Path versionFile) {
+    public FingerprinterWorkflow(RootOptions<?, ?, ?, ?> rootOptions, Path outputFile, int charge, Path versionFile) {
         this.outputFile = outputFile;
         this.rootOptions = rootOptions;
-        this.charge=charge;
-        this.versionFile=versionFile;
+        this.charge = charge;
+        this.versionFile = versionFile;
 
     }
 
     @Override
-    public void run(){
+    public void run() {
+        //todo maybe fixed size buffer for memory optimization
         List<Path> in = rootOptions.getInput().getAllFiles();
         if (in.isEmpty())
             throw new IllegalArgumentException("No input file given!");
+
         Path inputFile = in.iterator().next();
-        @NotNull JobManager jobmanager = SiriusJobs.getGlobalJobManager();
-
-
-        System.out.println("Happily Computing fingerprints from: " + inputFile.toString() + " to " + outputFile.toString());
         // get WEB API
         WebAPI<?> api = ApplicationCore.WEB_API;
-
 
         try {
             //get FingerIdDate File based on charge
@@ -75,86 +77,69 @@ public class FingerprinterWorkflow implements Workflow {
             MaskedFingerprintVersion mask = fdata.getFingerprintVersion();
             CdkFingerprintVersion cdkVersion = api.getCDKChemDBFingerprintVersion();
 
+            LoggerFactory.getLogger(getClass()).info("Reading input from '" + inputFile.toString() + "'...");
+            List<String> inchiList = readInput(inputFile);
 
-            ArrayList<String> inchiList = readInput(inputFile);
-            List<BasicJJob> jobs = new ArrayList<>();
+            List<BasicJJob<SmilesFpt>> jobs = new ArrayList<>();
 
+            LoggerFactory.getLogger(getClass()).info("Creating fingerprint jobs for '" +inchiList.size() + "' input structures.");
             for (String smiles : inchiList) {
-                BasicJJob fpt_job = new BasicJJob() {
+                BasicJJob<SmilesFpt> fpt_job = new BasicJJob<>() {
                     @Override
-                    protected SmilesFpt compute(){
-
+                    protected SmilesFpt compute() {
                         FixedFingerprinter printer = new FixedFingerprinter(cdkVersion);
-                        return new SmilesFpt(smiles, mask.mask(printer.computeFingerprintFromSMILES(smiles).asDeterministic()));
+                        return new SmilesFpt(smiles, mask.mask(printer.computeFingerprintFromSMILES(smiles).toIndizesArray()));
                     }
-
-
                 };
                 jobs.add(fpt_job);
-
             }
 
-            jobs = jobmanager.submitJobsInBatchesByThreads(jobs, 1);
+            LoggerFactory.getLogger(getClass()).info("Computing fingerprints...");
+            jobs = SiriusJobs.getGlobalJobManager().submitJobsInBatchesByThreads(jobs, SiriusJobs.getCPUThreads());
+            //collect jobs skipping failed ones (null)
+            List<SmilesFpt> outList = jobs.stream().map(JJob::getResult).filter(Objects::nonNull).toList();
 
-            ArrayList<SmilesFpt> outList = new ArrayList<>();
-            for (BasicJJob job : jobs) {
-                outList.add((SmilesFpt) job.takeResult());
-            }
-
-
+            LoggerFactory.getLogger(getClass()).info("Writing fingerprints to '" + outputFile.toString() + "'...");
             writeOutput(outputFile, outList);
-            if (versionFile!=null){
-                try(BufferedWriter bw = Files.newBufferedWriter(versionFile)){
+            if (versionFile != null) {
+                LoggerFactory.getLogger(getClass()).info("Writing fingerprint definition file to '" + versionFile.toString() + "'...");
+                try (BufferedWriter bw = Files.newBufferedWriter(versionFile)) {
                     FingerIdData.write(bw, fdata);
                 }
             }
-        }catch (IOException e){
-            e.printStackTrace();
+            LoggerFactory.getLogger(getClass()).info("DONE!");
+        } catch (IOException e) {
+           LoggerFactory.getLogger(getClass()).error("Unexpected error during fingerprint computation", e);
         }
-
-
-
-
     }
 
-    public ArrayList<String> readInput(Path in){
-        ArrayList<String> smiles =  new ArrayList<>();
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(in.toFile()));
+    public List<String> readInput(Path in) throws IOException {
+        List<String> smiles = new ArrayList<>();
+        try (BufferedReader reader = Files.newBufferedReader(in)) {
             String line;
             while ((line = reader.readLine()) != null) {
-                System.out.println(line+" "+line.length());
-                if (line.length()>0)smiles.add(line);
+                if (line.length() > 0) smiles.add(line);
             }
             return smiles;
-        }catch (Exception e){
-            e.printStackTrace();
         }
-    return null;
     }
 
-    public void writeOutput(Path outputFile, ArrayList<SmilesFpt> outList) throws IOException {
-        BufferedWriter bw =  Files.newBufferedWriter(outputFile);
-
+    public void writeOutput(Path outputFile, List<SmilesFpt> outList) throws IOException {
+        try (BufferedWriter bw = Files.newBufferedWriter(outputFile)) {
             for (SmilesFpt obj : outList) {
-                bw.write(obj.smiles + "\t" + obj.fpt.toOneZeroString() + "\n");
+                bw.write(obj.smiles + "\t" + obj.fpt.toCommaSeparatedString());
+                bw.newLine();
             }
-            bw.close();
-
-
+        }
     }
-
-
 }
 
-class SmilesFpt{
+class SmilesFpt {
     public String smiles;
     public Fingerprint fpt;
-    protected SmilesFpt(String smiles, Fingerprint fpt){
-        this.fpt=fpt;
-        this.smiles=smiles;
 
+    protected SmilesFpt(String smiles, Fingerprint fpt) {
+        this.fpt = fpt;
+        this.smiles = smiles;
     }
-
-
 }
