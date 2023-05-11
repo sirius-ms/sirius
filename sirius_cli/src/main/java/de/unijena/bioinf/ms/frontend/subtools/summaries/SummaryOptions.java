@@ -35,24 +35,41 @@ import java.nio.file.Path;
 @CommandLine.Command(name = "write-summaries", aliases = {"W"}, description = "<STANDALONE, POSTPROCESSING> Write Summary files from a given project-space into the given project-space or a custom location.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class SummaryOptions implements PostprocessingTool<SummarySubToolJob>, StandaloneTool<Workflow> {
 
+    //specify negated  name since default is true ->  special picocli behavior
+    //https://picocli.info/#_negatable_options
+    @CommandLine.Option(names = {"--no-top-hit-summary"}, description = "Write project wide summary files with all Top Hits.", defaultValue = "true", negatable = true)
+    protected boolean topHitSummary;
 
-    Path location;
+    public boolean isTopHitSummary() {
+        return topHitSummary;
+    }
+
+    @CommandLine.Option(names = {"--top-hit-adduct-summary"}, description = "Write project wide summary files with all Top Hits and their adducts", defaultValue = "false", negatable = true)
+    protected boolean topHitWithAdductsSummary;
+
+    public boolean isTopHitWithAdductsSummary() {
+        return topHitWithAdductsSummary;
+    }
+
+    @CommandLine.Option(names = {"--full-summary"}, description = {"Write project wide summary files with ALL Hits. ", "(Use with care! Might create large files and consume large amounts of memory for large projects.)"}, defaultValue = "false", negatable = true)
+    protected boolean fullSummary;
+
+    public boolean isFullSummary() {
+        return fullSummary;
+    }
+
     @CommandLine.Option(names = {"--output", "-o"}, description = "Specify location (outside the project) for writing summary files. Per default summaries are written to the project-space")
-    public void setSummaryLocation(Path summaryLocation) throws Exception {
-        this.location = summaryLocation;
-    }
+    Path location;
 
+    @CommandLine.Option(names = {"--compress", "--zip", "-c"}, description = "Summaries will be written into a compressed zip archive. This parameter will be ignored if the summary is written into the project-space.")
     boolean compress;
-    @CommandLine.Option(names = {"--compress", "--zip", "-c"}, description = "Summaries will be written into a compressed zip archive. This parameter will be ignored if the summary is written into the project-space.", defaultValue = "false")
-    public void setCompress(boolean compress) throws Exception {
-        this.compress = compress;
-    }
+
 
     @CommandLine.ArgGroup(exclusive = false, heading = "Include Predictions Table")
     @Nullable
     protected PredictionsOptions predictionsOptions;
 
-    public boolean isAnyPredictionOptionSet(){
+    public boolean isAnyPredictionOptionSet() {
         if (predictionsOptions == null)
             return false;
         return predictionsOptions.isAnyPredictionSet();
