@@ -39,14 +39,24 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
-public class StructureSummaryWriter implements Summarizer {
+public class StructureSummaryWriter extends CandidateSummarizer {
     private final Lock lock = new ReentrantLock();
-    private final List<Hit> compoundTopHits = new ArrayList<>();
-    private final Map<Hit, List<Hit>> compoundTopHitsAdducts = new HashMap<>();
+    private final List<Hit> compoundTopHits;
+    private final Map<Hit, List<Hit>> compoundTopHitsAdducts;
+    private final Map<Hit, List<Hit>> compoundAllHits;
+
+
+    public StructureSummaryWriter(boolean writeTopHitGlobal, boolean writeTopHitWithAdductsGlobal, boolean writeFullGlobal) {
+        super(writeTopHitGlobal, writeTopHitWithAdductsGlobal, writeFullGlobal);
+        compoundTopHits = writeTopHitGlobal ? new ArrayList<>() : null;
+        compoundTopHitsAdducts = writeTopHitWithAdductsGlobal ? new HashMap<>() : null;
+        compoundAllHits = writeFullGlobal ? new HashMap<>() : null;
+    }
 
     @Override
     public List<Class<? extends DataAnnotation>> requiredFormulaResultAnnotations() {
@@ -63,6 +73,7 @@ public class StructureSummaryWriter implements Summarizer {
                 return;
 
             final List<Hit> topHits = new ArrayList<>();
+            final List<Hit> allHits = new ArrayList<>();
 
             final List<SScored<FormulaResult, ? extends FormulaScore>> results =
                     FormulaScoring.reRankBy(formulaResults, List.of(SiriusScore.class), true); //sorted by SiriusScore to detect adducts
@@ -75,6 +86,7 @@ public class StructureSummaryWriter implements Summarizer {
 
                         int formulaRank = 0;
                         TIntIntHashMap adductCounts = new TIntIntHashMap();
+                        final AtomicInteger fpCounts = new AtomicInteger(0);
                         MolecularFormula preFormula = null;
                         for (SScored<FormulaResult, ? extends FormulaScore> result : results) {
                             if (preFormula == null || !result.getCandidate().getId().getPrecursorFormula().equals(preFormula))
@@ -85,6 +97,7 @@ public class StructureSummaryWriter implements Summarizer {
                             preFormula = result.getCandidate().getId().getPrecursorFormula();
 
                             if (result.getCandidate().hasAnnotation(FBCandidates.class)) {
+                                fpCounts.incrementAndGet();
                                 final List<Scored<CompoundCandidate>> frs = result.getCandidate().getAnnotationOrThrow(FBCandidates.class).getResults();
 
                                 //create buffer
@@ -93,7 +106,8 @@ public class StructureSummaryWriter implements Summarizer {
                                     new StructureCSVExporter().exportFingerIdResult(w, res, result.getCandidate().getId(), false, null);
 
                                 final List<List<String>> lines = w.toString().isBlank() ? null :
-                                        Arrays.stream(w.toString().split("\n")).map(l -> Arrays.asList(l.split("\t"))).collect(Collectors.toList());
+                                        Arrays.stream(w.toString().split("\n"))
+                                                .map(l -> Arrays.asList(l.split("\t"))).toList();
 
                                 if (lines != null && !lines.isEmpty()) {
                                     fileWriter.write("\n");
@@ -124,19 +138,31 @@ public class StructureSummaryWriter implements Summarizer {
                                                 map(s -> s.getAnnotationOr(ConfidenceScore.class, FormulaScore::NA)).orElse(FormulaScore.NA(ConfidenceScore.class));
                                         final TopCSIScore csiScore = result.getCandidate().getAnnotation(FormulaScoring.class).
                                                 map(s -> s.getAnnotationOr(TopCSIScore.class, FormulaScore::NA)).orElse(FormulaScore.NA(TopCSIScore.class));
-                                        final SiriusScore siriusScore = result.getCandidate().getAnnotation(FormulaScoring.class).
-                                                map(s -> s.getAnnotationOr(SiriusScore.class, FormulaScore::NA)).orElse(FormulaScore.NA(SiriusScore.class));
-                                        final ZodiacScore zodiacScore = result.getCandidate().getAnnotation(FormulaScoring.class).
-                                                map(s -> s.getAnnotationOr(ZodiacScore.class, FormulaScore::NA)).orElse(FormulaScore.NA(ZodiacScore.class));
+                                        final Hit topHit = toHit(exp.getId(), result, lines.get(0), confidence, csiScore.score(), formulaRank);
+                                        topHits.add(topHit);
 
-                                        topHits.add(new Hit(confidence + "\t" + lines.get(0).get(0) + "\t" + zodiacScore + "\t" + siriusScore + "\t" + String.join("\t", lines.get(0).subList(1, lines.get(0).size())) + "\t" + exp.getId().getIonMass().orElse(Double.NaN) + "\t" + exp.getId().getRt().orElse(RetentionTime.NA()).getRetentionTimeInSeconds() + "\t" + exp.getId().getDirectoryName() + "\n", confidence, csiScore, formulaRank));
+                                        if (compoundAllHits != null) {
+                                            int finalFormulaRank = formulaRank;
+                                            Iterator<List<String>> linesIt = lines.iterator();
+                                            linesIt.next();
+                                            allHits.add(topHit);
+                                            while (linesIt.hasNext()) {
+                                                List<String> l = linesIt.next();
+                                                allHits.add(toHit(exp.getId(), result, l, FormulaScore.NA(ConfidenceScore.class), Double.parseDouble(l.get(0)), finalFormulaRank));
+                                            }
+                                        }
                                     }
                                 }
                             }
                         }
+
                         topHits.forEach(hit -> hit.numberOfAdducts = adductCounts.get(hit.formulaRank));
-                        topHits.forEach(hit -> hit.numberOfFps = topHits.size());
+                        topHits.forEach(hit -> hit.numberOfFps = fpCounts.get());
                         topHits.sort(Hit.compareByFingerIdScore().reversed());
+
+                        allHits.forEach(hit -> hit.numberOfAdducts = adductCounts.get(hit.formulaRank));
+                        allHits.forEach(hit -> hit.numberOfFps = fpCounts.get());
+                        allHits.sort(Hit.compareByFingerIdScore().reversed());
                     });
 
                     return true;
@@ -150,15 +176,20 @@ public class StructureSummaryWriter implements Summarizer {
                 toadd.forEach(h -> h.numberOfAdducts = toadd.size());
                 lock.lock();
                 try {
-                    compoundTopHits.add(topHits.get(0));
-                    compoundTopHitsAdducts.put(topHits.get(0), toadd);
+                    if (compoundTopHits != null)
+                        compoundTopHits.add(topHits.get(0));
+                    if (compoundTopHitsAdducts != null)
+                        compoundTopHitsAdducts.put(topHits.get(0), toadd);
+                    if (compoundAllHits != null)
+                        compoundAllHits.put(allHits.get(0), allHits);
                 } finally {
                     lock.unlock();
                 }
             }
 
 
-        } catch (IOException e) {
+        } catch (
+                IOException e) {
             e.printStackTrace();
         }
     }
@@ -167,25 +198,47 @@ public class StructureSummaryWriter implements Summarizer {
     public void writeProjectSpaceSummary(ProjectWriter writer) throws IOException {
         lock.lock();
         try {
-            if (!compoundTopHits.isEmpty()) {
+            if (compoundTopHits != null && !compoundTopHits.isEmpty()) {
                 compoundTopHits.sort(Hit.compareByConfidence().reversed());
                 writer.textFile(SummaryLocations.COMPOUND_SUMMARY, w -> write(w, compoundTopHits));
+            }
 
-                if (!compoundTopHitsAdducts.isEmpty()) {
-                    final List<Hit> topHitList = new ArrayList<>();
-                    compoundTopHits.forEach(leadHit -> {
-                        List<Hit> hits = compoundTopHitsAdducts.get(leadHit);
-                        hits.sort(Hit.compareByConfidence().reversed());
-                        topHitList.addAll(hits);
-                    });
-                    writer.textFile(SummaryLocations.COMPOUND_SUMMARY_ADDUCTS, w -> write(w, topHitList));
-                }
+
+            if (compoundTopHitsAdducts != null && !compoundTopHitsAdducts.isEmpty()) {
+                final List<Hit> topHitList = new ArrayList<>();
+                compoundTopHitsAdducts.keySet().stream().sorted(Hit.compareByConfidence().reversed()).forEach(leadHit -> {
+                    List<Hit> hits = compoundTopHitsAdducts.get(leadHit);
+                    hits.sort(Hit.compareByConfidence().reversed());
+                    topHitList.addAll(hits);
+                });
+
+                writer.textFile(SummaryLocations.COMPOUND_SUMMARY_ADDUCTS, w -> write(w, topHitList));
+            }
+
+            if (compoundAllHits != null && !compoundAllHits.isEmpty()) {
+                final List<Hit> topHitList = new ArrayList<>();
+                compoundAllHits.keySet().stream().sorted(Hit.compareByConfidence().reversed()).forEach(leadHit -> {
+                    List<Hit> hits = compoundAllHits.get(leadHit);
+                    hits.sort(Hit.compareByConfidence().reversed());
+                    topHitList.addAll(hits);
+                });
+
+                writer.textFile(SummaryLocations.COMPOUND_SUMMARY_ALL, w -> write(w, topHitList));
             }
 
 
         } finally {
             lock.unlock();
         }
+    }
+
+    static Hit toHit(CompoundContainerId id, SScored<FormulaResult, ? extends FormulaScore> result, List<String> line, ConfidenceScore confidence, double csiScore, int formulaRank) {
+        final SiriusScore siriusScore = result.getCandidate().getAnnotation(FormulaScoring.class).
+                map(s -> s.getAnnotationOr(SiriusScore.class, FormulaScore::NA)).orElse(FormulaScore.NA(SiriusScore.class));
+        final ZodiacScore zodiacScore = result.getCandidate().getAnnotation(FormulaScoring.class).
+                map(s -> s.getAnnotationOr(ZodiacScore.class, FormulaScore::NA)).orElse(FormulaScore.NA(ZodiacScore.class));
+
+        return new Hit(confidence + "\t" + line.get(0) + "\t" + zodiacScore + "\t" + siriusScore + "\t" + String.join("\t", line.subList(1, line.size())) + "\t" + id.getIonMass().orElse(Double.NaN) + "\t" + id.getRt().orElse(RetentionTime.NA()).getRetentionTimeInSeconds() + "\t" + id.getDirectoryName() + "\n", confidence, csiScore, formulaRank);
     }
 
     static void write(BufferedWriter w, List<Hit> data) throws IOException {
@@ -207,12 +260,12 @@ public class StructureSummaryWriter implements Summarizer {
     static class Hit {
         final String line;
         final ConfidenceScore confidenceScore;
-        final TopCSIScore csiScore;
+        final double csiScore;
         final int formulaRank;
         int numberOfAdducts = 1;
         int numberOfFps = 1;
 
-        Hit(String line, ConfidenceScore confidenceScore, TopCSIScore csiScore, int formulaRank) {
+        Hit(String line, ConfidenceScore confidenceScore, double csiScore, int formulaRank) {
             this.line = line;
             this.confidenceScore = confidenceScore;
             this.csiScore = csiScore;
