@@ -31,6 +31,7 @@ import de.unijena.bioinf.ms.frontend.subtools.export.tables.ExportPredictionsOpt
 import de.unijena.bioinf.ms.frontend.subtools.export.trees.FTreeExporterOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
+import de.unijena.bioinf.ms.frontend.subtools.fingerprinter.FingerprinterOptions;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignOptions;
 import de.unijena.bioinf.ms.frontend.subtools.login.LoginOptions;
 import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoOptions;
@@ -96,6 +97,8 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
     public final LoginOptions loginOptions;
     public final SettingsOptions settingsOptions;
 
+    public final FingerprinterOptions fingerprinterOptions;
+
     //postprocessing, project-space consuming tool, exporting tools,
     public final SummaryOptions summaryOptions;
     public final ExportPredictionsOptions exportPredictions;
@@ -141,6 +144,7 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
         loginOptions = new LoginOptions();
         settingsOptions = new SettingsOptions();
         autocompleteOptions = new AutoCompletionScript();
+        fingerprinterOptions = new FingerprinterOptions();
     }
 
     public void initRootSpec() {
@@ -167,7 +171,7 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
 
     protected Object[] standaloneTools() {
         return Streams.concat(
-                Stream.of(projectSpaceOptions, customDBOptions, similarityMatrixOptions, decompOptions, mgfExporterOptions, ftreeExporterOptions, exportPredictions),
+                Stream.of(projectSpaceOptions, customDBOptions, similarityMatrixOptions, decompOptions, mgfExporterOptions, ftreeExporterOptions, exportPredictions, fingerprinterOptions),
                 additionalTools.stream(), Stream.of(loginOptions, settingsOptions, autocompleteOptions)
         ).toArray(Object[]::new);
 
