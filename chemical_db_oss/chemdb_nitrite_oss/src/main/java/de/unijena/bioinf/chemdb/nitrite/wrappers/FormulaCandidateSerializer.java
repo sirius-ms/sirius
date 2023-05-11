@@ -18,25 +18,24 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.chemdb;
+package de.unijena.bioinf.chemdb.nitrite.wrappers;
 
-import de.unijena.bioinf.ChemistryBase.chem.InChI;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import de.unijena.bioinf.chemdb.FormulaCandidate;
 
-public interface NoSQLSerializer<DocType> {
+import java.io.IOException;
 
-    DocType serializeFormula(MolecularFormula formula, long bitset);
+public class FormulaCandidateSerializer extends JsonSerializer<FormulaCandidate> {
 
-    <C extends CompoundCandidate> DocType serializeCompoundAndFingerprint(MolecularFormula formula, C candidate);
-
-    FormulaCandidate deserializeFormula(DocType document, PrecursorIonType ionType);
-
-    CompoundCandidate deserializeCompound(DocType document);
-
-    InChI deserializeInchi(DocType document);
-
-    FingerprintCandidate deserializeFingerprint(DocType document, FingerprintVersion version);
+    @Override
+    public void serialize(FormulaCandidate value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+        gen.writeStartObject();
+        gen.writeStringField("formula", value.getFormula().toString());
+        gen.writeNumberField("mass", value.getFormula().getMass());
+        gen.writeNumberField("bitset", value.getBitset());
+        gen.writeEndObject();
+    }
 
 }

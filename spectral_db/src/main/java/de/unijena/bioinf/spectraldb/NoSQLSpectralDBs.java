@@ -24,15 +24,16 @@ import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.chemdb.ChemDBs;
 import de.unijena.bioinf.spectraldb.nitrite.SpectralNitriteDatabase;
 
+import java.io.IOException;
 import java.nio.file.Path;
 
 public class NoSQLSpectralDBs extends ChemDBs {
 
-    SpectralLibrary getLocalSpectralLibrary(Path file) {
+    SpectralLibrary getLocalSpectralLibrary(Path file) throws IOException {
         return new SpectralNitriteDatabase(file);
     }
 
-    SpectralLibrary getLocalSpectralLibrary(Path file, FingerprintVersion version) {
+    SpectralLibrary getLocalSpectralLibrary(Path file, FingerprintVersion version) throws IOException {
         return new SpectralNitriteDatabase(file, version);
     }
 

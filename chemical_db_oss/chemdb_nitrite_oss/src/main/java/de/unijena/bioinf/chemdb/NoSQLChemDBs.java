@@ -23,15 +23,16 @@ package de.unijena.bioinf.chemdb;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.chemdb.nitrite.ChemicalNitriteDatabase;
 
+import java.io.IOException;
 import java.nio.file.Path;
 
 public class NoSQLChemDBs {
 
-    public static AbstractChemicalDatabase getLocalChemDB(Path file) {
+    public static AbstractChemicalDatabase getLocalChemDB(Path file) throws IOException {
         return new ChemicalNitriteDatabase(file);
     }
 
-    public static AbstractChemicalDatabase getLocalChemDB(Path file, FingerprintVersion version) {
+    public static AbstractChemicalDatabase getLocalChemDB(Path file, FingerprintVersion version) throws IOException {
         return new ChemicalNitriteDatabase(file, version);
     }
 

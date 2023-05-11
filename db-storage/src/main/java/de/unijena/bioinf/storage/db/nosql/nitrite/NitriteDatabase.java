@@ -20,9 +20,8 @@
 
 package de.unijena.bioinf.storage.db.nosql.nitrite;
 
-import com.fasterxml.jackson.databind.Module;
 import com.google.common.collect.Iterables;
-import de.unijena.bioinf.storage.db.nosql.Database;
+import de.unijena.bioinf.storage.db.nosql.*;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import de.unijena.bioinf.storage.db.nosql.Index;
 import de.unijena.bioinf.storage.db.nosql.IndexType;
@@ -33,7 +32,6 @@ import org.dizitart.no2.objects.ObjectFilter;
 import org.dizitart.no2.objects.ObjectRepository;
 import org.dizitart.no2.objects.filters.ObjectFilters;
 
-import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
@@ -69,31 +67,15 @@ public class NitriteDatabase implements Database<Document> {
     // STATE
     private boolean isClosed = false;
 
-    public NitriteDatabase(@NotNull Path file, Map<String, Index[]> collections) {
+    public NitriteDatabase(Path file, Metadata meta) {
         this.file = file;
-        this.db = initDB(file);
-        initCollections(collections);
+        this.db = initDB(file, meta);
+        this.initCollections(meta.collectionIndices);
+        this.initRepositories(meta.repoIndices);
     }
 
-    public NitriteDatabase(@NotNull Path file, Map<String, Index[]> collections, Map<Class<?>, Index[]> repositories, Module... jacksonModules) {
-        this.file = file;
-        this.db = initDB(file, jacksonModules);
-        initCollections(collections);
-        initRepositories(repositories);
-    }
-
-    public NitriteDatabase(@NotNull Path file, Map<Class<?>, Index[]> repositories, Module... jacksonModules) {
-        this.file = file;
-        this.db = initDB(file, jacksonModules);
-        initRepositories(repositories);
-    }
-
-    private Nitrite initDB(Path file, Module... jacksonModules) {
-        NitriteBuilder builder = Nitrite.builder().filePath(file.toFile());
-        for (Module module : jacksonModules) {
-            builder = builder.registerModule(module);
-        }
-        return builder.compressed().openOrCreate();
+    private Nitrite initDB(Path file, Metadata meta) {
+        return Nitrite.builder().filePath(file.toFile()).registerModule(meta.module).compressed().openOrCreate();
     }
 
     private void initCollections(Map<String, Index[]> collections) {
