@@ -22,11 +22,11 @@ package de.unijena.bioinf.chemdb.nitrite;
 
 import com.google.common.collect.Lists;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
-import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
-import de.unijena.bioinf.chemdb.ChemicalNoSQLDatabase;
-import de.unijena.bioinf.chemdb.CompoundCandidate;
-import de.unijena.bioinf.chemdb.NoSQLSerializer;
+import de.unijena.bioinf.chemdb.*;
+import de.unijena.bioinf.chemdb.nitrite.wrappers.CompoundCandidateWrapper;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import de.unijena.bioinf.storage.db.nosql.nitrite.NitriteDatabase;
@@ -39,32 +39,34 @@ import java.util.stream.StreamSupport;
 
 public class ChemicalNitriteDatabase extends ChemicalNoSQLDatabase<Document> {
 
-    public ChemicalNitriteDatabase(Path file) {
-        super(new NitriteDatabase(file, INDEX), new NitriteSerializer());
+    public ChemicalNitriteDatabase(Path file) throws IOException {
+        super(new NitriteDatabase(file, initMetadata(CdkFingerprintVersion.getDefault())));
     }
 
-    public ChemicalNitriteDatabase(Path file, FingerprintVersion version) {
-        super(new NitriteDatabase(file, INDEX), new NitriteSerializer(), version);
+    public ChemicalNitriteDatabase(Path file, FingerprintVersion version) throws IOException {
+        super(new NitriteDatabase(file, initMetadata(version)));
     }
 
     @Override
     public <C extends CompoundCandidate> void importCompoundsAndFingerprints(MolecularFormula key, Iterable<C> candidates) throws ChemicalDatabaseException  {
-        importCompoundsAndFingerprints(this.database, this.serializer, key, candidates);
+        importCompoundsAndFingerprints(this.database, key, candidates);
     }
 
-    public static <C extends CompoundCandidate, N extends NoSQLSerializer<Document>> void importCompoundsAndFingerprints(Database<Document> database, N serializer, MolecularFormula key, Iterable<C> candidates) throws ChemicalDatabaseException  {
+    public static <C extends CompoundCandidate> void importCompoundsAndFingerprints(Database<Document> database, MolecularFormula key, Iterable<C> candidates) throws ChemicalDatabaseException  {
         try {
-            database.insertAll(COMPOUND_COLLECTION, () -> StreamSupport.stream(candidates.spliterator(), false).map(c -> serializer.serializeCompoundAndFingerprint(key, c)).iterator());
+            // TODO what about importing fingerprintcandidates?
+            database.insertAll(() -> StreamSupport.stream(candidates.spliterator(), false).map(c -> new CompoundCandidateWrapper(key, c)).iterator());
             long bitset = StreamSupport.stream(candidates.spliterator(), false).map(CompoundCandidate::getBitset).reduce(0L, (a, b) -> a | b);
             synchronized (database) {
-                List<Document> fdocs = Lists.newArrayList(database.find(FORMULA_COLLECTION, new Filter().eq("formula", key.toString())));
-                if (fdocs.size() > 0) {
-                    for (Document fdoc : fdocs) {
-                        fdoc.put("bitset", (long) fdoc.getOrDefault("bitset", 0L) | bitset);
-                        database.upsert(FORMULA_COLLECTION, fdoc);
+                // TODO eq("formula", key.toString()) or eq("formula", key)?
+                List<FormulaCandidate> formulas = Lists.newArrayList(database.find(new Filter().eq("formula", key.toString()), FormulaCandidate.class));
+                if (formulas.size() > 0) {
+                    for (FormulaCandidate formula : formulas) {
+                        formula.setBitset(formula.getBitset() | bitset);
+                        database.upsert(formula);
                     }
                 } else {
-                    database.insert(FORMULA_COLLECTION, serializer.serializeFormula(key, bitset));
+                    database.insert(new FormulaCandidate(key, PrecursorIonType.unknownPositive(), bitset));
                 }
             }
         } catch (IOException e) {
