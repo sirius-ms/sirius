@@ -18,9 +18,12 @@ package de.unijena.bioinf.ms.gui.utils;/*
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
+import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.lcms.LCMSCompoundSummary;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -44,10 +47,13 @@ public class CompoundFilterModel implements SiriusPCS {
     private double currentMaxConfidence;
 
     //
-    private boolean[] peakShapeQualities = new boolean[]{true,true,true};
+    private boolean[] peakShapeQualities = new boolean[]{true, true, true};
 
     private Set<PrecursorIonType> adducts = Set.of();
     private LipidFilter lipidFilter = LipidFilter.KEEP_ALL_COMPOUNDS;
+
+    @NotNull
+    private ElementFilter elementFilter = ElementFilter.disabled();
 
     /*
     min/max possible values
@@ -69,6 +75,7 @@ public class CompoundFilterModel implements SiriusPCS {
     /**
      * the filter model is initialized with the min / max possible values
      * MAX VALUES SHOULD BE USED FOR DISPLAY ONLY. AND IF SELECTED VALUES EQUAL THE MAXIMUM, INFINITY SHOULD BE ASSUMED, see {@link CompoundFilterMatcher} and is[...]Active() methods.
+     *
      * @param minMz
      * @param maxMz
      * @param minRt
@@ -118,25 +125,43 @@ public class CompoundFilterModel implements SiriusPCS {
         pcs.firePropertyChange("setLipidFilter", oldValue, value);
     }
 
+    public boolean isElementFilterEnabled() {
+        return elementFilter.isActive();
+    }
+
+    @NotNull
+    public ElementFilter getElementFilter() {
+        return elementFilter;
+    }
+
+    public void setElementFilter(@NotNull ElementFilter value) {
+        ElementFilter oldValue = elementFilter;
+        elementFilter = value;
+        pcs.firePropertyChange("setElementFilter", oldValue, value);
+    }
+
     public void setPeakShapeQuality(LCMSCompoundSummary.Quality quality, boolean value) {
         boolean oldValue = peakShapeQualities[quality.ordinal()];
         peakShapeQualities[quality.ordinal()] = value;
         pcs.firePropertyChange("setPeakShapeQuality", oldValue, value);
     }
+
     public void setPeakShapeQuality(int quality, boolean value) {
         boolean oldValue = peakShapeQualities[quality];
         peakShapeQualities[quality] = value;
         pcs.firePropertyChange("setPeakShapeQuality", oldValue, value);
     }
+
     public boolean getPeakShapeQuality(LCMSCompoundSummary.Quality quality) {
         return peakShapeQualities[quality.ordinal()];
     }
+
     public boolean getPeakShapeQuality(int quality) {
         return peakShapeQualities[quality];
     }
 
     public void setCurrentMinMz(double currentMinMz) {
-        if (currentMinMz < minMz) throw new IllegalArgumentException("current value out of range: "+currentMinMz);
+        if (currentMinMz < minMz) throw new IllegalArgumentException("current value out of range: " + currentMinMz);
         double oldValue = this.currentMinMz;
         this.currentMinMz = currentMinMz;
         pcs.firePropertyChange("setMinMz", oldValue, currentMinMz);
@@ -151,7 +176,7 @@ public class CompoundFilterModel implements SiriusPCS {
     }
 
     public void setCurrentMaxMz(double currentMaxMz) {
-        if (currentMaxMz > maxMz) throw new IllegalArgumentException("current value out of range: "+currentMaxMz);
+        if (currentMaxMz > maxMz) throw new IllegalArgumentException("current value out of range: " + currentMaxMz);
         double oldValue = this.currentMaxMz;
         this.currentMaxMz = currentMaxMz;
         pcs.firePropertyChange("setMaxMz", oldValue, currentMaxMz);
@@ -162,7 +187,7 @@ public class CompoundFilterModel implements SiriusPCS {
     }
 
     public void setCurrentMinRt(double currentMinRt) {
-        if (currentMinRt < minRt) throw new IllegalArgumentException("current value out of range: "+currentMinRt);
+        if (currentMinRt < minRt) throw new IllegalArgumentException("current value out of range: " + currentMinRt);
         double oldValue = this.currentMinRt;
         this.currentMinRt = currentMinRt;
         pcs.firePropertyChange("setMinRt", oldValue, currentMinRt);
@@ -174,7 +199,7 @@ public class CompoundFilterModel implements SiriusPCS {
     }
 
     public void setCurrentMaxRt(double currentMaxRt) {
-        if (currentMaxRt > maxRt) throw new IllegalArgumentException("current value out of range: "+currentMaxRt);
+        if (currentMaxRt > maxRt) throw new IllegalArgumentException("current value out of range: " + currentMaxRt);
         double oldValue = this.currentMaxRt;
         this.currentMaxRt = currentMaxRt;
         pcs.firePropertyChange("setMaxRt", oldValue, currentMaxRt);
@@ -202,7 +227,8 @@ public class CompoundFilterModel implements SiriusPCS {
     }
 
     public void setCurrentMaxConfidence(double currentMaxConfidence) {
-        if (currentMaxConfidence > maxConfidence) throw new IllegalArgumentException("current value out of range: "+ currentMaxConfidence);
+        if (currentMaxConfidence > maxConfidence)
+            throw new IllegalArgumentException("current value out of range: " + currentMaxConfidence);
         double oldValue = this.currentMaxConfidence;
         this.currentMaxConfidence = currentMaxConfidence;
         pcs.firePropertyChange("setMaxConfidence", oldValue, currentMaxConfidence);
@@ -214,7 +240,8 @@ public class CompoundFilterModel implements SiriusPCS {
     }
 
     public void setCurrentMinConfidence(double currentMinConfidence) {
-        if (currentMinConfidence < minConfidence) throw new IllegalArgumentException("current value out of range: "+ currentMinConfidence);
+        if (currentMinConfidence < minConfidence)
+            throw new IllegalArgumentException("current value out of range: " + currentMinConfidence);
         double oldValue = this.currentMinConfidence;
         this.currentMinConfidence = currentMinConfidence;
         pcs.firePropertyChange("setMinConfidence", oldValue, currentMinConfidence);
@@ -231,15 +258,16 @@ public class CompoundFilterModel implements SiriusPCS {
 
     /**
      * filter options are active. that means selected values differ from absolute min/max
+     *
      * @return true if active and false if not.
      */
-    public boolean isActive(){
+    public boolean isActive() {
         if (currentMinMz != minMz || currentMaxMz != maxMz ||
                 currentMinRt != minRt || currentMaxRt != maxRt ||
                 currentMinConfidence != minConfidence || currentMaxConfidence != maxConfidence
         ) return true;
         if (!adducts.isEmpty()) return true;
-        if (isPeakShapeFilterEnabled() || isLipidFilterEnabled()) return true;
+        if (isPeakShapeFilterEnabled() || isLipidFilterEnabled() || isElementFilterEnabled()) return true;
 
         return false;
     }
@@ -278,12 +306,63 @@ public class CompoundFilterModel implements SiriusPCS {
         setCurrentMaxRt(maxRt);
         setCurrentMaxConfidence(maxConfidence);
         setCurrentMinConfidence(minConfidence);
-        Arrays.fill(peakShapeQualities,true);
-        lipidFilter = LipidFilter.KEEP_ALL_COMPOUNDS;
+        Arrays.fill(peakShapeQualities, true);
+        setLipidFilter(LipidFilter.KEEP_ALL_COMPOUNDS);
+        setElementFilter(ElementFilter.disabled());
         adducts = Set.of();
     }
 
     public enum LipidFilter {
         KEEP_ALL_COMPOUNDS, ANY_LIPID_CLASS_DETECTED, NO_LIPID_CLASS_DETECTED
+    }
+
+    public static class ElementFilter {
+        @NotNull
+        final FormulaConstraints constraints;
+        final boolean matchFormula;
+        final boolean matchPrecursorFormula;
+
+        public ElementFilter(@Nullable FormulaConstraints constraints) {
+            this(constraints, true, true);
+        }
+
+        public ElementFilter(@Nullable String constraints) {
+            this(constraints, true, true);
+        }
+
+        public ElementFilter(@Nullable String constraints, boolean matchFormula, boolean matchPrecursorFormula) {
+            this((constraints != null && !constraints.isBlank())
+                            ? FormulaConstraints.fromString(constraints)
+                            : FormulaConstraints.empty(),
+                    matchFormula, matchPrecursorFormula);
+        }
+
+        public ElementFilter(FormulaConstraints constraints, boolean matchFormula, boolean matchPrecursorFormula) {
+            this.constraints = constraints == null ? FormulaConstraints.empty() : constraints;
+            this.matchFormula = matchFormula;
+            this.matchPrecursorFormula = matchPrecursorFormula;
+        }
+
+        public boolean isActive() {
+            return !constraints.equals(FormulaConstraints.empty()) && (matchFormula || matchPrecursorFormula);
+        }
+
+        public FormulaConstraints getConstraints() {
+            return constraints;
+        }
+
+        public boolean isMatchFormula() {
+            return matchFormula;
+        }
+
+        public boolean isMatchPrecursorFormula() {
+            return matchPrecursorFormula;
+        }
+
+        public static final ElementFilter DISABLED = new ElementFilter(FormulaConstraints.empty(), true, true);
+
+        public static ElementFilter disabled() {
+            return DISABLED;
+        }
     }
 }
