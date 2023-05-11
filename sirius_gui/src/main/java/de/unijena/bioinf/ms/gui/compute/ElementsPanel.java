@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ms.gui.utils.SliderWithTextField;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -62,7 +63,7 @@ public class ElementsPanel extends TextHeaderBoxPanel implements ActionListener 
         this(owner, columns, null, null, enforcedElements);
     }
 
-    public ElementsPanel(Window owner, int columns, Collection<Element> possibleDetectable, Collection<Element> enabledDetectable, FormulaConstraints enforced) {
+    public ElementsPanel(Window owner, int columns, Collection<Element> possibleDetectable, Collection<Element> enabledDetectable, @NotNull FormulaConstraints enforced) {
         super("Elements allowed in Molecular Formula");
         this.owner = owner;
         this.individualAutoDetect = (possibleDetectable != null && enabledDetectable != null);
