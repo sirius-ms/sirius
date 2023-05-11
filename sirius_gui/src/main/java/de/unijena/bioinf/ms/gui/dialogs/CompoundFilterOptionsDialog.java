@@ -19,6 +19,7 @@ package de.unijena.bioinf.ms.gui.dialogs;
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
+import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -50,7 +51,6 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
     final SearchTextField searchField;
     final JTextField searchFieldDialogCopy;
     final JSpinner minMzSpinner, maxMzSpinner, minRtSpinner, maxRtSpinner, minConfidenceSpinner, maxConfidenceSpinner;
-    //    final PrecursorIonTypeSelector adductSelector;
     public final JCheckboxListPanel<PrecursorIonType> adductOptions;
     JButton discard, apply, reset;
     JCheckBox invertFilter;
@@ -61,6 +61,9 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
     JCheckBox[] peakShape;
 
     final JComboBox<CompoundFilterModel.LipidFilter> lipidFilterBox;
+    final PlaceholderTextField elementsField;
+    final JCheckBox elementsMatchFormula;
+    final JCheckBox elementsMatchPrecursorFormula;
 
     public CompoundFilterOptionsDialog(MainFrame owner, SearchTextField searchField, CompoundFilterModel filterModel, CompoundList compoundList) {
         super(owner, "Filter configuration", true);
@@ -112,23 +115,65 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             final JPanel group = new JPanel();
             final BoxLayout groupLayout = new BoxLayout(group, BoxLayout.X_AXIS);
             group.setLayout(groupLayout);
-            group.add(new JLabel("Peak shape quality: "));
             for (JCheckBox box : peakShape) {
-                group.add(Box.createHorizontalStrut(12));
+                group.add(Box.createHorizontalGlue());
                 group.add(box);
             }
-            for (int i=0; i < peakShape.length; ++i) {
+            group.add(Box.createHorizontalGlue());
+            for (int i = 0; i < peakShape.length; ++i) {
                 peakShape[i].setSelected(filterModel.getPeakShapeQuality(i));
             }
-            smallParameters.add(group);
+            smallParameters.addNamed("Peak shape quality: ", group);
         }
 
         //lipid filter
-        lipidFilterBox = new JComboBox<>();
-        java.util.List.copyOf(EnumSet.allOf(CompoundFilterModel.LipidFilter.class)).forEach(lipidFilterBox::addItem);
-        smallParameters.addNamed("Lipid filter: ", lipidFilterBox);
-        lipidFilterBox.setSelectedItem(filterModel.getLipidFilter());
+        {
+            lipidFilterBox = new JComboBox<>();
+            java.util.List.copyOf(EnumSet.allOf(CompoundFilterModel.LipidFilter.class)).forEach(lipidFilterBox::addItem);
+            smallParameters.addNamed("Lipid filter: ", lipidFilterBox);
+            lipidFilterBox.setSelectedItem(filterModel.getLipidFilter());
+        }
 
+
+        // Element filter
+        {
+            smallParameters.add(new JXTitledSeparator("Elements"));
+
+            JPanel elementSelector = new JPanel();
+            elementSelector.setLayout(new BoxLayout(elementSelector, BoxLayout.X_AXIS));
+            JButton selectElements = new JButton("...");
+            elementsField = new PlaceholderTextField(20);
+            if (filterModel.getElementFilter().isActive())
+                elementsField.setText(filterModel.getElementFilter().getConstraints().toString());
+
+            selectElements.addActionListener(e -> {
+                FormulaConstraints elements = new CompoundFilterModel.ElementFilter(elementsField.getText()).getConstraints();
+                ElementSelectionDialog diag = new ElementSelectionDialog(this, "Filter Elements", elements);
+                elements = diag.getConstraints();
+                if (elements.equals(FormulaConstraints.empty()))
+                    elementsField.setText(null);
+                else
+                    elementsField.setText(elements.toString());
+            });
+            elementsField.setPlaceholder("Insert or Select formula constraints");
+            elementSelector.add(elementsField);
+            elementSelector.add(selectElements);
+            smallParameters.add(elementSelector);
+            final JPanel group = new JPanel();
+            final BoxLayout groupLayout = new BoxLayout(group, BoxLayout.X_AXIS);
+            group.setLayout(groupLayout);
+
+            elementsMatchFormula = new JCheckBox("Molecular Formula");
+            elementsMatchFormula.setSelected(filterModel.getElementFilter().isMatchFormula());
+            elementsMatchPrecursorFormula = new JCheckBox("Precursor Formula");
+            elementsMatchPrecursorFormula.setSelected(filterModel.getElementFilter().isMatchPrecursorFormula());
+            group.add(Box.createHorizontalGlue());
+            group.add(elementsMatchFormula);
+            group.add(Box.createHorizontalGlue());
+            group.add(elementsMatchPrecursorFormula);
+            group.add(Box.createHorizontalGlue());
+            smallParameters.add(group);
+        }
 
         // Adduct filter
         adductOptions = new JCheckboxListPanel<>(new JCheckBoxList<>(), "Adducts", GuiUtils.formatToolTip("Select adducts to  filter by. Selecting all or none mean every adducts can pass"));
@@ -235,6 +280,14 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
 
         filterModel.setLipidFilter((CompoundFilterModel.LipidFilter) lipidFilterBox.getSelectedItem());
 
+        filterModel.setElementFilter(new CompoundFilterModel.ElementFilter(
+                        elementsField.getText() == null || elementsField.getText().isBlank()
+                                ? FormulaConstraints.empty()
+                                : FormulaConstraints.fromString(elementsField.getText()),
+                        elementsMatchFormula.isSelected(), elementsMatchPrecursorFormula.isSelected()
+                )
+        );
+
         saveTextFilter();
     }
 
@@ -286,10 +339,11 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
     private void resetFilter() {
         resetSpinnerValues();
         adductOptions.checkBoxList.uncheckAll();
-        for (int i=0; i < peakShape.length; ++i) {
+        for (int i = 0; i < peakShape.length; ++i) {
             peakShape[i].setSelected(true);
         }
         lipidFilterBox.setSelectedItem(CompoundFilterModel.LipidFilter.KEEP_ALL_COMPOUNDS);
+        elementsField.setText(null);
         searchFieldDialogCopy.setText("");
         invertFilter.setSelected(false);
         deleteSelection.setSelected(false);
@@ -329,16 +383,15 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
     }
 
 
-
     public double getDoubleValue(JSpinner spinner) {
-        return ((SpinnerNumberModel)spinner.getModel()).getNumber().doubleValue();
+        return ((SpinnerNumberModel) spinner.getModel()).getNumber().doubleValue();
     }
 
     private void ensureCompatibleBounds(JSpinner minSpinner, JSpinner maxSpinner) {
         minSpinner.addChangeListener(e -> {
             if (e.getSource() == minSpinner) {
-                double min = ((SpinnerNumberModel)minSpinner.getModel()).getNumber().doubleValue();
-                double max = ((SpinnerNumberModel)maxSpinner.getModel()).getNumber().doubleValue();
+                double min = ((SpinnerNumberModel) minSpinner.getModel()).getNumber().doubleValue();
+                double max = ((SpinnerNumberModel) maxSpinner.getModel()).getNumber().doubleValue();
                 if (min > max) {
                     maxSpinner.setValue(min);
                 }
@@ -347,8 +400,8 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
 
         maxSpinner.addChangeListener(e -> {
             if (e.getSource() == maxSpinner) {
-                double min = ((SpinnerNumberModel)minSpinner.getModel()).getNumber().doubleValue();
-                double max = ((SpinnerNumberModel)maxSpinner.getModel()).getNumber().doubleValue();
+                double min = ((SpinnerNumberModel) minSpinner.getModel()).getNumber().doubleValue();
+                double max = ((SpinnerNumberModel) maxSpinner.getModel()).getNumber().doubleValue();
                 if (min > max) {
                     minSpinner.setValue(max);
                 }
