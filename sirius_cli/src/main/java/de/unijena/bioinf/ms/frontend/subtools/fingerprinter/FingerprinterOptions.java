@@ -28,14 +28,20 @@ import picocli.CommandLine;
 
 import java.nio.file.Path;
 
-@CommandLine.Command(name = "fingerprinter", aliases = {"FP"}, description = "Compute SIRIUS compatible fingerprints from PubChem standardized SMILES in csv format.",  versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
+@CommandLine.Command(name = "fingerprinter", aliases = {"FP"}, description = "Compute SIRIUS compatible fingerprints from PubChem standardized SMILES in tsv format.",  versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class FingerprinterOptions implements StandaloneTool<FingerprinterWorkflow> {
 
-    @CommandLine.Option(names = {"--output", "-o"}, description = "Specify output csv file.", required = true)
+    @CommandLine.Option(names = {"--output", "-o"}, description = "Specify output tsv file.", required = true)
     private Path outputPath;
+
+    @CommandLine.Option(names = {"--charge", "-c"}, description = "Specify charge (1 for positive ion mode, -1 for negative ion mode)", required = true)
+    private int charge;
+
+    @CommandLine.Option(names = {"--version", "-v"}, description = "Specify file to write fingerprint version information to", required = false)
+    private Path version;
 
     @Override
     public FingerprinterWorkflow makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
-        return new FingerprinterWorkflow(rootOptions, outputPath);
+        return new FingerprinterWorkflow(rootOptions, outputPath,charge,version);
     }
 }
