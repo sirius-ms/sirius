@@ -18,15 +18,24 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.spectraldb;
+package de.unijena.bioinf.spectraldb.entities;
 
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
-import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
-import org.dizitart.no2.Document;
+public class SpectrumMetaData {
 
-public interface SpectralNoSQLSerializer {
+    long id;
 
-    <P extends Peak> Document serializeSpectrum(Spectrum<P> spectrum, long compoundId) throws ChemicalDatabaseException;
+    long compoundId;
+
+    long spectrumId;
+
+    // TODO spectral meta data:
+    // TODO compound name?
+    // TODO original smiles from spectrum (does not necessarily equal compound smiles!)
+    // TODO spectrum library identifiers
+    // TODO additional notes / technical parameters?
+    // TODO collisionenergy
+
+    // TODO NIST msp, massbank format
+
 
 }

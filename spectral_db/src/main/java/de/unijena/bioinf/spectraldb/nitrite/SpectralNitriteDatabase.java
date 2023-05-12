@@ -21,37 +21,38 @@
 package de.unijena.bioinf.spectraldb.nitrite;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.nitrite.ChemicalNitriteDatabase;
-import de.unijena.bioinf.chemdb.nitrite.NitriteSerializer;
 import de.unijena.bioinf.spectraldb.SpectralNoSQLDatabase;
 import de.unijena.bioinf.storage.db.nosql.nitrite.NitriteDatabase;
 import org.dizitart.no2.Document;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 
 public class SpectralNitriteDatabase extends SpectralNoSQLDatabase<Document> {
 
-    public SpectralNitriteDatabase(Path file) {
-        super(new NitriteDatabase(file, INDEX), new NitriteSerializer());
+    public SpectralNitriteDatabase(Path file) throws IOException {
+        super(new NitriteDatabase(file, SpectralNoSQLDatabase.initMetadata(CdkFingerprintVersion.getDefault())));
     }
 
-    public SpectralNitriteDatabase(Path file, FingerprintVersion version) {
-        super(new NitriteDatabase(file, INDEX), new NitriteSerializer(), version);
+    public SpectralNitriteDatabase(Path file, FingerprintVersion version) throws IOException {
+        super(new NitriteDatabase(file, SpectralNoSQLDatabase.initMetadata(version)));
     }
 
     @Override
     public <C extends CompoundCandidate> void importCompoundsAndFingerprints(MolecularFormula key, Iterable<C> candidates) throws ChemicalDatabaseException {
-        ChemicalNitriteDatabase.importCompoundsAndFingerprints(this.database, this.serializer, key, candidates);
+        ChemicalNitriteDatabase.importCompoundsAndFingerprints(this.database, key, candidates);
     }
 
     @Override
     public <C extends CompoundCandidate, S extends Spectrum<?>> void importCompoundsFingerprintsAndSpectra(MolecularFormula key, Map<C, Iterable<S>> candidates) throws ChemicalDatabaseException {
-        ChemicalNitriteDatabase.importCompoundsAndFingerprints(this.database, this.serializer, key, candidates.keySet());
+        ChemicalNitriteDatabase.importCompoundsAndFingerprints(this.database, key, candidates.keySet());
 //        try {
 //            for (C compound : candidates.keySet()) {
 //

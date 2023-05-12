@@ -23,35 +23,31 @@ package de.unijena.bioinf.spectraldb;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
-import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
-import de.unijena.bioinf.chemdb.ChemicalNoSQLDatabase;
-import de.unijena.bioinf.chemdb.CompoundCandidate;
-import de.unijena.bioinf.chemdb.NoSQLSerializer;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.chemdb.*;
+import de.unijena.bioinf.spectraldb.entities.SimpleSpectrumDeserializer;
+import de.unijena.bioinf.spectraldb.entities.SimpleSpectrumSerializer;
 import de.unijena.bioinf.storage.db.nosql.Database;
-import de.unijena.bioinf.storage.db.nosql.Index;
-import de.unijena.bioinf.storage.db.nosql.IndexType;
+import de.unijena.bioinf.storage.db.nosql.Metadata;
 
+import java.io.IOException;
 import java.util.Map;
 
 
 public abstract class SpectralNoSQLDatabase<Doctype> extends ChemicalNoSQLDatabase<Doctype> implements SpectralLibrary {
 
-    protected static final String SPECTRUM_COLLECTION = "spectrum";
-
-    protected static final Map<String, Index[]> INDEX = Map.of(
-            FORMULA_COLLECTION, ChemicalNoSQLDatabase.INDEX.get(FORMULA_COLLECTION),
-            COMPOUND_COLLECTION, ChemicalNoSQLDatabase.INDEX.get(COMPOUND_COLLECTION),
-            SPECTRUM_COLLECTION, new Index[]{
-                    new Index("test", IndexType.NON_UNIQUE)
-            }
-    );
-
-    public SpectralNoSQLDatabase(Database database, NoSQLSerializer serializer) {
-        super(database, serializer);
+    public SpectralNoSQLDatabase(Database<Doctype> database) throws IOException {
+        super(database);
     }
 
-    public SpectralNoSQLDatabase(Database database, NoSQLSerializer serializer, FingerprintVersion version) {
-        super(database, serializer, version);
+    protected static Metadata initMetadata(FingerprintVersion version) throws IOException {
+        Metadata metadata = ChemicalNoSQLDatabase.initMetadata(version);
+        return metadata.addRepository(
+                SimpleSpectrum.class,
+                "id",
+                new SimpleSpectrumSerializer(),
+                new SimpleSpectrumDeserializer()
+        );
     }
 
     public abstract <C extends CompoundCandidate, S extends Spectrum<?>> void importCompoundsFingerprintsAndSpectra(MolecularFormula key, Map<C, Iterable<S>> candidates) throws ChemicalDatabaseException;

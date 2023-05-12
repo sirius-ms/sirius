@@ -42,6 +42,8 @@ public class SimpleSpectrum extends BasicSpectrum<Peak> implements OrderedSpectr
 	}
 
 	protected int hash = 0;
+
+	public long id = -1L;
 	
 	public SimpleSpectrum(double[] masses, double[] intensities) {
 		this(new ArrayWrapperSpectrum(masses, intensities));
