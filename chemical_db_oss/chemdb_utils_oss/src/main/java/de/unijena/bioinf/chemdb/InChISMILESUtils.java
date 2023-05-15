@@ -32,13 +32,19 @@ import org.openscience.cdk.ChemFile;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.InvalidSmilesException;
+import org.openscience.cdk.graph.ConnectivityChecker;
 import org.openscience.cdk.inchi.InChIGenerator;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import org.openscience.cdk.inchi.InChIToStructure;
+import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.io.ISimpleChemObjectReader;
 import org.openscience.cdk.io.ReaderFactory;
+import org.openscience.cdk.isomorphism.Pattern;
+import org.openscience.cdk.isomorphism.matchers.QueryAtomContainer;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
+import org.openscience.cdk.smarts.Smarts;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.tools.manipulator.ChemFileManipulator;
@@ -50,6 +56,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.StreamSupport;
 
 import static de.unijena.bioinf.ChemistryBase.chem.InChIs.*;
 import static de.unijena.bioinf.ChemistryBase.chem.SmilesU.*;
@@ -69,31 +76,39 @@ public class InChISMILESUtils {
         }
     }
 
-    public static String inchi2inchiKey(String inchi) {
-        final InChI in = getInchiWithKeyOrThrow(inchi);
+    public static String inchi2inchiKey(String inchi, boolean keepStereoInformation) {
+        //todo by converting first to atom container and then retrieving the key, the inchi may be altered and so the inchi key. Should only concern 3D information. May happens for undefined stereo centers.
+        final InChI in = getInchiWithKeyOrThrow(inchi, keepStereoInformation);
         return in == null ? null : in.key;
     }
 
-    public static InChI getInchiWithKeyOrThrow(String inchi) {
-        return getInchiWithKeyOrThrow(inchi, e -> new RuntimeException("Error when creating CDK Objects from InChI String.", e));
+    public static InChI getStandardInchiIfNonStandard(InChI inChI, boolean keepStereoInformation) {
+        String inchi = inChI.in3D;
+        if (isStandardInchi(inchi)) return inChI;
+        return getInchiWithKeyOrThrow(inchi, keepStereoInformation);
     }
 
-    public static <X extends Throwable> InChI getInchiWithKeyOrThrow(String inchi, Function<CDKException, ? extends X> exceptionSupplier) throws X {
+    public static InChI getInchiWithKeyOrThrow(String inchi, boolean keepStereoInformation) {
+        return getInchiWithKeyOrThrow(inchi, keepStereoInformation, e -> new RuntimeException("Error when creating CDK Objects from InChI String.", e));
+    }
+
+    public static <X extends Throwable> InChI getInchiWithKeyOrThrow(String inchi, boolean keepStereoInformation, Function<CDKException, ? extends X> exceptionSupplier) throws X {
         try {
-            return getInchiWithKey(inchi);
+            return getInchiWithKey(inchi, keepStereoInformation);
         } catch (CDKException e) {
             throw exceptionSupplier.apply(e);
         }
     }
 
-    public static InChI getInchiWithKey(String inchi) throws CDKException {
-        return getInchi(getAtomContainerFromInchi(inchi));
+    public static InChI getInchiWithKey(String inchi, boolean keepStereoInformation) throws CDKException {
+        //todo this sometimes seems to produce a different InChI key than simultaneously generating InChI plus InChIKey from a SMILES. Does this only happen with q-charges? E.g. 'CC1CCC2C(=CCCC2(C)C)C1(C)CCC(C)=CCN3[CH][NH+](C)[C]4[N][CH][N][C](N)[C]34'
+        return getInchi(getAtomContainerFromInchi(inchi), keepStereoInformation);
     }
 
     //    NEWPSOFF/DoNotAddH/SNon
-    public static InChI getInchi(IAtomContainer atomContainer) throws CDKException {
+    public static InChI getInchi(IAtomContainer atomContainer, boolean keepStereoInformation) throws CDKException {
         // this will create a standard inchi, see: https://egonw.github.io/cdkbook/inchi.html
-        InChIGenerator inChIGenerator = InChIGeneratorFactory.getInstance().getInChIGenerator(atomContainer, InchiFlag.SNon); //suppress Omitted undefined stereo
+        InChIGenerator inChIGenerator = InChIGeneratorFactory.getInstance().getInChIGenerator(atomContainer, keepStereoInformation ? new InchiFlag[0] : new InchiFlag[]{InchiFlag.SNon}); //removing stereoInformation produces much less warnings, including 'Omitted undefined stereo'
         InchiStatus state = inChIGenerator.getStatus();
         if (state != InchiStatus.ERROR) {
             if (state == InchiStatus.WARNING)
@@ -141,8 +156,8 @@ public class InChISMILESUtils {
         }
     }
 
-    public static InChI getInchiFromSmiles(String smiles) throws CDKException {
-        return getInchi(getAtomContainerFromSmiles(smiles));
+    public static InChI getInchiFromSmiles(String smiles, boolean keepStereoInformation) throws CDKException {
+        return getInchi(getAtomContainerFromSmiles(smiles), keepStereoInformation);
     }
 
 
@@ -226,17 +241,99 @@ public class InChISMILESUtils {
         return SmilesUCdk.formulaFromSmiles(smiles);
     }
 
+    /**
+     * strips some salts and solvent. If only one connected component remains, it is returned. Else null.
+     * @param atomContainer
+     * @return
+     */
+    public static IAtomContainer getMainConnectedComponentOrNull(IAtomContainer atomContainer, boolean adjustForRemovedChargesIfPossible) {
+        if (atomContainer == null || atomContainer.getAtomCount()==0) return atomContainer;
+//        Cl,Br,I]
+//[Li,Na,K,Ca,Mg]
+//[O,N]
+
+
+        String smarts = "[Cl,Na,I,Br,K,Ca,Mg,Li,O,N]";
+        QueryAtomContainer query = new QueryAtomContainer(DefaultChemObjectBuilder.getInstance());
+            if (!Smarts.parse(query, smarts))
+                throw new IllegalArgumentException("Could not parse SMARTS: " +
+                        smarts + "\n" +
+                        Smarts.getLastErrorMesg() + "\n" +
+                        Smarts.getLastErrorLocation());
+        Pattern pattern = Pattern.findIdentical(query);
+
+        //no need to prepare target molecule with rings and  aromaticity
+
+        if (ConnectivityChecker.isConnected(atomContainer)) return atomContainer;
+
+        IAtomContainerSet fragments = ConnectivityChecker.partitionIntoMolecules(atomContainer);
+        int fragmentCount = fragments.getAtomContainerCount();
+
+        int mainComponentIdx = -1;
+        int removedCharge = 0;
+        for (int i = 0; i < fragmentCount; i++) {
+             IAtomContainer f = fragments.getAtomContainer(i);
+            if (!pattern.matches(f)) {
+                if (mainComponentIdx>=0) {
+                    LoggerFactory.getLogger(InChISMILESUtils.class).warn("Molecule has more than one main connected component.");
+                    return null; //more than one component after removal of salts
+                }
+                mainComponentIdx = i;
+            } else {
+                removedCharge += StreamSupport.stream(f.atoms().spliterator(), false).mapToInt(IAtom::getFormalCharge).sum();
+            }
+        }
+
+
+        IAtomContainer main = fragments.getAtomContainer(mainComponentIdx);
+
+        if (!adjustForRemovedChargesIfPossible || removedCharge == 0) return main;
+
+        int posCharges = 0;
+        int negCharges =0;
+        for (IAtom atom : main.atoms()) {
+            int charge = atom.getFormalCharge();
+                if (charge < 0) negCharges += charge;
+                if (charge > 0) posCharges += charge;
+        }
+
+        if (removedCharge < 0 && posCharges == -removedCharge) {
+            removeAllPositiveChargesIfPossible(main);
+        } else if (negCharges == -removedCharge) {
+            removeAllNegativeChargesIfPossible(main);
+        } else {
+            //don't know which charges to remove.
+            LoggerFactory.getLogger(InChISMILESUtils.class).warn("Cannot remove charges from main connected component");
+            return null;
+        }
+
+        return main;
+    }
+
+    private static void removeAllPositiveChargesIfPossible(IAtomContainer atomContainer) {
+        removeChargesIfPossible(atomContainer, true, false);
+    }
+
+    private static void removeAllNegativeChargesIfPossible(IAtomContainer atomContainer) {
+        removeChargesIfPossible(atomContainer, false, true);
+    }
+
+    private static void removeChargesIfPossible(IAtomContainer atomContainer, boolean removePositiveCharges, boolean removeNegativeCharges) {
+        for (IAtom atom : atomContainer.atoms()) {
+            if (atom.getFormalCharge()<0 && removeNegativeCharges){
+                atom.setImplicitHydrogenCount(atom.getImplicitHydrogenCount()-atom.getFormalCharge());
+                atom.setFormalCharge(0);
+            }
+            else if (atom.getFormalCharge()>0 && removePositiveCharges) {
+                int adjustment = atom.getImplicitHydrogenCount()-atom.getFormalCharge();
+                atom.setImplicitHydrogenCount(Math.max(0, adjustment));
+                atom.setFormalCharge(Math.max(0, -adjustment));
+            }
+        }
+    }
 
     public static void main(String... args) throws CDKException, IOException {
         //todo remove after testing
-
-//    System.out.println(formulaFromSmiles("CCCCCCCCCCCCCCCCCC(=O)OC[C@H](COP(=O)(O)OCC[N+](C)(C)C)O").formatByHill());
-//    System.out.println(InChIs.newInChI(null,"InChI=1S/C26H55NO7P/c1-5-6-7-8-9-10-11-12-13-14-15-16-17-18-19-20-26(29)32-23-25(28)24-34-35(30,31)33-22-21-27(2,3)4/h25,28H,5-24H2,1-4H3,(H,30,31)/t25-/m1/s1").extractFormula().formatByHill());
-//    System.out.println(inchi2inchiKey("InChI=1S/C26H55NO7P/c1-5-6-7-8-9-10-11-12-13-14-15-16-17-18-19-20-26(29)32-23-25(28)24-34-35(30,31)33-22-21-27(2,3)4/h25,28H,5-24H2,1-4H3,(H,30,31)/t25-/m1/s1"));
-//    InChI i = getInchiAndInchiKey("CCCCCCCCCCCCCCCCCC(=O)OC[C@H](COP(=O)(O)OCC[N+](C)(C)C)O");
-//    System.out.println(i.in3D);
-//    System.out.println(i.extractFormula().formatByHill());
-//    System.out.println(i.key);
 
         String s = "C(C(/O)=C/C=C1(CC2(/C(\\C(=O)1)=C/C=CC=2)))([O-])=O";
         s = stripStereoCentres(s);

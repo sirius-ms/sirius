@@ -110,7 +110,7 @@ public class CombinatorialSubtreeCalculatorJsonWriter {
 
         MolecularGraph molecule = subtreeCalc.getMolecule();
         SmilesGenerator smiGen = new SmilesGenerator(SmiFlavor.Generic);
-        InChI inChI = InChISMILESUtils.getInchi(molecule.getMolecule());
+        InChI inChI = InChISMILESUtils.getInchi(molecule.getMolecule(), false);
         Objects.requireNonNull(inChI);
         int[] atomOrder = new int[molecule.natoms];
 
