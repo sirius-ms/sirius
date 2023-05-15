@@ -76,7 +76,7 @@ public class NeighbourSetFingerprinter {
             }
             for (String inchi : inchis) {
                 final IAtomContainer mol = InChISMILESUtils.getAtomContainer(inchi2d(inchi));
-                final String key = Objects.requireNonNull(InChISMILESUtils.getInchi(mol)).key2D();
+                final String key = Objects.requireNonNull(InChISMILESUtils.getInchi(mol, false)).key2D();
                 if (map.get(key)==null) continue;
                 final Set<AtomicDescriptorSet> has = new HashSet<>(map.get(key));
                 SmartsMatchers.prepare(mol, true);
@@ -112,7 +112,7 @@ public class NeighbourSetFingerprinter {
                 AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
                 for (AtomicDescriptorSet set : buildDescriptorSets(mol, 2, 5)) {
                     HashSet<String> count = allSets.computeIfAbsent(set, k -> new HashSet<>());
-                    count.add(Objects.requireNonNull(InChISMILESUtils.getInchi(mol)).key2D());
+                    count.add(Objects.requireNonNull(InChISMILESUtils.getInchi(mol, false)).key2D());
                 }
                 System.out.println(".");
             }
