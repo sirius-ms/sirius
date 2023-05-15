@@ -68,7 +68,7 @@ ext {
     cplex_version = '12.7.1'
 //    cplex_version = '20.1.0'
     gurobi_version = '9.1.1'
-    cbc_version = '2.10.8.1'
+    cbc_version = '2.10.8.2'
 
     logger.lifecycle('reading build properties file...')
     props = new Properties()
