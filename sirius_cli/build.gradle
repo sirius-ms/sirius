@@ -41,7 +41,7 @@ dependencies {
     api group: 'de.isas.mztab', name: 'jmztabm-api', version: "$mztabm_version"
     api group: 'de.isas.mztab', name: 'jmztabm-io', version: "$mztabm_version"
 
-    api group: 'org.jbibtex', name: 'jbibtex', version: '1.0.17'
+    api group: 'org.jbibtex', name: 'jbibtex', version: '1.0.20'
     api group: 'commons-io', name: 'commons-io', version: '2.11.0'
 
     //ilp solver support
