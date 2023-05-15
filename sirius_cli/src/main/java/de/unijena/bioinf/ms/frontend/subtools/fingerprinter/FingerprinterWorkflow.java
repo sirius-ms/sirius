@@ -78,12 +78,12 @@ public class FingerprinterWorkflow implements Workflow {
             CdkFingerprintVersion cdkVersion = api.getCDKChemDBFingerprintVersion();
 
             LoggerFactory.getLogger(getClass()).info("Reading input from '" + inputFile.toString() + "'...");
-            List<String> inchiList = readInput(inputFile);
+            List<String> smilesList = readInput(inputFile);
 
             List<BasicJJob<SmilesFpt>> jobs = new ArrayList<>();
 
-            LoggerFactory.getLogger(getClass()).info("Creating fingerprint jobs for '" +inchiList.size() + "' input structures.");
-            for (String smiles : inchiList) {
+            LoggerFactory.getLogger(getClass()).info("Creating fingerprint jobs for '" +smilesList.size() + "' input structures.");
+            for (String smiles : smilesList) {
                 BasicJJob<SmilesFpt> fpt_job = new BasicJJob<>() {
                     @Override
                     protected SmilesFpt compute() {
@@ -127,8 +127,7 @@ public class FingerprinterWorkflow implements Workflow {
     public void writeOutput(Path outputFile, List<SmilesFpt> outList) throws IOException {
         try (BufferedWriter bw = Files.newBufferedWriter(outputFile)) {
             for (SmilesFpt obj : outList) {
-                bw.write(obj.smiles + "\t" + obj.fpt.toCommaSeparatedString());
-                bw.newLine();
+                bw.write(obj.smiles + "\t" + obj.fpt.toCommaSeparatedString() + System.lineSeparator());
             }
         }
     }
