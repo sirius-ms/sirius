@@ -47,7 +47,7 @@ public enum DataSource {
     ZINCBIO("ZINC bio", 8192, "zinc_id","zincbio", "http://zinc.docking.org/substances/%s",new Publication("Sterling Tand Irwin JJ, ZINC 15 - Ligand Discovery for Everyone. J Chem Inf Model. 2015", "10.1021/acs.jcim.5b00559")),
     TRAIN("Training Set", 16384, null, null, null, null), //not part of the PSQL database anymore but assigned for each predictor individually //todo but we still need that flag, right?
     YMDB("YMDB", 65536, "ymdb_id","ymdb", "http://www.ymdb.ca/compounds/%s", new Publication("Ramirez-Gaona M et al., YMDB 2.0: a significantly expanded version of the yeast metabolome database. Nucleic Acids Res. 2017", "10.1093/nar/gkw1058")),
-    PLANTCYC("Plantcyc", 131072, "unique_id","plantcyc",  "http://pmn.plantcyc.org/compound?orgid=PLANT&id=%s", new Publication("Hawkins C et al., Plant Metabolic Network 15: A resource of genome-wide metabolism databases for 126 plants and algae. J Integr Plant Biol. 2021", "10.1111/jipb.13163")),
+    PLANTCYC("Plantcyc", 131072, "compound_id","plantcyc",  "http://pmn.plantcyc.org/compound?orgid=PLANT&id=%s", new Publication("Hawkins C et al., Plant Metabolic Network 15: A resource of genome-wide metabolism databases for 126 plants and algae. J Integr Plant Biol. 2021", "10.1111/jipb.13163")),
     NORMAN("NORMAN", 262144,  "norman_susdat_id","norman", null, new Publication("Taha HM et al., The NORMAN Suspect List Exchange (NORMAN-SLE): facilitating European and worldwide collaboration on suspect screening in high resolution mass spectrometry. Environ Sci Eur. 2022", "10.1186/s12302-022-00680-6")),
     //this is currently only interesting for internal testing.
     ADDITIONAL("additional", 524288,  null,null,null, 0, false, null), //proably mostly training structures, but maybe more.
@@ -55,7 +55,7 @@ public enum DataSource {
     COCONUT("COCONUT", 2097152,  "id", "coconut", "https://coconut.naturalproducts.net/compound/coconut_id/%s", new Publication("Sorokina M et al., COCONUT online: Collection of Open Natural Products database. J Cheminf. 2021", "10.1186/s13321-020-00478-9")),
 
     BloodExposome("Blood Exposome", 4194304,  "pubchem_cid", "bloodexposome", "https://bloodexposome.org/#/description?qcid=%s", new Publication("Barupal DK and Fiehn O, Generating the Blood Exposome Database Using a Comprehensive Text Mining and Database Fusion Approach. Environ Health Perspect. 2019", "10.1289/EHP4713")),
-    TeroMol("TeroMOL", 8388608,  "pubchem_cid", "teromol", "http://terokit.qmclab.com/molecule.html?MolId=%s", new Publication("Zeng T et al.,Chemotaxonomic Investigation of Plant Terpenoids with an Established Database (TeroMOL). New Phytol. 2022", "10.1111/nph.18133")),
+    TeroMol("TeroMOL", 8388608,  "mol_id", "teromol", "http://terokit.qmclab.com/molecule.html?MolId=%s", new Publication("Zeng T et al.,Chemotaxonomic Investigation of Plant Terpenoids with an Established Database (TeroMOL). New Phytol. 2022", "10.1111/nph.18133")),
 
     PUBCHEMANNOTATIONBIO("PubChem class - bio and metabolites", 16777216,  null,null,null, 0, false, new Publication("Kim S et al., PubChem in 2021: new data content and improved web interfaces. Nucleic Acids Res. 2021", "10.1093/nar/gkaa971")), //2**24; Pubchem Annotations now have a separate flag
     PUBCHEMANNOTATIONDRUG("PubChem class - drug", 33554432,  null,null,null, 0, false, new Publication("Kim S et al., PubChem in 2021: new data content and improved web interfaces. Nucleic Acids Res. 2021", "10.1093/nar/gkaa971")),
