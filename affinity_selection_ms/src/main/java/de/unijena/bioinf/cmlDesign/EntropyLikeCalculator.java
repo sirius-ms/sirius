@@ -20,7 +20,7 @@ public class EntropyLikeCalculator implements CMLEvaluator{
 
         /* LOOP:
          * The idea is to compute a mass-deviation-window and the number of candidates contained in this window for each
-         * mass m with numMolecules[m] > 0. To avoid double counting of candidates,
+         * mass m in [minMoleculeMass, maxMoleculeMass]. To avoid double counting of candidates,
          * we shift this window from minMoleculeMass to maxMoleculeMass.
          */
 
@@ -33,36 +33,33 @@ public class EntropyLikeCalculator implements CMLEvaluator{
         for(int m = minMoleculeMass; m <= currentUpperBound; m++) numCandidatesInWindow = numCandidatesInWindow + numMoleculesPerMass[m];
 
         // 2.) Initialise the important sums for the score computation:
-        double blowupFactorReciprocal = 1 / this.blowupFactor;
-        double normalizedNumCandidatesInWindow = numCandidatesInWindow * blowupFactorReciprocal / minMoleculeMass;
-        double logCandidatesSum = normalizedNumCandidatesInWindow * Math.log(normalizedNumCandidatesInWindow);
-        double candidatesSum = normalizedNumCandidatesInWindow;
+        double totalNumMolecules = CMLUtils.getTotalNumberOfMolecules(bbMasses);
+        double totalNumMoleculesReciprocal = 1d / totalNumMolecules;
+
+        double relativeNumCandidatesInWindow = numCandidatesInWindow * totalNumMoleculesReciprocal;
+        double entropy = relativeNumCandidatesInWindow * Math.log(relativeNumCandidatesInWindow);
 
         int newLowerBound, newUpperBound;
         for(int mass = minMoleculeMass + 1; mass <= maxMoleculeMass; mass++){
-            if(numMoleculesPerMass[mass] > 0){
-                newLowerBound = (int) (mass - this.relDev * mass);
-                newUpperBound = (int) (mass + this.relDev * mass);
-                if(newUpperBound > maxMoleculeMass) newUpperBound = maxMoleculeMass;
+            newLowerBound = (int) (mass - this.relDev * mass);
+            newUpperBound = (int) (mass + this.relDev * mass);
+            if(newUpperBound > maxMoleculeMass) newUpperBound = maxMoleculeMass;
 
-                if(newLowerBound <= currentUpperBound){
-                    for(int m = currentLowerBound; m < newLowerBound; m++) numCandidatesInWindow -= numMoleculesPerMass[m];
-                    for(int m = currentUpperBound + 1; m <= newUpperBound; m++) numCandidatesInWindow += numMoleculesPerMass[m];
-                }else{
-                    numCandidatesInWindow = 0;
-                    for(int m = newLowerBound; m <= newUpperBound; m++) numCandidatesInWindow += numMoleculesPerMass[m];
-                }
-
-                normalizedNumCandidatesInWindow = numCandidatesInWindow * blowupFactorReciprocal / mass;
-                logCandidatesSum += normalizedNumCandidatesInWindow * Math.log(normalizedNumCandidatesInWindow);
-                candidatesSum += normalizedNumCandidatesInWindow;
-                currentLowerBound = newLowerBound;
-                currentUpperBound = newUpperBound;
+            if(newLowerBound <= currentUpperBound){
+                for(int m = currentLowerBound; m < newLowerBound; m++) numCandidatesInWindow -= numMoleculesPerMass[m];
+                for(int m = currentUpperBound + 1; m <= newUpperBound; m++) numCandidatesInWindow += numMoleculesPerMass[m];
+            }else{
+                numCandidatesInWindow = 0;
+                for(int m = newLowerBound; m <= newUpperBound; m++) numCandidatesInWindow += numMoleculesPerMass[m];
             }
+
+            relativeNumCandidatesInWindow = numCandidatesInWindow * totalNumMoleculesReciprocal;
+            if(relativeNumCandidatesInWindow > 0) entropy += relativeNumCandidatesInWindow * Math.log(relativeNumCandidatesInWindow);
+
+            currentLowerBound = newLowerBound;
+            currentUpperBound = newUpperBound;
         }
 
-        int totalNumMolecules = CMLUtils.getTotalNumberOfMolecules(bbMasses);
-        double totalNumMoleculesReciprocal =  1d / totalNumMolecules;
-        return - totalNumMoleculesReciprocal * logCandidatesSum + Math.log(totalNumMolecules) * totalNumMoleculesReciprocal * candidatesSum;
+        return -entropy;
     }
 }
