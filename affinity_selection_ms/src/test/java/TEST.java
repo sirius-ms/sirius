@@ -28,7 +28,7 @@ public class TEST {
     public static void main(String[] args){
         try {
             File cwd = new File("C:\\Users\\Nutzer\\Documents\\Bioinformatik_PhD\\AS-MS-Project\\Ergebnisse\\Evaluation_Entropy_Like_Function");
-            File file = new File(cwd, "normal_bb_masses.txt");
+            File file = new File(cwd, "uniform_bb_masses.txt");
             double blowupFactor = 1e5;
             double ppm = 5d;
 

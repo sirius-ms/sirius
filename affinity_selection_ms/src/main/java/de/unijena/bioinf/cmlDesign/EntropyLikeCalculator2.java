@@ -58,7 +58,6 @@ public class EntropyLikeCalculator2 implements CMLEvaluator{
 
             int newLowerBound, newUpperBound;
             for (int mass = minMoleculeMass + 1; mass <= maxMoleculeMass; mass++) {
-                if (numMoleculesPerMass[mass] > 0) {
                     newLowerBound = (int) (mass - this.relDev * mass);
                     newUpperBound = (int) (mass + this.relDev * mass);
                     if (newUpperBound > maxMoleculeMass) newUpperBound = maxMoleculeMass;
@@ -77,20 +76,22 @@ public class EntropyLikeCalculator2 implements CMLEvaluator{
                     fileWriter.newLine();
                     fileWriter.write(mass+"\t"+numCandidatesInWindow);
 
-                    normalizedNumCandidatesInWindow2 = numCandidatesInWindow * blowupFactorReciprocal;
-                    normalizedNumCandidatesInWindow3 = (numCandidatesInWindow * blowupFactorReciprocal) / mass;
+                    if(numCandidatesInWindow > 0) {
+                        normalizedNumCandidatesInWindow2 = numCandidatesInWindow * blowupFactorReciprocal;
+                        normalizedNumCandidatesInWindow3 = (numCandidatesInWindow * blowupFactorReciprocal) / mass;
 
-                    logCandidatesSum1 += numCandidatesInWindow * Math.log(numCandidatesInWindow);
-                    logCandidatesSum2 += normalizedNumCandidatesInWindow2 * Math.log(normalizedNumCandidatesInWindow2);
-                    logCandidatesSum3 += normalizedNumCandidatesInWindow3 * Math.log(normalizedNumCandidatesInWindow3);
+                        logCandidatesSum1 += numCandidatesInWindow * Math.log(numCandidatesInWindow);
+                        logCandidatesSum2 += normalizedNumCandidatesInWindow2 * Math.log(normalizedNumCandidatesInWindow2);
+                        logCandidatesSum3 += normalizedNumCandidatesInWindow3 * Math.log(normalizedNumCandidatesInWindow3);
 
-                    candidatesSum1 += numCandidatesInWindow;
-                    candidatesSum2 += normalizedNumCandidatesInWindow2;
-                    candidatesSum3 += normalizedNumCandidatesInWindow3;
+                        candidatesSum1 += numCandidatesInWindow;
+                        candidatesSum2 += normalizedNumCandidatesInWindow2;
+                        candidatesSum3 += normalizedNumCandidatesInWindow3;
+                    }
 
                     currentLowerBound = newLowerBound;
                     currentUpperBound = newUpperBound;
-                }
+
             }
 
             int totalNumMolecules = CMLUtils.getTotalNumberOfMolecules(bbMasses);
