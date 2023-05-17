@@ -243,7 +243,7 @@ public class ComputeController extends BaseApiController {
      * @param jobConfig to add
      * @return Probably modified name of the config (to ensure filesystem path compatibility).
      */
-    @PostMapping(value = "/job-configs/{name}", produces = MediaType.TEXT_PLAIN_VALUE)
+    @PostMapping(value = "/job-configs/{name}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public String postJobConfig(@PathVariable String name, @RequestBody JobSubmission jobConfig, @RequestParam(required = false, defaultValue = "false") boolean overrideExisting) {
         name = name.replaceAll("\\W+", "_");
