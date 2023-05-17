@@ -33,7 +33,7 @@ public enum DataSource {
     //the BIO flag is a collection of many bio-like databases. Furthermore, there was a flag 128 in the PSQL structure database which was called bio. This is now obsolete and replaced by a combined flags.
     BIO("Bio Database", makeBIOFLAG(), null, null, null, null), //todo make distinction to normal databases more clear
     PUBCHEM("PubChem", 2, "compound_id","pubchem", "https://pubchem.ncbi.nlm.nih.gov/compound/%s", new Publication("Kim S et al., PubChem in 2021: new data content and improved web interfaces. Nucleic Acids Res. 2021", "10.1093/nar/gkaa971")),
-    MESH("MeSH", 4, "compound_id", "hasmesh", "http://www.ncbi.nlm.nih.gov/mesh/%s", null),
+    MESH("MeSH", 4, "compound_id", "hasmesh", null, null),
     HMDB("HMDB", 8, "hmdb_id", "hmdb", "http://www.hmdb.ca/metabolites/%s", new Publication("Wishart DS, Guo AC, Oler E, et al., HMDB 5.0: the Human Metabolome Database for 2022. Nucleic Acids Res. 2022", "10.1093/nar/gkab1062")),
     //Knapsack maps via inchikey, now using COCONUT as source // http://www.knapsackfamily.com/knapsack_core/result.php?sname=INCHIKEY&word=JLJLRLWOEMWYQK-BKYUDGNBNA-N
     KNAPSACK("KNApSAcK", 16, "inchi_key", "knapsack", "http://www.knapsackfamily.com/knapsack_core/result.php?sname=INCHIKEY&word=%s", new Publication("Nakamura Y. et al, KNApSAcK Metabolite Activity Database for retrieving the relationships between metabolites and biological activities. Plant Cell Physiol.  2014", "10.1093/pcp/pct176")),
