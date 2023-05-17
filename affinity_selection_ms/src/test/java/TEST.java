@@ -36,8 +36,8 @@ public class TEST {
             double[][] bbMasses = new double[][]{fstBBMasses, {100d}};
             int[][] intBBMasses = CMLUtils.convertBBMassesToInteger(bbMasses, blowupFactor);
 
-            EntropyLikeCalculator2 cmlEvaluator = new EntropyLikeCalculator2(ppm, blowupFactor);
-            cmlEvaluator.evaluate(intBBMasses);
+            //EntropyLikeCalculator2 cmlEvaluator = new EntropyLikeCalculator2(ppm, blowupFactor);
+            //cmlEvaluator.evaluate(intBBMasses);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
