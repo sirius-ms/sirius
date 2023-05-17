@@ -167,7 +167,7 @@ pushToGitHub:
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
-  needs: [testCLI, testGUI, testAPI]
+  needs: [testCLI, testGUI]
   tags:
     - kubernetes
   only:
