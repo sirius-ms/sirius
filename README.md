@@ -1,5 +1,5 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blueviolet.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Generic badge](https://img.shields.io/badge/Version-5.6.3-informational.svg)](https://shields.io/)
+[![Generic badge](https://img.shields.io/badge/Version-5.7.0-informational.svg)](https://shields.io/)
 [![Build and Pubish](https://github.com/boecker-lab/sirius/actions/workflows/distribute.yaml/badge.svg?branch=release-4-pre)](https://github.com/boecker-lab/sirius/actions/workflows/distribute.yaml)
 
 *<span style="color: #808080;">Our methods are offered to the scientific community as freely available resources. (Re-)distribution of the
@@ -17,6 +17,27 @@ SIRIUS integrates a collection of our tools, including CSI:FingerID (with [COSMI
 graphical user interface and the command line version of SIRIUS seamlessly integrate the CSI:FingerID and CANOPUS web services.
 
 ## Download Links
+Since version 5.7.0 SIRIUS is officially available via conda ([conda-forge](https://conda-forge.org/)) under the
+package name [`sirius-ms`](https://anaconda.org/conda-forge/sirius-ms). Native MacOS `arm64` (Apple Silicon) builds are solely available
+via conda.
+
+<!--begin download-->
+
+### SIRIUS+CSI:FingerID GUI and CLI - Version 5.7.0 (2023-05-19)
+##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
+- for Windows (64bit): [msi](https://github.com/boecker-lab/sirius/releases/download/v5.7.0/sirius-5.7.0-win64.msi) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.7.0/sirius-5.7.0-win64.zip) / [msi (signed by Bright Giant)](https://github.com/bright-giant/sirius/releases/download/v5.7.0/sirius-5.7.0-win64.msi)
+- for Mac (64bit): [pkg](https://github.com/boecker-lab/sirius/releases/download/v5.7.0/sirius-5.7.0-osx64.pkg) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.7.0/sirius-5.7.0-osx64.zip) / [pkg (signed by Bright Giant)](https://github.com/bright-giant/sirius/releases/download/v5.7.0/sirius-5.7.0-osx64.pkg)
+- for Linux (64bit): [zip](https://github.com/boecker-lab/sirius/releases/download/v5.7.0/sirius-5.7.0-linux64.zip)
+
+### SIRIUS+CSI:FingerID Command-Line Interface only - Version 5.7.0 (2023-05-19)
+##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
+- for Windows (64bit): [msi](https://github.com/boecker-lab/sirius/releases/download/v5.7.0/sirius-5.7.0-win64-headless.msi) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.7.0/sirius-5.7.0-win64-headless.zip) / [msi (signed by Bright Giant)](https://github.com/bright-giant/sirius/releases/download/v5.7.0/sirius-5.7.0-win64-headless.msi)
+- for Mac (64bit): [pkg](https://github.com/boecker-lab/sirius/releases/download/v5.7.0/sirius-5.7.0-osx64-headless.pkg) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.7.0/sirius-5.7.0-osx64-headless.zip) / [pkg (signed by Bright Giant)](https://github.com/bright-giant/sirius/releases/download/v5.7.0/sirius-5.7.0-osx64-headless.pkg)
+- for Linux (64bit): [zip](https://github.com/boecker-lab/sirius/releases/download/v5.7.0/sirius-5.7.0-linux64-headless.zip)
+
+<!--end download-->
+
+All (including previous) releases can be found [here](https://github.com/boecker-lab/sirius/releases).
 
 ### Documentation
 - [Online Documentation](https://boecker-lab.github.io/docs.sirius.github.io/)
@@ -24,27 +45,16 @@ graphical user interface and the command line version of SIRIUS seamlessly integ
 - [Bookchapter on using SIRIUS 4](https://doi.org/10.1007/978-1-0716-0239-3_11) ([Preprint](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2020/12/SIRIUS4_book_chapter_preprint-2.pdf)) -- does not cover the new LC-MS/MS processing option
 - [Demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
 
-<!--begin download-->
-
-### SIRIUS+CSI:FingerID GUI and CLI - Version 5.6.3 (2023-01-12)
-##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
-- for Windows (64bit): [msi](https://github.com/boecker-lab/sirius/releases/download/v5.6.3/sirius-5.6.3-win64.msi) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.6.3/sirius-5.6.3-win64.zip) / [msi (signed by Bright Giant)](https://github.com/bright-giant/sirius/releases/download/v5.6.3/sirius-5.6.3-win64.msi)
-- for Mac (64bit): [pkg](https://github.com/boecker-lab/sirius/releases/download/v5.6.3/sirius-5.6.3-osx64.pkg) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.6.3/sirius-5.6.3-osx64.zip) / [pkg (signed by Bright Giant)](https://github.com/bright-giant/sirius/releases/download/v5.6.3/sirius-5.6.3-osx64.pkg)
-- for Linux (64bit): [zip](https://github.com/boecker-lab/sirius/releases/download/v5.6.3/sirius-5.6.3-linux64.zip)
-
-### SIRIUS+CSI:FingerID Command-Line Interface only - Version 5.6.3 (2023-01-12)
-##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
-- for Windows (64bit): [msi](https://github.com/boecker-lab/sirius/releases/download/v5.6.3/sirius-5.6.3-win64-headless.msi) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.6.3/sirius-5.6.3-win64-headless.zip) / [msi (signed by Bright Giant)](https://github.com/bright-giant/sirius/releases/download/v5.6.3/sirius-5.6.3-win64-headless.msi)
-- for Mac (64bit): [pkg](https://github.com/boecker-lab/sirius/releases/download/v5.6.3/sirius-5.6.3-osx64-headless.pkg) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.6.3/sirius-5.6.3-osx64-headless.zip) / [pkg (signed by Bright Giant)](https://github.com/bright-giant/sirius/releases/download/v5.6.3/sirius-5.6.3-osx64-headless.pkg)
-- for Linux (64bit): [zip](https://github.com/boecker-lab/sirius/releases/download/v5.6.3/sirius-5.6.3-linux64-headless.zip)
-
-
-<!--end download-->
-
-All (including previous) releases can be found [here](https://github.com/boecker-lab/sirius/releases).
 
 ### [Installation](https://boecker-lab.github.io/docs.sirius.github.io/install)
-For  Windows and MacOS, the installer version of SIRIUS (msi/pkg) should be preferred but might require administrator permissions.
+The recommended method to install SIRIUS is via conda ([`sirius-ms`](https://anaconda.org/conda-forge/sirius-ms)) since
+the package manager takes care about system library compatibility.
+```
+conda install -c conda-forge sirius-ms
+```
+
+For Windows and MacOS, we also provide installers (`msi`/`pkg`) which should be preferred over the standalone
+`zip` packages but might require administrator permissions for installation.
 
 Since we do not pay Microsoft/Apple for certification, you might have to confirm that you want to trust "software from
 an unknown source" on Windows/MacOS when using the installers provided by the Böcker group.
