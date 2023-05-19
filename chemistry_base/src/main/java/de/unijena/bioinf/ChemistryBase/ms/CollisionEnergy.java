@@ -51,6 +51,13 @@ public class CollisionEnergy {
         this.maxEnergySource = minSource;
     }
 
+    public CollisionEnergy(CollisionEnergy ce){
+        this.minEnergy=ce.getMinEnergy();
+        this.maxEnergy=ce.getMaxEnergy();
+        this.minEnergySource=ce.minEnergySource;
+        this.maxEnergySource=ce.maxEnergySource;
+    }
+
     public CollisionEnergy(double min, double max, double minSource, double maxSource) {
         if (min > max) throw new IllegalArgumentException("minimal energy have to be smaller than maximum energy");
         this.minEnergy = min;
