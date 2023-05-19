@@ -47,7 +47,7 @@ public class MsData {
     protected List<AnnotatedSpectrum> ms2Spectra;
     protected List<AnnotatedSpectrum> ms1Spectra;
 
-    public MsData(AnnotatedSpectrum mergedMs1, AnnotatedSpectrum mergedMs2, List<AnnotatedSpectrum> ms2Spectra, List<AnnotatedSpectrum> ms1Spectra) {
+    public MsData(AnnotatedSpectrum mergedMs1, AnnotatedSpectrum mergedMs2, List<AnnotatedSpectrum> ms1Spectra, List<AnnotatedSpectrum> ms2Spectra) {
         this.mergedMs1 = mergedMs1;
         this.mergedMs2 = mergedMs2;
         this.ms2Spectra = ms2Spectra;

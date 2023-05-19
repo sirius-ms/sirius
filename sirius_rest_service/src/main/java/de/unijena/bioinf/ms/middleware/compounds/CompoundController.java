@@ -19,10 +19,7 @@
 
 package de.unijena.bioinf.ms.middleware.compounds;
 
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.SpectrumFileSource;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.babelms.GenericParser;
@@ -47,6 +44,7 @@ import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidateNumber;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.checkerframework.checker.units.qual.C;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -225,10 +223,20 @@ public class CompoundController extends BaseApiController {
     private MsData asCompoundMsData(Instance instance) {
         return instance.loadCompoundContainer(Ms2Experiment.class)
                 .getAnnotation(Ms2Experiment.class).map(exp -> new MsData(
-                        opt(exp.getMergedMs1Spectrum(), s -> new AnnotatedSpectrum((Spectrum<Peak>) s)).orElse(null),
+                        opt(exp.getMergedMs1Spectrum(), s -> {AnnotatedSpectrum t = new AnnotatedSpectrum((Spectrum<Peak>) s);
+                            t.setMsLevel(1);
+                            return t;
+                        }).orElse(null),
                         null,
-                        exp.getMs1Spectra().stream().map(AnnotatedSpectrum::new).collect(Collectors.toList()),
-                        exp.getMs2Spectra().stream().map(AnnotatedSpectrum::new).collect(Collectors.toList()))).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        exp.getMs1Spectra().stream().map(x -> {AnnotatedSpectrum t = new AnnotatedSpectrum(x);
+                                    t.setMsLevel(1);
+                                    return t;
+                                }).collect(Collectors.toList()),
+                        exp.getMs2Spectra().stream().map(x -> {AnnotatedSpectrum t = new AnnotatedSpectrum(x);
+                            t.setCollisionEnergy(new CollisionEnergy(x.getCollisionEnergy()));
+                            t.setMsLevel(2);
+                            return t;
+                        }).collect(Collectors.toList()))).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                         "Compound with ID '" + instance + "' has no input Data!"));
     }
 
