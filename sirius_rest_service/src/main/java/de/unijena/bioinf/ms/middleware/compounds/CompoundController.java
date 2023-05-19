@@ -44,7 +44,6 @@ import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidateNumber;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.checkerframework.checker.units.qual.C;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +58,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -87,12 +87,12 @@ public class CompoundController extends BaseApiController {
      * @return CompoundIds with additional annotations and MS/MS data (if specified).
      */
     @GetMapping(value = "/compounds", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<CompoundId> getCompounds(@PathVariable String projectId, @RequestParam(required = false, defaultValue = "false") boolean topAnnotation, @RequestParam(required = false, defaultValue = "false") boolean msData) {
+    public List<CompoundId> getCompounds(@PathVariable String projectId, @RequestParam(required = false, defaultValue = "false") boolean topAnnotation, @RequestParam(required = false, defaultValue = "false") boolean msData, @RequestParam(required = false,defaultValue = "false") boolean msQuality) {
         LoggerFactory.getLogger(CompoundController.class).info("Started collecting compounds...");
         final ProjectSpaceManager<?> space = projectSpace(projectId);
 
         final ArrayList<CompoundId> compoundIds = new ArrayList<>();
-        space.projectSpace().forEach(ccid -> compoundIds.add(asCompoundId(ccid, space, topAnnotation, msData)));
+        space.projectSpace().forEach(ccid -> compoundIds.add(asCompoundId(ccid, space, topAnnotation, msData,msQuality)));
 
         LoggerFactory.getLogger(CompoundController.class).info("Finished parsing compounds...");
         return compoundIds;
@@ -175,10 +175,11 @@ public class CompoundController extends BaseApiController {
     @GetMapping(value = "/compounds/{cid}", produces = MediaType.APPLICATION_JSON_VALUE)
     public CompoundId getCompound(@PathVariable String projectId, @PathVariable String cid,
                                   @RequestParam(required = false, defaultValue = "false") boolean topAnnotation,
-                                  @RequestParam(required = false, defaultValue = "false") boolean msData) {
+                                  @RequestParam(required = false, defaultValue = "false") boolean msData,
+                                  @RequestParam(required = false, defaultValue = "false") boolean msQuality) {
         final ProjectSpaceManager<?> space = projectSpace(projectId);
         final CompoundContainerId ccid = parseCID(space, cid);
-        return asCompoundId(ccid, space, topAnnotation, msData);
+        return asCompoundId(ccid, space, topAnnotation, msData,msQuality);
     }
 
     /**
@@ -240,7 +241,18 @@ public class CompoundController extends BaseApiController {
                         "Compound with ID '" + instance + "' has no input Data!"));
     }
 
-    private CompoundId asCompoundId(CompoundContainerId cid, ProjectSpaceManager<?> ps, boolean includeSummary, boolean includeMsData) {
+    private EnumSet<CompoundQuality.CompoundQualityFlag> asCompoundQualityData(Instance instance){
+        return instance.loadCompoundContainer(Ms2Experiment.class)
+                .getAnnotation(Ms2Experiment.class)
+                .flatMap(exp -> exp.getAnnotation(CompoundQuality.class))
+                .map(CompoundQuality::getFlags)
+                .orElseThrow(()-> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Compound with ID '" + instance+ "' has no Quality information!"));
+    }
+
+
+
+    private CompoundId asCompoundId(CompoundContainerId cid, ProjectSpaceManager<?> ps, boolean includeSummary, boolean includeMsData, boolean includeMsQuality) {
         final CompoundId compoundId = CompoundId.of(cid);
         if (includeSummary || includeMsData) {
             Instance instance = ps.getInstanceFromCompound(cid);
@@ -248,6 +260,8 @@ public class CompoundController extends BaseApiController {
                 compoundId.setTopAnnotation(asCompoundSummary(instance));
             if (includeMsData)
                 compoundId.setMsData(asCompoundMsData(instance));
+            if (includeMsQuality)
+                compoundId.setQualityFlags(asCompoundQualityData(instance));
         }
         return compoundId;
     }
