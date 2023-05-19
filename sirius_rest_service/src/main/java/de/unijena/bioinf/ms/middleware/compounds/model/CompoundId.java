@@ -20,9 +20,12 @@
 package de.unijena.bioinf.ms.middleware.compounds.model;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.CompoundQuality;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.EnumSet;
 
 /**
  * The CompoundId contains the ID of a compound together with some read-only information that might be displayed in
@@ -49,6 +52,17 @@ public class CompoundId {
     //Summary of the results of the compounds
     protected CompoundAnnotation topAnnotation;
     protected MsData msData;
+
+    // Data and Result quality
+    /**
+     * Contains all pre-computation quality information that belong to
+     * this compound, such as information about the quality of the peak shape, MS2 spectrum etc.,
+     * see ({@link CompoundQuality.CompoundQualityFlag})
+     * <p>
+     * Each Compound has a Set of Quality assessment flags.
+     */
+    protected EnumSet<CompoundQuality.CompoundQualityFlag> qualityFlags;
+    //todo we will add an additional MSQuality Object with many different quality checks produced by LCMS Compound// Summary.
 
     //todo handle computing flag
     protected boolean computing = false;
