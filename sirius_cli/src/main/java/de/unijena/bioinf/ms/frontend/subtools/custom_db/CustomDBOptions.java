@@ -78,9 +78,10 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 description = {"Location of the custom database to import into.",
                         "If no input data is given (global --input) the database will just be added to SIRIUS",
                         "The added db will also be available in the GUI",
-                        "If just a name is given the db will be stored locally in '$SIRIUS_WORKSPACE/csi_fingerid_cache/custom'.",
-                        "A location can either be a absolute local path or (experimental) a 's3' cloud storage location e.g. 's3://my-bucket",
-                        "The Location of the SIRIUS workspace can be set globally by (--workspace)."}, order = 201)
+//                        "If just a name is given the db will be stored locally in '<SIRIUS_WORKSPACE>/csi_fingerid_cache/custom'.",
+                        "A location can either be a absolute local path OR a 's3' cloud storage location (experimental), e.g. 's3://my-bucket"
+//                       , "The Location of the SIRIUS workspace can be set globally by (--workspace)."
+                }, order = 201)
         String location = null;
 
         @Option(names = {"--buffer-size", "--buffer"}, defaultValue = "1000",
