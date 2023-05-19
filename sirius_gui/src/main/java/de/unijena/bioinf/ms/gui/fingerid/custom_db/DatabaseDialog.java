@@ -161,9 +161,9 @@ public class DatabaseDialog extends JDialog {
 
                 try {
                     Jobs.runCommandAndLoad(Arrays.asList(
-                            CustomDBOptions.class.getAnnotation(CommandLine.Command.class).name(),
-                            "--remove", name), null, null, owner,
-                            "Deleting database '" + name + "'...", true)
+                                            CustomDBOptions.class.getAnnotation(CommandLine.Command.class).name(),
+                                            "--remove", name), null, null, owner,
+                                    "Deleting database '" + name + "'...", true)
                             .awaitResult();
                 } catch (ExecutionException ex) {
                     LoggerFactory.getLogger(getClass()).error("Error during Custom DB removal.", ex);
@@ -192,11 +192,10 @@ public class DatabaseDialog extends JDialog {
     }
 
     protected void whenCustomDbIsAdded(final String dbName) {
-        SearchableDatabases.getCustomDatabaseByPath(Path.of(dbName)).ifPresent(db -> {
-            this.customDatabases.put(db.name(), db);
-            dbList.setListData(this.customDatabases.keySet().stream().sorted().toArray(String[]::new));
-            dbList.setSelectedValue(db.name(), true);
-        });
+        CustomDatabase<?> db = SearchableDatabases.getCustomDatabaseByPathOrThrow(Path.of(dbName));
+        this.customDatabases.put(db.name(), db);
+        dbList.setListData(this.customDatabases.keySet().stream().sorted().toArray(String[]::new));
+        dbList.setSelectedValue(db.name(), true);
     }
 
     protected static class DatabaseView extends JPanel {
@@ -213,13 +212,19 @@ public class DatabaseDialog extends JDialog {
 
         public void updateContent(CustomDatabase<?> c) {
             if (c.getStatistics().getCompounds() > 0) {
-                content.setText("<html>Custom database. Containing "
-                        + c.getStatistics().getCompounds() + " compounds with " + c.getStatistics().getFormulas()
-                        + " different molecular formulas." +
-                        ((c.getSettings().isInheritance() ? "<br>This database will also include all compounds from '" + DataSources.getDataSourcesFromBitFlags(c.getFilterFlag()).stream().filter(n -> !SearchableDatabases.NON_SLECTABLE_LIST.contains(n)).collect(Collectors.joining("', '")) + "'." : "")
-                                + (c.needsUpgrade() ? "<br><b>This database schema is outdated. You have to upgrade the database before you can use it.</b>" : "") + "</html>"));
+                content.setText("<html><b>" + c.name() + "</b>"
+                        + "<br><b>"
+                        + c.getStatistics().getCompounds() + "</b> compounds with <b>" + c.getStatistics().getFormulas()
+                        + "</b> different molecular formulas."
+                        + "<br>"
+                        + ((c.getSettings().isInheritance() ? "<br>This database will also include all compounds from '" + DataSources.getDataSourcesFromBitFlags(c.getFilterFlag()).stream().filter(n -> !SearchableDatabases.NON_SLECTABLE_LIST.contains(n)).collect(Collectors.joining("', '")) + "'." : "")
+                                + (c.needsUpgrade() ? "<br><b>This database schema is outdated. You have to upgrade the database before you can use it.</b>" : "")
+                                + "</html>"));
+
+                content.setToolTipText(c.storageLocation());
             } else {
                 content.setText("Empty custom database.");
+                content.setToolTipText(null);
             }
         }
     }
