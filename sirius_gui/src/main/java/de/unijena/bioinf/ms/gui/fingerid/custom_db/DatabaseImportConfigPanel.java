@@ -38,14 +38,14 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         if (db == null) {
             dbLocationField.field.setPlaceholder("Enter location (no whitespaces)");
         } else {
-            dbLocationField.field.setText(db.name());
+            dbLocationField.field.setText(db.storageLocation());
 
         }
         dbLocationField.setEnabled(db == null);
 
 
         getOptionDescriptionByName("import").ifPresent(it -> dbLocationField.setToolTipText(GuiUtils.formatToolTip(it)));
-        smalls.addNamed("import", dbLocationField);
+        smalls.addNamed("DB location", dbLocationField);
         parameterBindings.put("import", dbLocationField::getFilePath);
 
         final String buf = "buffer";
