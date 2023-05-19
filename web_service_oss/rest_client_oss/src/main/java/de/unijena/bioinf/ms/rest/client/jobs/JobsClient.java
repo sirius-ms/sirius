@@ -50,6 +50,7 @@ public class JobsClient extends AbstractCsiClient {
             PropertyManager.getInteger("de.unijena.bioinf.sirius.http.job.ftree.limit", 500)};
 
     private final ObjectMapper postJobMapper;
+
     @SafeVarargs
     public JobsClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<Request.Builder>... requestDecorator) {
         super(serverUrl, requestDecorator);
@@ -90,11 +91,11 @@ public class JobsClient extends AbstractCsiClient {
         return executeFromJson(client,
                 () -> new Request.Builder()
                         .url(buildVersionSpecificWebapiURI("/jobs/" + CID).build())
-                        .post(RequestBody.create(
-                                new ObjectMapper()
-                                        .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-                                        .writeValueAsBytes(submission), APPLICATION_JSON)
-                        ), new TypeReference<>() {}
+                        .post(RequestBody.create(postJobMapper
+                                .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+                                .writeValueAsBytes(submission), APPLICATION_JSON)
+                        ), new TypeReference<>() {
+                }
         );
     }
 
@@ -102,7 +103,7 @@ public class JobsClient extends AbstractCsiClient {
      * Unregisters Client and deletes all its jobs on server
      */
     public void deleteAllJobs(@NotNull OkHttpClient client) throws IOException {
-        execute(client, () ->  new Request.Builder()
+        execute(client, () -> new Request.Builder()
                 .url(buildVersionSpecificWebapiURI("/jobs/" + CID + "/delete").build())
                 .patch(RequestBody.create(new byte[]{})));
     }
