@@ -246,8 +246,7 @@ public class CompoundController extends BaseApiController {
                 .getAnnotation(Ms2Experiment.class)
                 .flatMap(exp -> exp.getAnnotation(CompoundQuality.class))
                 .map(CompoundQuality::getFlags)
-                .orElseThrow(()-> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                        "Compound with ID '" + instance+ "' has no Quality information!"));
+                .orElse(EnumSet.of(CompoundQuality.CompoundQualityFlag.UNKNOWN));
     }
 
 
