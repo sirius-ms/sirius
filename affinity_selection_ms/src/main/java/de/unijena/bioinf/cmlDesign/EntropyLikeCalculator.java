@@ -60,6 +60,6 @@ public class EntropyLikeCalculator implements CMLEvaluator{
             currentUpperBound = newUpperBound;
         }
 
-        return -entropy;
+        return -entropy / this.blowupFactor;
     }
 }

@@ -28,16 +28,19 @@ public class TEST {
     public static void main(String[] args){
         try {
             File cwd = new File("C:\\Users\\Nutzer\\Documents\\Bioinformatik_PhD\\AS-MS-Project\\Ergebnisse\\Evaluation_Entropy_Like_Function");
-            File file = new File(cwd, "uniform_bb_masses.txt");
-            double blowupFactor = 1e5;
+            File file = new File(cwd, "normal_bb_masses.txt");
+            double[] blowupFactors = new double[]{1e3,1e4,1e5,1e6};
             double ppm = 5d;
 
             double[] fstBBMasses = readBBMassesOfOneSet(file);
             double[][] bbMasses = new double[][]{fstBBMasses, {100d}};
-            int[][] intBBMasses = CMLUtils.convertBBMassesToInteger(bbMasses, blowupFactor);
 
-            //EntropyLikeCalculator2 cmlEvaluator = new EntropyLikeCalculator2(ppm, blowupFactor);
-            //cmlEvaluator.evaluate(intBBMasses);
+            for(double blowupFactor : blowupFactors) {
+                int[][] intBBMasses = CMLUtils.convertBBMassesToInteger(bbMasses, blowupFactor);
+
+                EntropyLikeCalculator entropyCalc = new EntropyLikeCalculator(ppm, blowupFactor);
+                System.out.println("Blowup-Factor: "+blowupFactor+"\tScore/Entropy: "+entropyCalc.evaluate(intBBMasses));
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
