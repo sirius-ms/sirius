@@ -1,0 +1,35 @@
+dependencies {
+    implementation project(':chemistry_base')
+    implementation "org.openscience.cdk:cdk-bundle:$cdk_version"
+    implementation group: 'args4j', name: 'args4j', version: '2.33'
+    implementation group: 'org.jfree', name: 'jfreechart', version: '1.5.2'
+
+    testImplementation project(':chemistry_base')
+    testImplementation "org.openscience.cdk:cdk-bundle:$cdk_version"
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+jar{
+    manifest {
+        attributes('Main-Class': 'de.unijena.bioinf.cmlDesign.CLI')
+    }
+}
+
+task SimpleCLI_FatJar(type: Jar) {
+    manifest.from jar.manifest
+    classifier = 'all'
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    } {
+        exclude "META-INF/*.SF"
+        exclude "META-inf/*.DSA"
+        exclude "META_INF/*.RSA"
+    }
+    with jar
+}

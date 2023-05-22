@@ -74,3 +74,5 @@ include ':web_service_oss'
     include ':web_service_oss:rest_client_oss'
     include ':web_service_oss:client_auth_oss'
     include ':web_service_oss:scribejava-httpclient-apache5'
+include ':affinity_selection_ms'
+
