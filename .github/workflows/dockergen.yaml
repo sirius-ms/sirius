@@ -1,0 +1,78 @@
+name: dockergen
+
+on: [ workflow_call ]
+      
+jobs:
+  dockergen:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Load Build properties
+      uses: Reedyuk/read-properties@v1.0.1
+      id: sirius_version
+      with:
+        path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
+        property: 'de.unijena.bioinf.siriusFrontend.version'
+    - name: Download Artifact
+      uses: actions/download-artifact@v2
+      with:
+        name: "sirius-${{ steps.sirius_version.outputs.value }}-Linux-x86-64"
+        path: sirius-artifact
+    - name: List Artifact Contents
+      run: ls sirius-artifact
+    - name: Unpack Sirius
+      run: |
+        unzip sirius-${{ steps.sirius_version.outputs.value }}-linux64.zip
+      working-directory: sirius-artifact/
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: Extract metadata (tags, labels) for Docker
+      id: meta
+      uses: docker/metadata-action@v4
+      with:
+        images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_REPOSITORY }}
+    - name: Build and export to Docker
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        file: ./sirius_dist/sirius_docker/Dockerfile
+        load: true
+        tags: test_container
+    - name: Test sirius --help
+      run: |
+        docker run --rm test_container sirius --help
+    - name: Test ILP solver on laudanosine.mgf
+      run: |
+        mkdir tmp_output
+
+        docker run -v ${{ github.workspace }}/sirius_doc/manual/demo-data/mgf:/inputfolder -v ${{ github.workspace }}/tmp_output:/result --rm test_container \
+        sirius --input ./inputfolder/laudanosine.mgf --output ./result formula -p orbitrap write-summaries --output ./result
+
+        folder_path="./tmp_output/1_laudanosine_FEATURE_1/"
+        if [ ! -d "$folder_path" ]; then
+          echo "Folder does not exist: $folder_path"
+          exit 1
+        fi
+
+        file_path="./tmp_output/1_laudanosine_FEATURE_1/formula_candidates.tsv"
+        if [ ! -e "$file_path" ]; then
+          echo "File does not exist: $file_path"
+          exit 1
+        fi
+    - name: Get lowercase version
+      id: lowercase_version
+      run: |
+        lowercase=$(echo "${{ steps.sirius_version.outputs.value }}" | tr '[:upper:]' '[:lower:]')
+        echo $lowercase
+        echo "lowercase_version=$lowercase" >> $GITHUB_OUTPUT
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        file: ./sirius_dist/sirius_docker/Dockerfile
+        push: true
+        tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_REPOSITORY }}:${{ steps.lowercase_version.outputs.lowercase_version }}
+        labels: ${{ steps.meta.outputs.labels }}
