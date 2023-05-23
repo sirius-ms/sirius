@@ -30,16 +30,22 @@ import java.util.Map;
 
 public class Metadata {
 
-    public JacksonModule module;
+    public Map<Class<?>, JsonSerializer<?>> serializers;
+
+    public Map<Class<?>, JsonDeserializer<?>> deserializers;
 
     public Map<Class<?>, Index[]> repoIndices;
+
+    public Map<Class<?>, String> idFields;
 
     public Map<String, Index[]> collectionIndices;
 
     private Metadata() {
-        module = new JacksonModule();
+        serializers = new HashMap<>();
+        deserializers = new HashMap<>();
         repoIndices = new HashMap<>();
         collectionIndices = new HashMap<>();
+        idFields = new HashMap<>();
     }
 
     public static Metadata build() {
@@ -60,8 +66,8 @@ public class Metadata {
             JsonDeserializer<T> deserializer,
             Index... indices
     ) {
-        this.module.addSerializer(clazz, serializer);
-        this.module.addDeserializer(clazz, deserializer);
+        this.serializers.put(clazz, serializer);
+        this.deserializers.put(clazz, deserializer);
         this.repoIndices.put(clazz, indices);
         return this;
     }
@@ -74,12 +80,9 @@ public class Metadata {
             Index... indices
     ) throws IOException {
         validateIdField(clazz, idField);
-        try {
-            this.module.addSerializer(clazz, new JacksonModule.IdMapperSerializer<>(clazz, idField, serializer));
-            this.module.addDeserializer(clazz, new JacksonModule.IdMapperDeserializer<>(clazz, idField, deserializer));
-        } catch (NoSuchFieldException e) {
-            throw new IOException(e);
-        }
+        this.serializers.put(clazz, serializer);
+        this.deserializers.put(clazz, deserializer);
+        this.idFields.put(clazz, idField);
         this.repoIndices.put(clazz, indices);
         return this;
     }

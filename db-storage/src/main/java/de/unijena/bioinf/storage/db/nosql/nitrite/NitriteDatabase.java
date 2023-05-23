@@ -20,11 +20,15 @@
 
 package de.unijena.bioinf.storage.db.nosql.nitrite;
 
+import com.fasterxml.jackson.core.Version;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.common.collect.Iterables;
-import de.unijena.bioinf.storage.db.nosql.*;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import de.unijena.bioinf.storage.db.nosql.Index;
 import de.unijena.bioinf.storage.db.nosql.IndexType;
+import de.unijena.bioinf.storage.db.nosql.*;
 import org.apache.commons.lang3.tuple.Pair;
 import org.dizitart.no2.*;
 import org.dizitart.no2.filters.Filters;
@@ -33,6 +37,7 @@ import org.dizitart.no2.objects.ObjectRepository;
 import org.dizitart.no2.objects.filters.ObjectFilters;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -67,15 +72,48 @@ public class NitriteDatabase implements Database<Document> {
     // STATE
     private boolean isClosed = false;
 
-    public NitriteDatabase(Path file, Metadata meta) {
+    public NitriteDatabase(Path file, Metadata meta) throws IOException {
         this.file = file;
         this.db = initDB(file, meta);
         this.initCollections(meta.collectionIndices);
-        this.initRepositories(meta.repoIndices);
+        this.initRepositories(meta.repoIndices, meta.idFields);
     }
 
-    private Nitrite initDB(Path file, Metadata meta) {
-        return Nitrite.builder().filePath(file.toFile()).registerModule(meta.module).compressed().openOrCreate();
+    @SuppressWarnings("unchecked")
+    private <T> void addSerializer(Metadata meta, SimpleModule module, Class<?> clazz, JsonSerializer<?> serializer) throws NoSuchFieldException {
+        Class<T> c = (Class<T>) clazz;
+        JsonSerializer<T> s = (JsonSerializer<T>) serializer;
+        if (meta.idFields.containsKey(clazz)) {
+            module.addSerializer(c, new NitriteIdMapperSerializer<>(c, meta.idFields.get(clazz), s));
+        } else {
+            module.addSerializer(c, s);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> void addDeserializer(Metadata meta, SimpleModule module, Class<?> clazz, JsonDeserializer<?> deserializer) throws NoSuchFieldException {
+        Class<T> c = (Class<T>) clazz;
+        JsonDeserializer<T> d = (JsonDeserializer<T>) deserializer;
+        if (meta.idFields.containsKey(clazz)) {
+            module.addDeserializer(c, new NitriteIdMapperDeserializer<>(c, meta.idFields.get(clazz), d));
+        } else {
+            module.addDeserializer(c, d);
+        }
+    }
+
+    private Nitrite initDB(Path file, Metadata meta) throws IOException {
+        SimpleModule module = new SimpleModule("sirius-nitrite", Version.unknownVersion());
+        try {
+            for (Map.Entry<Class<?>, JsonSerializer<?>> entry : meta.serializers.entrySet()) {
+                addSerializer(meta, module, entry.getKey(), entry.getValue());
+            }
+            for (Map.Entry<Class<?>, JsonDeserializer<?>> entry : meta.deserializers.entrySet()) {
+                addDeserializer(meta, module, entry.getKey(), entry.getValue());
+            }
+        } catch (NoSuchFieldException e) {
+            throw new IOException(e);
+        }
+        return Nitrite.builder().filePath(file.toFile()).registerModule(module).compressed().openOrCreate();
     }
 
     private void initCollections(Map<String, Index[]> collections) {
@@ -86,11 +124,28 @@ public class NitriteDatabase implements Database<Document> {
         }
     }
 
-    private void initRepositories(Map<Class<?>, Index[]> repositories) {
+    private void initRepositories(Map<Class<?>, Index[]> repositories, Map<Class<?>, String> idFields) throws IOException {
         for (Class<?> clazz : repositories.keySet()) {
             ObjectRepository<?> repository = this.db.getRepository(clazz);
             this.repositories.put(clazz, repository);
             initIndex(repositories.get(clazz), repository);
+            if (idFields.containsKey(clazz)) {
+                initIdField(clazz, idFields.get(clazz), repository);
+            }
+        }
+    }
+
+    private void initIdField(Class<?> clazz, String idFieldName, ObjectRepository<?> repository) throws IOException {
+        try {
+            Field idField = clazz.getDeclaredField(idFieldName);
+            Field fieldField = repository.getClass().getDeclaredField("idField");
+            fieldField.setAccessible(true);
+            fieldField.set(repository, idField);
+            if (!repository.hasIndex(idFieldName)) {
+                repository.createIndex(idFieldName, IndexOptions.indexOptions(org.dizitart.no2.IndexType.Unique));
+            }
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new IOException(e);
         }
     }
 
