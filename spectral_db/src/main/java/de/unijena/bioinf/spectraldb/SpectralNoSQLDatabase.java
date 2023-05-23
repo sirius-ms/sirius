@@ -20,13 +20,10 @@
 
 package de.unijena.bioinf.spectraldb;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.chemdb.ChemicalNoSQLDatabase;
-import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.spectraldb.entities.Ms2SpectralMetadata;
 import de.unijena.bioinf.spectraldb.entities.SpectralData;
 import de.unijena.bioinf.spectraldb.ser.Ms2SpectralMetadataDeserializer;
@@ -37,7 +34,6 @@ import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Metadata;
 
 import java.io.IOException;
-import java.util.Map;
 
 
 public abstract class SpectralNoSQLDatabase<Doctype> extends ChemicalNoSQLDatabase<Doctype> implements SpectralLibrary {

@@ -24,7 +24,8 @@ import com.google.common.collect.Iterables;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
-import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.nitrite.ChemicalNitriteDatabase;
@@ -39,7 +40,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 

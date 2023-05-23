@@ -48,10 +48,10 @@ import java.util.Map;
 
 public class Ms2SpectralMetadataDeserializer extends JsonDeserializer<Ms2SpectralMetadata> {
 
-    private ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper();
 
     @Override
-    public Ms2SpectralMetadata deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
+    public Ms2SpectralMetadata deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         Map<Class<SpectrumAnnotation>, SpectrumAnnotation> annotations = new HashMap<>();
         Map<Class<Ms2ExperimentAnnotation>, Ms2ExperimentAnnotation> experimentAnnotations = new HashMap<>();
         Ms2SpectralMetadata metadata = new Ms2SpectralMetadata();

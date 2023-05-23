@@ -69,9 +69,7 @@ public class Ms2SpectralMetadata extends MutableMs2Spectrum {
         this.ionMass = experiment.getIonMass();
         this.formula = experiment.getMolecularFormula();
         this.name = experiment.getName();
-        experiment.getAnnotation(Smiles.class).ifPresent(smiles -> {
-            this.smiles = smiles.toString();
-        });
+        experiment.getAnnotation(Smiles.class).ifPresent(smiles -> this.smiles = smiles.toString());
         // TODO read NIST msp format
         spec.getAnnotation(AdditionalFields.class).ifPresent(fields -> {
             if (fields.containsKey(MassbankFormat.ACCESSION.k())) {
@@ -193,7 +191,7 @@ public class Ms2SpectralMetadata extends MutableMs2Spectrum {
 
     private static final class ExperimentAnnotated implements Annotated<Ms2ExperimentAnnotation> {
 
-        private Annotations<Ms2ExperimentAnnotation> annotations = new Annotations<>();
+        private final Annotations<Ms2ExperimentAnnotation> annotations = new Annotations<>();
 
         @Override
         public Annotations<Ms2ExperimentAnnotation> annotations() {

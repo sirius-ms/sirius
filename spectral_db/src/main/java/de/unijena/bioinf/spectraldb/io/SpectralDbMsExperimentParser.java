@@ -28,7 +28,6 @@ import de.unijena.bioinf.babelms.ZippedSpectraParser;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Consumer;
