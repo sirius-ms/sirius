@@ -29,11 +29,11 @@ import java.nio.file.Path;
 
 public class NoSQLSpectralDBs extends ChemDBs {
 
-    SpectralLibrary getLocalSpectralLibrary(Path file) throws IOException {
+    public static SpectralLibrary getLocalSpectralLibrary(Path file) throws IOException {
         return new SpectralNitriteDatabase(file);
     }
 
-    SpectralLibrary getLocalSpectralLibrary(Path file, FingerprintVersion version) throws IOException {
+    public static SpectralLibrary getLocalSpectralLibrary(Path file, FingerprintVersion version) throws IOException {
         return new SpectralNitriteDatabase(file, version);
     }
 

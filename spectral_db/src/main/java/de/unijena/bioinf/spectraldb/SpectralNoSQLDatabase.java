@@ -22,11 +22,17 @@ package de.unijena.bioinf.spectraldb;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.chemdb.*;
-import de.unijena.bioinf.spectraldb.entities.SimpleSpectrumDeserializer;
-import de.unijena.bioinf.spectraldb.entities.SimpleSpectrumSerializer;
+import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
+import de.unijena.bioinf.chemdb.ChemicalNoSQLDatabase;
+import de.unijena.bioinf.chemdb.CompoundCandidate;
+import de.unijena.bioinf.spectraldb.entities.Ms2SpectralMetadata;
+import de.unijena.bioinf.spectraldb.entities.SpectralData;
+import de.unijena.bioinf.spectraldb.ser.Ms2SpectralMetadataDeserializer;
+import de.unijena.bioinf.spectraldb.ser.Ms2SpectralMetadataSerializer;
+import de.unijena.bioinf.spectraldb.ser.SpectralDataDeserializer;
+import de.unijena.bioinf.spectraldb.ser.SpectralDataSerializer;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Metadata;
 
@@ -43,13 +49,18 @@ public abstract class SpectralNoSQLDatabase<Doctype> extends ChemicalNoSQLDataba
     protected static Metadata initMetadata(FingerprintVersion version) throws IOException {
         Metadata metadata = ChemicalNoSQLDatabase.initMetadata(version);
         return metadata.addRepository(
-                SimpleSpectrum.class,
+                Ms2SpectralMetadata.class,
                 "id",
-                new SimpleSpectrumSerializer(),
-                new SimpleSpectrumDeserializer()
+                new Ms2SpectralMetadataSerializer(),
+                new Ms2SpectralMetadataDeserializer()
+        ).addRepository(
+                SpectralData.class,
+                "id",
+                new SpectralDataSerializer(),
+                new SpectralDataDeserializer()
         );
     }
 
-    public abstract <C extends CompoundCandidate, S extends Spectrum<?>> void importCompoundsFingerprintsAndSpectra(MolecularFormula key, Map<C, Iterable<S>> candidates) throws ChemicalDatabaseException;
+    public abstract void importSpectra(Iterable<Ms2Experiment> experiments) throws ChemicalDatabaseException;
 
 }

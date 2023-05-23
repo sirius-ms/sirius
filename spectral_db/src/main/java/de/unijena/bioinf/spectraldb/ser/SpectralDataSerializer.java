@@ -18,24 +18,27 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.spectraldb.entities;
+package de.unijena.bioinf.spectraldb.ser;
 
-public class SpectrumMetaData {
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import de.unijena.bioinf.spectraldb.entities.SpectralData;
 
-    long id;
+import java.io.IOException;
 
-    long compoundId;
+public class SpectralDataSerializer extends JsonSerializer<SpectralData> {
 
-    long spectrumId;
+    @Override
+    public void serialize(SpectralData value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+        gen.writeStartObject();
 
-    // TODO spectral meta data:
-    // TODO compound name?
-    // TODO original smiles from spectrum (does not necessarily equal compound smiles!)
-    // TODO spectrum library identifiers
-    // TODO additional notes / technical parameters?
-    // TODO collisionenergy
+//        gen.writeNumberField("id", value.getId());
+        gen.writeNumberField("metaId", value.getMetaId());
+        gen.writeObjectField("masses", value.getMasses());
+        gen.writeObjectField("intensities", value.getIntensities());
 
-    // TODO NIST msp, massbank format
-
+        gen.writeEndObject();
+    }
 
 }
