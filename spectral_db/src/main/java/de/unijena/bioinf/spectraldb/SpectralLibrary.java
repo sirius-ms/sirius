@@ -20,8 +20,37 @@
 
 package de.unijena.bioinf.spectraldb;
 
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
+import de.unijena.bioinf.spectraldb.entities.Ms2SpectralData;
+import de.unijena.bioinf.spectraldb.entities.Ms2SpectralMetadata;
+import de.unijena.bionf.spectral_alignment.AbstractSpectralAlignment;
+import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
+import org.apache.commons.lang3.tuple.Pair;
+
 public interface SpectralLibrary {
 
+    <P extends Peak, A extends AbstractSpectralAlignment> Iterable<Pair<SpectralSimilarity, Ms2SpectralMetadata>> matchingSpectra(
+            Ms2Spectrum<P> spectrum,
+            Deviation precursorMzDeviation,
+            Deviation maxPeakDeviation,
+            Class<A> alignmentType
+    ) throws ChemicalDatabaseException;
 
+    <P extends Peak, A extends AbstractSpectralAlignment> Iterable<Pair<SpectralSimilarity, Ms2SpectralMetadata>> matchingSpectra(
+            Ms2Spectrum<P> spectrum,
+            Deviation precursorMzDeviation,
+            Deviation maxPeakDeviation,
+            Class<A> alignmentType,
+            boolean parallel
+    ) throws ChemicalDatabaseException;
+
+    Iterable<Ms2SpectralData> lookupSpectra(double precursorMz, Deviation deviation) throws ChemicalDatabaseException;
+
+    Iterable<Ms2SpectralMetadata> getMetaData(Iterable<Ms2SpectralData> data) throws ChemicalDatabaseException;
+
+    Iterable<Ms2SpectralData> getSpectralData(Iterable<Ms2SpectralMetadata> metadata) throws ChemicalDatabaseException;
 
 }

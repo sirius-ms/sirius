@@ -24,18 +24,20 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
-import de.unijena.bioinf.spectraldb.entities.SpectralData;
+import de.unijena.bioinf.spectraldb.entities.Ms2SpectralData;
 
 import java.io.IOException;
 
-public class SpectralDataDeserializer extends JsonDeserializer<SpectralData> {
+public class Ms2SpectralDataDeserializer extends JsonDeserializer<Ms2SpectralData> {
 
     @Override
-    public SpectralData deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+    public Ms2SpectralData deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         long id = -1L;
         long metaId = -1L;
         double[] masses = null;
         double[] intensities = null;
+        double ionMass = 0;
+        double precursorMz = 0;
 
         JsonToken token = p.currentToken();
         while (!token.isStructStart()) {
@@ -46,6 +48,14 @@ public class SpectralDataDeserializer extends JsonDeserializer<SpectralData> {
                 switch (p.currentName()) {
                     case "metaId":
                         metaId = p.nextLongValue(-1L);
+                        break;
+                    case "ionMass":
+                        token = p.nextToken();
+                        ionMass = p.getDoubleValue();
+                        break;
+                    case "precursorMz":
+                        token = p.nextToken();
+                        precursorMz = p.getDoubleValue();
                         break;
                     case "masses":
                         token = p.nextToken();
@@ -58,7 +68,7 @@ public class SpectralDataDeserializer extends JsonDeserializer<SpectralData> {
                 }
             }
         }
-        return new SpectralData(id, metaId, masses, intensities);
+        return new Ms2SpectralData(id, metaId, ionMass, precursorMz, masses, intensities);
     }
 
 }

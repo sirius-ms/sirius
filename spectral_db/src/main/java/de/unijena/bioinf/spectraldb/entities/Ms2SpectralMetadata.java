@@ -176,11 +176,11 @@ public class Ms2SpectralMetadata extends MutableMs2Spectrum {
         experimentAnnotated.addAnnotationsFrom(map);
     }
 
-    public static List<Pair<Ms2SpectralMetadata, SpectralData>> fromMutableMs2Experiment(MutableMs2Experiment experiment) {
-        return experiment.getMs2Spectra().stream().map(s -> Pair.of(new Ms2SpectralMetadata(experiment, s), new SpectralData(s))).collect(Collectors.toList());
+    public static List<Pair<Ms2SpectralMetadata, Ms2SpectralData>> fromMutableMs2Experiment(MutableMs2Experiment experiment) {
+        return experiment.getMs2Spectra().stream().map(s -> Pair.of(new Ms2SpectralMetadata(experiment, s), new Ms2SpectralData(experiment, s))).collect(Collectors.toList());
     }
 
-    public static MutableMs2Spectrum toMutableMs2Spectrum(Ms2SpectralMetadata metadata, SpectralData data) {
+    public static MutableMs2Spectrum toMutableMs2Spectrum(Ms2SpectralMetadata metadata, Ms2SpectralData data) {
         MutableMs2Spectrum ms2Spectrum = metadata.shallowCopy();
         ms2Spectrum.addAnnotationsFrom(metadata);
         for (Peak p : data) {

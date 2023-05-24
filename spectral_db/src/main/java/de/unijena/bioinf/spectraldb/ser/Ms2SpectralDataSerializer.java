@@ -23,18 +23,19 @@ package de.unijena.bioinf.spectraldb.ser;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import de.unijena.bioinf.spectraldb.entities.SpectralData;
+import de.unijena.bioinf.spectraldb.entities.Ms2SpectralData;
 
 import java.io.IOException;
 
-public class SpectralDataSerializer extends JsonSerializer<SpectralData> {
+public class Ms2SpectralDataSerializer extends JsonSerializer<Ms2SpectralData> {
 
     @Override
-    public void serialize(SpectralData value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+    public void serialize(Ms2SpectralData value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
         gen.writeStartObject();
 
-//        gen.writeNumberField("id", value.getId());
         gen.writeNumberField("metaId", value.getMetaId());
+        gen.writeNumberField("ionMass", value.getIonMass());
+        gen.writeNumberField("precursorMz", value.getPrecursorMz());
         gen.writeObjectField("masses", value.getMasses());
         gen.writeObjectField("intensities", value.getIntensities());
 
