@@ -1,6 +1,5 @@
 package de.unijena.bioinf.chemdb;
 
-import com.google.api.client.util.Lists;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
@@ -13,6 +12,7 @@ import de.unijena.bioinf.chemdb.nitrite.wrappers.FormulaCandidateSerializer;
 import de.unijena.bioinf.storage.db.nosql.*;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -64,7 +64,9 @@ public abstract class ChemicalNoSQLDatabase<DocType> implements AbstractChemical
             final double mass = ionType.precursorMassToNeutralMass(ionMass);
             final double from = mass - deviation.absoluteFor(mass);
             final double to = mass + deviation.absoluteFor(mass);
-            return Lists.newArrayList(this.database.find(new Filter().and().gte("mass", from).lte("mass", to), FormulaCandidate.class));
+            return StreamSupport.stream(
+                    this.database.find(new Filter().and().gte("mass", from).lte("mass", to), FormulaCandidate.class)
+                            .spliterator(),false).collect(Collectors.toList());
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }
