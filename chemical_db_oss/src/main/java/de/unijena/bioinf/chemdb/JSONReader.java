@@ -173,11 +173,11 @@ public class JSONReader extends CompoundReader {
 
         private final FingerprintVersion version;
 
-        protected CompoundCandidateDeserializer() {
+        public CompoundCandidateDeserializer() {
             this(CdkFingerprintVersion.getDefault());
         }
 
-        protected CompoundCandidateDeserializer(FingerprintVersion version) {
+        public CompoundCandidateDeserializer(FingerprintVersion version) {
             this.version = version;
         }
 
