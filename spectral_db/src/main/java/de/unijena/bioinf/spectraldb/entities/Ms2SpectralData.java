@@ -20,32 +20,42 @@
 
 package de.unijena.bioinf.spectraldb.entities;
 
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.MutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import gnu.trove.list.array.TDoubleArrayList;
 
 import java.util.Arrays;
 
-public class SpectralData extends SimpleMutableSpectrum {
+public class Ms2SpectralData extends SimpleMutableSpectrum implements OrderedSpectrum<Peak> {
 
     private long id = -1L;
     private long metaId = -1L;
 
-    public <T extends Peak, S extends Spectrum<T>> SpectralData(S immutable) {
+    private final double ionMass;
+
+    private final double precursorMz;
+
+    public Ms2SpectralData(MutableMs2Experiment experiment, MutableMs2Spectrum spectrum) {
         super();
-        this.masses = new TDoubleArrayList(immutable.size());
-        this.intensities = new TDoubleArrayList(immutable.size());
-        for (Peak p: immutable) {
-            this.masses.add(p.getMass());
-            this.intensities.add(p.getIntensity());
-        }
+        this.ionMass = experiment.getIonMass();
+        this.precursorMz = spectrum.getPrecursorMz();
+        final MutableSpectrum<? extends Peak> t = new SimpleMutableSpectrum(spectrum);
+        Spectrums.sortSpectrumByMass(t);
+        this.masses = new TDoubleArrayList(Spectrums.copyMasses(t));
+        this.intensities = new TDoubleArrayList(Spectrums.copyIntensities(t));
     }
 
-    public SpectralData(long id, long metaId, double[] masses, double[] intensities) {
+    public Ms2SpectralData(long id, long metaId, double ionMass, double precursorMz, double[] masses, double[] intensities) {
         super();
         this.id = id;
         this.metaId = metaId;
+        this.ionMass = ionMass;
+        this.precursorMz = precursorMz;
         this.masses = new TDoubleArrayList(Arrays.copyOf(masses, masses.length));
         this.intensities = new TDoubleArrayList(Arrays.copyOf(intensities, intensities.length));
     }
@@ -64,6 +74,14 @@ public class SpectralData extends SimpleMutableSpectrum {
 
     public void setMetaId(long metaId) {
         this.metaId = metaId;
+    }
+
+    public double getIonMass() {
+        return ionMass;
+    }
+
+    public double getPrecursorMz() {
+        return precursorMz;
     }
 
     public double[] getMasses() {
