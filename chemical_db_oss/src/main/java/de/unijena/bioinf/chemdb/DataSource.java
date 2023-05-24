@@ -74,7 +74,9 @@ public enum DataSource {
     //everything with flags greater equal to 2**33 are databases of artificial structures.
     KEGGMINE("KEGG Mine", 8589934592L, null,null, null, 8589934592L | 256L, true, new Publication("Jeffryes JG et al., MINEs: Open access databases of computationally predicted enzyme promiscuity products for untargeted metabolomics. J Cheminf. 2015", "10.1186/s13321-015-0087-1")),
     ECOCYCMINE("EcoCyc Mine", 17179869184L, null,null, null, 17179869184L | 2048L, true, new Publication("Jeffryes JG et al., MINEs: Open access databases of computationally predicted enzyme promiscuity products for untargeted metabolomics. J Cheminf. 2015", "10.1186/s13321-015-0087-1")),
-    YMDBMINE("YMDB Mine", 34359738368L, null,null, null, 34359738368L | 65536L, true, new Publication("Jeffryes JG et al., MINEs: Open access databases of computationally predicted enzyme promiscuity products for untargeted metabolomics. J Cheminf. 2015", "10.1186/s13321-015-0087-1"));
+    YMDBMINE("YMDB Mine", 34359738368L, null,null, null, 34359738368L | 65536L, true, new Publication("Jeffryes JG et al., MINEs: Open access databases of computationally predicted enzyme promiscuity products for untargeted metabolomics. J Cheminf. 2015", "10.1186/s13321-015-0087-1")),
+
+    MASSBANK("MassBank", 68719476736L, null, null, "https://massbank.eu/MassBank/RecordDisplay?id=%s", null);
 
 
     // additional field
