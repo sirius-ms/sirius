@@ -53,8 +53,6 @@ public class SimpleSpectrum extends BasicSpectrum<Peak> implements OrderedSpectr
 	@JsonIgnore
 	protected int hash = 0;
 
-	public long id = -1L;
-
 	private SimpleSpectrum() {
 		super(new double[0], new double[0]);
 	}
