@@ -22,6 +22,8 @@ package de.unijena.bioinf.storage.db.nosql;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public interface Database<DocType> extends Closeable, AutoCloseable {
 
@@ -29,7 +31,7 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
         ASCENDING, DESCENDING
     }
 
-    // CRUD operations
+    //region CRUD operations
 
     <T> int insert(T object) throws IOException;
 
@@ -85,7 +87,21 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
 
     <T, P, C> Iterable<T> joinAllChildren(Class<T> targetClass, Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String targetField) throws IOException;
 
+    /**
+     * Override to perform more efficient in place join by reusing {@param parents} objects.
+     */
+    default <P, C> Iterable<P> joinAllChildren(Class<P> parentClass, Class<C> childClass, Iterable<P> parents, String foreignField, String targetField) {
+        return joinAllChildren(parentClass, parentClass, childClass, parents, foreignField, targetField);
+    }
+
     <T, P, C> Iterable<T> joinChildren(Class<T> targetClass, Class<C> childClass, Filter childFilter, Iterable<P> parents, String localField, String foreignField, String targetField) throws IOException;
+
+    /**
+     * Override to perform more efficient in place join by reusing {@param parents} objects.
+     */
+    default <P, C> Iterable<P> joinChildren(Class<P> parentClass, Class<C> childClass, Filter childFilter, Iterable<P> parents, String foreignField, String targetField) throws IOException {
+        return joinChildren(parentClass, parentClass, childClass, childFilter, parents, foreignField, targetField);
+    }
 
     Iterable<DocType> joinAllChildren(String childCollection, Iterable<DocType> parents, String localField, String foreignField, String targetField) throws IOException;
 
@@ -115,8 +131,101 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
 
     int removeAll(String collectionName, Filter filter) throws IOException;
 
+    //endregion
     <ObjectFilterType> ObjectFilterType getObjectFilter(Filter filter);
 
     <FilterType> FilterType getFilter(Filter filter);
+
+
+    // region CRUD Streaming API
+    default <T> Stream<T> findStr(Filter filter, Class<T> clazz) throws IOException {
+        return StreamSupport.stream(find(filter, clazz).spliterator(), false);
+    }
+
+    default <T> Stream<T> findStr(Filter filter, Class<T> clazz, int offset, int pageSize) throws IOException {
+        return StreamSupport.stream(find(filter, clazz, offset, pageSize).spliterator(), false);
+    }
+
+    default <T> Stream<T> findStr(Filter filter, Class<T> clazz, String sortField, SortOrder sortOrder) throws IOException {
+        return StreamSupport.stream(find(filter, clazz, sortField, sortOrder).spliterator(), false);
+    }
+
+    default <T> Stream<T> findStr(Filter filter, Class<T> clazz, int offset, int pageSize, String sortField, SortOrder sortOrder) throws IOException {
+        return StreamSupport.stream(find(filter, clazz, offset, pageSize, sortField, sortOrder).spliterator(), false);
+    }
+
+    default Stream<DocType> findStr(String collectionName, Filter filter) throws IOException {
+        return StreamSupport.stream(find(collectionName, filter).spliterator(), false);
+    }
+
+    default Stream<DocType> findStr(String collectionName, Filter filter, int offset, int pageSize) throws IOException {
+        return StreamSupport.stream(find(collectionName, filter, offset, pageSize).spliterator(), false);
+    }
+
+    default Stream<DocType> findStr(String collectionName, Filter filter, String sortField, SortOrder sortOrder) throws IOException {
+        return StreamSupport.stream(find(collectionName, filter, sortField, sortOrder).spliterator(), false);
+    }
+
+    default Stream<DocType> findStr(String collectionName, Filter filter, int offset, int pageSize, String sortField, SortOrder sortOrder) throws IOException {
+        return StreamSupport.stream(find(collectionName, filter, offset, pageSize, sortField, sortOrder).spliterator(), false);
+    }
+
+    default <T> Stream<T> findAllStr(Class<T> clazz) throws IOException {
+        return StreamSupport.stream(findAll(clazz).spliterator(), false);
+    }
+
+    default <T> Stream<T> findAllStr(Class<T> clazz, int offset, int pageSize) throws IOException {
+        return StreamSupport.stream(findAll(clazz, offset, pageSize).spliterator(), false);
+    }
+
+    default <T> Stream<T> findAllStr(Class<T> clazz, String sortField, SortOrder sortOrder) throws IOException {
+        return StreamSupport.stream(findAll(clazz, sortField, sortOrder).spliterator(), false);
+    }
+
+    default <T> Stream<T> findAllStr(Class<T> clazz, int offset, int pageSize, String sortField, SortOrder sortOrder) throws IOException {
+        return StreamSupport.stream(findAll(clazz, offset, pageSize, sortField, sortOrder).spliterator(), false);
+    }
+
+    default Stream<DocType> findAllStr(String collectionName) throws IOException {
+        return StreamSupport.stream(findAll(collectionName).spliterator(), false);
+    }
+
+    default Stream<DocType> findAllStr(String collectionName, int offset, int pageSize) throws IOException {
+        return StreamSupport.stream(findAll(collectionName, offset, pageSize).spliterator(), false);
+    }
+
+    default Stream<DocType> findAllStr(String collectionName, String sortField, SortOrder sortOrder) throws IOException {
+        return StreamSupport.stream(findAll(collectionName, sortField, sortOrder).spliterator(), false);
+    }
+
+    default Stream<DocType> findAllStr(String collectionName, int offset, int pageSize, String sortField, SortOrder sortOrder) throws IOException {
+        return StreamSupport.stream(findAll(collectionName, offset, pageSize, sortField, sortOrder).spliterator(), false);
+    }
+
+    default <T, P, C> Stream<T> joinAllChildrenStr(Class<T> clazz, Class<P> parentClass, Class<C> childClass, Iterable<P> parents, String foreignField, String targetField) {
+        return StreamSupport.stream(joinAllChildren(clazz, parentClass, childClass, parents, foreignField, targetField).spliterator(), false);
+    }
+
+    default <P, C> Stream<P> joinAllChildrenStr(Class<P> parentClass, Class<C> childClass, Iterable<P> parents, String foreignField, String targetField) {
+        return StreamSupport.stream(joinAllChildren(parentClass, childClass, parents, foreignField, targetField).spliterator(), false);
+    }
+
+    default <T, P, C> Stream<T> joinChildrenStr(Class<T> clazz, Class<P> parentClass, Class<C> childClass, Filter childFilter, Iterable<P> parents, String foreignField, String targetField) throws IOException {
+        return StreamSupport.stream(joinChildren(clazz, parentClass, childClass, childFilter, parents, foreignField, targetField).spliterator(), false);
+    }
+
+    default <P, C> Stream<P> joinChildrenStr(Class<P> parentClass, Class<C> childClass, Filter childFilter, Iterable<P> parents, String foreignField, String targetField) throws IOException {
+        return StreamSupport.stream(joinChildren(parentClass, childClass, childFilter, parents, foreignField, targetField).spliterator(), false);
+    }
+
+    default Stream<DocType> joinAllChildrenStr(String parentCollectionName, String childCollectionName, Iterable<DocType> parents, String foreignField, String targetField) {
+        return StreamSupport.stream(joinAllChildren(parentCollectionName, childCollectionName, parents, foreignField, targetField).spliterator(), false);
+    }
+
+    default Stream<DocType> joinChildrenStr(String parentCollectionName, String childCollectionName, Filter childFilter, Iterable<DocType> parents, String foreignField, String targetField) throws IOException {
+        return StreamSupport.stream(joinChildren(parentCollectionName, childCollectionName, childFilter, parents, foreignField, targetField).spliterator(), false);
+    }
+    //endregion
+
 
 }

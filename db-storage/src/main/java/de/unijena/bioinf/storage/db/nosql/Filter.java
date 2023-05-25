@@ -53,6 +53,14 @@ public class Filter {
 
     }
 
+    /**
+     *
+     * @return new Instance of the Filter class.
+     */
+    public static Filter build(){
+        return new Filter();
+    }
+
     public Deque<FilterElement> filterChain = new ArrayDeque<>();
 
     public Filter() {}
