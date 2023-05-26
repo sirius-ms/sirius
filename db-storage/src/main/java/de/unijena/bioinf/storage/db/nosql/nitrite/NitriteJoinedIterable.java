@@ -28,18 +28,16 @@ import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Set;
 import java.util.function.Function;
 
 public class NitriteJoinedIterable<T, P> implements Iterable<T> {
 
     protected final Class<T> targetClass;
 
-    protected org.dizitart.no2.Cursor parents;
+    protected final org.dizitart.no2.Cursor parents;
 
-    protected Function<Object, org.dizitart.no2.Cursor> children;
+    protected final Function<Object, Iterable<Document>> children;
 
     protected final String localField;
 
@@ -50,7 +48,7 @@ public class NitriteJoinedIterable<T, P> implements Iterable<T> {
     public NitriteJoinedIterable(
             Class<T> targetClass,
             Iterable<P> parents,
-            Function<Object, org.dizitart.no2.Cursor> children,
+            Function<Object, Iterable<Document>> children,
             String localField,
             String targetField,
             NitriteMapper mapper
@@ -78,40 +76,32 @@ public class NitriteJoinedIterable<T, P> implements Iterable<T> {
         if (parents.size() == 0) {
             return Collections.emptyIterator();
         }
-        return new JoinedIterator(parents);
+        return new JoinedIterator<>(targetClass, parents, children, localField, targetField, mapper);
     }
 
-    protected class JoinedIterator implements Iterator<T> {
+    static class JoinedIterator<T> implements Iterator<T> {
 
-        protected Iterator<Document> parentIterator;
+        protected final NitriteJoinedDocumentIterable.JoinedDocumentIterator documentIterator;
 
-        public JoinedIterator(org.dizitart.no2.Cursor parents) {
-            this.parentIterator = parents.iterator();
+        protected final Class<T> targetClass;
+
+        protected final NitriteMapper mapper;
+
+        public JoinedIterator(Class<T> targetClass, Iterable<Document> parents, Function<Object, Iterable<Document>> children, String localField, String targetField, NitriteMapper mapper) {
+            this.documentIterator = new NitriteJoinedDocumentIterable.JoinedDocumentIterator(parents, children, localField, targetField);
+            this.targetClass = targetClass;
+            this.mapper = mapper;
         }
 
         @Override
         public boolean hasNext() {
-            return parentIterator.hasNext();
+            return documentIterator.hasNext();
         }
 
         @Override
         public T next() {
-            Document targetDoc = new Document(parentIterator.next());
-            Object localObject = targetDoc.get(localField);
-            if (localObject == null) {
-                return mapper.asObject(targetDoc, targetClass);
-            }
-
-            Set<Document> target = new HashSet<>();
-            org.dizitart.no2.Cursor childCursor = children.apply(localObject);
-            for (Document foreignDoc : childCursor) {
-                target.add(foreignDoc);
-            }
-            if (!target.isEmpty()) {
-                targetDoc.put(targetField, target);
-            }
-
-            return mapper.asObject(targetDoc, targetClass);
+            Document document = documentIterator.next();
+            return mapper.asObject(document, targetClass);
         }
 
     }

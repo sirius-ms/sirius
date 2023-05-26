@@ -181,6 +181,12 @@ public class NitriteDatabaseTest {
             super();
         }
 
+        public NitriteFamilyTestEntry(String name) {
+            super();
+            this.name = name;
+            this.children = new ArrayList<>();
+        }
+
     }
 
     private static class A {
@@ -587,6 +593,8 @@ public class NitriteDatabaseTest {
                     results.get(1).children, false, null, true
             ));
 
+            outParent = db.findAll(NitriteTestEntry.class);
+
             results = Lists.newArrayList(db.joinChildren(NitriteFamilyTestEntry.class, NitriteChildTestEntry.class, new Filter().and().eq("name", "A").eq("name", "B"), outParent, "id", "parentId", "children"));
 
             assertEquals("2 joined filtered parents", 2, results.size());
@@ -674,6 +682,7 @@ public class NitriteDatabaseTest {
 
             assertEquals("joined filtered children okay", Lists.newArrayList(outChildrenF), outJoinedFChildren);
 
+            outParent = db.findAll("entries");
 
             results = Lists.newArrayList(db.joinChildren("children", new Filter().and().eq("name", "A").eq("name", "B"), outParent, "_id", "parentId", "children"));
 
@@ -687,6 +696,99 @@ public class NitriteDatabaseTest {
 
             assertNull("no children", results.get(0).get("children"));
             assertNull("no children", results.get(1).get("children"));
+        }
+
+    }
+
+    @Test
+    public void testJoinReflection() throws IOException {
+
+        Path file = Files.createTempFile("nitrite-test", "");
+        file.toFile().deleteOnExit();
+
+        NitriteFamilyTestEntry parent = new NitriteFamilyTestEntry("parent");
+
+        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build()
+                .addRepository(NitriteFamilyTestEntry.class, new Index("name", IndexType.UNIQUE))
+                .addRepository(NitriteChildTestEntry.class, new Index("name", IndexType.NON_UNIQUE)
+                ))) {
+
+            db.insert(parent);
+
+            List<NitriteChildTestEntry> children = new ArrayList<>(Arrays.asList(
+                    new NitriteChildTestEntry("A", parent.getId()),
+                    new NitriteChildTestEntry("B", parent.getId()),
+                    new NitriteChildTestEntry("C", parent.getId())
+            ));
+
+            db.insertAll(children);
+
+            Iterable<NitriteFamilyTestEntry> outParent = db.findAll(NitriteFamilyTestEntry.class);
+            Iterable<NitriteChildTestEntry> outChildren = db.findAll(NitriteChildTestEntry.class);
+            Iterable<NitriteChildTestEntry> outChildrenF = db.find(new Filter().or().eq("name", "A").eq("name", "B"), NitriteChildTestEntry.class);
+
+            assertEquals("1 parent", 1, Lists.newArrayList(outParent).size());
+            assertTrue("parent okay", EqualsBuilder.reflectionEquals(parent, outParent.iterator().next(), false, null, true));
+
+            List<NitriteFamilyTestEntry> results = Lists.newArrayList(db.joinAllChildren(NitriteChildTestEntry.class, Lists.newArrayList(outParent), "id", "parentId", "children"));
+
+            assertEquals("1 joined parent", 1, results.size());
+
+            assertEquals("joined parent okay", parent.getId(), results.get(0).getId());
+            assertEquals("joined parent okay", parent.name, results.get(0).name);
+
+            assertTrue("joined children okay", EqualsBuilder.reflectionEquals(
+                    Lists.newArrayList(outChildren),
+                    results.get(0).children, false, null, true
+            ));
+
+            NitriteFamilyTestEntry parentB = new NitriteFamilyTestEntry("parentB");
+
+            db.insert(parentB);
+
+            List<NitriteChildTestEntry> childrenB = new ArrayList<>(Arrays.asList(
+                    new NitriteChildTestEntry("A", parentB.getId()),
+                    new NitriteChildTestEntry("B", parentB.getId()),
+                    new NitriteChildTestEntry("C", parentB.getId())
+            ));
+
+            db.insertAll(childrenB);
+
+            outParent = db.findAll(NitriteFamilyTestEntry.class);
+
+            results = Lists.newArrayList(db.joinChildren(NitriteChildTestEntry.class, new Filter().or().eq("name", "A").eq("name", "B"), Lists.newArrayList(outParent), "id", "parentId", "children"));
+
+            assertEquals("2 joined filtered parents", 2, results.size());
+
+            assertEquals("joined filtered parent okay", parent.getId(), results.get(0).getId());
+            assertEquals("joined filtered parent okay", parent.name, results.get(0).name);
+
+            assertEquals("joined filtered parent okay", parentB.getId(), results.get(1).getId());
+            assertEquals("joined filtered parent okay", parentB.name, results.get(1).name);
+
+            assertTrue("joined filtered children okay", EqualsBuilder.reflectionEquals(
+                    Lists.newArrayList(outChildrenF),
+                    results.get(0).children, false, null, true
+            ));
+            assertTrue("joined filtered children okay", EqualsBuilder.reflectionEquals(
+                    Lists.newArrayList(outChildrenF),
+                    results.get(1).children, false, null, true
+            ));
+
+            outParent = db.findAll(NitriteFamilyTestEntry.class);
+
+            results = Lists.newArrayList(db.joinChildren(NitriteChildTestEntry.class, new Filter().and().eq("name", "A").eq("name", "B"), Lists.newArrayList(outParent), "id", "parentId", "children"));
+
+            assertEquals("2 joined filtered parents", 2, results.size());
+
+            assertEquals("joined filtered parent okay", parent.getId(), results.get(0).getId());
+            assertEquals("joined filtered parent okay", parent.name, results.get(0).name);
+
+            assertEquals("joined filtered parent okay", parentB.getId(), results.get(1).getId());
+            assertEquals("joined filtered parent okay", parentB.name, results.get(1).name);
+
+            assertEquals("zero joined children", 0, results.get(0).children.size());
+            assertEquals("zero joined children", 0, results.get(1).children.size());
         }
 
     }

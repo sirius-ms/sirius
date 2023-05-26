@@ -85,6 +85,10 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
 
     Iterable<DocType> findAll(String collectionName, int offset, int pageSize, String sortField, SortOrder sortOrder) throws IOException;
 
+    <P, C> Iterable<P> joinAllChildren(Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String targetField) throws IOException;
+
+    <P, C> Iterable<P> joinChildren(Class<C> childClass, Filter childFilter, Iterable<P> parents, String localField, String foreignField, String targetField) throws IOException;
+
     <T, P, C> Iterable<T> joinAllChildren(Class<T> targetClass, Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String targetField) throws IOException;
 
     <T, P, C> Iterable<T> joinChildren(Class<T> targetClass, Class<C> childClass, Filter childFilter, Iterable<P> parents, String localField, String foreignField, String targetField) throws IOException;

@@ -20,11 +20,9 @@
 
 package de.unijena.bioinf.storage.db.nosql.nitrite;
 
-import org.dizitart.no2.Cursor;
 import org.dizitart.no2.Document;
 
 import javax.validation.constraints.NotNull;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -33,9 +31,9 @@ import java.util.function.Function;
 
 public class NitriteJoinedDocumentIterable implements Iterable<Document> {
 
-    protected Cursor parents;
+    protected final Iterable<Document> parents;
 
-    protected Function<Object, Cursor> children;
+    protected final Function<Object, Iterable<Document>> children;
 
     protected final String localField;
 
@@ -44,14 +42,11 @@ public class NitriteJoinedDocumentIterable implements Iterable<Document> {
 
     protected NitriteJoinedDocumentIterable(
             Iterable<Document> parents,
-            Function<Object, Cursor> children,
+            Function<Object, Iterable<Document>> children,
             String localField,
             String targetField
-    ) throws IOException {
-        if (!(parents instanceof Cursor)) {
-            throw new IOException("parents must be cursor!");
-        }
-        this.parents = (Cursor) parents;
+    ) {
+        this.parents = parents;
         this.children = children;
         this.localField = localField;
         this.targetField = targetField;
@@ -60,18 +55,27 @@ public class NitriteJoinedDocumentIterable implements Iterable<Document> {
     @NotNull
     @Override
     public Iterator<Document> iterator() {
-        if (parents.size() == 0) {
+        if (!parents.iterator().hasNext()) {
             return Collections.emptyIterator();
         }
-        return new JoinedDocumentIterator(parents);
+        return new JoinedDocumentIterator(parents, children, localField, targetField);
     }
 
-    protected class JoinedDocumentIterator implements Iterator<Document> {
+    static class JoinedDocumentIterator implements Iterator<Document> {
 
         protected Iterator<Document> parentIterator;
 
-        public JoinedDocumentIterator(Cursor parents) {
+        protected final Function<Object, Iterable<Document>> children;
+
+        protected final String localField;
+
+        protected final String targetField;
+
+        public JoinedDocumentIterator(Iterable<Document> parents, Function<Object, Iterable<Document>> children, String localField, String targetField) {
             this.parentIterator = parents.iterator();
+            this.children = children;
+            this.localField = localField;
+            this.targetField = targetField;
         }
 
         @Override
@@ -88,8 +92,7 @@ public class NitriteJoinedDocumentIterable implements Iterable<Document> {
             }
 
             Set<Document> target = new HashSet<>();
-            org.dizitart.no2.Cursor childCursor = children.apply(localObject);
-            for (Document foreignDoc : childCursor) {
+            for (Document foreignDoc : children.apply(localObject)) {
                 target.add(foreignDoc);
             }
             if (!target.isEmpty()) {
