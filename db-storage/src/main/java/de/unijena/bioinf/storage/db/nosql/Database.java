@@ -83,13 +83,13 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
 
     Iterable<DocType> findAll(String collectionName, int offset, int pageSize, String sortField, SortOrder sortOrder) throws IOException;
 
-    <T, P, C> Iterable<T> joinAllChildren(Class<T> clazz, Class<P> parentClass, Class<C> childClass, Iterable<P> parents, String foreignField, String targetField);
+    <T, P, C> Iterable<T> joinAllChildren(Class<T> targetClass, Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String targetField) throws IOException;
 
-    <T, P, C> Iterable<T> joinChildren(Class<T> clazz, Class<P> parentClass, Class<C> childClass, Filter childFilter, Iterable<P> parents, String foreignField, String targetField) throws IOException;
+    <T, P, C> Iterable<T> joinChildren(Class<T> targetClass, Class<C> childClass, Filter childFilter, Iterable<P> parents, String localField, String foreignField, String targetField) throws IOException;
 
-    Iterable<DocType> joinAllChildren(String parentCollectionName, String childCollectionName, Iterable<DocType> parents, String foreignField, String targetField);
+    Iterable<DocType> joinAllChildren(String childCollection, Iterable<DocType> parents, String localField, String foreignField, String targetField) throws IOException;
 
-    Iterable<DocType> joinChildren(String parentCollectionName, String childCollectionName, Filter childFilter, Iterable<DocType> parents, String foreignField, String targetField) throws IOException;
+    Iterable<DocType> joinChildren(String childCollectionName, Filter childFilter, Iterable<DocType> parents, String localField, String foreignField, String targetField) throws IOException;
 
     <T> int count(Filter filter, Class<T> clazz) throws IOException;
 

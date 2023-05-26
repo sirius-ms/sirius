@@ -32,6 +32,7 @@ import de.unijena.bioinf.storage.db.nosql.*;
 import org.apache.commons.lang3.tuple.Pair;
 import org.dizitart.no2.*;
 import org.dizitart.no2.filters.Filters;
+import org.dizitart.no2.mapper.NitriteMapper;
 import org.dizitart.no2.objects.ObjectFilter;
 import org.dizitart.no2.objects.ObjectRepository;
 import org.dizitart.no2.objects.filters.ObjectFilters;
@@ -57,6 +58,8 @@ public class NitriteDatabase implements Database<Document> {
     // NITRITE
     private final Nitrite db;
 
+    private final NitriteMapper nitriteMapper;
+
     private final Map<String, NitriteCollection> collections = Collections.synchronizedMap(new HashMap<>());
 
     private final Map<Class<?>, ObjectRepository<?>> repositories = Collections.synchronizedMap(new HashMap<>());
@@ -77,6 +80,14 @@ public class NitriteDatabase implements Database<Document> {
         this.db = initDB(file, meta);
         this.initCollections(meta.collectionIndices);
         this.initRepositories(meta.repoIndices, meta.idFields);
+        try {
+            Field cField = Nitrite.class.getDeclaredField("context");
+            cField.setAccessible(true);
+            NitriteContext context = (NitriteContext) cField.get(this.db);
+            this.nitriteMapper = context.getNitriteMapper();
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new IOException(e);
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -519,22 +530,80 @@ public class NitriteDatabase implements Database<Document> {
         });
     }
 
-    public <T, P, C> Iterable<T> joinAllChildren(Class<T> clazz, Class<P> parentClass, Class<C> childClass, Iterable<P> parents, String foreignField, String targetField) {
-        return NitriteJoinedIterable.newInstance(clazz, parentClass, childClass, parents, foreignField, targetField, this);
+    public <T, P, C> Iterable<T> joinAllChildren(Class<T> targetClass, Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String targetField) throws IOException {
+        return new NitriteJoinedIterable<>(
+                targetClass,
+                parents,
+                (localObject) -> {
+                    try {
+                        org.dizitart.no2.objects.Cursor<C> objectCursor = (org.dizitart.no2.objects.Cursor<C>) find(new Filter().eq(foreignField, localObject), childClass);
+                        Field cField = objectCursor.getClass().getDeclaredField("cursor");
+                        cField.setAccessible(true);
+                        return (Cursor) cField.get(objectCursor);
+                    } catch (IOException | IllegalAccessException | NoSuchFieldException e) {
+                        throw new RuntimeException(e);
+                    }
+                },
+                localField,
+                targetField,
+                nitriteMapper
+        );
     }
 
-    public <T, P, C> Iterable<T> joinChildren(Class<T> clazz, Class<P> parentClass, Class<C> childClass, Filter childFilter, Iterable<P> parents, String foreignField, String targetField) throws IOException {
-        return NitriteFilteredJoinedIterable.newInstance(clazz, parentClass, childClass, childFilter, parents, foreignField, targetField, this);
+    public <T, P, C> Iterable<T> joinChildren(Class<T> targetClass, Class<C> childClass, Filter childFilter, Iterable<P> parents, String localField, String foreignField, String targetField) throws IOException {
+        return new NitriteJoinedIterable<>(
+                targetClass,
+                parents,
+                (localObject) -> {
+                    try {
+                        Filter cFilter = new Filter().and().eq(foreignField, localObject);
+                        cFilter.filterChain.addAll(childFilter.filterChain);
+                        org.dizitart.no2.objects.Cursor<C> objectCursor = (org.dizitart.no2.objects.Cursor<C>) find(cFilter, childClass);
+                        Field cField = objectCursor.getClass().getDeclaredField("cursor");
+                        cField.setAccessible(true);
+                        return (Cursor) cField.get(objectCursor);
+                    } catch (IOException | IllegalAccessException | NoSuchFieldException e) {
+                        throw new RuntimeException(e);
+                    }
+                },
+                localField,
+                targetField,
+                nitriteMapper
+        );
     }
 
     @Override
-    public Iterable<Document> joinAllChildren(String parentCollectionName, String childCollectionName, Iterable<Document> parents, String foreignField, String targetField) {
-        return NitriteJoinedDocumentIterable.newInstance(parentCollectionName, childCollectionName, parents, foreignField, targetField, this);
+    public Iterable<Document> joinAllChildren(String childCollectionName, Iterable<Document> parents, String localField, String foreignField, String targetField) throws IOException {
+        return new NitriteJoinedDocumentIterable(
+                parents,
+                (localObject) -> {
+                    try {
+                        return (Cursor) find(childCollectionName, new Filter().eq(foreignField, localObject));
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                },
+                localField,
+                targetField
+        );
     }
 
     @Override
-    public Iterable<Document> joinChildren(String parentCollectionName, String childCollectionName, Filter childFilter, Iterable<Document> parents, String foreignField, String targetField) throws IOException {
-        return NitriteFilteredJoinedDocumentIterable.newInstance(parentCollectionName, childCollectionName, childFilter, parents, foreignField, targetField, this);
+    public Iterable<Document> joinChildren(String childCollectionName, Filter childFilter, Iterable<Document> parents, String localField, String foreignField, String targetField) throws IOException {
+        return new NitriteJoinedDocumentIterable(
+                parents,
+                (localObject) -> {
+                    try {
+                        Filter cFilter = new Filter().and().eq(foreignField, localObject);
+                        cFilter.filterChain.addAll(childFilter.filterChain);
+                        return (Cursor) find(childCollectionName, cFilter);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                },
+                localField,
+                targetField
+        );
     }
 
     @Override

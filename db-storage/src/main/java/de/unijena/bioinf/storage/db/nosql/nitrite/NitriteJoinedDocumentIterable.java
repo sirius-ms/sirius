@@ -20,108 +20,83 @@
 
 package de.unijena.bioinf.storage.db.nosql.nitrite;
 
-import de.unijena.bioinf.storage.db.nosql.Filter;
-import it.unimi.dsi.fastutil.longs.LongArraySet;
-import it.unimi.dsi.fastutil.longs.LongConsumer;
-import it.unimi.dsi.fastutil.longs.LongIterator;
-import it.unimi.dsi.fastutil.longs.LongSet;
+import org.dizitart.no2.Cursor;
 import org.dizitart.no2.Document;
-import org.dizitart.no2.Lookup;
-import org.dizitart.no2.NitriteId;
-import org.dizitart.no2.RecordIterable;
-import org.dizitart.no2.objects.Cursor;
 
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
-import java.util.stream.StreamSupport;
+import java.util.Set;
+import java.util.function.Function;
 
 public class NitriteJoinedDocumentIterable implements Iterable<Document> {
-    protected final String parentCollection;
-    protected final String childCollection;
-    protected LongSet parents;
-    protected final String foreignField;
+
+    protected Cursor parents;
+
+    protected Function<Object, Cursor> children;
+
+    protected final String localField;
+
     protected final String targetField;
 
-    protected final NitriteDatabase database;
 
-    public static NitriteJoinedDocumentIterable newInstance(String parentCollection, String childCollection, Iterable<Document> parents, String foreignField, String targetField, NitriteDatabase database) {
-        NitriteJoinedDocumentIterable iterable = new NitriteJoinedDocumentIterable(parentCollection, childCollection, foreignField, targetField, database);
-        iterable.initParentIds(parents);
-        return iterable;
-    }
-
-    protected NitriteJoinedDocumentIterable(String parentCollection, String childCollection, String foreignField, String targetField, NitriteDatabase database) {
-        this.parentCollection = parentCollection;
-        this.childCollection = childCollection;
-        this.foreignField = foreignField;
-        this.targetField = targetField;
-        this.database = database;
-    }
-
-    protected void initParentIds(Iterable<Document> parents) {
-        if (parents instanceof Cursor) {
-            this.parents = new LongArraySet(((Cursor<Document>) parents).size());
-            ((Cursor<Document>) parents).idSet().stream().mapToLong(NitriteId::getIdValue).forEach((LongConsumer) this.parents::add);
-        } else if (parents instanceof org.dizitart.no2.Cursor) {
-            this.parents = new LongArraySet(((org.dizitart.no2.Cursor) parents).size());
-            ((org.dizitart.no2.Cursor) parents).idSet().stream().mapToLong(NitriteId::getIdValue).forEach((LongConsumer) this.parents::add);
-        } else {
-            this.parents = new LongArraySet();
-            StreamSupport.stream(parents.spliterator(), false).mapToLong(p -> (long) p.get("_id")).forEach((LongConsumer) this.parents::add);
+    protected NitriteJoinedDocumentIterable(
+            Iterable<Document> parents,
+            Function<Object, Cursor> children,
+            String localField,
+            String targetField
+    ) throws IOException {
+        if (!(parents instanceof Cursor)) {
+            throw new IOException("parents must be cursor!");
         }
+        this.parents = (Cursor) parents;
+        this.children = children;
+        this.localField = localField;
+        this.targetField = targetField;
     }
 
     @NotNull
     @Override
     public Iterator<Document> iterator() {
-        if (parents.isEmpty()) {
+        if (parents.size() == 0) {
             return Collections.emptyIterator();
         }
-        return new JoinedDocumentIterator(parentCollection, childCollection, parents, foreignField, targetField, database);
+        return new JoinedDocumentIterator(parents);
     }
 
-    protected static class JoinedDocumentIterator implements Iterator<Document> {
+    protected class JoinedDocumentIterator implements Iterator<Document> {
 
-        protected final String parentCollection;
-        protected final String childCollection;
-        protected LongIterator parents;
-        protected final String foreignField;
-        protected final String targetField;
-        protected final NitriteDatabase database;
+        protected Iterator<Document> parentIterator;
 
-        public JoinedDocumentIterator(String parentCollection, String childCollection, LongSet parents, String foreignField, String targetField, NitriteDatabase database) {
-            this.parentCollection = parentCollection;
-            this.childCollection = childCollection;
-            this.parents = parents.iterator();
-            this.foreignField = foreignField;
-            this.targetField = targetField;
-            this.database = database;
+        public JoinedDocumentIterator(Cursor parents) {
+            this.parentIterator = parents.iterator();
         }
 
         @Override
         public boolean hasNext() {
-            return parents.hasNext();
+            return parentIterator.hasNext();
         }
 
         @Override
         public Document next() {
-            try {
-                long id = parents.nextLong();
-                Iterable<Document> parent = database.find(parentCollection, new Filter().eq("_id", id));
-                Iterable<Document> children = database.find(childCollection, new Filter().or().eq(foreignField, id).eq(foreignField, NitriteId.createId(id)));
-
-                Lookup lookup = new Lookup();
-                lookup.setLocalField("_id");
-                lookup.setForeignField(foreignField);
-                lookup.setTargetField(targetField);
-
-                RecordIterable<Document> res = ((org.dizitart.no2.Cursor) parent).join((org.dizitart.no2.Cursor) children, lookup);
-                return res.firstOrDefault();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            Document targetDoc = new Document(parentIterator.next());
+            Object localObject = targetDoc.get(localField);
+            if (localObject == null) {
+                return targetDoc;
             }
+
+            Set<Document> target = new HashSet<>();
+            org.dizitart.no2.Cursor childCursor = children.apply(localObject);
+            for (Document foreignDoc : childCursor) {
+                target.add(foreignDoc);
+            }
+            if (!target.isEmpty()) {
+                targetDoc.put(targetField, target);
+            }
+
+            return targetDoc;
         }
 
     }

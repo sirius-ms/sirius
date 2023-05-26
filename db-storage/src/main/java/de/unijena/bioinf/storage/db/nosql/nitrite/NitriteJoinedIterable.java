@@ -20,135 +20,98 @@
 
 package de.unijena.bioinf.storage.db.nosql.nitrite;
 
-import de.unijena.bioinf.storage.db.nosql.Filter;
-import it.unimi.dsi.fastutil.longs.LongArraySet;
-import it.unimi.dsi.fastutil.longs.LongConsumer;
-import it.unimi.dsi.fastutil.longs.LongIterator;
-import it.unimi.dsi.fastutil.longs.LongSet;
-import org.dizitart.no2.Lookup;
-import org.dizitart.no2.NitriteId;
-import org.dizitart.no2.RecordIterable;
+import org.dizitart.no2.Document;
+import org.dizitart.no2.mapper.NitriteMapper;
 import org.dizitart.no2.objects.Cursor;
-import org.dizitart.no2.objects.Id;
 
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
-import java.util.stream.StreamSupport;
+import java.util.Set;
+import java.util.function.Function;
 
-public class NitriteJoinedIterable<T, P, C> implements Iterable<T> {
+public class NitriteJoinedIterable<T, P> implements Iterable<T> {
 
-    protected final Class<T> clazz;
-    protected final Class<P> parentClass;
-    protected final Class<C> childClass;
-    protected LongSet parents;
-    protected final String foreignField;
+    protected final Class<T> targetClass;
+
+    protected org.dizitart.no2.Cursor parents;
+
+    protected Function<Object, org.dizitart.no2.Cursor> children;
+
+    protected final String localField;
+
     protected final String targetField;
 
-    protected final NitriteDatabase database;
+    protected final NitriteMapper mapper;
 
-    public static <T, P, C> NitriteJoinedIterable<T, P, C> newInstance(Class<T> clazz, Class<P> parentClass, Class<C> childClass, Iterable<P> parents, String foreignField, String targetField, NitriteDatabase database) {
-        NitriteJoinedIterable<T, P, C> iterable = new NitriteJoinedIterable<>(clazz, parentClass, childClass, foreignField, targetField, database);
-        iterable.initParentIds(parents);
-        return iterable;
-    }
-
-    protected NitriteJoinedIterable(Class<T> clazz, Class<P> parentClass, Class<C> childClass, String foreignField, String targetField, NitriteDatabase database) {
-        this.clazz = clazz;
-        this.parentClass = parentClass;
-        this.childClass = childClass;
-        this.foreignField = foreignField;
-        this.targetField = targetField;
-        this.database = database;
-    }
-
-    protected void initParentIds(Iterable<P> parents) {
-        if (parents instanceof Cursor) {
-            this.parents = new LongArraySet(((Cursor<P>) parents).size());
-            ((Cursor<P>) parents).idSet().stream().mapToLong(NitriteId::getIdValue).forEach((LongConsumer) this.parents::add);
-        } else if (parents instanceof org.dizitart.no2.Cursor) {
-            this.parents = new LongArraySet(((org.dizitart.no2.Cursor) parents).size());
-            ((org.dizitart.no2.Cursor) parents).idSet().stream().mapToLong(NitriteId::getIdValue).forEach((LongConsumer) this.parents::add);
-        } else {
-            this.parents = new LongArraySet();
-            StreamSupport.stream(parents.spliterator(), false).mapToLong(p -> {
-                try {
-                    if (p instanceof NitritePOJO) {
-                        return ((NitritePOJO) p).getId().getIdValue();
-                    } else {
-                        for (Field field : p.getClass().getDeclaredFields()) {
-                            if (field.isAnnotationPresent(Id.class)) {
-                                field.setAccessible(true);
-                                Object fieldValue = field.get(p);
-                                if (fieldValue instanceof NitriteId) {
-                                    return ((NitriteId) fieldValue).getIdValue();
-                                } else if (fieldValue instanceof Long) {
-                                    return (long) fieldValue;
-                                }
-                            }
-                        }
-                        throw new RuntimeException("Object has no id.");
-                    }
-                } catch (IllegalAccessException e) {
-                    throw new RuntimeException(e);
-                }
-            }).forEach((LongConsumer) this.parents::add);
+    public NitriteJoinedIterable(
+            Class<T> targetClass,
+            Iterable<P> parents,
+            Function<Object, org.dizitart.no2.Cursor> children,
+            String localField,
+            String targetField,
+            NitriteMapper mapper
+    ) throws IOException {
+        if (!(parents instanceof Cursor)) {
+            throw new IOException("parents must be a cursor!");
         }
+        try {
+            Field cField = parents.getClass().getDeclaredField("cursor");
+            cField.setAccessible(true);
+            this.parents = (org.dizitart.no2.Cursor) cField.get(parents);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new IOException(e);
+        }
+        this.children = children;
+        this.targetClass = targetClass;
+        this.localField = localField;
+        this.targetField = targetField;
+        this.mapper = mapper;
     }
 
     @NotNull
     @Override
     public Iterator<T> iterator() {
-        if (parents.isEmpty()) {
+        if (parents.size() == 0) {
             return Collections.emptyIterator();
         }
-        return new JoinedIterator(clazz, parentClass, childClass, parents, foreignField, targetField, database);
+        return new JoinedIterator(parents);
     }
 
     protected class JoinedIterator implements Iterator<T> {
 
-        protected final Class<T> clazz;
-        protected final Class<P> parentClass;
-        protected final Class<C> childClass;
-        protected LongIterator parents;
-        protected final String foreignField;
-        protected final String targetField;
-        protected final NitriteDatabase database;
+        protected Iterator<Document> parentIterator;
 
-        public JoinedIterator(Class<T> clazz, Class<P> parentClass, Class<C> childClass, LongSet parents, String foreignField, String targetField, NitriteDatabase database) {
-            this.clazz = clazz;
-            this.parentClass = parentClass;
-            this.childClass = childClass;
-            this.parents = parents.iterator();
-            this.foreignField = foreignField;
-            this.targetField = targetField;
-            this.database = database;
+        public JoinedIterator(org.dizitart.no2.Cursor parents) {
+            this.parentIterator = parents.iterator();
         }
 
         @Override
         public boolean hasNext() {
-            return parents.hasNext();
+            return parentIterator.hasNext();
         }
 
         @Override
         public T next() {
-            try {
-                long id = parents.nextLong();
-                Iterable<P> parent = database.find(new Filter().eq("id", id), parentClass);
-                Iterable<C> children = database.find(new Filter().eq(foreignField, id), childClass);
-
-                Lookup lookup = new Lookup();
-                lookup.setLocalField("id");
-                lookup.setForeignField(foreignField);
-                lookup.setTargetField(targetField);
-
-                RecordIterable<T> res = ((org.dizitart.no2.objects.Cursor<P>) parent).join((org.dizitart.no2.objects.Cursor<C>) children, lookup, clazz);
-                return res.firstOrDefault();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            Document targetDoc = new Document(parentIterator.next());
+            Object localObject = targetDoc.get(localField);
+            if (localObject == null) {
+                return mapper.asObject(targetDoc, targetClass);
             }
+
+            Set<Document> target = new HashSet<>();
+            org.dizitart.no2.Cursor childCursor = children.apply(localObject);
+            for (Document foreignDoc : childCursor) {
+                target.add(foreignDoc);
+            }
+            if (!target.isEmpty()) {
+                targetDoc.put(targetField, target);
+            }
+
+            return mapper.asObject(targetDoc, targetClass);
         }
 
     }
