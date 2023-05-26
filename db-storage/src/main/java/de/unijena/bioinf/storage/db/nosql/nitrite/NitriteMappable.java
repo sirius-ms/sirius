@@ -54,8 +54,10 @@ public interface NitriteMappable extends Mappable, Serializable {
                     if (generic instanceof Class && ClassUtils.getAllInterfaces((Class<?>) generic).contains(Mappable.class)) {
                         List<Document> target = new ArrayList<>();
                         Collection<Mappable> source = (Collection<Mappable>) field.get(this);
-                        for (Mappable src : source) {
-                            target.add(src.write(mapper));
+                        if (source != null) {
+                            for (Mappable src : source) {
+                                target.add(src.write(mapper));
+                            }
                         }
                         document.put(field.getName(), target);
                     } else {
