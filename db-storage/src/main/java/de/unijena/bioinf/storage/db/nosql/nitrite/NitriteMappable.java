@@ -103,10 +103,12 @@ public interface NitriteMappable extends Mappable, Serializable {
                                 target = (Collection<Mappable>) field.getType().getDeclaredConstructor().newInstance();
                             }
                             Collection<Document> source = (Collection<Document>) document.get(field.getName());
-                            for (Document src : source) {
-                                Mappable t = (Mappable) ((Class<?>) generic).getDeclaredConstructor().newInstance();
-                                t.read(mapper, src);
-                                target.add(t);
+                            if (source != null) {
+                                for (Document src : source) {
+                                    Mappable t = (Mappable) ((Class<?>) generic).getDeclaredConstructor().newInstance();
+                                    t.read(mapper, src);
+                                    target.add(t);
+                                }
                             }
                             field.set(this, target);
                         } else {
