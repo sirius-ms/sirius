@@ -25,56 +25,41 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.chemdb.nitrite.wrappers.CompoundCandidateWrapper;
-import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
-import de.unijena.bioinf.chemdb.nitrite.wrappers.FormulaCandidateDeserializer;
-import de.unijena.bioinf.chemdb.nitrite.wrappers.FormulaCandidateSerializer;
+import de.unijena.bioinf.chemdb.nitrite.serializers.FingerprintCandidateDbSerializer;
+import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintWrapper;
+import de.unijena.bioinf.spectraldb.SpectralNoSQLDatabase;
 import de.unijena.bioinf.storage.db.nosql.*;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.MissingResourceException;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public abstract class ChemicalNoSQLDatabase<DocType> implements AbstractChemicalDatabase {
+import static de.unijena.bioinf.chemdb.ChemDbTags.TAG_DATE;
 
-    final protected Database<DocType> database;
+public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDatabase<Doctype> implements AbstractChemicalDatabase {
 
-    public ChemicalNoSQLDatabase(Database<DocType> database) throws IOException {
-        this.database = database;
+    public ChemicalNoSQLDatabase(Database<Doctype> database) throws IOException {
+        super(database);
     }
 
     protected static Metadata initMetadata(FingerprintVersion version) throws IOException {
-        return Metadata.build()
+        Metadata metadata = SpectralNoSQLDatabase.initMetadata();
+        return metadata
                 .addRepository(
-                        FormulaCandidate.class,
-                        new FormulaCandidateSerializer(),
-                        new FormulaCandidateDeserializer(),
-                        new Index("formula", IndexType.UNIQUE),
-                        new Index("mass", IndexType.NON_UNIQUE),
-                        new Index("bitset", IndexType.NON_UNIQUE)
+                        FingerprintWrapper.class,
+                        new Index("inchikey", IndexType.UNIQUE)
                 ).addRepository(
-                        CompoundCandidateWrapper.class,
-                        "id",
-                        new CompoundCandidateWrapper.WrapperSerializer(),
-                        new CompoundCandidateWrapper.WrapperDeserializer(version),
+                        FingerprintCandidate.class,
+                        new FingerprintCandidateDbSerializer(),
+                        new JSONReader.FingerprintCandidateDeserializer(version),
                         new Index("formula", IndexType.NON_UNIQUE),
                         new Index("mass", IndexType.NON_UNIQUE),
+                        new Index("candidate.inchikey", IndexType.UNIQUE),
                         new Index("candidate.bitset", IndexType.NON_UNIQUE),
-                        new Index("candidate.name", IndexType.NON_UNIQUE),
-                        new Index("candidate.inchikey", IndexType.NON_UNIQUE)
-                ).addRepository(
-                        FingerprintCandidateWrapper.class,
-                        "id",
-                        new FingerprintCandidateWrapper.WrapperSerializer(),
-                        new FingerprintCandidateWrapper.WrapperDeserializer(version),
-                        new Index("formula", IndexType.NON_UNIQUE),
-                        new Index("mass", IndexType.NON_UNIQUE),
-                        new Index("candidate.bitset", IndexType.NON_UNIQUE),
-                        new Index("candidate.name", IndexType.NON_UNIQUE),
-                        new Index("candidate.inchikey", IndexType.NON_UNIQUE)
+                        new Index("candidate.name", IndexType.NON_UNIQUE)
                 );
     }
 
@@ -84,9 +69,8 @@ public abstract class ChemicalNoSQLDatabase<DocType> implements AbstractChemical
             final double mass = ionType.precursorMassToNeutralMass(ionMass);
             final double from = mass - deviation.absoluteFor(mass);
             final double to = mass + deviation.absoluteFor(mass);
-            return StreamSupport.stream(
-                    this.database.find(new Filter().and().gte("mass", from).lte("mass", to), FormulaCandidate.class)
-                            .spliterator(),false).collect(Collectors.toList());
+            return this.storage.findStr(Filter.build().and().gte("mass", from).lte("mass", to), FingerprintCandidate.class)
+                    .map(c -> c.toFormulaCandidate(ionType)).toList();
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }
@@ -95,7 +79,7 @@ public abstract class ChemicalNoSQLDatabase<DocType> implements AbstractChemical
     @Override
     public boolean containsFormula(MolecularFormula formula) throws ChemicalDatabaseException {
         try {
-            return this.database.count(new Filter().eq("formula", formula.toString()), FormulaCandidate.class) > 0;
+            return this.storage.count(new Filter().eq("formula", formula.toString()), FingerprintCandidate.class, 0, 1) > 0;
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }
@@ -104,30 +88,46 @@ public abstract class ChemicalNoSQLDatabase<DocType> implements AbstractChemical
     @Override
     public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
         try {
-            return StreamSupport.stream(database.find(new Filter().eq("formula", formula.toString()), CompoundCandidateWrapper.class).spliterator(), false).map(c -> c.candidate).collect(Collectors.toList());
+            return storage.findStr(new Filter().eq("formula", formula.toString()), FingerprintCandidate.class)
+                    .map(FingerprintCandidate::toCompoundCandidate).toList();
         } catch (RuntimeException | IOException e) {
             throw new ChemicalDatabaseException(e);
         }
     }
 
     @Override
-    public List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
+    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
+        try {
+            storage.joinAllChildrenStr(FingerprintCandidate.class, FingerprintWrapper.class,
+                    storage.find(new Filter().eq("formula", formula.toString()), FingerprintCandidate.class),
+                    "inchikey", "inchikey", "fingerprint"
+            ).forEach(fingerprintCandidates::add);
+            return fingerprintCandidates;
+        } catch (IOException e) {
+            throw new ChemicalDatabaseException(e);
+        }
+    }
+
+    public Stream<FingerprintCandidate> lookupFingerprintsByInchisStr(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         try {
             Object[] keys = StreamSupport.stream(inchi_keys.spliterator(), false).toArray();
-            return StreamSupport.stream(database.find(new Filter().in("inchikey", keys), FingerprintCandidateWrapper.class).spliterator(), false).map(c -> c.candidate).collect(Collectors.toList());
+            return storage.joinAllChildrenStr(FingerprintCandidate.class, FingerprintWrapper.class,
+                    storage.find(new Filter().in("inchikey", keys), FingerprintCandidate.class),
+                    "inchikey", "inchikey", "fingerprint"
+            );
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }
     }
 
     @Override
+    public List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
+        return lookupFingerprintsByInchisStr(inchi_keys).toList();
+    }
+
+    @Override
     public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
-        try {
-            Object[] keys = StreamSupport.stream(inchi_keys.spliterator(), false).toArray();
-            return StreamSupport.stream(database.find(new Filter().in("inchikey", keys), FingerprintCandidateWrapper.class).spliterator(), false).map(c -> c.candidate.inchi).collect(Collectors.toList());
-        } catch (IOException e) {
-            throw new ChemicalDatabaseException(e);
-        }
+        return lookupFingerprintsByInchisStr(inchi_keys).map(FingerprintCandidate::getInchi).toList();
     }
 
     @Override
@@ -138,8 +138,9 @@ public abstract class ChemicalNoSQLDatabase<DocType> implements AbstractChemical
     @Override
     public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws ChemicalDatabaseException {
         try {
-            Object[] keys = StreamSupport.stream(compounds.spliterator(), false).map(c -> c.inchi.key).toArray();
-            return StreamSupport.stream(database.find(new Filter().in("inchikey", keys), FingerprintCandidateWrapper.class).spliterator(), false).map(c -> c.candidate).collect(Collectors.toList());
+            return storage.joinAllChildrenStr(FingerprintCandidate.class, FingerprintWrapper.class,
+                    compounds, "inchikey", "inchikey", "fingerptint"
+            ).toList();
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }
@@ -148,8 +149,8 @@ public abstract class ChemicalNoSQLDatabase<DocType> implements AbstractChemical
     @Override
     public List<InChI> findInchiByNames(List<String> names) throws ChemicalDatabaseException {
         try {
-            Object[] keys = names.toArray();
-            return StreamSupport.stream(database.find(new Filter().in("name", keys), CompoundCandidateWrapper.class).spliterator(), false).map(c -> c.candidate.inchi).collect(Collectors.toList());
+            return storage.findStr(new Filter().in("name", names.toArray()), FingerprintCandidate.class)
+                    .map(CompoundCandidate::getInchi).toList();
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }
@@ -157,29 +158,22 @@ public abstract class ChemicalNoSQLDatabase<DocType> implements AbstractChemical
 
     @Override
     public String getChemDbDate() throws ChemicalDatabaseException {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void annotateCompounds(List<? extends CompoundCandidate> sublist) throws ChemicalDatabaseException {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
         try {
-            StreamSupport.stream(database.find(new Filter().eq("formula", formula), FingerprintCandidateWrapper.class).spliterator(), false).forEach(c -> fingerprintCandidates.add(c.candidate));
-            return fingerprintCandidates;
+            return storage.findStr(Filter.build().eq("key", TAG_DATE), Tag.class, 0, 1)
+                    .map(Tag::getValue).findFirst()
+                    .orElseThrow(() -> new MissingResourceException("Could not find Database Date tag", "Tag", TAG_DATE));
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }
     }
 
     @Override
-    public void close() throws IOException {
-        this.database.close();
+    public void annotateCompounds(List<? extends CompoundCandidate> sublist) throws ChemicalDatabaseException {
+        throw new UnsupportedOperationException("Compounds of this database are already Annotated! So annotation is not supported!");
     }
 
-    public abstract <C extends CompoundCandidate> void importCompoundsAndFingerprints(MolecularFormula key, Iterable<C> candidates) throws ChemicalDatabaseException;
-
+    @Override
+    public void close() throws IOException {
+        this.storage.close();
+    }
 }

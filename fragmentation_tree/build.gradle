@@ -8,18 +8,16 @@ allprojects {
 subprojects {
     dependencies {
 //project
-        compile project(':chemistry_base')
-        compile project(':isotope_pattern:isotope_pattern_analysis')
-        compile project(':mass_decomposition:mass_decomposer')
-        compile project(':elgordo')
+        api project(':chemistry_base')
+        api project(':isotope_pattern:isotope_pattern_analysis')
+        api project(':mass_decomposition:mass_decomposer')
+        api project(':elgordo')
 //internal
-        compile group: 'de.unijena.bioinf.ms', name: 'Recalibration', version: '1.0'
-        compile group: 'de.unijena.bioinf', name: 'GraphUtils', version: "$graphUtils_version"
+        api group: 'de.unijena.bioinf.ms', name: 'Recalibration', version: '1.0'
 //external
-        compile "org.apache.commons:commons-math3:$math3_version"
-        compile ('net.java.dev.jna:jna:5.4.0')
+        implementation 'net.java.dev.jna:jna:5.4.0'
 //test
-        testCompile project(':io')
+        testImplementation project(':io')
     }
 }
 

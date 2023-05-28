@@ -19,8 +19,9 @@
  */
 
 dependencies {
-    testCompile project(':chemistry_base')
-    compile group: 'org.apache.commons', name: 'commons-configuration2', version: '2.8.0'
-    compile group: 'commons-beanutils', name: 'commons-beanutils', version: '1.9.4'
-    compile 'net.oneandone.reflections8:reflections8:0.11.7'
+    implementation group: 'commons-beanutils', name: 'commons-beanutils', version: '1.9.4'
+    implementation group: 'org.apache.commons', name: 'commons-configuration2', version: '2.9.0'
+    implementation 'net.oneandone.reflections8:reflections8:0.11.7'
+
+    testImplementation project(':chemistry_base')
 }

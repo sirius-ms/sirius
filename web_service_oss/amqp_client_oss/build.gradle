@@ -1,5 +1,5 @@
 
 dependencies {
-    compile project(':web_service_oss:web_core_oss')
-    compile project(':rabbitmq-support')
+    api project(':web_service_oss:web_core_oss')
+    api project(':rabbitmq-support')
 }

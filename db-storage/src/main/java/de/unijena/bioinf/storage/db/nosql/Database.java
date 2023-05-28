@@ -196,8 +196,8 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
         return StreamSupport.stream(joinAllChildren(targetClass, childClass, parents, localField, foreignField, targetField).spliterator(), false);
     }
 
-    default <T, P, C> Stream<T> joinChildrenStr(Class<T> clazz, Class<C> childClass, Filter childFilter, Iterable<P> parents, String localField, String foreignField, String targetField) throws IOException {
-        return StreamSupport.stream(joinChildren(clazz, childClass, childFilter, parents, localField, foreignField, targetField).spliterator(), false);
+    default <T, P, C> Stream<T> joinChildrenStr(Class<T> targetClass, Class<C> childClass, Filter childFilter, Iterable<P> parents, String localField, String foreignField, String targetField) throws IOException {
+        return StreamSupport.stream(joinChildren(targetClass, childClass, childFilter, parents, localField, foreignField, targetField).spliterator(), false);
     }
 
     default Stream<DocType> joinAllChildrenStr(String childCollectionName, Iterable<DocType> parents, String localField, String foreignField, String targetField) throws IOException  {

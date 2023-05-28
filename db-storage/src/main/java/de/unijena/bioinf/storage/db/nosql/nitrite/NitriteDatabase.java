@@ -32,6 +32,7 @@ import de.unijena.bioinf.storage.db.nosql.*;
 import org.apache.commons.lang3.tuple.Pair;
 import org.dizitart.no2.*;
 import org.dizitart.no2.filters.Filters;
+import org.dizitart.no2.mapper.JacksonMapper;
 import org.dizitart.no2.mapper.NitriteMapper;
 import org.dizitart.no2.objects.ObjectFilter;
 import org.dizitart.no2.objects.ObjectRepository;
@@ -47,18 +48,18 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class NitriteDatabase implements Database<Document> {
 
     // Prevent illegal reflective access warnings
-    static {
+   /* static {
         if (!NitriteDatabase.class.getModule().isNamed()) {
             ClassLoader.class.getModule().addOpens(ClassLoader.class.getPackageName(), NitriteDatabase.class.getModule());
         }
     }
-
+*/
     protected Path file;
 
     // NITRITE
     private final Nitrite db;
 
-    private final NitriteMapper nitriteMapper;
+    private final JacksonMapper nitriteMapper;
 
     private final Map<String, NitriteCollection> collections = Collections.synchronizedMap(new HashMap<>());
 
@@ -84,7 +85,7 @@ public class NitriteDatabase implements Database<Document> {
             Field cField = Nitrite.class.getDeclaredField("context");
             cField.setAccessible(true);
             NitriteContext context = (NitriteContext) cField.get(this.db);
-            this.nitriteMapper = context.getNitriteMapper();
+            this.nitriteMapper = (JacksonMapper) context.getNitriteMapper();
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new IOException(e);
         }

@@ -19,6 +19,6 @@
  */
 
 dependencies() {
-    compile "com.lexicalscope.jewelcli:jewelcli:$jewelcli_version"
-    compile "net.sf.opencsv:opencsv:2.3"
+    implementation "com.lexicalscope.jewelcli:jewelcli:$jewelcli_version"
+    implementation "net.sf.opencsv:opencsv:2.3"
 }

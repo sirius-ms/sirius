@@ -66,8 +66,8 @@ public class FingerIDProperties {
     }
 
     @Nullable
-    public static String gcsChemDBFpId() {
-        return PropertyManager.getProperty("de.unijena.bioinf.chemdb.fingerprint.id", null, null);
+    public static Integer gcsChemDBFpId() {
+        return PropertyManager.getInteger("de.unijena.bioinf.chemdb.fingerprint.id", null, null);
     }
 
     public static String defaultChemDBBucket(){

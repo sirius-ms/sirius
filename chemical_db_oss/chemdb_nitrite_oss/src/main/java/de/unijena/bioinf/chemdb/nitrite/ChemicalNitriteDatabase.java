@@ -20,22 +20,14 @@
 
 package de.unijena.bioinf.chemdb.nitrite;
 
-import com.google.common.collect.Lists;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
-import de.unijena.bioinf.chemdb.*;
-import de.unijena.bioinf.chemdb.nitrite.wrappers.CompoundCandidateWrapper;
-import de.unijena.bioinf.storage.db.nosql.Database;
-import de.unijena.bioinf.storage.db.nosql.Filter;
+import de.unijena.bioinf.chemdb.ChemicalNoSQLDatabase;
 import de.unijena.bioinf.storage.db.nosql.nitrite.NitriteDatabase;
 import org.dizitart.no2.Document;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.stream.StreamSupport;
 
 public class ChemicalNitriteDatabase extends ChemicalNoSQLDatabase<Document> {
 
@@ -47,31 +39,7 @@ public class ChemicalNitriteDatabase extends ChemicalNoSQLDatabase<Document> {
         super(new NitriteDatabase(file, initMetadata(version)));
     }
 
-    @Override
-    public <C extends CompoundCandidate> void importCompoundsAndFingerprints(MolecularFormula key, Iterable<C> candidates) throws ChemicalDatabaseException  {
-        importCompoundsAndFingerprints(this.database, key, candidates);
+    public NitriteDatabase getStorage(){
+        return (NitriteDatabase) storage;
     }
-
-    public static <C extends CompoundCandidate> void importCompoundsAndFingerprints(Database<Document> database, MolecularFormula key, Iterable<C> candidates) throws ChemicalDatabaseException  {
-        try {
-            // TODO what about importing fingerprintcandidates?
-            database.insertAll(() -> StreamSupport.stream(candidates.spliterator(), false).map(c -> new CompoundCandidateWrapper(key, c)).iterator());
-            long bitset = StreamSupport.stream(candidates.spliterator(), false).map(CompoundCandidate::getBitset).reduce(0L, (a, b) -> a | b);
-            synchronized (database) {
-                // TODO eq("formula", key.toString()) or eq("formula", key)?
-                List<FormulaCandidate> formulas = Lists.newArrayList(database.find(new Filter().eq("formula", key.toString()), FormulaCandidate.class));
-                if (formulas.size() > 0) {
-                    for (FormulaCandidate formula : formulas) {
-                        formula.setBitset(formula.getBitset() | bitset);
-                        database.upsert(formula);
-                    }
-                } else {
-                    database.insert(new FormulaCandidate(key, PrecursorIonType.unknownPositive(), bitset));
-                }
-            }
-        } catch (IOException e) {
-            throw new ChemicalDatabaseException(e);
-        }
-    }
-
 }

@@ -3,7 +3,8 @@ package de.unijena.bioinf.networks;
 import de.unijena.bioinf.networks.serialization.AbstractConnection;
 import de.unijena.bioinf.networks.serialization.ConnectionTable;
 import de.unijena.bioinf.networks.serialization.CorrelationConnection;
-import gnu.trove.map.hash.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -11,24 +12,24 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class MolecularNetwork {
-    protected final TObjectIntHashMap<String> id2index;
+    protected final Object2IntMap<String> id2index;
     protected final String[] ids;
     protected final ArrayList<NetworkNode> nodes;
 
-    protected MolecularNetwork(ArrayList<NetworkNode> nodes, TObjectIntHashMap<String> idMapper) {
+    protected MolecularNetwork(ArrayList<NetworkNode> nodes, Object2IntMap<String> idMapper) {
         this.id2index = idMapper;
         this.nodes = nodes;
         this.ids = new String[nodes.size()];
-        id2index.forEachEntry((key,id)->{ids[id]=key; return true;});
+        id2index.forEach((key, id) -> ids[id] = key);
     }
 
     public MolecularNetwork.NetworkBuilder modify() {
-        return new NetworkBuilder(new ArrayList<>(nodes.stream().map(x->x.clone()).collect(Collectors.toList())), new TObjectIntHashMap<>(id2index));
+        return new NetworkBuilder(new ArrayList<>(nodes.stream().map(NetworkNode::clone).collect(Collectors.toList())), new Object2IntOpenHashMap<>(id2index));
     }
 
     public ConnectionTable[] toConnectionTables() {
         final ConnectionTable[] tables = new ConnectionTable[nodes.size()];
-        for (int k=0; k < tables.length; ++k) {
+        for (int k = 0; k < tables.length; ++k) {
             tables[k] = getConnectionTable(k);
         }
         return tables;
@@ -41,11 +42,11 @@ public class MolecularNetwork {
         final List<CorrelationConnection> correlations = new ArrayList<>();
 
         for (NetworkEdge e : edges) {
-            e.getDatum(Correlation.class).ifPresent(x->correlations.add(new CorrelationConnection(ids[e.other(node).vertexId], (float)e.mzDifference, x.weight)));
+            e.getDatum(Correlation.class).ifPresent(x -> correlations.add(new CorrelationConnection(ids[e.other(node).vertexId], (float) e.mzDifference, x.weight)));
         }
 
         final ConnectionTable table = new ConnectionTable(
-                ids[vertexId], node.subnetwork, (float)node.mz,
+                ids[vertexId], node.subnetwork, (float) node.mz,
                 correlations.toArray(CorrelationConnection[]::new)
         );
         return table;
@@ -60,7 +61,7 @@ public class MolecularNetwork {
             final NetworkNode u = b.nodes.get(b.id2index.get(t.id));
             final HashMap<String, List<EdgeType>> data = new HashMap<>();
             for (AbstractConnection c : t.edges()) {
-                data.computeIfAbsent(c.targetName, (x)->new ArrayList<>()).add(c.asEdgeType());
+                data.computeIfAbsent(c.targetName, (x) -> new ArrayList<>()).add(c.asEdgeType());
             }
             for (Map.Entry<String, List<EdgeType>> entry : data.entrySet()) {
                 b.ensureEdge(u.vertexId, b.id2index.get(entry.getKey()), entry.getValue().toArray(EdgeType[]::new));
@@ -77,32 +78,32 @@ public class MolecularNetwork {
         }
         for (NetworkNode u : nodes) {
             for (NetworkEdge e : u.edges) {
-                if (e.left.vertexId>e.right.vertexId) continue;
+                if (e.left.vertexId > e.right.vertexId) continue;
                 boolean use = false;
                 for (EdgeType t : e.getData()) {
                     if (klasses.contains(t.getClass())) {
-                        use=true; break;
+                        use = true;
+                        break;
                     }
                 }
                 if (use) {
-                    b.addEdge(e.left.vertexId,e.right.vertexId, Arrays.stream(e.getData()).filter(x->klasses.contains(x.getClass())).toArray(EdgeType[]::new) );
+                    b.addEdge(e.left.vertexId, e.right.vertexId, Arrays.stream(e.getData()).filter(x -> klasses.contains(x.getClass())).toArray(EdgeType[]::new));
                 }
             }
         }
         return b.done(true);
     }
 
-    public MolecularNetwork relabel(Function<String,String> newIndexMapping) {
-        final TObjectIntHashMap<String> newMapping = new TObjectIntHashMap<>();
-        id2index.forEachEntry((key,index)->{
-            newMapping.put(newIndexMapping.apply(key), index);
-            return true;
+    public MolecularNetwork relabel(Function<String, String> newIndexMapping) {
+        final Object2IntMap<String> newMapping = new Object2IntOpenHashMap<>();
+        id2index.forEach((key, index) -> {
+            newMapping.put(newIndexMapping.apply(key), index.intValue());
         });
         return new MolecularNetwork(nodes, newMapping);
     }
 
     public NetworkNode getNode(String name) {
-        return nodes.get(id2index.get(name));
+        return nodes.get(id2index.getInt(name));
     }
 
     public Optional<NetworkEdge> getEdge(String u, String v) {
@@ -121,7 +122,7 @@ public class MolecularNetwork {
         stack.add(u);
         nodes.add(u);
         while (!stack.isEmpty()) {
-            NetworkNode v = stack.remove(stack.size()-1);
+            NetworkNode v = stack.remove(stack.size() - 1);
             for (NetworkEdge e : v.edges) {
                 if (!nodes.contains(e.left)) {
                     nodes.add(e.left);
@@ -141,25 +142,26 @@ public class MolecularNetwork {
     }
 
     public static class NetworkBuilder {
-        private ArrayList<NetworkNode> nodes;
-        private TObjectIntHashMap<String> id2index;
+        private final ArrayList<NetworkNode> nodes;
+        private final Object2IntMap<String> id2index;
+
         public NetworkBuilder() {
             nodes = new ArrayList<>();
-            id2index = new TObjectIntHashMap<>();
+            id2index = new Object2IntOpenHashMap<>();
         }
 
-        public NetworkBuilder(ArrayList<NetworkNode> nodes, TObjectIntHashMap<String> id2index) {
+        public NetworkBuilder(ArrayList<NetworkNode> nodes, Object2IntMap<String> id2index) {
             this.nodes = nodes;
             this.id2index = id2index;
         }
 
         public NetworkNode getNode(String name) {
-            return nodes.get(id2index.get(name));
+            return nodes.get(id2index.getInt(name));
         }
 
         public NetworkNode addNode(String id, double mz) {
             if (id2index.containsKey(id))
-                throw new IllegalArgumentException("ID '" + id + "' is already in use." );
+                throw new IllegalArgumentException("ID '" + id + "' is already in use.");
             final int vertexId = nodes.size();
             final NetworkNode u = new NetworkNode(vertexId, mz);
             nodes.add(u);
@@ -170,17 +172,17 @@ public class MolecularNetwork {
         public NetworkEdge addEdge(int u, int v, EdgeType... edgeTypes) {
             final NetworkNode U = nodes.get(u);
             final NetworkNode V = nodes.get(v);
-            return addEdge(U,V,edgeTypes);
+            return addEdge(U, V, edgeTypes);
         }
 
         public NetworkEdge addEdge(String u, String v, EdgeType... edgeTypes) {
-            final NetworkNode U = nodes.get(id2index.get(u));
-            final NetworkNode V = nodes.get(id2index.get(v));
-            return addEdge(U,V,edgeTypes);
+            final NetworkNode U = nodes.get(id2index.getInt(u));
+            final NetworkNode V = nodes.get(id2index.getInt(v));
+            return addEdge(U, V, edgeTypes);
         }
 
         public NetworkEdge addEdge(NetworkNode u, NetworkNode v, EdgeType[] edgeTypes) {
-            final NetworkEdge edge = new NetworkEdge(u,v, edgeTypes);
+            final NetworkEdge edge = new NetworkEdge(u, v, edgeTypes);
             u.addEdge(edge);
             v.addEdge(edge);
             return edge;
@@ -218,10 +220,10 @@ public class MolecularNetwork {
         private void traverse(NetworkNode u, boolean[] vec, Consumer<NetworkNode> functor) {
             final ArrayList<NetworkNode> stack = new ArrayList<>();
             functor.accept(u);
-            vec[u.vertexId]=true;
+            vec[u.vertexId] = true;
             stack.add(u);
             while (!stack.isEmpty()) {
-                NetworkNode node = stack.remove(stack.size()-1);
+                NetworkNode node = stack.remove(stack.size() - 1);
                 for (NetworkEdge edge : node.edges) {
                     if (!vec[edge.left.vertexId]) {
                         vec[edge.left.vertexId] = true;
@@ -239,7 +241,7 @@ public class MolecularNetwork {
 
         public void ensureEdge(int u, int v, EdgeType... edges) {
             Optional<NetworkEdge> e = nodes.get(u).getEdgeTo(nodes.get(v));
-            if (e.isEmpty()) addEdge(u,v,edges);
+            if (e.isEmpty()) addEdge(u, v, edges);
         }
     }
 }

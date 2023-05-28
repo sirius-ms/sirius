@@ -21,17 +21,16 @@
 version =  parent.fingeridVersion
 
 dependencies() {
+	// deprecated for removal ->  use fastutil instead
+	implementation 'net.sf.trove4j:core:3.1.0'
     //project
-    compile project(':chemical_db_oss')
-    compile project(':chemical_db_oss:chemdb_sql_oss')
-	compile project(':chemical_db_oss:chemdb_utils_oss')
+    api project(':chemical_db_oss')
+	api project(':chemical_db_oss:chemdb_sql_oss')
+	api project(':chemical_db_oss:chemdb_utils_oss')
 
 	// CDK
 	for (module in ["fingerprint", "qsarmolecular", "qsaratomic", "data", "inchi", "interfaces", "smiles", "core", "silent", "isomorphism", "legacy"]) {
 		//todo legacy is for old SMARTS matching in FixedMaACCSFingerprinter, SmartsMapper etc. THIS should be updated in the future
-		compile group: "org.openscience.cdk", name: "cdk-$module", version: "$cdk_version"
+		api "org.openscience.cdk:cdk-$module:$cdk_version"
 	}
-
-	// TODO: remove
-	compile group: "org.json", name:"json", version: "1.0"
 }

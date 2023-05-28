@@ -2,21 +2,14 @@ apply plugin: 'java-library'
 
 dependencies {
     //internal
-    compile project(':io')
-    compile project(':fingerid_base_oss')
-//    compile project(':error_reporter_oss')
-    compile project(':sirius_api')
-    compile project(':chemical_db_oss:chemdb_utils_oss')
+    api project(':io')
+    api project(':fingerid_base_oss')
+    api project(':sirius_api')
+    api project(':chemical_db_oss:chemdb_utils_oss')
 
-    compile group: "org.openscience.cdk", name: "cdk-inchi", version: "$cdk_version"
-
+    api group: "org.openscience.cdk", name: "cdk-inchi", version: "$cdk_version"
     // maven version number parsing
-    compile group: 'org.apache.maven', name: 'maven-artifact', version: '3.5.0'
+    api group: 'org.apache.maven', name: 'maven-artifact', version: '3.5.0'
     // jason marshalling
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version:"$jackson_version"
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:"$jackson_version"
-    compile 'com.squareup.okhttp3:okhttp:4.10.0'
-    compile 'com.github.scribejava:scribejava-apis:8.3.3'
-
-
+    api "com.squareup.okhttp3:okhttp:$okhttp_version"
 }

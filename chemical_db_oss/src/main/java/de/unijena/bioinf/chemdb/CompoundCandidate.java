@@ -22,16 +22,23 @@
 
 package de.unijena.bioinf.chemdb;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.core.*;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
+import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
+import de.unijena.bioinf.spectraldb.entities.Ms2SpectralMetadata;
+import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.list.array.TShortArrayList;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -40,27 +47,32 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@JsonSerialize(using = CompoundCandidate.Serializer.class)
+//@JsonSerialize(using = CompoundCandidate.Serializer.class)
 public class CompoundCandidate {
+    //The 2d inchi is the UID of an CompoundCandidate
     protected final InChI inchi;
     protected String name;
     protected String smiles;
     protected int pLayer;
     protected int qLayer;
     protected double xlogp = Double.NaN;
-    @Nullable //this is the tanimoto to a matched fingerprint.
-    protected Double tanimoto = null;
 
     //database info
     protected long bitset;
     protected ArrayList<DBLink> links;
 
     //citation info
-    protected PubmedLinks pubmedIDs = null;
+    protected PubmedLinks pubmedIDs;
 
     protected Double taxonomicScore;
     protected String taxonomicSpecies;
 
+    @Nullable //this is the tanimoto to a matched fingerprint.
+    protected Double tanimoto = null;
+
+    protected ArrayList<DBLink> referenceSpectraLinks;
+    @Nullable
+    protected Map<DBLink, Ms2SpectralMetadata> referenceSpectra;
 
     public CompoundCandidate(InChI inchi, String name, String smiles, int pLayer, int qLayer, double xlogp, @Nullable Double tanimoto, long bitset, DBLink[] links, PubmedLinks pubmedIDs) {
         this(inchi, name, smiles, pLayer, qLayer, xlogp, tanimoto, bitset, new ArrayList<>(List.of(links)), pubmedIDs);
@@ -93,7 +105,9 @@ public class CompoundCandidate {
             this.pubmedIDs = c.pubmedIDs;
         this.taxonomicScore = c.taxonomicScore;
         this.taxonomicSpecies = c.taxonomicSpecies;
+        this.referenceSpectra = c.referenceSpectra;
     }
+
 
     public CompoundCandidate(InChI inchi) {
         this.inchi = inchi;
@@ -253,6 +267,12 @@ public class CompoundCandidate {
         this.bitset |= bitset;
     }
 
+    public boolean hasReferenceSpectra() {
+        return referenceSpectra != null && !referenceSpectra.isEmpty();
+    }
+
+
+    //region Serializer
     public static class Serializer extends BaseSerializer<CompoundCandidate> {
     }
 
@@ -311,10 +331,9 @@ public class CompoundCandidate {
     public static <C extends CompoundCandidate> void toJSONList(List<C> fpcs, JsonGenerator generator) throws IOException {
         generator.writeStartObject();
         generator.writeFieldName("compounds");
-        new ObjectMapper().writeValue(generator,fpcs);
+        new ObjectMapper().writeValue(generator, fpcs);
         generator.writeEndObject();
         generator.flush();
     }
-
 }
 

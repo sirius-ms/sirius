@@ -21,15 +21,18 @@
 package de.unijena.bioinf.storage.db.nosql.nitrite;
 
 
-import com.fasterxml.jackson.core.*;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Streams;
 import de.unijena.bioinf.storage.db.nosql.*;
-import gnu.trove.list.TDoubleList;
-import gnu.trove.list.array.TDoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -79,14 +82,14 @@ public class NitriteDatabaseTest {
 
         public String name;
         public DoubleList dlist;
-        public TDoubleList dtlist;
+        public DoubleList dtlist;
         public double[] darr;
 
         public NitriteNoPOJOTestEntry() {
             super();
         }
 
-        public NitriteNoPOJOTestEntry(String name, DoubleList dlist, TDoubleList dtlist, double[] darr) {
+        public NitriteNoPOJOTestEntry(String name, DoubleList dlist, DoubleList dtlist, double[] darr) {
             this.name = name;
             this.dlist = dlist;
             this.dtlist = dtlist;
@@ -114,7 +117,7 @@ public class NitriteDatabaseTest {
         public NitriteNoPOJOTestEntry deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
             String name = null;
             DoubleList dlist = null;
-            TDoubleList dtlist = null;
+            DoubleList dtlist = null;
             double[] darr = null;
             JsonToken jsonToken = p.nextToken();
             while (!jsonToken.isStructEnd()) {
@@ -130,7 +133,7 @@ public class NitriteDatabaseTest {
                             break;
                         case "dtlist":
                             jsonToken = p.nextToken();
-                            dtlist = new TDoubleArrayList(p.readValueAs(double[].class));
+                            dtlist = new DoubleArrayList(p.readValueAs(double[].class));
                             break;
                         case "darr":
                             jsonToken = p.nextToken();
@@ -505,7 +508,7 @@ public class NitriteDatabaseTest {
         Path file = Files.createTempFile("nitrite-test", "");
         file.toFile().deleteOnExit();
         try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addRepository(NitriteNoPOJOTestEntry.class, "id", new TestSerializer(), new TestDeserializer(), new Index("name", IndexType.UNIQUE)))) {
-            NitriteNoPOJOTestEntry in = new NitriteNoPOJOTestEntry("A", DoubleList.of(1, 2, 3), new TDoubleArrayList(new double[]{1, 2, 3}), new double[]{1, 2, 3});
+            NitriteNoPOJOTestEntry in = new NitriteNoPOJOTestEntry("A", DoubleList.of(1, 2, 3), new DoubleArrayList(new double[]{1, 2, 3}), new double[]{1, 2, 3});
             db.insert(in);
             NitriteNoPOJOTestEntry[] out = Iterables.toArray(db.findAll(NitriteNoPOJOTestEntry.class), NitriteNoPOJOTestEntry.class);
             assertEquals("jackson db size", 1, out.length);
