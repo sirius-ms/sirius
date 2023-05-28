@@ -21,7 +21,6 @@
 
 package de.unijena.bioinf.sirius;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
@@ -127,12 +126,7 @@ public class ProcessedPeak implements Peak {
     }
 
     public Iterator<Ms2Spectrum> originalSpectraIterator() {
-        return Iterators.transform(originalPeaks.iterator(), new Function<MS2Peak, Ms2Spectrum>() {
-            @Override
-            public Ms2Spectrum apply(MS2Peak input) {
-                return input.getSpectrum();
-            }
-        });
+        return Iterators.transform(originalPeaks.iterator(), MS2Peak::getSpectrum);
     }
 
     public int getIndex() {
@@ -140,7 +134,7 @@ public class ProcessedPeak implements Peak {
     }
 
     public List<Ms2Spectrum> getOriginalSpectra() {
-        final List<Ms2Spectrum> spectrum =  new ArrayList<Ms2Spectrum>(originalPeaks.size());
+        final List<Ms2Spectrum> spectrum = new ArrayList<>(originalPeaks.size());
         Iterators.addAll(spectrum, originalSpectraIterator());
         return spectrum;
     }

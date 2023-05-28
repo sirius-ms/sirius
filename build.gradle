@@ -33,10 +33,10 @@ ext {
     glpk_version = props.getProperty('de.unijena.bioinf.sirius.build.glpk_version')
     gurobi_version = props.getProperty('de.unijena.bioinf.sirius.build.gurobi_version')
     cplex_version = props.getProperty('de.unijena.bioinf.sirius.build.cplex_version')
-    graphUtils_version = '1.1'
     cdk_version = "2.8"
     jetbrains_version = "23.0.0"
-    httpclient_version = "5.1.3"
+    okhttp_version = "4.10.0"
+    fastutil_version = '8.5.12' //replaces trove
 
     jewelcli_version = '0.8.9'
     //todo wenn wir die inhouse clis auch ind das frontend moven haben wir keinerlei distribution zeug mehr in sirius
@@ -58,10 +58,11 @@ ext {
 allprojects {
     apply plugin: "com.jfrog.artifactory"
     apply plugin: 'java'
+    apply plugin: 'java-library'
     apply plugin: 'maven-publish'
 
-    sourceCompatibility = 13
-    targetCompatibility = 13
+    sourceCompatibility = 17
+    targetCompatibility = 17
 
     compileJava.options.encoding = "UTF-8"
     compileTestJava.options.encoding = "UTF-8"
@@ -93,19 +94,31 @@ allprojects {
     }
 
     dependencies {
-        compile "org.jetbrains:annotations:$jetbrains_version"
-        compile 'net.sf.trove4j:core:3.1.0' //switched from 'net.sf.trove4j:trove4j:3.0.3' which seems to be buggy and no longer supported
-        compile group: 'com.google.guava', name: 'guava', version: "$guava_version"
-        compile 'org.apache.commons:commons-lang3:3.12.0'
-        compile 'commons-io:commons-io:2.11.0'
-        compile group: 'de.unijena.bioinf', name: 'jjobs-core', version:"$jjobs_version"
-        compile group: 'org.slf4j', name: 'slf4j-api', version: "$slf4j_version"
+        compileOnly 'org.projectlombok:lombok:1.18.26'
+        annotationProcessor 'org.projectlombok:lombok:1.18.26'
 
+        api "org.jetbrains:annotations:$jetbrains_version"
+        api "it.unimi.dsi:fastutil:$fastutil_version"
 
+//        api 'org.apache.commons:commons-collections4:4.4'
+        //try to remove and replace with basic java or fastutil
+        api group: 'com.google.guava', name: 'guava', version: '31.1-jre'
+        api "org.apache.commons:commons-math3:$math3_version"
+        api 'org.apache.commons:commons-compress:1.21'
+        api 'org.apache.commons:commons-lang3:3.12.0'
+        api 'commons-io:commons-io:2.11.0' //maybe provide via io package?
 
-        testCompile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
-        testCompile group: 'de.unijena.bioinf', name: 'jjobs-swing', version:"$jjobs_version"
-        testCompile group: 'junit', name: 'junit', version: '4.12'
+        api "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
+        api "com.fasterxml.jackson.core:jackson-annotations:$jackson_version"
+
+        api 'com.googlecode.concurrent-locks:concurrent-locks:1.0.0'
+
+        api group: 'de.unijena.bioinf', name: 'jjobs-core', version:"$jjobs_version"
+        api group: 'org.slf4j', name: 'slf4j-api', version: "$slf4j_version"
+
+        testImplementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+        testImplementation group: 'de.unijena.bioinf', name: 'jjobs-swing', version:"$jjobs_version"
+        testImplementation group: 'junit', name: 'junit', version: '4.13.1'
     }
 
     task sourceJar(type: Jar) {

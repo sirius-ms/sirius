@@ -22,7 +22,7 @@ allprojects {
     version =  parent.siriusVersion
 
     dependencies {
-        compile project(':chemistry_base')
-        compile project(':sirius_project_space')
+        api project(':chemistry_base')
+        api project(':sirius_project_space')
     }
 }

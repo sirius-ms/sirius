@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -36,8 +36,8 @@ import de.unijena.bioinf.storage.blob.AbstractCompressible;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.storage.blob.BlobStorages;
 import de.unijena.bioinf.storage.blob.Compressible;
-import gnu.trove.map.TObjectLongMap;
-import gnu.trove.map.hash.TObjectLongHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -49,6 +49,9 @@ import java.io.Reader;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static de.unijena.bioinf.chemdb.ChemDbTags.TAG_DATE;
+import static de.unijena.bioinf.chemdb.ChemDbTags.TAG_FORMAT;
 
 public class ChemicalBlobDatabase<Storage extends BlobStorage> extends AbstractCompressible implements AbstractChemicalDatabase {
 public enum Format {
@@ -77,12 +80,6 @@ public enum Format {
     }
 }
 
-    public static final String TAG_FORMAT = "chemdb-format";
-//    public static final String TAG_COMPRESSION = "chemdb-compression";
-    public static final String TAG_DATE = "chemdb-date";
-    public static final String TAG_FLAVOR = "chemdb-flavor";
-    public static final String TAG_FP_ID = "chemdb-fp-id";
-
     public static final String BLOB_SETTINGS = "SETTINGS";
     public static final String BLOB_FORMULAS = "formulas";
 
@@ -92,7 +89,7 @@ public enum Format {
     protected Format format; // csv or json
     protected CompoundReader reader;
     protected MolecularFormula[] formulas;
-    protected final TObjectLongMap<MolecularFormula> formulaFlags = new TObjectLongHashMap<>();
+    protected final Object2LongMap<MolecularFormula> formulaFlags = new Object2LongOpenHashMap<>();
     protected FingerprintVersion version;
 
 

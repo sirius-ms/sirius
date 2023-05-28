@@ -1,5 +1,5 @@
 dependencies {
-    compile project(':fragmentation_tree:fragmentation_tree_construction')
+    api project(':fragmentation_tree:fragmentation_tree_construction')
     // intellij seems to ignore other scopes than compile so we need to have this here and remove it before distribution
-    compile "com.gurobi:gurobi-jar:$gurobi_version"
+    implementation "com.gurobi:gurobi-jar:$gurobi_version"
 }
