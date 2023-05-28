@@ -23,9 +23,15 @@ allprojects {
 }
 
 dependencies {
-	//project
-    compile project(':fingerid_base_oss')
-    compile project(':chemistry_base')
-    compile project(':blob-storage')
-    compile project(':io')
+    // deprecated for removal ->  use fastutil instead
+    implementation 'net.sf.trove4j:core:3.1.0'
+
+    //project
+    api project(':fingerid_base_oss')
+    api project(':chemistry_base')
+    api project(':blob-storage')
+    api project(':io')
+
+    // external (api)
+    api 'org.dizitart:nitrite:3.4.2'
 }

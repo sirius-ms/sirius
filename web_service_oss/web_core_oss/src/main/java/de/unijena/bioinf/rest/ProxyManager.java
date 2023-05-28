@@ -438,6 +438,7 @@ public class ProxyManager {
         try {
             doWithClient.accept(client(clientID));
         } catch (IOException e) {
+            e.printStackTrace();
             throw new SiriusHttpException(clientID, e);
         } finally {
             reconnectLock.readLock().unlock();
@@ -468,6 +469,7 @@ public class ProxyManager {
         try {
             return doWithClient.apply(ProxyManager.client(clientID));
         } catch (IOException e) {
+            e.printStackTrace();
             throw new SiriusHttpException(clientID, e);
         } finally {
             reconnectLock.readLock().unlock();
