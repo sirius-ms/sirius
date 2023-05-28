@@ -57,8 +57,8 @@ import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.sirius.scores.TreeScore;
-import org.apache.commons.collections.map.AbstractReferenceMap;
-import org.apache.commons.collections.map.ReferenceMap;
+import org.apache.commons.collections4.map.AbstractReferenceMap;
+import org.apache.commons.collections4.map.ReferenceMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -166,7 +166,7 @@ public class ProjectSpaceManager<I extends Instance> implements IterableWithSize
         }
     }
 
-    private static final ReferenceMap instanceCache = new ReferenceMap(AbstractReferenceMap.HARD, AbstractReferenceMap.WEAK, true);
+    private static final ReferenceMap<CompoundContainerId, Instance> instanceCache = new ReferenceMap<>(AbstractReferenceMap.ReferenceStrength.HARD, AbstractReferenceMap.ReferenceStrength.WEAK, true);
 
     @SafeVarargs
     public final I getInstanceFromCompound(CompoundContainerId id, Class<? extends DataAnnotation>... components) {

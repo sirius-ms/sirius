@@ -4,6 +4,10 @@ dependencies {
     implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "2.0.7"
     implementation("de.unijena.bioinf.cbc-java:cbc-java-jni:$cbc_version:${siriusTargetPlatform.jenaClassifier().orElseThrow()}")
     implementation("de.unijena.bioinf.cbc-java:cbc-java-native:$cbc_version:${siriusTargetPlatform.jenaClassifier().orElseThrow()}")
+    implementation 'org.apache.commons:commons-collections4:4.4'
+    implementation group: 'org.apache.commons', name: 'commons-configuration2', version: '2.9.0'
+    implementation 'com.auth0:java-jwt:3.16.0' //jwt decoder
+
     // wrong place END
 
 
@@ -37,7 +41,8 @@ dependencies {
     api group: "de.unijena.bioinf.ms", name: "FTAlignmentTool", version: "$siriusVersion"
 
     //cdk
-    api "org.openscience.cdk:cdk-silent:$cdk_version"
+    for (module in ["silent", "smiles", "data", "formula"])
+        api "org.openscience.cdk:cdk-$module:$cdk_version"
 
     //mztabm
     api group: 'de.isas.mztab', name: 'jmztabm-api', version: "$mztabm_version"
