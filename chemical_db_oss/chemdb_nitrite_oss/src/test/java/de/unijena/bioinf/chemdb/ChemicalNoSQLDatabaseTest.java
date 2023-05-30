@@ -42,13 +42,14 @@ package de.unijena.bioinf.chemdb;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.chemdb.nitrite.ChemicalNitriteDatabase;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintWrapper;
 import de.unijena.bioinf.spectraldb.SpectralNoSQLDatabase;
 import de.unijena.bioinf.spectraldb.entities.Ms2SpectralData;
 import de.unijena.bioinf.spectraldb.entities.Ms2SpectralMetadata;
 import de.unijena.bioinf.storage.blob.file.FileBlobStorage;
-import org.apache.commons.lang3.NotImplementedException;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -66,6 +67,7 @@ public class ChemicalNoSQLDatabaseTest {
 
     static ChemicalNitriteDatabase chemDb;
     static MolecularFormula[] formulas;
+    static int[] sizePerFormula;
 
     static List<String> inchis2d;
     static List<String> names;
@@ -80,18 +82,22 @@ public class ChemicalNoSQLDatabaseTest {
             candidates.addAll(source.lookupStructuresAndFingerprintsByFormula(formula));
 
         formulas = source.formulas;
+        sizePerFormula = new int[formulas.length];
 
         inchis2d = new ArrayList<>();
         names = new ArrayList<>();
         compoundCandidates = new ArrayList<>();
 
-        for (MolecularFormula formula : formulas)
-            source.lookupStructuresByFormula(formula).forEach(c -> {
+        for (int i = 0; i < formulas.length; i++) {
+            List<CompoundCandidate> cs = source.lookupStructuresByFormula(formulas[i]);
+            sizePerFormula[i] = cs.size();
+
+            cs.forEach(c -> {
                 inchis2d.add(c.getInchiKey2D());
                 names.add(c.getName());
                 compoundCandidates.add(c);
             });
-
+        }
         Path tempDB = Files.createTempFile("chemDB-nitrite_", "_unitTest");
         chemDb = new ChemicalNitriteDatabase(tempDB);
         ChemicalNoSQLDBs.importCompoundsAndFingerprintsLazy(chemDb.getStorage(), candidates, null, "2099-12-24", null, 5, 100);
@@ -133,9 +139,10 @@ public class ChemicalNoSQLDatabaseTest {
 
     @Test
     public void lookUpStructureAndFingerprintByFormulaTest() throws IOException {
-        for (MolecularFormula formula : formulas) {
-            List<FingerprintCandidate> candidates = chemDb.lookupStructuresAndFingerprintsByFormula(formula);
+        for (int i = 0; i < formulas.length; i++) {
+            List<FingerprintCandidate> candidates = chemDb.lookupStructuresAndFingerprintsByFormula(formulas[i]);
             assertFalse(candidates.isEmpty());
+            assertEquals(sizePerFormula[i], candidates.size());
             candidates.forEach(fc ->
                     assertNotNull(fc.getFingerprint()));
         }
@@ -143,9 +150,10 @@ public class ChemicalNoSQLDatabaseTest {
 
     @Test
     public void lookUpCompoundsByFormulaTest() throws IOException {
-        for (MolecularFormula formula : formulas) {
-            List<CompoundCandidate> candidates = chemDb.lookupStructuresByFormula(formula);
+        for (int i = 0; i < formulas.length; i++) {
+            List<CompoundCandidate> candidates = chemDb.lookupStructuresByFormula(formulas[i]);
             assertFalse(candidates.isEmpty());
+            assertEquals(sizePerFormula[i], candidates.size());
         }
     }
 
@@ -178,10 +186,21 @@ public class ChemicalNoSQLDatabaseTest {
     }
 
     @Test
-    public void  lookupMolecularFormulas() throws ChemicalDatabaseException{
-//        chemDb.lookupMolecularFormulas()
-        throw new NotImplementedException("Implement this test!");
+    public void lookupMolecularFormulas() throws ChemicalDatabaseException {
+        Deviation ppm = new Deviation(10d);
+        List<PrecursorIonType> ionTypes = List.of(PrecursorIonType.fromString("M+"),PrecursorIonType.fromString("[M+H]+"), PrecursorIonType.fromString("[M+Na]+"));
+        for (PrecursorIonType ionType : ionTypes) {
+            for (int i = 0; i < formulas.length; i++) {
+                MolecularFormula formula = formulas[i];
+                double precursormass = ionType.neutralMassToPrecursorMass(formula.getMass());
+                List<FormulaCandidate> compounds = chemDb.lookupMolecularFormulas(precursormass, ppm, ionType);
+                assertTrue(compounds.size() >= sizePerFormula[i]);
+                assertTrue(compounds.stream().anyMatch(c -> c.formula.equals(formula)));
+                assertEquals(sizePerFormula[i], compounds.stream().filter(c -> c.formula.equals(formula)).count());
+            }
+        }
     }
+
     @Test
     public void containsFormula() throws ChemicalDatabaseException {
         for (MolecularFormula formula : formulas)
@@ -203,6 +222,4 @@ public class ChemicalNoSQLDatabaseTest {
     public void annotateCompoundsTest() throws ChemicalDatabaseException {
         chemDb.annotateCompounds(List.of());
     }
-
-
 }
