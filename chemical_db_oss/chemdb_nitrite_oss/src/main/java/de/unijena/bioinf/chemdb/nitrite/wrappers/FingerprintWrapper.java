@@ -31,11 +31,10 @@ import lombok.Setter;
 @Getter
 @Setter
 public class FingerprintWrapper {
-    private long id = -1L;
     String inchikey;
     short[] fingerprint;
 
     public static FingerprintWrapper of(FingerprintCandidate source){
-        return new FingerprintWrapper(-1, source.getInchiKey2D(), source.getFingerprint().toIndizesArray());
+        return new FingerprintWrapper(source.getInchiKey2D(), source.getFingerprint().toIndizesArray());
     }
 }
