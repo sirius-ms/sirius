@@ -2,10 +2,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
-import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
-import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaPacker;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaSet;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
@@ -31,10 +28,27 @@ public class DBPairedScorer implements FragmentScorer<MolecularFormula>, Paramet
         try {
             final MolecularFormulaPacker packer = MolecularFormulaPacker.newPacker(constraints.getChemicalAlphabet());
             final List<MolecularFormula> formulas = new ArrayList<>();
+            FormulaConstraints ALL = FormulaConstraints.fromString("HCNOSBrBFClSiIAsSeCuFeMgNaCa");
             final MolecularFormulaSet set = new MolecularFormulaSet(constraints.getChemicalAlphabet());
+            Ionization hplus = PrecursorIonType.getPrecursorIonType("[M + H]+").getIonization();
             for (String line : FileUtils.readLines(new File("/home/kaidu/temp/bioformulas.csv"))) {
                 MolecularFormula f = MolecularFormula.parse(line);
-                set.add(f);
+                if (ALL.isSatisfied(f, hplus))
+                    set.add(f);
+            }
+            for (String[] tab : FileUtils.readTable(new File("/home/kaidu/temp/fragments.csv"), true)) {
+                int count = Integer.parseInt(tab[3]);
+                if (count >= 10) {
+                    MolecularFormula f = MolecularFormula.parse(tab[0]);
+                    set.add(f);
+                }
+            }
+            for (String[] tab : FileUtils.readTable(new File("/home/kaidu/temp/rootlosses.csv"), true)) {
+                int count = Integer.parseInt(tab[3]);
+                if (count >= 10) {
+                    MolecularFormula f = MolecularFormula.parse(tab[0]);
+                    set.add(f);
+                }
             }
             System.out.println(set.numberOfCompressedFormulas() + " compressed formulas vs " + set.numberOfUncompressedFormulas() + " uncompressed.");
             try (final OutputStream out = FileUtils.getOut(new File("/home/kaidu/temp/bioformulas.bin.gz"))) {
