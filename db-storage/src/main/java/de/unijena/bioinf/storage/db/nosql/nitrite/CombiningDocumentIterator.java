@@ -18,23 +18,33 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.chemdb.nitrite.wrappers;
+package de.unijena.bioinf.storage.db.nosql.nitrite;
 
-import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import org.dizitart.no2.Document;
 
-@AllArgsConstructor
-@NoArgsConstructor
-@Getter
-@Setter
-public class FingerprintWrapper {
-    String inchikey;
-    short[] fingerprint;
+import java.util.Iterator;
+import java.util.function.Function;
 
-    public static FingerprintWrapper of(FingerprintCandidate source){
-        return new FingerprintWrapper(source.getInchiKey2D(), source.getFingerprint().toIndizesArray());
+abstract class CombiningDocumentIterator implements Iterator<Document> {
+
+    protected Iterator<Document> parentIterator;
+
+    protected final Function<Object, Iterable<Document>> children;
+
+    protected final String localField;
+
+    public CombiningDocumentIterator(Iterable<Document> parents, Function<Object, Iterable<Document>> children, String localField) {
+        this.parentIterator = parents.iterator();
+        this.children = children;
+        this.localField = localField;
+    }
+
+    /**
+     * Just a default Override for more complex handling
+     * @return true if another element is available
+     */
+    @Override
+    public boolean hasNext() {
+        return parentIterator.hasNext();
     }
 }

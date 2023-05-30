@@ -33,7 +33,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.dizitart.no2.*;
 import org.dizitart.no2.filters.Filters;
 import org.dizitart.no2.mapper.JacksonMapper;
-import org.dizitart.no2.mapper.NitriteMapper;
 import org.dizitart.no2.objects.ObjectFilter;
 import org.dizitart.no2.objects.ObjectRepository;
 import org.dizitart.no2.objects.filters.ObjectFilters;
@@ -47,23 +46,20 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class NitriteDatabase implements Database<Document> {
 
+    //todo I think this might cause even more problems. We should investigate this further.
+    // But I think this cannot be executed on runtime on modern jdks. we need to take care of this as jvm parameters
     // Prevent illegal reflective access warnings
-   /* static {
+/*    static {
         if (!NitriteDatabase.class.getModule().isNamed()) {
             ClassLoader.class.getModule().addOpens(ClassLoader.class.getPackageName(), NitriteDatabase.class.getModule());
         }
-    }
-*/
+    }*/
     protected Path file;
 
     // NITRITE
     private final Nitrite db;
 
     private final JacksonMapper nitriteMapper;
-
-    private final Map<String, NitriteCollection> collections = Collections.synchronizedMap(new HashMap<>());
-
-    private final Map<Class<?>, ObjectRepository<?>> repositories = Collections.synchronizedMap(new HashMap<>());
 
     // LOCKS
     private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
@@ -131,7 +127,6 @@ public class NitriteDatabase implements Database<Document> {
     private void initCollections(Map<String, Index[]> collections) {
         for (String name : collections.keySet()) {
             NitriteCollection collection = this.db.getCollection(name);
-            this.collections.put(name, collection);
             initIndex(collections.get(name), collection);
         }
     }
@@ -139,7 +134,6 @@ public class NitriteDatabase implements Database<Document> {
     private void initRepositories(Map<Class<?>, Index[]> repositories, Map<Class<?>, String> idFields) throws IOException {
         for (Class<?> clazz : repositories.keySet()) {
             ObjectRepository<?> repository = this.db.getRepository(clazz);
-            this.repositories.put(clazz, repository);
             initIndex(repositories.get(clazz), repository);
             if (idFields.containsKey(clazz)) {
                 initIdField(clazz, idFields.get(clazz), repository);
@@ -255,18 +249,18 @@ public class NitriteDatabase implements Database<Document> {
 
     @SuppressWarnings("unchecked")
     private <T> ObjectRepository<T> getRepository(Class<T> clazz) throws IOException {
-        if (!this.repositories.containsKey(clazz)) {
+        if (!this.db.hasRepository(clazz)) {
             throw new IOException(clazz + " is not registered.");
         }
-        return (ObjectRepository<T>) this.repositories.get(clazz);
+        return db.getRepository(clazz);
     }
 
     @SuppressWarnings("unchecked")
     private <T> ObjectRepository<T> getRepository(T object) throws IOException {
-        if (!this.repositories.containsKey(object.getClass())) {
+        if (!db.hasRepository(object.getClass())) {
             throw new IOException(object.getClass() + " is not registered.");
         }
-        return (ObjectRepository<T>) this.repositories.get(object.getClass());
+        return (ObjectRepository<T>) db.getRepository(object.getClass());
     }
 
     @SuppressWarnings("unchecked")
@@ -278,17 +272,19 @@ public class NitriteDatabase implements Database<Document> {
         }
         T[] arr = (T[]) collection.toArray();
         Class<T> clazz = (Class<T>) arr[0].getClass();
-        if (!this.repositories.containsKey(clazz)) {
+        if (!this.db.hasRepository(clazz)) {
             throw new IOException(clazz + " is not registered.");
         }
-        return Pair.of(arr, (ObjectRepository<T>) this.repositories.get(clazz));
+        return Pair.of(arr, db.getRepository(clazz));
     }
 
     private NitriteCollection getCollection(String name) throws IOException {
-        if (!this.collections.containsKey(name)) {
+        //collection of repos are created on demand, so we have to check both
+        if (!db.hasCollection(name) && !db.listRepositories().contains(name)) {
             throw new IOException(name + " is not registered.");
         }
-        return this.collections.get(name);
+
+        return db.getCollection(name);
     }
 
     @Override
@@ -625,7 +621,7 @@ public class NitriteDatabase implements Database<Document> {
 
     @Override
     public Iterable<Document> joinAllChildren(String childCollectionName, Iterable<Document> parents, String localField, String foreignField, String targetField) throws IOException {
-        return new NitriteJoinedDocumentIterable(
+        return () -> new JoinedDocumentIterator(
                 parents,
                 (localObject) -> {
                     try {
@@ -641,7 +637,7 @@ public class NitriteDatabase implements Database<Document> {
 
     @Override
     public Iterable<Document> joinChildren(String childCollectionName, Filter childFilter, Iterable<Document> parents, String localField, String foreignField, String targetField) throws IOException {
-        return new NitriteJoinedDocumentIterable(
+        return () -> new JoinedDocumentIterator(
                 parents,
                 (localObject) -> {
                     try {
@@ -654,6 +650,57 @@ public class NitriteDatabase implements Database<Document> {
                 },
                 localField,
                 targetField
+        );
+    }
+
+    @Override
+    public <P, C> Iterable<P> mergeChild(Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String... targetFields) throws IOException {
+        //todo implement more efficient in place variant.
+        if (!parents.iterator().hasNext())
+            return List.of();
+
+        return mergeChild((Class<P>) parents.iterator().next().getClass(), childClass, parents, localField, foreignField, targetFields);
+    }
+
+    @Override
+    public <T, P, C> Iterable<T> mergeChild(Class<T> targetClass, Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String... targetFields) throws IOException {
+        if (!parents.iterator().hasNext())
+            return List.of();
+
+        return new NitriteMergedIterable<>(
+                nitriteMapper,
+                targetClass,
+                parents,
+                (localObject) -> {
+                    try {
+                        org.dizitart.no2.objects.Cursor<C> objectCursor = (org.dizitart.no2.objects.Cursor<C>) find(new Filter().eq(foreignField, localObject), childClass);
+                        Field cField = objectCursor.getClass().getDeclaredField("cursor");
+                        cField.setAccessible(true);
+                        return (Iterable<Document>) cField.get(objectCursor);
+                    } catch (IOException | IllegalAccessException | NoSuchFieldException e) {
+                        throw new RuntimeException(e);
+                    }
+                },
+                localField,
+                targetFields
+        );
+    }
+
+    @Override
+    public Iterable<Document> mergeChild(String childCollectionName, Iterable<Document> parents, String localField, String foreignField, String... targetFields) throws IOException {
+        if (!parents.iterator().hasNext())
+            return List.of();
+        return () -> new MergedDocumentIterator(
+                parents,
+                (localObject) -> {
+                    try {
+                        return find(childCollectionName, new Filter().eq(foreignField, localObject));
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                },
+                localField,
+                targetFields
         );
     }
 

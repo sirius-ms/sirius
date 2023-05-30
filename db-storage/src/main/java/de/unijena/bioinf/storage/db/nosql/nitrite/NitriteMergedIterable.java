@@ -31,7 +31,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.function.Function;
 
-public class NitriteJoinedIterable<T, P> implements Iterable<T> {
+public class NitriteMergedIterable<T, P> implements Iterable<T> {
 
     protected final Class<T> targetClass;
 
@@ -41,17 +41,17 @@ public class NitriteJoinedIterable<T, P> implements Iterable<T> {
 
     protected final String localField;
 
-    protected final String targetField;
+    protected final String[] targetFields;
 
     protected final NitriteMapper mapper;
 
-    public NitriteJoinedIterable(
+    public NitriteMergedIterable(
+            NitriteMapper mapper,
             Class<T> targetClass,
             Iterable<P> parents,
             Function<Object, Iterable<Document>> children,
             String localField,
-            String targetField,
-            NitriteMapper mapper
+            String... targetField
     ) throws IOException {
         if (!(parents instanceof Cursor)) {
             throw new IOException("parents must be a cursor!");
@@ -66,7 +66,7 @@ public class NitriteJoinedIterable<T, P> implements Iterable<T> {
         this.children = children;
         this.targetClass = targetClass;
         this.localField = localField;
-        this.targetField = targetField;
+        this.targetFields = targetField;
         this.mapper = mapper;
     }
 
@@ -76,6 +76,8 @@ public class NitriteJoinedIterable<T, P> implements Iterable<T> {
         if (parents.size() == 0) {
             return Collections.emptyIterator();
         }
-        return new CombiningIterator<>(targetClass, new JoinedDocumentIterator(parents, children, localField, targetField), mapper);
+        return new CombiningIterator<>(targetClass, new MergedDocumentIterator(parents, children, localField, targetFields), mapper);
     }
+
 }
+
