@@ -98,7 +98,7 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
     @Override
     public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
         try {
-            storage.joinAllChildrenStr(FingerprintCandidate.class, FingerprintWrapper.class,
+            storage.mergeChildStr(FingerprintWrapper.class,
                     storage.find(new Filter().eq("formula", formula.toString()), FingerprintCandidate.class),
                     "inchikey", "inchikey", "fingerprint"
             ).forEach(fingerprintCandidates::add);
@@ -111,7 +111,7 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
     public Stream<FingerprintCandidate> lookupFingerprintsByInchisStr(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         try {
             Object[] keys = StreamSupport.stream(inchi_keys.spliterator(), false).toArray();
-            return storage.joinAllChildrenStr(FingerprintCandidate.class, FingerprintWrapper.class,
+            return storage.mergeChildStr(FingerprintCandidate.class, FingerprintWrapper.class,
                     storage.find(new Filter().in("inchikey", keys), FingerprintCandidate.class),
                     "inchikey", "inchikey", "fingerprint"
             );
@@ -138,7 +138,7 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
     @Override
     public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws ChemicalDatabaseException {
         try {
-            return storage.joinAllChildrenStr(FingerprintCandidate.class, FingerprintWrapper.class,
+            return storage.mergeChildStr(FingerprintCandidate.class, FingerprintWrapper.class,
                     compounds, "inchikey", "inchikey", "fingerptint"
             ).toList();
         } catch (IOException e) {
