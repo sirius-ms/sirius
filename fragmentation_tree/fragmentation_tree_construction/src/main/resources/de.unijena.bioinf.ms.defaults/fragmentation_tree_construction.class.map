@@ -1,1 +1,2 @@
 UseHeuristic=de.unijena.bioinf.FragmentationTreeConstruction.model.UseHeuristic
+BottomUpSearchSettings=de.unijena.bioinf.sirius.plugins.BottomUpSearch.BottomUpSearchSettings
