@@ -12,11 +12,13 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
+import de.unijena.bioinf.sirius.plugins.BottomUpSearch;
 import gnu.trove.procedure.TObjectDoubleProcedure;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.util.*;
 import java.util.zip.GZIPInputStream;
@@ -24,35 +26,35 @@ import java.util.zip.GZIPInputStream;
 public class DBPairedScorer implements FragmentScorer<MolecularFormula>, Parameterized {
 
     public static void main(String[] args) {
-        final FormulaConstraints constraints = new FormulaConstraints("CHNOPSClBrBIFSe");
         try {
-            final MolecularFormulaPacker packer = MolecularFormulaPacker.newPacker(constraints.getChemicalAlphabet());
             final List<MolecularFormula> formulas = new ArrayList<>();
             FormulaConstraints ALL = FormulaConstraints.fromString("HCNOSBrBFClSiIAsSeCuFeMgNaCa");
-            final MolecularFormulaSet set = new MolecularFormulaSet(constraints.getChemicalAlphabet());
+            //final MolecularFormulaSet set = new MolecularFormulaSet(constraints.getChemicalAlphabet());
             Ionization hplus = PrecursorIonType.getPrecursorIonType("[M + H]+").getIonization();
             for (String line : FileUtils.readLines(new File("/home/kaidu/temp/bioformulas.csv"))) {
                 MolecularFormula f = MolecularFormula.parse(line);
                 if (ALL.isSatisfied(f, hplus))
-                    set.add(f);
+                    formulas.add(f);
             }
             for (String[] tab : FileUtils.readTable(new File("/home/kaidu/temp/fragments.csv"), true)) {
                 int count = Integer.parseInt(tab[3]);
                 if (count >= 10) {
                     MolecularFormula f = MolecularFormula.parse(tab[0]);
-                    set.add(f);
+                    formulas.add(f);
                 }
             }
             for (String[] tab : FileUtils.readTable(new File("/home/kaidu/temp/rootlosses.csv"), true)) {
                 int count = Integer.parseInt(tab[3]);
                 if (count >= 10) {
                     MolecularFormula f = MolecularFormula.parse(tab[0]);
-                    set.add(f);
+                    formulas.add(f);
                 }
             }
-            System.out.println(set.numberOfCompressedFormulas() + " compressed formulas vs " + set.numberOfUncompressedFormulas() + " uncompressed.");
-            try (final OutputStream out = FileUtils.getOut(new File("/home/kaidu/temp/bioformulas.bin.gz"))) {
-                set.store(out);
+            MolecularFormulaMap MAP = new MolecularFormulaMap(formulas);
+            try (final OutputStream out = FileUtils.getOut(new File("/home/kaidu/software/sirius/sirius-libs/chemistry_base/src/main/resources//bioformulas.bin.gz"))) {
+                ObjectOutputStream oout = new ObjectOutputStream(out);
+                oout.writeObject(MAP);
+                oout.close();
             }
 
         } catch (IOException | UnknownElementException e) {
@@ -60,16 +62,7 @@ public class DBPairedScorer implements FragmentScorer<MolecularFormula>, Paramet
         }
     }
 
-    private final static MolecularFormulaSet formulaSet;
     private double score = 1d;
-
-    static {
-        try {
-            formulaSet = MolecularFormulaSet.load(new GZIPInputStream(DBPairedScorer.class.getResourceAsStream("/bioformulas.bin.gz")));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     public DBPairedScorer() {
 
@@ -87,7 +80,7 @@ public class DBPairedScorer implements FragmentScorer<MolecularFormula>, Paramet
 
     @Override
     public double score(Fragment graphFragment, ProcessedPeak correspondingPeak, boolean isRoot, MolecularFormula prepared) {
-        if (prepared!=null && formulaSet.contains(graphFragment.getFormula()) && formulaSet.contains(prepared)) {
+        if (prepared!=null && BottomUpSearch.MOLECULAR_FORMULA_MAP.contains(graphFragment.getFormula()) && BottomUpSearch.MOLECULAR_FORMULA_MAP.contains(prepared)) {
             return score;
         } else return 0d;
     }
