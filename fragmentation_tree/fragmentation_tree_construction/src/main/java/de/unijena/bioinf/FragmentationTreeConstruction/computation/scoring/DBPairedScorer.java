@@ -36,20 +36,23 @@ public class DBPairedScorer implements FragmentScorer<MolecularFormula>, Paramet
                 if (ALL.isSatisfied(f, hplus))
                     formulas.add(f);
             }
+
             for (String[] tab : FileUtils.readTable(new File("/home/kaidu/temp/fragments.csv"), true)) {
                 int count = Integer.parseInt(tab[3]);
-                if (count >= 10) {
+                if (count >= 20) {
                     MolecularFormula f = MolecularFormula.parse(tab[0]);
                     formulas.add(f);
                 }
             }
             for (String[] tab : FileUtils.readTable(new File("/home/kaidu/temp/rootlosses.csv"), true)) {
                 int count = Integer.parseInt(tab[3]);
-                if (count >= 10) {
+                if (count >= 20) {
                     MolecularFormula f = MolecularFormula.parse(tab[0]);
                     formulas.add(f);
                 }
             }
+
+
             MolecularFormulaMap MAP = new MolecularFormulaMap(formulas);
             try (final OutputStream out = FileUtils.getOut(new File("/home/kaidu/software/sirius/sirius-libs/chemistry_base/src/main/resources//bioformulas.bin.gz"))) {
                 ObjectOutputStream oout = new ObjectOutputStream(out);
