@@ -61,6 +61,8 @@ public class NitriteDatabase implements Database<Document> {
 
     private final JacksonMapper nitriteMapper;
 
+    private final Map<Class<?>, ObjectRepository<?>> repositories = Collections.synchronizedMap(new HashMap<>());
+
     // LOCKS
     private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     private final ReentrantReadWriteLock.WriteLock writeLock = readWriteLock.writeLock();
@@ -134,6 +136,7 @@ public class NitriteDatabase implements Database<Document> {
     private void initRepositories(Map<Class<?>, Index[]> repositories, Map<Class<?>, String> idFields) throws IOException {
         for (Class<?> clazz : repositories.keySet()) {
             ObjectRepository<?> repository = this.db.getRepository(clazz);
+            this.repositories.put(clazz, repository);
             initIndex(repositories.get(clazz), repository);
             if (idFields.containsKey(clazz)) {
                 initIdField(clazz, idFields.get(clazz), repository);
@@ -249,18 +252,18 @@ public class NitriteDatabase implements Database<Document> {
 
     @SuppressWarnings("unchecked")
     private <T> ObjectRepository<T> getRepository(Class<T> clazz) throws IOException {
-        if (!this.db.hasRepository(clazz)) {
+        if (!this.repositories.containsKey(clazz)) {
             throw new IOException(clazz + " is not registered.");
         }
-        return db.getRepository(clazz);
+        return (ObjectRepository<T>) this.repositories.get(clazz);
     }
 
     @SuppressWarnings("unchecked")
     private <T> ObjectRepository<T> getRepository(T object) throws IOException {
-        if (!db.hasRepository(object.getClass())) {
+        if (!this.repositories.containsKey(object.getClass())) {
             throw new IOException(object.getClass() + " is not registered.");
         }
-        return (ObjectRepository<T>) db.getRepository(object.getClass());
+        return (ObjectRepository<T>) this.repositories.get(object.getClass());
     }
 
     @SuppressWarnings("unchecked")
@@ -272,10 +275,10 @@ public class NitriteDatabase implements Database<Document> {
         }
         T[] arr = (T[]) collection.toArray();
         Class<T> clazz = (Class<T>) arr[0].getClass();
-        if (!this.db.hasRepository(clazz)) {
+        if (!this.repositories.containsKey(clazz)) {
             throw new IOException(clazz + " is not registered.");
         }
-        return Pair.of(arr, db.getRepository(clazz));
+        return Pair.of(arr, (ObjectRepository<T>) this.repositories.get(clazz));
     }
 
     private NitriteCollection getCollection(String name) throws IOException {
