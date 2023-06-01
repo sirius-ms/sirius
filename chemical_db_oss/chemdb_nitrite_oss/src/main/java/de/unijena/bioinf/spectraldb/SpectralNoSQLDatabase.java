@@ -41,7 +41,9 @@
 package de.unijena.bioinf.spectraldb;
 
 import com.google.common.collect.Iterables;
-import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
@@ -60,7 +62,11 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.PriorityBlockingQueue;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -113,7 +119,7 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary {
             boolean parallel
     ) throws ChemicalDatabaseException {
         try {
-            Collection<Pair<SpectralSimilarity, Ms2SpectralMetadata>> heap = Collections.synchronizedCollection(new PriorityQueue<>((o1, o2) -> -Double.compare(o1.getLeft().similarity, o2.getLeft().similarity)));
+            PriorityBlockingQueue<Pair<SpectralSimilarity, Ms2SpectralMetadata>> heap = new PriorityBlockingQueue<>(100, (o1, o2) -> - Double.compare(o1.getLeft().similarity, o2.getLeft().similarity));
             A alignment = alignmentType.getConstructor(Deviation.class).newInstance(maxPeakDeviation);
             OrderedSpectrum<Peak> query = new SimpleSpectrum(spectrum);
 
@@ -130,7 +136,10 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary {
                     }
                 }
             });
-            return heap;
+
+            List<Pair<SpectralSimilarity, Ms2SpectralMetadata>> result = new ArrayList<>(heap.size());
+            heap.drainTo(result);
+            return result;
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException |
                  RuntimeException e) {
             throw new ChemicalDatabaseException(e);
