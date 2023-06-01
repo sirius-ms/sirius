@@ -57,6 +57,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -83,8 +84,18 @@ public class SpectralNoSQLDBs extends ChemDBs {
     public static void importSpectra(Database<?> database, Iterable<Pair<Ms2SpectralMetadata, Ms2SpectralData>> spectra, int chunkSize) throws ChemicalDatabaseException {
         try {
             StreamSupport.stream(Iterables.partition(spectra, chunkSize).spliterator(), false).forEach(chunk -> {
-                List<Ms2SpectralMetadata> metadata = chunk.stream().map(Pair::getLeft).collect(Collectors.toList());
-                List<Ms2SpectralData> data = chunk.stream().map(Pair::getRight).collect(Collectors.toList());
+                Collector<Pair<Ms2SpectralMetadata, Ms2SpectralData>, ?, List<Object>> collector = Collectors.teeing(
+                        Collectors.mapping(Pair::getLeft, Collectors.toList()),
+                        Collectors.mapping(Pair::getRight, Collectors.toList()),
+                        List::of
+                );
+
+                // TODO what about spectra without inchi key and/or precursor mass?
+                List<Object> split = chunk.stream().filter(
+                        p -> p.getLeft().getCandidateInChiKey() != null && p.getLeft().getPrecursorMz() > 0
+                ).collect(collector);
+                List<Ms2SpectralMetadata> metadata = (List<Ms2SpectralMetadata>) split.get(0);
+                List<Ms2SpectralData> data = (List<Ms2SpectralData>) split.get(1);
 
                 try {
                     database.insertAll(metadata);
@@ -108,15 +119,18 @@ public class SpectralNoSQLDBs extends ChemDBs {
     private static List<Pair<Ms2SpectralMetadata, Ms2SpectralData>> ms2ExpToMsDataPair(MutableMs2Experiment experiment) {
         return experiment.getMs2Spectra().stream().map(s -> {
             Ms2SpectralMetadata.Ms2SpectralMetadataBuilder b = Ms2SpectralMetadata.builder()
+                    .id(-1)
+                    .peaksId(-1)
                     .formula(experiment.getMolecularFormula())
                     .ionMass(experiment.getIonMass())
                     .name(experiment.getName())
                     .collisionEnergy(s.getCollisionEnergy())
                     .msLevel(s.getMsLevel())
-                    .precursorMz(s.getPrecursorMz());
+                    .precursorMz(s.getPrecursorMz())
+                    .precursorIonType(experiment.getPrecursorIonType());
             experiment.getAnnotation(Splash.class).map(Splash::toString).ifPresent(b::splash);
             experiment.getAnnotation(Smiles.class).map(Smiles::toString).ifPresent(b::smiles);
-            experiment.getAnnotation(InChI.class).map(InChI::key2D).ifPresent(b::candidateInChiKey);
+            experiment.getAnnotation(InChI.class).map(inchi -> (inchi.key != null) ? inchi.key2D() : null).ifPresent(b::candidateInChiKey);
             experiment.getAnnotation(MsInstrumentation.class).ifPresent(b::instrumentation);
             //todo parse nist msp id output
             s.getAnnotation(AdditionalFields.class).ifPresent(fields -> {
