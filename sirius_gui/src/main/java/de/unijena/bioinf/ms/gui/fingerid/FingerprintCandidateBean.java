@@ -144,7 +144,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
             if (this.parent != null) {
 
                 SpectralSearchResultBean spectralSearch = this.parent.getSpectralSearchResults();
-                List<SpectralSearchResultBean.SearchResult> matches = spectralSearch.getMatchingSpectra(this.candidate.getInchi()).stream().filter(m -> m.rank <= 10).toList();
+                List<SpectralSearchResultBean.SearchResult> matches = spectralSearch.getMatchingSpectra(this.candidate.getInchi()).stream().filter(m -> m.rank <= 25).toList();
                 if (matches.size() > 0) {
                     // TODO open spectral mirror plot
                     // FIXME labels are not shown sometimes!?
