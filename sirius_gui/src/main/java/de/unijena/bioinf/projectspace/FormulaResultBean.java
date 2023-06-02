@@ -172,6 +172,10 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         return getResult(CanopusResult.class).flatMap(r -> r.getAnnotation(CanopusResult.class));
     }
 
+    public SpectralSearchResultBean getSpectralSearchResults() {
+        return parent.getSpectralSearchResults();
+    }
+
     //ranking stuff
     public int getRank() {
         return rank;

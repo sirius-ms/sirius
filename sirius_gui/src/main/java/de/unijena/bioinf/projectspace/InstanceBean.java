@@ -23,6 +23,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
@@ -30,11 +31,16 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
+import de.unijena.bioinf.spectraldb.SpectralLibrary;
+import de.unijena.bioinf.spectraldb.SpectralNoSQLDBs;
+import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -60,6 +66,19 @@ public class InstanceBean extends Instance implements SiriusPCS {
 
     //Project-space listener
     private List<ContainerListener.Defined> listeners;
+
+    private static final Path libraryPath = Path.of(System.getProperty("user.home"),"massbank.db");
+    private static final SpectralLibrary spectralLibrary;
+
+    static {
+        try {
+            spectralLibrary = (Files.exists(libraryPath)) ? SpectralNoSQLDBs.getLocalSpectralLibrary(libraryPath) : null;
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    private SpectralSearchResultBean spectralBean = null;
 
     //todo best hit property change is needed.
     // e.g. if the scoring changes from sirius to zodiac
@@ -179,6 +198,25 @@ public class InstanceBean extends Instance implements SiriusPCS {
         addToCache();
         List<? extends SScored<FormulaResult, ? extends FormulaScore>> form = loadFormulaResults(List.of(ZodiacScore.class, SiriusScore.class), FormulaScoring.class);
         return IntStream.range(0, form.size()).mapToObj(i -> new FormulaResultBean(form.get(i).getCandidate().getId(), this, i + 1)).collect(Collectors.toList());
+    }
+
+    public SpectralSearchResultBean getSpectralSearchResults() {
+        if (this.spectralBean == null) {
+            this.spectralBean = new SpectralSearchResultBean();
+            // TODO move hardcoded db to project space
+            // TODO move on-the-fly computation to job system
+            // TODO set search parameters
+            if (spectralLibrary != null) {
+                try {
+                    for (MutableMs2Spectrum query : getMs2Spectra()) {
+                        spectralBean.addResults(query, spectralLibrary.matchingSpectra(query, new Deviation(1000), new Deviation(2000), IntensityWeightedSpectralAlignment.class, true));
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+        return this.spectralBean;
     }
 
     public double getIonMass() {
