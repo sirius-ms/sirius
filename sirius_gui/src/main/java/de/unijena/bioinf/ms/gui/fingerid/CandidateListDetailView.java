@@ -33,6 +33,7 @@ import de.unijena.bioinf.chemdb.InChISMILESUtils;
 import de.unijena.bioinf.elgordo.LipidClass;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.dialogs.SpectralMatchingDialog;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.MolecularPropertyMatcherEditor;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.SmartFilterMatcherEditor;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
@@ -40,7 +41,9 @@ import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
+import de.unijena.bioinf.projectspace.SpectralSearchResultBean;
 import de.unijena.bioinf.rest.ProxyManager;
+import de.unijena.bioinf.spectraldb.entities.Ms2SpectralData;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
@@ -274,6 +277,26 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     }
 
     private void clickOnDBLabel(DatabaseLabel label, FingerprintCandidateBean candidate) {
+        if (label.sourceName.equals("Spectra")) {
+            final FingerprintCandidateBean c = candidateList.getModel().getElementAt(selectedCompoundId);
+            Jobs.runEDTLater(() -> {
+                c.getSpectralSearchResults().ifPresent(searchBean -> {
+                    List<SpectralSearchResultBean.SearchResult> results = new ArrayList<>();
+                    List<Ms2SpectralData> data = new ArrayList<>();
+
+                    searchBean.getMatchingSpectra(c.getFingerprintCandidate().getInchiKey2D()).forEach(r -> {
+                        c.getMs2SpectralData(r.metadata).ifPresent(d -> {
+                            results.add(r);
+                            data.add(d);
+                        });
+                    });
+                    if (results.size() > 0) {
+                        new SpectralMatchingDialog(results, data).setVisible(true);
+                    }
+                });
+            });
+        }
+
         DataSources.getSourceFromName(label.sourceName).ifPresent(s -> {
             if (label.values == null || label.values.length == 0 || s.URI == null)
                 return;

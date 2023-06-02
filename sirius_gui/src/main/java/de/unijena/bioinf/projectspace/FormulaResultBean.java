@@ -32,6 +32,8 @@ import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidateFingerprintsTopK;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidatesTopK;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
+import de.unijena.bioinf.spectraldb.entities.Ms2SpectralData;
+import de.unijena.bioinf.spectraldb.entities.Ms2SpectralMetadata;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -174,6 +176,10 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
 
     public SpectralSearchResultBean getSpectralSearchResults() {
         return parent.getSpectralSearchResults();
+    }
+
+    public Optional<Ms2SpectralData> getMs2SpectralData(Ms2SpectralMetadata metadata) {
+        return parent.getMs2SpectralData(metadata);
     }
 
     //ranking stuff

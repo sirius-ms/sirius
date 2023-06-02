@@ -29,10 +29,13 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
+import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.spectraldb.SpectralLibrary;
 import de.unijena.bioinf.spectraldb.SpectralNoSQLDBs;
+import de.unijena.bioinf.spectraldb.entities.Ms2SpectralData;
+import de.unijena.bioinf.spectraldb.entities.Ms2SpectralMetadata;
 import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,10 +44,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -217,6 +217,17 @@ public class InstanceBean extends Instance implements SiriusPCS {
             }
         }
         return this.spectralBean;
+    }
+
+    public Optional<Ms2SpectralData> getMs2SpectralData(Ms2SpectralMetadata metadata) {
+        if (spectralLibrary != null) {
+            try {
+                return Optional.of(spectralLibrary.getSpectralData(metadata));
+            } catch (ChemicalDatabaseException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return Optional.empty();
     }
 
     public double getIonMass() {
