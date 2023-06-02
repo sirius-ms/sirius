@@ -32,6 +32,7 @@ import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
+import de.unijena.bioinf.projectspace.SpectralSearchResultBean;
 import org.jetbrains.annotations.NotNull;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
@@ -138,6 +139,17 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
                     labels.add(new DatabaseLabel(key, "Lipid - " + linkeDBs.get(key).iterator().next(), cleaned.toArray(String[]::new), new Rectangle(0, 0, 0, 0)));
                 else
                     labels.add(new DatabaseLabel(key, cleaned.toArray(String[]::new), new Rectangle(0, 0, 0, 0)));
+            }
+
+            if (this.parent != null) {
+
+                SpectralSearchResultBean spectralSearch = this.parent.getSpectralSearchResults();
+                List<SpectralSearchResultBean.SearchResult> matches = spectralSearch.getMatchingSpectra(this.candidate.getInchi()).stream().filter(m -> m.rank <= 10).toList();
+                if (matches.size() > 0) {
+                    // TODO open spectral mirror plot
+                    // FIXME labels are not shown sometimes!?
+                    labels.add(new DatabaseLabel("MassBank", matches.stream().map(m -> m.hit.getLibraryId()).toArray(String[]::new), new Rectangle(0, 0, 0, 0)));
+                };
             }
             Collections.sort(labels);
             this.labels = labels.toArray(DatabaseLabel[]::new);
