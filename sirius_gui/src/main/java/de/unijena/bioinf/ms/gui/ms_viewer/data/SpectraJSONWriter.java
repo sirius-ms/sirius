@@ -85,6 +85,16 @@ public class SpectraJSONWriter{
 		}
 	}
 
+	public String ms2MirrorJSON(SimpleSpectrum query, SimpleSpectrum match, String matchName) {
+		ObjectNode spectra = ms2Mirror(query, match, matchName);
+		final ObjectMapper objectMapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
+		try {
+			return objectMapper.writeValueAsString(spectra);
+		} catch (JsonProcessingException e) {
+			throw new RuntimeException("Error generating JSON", e);
+		}
+	}
+
 	// MS1 spectrum (single)
 	public String ms1JSON(@NotNull SimpleSpectrum spectrum, @Nullable SimpleSpectrum extractedIsotopePattern, Deviation ms1MassDiffDev){
 		ObjectNode spectra;
@@ -166,6 +176,24 @@ public class SpectraJSONWriter{
 		ObjectNode spectrum2 = spectrum2json(pattern2);
 		spectrum1.put("name", "MS1");
 		spectrum2.put("name", "Sim. isotope pattern");
+
+		ArrayNode spectra = objectMapper.createArrayNode();
+		spectra.add(spectrum1);
+		spectra.add(spectrum2);
+
+		j.set("spectra", spectra);
+
+		return j;
+	}
+
+	protected ObjectNode ms2Mirror(SimpleSpectrum query, SimpleSpectrum match, String matchName) {
+		final ObjectMapper objectMapper = new ObjectMapper();
+		final ObjectNode j = objectMapper.createObjectNode();
+
+		ObjectNode spectrum1 = spectrum2json(query);
+		ObjectNode spectrum2 = spectrum2json(match);
+		spectrum1.put("name", "MS2");
+		spectrum2.put("name", matchName);
 
 		ArrayNode spectra = objectMapper.createArrayNode();
 		spectra.add(spectrum1);

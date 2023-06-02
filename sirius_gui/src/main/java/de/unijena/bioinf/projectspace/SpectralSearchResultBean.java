@@ -21,7 +21,6 @@
 package de.unijena.bioinf.projectspace;
 
 import com.google.common.collect.Streams;
-import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.spectraldb.entities.Ms2SpectralMetadata;
@@ -29,7 +28,9 @@ import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.StreamSupport;
 
 public class SpectralSearchResultBean {
@@ -46,24 +47,28 @@ public class SpectralSearchResultBean {
         return results;
     }
 
-    public List<SearchResult> getMatchingSpectra(InChI inchi) {
+    public List<SearchResult> getMatchingSpectra(String inchiKey) {
         List<SearchResult> res = new ArrayList<>();
         for (SearchEntry entry : this.results) {
             for (Triple<Integer, SpectralSimilarity, Ms2SpectralMetadata> r : entry.results) {
-                if (r.getRight().getCandidateInChiKey().equals(inchi.key)) {
-                    if (res.stream().noneMatch(r2 -> r2.hit.getLibraryId().equals(r.getRight().getLibraryId()))) {
+                if (r.getRight().getCandidateInChiKey().equals(inchiKey)) {
+                    if (res.stream().noneMatch(r2 -> r2.metadata.getLibraryId().equals(r.getRight().getLibraryId()))) {
                         res.add(new SearchResult(entry.query, r.getLeft(), r.getMiddle(), r.getRight()));
                     }
                     break;
                 }
             }
         }
+        res.sort((r1, r2) -> - Double.compare(r1.similarity.similarity, r2.similarity.similarity));
         return res;
     }
 
-    public Optional<SearchResult> getBestMatchingSpectrum(InChI inchi) {
-        List<SearchResult> results = getMatchingSpectra(inchi);
-        return results.stream().min(Comparator.comparingInt(r -> r.rank));
+    public Optional<SearchResult> getBestMatchingSpectrum(String inchiKey) {
+        List<SearchResult> results = getMatchingSpectra(inchiKey);
+        if (results.size() > 0) {
+            return Optional.of(results.get(0));
+        }
+        return Optional.empty();
     }
 
     private static final class SearchEntry {
@@ -87,13 +92,18 @@ public class SpectralSearchResultBean {
 
         public SpectralSimilarity similarity;
 
-        public Ms2SpectralMetadata hit;
+        public Ms2SpectralMetadata metadata;
 
-        public SearchResult(Ms2Spectrum<? extends Peak> query, int rank, SpectralSimilarity similarity, Ms2SpectralMetadata hit) {
+        public SearchResult(
+                Ms2Spectrum<? extends Peak> query,
+                int rank,
+                SpectralSimilarity similarity,
+                Ms2SpectralMetadata metadata
+        ) {
             this.query = query;
             this.rank = rank;
             this.similarity = similarity;
-            this.hit = hit;
+            this.metadata = metadata;
         }
 
     }

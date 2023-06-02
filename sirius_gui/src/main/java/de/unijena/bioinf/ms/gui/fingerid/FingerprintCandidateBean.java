@@ -33,6 +33,8 @@ import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.SpectralSearchResultBean;
+import de.unijena.bioinf.spectraldb.entities.Ms2SpectralData;
+import de.unijena.bioinf.spectraldb.entities.Ms2SpectralMetadata;
 import org.jetbrains.annotations.NotNull;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
@@ -141,16 +143,15 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
                     labels.add(new DatabaseLabel(key, cleaned.toArray(String[]::new), new Rectangle(0, 0, 0, 0)));
             }
 
-            if (this.parent != null) {
-
-                SpectralSearchResultBean spectralSearch = this.parent.getSpectralSearchResults();
-                List<SpectralSearchResultBean.SearchResult> matches = spectralSearch.getMatchingSpectra(this.candidate.getInchi()).stream().filter(m -> m.rank <= 25).toList();
+            this.getSpectralSearchResults().ifPresent(spectralBean -> {
+                String inchiKey = this.candidate.getInchi().key2D();
+                List<SpectralSearchResultBean.SearchResult> matches = spectralBean.getMatchingSpectra(inchiKey).stream().filter(m -> m.rank <= 25).toList();
                 if (matches.size() > 0) {
-                    // TODO open spectral mirror plot
                     // FIXME labels are not shown sometimes!?
-                    labels.add(new DatabaseLabel("MassBank", matches.stream().map(m -> m.hit.getLibraryId()).toArray(String[]::new), new Rectangle(0, 0, 0, 0)));
+                    labels.add(new DatabaseLabel("MassBank", matches.stream().map(m -> m.metadata.getLibraryId()).toArray(String[]::new), new Rectangle(0, 0, 0, 0)));
+                    labels.add(new DatabaseLabel("Spectra", new String[]{}, new Rectangle(0, 0, 0, 0)));
                 };
-            }
+            });
             Collections.sort(labels);
             this.labels = labels.toArray(DatabaseLabel[]::new);
         }
@@ -218,6 +219,22 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
 
     public FormulaResultBean getFormulaResult() {
         return parent;
+    }
+
+    public Optional<SpectralSearchResultBean> getSpectralSearchResults() {
+        if (this.parent != null) {
+            return Optional.of(this.parent.getSpectralSearchResults());
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    public Optional<Ms2SpectralData> getMs2SpectralData(Ms2SpectralMetadata metadata) {
+        if (this.parent != null) {
+            return this.parent.getMs2SpectralData(metadata);
+        } else {
+            return Optional.empty();
+        }
     }
 
     public boolean canBeNeutralCharged() {
