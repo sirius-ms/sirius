@@ -128,6 +128,11 @@ allprojects {
         maven {
             url "https://repo1.maven.org/maven2/" //glazed lists
         }
+        maven {
+            url "http://gose.fiehnlab.ucdavis.edu:55000/content/groups/public"
+            allowInsecureProtocol = true
+            // only used for spectral hashs (Splash)
+        }
     }
 
     dependencies {
