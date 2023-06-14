@@ -4,6 +4,7 @@ on: [ workflow_call ]
       
 jobs:
   dockergen:
+    if: (secrets.DOCKERHUB_USERNAME != '') && (secrets.DOCKERHUB_TOKEN != '')
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
