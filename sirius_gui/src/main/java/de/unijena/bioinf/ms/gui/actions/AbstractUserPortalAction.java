@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.io.IOException;
 import java.net.URI;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
@@ -50,8 +51,13 @@ public abstract class AbstractUserPortalAction extends AbstractAction {
         try {
             GuiUtils.openURL(path(), "Open User Portal", true);
         } catch (Exception ex2) {
-            LoggerFactory.getLogger(getClass()).error("Could not Open User Portal in System Browser", ex2);
-            new ExceptionDialog(MF, "Could not Open User Portal in System Browser: " + ex2.getMessage());
+            LoggerFactory.getLogger(getClass()).error("Could not Open 'User Portal' in system browser, Try internal browser as fallback.", ex2);
+            try {
+                GuiUtils.openURL(path(), "Open User Portal (internal)", false);
+            } catch (IOException ex) {
+                LoggerFactory.getLogger(getClass()).error("Could neither open 'User Portal' in system browser nor in internal Browser." +   System.lineSeparator() + "Please copy the url to your browser: " + path(), ex2);
+                new ExceptionDialog(MF, "Could neither open 'User Portal' in system browser nor in internal Browser: " + ex2.getMessage() + System.lineSeparator() + "Please copy the url to your browser: " + path());
+            }
         }
     }
 
