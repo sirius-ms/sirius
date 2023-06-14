@@ -20,6 +20,9 @@
 package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -29,8 +32,9 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-public class OpenOnlineDocumentationAction extends AbstractAction {
+import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
+public class OpenOnlineDocumentationAction extends AbstractAction {
     public OpenOnlineDocumentationAction() {
         super("Help");
         putValue(Action.LARGE_ICON_KEY, Icons.HELP_32);
@@ -39,10 +43,23 @@ public class OpenOnlineDocumentationAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        String url = PropertyManager.getProperty("de.unijena.bioinf.sirius.docu.url");
         try {
-            Desktop.getDesktop().browse(new URI("https://boecker-lab.github.io/docs.sirius.github.io/"));
-        } catch (IOException | URISyntaxException er) {
-            LoggerFactory.getLogger(this.getClass()).error(er.getMessage(), er);
+            URI uri = new URI(url);
+            try {
+                GuiUtils.openURL(uri, "Open Online Documentation", true);
+            } catch (IOException er) {
+                LoggerFactory.getLogger(getClass()).error("Could not 'Online Documentation' in system browser, Try internal browser as fallback.", er);
+                try {
+                    GuiUtils.openURL(uri, "Open Online Documentation (internal)", false);
+                } catch (IOException ex2) {
+                    LoggerFactory.getLogger(getClass()).error("Could neither open 'Online Documentation' in system browser nor in internal Browser." +   System.lineSeparator() + "Please copy the url to your browser: " + uri, ex2);
+                    new ExceptionDialog(MF, "Could neither open 'Online Documentation' in system browser nor in SIRIUS' internal browser: " + ex2.getMessage() + System.lineSeparator() + "Please copy the url to your browser: " + uri);
+                }
+                LoggerFactory.getLogger(this.getClass()).error(er.getMessage(), er);
+            }
+        } catch (URISyntaxException ex) {
+            new ExceptionDialog(MF,"Malformed URL '" + url + "'. Cause: " + ex.getMessage());
         }
     }
 }
