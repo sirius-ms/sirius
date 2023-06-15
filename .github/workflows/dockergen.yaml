@@ -8,47 +8,65 @@ jobs:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
     runs-on: ubuntu-latest
-    if: (${{ env.DOCKERHUB_USERNAME }} != '') && (${{ env.DOCKERHUB_TOKEN }} != '')
     steps:
-    - uses: actions/checkout@v2
-    - name: Load Build properties
+    - if: (${{ env.DOCKERHUB_USERNAME }} != '') && (${{ env.DOCKERHUB_TOKEN }} != '')
+      uses: actions/checkout@v2
+
+    - if: (${{ env.DOCKERHUB_USERNAME }} != '') && (${{ env.DOCKERHUB_TOKEN }} != '')
+      name: Load Build properties
       uses: Reedyuk/read-properties@v1.0.1
       id: sirius_version
       with:
         path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
         property: 'de.unijena.bioinf.siriusFrontend.version'
-    - name: Download Artifact
+
+    - if: (${{ env.DOCKERHUB_USERNAME }} != '') && (${{ env.DOCKERHUB_TOKEN }} != '')
+      name: Download Artifact
       uses: actions/download-artifact@v2
       with:
         name: "sirius-${{ steps.sirius_version.outputs.value }}-Linux-x86-64"
         path: sirius-artifact
-    - name: List Artifact Contents
+
+    - if: (${{ env.DOCKERHUB_USERNAME }} != '') && (${{ env.DOCKERHUB_TOKEN }} != '')
+      name: List Artifact Contents
       run: ls sirius-artifact
-    - name: Unpack Sirius
+
+    - if: (${{ env.DOCKERHUB_USERNAME }} != '') && (${{ env.DOCKERHUB_TOKEN }} != '')
+      name: Unpack Sirius
       run: |
         unzip sirius-${{ steps.sirius_version.outputs.value }}-linux64.zip
       working-directory: sirius-artifact/
-    - name: Log in to Docker Hub
+
+    - if: (${{ env.DOCKERHUB_USERNAME }} != '') && (${{ env.DOCKERHUB_TOKEN }} != '')
+      name: Log in to Docker Hub
       uses: docker/login-action@v2
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
-    - name: Extract metadata (tags, labels) for Docker
+
+    - if: (${{ env.DOCKERHUB_USERNAME }} != '') && (${{ env.DOCKERHUB_TOKEN }} != '')
+      name: Extract metadata (tags, labels) for Docker
       id: meta
       uses: docker/metadata-action@v4
       with:
         images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_REPOSITORY }}
-    - name: Build and export to Docker
+
+    - if: (${{ env.DOCKERHUB_USERNAME }} != '') && (${{ env.DOCKERHUB_TOKEN }} != '')
+      name: Build and export to Docker
       uses: docker/build-push-action@v4
       with:
         context: .
         file: ./sirius_dist/sirius_docker/Dockerfile
         load: true
         tags: test_container
-    - name: Test sirius --help
+
+    - if: (${{ env.DOCKERHUB_USERNAME }} != '') && (${{ env.DOCKERHUB_TOKEN }} != '')
+      name: Test sirius --help
       run: |
         docker run --rm test_container sirius --help
-    - name: Test ILP solver on laudanosine.mgf
+
+    - if: (${{ env.DOCKERHUB_USERNAME }} != '') && (${{ env.DOCKERHUB_TOKEN }} != '')
+      name: Test ILP solver on laudanosine.mgf
       run: |
         mkdir tmp_output
 
@@ -66,13 +84,17 @@ jobs:
           echo "File does not exist: $file_path"
           exit 1
         fi
-    - name: Get lowercase version
+
+    - if: (${{ env.DOCKERHUB_USERNAME }} != '') && (${{ env.DOCKERHUB_TOKEN }} != '')
+      name: Get lowercase version
       id: lowercase_version
       run: |
         lowercase=$(echo "${{ steps.sirius_version.outputs.value }}" | tr '[:upper:]' '[:lower:]')
         echo $lowercase
         echo "lowercase_version=$lowercase" >> $GITHUB_OUTPUT
-    - name: Build and push Docker image
+
+    - if: (${{ env.DOCKERHUB_USERNAME }} != '') && (${{ env.DOCKERHUB_TOKEN }} != '')
+      name: Build and push Docker image
       uses: docker/build-push-action@v4
       with:
         context: .
