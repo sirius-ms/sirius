@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -119,6 +120,9 @@ Also supports MS-Finder .mat extensions
  */
 
 public class MSP {
+    //todo maybe add TXONOMY field from MS-Dial mat file.
+
+    public final static String FEATURE_ID = "PEAKID"; //feature id extension of ms-dial .mat format
     public final static String SYNONYME = "Synon"; //multiple times possible
     public final static String SYNONYME_KEY = "Synon: $:"; //multiple times possible
     public final static String[] PRECURSOR_MZ = {"PrecursorMZ", "PRECURSORMZ"};
@@ -207,13 +211,38 @@ public class MSP {
         return Optional.empty();
     }
 
+    public static Optional<String> parseFeatureId(Map<String, String> metaInfo) {
+        return parseFeatureId(metaInfo, extractComments(metaInfo).orElse(null));
+    }
+    public static Optional<String> parseFeatureId(Map<String, String> metaInfo, @Nullable List<String> comments) {
+        String value = metaInfo.get(MSP.FEATURE_ID);
+        if (value != null && !value.isBlank())
+            return Optional.of(value);
+
+        if (comments != null && !comments.isEmpty()){
+            return comments.stream().filter(Objects::nonNull).flatMap(s -> Arrays.stream(s.split("\\s*\\|\\s*")))
+                    .filter(s -> s.startsWith(MSP.FEATURE_ID)).map(s -> s.split("\\s*=\\s*")[1]).findFirst();
+        }
+        return Optional.empty();
+    }
+
     public static Optional<String> parseName(Map<String, String> metaInfo) {
-        String value = metaInfo.get(MSP.NAME);
+        return parseName(metaInfo, extractComments(metaInfo).orElse(null));
+    }
+    public static Optional<String> parseName(Map<String, String> metaInfo, @Nullable List<String> comments) {
+        //if feature id is available, use this as name
+        String value = parseFeatureId(metaInfo, comments).orElse(null);
+        if (value != null && !value.isBlank())
+            return Optional.of(value);
+
+        value = metaInfo.get(MSP.NAME);
         if (value != null && !value.isBlank() && !"Unknown".equalsIgnoreCase(value) && !"null".equalsIgnoreCase(value)) {
             return Optional.of(value);
         }
 
-        value = extractComments(metaInfo).flatMap(l -> l.stream().min(Comparator.comparing(String::length))).orElse(null);
+        if (comments != null && !comments.isEmpty())
+            value = comments.stream().min(Comparator.comparing(String::length)).orElse(null);
+
         if (value != null && !value.isBlank())
             return Optional.of(value);
 
