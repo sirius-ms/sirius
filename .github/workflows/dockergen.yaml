@@ -4,8 +4,11 @@ on: [ workflow_call ]
       
 jobs:
   dockergen:
-    if: (${{ secrets.DOCKERHUB_USERNAME }} != '') && (${{ secrets.DOCKERHUB_TOKEN }} != '')
+    env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
     runs-on: ubuntu-latest
+    if: (${{ env.DOCKERHUB_USERNAME }} != '') && (${{ env.DOCKERHUB_TOKEN }} != '')
     steps:
     - uses: actions/checkout@v2
     - name: Load Build properties
