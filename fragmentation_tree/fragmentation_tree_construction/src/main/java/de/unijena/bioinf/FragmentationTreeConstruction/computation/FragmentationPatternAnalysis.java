@@ -25,6 +25,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 import de.unijena.bioinf.ChemistryBase.algorithm.Called;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
@@ -154,7 +155,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
 
         final PeriodicTable PT = PeriodicTable.getInstance();
         Whiteset whiteset = input.getAnnotationOrNull(Whiteset.class);
-        final FormulaConstraints constraints = input.getAnnotationOrNull(FormulaConstraints.class);
+        FormulaConstraints constraints = input.getAnnotationOrNull(FormulaConstraints.class);
         final Ms2Experiment experiment = input.getExperimentInformation();
         final double parentMass;
         // if parent peak stems from MS1, use MS1 mass deviation instead
@@ -204,16 +205,9 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 validatorWarning.warn("Specified precursor molecular formula does not fall into given m/z error window. "
                         +formula.formatByHill()+" for m/z "+parentPeak.getMass()+" and ionization "+ionType);
             }
-        } else if (whiteset != null && !whiteset.isEmpty()) {
-            final Collection<PrecursorIonType> ionTypes;
-            if (experiment.getPrecursorIonType().isIonizationUnknown()) {
-                ionTypes = input.getAnnotationOrThrow(PossibleAdducts.class).getAdducts();
-            } else {
-                ionTypes = Arrays.asList(experiment.getPrecursorIonType());
-            }
-            decomps.addAll(whiteset.resolve(parentMass, parentDeviation, ionTypes));
+        } else if (whiteset != null && !whiteset.isEmpty() && !whiteset.isStillAllowDeNovo()) {
+            // we add whiteset later
             pmds = new ArrayList<>();
-            for (Decomposition d : decomps) pmds.add(d.getCandidate());
         } else if (!experiment.getPrecursorIonType().isIonizationUnknown()) {
             // use given ionization
             final PrecursorIonType ionType = experiment.getPrecursorIonType();
@@ -232,6 +226,32 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 final List<MolecularFormula> forms = decomposer.decomposeToFormulas(parentMass, ion, parentDeviation.absoluteFor(parentMass), constraints);
                 pmds.addAll(forms);
                 for (MolecularFormula f : forms) decomps.add(new Decomposition(f, ion, 0d));
+            }
+        }
+
+
+        if (whiteset != null && !whiteset.isEmpty()) {
+            final Collection<PrecursorIonType> ionTypes;
+            if (experiment.getPrecursorIonType().isIonizationUnknown()) {
+                ionTypes = input.getAnnotationOrThrow(PossibleAdducts.class).getAdducts();
+            } else {
+                ionTypes = Arrays.asList(experiment.getPrecursorIonType());
+            }
+            List<Decomposition> forms = whiteset.resolve(parentMass, parentDeviation, ionTypes);
+            decomps.addAll(forms);
+            for (Decomposition d : decomps) pmds.add(d.getCandidate());
+            // extend formula constraints such that we can decompose fragment peaks
+            constraints = constraints.getExtendedConstraints(FormulaConstraints.allSubsetsOf(forms.stream().map(SScored::getCandidate).collect(Collectors.toList())));
+        }
+
+        // remove duplicate pmds
+        {
+            Set<Decomposition> usedDecomps = new HashSet<>();
+            Iterator<Decomposition> decompositionIterator = decomps.iterator();
+            while( decompositionIterator.hasNext()) {
+                if (!usedDecomps.add(decompositionIterator.next())) {
+                    decompositionIterator.remove();
+                }
             }
         }
 

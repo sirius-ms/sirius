@@ -40,6 +40,9 @@ public class FormulaFeatureVector {
     private static double softlog(double density) {
         return Math.max(-10000, Math.log(density));
     }
+    private static double softlog2(double density) {
+        return Math.min(10, Math.max(-10, Math.log(density)));
+    }
 
     static void normalizeAndCenter(double[][] matrix, double[] colAverages, double[] scales) {
         for (int i=0; i < matrix.length; ++i) {
@@ -184,6 +187,10 @@ public class FormulaFeatureVector {
 
     public double has(MolecularFormula f, Element a, Element b) {
         return f.numberOf(a) * f.numberOf(b);
+    }
+
+    public double hasb(MolecularFormula f, Element a, Element b) {
+        return Math.min(0, f.numberOf(a) * f.numberOf(b));
     }
 
     public double rdbe() {
@@ -468,10 +475,53 @@ public class FormulaFeatureVector {
         };
     }
 
+    public double[] getAlternativeFeatures2() {
+        double[] dists = distributions();
 
+        int nH = f.numberOfHydrogens(),
+                nC = f.numberOfCarbons(),
+                nN = f.numberOfNitrogens(),
+                nO = f.numberOfOxygens(),
+                nP = f.numberOf(P),
+                nS = f.numberOf(S),
+                nCl = f.numberOf(Cl),
+                nBr = f.numberOf(Br),
+                nI = f.numberOf(I),
+                nF = f.numberOf(F),
+                nAll = f.atomCount();
+        int nRest = nAll - nC - nN - nO - nP - nS - nCl - nBr - nI - nF;
+        int hetero = nAll - nH - nC;
+        final double normFactor = nAll, cc = nC+0.8d;
+        final double sqrnhetero = Math.sqrt(nAll+0.8-nH);
+        return new double[]{
+                rdbeIsZero(),                                   // 2
+                softlog(rdbeDistribution()),                    // 12
+                softlog(rdbeDividedByMassDistribution()),       // 13
+                softlog(rdbeDividedByMassDistribution2()),      // 14
+                softlog(hetero2carbonDistribution()),           // 15
+                softlog(hetero2carbonWithoutOxygenDist1()),     // 16
+                softlog(hetero2carbonWithoutOxygenDist2()),     // 17
+                softlog(no2carbonDist()),                       // 18
+                softlog(halo2carbonDist()),                     // 19
+                softlog(hydrogen2CarbonDist()),                 // 20
+                softlog(hydrogen2CarbonDist2()),                // 21
+                softlog(numberOfBenzolSubformulasPerRDBEDist()),// 22
+                softlog(numberOfBenzolSubformulasPerRDBEDist2()),// 23
+                log(Cldist[Math.min(Cldist.length-1,nCl)]),
+                log(Brdist[Math.min(Brdist.length-1,nBr)]),
+                log(Fdist[Math.min(Fdist.length-1,nF)]),
+                log(Idist[Math.min(Idist.length-1,nI)]),
+                log(Sdist[Math.min(Sdist.length-1,nS)]),
+                log(Pdist[Math.min(Pdist.length-1,nP)]),
+                min(dists),
+                max(dists),
+                nBr==1 && nCl == 1 ? 1 : -1,
+                nS==3 && nP == 1 ? 1 : -1,
+                nP>=1 && nO>=nP/3 ? 1 : -1,
+                f.getNumberOfElements()/5d
 
-
-
+        };
+    }
 
 
 }
