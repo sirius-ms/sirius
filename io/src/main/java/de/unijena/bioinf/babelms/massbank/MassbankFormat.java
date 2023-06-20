@@ -183,15 +183,18 @@ public enum MassbankFormat {
 
     public static Optional<Double> parsePrecursorMZ(Map<String, String> metaInfo) {
         String value = metaInfo.get(MS_FOCUSED_ION_PRECURSOR_MZ.k());
-        if (value != null) {
-            String[] arr = value.split("/");
-            return Optional.of(Double.parseDouble(arr[arr.length - 1]));
-        }
+        try {
+            if (value != null) {
+                String[] arr = value.split("/");
+                return Optional.of(Double.parseDouble(arr[arr.length - 1]));
+            }
+        } catch (NumberFormatException ignored) {}
 
-
-        value = metaInfo.get(CH_EXACT_MASS.k());
-        if (value != null)
-            return Optional.of(Double.parseDouble(value));
+        try {
+            value = metaInfo.get(CH_EXACT_MASS.k());
+            if (value != null)
+                return Optional.of(Double.parseDouble(value));
+        } catch (NumberFormatException ignored) {}
 
         return Optional.empty();
     }

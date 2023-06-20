@@ -70,8 +70,7 @@ public class MassbankExperimentParser extends MassbankSpectralParser implements 
             parsePrecursorIonType(fields).ifPresent(exp::setPrecursorIonType);
             parsePrecursorMZ(fields).ifPresent(exp::setIonMass);
             //optional
-            fields.getField(CH_IUPAC.k()).map(inchi -> fields.getField(CH_IUPAC_KEY.k()).map(key -> InChIs.newInChI(key, inchi)).
-                    orElse(InChIs.newInChI(inchi))).ifPresent(exp::annotate);
+            fields.getField(CH_IUPAC.k()).ifPresent(inchi -> fields.getField(CH_IUPAC_KEY.k()).ifPresentOrElse(key -> exp.annotate(InChIs.newInChI(key, inchi)), () -> exp.annotate(InChIs.newInChI(inchi))));
             fields.getField(CH_SMILES.k()).map(Smiles::new).ifPresent(exp::annotate);
             fields.getField(PK_SPLASH.k()).map(Splash::new).ifPresent(exp::annotate);
             parseRetentionTime(fields).ifPresent(exp::annotate);
