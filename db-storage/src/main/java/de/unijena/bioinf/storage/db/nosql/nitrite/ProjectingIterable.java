@@ -23,59 +23,62 @@ package de.unijena.bioinf.storage.db.nosql.nitrite;
 import org.dizitart.no2.Document;
 import org.dizitart.no2.mapper.NitriteMapper;
 import org.dizitart.no2.objects.Cursor;
+import org.jetbrains.annotations.NotNull;
 
-import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.Collections;
 import java.util.Iterator;
-import java.util.function.Function;
+import java.util.Set;
 
-public class NitriteJoinedIterable<T, P> implements Iterable<T> {
+public class ProjectingIterable<T> implements Iterable<T> {
 
-    protected final Class<T> targetClass;
+    private final ProjectingDocumentIterable documentIterable;
 
-    protected final org.dizitart.no2.Cursor parents;
+    private final Class<T> targetClass;
 
-    protected final Function<Object, Iterable<Document>> children;
+    private final NitriteMapper mapper;
 
-    protected final String localField;
-
-    protected final String targetField;
-
-    protected final NitriteMapper mapper;
-
-    public NitriteJoinedIterable(
-            Class<T> targetClass,
-            Iterable<P> parents,
-            Function<Object, Iterable<Document>> children,
-            String localField,
-            String targetField,
-            NitriteMapper mapper
-    ) throws IOException {
-        if (!(parents instanceof Cursor)) {
-            throw new IOException("parents must be a cursor!");
-        }
+    public ProjectingIterable(Class<T> targetClass, Cursor<T> cursor, Set<String> omittedFields, NitriteMapper mapper) throws IOException {
         try {
-            Field cField = parents.getClass().getDeclaredField("cursor");
+            Field cField = cursor.getClass().getDeclaredField("cursor");
             cField.setAccessible(true);
-            this.parents = (org.dizitart.no2.Cursor) cField.get(parents);
+            this.documentIterable = new ProjectingDocumentIterable((org.dizitart.no2.Cursor) cField.get(cursor), omittedFields);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new IOException(e);
         }
-        this.children = children;
         this.targetClass = targetClass;
-        this.localField = localField;
-        this.targetField = targetField;
         this.mapper = mapper;
+    }
+
+    public void withOptionalFields(Set<String> optionalFields) {
+        documentIterable.withOptionalFields(optionalFields);
     }
 
     @NotNull
     @Override
     public Iterator<T> iterator() {
-        if (parents.size() == 0) {
-            return Collections.emptyIterator();
-        }
-        return new CombiningIterator<>(targetClass, new JoinedDocumentIterator(parents, children, localField, targetField), mapper);
+        return new ProjectingIterator();
     }
+
+    private class ProjectingIterator implements Iterator<T> {
+
+        private final Iterator<Document> documentIterator;
+
+        private ProjectingIterator() {
+            this.documentIterator = documentIterable.iterator();
+        }
+
+        @Override
+        public boolean hasNext() {
+            return documentIterator.hasNext();
+        }
+
+        @Override
+        public T next() {
+            Document document = documentIterator.next();
+            return mapper.asObject(document, targetClass);
+        }
+
+    }
+
 }

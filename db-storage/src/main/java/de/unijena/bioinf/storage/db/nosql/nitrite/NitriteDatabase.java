@@ -63,6 +63,12 @@ public class NitriteDatabase implements Database<Document> {
 
     private final Map<Class<?>, ObjectRepository<?>> repositories = Collections.synchronizedMap(new HashMap<>());
 
+    private final Map<Class<?>, Set<String>> optionalRepoFields = Collections.synchronizedMap(new HashMap<>());
+
+    private final Map<Class<?>, String> repoIdFields = Collections.synchronizedMap(new HashMap<>());
+
+    private final Map<String, Set<String>> optionalCollectionFields = Collections.synchronizedMap(new HashMap<>());
+
     // LOCKS
     private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     private final ReentrantReadWriteLock.WriteLock writeLock = readWriteLock.writeLock();
@@ -79,6 +85,9 @@ public class NitriteDatabase implements Database<Document> {
         this.db = initDB(file, meta);
         this.initCollections(meta.collectionIndices);
         this.initRepositories(meta.repoIndices, meta.idFields);
+        meta.optionalRepoFields.forEach((clazz, fields) -> optionalRepoFields.put(clazz, new HashSet<>(Arrays.asList(fields))));
+        meta.optionalCollectionFields.forEach((collection, fields) -> optionalCollectionFields.put(collection, new HashSet<>(Arrays.asList(fields))));
+        repoIdFields.putAll(meta.idFields);
         try {
             Field cField = Nitrite.class.getDeclaredField("context");
             cField.setAccessible(true);
@@ -290,6 +299,28 @@ public class NitriteDatabase implements Database<Document> {
         return db.getCollection(name);
     }
 
+    private <T> Iterable<T> maybeProject(Class<T> clazz, org.dizitart.no2.objects.Cursor<T> cursor, String[] withOptionalFields) throws IOException {
+        if (optionalRepoFields.containsKey(clazz)) {
+            Set<String> omittedFields = new HashSet<>(optionalRepoFields.get(clazz));
+            omittedFields.removeAll(new HashSet<>(Arrays.asList(withOptionalFields)));
+            if (omittedFields.size() > 0) {
+                return new ProjectingIterable<>(clazz, cursor, omittedFields, nitriteMapper);
+            }
+        }
+        return cursor;
+    }
+
+    private Iterable<Document> maybeProjectDocuments(String collectionName, Cursor cursor, String[] withOptionalFields) {
+        if (optionalCollectionFields.containsKey(collectionName)) {
+            Set<String> omittedFields = new HashSet<>(optionalCollectionFields.get(collectionName));
+            omittedFields.removeAll(new HashSet<>(Arrays.asList(withOptionalFields)));
+            if (omittedFields.size() > 0) {
+                return new ProjectingDocumentIterable(cursor, omittedFields);
+            }
+        }
+        return cursor;
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public <T> int insert(T object) throws IOException {
@@ -371,169 +402,244 @@ public class NitriteDatabase implements Database<Document> {
     }
 
     @Override
-    public <T> T getById(long id, Class<T> clazz) throws IOException {
+    public <T> T getById(long id, Class<T> clazz, String... withOptionalFields) throws IOException {
         return this.read(() -> {
             ObjectRepository<T> repo = this.getRepository(clazz);
-            return repo.getById(NitriteId.createId(id));
+            if (optionalRepoFields.containsKey(clazz)) {
+                Set<String> omittedFields = new HashSet<>(optionalRepoFields.get(clazz));
+                omittedFields.removeAll(new HashSet<>(Arrays.asList(withOptionalFields)));
+                if (omittedFields.size() > 0) {
+                    Field cField = repo.getClass().getDeclaredField("collection");
+                    cField.setAccessible(true);
+                    NitriteCollection collection = (NitriteCollection) cField.get(repo);
+                    Document document = collection.getById(NitriteId.createId(id));
+                    return nitriteMapper.asObject(ProjectingDocumentIterable.project(document, omittedFields), clazz);
+                } else {
+                    return repo.getById(NitriteId.createId(id));
+                }
+            } else {
+                return repo.getById(NitriteId.createId(id));
+            }
         });
     }
 
     @Override
-    public Document getById(String collectionName, long id) throws IOException {
+    public Document getById(String collectionName, long id, String... withOptionalFields) throws IOException {
         return this.read(() -> {
             NitriteCollection collection = this.getCollection(collectionName);
-            return collection.getById(NitriteId.createId(id));
+            Document document = collection.getById(NitriteId.createId(id));
+            if (optionalCollectionFields.containsKey(collectionName)) {
+                Set<String> omittedFields = new HashSet<>(optionalCollectionFields.get(collectionName));
+                omittedFields.removeAll(new HashSet<>(Arrays.asList(withOptionalFields)));
+                if (omittedFields.size() > 0) {
+                    return ProjectingDocumentIterable.project(document, omittedFields);
+                } else {
+                    return document;
+                }
+            } else {
+                return document;
+            }
         });
     }
 
     @Override
-    public <T> Iterable<T> find(Filter filter, Class<T> clazz) throws IOException {
+    public <T> Iterable<T> find(Filter filter, Class<T> clazz, String... withOptionalFields) throws IOException {
         return this.read(() -> {
             ObjectRepository<T> repo = this.getRepository(clazz);
             ObjectFilter of = getObjectFilter(filter);
-            return repo.find(of);
+            return maybeProject(clazz, repo.find(of), withOptionalFields);
         });
     }
 
     @Override
-    public <T> Iterable<T> find(Filter filter, Class<T> clazz, int offset, int pageSize) throws IOException {
+    public <T> Iterable<T> find(Filter filter, Class<T> clazz, int offset, int pageSize, String... withOptionalFields) throws IOException {
         return this.read(() -> {
             ObjectRepository<T> repo = this.getRepository(clazz);
             ObjectFilter of = getObjectFilter(filter);
-            return repo.find(of, FindOptions.limit(offset, pageSize));
+            return maybeProject(clazz, repo.find(of, FindOptions.limit(offset, pageSize)), withOptionalFields);
         });
     }
 
     @Override
-    public <T> Iterable<T> find(Filter filter, Class<T> clazz, String sortField, SortOrder sortOrder) throws IOException {
+    public <T> Iterable<T> find(Filter filter, Class<T> clazz, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
         return this.read(() -> {
             ObjectRepository<T> repo = this.getRepository(clazz);
             ObjectFilter of = getObjectFilter(filter);
-            return repo.find(of, FindOptions.sort(sortField, (sortOrder == SortOrder.ASCENDING) ? org.dizitart.no2.SortOrder.Ascending : org.dizitart.no2.SortOrder.Descending));
+            return maybeProject(clazz, repo.find(of, FindOptions.sort(sortField, (sortOrder == SortOrder.ASCENDING) ? org.dizitart.no2.SortOrder.Ascending : org.dizitart.no2.SortOrder.Descending)), withOptionalFields);
         });
     }
 
     @Override
-    public <T> Iterable<T> find(Filter filter, Class<T> clazz, int offset, int pageSize, String sortField, SortOrder sortOrder) throws IOException {
+    public <T> Iterable<T> find(Filter filter, Class<T> clazz, int offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
         return this.read(() -> {
             ObjectRepository<T> repo = this.getRepository(clazz);
             ObjectFilter of = getObjectFilter(filter);
-            return repo.find(of, FindOptions.sort(sortField, (sortOrder == SortOrder.ASCENDING) ? org.dizitart.no2.SortOrder.Ascending : org.dizitart.no2.SortOrder.Descending).thenLimit(offset, pageSize));
+            return maybeProject(clazz, repo.find(of, FindOptions.sort(sortField, (sortOrder == SortOrder.ASCENDING) ? org.dizitart.no2.SortOrder.Ascending : org.dizitart.no2.SortOrder.Descending).thenLimit(offset, pageSize)), withOptionalFields);
         });
     }
 
     @Override
-    public Iterable<Document> find(String collectionName, Filter filter) throws IOException {
+    public Iterable<Document> find(String collectionName, Filter filter, String... withOptionalFields) throws IOException {
         return this.read(() -> {
             NitriteCollection collection = this.getCollection(collectionName);
             org.dizitart.no2.Filter f = getFilter(filter);
-            return collection.find(f);
+            return maybeProjectDocuments(collectionName, collection.find(f), withOptionalFields);
         });
     }
 
     @Override
-    public Iterable<Document> find(String collectionName, Filter filter, int offset, int pageSize) throws IOException {
+    public Iterable<Document> find(String collectionName, Filter filter, int offset, int pageSize, String... withOptionalFields) throws IOException {
         return this.read(() -> {
             NitriteCollection collection = this.getCollection(collectionName);
             org.dizitart.no2.Filter f = getFilter(filter);
-            return collection.find(f, FindOptions.limit(offset, pageSize));
+            return maybeProjectDocuments(collectionName, collection.find(f, FindOptions.limit(offset, pageSize)), withOptionalFields);
         });
     }
 
     @Override
-    public Iterable<Document> find(String collectionName, Filter filter, String sortField, SortOrder sortOrder) throws IOException {
+    public Iterable<Document> find(String collectionName, Filter filter, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
         return this.read(() -> {
             NitriteCollection collection = this.getCollection(collectionName);
             org.dizitart.no2.Filter f = getFilter(filter);
-            return collection.find(f, FindOptions.sort(sortField, (sortOrder == SortOrder.ASCENDING) ? org.dizitart.no2.SortOrder.Ascending : org.dizitart.no2.SortOrder.Descending));
+            return maybeProjectDocuments(collectionName, collection.find(f, FindOptions.sort(sortField, (sortOrder == SortOrder.ASCENDING) ? org.dizitart.no2.SortOrder.Ascending : org.dizitart.no2.SortOrder.Descending)), withOptionalFields);
         });
     }
 
     @Override
-    public Iterable<Document> find(String collectionName, Filter filter, int offset, int pageSize, String sortField, SortOrder sortOrder) throws IOException {
+    public Iterable<Document> find(String collectionName, Filter filter, int offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
         return this.read(() -> {
             NitriteCollection collection = this.getCollection(collectionName);
             org.dizitart.no2.Filter f = getFilter(filter);
-            return collection.find(f, FindOptions.sort(sortField, (sortOrder == SortOrder.ASCENDING) ? org.dizitart.no2.SortOrder.Ascending : org.dizitart.no2.SortOrder.Descending).thenLimit(offset, pageSize));
+            return maybeProjectDocuments(collectionName, collection.find(f, FindOptions.sort(sortField, (sortOrder == SortOrder.ASCENDING) ? org.dizitart.no2.SortOrder.Ascending : org.dizitart.no2.SortOrder.Descending).thenLimit(offset, pageSize)), withOptionalFields);
         });
     }
 
     @Override
-    public <T> Iterable<T> findAll(Class<T> clazz) throws IOException {
+    public <T> Iterable<T> findAll(Class<T> clazz, String... withOptionalFields) throws IOException {
         return this.read(() -> {
             ObjectRepository<T> repo = this.getRepository(clazz);
-            return repo.find();
+            return maybeProject(clazz, repo.find(), withOptionalFields);
         });
     }
 
     @Override
-    public <T> Iterable<T> findAll(Class<T> clazz, int offset, int pageSize) throws IOException {
+    public <T> Iterable<T> findAll(Class<T> clazz, int offset, int pageSize, String... withOptionalFields) throws IOException {
         return this.read(() -> {
             ObjectRepository<T> repo = this.getRepository(clazz);
-            return repo.find(FindOptions.limit(offset, pageSize));
+            return maybeProject(clazz, repo.find(FindOptions.limit(offset, pageSize)), withOptionalFields);
         });
     }
 
     @Override
-    public <T> Iterable<T> findAll(Class<T> clazz, String sortField, SortOrder sortOrder) throws IOException {
+    public <T> Iterable<T> findAll(Class<T> clazz, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
         return this.read(() -> {
             ObjectRepository<T> repo = this.getRepository(clazz);
-            return repo.find(
+            return maybeProject(clazz, repo.find(
                     FindOptions.sort(sortField, (sortOrder == SortOrder.ASCENDING) ? org.dizitart.no2.SortOrder.Ascending : org.dizitart.no2.SortOrder.Descending)
-            );
+            ), withOptionalFields);
         });
     }
 
     @Override
-    public <T> Iterable<T> findAll(Class<T> clazz, int offset, int pageSize, String sortField, SortOrder sortOrder) throws IOException {
+    public <T> Iterable<T> findAll(Class<T> clazz, int offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
         return this.read(() -> {
             ObjectRepository<T> repo = this.getRepository(clazz);
-            return repo.find(
+            return maybeProject(clazz, repo.find(
                     FindOptions.sort(sortField, (sortOrder == SortOrder.ASCENDING) ? org.dizitart.no2.SortOrder.Ascending : org.dizitart.no2.SortOrder.Descending).thenLimit(offset, pageSize)
-            );
+            ), withOptionalFields);
         });
     }
 
     @Override
-    public Iterable<Document> findAll(String collectionName) throws IOException {
+    public Iterable<Document> findAll(String collectionName, String... withOptionalFields) throws IOException {
         return this.read(() -> {
             NitriteCollection collection = this.getCollection(collectionName);
-            return collection.find();
+            return maybeProjectDocuments(collectionName, collection.find(), withOptionalFields);
         });
     }
 
     @Override
-    public Iterable<Document> findAll(String collectionName, int offset, int pageSize) throws IOException {
+    public Iterable<Document> findAll(String collectionName, int offset, int pageSize, String... withOptionalFields) throws IOException {
         return this.read(() -> {
             NitriteCollection collection = this.getCollection(collectionName);
-            return collection.find(FindOptions.limit(offset, pageSize));
+            return maybeProjectDocuments(collectionName, collection.find(FindOptions.limit(offset, pageSize)), withOptionalFields);
         });
     }
 
     @Override
-    public Iterable<Document> findAll(String collectionName, String sortField, SortOrder sortOrder) throws IOException {
+    public Iterable<Document> findAll(String collectionName, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
         return this.read(() -> {
             NitriteCollection collection = this.getCollection(collectionName);
-            return collection.find(
+            return maybeProjectDocuments(collectionName, collection.find(
                     FindOptions.sort(sortField, (sortOrder == SortOrder.ASCENDING) ? org.dizitart.no2.SortOrder.Ascending : org.dizitart.no2.SortOrder.Descending)
-            );
+            ), withOptionalFields);
         });
     }
 
     @Override
-    public Iterable<Document> findAll(String collectionName, int offset, int pageSize, String sortField, SortOrder sortOrder) throws IOException {
+    public Iterable<Document> findAll(String collectionName, int offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
         return this.read(() -> {
             NitriteCollection collection = this.getCollection(collectionName);
-            return collection.find(
+            return maybeProjectDocuments(collectionName, collection.find(
                     FindOptions.sort(sortField, (sortOrder == SortOrder.ASCENDING) ? org.dizitart.no2.SortOrder.Ascending : org.dizitart.no2.SortOrder.Descending).thenLimit(offset, pageSize)
-            );
+            ), withOptionalFields);
         });
+    }
+
+    @Override
+    public <T> T injectOptionalFields(T object, String... optionalFields) throws IOException {
+        NitriteCollection collection;
+        try {
+            ObjectRepository<T> repository = getRepository(object);
+            Field cField = repository.getClass().getDeclaredField("collection");
+            cField.setAccessible(true);
+            collection = (NitriteCollection) cField.get(repository);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new IOException(e);
+        }
+        if (!repoIdFields.containsKey(object.getClass())) {
+            throw new IOException("Object has no ID field.");
+        }
+        return InjectingIterable.inject(object, new HashSet<>(Arrays.asList(optionalFields)), collection, repoIdFields.get(object.getClass()));
+    }
+
+    @Override
+    public Document injectOptionalFields(String collectionName, Document document, String... optionalFields) throws IOException {
+        return InjectingDocumentIterable.inject(document, new HashSet<>(Arrays.asList(optionalFields)), getCollection(collectionName));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T> Iterable<T> injectOptionalFields(Class<T> clazz, Iterable<T> objects, String... optionalFields) throws IOException {
+        if (objects instanceof org.dizitart.no2.objects.Cursor<T>) {
+            return maybeProject(clazz, (org.dizitart.no2.objects.Cursor<T>) objects, optionalFields);
+        } else if (objects instanceof ProjectingIterable<T>) {
+            ((ProjectingIterable<T>) objects).withOptionalFields(new HashSet<>(Arrays.asList(optionalFields)));
+            return objects;
+        } else {
+            if (!repoIdFields.containsKey(clazz)) {
+                throw new IOException("Object has no ID field.");
+            }
+            return new InjectingIterable<>(objects, new HashSet<>(Arrays.asList(optionalFields)), getRepository(clazz), repoIdFields.get(clazz));
+        }
+    }
+
+    @Override
+    public Iterable<Document> injectOptionalFields(String collectionName, Iterable<Document> documents, String... optionalFields) throws IOException {
+        if (documents instanceof Cursor) {
+            return maybeProjectDocuments(collectionName, (Cursor) documents, optionalFields);
+        } else if (documents instanceof ProjectingDocumentIterable) {
+            ((ProjectingDocumentIterable) documents).withOptionalFields(new HashSet<>(Arrays.asList(optionalFields)));
+            return documents;
+        } else {
+            return new InjectingDocumentIterable(documents, new HashSet<>(Arrays.asList(optionalFields)), getCollection(collectionName));
+        }
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public <P, C> Iterable<P> joinAllChildren(Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String targetField) throws IOException {
-        return new NitriteJoinedReflectionIterable<>(
+        return new JoinedReflectionIterable<>(
                 childClass,
                 parents,
                 (localObject) -> {
@@ -555,7 +661,7 @@ public class NitriteDatabase implements Database<Document> {
     @SuppressWarnings("unchecked")
     @Override
     public <P, C> Iterable<P> joinChildren(Class<C> childClass, Filter childFilter, Iterable<P> parents, String localField, String foreignField, String targetField) throws IOException {
-        return new NitriteJoinedReflectionIterable<>(
+        return new JoinedReflectionIterable<>(
                 childClass,
                 parents,
                 (localObject) -> {
@@ -579,7 +685,7 @@ public class NitriteDatabase implements Database<Document> {
     @SuppressWarnings("unchecked")
     @Override
     public <T, P, C> Iterable<T> joinAllChildren(Class<T> targetClass, Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String targetField) throws IOException {
-        return new NitriteJoinedIterable<>(
+        return new JoinedIterable<>(
                 targetClass,
                 parents,
                 (localObject) -> {
@@ -601,7 +707,7 @@ public class NitriteDatabase implements Database<Document> {
     @SuppressWarnings("unchecked")
     @Override
     public <T, P, C> Iterable<T> joinChildren(Class<T> targetClass, Class<C> childClass, Filter childFilter, Iterable<P> parents, String localField, String foreignField, String targetField) throws IOException {
-        return new NitriteJoinedIterable<>(
+        return new JoinedIterable<>(
                 targetClass,
                 parents,
                 (localObject) -> {

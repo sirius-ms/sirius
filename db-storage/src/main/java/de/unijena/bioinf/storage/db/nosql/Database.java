@@ -49,41 +49,49 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
 
     int upsertAll(String collectionName, Iterable<DocType> documents) throws IOException;
 
-    <T> T getById(long id, Class<T> clazz) throws IOException;
+    <T> T getById(long id, Class<T> clazz, String... withOptionalFields) throws IOException;
 
-    DocType getById(String collectionName, long id) throws IOException;
+    DocType getById(String collectionName, long id, String... withOptionalFields) throws IOException;
 
-    <T> Iterable<T> find(Filter filter, Class<T> clazz) throws IOException;
+    <T> Iterable<T> find(Filter filter, Class<T> clazz, String... withOptionalFields) throws IOException;
 
-    <T> Iterable<T> find(Filter filter, Class<T> clazz, int offset, int pageSize) throws IOException;
+    <T> Iterable<T> find(Filter filter, Class<T> clazz, int offset, int pageSize, String... withOptionalFields) throws IOException;
 
-    <T> Iterable<T> find(Filter filter, Class<T> clazz, String sortField, SortOrder sortOrder) throws IOException;
+    <T> Iterable<T> find(Filter filter, Class<T> clazz, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException;
 
-    <T> Iterable<T> find(Filter filter, Class<T> clazz, int offset, int pageSize, String sortField, SortOrder sortOrder) throws IOException;
+    <T> Iterable<T> find(Filter filter, Class<T> clazz, int offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException;
 
-    Iterable<DocType> find(String collectionName, Filter filter) throws IOException;
+    Iterable<DocType> find(String collectionName, Filter filter, String... withOptionalFields) throws IOException;
 
-    Iterable<DocType> find(String collectionName, Filter filter, int offset, int pageSize) throws IOException;
+    Iterable<DocType> find(String collectionName, Filter filter, int offset, int pageSize, String... withOptionalFields) throws IOException;
 
-    Iterable<DocType> find(String collectionName, Filter filter, String sortField, SortOrder sortOrder) throws IOException;
+    Iterable<DocType> find(String collectionName, Filter filter, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException;
 
-    Iterable<DocType> find(String collectionName, Filter filter, int offset, int pageSize, String sortField, SortOrder sortOrder) throws IOException;
+    Iterable<DocType> find(String collectionName, Filter filter, int offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException;
 
-    <T> Iterable<T> findAll(Class<T> clazz) throws IOException;
+    <T> Iterable<T> findAll(Class<T> clazz, String... withOptionalFields) throws IOException;
 
-    <T> Iterable<T> findAll(Class<T> clazz, int offset, int pageSize) throws IOException;
+    <T> Iterable<T> findAll(Class<T> clazz, int offset, int pageSize, String... withOptionalFields) throws IOException;
 
-    <T> Iterable<T> findAll(Class<T> clazz, String sortField, SortOrder sortOrder) throws IOException;
+    <T> Iterable<T> findAll(Class<T> clazz, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException;
 
-    <T> Iterable<T> findAll(Class<T> clazz, int offset, int pageSize, String sortField, SortOrder sortOrder) throws IOException;
+    <T> Iterable<T> findAll(Class<T> clazz, int offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException;
 
-    Iterable<DocType> findAll(String collectionName) throws IOException;
+    Iterable<DocType> findAll(String collectionName, String... withOptionalFields) throws IOException;
 
-    Iterable<DocType> findAll(String collectionName, int offset, int pageSize) throws IOException;
+    Iterable<DocType> findAll(String collectionName, int offset, int pageSize, String... withOptionalFields) throws IOException;
 
-    Iterable<DocType> findAll(String collectionName, String sortField, SortOrder sortOrder) throws IOException;
+    Iterable<DocType> findAll(String collectionName, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException;
 
-    Iterable<DocType> findAll(String collectionName, int offset, int pageSize, String sortField, SortOrder sortOrder) throws IOException;
+    Iterable<DocType> findAll(String collectionName, int offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException;
+
+    <T> T injectOptionalFields(T object, String... optionalFields) throws IOException;
+
+    DocType injectOptionalFields(String collectionName, DocType document, String... optionalFields) throws IOException;
+
+    <T> Iterable<T> injectOptionalFields(Class<T> clazz, Iterable<T> objects, String... optionalFields) throws IOException;
+
+    Iterable<DocType> injectOptionalFields(String collectionName, Iterable<DocType> documents, String... optionalFields) throws IOException;
 
     <P, C> Iterable<P> joinAllChildren(Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String targetField) throws IOException;
 

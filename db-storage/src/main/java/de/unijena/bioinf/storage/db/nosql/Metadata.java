@@ -30,23 +30,21 @@ import java.util.Map;
 
 public class Metadata {
 
-    public Map<Class<?>, JsonSerializer<?>> serializers;
+    final public Map<Class<?>, JsonSerializer<?>> serializers = new HashMap<>();
 
-    public Map<Class<?>, JsonDeserializer<?>> deserializers;
+    final public Map<Class<?>, JsonDeserializer<?>> deserializers = new HashMap<>();
 
-    public Map<Class<?>, Index[]> repoIndices;
+    final public Map<Class<?>, Index[]> repoIndices = new HashMap<>();
 
-    public Map<Class<?>, String> idFields;
+    final public Map<Class<?>, String[]> optionalRepoFields = new HashMap<>();
 
-    public Map<String, Index[]> collectionIndices;
+    final public Map<Class<?>, String> idFields = new HashMap<>();
 
-    private Metadata() {
-        serializers = new HashMap<>();
-        deserializers = new HashMap<>();
-        repoIndices = new HashMap<>();
-        collectionIndices = new HashMap<>();
-        idFields = new HashMap<>();
-    }
+    final public Map<String, Index[]> collectionIndices = new HashMap<>();
+
+    final public Map<String, String[]> optionalCollectionFields = new HashMap<>();
+
+    private Metadata() {}
 
     public static Metadata build() {
         return new Metadata();
@@ -87,11 +85,27 @@ public class Metadata {
         return this;
     }
 
+    public <T> Metadata setOptionalFields(
+            Class<T> clazz,
+            String... fieldNames
+    ) {
+        this.optionalRepoFields.put(clazz, fieldNames);
+        return this;
+    }
+
     public Metadata addCollection(
             String name,
             Index... indices
     ) {
         this.collectionIndices.put(name, indices);
+        return this;
+    }
+
+    public Metadata setOptionalFields(
+            String collection,
+            String... fieldNames
+    ) {
+        this.optionalCollectionFields.put(collection, fieldNames);
         return this;
     }
 

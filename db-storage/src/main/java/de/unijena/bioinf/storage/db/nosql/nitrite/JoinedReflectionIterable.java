@@ -34,9 +34,9 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Function;
 
-public class NitriteJoinedReflectionIterable<P, C> implements Iterable<P> {
+public class JoinedReflectionIterable<P, C> implements Iterable<P> {
 
-    protected NitriteJoinedIterable<P, P> objectIterable = null;
+    protected JoinedIterable<P, P> objectIterable = null;
 
     protected Iterable<P> parents = null;
 
@@ -53,7 +53,7 @@ public class NitriteJoinedReflectionIterable<P, C> implements Iterable<P> {
     protected NitriteMapper mapper;
 
     @SuppressWarnings("unchecked")
-    public NitriteJoinedReflectionIterable(
+    public JoinedReflectionIterable(
             Class<C> childClass,
             Iterable<P> parents,
             Function<Object, Iterable<Document>> children,
@@ -64,7 +64,7 @@ public class NitriteJoinedReflectionIterable<P, C> implements Iterable<P> {
         if (parents instanceof Cursor) {
             if (((Cursor<P>) parents).size() > 0) {
                 P first = ((Cursor<P>) parents).firstOrDefault();
-                objectIterable = new NitriteJoinedIterable<>((Class<P>) first.getClass(), parents, children, localField, targetField, mapper);
+                objectIterable = new JoinedIterable<>((Class<P>) first.getClass(), parents, children, localField, targetField, mapper);
             }
         } else {
             if (parents.iterator().hasNext()) {
