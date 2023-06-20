@@ -105,12 +105,6 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
 
     Iterable<DocType> joinChildren(String childCollectionName, Filter childFilter, Iterable<DocType> parents, String localField, String foreignField, String targetField) throws IOException;
 
-    <P, C> Iterable<P> mergeChild(Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String... targetFields) throws IOException;
-
-    <T, P, C> Iterable<T> mergeChild(Class<T> targetClass, Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String... targetFields) throws IOException;
-
-    Iterable<DocType> mergeChild(String childCollection, Iterable<DocType> parents, String localField, String foreignField, String... targetFields) throws IOException;
-
     <T> int count(Filter filter, Class<T> clazz) throws IOException;
 
     <T> int count(Filter filter, Class<T> clazz, int offset, int pageSize) throws IOException;
@@ -228,18 +222,6 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
 
     default Stream<DocType> joinChildrenStr(String childCollectionName, Filter childFilter, Iterable<DocType> parents, String localField, String foreignField, String targetField) throws IOException {
         return StreamSupport.stream(joinChildren(childCollectionName, childFilter, parents, localField, foreignField, targetField).spliterator(), false);
-    }
-
-    default <P, C> Stream<P> mergeChildStr(Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String... targetFields) throws IOException {
-        return StreamSupport.stream(mergeChild(childClass, parents, localField, foreignField, targetFields).spliterator(), false);
-    }
-
-    default <T, P, C> Stream<T> mergeChildStr(Class<T> targetClass, Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String... targetFields) throws IOException {
-        return StreamSupport.stream(mergeChild(targetClass, childClass, parents, localField, foreignField, targetFields).spliterator(), false);
-    }
-
-    default Stream<DocType> mergeChildStr(String childCollectionName, Iterable<DocType> parents, String localField, String foreignField, String... targetFields) throws IOException  {
-        return StreamSupport.stream(mergeChild(childCollectionName, parents, localField, foreignField, targetFields).spliterator(), false);
     }
 
     //endregion

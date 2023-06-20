@@ -763,57 +763,6 @@ public class NitriteDatabase implements Database<Document> {
     }
 
     @Override
-    public <P, C> Iterable<P> mergeChild(Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String... targetFields) throws IOException {
-        //todo implement more efficient in place variant.
-        if (!parents.iterator().hasNext())
-            return List.of();
-
-        return mergeChild((Class<P>) parents.iterator().next().getClass(), childClass, parents, localField, foreignField, targetFields);
-    }
-
-    @Override
-    public <T, P, C> Iterable<T> mergeChild(Class<T> targetClass, Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String... targetFields) throws IOException {
-        if (!parents.iterator().hasNext())
-            return List.of();
-
-        return new NitriteMergedIterable<>(
-                nitriteMapper,
-                targetClass,
-                parents,
-                (localObject) -> {
-                    try {
-                        org.dizitart.no2.objects.Cursor<C> objectCursor = (org.dizitart.no2.objects.Cursor<C>) find(new Filter().eq(foreignField, localObject), childClass);
-                        Field cField = objectCursor.getClass().getDeclaredField("cursor");
-                        cField.setAccessible(true);
-                        return (Iterable<Document>) cField.get(objectCursor);
-                    } catch (IOException | IllegalAccessException | NoSuchFieldException e) {
-                        throw new RuntimeException(e);
-                    }
-                },
-                localField,
-                targetFields
-        );
-    }
-
-    @Override
-    public Iterable<Document> mergeChild(String childCollectionName, Iterable<Document> parents, String localField, String foreignField, String... targetFields) throws IOException {
-        if (!parents.iterator().hasNext())
-            return List.of();
-        return () -> new MergedDocumentIterator(
-                parents,
-                (localObject) -> {
-                    try {
-                        return find(childCollectionName, new Filter().eq(foreignField, localObject));
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                },
-                localField,
-                targetFields
-        );
-    }
-
-    @Override
     public <T> int count(Filter filter, Class<T> clazz) throws IOException {
         return this.read(() -> {
             ObjectRepository<T> repo = this.getRepository(clazz);
