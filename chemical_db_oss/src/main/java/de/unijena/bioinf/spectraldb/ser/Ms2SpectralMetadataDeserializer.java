@@ -20,10 +20,18 @@
 
 package de.unijena.bioinf.spectraldb.ser;
 
+import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
+import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
 import de.unijena.bioinf.spectraldb.entities.Ms2SpectralMetadata;
 
 import java.io.IOException;
@@ -32,7 +40,45 @@ public class Ms2SpectralMetadataDeserializer extends JsonDeserializer<Ms2Spectra
 
     @Override
     public Ms2SpectralMetadata deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        return new ObjectMapper().readValue(p, Ms2SpectralMetadata.class);
+        // FIXME DIRTY, DIRTY HACK
+        ObjectMapper mapper = new ObjectMapper();
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(PrecursorIonType.class, new JsonDeserializer<>() {
+            @Override
+            public PrecursorIonType deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
+                while (p.currentToken() != JsonToken.VALUE_STRING)
+                    p.nextToken();
+                return PrecursorIonType.fromString(p.getText());
+            }
+        });
+        module.addDeserializer(MolecularFormula.class, new JsonDeserializer<>() {
+            @Override
+            public MolecularFormula deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
+                while (p.currentToken() != JsonToken.VALUE_STRING)
+                    p.nextToken();
+                return MolecularFormula.parseOrThrow(p.getText());
+            }
+        });
+        module.addDeserializer(CollisionEnergy.class, new JsonDeserializer<>() {
+            @Override
+            public CollisionEnergy deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
+                while (p.currentToken() != JsonToken.VALUE_STRING)
+                    p.nextToken();
+                return CollisionEnergy.fromString(p.getText());
+            }
+        });
+        module.addDeserializer(MsInstrumentation.class, new JsonDeserializer<>() {
+            @Override
+            public MsInstrumentation deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
+                while (p.currentToken() != JsonToken.VALUE_STRING)
+                    p.nextToken();
+                return MsInstrumentation.Instrument.valueOf(p.getText());
+            }
+        });
+        mapper.registerModule(module);
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        // END DIRTY, DIRTY HACK
+        return mapper.readValue(p, Ms2SpectralMetadata.class);
     }
 
 
