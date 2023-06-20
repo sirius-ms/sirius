@@ -136,9 +136,12 @@ public class MolecularFormulaMap implements Iterable<MolecularFormula>, Serializ
 
         public RangeIterator(double start, double end) {
             this.end = end;
+            start = Math.max(start, 0);
             this.bucket = (int)Math.round(start);
             this.index = -1;
-            fetchFirst(start);
+            if (start < end) {
+                fetchFirst(start);
+            }
         }
 
         private void fetchFirst(double start) {
