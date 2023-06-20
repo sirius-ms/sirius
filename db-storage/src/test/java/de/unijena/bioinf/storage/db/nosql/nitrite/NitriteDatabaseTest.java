@@ -24,10 +24,7 @@ package de.unijena.bioinf.storage.db.nosql.nitrite;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -36,6 +33,7 @@ import de.unijena.bioinf.storage.db.nosql.*;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.burningwave.core.assembler.StaticComponentContainer;
 import org.dizitart.no2.Document;
 import org.dizitart.no2.NitriteId;
 import org.dizitart.no2.filters.Filters;
@@ -56,9 +54,7 @@ import static org.junit.Assert.*;
 public class NitriteDatabaseTest {
 
     static {
-        if (!EqualsBuilder.class.getModule().isNamed()) {
-            ClassLoader.class.getModule().addOpens(ArrayList.class.getPackageName(), EqualsBuilder.class.getModule());
-        }
+        StaticComponentContainer.Modules.exportAllToAll();
     }
 
     private static class NitriteTestEntry extends NitritePOJO implements NitriteWriteString {
@@ -192,13 +188,52 @@ public class NitriteDatabaseTest {
 
     }
 
-    private static class A {
+    private static class SmallTestObject {
+
+        public long id = -1;
+
+        public String name;
+
+        public String data;
+
+        public SmallTestObject(String name, String data) {
+            this.name = name;
+            this.data = data;
+        }
 
     }
 
-    @Test
-    public void testAnno() {
+    private static class SmallTestSerializer extends JsonSerializer<SmallTestObject> {
+        @Override
+        public void serialize(SmallTestObject value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+            gen.writeStartObject();
+            gen.writeStringField("name", value.name);
+            gen.writeObjectField("data", value.data);
+            gen.writeEndObject();
+        }
+    }
 
+    private static class SmallTestDeserializer extends JsonDeserializer<SmallTestObject> {
+        @Override
+        public SmallTestObject deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+            String name = null;
+            String data = null;
+            for (JsonToken jsonToken = p.nextToken(); jsonToken != null && !jsonToken.isStructEnd(); jsonToken = p.nextToken()) {
+                if (jsonToken == JsonToken.FIELD_NAME) {
+                    String fieldName = p.currentName();
+                    switch (fieldName) {
+                        case "name":
+                            name = p.nextTextValue();
+                            break;
+                        case "data":
+                            data = p.nextTextValue();
+                            break;
+                    }
+                }
+
+            }
+            return new SmallTestObject(name, data);
+        }
     }
 
     @Test
@@ -826,6 +861,104 @@ public class NitriteDatabaseTest {
 
             assertTrue("concurrent insert", EqualsBuilder.reflectionEquals(entries, out, false, null, true));
         }
+    }
+
+    @Test
+    public void testOptionals() throws IOException {
+        Path file = Files.createTempFile("nitrite-test", "");
+        file.toFile().deleteOnExit();
+
+        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addRepository(
+                SmallTestObject.class,
+                "id",
+                new SmallTestSerializer(),
+                new SmallTestDeserializer(),
+                new Index("name", IndexType.UNIQUE)
+        ).setOptionalFields(SmallTestObject.class, "data"))) {
+
+            SmallTestObject object = new SmallTestObject("TEST", "BIGDATA");
+
+            db.insert(object);
+
+            SmallTestObject res1 = db.getById(object.id, SmallTestObject.class);
+            SmallTestObject res2 = db.getById(object.id, SmallTestObject.class,"data");
+
+            List<SmallTestObject> res3 = Lists.newArrayList(db.findAll(SmallTestObject.class));
+            List<SmallTestObject> res4 = Lists.newArrayList(db.findAll(SmallTestObject.class, "data"));
+
+            assertNotNull(res1);
+            assertNotNull(res2);
+
+            assertEquals("1 document", 1, res3.size());
+            assertEquals("1 document", 1, res4.size());
+
+            assertNull("no data", res1.data);
+            assertNull("no data", res3.get(0).data);
+
+            assertNotNull("has data", res2.data);
+            assertNotNull("has data", res4.get(0).data);
+
+            SmallTestObject res5 = db.injectOptionalFields(res1, "data");
+            List<SmallTestObject> res6 = Lists.newArrayList(db.injectOptionalFields(SmallTestObject.class, db.findAll(SmallTestObject.class), "data"));
+            List<SmallTestObject> res7 = Lists.newArrayList(db.injectOptionalFields(SmallTestObject.class, Lists.newArrayList(db.findAll(SmallTestObject.class)), "data"));
+
+            assertNotNull(res5);
+
+            assertEquals("1 document", 1, res6.size());
+            assertEquals("1 document", 1, res7.size());
+
+            assertNotNull("has data", res5.data);
+            assertNotNull("has data", res6.get(0).data);
+            assertNotNull("has data", res7.get(0).data);
+
+        }
+
+    }
+
+    @Test
+    public void testOptionalDocuments() throws IOException {
+        Path file = Files.createTempFile("nitrite-test", "");
+        file.toFile().deleteOnExit();
+
+        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addCollection("test", new Index("name", IndexType.UNIQUE)).setOptionalFields("test", "data"))) {
+
+            Document doc = Document.createDocument("name", "TEST").put("data", "BIGDATA");
+
+            db.insert("test", doc);
+
+            Document res1 = db.getById("test", doc.getId().getIdValue());
+            Document res2 = db.getById("test", doc.getId().getIdValue(), "data");
+
+            List<Document> res3 = Lists.newArrayList(db.findAll("test"));
+            List<Document> res4 = Lists.newArrayList(db.findAll("test", "data"));
+
+            assertNotNull(res1);
+            assertNotNull(res2);
+
+            assertEquals("1 document", 1, res3.size());
+            assertEquals("1 document", 1, res4.size());
+
+            assertFalse("no data", res1.containsKey("data"));
+            assertFalse("no data", res3.get(0).containsKey("data"));
+
+            assertTrue("has data", res2.containsKey("data"));
+            assertTrue("has data", res4.get(0).containsKey("data"));
+
+            Document res5 = db.injectOptionalFields("test", res1, "data");
+            List<Document> res6 = Lists.newArrayList(db.injectOptionalFields("test", db.findAll("test"), "data"));
+            List<Document> res7 = Lists.newArrayList(db.injectOptionalFields("test", Lists.newArrayList(db.findAll("test")), "data"));
+
+            assertNotNull(res5);
+
+            assertEquals("1 document", 1, res6.size());
+            assertEquals("1 document", 1, res7.size());
+
+            assertTrue("has data", res5.containsKey("data"));
+            assertTrue("has data", res6.get(0).containsKey("data"));
+            assertTrue("has data", res7.get(0).containsKey("data"));
+
+        }
+
     }
 
 }
