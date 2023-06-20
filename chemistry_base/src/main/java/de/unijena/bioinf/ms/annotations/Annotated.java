@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.annotations;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import org.jetbrains.annotations.NotNull;
@@ -56,6 +57,7 @@ public interface Annotated<A extends DataAnnotation> {
      * @throws NullPointerException if there is no entry for this key
      */
     @NotNull
+    @JsonIgnore
     default <T extends A> T getAnnotationOrThrow(Class<T> klass) {
         return getAnnotationOrThrow(klass, () -> new NullPointerException("No annotation for key: " + klass.getName()));
     }
@@ -66,6 +68,7 @@ public interface Annotated<A extends DataAnnotation> {
      * @throws RuntimeException of your choice (@param ex)
      */
     @NotNull
+    @JsonIgnore
     default <T extends A> T getAnnotationOrThrow(Class<T> klass, Supplier<? extends RuntimeException> exceptionSupplier) {
         return getAnnotation(klass).orElseThrow(exceptionSupplier);
     }
@@ -73,6 +76,7 @@ public interface Annotated<A extends DataAnnotation> {
     /**
      * @return annotation value for the given class/key or null
      */
+    @JsonIgnore
     default <T extends A> T getAnnotationOrNull(@NotNull Class<T> klass) {
         return (T) annotations().map.get(klass);
     }
@@ -80,14 +84,17 @@ public interface Annotated<A extends DataAnnotation> {
     /**
      * @return annotation value for the given class/key or the given default value
      */
+    @JsonIgnore
     default <T extends A> T getAnnotation(@NotNull Class<T> klass, @NotNull Supplier<T> defaultValueSupplier) {
         return getAnnotation(klass).orElseGet(defaultValueSupplier);
     }
 
+    @JsonIgnore
     default <T extends A> T getAnnotationOr(@NotNull Class<T> klass, @NotNull Function<Class<T>, T> defaultValueFunction) {
         return getAnnotation(klass).orElse(defaultValueFunction.apply(klass));
     }
 
+    @JsonIgnore
     default <T extends A> Optional<T> getAnnotation(@NotNull Class<T> klass) {
         final T val = getAnnotationOrNull(klass);
         if (val == null) return Optional.empty();
@@ -108,6 +115,7 @@ public interface Annotated<A extends DataAnnotation> {
      *
      * @return true if there was no previous value for this annotation
      */
+    @JsonIgnore
     default <T extends A> boolean setAnnotation(Class<T> klass, T value) {
         if (value == null)
             return removeAnnotation(klass) != null;
@@ -207,6 +215,7 @@ public interface Annotated<A extends DataAnnotation> {
      *
      * @param annotated annotations to add
      */
+    @JsonIgnore
     default void setAnnotationsFrom(Annotated<A> annotated) {
         final Iterator<Map.Entry<Class<A>, A>> iter = annotated.annotationIterator();
         while (iter.hasNext()) {
@@ -220,6 +229,7 @@ public interface Annotated<A extends DataAnnotation> {
      *
      * @param annotations annotations to add
      */
+    @JsonIgnore
     default void setAnnotationsFrom(Map<Class<A>, A> annotations) {
         annotations.forEach(this::setAnnotation);
     }
@@ -231,6 +241,7 @@ public interface Annotated<A extends DataAnnotation> {
      * @param config from which the annotations will be add
      * @param clz type of the annotations that will be parsed
      */
+    @JsonIgnore
     default void setAnnotationsFrom(ParameterConfig config, Class<A> clz) {
         setAnnotationsFrom(config, clz, true);
     }
@@ -242,6 +253,7 @@ public interface Annotated<A extends DataAnnotation> {
      * @param clz type of the annotations that will be parsed
      * @param skipMissingKeys specify how to handle missing keys*
      */
+    @JsonIgnore
     default void setAnnotationsFrom(ParameterConfig config, Class<A> clz, boolean skipMissingKeys) {
         config.createInstancesWithDefaults(clz, skipMissingKeys).forEach(this::setAnnotation);
     }
