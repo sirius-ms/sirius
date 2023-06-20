@@ -45,10 +45,11 @@ public class BottomUpSearch extends SiriusPlugin {
     protected void beforeDecomposing(ProcessedInput input) {
         super.beforeDecomposing(input);
         final ValenceFilter filter = new ValenceFilter();
-        if (input.getAnnotation(BottomUpSearchSettings.class, BottomUpSearchSettings::disabled).enabled) {
+        BottomUpSearchSettings settings = input.getAnnotation(BottomUpSearchSettings.class, BottomUpSearchSettings::disabled);
+        if (settings.isEnabledFor(input.getExperimentInformation().getIonMass())) {
             // urks, we have to rewrite this horrible recalibration routine. if we recalibrate a tree, we have to fix its molecular formula.
             // same is when the user specifies a molecular formula in the file
-            if (!input.getAnnotation(Whiteset.class, Whiteset::empty).isEmpty()) return;
+            if (!input.getAnnotation(Whiteset.class, Whiteset::denovo).isStillAllowDeNovo()) return;
             final Set<IonMode> ionModes = input.getAnnotationOrThrow(PossibleAdducts.class).getIonModes();
             if (!input.getExperimentInformation().getPrecursorIonType().isIonizationUnknown()) {
                 ionModes.clear();
@@ -61,6 +62,7 @@ public class BottomUpSearch extends SiriusPlugin {
                 final MolecularFormula[] losses = MOLECULAR_FORMULA_MAP.searchMass(rootLossMass, dev);
                 for (Ionization ionMode : ionModes) {
                     final double mz = ionMode.subtractFromMass(peak.getMass());
+                    if (mz < 1) continue;
                     for (MolecularFormula fragment : MOLECULAR_FORMULA_MAP.searchMass(mz, dev)) {
                         for (MolecularFormula loss : losses) {
                             final MolecularFormula together = fragment.add(loss);
@@ -78,10 +80,8 @@ public class BottomUpSearch extends SiriusPlugin {
                 }
             });
 
-            input.setAnnotation(Whiteset.class, input.getAnnotation(Whiteset.class, Whiteset::empty).add(Whiteset.ofMeasuredFormulas(formulas)));
+            input.setAnnotation(Whiteset.class, input.getAnnotation(Whiteset.class, Whiteset::empty).add(Whiteset.ofMeasuredFormulas(formulas)).addDeNovo(settings.stillUseDeNovoFor(input.getExperimentInformation().getIonMass())));
             // override constraints... its a bit strange that we have to do that... I would have said when we have
-            // a whiteset we always override the constraints
-            input.setAnnotation(FormulaConstraints.class, input.getAnnotation(FormulaConstraints.class, ()->FormulaConstraints.fromString("CHNOPS")).getExtendedConstraints(FormulaConstraints.allSubsetsOf(formulas)));
         }
     }
 
