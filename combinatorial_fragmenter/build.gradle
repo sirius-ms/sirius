@@ -12,6 +12,6 @@ dependencies() {
 
     testImplementation project(":sirius_api")
     testImplementation "org.openscience.cdk:cdk-bundle:$cdk_version"
-    compile "args4j:args4j:2.32"
+    implementation "args4j:args4j:2.32"
 }
 

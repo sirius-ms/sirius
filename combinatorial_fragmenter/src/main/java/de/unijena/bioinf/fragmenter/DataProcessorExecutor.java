@@ -70,7 +70,7 @@ public class DataProcessorExecutor {
             int fragmentationDepth = executor.fragmentationDepth;
 
             // Initialise the fragmentation constraint:
-            CombinatorialFragmenter.Callback2 fragmentationConstraint = node -> node.getDepth() < fragmentationDepth;
+            CombinatorialFragmenter.Callback2 fragmentationConstraint = (node, nnodes, nedges) -> node.getDepth() < fragmentationDepth;
 
             // Load the scoring model from the given file and initialise the parameters of the DirectedBondTypeScoring:
             DirectedBondTypeScoring.loadScoringFromFile(scoringFile);
