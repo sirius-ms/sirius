@@ -136,68 +136,84 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
 
 
     // region CRUD Streaming API
-    default <T> Stream<T> findStr(Filter filter, Class<T> clazz) throws IOException {
-        return StreamSupport.stream(find(filter, clazz).spliterator(), false);
+    default <T> Stream<T> findStr(Filter filter, Class<T> clazz, String... withOptionalFields) throws IOException {
+        return StreamSupport.stream(find(filter, clazz, withOptionalFields).spliterator(), false);
     }
 
-    default <T> Stream<T> findStr(Filter filter, Class<T> clazz, int offset, int pageSize) throws IOException {
-        return StreamSupport.stream(find(filter, clazz, offset, pageSize).spliterator(), false);
+    default <T> Stream<T> findStr(Filter filter, Class<T> clazz, int offset, int pageSize, String... withOptionalFields) throws IOException {
+        return StreamSupport.stream(find(filter, clazz, offset, pageSize, withOptionalFields).spliterator(), false);
     }
 
-    default <T> Stream<T> findStr(Filter filter, Class<T> clazz, String sortField, SortOrder sortOrder) throws IOException {
-        return StreamSupport.stream(find(filter, clazz, sortField, sortOrder).spliterator(), false);
+    default <T> Stream<T> findStr(Filter filter, Class<T> clazz, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
+        return StreamSupport.stream(find(filter, clazz, sortField, sortOrder, withOptionalFields).spliterator(), false);
     }
 
-    default <T> Stream<T> findStr(Filter filter, Class<T> clazz, int offset, int pageSize, String sortField, SortOrder sortOrder) throws IOException {
-        return StreamSupport.stream(find(filter, clazz, offset, pageSize, sortField, sortOrder).spliterator(), false);
+    default <T> Stream<T> findStr(Filter filter, Class<T> clazz, int offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
+        return StreamSupport.stream(find(filter, clazz, offset, pageSize, sortField, sortOrder, withOptionalFields).spliterator(), false);
     }
 
-    default Stream<DocType> findStr(String collectionName, Filter filter) throws IOException {
-        return StreamSupport.stream(find(collectionName, filter).spliterator(), false);
+    default Stream<DocType> findStr(String collectionName, Filter filter, String... withOptionalFields) throws IOException {
+        return StreamSupport.stream(find(collectionName, filter, withOptionalFields).spliterator(), false);
     }
 
-    default Stream<DocType> findStr(String collectionName, Filter filter, int offset, int pageSize) throws IOException {
-        return StreamSupport.stream(find(collectionName, filter, offset, pageSize).spliterator(), false);
+    default Stream<DocType> findStr(String collectionName, Filter filter, int offset, int pageSize, String... withOptionalFields) throws IOException {
+        return StreamSupport.stream(find(collectionName, filter, offset, pageSize, withOptionalFields).spliterator(), false);
     }
 
-    default Stream<DocType> findStr(String collectionName, Filter filter, String sortField, SortOrder sortOrder) throws IOException {
-        return StreamSupport.stream(find(collectionName, filter, sortField, sortOrder).spliterator(), false);
+    default Stream<DocType> findStr(String collectionName, Filter filter, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
+        return StreamSupport.stream(find(collectionName, filter, sortField, sortOrder, withOptionalFields).spliterator(), false);
     }
 
-    default Stream<DocType> findStr(String collectionName, Filter filter, int offset, int pageSize, String sortField, SortOrder sortOrder) throws IOException {
-        return StreamSupport.stream(find(collectionName, filter, offset, pageSize, sortField, sortOrder).spliterator(), false);
+    default Stream<DocType> findStr(String collectionName, Filter filter, int offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
+        return StreamSupport.stream(find(collectionName, filter, offset, pageSize, sortField, sortOrder, withOptionalFields).spliterator(), false);
     }
 
-    default <T> Stream<T> findAllStr(Class<T> clazz) throws IOException {
-        return StreamSupport.stream(findAll(clazz).spliterator(), false);
+    default <T> Stream<T> findAllStr(Class<T> clazz, String... withOptionalFields) throws IOException {
+        return StreamSupport.stream(findAll(clazz, withOptionalFields).spliterator(), false);
     }
 
-    default <T> Stream<T> findAllStr(Class<T> clazz, int offset, int pageSize) throws IOException {
-        return StreamSupport.stream(findAll(clazz, offset, pageSize).spliterator(), false);
+    default <T> Stream<T> findAllStr(Class<T> clazz, int offset, int pageSize, String... withOptionalFields) throws IOException {
+        return StreamSupport.stream(findAll(clazz, offset, pageSize, withOptionalFields).spliterator(), false);
     }
 
-    default <T> Stream<T> findAllStr(Class<T> clazz, String sortField, SortOrder sortOrder) throws IOException {
-        return StreamSupport.stream(findAll(clazz, sortField, sortOrder).spliterator(), false);
+    default <T> Stream<T> findAllStr(Class<T> clazz, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
+        return StreamSupport.stream(findAll(clazz, sortField, sortOrder, withOptionalFields).spliterator(), false);
     }
 
-    default <T> Stream<T> findAllStr(Class<T> clazz, int offset, int pageSize, String sortField, SortOrder sortOrder) throws IOException {
-        return StreamSupport.stream(findAll(clazz, offset, pageSize, sortField, sortOrder).spliterator(), false);
+    default <T> Stream<T> findAllStr(Class<T> clazz, int offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
+        return StreamSupport.stream(findAll(clazz, offset, pageSize, sortField, sortOrder, withOptionalFields).spliterator(), false);
     }
 
-    default Stream<DocType> findAllStr(String collectionName) throws IOException {
-        return StreamSupport.stream(findAll(collectionName).spliterator(), false);
+    default Stream<DocType> findAllStr(String collectionName, String... withOptionalFields) throws IOException {
+        return StreamSupport.stream(findAll(collectionName, withOptionalFields).spliterator(), false);
     }
 
-    default Stream<DocType> findAllStr(String collectionName, int offset, int pageSize) throws IOException {
-        return StreamSupport.stream(findAll(collectionName, offset, pageSize).spliterator(), false);
+    default Stream<DocType> findAllStr(String collectionName, int offset, int pageSize, String... withOptionalFields) throws IOException {
+        return StreamSupport.stream(findAll(collectionName, offset, pageSize, withOptionalFields).spliterator(), false);
     }
 
-    default Stream<DocType> findAllStr(String collectionName, String sortField, SortOrder sortOrder) throws IOException {
-        return StreamSupport.stream(findAll(collectionName, sortField, sortOrder).spliterator(), false);
+    default Stream<DocType> findAllStr(String collectionName, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
+        return StreamSupport.stream(findAll(collectionName, sortField, sortOrder, withOptionalFields).spliterator(), false);
     }
 
-    default Stream<DocType> findAllStr(String collectionName, int offset, int pageSize, String sortField, SortOrder sortOrder) throws IOException {
-        return StreamSupport.stream(findAll(collectionName, offset, pageSize, sortField, sortOrder).spliterator(), false);
+    default Stream<DocType> findAllStr(String collectionName, int offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
+        return StreamSupport.stream(findAll(collectionName, offset, pageSize, sortField, sortOrder, withOptionalFields).spliterator(), false);
+    }
+
+    default <T> Stream<T> injectOptionalFieldsStr(Class<T> clazz, Iterable<T> objects, String... optionalFields) throws IOException {
+        return StreamSupport.stream(injectOptionalFields(clazz, objects, optionalFields).spliterator(), false);
+    }
+
+    default <T> Stream<T> injectOptionalFieldsStr(Class<T> clazz, Stream<T> objects, String... optionalFields) throws IOException {
+        return StreamSupport.stream(injectOptionalFields(clazz, objects.toList(), optionalFields).spliterator(), false);
+    }
+
+    default Stream<DocType> injectOptionalFieldsStr(String collectionName, Iterable<DocType> documents, String... optionalFields) throws IOException {
+        return StreamSupport.stream(injectOptionalFields(collectionName, documents, optionalFields).spliterator(), false);
+    }
+
+    default Stream<DocType> injectOptionalFieldsStr(String collectionName, Stream<DocType> documents, String... optionalFields) throws IOException {
+        return StreamSupport.stream(injectOptionalFields(collectionName, documents.toList(), optionalFields).spliterator(), false);
     }
 
     default <P, C> Stream<P> joinAllChildrenStr(Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String targetField) throws IOException {
