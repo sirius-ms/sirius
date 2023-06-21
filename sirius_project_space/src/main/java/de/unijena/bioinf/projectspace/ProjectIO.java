@@ -22,22 +22,47 @@ package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 
+import javax.annotation.concurrent.NotThreadSafe;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.nio.file.Path;
+import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 
+@NotThreadSafe
 public interface ProjectIO {
 
     /**
      * Returns a list of all files in the current directory, filtered by the given globPattern
-     * @param globPattern a glob-like pattern for the file. Does not support sub-directories!!!
+     *
+     * @param globPattern a glob-like pattern for the file.
      * @return list of files in the current directory that match globPattern
      * @throws IOException if io error occurs
      */
-    public List<String> list(String globPattern) throws IOException;
+    public List<String> list(String globPattern, final boolean recursive, final boolean includeFiles, final boolean includeDirs) throws IOException;
+
+    public default List<String> list(String globPattern) throws IOException {
+        return list(globPattern, false, true, true);
+    }
+
+    public default List<String> listDirs(String globPattern) throws IOException {
+        return list(globPattern, false, false, true);
+    }
+
+    public default List<String> listFiles(String globPattern) throws IOException {
+        return list(globPattern, false, true, false);
+    }
+
+    public default List<String> listRecursive(String globPattern) throws IOException {
+        return list(globPattern, true, true, true);
+    }
+
+    public default List<String> listDirsRecursive(String globPattern) throws IOException {
+        return list(globPattern, true, false, true);
+    }
+
+    public default List<String> listFilesRecursive(String globPattern) throws IOException {
+        return list(globPattern, true, true, false);
+    }
 
     public boolean exists(String relativePath) throws IOException;
 
@@ -45,14 +70,5 @@ public interface ProjectIO {
 
     public <T> T inDirectory(String relativePath, IOFunctions.IOCallable<T> ioAction) throws IOException;
 
-    public default URL asURL(String path) {
-        try {
-            return asPath(path).toUri().toURL();
-        } catch (MalformedURLException e) {
-            throw new IllegalArgumentException(e);
-        }
-    }
-
-    public Path asPath(String path);
-
+    public URI asURI(String path);
 }

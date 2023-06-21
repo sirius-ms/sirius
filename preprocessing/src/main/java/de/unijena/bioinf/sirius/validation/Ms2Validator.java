@@ -28,14 +28,17 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.data.DataSource;
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.InvalidException;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Warning;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import org.apache.commons.math3.util.Pair;
 
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class Ms2Validator extends Ms1Validator {
 
@@ -53,6 +56,8 @@ public class Ms2Validator extends Ms1Validator {
         checkIonization(warn, repair, input);
         checkMergedMs1(warn, repair, input);
         checkIonMass(warn, repair, input);
+        checkMolecularFormula(warn, repair, input);
+        correctCollisionEnergy(warn, repair, input);
         return true;
     }
 
@@ -83,6 +88,31 @@ public class Ms2Validator extends Ms1Validator {
         }
     }
 
+    private void correctCollisionEnergy(Warning warn,boolean repair, MutableMs2Experiment input) {
+        HashMap<String, Pair<Double,Double>> instrumentCorrection = new HashMap<>(); //Map saves correction values for min and max energy separatly
+        instrumentCorrection.put("Bruker Q-ToF (LCMS)", new Pair<>(5d,5d));
+        instrumentCorrection.put("Q-ToF (LCMS)", new Pair<>(5d,5d));
+        instrumentCorrection.put("Tripple-Quadrupole", new Pair<>(5d,5d));
+
+        String instrumentType = input.getAnnotation(MsInstrumentation.class).map(x->x.description()).orElse(null);
+
+        for (MutableMs2Spectrum spectrum : input.getMs2Spectra()) {
+            if (spectrum.getCollisionEnergy()==null) {
+                spectrum.setCollisionEnergy(CollisionEnergy.none());
+            }
+            if (!spectrum.getCollisionEnergy().isCorrected()) {
+                if (instrumentCorrection.containsKey(instrumentType) && !spectrum.getCollisionEnergy().equals(CollisionEnergy.none())) {
+                    spectrum.getCollisionEnergy().setMinEnergy(spectrum.getCollisionEnergy().minEnergySource() + instrumentCorrection.get(instrumentType).getFirst());
+                    spectrum.getCollisionEnergy().setMaxEnergy(spectrum.getCollisionEnergy().maxEnergySource() + instrumentCorrection.get(instrumentType).getSecond());
+                }else{
+                    spectrum.getCollisionEnergy().setMinEnergy(spectrum.getCollisionEnergy().minEnergySource());
+                    spectrum.getCollisionEnergy().setMaxEnergy(spectrum.getCollisionEnergy().maxEnergySource());
+                }
+            }
+
+        }
+    }
+
     private void checkScanNumbers(Warning warn, boolean repair, MutableMs2Experiment input) {
         for (int k=0; k < input.getMs2Spectra().size(); ++k) {
             input.getMs2Spectra().get(k).setScanNumber(k);
@@ -91,8 +121,8 @@ public class Ms2Validator extends Ms1Validator {
 
     private static String nameOf(MutableMs2Experiment exp) {
         final DataSource s = exp.getAnnotation(DataSource.class).orElse(new DataSource(exp.getSource()));
-        if (s.getUrl()==null) return exp.getName();
-        else return s.getUrl().getFile();
+        if (s.getURI()==null) return exp.getName();
+        else return s.getURI().getPath();
     }
 
 
@@ -357,6 +387,31 @@ public class Ms2Validator extends Ms1Validator {
                     if (Math.abs(s.getPrecursorMz() - parentMz) > 0.1d) {
                         final MutableMs2Spectrum t = new MutableMs2Spectrum(s, parentMz, s.getCollisionEnergy(), 2);
                         input.getMs2Spectra().set(i, t);
+                    }
+                }
+            }
+        }
+    }
+
+    protected void checkMolecularFormula(Warning warn, boolean repair, MutableMs2Experiment input) {
+        MolecularFormula mf = input.getMolecularFormula();
+        if (mf != null) {
+            Whiteset ws = input.getAnnotation(Whiteset.class).orElse(null);
+            if (ws == null || ws.isEmpty() || ws.getNeutralFormulas().isEmpty()) {
+                warn.warn("Adding missing formula candidate constrains for preset molecular formula.");
+                input.setAnnotation(Whiteset.class, Whiteset.ofNeutralizedFormulas(List.of(mf)));
+            } else {
+                if (ws.getNeutralFormulas().size() != 1 || !ws.getNeutralFormulas().iterator().next().equals(mf)) {
+                    String warning = nameOf(input) + ": Preset molecular formula '" + mf
+                            + "' does not match formula candidate constrains {"
+                            + ws.getNeutralFormulas().stream().map(MolecularFormula::toString).collect(Collectors.joining(", "))
+                            + "}.";
+                    if (repair) {
+                        warn.warn(warning + " Correcting constrains.");
+                        input.setAnnotation(Whiteset.class, Whiteset.ofNeutralizedFormulas(List.of(mf)));
+                    } else {
+                        warn.warn(warning + " No correction requested!.");
+
                     }
                 }
             }

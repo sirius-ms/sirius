@@ -38,10 +38,13 @@ public class ClassyfireProperty extends MolecularProperty {
      */
     protected final int priority;
     protected int fixedPriority;
+    // altPriority is an geometric mean between priority ranks and frequency ranks. Thus, "large" compound
+    // classes like peptides are ranked down because they are so frequent
+    protected float altPriority;
     protected int level;
     protected ClassyfireProperty parent;
 
-    public ClassyfireProperty(int chemOntId, String name, String description, int parentId, int priority) {
+    public ClassyfireProperty(int chemOntId, String name, String description, int parentId, int priority, float altPriority) {
         this.chemOntId = chemOntId;
         this.name = name;
         this.description = description;
@@ -49,6 +52,7 @@ public class ClassyfireProperty extends MolecularProperty {
         this.priority = priority;
         this.fixedPriority=-1;
         this.level=-1;
+        this.altPriority = altPriority;
     }
 
     public int getLevel() {
@@ -60,21 +64,31 @@ public class ClassyfireProperty extends MolecularProperty {
     }
 
     public int getFixedPriority() {
-        if (fixedPriority<0) fixedPriority = __getFixedPriority();
+        if (fixedPriority<0) __getFixedPriority();
         return fixedPriority;
+    }
+
+    public float getAltPriority() {
+        if (fixedPriority < 0) {
+            __getFixedPriority();
+        }
+        return altPriority;
     }
 
     /*
         strangely, sometimes a subclass has a lower priority than the superclass..
          */
-    private int __getFixedPriority() {
+    private void __getFixedPriority() {
         int prio = priority;
+        float prio2 = altPriority;
         ClassyfireProperty node = this;
         while (node.parent!=null) {
             node = node.parent;
             prio = Math.max(prio,node.priority);
+            prio2 = Math.max(prio2, node.altPriority);
         }
-        return prio;
+        this.fixedPriority = prio;
+        this.altPriority = prio2;
     }
 
     void setParent(ClassyfireProperty parent) {
@@ -142,6 +156,15 @@ public class ClassyfireProperty extends MolecularProperty {
         public int compare(ClassyfireProperty o1, ClassyfireProperty o2) {
             if ((o1.getFixedPriority() > o2.getFixedPriority()) || (o1.getFixedPriority() == o2.getFixedPriority() && o1.level > o2.level)) return 1;
             if ((o2.getFixedPriority() > o1.getFixedPriority()) || (o2.getFixedPriority() == o1.getFixedPriority() && o2.level > o1.level)) return -1;
+            return 0;
+        }
+    }
+    public static class CompareCompoundClassDescriptivityConsideringFrequency implements Comparator<ClassyfireProperty> {
+
+        @Override
+        public int compare(ClassyfireProperty o1, ClassyfireProperty o2) {
+            if ((o1.getAltPriority() > o2.getAltPriority()) || (o1.getAltPriority() == o2.getAltPriority() && o1.level > o2.level)) return 1;
+            if ((o2.getAltPriority() > o1.getAltPriority()) || (o2.getAltPriority() == o1.getAltPriority() && o2.level > o1.level)) return -1;
             return 0;
         }
     }

@@ -49,6 +49,10 @@ public class ProjectSpaceConfiguration {
         return projectSpacePropertySerializers.get(propertyClass);
     }
 
+    public <T extends ProjectSpaceProperty> boolean hasProjectSpacePropertyRegistered(Class<T> propertyClass){
+        return projectSpacePropertySerializers.containsKey(propertyClass);
+    }
+
     public <ID extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<ID>>
     void registerContainer(Class<Container> container, ContainerSerializer<ID, Container> serializer) {
         containerSerializers.put(container, serializer);

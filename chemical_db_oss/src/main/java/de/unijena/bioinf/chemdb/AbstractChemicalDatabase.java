@@ -32,67 +32,69 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+//todo needs to be refactored to StructureDatabase
 public interface AbstractChemicalDatabase extends Closeable, Cloneable, SearchStructureByFormula, AnnotateStructures {
     // temporary switch
-    public static final boolean USE_EXTENDED_FINGERPRINTS = PropertyManager.getBoolean("de.unijena.bioinf.chemdb.fingerprint.extended", null, false);
+    boolean USE_EXTENDED_FINGERPRINTS = PropertyManager.getBoolean("de.unijena.bioinf.chemdb.fingerprint.extended", null, false);
 
     /**
      * Search for molecular formulas in the database
-     * @param mass exact mass of the ion
+     *
+     * @param mass      exact mass of the ion
      * @param deviation allowed mass deviation
-     * @param ionType adduct of the ion
+     * @param ionType   adduct of the ion
      * @return list of formula candidates which theoretical mass (+ adduct mass) is within the given mass window
      */
-    public abstract List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException;
+    List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException;
 
     /**
      * Search for molecular formulas in the database
-     * @param mass exact mass of the ion
+     *
+     * @param mass      exact mass of the ion
      * @param deviation allowed mass deviation
-     * @param ionTypes allowed adducts of the ion
+     * @param ionTypes  allowed adducts of the ion
      * @return list of formula candidates which theoretical mass (+ adduct mass) is within the given mass window
      */
-    default List<List<FormulaCandidate>> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType[] ionTypes)  throws ChemicalDatabaseException {
+    default List<List<FormulaCandidate>> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType[] ionTypes) throws ChemicalDatabaseException {
         ArrayList<List<FormulaCandidate>> candidates = new ArrayList<>(ionTypes.length);
         for (PrecursorIonType type : ionTypes)
             candidates.add(lookupMolecularFormulas(mass, deviation, type));
         return candidates;
     }
 
-    public abstract boolean containsFormula(MolecularFormula formula) throws ChemicalDatabaseException;
+    boolean containsFormula(MolecularFormula formula) throws ChemicalDatabaseException;
 
-
-        /**
-         * Lookup structures by the given molecular formula. This method will NOT add database links to these structures
-         * @param formula
-         * @return
-         */
-    public abstract List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws ChemicalDatabaseException;
 
     /**
-     * Lookup structures and corresponding fingerprints
-     * by the given molecular formula. This method will NOT add database links to these structures
+     * Lookup structures by the given molecular formula. This method will NOT add database links to these structures
+     *
      * @param formula
      * @return
      */
-    default List<FingerprintCandidate> lookupStructuresAndFingerprintsByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
-        return lookupStructuresAndFingerprintsByFormula(formula, new ArrayList<>());
-    }
+    List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws ChemicalDatabaseException;
 
-    public abstract List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException;
+    List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException;
 
-    public abstract List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws ChemicalDatabaseException;
+    List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws ChemicalDatabaseException;
 
-    public abstract List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException;
+    List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException;
 
-    public abstract List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws ChemicalDatabaseException;
+    List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws ChemicalDatabaseException;
 
     default Fingerprint lookupFingerprintByInChI(InChI inchi) throws ChemicalDatabaseException {
         final List<FingerprintCandidate> xs = lookupFingerprintsByInchis(Collections.singleton(inchi.key2D()));
-        if (xs.size()>0) return xs.get(0).getFingerprint();
+        if (xs.size() > 0) return xs.get(0).getFingerprint();
         else return null;
     }
 
-    public abstract List<InChI> findInchiByNames(List<String> names) throws ChemicalDatabaseException;
+    List<InChI> findInchiByNames(List<String> names) throws ChemicalDatabaseException;
 
+    /**
+     * Returns Date of the represented structure database.
+     * Override this method in remote database implementations to return the correct date.
+     *
+     * @return Date of the represented structure database
+     */
+
+    String getChemDbDate() throws ChemicalDatabaseException;
 }

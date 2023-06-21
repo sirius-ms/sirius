@@ -76,6 +76,20 @@ public class Statistics {
         return (covariance(xs, ys, Exs, Eys) / n);
     }
 
+    public static double cosine(double[] xs, double[] ys) {
+        if (xs.length!=ys.length) throw new IllegalArgumentException("Both vectors should have same length");
+        double x = 0d;
+        double y = 0d;
+        double xy = 0d;
+        for (int k=0; k < xs.length; ++k) {
+            x += xs[k]*xs[k];
+            y += ys[k]*ys[k];
+            xy += xs[k]*ys[k];
+        }
+        return xy/Math.sqrt(x*y);
+    }
+
+
     public static double spearman(double[] xs, double[] ys, double delta) {
         final double[] rxs = toRank(xs, delta);
         final double[] rys = toRank(ys, delta);

@@ -28,11 +28,7 @@ import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.chemdb.PubmedLinks;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
-import de.unijena.bioinf.projectspace.ComponentSerializer;
-import de.unijena.bioinf.projectspace.FormulaResultId;
-import de.unijena.bioinf.projectspace.ProjectReader;
-import de.unijena.bioinf.projectspace.ProjectWriter;
-import de.unijena.bioinf.projectspace.FormulaResult;
+import de.unijena.bioinf.projectspace.*;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -47,14 +43,14 @@ import java.util.stream.Collectors;
 import static de.unijena.bioinf.projectspace.fingerid.FingerIdLocations.FINGERBLAST;
 
 public class FBCandidatesSerializer implements ComponentSerializer<FormulaResultId, FormulaResult, FBCandidates> {
-
+    public static final List<Class<? extends SerializerParameter>> supportedParameters = List.of(FBCandidateNumber.class);
     protected ArrayList<Scored<CompoundCandidate>> readCandidates(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
         if (!reader.exists(FINGERBLAST.relFilePath(id)))
             return null;
 
         final Pattern dblinkPat = Pattern.compile("^.+?:\\(.*\\)$");
         final ArrayList<Scored<CompoundCandidate>> results = new ArrayList<>();
-        final FBCandidateNumber numC = container.getAnnotation(FBCandidateNumber.class).orElse(FBCandidateNumber.ALL);
+        final FBCandidateNumber numC = id.getAnnotation(FBCandidateNumber.class).orElse(FBCandidateNumber.ALL);
 
         reader.table(FINGERBLAST.relFilePath(id), true, 0, numC.value, (row) -> {
             if (row.length == 0) return;
@@ -78,12 +74,12 @@ public class FBCandidatesSerializer implements ComponentSerializer<FormulaResult
                     Matcher matcher = dblinkPat.matcher(db);
                     db = db.trim();
                     if (matcher.matches()) {
-                        String[] split = matcher.group().split(":");
+                        String[] split = matcher.group().split(":\\(");
 
                         final String dbName = split[0].trim();
                         final String ids = split[1].trim();
                         if (!ids.isBlank())
-                            for (String dbId : ids.substring(1, ids.length() - 1).split(","))
+                            for (String dbId : ids.substring(0, ids.length() - 1).split(","))
                                 links.add(new DBLink(dbName,
                                         dbId.isBlank() || dbId.equalsIgnoreCase("null") || dbId.equalsIgnoreCase("na") || dbId.equalsIgnoreCase("n/a")
                                                 ? null : dbId.trim()));
@@ -97,14 +93,13 @@ public class FBCandidatesSerializer implements ComponentSerializer<FormulaResult
                 }
 
                 candidate.setBitset(CustomDataSources.getDBFlagsFromNames(importedNames));
-                candidate.setLinks(links.toArray(DBLink[]::new));
+                candidate.setLinks(links);
             }
 
             if (row.length > 10 && row[10] != null && !row[10].isBlank() && !row[10].equals("N/A")) {
                 candidate.setTanimoto(Double.valueOf(row[10]));
             } else
                 candidate.setTanimoto(null);
-
 
             // we sanity check if reconstructed NON custom db bits match the stored bit set.
             if (row.length > 11 && !row[11].isBlank()) {
@@ -113,6 +108,12 @@ public class FBCandidatesSerializer implements ComponentSerializer<FormulaResult
                 if (linkbasedNonCustomBits != bits)
                     LoggerFactory.getLogger(getClass()).warn("Reconstructed db flags differ from imported.'" + linkbasedNonCustomBits + "' vs '" + bits + "'.");
             }
+
+            if (row.length > 12 && row[12] != null && !row[12].isBlank())
+                candidate.setTaxonomicScore(Double.parseDouble(row[12]));
+
+            if (row.length > 13 && row[13] != null && !row[13].isBlank())
+                candidate.setTaxonomicSpecies(row[13]);
 
             results.add(new Scored<>(candidate, score));
         });
@@ -130,7 +131,7 @@ public class FBCandidatesSerializer implements ComponentSerializer<FormulaResult
         final FBCandidates fingerblastResult = optFingeridResult.orElseThrow(() -> new IllegalArgumentException("Could not find FingerIdResult to write for ID: " + id));
 
         final String[] header = new String[]{
-                "inchikey2D", "inchi", "molecularFormula", "rank", "score", "name", "smiles", "xlogp", "PubMedIds", "links", "tanimotoSimilarity", "dbflags"
+                "inchikey2D", "inchi", "molecularFormula", "rank", "score", "name", "smiles", "xlogp", "PubMedIds", "links", "tanimotoSimilarity", "dbflags", "biological_score", "species"
         };
         final String[] row = new String[header.length];
         final AtomicInteger ranking = new AtomicInteger(0);
@@ -148,6 +149,8 @@ public class FBCandidatesSerializer implements ComponentSerializer<FormulaResult
             row[9] = c.getLinkedDatabases().asMap().entrySet().stream().map((k) -> k.getValue().isEmpty() ? k.getKey() : k.getKey() + ":(" + String.join(", ", k.getValue()) + ")").collect(Collectors.joining("; "));
             row[10] = c.getTanimoto() == null ? "N/A" : String.valueOf(c.getTanimoto());
             row[11] = String.valueOf(CustomDataSources.removeCustomSourceFromFlag(c.getBitset())); //We remove custom db bits since they are only valid ad runtime and user dependent.
+            row[12] = c.getTaxonomicScore() != null ? String.valueOf(c.getTaxonomicScore()) : "";
+            row[13] = c.getTaxonomicSpecies() != null ? c.getTaxonomicSpecies() : "";
             return row;
         })::iterator);
 
@@ -155,6 +158,11 @@ public class FBCandidatesSerializer implements ComponentSerializer<FormulaResult
 
     @Override
     public void delete(ProjectWriter writer, FormulaResultId id) throws IOException {
-        writer.delete(FINGERBLAST.relFilePath(id));
+        writer.deleteIfExists(FINGERBLAST.relFilePath(id));
+    }
+
+    @Override
+    public void deleteAll(ProjectWriter writer) throws IOException {
+        writer.deleteIfExists(FINGERBLAST.relDir());
     }
 }

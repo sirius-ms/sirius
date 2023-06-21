@@ -20,10 +20,10 @@
 
 package de.unijena.bioinf.ChemistryBase.ms;
 
-import java.net.URL;
+import java.net.URI;
 
 public class MsFileSource extends SourceLocation {
-    public MsFileSource(URL value) {
+    public MsFileSource(URI value) {
         super(value);
     }
 }

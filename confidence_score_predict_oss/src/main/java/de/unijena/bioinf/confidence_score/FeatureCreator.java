@@ -32,9 +32,17 @@ import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 public interface FeatureCreator extends Parameterized {
     int weight_direction();
 
+    int min_quartil();
+
+    int max_quartil();
+
     double[] computeFeatures(ParameterStore parameters);
 
     int getFeatureSize();
+
+    void setMinQuartil(int quartil);
+
+    void setMaxQuartil(int quartil);
 
     boolean isCompatible(ProbabilityFingerprint query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates);
 

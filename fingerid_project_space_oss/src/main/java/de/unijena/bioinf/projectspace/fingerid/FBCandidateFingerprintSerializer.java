@@ -49,12 +49,12 @@ public class FBCandidateFingerprintSerializer implements ComponentSerializer<For
             final FingerIdData fingerIdData = reader.getProjectSpaceProperty(FingerIdDataProperty.class)
                     .map(p -> p.getByIonType(id.getIonType())).orElseThrow();
 
-            final FBCandidateNumber numC = container.getAnnotationOrNull(FBCandidateNumber.class);
+            final FBCandidateNumber numC = id.getAnnotationOrNull(FBCandidateNumber.class);
             return reader.binaryFile(FINGERBLAST_FPs.relFilePath(id), br -> {
                 List<Fingerprint> fps = new ArrayList<>();
                 try (DataInputStream dis = new DataInputStream(br)) {
                     TShortArrayList shorts = new TShortArrayList(2000); //use it to reconstruct the array
-                    while (dis.available() > 0 && (numC == null || fps.size() < numC.value)) {
+                    while (dis.available() > 0 && (numC == null || numC.value <= 0 || fps.size() < numC.value)) {
                         short value = dis.readShort();
                         if (value < 0) {
                             fps.add(new ArrayFingerprint(fingerIdData.getFingerprintVersion(), shorts.toArray()));
@@ -100,6 +100,11 @@ public class FBCandidateFingerprintSerializer implements ComponentSerializer<For
 
     @Override
     public void delete(ProjectWriter writer, FormulaResultId id) throws IOException {
-        writer.delete(FINGERBLAST_FPs.relFilePath(id));
+        writer.deleteIfExists(FINGERBLAST_FPs.relFilePath(id));
+    }
+
+    @Override
+    public void deleteAll(ProjectWriter writer) throws IOException {
+        writer.deleteIfExists(FINGERBLAST_FPs.relDir());
     }
 }

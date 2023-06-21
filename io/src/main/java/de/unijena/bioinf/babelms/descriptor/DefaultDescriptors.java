@@ -22,14 +22,17 @@ package de.unijena.bioinf.babelms.descriptor;
 
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.data.TypeError;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
+import de.unijena.bioinf.elgordo.LipidSpecies;
 import de.unijena.bioinf.sirius.annotations.SpectralRecalibration;
 import gnu.trove.list.array.TIntArrayList;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 class DefaultDescriptors {
 
@@ -48,6 +51,7 @@ class DefaultDescriptors {
         registry.put(Fragment.class, Score.class, new ScoreDescriptor());
         registry.put(Fragment.class, Ionization.class, new IonizationDescriptor());
         registry.put(Fragment.class, ImplicitAdduct.class, new ImplicitAdductDescriptor());
+;       registry.put(FTree.class, LipidSpecies.class, new LipidDescriptor());
 
         registry.put(Loss.class, Score.class, new ScoreDescriptor());
         registry.put(Loss.class, LossType.class, new LossTypeDescriptor());
@@ -60,6 +64,33 @@ class DefaultDescriptors {
         registry.put(FTree.class, TreeStatistics.class, new TreeStatisticsDescriptor());
     }
 
+
+    private static class LipidDescriptor implements Descriptor<LipidSpecies> {
+        private final String KEY = "lipid-annotation";
+        @Override
+        public String[] getKeywords() {
+            return new String[]{KEY};
+        }
+
+        @Override
+        public Class<LipidSpecies> getAnnotationClass() {
+            return LipidSpecies.class;
+        }
+
+        @Override
+        public <G, D, L> LipidSpecies read(DataDocument<G, D, L> document, D dictionary) {
+            if (document.hasKeyInDictionary(dictionary, KEY)) {
+                return LipidSpecies.fromString(document.getStringFromDictionary(dictionary,KEY));
+            } else return null;
+        }
+
+        @Override
+        public <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, LipidSpecies annotation) {
+            if (annotation!=null) {
+                document.addToDictionary(dictionary, KEY, annotation.toString());
+            }
+        }
+    }
 
     private static class TreeStatisticsDescriptor implements Descriptor<TreeStatistics> {
 
@@ -129,6 +160,7 @@ class DefaultDescriptors {
         }
     }
 
+    @Deprecated // we already have Fragment#getIonization so this is not necessary anymore...
     private static class IonizationDescriptor implements Descriptor<Ionization> {
 
         @Override
@@ -152,7 +184,7 @@ class DefaultDescriptors {
 
         @Override
         public <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, Ionization annotation) {
-            document.addToDictionary(dictionary, "ion", annotation.toString());
+            //document.addToDictionary(dictionary, "ion", annotation.toString());
         }
     }
 
@@ -202,7 +234,7 @@ class DefaultDescriptors {
 
         @Override
         public String[] getKeywords() {
-            return new String[]{"implicitAdduct"};
+            return new String[]{"implicitAdduct","hasImplicitAdduct"};
         }
 
         @Override
@@ -212,15 +244,36 @@ class DefaultDescriptors {
 
         @Override
         public <G, D, L> ImplicitAdduct read(DataDocument<G, D, L> document, D dictionary) {
-            if (document.hasKeyInDictionary(dictionary,"implicitAdduct")) {
-                return new ImplicitAdduct(MolecularFormula.parseOrThrow(document.getStringFromDictionary(dictionary, "implicitAdduct")));
-            } else return ImplicitAdduct.none();
-        }
+                // hacked :/
+                if (document.hasKeyInDictionary(dictionary,"hasImplicitAdduct")) {
+                    D dict = document.getDictionaryFromDictionary(dictionary, "hasImplicitAdduct");
+                    MolecularFormula f = MolecularFormula.parseOrThrow(document.getStringFromDictionary(dict, "adductFormula"));
+                    double score = 0d;
+                    if (document.hasKeyInDictionary(dict, "score"))
+                        score = document.getDoubleFromDictionary(dict, "score");
+                    AnnotatedPeak peak = null;
+                    if (document.hasKeyInDictionary(dict, "mz")) {
+                        peak = new AnnotatedPeakDescriptor().read(document, dict);
+                    }
+                    return new ImplicitAdduct(f, Optional.ofNullable(peak), score);
+                } else if (document.hasKeyInDictionary(dictionary,"implicitAdduct")) {
+                    return new ImplicitAdduct(MolecularFormula.parseOrThrow(document.getStringFromDictionary(dictionary, "implicitAdduct")));
+                } else return ImplicitAdduct.none();
+            }
 
         @Override
         public <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, ImplicitAdduct annotation) {
             if (annotation.hasImplicitAdduct()) {
-                document.addToDictionary(dictionary, "implicitAdduct", annotation.getAdductFormula().toString());
+                final D impl = document.newDictionary();
+                document.addToDictionary(impl, "adductFormula", annotation.getAdductFormula().toString());
+                if (annotation.getImplicitPeak().isPresent()) {
+                    document.addToDictionary(impl, "score", annotation.getScore());
+                    new AnnotatedPeakDescriptor().write(document, impl, annotation.getImplicitPeak().get());
+                } else {
+                    //legacy
+                    //document.addToDictionary(dictionary, "implicitAdduct", annotation.getAdductFormula().toString());
+                }
+                document.addDictionaryToDictionary(dictionary, "hasImplicitAdduct", impl);
             }
         }
     }
@@ -683,12 +736,13 @@ class DefaultDescriptors {
 
         @Override
         public <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, AnnotatedPeak annotation) {
-            if (!document.hasKeyInDictionary(dictionary, "molecularFormula"))
-                document.addToDictionary(dictionary, "molecularFormula", annotation.getMolecularFormula().toString());
+            // molecularFormula and ion are always part of the node
+            //if (!document.hasKeyInDictionary(dictionary, "molecularFormula"))
+            //    document.addToDictionary(dictionary, "molecularFormula", annotation.getMolecularFormula().toString());
             document.addToDictionary(dictionary, "mz", annotation.getMass());
             document.addToDictionary(dictionary, "relativeIntensity", annotation.getRelativeIntensity());
             document.addToDictionary(dictionary, "recalibratedMass", annotation.getRecalibratedMass());
-            document.addToDictionary(dictionary, "ion", annotation.getIonization().toString());
+            //document.addToDictionary(dictionary, "ion", annotation.getIonization().toString());
 
             final Peak[] peaks = annotation.getOriginalPeaks();
             final L peaklist = document.newList();

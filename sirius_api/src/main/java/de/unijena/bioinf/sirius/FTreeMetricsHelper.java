@@ -91,9 +91,8 @@ public class FTreeMetricsHelper {
     // TODO: we should solve that smarter... A fragment should know if it is the measured ion. Need another annotation for that
     private Fragment getMeasuredIonRoot(LossAnnotation<LossType> lossAno, Fragment root) {
         if (root.isLeaf()) return root;
-        final @Nullable LossType ano = lossAno.get(root.getOutgoingEdge(0));
-        //@todo kai: how to handle null here?
-        if (ano != null && ano.isRegular()) return root;
+        final LossType ano = lossAno.get(root.getOutgoingEdge(0), LossType::regular);
+        if (ano.isRegular()) return root;
         return getMeasuredIonRoot(lossAno, root.getChildren(0));
     }
 

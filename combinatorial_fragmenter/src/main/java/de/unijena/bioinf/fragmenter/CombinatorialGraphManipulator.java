@@ -3,7 +3,6 @@ package de.unijena.bioinf.fragmenter;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
-import gnu.trove.map.hash.TObjectIntHashMap;
 
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -59,82 +58,83 @@ public class CombinatorialGraphManipulator {
         BitSet terminalNodeBitSet = new BitSet();
         terminalNodeBitSet.set(molecule.natoms); // terminal nodes are not real fragments --> this bit characterises them
 
+        FragmentAnnotation<AnnotatedPeak> peakAno = fTree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
         for(Fragment ftFrag : fTree){
             MolecularFormula mf = ftFrag.getFormula().withoutHydrogen();
             lst = mf2NodeSet.get(mf);
             if(lst != null){
                 // in this case, there are nodes in 'graph' (and 'lst') with the same molecular formula base
-                CombinatorialFragment terminalFragment = new CombinatorialFragment(molecule,terminalNodeBitSet,ftFrag.getFormula(),new BitSet());
+                CombinatorialFragment terminalFragment = new CombinatorialFragment(molecule,terminalNodeBitSet,ftFrag.getFormula(),new BitSet(), false, (float)peakAno.get(ftFrag).getRelativeIntensity());
 
                 for(CombinatorialNode node : lst){
-                    graph.addReturnAlways(node, terminalFragment, null, null, scoring, null);
+                    graph.addReturnAlways(node, terminalFragment, null, null, scoring, null).state=1;
+                    colorAllToRoot(node);
                 }
 
                 terminalNodeBitSet = increment(terminalNodeBitSet);
             }
         }
+        // remove dangling subtrees
+
+        final int size = graph.numberOfNodes();
+        removeFromList(graph.nodes, x->x.state==0);
+        for (CombinatorialNode node : graph.nodes) {
+            removeFromList(node.outgoingEdges, x->x.target.state==0);
+        }
+        //LoggerFactory.getLogger(CombinatorialGraphManipulator.class).warn("Remove "+(size-graph.numberOfNodes()) + " of " + graph.numberOfNodes() + " nodes");
+
+
+    }
+    public static <T> void removeFromList(ArrayList<T> xs, Predicate<T> f) {
+        xs.removeIf(f); // super stupid implementation -_- shitty java
     }
 
-    public static void removeAllNodesNotConnectedToTerminalNodes(CombinatorialGraph graph){
-        // INITIALISATION:
-        // First create a hashmap which assigns each node in graph an unique index:
-        final TObjectIntHashMap<CombinatorialNode> node2Index = new TObjectIntHashMap<>(graph.numberOfNodes());
-        node2Index.put(graph.getRoot(), 0);
-
-        int idx = 1;
-        for(CombinatorialNode node : graph.getNodes()){
-            node2Index.put(node, idx);
-            idx++;
-        }
-
-        // ASSIGNING BOOLEAN STATES:
-        // Assign each node a state equals 'true' if there is a path from this node to a terminal node,
-        // otherwise, assign 'false' to this node:
-        boolean[] states = new boolean[graph.numberOfNodes()];
-        for(CombinatorialNode terminalNode : graph.getTerminalNodes()){
-            colorAllToRoot(terminalNode, states, node2Index);
-        }
-
-        // REMOVE ALL NODES WHOSE STATE IS 'FALSE':
-        // Iterate over all nodes in 'graph.getNodes()' and request their state/colour.
-        // If the state of a node is still 'false', we know it's not connected to a terminal node.
-        // In this case, remove this node.
-        ArrayList<CombinatorialNode> nodesWithoutRoot = new ArrayList<>(graph.getNodes());
-        for(CombinatorialNode node : nodesWithoutRoot){
-            int nodeIdx = node2Index.get(node);
-            if(!states[nodeIdx]){
-                graph.deleteNodeDangerously(node);
-            }
-        }
-    }
-
-    private static void colorAllToRoot(CombinatorialNode node, boolean[] states, TObjectIntHashMap<CombinatorialNode> node2Index){
-        // set the state of 'node' to true:
-        int nodeIdx = node2Index.get(node);
-        states[nodeIdx] = true;
-
-        // 'stack' contains only nodes which are connected with 'node':
+    private static void colorAllToRoot(CombinatorialNode node) {
+        node.state=1;
         ArrayList<CombinatorialNode> stack = new ArrayList<>();
         stack.add(node);
-
-        // Do the following for each node in 'stack':
-        // - poll 'currentNode' from the stack -> 'currentNode' is connected with 'node'
-        // - each parent node of 'currentNode' is connected to 'node'
-        // - if the parent node is not coloured 'true', colour it 'true' and add it to the stack
-        // - if it's already coloured to 'true', there are two cases:
-        //      case 1: this node was already processed
-        //      case 2: this node was not processed yet, but it's contained in the stack and will be processed
-        while(!stack.isEmpty()){
-            CombinatorialNode currentNode = stack.remove(stack.size() - 1);
-
-            for(CombinatorialEdge edge : currentNode.incomingEdges){
-                CombinatorialNode parentNode = edge.source;
-                int parentNodeIdx = node2Index.get(parentNode);
-                if(!states[parentNodeIdx]){
-                    states[parentNodeIdx] = true;
-                    stack.add(parentNode);
+        while (!stack.isEmpty()) {
+            CombinatorialNode fragment = stack.remove(stack.size()-1);
+            for (CombinatorialEdge e : fragment.incomingEdges) {
+                if (e.source.state == 0) {
+                    e.source.state=1;
+                    stack.add(e.source);
                 }
             }
         }
+    }
+
+    public static int[][] computeEcfpsUpTo(MolecularGraph graph, int diameter) {
+        CircularFingerprinterMod fingerprinter=null;
+        if (diameter==0) fingerprinter = new CircularFingerprinterMod(CircularFingerprinterMod.CLASS_ECFP0);
+        if (diameter==2) fingerprinter = new CircularFingerprinterMod(CircularFingerprinterMod.CLASS_ECFP2);
+        if (diameter==4) fingerprinter = new CircularFingerprinterMod(CircularFingerprinterMod.CLASS_ECFP4);
+        if (diameter==6) fingerprinter = new CircularFingerprinterMod(CircularFingerprinterMod.CLASS_ECFP6);
+        if (fingerprinter==null) throw new IllegalArgumentException("Unsupported diameter: "+ diameter);
+        try {
+            fingerprinter.calculate(graph.molecule);
+
+            int[][] res = new int[fingerprinter.identitiesPerIteration.size()][];
+            for (int i=0; i < res.length; ++i) res[i] = fingerprinter.identitiesPerIteration.get(i);
+            return res;
+        } catch (CDKException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static int[] computeEcfps(MolecularGraph graph, int diameter) {
+        CircularFingerprinterMod fingerprinter=null;
+        if (diameter==0) fingerprinter = new CircularFingerprinterMod(CircularFingerprinterMod.CLASS_ECFP0);
+        if (diameter==2) fingerprinter = new CircularFingerprinterMod(CircularFingerprinterMod.CLASS_ECFP2);
+        if (diameter==4) fingerprinter = new CircularFingerprinterMod(CircularFingerprinterMod.CLASS_ECFP4);
+        if (diameter==6) fingerprinter = new CircularFingerprinterMod(CircularFingerprinterMod.CLASS_ECFP6);
+        if (fingerprinter==null) throw new IllegalArgumentException("Unsupported diameter: "+ diameter);
+        try {
+            fingerprinter.calculate(graph.molecule);
+            return fingerprinter.identity;
+        } catch (CDKException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 }

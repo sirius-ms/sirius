@@ -31,7 +31,7 @@ public class PCSTFragmentationTreeAnnotatorTest {
 
         @Override
         public double scoreEdge(CombinatorialEdge edge) {
-            if(edge.target.fragment.isRealFragment()){
+            if(edge.target.fragment.isInnerNode()){
                 return this.scoreBond(edge.getCut1(), edge.getDirectionOfFirstCut()) + (edge.getCut2() != null ? scoreBond(edge.getCut2(), edge.getDirectionOfSecondCut()) : 0);
             }else{
                 return 10 - Math.abs(edge.source.fragment.hydrogenRearrangements(edge.target.fragment.getFormula()));

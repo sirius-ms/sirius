@@ -32,7 +32,6 @@ import javax.xml.parsers.SAXParserFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 
 public class MzXMLParser implements LCMSParser{
 
@@ -57,14 +56,11 @@ public class MzXMLParser implements LCMSParser{
         }
         {
             // get source location
-            try {
-                URI s = source.getUrl().toURI();
-                URI parent = s.getPath().endsWith("/") ? s.resolve("..") : s.resolve(".");
-                String fileName = parent.relativize(s).toString();
-                run.setReference(new MsDataSourceReference(parent, fileName, null, null));
-            } catch (URISyntaxException e) {
-                throw new IOException(e);
-            }
+            URI s = source.getURI();
+            URI parent = s.getPath().endsWith("/") ? s.resolve("..") : s.resolve(".");
+            String fileName = parent.relativize(s).toString();
+            run.setReference(new MsDataSourceReference(parent, fileName, null, null));
+
         }
         return run;
     }

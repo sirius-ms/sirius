@@ -21,10 +21,9 @@
 
 package de.unijena.bioinf.ChemistryBase.chem.utils;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import de.unijena.bioinf.ChemistryBase.chem.Isotopes;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
@@ -32,26 +31,25 @@ import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.Map;
 
 public class IsotopicDistributionJSONFile extends DistributionReader {
 
     public IsotopicDistribution read(Reader json) throws IOException {
         final IsotopicDistribution dist = new IsotopicDistribution(PeriodicTable.getInstance());
         final BufferedReader reader = FileUtils.ensureBuffering(json);
-        final JsonParser jreader = new JsonParser();
-        JsonObject jobj = jreader.parse(reader).getAsJsonObject();
-        for (Map.Entry<String, JsonElement> entry : jobj.entrySet()) {
+        final ObjectMapper mapper = new ObjectMapper();
+        JsonNode rootNode = mapper.readTree(reader);
+        rootNode.fields().forEachRemaining(entry -> {
             final Isotopes prev = PeriodicTable.getInstance().getDistribution().getIsotopesFor(entry.getKey());
-            final JsonArray jabundances = entry.getValue().getAsJsonArray();
+            final ArrayNode jabundances = (ArrayNode) entry.getValue();
             final double[] abundances = new double[jabundances.size()];
             final double[] masses = new double[jabundances.size()];
-            for (int i = 0; i < prev.getNumberOfIsotopes(); ++i) {  // TODO: fix!!!
-                abundances[i] = jabundances.get(i).getAsDouble();
+            for (int i = 0; i < prev.getNumberOfIsotopes(); ++i) { // TODO: fix!!!
+                abundances[i] = jabundances.get(i).asDouble();
                 masses[i] = prev.getMass(i);
             }
             dist.addIsotope(entry.getKey(), masses, abundances);
-        }
+        });
         return dist;
     }
 }

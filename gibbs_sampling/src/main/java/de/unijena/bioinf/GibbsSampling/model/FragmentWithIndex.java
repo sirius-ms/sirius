@@ -59,4 +59,9 @@ public class FragmentWithIndex implements Comparable<FragmentWithIndex> {
     public Ionization getIonization() {
         return ionization;
     }
+
+    @Override
+    public String toString() {
+        return "{" + mf + ", " + ionization + ", idx: " + idx +", score: " + score + "}";
+    }
 }

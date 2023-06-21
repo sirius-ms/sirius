@@ -113,6 +113,11 @@ public class ExtendedFingerprintVersion extends FingerprintVersion {
         }
 
         @Override
+        public String getChemDbDate() throws ChemicalDatabaseException {
+            return innerDatabase.getChemDbDate();
+        }
+
+        @Override
         public void close() throws IOException {
             innerDatabase.close();
         }
@@ -222,6 +227,11 @@ public class ExtendedFingerprintVersion extends FingerprintVersion {
 
     @Override
     public boolean compatible(FingerprintVersion fingerprintVersion) {
+        return identical(fingerprintVersion);
+    }
+
+    @Override
+    public boolean identical(FingerprintVersion fingerprintVersion) {
         return this == fingerprintVersion;
     }
 }

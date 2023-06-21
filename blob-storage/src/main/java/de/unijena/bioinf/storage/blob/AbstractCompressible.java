@@ -23,6 +23,8 @@ package de.unijena.bioinf.storage.blob;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.file.Path;
+
 public abstract class AbstractCompressible implements Compressible {
    protected Compression compression;
    protected volatile boolean decompressStreams;
@@ -44,5 +46,9 @@ public abstract class AbstractCompressible implements Compressible {
     @Override
     public @NotNull Compression getCompression() {
         return compression;
+    }
+
+    protected Path addExt(Path relative){
+        return Path.of(relative.toString() + getCompression().ext());
     }
 }

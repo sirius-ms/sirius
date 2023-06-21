@@ -20,14 +20,97 @@
 
 package de.unijena.bioinf.ChemistryBase.math;
 
+import de.unijena.bioinf.ChemistryBase.ms.MutableSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import gnu.trove.list.array.TIntArrayList;
 
 import java.util.Arrays;
+import java.util.Comparator;
 
 public class MatrixUtils {
+
+    public static double dot(double[] U, double[] V) {
+        double sum=0d;
+        for (int i=0; i < V.length; ++i) sum += U[i]*V[i];
+        return sum;
+    }
+    public static float dot(float[] U, float[] V) {
+        double sum=0d;
+        for (int i=0; i < V.length; ++i) sum += U[i]*V[i];
+        return (float)sum;
+    }
+
+    public static float[] matmul(float[][] M, float[] columnVector, float[] result) {
+        final int cols = M[0].length;
+        final int rows = M.length;
+        final int nrows = columnVector.length;
+        if (cols != nrows) throw new IllegalArgumentException("Cannot multiply an " + rows + " x " + cols + " matrix with a " + nrows +  " column vector.");
+
+        for (int row=0; row < M.length; ++row) {
+            final float[] rowvec = M[row];
+            result[row] = dot(rowvec,columnVector);
+        }
+        return result;
+    }
+
+    public static float[] matmul(float[][] M, float[] columnVector) {
+        return matmul(M,columnVector,columnVector.clone());
+    }
+
+    public static double[] matmul(double[][] M, double[] columnVector) {
+        return matmul(M,columnVector,columnVector.clone());
+    }
+
+    public static double[] matmul(double[][] M, double[] columnVector, double[] result) {
+        final int cols = M[0].length;
+        final int rows = M.length;
+        final int nrows = columnVector.length;
+        if (cols != nrows) throw new IllegalArgumentException("Cannot multiply an " + rows + " x " + cols + " matrix with a " + nrows +  " column vector.");
+        for (int row=0; row < M.length; ++row) {
+            final double[] rowvec = M[row];
+            result[row] = dot(rowvec,columnVector);
+        }
+        return result;
+    }
+
+    public static double[][] matmul(double[][] M, double[][] N) {
+        final int cols = M[0].length;
+        final int rows = M.length;
+        final int ncols = N[0].length;
+        if (N.length != cols) throw new IllegalArgumentException("Cannot multiply an " + rows + " x " + cols + " matrix with an " + N.length + " x " + ncols +  " matrix.");
+
+        final double[][] transposedN = transpose(N);
+        final double[][] target = new double[rows][N[0].length];
+        for (int row=0; row < M.length; ++row) {
+            final double[] rowvec = M[row];
+            for (int col=0; col < ncols; ++col) {
+                final double[] colvec = transposedN[col];
+                target[row][col] = dot(rowvec,colvec);
+            }
+        }
+        return target;
+    }
+    public static float[][] matmul(float[][] M, float[][] N) {
+        final int cols = M[0].length;
+        final int rows = M.length;
+        final int ncols = N[0].length;
+        if (N.length != cols) throw new IllegalArgumentException("Cannot multiply an " + rows + " x " + cols + " matrix with an " + N.length + " x " + ncols +  " matrix.");
+
+        final float[][] transposedN = transpose(N);
+        final float[][] target = new float[rows][N[0].length];
+        for (int row=0; row < M.length; ++row) {
+            final float[] rowvec = M[row];
+            for (int col=0; col < ncols; ++col) {
+                final float[] colvec = transposedN[col];
+                target[row][col] = dot(rowvec,colvec);
+            }
+        }
+        return target;
+    }
 
     public static double frobeniusProduct(double[][] M, double[][] N) {
         double prod = 0d;
@@ -131,6 +214,26 @@ public class MatrixUtils {
     public static double[][] unflatVector(double[] vector, int rows, int cols) {
         final double[][] M = new double[rows][cols];
         return unflatVector(vector, M);
+    }
+
+    public static long[] flatMatrix(long[][] matrix, long[] values) {
+        int offset = 0;
+        long[][] var3 = matrix;
+        int var4 = matrix.length;
+
+        for(int var5 = 0; var5 < var4; ++var5) {
+            long[] m = var3[var5];
+            System.arraycopy(m, 0, values, offset, m.length);
+            offset += m.length;
+        }
+
+        return values;
+    }
+    public static long[] flatMatrix(long[][] matrix) {
+        int count = 0;
+        for (long[] m : matrix) count += m.length;
+        final long[] values = new long[count];
+        return flatMatrix(matrix, values);
     }
 
     public static double[] flatMatrix(double[][] matrix, double[] values) {
@@ -269,9 +372,49 @@ public class MatrixUtils {
         }
         return submatrix;
     }
+    public static double[][] selectColumns(double[][] matrix, int[] colIndizes) {
+        return Arrays.stream(matrix).map(x->MatrixUtils.selectGrid(x, colIndizes)).toArray(double[][]::new);
+    }
 
     public static double[][] selectSubmatrix(double[][] matrix, int[] rowIndizes, int[] colIndizes) {
         final double[][] submatrix = new double[rowIndizes.length][colIndizes.length];
+        int i=0,j=0;
+        for (int rowIndex : rowIndizes) {
+            j=0;
+            for (int colIndex : colIndizes) {
+                submatrix[i][j++] = matrix[rowIndex][colIndex];
+            }
+            ++i;
+        }
+        return submatrix;
+    }
+
+
+    public static float[][] selectGrid(float[][] matrix, int[] indizes) {
+        return selectSubmatrix(matrix,indizes,indizes);
+    }
+
+    public static float[] selectGrid(float[] vector, int[] indizes) {
+        final float[] vec = new float[indizes.length];
+        int k=0;
+        for (int index : indizes) vec[k++] = vector[index];
+        return vec;
+    }
+
+    public static float[][] selectRows(float[][] matrix, int[] rowIndizes) {
+        final float[][] submatrix = new float[rowIndizes.length][];
+        int k=0;
+        for (int rowIndex : rowIndizes) {
+            submatrix[k++] = matrix[rowIndex];
+        }
+        return submatrix;
+    }
+    public static float[][] selectColumns(float[][] matrix, int[] colIndizes) {
+        return Arrays.stream(matrix).map(x->MatrixUtils.selectGrid(x, colIndizes)).toArray(float[][]::new);
+    }
+
+    public static float[][] selectSubmatrix(float[][] matrix, int[] rowIndizes, int[] colIndizes) {
+        final float[][] submatrix = new float[rowIndizes.length][colIndizes.length];
         int i=0,j=0;
         for (int rowIndex : rowIndizes) {
             j=0;
@@ -437,6 +580,44 @@ public class MatrixUtils {
             }
         };
     }
+    public static BasicMasterJJob<float[][]> parallelizeSymmetricMatrixComputation(float[][] matrix, MatrixComputationFunction function) {
+        return new BasicMasterJJob<float[][]>(JJob.JobType.CPU) {
+            @Override
+            protected float[][] compute() throws Exception {
+
+                final int middle = matrix.length/2;
+                for (int row=0; row < middle; ++row) {
+                    final int ROW = row;
+                    submitSubJob(new BasicJJob<Object>() {
+                        @Override
+                        protected Object compute() throws Exception {
+                            for (int i=0; i <= ROW; ++i) {
+                                matrix[ROW][i] = matrix[i][ROW] = (float)function.compute(ROW, i);
+                            }
+                            int row2 = matrix.length-ROW-1;
+                            for (int i=0; i <= row2; ++i) {
+                                matrix[row2][i] = matrix[i][row2] = (float)function.compute(row2, i);
+                            }
+                            return true;
+                        }
+                    });
+                }
+                if (matrix.length % 2 != 0) {
+                    submitSubJob(new BasicJJob<Object>() {
+                        @Override
+                        protected Object compute() throws Exception {
+                            for (int k=0; k <= middle; ++k) {
+                                matrix[middle][k] = matrix[k][middle] = (float)function.compute(middle,k);
+                            }
+                            return true;
+                        }
+                    });
+                }
+                awaitAllSubJobs();
+                return matrix;
+            }
+        };
+    }
     // I >= J
     public static BasicMasterJJob<Object> parallelizeSymmetricMatrixComputation(int size, GenericMatrixComputationFunction function) {
         return new BasicMasterJJob<Object>(JJob.JobType.CPU) {
@@ -475,6 +656,18 @@ public class MatrixUtils {
                 return "";
             }
         };
+    }
+
+    public static float[] boolean2float(boolean[] detected) {
+        final float[] xs = new float[detected.length];
+        for (int k=0; k < detected.length; ++k) xs[k] = (detected[k] ? 1f : 0f);
+        return xs;
+    }
+
+    public static float[] short2float(short[] distanceFromApex) {
+        final float[] xs = new float[distanceFromApex.length];
+        for (int k=0; k < distanceFromApex.length; ++k) xs[k] = (distanceFromApex[k]);
+        return xs;
     }
 
     public interface GenericMatrixComputationFunction {
@@ -667,6 +860,27 @@ public class MatrixUtils {
         return flatMatrix(matrix, values);
     }
 
+    public static int[] flatTensor(int[][][] tensor) {
+        int count = 0;
+        for (int[][] m : tensor) {
+            for (int [] n : m) {
+                count += n.length;
+            }
+        }
+        final int[] values = new int[count];
+        return flatTensor(tensor, values);
+    }
+    public static int[] flatTensor(int[][][] tensor, int[] target) {
+        int offset=0;
+        for (int[][] submatrix : tensor) {
+            for (int[] subvec : submatrix) {
+                System.arraycopy(subvec, 0, target, offset, subvec.length);
+                offset += subvec.length;
+            }
+        }
+        return target;
+    }
+
     public static boolean[][] unflatVector(boolean[] vector, int rows, int cols) {
         final boolean[][] M = new boolean[rows][cols];
         return unflatVector(vector, M);
@@ -711,4 +925,171 @@ public class MatrixUtils {
         final boolean[] values = new boolean[count];
         return flatMatrix(matrix, values);
     }
+
+
+
+    public static interface IntComparator {
+        public int compare(int a, int b);
+    }
+
+    public static <T> int[] argsort(int size, IntComparator comparator) {
+        int[] indizes = new int[size];
+        fillIndizes(indizes);
+        argsort(indizes, (i,j)->comparator.compare(i,j));
+        return indizes;
+    }
+
+    public static <T> int[] argsort(T[] values, Comparator<T> comp) {
+        int[] indizes = new int[values.length];
+        fillIndizes(indizes);
+        argsort(indizes, (i,j)->comp.compare(values[i],values[j]));
+        return indizes;
+    }
+
+    public static int[] argsort(int[] values) {
+        int[] indizes = values.clone();
+        fillIndizes(indizes);
+        argsort(indizes, (i,j)->Integer.compare(values[i],values[j]));
+        return indizes;
+    }
+    public static int[] argsort(float[] values) {
+        int[] indizes = new int[values.length];
+        fillIndizes(indizes);
+        argsort(indizes, (i,j)->Float.compare(values[i],values[j]));
+        return indizes;
+    }
+    public static int[] argsort(double[] values) {
+        int[] indizes = new int[values.length];
+        fillIndizes(indizes);
+        argsort(indizes, (i,j)->Double.compare(values[i],values[j]));
+        return indizes;
+    }
+    public static int[] argsort(long[] values) {
+        int[] indizes = new int[values.length];
+        fillIndizes(indizes);
+        argsort(indizes, (i,j)->Long.compare(values[i],values[j]));
+        return indizes;
+    }
+    public static int[] argsort(short[] values) {
+        int[] indizes = new int[values.length];
+        fillIndizes(indizes);
+        argsort(indizes, (i,j)->Short.compare(values[i],values[j]));
+        return indizes;
+    }
+
+    private static void fillIndizes(int[] indizes) {
+        for (int i=0; i < indizes.length; ++i) indizes[i] = i;
+    }
+
+    public static void argsort(int[] indizes, IntComparator compare) {
+        final int n = indizes.length;
+        // Insertion sort on smallest arrays
+        if (n <= 20) {
+            for (int i = 0; i < n; i++) {
+                for (int j = i; j > 0 && compare.compare(indizes[j], indizes[j - 1]) < 0; j--) {
+                    __swap(indizes, j, j - 1);
+                }
+            }
+            return;
+        }
+        // quicksort on larger arrays
+        {
+            int i = 1;
+            for (; i < n; ++i) {
+                if (compare.compare(indizes[i], indizes[i - 1]) < 0) break;
+            }
+            if (i < n) __quickSort__(indizes, compare, 0, n - 1, 0);
+        }
+
+    }
+
+    private static final short[] ALMOST_RANDOM = new short[]{9205, 23823, 4568, 17548, 15556, 31788, 3, 580, 17648, 22647, 17439, 24971, 10767, 9388, 6174, 21774, 4527, 19015, 22379, 12727, 23433, 11160, 15808, 27189, 17833, 7758, 32619, 12980, 31234, 31103, 5140, 571, 4439};
+
+    /**
+     * http://en.wikipedia.org/wiki/Quicksort#In-place_version
+     *
+     * @param low
+     * @param high
+     */
+    private static void __quickSort__(int[] s, IntComparator comp, int low, int high, int depth) {
+        int n = high - low + 1;
+        if (n >= 20 && depth <= 32) {
+            if (low < high) {
+                int pivot = ALMOST_RANDOM[depth] % n + low;
+                pivot = __partition__(s, comp, low, high, pivot);
+                __quickSort__(s, comp, low, pivot - 1, depth + 1);
+                __quickSort__(s, comp, pivot + 1, high, depth + 1);
+            }
+        } else if (n < 40) {
+            for (int i = low; i <= high; i++) {
+                for (int j = i; j > low && comp.compare(s[j], s[j - 1]) < 0; j--) {
+                    __swap(s, j, j - 1);
+                }
+            }
+            return;
+        } else heap_sort(s, comp, low, n);
+    }
+
+    private static void heap_sort(int[] s, IntComparator comp, int offset, int length) {
+        heap_build(s, comp, offset, length);
+        int n = length;
+        while (n > 1) {
+            __swap(s, offset, offset + n - 1);
+            heap_heapify(s, comp, offset, --n, 0);
+        }
+
+    }
+
+    private static void heap_heapify(int[] s, IntComparator comp, int offset, int length, int i) {
+        do {
+            int max = i;
+            final int right_i = 2 * i + 2;
+            final int left_i = right_i - 1;
+            if (left_i < length && comp.compare(s[offset + left_i], s[offset + max]) > 0)
+                max = left_i;
+            if (right_i < length && comp.compare(s[offset + right_i], s[offset + max]) > 0)
+                max = right_i;
+            if (max == i)
+                break;
+            __swap(s, offset + i, offset + max);
+            i = max;
+        } while (true);
+    }
+
+    private static void heap_build(int[] s, IntComparator comp, int offset, int length) {
+        if (length == 0) return;
+        for (int i = (length >> 1) - 1; i >= 0; --i)
+            heap_heapify(s, comp, offset, length, i);
+    }
+
+    /**
+     * http://en.wikipedia.org/wiki/Quicksort#In-place_version
+     *
+     * @param low
+     * @param high
+     * @param pivot
+     * @return
+     */
+    private static <T extends Peak, S extends MutableSpectrum<T>>
+    int __partition__(int[] s, IntComparator comp, int low, int high, int pivot) {
+        __swap(s, high, pivot);
+        int store = low;
+        for (int i = low; i < high; i++) {
+            if (comp.compare(s[i], s[high]) < 0) {
+                if (i != store) __swap(s, i, store);
+                store++;
+            }
+        }
+        __swap(s, store, high);
+        return store;
+    }
+
+    private static void __swap(int[] list, int a, int b) {
+        final int z = list[a];
+        list[a] = list[b];
+        list[b] = z;
+    }
+
+
+
 }
