@@ -207,7 +207,7 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
         // every node whose bitset.length is greater than the number of atoms (in the molecule) is a terminal node:
         ArrayList<CombinatorialNode> terminalNodes = new ArrayList<>();
         for(CombinatorialNode node : this.nodes){
-            if(!node.fragment.isRealFragment()) terminalNodes.add(node);
+            if(!node.fragment.isInnerNode()) terminalNodes.add(node);
         }
         return terminalNodes;
     }

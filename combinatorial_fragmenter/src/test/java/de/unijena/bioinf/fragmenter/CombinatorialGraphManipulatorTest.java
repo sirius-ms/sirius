@@ -3,8 +3,10 @@ package de.unijena.bioinf.fragmenter;
 import de.unijena.bioinf.ChemistryBase.chem.ElectronIonization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
+import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
 import org.junit.Test;
 import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.interfaces.IBond;
@@ -45,7 +47,7 @@ public class CombinatorialGraphManipulatorTest {
         MolecularGraph molecule = new MolecularGraph(parser.parseSmiles(smiles));
 
         CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(molecule);
-        return fragmenter.createCombinatorialFragmentationGraph(n -> true);
+        return fragmenter.createCombinatorialFragmentationGraph((n, nnodes, nnedges) -> true);
     }
 
     @Test
@@ -55,6 +57,7 @@ public class CombinatorialGraphManipulatorTest {
             fTree.addFragment(fTree.getRoot(), new Fragment(1, MolecularFormula.parse("CNH4"), new ElectronIonization()));
             fTree.addFragment(fTree.getRoot(), new Fragment(2,MolecularFormula.parse("CO2H"), new ElectronIonization()));
             fTree.addFragment(fTree.getFragmentAt(1), new Fragment(3, MolecularFormula.parse("NH2"), new ElectronIonization()));
+            fTree.addFragmentAnnotation(AnnotatedPeak.class, AnnotatedPeak::none);
 
             CombinatorialGraph graph = getCombinatorialGraph("C1CC1");
             CombinatorialGraphManipulator.addTerminalNodes(graph, EMPTY_SCORING, fTree);
@@ -84,6 +87,7 @@ public class CombinatorialGraphManipulatorTest {
             fTree.addFragment(fTree.getRoot(), new Fragment(1, MolecularFormula.parse("CH3"), new ElectronIonization()));
             fTree.addFragment(fTree.getRoot(), new Fragment(2, MolecularFormula.parse("C2H5"), new ElectronIonization()));
             fTree.addFragment(fTree.getRoot(), new Fragment(3, MolecularFormula.parse("CH2"), new ElectronIonization()));
+            fTree.addFragmentAnnotation(AnnotatedPeak.class, AnnotatedPeak::none);
 
             CombinatorialGraph graph = getCombinatorialGraph("C1CC1");
             CombinatorialGraphManipulator.addTerminalNodes(graph, EMPTY_SCORING, fTree);
