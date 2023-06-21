@@ -123,6 +123,7 @@ public class FTJsonWriter {
 
             generator.writeNumberField("id", f.getVertexId());
             generator.writeStringField("molecularFormula", f.getFormula().toString());
+            if (f.getIonization()!=null)generator.writeStringField("ion", f.getIonization().toString());
 
             if (anoPeak.get(f).isMeasured()) {
                 Deviation dev = tree.getMassError(f);

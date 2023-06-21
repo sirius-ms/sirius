@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.ms.properties;
 
-import com.google.common.primitives.Primitives;
 import org.apache.commons.configuration2.*;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.lang3.ArrayUtils;
@@ -172,7 +171,7 @@ public final class ParameterConfig {
         config.addConfiguration(nuLayer, name);
         localConfigName = name;
         Iterator<Configuration> it = inner.iterator();
-        innerNames.forEach(n -> config.addConfiguration(it.next(),n));
+        innerNames.forEach(n -> config.addConfiguration(it.next(), n));
     }
 
     public void updateConfig(ParameterConfig update) {
@@ -195,7 +194,7 @@ public final class ParameterConfig {
         if (!containsConfiguration(name))
             throw new IllegalArgumentException("Update failed: Configuration with name '" + name + "' does not exist.");
         final Configuration toUpdate = config.getConfiguration(name);
-        if (toUpdate ==  update)
+        if (toUpdate == update)
             return;
         update.getKeys().forEachRemaining(k -> {
             if (overrideExistingKeys || !toUpdate.containsKey(k))
@@ -403,7 +402,7 @@ public final class ParameterConfig {
                 }
             } catch (IllegalDefaultPropertyKeyException e) {
                 if (skipIllegalKeys)
-                    LoggerFactory.getLogger(getClass()).warn("\"" + classKey + "\" is not a valid DefaultPropertyKey and will be IGNORED!");
+                    LoggerFactory.getLogger(getClass()).debug("\"" + classKey + "\" is not a valid DefaultPropertyKey and will be IGNORED!");
                 else throw new RuntimeException(e);
             }
         });
@@ -517,11 +516,14 @@ public final class ParameterConfig {
             objectValue = (T) invokePossiblyPrivateMethod(fromString, null, stringValue);
         } else {
             if (fType.isPrimitive() || fType.isAssignableFrom(Boolean.class) || fType.isAssignableFrom(Byte.class) || fType.isAssignableFrom(Short.class) || fType.isAssignableFrom(Integer.class) || fType.isAssignableFrom(Long.class) || fType.isAssignableFrom(Float.class) || fType.isAssignableFrom(Double.class) || fType.isAssignableFrom(String.class) || fType.isAssignableFrom(Color.class)) {
-                objectValue = convertToDefaultType(fType, stringValue);
+                if (fType.isAssignableFrom(Color.class) && stringValue.startsWith("#"))
+                    objectValue = (T) Color.decode(stringValue);
+                else
+                    objectValue = convertToDefaultType(fType, stringValue);
             } else if (fType.isArray()) {
                 Class<?> elementType = fType.getComponentType();
                 if (elementType.isPrimitive()) {
-                    objectValue = (T) ArrayUtils.toPrimitive(convertToCollection(Primitives.wrap(elementType), stringValue));
+                    objectValue = (T) ArrayUtils.toPrimitive(convertToCollection(wrapPrimitive(elementType), stringValue));
                 } else {
                     objectValue = (T) convertToCollection(elementType, stringValue);
                 }
@@ -617,5 +619,18 @@ public final class ParameterConfig {
             }
             typeMap.put(typeParameter[i], actualTypeArgument[i]);
         }
+    }
+
+    public static <T> Class<T> wrapPrimitive(Class<T> type) {
+        if (type == int.class) return (Class<T>) Integer.class;
+        if (type == float.class) return (Class<T>) Float.class;
+        if (type == byte.class) return (Class<T>) Byte.class;
+        if (type == double.class) return (Class<T>) Double.class;
+        if (type == long.class) return (Class<T>) Long.class;
+        if (type == char.class) return (Class<T>) Character.class;
+        if (type == boolean.class) return (Class<T>) Boolean.class;
+        if (type == short.class) return (Class<T>) Short.class;
+        if (type == void.class) return (Class<T>) Void.class;
+        return type;
     }
 }

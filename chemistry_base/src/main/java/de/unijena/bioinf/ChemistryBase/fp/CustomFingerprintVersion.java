@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ChemistryBase.fp;
 
 import java.util.List;
+import java.util.Objects;
 
 public class CustomFingerprintVersion extends FingerprintVersion{
 
@@ -52,8 +53,13 @@ public class CustomFingerprintVersion extends FingerprintVersion{
 
     @Override
     public boolean compatible(FingerprintVersion fingerprintVersion) {
+        return identical(fingerprintVersion);
+    }
+
+    @Override
+    public boolean identical(FingerprintVersion fingerprintVersion) {
         if (fingerprintVersion instanceof CustomFingerprintVersion) {
-            return ((CustomFingerprintVersion) fingerprintVersion).name == this.name;
+            return Objects.equals(((CustomFingerprintVersion) fingerprintVersion).name, this.name);
         } else return false;
     }
 }

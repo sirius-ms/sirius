@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 
 import static java.util.Collections.binarySearch;
+import static java.util.Collections.min;
 
 public class MutableChromatographicPeak implements CorrelatedChromatographicPeak {
 
@@ -36,6 +37,20 @@ public class MutableChromatographicPeak implements CorrelatedChromatographicPeak
     private int correlationStartPoint, correlationEndPoint;
     private double correlation;
     public TreeMap<Integer, Segment> segments;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MutableChromatographicPeak that = (MutableChromatographicPeak) o;
+        final ScanPoint u = scanPoints.get(apex), v = that.scanPoints.get(that.apex);
+        return u.equals(v);
+    }
+
+    @Override
+    public int hashCode() {
+        return scanPoints.get(apex).hashCode();
+    }
 
     public MutableChromatographicPeak(ChromatographicPeak peak) {
         this.scanPoints = new ArrayList<>();
@@ -61,8 +76,8 @@ public class MutableChromatographicPeak implements CorrelatedChromatographicPeak
         scanPoints.add(0, p);
     }
 
-    public Segment addSegment(int from, int apex, int to) {
-        Segment newSegment = new Segment(this, from, apex, to);
+    public Segment addSegment(int from, int apex, int to, boolean noise) {
+        Segment newSegment = new Segment(this, from, apex, to, noise);
         // segments are not allowed to overlap
         var ceiling = segments.ceilingEntry(newSegment.apex);
         if (ceiling!=null && ceiling.getValue().startIndex < newSegment.endIndex)
@@ -72,19 +87,77 @@ public class MutableChromatographicPeak implements CorrelatedChromatographicPeak
             throw new IllegalArgumentException("Segments are not allowed to overlap: " + newSegment + " overlaps with " + floor.getValue() );
 
         this.segments.put(newSegment.apex, newSegment);
+        if (maxtensity(from, to) > getIntensityAt(apex)) {
+            LoggerFactory.getLogger(MutableChromatographicPeak.class).warn("Apex is not peak with highest intensity!");
+        }
         validate();
         return newSegment;
+    }
+
+    private double maxtensity(int from, int to) {
+        double f = getIntensityAt(from);
+        for (int k=from+1; k <= to; ++k) {
+            f = Math.max(f, getIntensityAt(k));
+        }
+        return f;
+    }
+    private double mintensity(int from, int to) {
+        double f = getIntensityAt(from);
+        for (int k=from+1; k <= to; ++k) {
+            f = Math.min(f, getIntensityAt(k));
+        }
+        return f;
+    }
+
+    /**
+     * Split the segment such that left is on the left side and right is on the right side. Return the two segments if this is possible.
+     */
+    public Optional<Segment[]> tryToDivideSegment(Segment segment, int leftIndex, int rightIndex) {
+        if (segment.peak!=this) throw new IllegalArgumentException("Can only split segments that are owned by this peak");
+        final double a = getIntensityAt(leftIndex);
+        final double b = getIntensityAt(rightIndex);
+        // find minimum in between
+        double minimum = Math.min(a,b);
+        int mindex = -1;
+        for (int k=leftIndex+1; k < rightIndex; ++k) {
+            if (getIntensityAt(k) < minimum) {
+                minimum = getIntensityAt(k);
+                mindex = k;
+            }
+        }
+        if (mindex<0) {
+            return Optional.empty();
+        }
+        // find maximum left and right
+        double maxLeft = 0d, maxRight = 0d;
+        int mxL=-1,mxR=-1;
+        for (int k=segment.getStartIndex(); k < mindex; ++k) {
+            if (maxLeft < getIntensityAt(k)) {
+                maxLeft = getIntensityAt(k);
+                mxL = k;
+            }
+        }
+        for (int k=mindex+1; k < segment.getEndIndex(); ++k) {
+            if (maxRight < getIntensityAt(k)) {
+                maxRight = getIntensityAt(k);
+                mxR = k;
+            }
+        }
+        if (mxL<0 || mxR<0) {
+            return Optional.empty();
+        }
+        divideSegment(segment, mindex, mxL, mxR);
+        return Optional.of(new Segment[]{
+           getSegmentWithApexId(mxL).get(), getSegmentWithApexId(mxR).get()
+        });
     }
 
     public void divideSegment(Segment segment, int minimum, int maximumLeft, int maximumRight) {
         try {
             final TreeMap<Integer,Segment> clone = (TreeMap<Integer, Segment>) segments.clone();
-            System.err.println("SPLIT " + segment + " AT " + getScanNumberAt(minimum) + " WITH TWO APEXES AT " + getScanNumberAt(maximumLeft) + " AND " + getScanNumberAt(maximumRight));
             segments.remove(segment.apex);
-            Segment s = addSegment(segment.startIndex, maximumLeft, minimum);
-            System.err.println(s + " added");
-            s = addSegment(minimum, maximumRight, segment.endIndex);
-            System.err.println(s + " added");
+            Segment s = addSegment(segment.startIndex, maximumLeft, minimum, segment.noise);
+            s = addSegment(minimum, maximumRight, segment.endIndex, segment.noise);
             validate();
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
@@ -93,15 +166,16 @@ public class MutableChromatographicPeak implements CorrelatedChromatographicPeak
         }
     }
 
-    public void joinSegments(Segment left, Segment right) {
+    public Segment joinSegments(Segment left, Segment right) {
         int newApex;
         if (getIntensityAt(left.apex) > getIntensityAt(right.apex))
             newApex = left.apex;
         else newApex = right.apex;
         segments.remove(left.apex);
         segments.remove(right.apex);
-        addSegment(Math.min(left.startIndex,right.startIndex),  newApex,Math.max(left.endIndex,right.endIndex));
+        Segment segment = addSegment(Math.min(left.startIndex,right.startIndex),  newApex,Math.max(left.endIndex,right.endIndex), false);
         validate();
+        return segment;
     }
 
     @Override
@@ -144,6 +218,23 @@ public class MutableChromatographicPeak implements CorrelatedChromatographicPeak
     @Override
     public ScanPoint getScanPointAt(int k) {
         return scanPoints.get(k);
+    }
+
+    @Override
+    public int findClosestIndexByRt(long rt) {
+        int insertionPoint = binarySearch(scanPoints, new ScanPoint(0, rt, 0, 0), Comparator.comparingLong(ScanPoint::getRetentionTime));
+        if (insertionPoint>=0) return insertionPoint;
+        final int indexA = -(insertionPoint+1);
+        final int indexB = indexA-1;
+        long delta = Long.MAX_VALUE;
+        if (indexA < scanPoints.size()) {
+            delta = Math.abs(scanPoints.get(indexA).getRetentionTime() - rt);
+        }
+        if (indexB >= 0) {
+            long d2=Math.abs(scanPoints.get(indexB).getRetentionTime() - rt);
+            if (d2 < delta) return indexB;
+        }
+        return indexA;
     }
 
     @Override
@@ -214,9 +305,20 @@ public class MutableChromatographicPeak implements CorrelatedChromatographicPeak
     }
 
     public void trimEdges() {
+        extendFirstSegmentToLeft();
+        extendLastSegmentToRight();
+
         int startIndex = segments.firstEntry().getValue().startIndex;
         int endIndex = segments.lastEntry().getValue().endIndex;
 
+        // artificially add noise segments to start and end, such that all scanpoints are covered by a segment
+        if (startIndex > 0) {
+            addNoiseSegment(0, startIndex-1 );
+        }
+        if (endIndex < this.numberOfScans()-1) {
+            addNoiseSegment(endIndex+1, this.numberOfScans()-1 );
+        }
+        /*
         final int shift = startIndex;
         final ArrayList<ScanPoint> copy = new ArrayList<>(scanPoints.subList(startIndex,endIndex+1));
         scanPoints.clear();
@@ -225,11 +327,55 @@ public class MutableChromatographicPeak implements CorrelatedChromatographicPeak
             final ArrayList<Segment> segs = new ArrayList<>(segments.values());
             segments.clear();
             for (Segment s : segs) {
-                final Segment t = new Segment(s.peak, s.startIndex - shift, s.apex - shift, s.endIndex - shift);
+                final Segment t = new Segment(s.peak, s.startIndex - shift, s.apex - shift, s.endIndex - shift, s.noise);
                 segments.put(t.apex, t);
             }
         }
         validate();
+         */
+    }
+
+    private void addNoiseSegment(int from, int to) {
+        // find apex
+        int mxi=from;
+        for (int i=from+1; i <= to; ++i) {
+            if (getIntensityAt(i)>getIntensityAt(mxi)) {
+                mxi=i;
+            }
+        }
+        segments.put(mxi, new Segment(this, from, mxi, to, true));
+    }
+
+    private void extendFirstSegmentToLeft() {
+        Segment seg = segments.firstEntry().getValue();
+        int k= seg.startIndex;;
+        int mindex=k;
+        for (; k >= 0; --k) {
+            if (getIntensityAt(k) < getIntensityAt(mindex)) {
+                mindex=k;
+            }
+        }
+        if (mindex!=seg.startIndex) {
+            Segment newSeg = new Segment(this, mindex, seg.apex, seg.endIndex, seg.noise);
+            segments.remove(seg.apex);
+            segments.put(newSeg.apex, newSeg);
+        }
+    }
+    private void extendLastSegmentToRight() {
+        Segment seg = segments.lastEntry().getValue();
+        int k= seg.endIndex;;
+        double minIntensity = getIntensityAt(k);
+        int mindex=k;
+        for (; k < numberOfScans(); ++k) {
+            if (getIntensityAt(k) < getIntensityAt(mindex)) {
+                mindex=k;
+            }
+        }
+        if (mindex!=seg.endIndex) {
+            Segment newSeg = new Segment(this, seg.startIndex, seg.apex, mindex, seg.noise);
+            segments.remove(seg.apex);
+            segments.put(newSeg.apex, newSeg);
+        }
     }
 
     public Optional<Segment> joinAllSegmentsWithinScanIds(int a, int b) {
@@ -254,7 +400,7 @@ public class MutableChromatographicPeak implements CorrelatedChromatographicPeak
         }
         if (segmentsToDelete.isEmpty()) return Optional.empty();
         segmentsToDelete.forEach(x->{segments.remove(x); return true;});
-        final Segment s = new Segment(this, minA, maxApex, maxB);
+        final Segment s = new Segment(this, minA, maxApex, maxB, false);
         segments.put(s.apex, s);
         validate();
         return Optional.of(s);

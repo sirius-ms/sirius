@@ -22,7 +22,8 @@
 package de.unijena.bioinf.sirius;
 
 
-import com.google.gson.JsonObject;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.unijena.bioinf.ChemistryBase.data.JSONDocumentType;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
@@ -50,11 +51,11 @@ public class Profile {
         if (oldSirius) {
             name = name.split(":")[1];
         }
-        final JsonObject json = JSONDocumentType.getJSON("/profiles/" + name.toLowerCase() + ".json", name);
+        final JsonNode json = JSONDocumentType.getJSON("/profiles/" + name.toLowerCase() + ".json", name);
         final JSONDocumentType document = new JSONDocumentType();
-        if (document.hasKeyInDictionary(json, "FragmentationPatternAnalysis")) this.fragmentationPatternAnalysis = FragmentationPatternAnalysis.loadFromProfile(document, json);
+        if (json.has("FragmentationPatternAnalysis")) this.fragmentationPatternAnalysis = FragmentationPatternAnalysis.loadFromProfile(document, json);
         else fragmentationPatternAnalysis=null;
-        if (document.hasKeyInDictionary(json, "IsotopePatternAnalysis")) this.isotopePatternAnalysis = IsotopePatternAnalysis.loadFromProfile(document, json);
+        if (json.has("IsotopePatternAnalysis")) this.isotopePatternAnalysis = IsotopePatternAnalysis.loadFromProfile(document, json);
         else isotopePatternAnalysis=null;
         this.ms2Preprocessor = new Ms2Preprocessor();
         this.ms1Preprocessor = new Ms1Preprocessor();
@@ -84,7 +85,7 @@ public class Profile {
     public void writeToFile(@NotNull final File file) throws IOException {
         final FileWriter writer = new FileWriter(file);
         final JSONDocumentType json = new JSONDocumentType();
-        final JsonObject obj = json.newDictionary();
+        final ObjectNode obj = json.newDictionary();
         if (fragmentationPatternAnalysis != null) {
             fragmentationPatternAnalysis.writeToProfile(json, obj);
         }

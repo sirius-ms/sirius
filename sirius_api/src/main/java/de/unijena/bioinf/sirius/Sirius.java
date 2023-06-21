@@ -39,7 +39,6 @@ import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.IsotopePatternAnalysis.generation.IsotopePatternGenerator;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
-import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
@@ -81,9 +80,15 @@ public class Sirius {
         this.getMs2Analyzer().registerPlugin(new AdductSwitchPlugin());
         this.getMs2Analyzer().registerPlugin(new IsotopePatternInMs1Plugin());
         this.getMs2Analyzer().registerPlugin(new IsotopePatternInMs2Plugin());
-
-
+        this.getMs2Analyzer().registerPlugin(new UseLossMassDeviationScoringPlugin());
         this.getMs2Analyzer().registerPlugin(new TreeMotifPlugin());
+
+        this.getMs2Analyzer().registerPlugin(new PredefinedPeakPlugin());
+        this.getMs2Analyzer().registerPlugin(new ElGordoPlugin());
+        this.getMs2Analyzer().registerPlugin(new AminoAcidPlugin());
+        this.getMs2Analyzer().registerPlugin(new AdductNeutralizationPlugin());
+
+        this.getMs2Analyzer().registerPlugin(new BottomUpSearch());
     }
 
     public Sirius(@NotNull Profile profile, @NotNull PeriodicTable table) {
@@ -541,7 +546,7 @@ public class Sirius {
      * @param ion      ionization mode (might be a Charge)
      * @return spectrum containing the theoretical isotope pattern of this compound
      */
-    public Spectrum<Peak> simulateIsotopePattern(MolecularFormula compound, Ionization ion) {
+    public SimpleSpectrum simulateIsotopePattern(MolecularFormula compound, Ionization ion) {
         return getMs1Analyzer().getPatternGenerator().simulatePattern(compound, ion);
     }
 
@@ -553,7 +558,7 @@ public class Sirius {
      * @param numberOfPeaks number of peaks in simulated pattern
      * @return spectrum containing the theoretical isotope pattern of this compound
      */
-    public Spectrum<Peak> simulateIsotopePattern(MolecularFormula compound, Ionization ion, int numberOfPeaks) {
+    public SimpleSpectrum simulateIsotopePattern(MolecularFormula compound, Ionization ion, int numberOfPeaks) {
         IsotopePatternGenerator gen = getMs1Analyzer().getPatternGenerator();
         gen.setMaximalNumberOfPeaks(numberOfPeaks);
         return gen.simulatePattern(compound, ion);
@@ -607,6 +612,16 @@ public class Sirius {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////CLASSES/////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+  /*  public class SiriusMS1IdentificationJob extends BasicMasterJJob<List<IdentificationResult<SiriusScore>>> {
+
+        @Override
+        protected List<IdentificationResult<SiriusScore>> compute() throws Exception {
+            return null;
+        }
+    }*/
+
     public class SiriusIdentificationJob extends BasicMasterJJob<List<IdentificationResult<SiriusScore>>> {
         private final Ms2Experiment experiment;
 
@@ -622,7 +637,7 @@ public class Sirius {
                 if (experiment.getAnnotationOrDefault(IsotopeSettings.class).isEnabled())
                     getMs1Analyzer().computeAndScoreIsotopePattern(input);
                 final FasterTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), input);
-                instance.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, evt -> updateProgress(0, 105,  ((Number)evt.getNewValue()).intValue()));
+                instance.addJobProgressListener(evt -> updateProgress(0, 105,  evt.getProgress()));
                 submitSubJob(instance);
                 FasterTreeComputationInstance.FinalResult fr = instance.awaitResult();
 
@@ -694,6 +709,8 @@ public class Sirius {
                 if (adductSettings != null && possibleAdducts.hasOnlyPlainIonizationsWithoutModifications()) {
                     //todo check if it makes sense to use the detectables
                     usedIonTypes = adductSettings.getDetectable(possibleAdducts.getIonModes());
+                    usedIonTypes.addAll(adductSettings.getEnforced(possibleAdducts.getIonModes()));
+                    usedIonTypes.addAll(adductSettings.getFallback(possibleAdducts.getIonModes()));
                 } else {
                     //there seem to be some information from the preprocessing
                     usedIonTypes = possibleAdducts.getAdducts();
@@ -701,7 +718,7 @@ public class Sirius {
 
                 Set<PrecursorIonType> adducts = new PossibleAdducts(usedIonTypes).getAdducts(ionType.getIonization());
                 if (adducts.size()==0) {
-                    LoggerFactory.getLogger(getClass()).warn("No valid adducts found for ionization " + ionType.getIonization() + " for compound " + experiment.getName() + ". Using incorrect adduct parameters?");
+                    LoggerFactory.getLogger(getClass()).warn("No valid adducts found for ionization " + ionType.getIonization() + " for compound " + experiment.getName() + ". This might be caused by incorrect adduct parameters! You might either want to add matching adducts to 'considered-ions' or set the ion type of this feature to unknown.");
                     return tree;
                 }
 

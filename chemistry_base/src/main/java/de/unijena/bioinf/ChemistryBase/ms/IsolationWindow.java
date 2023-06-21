@@ -43,13 +43,21 @@ public class IsolationWindow {
         return windowWidth;
     }
 
+    public double getLeftOffset() {
+        return (windowWidth/2d  - windowOffset);
+    }
+
+    public double getRightOffset() {
+        return (windowWidth/2d  + windowOffset);
+    }
+
     public Range<Double> getWindowFor(double peak) {
         return Range.closed(peak+windowOffset-windowWidth/2d, peak+windowOffset+windowWidth/2d);
     }
 
     public static IsolationWindow fromOffsets(double lowerOffset, double higherOffset) {
         double width = lowerOffset + higherOffset;
-        double offset = higherOffset - lowerOffset;
+        double offset = (higherOffset - lowerOffset) / 2d;
         return new IsolationWindow(offset, width);
     }
 

@@ -181,7 +181,7 @@ public class CommonLossEdgeScorer implements LossScorer {
     }
 
     public double score(MolecularFormula formula) {
-        final double score = recombinatedList.get(formula);
+        final double score = getRecombinatedList().get(formula);
         if (score != 0) return score - normalization;
         else return commonLosses.get(formula) - normalization;
     }

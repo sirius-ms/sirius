@@ -22,10 +22,7 @@ package de.unijena.bioinf.model.lcms;
 
 import com.google.common.collect.Range;
 
-import java.util.HashSet;
-import java.util.NavigableMap;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 public interface ChromatographicPeak {
 
@@ -57,6 +54,8 @@ public interface ChromatographicPeak {
         }
         return apex;
     }
+
+    public int findClosestIndexByRt(long rt);
 
     public Optional<Segment> getSegmentWithApexId(int apexId);
 
@@ -117,13 +116,37 @@ public interface ChromatographicPeak {
         return set;
     }
 
+    public default int index2scanNumber(int index) {
+        return getScanNumberAt(index);
+    }
+    public default Range<Integer> index2scanNumber(Range<Integer> indizes) {
+        int from = getScanNumberAt(indizes.lowerEndpoint());
+        int to = getScanNumberAt(indizes.upperEndpoint());
+        return Range.closed(from, to);
+    }
+
     public static class Segment {
 
         protected final ChromatographicPeak peak;
         protected final int startIndex, endIndex, apex;
         protected final int fwhmStart, fwhmEnd;
 
-        Segment(ChromatographicPeak peak, int startIndex, int apex, int endIndex) {
+        protected boolean noise;
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Segment segment = (Segment) o;
+            return apex == segment.apex && peak.equals(segment.peak);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(peak, apex);
+        }
+
+        Segment(ChromatographicPeak peak, int startIndex, int apex, int endIndex, boolean noise) {
             this.peak = peak;
             this.startIndex = startIndex;
             this.endIndex = endIndex;
@@ -131,6 +154,11 @@ public interface ChromatographicPeak {
             final Range<Integer> fwhm = calculateFWHM(0.5);
             this.fwhmEnd = fwhm.upperEndpoint();
             this.fwhmStart = fwhm.lowerEndpoint();
+            this.noise = noise;
+        }
+
+        public boolean isNoise() {
+            return noise;
         }
 
         void setMinMaxScanIndex(int[] scanIndex, int surrounding) {

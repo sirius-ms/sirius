@@ -26,18 +26,20 @@ import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.procedure.TObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.file.FileSystem;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.*;
@@ -45,6 +47,27 @@ import java.util.zip.*;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 public class FileUtils {
+
+    public static long getFolderSize(Path startPath) throws IOException {
+        final AtomicLong size = new AtomicLong(0);
+
+        Files.walkFileTree(startPath, new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                size.addAndGet(attrs.size());
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFileFailed(Path file, IOException exc) {
+                // Skip folders that can't be traversed
+                LoggerFactory.getLogger(FileUtils.class).warn("skipped: " + file, exc);
+                return FileVisitResult.CONTINUE;
+            }
+        });
+
+        return size.get();
+    }
 
     public static void closeIfNotDefaultFS(Path zipFS) throws IOException {
         final FileSystem fs = zipFS.getFileSystem();
@@ -56,19 +79,33 @@ public class FileUtils {
         if (!Files.isRegularFile(f))
             return false;
         int fileSignature;
-        try (RandomAccessFile raf = new RandomAccessFile(f.toFile(), "r")) {
+
+        try (DataInputStream raf = new DataInputStream(Files.newInputStream(f, StandardOpenOption.READ))) {
+            if (raf.available() < 4)
+                return false;
             fileSignature = raf.readInt();
         }
         return fileSignature == 0x504B0304 || fileSignature == 0x504B0506 || fileSignature == 0x504B0708;
     }
 
 
-    public static Path asZipFS(Path zipFile, boolean createNew) throws IOException {
-        final Map<String, String> option = new HashMap<>();
-        if (createNew)
+    public static FileSystem asZipFS(Path zipFile, boolean createNew, boolean useTempFile, @Nullable ZipCompressionMethod method) throws IOException {
+        final Map<String, Object> option = new HashMap<>();
+        option.put("useTempFile", useTempFile);
+        option.put("forceZIP64End", "true");
+        option.put("compressionMethod", method == null ? ZipCompressionMethod.DEFLATED.name() : method.name());
+        if (createNew){
+            if (zipFile.getParent() != null)
+                Files.createDirectories(zipFile.getParent());
             option.put("create", "true");
-        FileSystem zipFS = FileSystems.newFileSystem(URI.create("jar:file:" + zipFile.toUri().getPath()), option);
-        return zipFS.getPath(zipFS.getSeparator());
+        }
+        return FileSystems.newFileSystem(zipFile, option);
+    }
+
+    public static Path asZipFSPath(Path zipFile, boolean createNew, boolean useTempFile, @Nullable ZipCompressionMethod method) throws IOException {
+        FileSystem zipFS = asZipFS(zipFile, createNew, useTempFile, method);
+        Path p = zipFS.getPath(zipFS.getSeparator());
+        return p;
     }
 
     /**
@@ -101,7 +138,6 @@ public class FileUtils {
     }
 
     /**
-     *
      * @param zipFile
      * @param target
      * @return Target directory with unzipped data
@@ -125,10 +161,10 @@ public class FileUtils {
     /**
      * Copies a File Tree recursively to another location.
      * Src and dest might be different Filesystems (e.g. mounted ZipFile)
-     *
+     * <p>
      * Note: The target directory must already exist.
      *
-     * @param src Source location
+     * @param src  Source location
      * @param dest Target location
      * @throws IOException if I/O Error occurs
      */
@@ -140,36 +176,12 @@ public class FileUtils {
 
         List<Path> files = walkAndClose(w -> w.collect(Collectors.toList()), src);
         for (Path source : files) {
-                String relative = src.relativize(source).toString();
-                final Path target = dest.resolve(relative);
-                if (!target.equals(target.getFileSystem().getPath("/"))) //exclude root to be zipFS compatible
-                    Files.copy(source, target, REPLACE_EXISTING);
-
+            String relative = src.relativize(source).toString();
+            final Path target = dest.resolve(relative);
+            if (!target.equals(dest) && !target.equals(target.getFileSystem().getPath("/"))) //exclude root to be zipFS compatible
+                Files.copy(source, target, REPLACE_EXISTING);
         }
-
-
-        /*try (final Stream<Path> walker = Files.walk(src)) {
-            walker.forEach(source -> {
-                String relative = src.relativize(source).toString();
-                final Path target = dest.resolve(relative);
-                if (!target.equals(target.getFileSystem().getPath("/"))) //exclude root to be zipFS compatible
-                    copy(source, target);
-            });
-        } catch (RuntimeException e) {
-            if (e.getCause() instanceof IOException)
-                throw (IOException) e.getCause();
-            throw e;
-        }*/
-
     }
-
-    /*private static void copy(Path source, Path dest) {
-        try {
-            Files.copy(source, dest, REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }*/
 
     /**
      * Lazy move operation. If move not possible files will be copied but source will not be deleted
@@ -211,6 +223,7 @@ public class FileUtils {
         }
     }
 
+
     public static <T> List<T> mapLines(File file, Function<String, T> f) throws IOException {
         try (final BufferedReader br = getReader(file)) {
             return mapLines(br, f);
@@ -222,6 +235,7 @@ public class FileUtils {
             return mapTable(br, separator, f);
         }
     }
+
     public static <T> List<T> mapTable(File file, Function<String[], T> f) throws IOException {
         try (final BufferedReader br = getReader(file)) {
             return mapTable(br, f);
@@ -231,30 +245,33 @@ public class FileUtils {
     public static <T> List<T> mapLines(BufferedReader reader, Function<String, T> f) throws IOException {
         String line;
         final ArrayList<T> list = new ArrayList<>();
-        while ((line=reader.readLine())!=null) {
+        while ((line = reader.readLine()) != null) {
             list.add(f.apply(line));
         }
         return list;
     }
+
     public static <T> List<T> mapTable(BufferedReader reader, String separator, Function<String[], T> f) throws IOException {
         String line;
         final ArrayList<T> list = new ArrayList<>();
-        while ((line=reader.readLine())!=null) {
-            list.add(f.apply(line.split(separator,-1)));
+        while ((line = reader.readLine()) != null) {
+            list.add(f.apply(line.split(separator, -1)));
         }
         return list;
     }
+
     public static <T> List<T> mapTable(BufferedReader reader, Function<String[], T> f) throws IOException {
         return mapTable(reader, "\t", f);
     }
 
     public static void eachLine(BufferedReader reader, TObjectProcedure<String> proc) throws IOException {
         String line;
-        while ((line=reader.readLine())!=null) {
+        while ((line = reader.readLine()) != null) {
             if (!proc.execute(line))
-                    break;
+                break;
         }
     }
+
     public static void eachLine(File file, TObjectProcedure<String> proc) throws IOException {
         try (final BufferedReader br = getReader(file)) {
             eachLine(br, proc);
@@ -263,11 +280,12 @@ public class FileUtils {
 
     public static void eachRow(BufferedReader reader, TObjectProcedure<String[]> proc) throws IOException {
         String line;
-        while ((line=reader.readLine())!=null) {
-            if (!proc.execute(line.split("\t",-1)))
+        while ((line = reader.readLine()) != null) {
+            if (!proc.execute(line.split("\t", -1)))
                 break;
         }
     }
+
     public static void eachRow(File file, TObjectProcedure<String[]> proc) throws IOException {
         try (final BufferedReader br = getReader(file)) {
             eachRow(br, proc);
@@ -279,19 +297,22 @@ public class FileUtils {
             return readTable(br, sep);
         }
     }
-    public static String[][] readTable(File file, String sep,boolean skipHeader) throws IOException {
+
+    public static String[][] readTable(File file, String sep, boolean skipHeader) throws IOException {
         try (final BufferedReader br = getReader(file)) {
-            return readTable(br, sep,skipHeader);
+            return readTable(br, sep, skipHeader);
         }
     }
+
     public static String[][] readTable(File file) throws IOException {
         try (final BufferedReader br = getReader(file)) {
             return readTable(br);
         }
     }
+
     public static String[][] readTable(File file, boolean skipHeader) throws IOException {
         try (final BufferedReader br = getReader(file)) {
-            return readTable(br,"\t",skipHeader);
+            return readTable(br, "\t", skipHeader);
         }
     }
 
@@ -322,20 +343,20 @@ public class FileUtils {
         String line;
         ArrayList<String[]> table = new ArrayList<>();
         if (skipHeader) reader.readLine();
-        while ((line=reader.readLine())!=null) {
-            table.add(line.split(colSeparator,-1));
+        while ((line = reader.readLine()) != null) {
+            table.add(line.split(colSeparator, -1));
         }
         return table.toArray(new String[table.size()][]);
     }
 
     public static String[][] readTable(BufferedReader reader, String colSeparator) throws IOException {
-       return readTable(reader,colSeparator,false);
+        return readTable(reader, colSeparator, false);
     }
 
     public static String[] readLines(BufferedReader reader) throws IOException {
         String line;
         ArrayList<String> lines = new ArrayList<>();
-        while ((line=reader.readLine())!=null) {
+        while ((line = reader.readLine()) != null) {
             lines.add(line);
         }
         return lines.toArray(new String[lines.size()]);
@@ -367,16 +388,19 @@ public class FileUtils {
             return readAsFloatMatrix(br);
         }
     }
+
     public static float[] readAsFloatVector(File file) throws IOException {
         try (final BufferedReader br = getReader(file)) {
             return readAsFloatVector(br);
         }
     }
+
     public static double[][] readAsDoubleMatrix(File file) throws IOException {
         try (final BufferedReader br = getReader(file)) {
             return readAsDoubleMatrix(br);
         }
     }
+
     public static double[] readAsDoubleVector(File file) throws IOException {
         try (final BufferedReader br = getReader(file)) {
             return readAsDoubleVector(br);
@@ -388,26 +412,31 @@ public class FileUtils {
             writeDoubleMatrix(bw, matrix);
         }
     }
+
     public static void writeDoubleVector(File file, double[] vector) throws IOException {
         try (final BufferedWriter bw = getWriter(file)) {
             writeDoubleVector(bw, vector);
         }
     }
+
     public static void writeFloatMatrix(File file, float[][] matrix) throws IOException {
         try (final BufferedWriter bw = getWriter(file)) {
             writeFloatMatrix(bw, matrix);
         }
     }
+
     public static void writeFloatVector(File file, float[] vector) throws IOException {
         try (final BufferedWriter bw = getWriter(file)) {
             writeFloatVector(bw, vector);
         }
     }
+
     public static void writeIntMatrix(File file, int[][] matrix) throws IOException {
         try (final BufferedWriter bw = getWriter(file)) {
             writeIntMatrix(bw, matrix);
         }
     }
+
     public static void writeIntVector(File file, int[] vector) throws IOException {
         try (final BufferedWriter bw = getWriter(file)) {
             writeIntVector(bw, vector);
@@ -424,6 +453,7 @@ public class FileUtils {
             return new BufferedOutputStream(new FileOutputStream(file), getRecommendetBufferSize());
         }
     }
+
     public static BufferedInputStream getIn(File file) throws IOException {
         if (file.getName().endsWith(".gz")) {
             return new BufferedInputStream(new GZIPInputStream(new FileInputStream(file), getRecommendetBufferSize()));
@@ -434,11 +464,12 @@ public class FileUtils {
 
     public static BufferedWriter getWriter(File file) throws IOException {
         if (file.getName().endsWith(".gz")) {
-            return new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(file),  getRecommendetBufferSize()), Charset.forName("UTF-8")));
+            return new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(file), getRecommendetBufferSize()), Charset.forName("UTF-8")));
         } else {
             return new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), Charset.forName("UTF-8")), getRecommendetBufferSize());
         }
     }
+
     public static BufferedReader getReader(File file) throws IOException {
         if (file.getName().endsWith(".gz")) {
             return new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(file), getRecommendetBufferSize()), Charset.forName("UTF-8")));
@@ -448,9 +479,10 @@ public class FileUtils {
     }
 
     public static BufferedReader ensureBuffering(Reader r) {
-        if (r instanceof BufferedReader) return (BufferedReader)r;
+        if (r instanceof BufferedReader) return (BufferedReader) r;
         else return new BufferedReader(r, getRecommendetBufferSize());
     }
+
     public static InputStream ensureBuffering(InputStream r) {
         if (r instanceof BufferedInputStream || r instanceof GZIPInputStream || r instanceof InflaterInputStream)
             return r;
@@ -458,7 +490,7 @@ public class FileUtils {
     }
 
     private static int getRecommendetBufferSize() {
-        return 1024*1024*8;
+        return 1024 * 1024 * 8;
     }
 
     /*
@@ -469,7 +501,7 @@ public class FileUtils {
         String line;
         final TFloatArrayList values = new TFloatArrayList();
         ArrayList<float[]> rows = new ArrayList<float[]>();
-        while ((line=reader.readLine())!=null) {
+        while ((line = reader.readLine()) != null) {
             int i = 0;
             while (i < line.length() && Character.isWhitespace(line.charAt(i)))
                 ++i;
@@ -480,11 +512,11 @@ public class FileUtils {
                 if (Character.isWhitespace(line.charAt(i))) {
                     final String token = line.substring(n, i);
                     values.add(Float.parseFloat(token));
-                    n=i+1;
+                    n = i + 1;
                 }
             }
-            if (n < line.length()) values.add(Float.parseFloat(line.substring(n,line.length())));
-            if (values.size()==0) continue;
+            if (n < line.length()) values.add(Float.parseFloat(line.substring(n, line.length())));
+            if (values.size() == 0) continue;
             rows.add(values.toArray());
             values.clear();
         }
@@ -494,23 +526,23 @@ public class FileUtils {
     public static float[] readAsFloatVector(BufferedReader reader) throws IOException {
         String line;
         // skip comments
-        while ((line=reader.readLine())!=null) {
-            if (!line.isEmpty() && line.charAt(0)!='#') break;
+        while ((line = reader.readLine()) != null) {
+            if (!line.isEmpty() && line.charAt(0) != '#') break;
         }
-        if (line!= null && !line.isEmpty()) {
+        if (line != null && !line.isEmpty()) {
             String[] tabs = line.split("\\s+");
-            if (tabs.length>1) {
+            if (tabs.length > 1) {
                 // we have a row vector
                 final float[] vec = new float[tabs.length];
-                for (int i=0; i < tabs.length; ++i)
+                for (int i = 0; i < tabs.length; ++i)
                     vec[i] = Float.parseFloat(tabs[i]);
                 return vec;
             } else {
                 final TFloatArrayList buffer = new TFloatArrayList(128);
                 buffer.add(Float.parseFloat(tabs[0]));
                 // we have a col vector
-                while ((line=reader.readLine())!=null) {
-                    if (!line.isEmpty() && line.charAt(0)!='#') {
+                while ((line = reader.readLine()) != null) {
+                    if (!line.isEmpty() && line.charAt(0) != '#') {
                         buffer.add(Float.parseFloat(line));
                     }
                 }
@@ -523,7 +555,7 @@ public class FileUtils {
         String line;
         final TDoubleArrayList values = new TDoubleArrayList();
         ArrayList<double[]> rows = new ArrayList<double[]>();
-        while ((line=reader.readLine())!=null) {
+        while ((line = reader.readLine()) != null) {
             int i = 0;
             while (i < line.length() && Character.isWhitespace(line.charAt(i)))
                 ++i;
@@ -534,11 +566,11 @@ public class FileUtils {
                 if (Character.isWhitespace(line.charAt(i))) {
                     final String token = line.substring(n, i);
                     values.add(Double.parseDouble(token));
-                    n=i+1;
+                    n = i + 1;
                 }
             }
-            if (n < line.length()) values.add(Double.parseDouble(line.substring(n,line.length())));
-            if (values.size()==0) continue;
+            if (n < line.length()) values.add(Double.parseDouble(line.substring(n, line.length())));
+            if (values.size() == 0) continue;
             rows.add(values.toArray());
             values.clear();
         }
@@ -548,23 +580,23 @@ public class FileUtils {
     public static double[] readAsDoubleVector(BufferedReader reader) throws IOException {
         String line;
         // skip comments
-        while ((line=reader.readLine())!=null) {
-            if (!line.isEmpty() && line.charAt(0)!='#') break;
+        while ((line = reader.readLine()) != null) {
+            if (!line.isEmpty() && line.charAt(0) != '#') break;
         }
-        if (line!= null && !line.isEmpty()) {
+        if (line != null && !line.isEmpty()) {
             String[] tabs = line.split("\\s+");
-            if (tabs.length>1) {
+            if (tabs.length > 1) {
                 // we have a row vector
                 final double[] vec = new double[tabs.length];
-                for (int i=0; i < tabs.length; ++i)
+                for (int i = 0; i < tabs.length; ++i)
                     vec[i] = Double.parseDouble(tabs[i]);
                 return vec;
             } else {
                 final TDoubleArrayList buffer = new TDoubleArrayList(128);
                 buffer.add(Double.parseDouble(tabs[0]));
                 // we have a col vector
-                while ((line=reader.readLine())!=null) {
-                    if (!line.isEmpty() && line.charAt(0)!='#') {
+                while ((line = reader.readLine()) != null) {
+                    if (!line.isEmpty() && line.charAt(0) != '#') {
                         buffer.add(Double.parseDouble(line));
                     }
                 }
@@ -577,7 +609,7 @@ public class FileUtils {
         String line;
         final TIntArrayList values = new TIntArrayList();
         ArrayList<int[]> rows = new ArrayList<int[]>();
-        while ((line=reader.readLine())!=null) {
+        while ((line = reader.readLine()) != null) {
             int i = 0;
             while (i < line.length() && Character.isWhitespace(line.charAt(i)))
                 ++i;
@@ -588,11 +620,11 @@ public class FileUtils {
                 if (Character.isWhitespace(line.charAt(i))) {
                     final String token = line.substring(n, i);
                     values.add(Integer.parseInt(token));
-                    n=i+1;
+                    n = i + 1;
                 }
             }
-            if (n < line.length()) values.add(Integer.parseInt(line.substring(n,line.length())));
-            if (values.size()==0) continue;
+            if (n < line.length()) values.add(Integer.parseInt(line.substring(n, line.length())));
+            if (values.size() == 0) continue;
             rows.add(values.toArray());
             values.clear();
         }
@@ -602,23 +634,23 @@ public class FileUtils {
     public static int[] readAsIntVector(BufferedReader reader) throws IOException {
         String line;
         // skip comments
-        while ((line=reader.readLine())!=null) {
-            if (!line.isEmpty() && line.charAt(0)!='#') break;
+        while ((line = reader.readLine()) != null) {
+            if (!line.isEmpty() && line.charAt(0) != '#') break;
         }
-        if (line!= null && !line.isEmpty()) {
+        if (line != null && !line.isEmpty()) {
             String[] tabs = line.split("\\s+");
-            if (tabs.length>1) {
+            if (tabs.length > 1) {
                 // we have a row vector
                 final int[] vec = new int[tabs.length];
-                for (int i=0; i < tabs.length; ++i)
+                for (int i = 0; i < tabs.length; ++i)
                     vec[i] = Integer.parseInt(tabs[i]);
                 return vec;
             } else {
                 final TIntArrayList buffer = new TIntArrayList(128);
                 buffer.add(Integer.parseInt(tabs[0]));
                 // we have a col vector
-                while ((line=reader.readLine())!=null) {
-                    if (!line.isEmpty() && line.charAt(0)!='#') {
+                while ((line = reader.readLine()) != null) {
+                    if (!line.isEmpty() && line.charAt(0) != '#') {
                         buffer.add(Integer.parseInt(line));
                     }
                 }
@@ -631,13 +663,14 @@ public class FileUtils {
     public static void writeDoubleMatrix(Writer writer, double[][] matrix) throws IOException {
         for (double[] row : matrix) {
             writer.write(String.valueOf(row[0]));
-            for (int k=1; k < row.length; ++k) {
+            for (int k = 1; k < row.length; ++k) {
                 writer.write(' ');
                 writer.write(String.valueOf(row[k]));
             }
             writer.write('\n');
         }
     }
+
     public static void writeDoubleVector(Writer writer, double[] vector) throws IOException {
         for (double value : vector) {
             writer.write(String.valueOf(value));
@@ -648,13 +681,14 @@ public class FileUtils {
     public static void writeFloatMatrix(Writer writer, float[][] matrix) throws IOException {
         for (float[] row : matrix) {
             writer.write(String.valueOf(row[0]));
-            for (int k=1; k < row.length; ++k) {
+            for (int k = 1; k < row.length; ++k) {
                 writer.write(' ');
                 writer.write(String.valueOf(row[k]));
             }
             writer.write('\n');
         }
     }
+
     public static void writeFloatVector(Writer writer, float[] vector) throws IOException {
         for (float value : vector) {
             writer.write(String.valueOf(value));
@@ -665,7 +699,7 @@ public class FileUtils {
     public static void writeIntMatrix(Writer writer, int[][] matrix) throws IOException {
         for (int[] row : matrix) {
             writer.write(String.valueOf(row[0]));
-            for (int k=1; k < row.length; ++k) {
+            for (int k = 1; k < row.length; ++k) {
                 writer.write(' ');
                 writer.write(String.valueOf(row[k]));
             }
@@ -706,13 +740,13 @@ public class FileUtils {
         }
     }
 
-    public static Map<String,String> readKeyValues(File file) throws IOException {
+    public static Map<String, String> readKeyValues(File file) throws IOException {
         try (final BufferedReader br = getReader(file)) {
             return readKeyValues(br);
         }
     }
 
-    public static Map<String,String> readKeyValues(BufferedReader reader) throws IOException {
+    public static Map<String, String> readKeyValues(BufferedReader reader) throws IOException {
         final HashMap<String, String> keyValues = new HashMap<>();
         String line;
         while ((line = reader.readLine()) != null) {
@@ -747,12 +781,12 @@ public class FileUtils {
      */
     public static String[] head(File file, int nlines) throws IOException {
         String[] lines = new String[nlines];
-        int k=0;
-        try (final BufferedReader br = new BufferedReader(new FileReader(file),40*nlines)) {
+        int k = 0;
+        try (final BufferedReader br = new BufferedReader(new FileReader(file), 40 * nlines)) {
             while (k < nlines) {
                 String l = lines[k++] = br.readLine();
-                if (l==null) {
-                    Arrays.fill(lines,k,lines.length,"");
+                if (l == null) {
+                    Arrays.fill(lines, k, lines.length, "");
                     return lines;
                 }
             }
@@ -776,21 +810,40 @@ public class FileUtils {
     }
 
     public static <R> R findAndClose(Function<Stream<Path>, R> tryWith, Path p, int maxDepth,
-                              BiPredicate<Path, BasicFileAttributes> matcher,
-                              FileVisitOption... options) throws IOException {
+                                     BiPredicate<Path, BasicFileAttributes> matcher,
+                                     FileVisitOption... options) throws IOException {
         try (Stream<Path> s = Files.find(p, maxDepth, matcher, options)) {
             return tryWith.apply(s);
         }
     }
 
     public static <R> R walkAndClose(Function<Stream<Path>, R> tryWith, Path p, FileVisitOption... options) throws IOException {
+        return walkAndClose(tryWith, p, null, options);
+    }
+
+    // If the parameter does not take the form: syntax:pattern
+    public static <R> R walkAndClose(Function<Stream<Path>, R> tryWith, Path p, @Nullable String globOrRegex, FileVisitOption... options) throws IOException {
         try (Stream<Path> s = Files.walk(p, options)) {
+            if (globOrRegex != null && !globOrRegex.equals("glob:*")) {
+                final PathMatcher pathMatcher = p.getFileSystem().getPathMatcher(globOrRegex);
+                return tryWith.apply(s.filter(pathMatcher::matches));
+            }
             return tryWith.apply(s);
         }
     }
 
     public static <R> R walkAndClose(Function<Stream<Path>, R> tryWith, Path p, int maxDepth, FileVisitOption... options) throws IOException {
+        return walkAndClose(tryWith, p, maxDepth, null, options);
+
+    }
+
+    // If the parameter does not take the form: syntax:pattern
+    public static <R> R walkAndClose(Function<Stream<Path>, R> tryWith, Path p, int maxDepth, @Nullable String globOrRegex, FileVisitOption... options) throws IOException {
         try (Stream<Path> s = Files.walk(p, maxDepth, options)) {
+            if (globOrRegex != null && !globOrRegex.equals("glob:*")) {
+                final PathMatcher pathMatcher = p.getFileSystem().getPathMatcher(globOrRegex);
+                return tryWith.apply(s.filter(pathMatcher::matches));
+            }
             return tryWith.apply(s);
         }
     }
@@ -807,7 +860,7 @@ public class FileUtils {
     }
 
     public static long estimateNumOfLines(Path p, int sampleSize, int maxNumOfSamples) throws IOException {
-       return estimateCharOccurrence(p,System.lineSeparator().charAt(0),sampleSize,maxNumOfSamples); //returns  CR o LR
+        return estimateCharOccurrence(p, System.lineSeparator().charAt(0), sampleSize, maxNumOfSamples); //returns  CR o LR
 
     }
 
@@ -836,5 +889,107 @@ public class FileUtils {
         }
     }
 
+    /**
+     * Converts a standard POSIX Shell globbing pattern into a regular expression
+     * pattern. The result can be used with the standard {@link java.util.regex} API to
+     * recognize strings which match the glob pattern.
+     * <p>
+     * See also, the POSIX Shell language:
+     * http://pubs.opengroup.org/onlinepubs/009695399/utilities/xcu_chap02.html#tag_02_13_01
+     *
+     * @param pattern A glob pattern.
+     * @return A regex pattern to recognize the given glob pattern.
+     */
+    public static final String convertGlobToRegex(String pattern) {
+        StringBuilder sb = new StringBuilder(pattern.length());
+        int inGroup = 0;
+        int inClass = 0;
+        int firstIndexInClass = -1;
+        char[] arr = pattern.toCharArray();
+        for (int i = 0; i < arr.length; i++) {
+            char ch = arr[i];
+            switch (ch) {
+                case '\\':
+                    if (++i >= arr.length) {
+                        sb.append('\\');
+                    } else {
+                        char next = arr[i];
+                        switch (next) {
+                            case ',':
+                                // escape not needed
+                                break;
+                            case 'Q':
+                            case 'E':
+                                // extra escape needed
+                                sb.append('\\');
+                            default:
+                                sb.append('\\');
+                        }
+                        sb.append(next);
+                    }
+                    break;
+                case '*':
+                    if (inClass == 0)
+                        sb.append(".*");
+                    else
+                        sb.append('*');
+                    break;
+                case '?':
+                    if (inClass == 0)
+                        sb.append('.');
+                    else
+                        sb.append('?');
+                    break;
+                case '[':
+                    inClass++;
+                    firstIndexInClass = i + 1;
+                    sb.append('[');
+                    break;
+                case ']':
+                    inClass--;
+                    sb.append(']');
+                    break;
+                case '.':
+                case '(':
+                case ')':
+                case '+':
+                case '|':
+                case '^':
+                case '$':
+                case '@':
+                case '%':
+                    if (inClass == 0 || (firstIndexInClass == i && ch == '^'))
+                        sb.append('\\');
+                    sb.append(ch);
+                    break;
+                case '!':
+                    if (firstIndexInClass == i)
+                        sb.append('^');
+                    else
+                        sb.append('!');
+                    break;
+                case '{':
+                    inGroup++;
+                    sb.append('(');
+                    break;
+                case '}':
+                    inGroup--;
+                    sb.append(')');
+                    break;
+                case ',':
+                    if (inGroup > 0)
+                        sb.append('|');
+                    else
+                        sb.append(',');
+                    break;
+                default:
+                    sb.append(ch);
+            }
+        }
+        return sb.toString();
+    }
 
+    public static final Pattern compileGlobToRegex(String glob) {
+        return Pattern.compile(convertGlobToRegex(glob));
+    }
 }

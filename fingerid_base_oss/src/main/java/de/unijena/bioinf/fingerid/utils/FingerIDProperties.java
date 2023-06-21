@@ -22,45 +22,52 @@ package de.unijena.bioinf.fingerid.utils;
 
 
 import de.unijena.bioinf.ms.properties.PropertyManager;
-
-import java.nio.file.Path;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * All version numbers are directly taken from the build. So there is no more redundant data. Note that version a.b.c-SNAPSHOT lower than a.b.c
  */
 public class FingerIDProperties {
 
-    public static String fingeridVersion() {
+    public static String fingeridFullVersion() {
         return PropertyManager.getProperty("de.unijena.bioinf.fingerid.version");
     }
 
-    public static String fingeridWebHost() {
+    public static String fingeridMinorVersion() {
+        return toMinorVersion(fingeridFullVersion());
+    }
+    public static String toMinorVersion(@NotNull String version) {
+        String[] splits = version.split("[.]");
+        return splits[0] + "." + splits[1];
+    }
+
+    public static String fingeridMajorVersion() {
+        return toMajorVersion(fingeridFullVersion());
+    }
+    public static String toMajorVersion(@NotNull String version) {
+        return version.split("[.]")[0];
+    }
+
+    public static String siriusFallbackWebHost() {
         return PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.host");
     }
-
-    public static String fingeridWebPort() {
-        return PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.port");
-    }
-
 
     public static String siriusVersion() {
         return PropertyManager.getProperty("de.unijena.bioinf.sirius.version");
     }
 
     public static String sirius_guiVersion() {
-        return siriusVersion();
-    }
-
-    public static String databaseDate() {
-        return PropertyManager.getProperty("de.unijena.bioinf.fingerid.db.date");
-    }
-
-    public static String gcsChemDBName() {
-        return PropertyManager.getProperty("de.unijena.bioinf.chemdb.gcs.name");
+        return  PropertyManager.getProperty("de.unijena.bioinf.siriusFrontend.version");
     }
 
     public static String gcsChemDBFlavor() {
         return PropertyManager.getProperty("de.unijena.bioinf.chemdb.gcs.flavor", null, "default");
+    }
+
+    @Nullable
+    public static Integer gcsChemDBFpId() {
+        return PropertyManager.getInteger("de.unijena.bioinf.chemdb.fingerprint.id", null, null);
     }
 
     public static String defaultChemDBBucket(){

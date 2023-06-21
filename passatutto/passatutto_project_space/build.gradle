@@ -19,6 +19,6 @@
  */
 
 dependencies {
-    compile project(':passatutto')
-    compile project(':sirius_project_space')
+    api project(':passatutto')
+    api project(':sirius_project_space')
 }

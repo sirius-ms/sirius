@@ -23,64 +23,99 @@ package de.unijena.bioinf.chemdb;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.auth.AuthService;
-import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.jjobs.Partition;
 import de.unijena.bioinf.ms.rest.client.chemdb.ChemDBClient;
 import de.unijena.bioinf.ms.rest.client.chemdb.StructureSearchClient;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import de.unijena.bioinf.storage.blob.BlobStorage;
+import de.unijena.bioinf.storage.blob.file.FileBlobStorage;
+import okhttp3.OkHttpClient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.LoggerFactory;
 
-import javax.json.JsonException;
-import java.io.*;
-import java.nio.file.Files;
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
-public class RESTDatabase implements AbstractChemicalDatabase {
+public class RESTDatabase implements FilterableChemicalDatabase {
     static {
-        FingerIDProperties.fingeridVersion();
+        FingerIDProperties.fingeridFullVersion();
     }
 
+    private final OkHttpClient client;
+    private final boolean closeCLient;
 
-    private final CloseableHttpClient client;
-    protected StructureSearchClient chemDBClient;
-    protected File cacheDir;
-
-    protected long filter;
+    private StructureSearchClient chemDBClient;
+    protected final ChemDBFileCache cache;
 
 
-    public static File defaultCacheDir() {
+    public static BlobStorage defaultCache() {
         final String val = System.getenv("CSI_FINGERID_STORAGE");
-        if (val != null) return new File(val);
-        return new File(System.getProperty("user.home"), "csi_fingerid_cache");
-    }
-
-
-    public RESTDatabase(@Nullable File cacheDir, long filter, @NotNull StructureSearchClient chemDBClient, @NotNull CloseableHttpClient client) {
-        this.filter = filter;
-        this.cacheDir = cacheDir != null ? cacheDir : defaultCacheDir();
-        this.chemDBClient = chemDBClient;
-        this.client = client;
-    }
-
-    public RESTDatabase(long filter, @NotNull AuthService authService) {
-        this(RESTDatabase.defaultCacheDir(), filter,  new ChemDBClient(null, authService) , HttpClients.createDefault());
+        if (val != null) return new FileBlobStorage(Path.of(val));
+        return new FileBlobStorage(Path.of(System.getProperty("user.home"), "csi_fingerid_cache"));
     }
 
     @Override
-    public List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
+    public String getChemDbDate() throws ChemicalDatabaseException {
+        try {
+            return chemDBClient.getChemDbDate(client);
+        } catch (IOException e) {
+            throw new ChemicalDatabaseException(e);
+        }
+    }
+
+    public RESTDatabase(@Nullable BlobStorage cacheDir, @NotNull StructureSearchClient chemDBClient, @NotNull OkHttpClient client) {
+        this(cacheDir, chemDBClient, client, false);
+    }
+
+    public RESTDatabase(@Nullable BlobStorage cacheDir, @NotNull StructureSearchClient chemDBClient, @NotNull OkHttpClient client, boolean closeClient) {
+        this.closeCLient = closeClient;
+        this.chemDBClient = chemDBClient;
+        this.client = client;
+        this.cache = new ChemDBFileCache(cacheDir != null ? cacheDir : defaultCache(), new SearchStructureByFormula() {
+            @Override
+            public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
+                try {
+                    //get unfiltered list from server to write cache.
+                    fingerprintCandidates.addAll(chemDBClient.getCompounds(formula, DataSource.ALL.flag(), client));
+                    return fingerprintCandidates;
+                } catch (IOException e) {
+                    throw new ChemicalDatabaseException(e);
+                }
+            }
+        });
+    }
+
+    // closes clients
+
+    public RESTDatabase(@NotNull AuthService authService) {
+        this(URI.create(FingerIDProperties.siriusFallbackWebHost()), authService);
+    }
+
+    public RESTDatabase() {
+        this(URI.create(FingerIDProperties.siriusFallbackWebHost()));
+    }
+
+    public RESTDatabase(@NotNull URI serverURL) {
+        this(RESTDatabase.defaultCache(), new ChemDBClient(serverURL), new OkHttpClient.Builder().build(), true);
+    }
+
+    public RESTDatabase(@NotNull URI serverURL, @NotNull AuthService authService) {
+        this(RESTDatabase.defaultCache(), new ChemDBClient(serverURL, authService), new OkHttpClient.Builder().build(), true);
+    }
+
+    public RESTDatabase(@NotNull StructureSearchClient chemDBClient) {
+        this(RESTDatabase.defaultCache(), chemDBClient, new OkHttpClient.Builder().build(), true);
+    }
+
+
+    @Override
+    public List<FormulaCandidate> lookupMolecularFormulas(long filter, double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
         try {
             return chemDBClient.getFormulas(mass, deviation, ionType, filter, client);
         } catch (IOException e) {
@@ -89,68 +124,18 @@ public class RESTDatabase implements AbstractChemicalDatabase {
     }
 
     @Override
-    public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
+    public List<CompoundCandidate> lookupStructuresByFormula(long filter, MolecularFormula formula) throws ChemicalDatabaseException {
         final ArrayList<CompoundCandidate> candidates = new ArrayList<>();
-        for (CompoundCandidate c : lookupStructuresAndFingerprintsByFormula(formula))
+        for (CompoundCandidate c : lookupStructuresAndFingerprintsByFormula(filter, formula))
             candidates.add(new CompoundCandidate(c));
         return candidates;
     }
 
+
     @Override
-    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
-        final File stfile = new File(cacheDir, "/" + formula.toString() + ".json.gz");
-        try {
-            List<FingerprintCandidate> fpcs = new ArrayList<>();
-            if (stfile.exists()) {
-                try {
-                    final GZIPInputStream zin = new GZIPInputStream(new BufferedInputStream(new FileInputStream(stfile)));
-                    try (final CloseableIterator<FingerprintCandidate> fciter = new JSONReader().readFingerprints(CdkFingerprintVersion.getDefault(), new InputStreamReader(zin))) {
-                        while (fciter.hasNext())
-                            fpcs.add(fciter.next());
-                    }
-                } catch (IOException | JsonException e) {
-                    LoggerFactory.getLogger(RESTDatabase.class).error("Error when searching for " + formula.toString() + " in file database. Deleting cache file '" + stfile.getAbsolutePath() + "' an try fetching from Server");
-                    stfile.delete();
-                    fpcs = requestFormula(stfile, formula);
-                }
-            } else {
-                fpcs = requestFormula(stfile, formula);
-            }
-
-            fingerprintCandidates.addAll(
-                    fpcs.stream().filter(ChemDBs.inFilter((it)-> it.bitset,filter)).collect(Collectors.toList()));
-            return fingerprintCandidates;
-        } catch (IOException e) {
-            throw new ChemicalDatabaseException(e);
-        }
-    }
-
-    private List<FingerprintCandidate> requestFormula(final @NotNull File output, MolecularFormula formula) throws IOException {
-        //get unfiltered list from server to write cache.
-        final List<FingerprintCandidate> fpcs = chemDBClient.getCompounds(formula, DataSource.ALL.flag(), client);
-
-        // write cache in background -> cache has to be unfiltered
-        SiriusJobs.runInBackground(() -> {
-            output.getParentFile().mkdirs();
-            final File tempFile = File.createTempFile("sirius_formula", ".json.gz", output.getParentFile());
-            try {
-                try (final GZIPOutputStream fout = new GZIPOutputStream(new FileOutputStream(tempFile))) {
-                    try (final BufferedWriter br = new BufferedWriter(new OutputStreamWriter(fout))) {
-                        FingerprintCandidate.toJSONList(fpcs, br);
-                    }
-                }
-
-                // move tempFile is canonical on same fs
-                if (output.exists() || !tempFile.renameTo(output))
-                    tempFile.delete();
-
-                return true;
-            } finally {
-                Files.deleteIfExists(tempFile.toPath());
-            }
-        });
-
-        return fpcs;
+    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(long filter, MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
+        fingerprintCandidates.addAll(cache.lookupStructuresAndFingerprintsByFormula(formula, filter));
+        return fingerprintCandidates;
     }
 
 
@@ -162,7 +147,7 @@ public class RESTDatabase implements AbstractChemicalDatabase {
 
             try {
                 for (List<String> inchiKeys : keyParts)
-                    compounds.addAll(((ChemDBClient)chemDBClient).postCompounds(inchiKeys, client));
+                    compounds.addAll(((ChemDBClient) chemDBClient).postCompounds(inchiKeys, client));
             } catch (IOException e) {
                 throw new ChemicalDatabaseException(e);
             }
@@ -175,7 +160,6 @@ public class RESTDatabase implements AbstractChemicalDatabase {
     public Iterable<? extends FingerprintCandidate> lookupManyFingerprintsBy2dInchis(Collection<String> inchis2d) throws ChemicalDatabaseException {
         return lookupFingerprintsByInchis(inchis2d);
     }
-
 
 
     @Override
@@ -205,11 +189,21 @@ public class RESTDatabase implements AbstractChemicalDatabase {
 
     @Override
     public boolean containsFormula(MolecularFormula formula) throws ChemicalDatabaseException {
-        throw  new UnsupportedOperationException();
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public void close() throws IOException {
-        client.close();
+    public boolean containsFormula(long filter, MolecularFormula formula) throws ChemicalDatabaseException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void close() {
+        if (closeCLient && client != null) {
+            client.connectionPool().evictAll();
+            client.dispatcher().cancelAll();
+            client.dispatcher().executorService().shutdown();
+            client.connectionPool().evictAll();
+        }
     }
 }

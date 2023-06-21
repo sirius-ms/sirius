@@ -28,11 +28,12 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.babelms.SpectralParser;
+import de.unijena.bioinf.babelms.utils.ParserUtils;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -154,11 +155,9 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
 
                 int charge = Integer.parseInt(m.group(1));
                 if (charge == 0){
-                    charge = 1;
+                    charge = m.group(1).strip().startsWith("-") ? -1 : 1;
                     LoggerFactory.getLogger(MgfParser.class).warn("Charge value of 0 found. Changing value to Single charged under consideration of the given ion mode.");
                 }
-                if("-".equals(m.group(2)))
-                    charge = -charge;
 
                 if (spec.spectrum.getIonization() == null || spec.spectrum.getIonization().getCharge() != charge)
                     spec.spectrum.setIonization(new Charge(charge));
@@ -324,7 +323,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
     private MgfParserInstance inst;
 
     @Override
-    public synchronized Ms2Experiment parse(BufferedReader reader, URL source) throws IOException {
+    public synchronized Ms2Experiment parse(BufferedReader reader, URI source) throws IOException {
         if (inst == null || inst.reader != reader) inst = new MgfParserInstance(reader);
         if (!inst.hasNext()) return null;
         ++inst.specIndex;
@@ -394,9 +393,11 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
             } else break;
         }
 
-        if (!additionalFields.isEmpty()) {
+        ParserUtils.checkMolecularFormula(exp);
+
+        if (!additionalFields.isEmpty())
             exp.setAnnotation(AdditionalFields.class, additionalFields);
-        }
+
         exp.setAnnotation(SpectrumFileSource.class, new SpectrumFileSource(source));
         return exp;
     }

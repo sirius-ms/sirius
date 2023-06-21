@@ -41,7 +41,7 @@ public final class TreeBuilderFactory {
     public final static String GUROBI_VERSION;
     public final static String GLPK_VERSION;
     public final static String CPLEX_VERSION;
-    public final static String CLP_VERSION;
+    public final static String CBC_VERSION;
 
     public final static String ILP_VERSIONS_STRING;
 
@@ -50,8 +50,8 @@ public final class TreeBuilderFactory {
         GLPK_VERSION = PropertyManager.getProperty("de.unijena.bioinf.sirius.build.glpk_version");
         GUROBI_VERSION = PropertyManager.getProperty("de.unijena.bioinf.sirius.build.gurobi_version");
         CPLEX_VERSION = PropertyManager.getProperty("de.unijena.bioinf.sirius.build.cplex_version");
-        CLP_VERSION = PropertyManager.getProperty("de.unijena.bioinf.sirius.build.cpl_version");
-        ILP_VERSIONS_STRING = "Sirius was compiled with the following ILP solvers: GLPK-v" + GLPK_VERSION + " (included), Gurobi-v" + GUROBI_VERSION + ", CPLEX-v" + CPLEX_VERSION + ", COIN-OR-v" + CLP_VERSION;
+        CBC_VERSION = PropertyManager.getProperty("de.unijena.bioinf.sirius.build.cbc_version");
+        ILP_VERSIONS_STRING = "Sirius was compiled with the following ILP solvers: GLPK-v" + GLPK_VERSION + " (included), Gurobi-v" + GUROBI_VERSION + ", CPLEX-v" + CPLEX_VERSION + ", COIN-OR-v" + CBC_VERSION;
     }
 
     private static TreeBuilderFactory INSTANCE = null;
@@ -124,7 +124,7 @@ public final class TreeBuilderFactory {
         IlpFactory<?> factory = null;
         switch (builder) {
             case GUROBI:
-                factory = getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GrbSolver"); //we have to use classloader, to prevent class not found exception. because it could be possible that gurobi.jar doe not exist -> runtime dependency
+                factory = getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GrbSolver");
                 break;
             case GLPK:
                 factory = getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver");
@@ -133,7 +133,7 @@ public final class TreeBuilderFactory {
                 factory = getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.CPLEXSolver");
                 break;
             case CLP:
-                factory = getTreeBuilderFromClass(CLPSolver.class); //we deliver the jar file so we can be sure that th class exists
+                factory = getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.CLPSolver");
                 break;
             default:
                 LoggerFactory.getLogger(this.getClass()).warn("TreeBuilder " + builder.toString() + " is Unknown, supported are: " + Arrays.toString(DefaultBuilder.values()), new IllegalArgumentException("Unknown BuilderType!"));

@@ -65,11 +65,31 @@ public class InsertionSubtreeCalculator extends CombinatorialSubtreeCalculator{
         if(this.isComputed) return this.subtree;
 
         while(true){
-            // 1. Find the vertex which maximizes in[v]+out[v] and is not contained in the subtree:
             double maxScore = Double.NEGATIVE_INFINITY;
             CombinatorialNode bestNode = null;
             for(CombinatorialNode node : this.graph.getNodes()){
-                if(!this.subtree.contains(node.fragment)){
+                if (alreadyInserted(node)) {
+                    for (CombinatorialEdge edge : node.getOutgoingEdges()) {
+                        CombinatorialNode child = edge.target;
+                        if (!alreadyInserted(child)) {
+                            int idx = this.nodeIndices.get(child);
+                            double score = this.in[idx] + this.out[idx];
+                            if(score > maxScore){
+                                maxScore = score;
+                                bestNode = child;
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            // 1. Find the vertex which maximizes in[v]+out[v] and is not contained in the subtree:
+            /*
+            double maxScore = Double.NEGATIVE_INFINITY;
+            CombinatorialNode bestNode = null;
+            for(CombinatorialNode node : this.graph.getNodes()){
+                if(!alreadyInserted(node)){
                     int idx = this.nodeIndices.get(node);
                     double score = this.in[idx] + this.out[idx];
                     if(score > maxScore){
@@ -78,6 +98,7 @@ public class InsertionSubtreeCalculator extends CombinatorialSubtreeCalculator{
                     }
                 }
             }
+             */
             /* whether all nodes are already in the subtree or
              * the remaining nodes are connected by edges with score neg. infinity */
             if(bestNode == null) break;
@@ -98,10 +119,14 @@ public class InsertionSubtreeCalculator extends CombinatorialSubtreeCalculator{
         return this.subtree;
     }
 
+    private boolean alreadyInserted(CombinatorialNode node) {
+        return subtree.contains(node.fragment);
+    }
+
     private void relocateAndUpdate(CombinatorialNode v){ //'v' is the newly inserted node
         for(CombinatorialEdge vx : v.outgoingEdges){
             CombinatorialNode x = vx.target;
-            if(this.subtree.contains(x.fragment)){
+            if(alreadyInserted(x)){
                 double inEdgeOfXScore = this.subtree.getNode(x.fragment.bitset).incomingEdges.get(0).score;
                 if(vx.score > inEdgeOfXScore){
                     // in this case, a rerouting increases the score of the subtree:
@@ -110,7 +135,7 @@ public class InsertionSubtreeCalculator extends CombinatorialSubtreeCalculator{
                     // after rerouting, the 'out' scores have to be updated:
                     for(CombinatorialEdge ux : x.incomingEdges){
                         CombinatorialNode u = ux.source;
-                        if(!this.subtree.contains(u.fragment)){
+                        if(!alreadyInserted(u)){
                             int uIdx = this.nodeIndices.get(u);
                             this.out[uIdx] = this.out[uIdx] - Math.max(0,ux.score - inEdgeOfXScore) +
                                     Math.max(0, ux.score - vx.score);
@@ -127,7 +152,7 @@ public class InsertionSubtreeCalculator extends CombinatorialSubtreeCalculator{
         CombinatorialEdge optEdge = null;
         for(CombinatorialEdge edge : node.incomingEdges){
             CombinatorialNode parent = edge.source;
-            if(this.subtree.contains(parent.fragment)){
+            if(alreadyInserted(parent)){
                 double score = edge.score + node.fragmentScore;
                 if(score == this.in[nodeIdx]){
                     optEdge = edge;
@@ -139,11 +164,12 @@ public class InsertionSubtreeCalculator extends CombinatorialSubtreeCalculator{
         // 2. Attach 'node' to its optimal parent in the tree:
         this.subtree.addFragment(this.subtree.getNode(optEdge.source.fragment.bitset), node.fragment,
                 optEdge.cut1, optEdge.cut2, node.fragmentScore, optEdge.score);
+        node.state=5;
 
         // 3. Update 'out' scores:
         for(CombinatorialEdge edge : node.incomingEdges){
             CombinatorialNode parent = edge.source;
-            if(!this.subtree.contains(parent.fragment)){
+            if(!alreadyInserted(parent)){
                 int parentIdx = this.nodeIndices.get(parent);
                 this.out[parentIdx] = this.out[parentIdx] + Math.max(0, edge.score - optEdge.score);
             }
@@ -152,7 +178,7 @@ public class InsertionSubtreeCalculator extends CombinatorialSubtreeCalculator{
         // 4. Update 'in' scores:
         for(CombinatorialEdge edge : node.outgoingEdges){
             CombinatorialNode child = edge.target;
-            if(!this.subtree.contains(child.fragment)){
+            if(!alreadyInserted(child)){
                 int childIdx = this.nodeIndices.get(child);
                 this.in[childIdx] = Math.max(this.in[childIdx], edge.score + child.fragmentScore);
             }

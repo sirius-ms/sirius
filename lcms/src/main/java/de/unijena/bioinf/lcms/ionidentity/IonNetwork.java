@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.lcms.CorrelatedPeakDetector;
+import de.unijena.bioinf.lcms.InternalStatistics;
 import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.lcms.align.AlignedFeatures;
@@ -48,6 +49,17 @@ public class IonNetwork {
     public IonNetwork() {
         this.nodes = new ArrayList<>();
         signalIntensities = new TFloatArrayList();
+    }
+
+    public void collectStatistics(InternalStatistics statistics) {
+        for (IonNode node : nodes) {
+            for (Edge e : node.neighbours) {
+                if (e.from.mz < e.to.mz) {
+                    statistics.interFeatureCorrelation.add(e.calculateInterSampleCorrelation(0d)[2]);
+                    statistics.intraFeatureCorrelation.add(e.calculateIntraSampleCorrelation());
+                }
+            }
+        }
     }
 
     public void deleteSingletons() {
@@ -123,13 +135,13 @@ public class IonNetwork {
 
         final float quantile25 = (float)getSignalThreshold();
         nodes.forEach(node->node.priorForUnknownIonType = scoreNode(node,quantile25));
-
+        float average = (float)nodes.stream().mapToDouble(x->x.priorForUnknownIonType).average().orElse(0d);
+        nodes.forEach(x->x.priorForUnknownIonType = Math.max(x.priorForUnknownIonType,average));
 
         try (final PrintStream OUT = new PrintStream("edge_scores.txt")){
             for (IonNode node : nodes) {
                 for (Edge edge : node.neighbours) {
-
-                System.err.printf("score = %f - %f (evidences: inter %d and intra %d)\n", edge.score, (edge.from.priorForUnknownIonType + edge.to.priorForUnknownIonType), edge.evidencesInter, edge.evidencesIntra);
+                LoggerFactory.getLogger(getClass()).debug(String.format("score = %f - %f (evidences: inter %d and intra %d)\n", edge.score, (edge.from.priorForUnknownIonType + edge.to.priorForUnknownIonType), edge.evidencesInter, edge.evidencesIntra));
                 OUT.printf("score = %f - %f (evidences: inter %d and intra %d)\n", edge.score, (edge.from.priorForUnknownIonType + edge.to.priorForUnknownIonType), edge.evidencesInter, edge.evidencesIntra);
             }}
             } catch (FileNotFoundException e) {
@@ -229,7 +241,7 @@ public class IonNetwork {
         final IonNode[] todo = nodes.toArray(IonNode[]::new);
         for (IonNode node : todo) {
             final NavigableMap<Double, Link> links = new TreeMap<>();
-            final Deviation dev = new Deviation(40);
+            final Deviation dev = new Deviation(10);
             Map<ProcessedSample, FragmentedIon> F = node.getFeature().getFeatures();
             for (Map.Entry<ProcessedSample, FragmentedIon> entry : F.entrySet()) {
                 for (CorrelatedIon correlatedIon : entry.getValue().getAdducts()) {
@@ -324,15 +336,25 @@ public class IonNetwork {
     }
 
     private void scoreEdge(Map.Entry<Pair<PrecursorIonType, PrecursorIonType>, List<CorrelatedIon>> p, Edge edge, double signalThreshold) {
-        final double intraSampleCorrelationScore = (float) p.getValue().stream().mapToDouble(x->-Math.log(Math.max(0.01, 1.0-x.correlation.score)) + Math.log(0.5)).sum();
+
+        final double[] intraSampleCorrelationScores = p.getValue().stream().mapToDouble(x->-Math.log(Math.max(0.01, 1.0-x.correlation.score)) + Math.log(0.5)).toArray();
+        Arrays.sort(intraSampleCorrelationScores);
+        double intraSampleCorrelationScore = 0d;
+        for (int i=0; i < intraSampleCorrelationScores.length; ++i) {
+            intraSampleCorrelationScore += intraSampleCorrelationScores[i];
+        }
 
 
         // DEBUG
         edge.evidencesIntra = p.getValue().size();
+        edge.debugScoreIntra = intraSampleCorrelationScore;
 
         //final double[] interSampleCorrelationScore = edge.calculateInterSampleCorrelation(signalThreshold);
         //final double weighted = interSampleCorrelationScore[0]*interSampleCorrelationScore[3];
-        edge.score = (float)(intraSampleCorrelationScore+edge.calculateEdgeScore(signalThreshold));//(float)(intraSampleCorrelationScore + weighted);
+        final double scoreExtra = edge.calculateEdgeScore(signalThreshold);
+        edge.debugScoreExtra = scoreExtra;
+        edge.correlationGroups = p.getValue().stream().map(x->x.correlation).toArray(CorrelationGroup[]::new);
+        edge.score = (float)(intraSampleCorrelationScore+ scoreExtra);//(float)// (intraSampleCorrelationScore + weighted);
     }
 
     private static class Link {
@@ -438,7 +460,7 @@ public class IonNetwork {
         private Edge.Type type;
 
         public CorAlignedIon(CorrelatedIon ion, FragmentedIon orig, Edge.Type type) {
-            super(Polarity.of(orig.getPolarity()), null, null, Quality.UNUSABLE, ion.ion.getPeak(), ion.ion.getSegment(),new Scan[0]);
+            super(Polarity.of(orig.getPolarity()), null, null, null, Quality.UNUSABLE, ion.ion.getPeak(), ion.ion.getSegment(),new Scan[0]);
             this.type = type;
             this.ion = ion;
         }

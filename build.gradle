@@ -2,26 +2,17 @@ import java.nio.file.Files
 import java.nio.file.Paths
 
 plugins {
-    id "com.jfrog.artifactory" version "4.17.2"
+    id "com.jfrog.artifactory" version "4.25.1"
 }
 
+//this task is used to update the gradle wrapper properties to a new version
+// it also ensures that wrapper scripts and gradle-wrapper.jar are updates if necessary
+wrapper{
+    gradleVersion = '6.9.3'
+}
 
 //Global Properties
 ext {
-    logger.lifecycle('reading gradle properties file...')
-    File propertiesFile = Paths.get(System.properties['user.home'], 'gradle.properties').toFile()
-    if (propertiesFile.exists()) {
-        getLogger().lifecycle("Loading properties from ${propertiesFile.absolutePath}")
-        Properties props = new Properties()
-
-        propertiesFile.withReader("UTF8", {
-            props.load(it)
-        })
-        System.properties.putAll(props)
-    }else {
-        getLogger().lifecycle("No properties file found at '${propertiesFile.absolutePath}'. Some tasks might not work without this information.")
-    }
-
     logger.lifecycle('reading build properties file...')
     props = new Properties()
     file("${projectDir}/chemistry_base/src/main/resources/sirius.build.properties").withReader("UTF8", {
@@ -30,29 +21,28 @@ ext {
     file("${projectDir}/fingerid_base_oss/src/main/resources/csi_fingerid.build.properties").withReader("UTF8", {
         props.load(it)
     })
-    System.properties.putAll(props)
 
-
-    siriusVersion = System.getProperty('de.unijena.bioinf.sirius.version')
-    fingeridVersion = System.getProperty('de.unijena.bioinf.fingerid.version')
+    siriusVersion = props.getProperty('de.unijena.bioinf.sirius.version')
+    fingeridVersion = props.getProperty('de.unijena.bioinf.fingerid.version')
     //version for external libraries
-    jjobs_version = '0.9.24'
-    slf4j_version = '1.7.25'
-    gson_version = "2.8.6"//'2.6.2'
+    jjobs_version = '0.9.35'
+    slf4j_version = '1.7.36'
+    jackson_version = '2.14.2'
     math3_version = '3.6.1'
-    glpk_version = System.getProperty('de.unijena.bioinf.sirius.build.glpk_version')
-    gurobi_version = System.getProperty('de.unijena.bioinf.sirius.build.gurobi_version')
-    cplex_version = System.getProperty('de.unijena.bioinf.sirius.build.cplex_version')
-    graphUtils_version = '1.1'
-    cdk_version = "2.3"
-    jetbrains_version = "17.0.0"
+    cbc_version = props.getProperty('de.unijena.bioinf.sirius.build.cbc_version')
+    glpk_version = props.getProperty('de.unijena.bioinf.sirius.build.glpk_version')
+    gurobi_version = props.getProperty('de.unijena.bioinf.sirius.build.gurobi_version')
+    cplex_version = props.getProperty('de.unijena.bioinf.sirius.build.cplex_version')
+    cdk_version = "2.8"
+    jetbrains_version = "23.0.0"
+    okhttp_version = "4.10.0"
+    fastutil_version = '8.5.12' //replaces trove
 
     jewelcli_version = '0.8.9'
     //todo wenn wir die inhouse clis auch ind das frontend moven haben wir keinerlei distribution zeug mehr in sirius
-    glpk_lib_version = '4.60'
 
-    commons_email_version = '1.4'
-    oshi_version = '5.2.2'
+    commons_email_version = '1.5'
+    oshi_version = '6.1.5'
     json_version = '1.0'
     json_impl_version = "1.0.4"
     psql_version = "42.2.1"
@@ -60,16 +50,19 @@ ext {
     liblinear_version = "1.95"
     libsvm_version = "3.20"
 
+    guava_version = '31.1-jre'
+
 
 }
 
 allprojects {
     apply plugin: "com.jfrog.artifactory"
     apply plugin: 'java'
+    apply plugin: 'java-library'
     apply plugin: 'maven-publish'
 
-    sourceCompatibility = 11
-    targetCompatibility = 11
+    sourceCompatibility = 17
+    targetCompatibility = 17
 
     compileJava.options.encoding = "UTF-8"
     compileTestJava.options.encoding = "UTF-8"
@@ -88,64 +81,45 @@ allprojects {
                 artifact()
             }
         }
-
-        maven {
-            url "https://bio.informatik.uni-jena.de/repository/libs-release-local-private/"
-            metadataSources {
-                mavenPom()
-                artifact()
-            }
-            credentials {               // Optional resolver credentials (leave out to use anonymous resolution)
-                username = System.getProperty('de.unijena.bioinf.build.artifactory.username')
-                password = System.getProperty('de.unijena.bioinf.build.artifactory.password')
-            }
-        }
-
-        maven {
-            url "https://bio.informatik.uni-jena.de/repository/libs-snapshot-local-private/"
-            metadataSources {
-                mavenPom()
-                artifact()
-            }
-            credentials {               // Optional resolver credentials (leave out to use anonymous resolution)
-                username = System.getProperty('de.unijena.bioinf.build.artifactory.username')
-                password = System.getProperty('de.unijena.bioinf.build.artifactory.password')
-            }
-        }
-
-
         maven {
             url "https://www.xypron.de/repository" //glpk repo
         }
         maven {
-            url "http://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/" //mzml parser
+            url "https://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/" //mzml parser
         }
         maven {
             url "http://eulergui.sourceforge.net/maven2/" //FTAlign stuff
+            allowInsecureProtocol = true
         }
-        /*maven{
-            url "https://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo/" //cpdetector no gpl
-            metadataSources { artifact() }
-        }*/
     }
 
     dependencies {
-        compile "org.jetbrains:annotations:$jetbrains_version"
-        compile 'net.sf.trove4j:core:3.1.0' //switched from 'net.sf.trove4j:trove4j:3.0.3' which seems to be buggy and no longer supported
-        compile group: 'com.google.guava', name: 'guava', version: '28.1-jre'
-        compile 'org.apache.commons:commons-lang3:3.8.1'
-        compile 'commons-io:commons-io:2.6'
-        compile group: 'de.unijena.bioinf', name: 'jjobs-core', version:"$jjobs_version"
-        compile group: 'org.slf4j', name: 'slf4j-api', version: "$slf4j_version"
+        compileOnly 'org.projectlombok:lombok:1.18.26'
+        annotationProcessor 'org.projectlombok:lombok:1.18.26'
 
+        api "org.jetbrains:annotations:$jetbrains_version"
+        api "it.unimi.dsi:fastutil:$fastutil_version"
 
+//        api 'org.apache.commons:commons-collections4:4.4'
+        //try to remove and replace with basic java or fastutil
+        api group: 'com.google.guava', name: 'guava', version: '31.1-jre'
+        api "org.apache.commons:commons-math3:$math3_version"
+        api 'org.apache.commons:commons-compress:1.21'
+        api 'org.apache.commons:commons-lang3:3.12.0'
+        api 'commons-io:commons-io:2.11.0' //maybe provide via io package?
 
-        testCompile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
-        testCompile group: 'de.unijena.bioinf', name: 'jjobs-swing', version:"$jjobs_version"
-        testCompile group: 'junit', name: 'junit', version: '4.12'
+        api "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
+        api "com.fasterxml.jackson.core:jackson-annotations:$jackson_version"
+
+        api 'com.googlecode.concurrent-locks:concurrent-locks:1.0.0'
+
+        api group: 'de.unijena.bioinf', name: 'jjobs-core', version:"$jjobs_version"
+        api group: 'org.slf4j', name: 'slf4j-api', version: "$slf4j_version"
+
+        testImplementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+        testImplementation group: 'de.unijena.bioinf', name: 'jjobs-swing', version:"$jjobs_version"
+        testImplementation group: 'junit', name: 'junit', version: '4.13.1'
     }
-
-
 
     task sourceJar(type: Jar) {
         group = 'build'
@@ -196,30 +170,6 @@ allprojects {
     clean.dependsOn cleanConfig*/
 }
 
-task downloadGLPK(type: Copy) {
-    def glpkURL = new URL("https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/glpk/glpk-${project.glpk_lib_version}.zip")
-    project.ext.set("glpkPath", getBuildDir().toPath().resolve('tmp/glpk/').toFile())
-
-    java.nio.file.Path dir = project.glpkPath.toPath().getParent()
-    if (!dir.resolve('glpk').toFile().exists()) {
-        copy {
-            println(dir.toString())
-            dir.resolve('glpk').toFile().deleteDir()
-            Files.createDirectories(dir)
-
-            def glpkZipFile = Paths.get('glpk.zip')
-            getLogger().lifecycle("Downloading glpk...")
-            def file = dir.resolve(glpkZipFile).newOutputStream()
-            file << glpkURL.openStream()
-            file.close()
-
-            getLogger().lifecycle("Unpacking glpk...")
-            from zipTree(dir.resolve(glpkZipFile).toFile())
-            into dir.toFile()
-        }
-    }
-}
-
 def javaProjects() {
     subprojects.findAll { new File(it.projectDir, 'src').directory }
 }
@@ -248,12 +198,8 @@ artifactory {
             else
                 repoKey = 'libs-release-local'
 
-            username = System.getenv("ARTIFACTORY_USERNAME") != null
-                    ? System.getenv("ARTIFACTORY_USERNAME")
-                    : System.properties['de.unijena.bioinf.build.artifactory.username']
-            password = System.getenv("ARTIFACTORY_TOKEN") != null
-                    ? System.getenv("ARTIFACTORY_TOKEN")
-                    : System.properties['de.unijena.bioinf.build.artifactory.password']
+            username = project.findProperty('de.unijena.bioinf.build.artifactory.username')
+            password = project.findProperty('de.unijena.bioinf.build.artifactory.password')
         }
         defaults {
             publications('mavenJava')

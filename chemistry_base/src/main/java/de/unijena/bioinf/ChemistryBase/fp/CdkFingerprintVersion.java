@@ -23,6 +23,7 @@ package de.unijena.bioinf.ChemistryBase.fp;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import gnu.trove.list.array.TIntArrayList;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
@@ -41,9 +42,16 @@ import java.util.regex.Pattern;
 public class CdkFingerprintVersion extends FingerprintVersion {
 
 
+    public static void main(String[] args) {
+        System.out.println(CdkFingerprintVersion.getDefault().getOffsetFor(USED_FINGERPRINTS.INSILICO));
+        System.out.println(CdkFingerprintVersion.getDefault().size());
+    }
+
     private final long fastCompareFlag;
     private final MolecularProperty[] properties;
     private final USED_FINGERPRINTS[] usedFingerprints;
+
+    private static int[] topIndizes;
 
     public USED_FINGERPRINTS[] getUsedFingerprints() {
         return usedFingerprints;
@@ -119,6 +127,19 @@ public class CdkFingerprintVersion extends FingerprintVersion {
         return false;
     }
 
+    @Override
+    public boolean identical(FingerprintVersion fingerprintVersion) {
+        if (this == fingerprintVersion) return true;
+        if (fingerprintVersion.getClass().equals(this.getClass())) {
+            return fastCompareFlag == ((CdkFingerprintVersion)fingerprintVersion).fastCompareFlag;
+        }
+        if (fingerprintVersion instanceof MaskedFingerprintVersion) {
+            final MaskedFingerprintVersion m = (MaskedFingerprintVersion)fingerprintVersion;
+            return m.isNotFiltering() && identical(m.getMaskedFingerprintVersion());
+        }
+        return false;
+    }
+
     private static final USED_FINGERPRINTS[] WITHOUT_ECFP_SETUP = new USED_FINGERPRINTS[]{
             USED_FINGERPRINTS.OPENBABEL, USED_FINGERPRINTS.SUBSTRUCTURE, USED_FINGERPRINTS.MACCS, USED_FINGERPRINTS.PUBCHEM, USED_FINGERPRINTS.KLEKOTA_ROTH
     };
@@ -127,9 +148,15 @@ public class CdkFingerprintVersion extends FingerprintVersion {
      * will be replaced by complete setup as soon as fingerprints are imported into the database.
      */
     private static final USED_FINGERPRINTS[] EXTENDED_SETUP = new USED_FINGERPRINTS[]{
-            USED_FINGERPRINTS.OPENBABEL, USED_FINGERPRINTS.SUBSTRUCTURE, USED_FINGERPRINTS.MACCS, USED_FINGERPRINTS.PUBCHEM, USED_FINGERPRINTS.KLEKOTA_ROTH, USED_FINGERPRINTS.ECFP, USED_FINGERPRINTS.BIOSMARTS, USED_FINGERPRINTS.RINGSYSTEMS};
+            USED_FINGERPRINTS.OPENBABEL, USED_FINGERPRINTS.SUBSTRUCTURE, USED_FINGERPRINTS.MACCS, USED_FINGERPRINTS.PUBCHEM, USED_FINGERPRINTS.KLEKOTA_ROTH, USED_FINGERPRINTS.ECFP, USED_FINGERPRINTS.BIOSMARTS, USED_FINGERPRINTS.RINGSYSTEMS, USED_FINGERPRINTS.INSILICO};
 
-    private static final USED_FINGERPRINTS[] DEFAULT_SETUP = EXTENDED_SETUP;
+    /**
+     * version string to reference the exact fingerprint computation code in the database (fp_version table)
+     * TODO UPDATE everytime anything is changed on the code base of the fingerprint computation
+     */
+    public static final String DEFAULT_SETUP_VERSION = "2023-01-10";
+    private static final USED_FINGERPRINTS[] DEFAULT_SETUP = new USED_FINGERPRINTS[]{
+        USED_FINGERPRINTS.OPENBABEL, USED_FINGERPRINTS.SUBSTRUCTURE, USED_FINGERPRINTS.MACCS, USED_FINGERPRINTS.PUBCHEM, USED_FINGERPRINTS.KLEKOTA_ROTH, USED_FINGERPRINTS.ECFP, USED_FINGERPRINTS.BIOSMARTS, USED_FINGERPRINTS.RINGSYSTEMS, USED_FINGERPRINTS.INSILICO};
 
 
     public enum USED_FINGERPRINTS {
@@ -138,7 +165,7 @@ public class CdkFingerprintVersion extends FingerprintVersion {
 
         BIOSMARTS(6, 283, false, true),
         RINGSYSTEMS(7, 463, false, true),
-        SHORTEST_PATH(8, 2718, false, true);
+        INSILICO(8, 5847, false, true);
 
         public final int defaultPosition, length;
         /*
@@ -305,13 +332,21 @@ public class CdkFingerprintVersion extends FingerprintVersion {
             }
         }
 
-        // SHORTEST PATH FINGERPRINTS
-        try (final BufferedReader r = FileUtils.ensureBuffering(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/fingerprints/shortest_paths.txt")))) {
+        try (final BufferedReader r = FileUtils.ensureBuffering(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/fingerprints/insilico.txt")))) {
             String line = null;
             while ((line = r.readLine()) != null) {
-                properties.add(new ShortestPathProperty(line));
+                properties.add(new SubstructureProperty(line));
             }
         }
+
+        final TIntArrayList topIndizesList = new TIntArrayList();
+        try (final BufferedReader r = FileUtils.ensureBuffering(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/fingerprints/fingerprint_selection_indizes.txt")))) {
+            String line = null;
+            while ((line = r.readLine()) != null) {
+                topIndizesList.add(Integer.parseInt(line));
+            }
+        }
+        topIndizes = topIndizesList.toArray();
 
         int offset=0;
         for (int k=0; k < DEFAULT_PROPERTIES.length; ++k) {
@@ -323,6 +358,15 @@ public class CdkFingerprintVersion extends FingerprintVersion {
 
     public static MolecularProperty[] getDefaultPropertiesFor(USED_FINGERPRINTS uf) {
         return DEFAULT_PROPERTIES[uf.defaultPosition];
+    }
+
+    public static MaskedFingerprintVersion getTopProperties(int desiredNumberOfProperties) {
+        MaskedFingerprintVersion.Builder builder = MaskedFingerprintVersion.buildMaskFor(getDefault());
+        builder.disableAll();
+        for (int i=0; i < Math.min(topIndizes.length, desiredNumberOfProperties); ++i) {
+            builder.enable(topIndizes[i]);
+        }
+        return builder.toMask();
     }
 
 

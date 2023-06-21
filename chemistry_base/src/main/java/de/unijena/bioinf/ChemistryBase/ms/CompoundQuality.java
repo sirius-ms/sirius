@@ -78,6 +78,10 @@ public class CompoundQuality implements Ms2ExperimentAnnotation  {
         }
     }
 
+    public EnumSet<CompoundQualityFlag> getFlags() {
+        return EnumSet.copyOf(flags);
+    }
+
     public boolean is(CompoundQualityFlag flag) {
         return flags.contains(flag);
     }

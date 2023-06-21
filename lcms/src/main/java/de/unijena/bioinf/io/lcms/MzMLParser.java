@@ -21,6 +21,7 @@
 package de.unijena.bioinf.io.lcms;
 
 import de.unijena.bioinf.ChemistryBase.data.DataSource;
+import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
 import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
@@ -39,7 +40,6 @@ import uk.ac.ebi.jmzml.xml.io.MzMLUnmarshaller;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -47,11 +47,16 @@ public class MzMLParser implements LCMSParser {
 
     @Override
     public LCMSRun parse(File file, SpectrumStorage storage) throws IOException {
-        return parse(new DataSource(file), new MzMLUnmarshaller(file), storage);
+        try {
+            return parse(new DataSource(file), new MzMLUnmarshaller(file), storage);
+        } catch (Throwable w) {
+            LoggerFactory.getLogger(MzMLParser.class).error("Error when parsing file: " + file.getName());
+            throw w;
+        }
     }
 
-    public LCMSRun parse(URL source, SpectrumStorage storage) throws IOException {
-        return parse(new DataSource(source), new MzMLUnmarshaller(source), storage);
+    public LCMSRun parse(URI source, SpectrumStorage storage) throws IOException {
+        return parse(new DataSource(source), new MzMLUnmarshaller(source.toURL()), storage);
     }
 
     public LCMSRun parse(@NotNull DataSource source, @NotNull MzMLUnmarshaller um, @NotNull SpectrumStorage storage) throws IOException {
@@ -64,7 +69,7 @@ public class MzMLParser implements LCMSParser {
 
             {
                 // get source location oO
-                URI s = source.getUrl().toURI();
+                URI s = source.getURI();
                 URI parent = s.getPath().endsWith("/") ? s.resolve("..") : s.resolve(".");
                 String fileName = parent.relativize(s).toString();
                 run.setReference(new MsDataSourceReference(parent, fileName, runId, mzMlId));
@@ -101,14 +106,17 @@ public class MzMLParser implements LCMSParser {
             for (String sid : um.getSpectrumIDs()) {
                 final Spectrum spectrum = um.getSpectrumById(sid);
                 Polarity polarity = Polarity.UNKNOWN;
-                int msLevel = 1;
+                Integer msLevel = null;
                 boolean centroided=true;
+                final Set<CVParam> skipList = new HashSet<>();
                 for (CVParam cvParam : spectrum.getCvParam()) {
                     switch (cvParam.getAccession()) {
                         case "MS:1000129":
+                        case "MS:1000076":
                             polarity = Polarity.NEGATIVE;
                             break;
                         case "MS:1000130":
+                        case "MS:1000077":
                             polarity = Polarity.POSITIVE;
                             break;
                         case "MS:1000511":
@@ -120,8 +128,25 @@ public class MzMLParser implements LCMSParser {
                         case "MS:1000128":
                             centroided = false;
                             break;
+                        // add to skiplist
+                        case "MS:1000804":
+                            skipList.add(cvParam);
+                            break;
                     }
                 }
+
+                if (!skipList.isEmpty()){
+                    LoggerFactory.getLogger(getClass()).debug("Spectrum with ID '" + sid  + "' contains parameters that indicate non Mass Spectrometry data (e.g. EMR spectra). Skipping! Parameters: " + skipList.stream().map(CVParam::getAccession).collect(Collectors.joining(", ")) );
+                    continue;
+                }
+                if (msLevel == null && polarity == Polarity.UNKNOWN){
+                    LoggerFactory.getLogger(getClass()).warn("Spectrum with ID '" + sid  + "' does neither contain mslevel nor polarity information. Spectrum is likely to not be an Mass Spectrum. Skipping this entry." + System.lineSeparator() + "Spectrum information: " + spectrum.getCvParam().stream().map(CVParam::toString).collect(Collectors.joining(System.lineSeparator())));
+                    continue;
+                }
+
+                if (msLevel == null)
+                    msLevel = 1;
+
 
                 long retentionTimeMillis = 0L;
                 if (!spectrum.getScanList().getScan().isEmpty()) {
@@ -135,11 +160,16 @@ public class MzMLParser implements LCMSParser {
                 }
 
                 Precursor precursor = null;
-                double collisionEnergy = 0d;
+                double collisionEnergy = Double.NaN;
                 if (msLevel > 1) {
-                    precursor = spectrum.getPrecursorList().getPrecursor().get(0);
-                    collisionEnergy = precursor.getActivation().getCvParam().stream().filter(cv -> cv.getAccession().equals("MS:1000045"))
-                            .findFirst().map(cv -> Double.parseDouble(cv.getValue())).orElse(0d);
+                    if (spectrum.getPrecursorList()==null || spectrum.getPrecursorList().getPrecursor()==null || spectrum.getPrecursorList().getPrecursor().isEmpty()) {
+                        precursor = null;
+                        LoggerFactory.getLogger(MzMLParser.class).warn("No precursor given for MS/MS spectra");
+                    } else {
+                        precursor = spectrum.getPrecursorList().getPrecursor().get(0);
+                        collisionEnergy = precursor.getActivation().getCvParam().stream().filter(cv -> cv.getAccession().equals("MS:1000045"))
+                                .findFirst().map(cv -> Double.parseDouble(cv.getValue())).orElse(0d);
+                    }
                 }
 
                 double[] mzArray = null;
@@ -171,7 +201,7 @@ public class MzMLParser implements LCMSParser {
                         spectrum.getIndex(),
                         polarity,
                         retentionTimeMillis, //retention time
-                        collisionEnergy, //collision energy
+                        Double.isFinite(collisionEnergy) ? new CollisionEnergy(collisionEnergy) : CollisionEnergy.none(), //collision energy
                         spec.size(),
                         Spectrums.calculateTIC(spec),
                         centroided,

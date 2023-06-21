@@ -20,8 +20,11 @@
 
 package de.unijena.bioinf.ms.annotations;
 
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.Iterator;
@@ -113,6 +116,41 @@ public interface Annotated<A extends DataAnnotation> {
         fireAnnotationChange(val, value);
         return val != null;
     }
+
+    /**
+     * Set the annotation with lazily extracted the Key
+     * Setting the value to null will be ignored since the Key cannot be extracted
+     *
+     * @param annotation The value that will be annotated to this object.
+     *
+     * @return The value that was annotated or null
+     */
+    default <D extends A> D annotate(@Nullable final D annotation) {
+        return annotate(annotation, true);
+    }
+
+    /**
+     * Annotates this object with lazily extracted the Key
+     * Setting the value to null will be ignored since the Key cannot be extracted
+     *
+     * @param annotation The value that will be annotated to this object.
+     * @param overrideExisting if true existing value will be overwritten.
+     *
+     * @return The value that was annotated or null
+     */
+    default <D extends A> D annotate(@Nullable final D annotation, boolean overrideExisting) {
+        if (annotation != null) {
+            Class<D> clzz = (Class<D>) annotation.getClass();
+            if (overrideExisting || !annotations().map.containsKey(clzz))
+                setAnnotation(clzz, annotation);
+        }
+        return annotation;
+    }
+
+    default <D extends A> D takeAndAnnotate(@NotNull final JJob<D> resultJJob) {
+        return annotate(resultJJob.takeResult());
+    }
+
 
     default <T extends A> void addAnnotationIfAbsend(Class<T> klass, T value) {
         if (!annotations().map.containsKey(klass))
@@ -283,6 +321,7 @@ public interface Annotated<A extends DataAnnotation> {
     default boolean hasListeners(String propertyName) {
         return annotations().annotationChangeSupport.hasListeners(propertyName);
     }
+
 
     /**
      * This allows us to hide the annotation map from the outside

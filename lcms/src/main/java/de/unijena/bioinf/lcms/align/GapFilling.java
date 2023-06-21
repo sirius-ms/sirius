@@ -241,6 +241,7 @@ public class GapFilling {
                         minimum=k;
                     }
                 }
+                if (minimum<0) return Optional.empty();
                 return divide(sample, peak, segment, minimum, segment.getApexIndex(), mx);
             } else {
                 for (int k=mx-1; k > segment.getApexIndex(); --k) {
@@ -249,6 +250,7 @@ public class GapFilling {
                         minimum=k;
                     }
                 }
+                if (minimum<0) return Optional.empty();
                 return divide(sample, peak, segment, minimum, segment.getApexIndex(), mx);
 
             }

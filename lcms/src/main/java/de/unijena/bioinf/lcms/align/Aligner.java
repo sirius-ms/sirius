@@ -42,6 +42,7 @@ import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.lcms.quality.AlignmentQuality;
 import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bioinf.model.lcms.*;
+import de.unijena.bioinf.recal.MzRecalibration;
 import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
 import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
 import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
@@ -58,6 +59,7 @@ import org.apache.commons.math3.analysis.function.Identity;
 import org.apache.commons.math3.analysis.interpolation.LoessInterpolator;
 import org.apache.commons.math3.distribution.LaplaceDistribution;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -84,9 +86,8 @@ public class Aligner {
                 continue; // ignore multiple charged compounds
             final double mass = f.getMass();
             final TLongArrayList retentionTimes = new TLongArrayList();
-            final TDoubleArrayList collision_energies = new TDoubleArrayList();
             final ArrayList<Feature> features = new ArrayList<>();
-            final ArrayList<MergedSpectrum> mergedSpectra = new ArrayList<>();
+            MergedSpectrumWithCollisionEnergies mergedSpectra = new MergedSpectrumWithCollisionEnergies();
             final TIntObjectHashMap<List<SimpleSpectrum>> coeluted = new TIntObjectHashMap<>();
             Feature best = null;
             List<ProcessedSample> samples = new ArrayList<>(f.features.keySet());
@@ -124,11 +125,11 @@ public class Aligner {
             }
 
             if (rejectedSamples.size()>0) {
-                System.out.println("Reject " +rejectedSamples.size() + " of " + tot + " samples");
+                LoggerFactory.getLogger(Aligner.class).info("Reject " +rejectedSamples.size() + " of " + tot + " samples for feature " + featureID);
             }
 
             double totalInt = 0d;
-            MergedSpectrum merged = null;
+            MergedSpectrumWithCollisionEnergies merged = null;
             final Set<PrecursorIonType> ionTypes = new HashSet<>();
             PrecursorIonType ionType=null;
             double chimericPollution = 0d;
@@ -141,15 +142,16 @@ public class Aligner {
                 if (Math.abs(ion.getChargeState())>1)
                     continue; // multiple charged ions are not allowed
                 retentionTimes.add(ion.getRetentionTime());
-                if (ion.getMsMsScan()!=null)collision_energies.add(ion.getMsMsScan().getCollisionEnergy());
 
                 final Feature e = instance.makeFeature(sample, ion, !ion.isCompound());
                 features.add(e);
                 totalInt += e.getIntensity();
 
-                final MergedSpectrum msms;
-                if (ion.getMsMsScan()==null || rejectedSamples.contains(sample)) msms=null;
-                else msms = new MergedSpectrum(ion.getMsMsScan(), instance.getMs2(ion.getMsMsScan()), ion.getMsMsScan().getPrecursor(),sample.ms2NoiseModel.getNoiseLevel(ion.getMsMsScan().getIndex(),ion.getMass()));
+                final MergedSpectrumWithCollisionEnergies msms;
+                if (ion.getMsMsScans()==null || rejectedSamples.contains(sample)) msms=null;
+                else msms = new MergedSpectrumWithCollisionEnergies(Arrays.stream(ion.getMsMsScans()).map(x-> new MergedSpectrum(
+                        x, instance.getMs2(x), x.getPrecursor(),sample.ms2NoiseModel.getNoiseLevel(x.getIndex(),ion.getMass())
+                )).toArray(MergedSpectrum[]::new));
 
                 if (msms!=null) {
                     final double tic = msms.totalTic();
@@ -161,9 +163,16 @@ public class Aligner {
 
                 if (merged==null) merged = msms;
                 else if (msms!=null) {
-                    MergedSpectrum spec = Ms2CosineSegmenter.merge(merged,msms);
-                    if (spec.getMergedCosine()>=0.5)
+                    MergedSpectrumWithCollisionEnergies spec = Ms2CosineSegmenter.merge(merged,msms);
+                    boolean goodMatch = false;
+                    for (MergedSpectrum s : spec.getSpectra()) {
+                        if (s.getMergedCosine() >= 0.66) {
+                            goodMatch=true;
+                        }
+                    }
+                    if (goodMatch) {
                         merged = spec;
+                    }
                 }
 
                 for (SimpleSpectrum coel : e.getCorrelatedFeatures()) {
@@ -221,21 +230,13 @@ public class Aligner {
 
             retentionTimes.sort();
             final long medianRet = retentionTimes.get(retentionTimes.size()/2);
-            //collision energies
-            collision_energies.sort();
-            double lowestNonZero=0;
-            for(int i=0;i<collision_energies.size();i++){
-                if (collision_energies.get(i)>lowestNonZero) {
-                    lowestNonZero = collision_energies.get(i);
-                    break;
-                }
-            }
-
-            double highest = collision_energies.get(collision_energies.size()-1);
-            SimpleMutableSpectrum ms2merged = new SimpleMutableSpectrum(merged.finishMerging());
+            merged.getSpectra().sort(Comparator.comparingDouble(x->x.getCollisionEnergy().getMaxEnergy()));
+            SimpleMutableSpectrum[] ms2merged = merged.getSpectra().stream().map(x->new SimpleMutableSpectrum(x.finishMerging())).toArray(SimpleMutableSpectrum[]::new);
             // remove isotope peaks from the MS/MS
-            Spectrums.filterIsotopePeaks(ms2merged,new Deviation(10),0.2, 0.55,3,new ChemicalAlphabet(MolecularFormula.parseOrNull("CHNOPS").elementArray()),true);
-            final ConsensusFeature F = new ConsensusFeature(++featureID, features.toArray(new Feature[0]),representativeSample==null ? -1 : samples.indexOf(representativeSample), allMs1Spectra.toArray(SimpleSpectrum[]::new), new SimpleSpectrum[]{new SimpleSpectrum(ms2merged)}, ionType, medianRet, new CollisionEnergy(lowestNonZero,highest),mass, totalInt,chimericPollution);
+            for (SimpleMutableSpectrum s : ms2merged) {
+                Spectrums.filterIsotopePeaks(s, new Deviation(10), 0.2, 0.55, 3, new ChemicalAlphabet(MolecularFormula.parseOrNull("CHNOPS").elementArray()), true);
+            }
+            final ConsensusFeature F = new ConsensusFeature(++featureID, features.toArray(new Feature[0]),representativeSample==null ? -1 : samples.indexOf(representativeSample), allMs1Spectra.toArray(SimpleSpectrum[]::new), Arrays.stream(ms2merged).map(x->new SimpleSpectrum(x)).toArray(SimpleSpectrum[]::new), ionType, medianRet, merged.getSpectra().stream().map(x->x.getCollisionEnergy()).toArray(CollisionEnergy[]::new),mass, totalInt,chimericPollution);
             consensusFeatures.add(F);
             mapper.put(f, F);
         }
@@ -397,7 +398,8 @@ public class Aligner {
                                 }
                                 final double[] X = Spectrums.copyMasses(buff);
                                 final double[] Y = Spectrums.copyIntensities(buff);
-                                s.setRecalibrationFunction(new LoessFunction(new LoessInterpolator().interpolate(X, Y)));
+                                s.setRecalibrationFunction(MzRecalibration.getMedianLinearRecalibration(X, Y));
+                                //s.setRecalibrationFunction(new LoessFunction(new LoessInterpolator().interpolate(X, Y)));
                                 System.out.println(s.run.getSource() + " :: " + s.getRecalibrationFunction());
                             } else {
                                 System.out.println("Not enough aligned features to recalibrate " + s.run.getSource());

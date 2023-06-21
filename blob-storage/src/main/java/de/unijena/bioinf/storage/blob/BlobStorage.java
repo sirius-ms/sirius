@@ -24,22 +24,25 @@ import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Super simple object reading/writing API
  */
+public interface BlobStorage extends Closeable, AutoCloseable {
 
-public interface BlobStorage {
+    @Override
+    default void close() throws IOException {
+    }
 
     default Charset getCharset() {
         return StandardCharsets.UTF_8;
@@ -47,13 +50,37 @@ public interface BlobStorage {
 
     String getName();
 
+    String getBucketLocation();
+
+    default long size() throws IOException {
+        AtomicLong size = new AtomicLong(size());
+        listBlobs().forEachRemaining(blob -> {
+            if (!blob.isDirectory())
+                size.addAndGet(blob.size());
+        });
+        return size.get();
+    }
+
     boolean hasBlob(Path relative) throws IOException;
 
+    boolean deleteBlob(Path relative) throws IOException;
+
+    default void clear() throws IOException {
+        Iterator<Blob> it = listBlobs();
+        while (it.hasNext())
+            deleteBlob(Path.of(it.next().getKey()));
+    }
+
     /**
-     * returns a writer for the given path
-     * @param relative elative path from storage root
+     * Applies given function to a writer for the given path
+     * in the store and closes it after writing
+     *
+     * @param relative   relative path from storage root
+     * @param withStream consume OutputStream to write data
      */
-    OutputStream writer(Path relative) throws IOException;
+
+    void withWriter(Path relative, IOFunctions.IOConsumer<OutputStream> withStream) throws IOException;
+
 
     /**
      * Returns the raw unmodified byte stream from the store.
@@ -63,9 +90,9 @@ public interface BlobStorage {
      */
     InputStream reader(Path relative) throws IOException;
 
-
     /**
      * Returns the Tag on storage/bucket level for the given key
+     *
      * @param key associated with the requested value
      * @return tag corresponding to the given key or NULL if key does not exist or
      * if the storage/bucket does not support tags.
@@ -80,9 +107,7 @@ public interface BlobStorage {
      * @return map containing key value pairs
      */
     @NotNull
-    default Map<String, String> getTags() throws IOException {
-        return Collections.emptyMap();
-    }
+    Map<String, String> getTags() throws IOException;
 
 
     /**
@@ -102,9 +127,7 @@ public interface BlobStorage {
      * Set the tags associated with this storage/bucket
      * Might throw {@link UnsupportedOperationException} if storage/bucket does not support tags
      */
-    default void setTags(@NotNull Map<String, String> tags) throws IOException {
-        throw new UnsupportedOperationException("");
-    }
+    void setTags(@NotNull Map<String, String> tags) throws IOException;
 
     /**
      * Remove a tag with the given key from the storage/bucket
@@ -117,12 +140,20 @@ public interface BlobStorage {
 
     Iterator<Blob> listBlobs() throws IOException;
 
+    /**
+     * delete bucket and close client if necessary
+     */
+    void deleteBucket() throws IOException;
+
     interface Blob {
         boolean isDirectory();
+
         String getKey();
-        default String getFileName(){
+
+        default String getFileName() {
             return Path.of(getKey()).getFileName().toString();
         }
+
         long size();
     }
 

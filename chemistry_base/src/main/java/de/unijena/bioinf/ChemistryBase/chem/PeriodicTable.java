@@ -645,6 +645,14 @@ public final class PeriodicTable implements Iterable<Element>, Cloneable {
         distribution.merge(pt.distribution);
     }
 
+
+    // add TableSelection into cache or reuse an existing cached table selection
+    // returns the table selection from the cache (new or already existing). It is
+    // guaranteed that the returned table selection is compatible to the given selection
+    public TableSelection tryToAddTableSelectionIntoCache(TableSelection selection) {
+        return cache.addToCache(selection);
+    }
+
     /**
      * @return the empty formula. This object is cached as molecular formulas are immutable
      */
@@ -1044,7 +1052,8 @@ public final class PeriodicTable implements Iterable<Element>, Cloneable {
         name = canonicalizeIonName(name);
         if (name.equals(canonicalizeIonName(Charge.POSITIVE_CHARGE)) || name.equals("M+?+"))
             return PrecursorIonType.unknownPositive();
-        if (name.equals(canonicalizeIonName(Charge.NEGATIVE_CHARGE)) || name.equals("M+?-"))
+        if (name.equals(canonicalizeIonName(Charge.NEGATIVE_CHARGE)) || name.equals("M+?-") || name.equals("[M-?]-") || name.equals("M-?-"))
+            //[M-?]- is actually an incorrect use of [M+?]-. However, we still want it to be parse correctly
             return PrecursorIonType.unknownNegative();
 
         return knownIonTypes.get(name);

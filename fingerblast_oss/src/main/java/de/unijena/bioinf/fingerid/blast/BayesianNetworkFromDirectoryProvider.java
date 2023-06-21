@@ -25,13 +25,14 @@ import de.unijena.bioinf.ChemistryBase.exceptions.InsufficientDataException;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.chemdb.AbstractChemicalDatabase;
 import de.unijena.bioinf.chemdb.ChemicalDatabase;
-import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class BayesianNetworkFromDirectoryProvider implements BayesianNetworkScoringProvider, BayesianNetworkScoringStorage {
     private final Logger Log = LoggerFactory.getLogger(BayesianNetworkFromDirectoryProvider.class);
@@ -41,13 +42,16 @@ public class BayesianNetworkFromDirectoryProvider implements BayesianNetworkScor
 
     private final static String filePrefix = "bayesianScoring_";
     private final static String fileSuffix = "";
-    private final ChemicalDatabase chemDB;
+    private final AbstractChemicalDatabase chemDB;
+
+    private final ReadWriteLock lock;
 
     private BayesnetScoring defaultScoring = null;
 
     private final boolean autoSaveComputedScorings;
 
-    public BayesianNetworkFromDirectoryProvider(Path scoringDirectory, BayesianScoringUtils bayesianScoringUtils, ChemicalDatabase chemDB, boolean autoSaveComputedScorings) {
+    public BayesianNetworkFromDirectoryProvider(Path scoringDirectory, BayesianScoringUtils bayesianScoringUtils, AbstractChemicalDatabase chemDB, boolean autoSaveComputedScorings) {
+        this.lock = new ReentrantReadWriteLock();
         if (!Files.exists(scoringDirectory))
             throw new IllegalArgumentException("Directory does not exist, please create first: " + scoringDirectory);
         if (!Files.isDirectory(scoringDirectory))
@@ -58,103 +62,100 @@ public class BayesianNetworkFromDirectoryProvider implements BayesianNetworkScor
         this.chemDB = chemDB;
     }
 
-    public BayesianNetworkFromDirectoryProvider(Path scoringDirectory, BayesianScoringUtils bayesianScoringUtils, ChemicalDatabase chemDB) {
+    public BayesianNetworkFromDirectoryProvider(Path scoringDirectory, BayesianScoringUtils bayesianScoringUtils, AbstractChemicalDatabase chemDB) {
         this(scoringDirectory, bayesianScoringUtils, chemDB, true);
+    }
+
+    public boolean isDefaultScoring(BayesnetScoring scoring) {
+        if (this.defaultScoring==null) {
+            try {
+                getDefaultScoring();
+            } catch (IOException e) {
+                return false;
+            }
+        }
+        return this.defaultScoring==scoring;
     }
 
     @Override
     public BayesnetScoring getScoringOrDefault(MolecularFormula formula) throws IOException {
         Path scoringPath = getScoringPath(formula);
-        if (Files.exists(scoringPath)) {
+        lock.readLock().lock();
+        final boolean exists;
+        try {
+             exists = Files.exists(scoringPath);
+        } finally {
+            lock.readLock().unlock();
+        }
+        if (exists) {
             return readScoringFromFile(scoringPath);
         } else {
-            return computeOrGetDefaultScoring(formula);
+            try {
+                final BayesnetScoring scoring = bayesianScoringUtils.computeScoring(formula, chemDB);
+                if (autoSaveComputedScorings && (scoring != null)) {
+                    storeScoring(formula, scoring, true);
+                }
+                return scoring;
+            } catch (InsufficientDataException e) {
+                Log.info("Cannot compute Bayesian scoring tree topolology for "+formula+". Insufficient data");
+                return getDefaultScoring();
+            }
         }
     }
 
     @Override
     public BayesnetScoring getScoringOrNull(MolecularFormula formula) throws IOException {
         Path scoringPath = getScoringPath(formula);
-        if (Files.exists(scoringPath)) {
+        lock.readLock().lock();
+        final boolean exists;
+        try {
+            exists = Files.exists(scoringPath);
+        } finally {
+            lock.readLock().unlock();
+        }
+        if (exists) {
             return readScoringFromFile(scoringPath);
         } else {
-            return computeOrGetNull(formula);
-        }
-    }
-
-    private BayesnetScoring computeOrGetDefaultScoring(MolecularFormula formula) throws IOException {
-        return computeScoring(formula, true);
-    }
-
-    private BayesnetScoring computeOrGetNull(MolecularFormula formula) throws IOException {
-        return computeScoring(formula, false);
-    }
-
-    private BayesnetScoring computeScoring(MolecularFormula formula, boolean getDefaultIfFails) throws IOException {
-        BayesnetScoring scoring = null;
-        try {
-            //todo always store scoring after being computed?
-            scoring = bayesianScoringUtils.computeScoring(formula, chemDB);
-            if (autoSaveComputedScorings && (scoring != null)) {
-                storeScoring(formula, scoring, true);
+            try {
+                final BayesnetScoring scoring = bayesianScoringUtils.computeScoring(formula, chemDB);
+                if (autoSaveComputedScorings && (scoring != null)) {
+                    storeScoring(formula, scoring, true);
+                }
+                return scoring;
+            } catch (InsufficientDataException e) {
+                Log.info("Cannot compute Bayesian scoring tree topolology for "+formula+". Insufficient data");
+                return null;
             }
-        } catch (ChemicalDatabaseException e) {
-            e.printStackTrace();
-            Log.error("Cannot compute Bayesian scoring tree topolology. Error retrieving data", e);
-        } catch (InsufficientDataException e) {
-            Log.info("Cannot compute Bayesian scoring tree topolology for "+formula+". Insufficient data");
         }
-        if (scoring != null) return scoring;
-        return getDefaultIfFails ? getDefaultScoring() : null;
     }
-
-
 
     @Override
     public BayesnetScoring getDefaultScoring() throws IOException {
-        if (defaultScoring != null) return defaultScoring;
-        else {
-            Path scoringPath = getDefaultScoringPath();
-            if (Files.exists(scoringPath)) {
-                defaultScoring = readScoringFromFile(scoringPath);
-            } else {
-                defaultScoring = bayesianScoringUtils.computeDefaultScoring(chemDB);
-                if (autoSaveComputedScorings && (defaultScoring != null)) {
-                    storeDefaultScoring(defaultScoring, true);
-                }
+        if (defaultScoring!=null) return defaultScoring;
+        Path scoringPath = getDefaultScoringPath();
+        lock.readLock().lock();
+        final boolean ex = Files.exists(scoringPath);
+        lock.readLock().unlock();
+        if (ex) {
+            BayesnetScoring scoring = readScoringFromFile(scoringPath);
+            lock.writeLock().lock();
+            if (defaultScoring==null) defaultScoring=scoring;
+            lock.writeLock().unlock();
+            return defaultScoring;
+        } else {
+            if (! (chemDB instanceof ChemicalDatabase))
+                throw new UnsupportedOperationException("Default scoring can only be computed with SQL based chemDB");
+            BayesnetScoring scoring = bayesianScoringUtils.computeDefaultScoring((ChemicalDatabase) chemDB);
+            lock.writeLock().lock();
+            if (defaultScoring!=null) {
+                lock.writeLock().unlock();
+                return defaultScoring;
             }
+            storeDefaultScoring(scoring, true);
+            this.defaultScoring = scoring;
+            lock.writeLock().unlock();
             return defaultScoring;
         }
-    }
-
-    public boolean hasPrecomputedDefaultScoring() {
-        if (defaultScoring != null) return true;
-        Path scoringPath = getDefaultScoringPath();
-        if (Files.exists(scoringPath)) {
-            try {
-                defaultScoring = readScoringFromFile(scoringPath);
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            }
-            return true;
-        }
-        return false;
-    }
-
-    public boolean hasPrecomputedScoring(MolecularFormula formula) {
-        //todo also keep track somewhere, if there was no data to compute the scoring
-        Path scoringPath = getScoringPath(formula);
-        if (Files.exists(scoringPath)) {
-            try {
-                defaultScoring = readScoringFromFile(scoringPath);
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            }
-            return true;
-        }
-        return false;
     }
 
     private BayesnetScoring readScoringFromFile(Path scoringPath) throws IOException {
@@ -165,17 +166,19 @@ public class BayesianNetworkFromDirectoryProvider implements BayesianNetworkScor
     }
 
     @Override
-    public synchronized void storeScoring(MolecularFormula formula, BayesnetScoring scoring, boolean override) throws IOException {
-        if (!override & hasPrecomputedScoring(formula)) return;
+    public void storeScoring(MolecularFormula formula, BayesnetScoring scoring, boolean override) throws IOException {
         Path scoringPath = getScoringPath(formula);
+        lock.writeLock().lock();
         scoring.writeTreeWithCovToFile(scoringPath);
+        lock.writeLock().unlock();
     }
 
     @Override
-    public synchronized void storeDefaultScoring(BayesnetScoring scoring, boolean override) throws IOException {
-        if (!override & hasPrecomputedDefaultScoring()) return;
+    public void storeDefaultScoring(BayesnetScoring scoring, boolean override) throws IOException {
         Path scoringPath = getDefaultScoringPath();
+        lock.writeLock().lock();
         scoring.writeTreeWithCovToFile(scoringPath);
+        lock.writeLock().unlock();
     }
 
     private Path getDefaultScoringPath() {

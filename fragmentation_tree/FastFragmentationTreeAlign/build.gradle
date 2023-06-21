@@ -19,5 +19,6 @@
  */
 
 dependencies{
-    compile project(':chemistry_base')
+    api project(':chemistry_base')
+    api project(':chemical_db_oss:chemdb_utils_oss')
 }

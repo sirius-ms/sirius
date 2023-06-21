@@ -21,54 +21,51 @@
 
 package de.unijena.bioinf.ChemistryBase.data;
 
-import com.google.gson.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.*;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 
 import java.io.*;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 
-public class JSONDocumentType extends DataDocument<JsonElement, JsonObject, JsonArray> {
-    private final static JsonParser PARSER =  new JsonParser();
-
-
+public class JSONDocumentType extends DataDocument<JsonNode, ObjectNode, ArrayNode> {
+    private final static ObjectMapper mapper = new ObjectMapper();
     public static void writeParameters(Object o, Writer out) throws IOException {
         final ParameterHelper helper = ParameterHelper.getParameterHelper();
         final JSONDocumentType json = new JSONDocumentType();
-        final JsonElement value = helper.wrap(json, o);
+        final JsonNode value = helper.wrap(json, o);
         writeJson(json, value, out);
     }
 
     public static <G, D, L> void writeJson(DataDocument<G, D, L> document, G value, Writer out) throws IOException {
         final JSONDocumentType json = new JSONDocumentType();
-        final JsonElement object = DataDocument.transform(document, json, value);
+        final JsonNode object = DataDocument.transform(document, json, value);
 
-        out.write(object.toString()); //write to JSON string
+        out.write(mapper.writeValueAsString(object));
     }
 
-    public static JsonObject readFromFile(File fileName) throws IOException {
+    public static JsonNode readFromFile(File fileName) throws IOException {
         final FileReader reader = new FileReader(fileName);
-        final JsonObject o = read(reader);
+        final JsonNode o = read(reader);
         reader.close();
         return o;
     }
 
-    public static JsonObject read(Reader reader) {
-        return PARSER.parse(reader).getAsJsonObject();
+    public static JsonNode read(Reader reader) throws IOException {
+        return mapper.readTree(reader);
     }
 
-    public static JsonObject getJSON(String cpName, String fileName) throws IOException {
+    public static JsonNode getJSON(String cpName, String fileName) throws IOException {
         // 1. check for resource with same name
         final InputStream stream = JSONDocumentType.class.getResourceAsStream(cpName);
         if (stream != null) {
             final BufferedReader reader = FileUtils.ensureBuffering(new InputStreamReader(stream));
             try {
-                final JsonObject obj = JSONDocumentType.read(reader);
+                final JsonNode obj = JSONDocumentType.read(reader);
                 return obj;
             } finally {
                 reader.close();
@@ -80,193 +77,178 @@ public class JSONDocumentType extends DataDocument<JsonElement, JsonObject, Json
     }
 
     @Override
-    public boolean isDictionary(JsonElement document) {
-        return document.isJsonObject();
+    public boolean isDictionary(JsonNode document) {
+        return document.isObject();
     }
 
     @Override
-    public boolean isList(JsonElement document) {
-        return document.isJsonArray();
+    public boolean isList(JsonNode document) {
+        return document.isArray();
     }
 
-    public boolean isNumber(JsonElement document) {
-        if (!document.isJsonPrimitive())
-            return false;
-        return document.getAsJsonPrimitive().isNumber();
-    }
-
-    @Override
-    public double getDoubleFromList(JsonArray jsonElements, int index) {
-        return jsonElements.get(index).getAsDouble();
+    public boolean isNumber(JsonNode document) {
+        return document.isNumber();
     }
 
     @Override
-    public double getDoubleFromDictionary(JsonObject dict, String key) {
-        final JsonElement elem = dict.get(key);
-        if (elem==null) throw new NullPointerException("Key is not contained in dictionary: '" + key + "'\n");
-        return elem.getAsDouble();
+    public double getDoubleFromList(ArrayNode jsonElements, int index) {
+        return jsonElements.get(index).asDouble();
     }
 
     @Override
-    public boolean isInteger(JsonElement document) {
-        if (!document.isJsonPrimitive()) return false;
-        final JsonPrimitive primitive = (JsonPrimitive)document;
-        if (!primitive.isNumber()) return false;
-        final BigDecimal dec = document.getAsBigDecimal();
-        if (dec.scale() > 0) return false;
-        final BigInteger i = dec.toBigInteger();
-        return i.bitLength() <= 31;
+    public double getDoubleFromDictionary(ObjectNode dict, String key) {
+        final JsonNode elem = dict.get(key);
+        if (elem == null) throw new NullPointerException("Key is not contained in dictionary: '" + key + "'\n");
+        return elem.asDouble();
     }
 
     @Override
-    public boolean isDouble(JsonElement document) {
-        return isNumber(document);/* && document.getAsBigDecimal().scale() >= 0; */ // TODO: What does this mean?
+    public boolean isInteger(JsonNode document) {
+        if (!document.isNumber()) return false;
+        final double val = document.asDouble();
+        return val == Math.floor(val) && !Double.isInfinite(val);
     }
 
     @Override
-    public boolean isBoolean(JsonElement document) {
-        return document.isJsonPrimitive() && document.getAsJsonPrimitive().isBoolean();
+    public boolean isDouble(JsonNode document) {
+        return document.isNumber();
     }
 
     @Override
-    public boolean isString(JsonElement document) {
-        return document.isJsonPrimitive() && document.getAsJsonPrimitive().isString();
+    public boolean isBoolean(JsonNode document) {
+        return document.isBoolean();
     }
 
     @Override
-    public boolean isNull(JsonElement document) {
-        return document == null || document.isJsonNull();
+    public boolean isString(JsonNode document) {
+        return document.isTextual();
     }
 
     @Override
-    public long getInt(JsonElement document) {
-        return document.getAsInt();
+    public boolean isNull(JsonNode document) {
+        return document == null || document.isNull();
     }
 
     @Override
-    public double getDouble(JsonElement document) {
-        return document.getAsDouble();
+    public long getInt(JsonNode document) {
+        return document.asInt();
     }
 
     @Override
-    public boolean getBoolean(JsonElement document) {
-        return document.getAsBoolean();
+    public double getDouble(JsonNode document) {
+        return document.asDouble();
     }
 
     @Override
-    public String getString(JsonElement document) {
-        return document.getAsString();
+    public boolean getBoolean(JsonNode document) {
+        return document.asBoolean();
+    }
+
+    @Override
+    public String getString(JsonNode document) {
+        return document.asText();
     }
 
 
     @Override
-    public JsonObject getDictionary(JsonElement document) {
-        return document.getAsJsonObject();
+    public ObjectNode getDictionary(JsonNode document) {
+        return (ObjectNode) document;
     }
 
     @Override
-    public JsonArray getList(JsonElement document) {
-        return document.getAsJsonArray();
+    public ArrayNode getList(JsonNode document) {
+        return (ArrayNode) document;
     }
 
     @Override
-    public void addToList(JsonArray jsonArray, JsonElement value) {
+    public void addToList(ArrayNode jsonArray, JsonNode value) {
         jsonArray.add(value);
     }
 
     @Override
-    public JsonElement getFromList(JsonArray jsonArray, int index) {
+    public JsonNode getFromList(ArrayNode jsonArray, int index) {
         return jsonArray.get(index);
     }
 
     @Override
-    public void setInList(JsonArray jsonArray, int index, JsonElement value) {
+    public void setInList(ArrayNode jsonArray, int index, JsonNode value) {
         jsonArray.set(index, value);
     }
 
     @Override
-    public JsonPrimitive wrap(long value) {
-        return wrap((Number)value);
+    public LongNode wrap(long value) {
+        return LongNode.valueOf(value);
     }
 
     @Override
-    public JsonPrimitive wrap(double value) {
-        return wrap((Number)value);
-    }
-
-    public JsonPrimitive wrap(Number value) {
-        return new JsonPrimitive(value);
+    public DoubleNode wrap(double value) {
+        return DoubleNode.valueOf(value);
     }
 
     @Override
-    public JsonPrimitive wrap(boolean value) {
-        return new JsonPrimitive(value);
+    public BooleanNode wrap(boolean value) {
+        return BooleanNode.valueOf(value);
     }
 
     @Override
-    public JsonNull getNull() {
-        return JsonNull.INSTANCE;
+    public NullNode getNull() {
+        return NullNode.instance;
     }
 
     @Override
-    public JsonPrimitive wrap(String value) {
-        return new JsonPrimitive(value);
+    public TextNode wrap(String value) {
+        return TextNode.valueOf(value);
     }
 
     @Override
-    public JsonObject wrapDictionary(JsonObject dict) {
+    public ObjectNode wrapDictionary(ObjectNode dict) {
         return dict;
     }
 
     @Override
-    public JsonArray wrapList(JsonArray dict) {
+    public ArrayNode wrapList(ArrayNode dict) {
         return dict;
     }
 
     @Override
-    public JsonObject newDictionary() {
-        return new JsonObject();
+    public ObjectNode newDictionary() {
+        return mapper.createObjectNode();
     }
 
     @Override
-    public JsonArray newList() {
-        return new JsonArray();
+    public ArrayNode newList() {
+        return mapper.createArrayNode();
     }
 
     @Override
-    public JsonElement getFromDictionary(final JsonObject dict, final String key) {
+    public JsonNode getFromDictionary(final ObjectNode dict, final String key) {
         return dict.get(key);
     }
 
     @Override
-    public JsonElement deleteFromList(final JsonArray jsonArray, final int index) {
+    public JsonNode deleteFromList(final ArrayNode jsonArray, final int index) {
         return jsonArray.remove(index);
     }
 
     @Override
-    public void addToDictionary(final JsonObject dict, String key, JsonElement value) {
-        dict.add(key, value);
+    public void addToDictionary(final ObjectNode dict, String key, JsonNode value) {
+        dict.set(key, value);
     }
 
     @Override
-    public JsonElement deleteFromDictionary(final JsonObject dict, String key) {
+    public JsonNode deleteFromDictionary(final ObjectNode dict, String key) {
         return dict.remove(key);
     }
 
     @Override
-    public Set<String> keySetOfDictionary(final JsonObject dict) {
-        Set<Map.Entry<String, JsonElement>> e = dict.entrySet();
-        Set<String> s = new HashSet<>(e.size());
-        for (Map.Entry<String, JsonElement> entry : e) {
-            s.add(entry.getKey());
-        }
+    public Set<String> keySetOfDictionary(final ObjectNode dict) {
+        Set<String> s = new HashSet<>(dict.size());
+        dict.fieldNames().forEachRemaining(s::add);
         return s;
     }
 
     @Override
-    public int sizeOfList(final JsonArray jsonArray) {
+    public int sizeOfList(final ArrayNode jsonArray) {
         return jsonArray.size();
     }
-
-
 }

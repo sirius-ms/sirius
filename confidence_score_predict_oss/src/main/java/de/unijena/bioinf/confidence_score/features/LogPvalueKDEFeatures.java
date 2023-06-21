@@ -38,10 +38,22 @@ public class LogPvalueKDEFeatures implements FeatureCreator {
     Scored<FingerprintCandidate>[] rankedCandidates;
     Scored<FingerprintCandidate>[] rankedCandidates_filtered;
     public int weight_direction = -1;
+    int min_quartil=1;
+    int max_quartil=99;
 
     @Override
     public int weight_direction() {
         return weight_direction;
+    }
+
+    @Override
+    public int min_quartil() {
+        return min_quartil;
+    }
+
+    @Override
+    public int max_quartil() {
+        return max_quartil;
     }
 
     public LogPvalueKDEFeatures(Scored<FingerprintCandidate>[] rankedCandidates,Scored<FingerprintCandidate>[] rankedCandidates_filtered){
@@ -59,18 +71,23 @@ public class LogPvalueKDEFeatures implements FeatureCreator {
         PvalueScoreUtils utils = new PvalueScoreUtils();
         double pvalue_kde;
         pvalue_kde = utils.compute_pvalue_with_KDE(rankedCandidates, rankedCandidates_filtered, rankedCandidates_filtered[0]);
-
-        if (pvalue_kde == 0) {
-            return_value[0] = Double.NaN;
-        } else {
-            return_value[0] = Math.log(pvalue_kde);
-        }
+        return_value[0] = Math.log(pvalue_kde);
         return return_value;
     }
 
     @Override
     public int getFeatureSize() {
         return 1;
+    }
+
+    @Override
+    public void setMinQuartil(int quartil) {
+        min_quartil=quartil;
+    }
+
+    @Override
+    public void setMaxQuartil(int quartil) {
+    max_quartil=quartil;
     }
 
     @Override

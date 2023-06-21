@@ -22,8 +22,7 @@
 
 package de.unijena.bioinf.fingerid.fingerprints;
 
-import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
-import de.unijena.bioinf.ChemistryBase.fp.ShortestPathProperty;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import org.openscience.cdk.CDKConstants;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.fingerprint.*;
@@ -33,27 +32,22 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.interfaces.IPseudoAtom;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.*;
-
+@Deprecated
 public class ShortestPathFingerprinter extends AbstractFingerprinter implements IFingerprinter {
 
     protected HashMap<String, Integer> bits;
     protected String[] paths;
 
     public ShortestPathFingerprinter() {
-        final CdkFingerprintVersion CDK = CdkFingerprintVersion.getExtended();
-        final int offset = CDK.getOffsetFor(CdkFingerprintVersion.USED_FINGERPRINTS.SHORTEST_PATH);
-
-        final int length = CdkFingerprintVersion.USED_FINGERPRINTS.SHORTEST_PATH.length;
-
-        this.paths = new String[length];
-        for (int k=0; k < length; ++k) {
-            paths[k] = ((ShortestPathProperty)CDK.getMolecularProperty(offset+k)).getShortestPathDescriptor();
-        }
-
-        this.bits = new HashMap<>(paths.length);
-        for (int i=0; i < paths.length; ++i) {
-            bits.put(paths[i], i);
+        try {
+            final BufferedReader xs = new BufferedReader(new InputStreamReader(ShortestPathFingerprinter.class.getResourceAsStream("/fingerprints/shortest_paths.txt")));
+            this.paths = FileUtils.readLines(xs);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 

@@ -42,7 +42,7 @@ public class FormulaFeatureVector {
         return Math.max(-10000, Math.log(density));
     }
 
-    static void normalizeAndCenter(double[][] matrix, double[] colAverages, double[] scales) {
+    public static void normalizeAndCenter(double[][] matrix, double[] colAverages, double[] scales) {
         for (int i=0; i < matrix.length; ++i) {
             for (int j=0; j < matrix[i].length; ++j) {
                 matrix[i][j] -= colAverages[j];
@@ -51,7 +51,7 @@ public class FormulaFeatureVector {
         }
     }
 
-    static double[][] normalizeAndCenter(double[][] matrix) {
+    public static double[][] normalizeAndCenter(double[][] matrix) {
         final double[] colAverages = new double[matrix[0].length];
         for (int i=0; i < matrix.length; ++i) {
             for (int j=0; j < matrix[i].length; ++j) {

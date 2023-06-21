@@ -21,7 +21,11 @@
 package de.unijena.bioinf.ChemistryBase.ms.ft;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ms.annotations.TreeAnnotation;
+
+import java.util.Optional;
 
 /**
  * This annotation is set whenever we remove an adduct from the tree (see IonTreeUtils).
@@ -32,6 +36,8 @@ import de.unijena.bioinf.ms.annotations.TreeAnnotation;
 public class ImplicitAdduct implements TreeAnnotation  {
 
     protected final MolecularFormula adductFormula;
+    protected final Optional<AnnotatedPeak> implicitPeak;
+    protected final double score;
 
     private static final ImplicitAdduct NO_ADDUCT = new ImplicitAdduct(MolecularFormula.emptyFormula());
 
@@ -44,14 +50,29 @@ public class ImplicitAdduct implements TreeAnnotation  {
     }
 
     public ImplicitAdduct(MolecularFormula adductFormula) {
+        this(adductFormula, Optional.empty(), 0d);
+    }
+
+    public ImplicitAdduct(MolecularFormula adductFormula, Optional<AnnotatedPeak> implicitPeak, double score) {
         this.adductFormula = adductFormula;
+        this.implicitPeak = implicitPeak;
+        this.score = score;
     }
 
     public MolecularFormula getAdductFormula() {
         return adductFormula;
     }
 
+    public Optional<AnnotatedPeak> getImplicitPeak() {
+        return implicitPeak;
+    }
+
+    public double getScore() {
+        return score;
+    }
+
     public boolean hasImplicitAdduct() {
         return !adductFormula.isEmpty();
     }
+
 }

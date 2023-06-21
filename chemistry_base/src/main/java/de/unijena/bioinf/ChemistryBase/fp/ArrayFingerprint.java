@@ -36,6 +36,16 @@ public class ArrayFingerprint extends Fingerprint {
         if (indizes.length>0 && fingerprintVersion.size()>0 && indizes[indizes.length-1] > fingerprintVersion.getAbsoluteIndexOf(fingerprintVersion.size()-1)) {
             throw new IllegalArgumentException("Fingerprintversion is not compatible to fingerprint: " + "version size: " + fingerprintVersion.size() +", last index is " + fingerprintVersion.getAbsoluteIndexOf(fingerprintVersion.size()-1) + ", and given fingerprint is: " + Arrays.toString(indizes));
         }
+        ensureOrdering();
+    }
+
+    private void ensureOrdering() {
+        for (int k=1; k< indizes.length; ++k) {
+            if (indizes[k]<=indizes[k-1]) {
+                Arrays.sort(indizes);
+                return;
+            }
+        }
     }
 
     @Override

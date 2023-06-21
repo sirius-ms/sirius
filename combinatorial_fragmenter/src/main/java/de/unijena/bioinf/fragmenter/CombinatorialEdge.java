@@ -34,6 +34,13 @@ public class CombinatorialEdge {
         this.score = 0f;
     }
 
+    public IBond[] getCuts() {
+        if (cut1 !=null && cut2 !=null) return new IBond[]{cut1, cut2};
+        if (cut1 != null) return new IBond[]{cut1};
+        if (cut2 !=null) return new IBond[]{cut2};
+        return new IBond[]{};
+    }
+
     public IAtom[] getAtomsOfFragment() {
         if(cut1 != null) {
             IAtom[] atoms = (cut2 == null ? new IAtom[1] : new IAtom[2]);
@@ -118,6 +125,34 @@ public class CombinatorialEdge {
 
     public CombinatorialNode getTarget() {
         return target;
+    }
+
+    public String toString() {
+        StringBuilder buf = new StringBuilder();
+        if (cut1==null) return "<" + target.fragment.formula + ">";
+        buf.append(cut1.getAtom(0).getSymbol() + "." + cut1.getAtom(0).getHybridization().toString().toLowerCase());
+        buf.append(bond2string(cut1));
+        buf.append(cut1.getAtom(1).getSymbol() + "." + cut1.getAtom(1).getHybridization().toString().toLowerCase());
+        if (cut2!=null){
+            buf.append(" + ");
+            buf.append(cut2.getAtom(0).getSymbol() + "." + cut2.getAtom(0).getHybridization().toString().toLowerCase());
+            buf.append(bond2string(cut2));
+            buf.append(cut2.getAtom(1).getSymbol() + "." + cut2.getAtom(1).getHybridization().toString().toLowerCase());
+        }
+        buf.append(" -> ");
+        buf.append(target.fragment.formula.toString());
+        buf.append(!target.fragment.innerNode ? "*" : "");
+        return buf.toString();
+    }
+
+    private static String bond2string(IBond b) {
+        if (b.isAromatic()) return ":";
+        switch (b.getOrder()) {
+            case SINGLE: return "-";
+            case DOUBLE: return "=";
+            case TRIPLE: return "#";
+        }
+        return "~?";
     }
 
     public float getScore(){

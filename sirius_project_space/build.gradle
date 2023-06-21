@@ -21,7 +21,9 @@
 version =  parent.siriusVersion
 dependencies {
     annotationProcessor project(':default_properties:processor')
-    compile project(':io')
-    compile project(':sirius_api')
-    compile group: 'net.lingala.zip4j', name: 'zip4j', version: '1.3.2'
+    api project(':io')
+    api project(':sirius_api')
+    implementation 'net.lingala.zip4j:zip4j:2.10.0'
+    implementation 'ru.oleg-cherednik.zip4jvm:zip4jvm:1.8'
+    implementation group: 'org.apache.commons', name: 'commons-configuration2', version: '2.9.0'
 }

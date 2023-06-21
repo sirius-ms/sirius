@@ -30,7 +30,7 @@ import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.net.URL;
+import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,7 +41,7 @@ import java.util.Optional;
 public interface Ms2Experiment extends Cloneable, AnnotatedWithDefaults<Ms2ExperimentAnnotation>, DataAnnotation {
 
 
-    URL getSource();
+    URI getSource();
 
     /**
      * Tries to return a nice String representation for local URLS
@@ -82,11 +82,10 @@ public interface Ms2Experiment extends Cloneable, AnnotatedWithDefaults<Ms2Exper
      */
     @NotNull
     default PossibleAdducts getPossibleAdductsOrFallback() {
-        final PossibleAdducts ad = getDetectedAdducts().
-                orElseGet(() -> getAnnotation(AdductSettings.class).map(as -> as.getFallback(getPrecursorIonType().getCharge())).filter(it -> !it.isEmpty()).map(PossibleAdducts::new).
-                        orElseGet(() -> new PossibleAdducts(PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class).getFallback(getPrecursorIonType().getCharge())))
+        final PossibleAdducts detectedOrFallback = getDetectedAdducts().
+                orElseGet(() -> getAnnotation(AdductSettings.class).map(as -> as.getFallback(getPrecursorIonType().getCharge())).map(PossibleAdducts::new).orElseGet(() -> new PossibleAdducts(PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class).getFallback(getPrecursorIonType().getCharge())))
                 );
-        final PossibleAdducts detected = getAnnotation(AdductSettings.class).map(as -> PossibleAdducts.union(ad, as.getEnforced(getPrecursorIonType().getCharge()))).orElse(ad);
+        final PossibleAdducts detected = getAnnotation(AdductSettings.class).map(as -> PossibleAdducts.union(detectedOrFallback, as.getEnforced(getPrecursorIonType().getCharge()))).orElse(detectedOrFallback);
 
         return detected;
     }

@@ -32,6 +32,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.lcms.ionidentity.AdductMassDifference;
 import de.unijena.bioinf.lcms.ionidentity.CorrelationGroupScorer;
+import de.unijena.bioinf.lcms.ionidentity.CorrelationGroupScorer2;
 import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bioinf.model.lcms.*;
 import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
@@ -61,11 +62,11 @@ public class CorrelatedPeakDetector {
 */
 
     protected final static double PROBABILITY_THRESHOLD_ISOTOPES = 0.5d,
-            PROBABILITY_THRESHOLD_ADDUCTS = 0.75d, STRICT_THRESHOLD = 0.9;
+            PROBABILITY_THRESHOLD_ADDUCTS = 0.5d, STRICT_THRESHOLD = 0.9;
 
 
     protected Set<PrecursorIonType> detectableIonTypes;
-    protected Map<Double, AdductMassDifference> possibleIonPairsPositive, possibleIonPairsNegative;
+    protected Map<Long, AdductMassDifference> possibleIonPairsPositive, possibleIonPairsNegative;
 
     public CorrelatedPeakDetector(Set<PrecursorIonType> detectableIonTypes) {
         this.detectableIonTypes = detectableIonTypes;
@@ -113,7 +114,7 @@ public class CorrelatedPeakDetector {
         detectIsotopesFor(sample, peakBeforeChr.get().mutate(), segmentForScanId.get(), ion.getChargeState(), correlationGroups, new SimpleMutableSpectrum());
         for (CorrelationGroup g : correlationGroups) {
             int scanNumber = g.getRight().findScanNumber(ms1Scan.getIndex());
-            if (scanNumber >= 0 && new CorrelationGroupScorer().predictProbability(g) >= STRICT_THRESHOLD  /*g.getCosine() >= STRICT_COSINE_THRESHOLD*/ && Math.abs(g.getRight().getMzAt(scanNumber) - ionPeak.getMass()) < 1e-8) {
+            if (scanNumber >= 0 && new CorrelationGroupScorer2().predictProbability(g.getLeftSegment(), g.getRightSegment()) >= STRICT_THRESHOLD  /*g.getCosine() >= STRICT_COSINE_THRESHOLD*/ && Math.abs(g.getRight().getMzAt(scanNumber) - ionPeak.getMass()) < 1e-8) {
                 final SimpleMutableSpectrum buffer = new SimpleMutableSpectrum();
                 for (CorrelationGroup h : correlationGroups) {
                     int sc = h.getRight().findScanNumber(ms1Scan.getIndex());
@@ -186,7 +187,7 @@ public class CorrelatedPeakDetector {
         Scan ms1Scan = sample.run.getScanByNumber(ion.getSegment().getApexScanNumber()).get();
         final SimpleSpectrum ms1 = sample.storage.getScan(ms1Scan);
         final double basePeak = Spectrums.getMaximalIntensity(spectrum);
-        double precursor = ion.getMsMsScan().getPrecursor().getMass();
+        double precursor = ion.getPrecursor().getMass();
         for (int k = 0; k < spectrum.size(); ++k) {
             if (spectrum.getMzAt(k) >= (precursor - 2))
                 continue;
@@ -496,6 +497,7 @@ public class CorrelatedPeakDetector {
             return Optional.empty();
         }
 
+
         if (main.getIntensityAt(mainSegment.getApexIndex()) > mightBeCorrelated.getIntensityAt(otherSegment.getApexIndex())) {
             return Optional.ofNullable(correlateBiggerToSmaller(main, mainSegment, mightBeCorrelated, otherSegment));
         } else
@@ -509,19 +511,23 @@ public class CorrelatedPeakDetector {
 
         // find index that is above 25% intensity of main peak
         final Range<Integer> t25 = smallSegment.calculateFWHMMinPeaks(0.15d, 3);
-
+        // if small segment is outside boundary of large segment, the peaks do not correlate
 
         for (int i = t25.lowerEndpoint(); i <= t25.upperEndpoint(); ++i) {
             int j = large.findScanNumber(small.getScanNumberAt(i));
             if (j >= 0) a.add(large.getIntensityAt(j));
-            else a.add(0d);
+            else {
+                return null;
+                //a.add(0d);
+            }
             b.add(small.getIntensityAt(i));
         }
         if (a.size() < 3) return null;
         final double correlation = pearson(a, b);
         final double kl = kullbackLeibler(a, b, a.size());
         final CorrelationGroup correlationGroup = new CorrelationGroup(large, small, largeSegment, smallSegment, smallSegment.getPeak().getScanNumberAt(t25.lowerEndpoint()), smallSegment.getPeak().getScanNumberAt(t25.upperEndpoint()), t25.upperEndpoint()-t25.lowerEndpoint()+1, correlation, kl, cosine(a, b), 0);
-        correlationGroup.score = new CorrelationGroupScorer().predictProbability(correlationGroup);
+        correlationGroup.score = new CorrelationGroupScorer2().predictProbability(correlationGroup.getLeftSegment(), correlationGroup.getRightSegment());
+
         return correlationGroup;
     }
 

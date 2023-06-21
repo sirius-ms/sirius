@@ -22,46 +22,63 @@
 
 package de.unijena.bioinf.chemdb;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.*;
+import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
-import de.unijena.bioinf.ChemistryBase.fp.FPIter;
+import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
+import de.unijena.bioinf.spectraldb.entities.Ms2SpectralMetadata;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.list.array.TShortArrayList;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.io.OutputStream;
+import java.io.Writer;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+//@JsonSerialize(using = CompoundCandidate.Serializer.class)
 public class CompoundCandidate {
+    //The 2d inchi is the UID of an CompoundCandidate
     protected final InChI inchi;
     protected String name;
     protected String smiles;
     protected int pLayer;
     protected int qLayer;
     protected double xlogp = Double.NaN;
-    @Nullable //this is the tanimoto to a matched fingerprint.
-    protected Double tanimoto = null;
 
     //database info
     protected long bitset;
-    protected DBLink[] links;
+    protected ArrayList<DBLink> links;
 
     //citation info
-    protected PubmedLinks pubmedIDs = null;
+    protected PubmedLinks pubmedIDs;
+
+    protected Double taxonomicScore;
+    protected String taxonomicSpecies;
+
+    @Nullable //this is the tanimoto to a matched fingerprint.
+    protected Double tanimoto = null;
+
+    protected ArrayList<DBLink> referenceSpectraLinks;
+    @Nullable
+    protected Map<DBLink, Ms2SpectralMetadata> referenceSpectra;
 
     public CompoundCandidate(InChI inchi, String name, String smiles, int pLayer, int qLayer, double xlogp, @Nullable Double tanimoto, long bitset, DBLink[] links, PubmedLinks pubmedIDs) {
+        this(inchi, name, smiles, pLayer, qLayer, xlogp, tanimoto, bitset, new ArrayList<>(List.of(links)), pubmedIDs);
+    }
+
+    public CompoundCandidate(InChI inchi, String name, String smiles, int pLayer, int qLayer, double xlogp, @Nullable Double tanimoto, long bitset, ArrayList<DBLink> links, PubmedLinks pubmedIDs) {
         this.inchi = inchi;
         this.name = name;
         this.smiles = smiles;
@@ -86,7 +103,11 @@ public class CompoundCandidate {
         this.tanimoto = c.tanimoto;
         if (c.pubmedIDs != null)
             this.pubmedIDs = c.pubmedIDs;
+        this.taxonomicScore = c.taxonomicScore;
+        this.taxonomicSpecies = c.taxonomicSpecies;
+        this.referenceSpectra = c.referenceSpectra;
     }
+
 
     public CompoundCandidate(InChI inchi) {
         this.inchi = inchi;
@@ -116,18 +137,23 @@ public class CompoundCandidate {
         this.bitset = bitset;
     }
 
-    public DBLink[] getLinks() {
+    public List<DBLink> getMutableLinks() {
         return links;
     }
 
-    public void setLinks(DBLink[] links) {
-        this.links = links;
+    public List<DBLink> getLinks() {
+        return links == null ? null
+                : Collections.unmodifiableList(links);
+    }
+
+    public void setLinks(Collection<DBLink> links) {
+        if (links instanceof ArrayList)
+            this.links = (ArrayList<DBLink>) links;
+        else this.links = new ArrayList<>(links);
     }
 
     public @NotNull Multimap<String, String> getLinkedDatabases() {
-//        if (linkedDatabases == null)
         return DataSources.getLinkedDataSources(this);
-//        return linkedDatabases;
     }
 
     public String getSmiles() {
@@ -179,6 +205,24 @@ public class CompoundCandidate {
         this.tanimoto = tanimoto;
     }
 
+    @Nullable
+    public Double getTaxonomicScore() {
+        return taxonomicScore;
+    }
+
+    public void setTaxonomicScore(Double taxonomicScore) {
+        this.taxonomicScore = taxonomicScore;
+    }
+
+    @Nullable
+    public String getTaxonomicSpecies() {
+        return taxonomicSpecies;
+    }
+
+    public void setTaxonomicSpecies(String taxonomicSpecies) {
+        this.taxonomicSpecies = taxonomicSpecies;
+    }
+
     @Deprecated
     public boolean canBeNeutralCharged() {
         return hasChargeState(CompoundCandidateChargeState.NEUTRAL_CHARGE);
@@ -215,170 +259,81 @@ public class CompoundCandidate {
         return getInchiKey2D() + " (dbflags=" + bitset + ")";
     }
 
-    public void mergeDBLinks(DBLink[] links){
-        this.links = Stream.concat(Arrays.stream(this.links),Arrays.stream(links)).distinct().toArray(DBLink[]::new);
+    public void mergeDBLinks(List<DBLink> links) {
+        this.links = (ArrayList<DBLink>) Stream.concat(this.links.stream(), links.stream()).distinct().collect(Collectors.toList());
     }
 
     public void mergeBits(long bitset) {
         this.bitset |= bitset;
     }
 
-    public static class CompoundCandidateSerializer {
+    public boolean hasReferenceSpectra() {
+        return referenceSpectra != null && !referenceSpectra.isEmpty();
+    }
 
-        public void serialize(CompoundCandidate value, JsonGenerator gen) throws IOException {
-            gen.writeStartObject();
+
+    //region Serializer
+    public static class Serializer extends BaseSerializer<CompoundCandidate> {
+    }
+
+    public abstract static class BaseSerializer<C extends CompoundCandidate> extends JsonSerializer<C> {
+
+        protected void serializeInternal(C value, JsonGenerator gen) throws IOException {
             gen.writeStringField("name", value.name);
             gen.writeStringField("inchi", value.inchi.in3D);
-            gen.writeStringField("inchikey",value.getInchiKey2D());
-            if (value.pLayer!=0) gen.writeNumberField("pLayer",value.pLayer);
-            if (value.qLayer!=0) gen.writeNumberField("qLayer",value.qLayer);
-            gen.writeNumberField("xlogp",value.xlogp);
+            gen.writeStringField("inchikey", value.getInchiKey2D());
+            if (value.pLayer != 0) gen.writeNumberField("pLayer", value.pLayer);
+            if (value.qLayer != 0) gen.writeNumberField("qLayer", value.qLayer);
+            gen.writeNumberField("xlogp", value.xlogp);
             gen.writeStringField("smiles", value.smiles);
             gen.writeNumberField("bitset", value.bitset);
             gen.writeObjectFieldStart("links");
             final Set<String> set = new HashSet<>(3);
-            for (int k=0; k < value.links.length; ++k) {
-                final DBLink link = value.links[k];
+            for (int k = 0; k < value.links.size(); ++k) {
+                final DBLink link = value.links.get(k);
                 if (set.add(link.name)) {
                     gen.writeArrayFieldStart(link.name);
                     gen.writeString(link.id);
-                    for (int j=k+1; j < value.links.length; ++j) {
-                        if (value.links[j].name.equals(link.name)) {
-                            gen.writeString(value.links[j].id);
+                    for (int j = k + 1; j < value.links.size(); ++j) {
+                        if (value.links.get(j).name.equals(link.name)) {
+                            gen.writeString(value.links.get(j).id);
                         }
                     }
                     gen.writeEndArray();
                 }
             }
             gen.writeEndObject();
-            if (value.pubmedIDs!=null && value.pubmedIDs.getNumberOfPubmedIDs()>0) {
+            if (value.pubmedIDs != null && value.pubmedIDs.getNumberOfPubmedIDs() > 0) {
                 gen.writeArrayFieldStart("pubmedIDs");
                 for (int id : value.pubmedIDs.getCopyOfPubmedIDs()) {
                     gen.writeNumber(id);
                 }
                 gen.writeEndArray();
             }
-            // quickn dirty
-            if (value instanceof FingerprintCandidate) {
-                FingerprintCandidate fpc = (FingerprintCandidate)value;
-                gen.writeArrayFieldStart("fingerprint");
-                for (FPIter iter : fpc.fingerprint.presentFingerprints()) {
-                    gen.writeNumber(iter.getIndex());
-                }
-                gen.writeEndArray();
-            }
+        }
+
+        @Override
+        public void serialize(C value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+            gen.writeStartObject();
+            serializeInternal(value, gen);
             gen.writeEndObject();
         }
     }
 
-    public static class CompoundCandidateDeserializer {
-
-        private final FingerprintVersion version;
-
-        protected CompoundCandidateDeserializer(FingerprintVersion version) {
-            this.version = version;
-        }
-
-        public CompoundCandidate deserialize(JsonParser p) throws IOException, JsonProcessingException {
-            String inchi = null, inchikey = null, smiles=null,name=null;
-            int player=0,qlayer=0;
-            long bitset=0;
-            double xlogp=0;
-            TShortArrayList indizes = null;
-            TIntArrayList pubmedIds= null;
-            JsonToken jsonToken = p.nextToken();
-            ArrayList<DBLink> links = new ArrayList<>();
-            while (true) {
-                if (jsonToken.isStructEnd()) break;
-
-                // expect field name
-
-                final String fieldName = p.currentName();
-                switch (fieldName) {
-                    case "inchi":
-                        inchi = p.nextTextValue();
-                        break;
-                    case "inchikey":
-                        inchikey = p.nextTextValue();
-                        break;
-                    case "name":
-                        name = p.nextTextValue();
-                        break;
-                    case "pLayer":
-                        player = p.nextIntValue(0);
-                        break;
-                    case "qLayer":
-                        qlayer = p.nextIntValue(0);
-                        break;
-                    case "xlogp":
-                        if (p.nextToken().isNumeric()) {
-                            xlogp = p.getNumberValue().doubleValue();
-                        } else {
-                            LoggerFactory.getLogger("Warning: xlogp is invalid value for " + String.valueOf(inchikey) );
-                        }
-                        break;
-                    case "smiles":
-                        smiles = p.nextTextValue();
-                        break;
-                    case "bitset":
-                        bitset = p.nextLongValue(0L);
-                        break;
-                    case "links":
-                        if (p.nextToken() != JsonToken.START_OBJECT)
-                            throw new IOException("malformed json. expected object"); // array start
-                        do {
-                            jsonToken = p.nextToken();
-                            if (jsonToken == JsonToken.END_OBJECT) break;
-                            else {
-                                String linkName = p.currentName();
-                                if (p.nextToken() != JsonToken.START_ARRAY)
-                                    throw new IOException("malformed json. expected array"); // array start
-                                do {
-                                    jsonToken = p.nextToken();
-                                    if (jsonToken == JsonToken.END_ARRAY) break;
-                                    else links.add(new DBLink(linkName, p.getText()));
-                                } while (true);
-                            }
-                        } while (true);
-                        break;
-                    case "pubmedIDs":
-                        pubmedIds = new TIntArrayList();
-                        if (p.nextToken() != JsonToken.START_ARRAY)
-                            throw new IOException("malformed json. expected array"); // array start
-                        do {
-                            jsonToken = p.nextToken();
-                            if (jsonToken == JsonToken.END_ARRAY) break;
-                            else pubmedIds.add(Integer.parseInt(p.getText()));
-                        } while (true);
-                        break;
-                    case "fingerprint":
-                        indizes = new TShortArrayList();
-                        if (p.nextToken() != JsonToken.START_ARRAY)
-                            throw new IOException("malformed json. expected array"); // array start
-                        do {
-                            jsonToken = p.nextToken();
-                            if (jsonToken == JsonToken.END_ARRAY) break;
-                            else indizes.add(Short.parseShort(p.getText()));
-                        } while (true);
-
-                        break;
-                    default:
-                        p.nextToken();
-                        break;
-                }
-                jsonToken = p.nextToken();
-            }
-            final CompoundCandidate C = new CompoundCandidate(
-                    new InChI(inchikey, inchi), name, smiles, player,qlayer,xlogp,null,bitset,links.toArray(DBLink[]::new),
-                    pubmedIds==null ? null : new PubmedLinks(pubmedIds.toArray())
-            );
-            if (indizes==null) {
-                return C;
-            } else {
-                return new FingerprintCandidate(C, new ArrayFingerprint(version,indizes.toArray()));
-            }
-        }
+    public static void toJSONList(List<FingerprintCandidate> fpcs, Writer out) throws IOException {
+        toJSONList(fpcs, new JsonFactory().createGenerator(out));
     }
 
+    public static void toJSONList(List<FingerprintCandidate> fpcs, OutputStream out) throws IOException {
+        toJSONList(fpcs, new JsonFactory().createGenerator(out));
+    }
+
+    public static <C extends CompoundCandidate> void toJSONList(List<C> fpcs, JsonGenerator generator) throws IOException {
+        generator.writeStartObject();
+        generator.writeFieldName("compounds");
+        new ObjectMapper().writeValue(generator, fpcs);
+        generator.writeEndObject();
+        generator.flush();
+    }
 }
 

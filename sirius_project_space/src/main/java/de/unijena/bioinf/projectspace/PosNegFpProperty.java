@@ -36,7 +36,7 @@ public abstract class PosNegFpProperty<F extends FingerprintVersion, D extends F
 
     public boolean compatible(D positive, D negative) {
         // check if all compatible -> return true for null comparisons
-        return (positive != null ? Optional.ofNullable(getPositive()).map(d -> d.compatible(positive)).orElse(true) : true)
-            && (negative != null ? Optional.ofNullable(getNegative()).map(d -> d.compatible(negative)).orElse(true) : true);
+        return (positive != null ? Optional.ofNullable(getPositive()).map(d -> d.identical(positive)).orElse(true) : true)
+            && (negative != null ? Optional.ofNullable(getNegative()).map(d -> d.identical(negative)).orElse(true) : true);
     }
 }

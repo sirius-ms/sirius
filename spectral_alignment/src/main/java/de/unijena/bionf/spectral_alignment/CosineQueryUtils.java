@@ -48,17 +48,16 @@ public class CosineQueryUtils {
         return CosineQuerySpectrum.newInstance(spectrum, precursorMz, spectralAlignmentMethod);
     }
 
+    public CosineQuerySpectrum createQueryWithIntensityTransformation(Spectrum<Peak> spectrum, double precursorMz, boolean transformSqrtIntensity){
+        return createQuery(spectrum, precursorMz, false, transformSqrtIntensity);
+    }
 
     /**
-     * create a query for cosine computation
-     * @param spectrum
-     * @param precursorMz
-     * @return
+     *
      */
-    public CosineQuerySpectrum createQueryWithIntensityTransformation(Spectrum<Peak> spectrum, double precursorMz, boolean transformSqrtIntensity){
-        //todo transfomation first or other way around?
+    public CosineQuerySpectrum createQuery(Spectrum<Peak> spectrum, double precursorMz, boolean transformSqrtIntensity, boolean transformIntensityByMass){
 
-        IntensityTransformation intensityTransformation = new CosineQueryUtils.IntensityTransformation(true, transformSqrtIntensity);
+        IntensityTransformation intensityTransformation = new CosineQueryUtils.IntensityTransformation(transformIntensityByMass, transformSqrtIntensity);
         SimpleMutableSpectrum mutableSpectrum;
         if (spectrum instanceof SimpleMutableSpectrum){
             mutableSpectrum = (SimpleMutableSpectrum)spectrum;

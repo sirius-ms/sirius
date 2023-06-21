@@ -14,7 +14,7 @@ public class CEFTestMain {
         final Path f = Path.of("/home/fleisch/Downloads/CEF/ForTox_TestMix_AMSMS_MFE+MS2Extr(15 Cmpds).cef");
         final List<Ms2Experiment> exps = new ArrayList<>();
         MsExperimentParser parser = new MsExperimentParser();
-        parser.getParser(f).parseIterator(Files.newBufferedReader(f), f.toUri().toURL()).forEachRemaining(exps::add);
+        parser.getParser(f).parseIterator(Files.newBufferedReader(f), f.toUri()).forEachRemaining(exps::add);
         System.out.println(exps);
     }
 }

@@ -10,6 +10,8 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
 import org.apache.commons.math3.special.Erf;
+import org.slf4j.LoggerFactory;
+
 @Called("Mass Deviation")
 public class MassDeviationEdgeScorer implements LossScorer<Object> {
 
@@ -32,9 +34,18 @@ public class MassDeviationEdgeScorer implements LossScorer<Object> {
         if (deviation==null) {
             final double ppm = input.getExperimentInformation().getAnnotationOrDefault(MS2MassDeviation.class).standardMassDeviation.getPpm();
             dev =new Deviation(ppm, 100*1e-6*ppm);
-        } else dev = deviation;
+        } else {
+            dev = deviation;
+        }
         final double sd = dev.absoluteFor(delta);
-        return weight * Math.log(Erf.erfc(Math.abs(delta-theoreticalDelta)/(sd * Math.sqrt(2))));
+        double score = weight * Math.log(Erf.erfc(Math.abs(delta-theoreticalDelta)/(sd * Math.sqrt(2))));
+        if (score < -100 || !Double.isFinite(score)) {
+            if (Math.abs(delta-theoreticalDelta) < 3*sd) {
+                LoggerFactory.getLogger(MassDeviationVertexScorer.class).warn(input.getExperimentInformation().getSourceString() + "\nEdge " + delta + " has a too large mass deviation of " + Math.abs(delta - theoreticalDelta) + " for molecular formula " + loss.getFormula());
+            }
+            score = -100;
+        }
+        return score;
     }
 
     public double getWeight() {

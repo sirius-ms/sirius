@@ -37,13 +37,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Base64;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.Properties;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 /**
@@ -82,7 +80,11 @@ public class PropertyManager {
             PROPERTIES.addConfiguration(PERSISTENT_PROPERTIES, "PERSISTENT_PROPERTIES");
             PERSISTENT_PROPERTIES.addEventListener(CombinedConfiguration.COMBINED_INVALIDATE, event -> PROPERTIES.invalidate());
             CHANGED_PROPERTIES = loadDefaultProperties();
-            Reflections.log.ifPresent(l -> LogManager.getLogManager().getLogger(l.getName()).setLevel(Level.SEVERE));
+            Reflections.log.ifPresent(l -> {
+                Logger logger = LogManager.getLogManager().getLogger(l.getName());
+                if (logger != null)
+                    logger.setLevel(Level.SEVERE);
+            });
             final Reflections reflections = new Reflections("de.unijena.bioinf.ms.defaults", new ResourcesScanner());
             DEFAULTS_LAYOUT = new PropertiesConfigurationLayout();
 
@@ -137,7 +139,8 @@ public class PropertyManager {
         CombinedConfiguration configToAdd = SiriusConfigUtils.newCombinedConfiguration();
         PropertiesConfiguration changeable = SiriusConfigUtils.newConfiguration();
         configToAdd.addConfiguration(changeable, "CHANGED_DEFAULT_PROPERTIES");
-        SiriusConfigUtils.makeConfigFromResources(configToAdd, SiriusConfigUtils.parseResourcesLocation(System.getProperties().getProperty(PROPERTY_LOCATIONS_KEY), DEFAULT_PROPERTY_SOURCE), null);
+        SiriusConfigUtils.makeConfigFromResources(configToAdd, SiriusConfigUtils.parseResourcesLocation(
+                System.getProperties().getProperty(PROPERTY_LOCATIONS_KEY), DEFAULT_PROPERTY_SOURCE), null);
         addConfiguration(configToAdd, null, "PROPERTIES");
         return changeable;
     }
@@ -148,7 +151,12 @@ public class PropertyManager {
         return config;
     }
 
-    public static PersistentProperties addPersistentPropertiesFile(File propertiesFile, PropertiesConfiguration baseProps, boolean watchFile) {
+    public static PersistentProperties addPersistentPropertiesFile(File propertiesFile, @NotNull String basePropsName, boolean watchFile) {
+        PropertiesConfiguration basProps = (PropertiesConfiguration) PROPERTIES.getConfiguration(basePropsName);
+        return addPersistentPropertiesFile(propertiesFile, basProps, watchFile);
+    }
+
+    public static PersistentProperties addPersistentPropertiesFile(File propertiesFile, @NotNull PropertiesConfiguration baseProps, boolean watchFile) {
         PersistentProperties persProps = new PersistentProperties(propertiesFile, baseProps, watchFile);
         PERSISTENT_PROPERTIES.addConfiguration(persProps.config, persProps.propertiesFile.getAbsolutePath());
         return persProps;
@@ -160,13 +168,11 @@ public class PropertyManager {
         }
     }
 
-
     public static PropertiesConfiguration addPropertiesFromStream(@NotNull InputStream input, @Nullable String name, @Nullable String prefixToAdd) throws ConfigurationException {
         final PropertiesConfiguration config = loadConfigurationFromStream(input);
         PROPERTIES.addConfiguration(config, name, prefixToAdd);
         return config;
     }
-
 
     public static PropertiesConfiguration addPropertiesFromStream(@NotNull InputStream stream, @NotNull PropertiesConfiguration config, @Nullable String name) throws ConfigurationException {
         new FileHandler(config).load(stream);
@@ -182,12 +188,10 @@ public class PropertyManager {
         return addPropertiesFromStream(stream, null);
     }
 
-
     //this reads and merges read only properties from within jar resources
     public static CombinedConfiguration addPropertiesFromResources(@Nullable final String locations, @Nullable final String defaultLocation, @Nullable final String prefixToAdd, @Nullable String name) {
         return addPropertiesFromResources(SiriusConfigUtils.parseResourcesLocation(locations, defaultLocation), prefixToAdd, name);
     }
-
 
     public static CombinedConfiguration addPropertiesFromResources(@NotNull final LinkedHashSet<String> resources, @Nullable String prefixToAdd, @Nullable String name) {
         if (resources.isEmpty())
@@ -235,6 +239,14 @@ public class PropertyManager {
 
     public static String getProperty(@NotNull String key) {
         return PROPERTIES.getString(key);
+    }
+
+    public static Optional<String> getOptional(@NotNull String key, @Nullable String backupKey) {
+        return Optional.ofNullable(getProperty(key, backupKey, null));
+    }
+
+    public static Optional<String> getOptional(@NotNull String key) {
+        return Optional.ofNullable(getProperty(key));
     }
 
     public static Boolean getBoolean(@NotNull String key, Boolean defaultValue) {
@@ -288,6 +300,26 @@ public class PropertyManager {
         return PROPERTIES.getBigDecimal(key, defaultValue);
     }
 
+    public static <E extends Enum<E>> E getEnum(@NotNull String key, @NotNull E defaultValue) {
+        return getEnum(key, null, defaultValue);
+    }
+
+    public static <E extends Enum<E>> E getEnum(@NotNull String key, @Nullable String backupKey, @NotNull E defaultValue) {
+        return getEnum(key, backupKey, defaultValue, (Class<E>) defaultValue.getClass());
+    }
+
+    public static <E extends Enum<E>> E getEnum(@NotNull String key, @Nullable String backupKey, @Nullable E defaultValue, @NotNull Class<E> cls) {
+        String val = backupKey != null
+                ? PROPERTIES.getString(key, PROPERTIES.getString(backupKey, null))
+                : PROPERTIES.getString(key, null);
+        return val == null ? defaultValue : Enum.valueOf(cls, val);
+    }
+
+    private static <E extends Enum<E>> E parseEnum(@NotNull String name, @NotNull Class<E> cls) {
+        return Enum.valueOf(cls, name);
+    }
+
+
     public static Path getPath(String key) {
         String v = PROPERTIES.getString(key);
         return (v == null) ? null : Paths.get(v);
@@ -297,6 +329,7 @@ public class PropertyManager {
         String v = PROPERTIES.getString(key);
         return (v == null) ? null : new File(v);
     }
+
 
     public static int getNumberOfCores() {
         return PROPERTIES.getInt("de.unijena.bioinf.sirius.cpu.cores", 1);
@@ -327,7 +360,17 @@ public class PropertyManager {
     public static void loadSiriusCredentials() {
         final String path = getProperty("de.unijena.bioinf.ms.credentials.path", null, "$USER_HOME/sirius.credentials").replace("$USER_HOME", System.getProperty("user.home"));
         try (InputStream in = Files.newInputStream(Paths.get(path))) {
-            addPropertiesFromStream((isB64Credentials() ? Base64.getDecoder().wrap(in) : in), path);
+            PropertiesConfiguration config = SiriusConfigUtils.newConfiguration();
+            new FileHandler(config).load((isB64Credentials() ? Base64.getDecoder().wrap(in) : in));
+            List<Configuration> props = PROPERTIES.getConfigurations();
+            List<String> names = PROPERTIES.getConfigurationNameList();
+            names.forEach(PROPERTIES::removeConfiguration);
+
+            PROPERTIES.addConfiguration(config, path);
+            Iterator<Configuration> pit = props.iterator();
+            Iterator<String> nit = names.iterator();
+            while (pit.hasNext())
+                PROPERTIES.addConfiguration(pit.next(), nit.next());
         } catch (IOException | ConfigurationException e) {
             LoggerFactory.getLogger(PropertyManager.class).error("Could not load Sirius Credentials from: " + path, e);
         }

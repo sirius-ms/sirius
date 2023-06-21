@@ -34,6 +34,8 @@ import java.util.Arrays;
  * Created by Marcus Ludwig on 07.03.16.
  */
 public class PlattFeatures implements FeatureCreator {
+    int min_quartil=1;
+    int max_quartil=99;
     private double[] quantiles = new double[]{0.50, 0.75, 0.90};
     //private double[] quantilesAbs = new double[]{0.5, 0.10, 0.25, 0.45};
     private int featureSize;
@@ -48,6 +50,16 @@ public class PlattFeatures implements FeatureCreator {
     @Override
     public int weight_direction() {
         return 0;
+    }
+
+    @Override
+    public int min_quartil() {
+        return min_quartil;
+    }
+
+    @Override
+    public int max_quartil() {
+        return max_quartil;
     }
 
 
@@ -81,6 +93,16 @@ public class PlattFeatures implements FeatureCreator {
     @Override
     public int getFeatureSize() {
         return featureSize;
+    }
+
+    @Override
+    public void setMinQuartil(int quartil) {
+        min_quartil=quartil;
+    }
+
+    @Override
+    public void setMaxQuartil(int quartil) {
+        max_quartil=quartil;
     }
 
     @Override

@@ -25,16 +25,16 @@ import de.unijena.bioinf.ms.properties.DefaultProperty;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Mass deviation setting for MS1 spectra. Mass Deviations are always written as "X ppm (Y Da)" with X and Y
+ * Mass accuracy setting for MS1 spectra. Mass accuracies are always written as "X ppm (Y Da)" with X and Y
  * are numerical values. The ppm is a relative measure (parts per million), Da is an absolute measure. For each mass, the
  * maximum of relative and absolute is used.
  */
 public final class MS1MassDeviation extends MassDeviation {
 
     /**
-     * @param allowedMassDeviation allowedMassDeviation: Maximum allowed mass deviation. Only molecular formulas within this mass window are considered.
-     * @param standardMassDeviation standardMassDeviation: Expected mass deviation of the instrument. Is used for the scoring.
-     * @param massDifferenceDeviation massDifferenceDeviation: Expected mass deviation of the instrument for two close peaks or for recalibrated spectra. Should be smaller than the standard mass deviation
+     * @param allowedMassDeviation allowedMassDeviation: Maximum allowed mass accuracy. Only molecular formulas within this mass window are considered.
+     * @param standardMassDeviation standardMassDeviation: Expected mass accuracy of the instrument. Is used for the scoring.
+     * @param massDifferenceDeviation massDifferenceDeviation: Expected mass accuracy of the instrument for two close peaks or for recalibrated spectra. Should be smaller than the standard mass deviation
      */
     public MS1MassDeviation(@NotNull Deviation allowedMassDeviation, @NotNull Deviation standardMassDeviation, @NotNull Deviation massDifferenceDeviation) {
         super(allowedMassDeviation, standardMassDeviation, massDifferenceDeviation);

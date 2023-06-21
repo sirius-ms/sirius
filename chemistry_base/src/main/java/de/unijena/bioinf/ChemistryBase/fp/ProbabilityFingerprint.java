@@ -131,6 +131,11 @@ public class ProbabilityFingerprint extends AbstractFingerprint {
             this.next = next;
         }
 
+        @Override
+        public double getProbability() {
+            return fingerprint[current];
+        }
+
         public BIterJustOnes(int current) {
             this.current = current;
             this.next = findNext();

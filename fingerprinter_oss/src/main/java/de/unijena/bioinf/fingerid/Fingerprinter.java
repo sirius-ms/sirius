@@ -23,30 +23,24 @@ package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
-import de.unijena.bioinf.fingerid.fingerprints.ShortestPathFingerprinter;
+import de.unijena.bioinf.chemdb.InChISMILESUtils;
 import de.unijena.bioinf.fingerid.fingerprints.*;
-import net.sf.jniinchi.INCHI_RET;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.fingerprint.*;
-import org.openscience.cdk.inchi.InChIGeneratorFactory;
-import org.openscience.cdk.inchi.InChIToStructure;
 import org.openscience.cdk.interfaces.IAtomContainer;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
 public class Fingerprinter {
 
-    private final InChIGeneratorFactory factory;
     private final List<IFingerprinter> fingerprinters;
 
-    public Fingerprinter() throws CDKException {
-        factory = InChIGeneratorFactory.getInstance();
+    public Fingerprinter() {
         this.fingerprinters = createListOfFingerprints();
     }
 
-    public static Fingerprinter getForVersion(CdkFingerprintVersion version) throws CDKException {
+    public static Fingerprinter getForVersion(CdkFingerprintVersion version) {
         final List<IFingerprinter> fingerprinters = new ArrayList<>();
         for (int k=0; k < version.numberOfFingerprintTypesInUse(); ++k) {
             fingerprinters.add(getFingerprinter(version.getFingerprintTypeAt(k)));
@@ -54,8 +48,7 @@ public class Fingerprinter {
         return new Fingerprinter(fingerprinters);
     }
 
-    public Fingerprinter(List<IFingerprinter> fingerprinters) throws CDKException {
-        factory = InChIGeneratorFactory.getInstance();
+    public Fingerprinter(List<IFingerprinter> fingerprinters) {
         this.fingerprinters = fingerprinters;
     }
 
@@ -67,7 +60,7 @@ public class Fingerprinter {
             case PUBCHEM: return new PubchemFingerprinter(DefaultChemObjectBuilder.getInstance());
             case KLEKOTA_ROTH: return new KlekotaRothFingerprinter();
             case ECFP: return new ECFPFingerprinter();
-            case SHORTEST_PATH: return new ShortestPathFingerprinter();
+            case INSILICO: return new InsilicoFingerprinter();
             case BIOSMARTS: return new BiosmartsFingerprinter();
             case RINGSYSTEMS: return new RingsystemFingerprinter();
             default: throw new IllegalArgumentException();
@@ -87,7 +80,7 @@ public class Fingerprinter {
             case "spheres": return new SphericalFingerprint();
             case "ecfp": return new ECFPFingerprinter();
             case "biosmarts": return new BiosmartsFingerprinter();
-            case "shortest_paths": return new ShortestPathFingerprinter();
+            case "insilico": return new InsilicoFingerprinter();
             case "ringsystems": return new RingsystemFingerprinter();
             default: try {
                 return getFingerprinter(CdkFingerprintVersion.USED_FINGERPRINTS.valueOf(name.toUpperCase()));
@@ -207,26 +200,13 @@ public class Fingerprinter {
         return inchi;
     }
 
-    public IAtomContainer convertInchi2Mol(String inchi) throws CDKException {
-        if (inchi == null) throw new NullPointerException("Given InChI is null");
-        if (inchi.isEmpty()) throw new IllegalArgumentException("Empty string given as InChI");
-        final InChIToStructure converter = factory.getInChIToStructure(inchi, DefaultChemObjectBuilder.getInstance());
-        if (converter.getReturnStatus() == INCHI_RET.OKAY) return converter.getAtomContainer();       else if (converter.getReturnStatus()==INCHI_RET.WARNING) {
-            LoggerFactory.getLogger(Fingerprinter.class).warn(converter.getMessage());
-            return converter.getAtomContainer();
-        }
-        else {
-            LoggerFactory.getLogger(Fingerprinter.class).error("Error while parsing InChI:\n'" + inchi +"'\n-> " + converter.getMessage());
-            final IAtomContainer a = converter.getAtomContainer();
-            if (a!=null) return a;
-            else throw new CDKException(converter.getMessage());
-        }
-    }
-
     public List<IFingerprinter> getFingerprinters() {
         return Collections.unmodifiableList(fingerprinters);
     }
 
+    public IAtomContainer convertInchi2Mol(String inchi) throws CDKException {
+        return InChISMILESUtils.getAtomContainerFromInchi(inchi,true);
+    }
     public IAtomContainer convertInchi2Mol(String inchi, boolean is3D) throws CDKException {
         if (!is3D) inchi = convert3Dto2DInchi(inchi);
         return convertInchi2Mol(inchi);

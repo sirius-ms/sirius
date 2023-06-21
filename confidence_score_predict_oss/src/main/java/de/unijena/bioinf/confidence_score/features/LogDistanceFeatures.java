@@ -42,6 +42,8 @@ public class LogDistanceFeatures implements FeatureCreator {
     Scored<FingerprintCandidate>[] rankedCandidates;
     Scored<FingerprintCandidate>[] rankedCandidates_filtered;
     public int weight_direction=1;
+    int min_quartil=1;
+    int max_quartil=99;
 
 
 
@@ -60,6 +62,16 @@ public class LogDistanceFeatures implements FeatureCreator {
     }
 
     @Override
+    public int min_quartil() {
+        return min_quartil;
+    }
+
+    @Override
+    public int max_quartil() {
+        return max_quartil;
+    }
+
+    @Override
     public double[] computeFeatures(@Nullable ParameterStore ignored) {
         assert  rankedCandidates[0].getScore()>=rankedCandidates[rankedCandidates.length-1].getScore();
 
@@ -69,15 +81,15 @@ public class LogDistanceFeatures implements FeatureCreator {
         int pos = 0;
 
 
-            for (int j = 0; j < distances.length; j++) {
-                int additional_shift=0;
-                while (rankedCandidates_filtered[distances[j]+additional_shift].getCandidate().getFingerprint().toOneZeroString().equals(rankedCandidates_filtered[0].getCandidate().getFingerprint().toOneZeroString())){
-                    additional_shift+=1;
-                }
-                double dist=topHit - rankedCandidates_filtered[distances[j]+additional_shift].getScore();
-                if (dist>0) {
-                    scores[pos++] = Math.log(dist);
-                }else scores[pos++]=-10;
+        for (int j = 0; j < distances.length; j++) {
+            int additional_shift=0;
+            //    while (rankedCandidates_filtered[distances[j]+additional_shift].getCandidate().getFingerprint().toOneZeroString().equals(rankedCandidates_filtered[0].getCandidate().getFingerprint().toOneZeroString())){
+            //      additional_shift+=1;
+            // }
+            double dist=topHit - rankedCandidates_filtered[distances[j]+additional_shift].getScore();
+            if (dist>0) {
+                scores[pos++] = Math.log(dist);
+            }else scores[pos++]=Math.log(1);
 
 
         }
@@ -88,6 +100,16 @@ public class LogDistanceFeatures implements FeatureCreator {
     @Override
     public int getFeatureSize() {
         return distances.length;
+    }
+
+    @Override
+    public void setMinQuartil(int quartil) {
+        min_quartil=quartil;
+    }
+
+    @Override
+    public void setMaxQuartil(int quartil) {
+        max_quartil=quartil;
     }
 
     @Override

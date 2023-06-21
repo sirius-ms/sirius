@@ -1,0 +1,6 @@
+dependencies {
+    api project(':fingerid_base_oss')
+    api project(':chemistry_base')
+    // supporter lib provides rabbitmq client.
+    api group: 'com.rabbitmq', name: 'amqp-client', version: '5.11.0'
+}

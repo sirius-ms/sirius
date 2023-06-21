@@ -40,8 +40,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.*;
+import java.util.function.Supplier;
 
 public class SiriusConfigUtils {
+
 
     private static ReadWriteSynchronizer getSynchronizer() {
         return new ReadWriteSynchronizer();
@@ -86,12 +88,12 @@ public class SiriusConfigUtils {
                     new ReloadingFileBasedConfigurationBuilder<>(PropertiesConfiguration.class)
                             .configure(makeConfigProps(watcher.getFile().toFile()));
             watcher.setController(builder.getReloadingController());
-            c =  builder.getConfiguration();
+            c = builder.getConfiguration();
 
         } catch (ConfigurationException e) {
             System.err.println("WARNING: Error during PropertiesConfiguration initialization with auto reloading");
             e.printStackTrace();
-            c =  new PropertiesConfiguration();
+            c = new PropertiesConfiguration();
         }
         c.setSynchronizer(getSynchronizer());
         return c;
@@ -132,10 +134,10 @@ public class SiriusConfigUtils {
     public static PropertiesConfiguration makeConfigFromStream(@NotNull final String resource, @Nullable PropertiesConfigurationLayout layout) {
         final PropertiesConfiguration config = newConfiguration();
         try (InputStream input = PropertyManager.class.getResourceAsStream("/" + resource)) {
-            if (input != null){
-                if(layout != null){
+            if (input != null) {
+                if (layout != null) {
                     layout.load(config, new InputStreamReader(input));
-                }else {
+                } else {
                     new FileHandler(config).load(input);
                 }
             }
@@ -153,4 +155,6 @@ public class SiriusConfigUtils {
         new FileHandler(config).load(input);
         return config;
     }
+
+
 }

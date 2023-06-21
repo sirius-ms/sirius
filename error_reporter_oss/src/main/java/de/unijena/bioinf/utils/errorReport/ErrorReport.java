@@ -19,12 +19,6 @@
  */
 
 package de.unijena.bioinf.utils.errorReport;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 29.09.16.
- */
-
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -205,19 +199,6 @@ public class ErrorReport {
     void setCompessedAdditionalFiles(byte[] bytes) {
         this.compessedAdditionalFiles = bytes;
     }
-
-/*    protected static <T extends ErrorReport> Gson getGson(Class<T> clas) {
-        return new GsonBuilder().registerTypeAdapter(clas, new ReportSerializer<T>()).registerTypeAdapter(clas, new ReportDeSerializer<T>()).create();
-    }
-
-    public static <T extends ErrorReport> String toJson(T report) {
-        return getGson(report.getClass()).toJson(report);
-    }
-
-    public static <T extends ErrorReport> T fromJson(String json, Class<T> clas) {
-        Gson gson = getGson(clas);
-        return gson.fromJson(json, clas);
-    }*/
 
     protected static class ReportSerializer extends JsonSerializer<ErrorReport> {
         @Override

@@ -20,9 +20,9 @@
 
 package de.unijena.bioinf.projectspace.fingerid;
 
-import de.unijena.bioinf.ms.annotations.DataAnnotation;
+import de.unijena.bioinf.projectspace.SerializerParameter;
 
-public class FBCandidateNumber implements DataAnnotation {
+public class FBCandidateNumber implements SerializerParameter {
     public static final FBCandidateNumber ALL = new FBCandidateNumber(-1);
     public static final FBCandidateNumber GUI_DEFAULT = new FBCandidateNumber(100);
 

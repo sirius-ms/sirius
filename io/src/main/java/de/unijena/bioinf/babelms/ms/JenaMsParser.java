@@ -30,9 +30,11 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.ChemistryBase.ms.utils.PeakComment;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.Parser;
+import de.unijena.bioinf.babelms.utils.ParserUtils;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -41,7 +43,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -75,11 +77,11 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
     String lastCompundName = null;
 
     @Override
-    public Ms2Experiment parse(BufferedReader reader, URL source) throws IOException {
+    public Ms2Experiment parse(BufferedReader reader, URI source) throws IOException {
         return parse(reader, source, PropertyManager.DEFAULTS);
     }
 
-    public Ms2Experiment parse(BufferedReader reader, URL source, ParameterConfig config) throws IOException {
+    public Ms2Experiment parse(BufferedReader reader, URI source, ParameterConfig config) throws IOException {
 
         ParserInstance p = null;
         while (true) {
@@ -110,7 +112,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
     private static class ParserInstance {
 
-        private ParserInstance(URL source, BufferedReader reader, ParameterConfig baseConfig) {
+        private ParserInstance(URI source, BufferedReader reader, ParameterConfig baseConfig) {
             this.source = new MsFileSource(source);
             this.reader = reader;
             lineNumber = 0;
@@ -249,7 +251,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
         private static Pattern LINE_PATTERN = Pattern.compile("^\\s*([>#]|\\d)");
 
-        private static final String decimalPattern = "[+-]?\\s*\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?";
+        private static final String decimalPattern = "[+-]?\\s*\\d+(?:[.,]\\d+)?(?:[eE][+-]?\\d+)?";
 
         private static final Pattern MASS_PATTERN = Pattern.compile("(" + decimalPattern + ")(?:\\s*Da)?");
 
@@ -292,7 +294,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 addAsAdditionalField("index", Integer.toString(index));
             } else if (optionName.equals("source")) {
                 //override in source set in ms file
-                this.externalSource = new SpectrumFileSource(new URL(value));
+                this.externalSource = new SpectrumFileSource(URI.create(value));
             } else if (optionName.equals("formula") || optionName.equals("formulas")) {
                 final List<String> valueList = Arrays.asList(value.split("(?:\\s+|,)"));
                 if (this.formulas == null) {
@@ -305,13 +307,13 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 if (parentMass != 0) warn("parent mass is set twice");
                 final Matcher m = MASS_PATTERN.matcher(value);
                 if (m.find())
-                    this.parentMass = Double.parseDouble(m.group(1));
+                    this.parentMass = Utils.parseDoubleWithUnknownDezSep(m.group(1));
                 else
                     error("Cannot parse parent mass: '" + value + "'");
             } else if (optionName.equals("charge")) {
                 final Matcher m = FLOAT_PATTERN.matcher(value);
                 if (m.find()) {
-                    this.charge = (int) Double.parseDouble(m.group(1));
+                    this.charge = (int) Utils.parseDoubleWithUnknownDezSep(m.group(1));
                 } else {
                     error("Cannot parse charge '" + value + "'");
                 }
@@ -367,14 +369,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 else {
                     final Matcher m = COLLISION_PATTERN.matcher(value);
                     if (m.find()) {
-                        if (m.group(1) != null) {
-                            final double val = Double.parseDouble(m.group(1));
-                            currentEnergy = new CollisionEnergy(val, val);
-                        } else {
-                            assert m.group(2) != null;
-                            final String[] range = m.group(2).split("\\s*-\\s*", 2);
-                            this.currentEnergy = new CollisionEnergy(Double.parseDouble(range[0]), Double.parseDouble(range[1]));
-                        }
+                        this.currentEnergy = CollisionEnergy.fromString(value);
                     } else {
                         error("Cannot parse collision '" + value + "'");
                     }
@@ -384,7 +379,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 if (tic != 0) warn("total ion count is set twice");
                 final Matcher m = FLOAT_PATTERN.matcher(value);
                 if (m.find()) {
-                    tic = Double.parseDouble(value);
+                    tic = Utils.parseDoubleWithUnknownDezSep(value);
                 } else {
                     error("Cannot parse total ion count: '" + value + "'");
                 }
@@ -486,6 +481,9 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             fields = null;
             config = null;
             compoundName = null;
+
+            //validate
+            ParserUtils.checkMolecularFormula(exp);
         }
 
         private String[][] strings2arrays(List<List<String>> ms1Comments) {
@@ -533,7 +531,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private double parseRetentionTime(String value) {
             final Matcher m = RETENTION_PATTER.matcher(value);
             if (m.find()) {
-                return Double.parseDouble(m.group(1));
+                return Utils.parseDoubleWithUnknownDezSep(m.group(1));
             } else {
                 warn("Cannot parse retention time: '" + value + "'");
                 return Double.NaN;
@@ -543,7 +541,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private double parseTime(String value) {
             final Matcher m = TIME_PATTERN.matcher(value);
             if (m.find()) {
-                return Double.parseDouble(m.group(1));
+                return Utils.parseDoubleWithUnknownDezSep(m.group(1));
             } else {
                 return Double.NaN;
             }
@@ -552,7 +550,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private void parsePeak(String line, List<String> comments) throws IOException {
             final Matcher m = PEAK_PATTERN.matcher(line);
             if (m.find()) {
-                currentSpectrum.addPeak(new SimplePeak(Double.parseDouble(m.group(1)), Double.parseDouble(m.group(2))));
+                currentSpectrum.addPeak(new SimplePeak(Utils.parseDoubleWithUnknownDezSep(m.group(1)), Utils.parseDoubleWithUnknownDezSep(m.group(2))));
                 if (m.group(3)!=null && m.group(3).length()>0) {
                     hasPeakComment = true;
                     comments.add(m.group(3).strip());

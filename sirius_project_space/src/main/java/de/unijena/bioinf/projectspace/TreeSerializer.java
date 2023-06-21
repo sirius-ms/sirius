@@ -36,7 +36,7 @@ public class TreeSerializer implements ComponentSerializer<FormulaResultId, Form
     public FTree read(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
         return reader.inDirectory(TREES.relDir(), () -> {
             final String relativePath = TREES.fileName(id);
-            return reader.textFile(relativePath, (r) -> new FTJsonReader().parse(r, reader.asURL(relativePath)));
+            return reader.textFile(relativePath, (r) -> new FTJsonReader().parse(r, reader.asURI(relativePath)));
         });
 
         //NOTE: we do not need to read annotated spectra because the information is already in the trees.
@@ -62,15 +62,14 @@ public class TreeSerializer implements ComponentSerializer<FormulaResultId, Form
     @Override
     public void delete(ProjectWriter writer, FormulaResultId id) throws IOException {
         //delete trees
-        writer.inDirectory(TREES.relDir(), () -> {
-            writer.deleteIfExists(TREES.fileName(id));
-            return true;
-        });
+        writer.deleteIfExists(TREES.relFilePath(id));
+        writer.deleteIfExists(SPECTRA.relFilePath(id));
+    }
 
-        //delete annotated spectra
-        writer.inDirectory(SPECTRA.relDir(), () -> {
-            writer.deleteIfExists(SPECTRA.fileName(id));
-            return true;
-        });
+    @Override
+    public void deleteAll(ProjectWriter writer) throws IOException {
+        //delete trees
+        writer.deleteIfExists(TREES.relDir());
+        writer.deleteIfExists(SPECTRA.relDir());
     }
 }

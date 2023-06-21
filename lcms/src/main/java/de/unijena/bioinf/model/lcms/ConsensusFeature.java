@@ -43,7 +43,7 @@ public class ConsensusFeature implements Annotated<DataAnnotation> {
     protected final SimpleSpectrum[] coelutedPeaks;
     protected final SimpleSpectrum[] ms2;
     protected final long averageRetentionTime;
-    protected final CollisionEnergy collisionEnergy;
+    protected final CollisionEnergy[] collisionEnergies;
     protected final double averageMass, totalIntensity;
     protected final PrecursorIonType ionType;
     protected final double chimericPollution;
@@ -51,14 +51,14 @@ public class ConsensusFeature implements Annotated<DataAnnotation> {
 
     protected ArrayList<IonConnection<ConsensusFeature>> connections = new ArrayList<>();
 
-    public ConsensusFeature(int featureId, Feature[] features, int ms2RepresentativeFeature, SimpleSpectrum[] coelutedPeaks, SimpleSpectrum[] ms2, PrecursorIonType ionType,  long averageRetentionTime,CollisionEnergy collisionEnergy ,double averageMass, double totalIntensity, double chimericPollution) {
+    public ConsensusFeature(int featureId, Feature[] features, int ms2RepresentativeFeature, SimpleSpectrum[] coelutedPeaks, SimpleSpectrum[] ms2, PrecursorIonType ionType,  long averageRetentionTime,CollisionEnergy[] collisionEnergies ,double averageMass, double totalIntensity, double chimericPollution) {
         this.featureId = featureId;
         this.features = features;
         this.ms2RepresentativeFeature = ms2RepresentativeFeature;
         this.coelutedPeaks = coelutedPeaks;
         this.ms2 = ms2;
         this.averageRetentionTime = averageRetentionTime;
-        this.collisionEnergy=collisionEnergy;
+        this.collisionEnergies=collisionEnergies;
         this.averageMass = averageMass;
         this.totalIntensity = totalIntensity;
         this.ionType = ionType;
@@ -133,8 +133,8 @@ public class ConsensusFeature implements Annotated<DataAnnotation> {
         exp.setPrecursorIonType(ionType);
         exp.setMergedMs1Spectrum(Spectrums.mergeSpectra(coelutedPeaks));
         final ArrayList<MutableMs2Spectrum> ms2Spectra = new ArrayList<>();
-        for (SimpleSpectrum s : ms2) {
-            ms2Spectra.add(new MutableMs2Spectrum(s, averageMass, collisionEnergy, 2));
+        for (int k=0; k < ms2.length; ++k) {
+            ms2Spectra.add(new MutableMs2Spectrum(this.ms2[k], averageMass, collisionEnergies[k], 2));
         }
         exp.setMs2Spectra(ms2Spectra);
         exp.setIonMass(averageMass);
