@@ -1,12 +1,16 @@
 package de.unijena.bioinf.fragmenter;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
+import org.openscience.cdk.exception.CDKException;
 
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
+import java.util.function.Predicate;
 
 /**
  *  Utility class to edit a CombinatorialGraph object.
@@ -37,6 +41,8 @@ public class CombinatorialGraphManipulator {
      * @param fTree the fragmentation tree which explains the measured MS2 spectrum
      */
     public static void addTerminalNodes(CombinatorialGraph graph, CombinatorialFragmenterScoring scoring, FTree fTree){
+        graph.root.state = 0;
+        graph.nodes.forEach(x -> x.state=0);
         MolecularGraph molecule = graph.getRoot().fragment.parent;
 
         // 1. Create the hashmap which assigns each MF.withoutHydrogen()
@@ -78,12 +84,11 @@ public class CombinatorialGraphManipulator {
 
         final int size = graph.numberOfNodes();
         removeFromList(graph.nodes, x->x.state==0);
+        removeFromList(graph.root.outgoingEdges, x -> x.target.state==0);
         for (CombinatorialNode node : graph.nodes) {
             removeFromList(node.outgoingEdges, x->x.target.state==0);
         }
         //LoggerFactory.getLogger(CombinatorialGraphManipulator.class).warn("Remove "+(size-graph.numberOfNodes()) + " of " + graph.numberOfNodes() + " nodes");
-
-
     }
     public static <T> void removeFromList(ArrayList<T> xs, Predicate<T> f) {
         xs.removeIf(f); // super stupid implementation -_- shitty java

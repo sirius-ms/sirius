@@ -32,7 +32,6 @@ public class PrimSubtreeCalculator extends CombinatorialSubtreeCalculator {
             CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(this.molecule, scoring);
             this.graph = fragmenter.createCombinatorialFragmentationGraph(fragmentationConstraint);
             CombinatorialGraphManipulator.addTerminalNodes(this.graph, this.scoring, this.fTree);
-            CombinatorialGraphManipulator.removeAllNodesNotConnectedToTerminalNodes(this.graph);
         }
 
         // 2.) Assign each node of this graph - except the root - a unique index:

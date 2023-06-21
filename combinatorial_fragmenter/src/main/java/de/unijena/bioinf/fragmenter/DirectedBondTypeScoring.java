@@ -63,7 +63,7 @@ public class DirectedBondTypeScoring implements CombinatorialFragmenterScoring{
 
     @Override
     public double scoreFragment(CombinatorialNode fragment) {
-        if(fragment.fragment.isRealFragment()){
+        if(fragment.fragment.isInnerNode()){
             return 0;
         }else{
             return pseudoFragmentScore;
@@ -75,7 +75,7 @@ public class DirectedBondTypeScoring implements CombinatorialFragmenterScoring{
         CombinatorialFragment sourceFragment = edge.source.fragment;
         CombinatorialFragment targetFragment = edge.target.fragment;
 
-        if(targetFragment.isRealFragment()){
+        if(targetFragment.isInnerNode()){
             return scoreBond(edge.getCut1(), edge.getDirectionOfFirstCut()) + (edge.getCut2() != null ? scoreBond(edge.getCut2(), edge.getDirectionOfSecondCut()) : 0d);
         }else{
             int hydrogenDiff = Math.abs(targetFragment.hydrogenRearrangements(sourceFragment.getFormula()));

@@ -20,7 +20,6 @@ public class CombinatorialGraph {
         root.depth = 0;
         root.bondbreaks = 0;
         this.nodes = new ArrayList<>();
-        nodes.add(root);
         this.bitset2node = new HashMap<>();
         bitset2node.put(root.fragment.bitset, root);
     }
@@ -268,7 +267,7 @@ public class CombinatorialGraph {
     public List<CombinatorialNode> getTerminalNodes(){
         ArrayList<CombinatorialNode> terminalNodeList = new ArrayList<>();
         for(CombinatorialNode node : this.nodes){
-            if(!node.fragment.isRealFragment()){
+            if(!node.fragment.isInnerNode()){
                 terminalNodeList.add(node);
             }
         }

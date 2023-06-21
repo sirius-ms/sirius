@@ -26,7 +26,7 @@ public class CombinatorialSubtreeManipulatorTest {
         BitSet bitset = new BitSet(4);
         bitset.set(1);
         for(int i = 0; i < fragments.length; i++){
-            fragments[i] = new CombinatorialFragment(molecule, (BitSet) bitset.clone(), MolecularFormula.parse("C"+(1+i)), new BitSet());
+            fragments[i] = new CombinatorialFragment(molecule, (BitSet) bitset.clone(), MolecularFormula.parse("C"+(1+i)), new BitSet(), false, 0f);
             this.incrementBitSet(bitset);
         }
 
