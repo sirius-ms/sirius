@@ -93,17 +93,17 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
 
     Iterable<DocType> injectOptionalFields(String collectionName, Iterable<DocType> documents, String... optionalFields) throws IOException;
 
-    <P, C> Iterable<P> joinAllChildren(Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String targetField) throws IOException;
+    <P, C> Iterable<P> joinAllChildren(Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException;
 
-    <P, C> Iterable<P> joinChildren(Class<C> childClass, Filter childFilter, Iterable<P> parents, String localField, String foreignField, String targetField) throws IOException;
+    <P, C> Iterable<P> joinChildren(Class<C> childClass, Filter childFilter, Iterable<P> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException;
 
-    <T, P, C> Iterable<T> joinAllChildren(Class<T> targetClass, Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String targetField) throws IOException;
+    <T, P, C> Iterable<T> joinAllChildren(Class<T> targetClass, Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException;
 
-    <T, P, C> Iterable<T> joinChildren(Class<T> targetClass, Class<C> childClass, Filter childFilter, Iterable<P> parents, String localField, String foreignField, String targetField) throws IOException;
+    <T, P, C> Iterable<T> joinChildren(Class<T> targetClass, Class<C> childClass, Filter childFilter, Iterable<P> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException;
 
-    Iterable<DocType> joinAllChildren(String childCollection, Iterable<DocType> parents, String localField, String foreignField, String targetField) throws IOException;
+    Iterable<DocType> joinAllChildren(String childCollection, Iterable<DocType> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException;
 
-    Iterable<DocType> joinChildren(String childCollectionName, Filter childFilter, Iterable<DocType> parents, String localField, String foreignField, String targetField) throws IOException;
+    Iterable<DocType> joinChildren(String childCollectionName, Filter childFilter, Iterable<DocType> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException;
 
     <T> int count(Filter filter, Class<T> clazz) throws IOException;
 
@@ -216,28 +216,28 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
         return StreamSupport.stream(injectOptionalFields(collectionName, documents.toList(), optionalFields).spliterator(), false);
     }
 
-    default <P, C> Stream<P> joinAllChildrenStr(Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String targetField) throws IOException {
-        return StreamSupport.stream(joinAllChildren(childClass, parents, localField, foreignField, targetField).spliterator(), false);
+    default <P, C> Stream<P> joinAllChildrenStr(Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException {
+        return StreamSupport.stream(joinAllChildren(childClass, parents, localField, foreignField, targetField, withOptionalChildFields).spliterator(), false);
     }
 
-    default <P, C> Stream<P> joinChildrenStr(Class<C> childClass, Filter childFilter, Iterable<P> parents, String localField, String foreignField, String targetField) throws IOException {
-        return StreamSupport.stream(joinChildren(childClass, childFilter, parents, localField, foreignField, targetField).spliterator(), false);
+    default <P, C> Stream<P> joinChildrenStr(Class<C> childClass, Filter childFilter, Iterable<P> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException {
+        return StreamSupport.stream(joinChildren(childClass, childFilter, parents, localField, foreignField, targetField, withOptionalChildFields).spliterator(), false);
     }
 
-    default <T, P, C> Stream<T> joinAllChildrenStr(Class<T> targetClass, Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String targetField) throws IOException {
-        return StreamSupport.stream(joinAllChildren(targetClass, childClass, parents, localField, foreignField, targetField).spliterator(), false);
+    default <T, P, C> Stream<T> joinAllChildrenStr(Class<T> targetClass, Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException {
+        return StreamSupport.stream(joinAllChildren(targetClass, childClass, parents, localField, foreignField, targetField, withOptionalChildFields).spliterator(), false);
     }
 
-    default <T, P, C> Stream<T> joinChildrenStr(Class<T> targetClass, Class<C> childClass, Filter childFilter, Iterable<P> parents, String localField, String foreignField, String targetField) throws IOException {
-        return StreamSupport.stream(joinChildren(targetClass, childClass, childFilter, parents, localField, foreignField, targetField).spliterator(), false);
+    default <T, P, C> Stream<T> joinChildrenStr(Class<T> targetClass, Class<C> childClass, Filter childFilter, Iterable<P> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException {
+        return StreamSupport.stream(joinChildren(targetClass, childClass, childFilter, parents, localField, foreignField, targetField, withOptionalChildFields).spliterator(), false);
     }
 
-    default Stream<DocType> joinAllChildrenStr(String childCollectionName, Iterable<DocType> parents, String localField, String foreignField, String targetField) throws IOException  {
-        return StreamSupport.stream(joinAllChildren(childCollectionName, parents, localField, foreignField, targetField).spliterator(), false);
+    default Stream<DocType> joinAllChildrenStr(String childCollectionName, Iterable<DocType> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException  {
+        return StreamSupport.stream(joinAllChildren(childCollectionName, parents, localField, foreignField, targetField, withOptionalChildFields).spliterator(), false);
     }
 
-    default Stream<DocType> joinChildrenStr(String childCollectionName, Filter childFilter, Iterable<DocType> parents, String localField, String foreignField, String targetField) throws IOException {
-        return StreamSupport.stream(joinChildren(childCollectionName, childFilter, parents, localField, foreignField, targetField).spliterator(), false);
+    default Stream<DocType> joinChildrenStr(String childCollectionName, Filter childFilter, Iterable<DocType> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException {
+        return StreamSupport.stream(joinChildren(childCollectionName, childFilter, parents, localField, foreignField, targetField, withOptionalChildFields).spliterator(), false);
     }
 
     //endregion

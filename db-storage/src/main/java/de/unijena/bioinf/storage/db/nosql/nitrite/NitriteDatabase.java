@@ -608,7 +608,6 @@ public class NitriteDatabase implements Database<Document> {
         return InjectingDocumentIterable.inject(document, new HashSet<>(Arrays.asList(optionalFields)), getCollection(collectionName));
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public <T> Iterable<T> injectOptionalFields(Class<T> clazz, Iterable<T> objects, String... optionalFields) throws IOException {
         if (objects instanceof org.dizitart.no2.objects.Cursor<T>) {
@@ -636,9 +635,8 @@ public class NitriteDatabase implements Database<Document> {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public <P, C> Iterable<P> joinAllChildren(Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String targetField) throws IOException {
+    public <P, C> Iterable<P> joinAllChildren(Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException {
         return new JoinedReflectionIterable<>(
                 childClass,
                 parents,
@@ -647,7 +645,7 @@ public class NitriteDatabase implements Database<Document> {
                         org.dizitart.no2.objects.Cursor<C> objectCursor = (org.dizitart.no2.objects.Cursor<C>) find(new Filter().eq(foreignField, localObject), childClass);
                         Field cField = objectCursor.getClass().getDeclaredField("cursor");
                         cField.setAccessible(true);
-                        return (Iterable<Document>) cField.get(objectCursor);
+                        return maybeProjectDocuments(childClass.getName(), (Cursor) cField.get(objectCursor), withOptionalChildFields);
                     } catch (IOException | IllegalAccessException | NoSuchFieldException e) {
                         throw new RuntimeException(e);
                     }
@@ -658,9 +656,8 @@ public class NitriteDatabase implements Database<Document> {
         );
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public <P, C> Iterable<P> joinChildren(Class<C> childClass, Filter childFilter, Iterable<P> parents, String localField, String foreignField, String targetField) throws IOException {
+    public <P, C> Iterable<P> joinChildren(Class<C> childClass, Filter childFilter, Iterable<P> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException {
         return new JoinedReflectionIterable<>(
                 childClass,
                 parents,
@@ -671,7 +668,7 @@ public class NitriteDatabase implements Database<Document> {
                         org.dizitart.no2.objects.Cursor<C> objectCursor = (org.dizitart.no2.objects.Cursor<C>) find(cFilter, childClass);
                         Field cField = objectCursor.getClass().getDeclaredField("cursor");
                         cField.setAccessible(true);
-                        return (Iterable<Document>) cField.get(objectCursor);
+                        return maybeProjectDocuments(childClass.getName(), (Cursor) cField.get(objectCursor), withOptionalChildFields);
                     } catch (IOException | IllegalAccessException | NoSuchFieldException e) {
                         throw new RuntimeException(e);
                     }
@@ -682,9 +679,8 @@ public class NitriteDatabase implements Database<Document> {
         );
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public <T, P, C> Iterable<T> joinAllChildren(Class<T> targetClass, Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String targetField) throws IOException {
+    public <T, P, C> Iterable<T> joinAllChildren(Class<T> targetClass, Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException {
         return new JoinedIterable<>(
                 targetClass,
                 parents,
@@ -693,7 +689,7 @@ public class NitriteDatabase implements Database<Document> {
                         org.dizitart.no2.objects.Cursor<C> objectCursor = (org.dizitart.no2.objects.Cursor<C>) find(new Filter().eq(foreignField, localObject), childClass);
                         Field cField = objectCursor.getClass().getDeclaredField("cursor");
                         cField.setAccessible(true);
-                        return (Iterable<Document>) cField.get(objectCursor);
+                        return maybeProjectDocuments(childClass.getName(), (Cursor) cField.get(objectCursor), withOptionalChildFields);
                     } catch (IOException | IllegalAccessException | NoSuchFieldException e) {
                         throw new RuntimeException(e);
                     }
@@ -704,9 +700,8 @@ public class NitriteDatabase implements Database<Document> {
         );
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public <T, P, C> Iterable<T> joinChildren(Class<T> targetClass, Class<C> childClass, Filter childFilter, Iterable<P> parents, String localField, String foreignField, String targetField) throws IOException {
+    public <T, P, C> Iterable<T> joinChildren(Class<T> targetClass, Class<C> childClass, Filter childFilter, Iterable<P> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException {
         return new JoinedIterable<>(
                 targetClass,
                 parents,
@@ -717,7 +712,7 @@ public class NitriteDatabase implements Database<Document> {
                         org.dizitart.no2.objects.Cursor<C> objectCursor = (org.dizitart.no2.objects.Cursor<C>) find(cFilter, childClass);
                         Field cField = objectCursor.getClass().getDeclaredField("cursor");
                         cField.setAccessible(true);
-                        return (Iterable<Document>) cField.get(objectCursor);
+                        return maybeProjectDocuments(childClass.getName(), (Cursor) cField.get(objectCursor), withOptionalChildFields);
                     } catch (IOException | IllegalAccessException | NoSuchFieldException e) {
                         throw new RuntimeException(e);
                     }
@@ -729,12 +724,12 @@ public class NitriteDatabase implements Database<Document> {
     }
 
     @Override
-    public Iterable<Document> joinAllChildren(String childCollectionName, Iterable<Document> parents, String localField, String foreignField, String targetField) throws IOException {
+    public Iterable<Document> joinAllChildren(String childCollectionName, Iterable<Document> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException {
         return () -> new JoinedDocumentIterator(
                 parents,
                 (localObject) -> {
                     try {
-                        return find(childCollectionName, new Filter().eq(foreignField, localObject));
+                        return find(childCollectionName, new Filter().eq(foreignField, localObject), withOptionalChildFields);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
@@ -745,14 +740,14 @@ public class NitriteDatabase implements Database<Document> {
     }
 
     @Override
-    public Iterable<Document> joinChildren(String childCollectionName, Filter childFilter, Iterable<Document> parents, String localField, String foreignField, String targetField) throws IOException {
+    public Iterable<Document> joinChildren(String childCollectionName, Filter childFilter, Iterable<Document> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException {
         return () -> new JoinedDocumentIterator(
                 parents,
                 (localObject) -> {
                     try {
                         Filter cFilter = new Filter().and().eq(foreignField, localObject);
                         cFilter.filterChain.addAll(childFilter.filterChain);
-                        return find(childCollectionName, cFilter);
+                        return find(childCollectionName, cFilter, withOptionalChildFields);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
