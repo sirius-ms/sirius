@@ -33,12 +33,12 @@ public class Precursor implements Peak {
     private final IsolationWindow isolationWindow;
     private final float mass, intensity;
 
-    public Precursor(int index, double mz, double intensity, int charge, double isolationWindowWidth) {
-        this(index, mz, intensity, charge, new IsolationWindow(0, isolationWindowWidth));
+    public Precursor(int index, double targetMz, double intensity, int charge, double isolationWindowWidth) {
+        this(index, targetMz, intensity, charge, new IsolationWindow(0, isolationWindowWidth));
     }
 
-    public Precursor(int index, double mz, double intensity, int charge, IsolationWindow isolationWindow) {
-        this.mass = (float)mz;
+    public Precursor(int index, double targedMz, double intensity, int charge, IsolationWindow isolationWindow) {
+        this.mass = (float)targedMz;
         this.intensity = (float)intensity;
         this.index = index;
         this.charge = charge;
@@ -66,6 +66,9 @@ public class Precursor implements Peak {
     }
 
     @Override
+    /**
+     * this represents the isolation window target m/z, if known. Else the selected iom m/z
+     */
     public double getMass() {
         return mass;
     }

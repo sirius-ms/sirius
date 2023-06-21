@@ -34,20 +34,25 @@ import static de.unijena.bioinf.projectspace.SiriusLocations.SCORES;
 public class FormulaScoringSerializer implements ComponentSerializer<FormulaResultId, FormulaResult, FormulaScoring> {
     @Override
     public FormulaScoring read(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
-        final Map<String,String> kv = reader.keyValues(SCORES.relFilePath(id));
-        final FormulaScoring scoring = new FormulaScoring();
-        for (String key : kv.keySet()) {
-            final Class<? extends FormulaScore> s = (Class<? extends FormulaScore>) Score.resolve(key);
-            double value;
-            try {
-                value = Double.parseDouble(kv.get(key));
-            } catch (NumberFormatException e) {
-                LoggerFactory.getLogger(getClass()).warn("Could not parse score value '" + key + ":" + kv.get(key) + "'. Setting value to " + FormulaScore.NA());
-                value = FormulaScore.NA(s).score();
+        try {
+            final Map<String, String> kv = reader.keyValues(SCORES.relFilePath(id));
+            final FormulaScoring scoring = new FormulaScoring();
+            for (String key : kv.keySet()) {
+                final Class<? extends FormulaScore> s = (Class<? extends FormulaScore>) Score.resolve(key);
+                double value;
+                try {
+                    value = Double.parseDouble(kv.get(key));
+                } catch (NumberFormatException e) {
+                    LoggerFactory.getLogger(getClass()).warn("Could not parse score value '" + key + ":" + kv.get(key) + "'. Setting value to " + FormulaScore.NA());
+                    value = FormulaScore.NA(s).score();
+                }
+                scoring.addAnnotation(s, value);
             }
-            scoring.addAnnotation(s, value);
+            return scoring;
+        } catch (IOException e) {
+            LoggerFactory.getLogger(FormulaScoringSerializer.class).error("Cannot read formula scoring of " + id.getParentId().toString() + " (" + id.toString() + ")");
+            throw e;
         }
-        return scoring;
     }
 
     @Override
@@ -63,5 +68,10 @@ public class FormulaScoringSerializer implements ComponentSerializer<FormulaResu
     @Override
     public void delete(ProjectWriter writer, FormulaResultId id) throws IOException {
         writer.deleteIfExists(SCORES.relFilePath(id));
+    }
+
+    @Override
+    public void deleteAll(ProjectWriter writer) throws IOException {
+        writer.deleteIfExists(SCORES.relDir());
     }
 }

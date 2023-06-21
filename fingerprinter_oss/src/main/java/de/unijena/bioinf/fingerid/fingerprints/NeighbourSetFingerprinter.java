@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.fingerid.fingerprints;
 
+import de.unijena.bioinf.chemdb.InChISMILESUtils;
 import org.openscience.cdk.CDKConstants;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.aromaticity.Aromaticity;
@@ -74,8 +75,8 @@ public class NeighbourSetFingerprinter {
                 }
             }
             for (String inchi : inchis) {
-                final IAtomContainer mol = InChIGeneratorFactory.getInstance().getInChIToStructure(inchi2d(inchi), DefaultChemObjectBuilder.getInstance()).getAtomContainer();
-                final String key = InChIGeneratorFactory.getInstance().getInChIGenerator(mol).getInchiKey().substring(0,14);
+                final IAtomContainer mol = InChISMILESUtils.getAtomContainer(inchi2d(inchi));
+                final String key = Objects.requireNonNull(InChISMILESUtils.getInchi(mol, false)).key2D();
                 if (map.get(key)==null) continue;
                 final Set<AtomicDescriptorSet> has = new HashSet<>(map.get(key));
                 SmartsMatchers.prepare(mol, true);
@@ -105,30 +106,20 @@ public class NeighbourSetFingerprinter {
             inchis = Files.readAllLines(new File("D:/arbeit/daten/fingerid/inchis.csv").toPath(), Charset.defaultCharset());
             final int MIN_COUNT = (int)Math.ceil(inchis.size()*0.01);
             final int MAX_COUNT = (int)Math.ceil(inchis.size()*0.2);
-            final InChIGeneratorFactory f = InChIGeneratorFactory.getInstance();
             for (String inchi : inchis) {
-                final IAtomContainer mol = f.getInChIToStructure(inchi2d(inchi),DefaultChemObjectBuilder.getInstance() ).getAtomContainer();
+                final IAtomContainer mol = InChISMILESUtils.getAtomContainerFromInchi(inchi2d(inchi));
                 SmartsMatchers.prepare(mol, true);
                 AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
                 for (AtomicDescriptorSet set : buildDescriptorSets(mol, 2, 5)) {
-                    HashSet<String> count = allSets.get(set);
-                    if (count==null) {
-                        count = new HashSet<>();
-                        allSets.put(set, count);
-                    }
-                    count.add(InChIGeneratorFactory.getInstance().getInChIGenerator(mol).getInchiKey().substring(0,14));
+                    HashSet<String> count = allSets.computeIfAbsent(set, k -> new HashSet<>());
+                    count.add(Objects.requireNonNull(InChISMILESUtils.getInchi(mol, false)).key2D());
                 }
                 System.out.println(".");
             }
 
             // delete duplicate entries
             final List<AtomicDescriptorSet> sets = new ArrayList<>(allSets.keySet());
-            Collections.sort(sets, new Comparator<AtomicDescriptorSet>() {
-                @Override
-                public int compare(AtomicDescriptorSet o1, AtomicDescriptorSet o2) {
-                    return Integer.compare(o2.descriptors.size(), o1.descriptors.size());
-                }
-            });
+            sets.sort((o1, o2) -> Integer.compare(o2.descriptors.size(), o1.descriptors.size()));
             final ArrayList<AtomicDescriptorSet> keep = new ArrayList<>();
             for (int k=0; k < sets.size(); ++k) {
                 final AtomicDescriptorSet aset = sets.get(k);

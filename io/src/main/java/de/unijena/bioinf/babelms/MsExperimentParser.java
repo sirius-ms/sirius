@@ -23,9 +23,11 @@ package de.unijena.bioinf.babelms;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.cef.AgilentCefExperimentParser;
+import de.unijena.bioinf.babelms.massbank.MassbankExperimentParser;
 import de.unijena.bioinf.babelms.mgf.MgfParser;
 import de.unijena.bioinf.babelms.ms.InputFileConfig;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
+import de.unijena.bioinf.babelms.msp.MSPExperimentParser;
 import de.unijena.bioinf.babelms.mzml.MzMlExperimentParser;
 import de.unijena.bioinf.babelms.mzml.MzXmlExperimentParser;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
@@ -41,7 +43,7 @@ import java.util.function.Consumer;
 
 public class MsExperimentParser {
 
-    private static final Map<String, Class<? extends Parser<Ms2Experiment>>> KNOWN_ENDINGS = addKnownEndings();
+    protected static final Map<String, Class<? extends Parser<Ms2Experiment>>> KNOWN_ENDINGS = addKnownEndings();
     /**
      * This postprocessor annotates Parameter configs to the {@link Ms2Experiment}. If {@link InputFileConfig} is given
      * this is preferred over the {@link PropertyManager#DEFAULTS} config.
@@ -66,17 +68,27 @@ public class MsExperimentParser {
         final int i = fileName.lastIndexOf('.');
         if (i < 0) return null; // no parser found
         final String extName = fileName.substring(i).toLowerCase();
+        return getParserByExt(extName);
+    }
+
+    public GenericParser<Ms2Experiment> getParserByExt(String extName) {
+        if (!extName.startsWith("."))
+            extName = "." + extName;
+
         final Class<? extends Parser<Ms2Experiment>> pc = KNOWN_ENDINGS.get(extName);
-        if (pc==null) return null;
+        if (pc == null) return null;
         try {
             if (pc.equals(ZippedSpectraParser.class))
                 return (GenericParser<Ms2Experiment>) pc.getConstructor().newInstance();
 
             return new GenericParser<>(pc.getConstructor().newInstance(), DEFAULTS_ANNOTATOR);
-        } catch (InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+        } catch (InstantiationException | NoSuchMethodException | InvocationTargetException |
+                 IllegalAccessException e) {
             throw new RuntimeException(e);
         }
+
     }
+
 
     public static boolean isSupportedFileName(final @NotNull String fileName) {
         int index = fileName.lastIndexOf('.');
@@ -97,6 +109,10 @@ public class MsExperimentParser {
         endings.put(".mzxml", MzXmlExperimentParser.class);
         endings.put(".mzml", MzMlExperimentParser.class);
         endings.put(".cef", AgilentCefExperimentParser.class);
+        endings.put(".msp", MSPExperimentParser.class);
+        endings.put(".mat", MSPExperimentParser.class);
+        endings.put(".txt", MassbankExperimentParser.class); //Too bad that Massbank format has no unique file extension
+        endings.put(".mb", MassbankExperimentParser.class);
         return endings;
     }
 }

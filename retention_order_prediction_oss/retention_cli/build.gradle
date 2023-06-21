@@ -19,10 +19,7 @@
  */
 
 dependencies {
-    compile project(':retention_order_prediction_oss')
-    for (module in ["depict"]) {
-        compile group: "org.openscience.cdk", name: "cdk-$module", version: "$cdk_version"
-    }
-    compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
-    compile "com.gurobi:gurobi-jar:$gurobi_version"
+    api project(':retention_order_prediction_oss')
+    implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+    implementation "com.gurobi:gurobi-jar:$gurobi_version"
 }

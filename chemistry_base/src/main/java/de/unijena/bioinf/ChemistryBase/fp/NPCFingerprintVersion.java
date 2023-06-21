@@ -70,7 +70,7 @@ public class NPCFingerprintVersion extends FingerprintVersion {
     }
 
     @Override
-    public MolecularProperty getMolecularProperty(int index) {
+    public NPCProperty getMolecularProperty(int index) {
         return properties[index];
     }
 
@@ -81,6 +81,11 @@ public class NPCFingerprintVersion extends FingerprintVersion {
 
     @Override
     public boolean compatible(FingerprintVersion fingerprintVersion) {
+       return identical(fingerprintVersion);
+    }
+
+    @Override
+    public boolean identical(FingerprintVersion fingerprintVersion) {
         if (fingerprintVersion==this) return true;
         if (fingerprintVersion instanceof NPCFingerprintVersion) {
             return Arrays.equals(properties, ((NPCFingerprintVersion) fingerprintVersion).properties);
@@ -112,6 +117,18 @@ public class NPCFingerprintVersion extends FingerprintVersion {
         @Override
         public String getDescription() {
             return level.name + ": " + name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public NPCLevel getLevel() {
+            return level;
+        }
+
+        public int getNpcIndex() {
+            return npcIndex;
         }
 
         @Override

@@ -24,8 +24,11 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 
 import java.util.ArrayList;
 import java.util.Optional;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ChromatogramCache {
+
+    private ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     private final TIntObjectHashMap<ChromatographicPeakSet> cache;
 
@@ -44,9 +47,14 @@ public class ChromatogramCache {
     }
 
     private ChromatographicPeak retrieve(ScanPoint dp, int key) {
-        ChromatographicPeakSet s = cache.get(key);
-        if (s==null) return null;
-        return s.retrieve(dp);
+        lock.readLock().lock();
+        try {
+            ChromatographicPeakSet s = cache.get(key);
+            if (s == null) return null;
+            return s.retrieve(dp);
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     public void add(ChromatographicPeak peak) {
@@ -59,12 +67,17 @@ public class ChromatogramCache {
     }
 
     private void store(ChromatographicPeak peak, int key) {
-        ChromatographicPeakSet set = cache.get(key);
-        if (set==null) {
-            set = new ChromatographicPeakSet();
-            cache.put(key,set);
+        lock.writeLock().lock();
+        try {
+            ChromatographicPeakSet set = cache.get(key);
+            if (set == null) {
+                set = new ChromatographicPeakSet();
+                cache.put(key, set);
+            }
+            set.store(peak);
+        } finally {
+            lock.writeLock().unlock();
         }
-        set.store(peak);
     }
 
     protected static class ChromatographicPeakSet {

@@ -36,8 +36,12 @@ public class IonTrace {
     @JsonProperty
     @Nonnull protected final Trace[] isotopes;
 
-    public IonTrace(@JsonProperty("isotopes") Trace[] isotopes) {
+    @JsonProperty
+    @Nonnull protected final double[] correlationScores;
+
+    public IonTrace(@JsonProperty("isotopes") Trace[] isotopes, @JsonProperty("correlationScores") double[] correlationScores) {
         this.isotopes = isotopes==null ? new Trace[0] : isotopes;
+        this.correlationScores = correlationScores==null ? new double[0] : correlationScores;
     }
 
     @JsonIgnore public Trace getMonoisotopicPeak() {
@@ -47,5 +51,10 @@ public class IonTrace {
     @Nonnull
     public Trace[] getIsotopes() {
         return isotopes;
+    }
+
+    @Nonnull
+    public double[] getCorrelationScores() {
+        return correlationScores;
     }
 }

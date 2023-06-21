@@ -133,7 +133,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
     }
 
     protected void configureProgress(int to, int numberOfTicks) {
-        configureProgress(Math.min(to-1, this.currentProgress().getNewValue().intValue()), to, numberOfTicks);
+        configureProgress((int) Math.min(to-1, this.currentProgress().getProgress()), to, numberOfTicks);
     }
 
     protected void configureProgress(int from, int to, int numberOfTicks) {
@@ -155,6 +155,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
     protected FinalResult compute() throws Exception {
         configureProgress(0, 2, 1);
         score();
+
         startTimeMillis = System.currentTimeMillis();
 //        secondsPerInstance = timeout.getNumberOfSecondsPerInstance();
 //        secondsPerTree = timeout.getNumberOfSecondsPerDecomposition();
@@ -202,7 +203,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         if (Math.abs(newScore - oldScore) > 0.1) {
 
             final double treeSize = tree.numberOfVertices()==1 ? 0 : tree.getFragmentAnnotationOrNull(Score.class).get(tree.getFragmentAt(tree.numberOfVertices() - 1)).get("TreeSizeScorer");
-            this.logDebug(prefix + ": Score of " + tree.getRoot().getFormula() + " differs significantly from recalculated score: " + oldScore + " vs " + newScore + " with tree size is " + pinput.getAnnotation(TreeSizeScorer.TreeSizeBonus.class, () -> new TreeSizeScorer.TreeSizeBonus(-0.5d)).score + " and root score is " + tree.getFragmentAnnotationOrNull(Score.class).get(tree.getFragmentAt(0)).sum() + " and " + treeSize + " sort key is score " + tree.getTreeWeight() + " and filename is " + pinput.getExperimentInformation().getSourceString());
+            this.logTrace(prefix + ": Score of " + tree.getRoot().getFormula() + " differs significantly from recalculated score: " + oldScore + " vs " + newScore + " with tree size is " + pinput.getAnnotation(TreeSizeScorer.TreeSizeBonus.class, () -> new TreeSizeScorer.TreeSizeBonus(-0.5d)).score + " and root score is " + tree.getFragmentAnnotationOrNull(Score.class).get(tree.getFragmentAt(0)).sum() + " and " + treeSize + " sort key is score " + tree.getTreeWeight() + " and filename is " + pinput.getExperimentInformation().getSourceString() + " " + pinput.getExperimentInformation().getName());
         }
 
     }
@@ -287,7 +288,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             }
             checkForInterruption();
             jobs.forEach(this::submitSubJob);
-            LoggerFactory.getLogger(FasterTreeComputationInstance.class).warn("Recalibration is disabled!");
+            LoggerFactory.getLogger(FasterTreeComputationInstance.class).debug("Recalibration is disabled!");
             checkForInterruption();
             return jobs.stream().map(JJob::takeResult).sorted(Collections.reverseOrder()).toArray(ExactResult[]::new);
         }
@@ -300,7 +301,11 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             submitSubJob(recalibrationJob);
             recalibrationJobs.add(recalibrationJob);
         }
-        final ExactResult[] recalibrated = extractTopResults(recalibrationJobs.stream().map(JJob::takeResult).sorted(Collections.reverseOrder()).collect(Collectors.toList()), numberOfResultsToKeep, numberOfResultsToKeepPerIonization).toArray(ExactResult[]::new);
+        final ExactResult[] recalibrated = extractTopResults(recalibrationJobs.stream()
+                .map(JJob::takeResult)
+                .sorted(Collections.reverseOrder())
+                .collect(Collectors.toList()), numberOfResultsToKeep, numberOfResultsToKeepPerIonization)
+                .toArray(ExactResult[]::new);
         final double[] originalScores = new double[recalibrated.length];
         for (int k = 0; k < recalibrated.length; ++k) originalScores[k] = recalibrated[k].score;
         final ExactJob[] beautify = new ExactJob[recalibrated.length];
@@ -361,6 +366,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             //if (r.input!=null) r.input.setAnnotation(TreeSizeScorer.TreeSizeBonus.class, new TreeSizeScorer.TreeSizeBonus(orig));
             final double penalty = (r.tree.getAnnotationOrThrow(Beautified.class).getBeautificationPenalty());
             r.tree.setTreeWeight(r.tree.getTreeWeight()-penalty);
+            r.tree.setRootScore(r.tree.getRootScore()-penalty);
             recalculateScore(r.input==null ? pinput : r.input, r.tree, "final");
         }
     }
@@ -408,7 +414,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         return new ExtendedCriticalPathHeuristicTreeBuilder(this::checkHeuristicInterruption);
     }
 
-    private boolean checkHeuristicInterruption() throws Exception {
+    private boolean checkHeuristicInterruption() throws InterruptedException {
         this.checkForInterruption();
         return false;
     }
@@ -509,6 +515,11 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             this.graphCache = null;
             this.decomposition = null;
         }
+
+        @Override
+        public String identifier() {
+            return super.identifier() + " | " + experiment.getName() + "@" + experiment.getIonMass() + "m/z | " +decomposition;
+        }
     }
 
 
@@ -545,28 +556,34 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         pin.setAnnotation(PossibleAdducts.class, new PossibleAdducts(PrecursorIonType.getPrecursorIonType(decomp.getIon())));
         pin.setAnnotation(SpectralRecalibration.class, rec);
         pin.setAnnotation(Whiteset.class, Whiteset.ofMeasuredFormulas(Collections.singleton(tree.getRoot().getFormula()))); // TODO: check if this works for adducts
+        pin.getExperimentInformation().setPrecursorIonType(tree.getAnnotation(PrecursorIonType.class).orElse(pin.getExperimentInformation().getPrecursorIonType()));
         pin.setAnnotation(TreeSizeScorer.TreeSizeBonus.class, pinput.getAnnotationOrNull(TreeSizeScorer.TreeSizeBonus.class));
         // we have to completely rescore the input...
-        //final DecompositionList l = new DecompositionList(Arrays.asList(pin.getAnnotationOrThrow(DecompositionList.class).find(tree.getRoot().getFormula())));
-        //pin.setAnnotation(DecompositionList.class, l);
         checkForInterruption();
         analyzer.performDecomposition(pin);
         checkForInterruption();
         analyzer.performPeakScoring(pin);
+        if (!pin.hasAnnotation(DecompositionList.class) || pin.getAnnotationOrThrow(DecompositionList.class).getDecompositions().isEmpty() || !pin.getAnnotationOrThrow(DecompositionList.class).getDecompositions().get(0).equals(decomp)){
+            logWarn("Could not recreate decomposiion during recalibration for " + input.getExperimentInformation().getName() + ". Falling back to non recalibrated tree.");
+            return new ExactResult(input, decomp, null, tree, tree.getTreeWeight());
+        }
         final FGraph graph = analyzer.buildGraph(pin, decomp);
         graph.addAnnotation(SpectralRecalibration.class, rec);
         checkForInterruption();
         final TreeBuilder.Result recal = builder.computeTree().withTimeLimit(Math.min(restTimeSec(), secsPerTree)).solve(pin, graph);
         checkForInterruption();
-        final TreeBuilder.Result finalTree;
+        TreeBuilder.Result finalTree;
         if (recal.tree.getTreeWeight() >= tree.getTreeWeight()) {
             finalTree = builder == finalBuilder ? recal : finalBuilder.computeTree().withTimeLimit(Math.min(restTimeSec(), secsPerTree)).solve(pin, graph);
             checkForInterruption();
-            if (finalTree.tree == null) {
+            //this is to prevent null trees in case the ILP solver fails.
+            if (finalTree == null || finalTree.tree == null) {
                 // TODO: why is tree score != ILP score? Or is this an error in ILP?
                 // check that
                 TreeBuilder.Result solve = analyzer.getTreeBuilder().computeTree().withTimeLimit(Math.min(restTimeSec(), secsPerTree)).solve(pin, graph);
-                throw new RuntimeException("Recalibrated tree is null for " + input.getExperimentInformation().getName() + ". Error in ILP? Without score constraint the result is = optimal = " + solve.isOptimal + ", score = " + solve.tree.getTreeWeight() + " with score of uncalibrated tree is " + recal.tree.getTreeWeight());
+                logWarn("Recalibrated tree is null for " + input.getExperimentInformation().getName() + ". Error in ILP? Without score constraint the result is = optimal = " + solve.isOptimal + ", score = " + (solve.tree == null ? "NULL" : solve.tree.getTreeWeight()) + " with score of uncalibrated tree is " + recal.tree.getTreeWeight()
+                        + ". Falling back to the heuristic tree. Please submit a bug report with the input data of this instance and this error message.");
+                finalTree = recal;
             }
             finalTree.tree.setAnnotation(SpectralRecalibration.class, rec);
             analyzer.makeTreeReleaseReady(pin, graph, finalTree.tree, finalTree.mapping);
@@ -577,16 +594,17 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             checkForInterruption();
             finalTree = finalBuilder.computeTree().withTimeLimit(Math.min(restTimeSec(), secsPerTree)).solve(pin, origGraph);
             checkForInterruption();
+            //this is to prevent null trees in case the ILP solver fails.
+            if (finalTree == null || finalTree.tree == null) {
+                logWarn("Recalibrated ILP tree is null for '" + input.getExperimentInformation().getName() + "'. Falling back to the heuristic tree. Please submit a bug report with the input data of this instance and this error message.");
+                finalTree = builder.computeTree().withTimeLimit(Math.min(restTimeSec(), secsPerTree)).solve(pin, origGraph);
+            }
             finalTree.tree.setAnnotation(SpectralRecalibration.class, SpectralRecalibration.none());
             analyzer.makeTreeReleaseReady(pin, origGraph, finalTree.tree, finalTree.mapping);
         }
         checkForInterruption();
         recalculateScore(pin, finalTree.tree, "recalibrate");
-        assert finalTree!=null;
         tick();
-        if (pin.getAnnotationOrThrow(DecompositionList.class).getDecompositions().size() <= 0) {
-            System.err.println("WTF? ");
-        }
         return new ExactResult(pin, pin.getAnnotationOrThrow(DecompositionList.class).getDecompositions().get(0), null, finalTree.tree, finalTree.tree.getTreeWeight());
     }
 
@@ -639,6 +657,11 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         return analyzer.getIntensityRatioOfExplainedPeaksFromUnanotatedTree(pinput, r.tree) >= MIN_EXPLAINED_INTENSITY && r.tree.numberOfVertices() >= Math.min(pinput.getMergedPeaks().size() - 2, MIN_NUMBER_OF_EXPLAINED_PEAKS);
     }
 
+
+    @Override
+    public String identifier() {
+        return super.identifier() + " | " + experiment.getName() + "@" + experiment.getIonMass() + "m/z";
+    }
 
     protected final static class ExactResult implements Comparable<ExactResult> {
 

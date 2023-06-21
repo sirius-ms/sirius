@@ -23,6 +23,7 @@ package de.unijena.bioinf.storage.blob.minio;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import io.minio.*;
 import io.minio.errors.*;
@@ -49,6 +50,8 @@ public class MinIoS3BlobStorage implements BlobStorage {
         this.minioClient = client;
         this.bucketName = bucketName;
         init();
+        if (PropertyManager.getBoolean("de.unijena.bioinf.stores.minio.trace", null, false))
+            minioClient.traceOn(System.out);
     }
 
     private void init() {
@@ -59,6 +62,11 @@ public class MinIoS3BlobStorage implements BlobStorage {
     @Override
     public String getName() {
         return bucketName;
+    }
+
+    @Override
+    public String getBucketLocation() {
+        return MinIoUtils.URL_PREFIX + getName();
     }
 
     @Override
@@ -73,6 +81,12 @@ public class MinIoS3BlobStorage implements BlobStorage {
     }
 
     @Override
+    public void withWriter(Path relative, IOFunctions.IOConsumer<OutputStream> withStream) throws IOException {
+        try (OutputStream w = writer(relative)) {
+            withStream.accept(w);
+        }
+    }
+
     public OutputStream writer(Path relative) throws IOException {
         return BackgroundPipedOutputStream.createAndRead((in) -> {
             try {
@@ -184,6 +198,32 @@ public class MinIoS3BlobStorage implements BlobStorage {
         return new BlobIt<>(it, MinIoBlob::of);
     }
 
+    @Override
+    public boolean deleteBlob(Path relative) throws IOException {
+        try {
+            minioClient.removeObject(
+                    RemoveObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(makePath(relative)).build());
+            return true;
+        } catch (ErrorResponseException e) {
+            exists(e);
+            return false;
+        } catch (InvalidResponseException | IOException | InsufficientDataException | InternalException | InvalidKeyException | NoSuchAlgorithmException | ServerException | XmlParserException e) {
+            throw new IOException("Error when Searching Object", e);
+        }
+    }
+
+    @Override
+    public void deleteBucket() throws IOException {
+        try {
+            minioClient.removeBucket(RemoveBucketArgs.builder().bucket(bucketName).build());
+            close();
+        } catch (ErrorResponseException | InsufficientDataException | InternalException | InvalidKeyException | InvalidResponseException | NoSuchAlgorithmException | ServerException | XmlParserException e) {
+            throw new IOException("Error when deleting Bucket", e);
+        }
+    }
+
     public static class MinIoBlob implements Blob {
         final Item source;
 
@@ -219,8 +259,6 @@ public class MinIoS3BlobStorage implements BlobStorage {
             } catch (ErrorResponseException | InvalidResponseException | IOException | InsufficientDataException | InternalException | InvalidKeyException | NoSuchAlgorithmException | ServerException | XmlParserException e) {
                 throw new IOException("Error when writing Tags", e);
             }
-
-
         }
     }
 }

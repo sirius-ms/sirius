@@ -1,11 +1,6 @@
 package de.unijena.bioinf.babelms.ms;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius
- * 13.06.16.
- */
 
-import com.google.gson.JsonObject;
+import com.fasterxml.jackson.databind.JsonNode;
 import de.unijena.bioinf.ChemistryBase.data.JSONDocumentType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
@@ -29,20 +24,20 @@ import static org.junit.Assert.assertNotNull;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class FTioTest {
-    final String input = getClass().getResource("/de/unijena/bioinf/babelms/ms/casmi2016_084.json").getFile();
+    final String input = getClass().getResource("/de/unijena/bioinf/babelms/ms/C12H25N7O3.json").getFile();
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
     @Test
     public void testFTJsonRead() throws IOException {
-        final JsonObject json = JSONDocumentType.getJSON("test.json", input);
+        final JsonNode json = JSONDocumentType.getJSON("test.json", input);
         assertNotNull(json);
     }
 
     @Test
     public void testJsonToFTree() throws IOException {
-        final JsonObject json = JSONDocumentType.getJSON("test.json", input);
+        final JsonNode json = JSONDocumentType.getJSON("test.json", input);
         assertNotNull(json);
 
         BufferedReader b = Files.newBufferedReader(Paths.get(input), Charset.defaultCharset());
@@ -50,8 +45,8 @@ public class FTioTest {
         FTree tree = r.parse(b);
         assertNotNull(tree);
 
-        assertEquals(json.get("molecularFormula").getAsString(), tree.getRoot().getFormula().toString());
-        assertEquals(json.getAsJsonArray("fragments").size(), tree.getFragments().size());
+        assertEquals(json.get("molecularFormula").asText(), tree.getRoot().getFormula().toString());
+        assertEquals(json.get("fragments").size(), tree.getFragments().size());
     }
 
     @Test

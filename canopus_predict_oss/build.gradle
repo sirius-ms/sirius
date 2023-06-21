@@ -19,7 +19,7 @@
  */
 
 apply plugin: "application"
-version =  parent.fingeridVersion
+version =  fingeridVersion
 mainClassName = "de.unijena.bioinf.canopus.Main"
 
 ext {
@@ -28,20 +28,20 @@ ext {
 
 dependencies() {
     //project
-    compile project(':sirius_project_space')
-    compile project(':fingerprinter_oss')
-    compile project(':rest_service_oss:rest_core_oss')
-    compile project(':chemistry_base')
-    compile project(':io')
-    compile project(':chemical_db_oss:chemdb_sql_oss')
+    api project(':sirius_project_space')
+    api project(':fingerprinter_oss')
+    api project(':web_service_oss:web_core_oss')
+    api project(':chemistry_base')
+    api project(':io')
+    api project(':chemical_db_oss:chemdb_sql_oss')
 
     // external
-    compile group: 'org.ejml', name: 'ejml-fdense', version: '0.31'
-    compile group: 'org.ejml', name: 'ejml-simple', version: '0.31'
+    implementation group: 'org.ejml', name: 'ejml-fdense', version: '0.41'
+    implementation group: 'org.ejml', name: 'ejml-simple', version: '0.41'
 
     // CDK
     for (module in ["fingerprint", "qsarmolecular", "data", "inchi", "interfaces", "smiles", "core"]) {
-        compile group: "org.openscience.cdk", name: "cdk-$module", version: "$cdk_version"
+        api "org.openscience.cdk:cdk-$module:$cdk_version"
     }
 }
 
@@ -59,7 +59,6 @@ distributions {
         contents {
             into('lib') {
                 from("build/install/${project.name}/lib")
-                from("${project.glpkPath}/l64/")
             }
 
             into('bin') {
@@ -71,7 +70,6 @@ distributions {
         }
 
     }
-    linux64DistZip.dependsOn ':downloadGLPK'
 
     getTasksByName("linux64DistTar", false).each {it.setEnabled(false)}
     getTasksByName("linux64DistTar", false).each { it.setEnabled(false)}

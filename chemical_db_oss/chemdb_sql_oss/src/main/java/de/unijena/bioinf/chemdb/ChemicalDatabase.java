@@ -51,13 +51,13 @@ import java.util.*;
 
 import static de.unijena.bioinf.ChemistryBase.chem.InChIs.newInChI;
 
-public class ChemicalDatabase implements AbstractChemicalDatabase, PooledDB<Connection> {
+public class ChemicalDatabase implements FilterableChemicalDatabase, PooledDB<Connection> {
     public final static String REF_SCHEME = PropertyManager.getProperty("de.unijena.bioinf.chemdb.scheme.references", null, "ref");
     //REF_MAPPING_TABLE_SUFFIX is included for compatibility reasons all recent database version should contain a VIEW ref.xxx_mapping_id_inchi_key that combines InChIKeys of non-standardized and standardized structures
-    public final static String REF_MAPPING_TABLE_SUFFIX = PropertyManager.getProperty("de.unijena.bioinf.chemdb.scheme.references.mapping.suffix", null, "");
+    public final static String REF_MAPPING_TABLE_SUFFIX = PropertyManager.getProperty("de.unijena.bioinf.chemdb.scheme.references.mapping.suffix", null, "_mapping_id_inchi_key");
     public final static String PUBCHEM_SCHEME = PropertyManager.getProperty("de.unijena.bioinf.chemdb.scheme.pubchem", null, "pubchem");
     public final static String DEFAULT_SCHEME = PropertyManager.getProperty("de.unijena.bioinf.chemdb.scheme.default", null, "public");
-    public final static String FINGERPRINT_ID = PropertyManager.getProperty("de.unijena.bioinf.chemdb.fingerprint.id", null, "1");
+    public final static String FINGERPRINT_ID = PropertyManager.getProperty("de.unijena.bioinf.chemdb.fingerprint.id", null, "4");
 
 
     public final static String STRUCTURES_TABLE = DEFAULT_SCHEME + ".structures";
@@ -65,17 +65,18 @@ public class ChemicalDatabase implements AbstractChemicalDatabase, PooledDB<Conn
     public final static String SYNONYMS_TABLE = PUBCHEM_SCHEME + ".synonyms";
     public final static String PUBCHEM_REF_TABLE = REF_SCHEME + ".pubchem";
 
-    private static final int DEFAULT_SQL_CAPACITY = 5;
+    public static final int DEFAULT_SQL_CAPACITY = 5;
     protected static final Logger log = LoggerFactory.getLogger(ChemicalDatabase.class);
 
     static {
-        FingerIDProperties.fingeridVersion();//just to load the props
+        FingerIDProperties.fingeridFullVersion();//just to load the props
     }
 
     protected final ConnectionPool<Connection> connection;
     protected String host, username, password;
     protected Properties connectionProps;
 
+    //todo we should save the database import dat in the sql db. or is this already somewhere
 
     /**
      * initialize a chemical database connection using default values for password and username
@@ -117,6 +118,9 @@ public class ChemicalDatabase implements AbstractChemicalDatabase, PooledDB<Conn
             this.username = PropertyManager.getProperty("de.unijena.bioinf.fingerid.chemical_db.username");
         if (password == null)
             this.password = PropertyManager.getProperty("de.unijena.bioinf.fingerid.chemical_db.password");
+
+        if (host == null || host.isBlank() || username == null || username.isBlank() || password == null || password.isBlank())
+            throw new IllegalArgumentException("No valid credentials available to connect to SQL DB");
     }
     /**
      * initialize a chemical database connection using the given authentification values
@@ -126,16 +130,23 @@ public class ChemicalDatabase implements AbstractChemicalDatabase, PooledDB<Conn
      * @param password
      */
     public ChemicalDatabase(String host, String username, String password, Properties connectionProps) {
+        this(host, username, password,connectionProps,DEFAULT_SQL_CAPACITY);
+    }
+    public ChemicalDatabase(String host, String username, String password, Properties connectionProps, int connections) {
         this.host = host;
         this.username = username;
         this.password = password;
         this.connectionProps = connectionProps;
         setup();
-        this.connection = new ConnectionPool<>(new SqlConnector(this.host, this.username, this.password, this.connectionProps), DEFAULT_SQL_CAPACITY);
+        this.connection = new ConnectionPool<>(new SqlConnector(this.host, this.username, this.password, this.connectionProps), connections);
     }
 
     public ChemicalDatabase(String host, String username, String password) {
         this(host, username, password, null);
+    }
+
+    public ChemicalDatabase(String host, String username, String password, int connections) {
+        this(host, username, password, null,connections);
     }
 
 
@@ -255,7 +266,7 @@ public class ChemicalDatabase implements AbstractChemicalDatabase, PooledDB<Conn
     }
 
     private static final String CONTAINS_FORMULA_FILTERED = "SELECT EXISTS(SELECT * FROM formulas WHERE formula = ? AND (flags & %s) != 0)";
-    public boolean containsFormula(MolecularFormula formula, long filter) throws ChemicalDatabaseException {
+    public boolean containsFormula(long filter, MolecularFormula formula) throws ChemicalDatabaseException {
         return containsFormula(formula,String.format(CONTAINS_FORMULA_FILTERED, filter));
     }
 
@@ -307,7 +318,9 @@ public class ChemicalDatabase implements AbstractChemicalDatabase, PooledDB<Conn
                 final long flag = set.getLong(2);
                 if (!ChemDBs.inFilter(flag, filter)) continue;
                 final FormulaCandidate fc = new FormulaCandidate(MolecularFormula.parseOrThrow(set.getString(1)), ionType, set.getLong(2));
-                list.add(fc);
+                if (ionType.isApplicableToNeutralFormula(fc.formula)) {
+                    list.add(fc);
+                }
             }
         } catch (SQLException e) {
             throw new ChemicalDatabaseException(e);
@@ -545,8 +558,8 @@ public class ChemicalDatabase implements AbstractChemicalDatabase, PooledDB<Conn
                 String sql = String.format("SELECT %s FROM %s.%s WHERE inchi_key_1 = ?", source.sqlIdColumn, REF_SCHEME, tableName);
                 statements[k++] = source.sqlRefTable == null ? null : c.connection.prepareStatement(sql);
             }
-            final ArrayList<DBLink> buffer = new ArrayList<>();
             for (CompoundCandidate candidate : sublist) {
+                final ArrayList<DBLink> links = new ArrayList<>();
                 for (int i = 0; i < sources.length; ++i) {
                     final DataSource source = sources[i];
                     if (/* legacy mode */ source == DataSource.PUBCHEM || ((candidate.getBitset() & source.flag)) != 0) {
@@ -555,14 +568,13 @@ public class ChemicalDatabase implements AbstractChemicalDatabase, PooledDB<Conn
                             statement.setString(1, candidate.getInchiKey2D());
                             try (final ResultSet set = statement.executeQuery()) {
                                 while (set.next()) {
-                                    buffer.add(new DBLink(source.realName, set.getString(1)));
+                                    links.add(new DBLink(source.realName, set.getString(1)));
                                 }
                             }
                         }
                     }
                 }
-                candidate.setLinks(buffer.toArray(new DBLink[buffer.size()]));
-                buffer.clear();
+                candidate.setLinks(links);
             }
 
         } catch (InterruptedException e) {
@@ -708,18 +720,23 @@ public class ChemicalDatabase implements AbstractChemicalDatabase, PooledDB<Conn
     }
 
 
-    private Fingerprint parseFingerprint(ResultSet result, int index) throws SQLException {
+    public static Fingerprint parseFingerprint(ResultSet result, int index) throws SQLException {
         try (final ResultSet fp = result.getArray(index).getResultSet()) {
             return parseFingerprint(fp);
         }
     }
 
-    private Fingerprint parseFingerprint(ResultSet fp) throws SQLException {
+    public static Fingerprint parseFingerprint(ResultSet fp) throws SQLException {
         TShortArrayList shorts = new TShortArrayList();
         while (fp.next()) {
             final short s = fp.getShort(2);
             shorts.add(s);
         }
         return new ArrayFingerprint(USE_EXTENDED_FINGERPRINTS ? CdkFingerprintVersion.getExtended() : CdkFingerprintVersion.getDefault(), shorts.toArray());
+    }
+    // todo this should be stored in and retrieved from the relation database, based on the used tables...
+    // todo probably the date could be used to choose the table?
+    public String getChemDbDate() throws ChemicalDatabaseException{
+        return PropertyManager.getProperty("de.unijena.bioinf.fingerid.db.psqlDbDate");
     }
 }

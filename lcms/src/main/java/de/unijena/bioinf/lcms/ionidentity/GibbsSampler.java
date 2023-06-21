@@ -72,7 +72,6 @@ class GibbsSampler {
             for (int j=0; j < posteriorCount[i].length; ++j) {
                 nodes.get(i).assignment.probabilities[j] = ((float)posteriorCount[i][j]) / totalSamples;
             }
-            System.out.println(nodes.get(i).assignment);
         }
     }
 
@@ -91,10 +90,14 @@ class GibbsSampler {
             for (int i = 0; i < nodes.size(); ++i) {
                 IonNode node = nodes.get(i);
                 double[] probs = buf[i], drw = draw[i];
-                double total = 0;
+                double max = Double.NEGATIVE_INFINITY;
                 for (int j=0; j < probs.length; ++j) {
                     probs[j] = node.activeAssignment==j ? score : probabilityUpdate(node, j, score);
-                    drw[j] = Math.exp(probs[j]/LAMBDA);
+                    max = Math.max(probs[j], max);
+                }
+                double total = 0d;
+                for (int j=0; j < probs.length; ++j) {
+                    drw[j] = Math.exp(probs[j]-max);
                     total += drw[j];
                 }
                 double randomNumber = r.nextDouble()*total;
@@ -122,6 +125,7 @@ class GibbsSampler {
         if (newType.isIonizationUnknown()) newScore += ionNode.priorForUnknownIonType;
         if (commonTypes.contains(newType)) newScore += IonNode.priorForCommonIonType;
         else newScore += IonNode.priorForUncommonIonType;
+        if (!newType.hasNeitherAdductNorInsource()) newScore += ionNode.priorForAdductsAndInsource;
         for (Edge e : ionNode.neighbours) {
             newScore += e.score *compatibilityScore(e);
         }
@@ -129,6 +133,7 @@ class GibbsSampler {
         if (oldType.isIonizationUnknown()) oldScore += ionNode.priorForUnknownIonType;
         if (commonTypes.contains(oldType)) oldScore += IonNode.priorForCommonIonType;
         else oldScore += IonNode.priorForUncommonIonType;
+        if (!oldType.hasNeitherAdductNorInsource()) oldScore += ionNode.priorForAdductsAndInsource;
         for (Edge e : ionNode.neighbours) {
             oldScore += e.score *compatibilityScore(e);
         }
@@ -151,6 +156,8 @@ class GibbsSampler {
             } else {
                 score += IonNode.priorForUncommonIonType;
             }
+            if (!ionNode.activeType().hasNeitherAdductNorInsource())
+                score += IonNode.priorForAdductsAndInsource;
         }
         // edge scores
         for (Edge e : edges) {

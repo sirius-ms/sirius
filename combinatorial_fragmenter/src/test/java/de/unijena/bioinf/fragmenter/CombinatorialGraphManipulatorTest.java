@@ -31,7 +31,7 @@ public class CombinatorialGraphManipulatorTest {
 
         @Override
         public double scoreEdge(CombinatorialEdge edge) {
-            if (edge.target.fragment.isRealFragment) {
+            if (edge.target.fragment.innerNode) {
                 return (edge.getCut1() != null ? scoreBond(edge.getCut1(), edge.getDirectionOfFirstCut()) : 0) + (edge.getCut2() != null ? scoreBond(edge.getCut2(), edge.getDirectionOfSecondCut()) : 0);
             }else{
                 MolecularFormula f = edge.target.fragment.getFormula();

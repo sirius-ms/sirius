@@ -1,5 +1,10 @@
 package de.unijena.bioinf.fragmenter;
 
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import org.openscience.cdk.interfaces.IBond;
 
@@ -151,6 +156,12 @@ public class DirectedBondTypeScoring implements CombinatorialFragmenterScoring{
 
     public static String bondNameSpecific(IBond b, boolean fromLeftToRight) {
         return explainBondBy(b, b.getAtom(0).getAtomTypeName()  ,b.getAtom(1).getAtomTypeName(), fromLeftToRight);
+    }
+
+    public static String bondNameEcfp(IBond b, boolean fromLeftToRight) {
+        int ecfp = b.getAtom(0).getProperty("ECFP");
+        int ecfp2 = b.getAtom(1).getProperty("ECFP");
+        return explainBondBy(b, b.getAtom(0).getAtomTypeName() + "#" + ecfp  ,b.getAtom(1).getAtomTypeName() + "#" + ecfp2, fromLeftToRight);
     }
 
     public static String explainBondBy(IBond b, String labelA, String labelB, boolean fromLeftToRight) {

@@ -4,7 +4,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -21,6 +21,8 @@
 
 package de.unijena.bioinf.ChemistryBase.ms.utils;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.ChemistryBase.ms.MutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.SimplePeak;
@@ -33,6 +35,13 @@ import java.util.Arrays;
  * Simple implementation of an immutable Mass Spectrum.
  * Peaks are stored ordered by mass in arrays.
  */
+@JsonAutoDetect(
+		fieldVisibility = JsonAutoDetect.Visibility.ANY,
+		setterVisibility = JsonAutoDetect.Visibility.NONE,
+		getterVisibility = JsonAutoDetect.Visibility.NONE,
+		isGetterVisibility = JsonAutoDetect.Visibility.NONE,
+		creatorVisibility = JsonAutoDetect.Visibility.NONE
+)
 public class SimpleSpectrum extends BasicSpectrum<Peak> implements OrderedSpectrum<Peak>, Serializable {
 
 	private static SimpleSpectrum EMPTY = new SimpleSpectrum(new double[0], new double[0]);
@@ -41,8 +50,13 @@ public class SimpleSpectrum extends BasicSpectrum<Peak> implements OrderedSpectr
 		return EMPTY;
 	}
 
+	@JsonIgnore
 	protected int hash = 0;
-	
+
+	private SimpleSpectrum() {
+		super(new double[0], new double[0]);
+	}
+
 	public SimpleSpectrum(double[] masses, double[] intensities) {
 		this(new ArrayWrapperSpectrum(masses, intensities));
 	}

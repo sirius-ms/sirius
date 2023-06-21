@@ -16,6 +16,7 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
     private final CombinatorialNode root;
     private final ArrayList<CombinatorialNode> nodes; // um Verwirrung zu vermeiden, sind auch hier alle Knoten ausser der Wurzel enthalten
     private final HashMap<BitSet, CombinatorialNode> bitset2Node;
+    private final HashSet<CombinatorialFragment> fragments;
 
     public CombinatorialSubtree(MolecularGraph molecule){
         this.root = new CombinatorialNode(molecule.asFragment());
@@ -25,6 +26,23 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
         this.nodes = new ArrayList<>();
         this.bitset2Node = new HashMap<>();
         this.bitset2Node.put(this.root.fragment.bitset, this.root);
+
+        fragments = new HashSet<>();
+    }
+
+    public HashMap<CombinatorialNode, Integer> getSubtreeSizes() {
+        HashMap<CombinatorialNode, Integer> sizes = new HashMap<>(nodes.size());
+        subtreeSizesRekursive(root, sizes);
+        return sizes;
+    }
+
+    private void subtreeSizesRekursive(CombinatorialNode root, HashMap<CombinatorialNode, Integer> sizes) {
+        int size=1;
+        for (CombinatorialEdge e : root.getOutgoingEdges()) {
+            subtreeSizesRekursive(e.target, sizes);
+            size += sizes.get(e.target);
+        }
+        sizes.put(root, size);
     }
 
     public CombinatorialNode addFragment(CombinatorialNode parent, CombinatorialFragment fragment, IBond firstBond, IBond secondBond, float fragmentScore, float edgeScore){
@@ -49,6 +67,8 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
             this.nodes.add(node);
             this.bitset2Node.put(node.fragment.bitset, node);
 
+            fragments.add(node.fragment);
+
             return node;
         }else {
             return null;
@@ -71,6 +91,8 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
                 CombinatorialNode currentNode = subtreeNodes.remove(0);
                 this.nodes.remove(currentNode);
                 this.bitset2Node.remove(currentNode.fragment.bitset, currentNode);
+
+                fragments.remove(currentNode.fragment);
 
                 for(CombinatorialEdge e : currentNode.outgoingEdges){
                     CombinatorialNode child = e.target;
@@ -299,7 +321,7 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
             return node.fragment.toSMILES()+"[0,"+node.fragmentScore+",0];";
         }else {
             CombinatorialEdge edge = node.incomingEdges.get(0);
-            if(node.fragment.isRealFragment) {
+            if(node.fragment.innerNode) {
                 return node.fragment.toSMILES() + "[" + edge.score + "," + node.fragmentScore + "," + node.bondbreaks + "]";
             }else{
                 return node.fragment.getFormula() + "[" + edge.score + "," + node.fragmentScore + "," + node.bondbreaks + "]";

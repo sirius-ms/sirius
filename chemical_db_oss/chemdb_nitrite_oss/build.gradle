@@ -1,0 +1,6 @@
+dependencies {
+    //project
+    implementation project(':chemical_db_oss')
+    implementation project(':db-storage')
+    testImplementation project(':chemical_db_oss:chemdb_blob_oss')
+}

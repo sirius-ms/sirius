@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ChemistryBase.jobs;
 
+import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.jjobs.ProgressJJob;
@@ -28,11 +29,12 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.concurrent.Callable;
 
 public class SiriusJobs {
 
-    private static volatile JobManagerFactory<?> instanceCreator = (cores) -> new JobManager(cores, Math.min(cores, 3));
+    private static volatile JobManagerFactory<?> instanceCreator = (cores) -> new JobManager(cores, Math.min(cores, 4));
     private static volatile JobManager globalJobManager = null;
 
     private SiriusJobs() {/*prevent instantiation*/}
@@ -41,6 +43,10 @@ public class SiriusJobs {
         replace(instanceCreator.createJobManager(cpuThreads));
     }
 
+    public static synchronized void enforceClassLoaderGlobally(@NotNull final ClassLoader enforcedClassloader){
+        setJobManagerFactory((cores) -> new JobManager(cores, Math.min(cores, 4), enforcedClassloader));
+    }
+    
     private synchronized static void replace(JobManager jobManager) {
         final JobManager oldManager = globalJobManager;
         globalJobManager = jobManager;
@@ -73,7 +79,7 @@ public class SiriusJobs {
     @NotNull
     public static JobManager getGlobalJobManager() {
         if (globalJobManager == null) {
-            setGlobalJobManager(PropertyManager.getNumberOfCores());
+            setGlobalJobManager(defaultThreadNumber());
             LoggerFactory.getLogger(SiriusJobs.class).info("Job manager successful initialized with " + globalJobManager.getCPUThreads() + " CPU thread(s) and " + globalJobManager.getIOThreads() + " IO thread(s).");
         }
         return globalJobManager;
@@ -105,5 +111,19 @@ public class SiriusJobs {
         });
     }
 
+    public static TinyBackgroundJJob<Boolean> runInBackgroundIO(IOFunctions.IORunnable task) {
+        final TinyBackgroundJJob<Boolean> t = new TinyBackgroundJJob<>() {
+            @Override
+            protected Boolean compute() throws IOException {
+                task.run();
+                return true;
+            }
+        };
+        return getGlobalJobManager().submitJob(t);
+    }
 
+    private static int defaultThreadNumber(){
+        int threadsAv = PropertyManager.getNumberOfThreads();
+        return Math.max(1, threadsAv <= 8 ? threadsAv - 2 : threadsAv - (int)(threadsAv * .2));
+    }
 }

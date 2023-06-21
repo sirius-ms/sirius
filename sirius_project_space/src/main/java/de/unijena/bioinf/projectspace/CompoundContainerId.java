@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 public final class CompoundContainerId extends ProjectSpaceContainerId {
@@ -38,7 +39,7 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
     public static final String RANKING_KEY = "rankingScoreType";
 
     //transient fields
-    protected final transient Lock containerLock = new ReentrantLock(); //lock for IO
+    protected final transient ReentrantReadWriteLock containerLock = new ReentrantReadWriteLock(); //lock for IO
     protected final transient Lock flagsLock = new ReentrantLock(); //lock for non persistent changes
     protected final transient EnumSet<Flag> flags = EnumSet.noneOf(Flag.class);
 

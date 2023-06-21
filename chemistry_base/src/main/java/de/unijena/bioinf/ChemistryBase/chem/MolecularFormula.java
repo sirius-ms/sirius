@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
+import java.nio.ShortBuffer;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -51,7 +52,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
             try {
                 Hydrogen = parse("H");
             } catch (UnknownElementException e) {
-                throw new RuntimeException();
+                throw new RuntimeException(e);
             }
         }
         return Hydrogen;
@@ -153,7 +154,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         try {
             return parse(text);
         } catch (UnknownElementException e) {
-            throw new RuntimeException();
+            throw new RuntimeException(e);
         }
     }
 
@@ -168,7 +169,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
 
 
     /**
-     * parse and execuutes return false if parsing failed and no execution happend
+     * parse and executors return false if parsing failed and no execution happend
      */
     public static boolean parseAndExecute(@NotNull final String textFormula, @Nullable Consumer<MolecularFormula> executeOrSkip) {
         try {
@@ -475,6 +476,11 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         return buffer().clone();
     }
 
+    public void copyToBuffer(ShortBuffer buffer) {
+        buffer.put(buffer());
+    }
+
+
     /**
      * a formula is subtractable from another formula, if for each element in the
      * periodic table the amount of atoms of this element is greater or equal to the other formula.
@@ -738,6 +744,24 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         if (scalar == 0) return emptyFormula();
         final short[] nrs = Arrays.copyOf(buffer(), buffer().length);
         for (int i = 0; i < nrs.length; ++i) nrs[i] *= scalar;
+        return new ImmutableMolecularFormula(getTableSelection(), nrs);
+    }
+
+    /**
+     * returns a new molecular formula in which the amount of each element
+     * is divided with the given scalar. Throws an exception if
+     * division is not possible without remainer.
+     */
+    public MolecularFormula divide(int scalar) {
+        if (scalar == 1) return this;
+        if (scalar == 0)
+            throw new IllegalArgumentException("Division by zero not possible");
+        final short[] nrs = Arrays.copyOf(buffer(), buffer().length);
+        for (int i = 0; i < nrs.length; ++i) {
+            if (nrs[i] % scalar != 0)
+                throw new IllegalArgumentException(toString() + " cannot be divided by " + scalar);
+            nrs[i] /= scalar;
+        }
         return new ImmutableMolecularFormula(getTableSelection(), nrs);
     }
 

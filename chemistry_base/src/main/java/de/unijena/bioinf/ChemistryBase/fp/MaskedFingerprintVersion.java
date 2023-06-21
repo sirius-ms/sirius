@@ -221,6 +221,17 @@ public class MaskedFingerprintVersion extends FingerprintVersion{
         } else return false;
     }
 
+    @Override
+    public boolean identical(FingerprintVersion fingerprintVersion) {
+        if (this == fingerprintVersion) return true;
+        else if (fingerprintVersion.getClass().equals(MaskedFingerprintVersion.class)){
+            MaskedFingerprintVersion other = (MaskedFingerprintVersion)fingerprintVersion;
+            return innerVersion.identical(other.innerVersion) && mask.equals(other.mask);
+        } else if (isNotFiltering()) {
+            return innerVersion.identical(fingerprintVersion);
+        } else return false;
+    }
+
     public MaskedFingerprintVersion invert() {
         final BitSet copy = (BitSet) mask.clone();
         copy.flip(0, copy.size());
