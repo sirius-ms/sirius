@@ -47,7 +47,6 @@ public class CriticalPathSubtreeCalculator extends CombinatorialSubtreeCalculato
         if(this.graph == null) {
             CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(molecule, scoring);
             this.graph = fragmenter.createCombinatorialFragmentationGraphPriorized(fragmentationConstraint, maxNumberOfNodes);
-
             CombinatorialGraphManipulator.addTerminalNodes(this.graph, this.scoring, this.fTree);
         }
 

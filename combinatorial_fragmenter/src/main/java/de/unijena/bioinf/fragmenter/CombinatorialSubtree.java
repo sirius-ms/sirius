@@ -1,10 +1,13 @@
 package de.unijena.bioinf.fragmenter;
 
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
+import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.interfaces.IBond;
 
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
@@ -191,6 +194,24 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
         return edgeList;
     }
 
+    public ArrayList<CombinatorialNode> getLeaves(){
+        // every node (except the root) is considered a leaf if it doesn't have outgoing edges.
+        ArrayList<CombinatorialNode> leaves = new ArrayList<>();
+        for(CombinatorialNode node : this.nodes){
+            if(node.getOutgoingEdges().isEmpty()) leaves.add(node);
+        }
+        return leaves;
+    }
+
+    public ArrayList<CombinatorialNode> getTerminalNodes(){
+        // every node whose bitset.length is greater than the number of atoms (in the molecule) is a terminal node:
+        ArrayList<CombinatorialNode> terminalNodes = new ArrayList<>();
+        for(CombinatorialNode node : this.nodes){
+            if(!node.fragment.isInnerNode()) terminalNodes.add(node);
+        }
+        return terminalNodes;
+    }
+
     public double[][] getAdjacencyMatrix(){
         ArrayList<CombinatorialNode> sortedNodeList = this.getSortedNodeList();
         TObjectIntHashMap<CombinatorialNode> nodeIndices = new TObjectIntHashMap<>(this.numberOfNodes());
@@ -209,6 +230,39 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
         }
 
         return adjMatrix;
+    }
+
+    /**
+     * Returns an array of length 2 containing the number of cuts regarding this given bond.<br>
+     * The first position of the returned integer array is the number of cuts where
+     * the first atom is contained in the fragment. The second position of the returned array is the number
+     * of cuts where the second atom is contained in the fragment.
+     *
+     * @param bond {@link IBond} which is part of the molecule
+     * @return an integer array of length 2 containing the amount of cuts regarding the given bond
+     */
+    public int[] getNumberOfCuts(IBond bond){
+        int[] numberOfCuts = new int[2];
+
+        // Every vertex (except the root) has an in-degree of 1 --> one incoming edge:
+        for(CombinatorialNode node : this.nodes){
+            CombinatorialEdge edge = node.incomingEdges.get(0);
+
+            if(edge.getCut1() == bond){
+                if(edge.getDirectionOfFirstCut()){
+                    numberOfCuts[0]++;
+                }else{
+                    numberOfCuts[1]++;
+                }
+            }else if(edge.getCut2() == bond){
+                if(edge.getDirectionOfSecondCut()){
+                    numberOfCuts[0]++;
+                }else{
+                    numberOfCuts[1]++;
+                }
+            }
+        }
+        return numberOfCuts;
     }
 
     public float getScore(){
@@ -310,7 +364,43 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
         return this.toNewickString(this.root);
     }
 
-    public int[] toBinaryArray(CombinatorialGraph graph){
-        throw new UnsupportedOperationException();
+    /**
+     * Converts this {@link CombinatorialSubtree} into a boolean array denoting
+     * which edges of {@code graph} are contained in this subtree.<br>
+     *
+     * @param graph the {@link CombinatorialGraph} that respresents the supergraph of this subtree
+     * @return an boolean array denoting which edges of {@code graph} are present in this subtree
+     */
+    public boolean[] toBooleanArray(CombinatorialGraph graph){
+        int maxBitSetLength = graph.maximalBitSetLength();
+        TObjectIntHashMap<BitSet> mergedEdgeBitSet2Index = graph.mergedEdgeBitSet2Index();
+        return this.toBooleanArray(mergedEdgeBitSet2Index, maxBitSetLength);
+    }
+
+    /**
+     * Converts this {@link CombinatorialSubtree} into a boolean array denoting
+     * which edges of {@code graph} are contained in this subtree.<br>
+     *
+     * The given hashmap {@code mergedEdgeBitSet2Index} assigns each {@link BitSet}, that is the result
+     * of merging the source and target BitSet of an {@link CombinatorialEdge} contained in the
+     * underlying {@link CombinatorialGraph}, a unique integer value
+     * in the range from 0 to #edgesInCombGraph. Because every {@link CombinatorialNode} in {@link CombinatorialGraph}
+     * has a unique BitSet object, every merged edge BitSet is also unique.<br>
+     *
+     * @param mergedEdgeBitSet2Index hashmap that assigns each edge a unique index in the resulting array
+     * @param maxBitSetLength the maximal length of all bitsets found in the {@link CombinatorialGraph}
+     * @return a boolean array denoting which edges of the supergraph are contained in this subtree
+     */
+    public boolean[] toBooleanArray(TObjectIntHashMap<BitSet> mergedEdgeBitSet2Index, int maxBitSetLength){
+        boolean[] subtreeArray = new boolean[mergedEdgeBitSet2Index.size()];
+
+        for(CombinatorialNode node : this.nodes){
+            CombinatorialEdge edge = node.incomingEdges.get(0);
+            BitSet mergedEdgeBitSet = edge.getMergedBitSet(maxBitSetLength);
+            int edgeIdx = mergedEdgeBitSet2Index.get(mergedEdgeBitSet);
+            subtreeArray[edgeIdx] = true;
+        }
+
+        return subtreeArray;
     }
 }
