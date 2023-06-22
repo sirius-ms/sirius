@@ -1,11 +1,13 @@
 package de.unijena.bioinf.fragmenter;
 
-public class EMFragmenterScoring extends DirectedBondTypeScoring.Impl {
+import org.openscience.cdk.interfaces.IBond;
+
+public class EMFragmenterScoring implements CombinatorialFragmenterScoring {
 
     protected static double rearrangementScore = -0.15d;
 
-    public EMFragmenterScoring(MolecularGraph graph) {
-        super(graph, null);
+    public EMFragmenterScoring() {
+        super();
     }
 
     @Override
@@ -17,13 +19,25 @@ public class EMFragmenterScoring extends DirectedBondTypeScoring.Impl {
         }
     }
 
+    public double scoreBond(IBond bond, boolean direction){
+        return switch (bond.getOrder()) {
+            case SINGLE -> -1d;
+            case DOUBLE -> -2d;
+            case TRIPLE -> -3d;
+            case QUADRUPLE -> -4d;
+            case QUINTUPLE -> -5d;
+            case SEXTUPLE -> -6d;
+            default -> -1.5;
+        };
+    }
+
     @Override
     public double scoreEdge(CombinatorialEdge edge){
         CombinatorialFragment sourceFragment = edge.source.fragment;
         CombinatorialFragment targetFragment = edge.target.fragment;
 
         if(targetFragment.isInnerNode()){
-            return super.scoreEdge(edge);
+            return scoreBond(edge.cut1, edge.getDirectionOfFirstCut()) + ((edge.cut2 != null) ? scoreBond(edge.cut2, edge.getDirectionOfSecondCut()) : 0d);
         }else{
             int hydrogenDiff = Math.abs(sourceFragment.hydrogenRearrangements(targetFragment.getFormula()));
             if(hydrogenDiff == 0){

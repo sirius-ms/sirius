@@ -12,13 +12,6 @@ dependencies() {
 
     testImplementation project(":sirius_api")
     testImplementation "org.openscience.cdk:cdk-bundle:$cdk_version"
+    implementation "args4j:args4j:2.32"
 }
 
-task DataProcessing_FatJar(type: Jar) {
-    manifest {
-        attributes 'Main-Class': 'de.unijena.bioinf.fragmenter.DataProcessor'
-    }
-    archiveBaseName = "DataProcessor"
-    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
-    with jar
-}

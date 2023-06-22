@@ -1,6 +1,8 @@
 package de.unijena.bioinf.fragmenter;
 
 import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
+import gnu.trove.map.hash.TIntIntHashMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import org.openscience.cdk.interfaces.IBond;
 
@@ -18,7 +20,6 @@ public class CombinatorialGraph {
         root.depth = 0;
         root.bondbreaks = 0;
         this.nodes = new ArrayList<>();
-        nodes.add(root);
         this.bitset2node = new HashMap<>();
         bitset2node.put(root.fragment.bitset, root);
     }
@@ -104,6 +105,44 @@ public class CombinatorialGraph {
     }
 
     /**
+     * This method removes the {@link CombinatorialNode} {@code node} from this CombinatorialGraph
+     * in a "dangerous" fashion because it can happen that the resulting graph is not connected and
+     * the attributes of the successor nodes are not valid anymore.
+     * Thus, use this method carefully.<br>
+     * All nodes in this graph except the root can be removed.
+     *
+     * @param node the {@link CombinatorialNode} to remove
+     * @return {@code true} if this node was removed successfully from this graph;<br>
+     * {@code false} if this node is not contained in this graph, is the root of this graph or is assigned with {@code null}
+     */
+    public boolean deleteNodeDangerously(CombinatorialNode node){
+        if(node != null && node != this.root && node == this.bitset2node.get(node.fragment.bitset)){
+            // 1: Delete this node from this.nodes and this.bitset2node:
+            this.nodes.remove(node);
+            this.bitset2node.remove(node.fragment.bitset, node);
+
+            // 2: Delete all pointers to this node from its parent and child nodes:
+            for(CombinatorialEdge inEdge : node.incomingEdges){
+                CombinatorialNode parentNode = inEdge.source;
+                parentNode.outgoingEdges.remove(inEdge);
+            }
+
+            for(CombinatorialEdge outEdge : node.outgoingEdges){
+                CombinatorialNode childNode = outEdge.target;
+                childNode.incomingEdges.remove(outEdge);
+            }
+
+            // 3.: Delete all pointer to its parent and child nodes:
+            node.incomingEdges.clear();
+            node.outgoingEdges.clear();
+
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+    /**
      * for each node, allow only paths back to root which have minimal distance
      */
     public void pruneLongerPaths() {
@@ -167,6 +206,52 @@ public class CombinatorialGraph {
         return edgeList;
     }
 
+    /**
+     * This method returns a hashmap which assigns each CombinatorialEdge in this graph a unique index with
+     * index >= 0 and index <= #Edges.<br>
+     * This hashmap can be used to transform a {@link CombinatorialSubtree} into a binary array denoting
+     * which edges are contained and which are not contained in the subtree.
+     *
+     */
+    public TObjectIntHashMap<CombinatorialEdge> getEdgeIndices(){
+        TObjectIntHashMap<CombinatorialEdge> edgeIndices = new TObjectIntHashMap<>();
+        int idx = 0;
+        for(CombinatorialNode node : this.nodes){
+            for(CombinatorialEdge edge : node.incomingEdges){
+                edgeIndices.put(edge, idx);
+                idx++;
+            }
+        }
+        return edgeIndices;
+    }
+
+    public TObjectIntHashMap<BitSet> mergedEdgeBitSet2Index(){
+        int maxBitSetLength = this.maximalBitSetLength();
+        TObjectIntHashMap<BitSet> mergedEdgeBitSet2Index = new TObjectIntHashMap<>();
+
+        int idx = 0;
+        for(CombinatorialNode node : this.nodes){
+            for(CombinatorialEdge edge : node.incomingEdges){
+                BitSet mergedEdgeBitSet = edge.getMergedBitSet(maxBitSetLength);
+                mergedEdgeBitSet2Index.put(mergedEdgeBitSet, idx);
+                idx++;
+            }
+        }
+
+        return mergedEdgeBitSet2Index;
+    }
+
+    public int maximalBitSetLength(){
+        int maxBitSetLength = this.root.fragment.bitset.length();
+        for(CombinatorialNode node : this.nodes){
+            int nodeBitSetLength = node.fragment.bitset.length();
+            if(nodeBitSetLength > maxBitSetLength){
+                maxBitSetLength = nodeBitSetLength;
+            }
+        }
+        return maxBitSetLength;
+    }
+
     public boolean contains(CombinatorialFragment fragment){
         return this.bitset2node.get(fragment.bitset) != null;
     }
@@ -177,6 +262,16 @@ public class CombinatorialGraph {
 
     public List<CombinatorialNode> getNodes() {
         return nodes;
+    }
+
+    public List<CombinatorialNode> getTerminalNodes(){
+        ArrayList<CombinatorialNode> terminalNodeList = new ArrayList<>();
+        for(CombinatorialNode node : this.nodes){
+            if(!node.fragment.isInnerNode()){
+                terminalNodeList.add(node);
+            }
+        }
+        return terminalNodeList;
     }
 
     public CombinatorialNode getRoot() {
