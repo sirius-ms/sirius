@@ -24,7 +24,10 @@ package de.unijena.bioinf.storage.db.nosql.nitrite;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -78,17 +81,15 @@ public class NitriteDatabaseTest {
 
         public String name;
         public DoubleList dlist;
-        public DoubleList dtlist;
         public double[] darr;
 
         public NitriteNoPOJOTestEntry() {
             super();
         }
 
-        public NitriteNoPOJOTestEntry(String name, DoubleList dlist, DoubleList dtlist, double[] darr) {
+        public NitriteNoPOJOTestEntry(String name, DoubleList dlist, double[] darr) {
             this.name = name;
             this.dlist = dlist;
-            this.dtlist = dtlist;
             this.darr = darr;
         }
     }
@@ -100,7 +101,6 @@ public class NitriteDatabaseTest {
             gen.writeStartObject();
             gen.writeStringField("name", value.name + "_S");
             gen.writeObjectField("dlist", value.dlist);
-            gen.writeObjectField("dtlist", value.dtlist.toArray());
             gen.writeObjectField("darr", value.darr);
             gen.writeEndObject();
         }
@@ -113,7 +113,6 @@ public class NitriteDatabaseTest {
         public NitriteNoPOJOTestEntry deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
             String name = null;
             DoubleList dlist = null;
-            DoubleList dtlist = null;
             double[] darr = null;
             JsonToken jsonToken = p.nextToken();
             while (!jsonToken.isStructEnd()) {
@@ -127,10 +126,6 @@ public class NitriteDatabaseTest {
                             jsonToken = p.nextToken();
                             dlist = new DoubleArrayList(p.readValueAs(double[].class));
                             break;
-                        case "dtlist":
-                            jsonToken = p.nextToken();
-                            dtlist = new DoubleArrayList(p.readValueAs(double[].class));
-                            break;
                         case "darr":
                             jsonToken = p.nextToken();
                             darr = p.readValueAs(double[].class);
@@ -139,9 +134,16 @@ public class NitriteDatabaseTest {
                 }
                 jsonToken = p.nextToken();
             }
-            return new NitriteNoPOJOTestEntry(name, dlist, dtlist, darr);
+            return new NitriteNoPOJOTestEntry(name, dlist, darr);
         }
 
+    }
+
+    private static class DoubleArrayDeserializer extends JsonDeserializer<DoubleList> {
+        @Override
+        public DoubleList deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+            return new DoubleArrayList(p.readValueAs(double[].class));
+        }
     }
 
     private static class TestModule extends SimpleModule {
@@ -195,6 +197,8 @@ public class NitriteDatabaseTest {
         public String name;
 
         public String data;
+
+        public SmallTestObject() {}
 
         public SmallTestObject(String name, String data) {
             this.name = name;
@@ -542,15 +546,27 @@ public class NitriteDatabaseTest {
     public void testJackson() throws IOException {
         Path file = Files.createTempFile("nitrite-test", "");
         file.toFile().deleteOnExit();
-        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addRepository(NitriteNoPOJOTestEntry.class, "id", new TestSerializer(), new TestDeserializer(), new Index("name", IndexType.UNIQUE)))) {
-            NitriteNoPOJOTestEntry in = new NitriteNoPOJOTestEntry("A", DoubleList.of(1, 2, 3), new DoubleArrayList(new double[]{1, 2, 3}), new double[]{1, 2, 3});
+        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addRepository(NitriteNoPOJOTestEntry.class, "id", false, new Index("name", IndexType.UNIQUE)).addSerialization(NitriteNoPOJOTestEntry.class, new TestSerializer(), new TestDeserializer()))) {
+            NitriteNoPOJOTestEntry in = new NitriteNoPOJOTestEntry("A", DoubleList.of(1, 2, 3), new double[]{1, 2, 3});
             db.insert(in);
             NitriteNoPOJOTestEntry[] out = Iterables.toArray(db.findAll(NitriteNoPOJOTestEntry.class), NitriteNoPOJOTestEntry.class);
             assertEquals("jackson db size", 1, out.length);
             assertEquals("jackson module used", in.name + "_S_D", out[0].name);
             assertEquals("jackson id mapping", 1L, (long) out[0].id);
             assertTrue("jackson fastutil", EqualsBuilder.reflectionEquals(in.dlist.toDoubleArray(), out[0].dlist.toDoubleArray()));
-            assertTrue("jackson trove", EqualsBuilder.reflectionEquals(in.dtlist, out[0].dtlist));
+            assertTrue("jackson primitive array", EqualsBuilder.reflectionEquals(in.darr, out[0].darr));
+        }
+
+        file = Files.createTempFile("nitrite-test", "");
+        file.toFile().deleteOnExit();
+        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addRepository(NitriteNoPOJOTestEntry.class, "id", false, new Index("name", IndexType.UNIQUE)).addDeserializer(DoubleList.class, new DoubleArrayDeserializer()))) {
+            NitriteNoPOJOTestEntry in = new NitriteNoPOJOTestEntry("A", DoubleList.of(1, 2, 3), new double[]{1, 2, 3});
+            db.insert(in);
+            NitriteNoPOJOTestEntry[] out = Iterables.toArray(db.findAll(NitriteNoPOJOTestEntry.class), NitriteNoPOJOTestEntry.class);
+            assertEquals("jackson db size", 1, out.length);
+            assertEquals("jackson module used", in.name, out[0].name);
+            assertEquals("jackson id mapping", 1L, (long) out[0].id);
+            assertTrue("jackson fastutil", EqualsBuilder.reflectionEquals(in.dlist.toDoubleArray(), out[0].dlist.toDoubleArray()));
             assertTrue("jackson primitive array", EqualsBuilder.reflectionEquals(in.darr, out[0].darr));
         }
 
@@ -871,8 +887,6 @@ public class NitriteDatabaseTest {
         try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addRepository(
                 SmallTestObject.class,
                 "id",
-                new SmallTestSerializer(),
-                new SmallTestDeserializer(),
                 new Index("name", IndexType.UNIQUE)
         ).setOptionalFields(SmallTestObject.class, "data"))) {
 
