@@ -124,7 +124,7 @@ public class CombinatorialFragmenterTest {
         IAtomContainer molecule = new AtomContainer();
         MolecularGraph mol = new MolecularGraph(molecule);
         CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(mol);
-        CombinatorialGraph fragGraph = fragmenter.createCombinatorialFragmentationGraph(n -> true);
+        CombinatorialGraph fragGraph = fragmenter.createCombinatorialFragmentationGraph((n, nnodes, nnedges)-> true);
         assertTrue(fragGraph.getNodes().isEmpty()); //fragGraph.nodes is the set of all nodes without the root
     }
 
@@ -135,7 +135,7 @@ public class CombinatorialFragmenterTest {
             SmilesParser parser = new SmilesParser(SilentChemObjectBuilder.getInstance());
             MolecularGraph mol = new MolecularGraph(parser.parseSmiles(smiles));
             CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(mol);
-            CombinatorialGraph graph = fragmenter.createCombinatorialFragmentationGraph(n -> true);
+            CombinatorialGraph graph = fragmenter.createCombinatorialFragmentationGraph((n, nnodes, nnedges) -> true);
 
             assertEquals(7,graph.numberOfNodes());
 
@@ -189,7 +189,7 @@ public class CombinatorialFragmenterTest {
             MolecularGraph molecule = new MolecularGraph(smilesParser.parseSmiles(smiles));
 
             CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(molecule);
-            CombinatorialGraph graph = fragmenter.createCombinatorialFragmentationGraph(n -> n.fragment.bitset.cardinality() > 2);
+            CombinatorialGraph graph = fragmenter.createCombinatorialFragmentationGraph((n, nnodes, nnedges) -> n.fragment.bitset.cardinality() > 2);
 
             // Convert the sorted node list into an integer array - each bitset is seen as a binary number:
             ArrayList<CombinatorialNode> sortedNodeList = graph.getSortedNodeList();
