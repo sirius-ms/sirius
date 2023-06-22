@@ -40,19 +40,23 @@
 
 package de.unijena.bioinf.spectraldb;
 
+import com.fasterxml.jackson.core.JacksonException;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import com.google.common.collect.Iterables;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.spectraldb.entities.Ms2SpectralData;
 import de.unijena.bioinf.spectraldb.entities.Ms2SpectralMetadata;
-import de.unijena.bioinf.spectraldb.ser.Ms2SpectralDataDeserializer;
-import de.unijena.bioinf.spectraldb.ser.Ms2SpectralDataSerializer;
-import de.unijena.bioinf.spectraldb.ser.Ms2SpectralMetadataDeserializer;
-import de.unijena.bioinf.spectraldb.ser.Ms2SpectralMetadataSerializer;
 import de.unijena.bioinf.storage.db.nosql.*;
 import de.unijena.bionf.spectral_alignment.AbstractSpectralAlignment;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
@@ -67,6 +71,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.PriorityBlockingQueue;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -78,14 +83,32 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary {
         this.storage = storage;
     }
 
+    protected static <T> JsonSerializer<T> serializer() {
+        return new JsonSerializer<T>() {
+            @Override
+            public void serialize(T value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+                gen.writeString(toString());
+            }
+        };
+    }
+
+    protected static <T> JsonDeserializer<T> deserializer(Function<String, T> callable) {
+        return new JsonDeserializer<T>() {
+            @Override
+            public T deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
+                while (p.currentToken() != JsonToken.VALUE_STRING)
+                    p.nextToken();
+                return callable.apply(p.getText());
+            }
+        };
+    }
+
     protected static Metadata initMetadata() throws IOException {
         return Metadata.build()
                 .addRepository(Tag.class, new Index("key",IndexType.UNIQUE))
                 .addRepository(
                         Ms2SpectralMetadata.class,
                         "id",
-                        new Ms2SpectralMetadataSerializer(),
-                        new Ms2SpectralMetadataDeserializer(),
                         new Index("ionMass", IndexType.NON_UNIQUE),
                         new Index("formula", IndexType.NON_UNIQUE),
                         new Index("name", IndexType.NON_UNIQUE),
@@ -93,10 +116,23 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary {
                 ).addRepository(
                         Ms2SpectralData.class,
                         "id",
-                        new Ms2SpectralDataSerializer(),
-                        new Ms2SpectralDataDeserializer(),
                         new Index("metaId", IndexType.NON_UNIQUE),
                         new Index("precursorMz", IndexType.NON_UNIQUE)
+                ).addSerialization(
+                        PrecursorIonType.class,
+                        serializer(),
+                        deserializer(PrecursorIonType::fromString)
+                ).addSerialization(
+                        MolecularFormula.class,
+                        serializer(),
+                        deserializer(MolecularFormula::parseOrThrow)
+                ).addSerialization(
+                        CollisionEnergy.class,
+                        serializer(),
+                        deserializer(CollisionEnergy::fromString)
+                ).addDeserializer(
+                        MsInstrumentation.class,
+                        deserializer(MsInstrumentation.Instrument::valueOf)
                 );
     }
 
