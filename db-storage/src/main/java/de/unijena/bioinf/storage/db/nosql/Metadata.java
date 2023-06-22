@@ -22,6 +22,7 @@ package de.unijena.bioinf.storage.db.nosql;
 
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -38,7 +39,7 @@ public class Metadata {
 
     final public Map<Class<?>, String[]> optionalRepoFields = new HashMap<>();
 
-    final public Map<Class<?>, String> idFields = new HashMap<>();
+    final public Map<Class<?>, Pair<String, Boolean>> idFields = new HashMap<>();
 
     final public Map<String, Index[]> collectionIndices = new HashMap<>();
 
@@ -60,28 +61,47 @@ public class Metadata {
 
     public <T> Metadata addRepository(
             Class<T> clazz,
-            JsonSerializer<T> serializer,
-            JsonDeserializer<T> deserializer,
+            String idField,
             Index... indices
-    ) {
-        this.serializers.put(clazz, serializer);
-        this.deserializers.put(clazz, deserializer);
-        this.repoIndices.put(clazz, indices);
-        return this;
+    ) throws IOException {
+        return addRepository(clazz, idField, true, indices);
     }
 
     public <T> Metadata addRepository(
             Class<T> clazz,
             String idField,
-            JsonSerializer<T> serializer,
-            JsonDeserializer<T> deserializer,
+            boolean forceGenerateID,
             Index... indices
     ) throws IOException {
         validateIdField(clazz, idField);
-        this.serializers.put(clazz, serializer);
-        this.deserializers.put(clazz, deserializer);
-        this.idFields.put(clazz, idField);
+        this.idFields.put(clazz, Pair.of(idField, forceGenerateID));
         this.repoIndices.put(clazz, indices);
+        return this;
+    }
+
+    public <T> Metadata addSerialization(
+            Class<T> clazz,
+            JsonSerializer<T> jsonSerializer,
+            JsonDeserializer jsonDeserializer
+    ) {
+        addSerializer(clazz, jsonSerializer);
+        addDeserializer(clazz, jsonDeserializer);
+        return this;
+    }
+
+    public <T> Metadata addSerializer(
+            Class<T> clazz,
+            JsonSerializer<T> jsonSerializer
+    ) {
+        this.serializers.put(clazz, jsonSerializer);
+        return this;
+    }
+
+    public <T> Metadata addDeserializer(
+            Class<T> clazz,
+            JsonDeserializer<T> jsonDeserializer
+    ) {
+        this.deserializers.put(clazz, jsonDeserializer);
         return this;
     }
 

@@ -87,8 +87,9 @@ public class NitriteDatabase implements Database<Document> {
         this.initRepositories(meta.repoIndices, meta.idFields);
         meta.optionalRepoFields.forEach((clazz, fields) -> optionalRepoFields.put(clazz, new HashSet<>(Arrays.asList(fields))));
         meta.optionalCollectionFields.forEach((collection, fields) -> optionalCollectionFields.put(collection, new HashSet<>(Arrays.asList(fields))));
-        repoIdFields.putAll(meta.idFields);
+        meta.idFields.forEach((clazz, pair) -> repoIdFields.put(clazz, pair.getKey()));
         try {
+
             Field cField = Nitrite.class.getDeclaredField("context");
             cField.setAccessible(true);
             NitriteContext context = (NitriteContext) cField.get(this.db);
@@ -98,38 +99,56 @@ public class NitriteDatabase implements Database<Document> {
         }
     }
 
+    public JacksonMapper getJacksonMapper() {
+        return this.nitriteMapper;
+    }
+
     @SuppressWarnings("unchecked")
     private <T> void addSerializer(Metadata meta, SimpleModule module, Class<?> clazz, JsonSerializer<?> serializer) throws NoSuchFieldException {
-        Class<T> c = (Class<T>) clazz;
-        JsonSerializer<T> s = (JsonSerializer<T>) serializer;
-        if (meta.idFields.containsKey(clazz)) {
-            module.addSerializer(c, new NitriteIdMapperSerializer<>(c, meta.idFields.get(clazz), s));
-        } else {
+        if (!meta.idFields.containsKey(clazz)) {
+            Class<T> c = (Class<T>) clazz;
+            JsonSerializer<T> s = (JsonSerializer<T>) serializer;
             module.addSerializer(c, s);
         }
     }
 
     @SuppressWarnings("unchecked")
     private <T> void addDeserializer(Metadata meta, SimpleModule module, Class<?> clazz, JsonDeserializer<?> deserializer) throws NoSuchFieldException {
-        Class<T> c = (Class<T>) clazz;
-        JsonDeserializer<T> d = (JsonDeserializer<T>) deserializer;
-        if (meta.idFields.containsKey(clazz)) {
-            module.addDeserializer(c, new NitriteIdMapperDeserializer<>(c, meta.idFields.get(clazz), d));
-        } else {
+        if (!meta.idFields.containsKey(clazz)) {
+            Class<T> c = (Class<T>) clazz;
+            JsonDeserializer<T> d = (JsonDeserializer<T>) deserializer;
             module.addDeserializer(c, d);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> void addIdSerialization(Metadata meta, SimpleModule module, Class<T> clazz, String idField, boolean forceGenerateID) throws NoSuchFieldException, IllegalAccessException {
+        if (!meta.serializers.containsKey(clazz)) {
+            module.addSerializer(clazz, new NitriteIdMapperSerializer<>(clazz, idField, forceGenerateID, this));
+        } else {
+            module.addSerializer(clazz, new NitriteIdMapperSerializer<>(clazz, idField, forceGenerateID, (JsonSerializer<T>) meta.serializers.get(clazz)));
+        }
+        if (!meta.deserializers.containsKey(clazz)) {
+            module.addDeserializer(clazz, new NitriteIdMapperDeserializer<>(clazz, idField, this));
+        } else {
+            module.addDeserializer(clazz, new NitriteIdMapperDeserializer<>(clazz, idField, (JsonDeserializer<T>) meta.deserializers.get(clazz)));
         }
     }
 
     private Nitrite initDB(Path file, Metadata meta) throws IOException {
         SimpleModule module = new SimpleModule("sirius-nitrite", Version.unknownVersion());
         try {
+            for (Map.Entry<Class<?>, Pair<String, Boolean>> entry : meta.idFields.entrySet()) {
+                addIdSerialization(meta, module, entry.getKey(), entry.getValue().getKey(), entry.getValue().getValue());
+            }
+            // FIXME conflict with id(de-)serializers!
             for (Map.Entry<Class<?>, JsonSerializer<?>> entry : meta.serializers.entrySet()) {
                 addSerializer(meta, module, entry.getKey(), entry.getValue());
             }
             for (Map.Entry<Class<?>, JsonDeserializer<?>> entry : meta.deserializers.entrySet()) {
                 addDeserializer(meta, module, entry.getKey(), entry.getValue());
             }
-        } catch (NoSuchFieldException e) {
+        } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new IOException(e);
         }
         return Nitrite.builder().filePath(file.toFile()).registerModule(module).compressed().openOrCreate();
@@ -142,13 +161,13 @@ public class NitriteDatabase implements Database<Document> {
         }
     }
 
-    private void initRepositories(Map<Class<?>, Index[]> repositories, Map<Class<?>, String> idFields) throws IOException {
+    private void initRepositories(Map<Class<?>, Index[]> repositories, Map<Class<?>, Pair<String, Boolean>> idFields) throws IOException {
         for (Class<?> clazz : repositories.keySet()) {
             ObjectRepository<?> repository = this.db.getRepository(clazz);
             this.repositories.put(clazz, repository);
             initIndex(repositories.get(clazz), repository);
             if (idFields.containsKey(clazz)) {
-                initIdField(clazz, idFields.get(clazz), repository);
+                initIdField(clazz, idFields.get(clazz).getKey(), repository);
             }
         }
     }

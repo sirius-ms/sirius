@@ -53,13 +53,15 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
                         new Index("inchikey", IndexType.UNIQUE)
                 ).addRepository(
                         FingerprintCandidate.class,
-                        new FingerprintCandidateDbSerializer(),
-                        new JSONReader.FingerprintCandidateDeserializer(version),
                         new Index("formula", IndexType.NON_UNIQUE),
                         new Index("mass", IndexType.NON_UNIQUE),
                         new Index("candidate.inchikey", IndexType.UNIQUE),
                         new Index("candidate.bitset", IndexType.NON_UNIQUE),
                         new Index("candidate.name", IndexType.NON_UNIQUE)
+                ).addSerialization(
+                        FingerprintCandidate.class,
+                        new FingerprintCandidateDbSerializer(),
+                        new JSONReader.FingerprintCandidateDeserializer(version)
                 );
     }
 

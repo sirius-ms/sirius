@@ -24,46 +24,120 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.cfg.SerializerFactoryConfig;
+import com.fasterxml.jackson.databind.module.SimpleSerializers;
+import com.fasterxml.jackson.databind.ser.BasicSerializerFactory;
+import com.fasterxml.jackson.databind.ser.BeanSerializerFactory;
+import com.fasterxml.jackson.databind.ser.Serializers;
+import com.fasterxml.jackson.databind.type.ClassKey;
 import com.fasterxml.jackson.databind.util.TokenBuffer;
 import org.dizitart.no2.NitriteId;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.Map;
 
 public class NitriteIdMapperSerializer<T> extends JsonSerializer<T> {
 
-    protected final JsonSerializer<T> serializer;
+    protected final NitriteDatabase database;
+
+    protected ObjectMapper objectMapper;
+
+    protected final JsonSerializer<T> jsonSerializer;
+
+    protected final Class<T> clazz;
 
     protected final Field idField;
 
-    public NitriteIdMapperSerializer(Class<T> clazz, String idField, JsonSerializer<T> serializer) throws NoSuchFieldException {
+    protected final boolean force;
+
+    public NitriteIdMapperSerializer(Class<T> clazz, String idField, boolean forceGenerateID, NitriteDatabase database) throws NoSuchFieldException {
         super();
-        this.serializer = serializer;
+        this.database = database;
+        this.jsonSerializer = null;
+        this.force = forceGenerateID;
+        this.clazz = clazz;
         this.idField = clazz.getDeclaredField(idField);
         this.idField.setAccessible(true);
     }
 
+    public NitriteIdMapperSerializer(Class<T> clazz, String idField, boolean forceGenerateID, JsonSerializer<T> jsonSerializer) throws NoSuchFieldException {
+        super();
+        this.database = null;
+        this.jsonSerializer = jsonSerializer;
+        this.force = forceGenerateID;
+        this.clazz = clazz;
+        this.idField = clazz.getDeclaredField(idField);
+        this.idField.setAccessible(true);
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> void addSerializer(SimpleSerializers sd, Class<?> cls, JsonSerializer<?> jsonSerializer) {
+        Class<T> c = (Class<T>) cls;
+        JsonSerializer<T> jd = (JsonSerializer<T>) jsonSerializer;
+        sd.addSerializer(c, jd);
+    }
+
+    @SuppressWarnings("unchecked")
     @Override
     public void serialize(T value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
         try {
-            long idValue = -1L;
+            long idValue;
             if (idField.getType().isPrimitive()) {
                 idValue = idField.getLong(value);
-                if (idValue < 0) {
+                if (idValue < 0 || force) {
                     idValue = NitriteId.newId().getIdValue();
                     idField.setLong(value, idValue);
                 }
             } else {
                 idValue = (Long) idField.get(value);
-                if (idValue < 0) {
+                if (idValue < 0 || force) {
                     idValue = NitriteId.newId().getIdValue();
-                    idField.set(value, (Long) idValue);
+                    idField.set(value, idValue);
                 }
             }
 
             try (TokenBuffer buffer = new TokenBuffer(gen.getCodec(), false)) {
-                serializer.serialize(value, buffer, serializers);
+                if (database != null) {
+                    if (objectMapper == null) {
+                        ObjectMapper originalMapper = database.getJacksonMapper().getObjectMapper();
+                        objectMapper = originalMapper.copy();
+
+                        SerializerFactoryConfig originalConfig = ((BasicSerializerFactory) originalMapper.getSerializerFactory()).getFactoryConfig();
+                        SerializerFactoryConfig copyConfig = new SerializerFactoryConfig();
+                        for (Serializers s : originalConfig.serializers()) {
+                            if (s.findSerializer(null, originalMapper.getTypeFactory().constructType(clazz), null) == null) {
+                                copyConfig = copyConfig.withAdditionalSerializers(s);
+                            } else {
+                                Field mapField = SimpleSerializers.class.getDeclaredField("_classMappings");
+                                mapField.setAccessible(true);
+                                Map<ClassKey, JsonSerializer<?>> classMap = (Map<ClassKey, JsonSerializer<?>>) mapField.get(s);
+                                SimpleSerializers copyS = new SimpleSerializers();
+                                ClassKey key = new ClassKey(clazz);
+                                for (Map.Entry<ClassKey, JsonSerializer<?>> entry : classMap.entrySet()) {
+                                    ClassKey ckey = entry.getKey();
+                                    JsonSerializer<?> v = entry.getValue();
+                                    if (!ckey.equals(key)) {
+                                        try {
+                                            addSerializer(copyS, Class.forName(ckey.toString()), v);
+                                        } catch (ClassNotFoundException e) {
+                                            throw new IOException(e);
+                                        }
+                                    }
+                                }
+                                copyConfig = copyConfig.withAdditionalSerializers(copyS);
+                            }
+                        }
+                        objectMapper.setSerializerFactory(BeanSerializerFactory.instance.withConfig(copyConfig));
+                    }
+
+                    objectMapper.writeValue(buffer, value);
+                } else {
+                    jsonSerializer.serialize(value, buffer, serializers);
+                }
+
                 JsonParser p = buffer.asParser();
                 JsonToken token = p.nextToken();
                 while (!token.isStructStart()) {
@@ -78,7 +152,7 @@ public class NitriteIdMapperSerializer<T> extends JsonSerializer<T> {
                     gen.copyCurrentStructure(p);
                 }
             }
-        } catch (IllegalAccessException e) {
+        } catch (IllegalAccessException | NoSuchFieldException e) {
             throw new IOException(e);
         }
     }

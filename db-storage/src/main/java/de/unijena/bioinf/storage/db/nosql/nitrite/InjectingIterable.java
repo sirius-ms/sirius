@@ -25,7 +25,6 @@ import org.dizitart.no2.Document;
 import org.dizitart.no2.NitriteCollection;
 import org.dizitart.no2.NitriteId;
 import org.dizitart.no2.exceptions.InvalidOperationException;
-import org.dizitart.no2.mapper.NitriteMapper;
 import org.dizitart.no2.objects.ObjectRepository;
 import org.jetbrains.annotations.NotNull;
 
