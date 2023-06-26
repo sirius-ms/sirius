@@ -99,7 +99,7 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
 
     @Override
     public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
-        try {
+       /* try {
             storage.mergeChildStr(FingerprintWrapper.class,
                     storage.find(new Filter().eq("formula", formula.toString()), FingerprintCandidate.class),
                     "inchikey", "inchikey", "fingerprint"
@@ -107,11 +107,13 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
             return fingerprintCandidates;
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
-        }
+        }*/
+        return null;
+        //todo implement with new api
     }
 
     public Stream<FingerprintCandidate> lookupFingerprintsByInchisStr(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
-        try {
+        /*try {
             Object[] keys = StreamSupport.stream(inchi_keys.spliterator(), false).toArray();
             return storage.mergeChildStr(FingerprintCandidate.class, FingerprintWrapper.class,
                     storage.find(Filter.build().in("inchikey", keys), FingerprintCandidate.class),
@@ -119,7 +121,10 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
             );
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
-        }
+        }*/
+
+        return null;//todo implement with new api
+
     }
 
     @Override
@@ -139,13 +144,16 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
 
     @Override
     public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws ChemicalDatabaseException {
-        try {
+//        try {
             //todo inefficient workaround
-            Object[] keys = StreamSupport.stream(compounds.spliterator(), false).map(CompoundCandidate::getInchiKey2D).toArray();
-            return storage.mergeChildStr(FingerprintWrapper.class,
-                    storage.find(Filter.build().in("inchikey", keys), FingerprintCandidate.class),
-                    "inchikey", "inchikey", "fingerprint"
-            ).toList();
+//            Object[] keys = StreamSupport.stream(compounds.spliterator(), false).map(CompoundCandidate::getInchiKey2D).toArray();
+//            return storage.mergeChildStr(FingerprintWrapper.class,
+//                    storage.find(Filter.build().in("inchikey", keys), FingerprintCandidate.class),
+//                    "inchikey", "inchikey", "fingerprint"
+//            ).toList();
+
+            return null;
+
 
             //todo would like to have this syntax to be possible
 //            List<FingerprintCandidate> fps =
@@ -155,9 +163,9 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
 //            return storage.mergeChildStr(FingerprintWrapper.class,
 //                    fps, "inchikey", "inchikey", "fingerprint"
 //            ).toList();
-        } catch (IOException e) {
-            throw new ChemicalDatabaseException(e);
-        }
+//        } catch (IOException e) {
+//            throw new ChemicalDatabaseException(e);
+//        }
     }
 
     @Override
