@@ -32,7 +32,7 @@ import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 
 import java.io.IOException;
 
-//@JsonSerialize(using = FingerprintCandidate.Serializer.class)
+@JsonSerialize(using = FingerprintCandidate.Serializer.class)
 public class FingerprintCandidate extends CompoundCandidate {
 
     protected Fingerprint fingerprint;

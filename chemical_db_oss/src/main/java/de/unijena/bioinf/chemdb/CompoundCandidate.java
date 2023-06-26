@@ -47,7 +47,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-//@JsonSerialize(using = CompoundCandidate.Serializer.class)
+@JsonSerialize(using = CompoundCandidate.Serializer.class)
 public class CompoundCandidate {
     //The 2d inchi is the UID of an CompoundCandidate
     protected final InChI inchi;
