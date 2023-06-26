@@ -54,7 +54,7 @@ buildCLI:
 buildGUI:
   stage: build
   script:
-    - ./gradlew :sirius_dist:sirius_gui_dist:publishSiriusMSPublicationToMavenLocal -P "build.sirius.native.openjfx.exclude=true" -P "build.sirius.starter.jdk.include=true"
+    - ./gradlew :sirius_dist:sirius_gui_dist:publishSiriusMSPublicationToMavenLocal
     - mkdir maven_artifacts
     - mv ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/$VSNAP maven_artifacts
   cache:
