@@ -2,7 +2,6 @@
 # https://gradle.org/
 # https://github.com/gradle/gradle
 image: azul/zulu-openjdk:17-latest
-#git.bio.informatik.uni-jena.de:5050/bioinf-mit/docker-images/ubuntu-zulu-fx-gradle:18.04-15.0.3-6.9-5
 
 # Disable the Gradle daemon for Continuous Integration servers as correctness
 # is usually a priority over speed in CI environments. Using a fresh
@@ -29,7 +28,7 @@ buildLinux64:
     refs:
       - master
       - stable
-    # stupid there is no exclude if only specific type was changed, so we have to use some heuristic to exclude README only changes
+    # there is no exclude if only specific type was changed, so we have to use some heuristic to exclude README only changes
     # from pipeline
     changes:
       - "**/*.{java,gradle,properties,yml,tex,png,ico,json,xml,html,csv,tsv,py}"
