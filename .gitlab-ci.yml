@@ -1,7 +1,7 @@
 # This is the Gradle build system for JVM applications
 # https://gradle.org/
 # https://github.com/gradle/gradle
-image: git.bio.informatik.uni-jena.de:5050/bioinf-mit/docker-images/ubuntu-zulu-fx-gradle:22.04-15.42.15-6.9.2-9
+image: azul/zulu-openjdk:17-latest
 #git.bio.informatik.uni-jena.de:5050/bioinf-mit/docker-images/ubuntu-zulu-fx-gradle:18.04-15.0.3-6.9-5
 
 # Disable the Gradle daemon for Continuous Integration servers as correctness
