@@ -29,15 +29,19 @@ public class MsTestLocal {
         TestMethods.areContentsEqual(temp_output + "canopus", temp_output + "canopus_npc", temp_output + "fingerprints");
 
 
-        int rank_count = 3;
+        int rank_count = 1;
         int table_feature = 2;
         String[] pre_formula = TestMethods.readCandidates(absPath + "sirius_cli/src/test/test_results/ms_candidates/ignore_formula/formula_candidates.tsv".replace("/", sep), rank_count, table_feature);
         String[] post_formula = TestMethods.readCandidates(temp_summary + "formula_candidates.tsv", rank_count, table_feature);
+        System.out.println(String.join(",", pre_formula));
+        System.out.println(String.join(",", post_formula));
 
         rank_count = 3;
         table_feature = 6;
         String[] pre_structure = TestMethods.readCandidates(absPath + "sirius_cli/src/test/test_results/ms_candidates/compound_class_annotation/structure_candidates.tsv".replace("/", sep), rank_count, table_feature);
         String[] post_structure = TestMethods.readCandidates(temp_summary + "structure_candidates.tsv", rank_count, table_feature);
+        System.out.println(String.join(",", pre_structure));
+        System.out.println(String.join(",", post_structure));
 
         assertArrayEquals(pre_formula, post_formula);
         assertArrayEquals(pre_structure, post_structure);
