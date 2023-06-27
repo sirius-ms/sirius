@@ -19,7 +19,7 @@ stages:
 before_script:
   - rm /etc/apt/sources.list.d/zulu-openjdk.list
   - apt-get update
-  - apt-get -y install openssh-client unzip liblapack3
+  - apt-get -y install openssh-client unzip liblapack-dev curl git
   - dpkg-reconfigure -p critical ca-certificates
   - eval `ssh-agent -s`
   - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null # add ssh key
@@ -34,7 +34,7 @@ before_script:
 buildCLI:
   stage: build
   script:
-    - ./gradlew :sirius_dist:sirius_cli_single_os:publishSiriusMSPublicationToMavenLocal -P "build.sirius.native.openjfx.exclude=true" -P "build.sirius.starter.jdk.include=true"
+    - ./gradlew :sirius_dist:sirius_cli_single_os:publishSiriusMSPublicationToMavenLocal -P "build.sirius.starter.jdk.include=true"
     - mkdir maven_artifacts
     - mv ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/$VSNAP maven_artifacts
   cache:
@@ -162,7 +162,6 @@ pushToGitHub:
     - git remote show origin
     - git remote set-url --push origin git@github.com:boecker-lab/sirius.git
     - git remote show origin
-    ##todo  re-insert before merge to master
     - git push --follow-tags origin HEAD:$CI_COMMIT_REF_NAME
   cache:
     key: "$CI_COMMIT_REF_NAME"
