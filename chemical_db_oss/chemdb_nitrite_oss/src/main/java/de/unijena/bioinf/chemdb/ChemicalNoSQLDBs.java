@@ -21,23 +21,18 @@
 package de.unijena.bioinf.chemdb;
 
 import com.google.common.collect.Iterables;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.chemdb.nitrite.ChemicalNitriteDatabase;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintWrapper;
 import de.unijena.bioinf.spectraldb.SpectralNoSQLDBs;
 import de.unijena.bioinf.spectraldb.SpectralNoSQLDatabase;
-import de.unijena.bioinf.spectraldb.entities.Ms2SpectralData;
-import de.unijena.bioinf.spectraldb.entities.Ms2SpectralMetadata;
+import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.storage.db.nosql.Database;
-import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.validation.constraints.Null;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.stream.StreamSupport;
 
 public class ChemicalNoSQLDBs extends SpectralNoSQLDBs {
@@ -53,7 +48,7 @@ public class ChemicalNoSQLDBs extends SpectralNoSQLDBs {
     public static void importCompoundsAndFingerprintsLazy(
             @NotNull Database<?> database,
             @NotNull Iterable<FingerprintCandidate> candidates,
-            @Nullable Iterable<Pair<Ms2SpectralMetadata, Ms2SpectralData>> spectra,
+            @Nullable Iterable<Ms2ReferenceSpectrum> spectra,
             @NotNull String dbDate, @Nullable String dbFlavor, int fpId,
             int chunkSize
     ) throws ChemicalDatabaseException {

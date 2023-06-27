@@ -55,8 +55,7 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
-import de.unijena.bioinf.spectraldb.entities.Ms2SpectralData;
-import de.unijena.bioinf.spectraldb.entities.Ms2SpectralMetadata;
+import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.storage.db.nosql.*;
 import de.unijena.bionf.spectral_alignment.AbstractSpectralAlignment;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
@@ -72,7 +71,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary {
@@ -107,17 +105,12 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary {
         return Metadata.build()
                 .addRepository(Tag.class, new Index("key",IndexType.UNIQUE))
                 .addRepository(
-                        Ms2SpectralMetadata.class,
+                        Ms2ReferenceSpectrum.class,
                         "id",
                         new Index("ionMass", IndexType.NON_UNIQUE),
                         new Index("formula", IndexType.NON_UNIQUE),
                         new Index("name", IndexType.NON_UNIQUE),
                         new Index("candidateInChiKey", IndexType.NON_UNIQUE)
-                ).addRepository(
-                        Ms2SpectralData.class,
-                        "id",
-                        new Index("metaId", IndexType.NON_UNIQUE),
-                        new Index("precursorMz", IndexType.NON_UNIQUE)
                 ).addSerialization(
                         PrecursorIonType.class,
                         serializer(),
@@ -133,11 +126,11 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary {
                 ).addDeserializer(
                         MsInstrumentation.class,
                         deserializer(MsInstrumentation.Instrument::valueOf)
-                );
+                ).setOptionalFields(Ms2ReferenceSpectrum.class, "spectrum");
     }
 
     @Override
-    public <P extends Peak, A extends AbstractSpectralAlignment> Iterable<Pair<SpectralSimilarity, Ms2SpectralMetadata>> matchingSpectra(
+    public <P extends Peak, A extends AbstractSpectralAlignment> Iterable<Pair<SpectralSimilarity, Ms2ReferenceSpectrum>> matchingSpectra(
             Ms2Spectrum<P> spectrum,
             Deviation precursorMzDeviation,
             Deviation maxPeakDeviation,
@@ -147,7 +140,7 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary {
     }
 
     @Override
-    public <P extends Peak, A extends AbstractSpectralAlignment> Iterable<Pair<SpectralSimilarity, Ms2SpectralMetadata>> matchingSpectra(
+    public <P extends Peak, A extends AbstractSpectralAlignment> Iterable<Pair<SpectralSimilarity, Ms2ReferenceSpectrum>> matchingSpectra(
             Ms2Spectrum<P> spectrum,
             Deviation precursorMzDeviation,
             Deviation maxPeakDeviation,
@@ -155,25 +148,27 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary {
             boolean parallel
     ) throws ChemicalDatabaseException {
         try {
-            PriorityBlockingQueue<Pair<SpectralSimilarity, Ms2SpectralMetadata>> heap = new PriorityBlockingQueue<>(100, (o1, o2) -> - Double.compare(o1.getLeft().similarity, o2.getLeft().similarity));
+            PriorityBlockingQueue<Pair<SpectralSimilarity, Ms2ReferenceSpectrum>> heap = new PriorityBlockingQueue<>(100, (o1, o2) -> - Double.compare(o1.getLeft().similarity, o2.getLeft().similarity));
             A alignment = alignmentType.getConstructor(Deviation.class).newInstance(maxPeakDeviation);
             OrderedSpectrum<Peak> query = new SimpleSpectrum(spectrum);
 
-            Iterable<Ms2SpectralData> spectra = lookupSpectra(spectrum.getPrecursorMz(), precursorMzDeviation);
+            // TODO it might be a better idea replace iterables.partition with pagination
+            Iterable<Ms2ReferenceSpectrum> spectra = lookupSpectra(spectrum.getPrecursorMz(), precursorMzDeviation, true);
             StreamSupport.stream(Iterables.partition(spectra, 100).spliterator(), parallel).forEach(chunk -> {
-                for (Ms2SpectralData data : chunk) {
-                    SpectralSimilarity similarity = alignment.score(query, data);
+                for (Ms2ReferenceSpectrum reference : chunk) {
+                    SpectralSimilarity similarity = alignment.score(query, reference.getSpectrum());
+                    Ms2ReferenceSpectrum withoutData = new Ms2ReferenceSpectrum(
+                            reference.getId(), reference.getCandidateInChiKey(), reference.getPrecursorIonType(),
+                            reference.getPrecursorMz(), reference.getIonMass(), reference.getMsLevel(), reference.getCollisionEnergy(),
+                            reference.getInstrumentation(), reference.getFormula(), reference.getName(), reference.getSmiles(),
+                            reference.getLibraryName(), reference.getLibraryId(), reference.getSplash(), null);
                     if (similarity.shardPeaks > 0) {
-                        try {
-                            heap.add(Pair.of(similarity, storage.getById(data.getMetaId(), Ms2SpectralMetadata.class)));
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
+                        heap.add(Pair.of(similarity, withoutData));
                     }
                 }
             });
 
-            List<Pair<SpectralSimilarity, Ms2SpectralMetadata>> result = new ArrayList<>(heap.size());
+            List<Pair<SpectralSimilarity, Ms2ReferenceSpectrum>> result = new ArrayList<>(heap.size());
             heap.drainTo(result);
             return result;
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException |
@@ -183,50 +178,30 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary {
     }
 
     @Override
-    public Iterable<Ms2SpectralData> lookupSpectra(double precursorMz, Deviation deviation) throws ChemicalDatabaseException {
+    public Iterable<Ms2ReferenceSpectrum> lookupSpectra(double precursorMz, Deviation deviation, boolean withData) throws ChemicalDatabaseException {
         try {
             double abs = deviation.absoluteFor(precursorMz);
-            return this.storage.find(new Filter().and().gte("precursorMz", precursorMz - abs).lte("precursorMz", precursorMz + abs), Ms2SpectralData.class);
+            Filter filter = new Filter().and().gte("precursorMz", precursorMz - abs).lte("precursorMz", precursorMz + abs);
+            if (withData) {
+                return this.storage.find(filter, Ms2ReferenceSpectrum.class, "spectrum");
+            } else {
+                return this.storage.find(filter, Ms2ReferenceSpectrum.class);
+            }
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }
     }
 
     @Override
-    public Iterable<Ms2SpectralMetadata> lookupSpectra(String inchiKey2d) throws ChemicalDatabaseException {
+    public Iterable<Ms2ReferenceSpectrum> lookupSpectra(String inchiKey2d, boolean withData) throws ChemicalDatabaseException {
         try {
-            return this.storage.find(new Filter().elemMatch(inchiKey2d), Ms2SpectralMetadata.class);
+            Filter filter = new Filter().eq("candidateInChiKey", inchiKey2d);
+            if (withData) {
+                return this.storage.find(filter, Ms2ReferenceSpectrum.class, "spectrum");
+            } else {
+                return this.storage.find(filter, Ms2ReferenceSpectrum.class);
+            }
         } catch (IOException e) {
-            throw new ChemicalDatabaseException(e);
-        }
-    }
-
-    @Override
-    public Iterable<Ms2SpectralMetadata> getMetaData(Iterable<Ms2SpectralData> data) throws ChemicalDatabaseException {
-        try {
-            return StreamSupport.stream(data.spliterator(), false).map(d -> {
-                try {
-                    return storage.getById(d.getMetaId(), Ms2SpectralMetadata.class);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }).collect(Collectors.toList());
-        } catch (RuntimeException e) {
-            throw new ChemicalDatabaseException(e);
-        }
-    }
-
-    @Override
-    public Iterable<Ms2SpectralData> getSpectralData(Iterable<Ms2SpectralMetadata> metadata) throws ChemicalDatabaseException {
-        try {
-            return StreamSupport.stream(metadata.spliterator(), false).map(d -> {
-                try {
-                    return storage.getById(d.getPeaksId(), Ms2SpectralData.class);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }).collect(Collectors.toList());
-        } catch (RuntimeException e) {
             throw new ChemicalDatabaseException(e);
         }
     }

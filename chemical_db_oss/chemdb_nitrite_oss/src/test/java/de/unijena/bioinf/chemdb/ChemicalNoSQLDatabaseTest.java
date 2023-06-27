@@ -47,8 +47,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.chemdb.nitrite.ChemicalNitriteDatabase;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintWrapper;
 import de.unijena.bioinf.spectraldb.SpectralNoSQLDatabase;
-import de.unijena.bioinf.spectraldb.entities.Ms2SpectralData;
-import de.unijena.bioinf.spectraldb.entities.Ms2SpectralMetadata;
+import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.storage.blob.file.FileBlobStorage;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -59,7 +58,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
 
@@ -126,15 +124,9 @@ public class ChemicalNoSQLDatabaseTest {
     }
 
     @Test
-    public void rawTestSpectraMeta() throws IOException {
-        List<Ms2SpectralMetadata> specMeta = chemDb.getStorage().findAllStr(Ms2SpectralMetadata.class).toList();
-        assertEquals(0, specMeta.size());
-    }
-
-    @Test
-    public void rawTestSpectraData() throws IOException {
-        Stream<Ms2SpectralData> spectData = chemDb.getStorage().findAllStr(Ms2SpectralData.class);
-        assertEquals(0, spectData.count());
+    public void rawTestReferenceSpectra() throws IOException {
+        List<Ms2ReferenceSpectrum> reference = chemDb.getStorage().findAllStr(Ms2ReferenceSpectrum.class).toList();
+        assertEquals(0, reference.size());
     }
 
     @Test

@@ -22,23 +22,17 @@
 
 package de.unijena.bioinf.chemdb;
 
-import com.fasterxml.jackson.core.*;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
-import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
-import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
-import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
-import de.unijena.bioinf.spectraldb.entities.Ms2SpectralMetadata;
-import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.list.array.TShortArrayList;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -72,7 +66,7 @@ public class CompoundCandidate {
 
     protected ArrayList<DBLink> referenceSpectraLinks;
     @Nullable
-    protected Map<DBLink, Ms2SpectralMetadata> referenceSpectra;
+    protected Map<DBLink, Ms2ReferenceSpectrum> referenceSpectra;
 
     public CompoundCandidate(InChI inchi, String name, String smiles, int pLayer, int qLayer, double xlogp, @Nullable Double tanimoto, long bitset, DBLink[] links, PubmedLinks pubmedIDs) {
         this(inchi, name, smiles, pLayer, qLayer, xlogp, tanimoto, bitset, new ArrayList<>(List.of(links)), pubmedIDs);

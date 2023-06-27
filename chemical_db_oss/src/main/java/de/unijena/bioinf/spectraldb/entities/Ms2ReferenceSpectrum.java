@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.chemdb.DBLink;
 import lombok.*;
 
@@ -33,10 +34,10 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Ms2SpectralMetadata {
+public class Ms2ReferenceSpectrum {
 
+    @Builder.Default
     private long id = -1L;
-    private long peaksId = -1L;
 
     /**
      * This is the InChiKey (2D) to map spectra to a standardized SIRIUS structure candidate.
@@ -79,6 +80,7 @@ public class Ms2SpectralMetadata {
 
     private String splash;
 
+    private SimpleSpectrum spectrum;
 
     @JsonIgnore
     public DBLink getSpectralDbLink() {

@@ -44,20 +44,18 @@ import com.google.common.collect.Iterables;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.massbank.MassbankFormat;
 import de.unijena.bioinf.chemdb.ChemDBs;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
-import de.unijena.bioinf.spectraldb.entities.Ms2SpectralData;
-import de.unijena.bioinf.spectraldb.entities.Ms2SpectralMetadata;
+import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.nitrite.SpectralNitriteDatabase;
 import de.unijena.bioinf.storage.db.nosql.Database;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -71,42 +69,25 @@ public class SpectralNoSQLDBs extends ChemDBs {
         importSpectraFromMs2Experiments(database.storage, experiments, chunkSize);
     }
     public static void importSpectraFromMs2Experiments(Database<?> database, Iterable<Ms2Experiment> experiments, int chunkSize) throws ChemicalDatabaseException {
-        List<Pair<Ms2SpectralMetadata, Ms2SpectralData>> pairs = new ArrayList<>();
+        List<Ms2ReferenceSpectrum> spectra = new ArrayList<>();
         for (Ms2Experiment experiment : experiments) {
             if (!(experiment instanceof MutableMs2Experiment)) {
                 throw new ChemicalDatabaseException(experiment.getClass() + " is not supported.");
             }
-            pairs.addAll(ms2ExpToMsDataPair((MutableMs2Experiment) experiment));
+            spectra.addAll(ms2ExpToMs2Ref((MutableMs2Experiment) experiment));
         }
 
-        importSpectra(database, pairs, chunkSize);
+        importSpectra(database, spectra, chunkSize);
     }
-    public static void importSpectra(Database<?> database, Iterable<Pair<Ms2SpectralMetadata, Ms2SpectralData>> spectra, int chunkSize) throws ChemicalDatabaseException {
+    public static void importSpectra(Database<?> database, Iterable<Ms2ReferenceSpectrum> spectra, int chunkSize) throws ChemicalDatabaseException {
         try {
             StreamSupport.stream(Iterables.partition(spectra, chunkSize).spliterator(), false).forEach(chunk -> {
-                Collector<Pair<Ms2SpectralMetadata, Ms2SpectralData>, ?, List<Object>> collector = Collectors.teeing(
-                        Collectors.mapping(Pair::getLeft, Collectors.toList()),
-                        Collectors.mapping(Pair::getRight, Collectors.toList()),
-                        List::of
-                );
-
-                // TODO what about spectra without inchi key and/or precursor mass?
-                List<Object> split = chunk.stream().filter(
-                        p -> p.getLeft().getCandidateInChiKey() != null && p.getLeft().getPrecursorMz() > 0
-                ).collect(collector);
-                List<Ms2SpectralMetadata> metadata = (List<Ms2SpectralMetadata>) split.get(0);
-                List<Ms2SpectralData> data = (List<Ms2SpectralData>) split.get(1);
-
                 try {
-                    database.insertAll(metadata);
-                    for (Pair<Ms2SpectralMetadata, Ms2SpectralData> pair : chunk) {
-                        pair.getRight().setMetaId(pair.getLeft().getId());
-                    }
+                    // TODO what about spectra without inchi key and/or precursor mass?
+                    List<Ms2ReferenceSpectrum> data = chunk.stream().filter(
+                            p -> p.getCandidateInChiKey() != null && p.getPrecursorMz() > 0
+                    ).toList();
                     database.insertAll(data);
-                    for (Pair<Ms2SpectralMetadata, Ms2SpectralData> pair : chunk) {
-                        pair.getLeft().setPeaksId(pair.getRight().getId());
-                    }
-                    database.upsertAll(metadata);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -116,18 +97,17 @@ public class SpectralNoSQLDBs extends ChemDBs {
         }
     }
 
-    private static List<Pair<Ms2SpectralMetadata, Ms2SpectralData>> ms2ExpToMsDataPair(MutableMs2Experiment experiment) {
+    private static List<Ms2ReferenceSpectrum> ms2ExpToMs2Ref(MutableMs2Experiment experiment) {
         return experiment.getMs2Spectra().stream().map(s -> {
-            Ms2SpectralMetadata.Ms2SpectralMetadataBuilder b = Ms2SpectralMetadata.builder()
-                    .id(-1)
-                    .peaksId(-1)
+            Ms2ReferenceSpectrum.Ms2ReferenceSpectrumBuilder b = Ms2ReferenceSpectrum.builder()
                     .formula(experiment.getMolecularFormula())
                     .ionMass(experiment.getIonMass())
                     .name(experiment.getName())
                     .collisionEnergy(s.getCollisionEnergy())
                     .msLevel(s.getMsLevel())
                     .precursorMz(s.getPrecursorMz())
-                    .precursorIonType(experiment.getPrecursorIonType());
+                    .precursorIonType(experiment.getPrecursorIonType())
+                    .spectrum(new SimpleSpectrum(s));
             experiment.getAnnotation(Splash.class).map(Splash::toString).ifPresent(b::splash);
             experiment.getAnnotation(Smiles.class).map(Smiles::toString).ifPresent(b::smiles);
             experiment.getAnnotation(InChI.class).map(inchi -> (inchi.key != null) ? inchi.key2D() : null).ifPresent(b::candidateInChiKey);
@@ -138,7 +118,7 @@ public class SpectralNoSQLDBs extends ChemDBs {
                     b.libraryId(fields.get(MassbankFormat.ACCESSION.k()));
                 }
             });
-            return Pair.of(b.build(), new Ms2SpectralData(s));
+            return b.build();
         }).collect(Collectors.toList());
     }
 }

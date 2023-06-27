@@ -24,24 +24,21 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
-import de.unijena.bioinf.spectraldb.entities.Ms2SpectralData;
-import de.unijena.bioinf.spectraldb.entities.Ms2SpectralMetadata;
+import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bionf.spectral_alignment.AbstractSpectralAlignment;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.List;
-
 public interface SpectralLibrary {
 
-    <P extends Peak, A extends AbstractSpectralAlignment> Iterable<Pair<SpectralSimilarity, Ms2SpectralMetadata>> matchingSpectra(
+    <P extends Peak, A extends AbstractSpectralAlignment> Iterable<Pair<SpectralSimilarity, Ms2ReferenceSpectrum>> matchingSpectra(
             Ms2Spectrum<P> spectrum,
             Deviation precursorMzDeviation,
             Deviation maxPeakDeviation,
             Class<A> alignmentType
     ) throws ChemicalDatabaseException;
 
-    <P extends Peak, A extends AbstractSpectralAlignment> Iterable<Pair<SpectralSimilarity, Ms2SpectralMetadata>> matchingSpectra(
+    <P extends Peak, A extends AbstractSpectralAlignment> Iterable<Pair<SpectralSimilarity, Ms2ReferenceSpectrum>> matchingSpectra(
             Ms2Spectrum<P> spectrum,
             Deviation precursorMzDeviation,
             Deviation maxPeakDeviation,
@@ -49,33 +46,17 @@ public interface SpectralLibrary {
             boolean parallel
     ) throws ChemicalDatabaseException;
 
-    Iterable<Ms2SpectralData> lookupSpectra(double precursorMz, Deviation deviation) throws ChemicalDatabaseException;
-
-    Iterable<Ms2SpectralMetadata> lookupSpectra(String inchiKey2d) throws ChemicalDatabaseException;
-
-    default Ms2SpectralMetadata getMetaData(Ms2SpectralData data) throws ChemicalDatabaseException {
-        return getMetaData(List.of(data)).iterator().next();
+    default Iterable<Ms2ReferenceSpectrum> lookupSpectra(double precursorMz, Deviation deviation) throws ChemicalDatabaseException {
+        return lookupSpectra(precursorMz, deviation, false);
     }
 
-    Iterable<Ms2SpectralMetadata> getMetaData(Iterable<Ms2SpectralData> data) throws ChemicalDatabaseException;
+    Iterable<Ms2ReferenceSpectrum> lookupSpectra(double precursorMz, Deviation deviation, boolean withData) throws ChemicalDatabaseException;
 
-    default Ms2SpectralData getSpectralData(Ms2SpectralMetadata metadata) throws ChemicalDatabaseException {
-        return getSpectralData(List.of(metadata)).iterator().next();
+    default Iterable<Ms2ReferenceSpectrum> lookupSpectra(String inchiKey2d) throws ChemicalDatabaseException {
+        return lookupSpectra(inchiKey2d, false);
     }
 
-    Iterable<Ms2SpectralData> getSpectralData(Iterable<Ms2SpectralMetadata> metadata) throws ChemicalDatabaseException;
-
-//    default Iterable<MutableMs2Spectrum> getSpectra(Iterable<Ms2SpectralData> data) throws ChemicalDatabaseException {
-//
-//    }
-/*    default Iterable<MutableMs2Spectrum> getSpectra(Iterable<Ms2SpectralMetadata> metadata) throws ChemicalDatabaseException {
-        Iterable<Ms2SpectralData> data = getSpectralData(metadata);
-        Iterator<Ms2SpectralData> dataIt = data.iterator();
-        metadata.forEach(m ->
-                new MutableMs2Spectrum(dataIt.next(),m.getPrecursorMz(),m.getCollisionEnergy(),m.getMsLevel())
-
-        );
-    }*/
+    Iterable<Ms2ReferenceSpectrum> lookupSpectra(String inchiKey2d, boolean withData) throws ChemicalDatabaseException;
 
 
 }
