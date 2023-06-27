@@ -19,7 +19,7 @@ stages:
 before_script:
   - rm /etc/apt/sources.list.d/zulu-openjdk.list
   - apt-get update
-  - apt-get -y install openssh-client unzip liblapack-dev curl
+  - apt-get -y install openssh-client unzip liblapack-dev curl git
   - dpkg-reconfigure -p critical ca-certificates
   - eval `ssh-agent -s`
   - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null # add ssh key
