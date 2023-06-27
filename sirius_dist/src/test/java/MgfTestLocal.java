@@ -32,12 +32,14 @@ public class MgfTestLocal {
         int table_feature = 2;
         String[] pre_formula = TestMethods.readCandidates(absPath + "sirius_cli/src/test/test_results/mgf_candidates/formula_candidates.tsv".replace("/", sep), rank_count, table_feature);
         String[] post_formula = TestMethods.readCandidates(temp_summary + "formula_candidates.tsv", rank_count, table_feature);
-
+        System.out.println(String.join(",", pre_formula));
+        System.out.println(String.join(",", post_formula));
         rank_count = 3;
         table_feature = 6;
         String[] pre_structure = TestMethods.readCandidates(absPath + "sirius_cli/src/test/test_results/mgf_candidates/structure_candidates.tsv".replace("/", sep), rank_count, table_feature);
         String[] post_structure = TestMethods.readCandidates(temp_summary + "structure_candidates.tsv", rank_count, table_feature);
-
+        System.out.println(String.join(",", pre_structure));
+        System.out.println(String.join(",", post_structure));
         assertArrayEquals(pre_formula, post_formula);
         assertArrayEquals(pre_structure, post_structure);
         System.out.println("MGF passed");
