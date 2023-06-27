@@ -349,6 +349,8 @@ subprojects {
             String temp_res_path = abs_path + 'sirius_frontend' + sep + 'sirius_cli' + sep + 'src' + sep + 'test' + sep + 'temp_results'
             String demo_path = abs_path + 'sirius_frontend' + sep + 'sirius_doc' + sep + 'manual' + sep + 'demo-data' + sep
 
+            delete(temp_res_path)
+
             mkdir temp_res_path
             mkdir temp_res_path + sep + 'mgf_temp_output'
             mkdir temp_res_path + sep + 'mgf_temp_summary'
@@ -413,6 +415,8 @@ subprojects {
             String temp_res_path = abs_path + 'sirius_frontend/sirius_cli/src/test/temp_results'
             String demo_path = abs_path + 'sirius_frontend/sirius_doc/manual/demo-data/'
             String sep = System.getProperty("file.separator")
+
+            delete(temp_res_path)
 
             mkdir temp_res_path
             mkdir temp_res_path + sep + 'mgf_temp_output'
