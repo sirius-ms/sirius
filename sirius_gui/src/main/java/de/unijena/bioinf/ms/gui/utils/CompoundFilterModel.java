@@ -20,7 +20,7 @@ package de.unijena.bioinf.ms.gui.utils;/*
 
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.lcms.LCMSCompoundSummary;
+import de.unijena.bioinf.lcms.quality.LCMSQualityCheck;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -140,7 +140,7 @@ public class CompoundFilterModel implements SiriusPCS {
         pcs.firePropertyChange("setElementFilter", oldValue, value);
     }
 
-    public void setPeakShapeQuality(LCMSCompoundSummary.Quality quality, boolean value) {
+    public void setPeakShapeQuality(LCMSQualityCheck.Quality quality, boolean value) {
         boolean oldValue = peakShapeQualities[quality.ordinal()];
         peakShapeQualities[quality.ordinal()] = value;
         pcs.firePropertyChange("setPeakShapeQuality", oldValue, value);
@@ -152,7 +152,7 @@ public class CompoundFilterModel implements SiriusPCS {
         pcs.firePropertyChange("setPeakShapeQuality", oldValue, value);
     }
 
-    public boolean getPeakShapeQuality(LCMSCompoundSummary.Quality quality) {
+    public boolean getPeakShapeQuality(LCMSQualityCheck.Quality quality) {
         return peakShapeQualities[quality.ordinal()];
     }
 

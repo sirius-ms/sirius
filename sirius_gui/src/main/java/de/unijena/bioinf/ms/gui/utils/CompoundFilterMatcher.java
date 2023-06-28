@@ -28,6 +28,7 @@ import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.elgordo.LipidSpecies;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.lcms.LCMSCompoundSummary;
+import de.unijena.bioinf.lcms.quality.LCMSQualityCheck;
 import de.unijena.bioinf.projectspace.CompoundContainer;
 import de.unijena.bioinf.projectspace.FormulaResult;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
@@ -97,7 +98,7 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
             final Optional<CoelutingTraceSet> tracesFor = lcmsPeakInformation.getTracesFor(k);
             if (tracesFor.isPresent()) {
                 final CoelutingTraceSet coelutingTraceSet = tracesFor.get();
-                LCMSCompoundSummary.Quality peakQuality = LCMSCompoundSummary.checkPeakQuality(coelutingTraceSet, coelutingTraceSet.getIonTrace());
+                LCMSQualityCheck.Quality peakQuality = LCMSCompoundSummary.checkPeakQuality(coelutingTraceSet, coelutingTraceSet.getIonTrace());
                 if (filterModel.getPeakShapeQuality(peakQuality)) {
                     return true;
                 }
