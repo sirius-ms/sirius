@@ -2,7 +2,7 @@ package de.unijena.bioinf.lcms;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import de.unijena.bioinf.ChemistryBase.math.Statistics;
+import de.unijena.bioinf.lcms.quality.LCMSQualityCheck;
 import gnu.trove.list.array.TFloatArrayList;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.PUBLIC_ONLY,getterVisibility = JsonAutoDetect.Visibility.NONE, setterVisibility = JsonAutoDetect.Visibility.NONE, creatorVisibility = JsonAutoDetect.Visibility.NONE)
@@ -119,28 +119,28 @@ public class InternalStatistics {
         float n = 0f;
         for (LCMSCompoundSummary sum : summaries) {
             n += 1f;
-            if (sum.adductQuality.compareTo(LCMSCompoundSummary.Quality.GOOD) >= 0) {
+            if (sum.getAdductQuality().compareTo(LCMSQualityCheck.Quality.GOOD) >= 0) {
                 ++adductGood;
             }
-            if (sum.adductQuality.compareTo(LCMSCompoundSummary.Quality.MEDIUM) >= 0) {
+            if (sum.getAdductQuality().compareTo(LCMSQualityCheck.Quality.MEDIUM) >= 0) {
                 ++adductMedium;
             }
-            if (sum.peakQuality.compareTo(LCMSCompoundSummary.Quality.GOOD) >= 0) {
+            if (sum.getPeakQuality().compareTo(LCMSQualityCheck.Quality.GOOD) >= 0) {
                 ++peakGood;
             }
-            if (sum.peakQuality.compareTo(LCMSCompoundSummary.Quality.MEDIUM) >= 0) {
+            if (sum.getPeakQuality().compareTo(LCMSQualityCheck.Quality.MEDIUM) >= 0) {
                 ++peakMedium;
             }
-            if (sum.isotopeQuality.compareTo(LCMSCompoundSummary.Quality.GOOD) >= 0) {
+            if (sum.getIsotopeQuality().compareTo(LCMSQualityCheck.Quality.GOOD) >= 0) {
                 ++isotopeGood;
             }
-            if (sum.isotopeQuality.compareTo(LCMSCompoundSummary.Quality.MEDIUM) >= 0) {
+            if (sum.getIsotopeQuality().compareTo(LCMSQualityCheck.Quality.MEDIUM) >= 0) {
                 ++isotopeMedium;
             }
-            if (sum.ms2Quality.compareTo(LCMSCompoundSummary.Quality.GOOD) >= 0) {
+            if (sum.getMs2Quality().compareTo(LCMSQualityCheck.Quality.GOOD) >= 0) {
                 ++ms2Good;
             }
-            if (sum.ms2Quality.compareTo(LCMSCompoundSummary.Quality.MEDIUM) >= 0) {
+            if (sum.getMs2Quality().compareTo(LCMSQualityCheck.Quality.MEDIUM) >= 0) {
                 ++ms2Medium;
             }
         }
