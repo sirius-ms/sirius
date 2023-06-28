@@ -32,6 +32,8 @@ import de.unijena.bioinf.ChemistryBase.ms.lcms.Trace;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import de.unijena.bioinf.lcms.ionidentity.AdductResolver;
+import de.unijena.bioinf.lcms.quality.LCMSQualityCheck;
+import de.unijena.bioinf.lcms.quality.LCMSQualityCheckResult;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -42,25 +44,41 @@ public class LCMSCompoundSummary {
     public IonTrace compoundTrace;
     public Ms2Experiment ms2Experiment;
 
-    public ArrayList<Check> peakCheck, isotopeCheck, adductCheck, ms2Check;
-    public Quality peakQuality, isotopeQuality, adductQuality, ms2Quality;
+    public LCMSQualityCheckResult peakQualityResult, isotopeQualityResult, adductQualityResult, ms2QualityResult;
 
     public LCMSCompoundSummary(CoelutingTraceSet traceSet, IonTrace compoundTrace, Ms2Experiment ms2Experiment) {
         this.traceSet = traceSet;
         this.compoundTrace = compoundTrace;
         this.ms2Experiment = ms2Experiment;
-        checkPeak();
-        checkIsotopes();
-        checkAdducts();
-        checkMs2();
+        this.peakQualityResult = checkPeak();
+        this.isotopeQualityResult = checkIsotopes();
+        this.adductQualityResult = checkAdducts();
+        this.ms2QualityResult = checkMs2();
     }
 
     public int points() {
-        return peakQuality.ordinal() + isotopeQuality.ordinal() + adductQuality.ordinal() + ms2Quality.ordinal();
+        return peakQualityResult.getQuality().ordinal() + isotopeQualityResult.getQuality().ordinal() + adductQualityResult.getQuality().ordinal() + ms2QualityResult.getQuality().ordinal();
     }
 
-    private void checkAdducts() {
-        adductCheck = new ArrayList<>();
+    public LCMSQualityCheck.Quality getPeakQuality() {
+        return peakQualityResult.getQuality();
+    }
+
+    public LCMSQualityCheck.Quality getIsotopeQuality() {
+        return isotopeQualityResult.getQuality();
+    }
+
+    public LCMSQualityCheck.Quality getAdductQuality() {
+        return adductQualityResult.getQuality();
+    }
+
+    public LCMSQualityCheck.Quality getMs2Quality() {
+        return ms2QualityResult.getQuality();
+    }
+
+    private LCMSQualityCheckResult checkAdducts() {
+        List<LCMSQualityCheck> adductCheck = new ArrayList<>();
+        LCMSQualityCheck.Quality adductQuality;
         HashSet<PrecursorIonType> possibleIonTypes;
         possibleIonTypes = new HashSet<>(ms2Experiment.getAnnotationOrDefault(AdductSettings.class).getDetectable(ms2Experiment.getPrecursorIonType().getCharge()));
         possibleIonTypes = new HashSet<>(Arrays.asList(
@@ -96,6 +114,9 @@ public class LCMSCompoundSummary {
         possibleIonTypes.removeIf(x->x.getCharge() != ms2Experiment.getPrecursorIonType().getCharge());
 
 
+        LCMSQualityCheck.QualityCategory category = LCMSQualityCheck.QualityCategory.ADDUCTS;
+        String identifier;
+
         final double ionmz = compoundTrace.getMonoisotopicPeak().getApexMass();
         final AdductResolver resolver = new AdductResolver(ionmz, possibleIonTypes);
 //        System.out.println(possibleIonTypes);
@@ -104,20 +125,34 @@ public class LCMSCompoundSummary {
             resolver.addAdduct(adducts[i].getMonoisotopicPeak().getApexMass(), adducts[i].getCorrelationScores().length > 0 ? adducts[i].getCorrelationScores()[0] : 1e-3);
         }
         final List<AdductResolver.AdductAssignment> assignments = resolver.getAssignments();
+
+
+        identifier = "adductAssignment";
+        LCMSQualityCheck.ParameterValue numberOfAdductsParameter = new LCMSQualityCheck.ParameterValue(assignments.size(), "numberOfAdducts", "Number of possible adducts detected based on correlating features.");
         if (assignments.size()==0) {
-            adductCheck.add(new Check(Quality.MEDIUM, "No adducts found."));
-            adductQuality=Quality.MEDIUM;
-            return;
+            adductCheck.add(new LCMSQualityCheck(LCMSQualityCheck.Quality.MEDIUM, category, identifier,
+                    "No adducts found.",
+                    //additional parameters not used for string formatting
+                    numberOfAdductsParameter
+                    ));
+            adductQuality = LCMSQualityCheck.Quality.MEDIUM;
+            return new LCMSQualityCheckResult(adductCheck, adductQuality);
         }
         final AdductResolver.AdductAssignment bestAss = assignments.get(0);
+        LCMSQualityCheck.ParameterValue bestAssParameter = new LCMSQualityCheck.ParameterValue(bestAss.ionType.toString(), "bestAdduct", "Best adduct assignement.");
+        LCMSQualityCheck.ParameterValue supportedIonsParameter = new LCMSQualityCheck.ParameterValue(bestAss.supportedIons, "supportedIons", "Number of correlated ions that support this adduct.");
+        LCMSQualityCheck.ParameterValue probabilityParameter = new LCMSQualityCheck.ParameterValue(bestAss.probability, "probability", "Probability of adduct assignemnt.");
+
         if (assignments.size()==1) {
-            if (bestAss.probability>=0.9 || bestAss.supportedIons>=3) {
-                adductCheck.add(new Check(Quality.GOOD, "Adduct assignment is unambigous: Ion is annotated as " + bestAss.ionType + " with " + bestAss.supportedIons + " correlated ions and probability " + String.format(Locale.US, "%.2f", bestAss.probability)));
-            } else {
-                adductCheck.add(new Check(Quality.GOOD, "Adduct assignment is unambigous, but support is not strong. Ion is annotated as " + bestAss.ionType + " with " + bestAss.supportedIons + " correlated ions and probability " + String.format(Locale.US, "%.2f", bestAss.probability)));
-            }
-        }
-        if (assignments.size()>1) {
+            boolean strongSupport = (bestAss.probability>=0.9 || bestAss.supportedIons>=3);
+            adductCheck.add(new LCMSQualityCheck(LCMSQualityCheck.Quality.GOOD, category, identifier,
+                    "Adduct assignment is unambigous " + (strongSupport ? ":": ", but support is not strong.") + " Ion is annotated as %s with %s correlated ions and probability %.2f",
+                    //for string format
+                    bestAssParameter, supportedIonsParameter, probabilityParameter,
+                    //additional parameters not used for string formatting
+                    numberOfAdductsParameter
+            ));
+        } else if (assignments.size()>1) {
             StringBuilder alternativeAssignments = new StringBuilder();
             alternativeAssignments.append(". Alternative assignments are ");
             for (int j=1; j < assignments.size(); ++j) {
@@ -128,47 +163,82 @@ public class LCMSCompoundSummary {
                     alternativeAssignments.append(".");
                 }
             }
+            LCMSQualityCheck.ParameterValue alternativeAdductsParameter = new LCMSQualityCheck.ParameterValue(alternativeAssignments, "alternativeAdducts", "Alternative adduct assignments and their probabilities");
+
+            String formatTextPrefix;
+            LCMSQualityCheck.Quality quality;
             if (bestAss.probability>=0.9) {
-                adductCheck.add(new Check(Quality.GOOD, "Adduct assignment is ambigous, but " + bestAss.ionType + " has strong support with " + bestAss.supportedIons + " correlated ions and probability " + String.format(Locale.US, "%.2f", bestAss.probability) + alternativeAssignments));
+                formatTextPrefix = "Adduct assignment is ambigous, but %s has strong support";
+                quality = LCMSQualityCheck.Quality.GOOD;
             } else if (bestAss.probability>0.5) {
-                adductCheck.add(new Check(Quality.MEDIUM, "Adduct assignment is ambigous, but " + bestAss.ionType + " has good support with " + bestAss.supportedIons + " correlated ions and probability " + String.format(Locale.US, "%.2f", bestAss.probability) + alternativeAssignments));
+                formatTextPrefix = "Adduct assignment is ambigous, but %s has good support";
+                quality = LCMSQualityCheck.Quality.MEDIUM;
             } else {
-                adductCheck.add(new Check(Quality.LOW, "Adduct assignment is ambigous. Best assignment is " + bestAss.ionType + " with " + bestAss.supportedIons + " correlated ions and probability " + String.format(Locale.US, "%.2f", bestAss.probability) + alternativeAssignments));
+                formatTextPrefix = "Adduct assignment is ambigous. Best assignment is %s";
+                quality = LCMSQualityCheck.Quality.LOW;
             }
+            String formatTextDetails = " with %s correlated ions and probability %.2f. Alternative assignments are %s";
+            adductCheck.add(new LCMSQualityCheck(quality, category, identifier,
+                    formatTextPrefix + formatTextDetails,
+                    //for string format
+                    bestAssParameter, supportedIonsParameter, probabilityParameter, alternativeAdductsParameter,
+                    //additional parameters not used for string formatting
+                    numberOfAdductsParameter
+            ));
         }
+
+
+        identifier = "adductAssignmentMassDeltaInterpretationDetails";
+        LCMSQualityCheck.ParameterValue massDeltaParameter = new LCMSQualityCheck.ParameterValue(null, "massDelta", "Mass difference between the ion feature and the supporting ion.");
+        LCMSQualityCheck.ParameterValue adductRelationParameter = new LCMSQualityCheck.ParameterValue(null, "adductRelation", "The adduct explanations of the ion feature and the supporting ion.");
         for (int j=0; j < bestAss.supportedIonTypes.length; ++j) {
-            adductCheck.add(new Check(Quality.GOOD, "Mass delta " + (bestAss.supportedIonMzs[j]-ionmz) + " can be interpreted as " + bestAss.ionType + " -> " + bestAss.supportedIonTypes[j]));
+            adductCheck.add(new LCMSQualityCheck(LCMSQualityCheck.Quality.GOOD, category, identifier,
+                    "Mass delta %f can be interpreted as %s",
+                    //for string format
+                    massDeltaParameter.withValue(bestAss.supportedIonMzs[j]-ionmz), adductRelationParameter.withValue(bestAss.ionType + " -> " + bestAss.supportedIonTypes[j])
+            ));
         }
+
         for (int i=1; i < assignments.size(); ++i) {
             for (int j = 0; j < assignments.get(i).supportedIonTypes.length; ++j) {
-                adductCheck.add(new Check(Quality.LOW, "Mass delta " + (assignments.get(i).supportedIonMzs[j] - ionmz) + " can be interpreted as " + assignments.get(i).ionType + " -> " + assignments.get(i).supportedIonTypes[j]));
+                adductCheck.add(new LCMSQualityCheck(LCMSQualityCheck.Quality.LOW, category, identifier,
+                        "Mass delta %f can be interpreted as %s",
+                        //for string format
+                        massDeltaParameter.withValue(assignments.get(i).supportedIonMzs[j] - ionmz),
+                        adductRelationParameter.withValue(assignments.get(i).ionType + " -> " + assignments.get(i).supportedIonTypes[j])
+                ));
             }
         }
-        adductCheck.add(new Check(traceSet.getIonTrace().getAdducts().length>2 ? Quality.GOOD : Quality.MEDIUM, "Adduct mass deltas are: " + Arrays.stream(traceSet.getIonTrace().getAdducts()).map(x->String.format(Locale.US, "%.3f", x.getMonoisotopicPeak().getApexMass()-ionmz)).collect(Collectors.joining(", "))));
-        adductQuality = adductCheck.get(0).quality;
+
+        identifier = "adductMassDeltas";
+        double[] massDeltas = Arrays.stream(traceSet.getIonTrace().getAdducts()).mapToDouble(x -> x.getMonoisotopicPeak().getApexMass()-ionmz).toArray();
+        String massDeltaString = Arrays.stream(massDeltas).mapToObj(x->String.format(Locale.US, "%.3f", x)).collect(Collectors.joining(", "));
+        adductCheck.add(new LCMSQualityCheck(
+                traceSet.getIonTrace().getAdducts().length>2 ? LCMSQualityCheck.Quality.GOOD : LCMSQualityCheck.Quality.MEDIUM, category, identifier,
+                "Adduct mass deltas are: " + massDeltaString, //preformatted string
+                //additional parameters not used for string formatting
+                new LCMSQualityCheck.ParameterValue(massDeltas, "massDeltas", "mass differences of correlating ions")
+        ));
+        adductQuality = adductCheck.get(0).getQuality();
+
+        return new LCMSQualityCheckResult(adductCheck, adductQuality);
     }
 
-    private void checkMs2() {
-        CheckResult result = new Ms2Checker(ms2Experiment).performCheck();
-        ms2Check = result.checks;
-        ms2Quality = result.quality;
+    private LCMSQualityCheckResult checkMs2() {
+        return new Ms2Checker(ms2Experiment).performCheck();
     }
 
-    private void checkIsotopes() {
-        CheckResult result = new IsotopesChecker(traceSet, compoundTrace).performCheck();
-        isotopeCheck = result.checks;
-        isotopeQuality = result.quality;
+    private LCMSQualityCheckResult checkIsotopes() {
+        return new IsotopesChecker(traceSet, compoundTrace).performCheck();
     }
 
-    private void checkPeak() {
-        CheckResult result = new PeakChecker(traceSet, compoundTrace).performCheck();
-        peakCheck = result.checks;
-        peakQuality = result.quality;
+    private LCMSQualityCheckResult checkPeak() {
+        return new PeakChecker(traceSet, compoundTrace).performCheck();
     }
 
-    public static Quality checkPeakQuality(CoelutingTraceSet traceSet, IonTrace compoundTrace){
-        CheckResult result = new PeakChecker(traceSet, compoundTrace).performCheck();
-        return  result.quality;
+    public static LCMSQualityCheck.Quality checkPeakQuality(CoelutingTraceSet traceSet, IonTrace compoundTrace){
+        LCMSQualityCheckResult result = new PeakChecker(traceSet, compoundTrace).performCheck();
+        return  result.getQuality();
     }
 
 
@@ -180,8 +250,8 @@ public class LCMSCompoundSummary {
         }
 
         @Override
-        public CheckResult performCheck() {
-            ArrayList<Check> ms2Check=new ArrayList<>();
+        public LCMSQualityCheckResult performCheck() {
+            ArrayList<LCMSQualityCheck> ms2Check=new ArrayList<>();
             if (ms2Experiment!=null) {
                 final MassToFormulaDecomposer mfd = new MassToFormulaDecomposer(
                         new ChemicalAlphabet(MolecularFormula.parseOrThrow("CHNOPS").elementArray())
@@ -223,54 +293,78 @@ public class LCMSCompoundSummary {
 
                 int score = 0;
 
+                LCMSQualityCheck.QualityCategory category = LCMSQualityCheck.QualityCategory.MSMS;
+                String identifier;
+
+                identifier = "msMsNumDecomposablePeaks";
+                LCMSQualityCheck.ParameterValue npeaksParameter = new LCMSQualityCheck.ParameterValue<>(npeaks, "numberOfPeaks", "Number of decomposable peaks.");
+                LCMSQualityCheck.Quality decompQuality;
                 if (npeaks >= 20) {
-                    ms2Check.add(new Check(
-                            Quality.GOOD, "Ms/Ms has " + npeaks + " decomposable peaks."
-                    ));
+                    decompQuality = LCMSQualityCheck.Quality.GOOD;
                     score += 5;
                 } else if (npeaks >= 10) {
-                    ms2Check.add(new Check(
-                            Quality.MEDIUM, "Ms/Ms has " + npeaks + " decomposable peaks."
-                    ));
+                    decompQuality = LCMSQualityCheck.Quality.MEDIUM;
                     score += 3;
                 } else {
-                    ms2Check.add(new Check(
-                            Quality.LOW, "Ms/Ms has only " + npeaks + " decomposable peaks."
-                    ));
+                    decompQuality = LCMSQualityCheck.Quality.LOW;
                     score += 1;
                 }
+                ms2Check.add(new LCMSQualityCheck(
+                        decompQuality, category, identifier,
+                        "Ms/Ms has " + (decompQuality== LCMSQualityCheck.Quality.LOW?"only ":"") + "%d decomposable peaks.",
+                        //for string format
+                        npeaksParameter
+                        //additional parameters not used for string formatting
+                ));
 
+                identifier = "msMsNumIntensiveDecomposablePeaks";
+                LCMSQualityCheck.ParameterValue nIntensivePeaksParameter = new LCMSQualityCheck.ParameterValue<>(nIntensivePeaks, "numberOfIntensivePeaks", "Number of decomposable peaks above noise threshold.");
+                LCMSQualityCheck.Quality numPeaksQuality;
                 if (nIntensivePeaks >= 6) {
-                    ms2Check.add(new Check(
-                            Quality.GOOD, "Ms/Ms has " + nIntensivePeaks + (noiseModel.isPresent() ? " peaks above the noise level." : " peaks with relative intensity above 3%.")
-                    ));
+                    numPeaksQuality = LCMSQualityCheck.Quality.GOOD;
                     score += 3;
                 } else if (nIntensivePeaks >= 3) {
-                    ms2Check.add(new Check(
-                            Quality.MEDIUM, "Ms/Ms has " + nIntensivePeaks + (noiseModel.isPresent() ? " peaks above the noise level." : " peaks with relative intensity above 3%.")
-                    ));
+                    numPeaksQuality = LCMSQualityCheck.Quality.MEDIUM;
                     score += 2;
                 } else {
-                    ms2Check.add(new Check(
-                            Quality.LOW, "Ms/Ms has " + (nIntensivePeaks == 0 ? "no" : (nIntensivePeaks==1) ? "only one" : "only " + nIntensivePeaks) + (noiseModel.isPresent() ? " peaks above the noise level." : " peaks with relative intensity above 3%.")
-                    ));
+                    numPeaksQuality = LCMSQualityCheck.Quality.LOW;
                     score += 1;
                 }
+
+                ms2Check.add(new LCMSQualityCheck(
+                        numPeaksQuality, category, identifier,
+                        "Ms/Ms has " + (nIntensivePeaks == 0 ? "no" : (nIntensivePeaks==1) ? "only one" : (nIntensivePeaks<3) ? "only %d" : "%d") +
+                                (noiseModel.isPresent() ? " peaks above the noise level." : " peaks with relative intensity above 3%%."),
+                        //for string format
+                        nIntensivePeaksParameter
+                        //additional parameters not used for string formatting
+                ));
+
+                identifier = "msMsNumCollisionEnergies";
+                LCMSQualityCheck.ParameterValue numberOfCEsParameter = new LCMSQualityCheck.ParameterValue<>(ces.size(), "numberOfCEs", "Number of different collision energies the compound was measured at.");
                 if (ces.size()>1) {
-                    ms2Check.add(new Check(
-                            Quality.GOOD, "Ms/Ms has " + ces.size() + " different collision energies."
+                    ms2Check.add(new LCMSQualityCheck(
+                            LCMSQualityCheck.Quality.GOOD, category, identifier,
+                            "Ms/Ms has %d different collision energies.",
+                            //for string format
+                            numberOfCEsParameter
+                            //additional parameters not used for string formatting
                     ));
                     score += 3;
                 } else {
-                    ms2Check.add(new Check(
-                            Quality.LOW, "Ms/Ms was only recorded at a single collision energy."
+                    ms2Check.add(new LCMSQualityCheck(
+                            LCMSQualityCheck.Quality.LOW, category, identifier,
+                            "Ms/Ms was only recorded at a single collision energy.",
+                            //for string format
+                            numberOfCEsParameter
+                            //additional parameters not used for string formatting
                     ));
                 }
-                Quality ms2Quality = (score >= 6) ? Quality.GOOD : (score >= 3 ? Quality.MEDIUM : Quality.LOW);
 
-                return new CheckResult(ms2Check, ms2Quality);
+                LCMSQualityCheck.Quality ms2Quality = (score >= 6) ? LCMSQualityCheck.Quality.GOOD : (score >= 3 ? LCMSQualityCheck.Quality.MEDIUM : LCMSQualityCheck.Quality.LOW);
+                return new LCMSQualityCheckResult(ms2Check, ms2Quality);
             } else {
-                return new CheckResult(ms2Check, null);
+                return new LCMSQualityCheckResult(ms2Check, null);
             }
         }
     }
@@ -285,28 +379,45 @@ public class LCMSCompoundSummary {
         }
 
         @Override
-        public CheckResult performCheck() {
-            ArrayList<Check> isotopeCheck = new ArrayList<>();
-            Quality isotopeQuality = null;
+        public LCMSQualityCheckResult performCheck() {
+            ArrayList<LCMSQualityCheck> isotopeCheck = new ArrayList<>();
+            LCMSQualityCheck.Quality isotopeQuality = null;
+
+            LCMSQualityCheck.QualityCategory category = LCMSQualityCheck.QualityCategory.ISOTOPE;
+            String identifier;
 
             // check number if isotope peaks
+            identifier = "isotopeNumIsotopes";
+            LCMSQualityCheck.ParameterValue numberOfIsotopesParameter = new LCMSQualityCheck.ParameterValue<>(compoundTrace.getIsotopes().length, "numberOfIsotopes", "Number of isotope peaks including monoisotopic.");
             if (compoundTrace.getIsotopes().length>=3) {
-                isotopeQuality=Quality.GOOD;
-                isotopeCheck.add(new Check(
-                        Quality.GOOD, "Has " + compoundTrace.getIsotopes().length + " isotope peaks."
+                isotopeQuality= LCMSQualityCheck.Quality.GOOD;
+                isotopeCheck.add(new LCMSQualityCheck(
+                        LCMSQualityCheck.Quality.GOOD, category, identifier,
+                        "Has %d isotope peaks.",
+                        //for string format
+                        numberOfIsotopesParameter
+                        //additional parameters not used for string formatting
                 ));
 
             } else if (compoundTrace.getIsotopes().length>=2) {
-                isotopeQuality=Quality.MEDIUM;
-                isotopeCheck.add(new Check(
-                        Quality.MEDIUM, "Has two isotope peaks."
+                isotopeQuality= LCMSQualityCheck.Quality.MEDIUM;
+                isotopeCheck.add(new LCMSQualityCheck(
+                        LCMSQualityCheck.Quality.MEDIUM, category, identifier,
+                        "Has two isotope peaks.",
+                        //for string format
+                        //additional parameters not used for string formatting
+                        numberOfIsotopesParameter
                 ));
             } else {
-                isotopeCheck.add(new Check(
-                        Quality.LOW, "Has no isotope peaks besides the monoisotopic peak."
+                isotopeCheck.add(new LCMSQualityCheck(
+                        LCMSQualityCheck.Quality.LOW, category, identifier,
+                        "Has no isotope peaks besides the monoisotopic peak.",
+                        //for string format
+                        //additional parameters not used for string formatting
+                        numberOfIsotopesParameter
                 ));
-                isotopeQuality = Quality.LOW;
-                return new CheckResult(isotopeCheck, isotopeQuality);
+                isotopeQuality = LCMSQualityCheck.Quality.LOW;
+                return new LCMSQualityCheckResult(isotopeCheck, isotopeQuality);
             }
 
             int goodIsotopePeaks = 0;
@@ -325,8 +436,9 @@ public class LCMSCompoundSummary {
                         if (t.getIntensities()[i] <  traceSet.getNoiseLevels()[i+t.getIndexOffset()]) {
                             continue eachPeak;
                         } else {
-                            isotopeCheck.add(new Check(
-                                    Quality.LOW, "The isotope peak is found at retention times outside of the monoisotopic peak"
+                            isotopeCheck.add(new LCMSQualityCheck(
+                                    LCMSQualityCheck.Quality.LOW, category, "isotopeRetentionTimeShift",
+                                    "The isotope peak is found at retention times outside of the monoisotopic peak"
                             ));
                             break checkIsotopes;
                         }
@@ -341,20 +453,31 @@ public class LCMSCompoundSummary {
                 correlation = Statistics.pearson(main, iso);
                 // we also use our isotope scoring
                 final double intensityScore = scoreIso(main, iso);
-                Quality quality;
-                if (correlation>=0.99 || intensityScore>=5) quality=Quality.GOOD;
-                else if (correlation>=0.95 || intensityScore>=0) quality=Quality.MEDIUM;
-                else quality = Quality.LOW;
+                LCMSQualityCheck.Quality quality;
+                if (correlation>=0.99 || intensityScore>=5) quality= LCMSQualityCheck.Quality.GOOD;
+                else if (correlation>=0.95 || intensityScore>=0) quality= LCMSQualityCheck.Quality.MEDIUM;
+                else quality = LCMSQualityCheck.Quality.LOW;
 
-                isotopeCheck.add(new Check(quality, String.format(Locale.US, "%s isotope peak has a correlation of %.2f. The isotope score is %.3f.", getNumWord(k), correlation, intensityScore)));
-                if (quality==Quality.GOOD) ++goodIsotopePeaks;
+                LCMSQualityCheck.ParameterValue isotopeIndexParameter = new LCMSQualityCheck.ParameterValue<>(k, "isotopeIndex", "Index of the isotope peak.");
+                LCMSQualityCheck.ParameterValue correlationParameter = new LCMSQualityCheck.ParameterValue<>(correlation, "correlation", "Correlation to monoisotopic peak.");
+                LCMSQualityCheck.ParameterValue intensityScoreParameter = new LCMSQualityCheck.ParameterValue<>(intensityScore, "isotopeScore", "Isotope intensity score.");
+                isotopeCheck.add(new LCMSQualityCheck(
+                        quality, LCMSQualityCheck.QualityCategory.ISOTOPE, "isotopeCorrelation",
+                        getNumWord(k)+" isotope peak has a correlation of %.2f. The isotope score is %.3f.",
+                        //for string format
+                        correlationParameter, intensityScoreParameter,
+                        //additional parameters not used for string formatting
+                        isotopeIndexParameter
+                ));
+
+                if (quality== LCMSQualityCheck.Quality.GOOD) ++goodIsotopePeaks;
             }
 
             if (goodIsotopePeaks>=2) {
-                isotopeQuality = Quality.GOOD;
+                isotopeQuality = LCMSQualityCheck.Quality.GOOD;
             }
 
-            return new CheckResult(isotopeCheck, isotopeQuality);
+            return new LCMSQualityCheckResult(isotopeCheck, isotopeQuality);
         }
 
         private String[] words = new String[]{
@@ -406,8 +529,8 @@ public class LCMSCompoundSummary {
 
 
         @Override
-        public CheckResult performCheck() {
-            ArrayList<Check> peakCheck = new ArrayList<>();
+        public LCMSQualityCheckResult performCheck() {
+            ArrayList<LCMSQualityCheck> peakCheck = new ArrayList<>();
             final Trace t = compoundTrace.getMonoisotopicPeak();
 
             // has a clearly defined apex
@@ -432,20 +555,31 @@ public class LCMSCompoundSummary {
             double stp = Math.max(t.getLeftEdgeIntensity(),t.getRightEdgeIntensity());
             double peak = t.getApexIntensity() - stp;
 
+            LCMSQualityCheck.QualityCategory category = LCMSQualityCheck.QualityCategory.ISOTOPE;
+            String identifier;
+
+            identifier = "chromPeakApex";
+            //todo don't know if/how to include @{ParameterValue}s
             if (l==0) {
                 double m = peak/stp;
                 if (m > 8) {
-                    peakCheck.add(new Check(Quality.GOOD, "The chromatographic peak has clearly defined apex."));
+                    peakCheck.add(new LCMSQualityCheck(LCMSQualityCheck.Quality.GOOD, category, identifier,
+                            "The chromatographic peak has clearly defined apex."));
                 } else if (m > 4) {
-                    peakCheck.add(new Check(Quality.MEDIUM, "The apex of the chromatographic peak has a low slope."));
-                } else peakCheck.add(new Check(Quality.LOW, "The chromatographic peak has no clearly defined apex."));
+                    peakCheck.add(new LCMSQualityCheck(LCMSQualityCheck.Quality.MEDIUM, category, identifier,
+                            "The apex of the chromatographic peak has a low slope."));
+                } else peakCheck.add(new LCMSQualityCheck(LCMSQualityCheck.Quality.LOW, category, identifier,
+                        "The chromatographic peak has no clearly defined apex."));
 
             } else {
                 if (peak > 10*v2) {
-                    peakCheck.add(new Check(Quality.GOOD, "The chromatographic peak has clearly defined apex."));
+                    peakCheck.add(new LCMSQualityCheck(LCMSQualityCheck.Quality.GOOD, category, identifier,
+                            "The chromatographic peak has clearly defined apex."));
                 } else if (peak > 5*v2) {
-                    peakCheck.add(new Check(Quality.MEDIUM, "The apex of the chromatographic peak has a low intensity compared to the variance of the surrounding peaks."));
-                } else peakCheck.add(new Check(Quality.LOW, "The chromatographic peak has no clearly defined apex."));
+                    peakCheck.add(new LCMSQualityCheck(LCMSQualityCheck.Quality.MEDIUM, category, identifier,
+                            "The apex of the chromatographic peak has a low intensity compared to the variance of the surrounding peaks."));
+                } else peakCheck.add(new LCMSQualityCheck(LCMSQualityCheck.Quality.LOW, category, identifier,
+                        "The chromatographic peak has no clearly defined apex."));
             }
 
             // has a clearly defined start point
@@ -493,93 +627,84 @@ public class LCMSCompoundSummary {
             leftNeighbour &= slopeLeft;
             rightNeighbour &= slopeRight;
 
+            identifier = "chromPeakStartEnd";
             if (relativeBegin&&absoluteBegin && (relativeEnd&&absoluteEnd || clearlyRelativeEnd)) {
-                peakCheck.add(new Check(Quality.GOOD, "The chromatographic peak has clearly defined start and end points."));
+                peakCheck.add(new LCMSQualityCheck(LCMSQualityCheck.Quality.GOOD, category, identifier,
+                        "The chromatographic peak has clearly defined start and end points."));
             } else {
                 if (relativeBegin&&(absoluteBegin||leftNeighbour)) {
-                    peakCheck.add(new Check(Quality.GOOD, "The chromatographic peak has clearly defined start points."));
+                    peakCheck.add(new LCMSQualityCheck(LCMSQualityCheck.Quality.GOOD, category, identifier,
+                            "The chromatographic peak has clearly defined start points."));
                 } else if (relativeBegin) {
-                    peakCheck.add(new Check(Quality.MEDIUM, "The chromatographic peak starts way above the noise level."));
+                    peakCheck.add(new LCMSQualityCheck(LCMSQualityCheck.Quality.MEDIUM, category, identifier,
+                            "The chromatographic peak starts way above the noise level."));
                 } else if (absoluteBegin) {
-                    peakCheck.add(new Check(Quality.MEDIUM, "The left side of the chromatographic peak is close to noise level"));
+                    peakCheck.add(new LCMSQualityCheck(LCMSQualityCheck.Quality.MEDIUM, category, identifier,
+                            "The left side of the chromatographic peak is close to noise level"));
                 } else if (leftNeighbour) {
-                    peakCheck.add(new Check(Quality.MEDIUM, "The left edge of the chromatographic peak is clearly separated from its left neighbour peak"));
+                    peakCheck.add(new LCMSQualityCheck(LCMSQualityCheck.Quality.MEDIUM, category, identifier,
+                            "The left edge of the chromatographic peak is clearly separated from its left neighbour peak"));
                 } else if (!reallyBadLeft) {
-                    peakCheck.add(new Check(Quality.MEDIUM, "The left edge of the chromatographic peak is not clearly defined."));
+                    peakCheck.add(new LCMSQualityCheck(LCMSQualityCheck.Quality.MEDIUM, category, identifier,
+                            "The left edge of the chromatographic peak is not clearly defined."));
                 } else {
-                    peakCheck.add(new Check(Quality.LOW, "The left edge of the chromatographic peak is not well defined."));
+                    peakCheck.add(new LCMSQualityCheck(LCMSQualityCheck.Quality.LOW, category, identifier,
+                            "The left edge of the chromatographic peak is not well defined."));
                 }
                 if (relativeEnd&&(absoluteEnd||rightNeighbour)) {
-                    peakCheck.add(new Check(Quality.GOOD, "The chromatographic peak has clearly defined end points."));
+                    peakCheck.add(new LCMSQualityCheck(LCMSQualityCheck.Quality.GOOD, category, identifier,
+                            "The chromatographic peak has clearly defined end points."));
                 } else if (relativeEnd) {
-                    peakCheck.add(new Check(Quality.MEDIUM, "The chromatographic peak ends way above the noise level."));
+                    peakCheck.add(new LCMSQualityCheck(LCMSQualityCheck.Quality.MEDIUM, category, identifier,
+                            "The chromatographic peak ends way above the noise level."));
                 } else if (absoluteEnd) {
-                    peakCheck.add(new Check(Quality.MEDIUM, "The right side of the chromatographic peak is close to noise level"));
+                    peakCheck.add(new LCMSQualityCheck(LCMSQualityCheck.Quality.MEDIUM, category, identifier,
+                            "The right side of the chromatographic peak is close to noise level"));
                 } else if (rightNeighbour) {
-                    peakCheck.add(new Check(Quality.MEDIUM, "The right edge of the chromatographic peak is clearly separated from its right neighbour peak"));
+                    peakCheck.add(new LCMSQualityCheck(LCMSQualityCheck.Quality.MEDIUM, category, identifier,
+                            "The right edge of the chromatographic peak is clearly separated from its right neighbour peak"));
                 } else if (!reallyBadRight) {
-                    peakCheck.add(new Check(Quality.MEDIUM, "The right edge of the chromatographic peak is not clearly defined."));
+                    peakCheck.add(new LCMSQualityCheck(LCMSQualityCheck.Quality.MEDIUM, category, identifier,
+                            "The right edge of the chromatographic peak is not clearly defined."));
                 }  else {
-                    peakCheck.add(new Check(Quality.LOW, "The right edge of the chromatographic peak is not well defined."));
+                    peakCheck.add(new LCMSQualityCheck(LCMSQualityCheck.Quality.LOW, category, identifier,
+                            "The right edge of the chromatographic peak is not well defined."));
                 }
 
 
             }
 
             // check number of data points
+            identifier = "chromPeakNumDataPoints";
+            LCMSQualityCheck.ParameterValue numDataPointParameter = new LCMSQualityCheck.ParameterValue(t.getDetectedFeatureLength(), "numberOfDataPoints", "Number of data points available for the chromatographic peak.");
+            LCMSQualityCheck.Quality datapointQualitiy;
             if (t.getDetectedFeatureLength() >= 8) {
-                peakCheck.add(new Check(Quality.GOOD, "The chromatographic peak consists of " + t.getDetectedFeatureLength() + " data points"));
+                datapointQualitiy = LCMSQualityCheck.Quality.GOOD;
             } else if (t.getDetectedFeatureLength() >= 4) {
-                peakCheck.add(new Check(Quality.MEDIUM, "The chromatographic peak consists of " + t.getDetectedFeatureLength() + " data points"));
-            } else peakCheck.add(new Check(Quality.LOW, "The chromatographic peak has only " + t.getDetectedFeatureLength() + " data points"));
+                datapointQualitiy = LCMSQualityCheck.Quality.MEDIUM;
+            } else{
+                datapointQualitiy = LCMSQualityCheck.Quality.LOW;
+            }
+            peakCheck.add(new LCMSQualityCheck(LCMSQualityCheck.Quality.GOOD, category, identifier,
+                    "The chromatographic peak consists of" + (datapointQualitiy== LCMSQualityCheck.Quality.LOW ? " only" : " ") + " %d data points",
+                    numDataPointParameter
+            ));
 
             // check peak slope
 
-            Quality quality = Quality.GOOD;
-            for (Check c : peakCheck) {
-                if (c.quality.ordinal() < quality.ordinal()) {
-                    quality = c.quality;
+            LCMSQualityCheck.Quality quality = LCMSQualityCheck.Quality.GOOD;
+            for (LCMSQualityCheck c : peakCheck) {
+                if (c.getQuality().ordinal() < quality.ordinal()) {
+                    quality = c.getQuality();
                 }
             }
 
-            return new CheckResult(peakCheck, quality);
+            return new LCMSQualityCheckResult(peakCheck, quality);
         }
     }
 
-
-    public static enum Quality {
-        LOW, MEDIUM, GOOD;
-    }
-
-    public static class Check {
-        private final Quality quality;
-        private final String description;
-
-        public Check(Quality quality, String description) {
-            this.quality = quality;
-            this.description = description;
-        }
-
-        public Quality getQuality() {
-            return quality;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-    }
-
-    public static class CheckResult {
-        private final ArrayList<Check> checks;
-        private final Quality quality;
-
-        public CheckResult(ArrayList<Check> checks, Quality quality) {
-            this.checks = checks;
-            this.quality = quality;
-        }
-    }
 
     protected interface Checker {
-        public CheckResult performCheck();
+        public LCMSQualityCheckResult performCheck();
     }
 }
