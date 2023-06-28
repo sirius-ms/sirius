@@ -64,6 +64,11 @@ public class CompoundId {
     protected EnumSet<CompoundQuality.CompoundQualityFlag> qualityFlags;
     //todo we will add an additional MSQuality Object with many different quality checks produced by LCMS Compound// Summary.
 
+    /**
+     * LCMS feature-based quality information as also provided in the LCMS-view in the GUI
+     */
+    protected LCMSFeatureSummaryQualityData lcmsCompoundSummaryQualityData;
+
     //todo handle computing flag
     protected boolean computing = false;
 
