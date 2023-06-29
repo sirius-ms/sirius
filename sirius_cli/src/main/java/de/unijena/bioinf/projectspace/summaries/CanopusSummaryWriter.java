@@ -176,7 +176,7 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
                 preForms.add(cid.getPrecursorFormula());
             });
             ++i;
-        } while (i < results.size() && (results.get(i).getScoreObject().compareTo(hit.getScoreObject()) >= 0 || all));
+        } while (i < results.size() && (results.get(i).getCandidate().getId().getPrecursorFormula().equals(results.get(0).getCandidate().getId().getPrecursorFormula()) || all));
         if (cfFingerprints.size() > 0) {
             lock.writeLock().lock();
             try {
