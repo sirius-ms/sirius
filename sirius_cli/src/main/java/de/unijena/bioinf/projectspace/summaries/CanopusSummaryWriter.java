@@ -25,8 +25,6 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.*;
-import de.unijena.bioinf.GibbsSampling.Zodiac;
-import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
@@ -37,7 +35,10 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class CanopusSummaryWriter extends CandidateSummarizer {
@@ -47,8 +48,6 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
         private final ProbabilityFingerprint[] npcClassifications;
         private final MolecularFormula[] molecularFormulas, precursorFormulas;
         private final ClassyfireProperty[] mostSpecificClasses;
-
-//        private final double[] mostSpecificClassesProbs;
 
         private final NPCFingerprintVersion.NPCProperty[][] bestNPCProps;
 
@@ -63,13 +62,10 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
 
         public CanopusSummaryRow(ProbabilityFingerprint[] cfClassifications, ProbabilityFingerprint[] npcClassifications, MolecularFormula[] molecularFormulas, MolecularFormula[] precursorFormulas, PrecursorIonType[] ionTypes, String id) {
             this.cfClassifications = cfClassifications;
-            Arrays.stream(cfClassifications).map(x -> x.asDeterministic().asArray()).toArray(ArrayFingerprint[]::new);
-            this.npcClassifications = cfClassifications;
-            Arrays.stream(npcClassifications).map(x -> x.asDeterministic().asArray()).toArray(ArrayFingerprint[]::new);
+            this.npcClassifications = npcClassifications;
             this.molecularFormulas = molecularFormulas;
             this.precursorFormulas = precursorFormulas;
             this.mostSpecificClasses = new ClassyfireProperty[molecularFormulas.length];
-//            this.mostSpecificClassesProbs = new double[molecularFormulas.length];
             this.ionTypes = ionTypes;
             this.id = id;
             this.best = chooseBestAndAssignPrimaryClasses(cfClassifications);
@@ -341,21 +337,21 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
                 cols[i++] = row.ionTypes[j].toString();
                 cols[i++] = row.precursorFormulas[j].toString();
 
-                cols[i++] = row.bestNPCProps[row.best][0].getName();
-                cols[i++] = Double.toString(row.bestNPCProbs[row.best][0]);
+                cols[i++] = row.bestNPCProps[j][0].getName();
+                cols[i++] = Double.toString(row.bestNPCProbs[j][0]);
 
-                cols[i++] = row.bestNPCProps[row.best][1].getName();
-                cols[i++] = Double.toString(row.bestNPCProbs[row.best][1]);
+                cols[i++] = row.bestNPCProps[j][1].getName();
+                cols[i++] = Double.toString(row.bestNPCProbs[j][1]);
 
-                cols[i++] = row.bestNPCProps[row.best][2].getName();
-                cols[i++] = Double.toString(row.bestNPCProbs[row.best][2]);
+                cols[i++] = row.bestNPCProps[j][2].getName();
+                cols[i++] = Double.toString(row.bestNPCProbs[j][2]);
 
                 cols[i++] = primaryClass.getName();
-                cols[i++] = Double.toString(row.cfClassifications[row.best].getProbability(row.CLF.getIndexOfMolecularProperty(primaryClass)));
+                cols[i++] = Double.toString(row.cfClassifications[j].getProbability(row.CLF.getIndexOfMolecularProperty(primaryClass)));
 
                 if (lineage.length > 5) {
                     cols[i++] = lineage[5].getName();
-                    cols[i++] = Double.toString(row.cfClassifications[row.best].getProbability(row.CLF.getIndexOfMolecularProperty(lineage[5])));
+                    cols[i++] = Double.toString(row.cfClassifications[j].getProbability(row.CLF.getIndexOfMolecularProperty(lineage[5])));
                 } else {
                     cols[i++] = "";
                     cols[i++] = "";
@@ -363,7 +359,7 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
 
                 if (lineage.length > 4) {
                     cols[i++] = lineage[4].getName();
-                    cols[i++] = Double.toString(row.cfClassifications[row.best].getProbability(row.CLF.getIndexOfMolecularProperty(lineage[4])));
+                    cols[i++] = Double.toString(row.cfClassifications[j].getProbability(row.CLF.getIndexOfMolecularProperty(lineage[4])));
                 } else {
                     cols[i++] = "";
                     cols[i++] = "";
@@ -371,7 +367,7 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
 
                 if (lineage.length > 3) {
                     cols[i++] = lineage[3].getName();
-                    cols[i++] = Double.toString(row.cfClassifications[row.best].getProbability(row.CLF.getIndexOfMolecularProperty(lineage[3])));
+                    cols[i++] = Double.toString(row.cfClassifications[j].getProbability(row.CLF.getIndexOfMolecularProperty(lineage[3])));
                 } else {
                     cols[i++] = "";
                     cols[i++] = "";
@@ -379,7 +375,7 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
 
                 if (lineage.length > 2) {
                     cols[i++] = lineage[2].getName();
-                    cols[i++] = Double.toString(row.cfClassifications[row.best].getProbability(row.CLF.getIndexOfMolecularProperty(lineage[2])));
+                    cols[i++] = Double.toString(row.cfClassifications[j].getProbability(row.CLF.getIndexOfMolecularProperty(lineage[2])));
                 } else {
                     cols[i++] = "";
                     cols[i++] = "";
