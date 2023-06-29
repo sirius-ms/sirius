@@ -133,31 +133,18 @@ public class FormulaSummaryWriter extends CandidateSummarizer {
                     globalResultsAll.put(results.get(0).getCandidate(), new ArrayList<>(results));
             });
     }
-//todo @marcus what is this good for?
-
-    /*    private FormulaResult resolveIonizationOnly(ResultEntry r) {
-//        FormulaResultId rid = r.getId();
-        FormulaResultId newRid = new FormulaResultId(rid.getParentId(), rid.getPrecursorFormula(), PrecursorIonType.getPrecursorIonType(rid.getIonType().getIonization()));
-        FormulaResult newResult = new FormulaResult(newRid);
-        r.annotations().forEach(newResult::setAnnotation);
-        return newResult;
-    }*/
 
     private List<SScored<ResultEntry, ? extends FormulaScore>> extractAllTopScoringResults(List<? extends SScored<ResultEntry, ? extends FormulaScore>> sortedResults, List<Class<? extends FormulaScore>> rankingScores) {
         if (sortedResults.isEmpty()) return Collections.emptyList();
         if (sortedResults.size() == 1) return Collections.singletonList(sortedResults.get(0));
 
         SScored<ResultEntry, ? extends FormulaScore> best = sortedResults.get(0);
-        FormulaScoring bestScore = best.getCandidate().getScoring();
-
-        Comparator<FormulaScoring> comparator = FormulaScoring.comparingMultiScore(rankingScores, true);
 
         List<SScored<ResultEntry, ? extends FormulaScore>> topResultsWithAdducts = sortedResults.stream()
-                .takeWhile(r -> comparator.compare(bestScore, r.getCandidate().getScoring()) == 0)
+                .takeWhile(r -> best.getCandidate().preFormula.equals(r.getCandidate().preFormula))
                 .collect(Collectors.toList());
 
         //candidates with same score should have the same adduct.
-        assert topResultsWithAdducts.stream().map(s -> s.getCandidate().ion).distinct().count() == 1;
         return topResultsWithAdducts;
     }
 
