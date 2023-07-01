@@ -29,6 +29,11 @@ public class MgfExporterConfigPanel extends SubToolConfigPanel<MgfExporterOption
         getOptionDescriptionByName("merge-ms2").ifPresent(it -> mergeMs2.setToolTipText(GuiUtils.formatToolTip(it)));
         paras.add(mergeMs2);
 
+        JCheckBox featureId = new JCheckBox("Feature ID?", true);
+        parameterBindings.put("feature-id", () -> "~" + featureId.isSelected());
+        getOptionDescriptionByName("feature-id").ifPresent(it -> featureId.setToolTipText(GuiUtils.formatToolTip(it)));
+        paras.add(featureId);
+
         //merge-ppm
         final String buf = "merge-ppm";
         JSpinner mergePpm = makeGenericOptionSpinner(buf,

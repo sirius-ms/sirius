@@ -55,12 +55,13 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
 
         private final PrecursorIonType[] ionTypes;
         private final String id;
+        private final String featureId;
         private final int best;
 
         private ClassyFireFingerprintVersion CLF;
         NPCFingerprintVersion NPCF;
 
-        public CanopusSummaryRow(ProbabilityFingerprint[] cfClassifications, ProbabilityFingerprint[] npcClassifications, MolecularFormula[] molecularFormulas, MolecularFormula[] precursorFormulas, PrecursorIonType[] ionTypes, String id) {
+        public CanopusSummaryRow(ProbabilityFingerprint[] cfClassifications, ProbabilityFingerprint[] npcClassifications, MolecularFormula[] molecularFormulas, MolecularFormula[] precursorFormulas, PrecursorIonType[] ionTypes, String id, String featureId) {
             this.cfClassifications = cfClassifications;
             this.npcClassifications = npcClassifications;
             this.molecularFormulas = molecularFormulas;
@@ -68,6 +69,7 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
             this.mostSpecificClasses = new ClassyfireProperty[molecularFormulas.length];
             this.ionTypes = ionTypes;
             this.id = id;
+            this.featureId = featureId;
             this.best = chooseBestAndAssignPrimaryClasses(cfClassifications);
 
             bestNPCProps = new NPCFingerprintVersion.NPCProperty[molecularFormulas.length][3];
@@ -186,7 +188,8 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
                         formulas.toArray(MolecularFormula[]::new),
                         preForms.toArray(MolecularFormula[]::new),
                         ionTypes.toArray(PrecursorIonType[]::new),
-                        id.getParentId().getDirectoryName()
+                        id.getParentId().getDirectoryName(),
+                        id.getParentId().getFeatureId().orElse("N/A")
                 ));
             } finally {
                 lock.writeLock().unlock();
@@ -218,14 +221,14 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
             "ClassyFire#most specific class", "ClassyFire#most specific class Probability", "ClassyFire#level 5",
             "ClassyFire#level 5 Probability", "ClassyFire#subclass", "ClassyFire#subclass Probability",
             "ClassyFire#class", "ClassyFire#class Probability", "ClassyFire#superclass", "ClassyFire#superclass probability",
-            /*"NPC#all classifications",*/ "ClassyFire#all classifications"},
+            /*"NPC#all classifications",*/ "ClassyFire#all classifications", "featureId"},
             HEADER2 = new String[]{"id", "molecularFormula", "adduct", "precursorFormula",
                     "NPC#pathway", "NPC#pathway Probability", "NPC#superclass", "NPC#superclass Probability",
                     "NPC#class", "NPC#class Probability",
                     "ClassyFire#most specific class", "ClassyFire#most specific class Probability", "ClassyFire#level 5",
                     "ClassyFire#level 5 Probability", "ClassyFire#subclass", "ClassyFire#subclass Probability",
                     "ClassyFire#class", "ClassyFire#class Probability", "ClassyFire#superclass", "ClassyFire#superclass probability",
-                    /*"NPC#all classifications",*/ "ClassyFire#all classifications"};
+                    /*"NPC#all classifications",*/ "ClassyFire#all classifications", "featureId"};
 
     public static class IterateOverFormulas implements Iterator<String[]> {
         int k = 0;
@@ -299,6 +302,8 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
 
                 cols[i++] = Joiner.on("; ").join(row.cfClassifications[row.best].asDeterministic().asArray().presentFingerprints().asMolecularPropertyIterator());
 //                cols[i++] = Joiner.on("; ").join(row.npcClassifications[row.best].asDeterministic().asArray().presentFingerprints().asMolecularPropertyIterator());
+
+                cols[i++] = row.featureId;
                 ++k;
                 return cols;
 
@@ -383,6 +388,9 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
 
                 cols[i++] = Joiner.on("; ").join(row.cfClassifications[j].asDeterministic().asArray().presentFingerprints().asMolecularPropertyIterator());
 //                cols[i++] = Joiner.on("; ").join(row.npcClassifications[j].asDeterministic().asArray().presentFingerprints().asMolecularPropertyIterator());
+
+                cols[i++] = row.featureId;
+
 
                 ++j;
                 if (j >= rows.get(k).cfClassifications.length) {
