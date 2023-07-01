@@ -238,11 +238,11 @@ public class StructureSummaryWriter extends CandidateSummarizer {
         final ZodiacScore zodiacScore = result.getCandidate().getAnnotation(FormulaScoring.class).
                 map(s -> s.getAnnotationOr(ZodiacScore.class, FormulaScore::NA)).orElse(FormulaScore.NA(ZodiacScore.class));
 
-        return new Hit(confidence + "\t" + line.get(0) + "\t" + zodiacScore + "\t" + siriusScore + "\t" + String.join("\t", line.subList(1, line.size())) + "\t" + id.getIonMass().orElse(Double.NaN) + "\t" + id.getRt().orElse(RetentionTime.NA()).getRetentionTimeInSeconds() + "\t" + id.getDirectoryName() + "\n", confidence, csiScore, formulaRank);
+        return new Hit(confidence + "\t" + line.get(0) + "\t" + zodiacScore + "\t" + siriusScore + "\t" + String.join("\t", line.subList(1, line.size())) + "\t" + id.getIonMass().orElse(Double.NaN) + "\t" + id.getRt().orElse(RetentionTime.NA()).getRetentionTimeInSeconds() + "\t" + id.getDirectoryName(), confidence, csiScore, formulaRank, id.getFeatureId().orElse("N/A"));
     }
 
     static void write(BufferedWriter w, List<Hit> data) throws IOException {
-        w.write("rank\t" + "formulaRank\t" + "#adducts\t" + "#predictedFPs\t" + new ConfidenceScore(0).name() + "\t" + StructureCSVExporter.HEADER_LIST.get(0) + "\t" + new ZodiacScore(0).name() + "\t" + new SiriusScore(0).name() + "\t" + String.join("\t", StructureCSVExporter.HEADER_LIST.subList(1, StructureCSVExporter.HEADER_LIST.size())) + "\t" + "ionMass\t" + "retentionTimeInSeconds\t" + "id" + "\n");
+        w.write("rank\t" + "formulaRank\t" + "#adducts\t" + "#predictedFPs\t" + new ConfidenceScore(0).name() + "\t" + StructureCSVExporter.HEADER_LIST.get(0) + "\t" + new ZodiacScore(0).name() + "\t" + new SiriusScore(0).name() + "\t" + String.join("\t", StructureCSVExporter.HEADER_LIST.subList(1, StructureCSVExporter.HEADER_LIST.size())) + "\t" + "ionMass\t" + "retentionTimeInSeconds\t" + "id\t" + "featureId" + "\n");
         int rank = 0;
         for (Hit s : data) {
             w.write(String.valueOf(++rank));
@@ -254,6 +254,9 @@ public class StructureSummaryWriter extends CandidateSummarizer {
             w.write(String.valueOf(s.numberOfFps));
             w.write("\t");
             w.write(s.line);
+            w.write("\t");
+            w.write(s.featureId);
+            w.write("\n");
         }
     }
 
@@ -264,12 +267,14 @@ public class StructureSummaryWriter extends CandidateSummarizer {
         final int formulaRank;
         int numberOfAdducts = 1;
         int numberOfFps = 1;
+        final String featureId;
 
-        Hit(String line, ConfidenceScore confidenceScore, double csiScore, int formulaRank) {
+        Hit(String line, ConfidenceScore confidenceScore, double csiScore, int formulaRank, String featureId) {
             this.line = line;
             this.confidenceScore = confidenceScore;
             this.csiScore = csiScore;
             this.formulaRank = formulaRank;
+            this.featureId = featureId;
         }
 
         static Comparator<Hit> compareByConfidence() {
