@@ -156,7 +156,7 @@ public class InstanceBean extends Instance implements SiriusPCS {
     }
 
     public String getGUIName() {
-        return getName() + " (" + getID().getCompoundIndex() + ")";
+        return getName() + " (" + getID().getFeatureId().orElse(String.valueOf(getID().getCompoundIndex())) + ")";
     }
 
     public List<SimpleSpectrum> getMs1Spectra() {
