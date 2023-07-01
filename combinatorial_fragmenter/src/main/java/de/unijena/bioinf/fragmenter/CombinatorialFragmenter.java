@@ -44,12 +44,17 @@ public class CombinatorialFragmenter {
         void cut(CombinatorialFragment parent, IBond[] bonds, CombinatorialFragment[] fragments);
     }
 
-    public List<CombinatorialFragment> cutAllBonds(CombinatorialFragment fragment, Callback callback) {
+    public List<CombinatorialFragment> cutAllBonds(CombinatorialFragment fragment, Callback callback){
         int[] bonds = fragment.bonds().toArray();
-        BitSet cuttedBonds = new BitSet(fragment.parent.bonds.length);
+        BitSet bondsToCut = new BitSet(fragment.parent.bonds.length);
+        for(final int bond : bonds) bondsToCut.set(bond);
+        return this.cutBonds(fragment, bondsToCut, callback);
+    }
+
+    public List<CombinatorialFragment> cutBonds(CombinatorialFragment fragment, BitSet bondsToCut, Callback callback) {
         List<CombinatorialFragment> list = new ArrayList<>();
-        for (final int bond : bonds) {
-            cuttedBonds.set(bond);
+        for (int bond = bondsToCut.nextSetBit(0); bond >= 0; bond = bondsToCut.nextSetBit(bond+1)) {
+            bondsToCut.set(bond, false);
             if (fragment.allRingsDisconnected(bond)) {
                 final CombinatorialFragment[] combinatorialFragments = cutBond(fragment, bond);
                 list.add(combinatorialFragments[0]);
@@ -62,7 +67,7 @@ public class CombinatorialFragmenter {
                 if (ringId >= 0) {
                     for (IBond b : fragment.parent.bondsOfRings[ringId]) {
                         final int bidx = b.getIndex();
-                        if (bidx != bond && !cuttedBonds.get(bidx) && fragment.stillContains(b) && fragment.getSSSRIfCuttable(bidx) == ringId) {
+                        if (bidx != bond && bondsToCut.get(bidx) && fragment.getSSSRIfCuttable(bidx) == ringId) {
                             final CombinatorialFragment[] combinatorialFragments = cutRing(fragment, ringId, bond, bidx);
                             list.add(combinatorialFragments[0]);
                             list.add(combinatorialFragments[1]);
