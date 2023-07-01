@@ -197,7 +197,7 @@ public class FormulaSummaryWriter extends CandidateSummarizer {
 
         String header = makeHeader(scoreOrder.stream().map(types::get).collect(Collectors.joining("\t")));
         if (suffix)
-            header = header + "\tionMass" + "\tretentionTimeInSeconds" + "\tid";
+            header = header + "\tionMass" + "\tretentionTimeInSeconds" + "\tid" + "\tfeatureId";
 
         w.write("rank\tformulaRank\t" + header + "\n");
 
@@ -245,6 +245,8 @@ public class FormulaSummaryWriter extends CandidateSummarizer {
                 w.write(r.retentionTimeSeconds);
                 w.write('\t');
                 w.write(r.dirName);
+                w.write('\t');
+                w.write(r.featureId);
             }
 
             w.write('\n');
@@ -269,6 +271,8 @@ public class FormulaSummaryWriter extends CandidateSummarizer {
 
         public String lipidClass = "";
 
+        public String featureId;
+
         public ResultEntry(FormulaResult r, CompoundContainer exp, int formulaRank) {
             this.formulaRank = formulaRank;
             scoring = r.getAnnotationOrThrow(FormulaScoring.class);
@@ -289,6 +293,7 @@ public class FormulaSummaryWriter extends CandidateSummarizer {
             ionMass = BigDecimal.valueOf(exp.getId().getIonMass().orElse(Double.NaN)).setScale(5, RoundingMode.HALF_UP).toString();
             retentionTimeSeconds = String.valueOf(exp.getId().getRt().orElse(RetentionTime.NA()).getRetentionTimeInSeconds());
             dirName = exp.getId().getDirectoryName();
+            featureId = exp.getId().getFeatureId().orElse("N/A");
         }
 
         public FormulaScoring getScoring() {

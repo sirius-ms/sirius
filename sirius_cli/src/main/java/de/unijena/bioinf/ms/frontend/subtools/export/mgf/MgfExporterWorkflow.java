@@ -28,10 +28,12 @@ import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.QuantificationMeasure;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.QuantificationTable;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.babelms.mgf.MgfWriter;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
+import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import org.apache.commons.text.translate.CsvTranslators;
@@ -44,7 +46,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 /**
  * Standalone-Tool to export spectra to mgf format.
@@ -55,6 +59,8 @@ public class MgfExporterWorkflow implements Workflow {
     private final PreprocessingJob<? extends Iterable<Instance>> ppj;
     private final Optional<Path> quantPath;
 
+    private final AtomicBoolean useFeatureId;
+
 
     public MgfExporterWorkflow(PreprocessingJob<? extends Iterable<Instance>> ppj, MgfExporterOptions options, ParameterConfig config) {
         outputPath = options.output;
@@ -62,6 +68,7 @@ public class MgfExporterWorkflow implements Workflow {
         mgfWriter = new MgfWriter(options.writeMs1, options.mergeMs2, mergeMs2Deviation, true);
         this.ppj = ppj;
         this.quantPath = Optional.ofNullable(options.quantTable).map(File::toPath);
+        this.useFeatureId = new AtomicBoolean(options.featureId);
     }
 
 
@@ -69,22 +76,43 @@ public class MgfExporterWorkflow implements Workflow {
     public void run() {
         try {
             final Iterable<Instance> ps = SiriusJobs.getGlobalJobManager().submitJob(ppj).awaitResult();
-            final boolean zeroIndex;
-            if (ps instanceof ProjectSpaceManager) {
-                zeroIndex = ((ProjectSpaceManager<Instance>) ps).projectSpace().getMinIndex().orElse(1) <= 0;
-            } else {
+            boolean zeroIndex;
+            {
                 final AtomicInteger minIndex = new AtomicInteger(Integer.MAX_VALUE);
-                ps.forEach(i -> minIndex.set(Math.min(minIndex.get(),i.getID().getCompoundIndex())));
+                final AtomicInteger size = new AtomicInteger(0);
+                final Set<String> ids = new HashSet<>();
+                final Consumer<CompoundContainerId> checkId = id -> {
+                    size.incrementAndGet();
+                    minIndex.set(Math.min(minIndex.get(), id.getCompoundIndex()));
+                    if (useFeatureId.get())
+                        id.getFeatureId().ifPresentOrElse(ids::add, (() -> useFeatureId.set(false)));
+                };
+
+                if (ps instanceof ProjectSpaceManager)
+                    ((ProjectSpaceManager<Instance>) ps).projectSpace().forEach(checkId);
+                else
+                    ps.forEach(i -> checkId.accept(i.getID()));
+
+                if (ids.size() < size.get())
+                    useFeatureId.set(false);
                 zeroIndex = minIndex.get() <= 0;
+                if (useFeatureId.get()){
+                    LoggerFactory.getLogger(getClass()).info("Using imported/generated feature ids.");
+                }else {
+                    LoggerFactory.getLogger(getClass()).info("Using SIRIUS internal IDs as feature ids.");
+                    if (zeroIndex)
+                        LoggerFactory.getLogger(getClass()).warn("Index value 0 found (old project-space format). Using index + 1 as Feature ID to make them compatible with GNPS FBMN.");
+                }
             }
 
-            if (zeroIndex)
-                LoggerFactory.getLogger("Index value 0 found (old project-space format). Using index + 1 as Feature ID to be compatible with GNPS FBMN.");
 
             try (final BufferedWriter writer = Files.newBufferedWriter(outputPath)) {
                 for (Instance inst : ps) {
                     try {
-                        mgfWriter.write(writer, inst.getExperiment(), String.valueOf(zeroIndex ? inst.getID().getCompoundIndex() + 1 : inst.getID().getCompoundIndex()));
+                        final String fid = useFeatureId.get() && inst.getID().getFeatureId().isPresent()
+                                ? inst.getID().getFeatureId().get()
+                                : extractFid(inst, zeroIndex);
+                        mgfWriter.write(writer, inst.getExperiment(), fid);
                     } catch (IOException e) {
                         throw e;
                     } catch (Exception e) {
@@ -109,6 +137,10 @@ public class MgfExporterWorkflow implements Workflow {
         }
     }
 
+    private String extractFid(Instance inst, boolean zeroIndex){
+        return String.valueOf(zeroIndex ? inst.getID().getCompoundIndex() + 1 : inst.getID().getCompoundIndex());
+    }
+
     private void writeQuantifiactionTable(Iterable<Instance> ps, Path path, boolean zeroIndex) throws IOException {
         final HashMap<String, QuantInfo> compounds = new HashMap<>();
         final Set<String> sampleNames = new HashSet<>();
@@ -118,8 +150,11 @@ public class MgfExporterWorkflow implements Workflow {
                 final Ms2Experiment experiment = i.getExperiment();
                 getQuantificationTable(i, experiment).ifPresent(quant -> {
                     for (int j = 0; j < quant.length(); ++j) sampleNames.add(quant.getName(j));
-                    String id = String.valueOf(zeroIndex ? i.getID().getCompoundIndex() + 1 : i.getID().getCompoundIndex());
-                    compounds.put(id, new QuantInfo(
+                    final String fid = useFeatureId.get() && i.getID().getFeatureId().isPresent()
+                            ? i.getID().getFeatureId().get()
+                            : extractFid(i, zeroIndex);
+
+                    compounds.put(fid, new QuantInfo(
                             experiment.getIonMass(),
                             experiment.getAnnotation(RetentionTime.class).orElse(new RetentionTime(0d)).getRetentionTimeInSeconds() / 60d, //use min
                             quant
@@ -132,9 +167,9 @@ public class MgfExporterWorkflow implements Workflow {
 
             // now write data
             ArrayList<String> compoundNames = new ArrayList<>(compounds.keySet());
-            Collections.sort(compoundNames);
+            compoundNames.sort(Utils.ALPHANUMERIC_COMPARATOR);
             ArrayList<String> sampleNameList = new ArrayList<>(sampleNames);
-            Collections.sort(sampleNameList);
+            sampleNameList.sort(Utils.ALPHANUMERIC_COMPARATOR);
             bw.write("row ID,row m/z,row retention time");
             CsvTranslators.CsvEscaper escaper = new CsvTranslators.CsvEscaper();
             for (String sample : sampleNameList) {
@@ -170,7 +205,7 @@ public class MgfExporterWorkflow implements Workflow {
         return lcms.isEmpty() ? Optional.empty() : Optional.of(lcms.getQuantificationTable());
     }
 
-    private String toQuantSuffix(QuantificationMeasure m){
+    private String toQuantSuffix(QuantificationMeasure m) {
         return switch (m) {
             case APEX -> " Peak height";
             case INTEGRAL, INTEGRAL_FWHMD -> " Peak area";
