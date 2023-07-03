@@ -21,12 +21,12 @@ package de.unijena.bioinf.projectspace.summaries;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Score;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeStatistics;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.elgordo.LipidSpecies;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
@@ -89,8 +89,15 @@ public class FormulaSummaryWriter extends CandidateSummarizer {
 
         List<SScored<ResultEntry, ? extends FormulaScore>> results = new ArrayList<>(res.size());
         int rank = 0;
-        for (SScored<FormulaResult, ? extends FormulaScore> s : res)
-            results.add(new SScored<>(ResultEntry.of(s.getCandidate(), exp, ++rank), s.getScoreObject()));
+        MolecularFormula preFormula = null;
+        for (SScored<FormulaResult, ? extends FormulaScore> s : res) {
+            FormulaResult c = s.getCandidate();
+            if (preFormula == null || !c.getId().getPrecursorFormula().equals(preFormula))
+                rank++;
+            preFormula = c.getId().getPrecursorFormula();
+
+            results.add(new SScored<>(ResultEntry.of(c, exp, rank), s.getScoreObject()));
+        }
         List<? extends SScored<ResultEntry, ? extends FormulaScore>> topResultWithAdducts = extractAllTopScoringResults(results, RANKING_SCORES_SELECTING_TOP1);
 
 
@@ -119,7 +126,14 @@ public class FormulaSummaryWriter extends CandidateSummarizer {
                 //writing stuff
                 types.remove(TopCSIScore.class);
                 types.remove(ConfidenceScore.class);
-                writeCSV(w, types, results, false, true);
+                List<ResultEntry> r = results.stream()
+                        .sorted((i1, i2) -> FormulaScoring.comparingMultiScore(
+                                ProjectSpaceManager.scorePriorities()
+                                        .stream().filter(types::containsKey).toList()).compare(
+                                i1.getCandidate().scoring,
+                                i2.getCandidate().scoring)).map(SScored::getCandidate)
+                        .toList();
+                writeCSV(w, types, r, false);
             });
 
             return true;
@@ -156,20 +170,22 @@ public class FormulaSummaryWriter extends CandidateSummarizer {
             globalTypes.remove(TopCSIScore.class);
 
             if (globalResults != null) {
-                final List<SScored<ResultEntry, ? extends FormulaScore>> r = FormulaScoring.rankBy(globalResults.stream(), RANKING_SCORES, true, ResultEntry::getScoring);
-                writer.textFile(SummaryLocations.FORMULA_SUMMARY, w -> writeCSV(w, globalTypes, r, true, true));
+                final List<ResultEntry> r = globalResults.stream()
+                        .sorted(Comparator.comparing(s -> s.dirName, Utils.ALPHANUMERIC_COMPARATOR)).toList();
+                writer.textFile(SummaryLocations.FORMULA_SUMMARY, w -> writeCSV(w, globalTypes, r, true));
             }
 
             if (globalResultsWithAdducts != null) {
-                final List<SScored<ResultEntry, ? extends FormulaScore>> rAdducts = FormulaScoring.rankBy(globalResultsWithAdducts.stream(), RANKING_SCORES, true, ResultEntry::getScoring);
-                writer.textFile(SummaryLocations.FORMULA_SUMMARY_ADDUCTS, w -> writeCSV(w, globalTypes, rAdducts, true, false));
+                final List<ResultEntry> rAdducts = globalResultsWithAdducts.stream()
+                        .sorted(Comparator.comparing(s -> s.dirName, Utils.ALPHANUMERIC_COMPARATOR)).toList();
+                writer.textFile(SummaryLocations.FORMULA_SUMMARY_ADDUCTS, w -> writeCSV(w, globalTypes, rAdducts, true));
             }
 
             if (globalResultsAll != null) {
-                List<SScored<ResultEntry, ? extends FormulaScore>> all =
-                        FormulaScoring.rankBy(globalResultsAll.keySet().stream(), RANKING_SCORES, true, ResultEntry::getScoring)
-                        .stream().flatMap(s -> globalResultsAll.get(s.getCandidate()).stream()).toList();
-                writer.textFile(SummaryLocations.FORMULA_SUMMARY_ALL, w -> writeCSV(w, globalTypes, all, true, false));
+                List<ResultEntry> all = globalResultsAll.keySet().stream()
+                        .sorted(Comparator.comparing(s -> s.dirName, Utils.ALPHANUMERIC_COMPARATOR))
+                        .flatMap(s -> globalResultsAll.get(s).stream().map(SScored::getCandidate)).toList();
+                writer.textFile(SummaryLocations.FORMULA_SUMMARY_ALL, w -> writeCSV(w, globalTypes, all, true));
             }
         } finally {
             lock.unlock();
@@ -184,35 +200,19 @@ public class FormulaSummaryWriter extends CandidateSummarizer {
         return headerBuilder.toString();
     }
 
-    private void writeCSV(Writer w, LinkedHashMap<Class<? extends FormulaScore>, String> types, List<? extends SScored<? extends ResultEntry, ? extends Score<?>>> results, boolean suffix, boolean sort) throws IOException {
-        final List<Class<? extends FormulaScore>> scoreOrder = ProjectSpaceManager.scorePriorities().stream().filter(types::containsKey).collect(Collectors.toList());
-        if (sort) {
-            results = results.stream()
-                    .sorted((i1, i2) -> FormulaScoring.comparingMultiScore(scoreOrder).compare(
-                            i1.getCandidate().scoring,
-                            i2.getCandidate().scoring))
-                    .collect(Collectors.toList());
-        }
-
+    private void writeCSV(Writer w, LinkedHashMap<Class<? extends FormulaScore>, String> types, List<ResultEntry> results, boolean suffix) throws IOException {
+        final List<Class<? extends FormulaScore>> scoreOrder = ProjectSpaceManager.scorePriorities()
+                .stream().filter(types::containsKey).toList();
 
         String header = makeHeader(scoreOrder.stream().map(types::get).collect(Collectors.joining("\t")));
         if (suffix)
             header = header + "\tionMass" + "\tretentionTimeInSeconds" + "\tid" + "\tfeatureId";
 
-        w.write("rank\tformulaRank\t" + header + "\n");
+        w.write("formulaRank\t" + header + "\n");
 
-        int rank = 0;
-        MolecularFormula preFormula = null;
-        for (SScored<? extends ResultEntry, ? extends Score<?>> s : results) {
-            ResultEntry r = s.getCandidate();
+        for (ResultEntry r : results) {
             FormulaScoring scores = r.scoring;
-            if (preFormula == null || !r.preFormula.equals(preFormula))
-                rank++;
-            preFormula = r.preFormula;
 
-
-            w.write(String.valueOf(rank));
-            w.write('\t');
             w.write(String.valueOf(r.formulaRank));
             w.write('\t');
             w.write(r.molecularFormula.toString());
@@ -220,7 +220,7 @@ public class FormulaSummaryWriter extends CandidateSummarizer {
             w.write(r.ion);
             w.write('\t');
 
-            w.write(preFormula.toString());
+            w.write(r.preFormula.toString());
             w.write('\t');
 
             for (Class<? extends FormulaScore> k : scoreOrder) {
@@ -302,14 +302,6 @@ public class FormulaSummaryWriter extends CandidateSummarizer {
 
         public static ResultEntry of(@NotNull FormulaResult r, @NotNull CompoundContainer exp, int formulaRank) {
             return new ResultEntry(r, exp, formulaRank);
-        }
-
-        public int getFormulaRank() {
-            return formulaRank;
-        }
-
-        public void setFormulaRank(int formulaRank) {
-            this.formulaRank = formulaRank;
         }
     }
 

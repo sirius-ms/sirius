@@ -25,20 +25,23 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.*;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
+import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.canopus.CanopusResult;
+import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
+import de.unijena.bioinf.sirius.scores.TreeScore;
 import de.unijena.bioinf.util.Iterators;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class CanopusSummaryWriter extends CandidateSummarizer {
@@ -130,6 +133,7 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
     private final List<CanopusSummaryRow> rowsBySiriusScore;
     private final List<CanopusSummaryRow> rowsByCSIScore;
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final AtomicInteger numStructureResults = new AtomicInteger(0);
 
     public CanopusSummaryWriter(boolean writeTopHitGlobal, boolean writeTopHitWithAdductsGlobal, boolean writeFullGlobal) {
         super(writeTopHitGlobal, writeTopHitWithAdductsGlobal, writeFullGlobal);
@@ -147,11 +151,14 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
     public void addWriteCompoundSummary(ProjectWriter writer, @NotNull CompoundContainer exp, List<? extends SScored<FormulaResult, ? extends FormulaScore>> results) throws IOException {
         if (!results.isEmpty()) {
             if (rowsBySiriusScore != null)
-                addToRows(rowsBySiriusScore, FormulaScoring.reRankBy(results, List.of(SiriusScore.class), true), false);
-            if (rowsByCSIScore != null)
-                addToRows(rowsByCSIScore, FormulaScoring.reRankBy(results, List.of(TopCSIScore.class, SiriusScore.class), true), false);
+                addToRows(rowsBySiriusScore, FormulaScoring.reRankBy(results, List.of(ZodiacScore.class, SiriusScore.class, TreeScore.class, IsotopeScore.class), true), false);
+            if (rowsByCSIScore != null) {
+                if (results.stream().anyMatch(it -> it.getCandidate().hasAnnotation(FBCandidates.class)))
+                    numStructureResults.incrementAndGet();
+                addToRows(rowsByCSIScore, FormulaScoring.reRankBy(results, List.of(TopCSIScore.class, ZodiacScore.class, SiriusScore.class, TreeScore.class, IsotopeScore.class), true), false);
+            }
             if (rowsBySiriusScoreAll != null)
-                addToRows(rowsBySiriusScoreAll, FormulaScoring.reRankBy(results, List.of(SiriusScore.class), true), true);
+                addToRows(rowsBySiriusScoreAll, FormulaScoring.reRankBy(results, List.of(ZodiacScore.class, SiriusScore.class, TreeScore.class, IsotopeScore.class), true), true);
         }
     }
 
@@ -201,34 +208,35 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
     public void writeProjectSpaceSummary(ProjectWriter writer) throws IOException {
         lock.readLock().lock();
         try {
-            if (writeTopHitGlobal && rowsBySiriusScore != null)
-                writer.table(SummaryLocations.CANOPUS_FORMULA_SUMMARY, HEADER, Iterators.capture(new IterateOverFormulas(rowsBySiriusScore)));
-            if (writeTopHitGlobal && rowsByCSIScore != null)
+            if (rowsBySiriusScore != null && (writeTopHitGlobal || writeTopHitWithAdductsGlobal)) {
+                rowsBySiriusScore.sort(Comparator.comparing(c -> c.id, Utils.ALPHANUMERIC_COMPARATOR));
+                if (writeTopHitGlobal)
+                    writer.table(SummaryLocations.CANOPUS_FORMULA_SUMMARY, HEADER, Iterators.capture(new IterateOverFormulas(rowsBySiriusScore)));
+                if (writeTopHitWithAdductsGlobal)
+                    writer.table(SummaryLocations.CANOPUS_FOMRULA_SUMMARY_ADDUCTS, HEADER, Iterators.capture(new IterateOverAdducts(rowsBySiriusScore)));
+            }
+            if (writeTopHitGlobal && rowsByCSIScore != null && numStructureResults.get() > 0) {
+                rowsByCSIScore.sort(Comparator.comparing(c -> c.id, Utils.ALPHANUMERIC_COMPARATOR));
                 writer.table(SummaryLocations.CANOPUS_COMPOUND_SUMMARY, HEADER, Iterators.capture(new IterateOverFormulas(rowsByCSIScore)));
-            if (writeTopHitWithAdductsGlobal && rowsBySiriusScore != null)
-                writer.table(SummaryLocations.CANOPUS_FOMRULA_SUMMARY_ADDUCTS, HEADER2, Iterators.capture(new IterateOverAdducts(rowsBySiriusScore)));
-            if (writeFullGlobal && rowsBySiriusScoreAll != null)
-                writer.table(SummaryLocations.CANOPUS_FOMRULA_SUMMARY_ALL, HEADER2, Iterators.capture(new IterateOverAdducts(rowsBySiriusScoreAll)));
+            }
+            if (writeFullGlobal && rowsBySiriusScoreAll != null) {
+                rowsBySiriusScoreAll.sort(Comparator.comparing(c -> c.id, Utils.ALPHANUMERIC_COMPARATOR));
+                writer.table(SummaryLocations.CANOPUS_FOMRULA_SUMMARY_ALL, HEADER, Iterators.capture(new IterateOverAdducts(rowsBySiriusScoreAll)));
+            }
         } finally {
             lock.readLock().unlock();
         }
     }
 
     private final static String[]
-            HEADER = new String[]{"id", "molecularFormula", "adduct",
+            HEADER = new String[]{"id", "molecularFormula", "adduct", "precursorFormula",
             "NPC#pathway", "NPC#pathway Probability", "NPC#superclass", "NPC#superclass Probability",
             "NPC#class", "NPC#class Probability",
             "ClassyFire#most specific class", "ClassyFire#most specific class Probability", "ClassyFire#level 5",
             "ClassyFire#level 5 Probability", "ClassyFire#subclass", "ClassyFire#subclass Probability",
             "ClassyFire#class", "ClassyFire#class Probability", "ClassyFire#superclass", "ClassyFire#superclass probability",
-            /*"NPC#all classifications",*/ "ClassyFire#all classifications", "featureId"},
-            HEADER2 = new String[]{"id", "molecularFormula", "adduct", "precursorFormula",
-                    "NPC#pathway", "NPC#pathway Probability", "NPC#superclass", "NPC#superclass Probability",
-                    "NPC#class", "NPC#class Probability",
-                    "ClassyFire#most specific class", "ClassyFire#most specific class Probability", "ClassyFire#level 5",
-                    "ClassyFire#level 5 Probability", "ClassyFire#subclass", "ClassyFire#subclass Probability",
-                    "ClassyFire#class", "ClassyFire#class Probability", "ClassyFire#superclass", "ClassyFire#superclass probability",
-                    /*"NPC#all classifications",*/ "ClassyFire#all classifications", "featureId"};
+            /*"NPC#all classifications",*/ "ClassyFire#all classifications", "featureId"};
+
 
     public static class IterateOverFormulas implements Iterator<String[]> {
         int k = 0;
@@ -255,6 +263,7 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
                 cols[i++] = row.id;
                 cols[i++] = row.molecularFormulas[row.best].toString();
                 cols[i++] = row.ionTypes[row.best].toString();
+                cols[i++] = row.precursorFormulas[row.best].toString();
 
                 cols[i++] = row.bestNPCProps[row.best][0].getName();
                 cols[i++] = Double.toString(row.bestNPCProbs[row.best][0]);
@@ -317,7 +326,7 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
 
     public static class IterateOverAdducts implements Iterator<String[]> {
         int k = 0, j = 0;
-        String[] cols = new String[HEADER2.length];
+        String[] cols = new String[HEADER.length];
         final List<CanopusSummaryRow> rows;
 
         public IterateOverAdducts(List<CanopusSummaryRow> rows) {
