@@ -45,6 +45,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.chemdb.nitrite.ChemicalNitriteDatabase;
+import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintWrapper;
 import de.unijena.bioinf.spectraldb.SpectralNoSQLDatabase;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
@@ -55,9 +56,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -75,9 +74,9 @@ public class ChemicalNoSQLDatabaseTest {
     public static void importData() throws IOException {
 
         ChemicalBlobDatabase<?> source = new ChemicalBlobDatabase<>(new FileBlobStorage(Path.of("src/test/resources/test-blob-db").toAbsolutePath()));
-        List<FingerprintCandidate> candidates = new ArrayList<>();
+        Map<MolecularFormula, Iterable<FingerprintCandidate>> candidates = new HashMap<>();
         for (MolecularFormula formula : source.formulas)
-            candidates.addAll(source.lookupStructuresAndFingerprintsByFormula(formula));
+            candidates.put(formula, source.lookupStructuresAndFingerprintsByFormula(formula));
 
         formulas = source.formulas;
         sizePerFormula = new int[formulas.length];
@@ -111,9 +110,14 @@ public class ChemicalNoSQLDatabaseTest {
 
     @Test
     public void rawTestCompounds() throws IOException {
-        List<FingerprintCandidate> fcs = chemDb.getStorage().findAllStr(FingerprintCandidate.class).toList();
+        List<FingerprintCandidateWrapper> fcs = chemDb.getStorage().findAllStr(FingerprintCandidateWrapper.class).toList();
         assertEquals(21, fcs.size());
-        fcs.forEach(fc -> assertNull(fc.getFingerprint()));
+        fcs.forEach(fc -> assertNull(fc.getCandidate()));
+
+        fcs = chemDb.getStorage().findAllStr(FingerprintCandidateWrapper.class, "candidate").toList();
+        assertEquals(21, fcs.size());
+        fcs.forEach(fc -> assertNotNull(fc.getCandidate()));
+        fcs.forEach(fc -> assertNotNull(fc.getCandidate().getFingerprint()));
     }
 
     @Test
