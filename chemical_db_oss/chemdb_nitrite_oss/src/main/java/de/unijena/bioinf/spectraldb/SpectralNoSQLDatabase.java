@@ -48,7 +48,6 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import com.google.common.collect.Iterables;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
@@ -59,9 +58,12 @@ import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.storage.db.nosql.*;
 import de.unijena.bionf.spectral_alignment.AbstractSpectralAlignment;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
+import it.unimi.dsi.fastutil.doubles.Double2ObjectMaps;
+import it.unimi.dsi.fastutil.doubles.Double2ObjectRBTreeMap;
+import it.unimi.dsi.fastutil.doubles.Double2ObjectSortedMap;
+import it.unimi.dsi.fastutil.doubles.DoubleComparators;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -69,7 +71,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.PriorityBlockingQueue;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
@@ -130,49 +131,58 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary {
     }
 
     @Override
-    public <P extends Peak, A extends AbstractSpectralAlignment> Iterable<Pair<SpectralSimilarity, Ms2ReferenceSpectrum>> matchingSpectra(
-            Ms2Spectrum<P> spectrum,
+    public <P extends Peak, A extends AbstractSpectralAlignment> Iterable<SearchResult> matchingSpectra(
+            Iterable<Ms2Spectrum<P>> queries,
             Deviation precursorMzDeviation,
             Deviation maxPeakDeviation,
             Class<A> alignmentType
     ) throws ChemicalDatabaseException {
-        return matchingSpectra(spectrum, precursorMzDeviation, maxPeakDeviation, alignmentType, false);
-    }
-
-    @Override
-    public <P extends Peak, A extends AbstractSpectralAlignment> Iterable<Pair<SpectralSimilarity, Ms2ReferenceSpectrum>> matchingSpectra(
-            Ms2Spectrum<P> spectrum,
-            Deviation precursorMzDeviation,
-            Deviation maxPeakDeviation,
-            Class<A> alignmentType,
-            boolean parallel
-    ) throws ChemicalDatabaseException {
         try {
-            PriorityBlockingQueue<Pair<SpectralSimilarity, Ms2ReferenceSpectrum>> heap = new PriorityBlockingQueue<>(100, (o1, o2) -> - Double.compare(o1.getLeft().similarity, o2.getLeft().similarity));
-            A alignment = alignmentType.getConstructor(Deviation.class).newInstance(maxPeakDeviation);
-            OrderedSpectrum<Peak> query = new SimpleSpectrum(spectrum);
+            Double2ObjectSortedMap<List<SearchResult>> map = new Double2ObjectRBTreeMap<>(DoubleComparators.OPPOSITE_COMPARATOR);
 
-            // TODO it might be a better idea replace iterables.partition with pagination
-            Iterable<Ms2ReferenceSpectrum> spectra = lookupSpectra(spectrum.getPrecursorMz(), precursorMzDeviation, true);
-            StreamSupport.stream(Iterables.partition(spectra, 100).spliterator(), parallel).forEach(chunk -> {
-                for (Ms2ReferenceSpectrum reference : chunk) {
-                    SpectralSimilarity similarity = alignment.score(query, reference.getSpectrum());
-                    Ms2ReferenceSpectrum withoutData = new Ms2ReferenceSpectrum(
-                            reference.getId(), reference.getCandidateInChiKey(), reference.getPrecursorIonType(),
-                            reference.getPrecursorMz(), reference.getIonMass(), reference.getMsLevel(), reference.getCollisionEnergy(),
-                            reference.getInstrumentation(), reference.getFormula(), reference.getName(), reference.getSmiles(),
-                            reference.getLibraryName(), reference.getLibraryId(), reference.getSplash(), null);
-                    if (similarity.shardPeaks > 0) {
-                        heap.add(Pair.of(similarity, withoutData));
-                    }
+            A alignment = alignmentType.getConstructor(Deviation.class).newInstance(maxPeakDeviation);
+            for (Ms2Spectrum<P> query : queries) {
+                OrderedSpectrum<Peak> orderedQuery = new SimpleSpectrum(query);
+
+                double abs = precursorMzDeviation.absoluteFor(query.getPrecursorMz());
+                Filter filter = new Filter().and().gte("precursorMz", query.getPrecursorMz() - abs).lte("precursorMz", query.getPrecursorMz() + abs);
+
+                int total = this.storage.count(filter, Ms2ReferenceSpectrum.class);
+                int pageSize = 100;
+                for (int offset = 0; offset < total; offset += pageSize) {
+                    Iterable<Ms2ReferenceSpectrum> references = this.storage.find(filter, Ms2ReferenceSpectrum.class, offset, pageSize,"spectrum");
+
+                    StreamSupport.stream(references.spliterator(), false).forEach(reference -> {
+                        SpectralSimilarity similarity = alignment.score(orderedQuery, reference.getSpectrum());
+                        if (similarity.shardPeaks > 0) {
+                            Ms2ReferenceSpectrum withoutData = new Ms2ReferenceSpectrum(
+                                    reference.getId(), reference.getCandidateInChiKey(), reference.getPrecursorIonType(),
+                                    reference.getPrecursorMz(), reference.getIonMass(), reference.getMsLevel(), reference.getCollisionEnergy(),
+                                    reference.getInstrumentation(), reference.getFormula(), reference.getName(), reference.getSmiles(),
+                                    reference.getLibraryName(), reference.getLibraryId(), reference.getSplash(), null);
+                            SearchResult res = SearchResult.builder().query(query).similarity(similarity).reference(withoutData).build();
+                            if (map.containsKey(similarity.similarity)) {
+                                map.get(similarity.similarity).add(res);
+                            } else {
+                                map.put(similarity.similarity, List.of(res));
+                            }
+                        }
+                    });
+                }
+            }
+
+            List<SearchResult> result = new ArrayList<>();
+            final int[] rank = new int[]{0};
+            Double2ObjectMaps.fastForEach(map, entry -> {
+                for (SearchResult res : entry.getValue()) {
+                    res.setRank(++rank[0]);
+                    result.add(res);
                 }
             });
 
-            List<Pair<SpectralSimilarity, Ms2ReferenceSpectrum>> result = new ArrayList<>(heap.size());
-            heap.drainTo(result);
             return result;
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException |
-                 RuntimeException e) {
+                 RuntimeException | IOException e) {
             throw new ChemicalDatabaseException(e);
         }
     }
@@ -201,6 +211,24 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary {
             } else {
                 return this.storage.find(filter, Ms2ReferenceSpectrum.class);
             }
+        } catch (IOException e) {
+            throw new ChemicalDatabaseException(e);
+        }
+    }
+
+    @Override
+    public Iterable<Ms2ReferenceSpectrum> getSpectralData(Iterable<Ms2ReferenceSpectrum> references) throws ChemicalDatabaseException {
+        try {
+            return this.storage.injectOptionalFields(Ms2ReferenceSpectrum.class, references, "spectrum");
+        } catch (IOException e) {
+            throw new ChemicalDatabaseException(e);
+        }
+    }
+
+    @Override
+    public Ms2ReferenceSpectrum getSpectralData(Ms2ReferenceSpectrum reference) throws ChemicalDatabaseException {
+        try {
+            return this.storage.injectOptionalFields(reference, "spectrum");
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }
