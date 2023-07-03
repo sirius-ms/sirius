@@ -68,6 +68,7 @@ public class SpectralNoSQLDBs extends ChemDBs {
     public static void importSpectraFromMs2Experiments(SpectralNoSQLDatabase<?> database, Iterable<Ms2Experiment> experiments, int chunkSize) throws ChemicalDatabaseException {
         importSpectraFromMs2Experiments(database.storage, experiments, chunkSize);
     }
+
     public static void importSpectraFromMs2Experiments(Database<?> database, Iterable<Ms2Experiment> experiments, int chunkSize) throws ChemicalDatabaseException {
         List<Ms2ReferenceSpectrum> spectra = new ArrayList<>();
         for (Ms2Experiment experiment : experiments) {
