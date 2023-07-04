@@ -20,13 +20,9 @@
 package de.unijena.bioinf.ms.middleware.compounds.model;
 
 import de.unijena.bioinf.lcms.LCMSCompoundSummary;
-import de.unijena.bioinf.lcms.quality.LCMSQualityCheck;
 import de.unijena.bioinf.lcms.quality.LCMSQualityCheckResult;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * This quality information is available for LC-MS data and includes quality measures for
@@ -34,19 +30,37 @@ import java.util.Map;
  * - isotope peaks
  * - detected adducts
  * - MS/MS peaks
- *
  * This information is the same as provided in the LCMS-view in the GUI
  */
 @Getter
 @Setter
 public class LCMSFeatureSummaryQualityData {
 
-    protected Map<LCMSQualityCheck.QualityCategory, LCMSQualityCheckResult> qualityCategories;
+    /*
+    Quality checks and overall quality for QualityCategory PEAK
+     */
+    protected final LCMSQualityCheckResult peakQualityResult;
+    /*
+    Quality checks and overall quality for QualityCategory ISOTOPE
+     */
+    protected final LCMSQualityCheckResult isotopeQualityResult;
+    /*
+    Quality checks and overall quality for QualityCategory ADDUCTS
+     */
+    protected final LCMSQualityCheckResult adductQualityResult;
+    /*
+    Quality checks and overall quality for QualityCategory MSMS
+     */
+    protected final LCMSQualityCheckResult ms2QualityResult;
+
     public LCMSFeatureSummaryQualityData(LCMSCompoundSummary lcmsCompoundSummary) {
-        qualityCategories = new HashMap<>();
-        qualityCategories.put(LCMSQualityCheck.QualityCategory.PEAK, lcmsCompoundSummary.peakQualityResult);
-        qualityCategories.put(LCMSQualityCheck.QualityCategory.ISOTOPE, lcmsCompoundSummary.isotopeQualityResult);
-        qualityCategories.put(LCMSQualityCheck.QualityCategory.ADDUCTS, lcmsCompoundSummary.adductQualityResult);
-        qualityCategories.put(LCMSQualityCheck.QualityCategory.MSMS, lcmsCompoundSummary.ms2QualityResult);
+        //LCMSQualityCheck.QualityCategory.PEAK
+        this.peakQualityResult = lcmsCompoundSummary.peakQualityResult;
+        //LCMSQualityCheck.QualityCategory.ISOTOPE
+        this.isotopeQualityResult = lcmsCompoundSummary.isotopeQualityResult;
+        //LCMSQualityCheck.QualityCategory.ADDUCTS
+        this.adductQualityResult = lcmsCompoundSummary.adductQualityResult;
+        //LCMSQualityCheck.QualityCategory.MSMS
+        this.ms2QualityResult = lcmsCompoundSummary.ms2QualityResult;
     }
 }
