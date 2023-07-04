@@ -109,7 +109,7 @@ public class SpectralNoSQLDBs extends ChemDBs {
                     .precursorMz(s.getPrecursorMz())
                     .precursorIonType(experiment.getPrecursorIonType())
                     .spectrum(new SimpleSpectrum(s));
-            experiment.getAnnotation(Splash.class).map(Splash::toString).ifPresent(b::splash);
+            experiment.getAnnotation(Splash.class).map(Splash::getSplash).ifPresent(b::splash);
             experiment.getAnnotation(Smiles.class).map(Smiles::toString).ifPresent(b::smiles);
             experiment.getAnnotation(InChI.class).map(inchi -> (inchi.key != null) ? inchi.key2D() : null).ifPresent(b::candidateInChiKey);
             experiment.getAnnotation(MsInstrumentation.class).ifPresent(b::instrumentation);
