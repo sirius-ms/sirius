@@ -4,14 +4,18 @@ import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import org.junit.Test;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.InvalidSmilesException;
+import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.silent.AtomContainer;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
+import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
 
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 
@@ -116,6 +120,35 @@ public class CombinatorialFragmenterTest {
             assertTrue(bitsets.isEmpty());
         } catch (InvalidSmilesException e) {
             e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testCutSpecificBonds(){
+        try {
+            String smiles = "c1c(O)cc(N)cc1";
+            SmilesParser smiParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+            IAtomContainer molecule = smiParser.parseSmiles(smiles);
+            MolecularGraph mol = new MolecularGraph(molecule);
+            CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(mol);
+
+            BitSet bondsToCut = new BitSet(molecule.getBondCount());
+            bondsToCut.set(0);
+            bondsToCut.set(5);
+
+            List<CombinatorialFragment> fragments = fragmenter.cutBonds(mol.asFragment(), bondsToCut, null);
+            assertEquals(2, fragments.size());
+
+            BitSet fragment1 = new BitSet(8);
+            fragment1.set(0);fragment1.set(6);fragment1.set(7);
+            BitSet fragment2 = (BitSet) fragment1.clone();
+            fragment2.flip(0,8);
+
+            List<BitSet> fragmentBitSets = fragments.stream().map(f -> f.bitset).toList();
+            assertTrue(fragmentBitSets.contains(fragment1));
+            assertTrue(fragmentBitSets.contains(fragment2));
+        } catch (InvalidSmilesException e) {
+            throw new RuntimeException(e);
         }
     }
 
