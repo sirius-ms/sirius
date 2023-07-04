@@ -32,4 +32,9 @@ public class SpectralNitriteDatabase extends SpectralNoSQLDatabase<Document> {
     public SpectralNitriteDatabase(Path file) throws IOException {
         super(new NitriteDatabase(file, SpectralNoSQLDatabase.initMetadata()));
     }
+
+    public NitriteDatabase getStorage(){
+        return (NitriteDatabase) storage;
+    }
+
 }

@@ -54,6 +54,7 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
+import de.unijena.bioinf.ms.annotations.SpectrumAnnotation;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.storage.db.nosql.*;
 import de.unijena.bionf.spectral_alignment.AbstractSpectralAlignment;
@@ -67,10 +68,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
@@ -86,7 +84,7 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary {
         return new JsonSerializer<T>() {
             @Override
             public void serialize(T value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-                gen.writeString(toString());
+                gen.writeString(value.toString());
             }
         };
     }
@@ -98,6 +96,48 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary {
                 while (p.currentToken() != JsonToken.VALUE_STRING)
                     p.nextToken();
                 return callable.apply(p.getText());
+            }
+        };
+    }
+
+    protected static JsonSerializer<AdditionalFields> annotationSerializer() {
+        return new JsonSerializer<>() {
+            @Override
+            public void serialize(AdditionalFields value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+                try {
+                    gen.writeStartObject();
+                    value.forEach((key, val) -> {
+                        try {
+                            gen.writeStringField(key, val);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+                    gen.writeEndObject();
+                } catch (RuntimeException e) {
+                    throw new IOException(e);
+                }
+            }
+        };
+    }
+
+    protected static JsonDeserializer<SpectrumAnnotation> annotationDeserializer() {
+        return new JsonDeserializer<>() {
+            @Override
+            public SpectrumAnnotation deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+                JsonToken token = p.currentToken();
+                if (token != JsonToken.START_OBJECT)
+                    return null;
+
+                Map<String, String> map = new HashMap<>();
+                for (token = p.nextToken(); token == JsonToken.FIELD_NAME; token = p.nextToken()) {
+                    String key = p.getCurrentName();
+                    String value = p.nextTextValue();
+                    map.put(key, value);
+                }
+                AdditionalFields af = new AdditionalFields();
+                af.putAll(map);
+                return af;
             }
         };
     }
@@ -127,6 +167,12 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary {
                 ).addDeserializer(
                         MsInstrumentation.class,
                         deserializer(MsInstrumentation.Instrument::valueOf)
+                ).addSerializer(
+                        AdditionalFields.class,
+                        annotationSerializer()
+                ).addDeserializer(
+                        SpectrumAnnotation.class,
+                        annotationDeserializer()
                 ).setOptionalFields(Ms2ReferenceSpectrum.class, "spectrum");
     }
 
