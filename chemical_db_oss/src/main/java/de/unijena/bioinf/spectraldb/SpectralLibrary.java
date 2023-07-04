@@ -32,9 +32,28 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 public interface SpectralLibrary {
 
+    default <P extends Peak> Iterable<SearchResult> matchingSpectra(
+            Ms2Spectrum<P> query,
+            Deviation precursorMzDeviation,
+            Deviation maxPeakDeviation
+    ) throws ChemicalDatabaseException {
+        return matchingSpectra(List.of(query), precursorMzDeviation, maxPeakDeviation);
+    }
+
     default <P extends Peak, A extends AbstractSpectralAlignment> Iterable<SearchResult> matchingSpectra(
+            Ms2Spectrum<P> query,
+            Deviation precursorMzDeviation,
+            Deviation maxPeakDeviation,
+            Class<A> alignmentType
+    ) throws ChemicalDatabaseException {
+        return matchingSpectra(List.of(query), precursorMzDeviation, maxPeakDeviation, alignmentType);
+    }
+
+    default <P extends Peak> Iterable<SearchResult> matchingSpectra(
             Iterable<Ms2Spectrum<P>> queries,
             Deviation precursorMzDeviation,
             Deviation maxPeakDeviation
