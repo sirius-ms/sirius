@@ -48,6 +48,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import com.google.common.collect.Streams;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
@@ -59,10 +60,6 @@ import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.storage.db.nosql.*;
 import de.unijena.bionf.spectral_alignment.AbstractSpectralAlignment;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
-import it.unimi.dsi.fastutil.doubles.Double2ObjectMaps;
-import it.unimi.dsi.fastutil.doubles.Double2ObjectRBTreeMap;
-import it.unimi.dsi.fastutil.doubles.Double2ObjectSortedMap;
-import it.unimi.dsi.fastutil.doubles.DoubleComparators;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
@@ -184,7 +181,7 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary {
             Class<A> alignmentType
     ) throws ChemicalDatabaseException {
         try {
-            Double2ObjectSortedMap<List<SearchResult>> map = new Double2ObjectRBTreeMap<>(DoubleComparators.OPPOSITE_COMPARATOR);
+            final List<SearchResult> results = new ArrayList<>();
 
             A alignment = alignmentType.getConstructor(Deviation.class).newInstance(maxPeakDeviation);
             for (Ms2Spectrum<P> query : queries) {
@@ -207,26 +204,19 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary {
                                     reference.getInstrumentation(), reference.getFormula(), reference.getName(), reference.getSmiles(),
                                     reference.getLibraryName(), reference.getLibraryId(), reference.getSplash(), null);
                             SearchResult res = SearchResult.builder().query(query).similarity(similarity).reference(withoutData).build();
-                            if (map.containsKey(similarity.similarity)) {
-                                map.get(similarity.similarity).add(res);
-                            } else {
-                                map.put(similarity.similarity, List.of(res));
-                            }
+                            results.add(res);
                         }
                     });
                 }
             }
 
-            List<SearchResult> result = new ArrayList<>();
-            final int[] rank = new int[]{0};
-            Double2ObjectMaps.fastForEach(map, entry -> {
-                for (SearchResult res : entry.getValue()) {
-                    res.setRank(++rank[0]);
-                    result.add(res);
-                }
-            });
+            results.sort((a, b) -> Double.compare(b.getSimilarity().similarity, a.getSimilarity().similarity));
 
-            return result;
+            return Streams.mapWithIndex(results.stream(), (from, index) -> {
+                from.setRank((int) index + 1);
+                return from;
+            }).toList();
+
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException |
                  RuntimeException | IOException e) {
             throw new ChemicalDatabaseException(e);
