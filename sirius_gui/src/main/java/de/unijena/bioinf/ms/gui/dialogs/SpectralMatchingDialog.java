@@ -22,11 +22,12 @@ package de.unijena.bioinf.ms.gui.dialogs;
 
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.ms_viewer.WebViewSpectraViewer;
 import de.unijena.bioinf.ms.gui.ms_viewer.data.SpectraJSONWriter;
-import de.unijena.bioinf.projectspace.SpectralSearchResultBean;
-import de.unijena.bioinf.spectraldb.entities.Ms2SpectralData;
+import de.unijena.bioinf.spectraldb.SpectralLibrary;
+import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 
 import javax.swing.*;
 import java.awt.*;
@@ -39,14 +40,14 @@ public class SpectralMatchingDialog extends JDialog {
 
     private final SpectraJSONWriter spectraWriter;
 
-    private final List<SpectralSearchResultBean.SearchResult> results;
+    private final FingerprintCandidateBean fpBean;
 
-    private final List<Ms2SpectralData> data;
+    private final List<SpectralLibrary.SearchResult> searchResults;
 
-    public SpectralMatchingDialog(List<SpectralSearchResultBean.SearchResult> results, List<Ms2SpectralData> data) {
+    public SpectralMatchingDialog(FingerprintCandidateBean fpBean, List<SpectralLibrary.SearchResult> searchResults) {
         super(MainFrame.MF, "Spectral comparison", false);
-        this.results = results;
-        this.data = data;
+        this.fpBean = fpBean;
+        this.searchResults = searchResults;
         this.spectraWriter = new SpectraJSONWriter();
         this.browser = new WebViewSpectraViewer();
 
@@ -63,11 +64,15 @@ public class SpectralMatchingDialog extends JDialog {
     }
 
     private void selectionChanged(int index) {
-        if (index < this.results.size()) {
+        if (index < searchResults.size() && searchResults.size() > 0) {
             Jobs.runEDTLater(() -> {
-                final SimpleSpectrum query = new SimpleSpectrum(results.get(index).query);
-                final SimpleSpectrum match = new SimpleSpectrum(data.get(index));
-                String json = spectraWriter.ms2MirrorJSON(query, match, results.get(index).metadata.getName());
+                SpectralLibrary.SearchResult result = searchResults.get(index);
+                Ms2ReferenceSpectrum reference = fpBean.getMs2SpectralData(result.getReference());
+
+                final SimpleSpectrum query = new SimpleSpectrum(result.getQuery());
+                final SimpleSpectrum referenceSpectrum = new SimpleSpectrum(reference.getSpectrum());
+
+                String json = spectraWriter.ms2MirrorJSON(query, referenceSpectrum, reference.getName());
                 this.browser.loadData(json, null, null);
             });
         }
@@ -86,4 +91,5 @@ public class SpectralMatchingDialog extends JDialog {
         }
         super.setVisible(b);
     }
+
 }

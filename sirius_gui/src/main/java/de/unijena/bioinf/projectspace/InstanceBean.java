@@ -23,10 +23,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
@@ -34,9 +31,7 @@ import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.spectraldb.SpectralLibrary;
 import de.unijena.bioinf.spectraldb.SpectralNoSQLDBs;
-import de.unijena.bioinf.spectraldb.entities.Ms2SpectralData;
-import de.unijena.bioinf.spectraldb.entities.Ms2SpectralMetadata;
-import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
+import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -200,34 +195,37 @@ public class InstanceBean extends Instance implements SiriusPCS {
         return IntStream.range(0, form.size()).mapToObj(i -> new FormulaResultBean(form.get(i).getCandidate().getId(), this, i + 1)).collect(Collectors.toList());
     }
 
-    public SpectralSearchResultBean getSpectralSearchResults() {
-        if (this.spectralBean == null) {
-            this.spectralBean = new SpectralSearchResultBean();
+    public Optional<SpectralSearchResultBean> getSpectralSearchResults() {
+        // TODO why is it called 3 times?
+        // FIXME somewhere is an infinite loop!
+        if (this.spectralBean == null && spectralLibrary != null) {
+            SpectralSearchResultBean searchBean = new SpectralSearchResultBean();
             // TODO move hardcoded db to project space
             // TODO move on-the-fly computation to job system
             // TODO set search parameters
-            if (spectralLibrary != null) {
-                try {
-                    for (MutableMs2Spectrum query : getMs2Spectra()) {
-                        spectralBean.addResults(query, spectralLibrary.matchingSpectra(query, new Deviation(1000), new Deviation(2000), IntensityWeightedSpectralAlignment.class, true));
-                    }
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
+            try {
+                List<Ms2Spectrum<Peak>> queries = new ArrayList<>(getMs2Spectra());
+                Iterable<SpectralLibrary.SearchResult> searchResults = spectralLibrary.matchingSpectra(queries, new Deviation(1), new Deviation(2));
+                searchBean.setResults(searchResults);
+            } catch (Exception e) {
+                LoggerFactory.getLogger(getClass()).error("Error matching spectra from '" + getID() + "'.");
+            }
+            if (searchBean.getAllResults().size() > 0) {
+                this.spectralBean = searchBean;
             }
         }
-        return this.spectralBean;
+        return this.spectralBean != null ? Optional.of(spectralBean) : Optional.empty();
     }
 
-    public Optional<Ms2SpectralData> getMs2SpectralData(Ms2SpectralMetadata metadata) {
-        if (spectralLibrary != null) {
+    public Ms2ReferenceSpectrum getSpectralData(Ms2ReferenceSpectrum reference) {
+        if (spectralLibrary != null && reference.getSpectrum() == null) {
             try {
-                return Optional.of(spectralLibrary.getSpectralData(metadata));
+                return spectralLibrary.getSpectralData(reference);
             } catch (ChemicalDatabaseException e) {
-                throw new RuntimeException(e);
+                LoggerFactory.getLogger(getClass()).error("Error when getting spectral data '" + reference.getCandidateInChiKey() + "' from '" + getID() + "'.");
             }
         }
-        return Optional.empty();
+        return reference;
     }
 
     public double getIonMass() {
