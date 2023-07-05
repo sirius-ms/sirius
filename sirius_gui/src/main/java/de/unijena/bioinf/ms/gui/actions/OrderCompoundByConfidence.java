@@ -19,6 +19,8 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
+import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.projectspace.InstanceBean;
 
@@ -29,15 +31,13 @@ import java.util.Comparator;
 public class OrderCompoundByConfidence extends AbstractAction {
 
     public OrderCompoundByConfidence() {
-        super("Order by COSMIC");
+        super("Order by " + FormulaScore.NA(ConfidenceScore.class).shortName());
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        MainFrame.MF.getCompoundList().orderBy(((Comparator<InstanceBean>) (o1, o2) -> {
-            return Double.compare(
-                    o1.getID().getConfidenceScore().orElse(Double.NEGATIVE_INFINITY),
-                    o2.getID().getConfidenceScore().orElse(Double.NEGATIVE_INFINITY));
-        }).reversed());
+        MainFrame.MF.getCompoundList().orderBy(Comparator
+                .comparingDouble((InstanceBean o) -> o.getID().getConfidenceScore().orElse(Double.NEGATIVE_INFINITY))
+                        .reversed());
     }
 }
