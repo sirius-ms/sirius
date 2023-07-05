@@ -25,6 +25,7 @@ import org.dizitart.no2.Document;
 import org.dizitart.no2.NitriteCollection;
 import org.dizitart.no2.NitriteId;
 import org.dizitart.no2.exceptions.InvalidOperationException;
+import org.dizitart.no2.mapper.NitriteMapper;
 import org.dizitart.no2.objects.ObjectRepository;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,7 +46,9 @@ public class InjectingIterable<T> implements Iterable<T> {
 
     private final String idField;
 
-    public InjectingIterable(Iterable<T> parent, Set<String> injectedFields, ObjectRepository<T> repository, String idField) throws IOException {
+    private final NitriteMapper mapper;
+
+    public InjectingIterable(Iterable<T> parent, Set<String> injectedFields, ObjectRepository<T> repository, String idField, NitriteMapper mapper) throws IOException {
         try {
             Field cField = repository.getClass().getDeclaredField("collection");
             cField.setAccessible(true);
@@ -56,6 +59,7 @@ public class InjectingIterable<T> implements Iterable<T> {
         this.parent = parent;
         this.injectedFields = injectedFields;
         this.idField = idField;
+        this.mapper = mapper;
     }
 
     @NotNull
@@ -89,7 +93,7 @@ public class InjectingIterable<T> implements Iterable<T> {
             while (iterator.hasNext()) {
                 T object = iterator.next();
                 if (object != null) {
-                    T injected = inject(object, injectedFields, collection, idField);
+                    T injected = inject(object, injectedFields, collection, idField, mapper);
                     nextElement = injected;
                     return;
                 } else {
@@ -107,12 +111,18 @@ public class InjectingIterable<T> implements Iterable<T> {
 
     }
 
-    private static <T> void inject(T object, Document document, Class<?> clazz, Set<String> injectedFields) {
+    private static <T> void inject(T object, Document document, Class<?> clazz, Set<String> injectedFields, NitriteMapper mapper) {
         for (String fieldName : injectedFields) {
             for (Field field : clazz.getDeclaredFields()) {
                 if (field.getName().equals(fieldName)) {
                     try {
-                        field.set(object, document.get(field.getName(), field.getType()));
+                        field.setAccessible(true);
+                        Object content = document.get(field.getName());
+                        if (content instanceof Document) {
+                            field.set(object, mapper.asObject((Document) content, field.getType()));
+                        } else {
+                            field.set(object, document.get(field.getName(), field.getType()));
+                        }
                     } catch (IllegalAccessException e) {
                         throw new RuntimeException(e);
                     }
@@ -121,12 +131,13 @@ public class InjectingIterable<T> implements Iterable<T> {
         }
     }
 
-    public static <T> T inject(T original, Set<String> injectedFields, NitriteCollection collection, String idField) {
+    public static <T> T inject(T original, Set<String> injectedFields, NitriteCollection collection, String idField, NitriteMapper mapper) {
         if (injectedFields.size() == 0) return original;
 
         long id;
         try {
             Field idf = original.getClass().getDeclaredField(idField);
+            idf.setAccessible(true);
             id = idf.getLong(original);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -137,9 +148,9 @@ public class InjectingIterable<T> implements Iterable<T> {
             throw new RuntimeException("No such document: " + id);
         }
 
-        inject(original, fromDB, original.getClass(), injectedFields);
+        inject(original, fromDB, original.getClass(), injectedFields, mapper);
         for (Class<?> clazz : ClassUtils.getAllSuperclasses(original.getClass())) {
-            inject(original, fromDB, clazz, injectedFields);
+            inject(original, fromDB, clazz, injectedFields, mapper);
         }
         return original;
     }
