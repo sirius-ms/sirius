@@ -41,9 +41,7 @@ import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
-import de.unijena.bioinf.projectspace.SpectralSearchResultBean;
 import de.unijena.bioinf.rest.ProxyManager;
-import de.unijena.bioinf.spectraldb.entities.Ms2SpectralData;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
@@ -281,17 +279,8 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
             final FingerprintCandidateBean c = candidateList.getModel().getElementAt(selectedCompoundId);
             Jobs.runEDTLater(() -> {
                 c.getSpectralSearchResults().ifPresent(searchBean -> {
-                    List<SpectralSearchResultBean.SearchResult> results = new ArrayList<>();
-                    List<Ms2SpectralData> data = new ArrayList<>();
-
-                    searchBean.getMatchingSpectra(c.getFingerprintCandidate().getInchiKey2D()).forEach(r -> {
-                        c.getMs2SpectralData(r.metadata).ifPresent(d -> {
-                            results.add(r);
-                            data.add(d);
-                        });
-                    });
-                    if (results.size() > 0) {
-                        new SpectralMatchingDialog(results, data).setVisible(true);
+                    if (searchBean.isFPCandidateInResults(c.candidate.getInchiKey2D())) {
+                        searchBean.getMatchingSpectraForFPCandidate(c.candidate.getInchiKey2D()).ifPresent(searchResults -> new SpectralMatchingDialog(candidate, searchResults).setVisible(true));
                     }
                 });
             });

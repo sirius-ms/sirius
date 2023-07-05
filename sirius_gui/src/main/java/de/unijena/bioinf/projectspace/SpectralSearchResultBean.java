@@ -20,92 +20,62 @@
 
 package de.unijena.bioinf.projectspace;
 
-import com.google.common.collect.Streams;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.spectraldb.entities.Ms2SpectralMetadata;
-import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
+import de.unijena.bioinf.spectraldb.SpectralLibrary;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.StreamSupport;
+import java.util.*;
 
 public class SpectralSearchResultBean {
 
-    private final List<SearchEntry> results = new ArrayList<>();
+    private final List<SpectralLibrary.SearchResult> allResults = new ArrayList<>();
+    private final Map<String, List<SpectralLibrary.SearchResult>> resultMap = new HashMap<>();
+    private final int rankLimit;
 
-    public SpectralSearchResultBean() {}
-
-    public <P extends Peak> void addResults(Ms2Spectrum<P> query, Iterable<Pair<SpectralSimilarity, Ms2SpectralMetadata>> results) {
-        this.results.add(new SearchEntry(query, results));
+    public SpectralSearchResultBean() {
+        this(25);
+        // TODO is limit rank <= 25 okay? -> set the rank limit parameter somewhere!
     }
 
-    public List<SearchEntry> getResults() {
-        return results;
+    public SpectralSearchResultBean(int rankLimit) {
+        this.rankLimit = rankLimit;
     }
 
-    public List<SearchResult> getMatchingSpectra(String inchiKey) {
-        List<SearchResult> res = new ArrayList<>();
-        for (SearchEntry entry : this.results) {
-            for (Triple<Integer, SpectralSimilarity, Ms2SpectralMetadata> r : entry.results) {
-                if (r.getRight().getCandidateInChiKey().equals(inchiKey)) {
-                    if (res.stream().noneMatch(r2 -> r2.metadata.getLibraryId().equals(r.getRight().getLibraryId()))) {
-                        res.add(new SearchResult(entry.query, r.getLeft(), r.getMiddle(), r.getRight()));
-                    }
-                    break;
+    public <P extends Peak> void setResults(Iterable<SpectralLibrary.SearchResult> results) {
+        this.resultMap.clear();
+        this.allResults.clear();
+        results.forEach(res -> {
+            if (res.getRank() <= rankLimit) {
+                if (!resultMap.containsKey(res.getReference().getCandidateInChiKey())) {
+                    resultMap.put(res.getReference().getCandidateInChiKey(), new ArrayList<>());
                 }
+                resultMap.get(res.getReference().getCandidateInChiKey()).add(res);
             }
-        }
-        res.sort((r1, r2) -> - Double.compare(r1.similarity.similarity, r2.similarity.similarity));
-        return res;
+            allResults.add(res);
+        });
     }
 
-    public Optional<SearchResult> getBestMatchingSpectrum(String inchiKey) {
-        List<SearchResult> results = getMatchingSpectra(inchiKey);
-        if (results.size() > 0) {
-            return Optional.of(results.get(0));
-        }
-        return Optional.empty();
+    public boolean isFPCandidateInResults(String inchiKey) {
+        return this.resultMap.containsKey(inchiKey);
     }
 
-    private static final class SearchEntry {
-
-        Ms2Spectrum<? extends Peak> query;
-
-        List<Triple<Integer, SpectralSimilarity, Ms2SpectralMetadata>> results;
-
-        public SearchEntry(Ms2Spectrum<? extends Peak> query, Iterable<Pair<SpectralSimilarity, Ms2SpectralMetadata>> results) {
-            this.query = query;
-            this.results = Streams.mapWithIndex(StreamSupport.stream(results.spliterator(), false), (pair, idx) -> Triple.of((int) idx + 1, pair.getLeft(), pair.getRight())).toList();
+    public Optional<List<SpectralLibrary.SearchResult>> getMatchingSpectraForFPCandidate(String inchiKey) {
+        if (this.resultMap.containsKey(inchiKey)) {
+            return Optional.of(this.resultMap.get(inchiKey));
+        } else {
+            return Optional.empty();
         }
-
     }
 
-    public static final class SearchResult {
-
-        public Ms2Spectrum<? extends Peak> query;
-
-        public int rank;
-
-        public SpectralSimilarity similarity;
-
-        public Ms2SpectralMetadata metadata;
-
-        public SearchResult(
-                Ms2Spectrum<? extends Peak> query,
-                int rank,
-                SpectralSimilarity similarity,
-                Ms2SpectralMetadata metadata
-        ) {
-            this.query = query;
-            this.rank = rank;
-            this.similarity = similarity;
-            this.metadata = metadata;
+    public Optional<SpectralLibrary.SearchResult> getBestMatchingSpectrumForFPCandidate(String inchiKey) {
+        if (this.resultMap.containsKey(inchiKey)) {
+            return Optional.of(this.resultMap.get(inchiKey).get(0));
+        } else {
+            return Optional.empty();
         }
+    }
 
+    public List<SpectralLibrary.SearchResult> getAllResults() {
+        return allResults;
     }
 
 }
