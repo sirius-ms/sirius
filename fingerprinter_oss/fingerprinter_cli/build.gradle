@@ -21,9 +21,11 @@
 apply plugin: "application"
 version =  parent.fingeridVersion
 
-mainClassName = "de.unijena.bioinf.fingerid.FingerprinterCLI"
+mainClassName = "de.unijena.bioinf.fingerid.SimpleFingerprinterCLI"
 dependencies {
-    compile project(':fingerprinter_oss')
-    compile group: "com.lexicalscope.jewelcli", name: "jewelcli", version: "$jewelcli_version"
+    api project(':fingerprinter_oss')
+    for (module in ["fingerprint", "data", "interfaces"])
+        api "org.openscience.cdk:cdk-$module:$cdk_version"
+    implementation group: "com.lexicalscope.jewelcli", name: "jewelcli", version: "$jewelcli_version"
 
 }

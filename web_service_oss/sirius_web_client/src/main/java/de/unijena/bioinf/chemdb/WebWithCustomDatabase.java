@@ -158,14 +158,16 @@ public class WebWithCustomDatabase {
                 result = new CandidateResult();
             }
 
+            // add candidates from requested custom dbs
             for (CustomDatabase<?> cdb : dbs.stream().filter(SearchableDatabase::isCustomDb).distinct().map(it -> (CustomDatabase<?>) it).collect(Collectors.toList())) {
                 Optional<? extends ChemicalBlobDatabase<?>> optDB = cdb.toChemDB(api.getCDKChemDBFingerprintVersion());
                 if (optDB.isPresent())
-                    result.addCustom(cdb.name(), optDB.get().lookupStructuresAndFingerprintsByFormula(formula), false);
+                    result.addRequestedCustom(cdb.name(), optDB.get().lookupStructuresAndFingerprintsByFormula(formula));
             }
 
+            // add tags from non-requested custom dbs for compounds that are also part of the requested dbs
             for (ChemicalBlobDatabase<?> custom : getAdditionalCustomDBs(dbs))
-                result.addCustom(custom.getName(), custom.lookupStructuresAndFingerprintsByFormula(formula), true);
+                result.addAdditionalCustom(custom.getName(), custom.lookupStructuresAndFingerprintsByFormula(formula));
 
             return result;
         } catch (ChemicalDatabaseException e) {
@@ -206,7 +208,7 @@ public class WebWithCustomDatabase {
         }
 
         return map.entrySet().stream().map(e ->
-                new FormulaCandidate(e.getKey().formula, e.getKey().ionType, e.getValue().longValue())).
+                        new FormulaCandidate(e.getKey().formula, e.getKey().ionType, e.getValue().longValue())).
                 collect(Collectors.toSet());
     }
 
@@ -312,12 +314,19 @@ public class WebWithCustomDatabase {
             restDbInChIs = mergeCompounds(compounds, cs);
         }
 
-        private void addCustom(String name, List<FingerprintCandidate> compounds, boolean onlyContained) {
+        private void addRequestedCustom(String name, List<FingerprintCandidate> compounds) {
             if (customInChIs.containsKey(name))
                 throw new IllegalArgumentException("Custom db already exists: '" + name + "'");
-            customInChIs.put(name, mergeCompounds(compounds, cs, onlyContained));
+            customInChIs.put(name, mergeCompounds(compounds, cs, false));
         }
 
+        private void addAdditionalCustom(String name, List<FingerprintCandidate> compounds) {
+            if (customInChIs.containsKey(name))
+                throw new IllegalArgumentException("Custom db already exists: '" + name + "'");
+            HashMap<String, FingerprintCandidate> candidates = new HashMap<>(cs);
+            candidates.keySet().retainAll(getReqCandidatesInChIs());
+            customInChIs.put(name, mergeCompounds(compounds, candidates, true));
+        }
 
         public Set<String> getCombCandidatesInChIs() {
             return getCombCandidatesStr().map(FingerprintCandidate::getInchiKey2D).collect(Collectors.toSet());
@@ -345,15 +354,16 @@ public class WebWithCustomDatabase {
                 if (requestFilter == restFilter)
                     return getCombCandidatesStr(); //requested rest candidates equals the searched rest candidates
                 else
-                    return Stream.concat(restDbInChIs.stream().filter(ChemDBs.inFilter((it) -> it.bitset, requestFilter)), customInChIs.values().stream().flatMap(Set::stream)).
-                            unordered();
+                    return Stream.concat(
+                            restDbInChIs.stream().filter(ChemDBs.inFilter((it) -> it.bitset, requestFilter)),
+                            customInChIs.values().stream().flatMap(Set::stream)
+                    ).unordered();
             } else {
                 // only custom db without inheritance was requested
                 return customInChIs.values().stream().flatMap(Set::stream).
                         unordered();
             }
         }
-
 
 
         public Optional<Set<String>> getCustomDbCandidatesInChIs(String name) {
@@ -371,7 +381,6 @@ public class WebWithCustomDatabase {
         }
 
 
-
         public Optional<Set<String>> getAllDbCandidatesInChIs() {
             return getAllDbCandidatesOpt().map(it -> it.stream().map(FingerprintCandidate::getInchiKey2D).collect(Collectors.toSet()));
         }
@@ -385,7 +394,6 @@ public class WebWithCustomDatabase {
                 return Optional.empty();
             return Optional.of(restDbInChIs);
         }
-
 
 
         public boolean containsAllDb() {

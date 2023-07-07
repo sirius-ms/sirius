@@ -20,7 +20,9 @@
 
 package de.unijena.bioinf.ms.rest.client.info;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
@@ -30,18 +32,14 @@ import de.unijena.bioinf.ms.rest.model.info.News;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.ms.rest.model.license.SubscriptionConsumables;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
-import org.apache.hc.client5.http.classic.HttpClient;
-import org.apache.hc.client5.http.classic.methods.HttpGet;
-import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
-import org.apache.hc.client5.http.config.RequestConfig;
-import org.apache.hc.core5.net.URIBuilder;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.URI;
@@ -49,105 +47,97 @@ import java.sql.Timestamp;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class InfoClient extends AbstractCsiClient {
     private static final String WEBAPI_VERSION_JSON = "/version.json";
     private static final String WEBAPI_WORKER_JSON = "/workers.json";
 
     @SafeVarargs
-    public InfoClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest>... requestDecorators) {
+    public InfoClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<Request.Builder>... requestDecorators) {
         super(serverUrl, requestDecorators);
     }
 
     @NotNull
-    public VersionsInfo getVersionInfo(final HttpClient client, boolean includeUpdateInfo) throws IOException {
+    public VersionsInfo getVersionInfo(final OkHttpClient client, boolean includeUpdateInfo) throws IOException {
         return execute(client,
-                () -> {
-                    HttpGet get = new HttpGet(buildVersionSpecificWebapiURI(WEBAPI_VERSION_JSON)
-                            .setParameter("fingeridVersion", FingerIDProperties.fingeridFullVersion())
-                            .setParameter("siriusguiVersion", FingerIDProperties.sirius_guiVersion())
-                            .setParameter("updateInfo", String.valueOf(includeUpdateInfo))
-                            .build());
-                    get.setConfig(RequestConfig.custom().setConnectTimeout(8, TimeUnit.SECONDS)
-                            /*.setSocketTimeout(8000)*/.build());
-                    return get;
-                },
+                () -> new Request.Builder()
+                        .url(buildVersionSpecificWebapiURI(WEBAPI_VERSION_JSON)
+                                .addQueryParameter("fingeridVersion", FingerIDProperties.fingeridFullVersion())
+                                .addQueryParameter("siriusguiVersion", FingerIDProperties.sirius_guiVersion())
+                                .addQueryParameter("updateInfo", String.valueOf(includeUpdateInfo))
+                                .build())
+                        .get(),
                 this::parseVersionInfo
         );
     }
 
-    //todo change to Jackson
     @Nullable
     private VersionsInfo parseVersionInfo(BufferedReader reader) {
         if (reader != null) {
-            try (final JsonReader r = Json.createReader(reader)) {
-                JsonObject o = r.readObject();
-                JsonObject gui = o.getJsonObject("SIRIUS GUI");
+            ObjectMapper mapper = new ObjectMapper();
+            try (final JsonParser parser = mapper.createParser(reader)){
+                final JsonNode o = mapper.readTree(parser);
 
-                final String version = gui.getString("version");
-                String database = o.getJsonObject("database").getString("version");
+                JsonNode gui = o.get("SIRIUS GUI");
+
+                final String version = gui.get("version").asText();
+                String database = o.get("database").get("version").asText();
 
                 boolean expired = true;
                 Timestamp accept = null;
                 Timestamp finish = null;
 
-                if (o.containsKey("expiry dates")) {
-                    JsonObject expiryInfo = o.getJsonObject("expiry dates");
-                    expired = expiryInfo.getBoolean("isExpired");
-                    if (expiryInfo.getBoolean("isAvailable")) {
-                        accept = Timestamp.valueOf(expiryInfo.getString("acceptJobs"));
-                        finish = Timestamp.valueOf(expiryInfo.getString("finishJobs"));
+                if (o.has("expiry dates")) {
+                    JsonNode expiryInfo = o.get("expiry dates");
+                    expired = expiryInfo.get("isExpired").asBoolean();
+                    if (expiryInfo.get("isAvailable").asBoolean()) {
+                        accept = Timestamp.valueOf(expiryInfo.get("acceptJobs").asText());
+                        finish = Timestamp.valueOf(expiryInfo.get("finishJobs").asText());
                     }
                 }
 
                 List<News> newsList = Collections.emptyList();
-                if (o.containsKey("news")) {
-                    final String newsJson = o.getJsonArray("news").toString();
-                    newsList = News.parseJsonNews(newsJson);
-                }
+                if (o.has("news"))
+                    newsList = News.parseJsonNews(o.get("news"));
+
                 VersionsInfo v = new VersionsInfo(version, database, expired, accept, finish, newsList);
 
-                if (gui.containsKey("latestVersion") && gui.getString("latestVersion") != null)
-                    v.setLatestSiriusVersion(new DefaultArtifactVersion(gui.getString("latestVersion")));
+                if (gui.has("latestVersion") && gui.get("latestVersion") != null)
+                    v.setLatestSiriusVersion(new DefaultArtifactVersion(gui.get("latestVersion").asText()));
 
-                if (gui.containsKey("latestVersionUrl"))
-                    v.setLatestSiriusLink(gui.getString("latestVersionUrl"));
+                if (gui.has("latestVersionUrl"))
+                    v.setLatestSiriusLink(gui.get("latestVersionUrl").asText());
 
                 return v;
+            } catch (IOException e) {
+                LoggerFactory.getLogger(getClass()).warn("Error when deserializing version information.", e);
             }
         }
         return null;
     }
 
     @Nullable
-    public WorkerList getWorkerInfo(@NotNull HttpClient client) throws IOException {
+    public WorkerList getWorkerInfo(@NotNull OkHttpClient client) throws IOException {
         return executeFromJson(client,
-                () -> {
-                    HttpGet get = new HttpGet(buildVersionSpecificWebapiURI(WEBAPI_WORKER_JSON).build());
-                    final int timeoutInSeconds = 8000;
-                    get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds, TimeUnit.SECONDS)
-                            /*.setSocketTimeout(timeoutInSeconds)*/.build());
-                    return get;
-                }, new TypeReference<>() {
-                }
+                () -> new Request.Builder().url(buildVersionSpecificWebapiURI(WEBAPI_WORKER_JSON).build()).get(),
+                new TypeReference<>() {}
         );
     }
 
-    public SubscriptionConsumables getConsumables(@NotNull Date monthAndYear, boolean byMonth, @NotNull HttpClient client) throws IOException {
+    public SubscriptionConsumables getConsumables(@NotNull Date monthAndYear, boolean byMonth, @NotNull OkHttpClient client) throws IOException {
         return getConsumables(monthAndYear, null, byMonth, client);
     }
 
-    public SubscriptionConsumables getConsumables(@NotNull Date monthAndYear, @Nullable JobTable jobType, boolean byMonth, @NotNull HttpClient client) throws IOException {
+    public SubscriptionConsumables getConsumables(@NotNull Date monthAndYear, @Nullable JobTable jobType, boolean byMonth, @NotNull OkHttpClient client) throws IOException {
         return executeFromJson(client,
                 () -> {
-                    URIBuilder builder = buildVersionSpecificWebapiURI("/consumed-resources")
-                            .setParameter("date", Long.toString(monthAndYear.getTime()))
-                            .setParameter("byMonth", Boolean.toString(byMonth));
+                    HttpUrl.Builder builder = buildVersionSpecificWebapiURI("/consumed-resources")
+                            .addQueryParameter("date", Long.toString(monthAndYear.getTime()))
+                            .addQueryParameter("byMonth", Boolean.toString(byMonth));
                     if (jobType != null)
-                        builder.setParameter("jobType", new ObjectMapper().writeValueAsString(jobType));
+                        builder.addQueryParameter("jobType", new ObjectMapper().writeValueAsString(jobType));
 
-                    return new HttpGet(builder.build());
+                    return new Request.Builder().url(builder.build()).get();
                 },
                 new TypeReference<>() {
                 }

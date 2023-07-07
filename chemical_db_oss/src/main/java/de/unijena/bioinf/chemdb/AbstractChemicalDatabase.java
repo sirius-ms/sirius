@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+//todo needs to be refactored to StructureDatabase
 public interface AbstractChemicalDatabase extends Closeable, Cloneable, SearchStructureByFormula, AnnotateStructures {
     // temporary switch
     boolean USE_EXTENDED_FINGERPRINTS = PropertyManager.getBoolean("de.unijena.bioinf.chemdb.fingerprint.extended", null, false);

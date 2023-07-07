@@ -1,5 +1,6 @@
 dependencies {
-    compile project(':fingerid_base_oss')
-    compile project(':chemistry_base')
-    compile group: 'com.rabbitmq', name: 'amqp-client', version: '5.10.0'
+    api project(':fingerid_base_oss')
+    api project(':chemistry_base')
+    // supporter lib provides rabbitmq client.
+    api group: 'com.rabbitmq', name: 'amqp-client', version: '5.11.0'
 }

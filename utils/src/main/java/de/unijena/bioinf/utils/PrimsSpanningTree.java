@@ -18,8 +18,8 @@ package de.unijena.bioinf.utils;/*
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +48,7 @@ public class PrimsSpanningTree<T> {
             incomingEdges[i] = -1;
         }
 
-        TIntSet queue = new TIntHashSet();
+        IntSet queue = new IntOpenHashSet();
         for (int i = 0; i < distances.length; i++) {
             if (i != root) queue.add(i);
         }
@@ -66,11 +66,11 @@ public class PrimsSpanningTree<T> {
     }
 
     //
-    private int update(List<int[]> edges, int lastVertex, double[] costs, int[] incomingEdges, TIntSet queue) {
+    private int update(List<int[]> edges, int lastVertex, double[] costs, int[] incomingEdges, IntSet queue) {
         final int[] newMin = new int[]{-1};
         final double[] minDist = new double[]{Double.POSITIVE_INFINITY};
-        queue.forEach(i->{
-            if (i==lastVertex) return true;
+        queue.forEach(i -> {
+            if (i==lastVertex) return;
 
             double neighbourDist = getDistance(lastVertex,i);
             if (costs[i]>neighbourDist){
@@ -81,7 +81,6 @@ public class PrimsSpanningTree<T> {
                 newMin[0] = i;
                 minDist[0] = costs[i];
             }
-            return true;
         });
 
         int parent = incomingEdges[newMin[0]];

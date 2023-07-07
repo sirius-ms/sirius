@@ -49,6 +49,8 @@ public class Aligner2 {
     //protected double retentionTimeError;
     protected Deviation dev = new Deviation(20);
 
+    protected double minRetentionTimeError = 3000;
+
     public BasicMasterJJob<Cluster> align(List<ProcessedSample> samples) {
         return new BasicMasterJJob<Cluster>(JJob.JobType.SCHEDULER) {
             @Override
@@ -202,7 +204,7 @@ public class Aligner2 {
 
     public double maxRetentionError() {
         if (retentionTimeErrorModel instanceof LaplaceDistribution)
-            return 3*((LaplaceDistribution)retentionTimeErrorModel).getScale();
+            return 3*((LaplaceDistribution)retentionTimeErrorModel).getScale() < minRetentionTimeError ? minRetentionTimeError :  3*((LaplaceDistribution)retentionTimeErrorModel).getScale();
         else if (retentionTimeErrorModel instanceof NormalDistribution)
             return 3*((NormalDistribution) retentionTimeErrorModel).getStandardDeviation();
         else return Math.sqrt(retentionTimeErrorModel.getNumericalVariance())*3;

@@ -3,6 +3,7 @@ package de.unijena.bioinf.fragmenter;
 import de.unijena.bioinf.ChemistryBase.chem.ElectronIonization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
+import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import gurobi.GRBException;
@@ -49,9 +50,10 @@ public class PCSTFragmentationTreeAnnotatorTest {
             FTree fTree = new FTree(MolecularFormula.parse("C4H4"), new ElectronIonization());
             fTree.addFragment(fTree.getRoot(), new Fragment(1, MolecularFormula.parse("C2H2"), new ElectronIonization()));
             fTree.addFragment(fTree.getRoot(), new Fragment(2, MolecularFormula.parse("CH2"), new ElectronIonization()));
+            fTree.addFragmentAnnotation(AnnotatedPeak.class, AnnotatedPeak::none);
 
             PCSTFragmentationTreeAnnotator subtreeCalc = new PCSTFragmentationTreeAnnotator(fTree, molecule, DEFAULT_SCORING);
-            subtreeCalc.initialize(n -> true);
+            subtreeCalc.initialize((n, nnodes, nnedges) -> true);
             CombinatorialSubtree subtree = subtreeCalc.computeSubtree();
 
             assertEquals(26.0, subtreeCalc.getScore(), 0.0);
@@ -71,9 +73,10 @@ public class PCSTFragmentationTreeAnnotatorTest {
             FTree fTree = new FTree(MolecularFormula.parse("C4H4"), new ElectronIonization());
             fTree.addFragment(fTree.getRoot(), new Fragment(1, MolecularFormula.parse("C2H2"), new ElectronIonization()));
             fTree.addFragment(fTree.getRoot(), new Fragment(2, MolecularFormula.parse("CH2"), new ElectronIonization()));
+            fTree.addFragmentAnnotation(AnnotatedPeak.class, AnnotatedPeak::none);
 
             PCSTFragmentationTreeAnnotator subtreeCalc = new PCSTFragmentationTreeAnnotator(fTree, molecule, DEFAULT_SCORING);
-            subtreeCalc.initialize(n -> true);
+            subtreeCalc.initialize((n, nnodes, nnedges) -> true);
             CombinatorialSubtree subtree = subtreeCalc.computeSubtree();
 
             List<Integer> actualHydrogenRearrangementList = subtreeCalc.getListWithAmountOfHydrogenRearrangements();

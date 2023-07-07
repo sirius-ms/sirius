@@ -79,7 +79,7 @@ public class MassDeviationVertexScorer implements DecompositionScorer<MassDeviat
         }
     }
 
-    public double score(MolecularFormula formula, Ionization ion,double realMass, Deviation dev) {
+    public double score(MolecularFormula formula, Ionization ion, double realMass, Deviation dev) {
         final double theoreticalMass = ion.addToMass(formula.getMass());
         final double sd = dev.absoluteFor(realMass);
         double score = weight * Math.log(Erf.erfc(Math.abs(realMass-theoreticalMass)/(sd * sqrt2)));

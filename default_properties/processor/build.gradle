@@ -19,5 +19,5 @@
  */
 
 dependencies {
-    compile project(':default_properties:annotations')
+    api project(':default_properties:annotations')
 }

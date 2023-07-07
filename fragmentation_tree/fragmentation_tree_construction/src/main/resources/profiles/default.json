@@ -1249,7 +1249,7 @@
             },
             {
                 "$name": "CommonLossEdgeScorer",
-                "normalization": 2.694804625936435,
+                "normalization": 1.5,
                 "recombinator":
                 {
                     "$name": "CommonLossEdgeScorer$MinimalScoreRecombinator",

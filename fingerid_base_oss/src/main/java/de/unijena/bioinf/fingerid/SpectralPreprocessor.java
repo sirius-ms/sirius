@@ -141,7 +141,7 @@ public class SpectralPreprocessor {
                 if (pk.getIntensity() < intensityThreshold) {
                     continue;
                 }
-                if (!decomposer.formulaIterator(pk.getMass(), ion, dev, constraints).hasNext() && (proton==null || !decomposer.formulaIterator(pk.getMass(), proton, dev, constraints).hasNext())) {
+                if (pk.getIntensity() < 0.05 && !decomposer.formulaIterator(pk.getMass(), ion, dev, constraints).hasNext() && (proton==null || !decomposer.formulaIterator(pk.getMass(), proton, dev, constraints).hasNext())) {
                     continue; // not a single decomposition...
                 }
                 final double recalibratedMass = recalibration.recalibrate(pk);

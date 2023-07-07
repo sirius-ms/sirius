@@ -32,7 +32,7 @@ import java.util.List;
 /**
  * A summarizer does not contain any "new" data, but summarizes or visualize the data of other components.
  * Summarizers can be written automatically with other components.
- *
+ * <p>
  * Note: Summarizers might be called in parallel on different compounds and need to be TREAD SAFE!
  */
 @ThreadSafe
