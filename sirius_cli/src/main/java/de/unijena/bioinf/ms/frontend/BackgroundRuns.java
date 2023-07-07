@@ -274,6 +274,7 @@ public final class BackgroundRuns {
                 logInfo("Freeing up memory...");
                 computation = null;
                 System.gc(); //hint for the gc to collect som trash after computations
+                System.runFinalization();
                 logInfo("Memory freed!");
             } finally {
                 if (AUTOREMOVE.get())
