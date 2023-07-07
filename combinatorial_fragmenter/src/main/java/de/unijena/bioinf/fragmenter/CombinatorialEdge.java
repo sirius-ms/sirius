@@ -1,7 +1,12 @@
 package de.unijena.bioinf.fragmenter;
 
+import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IBond;
+import org.openscience.cdk.silent.SilentChemObjectBuilder;
+import org.openscience.cdk.smiles.SmilesParser;
+
+import java.util.BitSet;
 
 public class CombinatorialEdge {
     protected IBond cut1, cut2;
@@ -62,6 +67,40 @@ public class CombinatorialEdge {
         }else{
             return null;
         }
+    }
+
+    /**
+     * This method returns the {@link BitSet} that results from merging the
+     * source and target BitSet of this edge.<br>
+     * The given parameter {@code maxBitSetLength} is the maximal length of all BitSets found in the
+     * corresponding {@link CombinatorialGraph}.
+     * Although the source fragment of each {@link CombinatorialEdge} in the CombinatorialGraph
+     * is currently a real fragment and the source BitSet has maximum length of {@link MolecularGraph#natoms},
+     * there can always be some changes in the code. Thus, this parameter is necessary for adapting
+     * to further changes.
+     *
+     * @param maxBitSetLength maximum length of all BitSet objects found in the corresponding CombinatorialGraph
+     * @return the BitSet resulting from merging the source and the target BitSet
+     */
+    public BitSet getMergedBitSet(int maxBitSetLength){
+        BitSet sourceBitSet = this.source.fragment.bitset;
+        BitSet targetBitSet = this.target.fragment.bitset;
+
+        // First: Set all bits to true, which are set to true in sourceBitSet
+        BitSet mergedBitSet = new BitSet(2*maxBitSetLength);
+        for(int i = sourceBitSet.nextSetBit(0); i >= 0; i = sourceBitSet.nextSetBit(i+1)){
+            // 'i' is the index of a bit that is set to true:
+            mergedBitSet.set(i);
+        }
+
+        // Second: set all bits to true, which are true in targetBiSet,
+        // but shift those bits by maxBitSetLength:
+        for(int i = targetBitSet.nextSetBit(0); i >= 0; i = targetBitSet.nextSetBit(i+1)){
+            // 'i' is the index of a bit that is set to true
+            mergedBitSet.set(maxBitSetLength + i);
+        }
+
+        return mergedBitSet;
     }
 
     public boolean getDirectionOfFirstCut() {

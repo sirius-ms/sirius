@@ -87,6 +87,8 @@ public class Sirius {
         this.getMs2Analyzer().registerPlugin(new ElGordoPlugin());
         this.getMs2Analyzer().registerPlugin(new AminoAcidPlugin());
         this.getMs2Analyzer().registerPlugin(new AdductNeutralizationPlugin());
+
+        this.getMs2Analyzer().registerPlugin(new BottomUpSearch());
     }
 
     public Sirius(@NotNull Profile profile, @NotNull PeriodicTable table) {
@@ -716,7 +718,7 @@ public class Sirius {
 
                 Set<PrecursorIonType> adducts = new PossibleAdducts(usedIonTypes).getAdducts(ionType.getIonization());
                 if (adducts.size()==0) {
-                    LoggerFactory.getLogger(getClass()).warn("No valid adducts found for ionization " + ionType.getIonization() + " for compound " + experiment.getName() + ". Using incorrect adduct parameters?");
+                    LoggerFactory.getLogger(getClass()).warn("No valid adducts found for ionization " + ionType.getIonization() + " for compound " + experiment.getName() + ". This might be caused by incorrect adduct parameters! You might either want to add matching adducts to 'considered-ions' or set the ion type of this feature to unknown.");
                     return tree;
                 }
 

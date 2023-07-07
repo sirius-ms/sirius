@@ -32,6 +32,7 @@ import de.unijena.bioinf.chemdb.FormulaCandidate;
 import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.rest.NetUtils;
 
 import java.util.List;
 import java.util.Set;
@@ -75,9 +76,11 @@ public class FormulaWhiteListJob extends BasicJJob<Whiteset> {
             allowedIons = new PrecursorIonType[]{ionType};
         }
 
-        final Set<MolecularFormula> formulas = searchDB.loadMolecularFormulas(experiment.getIonMass(), massDev, allowedIons, searchableDatabases)
+
+        final Set<MolecularFormula> formulas = NetUtils.tryAndWait(() ->
+                searchDB.loadMolecularFormulas(experiment.getIonMass(), massDev, allowedIons, searchableDatabases)
                 .stream().map(FormulaCandidate::getFormula).filter(f -> !onlyOrganic || f.isCHNOPSBBrClFI())
-                .collect(Collectors.toSet());
+                .collect(Collectors.toSet()), this::checkForInterruption);
 
         final Whiteset whiteset = Whiteset.ofNeutralizedFormulas(formulas);
         if (annotate)
@@ -85,31 +88,4 @@ public class FormulaWhiteListJob extends BasicJJob<Whiteset> {
 
         return whiteset;
     }
-
-    /*private List<MolecularFormula> searchInOnlineDB(final RESTDatabase db, PrecursorIonType[] allowedIons) throws ChemicalDatabaseException {
-        final List<MolecularFormula> formulas = new ArrayList<>();
-        for (List<FormulaCandidate> fc : db.lookupMolecularFormulas(experiment.getIonMass(), massDev, allowedIons)) {
-            formulas.addAll(getFromCandidates(fc));
-        }
-        return formulas;
-    }
-
-    private List<MolecularFormula> getFromCandidates(List<FormulaCandidate> fc) {
-        final List<MolecularFormula> formulas = new ArrayList<>();
-        for (FormulaCandidate f : fc) {
-            if (onlyOrganic) {
-                if (f.getFormula().isCHNOPSBBrClFI())
-                    formulas.add(f.getFormula());
-            } else {
-                formulas.add(f.getFormula());
-            }
-        }
-        return formulas;
-    }*/
-
-    /*public static Whiteset searchFormulasInBackround(double ppm, boolean onlyOrganic, SearchableDatabase searchableDatabase, Ms2Experiment ex) {
-        FormulaWhiteListJob j = new FormulaWhiteListJob(new Deviation(ppm), onlyOrganic, searchableDatabase, ex, false);
-        SiriusJobs.getGlobalJobManager().submitJob(j);
-        return j.getResult();
-    }*/
 }

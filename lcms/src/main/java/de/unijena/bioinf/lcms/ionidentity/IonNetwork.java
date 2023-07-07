@@ -141,8 +141,7 @@ public class IonNetwork {
         try (final PrintStream OUT = new PrintStream("edge_scores.txt")){
             for (IonNode node : nodes) {
                 for (Edge edge : node.neighbours) {
-
-                System.err.printf("score = %f - %f (evidences: inter %d and intra %d)\n", edge.score, (edge.from.priorForUnknownIonType + edge.to.priorForUnknownIonType), edge.evidencesInter, edge.evidencesIntra);
+                LoggerFactory.getLogger(getClass()).debug(String.format("score = %f - %f (evidences: inter %d and intra %d)\n", edge.score, (edge.from.priorForUnknownIonType + edge.to.priorForUnknownIonType), edge.evidencesInter, edge.evidencesIntra));
                 OUT.printf("score = %f - %f (evidences: inter %d and intra %d)\n", edge.score, (edge.from.priorForUnknownIonType + edge.to.priorForUnknownIonType), edge.evidencesInter, edge.evidencesIntra);
             }}
             } catch (FileNotFoundException e) {

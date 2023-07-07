@@ -20,7 +20,7 @@
 
 version =  parent.siriusVersion
 dependencies {
-    compile project(':chemistry_base')
-    compile project(':preprocessing')
-    compile project(':sirius_api')
+    api project(':chemistry_base')
+    api project(':preprocessing')
+    api project(':sirius_api')
 }

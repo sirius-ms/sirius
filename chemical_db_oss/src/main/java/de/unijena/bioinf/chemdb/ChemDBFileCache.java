@@ -32,7 +32,6 @@ import de.unijena.bioinf.storage.blob.memory.InMemoryBlobStorage;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
-import javax.json.JsonException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -78,7 +77,7 @@ public class ChemDBFileCache extends AbstractCompressible {
                                 fpcs.add(fciter.next());
                         }
                     }
-                } catch (IOException | JsonException e) {
+                } catch (IOException e) {
                     LoggerFactory.getLogger(getClass()).error("Error when searching for " + formula + " in file database. Deleting cache file '" + blobKey + "' an try fetching from Server");
                     fpcs = requestFormulaAndCache(blobKey, formula);
                 }
