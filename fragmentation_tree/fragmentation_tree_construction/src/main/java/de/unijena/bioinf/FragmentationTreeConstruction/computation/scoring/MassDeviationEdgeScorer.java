@@ -28,7 +28,9 @@ public class MassDeviationEdgeScorer implements LossScorer<Object> {
     public double score(Loss loss, ProcessedInput input, Object precomputed) {
         if (loss.isArtificial() || loss.getSource().getPeakId()<0 || loss.getTarget().getPeakId()<0) return 0d;
         final ProcessedPeak parent = input.getMergedPeaks().get(loss.getSource().getPeakId());
-        final ProcessedPeak child = input.getMergedPeaks().get(loss.getTarget().getPeakId());        final double delta = parent.getMass()-child.getMass();
+        final ProcessedPeak child = input.getMergedPeaks().get(loss.getTarget().getPeakId());
+
+        final double delta = parent.getMass()-child.getMass();
         final double theoreticalDelta = loss.getSource().getIonization().addToMass(loss.getSource().getFormula().getMass()) - loss.getTarget().getIonization().addToMass(loss.getTarget().getFormula().getMass());
         final Deviation dev;
         if (deviation==null) {

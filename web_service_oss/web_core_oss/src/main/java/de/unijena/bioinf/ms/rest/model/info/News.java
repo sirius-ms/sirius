@@ -20,10 +20,8 @@
 
 package de.unijena.bioinf.ms.rest.model.info;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,15 +54,15 @@ public class News {
         return message;
     }
 
-    public static List<News> parseJsonNews(String json){
-        List<News> newsList = new ArrayList<>();
 
-        JsonArray array = new JsonParser().parse(json).getAsJsonArray();
-        for (JsonElement jsonElement : array) {
-            final JsonObject obj = jsonElement.getAsJsonObject();
-            final String id = obj.get("id").getAsString();
-            final String message = obj.get("message").getAsString();
-            final String begin = obj.get("date").getAsString();
+    public static List<News> parseJsonNews(JsonNode array) {
+        List<News> newsList = new ArrayList<>();
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        for (JsonNode jsonNode : array) {
+            final String id = jsonNode.get("id").asText();
+            final String message = jsonNode.get("message").asText();
+            final String begin = jsonNode.get("date").asText();
             newsList.add(new News(id, begin, message));
         }
         return newsList;

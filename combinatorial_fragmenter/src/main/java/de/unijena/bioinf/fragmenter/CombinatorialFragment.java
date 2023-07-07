@@ -4,6 +4,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.TableSelection;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.hash.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -239,6 +240,10 @@ public class CombinatorialFragment {
     }
 
     public HashMap<String, String> getAllSMARTS(boolean keepAromaticRingsIntact, boolean addCutEdges) {
+        return getAllSMARTS(keepAromaticRingsIntact,addCutEdges, 0);
+    }
+
+    public HashMap<String, String> getAllSMARTS(boolean keepAromaticRingsIntact, boolean addCutEdges, int keepRingsSmallerIntactThanX) {
 
         int k=0;
         for (IAtom a : parent.molecule.atoms()) {
@@ -246,11 +251,11 @@ public class CombinatorialFragment {
         }
 
         ArrayList<IAtomContainer> mols = new ArrayList<>();
-        mols.addAll(Arrays.asList(extractSubstructures(Arrays.stream(this.getAtoms()).mapToInt(IAtom::getIndex).toArray(),keepAromaticRingsIntact, addCutEdges,false)));
+        mols.addAll(Arrays.asList(extractSubstructures(Arrays.stream(this.getAtoms()).mapToInt(IAtom::getIndex).toArray(),keepAromaticRingsIntact, addCutEdges,keepRingsSmallerIntactThanX, false)));
         final HashSet<IAtom> loss = new HashSet<>();
         for (IAtom a : parent.molecule.atoms()) loss.add(a);
         for (IAtom a : this.getAtoms()) loss.remove(a);
-        mols.addAll(Arrays.asList(extractSubstructures(loss.stream().mapToInt(IAtom::getIndex).toArray(),keepAromaticRingsIntact, addCutEdges,true)));
+        mols.addAll(Arrays.asList(extractSubstructures(loss.stream().mapToInt(IAtom::getIndex).toArray(),keepAromaticRingsIntact, addCutEdges,keepRingsSmallerIntactThanX, true)));
         final SmilesGenerator smi = SmilesGenerator.unique();
         final SmartsGen extr = new SmartsGen(parent.molecule);
         final HashMap<String, String> map = new HashMap<>();
@@ -342,7 +347,7 @@ public class CombinatorialFragment {
         return losses.toArray(IAtomContainer[]::new);
     }
 
-    private IAtomContainer[] extractSubstructures(int[] atomids, boolean keepAromaticRingsIntact, boolean addCutEdges, boolean isLoss) {
+    private IAtomContainer[] extractSubstructures(int[] atomids, boolean keepAromaticRingsIntact, boolean addCutEdges, int keepRingsSmallerIntactThanX, boolean isLoss) {
         Set<IAtom> atoms = Arrays.stream(atomids).mapToObj(parent.molecule::getAtom).collect(Collectors.toSet());
         final BitSet visited = new BitSet(parent.molecule.getAtomCount());
         final Set<IAtom> orig = new HashSet<>(atoms);
@@ -350,6 +355,32 @@ public class CombinatorialFragment {
         final TIntHashSet indizes = new TIntHashSet();
         final TIntHashSet cutIndizes = new TIntHashSet();
         ArrayList<IAtomContainer> losses = new ArrayList<>();
+        Set<IAtom> ringSet = new HashSet<>();
+        // keep rings intact
+        if (keepRingsSmallerIntactThanX > 0) {
+            for (int i = 0; i < parent.bonds.length; ++i) {
+                if (parent.ringMemberships[i].length == 0) continue;
+                IBond b = parent.bonds[i];
+                if (atoms.contains(b.getAtom(0)) && atoms.contains(b.getAtom(1))) {
+                    for (int j = 0; j < parent.ringMemberships[i].length; ++j) {
+                        ArrayList<IBond> bondsOfRing = parent.bondsOfRings[parent.ringMemberships[i][j]];
+                        if (bondsOfRing.size() <= keepRingsSmallerIntactThanX) {
+                            // add all atoms of the ring to the atoms set (but not the orig set)
+                            for (IBond ringbond : bondsOfRing) {
+                                atoms.add(ringbond.getAtom(0));
+                                atoms.add(ringbond.getAtom(1));
+                                ringSet.add(ringbond.getAtom(0));
+                                ringSet.add(ringbond.getAtom(1));
+
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        ringSet.removeAll(orig);
+        ///////////////////
+
         for (IAtom a : todo) {
             indizes.clear();
             cutIndizes.clear();
@@ -367,7 +398,7 @@ public class CombinatorialFragment {
                                 stack.add(neighbour);
                                 indizes.add(neighbour.getIndex());
                                 visited.set(neighbour.getIndex());
-                            } else if (addCutEdges && orig.contains(a) && !orig.contains(neighbour)) {
+                            } else if (addCutEdges && (orig.contains(a) && !orig.contains(neighbour)) || ringSet.contains(neighbour)) {
                                 cutIndizes.add(neighbour.getIndex());
                             }
                         }

@@ -154,6 +154,8 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                 m.find();
 
                 int charge = Integer.parseInt(m.group(1));
+                if (m.group(2).equals("-"))
+                    charge = Math.abs(charge) * -1;
                 if (charge == 0){
                     charge = m.group(1).strip().startsWith("-") ? -1 : 1;
                     LoggerFactory.getLogger(MgfParser.class).warn("Charge value of 0 found. Changing value to Single charged under consideration of the given ion mode.");
@@ -170,7 +172,6 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                 } else if (value.toLowerCase().startsWith("neg")) {
                     ion = PrecursorIonType.unknown(-1);
                 } else if (cm.matches()) {
-                    int v = Integer.parseInt(cm.group(1));
                     if ("-".equals(cm.group(2))) ion = PrecursorIonType.unknown(-1);
                     else ion = PrecursorIonType.unknown(1);
                 } else {

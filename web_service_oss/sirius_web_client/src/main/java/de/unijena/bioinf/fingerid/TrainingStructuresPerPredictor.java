@@ -22,7 +22,7 @@ package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.webapi.WebAPI;
-import org.apache.hc.client5.http.classic.HttpClient;
+import okhttp3.OkHttpClient;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -50,7 +50,7 @@ class TrainingStructuresPerPredictor {
     }
 
 
-    TrainingStructuresSet getTrainingStructuresSet(PredictorType predictorType, @NotNull WebAPI.Clients api, @NotNull HttpClient client) throws IOException {
+    TrainingStructuresSet getTrainingStructuresSet(PredictorType predictorType, @NotNull WebAPI.Clients api, @NotNull OkHttpClient client) throws IOException {
         try {
             return predictorTypeToInchiKeys2D.computeIfAbsent(predictorType, pt -> {
                 try {

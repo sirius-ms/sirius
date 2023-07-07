@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.elgordo;
 
-import com.google.common.base.Joiner;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ms.annotations.ProcessedInputAnnotation;
 import org.slf4j.LoggerFactory;
@@ -28,6 +27,7 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public final class LipidSpecies implements ProcessedInputAnnotation {
 
@@ -172,7 +172,9 @@ public final class LipidSpecies implements ProcessedInputAnnotation {
     public String toString() {
         if (chains.length == 0) return type.abbr();
         final boolean cu = chainsUnknown();
-        return type.abbr() + (cu ? " " : "(") + Joiner.on('_').join(chains) + (cu ? "" : ")");
+        return type.abbr() + (cu ? " " : "(")
+                + Arrays.stream(chains).map(LipidChain::toString).collect(Collectors.joining("_"))
+                + (cu ? "" : ")");
     }
 
     public LipidSpecies makeGeneric() {

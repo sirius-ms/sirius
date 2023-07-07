@@ -94,18 +94,20 @@ public class NetUtils {
                 awakeAll();
                 return a;
             } catch (IOException retry) {
-                synchronized (IS_WAITING) {
-                    IS_WAITING.set(true);
+                if (!IS_WAITING.get()) {
+                    synchronized (IS_WAITING) {
+                        IS_WAITING.set(true);
+                    }
                 }
 
                 waitTime = (long) Math.min(waitTime * WAIT_TIME_MULTIPLIER, MAX_WAIT_TIME);
                 timeout -= waitTime;
 
                 if (DEBUG) {
-                    LOG.warn("Error when try to connect to Server. Try again in " + waitTime / 1000d + "s", retry);
+                    LOG.warn("Request to Server failed! Try again in " + waitTime / 1000d + "s", retry);
                 } else {
-                    LOG.warn("Error when try to connect to Server. Try again in " + waitTime / 1000d + "s \n Cause: " + retry.getMessage());
-                    LOG.debug("Error when try to connect to Server. Try again in " + waitTime / 1000d + "s", retry);
+                    LOG.warn("Request to Server failed! Try again in " + waitTime / 1000d + "s | Exception: " + retry.getClass().getCanonicalName() + " | Cause: " + retry.getMessage());
+                    LOG.debug("Request to Server failed! Try again in " + waitTime / 1000d + "s", retry);
                 }
 
                 if (IS_WAITING.get()) {
@@ -128,7 +130,7 @@ public class NetUtils {
         throw new TimeoutException("Stop trying because of Timeout!");
     }
 
-    public static final int INIT_WAIT_TIME = 2000;
+    public static final int INIT_WAIT_TIME = 1000;
     public static final int MAX_WAIT_TIME = 120000;
     public static final float WAIT_TIME_MULTIPLIER = 2;
     public static final int TICK = 1000; //1 sek. without interruption check
@@ -174,8 +176,9 @@ public class NetUtils {
     }
 
     public static void awakeAll() {
-        if (IS_WAITING.getAndSet(false)) {
+        if (IS_WAITING.get()) {
             synchronized (IS_WAITING) {
+                IS_WAITING.set(false);
                 IS_WAITING.notifyAll();
                 LOG.warn("Recovered connection successfully and woke up waiting threads.");
             }

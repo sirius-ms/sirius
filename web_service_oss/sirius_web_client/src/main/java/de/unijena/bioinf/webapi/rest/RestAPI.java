@@ -72,10 +72,8 @@ import de.unijena.bioinf.rest.ProxyManager;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.webapi.AbstractWebAPI;
 import de.unijena.bioinf.webapi.Tokens;
-import org.apache.hc.client5.http.classic.HttpClient;
-import org.apache.hc.client5.http.classic.methods.HttpGet;
-import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
-import org.apache.hc.client5.http.config.RequestConfig;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -85,7 +83,6 @@ import javax.annotation.concurrent.ThreadSafe;
 import java.io.IOException;
 import java.net.URI;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 /**
@@ -122,7 +119,7 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
 
     public RestAPI(@NotNull AuthService authService, @Nullable Subscription activeSubscription) {
         super(authService);
-        IOFunctions.IOConsumer<HttpUriRequest> subsDeco = (req) -> {
+        IOFunctions.IOConsumer<Request.Builder> subsDeco = (req) -> {
             if (getActiveSubscription() != null)
                 req.addHeader("SUBSCRIPTION", getActiveSubscription().getSid());
         };
@@ -139,20 +136,6 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
 
         if (activeSubscription != null)
             changeActiveSubscription(activeSubscription);
-    }
-
-
-    public static void initConnectionPools() {
-        try {
-            ProxyManager.consumeClient(c -> {
-            });
-            ProxyManager.consumeClient(c -> {
-            }, WebJobWatcher.JOB_SUBMITTER_CLIENT_ID);
-            ProxyManager.consumeClient(c -> {
-            }, WebJobWatcher.JOB_WATCHER_CLIENT_ID);
-        } catch (IOException e) {
-            LOG.error("Error when pre initializing connection managers. Try to ignore!", e);
-        }
     }
 
     public RestAPI(@NotNull AuthService authService, @NotNull AuthService.Token token) {
@@ -288,9 +271,10 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
         }
     }
 
-    private Optional<ConnectionError> checkUnsecuredConnection(@NotNull HttpClient client) {
+    private Optional<ConnectionError> checkUnsecuredConnection(@NotNull OkHttpClient client) {
         try {
-            serverInfoClient.execute(client, () -> new HttpGet(serverInfoClient.getBaseURI("/actuator/health").build()));
+            serverInfoClient.execute(client, () -> new Request.Builder().get()
+                    .url(serverInfoClient.getBaseURI("/actuator/health").build()));
             return Optional.empty();
         } catch (HttpErrorResponseException e) {
             String message = "Could not load version info (unsecured api endpoint). Bad Response Code.";
@@ -301,15 +285,10 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
         }
     }
 
-    private Optional<ConnectionError> checkSecuredConnection(@NotNull HttpClient client) {
+    private Optional<ConnectionError> checkSecuredConnection(@NotNull OkHttpClient client) {
         try {
-            serverInfoClient.execute(client, () -> {
-                HttpGet get = new HttpGet(serverInfoClient.getBaseURI("/api/check").build());
-                final int timeoutInSeconds = 8000;
-                get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds, TimeUnit.SECONDS)
-                        /*.setSocketTimeout(timeoutInSeconds)*/.build());
-                return get;
-            });
+            serverInfoClient.execute(client, () -> new Request.Builder().get()
+                    .url(serverInfoClient.getBaseURI("/api/check").build()));
             return Optional.empty();
         } catch (HttpErrorResponseException e) {
             String message = "Could not reach secured api endpoint. Bad Response Code.";
@@ -471,8 +450,7 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
      * @param doWithApi
      * @throws IOException
      */
-    @Override
-    public void executeBatch(IOFunctions.BiIOConsumer<Clients, HttpClient> doWithApi) throws IOException {
+    public void executeBatch(IOFunctions.BiIOConsumer<Clients, OkHttpClient> doWithApi) throws IOException {
         ProxyManager.consumeClient(client -> {
             doWithApi.accept(new Clients() {
                 @Override

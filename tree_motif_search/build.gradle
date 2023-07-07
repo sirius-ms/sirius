@@ -20,8 +20,11 @@
 
 version =  parent.siriusVersion
 dependencies {
+    // deprecated for removal ->  use fastutil instead
+    implementation 'net.sf.trove4j:core:3.1.0'
+
 	annotationProcessor project(':default_properties:processor')
-    compile project(':default_properties:annotations')
-    compile project(':chemistry_base')
-    compile project(':fragmentation_tree:fragmentation_tree_construction')
+    api project(':default_properties:annotations')
+    api project(':chemistry_base')
+    api project(':fragmentation_tree:fragmentation_tree_construction')
 }

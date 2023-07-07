@@ -29,13 +29,10 @@ import com.github.scribejava.core.builder.api.DefaultApi20;
 import com.github.scribejava.core.model.Response;
 import com.github.scribejava.core.oauth.OAuth20Service;
 import com.github.scribejava.core.revoke.TokenTypeHint;
-import com.github.scribejava.httpclient.apache.ApacheHttpClient;
+import com.github.scribejava.httpclient.okhttp.OkHttpHttpClient;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
-import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
-import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
-import org.apache.hc.core5.annotation.Contract;
-import org.apache.hc.core5.annotation.ThreadingBehavior;
-import org.apache.hc.core5.http.Header;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -50,7 +47,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 
 
-public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Closeable {
+public class AuthService implements IOFunctions.IOConsumer<Request.Builder>, Closeable {
     private OAuth20Service service;
 
     @Nullable
@@ -77,7 +74,7 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
     }
 
     @SafeVarargs
-    public AuthService(@NotNull DefaultApi20 authAPI, @NotNull String clientID, @Nullable CloseableHttpAsyncClient client, Consumer<AuthService>... postRefreshHooks) {
+    public AuthService(@NotNull DefaultApi20 authAPI, @NotNull String clientID, @Nullable OkHttpClient client, Consumer<AuthService>... postRefreshHooks) {
         this(authAPI, clientID, null, null, client, postRefreshHooks);
     }
 
@@ -87,7 +84,7 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
     }
 
     @SafeVarargs
-    public AuthService(@NotNull DefaultApi20 authAPI, @NotNull String clientID, @Nullable String clientSecret, @Nullable String refreshToken, @Nullable CloseableHttpAsyncClient client, Consumer<AuthService>... postRefreshHooks) {
+    public AuthService(@NotNull DefaultApi20 authAPI, @NotNull String clientID, @Nullable String clientSecret, @Nullable String refreshToken, @Nullable OkHttpClient client, Consumer<AuthService>... postRefreshHooks) {
         this(buildService(authAPI, clientID, clientSecret, client), refreshToken, postRefreshHooks);
     }
 
@@ -124,20 +121,20 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
         }
     }
 
-    private static OAuth20Service buildService(@NotNull DefaultApi20 authAPI, @NotNull String clientID, @Nullable String clientSecret, @Nullable CloseableHttpAsyncClient client) {
+    private static OAuth20Service buildService(@NotNull DefaultApi20 authAPI, @NotNull String clientID, @Nullable String clientSecret, @Nullable OkHttpClient client) {
         ServiceBuilder b = new ServiceBuilder(clientID);
         if (client != null)
-            b.httpClient(new ApacheHttpClient(client));
+            b.httpClient(new OkHttpHttpClient(client));
         if (clientSecret != null)
             b.apiSecret(clientSecret);
         return b.build(authAPI);
     }
 
-    public void reconnectService(@Nullable CloseableHttpAsyncClient client) {
+    public void reconnectService(@Nullable OkHttpClient client) {
         reconnectService(null, client);
     }
 
-    public void reconnectService(@Nullable DefaultApi20 authAPI, @Nullable CloseableHttpAsyncClient client) {
+    public void reconnectService(@Nullable DefaultApi20 authAPI, @Nullable OkHttpClient client) {
         reconnectService(buildService(authAPI == null ? service.getApi() : authAPI, service.getApiKey(), service.getApiSecret(), client));
     }
 
@@ -273,36 +270,13 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
     }
 
     @Override
-    public void accept(HttpUriRequest httpUriRequest) {
-        if (isLoggedIn())
-            httpUriRequest.setHeader(new TokenHeader(() -> refreshIfNeeded().getAccessToken()));
-    }
-
-    @Contract(threading = ThreadingBehavior.IMMUTABLE)
-    private static class TokenHeader implements Header {
-        private final IOFunctions.IOSupplier<String> tokenSupplier;
-
-        private TokenHeader(IOFunctions.IOSupplier<String> tokenSupplier) {
-            this.tokenSupplier = tokenSupplier;
-        }
-
-        @Override
-        public String getName() {
-            return "Authorization";
-        }
-
-        @Override
-        public String getValue() {
+    public void accept(Request.Builder httpUriRequest) {
+        if (isLoggedIn()) {
             try {
-                return "Bearer " + tokenSupplier.get();
-            } catch (IOException e) {
+                httpUriRequest.addHeader("Authorization",  "Bearer " + refreshIfNeeded().getAccessToken());
+            } catch (LoginException e) {
                 throw new RuntimeException(e);
             }
-        }
-
-        @Override
-        public boolean isSensitive() {
-            return true;
         }
     }
 

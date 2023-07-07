@@ -23,13 +23,12 @@ package de.unijena.bioinf.auth;
 import com.github.scribejava.apis.Auth0Api;
 import de.unijena.bioinf.babelms.utils.Base64;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
+import okhttp3.OkHttpClient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -40,11 +39,11 @@ public class AuthServices {
     private AuthServices() {
     }
 
-    public static AuthService createDefault(@NotNull URI audienceURI, Path refreshTokenFile, @Nullable CloseableHttpAsyncClient client) throws MalformedURLException {
+    public static AuthService createDefault(@NotNull URI audienceURI, Path refreshTokenFile, @Nullable OkHttpClient client) {
         return createDefault(audienceFromURI(audienceURI), refreshTokenFile, client);
     }
 
-    public static AuthService createDefault(@NotNull String audience, Path refreshTokenFile, @Nullable CloseableHttpAsyncClient client) throws MalformedURLException {
+    public static AuthService createDefault(@NotNull String audience, Path refreshTokenFile, @Nullable OkHttpClient client) {
         String rToken = null;
         try {
             if (Files.exists(refreshTokenFile))
@@ -70,21 +69,21 @@ public class AuthServices {
         });
     }
 
-    public static AuthService createDefault(@NotNull URI audienceURI, @Nullable CloseableHttpAsyncClient client) throws MalformedURLException {
+    public static AuthService createDefault(@NotNull URI audienceURI, @Nullable OkHttpClient client) {
         return createDefault(audienceFromURI(audienceURI), client);
     }
 
-    public static AuthService createDefault(@NotNull String audience, @Nullable CloseableHttpAsyncClient client) throws MalformedURLException {
+    public static AuthService createDefault(@NotNull String audience, @Nullable OkHttpClient client) {
         String rToken = PropertyManager.getProperty("de.unijena.bioinf.sirius.security.rToken");
         return createDefault(audience, rToken, client);
     }
 
-    protected static AuthService createDefault(@NotNull URI audienceURI, @Nullable String rToken, @Nullable CloseableHttpAsyncClient client) throws MalformedURLException {
+    protected static AuthService createDefault(@NotNull URI audienceURI, @Nullable String rToken, @Nullable OkHttpClient client) {
         return createDefault(audienceFromURI(audienceURI), rToken, client);
     }
 
     @SafeVarargs
-    protected static AuthService createDefault(@NotNull String audience, @Nullable String rToken, @Nullable CloseableHttpAsyncClient client, Consumer<AuthService>... postRefreshHooks) throws MalformedURLException {
+    protected static AuthService createDefault(@NotNull String audience, @Nullable String rToken, @Nullable OkHttpClient client, Consumer<AuthService>... postRefreshHooks) {
         return new AuthService(createDefaultApi(audience),
                 PropertyManager.getProperty("de.unijena.bioinf.sirius.security.clientID"),
                 PropertyManager.getProperty("de.unijena.bioinf.sirius.security.clientSecret"),

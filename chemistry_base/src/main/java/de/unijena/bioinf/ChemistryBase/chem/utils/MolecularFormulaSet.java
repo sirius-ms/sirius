@@ -46,11 +46,18 @@ public class MolecularFormulaSet extends AbstractSet<MolecularFormula> {
     private final static long ADD_SIGN_FLAG = (1l << 31);
     private final static int CLEAR_SIGN_FLAG = Integer.MAX_VALUE;
 
-    protected MolecularFormulaSet(MolecularFormulaPacker packer) {
+    public MolecularFormulaSet(MolecularFormulaPacker packer) {
         this.hashset = new TLongHashSet(1000);
         this.uncompressed = new HashSet<MolecularFormula>(100);
         this.packer = packer;
         this.lock = new FastReadWriteLock();
+    }
+
+    public int numberOfCompressedFormulas() {
+        return hashset.size();
+    }
+    public int numberOfUncompressedFormulas() {
+        return uncompressed.size();
     }
 
     public MolecularFormulaSet(ChemicalAlphabet alphabet) {

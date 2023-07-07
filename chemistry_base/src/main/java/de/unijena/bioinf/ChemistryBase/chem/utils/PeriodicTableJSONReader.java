@@ -1,4 +1,3 @@
-
 /*
  *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
@@ -21,17 +20,14 @@
 
 package de.unijena.bioinf.ChemistryBase.chem.utils;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.chem.Isotopes;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.util.Map;
 
 public class PeriodicTableJSONReader extends PeriodicTableReader {
 
@@ -55,29 +51,29 @@ public class PeriodicTableJSONReader extends PeriodicTableReader {
 
     @Override
     public void read(PeriodicTable table, Reader reader) throws IOException {
-        final JsonParser jreader = new JsonParser();
-        final JsonObject data = jreader.parse(FileUtils.ensureBuffering(reader)).getAsJsonObject();
-        for (Map.Entry<String, JsonElement> entry : data.entrySet()) {
-            final JsonObject element = entry.getValue().getAsJsonObject();
-            final String elementName = element.get("name").getAsString();
-            final int elementValence = element.getAsJsonPrimitive("valence").getAsInt();
-            final JsonObject isotopes = element.getAsJsonObject("isotopes");
-            final double[] masses = toDoubleArray(isotopes.getAsJsonArray("mass"));
-            final double[] abundances = toDoubleArray(isotopes.getAsJsonArray("abundance"));
+        final ObjectMapper mapper = new ObjectMapper();
+        final JsonNode data = mapper.readTree(FileUtils.ensureBuffering(reader));
+        data.fields().forEachRemaining(entry -> {
+            final JsonNode element = entry.getValue();
+            final String elementName = element.get("name").asText();
+            final int elementValence = element.get("valence").asInt();
+            final JsonNode isotopes = element.get("isotopes");
+            final double[] masses = toDoubleArray(isotopes.get("mass"));
+            final double[] abundances = toDoubleArray(isotopes.get("abundance"));
             final Isotopes iso = new Isotopes(masses, abundances);
             if (overrideElements || table.getByName(entry.getKey()) == null)
                 table.addElement(elementName, entry.getKey(), iso.getMass(0), elementValence);
             table.getDistribution().addIsotope(entry.getKey(), iso);
-        }
+        });
     }
 
     public boolean isOverrideElements() {
         return overrideElements;
     }
 
-    private static double[] toDoubleArray(JsonArray ary) {
+    private static double[] toDoubleArray(JsonNode ary) {
         final double[] array = new double[ary.size()];
-        for (int i = 0; i < ary.size(); ++i) array[i] = ary.get(i).getAsDouble();
+        for (int i = 0; i < ary.size(); ++i) array[i] = ary.get(i).asDouble();
         return array;
     }
 }

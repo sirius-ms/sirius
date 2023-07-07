@@ -43,7 +43,7 @@ import java.util.function.Consumer;
 
 public class MsExperimentParser {
 
-    private static final Map<String, Class<? extends Parser<Ms2Experiment>>> KNOWN_ENDINGS = addKnownEndings();
+    protected static final Map<String, Class<? extends Parser<Ms2Experiment>>> KNOWN_ENDINGS = addKnownEndings();
     /**
      * This postprocessor annotates Parameter configs to the {@link Ms2Experiment}. If {@link InputFileConfig} is given
      * this is preferred over the {@link PropertyManager#DEFAULTS} config.

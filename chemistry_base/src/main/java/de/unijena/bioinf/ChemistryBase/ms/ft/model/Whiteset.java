@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 public class Whiteset implements Ms2ExperimentAnnotation {
 
     private static Set<MolecularFormula> EMPTY_SET = Collections.unmodifiableSet(new HashSet<>());
-    private static Whiteset EMPTY_WHITESET = new Whiteset(EMPTY_SET,EMPTY_SET);
+    private static Whiteset EMPTY_WHITESET = new Whiteset(EMPTY_SET,EMPTY_SET, false), NO_WHITESET = new Whiteset(EMPTY_SET,EMPTY_SET,true);
 
     public static Whiteset ofMeasuredOrNeutral(Set<MolecularFormula> f) {
         return new Whiteset(f,f);
@@ -74,14 +74,25 @@ public class Whiteset implements Ms2ExperimentAnnotation {
     // these are formulas as they are derived from the MS. They contain the adduct (but not the ionization)
     protected final Set<MolecularFormula> measuredFormulas;
 
+    protected final boolean stillAllowDeNovo;
+
 
     public static Whiteset empty() {
         return EMPTY_WHITESET;
     }
 
+    public static Whiteset denovo() {
+        return NO_WHITESET;
+    }
+
     private Whiteset(Set<MolecularFormula> neutralFormulas, Set<MolecularFormula> measuredFormulas) {
+        this(neutralFormulas,measuredFormulas,false);
+    }
+
+    private Whiteset(Set<MolecularFormula> neutralFormulas, Set<MolecularFormula> measuredFormulas, boolean stillAllowDeNovo) {
         this.neutralFormulas = Set.copyOf(neutralFormulas);
         this.measuredFormulas = Set.copyOf(measuredFormulas);
+        this.stillAllowDeNovo = stillAllowDeNovo;
     }
 
     public Set<MolecularFormula> getNeutralFormulas() {
@@ -92,6 +103,10 @@ public class Whiteset implements Ms2ExperimentAnnotation {
         return measuredFormulas;
     }
 
+    public boolean isStillAllowDeNovo() {
+        return stillAllowDeNovo;
+    }
+
     public Whiteset addMeasured(Set<MolecularFormula> measured) {
         return add(EMPTY_SET,measured);
     }
@@ -100,11 +115,22 @@ public class Whiteset implements Ms2ExperimentAnnotation {
         return add(neutral, EMPTY_SET);
     }
 
-    public Whiteset add(Whiteset other) {
-        return add(other.neutralFormulas, other.measuredFormulas);
+    public Whiteset addDeNovo(boolean value) {
+        return new Whiteset(getNeutralFormulas(), getMeasuredFormulas(), value);
+    }
+    public Whiteset addDeNovo() {
+        return addDeNovo(true);
     }
 
-    public Whiteset add(Set<MolecularFormula> neutralFormulas, Set<MolecularFormula> measuredFormulas) {
+    public Whiteset add(Whiteset other) {
+        return add(other.neutralFormulas, other.measuredFormulas, stillAllowDeNovo|other.stillAllowDeNovo);
+    }
+
+    public Whiteset add(Set<MolecularFormula> neutralFormulas, Set<MolecularFormula> measuredFormulas){
+        return add(neutralFormulas,measuredFormulas,stillAllowDeNovo);
+    }
+
+    public Whiteset add(Set<MolecularFormula> neutralFormulas, Set<MolecularFormula> measuredFormulas, boolean stillAllowDeNovo) {
         Set<MolecularFormula> n = neutralFormulas;
         if (n.isEmpty()) n = this.neutralFormulas;
         else if (this.neutralFormulas.isEmpty()) n = neutralFormulas;
@@ -119,7 +145,7 @@ public class Whiteset implements Ms2ExperimentAnnotation {
             m = new HashSet<>(measuredFormulas);
             m.addAll(this.measuredFormulas);
         }
-        return new Whiteset(n,m);
+        return new Whiteset(n,m, stillAllowDeNovo);
     }
 
     /**

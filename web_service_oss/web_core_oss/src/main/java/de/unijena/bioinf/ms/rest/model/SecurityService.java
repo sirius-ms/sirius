@@ -22,7 +22,8 @@
 
 package de.unijena.bioinf.ms.rest.model;
 
-import net.iharder.Base64;
+
+import de.unijena.bioinf.babelms.utils.Base64;
 
 import java.io.IOException;
 import java.security.SecureRandom;

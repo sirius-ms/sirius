@@ -36,8 +36,6 @@ import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TLongArrayList;
 import gnu.trove.map.hash.TIntObjectHashMap;
-import gnu.trove.procedure.TIntObjectProcedure;
-import gnu.trove.procedure.TIntProcedure;
 import gnu.trove.set.hash.TIntHashSet;
 import org.slf4j.LoggerFactory;
 
@@ -239,7 +237,8 @@ public class Ms2CosineSegmenter {
                     int j=0;
                     for (CosineQuery q : cos) {
                         if (!have.contains(q.originalSpectrum.getScans().get(0).getIndex())) {
-                            System.out.println(have.toString() + " <-- " + q.originalSpectrum.getScans().get(0));
+                            //todo we should connect this to jobProgress
+                            LoggerFactory.getLogger(getClass()).debug(have + " <-- " + q.originalSpectrum.getScans().get(0));
                             rejectedMsMsLowCosine[k][j++] = q;
                         }
                     }

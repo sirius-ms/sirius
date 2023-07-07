@@ -20,18 +20,19 @@
 
 package de.unijena.bioinf.ms.rest.client.utils;
 
-import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+
+import okhttp3.Request;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 
 @FunctionalInterface
-public interface HTTPSupplier<T extends HttpUriRequest> {
+public interface HTTPSupplier {
 
     /**
      * Gets a result.
      *
      * @return a result
      */
-    T get() throws IOException, URISyntaxException;
+    Request.Builder get() throws IOException, URISyntaxException;
 }

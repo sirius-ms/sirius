@@ -1,6 +1,10 @@
 package de.unijena.bioinf.fragmenter;
 
+import gnu.trove.map.hash.TIntIntHashMap;
+import gnu.trove.map.hash.TObjectIntHashMap;
+
 import java.util.ArrayList;
+import java.util.BitSet;
 
 public class CombinatorialSubtreeManipulator {
 
@@ -24,5 +28,29 @@ public class CombinatorialSubtreeManipulator {
             }
         }
         return score;
+    }
+
+    public static double tanimoto(CombinatorialSubtree subtree1, CombinatorialSubtree subtree2, CombinatorialGraph graph){
+        int maxBitSetLength = graph.maximalBitSetLength();
+        TObjectIntHashMap<BitSet> mergedEdgeBitSet2Index = graph.mergedEdgeBitSet2Index();
+        return tanimoto(subtree1, subtree2, mergedEdgeBitSet2Index, maxBitSetLength);
+    }
+
+    public static double tanimoto(CombinatorialSubtree subtree1, CombinatorialSubtree subtree2, TObjectIntHashMap<BitSet> mergedEdgeBitSet2Index, int maxBitSetLength){
+        boolean[] subtree1Array = subtree1.toBooleanArray(mergedEdgeBitSet2Index, maxBitSetLength);
+        boolean[] subtree2Array = subtree2.toBooleanArray(mergedEdgeBitSet2Index, maxBitSetLength);
+        return tanimoto(subtree1Array, subtree2Array);
+    }
+
+    public static double tanimoto(boolean[] subtree1, boolean[] subtree2){
+        int numCommonEdges = 0;
+        int numEdges = 0;
+
+        for(int i = 0; i < subtree1.length; i++){
+            numCommonEdges = numCommonEdges + (subtree1[i] && subtree2[i] ? 1 : 0);
+            numEdges = numEdges + (subtree1[i] || subtree2[i] ? 1 : 0);
+        }
+
+        return ((double) numCommonEdges / numEdges);
     }
 }

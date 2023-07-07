@@ -79,14 +79,28 @@ public class MSPExperimentParser extends MSPSpectralParser implements Parser<Ms2
                     // mandatory
                     exp.setSource(new SpectrumFileSource(source));
                     MSP.parseName(fields).ifPresent(exp::setName);
-                    fields.getField(MSP.FORMULA).filter(s -> !s.isBlank()).map(MolecularFormula::parseOrThrow).ifPresent(exp::setMolecularFormula);
-                    MSP.parsePrecursorIonType(fields).ifPresent(exp::setPrecursorIonType);
+                    fields.getField(MSP.FORMULA)
+                            .filter(s -> !"null".equalsIgnoreCase(s))
+                            .filter(s -> !s.isBlank())
+                            .map(MolecularFormula::parseOrThrow)
+                            .filter(m -> !m.isEmpty()).ifPresent(exp::setMolecularFormula);
+                    MSP.parsePrecursorIonType(fields)
+                            .ifPresent(exp::setPrecursorIonType);
                     MSP.parsePrecursorMZ(fields).ifPresent(exp::setIonMass);
                     //optional
-                    fields.getField(MSP.INCHI).filter(s -> !s.isBlank()).map(inchi -> MSP.getWithSynonyms(finFields, MSP.INCHI_KEY).filter(s -> !s.isBlank()).map(key -> InChIs.newInChI(key, inchi)).
+                    fields.getField(MSP.INCHI)
+                            .filter(s -> !"null".equalsIgnoreCase(s))
+                            .filter(s -> !s.isBlank())
+                            .map(inchi -> MSP.getWithSynonyms(finFields, MSP.INCHI_KEY).filter(s -> !s.isBlank()).map(key -> InChIs.newInChI(key, inchi)).
                             orElse(InChIs.newInChI(inchi))).ifPresent(exp::annotate);
-                    fields.getField(MSP.SMILES).filter(s -> !s.isBlank()).map(Smiles::new).ifPresent(exp::annotate);
-                    fields.getField(MSP.SPLASH).filter(s -> !s.isBlank()).map(Splash::new).ifPresent(exp::annotate);
+                    fields.getField(MSP.SMILES)
+                            .filter(s -> !"null".equalsIgnoreCase(s))
+                            .filter(s -> !s.isBlank())
+                            .map(Smiles::new).ifPresent(exp::annotate);
+                    fields.getField(MSP.SPLASH)
+                            .filter(s -> !"null".equalsIgnoreCase(s))
+                            .filter(s -> !s.isBlank())
+                            .map(Splash::new).ifPresent(exp::annotate);
                     MSP.getWithSynonyms(fields, MSP.INSTRUMENT_TYPE).map(MsInstrumentation::getBestFittingInstrument).ifPresent(exp::annotate);
                     fields.getField(MSP.RT).filter(s -> !s.isBlank()).map(Utils::parseDoubleWithUnknownDezSep).filter(v -> v > 0).map(v -> new RetentionTime(v * 60)).ifPresent(exp::annotate);
                 }

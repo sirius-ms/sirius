@@ -25,6 +25,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 import de.unijena.bioinf.ChemistryBase.algorithm.Called;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
@@ -71,9 +72,9 @@ import java.util.stream.Collectors;
  * 7. Decompose each peak
  * 8. Postprocesing
  * 9. Score each peak and each pair of peaks
- *
+ * <p>
  * Steps 1-9 are bundled within the method FragmentationPatternAnalysis#preprocessing
- *
+ * <p>
  * Now for each Molecular formula candidate:
  * 10. Compute Fragmentation Graph
  * 11. Score losses and vertices in the graph
@@ -81,16 +82,14 @@ import java.util.stream.Collectors;
  * 13. Recalibrate tree
  * 14. Might repeat all steps with recalibration function
  * 15. Postprocess tree
- *
+ * <p>
  * Steps 10-15 are bundled within the method FragmentationPatternAnalysis#computeTree
- *
+ * <p>
  * You can run each step individually. However, you have to run step 1. first to get a ProcessedInput object.
  * This object contains the Ms2Experiment input and stores all intermediate values during the computation.
- *
+ * <p>
  * Some (or, honestly, most) steps rely on certain properties and intermediate values computed in previous steps.
  * So you have to be very careful when running a step separately. The recommended way is to run the whole pipeline.
- *
- *
  */
 public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     private List<Ms2ExperimentValidator> inputValidators;
@@ -156,7 +155,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
 
         final PeriodicTable PT = PeriodicTable.getInstance();
         Whiteset whiteset = input.getAnnotationOrNull(Whiteset.class);
-        final FormulaConstraints constraints = input.getAnnotationOrNull(FormulaConstraints.class);
+        FormulaConstraints constraints = input.getAnnotationOrNull(FormulaConstraints.class);
         final Ms2Experiment experiment = input.getExperimentInformation();
         final double parentMass;
         // if parent peak stems from MS1, use MS1 mass deviation instead
@@ -206,16 +205,9 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 validatorWarning.warn("Specified precursor molecular formula does not fall into given m/z error window. "
                         +formula.formatByHill()+" for m/z "+parentPeak.getMass()+" and ionization "+ionType);
             }
-        } else if (whiteset != null && !whiteset.isEmpty()) {
-            final Collection<PrecursorIonType> ionTypes;
-            if (experiment.getPrecursorIonType().isIonizationUnknown()) {
-                ionTypes = input.getAnnotationOrThrow(PossibleAdducts.class).getAdducts();
-            } else {
-                ionTypes = Arrays.asList(experiment.getPrecursorIonType());
-            }
-            decomps.addAll(whiteset.resolve(parentMass, parentDeviation, ionTypes));
+        } else if (whiteset != null && !whiteset.isEmpty() && !whiteset.isStillAllowDeNovo()) {
+            // we add whiteset later
             pmds = new ArrayList<>();
-            for (Decomposition d : decomps) pmds.add(d.getCandidate());
         } else if (!experiment.getPrecursorIonType().isIonizationUnknown()) {
             // use given ionization
             final PrecursorIonType ionType = experiment.getPrecursorIonType();
@@ -234,6 +226,32 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 final List<MolecularFormula> forms = decomposer.decomposeToFormulas(parentMass, ion, parentDeviation.absoluteFor(parentMass), constraints);
                 pmds.addAll(forms);
                 for (MolecularFormula f : forms) decomps.add(new Decomposition(f, ion, 0d));
+            }
+        }
+
+
+        if (whiteset != null && !whiteset.isEmpty()) {
+            final Collection<PrecursorIonType> ionTypes;
+            if (experiment.getPrecursorIonType().isIonizationUnknown()) {
+                ionTypes = input.getAnnotationOrThrow(PossibleAdducts.class).getAdducts();
+            } else {
+                ionTypes = Arrays.asList(experiment.getPrecursorIonType());
+            }
+            List<Decomposition> forms = whiteset.resolve(parentMass, parentDeviation, ionTypes);
+            decomps.addAll(forms);
+            for (Decomposition d : decomps) pmds.add(d.getCandidate());
+            // extend formula constraints such that we can decompose fragment peaks
+            constraints = constraints.getExtendedConstraints(FormulaConstraints.allSubsetsOf(forms.stream().map(SScored::getCandidate).collect(Collectors.toList())));
+        }
+
+        // remove duplicate pmds
+        {
+            Set<Decomposition> usedDecomps = new HashSet<>();
+            Iterator<Decomposition> decompositionIterator = decomps.iterator();
+            while( decompositionIterator.hasNext()) {
+                if (!usedDecomps.add(decompositionIterator.next())) {
+                    decompositionIterator.remove();
+                }
             }
         }
 
@@ -837,53 +855,54 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     }
 
     public FGraph performGraphReduction(FGraph fragments, double lowerbound) {
-        boolean reduce=true;
-         if(reduction==null) reduce=false;
-         else {
-             for (SiriusPlugin plugin : siriusPlugins.values()) {
-                 if (plugin.isGraphReductionForbidden(fragments)) {
-                     reduce=false;
-                     break;
-                 }
-             }
-         }
-         if (reduce)
-            return reduction.reduce(fragments, lowerbound);
-         else {
-             return removeNegativeInfinityEdges(fragments,lowerbound);
-         }
+        // remove unsupported edges an fragments first
+        removeNegativeInfinityEdges(fragments);
+
+        boolean reduce = true;
+        if (reduction == null) reduce = false;
+        else {
+            for (SiriusPlugin plugin : siriusPlugins.values()) {
+                if (plugin.isGraphReductionForbidden(fragments)) {
+                    reduce = false;
+                    break;
+                }
+            }
+        }
+
+        if (reduce)
+            fragments = reduction.reduce(fragments, lowerbound);
+
+        return fragments;
     }
 
-    private FGraph removeNegativeInfinityEdges(FGraph fragments, double lowerbound) {
+    private FGraph removeNegativeInfinityEdges(final FGraph fragments) {
         final ArrayList<Loss> todelete = new ArrayList<>();
-         for (Loss l : fragments.losses()) {
-            if (Double.isInfinite(l.getWeight())) {
-                if (l.getWeight()>0) {
-                    LoggerFactory.getLogger(FragmentationPatternAnalysis.class).warn("We do not support edges with infinite score. Delete edge " + l + ", even though it has positive infinite score.");
+        for (Loss l : fragments.losses()) {
+            if (!Double.isFinite(l.getWeight())) {
+                if (l.getWeight() > 0) {
+                    LoggerFactory.getLogger(getClass()).warn("We do not support edges with infinite score. Delete edge " + l + ", even though it has positive infinite score.");
                 }
                 todelete.add(l);
             }
         }
-         for (Loss l : todelete) fragments.deleteLoss(l);
-         return fragments;
-    }
 
-    /*
-    public FGraph buildGraph(ProcessedInput input, List<ProcessedPeak> parentPeaks, List<List<Scored<MolecularFormula>>> candidatesPerParentPeak) {
-        throw new RuntimeException("Not supported yet"); // implement the possibility to allow several ion types per
-        // within the same graph
-
-        // build Graph
-        FGraph graph = graphBuilder.initializeEmptyGraph(input);
-        for (int i = 0; i < parentPeaks.size(); ++i) {
-            graph = graphBuilder.addRoot(graph, parentPeaks.get(i), candidatesPerParentPeak.get(i));
+        Set<Fragment> fragmentsToDelete = new HashSet<>();
+        for (Loss l : todelete) {
+            fragments.deleteLoss(l);
+            if (l.getTarget().getInDegree() <= 0) {
+                fragmentsToDelete.add(l.getTarget());
+            }
         }
-        return performGraphReduction(performGraphScoring(graphBuilder.fillGraph(graph)));
 
+        while (!fragmentsToDelete.isEmpty()) {
+            fragments.deleteFragmentsKeepTopologicalOrder(fragmentsToDelete);
+            fragmentsToDelete = fragments.getFragments().stream()
+                    .filter(f -> f.getInDegree() <= 0)
+                    .filter(f -> !fragments.getRoot().equals(f))
+                    .collect(Collectors.toSet());
+        }
+        return fragments;
     }
-*/
-
-
 
     public double getIntensityRatioOfExplainedPeaksFromUnanotatedTree(ProcessedInput input, FTree tree) {
         final double[] fragmentMasses = new double[tree.numberOfVertices()];

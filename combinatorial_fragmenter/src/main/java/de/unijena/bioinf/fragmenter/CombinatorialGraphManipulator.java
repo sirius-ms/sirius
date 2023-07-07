@@ -17,19 +17,16 @@ import java.util.function.Predicate;
  */
 public class CombinatorialGraphManipulator {
 
-    private static BitSet toBitSet(int number){
-        BitSet bitset = new BitSet();
-        int currentNumber = number;
+    private static BitSet increment(BitSet bitSet){
+        BitSet newBitSet = (BitSet) bitSet.clone();
         int idx = 0;
 
-        while(currentNumber > 0){
-            int newNumber = currentNumber / 2;
-            int rest = currentNumber - 2*newNumber;
-            if(rest == 1) bitset.set(idx);
-            currentNumber = newNumber;
+        while(newBitSet.get(idx)){
+            newBitSet.set(idx, false);
             idx++;
         }
-        return bitset;
+        newBitSet.set(idx, true);
+        return newBitSet;
     }
 
     /**
@@ -44,7 +41,8 @@ public class CombinatorialGraphManipulator {
      * @param fTree the fragmentation tree which explains the measured MS2 spectrum
      */
     public static void addTerminalNodes(CombinatorialGraph graph, CombinatorialFragmenterScoring scoring, FTree fTree){
-        graph.nodes.forEach(x->x.state=0);
+        graph.root.state = 0;
+        graph.nodes.forEach(x -> x.state=0);
         MolecularGraph molecule = graph.getRoot().fragment.parent;
 
         // 1. Create the hashmap which assigns each MF.withoutHydrogen()
@@ -63,15 +61,15 @@ public class CombinatorialGraphManipulator {
         // for each vertex in 'fTree', add a terminal node into the CombinatorialGraph if
         // there are CombinatorialNodes in 'graph' which have the same molecular formula without hydrogen atoms.
         // Then connect this terminal node with these nodes.
-        int count = 0;
+        BitSet terminalNodeBitSet = new BitSet();
+        terminalNodeBitSet.set(molecule.natoms); // terminal nodes are not real fragments --> this bit characterises them
+
         FragmentAnnotation<AnnotatedPeak> peakAno = fTree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
         for(Fragment ftFrag : fTree){
             MolecularFormula mf = ftFrag.getFormula().withoutHydrogen();
             lst = mf2NodeSet.get(mf);
             if(lst != null){
                 // in this case, there are nodes in 'graph' (and 'lst') with the same molecular formula base
-                BitSet terminalNodeBitSet = toBitSet(count);
-                terminalNodeBitSet.set(molecule.natoms); // terminal nodes are not real fragment --> this bit characterises them
                 CombinatorialFragment terminalFragment = new CombinatorialFragment(molecule,terminalNodeBitSet,ftFrag.getFormula(),new BitSet(), false, (float)peakAno.get(ftFrag).getRelativeIntensity());
 
                 for(CombinatorialNode node : lst){
@@ -79,19 +77,18 @@ public class CombinatorialGraphManipulator {
                     colorAllToRoot(node);
                 }
 
-                count++;
+                terminalNodeBitSet = increment(terminalNodeBitSet);
             }
         }
         // remove dangling subtrees
 
         final int size = graph.numberOfNodes();
         removeFromList(graph.nodes, x->x.state==0);
+        removeFromList(graph.root.outgoingEdges, x -> x.target.state==0);
         for (CombinatorialNode node : graph.nodes) {
             removeFromList(node.outgoingEdges, x->x.target.state==0);
         }
         //LoggerFactory.getLogger(CombinatorialGraphManipulator.class).warn("Remove "+(size-graph.numberOfNodes()) + " of " + graph.numberOfNodes() + " nodes");
-
-
     }
     public static <T> void removeFromList(ArrayList<T> xs, Predicate<T> f) {
         xs.removeIf(f); // super stupid implementation -_- shitty java

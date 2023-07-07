@@ -61,7 +61,7 @@ import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.webapi.WebJJob;
 import de.unijena.bioinf.rest.ConnectionError;
 import de.unijena.bioinf.storage.blob.BlobStorage;
-import org.apache.hc.client5.http.classic.HttpClient;
+import okhttp3.OkHttpClient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -69,7 +69,6 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.concurrent.ThreadSafe;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.Map;
@@ -258,7 +257,7 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
 
     //endregion
 
-    void executeBatch(IOFunctions.BiIOConsumer<Clients, HttpClient> doWithApi) throws IOException;
+    void executeBatch(IOFunctions.BiIOConsumer<Clients, OkHttpClient> doWithApi) throws IOException;
     interface Clients {
         InfoClient serverInfoClient();
         JobsClient jobsClient();
