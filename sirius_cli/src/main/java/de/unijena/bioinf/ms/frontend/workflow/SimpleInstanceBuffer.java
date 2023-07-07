@@ -95,6 +95,13 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
                     }
                 }
 
+                { //gc hint
+                    if (instanceComputed.get() % bufferSize == 0) {
+                        System.gc(); //hint for the gc to collect som trash after computations
+                        System.runFinalization();
+                    }
+                }
+
                 lock.lock();
                 try {
                     //wait for free slot in buffer if it is full
@@ -102,7 +109,6 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
                         isFull.await();
                         checkForCancellation();
                     }
-
 
                     checkForCancellation();
 
