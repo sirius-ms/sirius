@@ -80,7 +80,7 @@ public enum DataSource {
     //////////////////////////////////////////
 
 
-    DSSTox("DSSTox", 68719476736L,  "DSSTox_Compound_id","DSSTox", "https://comptox.epa.gov/dashboard/%s", new Publication("Grulke CM at al., EPA’s DSSTox database: History of development of a curated chemistry resource supporting computational toxicology research. Comput Toxicol. 2019", "10.1016/j.comtox.2019.100096"));
+    DSSTox("DSSTox", 68719476736L,  "DSSTox_Substance_id","DSSTox", "https://comptox.epa.gov/dashboard/%s", new Publication("Grulke CM at al., EPA’s DSSTox database: History of development of a curated chemistry resource supporting computational toxicology research. Comput Toxicol. 2019", "10.1016/j.comtox.2019.100096"));
 
 
 
