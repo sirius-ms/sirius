@@ -43,6 +43,7 @@ import de.unijena.bioinf.lcms.align.Aligner;
 import de.unijena.bioinf.lcms.align.Aligner2;
 import de.unijena.bioinf.lcms.align.Cluster;
 import de.unijena.bioinf.lcms.ionidentity.AdductResolver;
+import de.unijena.bioinf.lcms.quality.LCMSQualityCheck;
 import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bioinf.model.lcms.*;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
@@ -288,7 +289,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager<?>
                     if (bestSummary==null || summary.points() > bestSummary.points())
                         bestSummary = summary;
 
-                    if (summary.peakQuality.ordinal() > LCMSCompoundSummary.Quality.LOW.ordinal()) {
+                    if (summary.getPeakQuality().ordinal() > LCMSQualityCheck.Quality.LOW.ordinal()) {
                         badPeakShape = false;
                         break;
                     }

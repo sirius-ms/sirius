@@ -14,6 +14,8 @@ package de.unijena.bioinf.ms.gui.lcms_viewer;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
 import de.unijena.bioinf.lcms.LCMSCompoundSummary;
+import de.unijena.bioinf.lcms.quality.LCMSQualityCheck;
+import de.unijena.bioinf.lcms.quality.LCMSQualityCheckResult;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 
 import javax.swing.*;
@@ -54,11 +56,11 @@ public class LCMSCompoundSummaryPanel extends JPanel {
 
             final LCMSCompoundSummary summary = new LCMSCompoundSummary(traceSet, traceSet.getIonTrace(), experiment);
 
-            addSection("Peak Quality", summary.peakCheck, summary.peakQuality);
+            addSection("Peak Quality", summary.peakQualityResult);
 
-            addSection("Isotope Quality", summary.isotopeCheck, summary.isotopeQuality);
-            addSection("MS/MS Quality", summary.ms2Check, summary.ms2Quality);
-            addSection("Adducts", summary.adductCheck, summary.adductQuality);
+            addSection("Isotope Quality", summary.isotopeQualityResult);
+            addSection("MS/MS Quality", summary.ms2QualityResult);
+            addSection("Adducts", summary.adductQualityResult);
 
         }
         revalidate();
@@ -66,7 +68,9 @@ public class LCMSCompoundSummaryPanel extends JPanel {
     }
 
 
-    private void addSection(String title, List<LCMSCompoundSummary.Check> checkList, LCMSCompoundSummary.Quality quality) {
+    private void addSection(String title, LCMSQualityCheckResult qualityCheckResult) {
+        List<LCMSQualityCheck> checkList = qualityCheckResult.getChecks();
+        LCMSQualityCheck.Quality quality = qualityCheckResult.getQuality();
         if (quality==null) return;
         final TitledIconBorder peakHeader = new TitledIconBorder(title);
         peakHeader.setIcon(Icons.TRAFFIC_LIGHT_MEDIUM[quality.ordinal()]);
@@ -75,7 +79,7 @@ public class LCMSCompoundSummaryPanel extends JPanel {
         peakPanel.setBorder(peakHeader);
         add(peakPanel);
 
-        for (LCMSCompoundSummary.Check check : checkList) {
+        for (LCMSQualityCheck check : checkList) {
             JLabel c = new JLabel("<html>"+check.getDescription()+"</html>", Icons.TRAFFIC_LIGHT_SMALL[check.getQuality().ordinal()], JLabel.LEADING);
             c.setBorder(BorderFactory.createEmptyBorder(6,0,2,0));
             peakPanel.add(c);

@@ -21,16 +21,20 @@ package de.unijena.bioinf.ms.middleware.compounds;
 
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
+import de.unijena.bioinf.lcms.LCMSCompoundSummary;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.middleware.BaseApiController;
 import de.unijena.bioinf.ms.middleware.compounds.model.CompoundAnnotation;
 import de.unijena.bioinf.ms.middleware.compounds.model.CompoundId;
+import de.unijena.bioinf.ms.middleware.compounds.model.LCMSFeatureSummaryQualityData;
 import de.unijena.bioinf.ms.middleware.compounds.model.MsData;
 import de.unijena.bioinf.ms.middleware.compute.model.ComputeContext;
 import de.unijena.bioinf.ms.middleware.compute.model.JobId;
@@ -87,12 +91,12 @@ public class CompoundController extends BaseApiController {
      * @return CompoundIds with additional annotations and MS/MS data (if specified).
      */
     @GetMapping(value = "/compounds", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<CompoundId> getCompounds(@PathVariable String projectId, @RequestParam(required = false, defaultValue = "false") boolean topAnnotation, @RequestParam(required = false, defaultValue = "false") boolean msData, @RequestParam(required = false,defaultValue = "false") boolean msQuality) {
+    public List<CompoundId> getCompounds(@PathVariable String projectId, @RequestParam(required = false, defaultValue = "false") boolean topAnnotation, @RequestParam(required = false, defaultValue = "false") boolean msData, @RequestParam(required = false, defaultValue = "false") boolean lcmsFeatureQuality,@RequestParam(required = false,defaultValue = "false") boolean msQuality) {
         LoggerFactory.getLogger(CompoundController.class).info("Started collecting compounds...");
         final ProjectSpaceManager<?> space = projectSpace(projectId);
 
         final ArrayList<CompoundId> compoundIds = new ArrayList<>();
-        space.projectSpace().forEach(ccid -> compoundIds.add(asCompoundId(ccid, space, topAnnotation, msData,msQuality)));
+        space.projectSpace().forEach(ccid -> compoundIds.add(asCompoundId(ccid, space, topAnnotation, msData, lcmsFeatureQuality, msQuality)));
 
         LoggerFactory.getLogger(CompoundController.class).info("Finished parsing compounds...");
         return compoundIds;
@@ -176,10 +180,11 @@ public class CompoundController extends BaseApiController {
     public CompoundId getCompound(@PathVariable String projectId, @PathVariable String cid,
                                   @RequestParam(required = false, defaultValue = "false") boolean topAnnotation,
                                   @RequestParam(required = false, defaultValue = "false") boolean msData,
+                                  @RequestParam(required = false, defaultValue = "false") boolean lcmsFeatureQuality,
                                   @RequestParam(required = false, defaultValue = "false") boolean msQuality) {
         final ProjectSpaceManager<?> space = projectSpace(projectId);
         final CompoundContainerId ccid = parseCID(space, cid);
-        return asCompoundId(ccid, space, topAnnotation, msData,msQuality);
+        return asCompoundId(ccid, space, topAnnotation, msData, lcmsFeatureQuality, msQuality);
     }
 
     /**
@@ -249,9 +254,21 @@ public class CompoundController extends BaseApiController {
                 .orElse(EnumSet.of(CompoundQuality.CompoundQualityFlag.UNKNOWN));
     }
 
+    private LCMSFeatureSummaryQualityData asCompoundLCMSFeatureQualityData(Instance instance){
+        final LCMSPeakInformation peakInformation = instance.loadCompoundContainer(LCMSPeakInformation.class).getAnnotation(LCMSPeakInformation.class, LCMSPeakInformation::empty);
+        Ms2Experiment experiment = instance.getExperiment();
+        Optional<CoelutingTraceSet> traceSet = peakInformation.getTracesFor(0);
+        if (traceSet.isPresent()) {
+            final LCMSCompoundSummary summary = new LCMSCompoundSummary(traceSet.get(), traceSet.get().getIonTrace(), experiment);
+            return new LCMSFeatureSummaryQualityData(summary);
+        } else {
+            //todo is this allowed???
+            return null;
+        }
+    }
 
 
-    private CompoundId asCompoundId(CompoundContainerId cid, ProjectSpaceManager<?> ps, boolean includeSummary, boolean includeMsData, boolean includeMsQuality) {
+    private CompoundId asCompoundId(CompoundContainerId cid, ProjectSpaceManager<?> ps, boolean includeSummary, boolean includeMsData, boolean includeLCMSFeatureMsQuality, boolean includeMsQuality) {
         final CompoundId compoundId = CompoundId.of(cid);
         if (includeSummary || includeMsData) {
             Instance instance = ps.getInstanceFromCompound(cid);
@@ -259,6 +276,8 @@ public class CompoundController extends BaseApiController {
                 compoundId.setTopAnnotation(asCompoundSummary(instance));
             if (includeMsData)
                 compoundId.setMsData(asCompoundMsData(instance));
+            if (includeLCMSFeatureMsQuality)
+                compoundId.setLcmsCompoundSummaryQualityData(asCompoundLCMSFeatureQualityData(instance));
             if (includeMsQuality)
                 compoundId.setQualityFlags(asCompoundQualityData(instance));
         }
