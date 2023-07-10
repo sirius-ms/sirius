@@ -150,7 +150,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private ArrayList<MutableMs2Spectrum> ms2spectra = new ArrayList<MutableMs2Spectrum>();
         private ArrayList<SimpleSpectrum> ms1spectra = new ArrayList<SimpleSpectrum>();
         private SimpleSpectrum mergedMs1;
-        private String inchi, inchikey, smiles, splash, spectrumQualityString;
+        private String inchi, inchikey, smiles, splash, spectrumQualityString, featureId;
         private MutableMs2Experiment experiment;
         private MsInstrumentation instrumentation = MsInstrumentation.Unknown;
 
@@ -165,6 +165,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             inchikey = null;
             smiles = null;
             splash = null;
+            featureId = null;
             ms1spectra = new ArrayList<>();
             mergedMs1 = null;
             ms2spectra = new ArrayList<>();
@@ -391,8 +392,11 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 this.spectrumType = SPECTRUM_TYPE.MS1;
             } else if (optionName.contains("ion") || optionName.equals("adduct")) {
                 parseIonizations(value);
+            } else if (optionName.equalsIgnoreCase("feature_id") || optionName.equalsIgnoreCase("feature-id") || optionName.equalsIgnoreCase("featureid")) {
+                if (featureId != null) warn("feature-id has bean set set twice");
+                featureId = value;
             } else {
-                warn("Unknown option " + "'>" + optionName + "'" + " in .ms file. Option will be ignored");
+                warn("Unknown option " + "'>" + optionName + "'" + " in .ms file. Option will be ignored, but stored as additional field.");
                 if (fields == null) fields = new AdditionalFields();
                 fields.put(optionName, value);
             }
@@ -428,6 +432,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                     exp.setAnnotation(Whiteset.class, formulas);
             }
             exp.setName(compoundName);
+            exp.setFeatureId(featureId);
             if (ionization == null) {
                 if (charge != 0) {
                     exp.setPrecursorIonType(PrecursorIonType.unknown(charge));

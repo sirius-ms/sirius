@@ -87,6 +87,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
         public MgfParserInstance(BufferedReader reader) {
             this(reader, false);
         }
+
         public MgfParserInstance(BufferedReader reader, boolean ignoreUnsupportedIonTypes) {
             this.reader = reader;
             this.prototype = new MgfSpec();
@@ -117,7 +118,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                 buffer.addLast(s);
         }
 
-        private static Pattern CHARGE_PATTERN = Pattern.compile("([+-]?\\d+)([+-])?");
+        private static Pattern CHARGE_PATTERN = Pattern.compile("([+-]?)(\\d+)([+-]?)");
         private static Pattern NOT_AVAILABLE = Pattern.compile("\\s*N/A\\s*");
 
         private void handleKeyword(MgfSpec spec, String keyword, String value) throws IOException {
@@ -147,19 +148,20 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                 }
             } else if (keyword.contains("FORMULA")) {
                 spec.formula = MolecularFormula.parseOrNull(value);
-                if (spec.formula==null)
+                if (spec.formula == null)
                     LoggerFactory.getLogger(MgfParser.class).warn("Cannot parse molecular formula '" + value + "'. Ignore field.");
             } else if (keyword.equals("CHARGE")) {
                 final Matcher m = CHARGE_PATTERN.matcher(value);
                 m.find();
 
-                int charge = Integer.parseInt(m.group(1));
-                if (m.group(2).equals("-"))
-                    charge = Math.abs(charge) * -1;
-                if (charge == 0){
-                    charge = m.group(1).strip().startsWith("-") ? -1 : 1;
-                    LoggerFactory.getLogger(MgfParser.class).warn("Charge value of 0 found. Changing value to Single charged under consideration of the given ion mode.");
+                int charge = Integer.parseInt(m.group(2));
+                if (charge == 0) {
+                    charge = 1;
+                    LoggerFactory.getLogger(MgfParser.class).warn("'CHARGE' value of 0 found. Changing value to Single charged under consideration of the sign.");
                 }
+                if ("-".equals(m.group(3)) || "-".equals(m.group(1)))
+                    charge = Math.abs(charge) * -1;
+
 
                 if (spec.spectrum.getIonization() == null || spec.spectrum.getIonization().getCharge() != charge)
                     spec.spectrum.setIonization(new Charge(charge));
@@ -172,8 +174,14 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                 } else if (value.toLowerCase().startsWith("neg")) {
                     ion = PrecursorIonType.unknown(-1);
                 } else if (cm.matches()) {
-                    if ("-".equals(cm.group(2))) ion = PrecursorIonType.unknown(-1);
-                    else ion = PrecursorIonType.unknown(1);
+                    int charge = Integer.parseInt(cm.group(2));
+                    if (charge == 0) {
+                        charge = 1;
+                        LoggerFactory.getLogger(MgfParser.class).warn("'" + keyword + "' has Charge value of 0. Changing value to Single charged under consideration of the sign.");
+                    }
+                    if ("-".equals(cm.group(1)) || "-".equals(cm.group(3)))
+                        charge = charge * -1;
+                    ion = PrecursorIonType.unknown(charge);
                 } else {
                     try {
                         ion = PeriodicTable.getInstance().ionByNameOrNull(value);
@@ -210,7 +218,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                         spec.inchi = value;
                     }
                 } else if (keyword.equalsIgnoreCase("SMILES")) {
-                    if (!value.equalsIgnoreCase("n/a") && !value.equalsIgnoreCase("na"))  {
+                    if (!value.equalsIgnoreCase("n/a") && !value.equalsIgnoreCase("na")) {
                         spec.smiles = value;
                     }
                 } else if (keyword.equalsIgnoreCase("NAME") || keyword.equalsIgnoreCase("TITLE")) {
@@ -258,7 +266,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                     }
 
                     if (e instanceof MultipleChargeException || e instanceof MultimereException) {
-                        LoggerFactory.getLogger(this.getClass()).warn("Compound " + lastErrorFeatureId + " ignored because of: " +  e.getMessage());
+                        LoggerFactory.getLogger(this.getClass()).warn("Compound " + lastErrorFeatureId + " ignored because of: " + e.getMessage());
                     } else {
                         LoggerFactory.getLogger(this.getClass()).error("Compund " + lastErrorFeatureId + " ignored because of unexpected parsing error.", e);
                     }
@@ -333,11 +341,13 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
         exp.setMs1Spectra(new ArrayList<>());
         exp.setIonMass(inst.peekNext().spectrum.getPrecursorMz());
         exp.setName(inst.peekNext().name);
-        if (exp.getName() == null) exp.setName(inst.peekNext().featureId);
+        exp.setFeatureId(inst.peekNext().featureId);
+        if (exp.getName() == null)
+            exp.setName(exp.getFeatureId());
         if (exp.getName() == null) {
             exp.setName("FEATURE_" + inst.specIndex);
         }
-        exp.computeAnnotationIfAbsent(AdditionalFields.class, AdditionalFields::new).put("index",Integer.toString(inst.specIndex));
+        exp.computeAnnotationIfAbsent(AdditionalFields.class, AdditionalFields::new).put("index", Integer.toString(inst.specIndex));
         final AdditionalFields additionalFields = new AdditionalFields();
 
         while (true) {

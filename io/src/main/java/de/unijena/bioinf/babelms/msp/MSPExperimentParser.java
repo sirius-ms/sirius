@@ -79,6 +79,7 @@ public class MSPExperimentParser extends MSPSpectralParser implements Parser<Ms2
                     // mandatory
                     exp.setSource(new SpectrumFileSource(source));
                     MSP.parseName(fields).ifPresent(exp::setName);
+                    MSP.parseFeatureId(fields).ifPresent(exp::setFeatureId);
                     fields.getField(MSP.FORMULA)
                             .filter(s -> !"null".equalsIgnoreCase(s))
                             .filter(s -> !s.isBlank())
