@@ -90,14 +90,22 @@ public class CombinatorialFragmenter {
         boolean cut(CombinatorialNode node, int numberOfNodes, int numberOfEdges);
     }
 
-    public CombinatorialGraph createCombinatorialFragmentationGraph(Callback2 callback) {
+    public CombinatorialGraph createCombinatorialFragmentationGraph(BitSet bondsToCut, Callback2 callback) {
         CombinatorialGraph graph = new CombinatorialGraph(this.molecularGraph);
         ArrayDeque<CombinatorialNode> nodes = new ArrayDeque<>();
         nodes.addLast(graph.root);
         final int[] counting = new int[]{1,0};
         while (!nodes.isEmpty()) {
             CombinatorialNode n = nodes.pollFirst();
-            List<CombinatorialFragment> fragments = cutAllBonds(n.fragment, (parent, bonds, fragments1) -> {
+
+            TIntArrayList bondsInFragment = n.fragment.bonds();
+            BitSet bondsToCutInFragment = new BitSet(this.molecularGraph.bonds.length);
+            for(int idx = 0; idx < bondsInFragment.size(); idx++){
+                final int bondIdx = bondsInFragment.get(idx);
+                if(bondsToCut.get(bondIdx)) bondsToCutInFragment.set(bondIdx);
+            }
+
+            List<CombinatorialFragment> fragments = cutBonds(n.fragment, bondsToCutInFragment, (parent, bonds, fragments1) -> {
                 for (CombinatorialFragment f : fragments1) {
                     ++counting[1];
                     CombinatorialNode w = graph.addReturnNovel(n,f,bonds[0], bonds.length>1 ? bonds[1] : null, scoring);
@@ -109,6 +117,12 @@ public class CombinatorialFragmenter {
             });
         }
         return graph;
+    }
+
+    public CombinatorialGraph createCombinatorialFragmentationGraph(Callback2 callback){
+        BitSet bondsToCut = new BitSet(this.molecularGraph.bonds.length);
+        bondsToCut.flip(0, this.molecularGraph.bonds.length);
+        return this.createCombinatorialFragmentationGraph(bondsToCut, callback);
     }
 
 
