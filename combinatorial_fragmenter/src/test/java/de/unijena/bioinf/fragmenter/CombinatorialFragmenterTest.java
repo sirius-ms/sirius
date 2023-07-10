@@ -162,6 +162,61 @@ public class CombinatorialFragmenterTest {
     }
 
     @Test
+    public void testCreateCombinatorialGraphByCuttingSpecificBonds(){
+        try {
+            String smiles = "NCC(=O)NC(c1ccccc1)C(=O)NC(C)C(=O)O";
+            SmilesParser smiParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+            MolecularGraph mol = new MolecularGraph(smiParser.parseSmiles(smiles));
+            CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(mol);
+
+            BitSet bondsToCut = new BitSet(mol.bonds.length);
+            bondsToCut.set(3); bondsToCut.set(7); bondsToCut.set(10);
+            CombinatorialGraph graph = fragmenter.createCombinatorialFragmentationGraph(bondsToCut, (nodes,nnodes,nedges) -> true);
+
+            // Compare the expected number of nodes/edges with the actual number of nodes/edges:
+            assertEquals(6, graph.numberOfNodes());
+            assertEquals(8, graph.getEdgeList().size());
+
+            // For each node, retrieve some metadata, and compare the expected with the actual:
+            ArrayList<CombinatorialNode> sortedNodeList = graph.getSortedNodeList();
+            int[] numList = sortedNodeList.stream().mapToInt(node -> {
+                BitSet bs = node.fragment.bitset;
+                int val = 0;
+                for(int i = 0; i < mol.natoms; i++) val += bs.get(i) ? Math.pow(2, i) : 0;
+                return val;
+            }).toArray();
+            int[] depths = sortedNodeList.stream().mapToInt(node -> node.depth).toArray();
+            int[] bondsBreaks = sortedNodeList.stream().mapToInt(node -> node.bondbreaks).toArray();
+            double[] totalScores = sortedNodeList.stream().mapToDouble(CombinatorialNode::getTotalScore).toArray();
+            double[] scores = sortedNodeList.stream().mapToDouble(node -> node.score).toArray();
+
+            assertArrayEquals(new int[]{15, 1792, 1046768, 1046783, 1048560, 1048575}, numList);
+            assertArrayEquals(new int[]{1, 1, 2, 1, 1, 0}, depths);
+            assertArrayEquals(new int[]{1, 2, 3, 2, 1, 0}, bondsBreaks);
+            assertArrayEquals(new double[]{-1d, -2d, -3d, -2d, -1d, 0d}, totalScores, 0d);
+            assertArrayEquals(new double[]{-1d, -2d, -2d, -2d, -1d, 0d}, scores, 0d);
+
+            // Compare the topology of the expected graph with the actual one by using the adjacency list:
+            double[][] actualAdjMatrix = graph.getAdjacencyMatrix();
+            double negInf = Double.NEGATIVE_INFINITY;
+            double[][] expectedAdjMatrix = new double[][]{
+                    {negInf, negInf, negInf, negInf, negInf, negInf},
+                    {negInf, negInf, negInf, negInf, negInf, negInf},
+                    {negInf, negInf, negInf, negInf, negInf, negInf},
+                    {-1d, negInf, -1d, negInf, negInf, negInf},
+                    {negInf, -2d, -2d, negInf, negInf, negInf},
+                    {-1d, -2d, negInf, -2d, -1d, negInf}
+            };
+
+            for(int i = 0; i < 6; i++){
+                assertArrayEquals(expectedAdjMatrix[i], actualAdjMatrix[i], 0d);
+            }
+        } catch (InvalidSmilesException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
     public void testCreateCombinatorialGraphWithoutFragmentationConstraint(){
         try{
             String smiles = "C1CC1";
