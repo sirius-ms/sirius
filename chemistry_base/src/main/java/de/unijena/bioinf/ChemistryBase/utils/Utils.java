@@ -23,10 +23,15 @@ package de.unijena.bioinf.ChemistryBase.utils;
 import org.apache.commons.lang3.time.StopWatch;
 
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class Utils {
+
+    public static final Comparator<String> ALPHANUMERIC_COMPARATOR = new AlphanumComparator();
+
+
     public static void withTime(String text, Consumer<StopWatch> exec) {
         withTimeR(text, (w) -> {
             exec.accept(w);

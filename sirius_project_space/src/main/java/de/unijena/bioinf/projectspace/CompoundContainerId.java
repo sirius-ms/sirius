@@ -50,6 +50,9 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
     @NotNull
     private String compoundName;
 
+    @Nullable
+    private String featureId;
+
     // fields for fast compound filtering
     @Nullable
     private Double ionMass = null;
@@ -65,10 +68,13 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
     private Double confidenceScore;
 
     protected CompoundContainerId(@NotNull String directoryName, @NotNull String compoundName, int compoundIndex) {
-        this(directoryName, compoundName, compoundIndex, null, null, null, null);
+        this(directoryName, compoundName, compoundIndex, null, null, null, null, null);
     }
 
-    protected CompoundContainerId(@NotNull String directoryName, @NotNull String compoundName, int compoundIndex, @Nullable Double ionMass, @Nullable PrecursorIonType ionType, @Nullable RetentionTime rt, @Nullable Double confidenceScore) {
+    protected CompoundContainerId(@NotNull String directoryName, @NotNull String compoundName, int compoundIndex,
+                                  @Nullable Double ionMass, @Nullable PrecursorIonType ionType,
+                                  @Nullable RetentionTime rt, @Nullable Double confidenceScore,
+                                  @Nullable String featureId ) {
         this.directoryName = directoryName;
         this.compoundName = compoundName;
         this.compoundIndex = compoundIndex;
@@ -76,6 +82,7 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         this.ionType = ionType;
         this.rt = rt;
         this.confidenceScore = confidenceScore;
+        this.featureId = featureId;
     }
 
     public boolean hasFlag(Flag flag) {
@@ -144,6 +151,15 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         this.confidenceScore = confidenceScore;
     }
 
+    @NotNull
+    public Optional<String> getFeatureId() {
+        return Optional.ofNullable(featureId);
+    }
+
+    public void setFeatureId(@Nullable String featureId) {
+        this.featureId = featureId;
+    }
+
     @SafeVarargs
     public final void setRankingScoreTypes(@NotNull Class<? extends FormulaScore>... rankingScores) {
         setRankingScoreTypes(Arrays.asList(rankingScores));
@@ -175,6 +191,7 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         getDetectedAdducts().ifPresent(pa -> kv.put("detectedAdducts", pa.toString()));
         getRt().ifPresent(rt -> kv.put("rt", RetentionTime.asStringValue(rt)));
         getConfidenceScore().ifPresent(cs -> kv.put("confidenceScore", String.valueOf(cs)));
+        getFeatureId().ifPresent(fid -> kv.put("featureId", featureId));
 
         if (!rankingScores.isEmpty())
             kv.put(RANKING_KEY, rankingScores.stream().map(Score::simplify).collect(Collectors.joining(",")));
@@ -191,5 +208,6 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         setDetectedAdducts(cid.possibleAdducts);
         setRt(cid.rt);
         setConfidenceScore(cid.confidenceScore);
+        setFeatureId(cid.featureId);
     }
 }
