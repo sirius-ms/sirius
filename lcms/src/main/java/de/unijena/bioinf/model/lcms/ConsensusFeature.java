@@ -130,6 +130,7 @@ public class ConsensusFeature implements Annotated<DataAnnotation> {
 
         final MutableMs2Experiment exp = new MutableMs2Experiment();
         exp.setName(String.valueOf(featureId));
+        exp.setFeatureId(String.valueOf(featureId));
         exp.setPrecursorIonType(ionType);
         exp.setMergedMs1Spectrum(Spectrums.mergeSpectra(coelutedPeaks));
         final ArrayList<MutableMs2Spectrum> ms2Spectra = new ArrayList<>();
