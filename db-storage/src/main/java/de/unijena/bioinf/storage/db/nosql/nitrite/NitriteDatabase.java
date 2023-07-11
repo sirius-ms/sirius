@@ -341,6 +341,11 @@ public class NitriteDatabase implements Database<Document> {
     }
 
     @Override
+    public Path location() {
+        return file;
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
     public <T> int insert(T object) throws IOException {
         return this.write(() -> {
