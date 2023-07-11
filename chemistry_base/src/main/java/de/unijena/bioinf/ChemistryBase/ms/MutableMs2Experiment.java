@@ -43,6 +43,9 @@ public class MutableMs2Experiment implements Ms2Experiment {
     private MolecularFormula molecularFormula;
     private String name;
 
+    @Nullable
+    private String featureId;
+
 
     private Annotated.Annotations<Ms2ExperimentAnnotation> annotations;
 
@@ -178,6 +181,16 @@ public class MutableMs2Experiment implements Ms2Experiment {
 
     public void setMolecularFormula(MolecularFormula molecularFormula) {
         this.molecularFormula = molecularFormula;
+    }
+
+    @Nullable
+    @Override
+    public String getFeatureId() {
+        return featureId;
+    }
+
+    public void setFeatureId(String featureId) {
+        this.featureId = featureId;
     }
 
     @Override

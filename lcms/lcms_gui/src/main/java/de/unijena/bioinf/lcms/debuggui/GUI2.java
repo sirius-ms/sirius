@@ -138,7 +138,7 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
         final JButton export2 = new JButton(new AbstractAction("Copy Single") {
             @Override
             public void actionPerformed(ActionEvent e) {
-                final List<Ms2Experiment> experiments = Arrays.stream(specViewer.feature.getFeatures()).map(f->f.toMsExperiment("")).collect(Collectors.toList());
+                final List<Ms2Experiment> experiments = Arrays.stream(specViewer.feature.getFeatures()).map(f->f.toMsExperiment("", null)).collect(Collectors.toList());
                 final StringWriter wr = new StringWriter();
                 try {
                     final BufferedWriter writer = new BufferedWriter(wr);
