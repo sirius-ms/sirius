@@ -62,14 +62,16 @@ import de.unijena.bionf.spectral_alignment.AbstractSpectralAlignment;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.tuple.Triple;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
-import java.util.stream.StreamSupport;
 
-public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary {
+public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, Closeable {
 
     final protected Database<Doctype> storage;
 
@@ -141,7 +143,7 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary {
 
     protected static Metadata initMetadata() throws IOException {
         return Metadata.build()
-                .addRepository(Tag.class, new Index("key",IndexType.UNIQUE))
+                .addRepository(Tag.class, "id", new Index("key",IndexType.UNIQUE))
                 .addRepository(
                         Ms2ReferenceSpectrum.class,
                         "id",
@@ -174,28 +176,35 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary {
     }
 
     @Override
-    public <P extends Peak, A extends AbstractSpectralAlignment> Iterable<SearchResult> matchingSpectra(
+    public <P extends Peak> Iterable<SearchResult> matchingSpectra(
             Iterable<Ms2Spectrum<P>> queries,
             Deviation precursorMzDeviation,
             Deviation maxPeakDeviation,
-            Class<A> alignmentType
+            SpectralAlignmentType alignmentType,
+            BiConsumer<Integer, Integer> progressConsumer
     ) throws ChemicalDatabaseException {
         try {
             final List<SearchResult> results = new ArrayList<>();
+            AbstractSpectralAlignment alignment = alignmentType.type.getConstructor(Deviation.class).newInstance(maxPeakDeviation);
 
-            A alignment = alignmentType.getConstructor(Deviation.class).newInstance(maxPeakDeviation);
+            int maxProgress = 0;
+            List<Triple<Ms2Spectrum<P>, Integer, Filter>> params = new ArrayList<>();
             for (Ms2Spectrum<P> query : queries) {
-                OrderedSpectrum<Peak> orderedQuery = new SimpleSpectrum(query);
-
                 double abs = precursorMzDeviation.absoluteFor(query.getPrecursorMz());
                 Filter filter = new Filter().and().gte("precursorMz", query.getPrecursorMz() - abs).lte("precursorMz", query.getPrecursorMz() + abs);
+                int count = this.storage.count(filter, Ms2ReferenceSpectrum.class);
+                maxProgress += count;
+                params.add(Triple.of(query, count, filter));
+            }
 
-                int total = this.storage.count(filter, Ms2ReferenceSpectrum.class);
+            int progress = 0;
+            for (Triple<Ms2Spectrum<P>, Integer, Filter> param : params) {
+                OrderedSpectrum<Peak> orderedQuery = new SimpleSpectrum(param.getLeft());
+
                 int pageSize = 100;
-                for (int offset = 0; offset < total; offset += pageSize) {
-                    Iterable<Ms2ReferenceSpectrum> references = this.storage.find(filter, Ms2ReferenceSpectrum.class, offset, pageSize,"spectrum");
-
-                    StreamSupport.stream(references.spliterator(), false).forEach(reference -> {
+                for (int offset = 0; offset < param.getMiddle(); offset += pageSize) {
+                    Iterable<Ms2ReferenceSpectrum> references = this.storage.find(param.getRight(), Ms2ReferenceSpectrum.class, offset, pageSize,"spectrum");
+                    for (Ms2ReferenceSpectrum reference : references) {
                         SpectralSimilarity similarity = alignment.score(orderedQuery, reference.getSpectrum());
                         if (similarity.shardPeaks > 0) {
                             Ms2ReferenceSpectrum withoutData = new Ms2ReferenceSpectrum(
@@ -203,10 +212,13 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary {
                                     reference.getPrecursorMz(), reference.getIonMass(), reference.getMsLevel(), reference.getCollisionEnergy(),
                                     reference.getInstrumentation(), reference.getFormula(), reference.getName(), reference.getSmiles(),
                                     reference.getLibraryName(), reference.getLibraryId(), reference.getSplash(), null);
-                            SearchResult res = SearchResult.builder().query(query).similarity(similarity).reference(withoutData).build();
+                            SearchResult res = SearchResult.builder().query(param.getLeft()).similarity(similarity).reference(withoutData).build();
                             results.add(res);
                         }
-                    });
+                        if (progressConsumer != null) {
+                            progressConsumer.accept(++progress, maxProgress);
+                        }
+                    }
                 }
             }
 
@@ -221,6 +233,21 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary {
                  RuntimeException | IOException e) {
             throw new ChemicalDatabaseException(e);
         }
+    }
+
+    @Override
+    public String name() {
+        return this.storage.location().getFileName().toString();
+    }
+
+    @Override
+    public String location() {
+        return this.storage.location().toString();
+    }
+
+    @Override
+    public int countAllSpectra() throws IOException {
+        return this.storage.countAll(Ms2ReferenceSpectrum.class);
     }
 
     @Override
@@ -270,14 +297,20 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary {
         }
     }
 
+    @Override
+    public void close() throws IOException {
+        this.storage.close();
+    }
+
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Tag {
+        private long id;
         private String key;
         private String value;
 
         public static Tag of(String key, String value) {
-            return new Tag(key, value);
+            return new Tag(-1L, key, value);
         }
 
         public static Tag of(Map.Entry<String, String> source) {
