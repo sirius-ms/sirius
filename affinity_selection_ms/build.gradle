@@ -3,6 +3,7 @@ dependencies {
     api "org.openscience.cdk:cdk-bundle:$cdk_version"
     implementation group: 'args4j', name: 'args4j', version: '2.33'
     implementation group: 'org.jfree', name: 'jfreechart', version: '1.5.2'
+    implementation project(path: ':combinatorial_fragmenter')
 
     testImplementation project(':chemistry_base')
     testImplementation "org.openscience.cdk:cdk-bundle:$cdk_version"
