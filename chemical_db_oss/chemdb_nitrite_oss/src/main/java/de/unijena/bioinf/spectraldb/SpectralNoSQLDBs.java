@@ -47,15 +47,22 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.massbank.MassbankFormat;
 import de.unijena.bioinf.chemdb.ChemDBs;
+import de.unijena.bioinf.chemdb.ChemDbTags;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
+import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.nitrite.SpectralNitriteDatabase;
 import de.unijena.bioinf.storage.db.nosql.Database;
+import de.unijena.bioinf.storage.db.nosql.Filter;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -65,11 +72,11 @@ public class SpectralNoSQLDBs extends ChemDBs {
         return new SpectralNitriteDatabase(file);
     }
 
-    public static void importSpectraFromMs2Experiments(SpectralNoSQLDatabase<?> database, Iterable<Ms2Experiment> experiments, int chunkSize) throws ChemicalDatabaseException {
-        importSpectraFromMs2Experiments(database.storage, experiments, chunkSize);
+    public static int importSpectraFromMs2Experiments(SpectralNoSQLDatabase<?> database, Iterable<Ms2Experiment> experiments, int chunkSize) throws ChemicalDatabaseException {
+        return importSpectraFromMs2Experiments(database.storage, experiments, chunkSize);
     }
 
-    public static void importSpectraFromMs2Experiments(Database<?> database, Iterable<Ms2Experiment> experiments, int chunkSize) throws ChemicalDatabaseException {
+    public static int importSpectraFromMs2Experiments(Database<?> database, Iterable<Ms2Experiment> experiments, int chunkSize) throws ChemicalDatabaseException {
         List<Ms2ReferenceSpectrum> spectra = new ArrayList<>();
         for (Ms2Experiment experiment : experiments) {
             if (!(experiment instanceof MutableMs2Experiment)) {
@@ -78,22 +85,32 @@ public class SpectralNoSQLDBs extends ChemDBs {
             spectra.addAll(ms2ExpToMs2Ref((MutableMs2Experiment) experiment));
         }
 
-        importSpectra(database, spectra, chunkSize);
+        return importSpectra(database, spectra, chunkSize);
     }
-    public static void importSpectra(Database<?> database, Iterable<Ms2ReferenceSpectrum> spectra, int chunkSize) throws ChemicalDatabaseException {
+    public static int importSpectra(Database<?> database, Iterable<Ms2ReferenceSpectrum> spectra, int chunkSize) throws ChemicalDatabaseException {
         try {
-            StreamSupport.stream(Iterables.partition(spectra, chunkSize).spliterator(), false).forEach(chunk -> {
+            DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+            String dbDate = df.format(new Date());
+
+            if (database.count(Filter.build().eq("key", ChemDbTags.TAG_DATE), SpectralNoSQLDatabase.Tag.class) > 0) {
+                SpectralNoSQLDatabase.Tag tag = database.find(Filter.build().eq("key", ChemDbTags.TAG_DATE), SpectralNoSQLDatabase.Tag.class).iterator().next();
+                tag.setValue(dbDate);
+                database.upsert(tag);
+            } else {
+                database.insert(SpectralNoSQLDatabase.Tag.of(ChemDbTags.TAG_DATE, dbDate));
+            }
+            return StreamSupport.stream(Iterables.partition(spectra, chunkSize).spliterator(), false).mapToInt(chunk -> {
                 try {
                     // TODO what about spectra without inchi key and/or precursor mass?
                     List<Ms2ReferenceSpectrum> data = chunk.stream().filter(
                             p -> p.getCandidateInChiKey() != null && p.getPrecursorMz() > 0
                     ).toList();
-                    database.insertAll(data);
+                    return database.insertAll(data);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            });
-        } catch (RuntimeException e) {
+            }).sum();
+        } catch (RuntimeException | IOException e) {
             throw new ChemicalDatabaseException(e);
         }
     }
@@ -116,6 +133,7 @@ public class SpectralNoSQLDBs extends ChemDBs {
             //todo parse nist msp id output
             s.getAnnotation(AdditionalFields.class).ifPresent(fields -> {
                 if (fields.containsKey(MassbankFormat.ACCESSION.k())) {
+                    b.libraryName(DataSource.MASSBANK.realName);
                     b.libraryId(fields.get(MassbankFormat.ACCESSION.k()));
                 }
             });
