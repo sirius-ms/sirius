@@ -7,7 +7,6 @@ public abstract class FragmentationPredictor {
 
     private final MolecularGraph molecule;
     private final CombinatorialFragmenter fragmenter;
-    private CombinatorialGraph graph;
 
     public FragmentationPredictor(MolecularGraph molecule){
         this.molecule = molecule;
@@ -23,12 +22,12 @@ public abstract class FragmentationPredictor {
 
     public abstract Collection<CombinatorialFragment> getFragments();
 
-    public CombinatorialGraph getFragmentationGraph(){
-        return this.graph;
-    }
-
     public MolecularGraph getMolecule(){
         return this.molecule;
+    }
+
+    public CombinatorialFragmenter getFragmenter(){
+        return this.fragmenter;
     }
 
 }
