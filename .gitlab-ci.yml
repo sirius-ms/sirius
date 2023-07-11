@@ -44,3 +44,4 @@ trigger_sirius_frontend:
     refs:
       - master
       - stable
+  allow_failure: true
