@@ -128,8 +128,9 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager<?>
 
     private ProjectSpaceManager computeMixedWorkflow(LCMSProccessingInstance i, List<Path> files, boolean align ) throws IOException {
         final ArrayList<BasicJJob<?>> jobs = new ArrayList<>();
-        updateProgress(0, files.size(), 1, "Parse LC/MS runs");
+        updateProgress(0, files.size(), 0, "Parse LC/MS runs");
         AtomicInteger counter = new AtomicInteger(0);
+        AtomicInteger featureCounter = new AtomicInteger(0);
         for (Path f : files) {
             jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<>() {
                 @Override
@@ -149,7 +150,9 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager<?>
                                 final FragmentedIon ion = ions.next();
                                 AdductResolver.resolve(i, ion);
                                 Feature feature = i.makeFeature(sample, ion, false);
-                                MutableMs2Experiment experiment = feature.toMsExperiment(sample.run.getIdentifier() + "_" + String.valueOf(counter.incrementAndGet())).mutate();
+                                final int featureId = featureCounter.incrementAndGet();
+                                MutableMs2Experiment experiment = feature.toMsExperiment(
+                                        sample.run.getIdentifier() + "_" + featureId, String.valueOf(featureId)).mutate();
                                 new Ms2Validator().validate(experiment, Warning.Logger, true);
                                 importCompound(space, experiment);
                             }
