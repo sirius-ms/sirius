@@ -38,6 +38,7 @@ dependencies {
     api group: "de.unijena.bioinf.ms", name: "canopus_predict_oss", version: "$fingeridVersion"
     api group: "de.unijena.bioinf.ms", name: "sirius_web_client", version: "$fingeridVersion"
     api group: "de.unijena.bioinf.ms", name: "fingerid_project_space_oss", version: "$fingeridVersion"
+    api group: "de.unijena.bioinf.ms", name: "db-storage", version: "$siriusVersion"
 
     api group: "de.unijena.bioinf.ms", name: "FTAlignmentTool", version: "$siriusVersion"
 
