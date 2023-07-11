@@ -58,6 +58,7 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
         writeIfAvailable(writer, ">formula", data.getMolecularFormula());
         writeIf(writer, ">parentmass", String.valueOf(data.getIonMass()), data.getIonMass() != 0d);
         writeIfAvailable(writer, ">ionization", data.getPrecursorIonType());
+        writeIfAvailable(writer, ">feature_id", data.getFeatureId());
         final InChI i = data.getAnnotationOrNull(InChI.class);
         if (i != null) {
             writeIfAvailable(writer, ">InChI", i.in2D);
