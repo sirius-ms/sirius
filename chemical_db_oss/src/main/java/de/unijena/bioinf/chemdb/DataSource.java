@@ -71,12 +71,16 @@ public enum DataSource {
 /*"https://www.lipidmaps.org/rest/compound/abbrev/%s/all/txt"*/ //todo which is the correect query?
 
 
-    //everything with flags greater equal to 2**33 are databases of artificial structures.
+    //everything with flags greater equal to 2**33 may be databases of artificial structures and have to be added separately to bio
     KEGGMINE("KEGG MINE", 8589934592L, null,null, null, 8589934592L | 256L, true, new Publication("Jeffryes JG et al., MINEs: Open access databases of computationally predicted enzyme promiscuity products for untargeted metabolomics. J Cheminf. 2015", "10.1186/s13321-015-0087-1")),
     ECOCYCMINE("EcoCyc MINE", 17179869184L, null,null, null, 17179869184L | 2048L, true, new Publication("Jeffryes JG et al., MINEs: Open access databases of computationally predicted enzyme promiscuity products for untargeted metabolomics. J Cheminf. 2015", "10.1186/s13321-015-0087-1")),
     YMDBMINE("YMDB MINE", 34359738368L, null,null, null, 34359738368L | 65536L, true, new Publication("Jeffryes JG et al., MINEs: Open access databases of computationally predicted enzyme promiscuity products for untargeted metabolomics. J Cheminf. 2015", "10.1186/s13321-015-0087-1")),
 
-    MASSBANK("MassBank", 68719476736L, null, null, "https://massbank.eu/MassBank/RecordDisplay?id=%s", null);
+    MASSBANK("MassBank", 68719476736L, null, null, "https://massbank.eu/MassBank/RecordDisplay?id=%s", null),
+    //////////////////////////////////////////
+
+
+    DSSTox("DSSTox", 137438953472L,  "DSSTox_Substance_id","DSSTox", "https://comptox.epa.gov/dashboard/%s", new Publication("Grulke CM at al., EPA’s DSSTox database: History of development of a curated chemistry resource supporting computational toxicology research. Comput Toxicol. 2019", "10.1016/j.comtox.2019.100096"));
 
 
     // additional field
