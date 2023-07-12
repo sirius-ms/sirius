@@ -79,7 +79,7 @@ jobs:
 
       - name: Sirius Run
         run: |
-          TEMP_DIR="$(cd "$(dirname "sirius_cli/src/test/temp_results")"; pwd -P)/$(basename "sirius_cli/src/test/temp_results")"
+          TEMP_DIR="$(cd "$(dirname "sirius_cli/build/test/temp_results")"; pwd -P)/$(basename "sirius_cli/build/test/temp_results")"
           mkdir "${TEMP_DIR}" "${TEMP_DIR}/mgf_temp_output" "${TEMP_DIR}/mgf_temp_summary" "${TEMP_DIR}/ms_temp_output" "${TEMP_DIR}/ms_temp_summary" "${TEMP_DIR}/txt_temp_output" "${TEMP_DIR}/txt_temp_summary"
           DEMO_DIR="$(cd "$(dirname "sirius_doc/manual/demo-data")"; pwd -P)/$(basename "sirius_doc/manual/demo-data")"
           MGF_DATA="${DEMO_DIR}/mgf/laudanosine.mgf"
@@ -106,7 +106,7 @@ jobs:
 
       - name: Sirius MGF Test
         run: |
-          RESULTS="sirius_cli/src/test/temp_results/"
+          RESULTS="sirius_cli/build/test/temp_results/"
           OUTPUT="${RESULTS}mgf_temp_output/1_laudanosine_FEATURE_1/"
           SUMMARY="${RESULTS}mgf_temp_summary/1_laudanosine_FEATURE_1/"
           CANOPUS="${OUTPUT}canopus/"
@@ -132,7 +132,7 @@ jobs:
 
       - name: Sirius MS Test
         run: |
-          RESULTS="sirius_cli/src/test/temp_results/"
+          RESULTS="sirius_cli/build/test/temp_results/"
           OUTPUT="${RESULTS}ms_temp_output/1_Bicuculline_Bicuculline/"
           SUMMARY="${RESULTS}ms_temp_summary/1_Bicuculline_Bicuculline/"
           CANOPUS="${OUTPUT}canopus/"
@@ -160,7 +160,7 @@ jobs:
 
       - name: Sirius TXT Test
         run: |
-          RESULTS="sirius_cli/src/test/temp_results/"
+          RESULTS="sirius_cli/build/test/temp_results/"
           SUMMARY="${RESULTS}txt_temp_summary/1_unknown_/"
           if [ -d "${SUMMARY}" ]; then
             echo "Found result directory ${SUMMARY}..."
@@ -178,7 +178,7 @@ jobs:
 
       - name: Sirius Run Cleanup
         run: |
-          rm -r sirius_cli/src/test/temp_results
+          rm -r sirius_cli/build/test/temp_results
 
       - name: Upload Distributions
         uses: actions/upload-artifact@v2
@@ -261,7 +261,7 @@ jobs:
 
       - name: Sirius Run
         run: |
-          TEMP_DIR="$(cd "$(dirname "sirius_cli/src/test/temp_results")"; pwd -P)/$(basename "sirius_cli/src/test/temp_results")"
+          TEMP_DIR="$(cd "$(dirname "sirius_cli/build/test/temp_results")"; pwd -P)/$(basename "sirius_cli/build/test/temp_results")"
           mkdir "${TEMP_DIR}" "${TEMP_DIR}/mgf_temp_output" "${TEMP_DIR}/mgf_temp_summary" "${TEMP_DIR}/ms_temp_output" "${TEMP_DIR}/ms_temp_summary" "${TEMP_DIR}/txt_temp_output" "${TEMP_DIR}/txt_temp_summary"
           DEMO_DIR="$(cd "$(dirname "sirius_doc/manual/demo-data")"; pwd -P)/$(basename "sirius_doc/manual/demo-data")"
           MGF_DATA="${DEMO_DIR}/mgf/laudanosine.mgf"
@@ -288,7 +288,7 @@ jobs:
 
       - name: Sirius MGF Test
         run: |
-          RESULTS="sirius_cli/src/test/temp_results/"
+          RESULTS="sirius_cli/build/test/temp_results/"
           OUTPUT="${RESULTS}mgf_temp_output/1_laudanosine_FEATURE_1/"
           SUMMARY="${RESULTS}mgf_temp_summary/1_laudanosine_FEATURE_1/"
           CANOPUS="${OUTPUT}canopus/"
@@ -314,7 +314,7 @@ jobs:
 
       - name: Sirius MS Test
         run: |
-          RESULTS="sirius_cli/src/test/temp_results/"
+          RESULTS="sirius_cli/build/test/temp_results/"
           OUTPUT="${RESULTS}ms_temp_output/1_Bicuculline_Bicuculline/"
           SUMMARY="${RESULTS}ms_temp_summary/1_Bicuculline_Bicuculline/"
           CANOPUS="${OUTPUT}canopus/"
@@ -342,7 +342,7 @@ jobs:
 
       - name: Sirius TXT Test
         run: |
-          RESULTS="sirius_cli/src/test/temp_results/"
+          RESULTS="sirius_cli/build/test/temp_results/"
           SUMMARY="${RESULTS}txt_temp_summary/1_unknown_/"
           if [ -d "${SUMMARY}" ]; then
             echo "Found result directory ${SUMMARY}..."
@@ -360,7 +360,7 @@ jobs:
 
       - name: Sirius Run Cleanup
         run: |
-          rm -r sirius_cli/src/test/temp_results
+          rm -r sirius_cli/build/test/temp_results
 
       - name: Upload Distributions
         uses: actions/upload-artifact@v2
