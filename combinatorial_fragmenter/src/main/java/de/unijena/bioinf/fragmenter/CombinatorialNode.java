@@ -99,6 +99,10 @@ public class CombinatorialNode {
         return bondbreaks;
     }
 
+    public void setState(byte newState){
+        this.state = newState;
+    }
+
     public byte getState() {
         return state;
     }

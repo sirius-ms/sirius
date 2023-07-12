@@ -1,9 +1,11 @@
 package de.unijena.bioinf.cmlSpectrumPrediction;
 
+
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.cmlFragmentation.FragmentationPredictor;
+import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 
 public abstract class SpectrumPredictor<T extends Peak> {
 

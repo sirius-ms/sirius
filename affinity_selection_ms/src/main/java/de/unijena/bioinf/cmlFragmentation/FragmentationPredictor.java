@@ -9,13 +9,12 @@ public abstract class FragmentationPredictor {
     private final CombinatorialFragmenter fragmenter;
 
     public FragmentationPredictor(MolecularGraph molecule){
-        this.molecule = molecule;
-        this.fragmenter = new CombinatorialFragmenter(molecule);
+        this(molecule, null);
     }
 
     public FragmentationPredictor(MolecularGraph molecule, CombinatorialFragmenterScoring scoring){
         this.molecule = molecule;
-        this.fragmenter = new CombinatorialFragmenter(molecule, scoring);
+        this.fragmenter = scoring != null ? new CombinatorialFragmenter(molecule, scoring) : new CombinatorialFragmenter(molecule);
     }
 
     public abstract CombinatorialGraph predictFragmentation();
