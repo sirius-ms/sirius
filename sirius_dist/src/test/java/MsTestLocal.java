@@ -1,7 +1,10 @@
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -10,8 +13,14 @@ public class MsTestLocal {
 
     private static final String absPath = System.getProperty("user.dir").split("sirius_dist")[0];
     private static final String sep = System.getProperty("file.separator");
-    private static final String temp_output = absPath + "sirius_cli/src/test/temp_results/ms_temp_output/1_Bicuculline_Bicuculline/".replace("/", sep);
-    private static final String temp_summary = absPath + "sirius_cli/src/test/temp_results/ms_temp_summary/1_Bicuculline_Bicuculline/".replace("/", sep);
+    private static final String temp_root = absPath + "sirius_cli/build/test/temp_results/";
+    private static final String temp_output = temp_root + "ms_temp_output/1_Bicuculline_Bicuculline/".replace("/", sep);
+    private static final String temp_summary = temp_root + "ms_temp_summary/1_Bicuculline_Bicuculline/".replace("/", sep);
+
+    @BeforeAll
+    public static void createTempDir() throws IOException {
+        Files.createDirectories(Path.of(temp_root));
+    }
 
     @Test
     @DisplayName("Testing if SIRIUS calculates expected formula candidates with ms file.")
