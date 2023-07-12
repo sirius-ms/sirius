@@ -196,7 +196,8 @@ public class InstanceBean extends Instance implements SiriusPCS {
     }
 
     public Optional<SpectralSearchResultBean> getSpectralSearchResults() {
-        // TODO why is it called 3 times?
+        return Optional.empty();
+/*        // TODO why is it called 3 times?
         // FIXME somewhere is an infinite loop!
         if (this.spectralBean == null && spectralLibrary != null) {
             SpectralSearchResultBean searchBean = new SpectralSearchResultBean();
@@ -214,7 +215,7 @@ public class InstanceBean extends Instance implements SiriusPCS {
                 this.spectralBean = searchBean;
             }
         }
-        return this.spectralBean != null ? Optional.of(spectralBean) : Optional.empty();
+        return this.spectralBean != null ? Optional.of(spectralBean) : Optional.empty();*/
     }
 
     public Ms2ReferenceSpectrum getSpectralData(Ms2ReferenceSpectrum reference) {
