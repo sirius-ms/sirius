@@ -21,7 +21,10 @@
 package de.unijena.bioinf.ms.rest.model.msnovelist;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import de.unijena.bioinf.ms.rest.model.*;
+import de.unijena.bioinf.ms.rest.model.Job;
+import de.unijena.bioinf.ms.rest.model.JobState;
+import de.unijena.bioinf.ms.rest.model.JobTable;
+import de.unijena.bioinf.ms.rest.model.JobUpdate;
 import lombok.Getter;
 import lombok.Setter;
 import org.jdbi.v3.json.Json;
