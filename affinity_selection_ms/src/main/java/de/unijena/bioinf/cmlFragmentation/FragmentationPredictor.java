@@ -21,6 +21,8 @@ public abstract class FragmentationPredictor {
 
     public abstract Collection<CombinatorialFragment> getFragments();
 
+    public abstract CombinatorialGraph getFragmentationGraph();
+
     public MolecularGraph getMolecule(){
         return this.molecule;
     }
