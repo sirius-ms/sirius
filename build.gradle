@@ -46,6 +46,7 @@ ext {
     json_version = '1.0'
     json_impl_version = "1.0.4"
     psql_version = "42.2.1"
+    jdbi_version = '3.34.0'
 
     liblinear_version = "1.95"
     libsvm_version = "3.20"

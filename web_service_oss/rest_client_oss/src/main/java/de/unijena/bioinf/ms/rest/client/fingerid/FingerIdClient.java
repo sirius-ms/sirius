@@ -58,19 +58,6 @@ public class FingerIdClient extends AbstractCsiClient {
         super(serverUrl, requestDecorators);
     }
 
-    public JobUpdate<FingerprintJobOutput> postJobs(@NotNull final FingerprintJobInput input,
-                                                    @NotNull OkHttpClient client
-    ) throws IOException {
-        return executeFromJson(client,
-                () -> new Request.Builder()
-                        .url(buildVersionSpecificWebapiURI("/fingerid/" + CID + "/fp-jobs").build())
-                        .post(RequestBody.create(
-                                new ObjectMapper().writeValueAsBytes(input), APPLICATION_JSON))
-                    , new TypeReference<>() {
-                }
-        );
-    }
-
     /**
      * make statistics of fingerprints and write the used indizes of fingerprints into the
      * given TIntArrayList (as this property is not contained in FingerprintStatistics)
@@ -88,20 +75,6 @@ public class FingerIdClient extends AbstractCsiClient {
                 FingerIdData::read
         );
     }
-
-
-    public JobUpdate<CovtreeJobOutput> postCovtreeJobs(@NotNull final CovtreeJobInput input,
-                                                       @NotNull OkHttpClient client
-    ) throws IOException {
-        return executeFromJson(client,
-                () -> new Request.Builder()
-                        .url(buildVersionSpecificWebapiURI("/fingerid/" + CID + "/covtree-jobs").build())
-                        .post(RequestBody.create(new ObjectMapper().writeValueAsBytes(input), APPLICATION_JSON)),
-                new TypeReference<>() {
-                }
-        );
-    }
-
 
     public BayesnetScoring getCovarianceScoring(@NotNull PredictorType predictorType,
                                                 @NotNull FingerprintVersion fpVersion,
