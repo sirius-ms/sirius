@@ -8,7 +8,7 @@ import java.util.*;
 public class RuleBasedFragmentation extends FragmentationPredictor{
 
     private CombinatorialGraph graph;
-    private final Collection<CombinatorialFragment> fragments;
+    private final List<CombinatorialFragment> fragments;
     private final CombinatorialFragmenter.Callback2 fragmentationConstraint;
     private final BitSet bondsToCut;
 
@@ -80,7 +80,7 @@ public class RuleBasedFragmentation extends FragmentationPredictor{
     }
 
     @Override
-    public Collection<CombinatorialFragment> getFragments() {
+    public List<CombinatorialFragment> getFragments() {
         return this.fragments;
     }
 

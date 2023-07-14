@@ -5,7 +5,9 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.cmlFragmentation.FragmentationPredictor;
-import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
+import de.unijena.bioinf.fragmenter.CombinatorialFragment;
+
+import java.util.Map;
 
 public abstract class SpectrumPredictor<T extends Peak> {
 
@@ -20,6 +22,8 @@ public abstract class SpectrumPredictor<T extends Peak> {
     }
 
     public abstract Ms2Spectrum<T> predictSpectrum();
+
+    public abstract Map<T, CombinatorialFragment> getPeakFragmentMapping();
 
     public FragmentationPredictor getFragmentationPredictor(){
         return this.fragPredictor;

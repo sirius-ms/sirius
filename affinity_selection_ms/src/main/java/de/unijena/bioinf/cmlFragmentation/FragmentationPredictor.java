@@ -1,7 +1,7 @@
 package de.unijena.bioinf.cmlFragmentation;
 
 import de.unijena.bioinf.fragmenter.*;
-import java.util.Collection;
+import java.util.List;
 
 public abstract class FragmentationPredictor {
 
@@ -19,7 +19,7 @@ public abstract class FragmentationPredictor {
 
     public abstract CombinatorialGraph predictFragmentation();
 
-    public abstract Collection<CombinatorialFragment> getFragments();
+    public abstract List<CombinatorialFragment> getFragments();
 
     public abstract CombinatorialGraph getFragmentationGraph();
 
