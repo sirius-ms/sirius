@@ -5,7 +5,7 @@ import de.unijena.bioinf.fragmenter.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class AbstractFragmentationPredictor {
+public abstract class AbstractFragmentationPredictor implements FragmentationPredictor{
 
     protected final MolecularGraph molecule;
     protected final ArrayList<CombinatorialFragment> fragments; // fragments of 'molecule' without 'molecule'
@@ -16,6 +16,7 @@ public abstract class AbstractFragmentationPredictor {
         this.fragments = new ArrayList<>();
     }
 
+    @Override
     public List<CombinatorialFragment> getFragments(){
         return this.fragments;
     }
@@ -26,10 +27,12 @@ public abstract class AbstractFragmentationPredictor {
         return allFragments;
     }
 
+    @Override
     public CombinatorialGraph getFragmentationGraph(){
         return this.graph;
     }
 
+    @Override
     public MolecularGraph getMolecule(){
         return this.molecule;
     }

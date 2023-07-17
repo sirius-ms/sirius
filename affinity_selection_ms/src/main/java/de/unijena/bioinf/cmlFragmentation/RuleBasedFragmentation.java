@@ -29,6 +29,7 @@ public class RuleBasedFragmentation extends AbstractFragmentationPredictor{
         this(molecule, null, numFragments, fragmentationRules, fragmentationConstraint);
     }
 
+    @Override
     public CombinatorialGraph predictFragmentation() {
         // Construct the combinatorial fragmentation graph for this.molecule:
         CombinatorialFragmenter fragmenter = this.scoring != null ? new CombinatorialFragmenter(this.molecule, this.scoring) : new CombinatorialFragmenter(this.molecule);
