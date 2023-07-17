@@ -5,25 +5,23 @@ import org.openscience.cdk.interfaces.IBond;
 
 import java.util.*;
 
-public class RuleBasedFragmentation extends FragmentationPredictor{
+public class RuleBasedFragmentation extends AbstractFragmentationPredictor{
 
-    private CombinatorialGraph graph;
-    private final List<CombinatorialFragment> fragments;
+    private final CombinatorialFragmenterScoring scoring;
     private final CombinatorialFragmenter.Callback2 fragmentationConstraint;
     private final BitSet bondsToCut;
-
     private final int numFragments;
 
     public RuleBasedFragmentation(MolecularGraph molecule, CombinatorialFragmenterScoring scoring, int numFragments, FragmentationRules fragmentationRules, CombinatorialFragmenter.Callback2 fragmentationConstraint){
-        super(molecule, scoring);
+        super(molecule);
         this.numFragments = numFragments;
+        this.scoring = scoring;
         this.fragmentationConstraint = fragmentationConstraint;
-        this.fragments = new ArrayList<>();
 
         this.bondsToCut = new BitSet(molecule.getBonds().length);
         for(IBond bond : molecule.getBonds()){
             int bondIdx = bond.getIndex();
-            bondsToCut.set(bondIdx, fragmentationRules.match(bond));
+            this.bondsToCut.set(bondIdx, fragmentationRules.match(bond));
         }
     }
 
@@ -31,12 +29,10 @@ public class RuleBasedFragmentation extends FragmentationPredictor{
         this(molecule, null, numFragments, fragmentationRules, fragmentationConstraint);
     }
 
-    @Override
     public CombinatorialGraph predictFragmentation() {
         // Construct the combinatorial fragmentation graph for this.molecule:
-        CombinatorialFragmenter fragmenter = this.getFragmenter();
+        CombinatorialFragmenter fragmenter = this.scoring != null ? new CombinatorialFragmenter(this.molecule, this.scoring) : new CombinatorialFragmenter(this.molecule);
         this.graph = fragmenter.createCombinatorialFragmentationGraph(this.bondsToCut, this.fragmentationConstraint);
-        this.fragments.add(this.graph.getRoot().getFragment());
         if(this.graph.getNodes().size() <= this.numFragments){
             this.graph.getNodes().forEach(node -> this.fragments.add(node.getFragment()));
             return this.graph;
@@ -79,13 +75,4 @@ public class RuleBasedFragmentation extends FragmentationPredictor{
         return this.graph;
     }
 
-    @Override
-    public List<CombinatorialFragment> getFragments() {
-        return this.fragments;
-    }
-
-    @Override
-    public CombinatorialGraph getFragmentationGraph(){
-        return this.graph;
-    }
 }
