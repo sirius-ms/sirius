@@ -20,62 +20,63 @@
 
 package de.unijena.bioinf.projectspace;
 
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
+import de.unijena.bioinf.ms.frontend.subtools.spectra_db.SpectralDatabases;
 import de.unijena.bioinf.spectraldb.SpectralLibrary;
+import de.unijena.bioinf.spectraldb.SpectralSearchResult;
+import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
+import org.slf4j.LoggerFactory;
 
+import java.nio.file.Path;
 import java.util.*;
 
 public class SpectralSearchResultBean {
 
-    private final List<SpectralLibrary.SearchResult> allResults = new ArrayList<>();
-    private final Map<String, List<SpectralLibrary.SearchResult>> resultMap = new HashMap<>();
-    private final int rankLimit;
+    private SpectralSearchResult result;
+    private final Map<String, List<SpectralSearchResult.SearchResult>> resultMap = new HashMap<>();
 
-    public SpectralSearchResultBean() {
-        this(25);
-        // TODO is limit rank <= 25 okay? -> set the rank limit parameter somewhere!
-    }
-
-    public SpectralSearchResultBean(int rankLimit) {
-        this.rankLimit = rankLimit;
-    }
-
-    public <P extends Peak> void setResults(Iterable<SpectralLibrary.SearchResult> results) {
-        this.resultMap.clear();
-        this.allResults.clear();
-        results.forEach(res -> {
-            if (res.getRank() <= rankLimit) {
-                if (!resultMap.containsKey(res.getReference().getCandidateInChiKey())) {
-                    resultMap.put(res.getReference().getCandidateInChiKey(), new ArrayList<>());
+    public SpectralSearchResultBean(SpectralSearchResult result) {
+        for (SpectralSearchResult.SearchResult r : result) {
+            try {
+                SpectralLibrary db = SpectralDatabases.getSpectralLibrary(Path.of(r.getDbLocation())).orElseThrow();
+                Ms2ReferenceSpectrum reference = db.getReferenceSpectrum(r.getReferenceId());
+                if (!resultMap.containsKey(reference.getCandidateInChiKey())) {
+                    resultMap.put(reference.getCandidateInChiKey(), new ArrayList<>());
                 }
-                resultMap.get(res.getReference().getCandidateInChiKey()).add(res);
+                resultMap.get(reference.getCandidateInChiKey()).add(r);
+            } catch (ChemicalDatabaseException e) {
+                LoggerFactory.getLogger(this.getClass()).error("Error reading spectrum " + r.getReferenceId(), e);
+            }  catch (Exception e) {
+                LoggerFactory.getLogger(this.getClass()).error("No such database: '" + r.getDbLocation() + "'");
+                break;
             }
-            allResults.add(res);
-        });
-    }
-
-    public boolean isFPCandidateInResults(String inchiKey) {
-        return this.resultMap.containsKey(inchiKey);
-    }
-
-    public Optional<List<SpectralLibrary.SearchResult>> getMatchingSpectraForFPCandidate(String inchiKey) {
-        if (this.resultMap.containsKey(inchiKey)) {
-            return Optional.of(this.resultMap.get(inchiKey));
-        } else {
-            return Optional.empty();
         }
+        this.result = result;
     }
 
-    public Optional<SpectralLibrary.SearchResult> getBestMatchingSpectrumForFPCandidate(String inchiKey) {
-        if (this.resultMap.containsKey(inchiKey)) {
-            return Optional.of(this.resultMap.get(inchiKey).get(0));
-        } else {
-            return Optional.empty();
+    public boolean isFPCandidateInResults(String inchiKey, int minSharedPeaks, double minSimilarity) {
+        if (resultMap.containsKey(inchiKey)) {
+            return resultMap.get(inchiKey).stream().anyMatch(r -> r.getSimilarity().shardPeaks >= minSharedPeaks && r.getSimilarity().similarity >= minSimilarity);
         }
+        return false;
     }
 
-    public List<SpectralLibrary.SearchResult> getAllResults() {
-        return allResults;
+    public Optional<List<SpectralSearchResult.SearchResult>> getMatchingSpectraForFPCandidate(String inchiKey, int minSharedPeaks, double minSimilarity) {
+        if (resultMap.containsKey(inchiKey)) {
+            return Optional.of(resultMap.get(inchiKey).stream().filter(r -> r.getSimilarity().shardPeaks >= minSharedPeaks && r.getSimilarity().similarity >= minSimilarity).toList());
+        }
+        return Optional.empty();
+    }
+
+    public Optional<SpectralSearchResult.SearchResult> getBestMatchingSpectrumForFPCandidate(String inchiKey, int minSharedPeaks, double minSimilarity) {
+        if (resultMap.containsKey(inchiKey)) {
+            return resultMap.get(inchiKey).stream().filter(r -> r.getSimilarity().shardPeaks >= minSharedPeaks && r.getSimilarity().similarity >= minSimilarity).findFirst();
+        }
+        return Optional.empty();
+    }
+
+    public SpectralSearchResult getAllResults() {
+        return result;
     }
 
 }
