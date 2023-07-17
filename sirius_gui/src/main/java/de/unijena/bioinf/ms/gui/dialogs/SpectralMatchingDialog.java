@@ -20,18 +20,14 @@
 package de.unijena.bioinf.ms.gui.dialogs;
 
 
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.ms_viewer.WebViewSpectraViewer;
 import de.unijena.bioinf.ms.gui.ms_viewer.data.SpectraJSONWriter;
-import de.unijena.bioinf.spectraldb.SpectralLibrary;
-import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
+import de.unijena.bioinf.projectspace.InstanceBean;
+import de.unijena.bioinf.projectspace.SpectralSearchResultBean;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 
 public class SpectralMatchingDialog extends JDialog {
 
@@ -40,19 +36,31 @@ public class SpectralMatchingDialog extends JDialog {
 
     private final SpectraJSONWriter spectraWriter;
 
-    private final FingerprintCandidateBean fpBean;
+//    private final FingerprintCandidateBean fpBean;
 
-    private final List<SpectralLibrary.SearchResult> searchResults;
+    private final SpectralSearchResultBean searchResults;
 
-    public SpectralMatchingDialog(FingerprintCandidateBean fpBean, List<SpectralLibrary.SearchResult> searchResults) {
+    private final InstanceBean instance;
+
+    private int minSharedPeaks;
+
+    private double minSimilarity;
+
+    public SpectralMatchingDialog(SpectralSearchResultBean searchResults, InstanceBean instance) {
         super(MainFrame.MF, "Spectral comparison", false);
-        this.fpBean = fpBean;
+//        this.fpBean = fpBean;
+        this.instance = instance;
         this.searchResults = searchResults;
+
+        this.minSharedPeaks = 3;
+        this.minSimilarity = 0.9;
+
         this.spectraWriter = new SpectraJSONWriter();
         this.browser = new WebViewSpectraViewer();
 
         this.setLayout(new BorderLayout());
 
+        // TODO add filter
         // TODO add selection table
 
         this.add(this.browser, BorderLayout.CENTER);
@@ -63,19 +71,29 @@ public class SpectralMatchingDialog extends JDialog {
         selectionChanged(0);
     }
 
+    private void setMinSharedPeaks(int minSharedPeaks) {
+        // TODO is there already a filtered list implementation?
+//        if (minSharedPeaks >= 3 && minSharedPeaks != this.minSharedPeaks) {
+//
+//        }
+    }
+
     private void selectionChanged(int index) {
-        if (index < searchResults.size() && searchResults.size() > 0) {
-            Jobs.runEDTLater(() -> {
-                SpectralLibrary.SearchResult result = searchResults.get(index);
-                Ms2ReferenceSpectrum reference = fpBean.getMs2SpectralData(result.getReference());
-
-                final SimpleSpectrum query = new SimpleSpectrum(result.getQuery());
-                final SimpleSpectrum referenceSpectrum = new SimpleSpectrum(reference.getSpectrum());
-
-                String json = spectraWriter.ms2MirrorJSON(query, referenceSpectrum, reference.getName());
-                this.browser.loadData(json, null, null);
-            });
-        }
+//        if (index < searchResults.size() && searchResults.size() > 0) {
+//            Jobs.runEDTLater(() -> {
+//                SpectralSearchResult.SearchResult result = searchResults.get(index);
+//                try {
+//                    SpectralLibrary db = SpectralDatabases.getSpectralLibrary(Path.of(result.getDbLocation())).orElseThrow();
+//                    final Ms2ReferenceSpectrum reference = db.getSpectralData(db.getReferenceSpectrum(result.getReferenceId()));
+//                    final SimpleSpectrum query = new SimpleSpectrum(instance.getMs2Spectra().get(result.getQuerySpectrumIndex()));
+//                    final SimpleSpectrum referenceSpectrum = reference.getSpectrum();
+//                    String json = spectraWriter.ms2MirrorJSON(query, referenceSpectrum, reference.getName());
+//                    this.browser.loadData(json, null, null);
+//                } catch (Exception e) {
+//                    throw new RuntimeException(e);
+//                }
+//            });
+//        }
     }
 
     @Override

@@ -31,6 +31,7 @@ import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.spectraldb.SpectralLibrary;
 import de.unijena.bioinf.spectraldb.SpectralNoSQLDBs;
+import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -196,26 +197,9 @@ public class InstanceBean extends Instance implements SiriusPCS {
     }
 
     public Optional<SpectralSearchResultBean> getSpectralSearchResults() {
-        return Optional.empty();
-/*        // TODO why is it called 3 times?
-        // FIXME somewhere is an infinite loop!
-        if (this.spectralBean == null && spectralLibrary != null) {
-            SpectralSearchResultBean searchBean = new SpectralSearchResultBean();
-            // TODO move hardcoded db to project space
-            // TODO move on-the-fly computation to job system
-            // TODO set search parameters
-            try {
-                List<Ms2Spectrum<Peak>> queries = new ArrayList<>(getMs2Spectra());
-                Iterable<SpectralLibrary.SearchResult> searchResults = spectralLibrary.matchingSpectra(queries, new Deviation(1), new Deviation(2));
-                searchBean.setResults(searchResults);
-            } catch (Exception e) {
-                LoggerFactory.getLogger(getClass()).error("Error matching spectra from '" + getID() + "'.");
-            }
-            if (searchBean.getAllResults().size() > 0) {
-                this.spectralBean = searchBean;
-            }
-        }
-        return this.spectralBean != null ? Optional.of(spectralBean) : Optional.empty();*/
+        CompoundContainer container = loadCompoundContainer(SpectralSearchResult.class);
+        Optional<SpectralSearchResult> result = container.getAnnotation(SpectralSearchResult.class);
+        return result.map(SpectralSearchResultBean::new);
     }
 
     public Ms2ReferenceSpectrum getSpectralData(Ms2ReferenceSpectrum reference) {

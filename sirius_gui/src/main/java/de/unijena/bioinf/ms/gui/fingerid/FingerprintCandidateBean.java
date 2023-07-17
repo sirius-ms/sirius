@@ -142,15 +142,16 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
                     labels.add(new DatabaseLabel(key, cleaned.toArray(String[]::new), new Rectangle(0, 0, 0, 0)));
             }
 
-            this.getSpectralSearchResults().ifPresent(spectralBean -> {
-                String inchiKey = this.candidate.getInchi().key2D();
-                if (spectralBean.isFPCandidateInResults(inchiKey)) {
-                        spectralBean.getMatchingSpectraForFPCandidate(inchiKey).ifPresent(searchResults -> {
-                        labels.add(new DatabaseLabel("MassBank", searchResults.stream().map(m -> m.getReference().getLibraryId()).toArray(String[]::new), new Rectangle(0, 0, 0, 0)));
-                        labels.add(new DatabaseLabel("Spectra", new String[]{}, new Rectangle(0, 0, 0, 0)));
-                    });
-                }
-            });
+            // TODO move away from db label to extra button
+//            this.getSpectralSearchResults().ifPresent(spectralBean -> {
+//                String inchiKey = this.candidate.getInchi().key2D();
+//                if (spectralBean.isFPCandidateInResults(inchiKey, 3, 0.9)) {
+//                        spectralBean.getMatchingSpectraForFPCandidate(inchiKey, 3, 0.9).ifPresent(searchResults -> {
+//                            labels.add(new DatabaseLabel("MassBank", searchResults.stream().map(m -> m.getReference().getLibraryId()).toArray(String[]::new), new Rectangle(0, 0, 0, 0)));
+//                            labels.add(new DatabaseLabel("Spectra", new String[]{}, new Rectangle(0, 0, 0, 0)));
+//                    });
+//                }
+//            });
             Collections.sort(labels);
             this.labels = labels.toArray(DatabaseLabel[]::new);
         }

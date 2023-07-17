@@ -275,16 +275,17 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     }
 
     private void clickOnDBLabel(DatabaseLabel label, FingerprintCandidateBean candidate) {
-        if (label.sourceName.equals("Spectra")) {
-            final FingerprintCandidateBean c = candidateList.getModel().getElementAt(selectedCompoundId);
-            Jobs.runEDTLater(() -> {
-                c.getSpectralSearchResults().ifPresent(searchBean -> {
-                    if (searchBean.isFPCandidateInResults(c.candidate.getInchiKey2D())) {
-                        searchBean.getMatchingSpectraForFPCandidate(c.candidate.getInchiKey2D()).ifPresent(searchResults -> new SpectralMatchingDialog(candidate, searchResults).setVisible(true));
-                    }
-                });
-            });
-        }
+        // TODO move away from db label to extra button
+//        if (label.sourceName.equals("Spectra")) {
+//            final FingerprintCandidateBean c = candidateList.getModel().getElementAt(selectedCompoundId);
+//            Jobs.runEDTLater(() -> {
+//                c.getSpectralSearchResults().ifPresent(searchBean -> {
+//                    if (searchBean.isFPCandidateInResults(c.candidate.getInchiKey2D())) {
+//                        searchBean.getMatchingSpectraForFPCandidate(c.candidate.getInchiKey2D()).ifPresent(searchResults -> new SpectralMatchingDialog(candidate, searchResults).setVisible(true));
+//                    }
+//                });
+//            });
+//        }
 
         DataSources.getSourceFromName(label.sourceName).ifPresent(s -> {
             if (label.values == null || label.values.length == 0 || s.URI == null)
