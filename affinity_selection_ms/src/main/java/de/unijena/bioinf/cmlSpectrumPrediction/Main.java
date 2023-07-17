@@ -64,7 +64,7 @@ public class Main {
             final EMFragmenterScoring2 scoring = new EMFragmenterScoring2(mol, null);
 
             final RuleBasedFragmentation fragmentationPredictor = new RuleBasedFragmentation(mol, scoring, NUM_FRAGMENTS, fragRule, fragmentationConstraint);
-            final BarcodeSpectrumPredictor spectrumPredictor = new BarcodeSpectrumPredictor((FragmentationPredictor) fragmentationPredictor, true);
+            final BarcodeSpectrumPredictor spectrumPredictor = new BarcodeSpectrumPredictor(fragmentationPredictor, true);
 
             fragmentationPredictor.predictFragmentation(); // has to be called first!
             Ms2Spectrum<Peak> predictedSpectrum = spectrumPredictor.predictSpectrum();
