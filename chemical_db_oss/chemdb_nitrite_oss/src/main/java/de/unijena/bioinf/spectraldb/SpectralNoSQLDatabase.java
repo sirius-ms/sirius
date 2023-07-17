@@ -40,23 +40,17 @@
 
 package de.unijena.bioinf.spectraldb;
 
-import com.fasterxml.jackson.core.JacksonException;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
 import com.google.common.collect.Streams;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.AdditionalFields;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.ms.annotations.SpectrumAnnotation;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
+import de.unijena.bioinf.spectraldb.entities.SimpleSerializers;
 import de.unijena.bioinf.storage.db.nosql.*;
 import de.unijena.bionf.spectral_alignment.AbstractSpectralAlignment;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
@@ -67,9 +61,11 @@ import org.apache.commons.lang3.tuple.Triple;
 import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
 
 public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, Closeable {
 
@@ -77,68 +73,6 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, Closeabl
 
     public SpectralNoSQLDatabase(Database<Doctype> storage) throws IOException {
         this.storage = storage;
-    }
-
-    protected static <T> JsonSerializer<T> serializer() {
-        return new JsonSerializer<T>() {
-            @Override
-            public void serialize(T value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-                gen.writeString(value.toString());
-            }
-        };
-    }
-
-    protected static <T> JsonDeserializer<T> deserializer(Function<String, T> callable) {
-        return new JsonDeserializer<T>() {
-            @Override
-            public T deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
-                while (p.currentToken() != JsonToken.VALUE_STRING)
-                    p.nextToken();
-                return callable.apply(p.getText());
-            }
-        };
-    }
-
-    protected static JsonSerializer<AdditionalFields> annotationSerializer() {
-        return new JsonSerializer<>() {
-            @Override
-            public void serialize(AdditionalFields value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-                try {
-                    gen.writeStartObject();
-                    value.forEach((key, val) -> {
-                        try {
-                            gen.writeStringField(key, val);
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-                    gen.writeEndObject();
-                } catch (RuntimeException e) {
-                    throw new IOException(e);
-                }
-            }
-        };
-    }
-
-    protected static JsonDeserializer<SpectrumAnnotation> annotationDeserializer() {
-        return new JsonDeserializer<>() {
-            @Override
-            public SpectrumAnnotation deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-                JsonToken token = p.currentToken();
-                if (token != JsonToken.START_OBJECT)
-                    return null;
-
-                Map<String, String> map = new HashMap<>();
-                for (token = p.nextToken(); token == JsonToken.FIELD_NAME; token = p.nextToken()) {
-                    String key = p.getCurrentName();
-                    String value = p.nextTextValue();
-                    map.put(key, value);
-                }
-                AdditionalFields af = new AdditionalFields();
-                af.putAll(map);
-                return af;
-            }
-        };
     }
 
     protected static Metadata initMetadata() throws IOException {
@@ -151,32 +85,17 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, Closeabl
                         new Index("formula", IndexType.NON_UNIQUE),
                         new Index("name", IndexType.NON_UNIQUE),
                         new Index("candidateInChiKey", IndexType.NON_UNIQUE)
-                ).addSerialization(
-                        PrecursorIonType.class,
-                        serializer(),
-                        deserializer(PrecursorIonType::fromString)
-                ).addSerialization(
-                        MolecularFormula.class,
-                        serializer(),
-                        deserializer(MolecularFormula::parseOrThrow)
-                ).addSerialization(
-                        CollisionEnergy.class,
-                        serializer(),
-                        deserializer(CollisionEnergy::fromString)
-                ).addDeserializer(
-                        MsInstrumentation.class,
-                        deserializer(MsInstrumentation.Instrument::valueOf)
                 ).addSerializer(
                         AdditionalFields.class,
-                        annotationSerializer()
+                        new SimpleSerializers.AnnotationSerializer()
                 ).addDeserializer(
                         SpectrumAnnotation.class,
-                        annotationDeserializer()
+                        new SimpleSerializers.AnnotationDeserializer()
                 ).setOptionalFields(Ms2ReferenceSpectrum.class, "spectrum");
     }
 
     @Override
-    public <P extends Peak> Iterable<SearchResult> matchingSpectra(
+    public <P extends Peak> SpectralSearchResult matchingSpectra(
             Iterable<Ms2Spectrum<P>> queries,
             Deviation precursorMzDeviation,
             Deviation maxPeakDeviation,
@@ -184,7 +103,7 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, Closeabl
             BiConsumer<Integer, Integer> progressConsumer
     ) throws ChemicalDatabaseException {
         try {
-            final List<SearchResult> results = new ArrayList<>();
+            final List<SpectralSearchResult.SearchResult> results = new ArrayList<>();
             AbstractSpectralAlignment alignment = alignmentType.type.getConstructor(Deviation.class).newInstance(maxPeakDeviation);
 
             int maxProgress = 0;
@@ -198,7 +117,8 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, Closeabl
             }
 
             int progress = 0;
-            for (Triple<Ms2Spectrum<P>, Integer, Filter> param : params) {
+            for (int i = 0; i < params.size(); i++) {
+                Triple<Ms2Spectrum<P>, Integer, Filter> param = params.get(i);
                 OrderedSpectrum<Peak> orderedQuery = new SimpleSpectrum(param.getLeft());
 
                 int pageSize = 100;
@@ -207,12 +127,12 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, Closeabl
                     for (Ms2ReferenceSpectrum reference : references) {
                         SpectralSimilarity similarity = alignment.score(orderedQuery, reference.getSpectrum());
                         if (similarity.shardPeaks > 0) {
-                            Ms2ReferenceSpectrum withoutData = new Ms2ReferenceSpectrum(
-                                    reference.getId(), reference.getCandidateInChiKey(), reference.getPrecursorIonType(),
-                                    reference.getPrecursorMz(), reference.getIonMass(), reference.getMsLevel(), reference.getCollisionEnergy(),
-                                    reference.getInstrumentation(), reference.getFormula(), reference.getName(), reference.getSmiles(),
-                                    reference.getLibraryName(), reference.getLibraryId(), reference.getSplash(), null);
-                            SearchResult res = SearchResult.builder().query(param.getLeft()).similarity(similarity).reference(withoutData).build();
+                            SpectralSearchResult.SearchResult res = SpectralSearchResult.SearchResult.builder()
+                                    .dbLocation(this.location())
+                                    .querySpectrumIndex(i)
+                                    .similarity(similarity)
+                                    .referenceId(reference.getId())
+                                    .build();
                             results.add(res);
                         }
                         if (progressConsumer != null) {
@@ -224,10 +144,15 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, Closeabl
 
             results.sort((a, b) -> Double.compare(b.getSimilarity().similarity, a.getSimilarity().similarity));
 
-            return Streams.mapWithIndex(results.stream(), (from, index) -> {
-                from.setRank((int) index + 1);
-                return from;
-            }).toList();
+            return SpectralSearchResult.builder()
+                    .precursorDeviation(precursorMzDeviation)
+                    .peakDeviation(maxPeakDeviation)
+                    .alignmentType(alignmentType)
+                    .results(Streams.mapWithIndex(results.stream(), (r, index) -> {
+                        r.setRank((int) index + 1);
+                        return r;
+                    }).toList())
+                    .build();
 
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException |
                  RuntimeException | IOException e) {
@@ -274,6 +199,15 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, Closeabl
             } else {
                 return this.storage.find(filter, Ms2ReferenceSpectrum.class);
             }
+        } catch (IOException e) {
+            throw new ChemicalDatabaseException(e);
+        }
+    }
+
+    @Override
+    public Ms2ReferenceSpectrum getReferenceSpectrum(long id) throws ChemicalDatabaseException {
+        try {
+            return this.storage.getById(id, Ms2ReferenceSpectrum.class);
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }

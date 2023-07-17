@@ -23,6 +23,7 @@ dependencies {
     annotationProcessor project(':default_properties:processor')
     api project(':io')
     api project(':sirius_api')
+    implementation project(':chemical_db_oss')
     implementation 'net.lingala.zip4j:zip4j:2.10.0'
     implementation 'ru.oleg-cherednik.zip4jvm:zip4jvm:1.8'
     implementation group: 'org.apache.commons', name: 'commons-configuration2', version: '2.9.0'
