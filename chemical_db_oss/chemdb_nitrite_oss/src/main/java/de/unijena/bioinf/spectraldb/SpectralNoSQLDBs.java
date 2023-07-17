@@ -43,17 +43,17 @@ package de.unijena.bioinf.spectraldb;
 import com.google.common.collect.Iterables;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.massbank.MassbankFormat;
-import de.unijena.bioinf.chemdb.ChemDBs;
-import de.unijena.bioinf.chemdb.ChemDbTags;
-import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
-import de.unijena.bioinf.chemdb.DataSource;
+import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.nitrite.SpectralNitriteDatabase;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
+import org.openscience.cdk.exception.InvalidSmilesException;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -62,7 +62,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -101,10 +101,35 @@ public class SpectralNoSQLDBs extends ChemDBs {
             }
             return StreamSupport.stream(Iterables.partition(spectra, chunkSize).spliterator(), false).mapToInt(chunk -> {
                 try {
-                    // TODO what about spectra without inchi key and/or precursor mass?
-                    List<Ms2ReferenceSpectrum> data = chunk.stream().filter(
-                            p -> p.getCandidateInChiKey() != null && p.getPrecursorMz() > 0
-                    ).toList();
+                    List<Ms2ReferenceSpectrum> data = chunk.stream().filter(reference -> {
+                        if (reference.getSmiles() == null) {
+                            LoggerFactory.getLogger(SpectralNoSQLDBs.class).warn(reference.getName() + " has no SMILES. Skipping import.");
+                        }
+                        if (reference.getPrecursorIonType() == null) {
+                            LoggerFactory.getLogger(SpectralNoSQLDBs.class).warn(reference.getName() + " has no precursor ion type. Skipping import.");
+                        }
+                        if (reference.getCandidateInChiKey() == null) {
+                            LoggerFactory.getLogger(SpectralNoSQLDBs.class).warn(reference.getName() + " has no candidate InChI key. Skipping import.");
+                        }
+                        return reference.getSmiles() != null && reference.getCandidateInChiKey() != null;
+                    }).map(reference -> {
+                        if (reference.getFormula() == null) {
+                            try {
+                                reference.setFormula(InChISMILESUtils.formulaFromSmiles(reference.getSmiles()));
+                            } catch (InvalidSmilesException | UnknownElementException e) {
+                                LoggerFactory.getLogger(SpectralNoSQLDBs.class).error("Error converting SMILES to MolecularFormula for " + reference.getName());
+                                return Optional.<Ms2ReferenceSpectrum>empty();
+                            }
+                        }
+                        return Optional.of(reference);
+                    }).filter(Optional::isPresent).map(opt -> {
+                        Ms2ReferenceSpectrum reference = opt.get();
+                        if (reference.getPrecursorMz() <= 0) {
+                            double pmz = reference.getPrecursorIonType().addIonAndAdduct(reference.getFormula().getMass());
+                            reference.setPrecursorMz(pmz);
+                        }
+                        return reference;
+                    }).toList();
                     return database.insertAll(data);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
