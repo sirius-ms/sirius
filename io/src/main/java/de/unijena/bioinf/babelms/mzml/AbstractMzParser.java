@@ -71,7 +71,8 @@ public abstract class AbstractMzParser implements Parser<Ms2Experiment> {
                 final FragmentedIon ion = ions.next();
                 AdductResolver.resolve(instance, ion);
                 Feature feature = instance.makeFeature(sample, ion, false);
-                MutableMs2Experiment experiment = feature.toMsExperiment(String.valueOf(++counter)).mutate();
+                String featureId = String.valueOf(++counter);
+                MutableMs2Experiment experiment = feature.toMsExperiment(featureId, featureId).mutate();
                 new Ms2Validator().validate(experiment, Warning.Logger, true);
                 return experiment;
             } else {

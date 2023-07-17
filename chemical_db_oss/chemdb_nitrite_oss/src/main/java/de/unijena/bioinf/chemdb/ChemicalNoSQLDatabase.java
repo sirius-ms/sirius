@@ -26,12 +26,14 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.chemdb.nitrite.serializers.FingerprintCandidateDbSerializer;
+import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintWrapper;
 import de.unijena.bioinf.spectraldb.SpectralNoSQLDatabase;
 import de.unijena.bioinf.storage.db.nosql.*;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.stream.Stream;
@@ -48,16 +50,19 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
     protected static Metadata initMetadata(FingerprintVersion version) throws IOException {
         Metadata metadata = SpectralNoSQLDatabase.initMetadata();
         return metadata
+                // TODO is the FingerprintWrapper actually necessary or does FingerprintCandidateWrapper work for all use cases?
                 .addRepository(
                         FingerprintWrapper.class,
                         new Index("inchikey", IndexType.UNIQUE)
                 ).addRepository(
-                        FingerprintCandidate.class,
+                        FingerprintCandidateWrapper.class,
                         new Index("formula", IndexType.NON_UNIQUE),
                         new Index("mass", IndexType.NON_UNIQUE),
                         new Index("candidate.inchikey", IndexType.UNIQUE),
                         new Index("candidate.bitset", IndexType.NON_UNIQUE),
                         new Index("candidate.name", IndexType.NON_UNIQUE)
+                ).setOptionalFields(
+                        FingerprintCandidateWrapper.class, "candidate"
                 ).addSerialization(
                         FingerprintCandidate.class,
                         new FingerprintCandidateDbSerializer(),
@@ -71,8 +76,8 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
             final double mass = ionType.precursorMassToNeutralMass(ionMass);
             final double from = mass - deviation.absoluteFor(mass);
             final double to = mass + deviation.absoluteFor(mass);
-            return this.storage.findStr(Filter.build().and().gte("mass", from).lte("mass", to), FingerprintCandidate.class)
-                    .map(c -> c.toFormulaCandidate(ionType)).toList();
+            return this.storage.findStr(Filter.build().and().gte("mass", from).lte("mass", to), FingerprintCandidateWrapper.class, "candidate")
+                    .map(c -> c.getCandidate().toFormulaCandidate(ionType)).toList();
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }
@@ -81,7 +86,7 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
     @Override
     public boolean containsFormula(MolecularFormula formula) throws ChemicalDatabaseException {
         try {
-            return this.storage.count(new Filter().eq("formula", formula.toString()), FingerprintCandidate.class, 0, 1) > 0;
+            return this.storage.count(new Filter().eq("formula", formula.toString()), FingerprintCandidateWrapper.class, 0, 1) > 0;
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }
@@ -90,8 +95,8 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
     @Override
     public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
         try {
-            return storage.findStr(new Filter().eq("formula", formula.toString()), FingerprintCandidate.class)
-                    .map(FingerprintCandidate::toCompoundCandidate).toList();
+            return storage.findStr(new Filter().eq("formula", formula.toString()), FingerprintCandidateWrapper.class, "candidate")
+                    .map(fc -> fc.getCandidate().toCompoundCandidate()).toList();
         } catch (RuntimeException | IOException e) {
             throw new ChemicalDatabaseException(e);
         }
@@ -99,32 +104,24 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
 
     @Override
     public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
-       /* try {
-            storage.mergeChildStr(FingerprintWrapper.class,
-                    storage.find(new Filter().eq("formula", formula.toString()), FingerprintCandidate.class),
-                    "inchikey", "inchikey", "fingerprint"
-            ).forEach(fingerprintCandidates::add);
+        try {
+            StreamSupport.stream(
+                    storage.find(Filter.build().eq("formula", formula.toString()), FingerprintCandidateWrapper.class, "candidate").spliterator(), false
+            ).map(FingerprintCandidateWrapper::getCandidate).forEach(fingerprintCandidates::add);
             return fingerprintCandidates;
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
-        }*/
-        return null;
-        //todo implement with new api
+        }
     }
 
     public Stream<FingerprintCandidate> lookupFingerprintsByInchisStr(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
-        /*try {
+        try {
             Object[] keys = StreamSupport.stream(inchi_keys.spliterator(), false).toArray();
-            return storage.mergeChildStr(FingerprintCandidate.class, FingerprintWrapper.class,
-                    storage.find(Filter.build().in("inchikey", keys), FingerprintCandidate.class),
-                    "inchikey", "inchikey", "fingerprint"
-            );
+            return StreamSupport.stream(storage.find(Filter.build().in("candidate.inchikey", keys), FingerprintCandidateWrapper.class, "candidate"
+            ).spliterator(), false).map(FingerprintCandidateWrapper::getCandidate);
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
-        }*/
-
-        return null;//todo implement with new api
-
+        }
     }
 
     @Override
@@ -144,35 +141,28 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
 
     @Override
     public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws ChemicalDatabaseException {
-//        try {
-            //todo inefficient workaround
-//            Object[] keys = StreamSupport.stream(compounds.spliterator(), false).map(CompoundCandidate::getInchiKey2D).toArray();
-//            return storage.mergeChildStr(FingerprintWrapper.class,
-//                    storage.find(Filter.build().in("inchikey", keys), FingerprintCandidate.class),
-//                    "inchikey", "inchikey", "fingerprint"
-//            ).toList();
+        Iterable<String> inchiIt = () -> {
+            Iterator<CompoundCandidate> it = compounds.iterator();
+            return new Iterator<>() {
+                @Override
+                public boolean hasNext() {
+                    return it.hasNext();
+                }
 
-            return null;
-
-
-            //todo would like to have this syntax to be possible
-//            List<FingerprintCandidate> fps =
-//                    StreamSupport.stream(compounds.spliterator(), false)
-//                            .map(c -> new FingerprintCandidate(c, null)).toList();
-//
-//            return storage.mergeChildStr(FingerprintWrapper.class,
-//                    fps, "inchikey", "inchikey", "fingerprint"
-//            ).toList();
-//        } catch (IOException e) {
-//            throw new ChemicalDatabaseException(e);
-//        }
+                @Override
+                public String next() {
+                    return it.next().getInchiKey2D();
+                }
+            };
+        };
+        return lookupFingerprintsByInchis(inchiIt);
     }
 
     @Override
     public List<InChI> findInchiByNames(List<String> names) throws ChemicalDatabaseException {
         try {
-            return storage.findStr(new Filter().in("name", names.toArray()), FingerprintCandidate.class)
-                    .map(CompoundCandidate::getInchi).toList();
+            return storage.findStr(new Filter().in("candidate.name", names.toArray()), FingerprintCandidateWrapper.class, "candidate")
+                    .map(fc -> fc.getCandidate().getInchi()).toList();
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }
