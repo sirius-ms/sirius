@@ -8,7 +8,7 @@ import java.util.List;
 public abstract class AbstractFragmentationPredictor {
 
     protected final MolecularGraph molecule;
-    protected final ArrayList<CombinatorialFragment> fragments;
+    protected final ArrayList<CombinatorialFragment> fragments; // fragments of 'molecule' without 'molecule'
     protected CombinatorialGraph graph;
 
     public AbstractFragmentationPredictor(MolecularGraph molecule){

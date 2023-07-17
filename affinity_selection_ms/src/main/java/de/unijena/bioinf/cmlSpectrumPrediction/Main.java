@@ -3,6 +3,7 @@ package de.unijena.bioinf.cmlSpectrumPrediction;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.babelms.MsIO;
+import de.unijena.bioinf.cmlFragmentation.FragmentationPredictor;
 import de.unijena.bioinf.cmlFragmentation.FragmentationRules;
 import de.unijena.bioinf.cmlFragmentation.RuleBasedFragmentation;
 import de.unijena.bioinf.fragmenter.CombinatorialFragment;
@@ -63,7 +64,7 @@ public class Main {
             final EMFragmenterScoring2 scoring = new EMFragmenterScoring2(mol, null);
 
             final RuleBasedFragmentation fragmentationPredictor = new RuleBasedFragmentation(mol, scoring, NUM_FRAGMENTS, fragRule, fragmentationConstraint);
-            final BarcodeSpectrumPredictor spectrumPredictor = new BarcodeSpectrumPredictor(fragmentationPredictor, true);
+            final BarcodeSpectrumPredictor spectrumPredictor = new BarcodeSpectrumPredictor((FragmentationPredictor) fragmentationPredictor, true);
 
             fragmentationPredictor.predictFragmentation(); // has to be called first!
             Ms2Spectrum<Peak> predictedSpectrum = spectrumPredictor.predictSpectrum();
