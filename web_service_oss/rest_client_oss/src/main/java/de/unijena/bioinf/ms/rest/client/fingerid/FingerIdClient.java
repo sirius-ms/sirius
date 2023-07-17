@@ -20,8 +20,6 @@
 
 package de.unijena.bioinf.ms.rest.client.fingerid;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
@@ -32,17 +30,11 @@ import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoringBuilder;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.ms.rest.client.AbstractCsiClient;
-import de.unijena.bioinf.ms.rest.model.JobUpdate;
-import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobInput;
-import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobOutput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
-import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
-import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobOutput;
 import de.unijena.bioinf.ms.rest.model.fingerid.TrainingData;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,19 +48,6 @@ public class FingerIdClient extends AbstractCsiClient {
                           @NotNull IOFunctions.IOConsumer<Request.Builder>... requestDecorators
     ) {
         super(serverUrl, requestDecorators);
-    }
-
-    public JobUpdate<FingerprintJobOutput> postJobs(@NotNull final FingerprintJobInput input,
-                                                    @NotNull OkHttpClient client
-    ) throws IOException {
-        return executeFromJson(client,
-                () -> new Request.Builder()
-                        .url(buildVersionSpecificWebapiURI("/fingerid/" + CID + "/fp-jobs").build())
-                        .post(RequestBody.create(
-                                new ObjectMapper().writeValueAsBytes(input), APPLICATION_JSON))
-                    , new TypeReference<>() {
-                }
-        );
     }
 
     /**
@@ -88,20 +67,6 @@ public class FingerIdClient extends AbstractCsiClient {
                 FingerIdData::read
         );
     }
-
-
-    public JobUpdate<CovtreeJobOutput> postCovtreeJobs(@NotNull final CovtreeJobInput input,
-                                                       @NotNull OkHttpClient client
-    ) throws IOException {
-        return executeFromJson(client,
-                () -> new Request.Builder()
-                        .url(buildVersionSpecificWebapiURI("/fingerid/" + CID + "/covtree-jobs").build())
-                        .post(RequestBody.create(new ObjectMapper().writeValueAsBytes(input), APPLICATION_JSON)),
-                new TypeReference<>() {
-                }
-        );
-    }
-
 
     public BayesnetScoring getCovarianceScoring(@NotNull PredictorType predictorType,
                                                 @NotNull FingerprintVersion fpVersion,

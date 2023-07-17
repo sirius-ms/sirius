@@ -144,7 +144,9 @@ public class SiriusProjectSpace implements IterableWithSize<CompoundContainerId>
 
                         final Double confidenceScore = Optional.ofNullable(keyValues.get("confidenceScore")).map(Double::parseDouble).orElse(null);
 
-                        final CompoundContainerId cid = new CompoundContainerId(dirName, name, index, ionMass, ionType, rt, confidenceScore);
+                        final String featureId = keyValues.get("featureId");
+
+                        final CompoundContainerId cid = new CompoundContainerId(dirName, name, index, ionMass, ionType, rt, confidenceScore, featureId);
 
                         cid.setDetectedAdducts(
                                 Optional.ofNullable(keyValues.get("detectedAdducts")).map(DetectedAdducts::fromString).orElse(null));
@@ -310,8 +312,9 @@ public class SiriusProjectSpace implements IterableWithSize<CompoundContainerId>
         double ionMass = exp != null ? exp.getIonMass() : Double.NaN;
         RetentionTime rt = exp != null ? exp.getAnnotation(RetentionTime.class).orElse(null) : null;
         PrecursorIonType iontype = exp != null ? exp.getPrecursorIonType() : null;
+        String featureId = exp != null ? exp.getFeatureId() : null;
 
-        return newUniqueCompoundId(compoundName, index2dirName, ionMass, iontype, rt, null)
+        return newUniqueCompoundId(compoundName, index2dirName, ionMass, iontype, rt, null, featureId)
                 .map(idd -> {
                     try {
                         idd.containerLock.writeLock().lock();
@@ -333,15 +336,15 @@ public class SiriusProjectSpace implements IterableWithSize<CompoundContainerId>
 
 
     public Optional<CompoundContainerId> newUniqueCompoundId(String compoundName, IntFunction<String> index2dirName) {
-        return newUniqueCompoundId(compoundName, index2dirName, Double.NaN, null, null, null);
+        return newUniqueCompoundId(compoundName, index2dirName, Double.NaN, null, null, null, null);
     }
 
 
-    public Optional<CompoundContainerId> newUniqueCompoundId(String compoundName, IntFunction<String> index2dirName, double ioMass, PrecursorIonType ionType, RetentionTime rt, Double confidence) {
+    public Optional<CompoundContainerId> newUniqueCompoundId(String compoundName, IntFunction<String> index2dirName, double ioMass, PrecursorIonType ionType, RetentionTime rt, Double confidence, String featureId) {
         int index = compoundCounter.getAndIncrement();
         String dirName = index2dirName.apply(index);
 
-        Optional<CompoundContainerId> cidOpt = tryCreateCompoundContainer(dirName, compoundName, index, ioMass, ionType, rt, confidence);
+        Optional<CompoundContainerId> cidOpt = tryCreateCompoundContainer(dirName, compoundName, index, ioMass, ionType, rt, confidence, featureId);
         cidOpt.ifPresent(cid ->
                 fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.ID_CREATED, cid, Collections.emptySet())));
         return cidOpt;
@@ -397,12 +400,12 @@ public class SiriusProjectSpace implements IterableWithSize<CompoundContainerId>
         }
     }
 
-    protected Optional<CompoundContainerId> tryCreateCompoundContainer(String directoryName, String compoundName, int compoundIndex, double ionMass, PrecursorIonType ionType, RetentionTime rt, Double confidence) {
+    protected Optional<CompoundContainerId> tryCreateCompoundContainer(String directoryName, String compoundName, int compoundIndex, double ionMass, PrecursorIonType ionType, RetentionTime rt, Double confidence, String featureId) {
         if (containsCompound(directoryName)) return Optional.empty();
         idLock.writeLock().lock();
         try {
             final ProjectWriter writer = ioProvider.newWriter(this::getProjectSpaceProperty);
-            final CompoundContainerId id = new CompoundContainerId(directoryName, compoundName, compoundIndex, ionMass, ionType, rt, confidence);
+            final CompoundContainerId id = new CompoundContainerId(directoryName, compoundName, compoundIndex, ionMass, ionType, rt, confidence, featureId);
             try {
                 if (writer.exists(directoryName))
                     return Optional.empty();

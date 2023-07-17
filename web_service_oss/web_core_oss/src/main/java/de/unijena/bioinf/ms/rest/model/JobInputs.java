@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
 import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
+import de.unijena.bioinf.ms.rest.model.msnovelist.MsNovelistJobInput;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,9 +39,10 @@ public class JobInputs {
     private List<FingerprintJobInput> fingerprintJobInputs = new ArrayList<>();
     private List<CanopusJobInput> canopusJobInputs = new ArrayList<>();
     private List<CovtreeJobInput> covtreeJobInputs = new ArrayList<>();
+    private List<MsNovelistJobInput> msnovelistJobInputs = new ArrayList<>();
 
     public List<FingerprintJobInput> getFingerprintJobInputs() {
-        return fingerprintJobInputs;
+        return Collections.unmodifiableList(fingerprintJobInputs);
     }
 
     @JsonIgnore
@@ -51,6 +53,7 @@ public class JobInputs {
     public void setFingerprintJobInputs(List<FingerprintJobInput> fingerprintJobInputs) {
         this.fingerprintJobInputs = fingerprintJobInputs;
     }
+
 
     @JsonIgnore
     public void addFingerprintJobInput(FingerprintJobInput fingerprintJobInput) {
@@ -63,7 +66,6 @@ public class JobInputs {
             this.fingerprintJobInputs = new ArrayList<>();
         this.fingerprintJobInputs.addAll(fingerprintJobInputs);
     }
-
 
     public List<CanopusJobInput> getCanopusJobInputs() {
         return Collections.unmodifiableList(canopusJobInputs);
@@ -115,36 +117,57 @@ public class JobInputs {
         this.covtreeJobInputs.addAll(covtreeJobInputs);
     }
 
+    public List<MsNovelistJobInput> getMsNovelistJobInputs() {
+        return Collections.unmodifiableList(msnovelistJobInputs);
+    }
+
+    @JsonIgnore
+    public boolean hasMsNovelistJobs(){
+        return msnovelistJobInputs != null && !msnovelistJobInputs.isEmpty();
+    }
+
+    public void setMsNovelistSSJobInputs(List<MsNovelistJobInput> msnovelistJobInputs) {
+        this.msnovelistJobInputs = msnovelistJobInputs;
+    }
+
+    @JsonIgnore
+    public void addMsNovelistJobInput(MsNovelistJobInput msnovelistJobInputs) {
+        addMsNovelistJobInputs(List.of(msnovelistJobInputs));
+    }
+
+    @JsonIgnore
+    public void addMsNovelistJobInputs(List<MsNovelistJobInput> msnovelistJobInputs) {
+        if (this.msnovelistJobInputs == null)
+            this.msnovelistJobInputs = new ArrayList<>();
+        this.msnovelistJobInputs.addAll(msnovelistJobInputs);
+    }
+
     @JsonIgnore
     public Map<JobTable, List<?>> asMap() {
         return Map.of(
                 JobTable.JOBS_FINGERID, fingerprintJobInputs,
                 JobTable.JOBS_CANOPUS, canopusJobInputs,
-                JobTable.JOBS_COVTREE, covtreeJobInputs
+                JobTable.JOBS_COVTREE, covtreeJobInputs,
+                JobTable.JOBS_MSNOVELIST, msnovelistJobInputs
         );
     }
     @JsonIgnore
     public void addJobInput(Object jobInput, JobTable type) {
         switch (type) {
-            case JOBS_FINGERID:
-                addFingerprintJobInput(((FingerprintJobInput)jobInput));
-                break;
-            case JOBS_CANOPUS:
-                addCanopusJobInput((CanopusJobInput) jobInput);
-                break;
-            case JOBS_COVTREE:
-                addCovtreeJobInput((CovtreeJobInput) jobInput);
-                break;
+            case JOBS_FINGERID -> addFingerprintJobInput(((FingerprintJobInput) jobInput));
+            case JOBS_CANOPUS -> addCanopusJobInput((CanopusJobInput) jobInput);
+            case JOBS_COVTREE -> addCovtreeJobInput((CovtreeJobInput) jobInput);
+            case JOBS_MSNOVELIST -> addMsNovelistJobInput((MsNovelistJobInput) jobInput);
         }
     }
 
     @JsonIgnore
     public boolean hasJobs(){
-        return hasCanopusJobs() || hasFingerprintJobs() || hasCovtreeJobs();
+        return hasCanopusJobs() || hasFingerprintJobs() || hasCovtreeJobs() || hasMsNovelistJobs();
     }
 
     @JsonIgnore
     public int size(){
-        return fingerprintJobInputs.size() + canopusJobInputs.size() + covtreeJobInputs.size();
+        return fingerprintJobInputs.size() + canopusJobInputs.size() + covtreeJobInputs.size() + msnovelistJobInputs.size();
     }
 }
