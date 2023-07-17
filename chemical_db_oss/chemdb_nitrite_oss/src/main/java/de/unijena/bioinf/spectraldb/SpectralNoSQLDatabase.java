@@ -40,40 +40,34 @@
 
 package de.unijena.bioinf.spectraldb;
 
-import com.fasterxml.jackson.core.JacksonException;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.google.common.collect.Iterables;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.*;
+import com.google.common.collect.Streams;
+import de.unijena.bioinf.ChemistryBase.ms.AdditionalFields;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
+import de.unijena.bioinf.ms.annotations.SpectrumAnnotation;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
+import de.unijena.bioinf.spectraldb.entities.SimpleSerializers;
 import de.unijena.bioinf.storage.db.nosql.*;
 import de.unijena.bionf.spectral_alignment.AbstractSpectralAlignment;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
-import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.PriorityBlockingQueue;
-import java.util.function.Function;
-import java.util.stream.StreamSupport;
+import java.util.function.BiConsumer;
 
-public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary {
+public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, Closeable {
 
     final protected Database<Doctype> storage;
 
@@ -81,29 +75,9 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary {
         this.storage = storage;
     }
 
-    protected static <T> JsonSerializer<T> serializer() {
-        return new JsonSerializer<T>() {
-            @Override
-            public void serialize(T value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-                gen.writeString(toString());
-            }
-        };
-    }
-
-    protected static <T> JsonDeserializer<T> deserializer(Function<String, T> callable) {
-        return new JsonDeserializer<T>() {
-            @Override
-            public T deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
-                while (p.currentToken() != JsonToken.VALUE_STRING)
-                    p.nextToken();
-                return callable.apply(p.getText());
-            }
-        };
-    }
-
     protected static Metadata initMetadata() throws IOException {
         return Metadata.build()
-                .addRepository(Tag.class, new Index("key",IndexType.UNIQUE))
+                .addRepository(Tag.class, "id", new Index("key",IndexType.UNIQUE))
                 .addRepository(
                         Ms2ReferenceSpectrum.class,
                         "id",
@@ -111,70 +85,94 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary {
                         new Index("formula", IndexType.NON_UNIQUE),
                         new Index("name", IndexType.NON_UNIQUE),
                         new Index("candidateInChiKey", IndexType.NON_UNIQUE)
-                ).addSerialization(
-                        PrecursorIonType.class,
-                        serializer(),
-                        deserializer(PrecursorIonType::fromString)
-                ).addSerialization(
-                        MolecularFormula.class,
-                        serializer(),
-                        deserializer(MolecularFormula::parseOrThrow)
-                ).addSerialization(
-                        CollisionEnergy.class,
-                        serializer(),
-                        deserializer(CollisionEnergy::fromString)
+                ).addSerializer(
+                        AdditionalFields.class,
+                        new SimpleSerializers.AnnotationSerializer()
                 ).addDeserializer(
-                        MsInstrumentation.class,
-                        deserializer(MsInstrumentation.Instrument::valueOf)
+                        SpectrumAnnotation.class,
+                        new SimpleSerializers.AnnotationDeserializer()
                 ).setOptionalFields(Ms2ReferenceSpectrum.class, "spectrum");
     }
 
     @Override
-    public <P extends Peak, A extends AbstractSpectralAlignment> Iterable<Pair<SpectralSimilarity, Ms2ReferenceSpectrum>> matchingSpectra(
-            Ms2Spectrum<P> spectrum,
+    public <P extends Peak> SpectralSearchResult matchingSpectra(
+            Iterable<Ms2Spectrum<P>> queries,
             Deviation precursorMzDeviation,
             Deviation maxPeakDeviation,
-            Class<A> alignmentType
+            SpectralAlignmentType alignmentType,
+            BiConsumer<Integer, Integer> progressConsumer
     ) throws ChemicalDatabaseException {
-        return matchingSpectra(spectrum, precursorMzDeviation, maxPeakDeviation, alignmentType, false);
+        try {
+            final List<SpectralSearchResult.SearchResult> results = new ArrayList<>();
+            AbstractSpectralAlignment alignment = alignmentType.type.getConstructor(Deviation.class).newInstance(maxPeakDeviation);
+
+            int maxProgress = 0;
+            List<Triple<Ms2Spectrum<P>, Integer, Filter>> params = new ArrayList<>();
+            for (Ms2Spectrum<P> query : queries) {
+                double abs = precursorMzDeviation.absoluteFor(query.getPrecursorMz());
+                Filter filter = new Filter().and().gte("precursorMz", query.getPrecursorMz() - abs).lte("precursorMz", query.getPrecursorMz() + abs);
+                int count = this.storage.count(filter, Ms2ReferenceSpectrum.class);
+                maxProgress += count;
+                params.add(Triple.of(query, count, filter));
+            }
+
+            int progress = 0;
+            for (int i = 0; i < params.size(); i++) {
+                Triple<Ms2Spectrum<P>, Integer, Filter> param = params.get(i);
+                OrderedSpectrum<Peak> orderedQuery = new SimpleSpectrum(param.getLeft());
+
+                int pageSize = 100;
+                for (int offset = 0; offset < param.getMiddle(); offset += pageSize) {
+                    Iterable<Ms2ReferenceSpectrum> references = this.storage.find(param.getRight(), Ms2ReferenceSpectrum.class, offset, pageSize,"spectrum");
+                    for (Ms2ReferenceSpectrum reference : references) {
+                        SpectralSimilarity similarity = alignment.score(orderedQuery, reference.getSpectrum());
+                        if (similarity.shardPeaks > 0) {
+                            SpectralSearchResult.SearchResult res = SpectralSearchResult.SearchResult.builder()
+                                    .dbLocation(this.location())
+                                    .querySpectrumIndex(i)
+                                    .similarity(similarity)
+                                    .referenceId(reference.getId())
+                                    .build();
+                            results.add(res);
+                        }
+                        if (progressConsumer != null) {
+                            progressConsumer.accept(++progress, maxProgress);
+                        }
+                    }
+                }
+            }
+
+            results.sort((a, b) -> Double.compare(b.getSimilarity().similarity, a.getSimilarity().similarity));
+
+            return SpectralSearchResult.builder()
+                    .precursorDeviation(precursorMzDeviation)
+                    .peakDeviation(maxPeakDeviation)
+                    .alignmentType(alignmentType)
+                    .results(Streams.mapWithIndex(results.stream(), (r, index) -> {
+                        r.setRank((int) index + 1);
+                        return r;
+                    }).toList())
+                    .build();
+
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException |
+                 RuntimeException | IOException e) {
+            throw new ChemicalDatabaseException(e);
+        }
     }
 
     @Override
-    public <P extends Peak, A extends AbstractSpectralAlignment> Iterable<Pair<SpectralSimilarity, Ms2ReferenceSpectrum>> matchingSpectra(
-            Ms2Spectrum<P> spectrum,
-            Deviation precursorMzDeviation,
-            Deviation maxPeakDeviation,
-            Class<A> alignmentType,
-            boolean parallel
-    ) throws ChemicalDatabaseException {
-        try {
-            PriorityBlockingQueue<Pair<SpectralSimilarity, Ms2ReferenceSpectrum>> heap = new PriorityBlockingQueue<>(100, (o1, o2) -> - Double.compare(o1.getLeft().similarity, o2.getLeft().similarity));
-            A alignment = alignmentType.getConstructor(Deviation.class).newInstance(maxPeakDeviation);
-            OrderedSpectrum<Peak> query = new SimpleSpectrum(spectrum);
+    public String name() {
+        return this.storage.location().getFileName().toString();
+    }
 
-            // TODO it might be a better idea replace iterables.partition with pagination
-            Iterable<Ms2ReferenceSpectrum> spectra = lookupSpectra(spectrum.getPrecursorMz(), precursorMzDeviation, true);
-            StreamSupport.stream(Iterables.partition(spectra, 100).spliterator(), parallel).forEach(chunk -> {
-                for (Ms2ReferenceSpectrum reference : chunk) {
-                    SpectralSimilarity similarity = alignment.score(query, reference.getSpectrum());
-                    Ms2ReferenceSpectrum withoutData = new Ms2ReferenceSpectrum(
-                            reference.getId(), reference.getCandidateInChiKey(), reference.getPrecursorIonType(),
-                            reference.getPrecursorMz(), reference.getIonMass(), reference.getMsLevel(), reference.getCollisionEnergy(),
-                            reference.getInstrumentation(), reference.getFormula(), reference.getName(), reference.getSmiles(),
-                            reference.getLibraryName(), reference.getLibraryId(), reference.getSplash(), null);
-                    if (similarity.shardPeaks > 0) {
-                        heap.add(Pair.of(similarity, withoutData));
-                    }
-                }
-            });
+    @Override
+    public String location() {
+        return this.storage.location().toString();
+    }
 
-            List<Pair<SpectralSimilarity, Ms2ReferenceSpectrum>> result = new ArrayList<>(heap.size());
-            heap.drainTo(result);
-            return result;
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException |
-                 RuntimeException e) {
-            throw new ChemicalDatabaseException(e);
-        }
+    @Override
+    public int countAllSpectra() throws IOException {
+        return this.storage.countAll(Ms2ReferenceSpectrum.class);
     }
 
     @Override
@@ -206,14 +204,47 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary {
         }
     }
 
+    @Override
+    public Ms2ReferenceSpectrum getReferenceSpectrum(long id) throws ChemicalDatabaseException {
+        try {
+            return this.storage.getById(id, Ms2ReferenceSpectrum.class);
+        } catch (IOException e) {
+            throw new ChemicalDatabaseException(e);
+        }
+    }
+
+    @Override
+    public Iterable<Ms2ReferenceSpectrum> getSpectralData(Iterable<Ms2ReferenceSpectrum> references) throws ChemicalDatabaseException {
+        try {
+            return this.storage.injectOptionalFields(Ms2ReferenceSpectrum.class, references, "spectrum");
+        } catch (IOException e) {
+            throw new ChemicalDatabaseException(e);
+        }
+    }
+
+    @Override
+    public Ms2ReferenceSpectrum getSpectralData(Ms2ReferenceSpectrum reference) throws ChemicalDatabaseException {
+        try {
+            return this.storage.injectOptionalFields(reference, "spectrum");
+        } catch (IOException e) {
+            throw new ChemicalDatabaseException(e);
+        }
+    }
+
+    @Override
+    public void close() throws IOException {
+        this.storage.close();
+    }
+
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Tag {
+        private long id;
         private String key;
         private String value;
 
         public static Tag of(String key, String value) {
-            return new Tag(key, value);
+            return new Tag(-1L, key, value);
         }
 
         public static Tag of(Map.Entry<String, String> source) {

@@ -21,6 +21,9 @@
 package de.unijena.bioinf.spectraldb.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
@@ -48,6 +51,8 @@ public class Ms2ReferenceSpectrum {
     /**
      * The adduct / ion type / precursor type
      */
+    @JsonSerialize(using = ToStringSerializer.class)
+    @JsonDeserialize(using = SimpleSerializers.PrecursorIonTypeDeserializer.class)
     private PrecursorIonType precursorIonType;
 
     private double precursorMz;
@@ -56,13 +61,18 @@ public class Ms2ReferenceSpectrum {
 
     private int msLevel = 0;
 
+    @JsonSerialize(using = ToStringSerializer.class)
+    @JsonDeserialize(using = SimpleSerializers.CollisionEnergyDeserializer.class)
     private CollisionEnergy collisionEnergy;
 
+    @JsonDeserialize(using = SimpleSerializers.MSInstrumentationDeserializer.class)
     private MsInstrumentation instrumentation;
 
     /**
      * Molecular formula of the measured compound. Must match candidateInChiKey and  smiles
      */
+    @JsonSerialize(using = ToStringSerializer.class)
+    @JsonDeserialize(using = SimpleSerializers.MolecularFormulaDeserializer.class)
     private MolecularFormula formula;
 
     private String name;

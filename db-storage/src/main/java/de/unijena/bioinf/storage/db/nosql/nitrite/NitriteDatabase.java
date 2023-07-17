@@ -341,6 +341,11 @@ public class NitriteDatabase implements Database<Document> {
     }
 
     @Override
+    public Path location() {
+        return file;
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
     public <T> int insert(T object) throws IOException {
         return this.write(() -> {
@@ -619,7 +624,7 @@ public class NitriteDatabase implements Database<Document> {
         if (!repoIdFields.containsKey(object.getClass())) {
             throw new IOException("Object has no ID field.");
         }
-        return InjectingIterable.inject(object, new HashSet<>(Arrays.asList(optionalFields)), collection, repoIdFields.get(object.getClass()));
+        return InjectingIterable.inject(object, new HashSet<>(Arrays.asList(optionalFields)), collection, repoIdFields.get(object.getClass()), nitriteMapper);
     }
 
     @Override
@@ -638,7 +643,7 @@ public class NitriteDatabase implements Database<Document> {
             if (!repoIdFields.containsKey(clazz)) {
                 throw new IOException("Object has no ID field.");
             }
-            return new InjectingIterable<>(objects, new HashSet<>(Arrays.asList(optionalFields)), getRepository(clazz), repoIdFields.get(clazz));
+            return new InjectingIterable<>(objects, new HashSet<>(Arrays.asList(optionalFields)), getRepository(clazz), repoIdFields.get(clazz), nitriteMapper);
         }
     }
 

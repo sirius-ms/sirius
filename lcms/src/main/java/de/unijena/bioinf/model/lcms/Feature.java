@@ -33,6 +33,7 @@ import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import org.apache.commons.math3.analysis.UnivariateFunction;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Set;
@@ -168,11 +169,12 @@ public class Feature implements Annotated<DataAnnotation> {
         return annotations;
     }
 
-    public Ms2Experiment toMsExperiment(String name) {
+    public Ms2Experiment toMsExperiment(String name, @Nullable String featureId) {
         final MutableMs2Experiment exp = new MutableMs2Experiment();
         final Trace peak = traceset.getIonTrace().getMonoisotopicPeak();
         int apex = traceset.getScanIds()[peak.getAbsoluteIndexApex()];
         exp.setName(name);
+        exp.setFeatureId(featureId);
         exp.setPrecursorIonType(ionType);
         exp.setMergedMs1Spectrum(Spectrums.mergeSpectra(getCorrelatedFeatures()));
         final ArrayList<MutableMs2Spectrum> ms2Spectra = new ArrayList<>();

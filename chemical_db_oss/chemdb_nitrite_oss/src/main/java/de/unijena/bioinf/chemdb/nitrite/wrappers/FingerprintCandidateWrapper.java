@@ -18,23 +18,27 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.spectraldb.nitrite;
+package de.unijena.bioinf.chemdb.nitrite.wrappers;
 
-import de.unijena.bioinf.spectraldb.SpectralNoSQLDatabase;
-import de.unijena.bioinf.storage.db.nosql.nitrite.NitriteDatabase;
-import org.dizitart.no2.Document;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import java.io.IOException;
-import java.nio.file.Path;
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+public class FingerprintCandidateWrapper {
 
-public class SpectralNitriteDatabase extends SpectralNoSQLDatabase<Document> {
+    String formula;
+    double mass;
+    FingerprintCandidate candidate;
 
-    public SpectralNitriteDatabase(Path file) throws IOException {
-        super(new NitriteDatabase(file, SpectralNoSQLDatabase.initMetadata()));
-    }
-
-    public NitriteDatabase getStorage(){
-        return (NitriteDatabase) storage;
+    public static FingerprintCandidateWrapper of(MolecularFormula formula, FingerprintCandidate candidate) {
+        return new FingerprintCandidateWrapper(formula.toString(), formula.getMass(), candidate);
     }
 
 }

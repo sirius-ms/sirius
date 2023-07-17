@@ -29,6 +29,7 @@ import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
 import java.util.List;
@@ -150,6 +151,13 @@ public interface Ms2Experiment extends Cloneable, AnnotatedWithDefaults<Ms2Exper
      * @return molecular formula of the neutral molecule
      */
     MolecularFormula getMolecularFormula();
+
+    /**
+     *
+     * @return the feature Id of this feature
+     */
+    @Nullable
+    String getFeatureId();
 
     /*
         Annotations are additional information, that might be present in the data or not. They are usually

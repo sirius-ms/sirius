@@ -55,7 +55,8 @@ public class MgfWriter implements DataWriter<Ms2Experiment> {
 
     @Override
     public void write(BufferedWriter writer, Ms2Experiment data) throws IOException {
-        write(writer, data, data.getName());
+        String fid = data.getFeatureId() != null ? data.getFeatureId() : data.getName();
+        write(writer, data, fid);
     }
 
     public void write(BufferedWriter writer, Ms2Experiment data, @NotNull String featureId) throws IOException {

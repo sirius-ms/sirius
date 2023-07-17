@@ -18,23 +18,20 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.spectraldb.nitrite;
+package de.unijena.bioinf.spectraldb;
 
-import de.unijena.bioinf.spectraldb.SpectralNoSQLDatabase;
-import de.unijena.bioinf.storage.db.nosql.nitrite.NitriteDatabase;
-import org.dizitart.no2.Document;
+import de.unijena.bionf.spectral_alignment.AbstractSpectralAlignment;
+import de.unijena.bionf.spectral_alignment.GaussianSpectralAlignment;
+import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
 
-import java.io.IOException;
-import java.nio.file.Path;
+public enum SpectralAlignmentType {
 
-public class SpectralNitriteDatabase extends SpectralNoSQLDatabase<Document> {
+    INTENSITY(IntensityWeightedSpectralAlignment.class), GAUSSIAN(GaussianSpectralAlignment.class);
 
-    public SpectralNitriteDatabase(Path file) throws IOException {
-        super(new NitriteDatabase(file, SpectralNoSQLDatabase.initMetadata()));
-    }
+    public final Class<? extends AbstractSpectralAlignment> type;
 
-    public NitriteDatabase getStorage(){
-        return (NitriteDatabase) storage;
+    private SpectralAlignmentType(Class<? extends AbstractSpectralAlignment> type) {
+        this.type = type;
     }
 
 }

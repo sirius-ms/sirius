@@ -21,21 +21,79 @@
 package de.unijena.bioinf.chemdb;
 
 import com.google.common.collect.Iterables;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.chemdb.nitrite.ChemicalNitriteDatabase;
+import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintWrapper;
 import de.unijena.bioinf.spectraldb.SpectralNoSQLDBs;
 import de.unijena.bioinf.spectraldb.SpectralNoSQLDatabase;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.storage.db.nosql.Database;
+import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.stream.StreamSupport;
 
 public class ChemicalNoSQLDBs extends SpectralNoSQLDBs {
+
+    private static class FlatmapIterable<K, V> implements Iterable<Pair<K, V>> {
+
+        final Map<K, Iterable<V>> source;
+
+        private FlatmapIterable(Map<K, Iterable<V>> source) {
+            this.source = source;
+        }
+
+        @NotNull
+        @Override
+        public Iterator<Pair<K, V>> iterator() {
+            return new FlatmapIterator();
+        }
+
+        private class FlatmapIterator implements Iterator<Pair<K, V>> {
+
+        K key;
+        Iterator<K> keyIt;
+        Iterator<V> valueIt;
+
+            public FlatmapIterator() {
+                this.key = null;
+                this.keyIt = source.keySet().iterator();
+                this.valueIt = null;
+            }
+
+            @Override
+            public boolean hasNext() {
+                if (valueIt == null || !valueIt.hasNext()) {
+                    if (keyIt.hasNext()) {
+                        key = keyIt.next();
+                        valueIt = source.get(key).iterator();
+                    } else {
+                        key = null;
+                        valueIt = null;
+                    }
+                }
+                if (valueIt == null)
+                    return false;
+                return valueIt.hasNext();
+            }
+
+            @Override
+            public Pair<K, V> next() {
+                if (valueIt == null)
+                    return Pair.of(null, null);
+                return Pair.of(key, valueIt.next());
+            }
+
+        }
+
+    }
 
     public static AbstractChemicalDatabase getLocalChemDB(Path file) throws IOException {
         return new ChemicalNitriteDatabase(file);
@@ -47,7 +105,7 @@ public class ChemicalNoSQLDBs extends SpectralNoSQLDBs {
 
     public static void importCompoundsAndFingerprintsLazy(
             @NotNull Database<?> database,
-            @NotNull Iterable<FingerprintCandidate> candidates,
+            @NotNull Map<MolecularFormula, Iterable<FingerprintCandidate>> candidates,
             @Nullable Iterable<Ms2ReferenceSpectrum> spectra,
             @NotNull String dbDate, @Nullable String dbFlavor, int fpId,
             int chunkSize
@@ -59,26 +117,17 @@ public class ChemicalNoSQLDBs extends SpectralNoSQLDBs {
                 database.insert(SpectralNoSQLDatabase.Tag.of(ChemDbTags.TAG_FLAVOR, dbFlavor));
             database.insert(SpectralNoSQLDatabase.Tag.of(ChemDbTags.TAG_FP_ID, String.valueOf(fpId)));
 
-//            database.findAll(SpectralNoSQLDatabase.Tag.class).forEach(System.out::println);
-
-            StreamSupport.stream(Iterables.partition(candidates, chunkSize).spliterator(), false)
+            StreamSupport.stream(Iterables.partition(new FlatmapIterable<>(candidates), chunkSize).spliterator(), false)
                     .forEach(chunk -> {
                         try {
                             //candidates
-                            database.insertAll(chunk);
+                            database.insertAll(chunk.stream().map(c -> FingerprintCandidateWrapper.of(c.getLeft(), c.getRight())).toList());
                             //fingerprints
-                            database.insertAll(
-                                    chunk.stream().map(FingerprintWrapper::of).toList());
+                            database.insertAll(chunk.stream().map(c -> FingerprintWrapper.of(c.getRight())).toList());
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }
                     });
-
-           /* System.out.println("Show compound candidates");
-            database.findAll(FingerprintCandidate.class).forEach(c -> System.out.println(c.getInchiKey2D()));
-            System.out.println();
-            System.out.println("Show FingerprintWrapper");
-            database.findAll(FingerprintWrapper.class).forEach(c -> System.out.println(c.getInchikey()));*/
 
             //spectra
             if (spectra != null)

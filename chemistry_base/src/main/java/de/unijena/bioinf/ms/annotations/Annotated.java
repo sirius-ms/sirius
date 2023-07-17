@@ -342,6 +342,8 @@ public interface Annotated<A extends DataAnnotation> {
      * instead of each class separately.
      */
     final class Annotations<Annotation extends DataAnnotation> implements Cloneable, Iterable<Class<Annotation>> {
+
+        @JsonIgnore
         private final PropertyChangeSupport annotationChangeSupport;
         private final Map<Class<Annotation>, Annotation> map;
 
