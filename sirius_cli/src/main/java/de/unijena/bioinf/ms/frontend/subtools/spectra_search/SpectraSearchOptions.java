@@ -28,12 +28,13 @@ import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.spectraldb.SpectralAlignmentType;
 import picocli.CommandLine;
 
+import java.util.List;
+
 @CommandLine.Command(name = "spectra-search", aliases = {"spectral-search"}, description = "<STANDALONE> Computes the similarity between all compounds/features in the project-space (queries) one vs all compounds/features in the second project-space (library).",  versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class SpectraSearchOptions implements StandaloneTool<SpectraSearchWorkflow> {
- // todo we want to implement a spectral library searches bases on cosine and similarity search.
 
-    @CommandLine.Option(names = {"--db"}, required = true, description = {"Spectral database location."})
-    String dbLocation;
+    @CommandLine.Option(names = {"--db", "--dbs"}, required = true, description = {"Spectral database location(s)."}, split = ",")
+    List<String> dbLocations;
 
     @CommandLine.Option(names = {"--ppm-precursor"}, defaultValue = "20", description = {"Relative precursor mass error in ppm."})
     int ppmPrecursor;
