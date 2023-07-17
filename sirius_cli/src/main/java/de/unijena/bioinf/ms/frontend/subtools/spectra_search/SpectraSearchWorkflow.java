@@ -24,13 +24,17 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
+import de.unijena.bioinf.ms.frontend.subtools.spectra_db.SpectralDatabases;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
+import de.unijena.bioinf.projectspace.CompoundContainer;
+import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.spectraldb.SpectralLibrary;
-import de.unijena.bioinf.spectraldb.SpectralNoSQLDBs;
+import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import org.slf4j.Logger;
@@ -39,6 +43,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -64,55 +69,97 @@ public class SpectraSearchWorkflow implements Workflow {
     @Override
     public void run() {
         final JobManager jobManager = SiriusJobs.getGlobalJobManager();
-        List<Instance> xs = new ArrayList<>();
+        Map<CompoundContainerId, Instance> xs = new HashMap<>();
 
         Deviation precursorDev = new Deviation(options.ppmPrecursor, options.absPrecursor);
         Deviation peakDev = new Deviation(options.ppmPeak, options.absPeak);
 
         try {
             ps = jobManager.submitJob(ppj).awaitResult();
-            ps.forEach(xs::add);
+            ps.forEach(instance -> xs.put(instance.getID(), instance));
 
             if (xs.isEmpty()) {
                 logger.info("==> Project space is empty.");
                 return;
             }
 
-            SpectralLibrary db = SpectralNoSQLDBs.getLocalSpectralLibrary(Path.of(options.dbLocation));
+            Map<CompoundContainerId, List<JJob<SpectralSearchResult>>> allJobs = new HashMap<>();
+            Map<CompoundContainerId, SpectralSearchResult> results = new HashMap<>();
+
+            // distribute jobs
+
+            for (String location : options.dbLocations) {
+                for (Instance instance : xs.values()) {
+                    List<Ms2Spectrum<Peak>> queries = instance.getExperiment().getMs2Spectra();
+                    SpectralLibrary db = SpectralDatabases.getSpectralLibrary(Path.of(location)).orElseThrow(() -> new IOException("No such database: '" + location + "'"));
+                    JJob<SpectralSearchResult> job = jobManager.submitJob(new BasicJJob<SpectralSearchResult>() {
+                        @Override
+                        protected SpectralSearchResult compute() throws Exception {
+                            return db.matchingSpectra(queries, precursorDev, peakDev, options.alignmentType, (progress, max) -> {
+                                this.updateProgress(max, progress, "Aligning spectra from " + instance.getExperiment().getName() + " with database '" + location + "'...");
+                            });
+                        }
+                    });
+                    CompoundContainerId compoundId = instance.getID();
+                    if (!allJobs.containsKey(compoundId)) {
+                        allJobs.put(compoundId, new ArrayList<>());
+                    }
+                    allJobs.get(compoundId).add(job);
+                }
+            }
+
+            // collect results
+
+            for (CompoundContainerId compoundId : allJobs.keySet()) {
+                List<JJob<SpectralSearchResult>> instanceJobs = allJobs.get(compoundId);
+                if (instanceJobs.size() == 0) {
+                    continue;
+                }
+                SpectralSearchResult result = instanceJobs.get(0).awaitResult();
+                if (instanceJobs.size() > 1) {
+                    for (JJob<SpectralSearchResult> job : instanceJobs.subList(1, instanceJobs.size())) {
+                        result.join(job.awaitResult());
+                    }
+                }
+                results.put(compoundId, result);
+            }
+
+            // save and log results
 
             if (options.log > 0) {
                 logger.info("##########  BEGIN SPECTRUM SEARCH RESULTS  ##########");
-                logger.info("Spectrum database: " + db.location());
                 logger.info("Precursor deviation: " + precursorDev);
                 logger.info("Peak deviation: " + peakDev);
                 logger.info("Spectral alignment: " + options.alignmentType);
             }
 
-            for (Instance instance : xs) {
-                List<Ms2Spectrum<Peak>> queries = instance.getExperiment().getMs2Spectra();
+            for (CompoundContainerId compoundId : results.keySet()) {
+                Instance instance = xs.get(compoundId);
+                SpectralSearchResult result = results.get(compoundId);
 
-                Iterable<SpectralLibrary.SearchResult> results = jobManager.submitJob(new BasicJJob<Iterable<SpectralLibrary.SearchResult>>() {
-                    @Override
-                    protected Iterable<SpectralLibrary.SearchResult> compute() throws Exception {
-                        return db.matchingSpectra(queries, precursorDev, peakDev, options.alignmentType, (progress, max) -> {
-                            this.updateProgress(max, progress, "Aligning spectra...");
-                        });
-                    }
-                }).awaitResult();
+                CompoundContainer container = instance.loadCompoundContainer(SpectralSearchResult.class);
+                if (container.hasAnnotation(SpectralSearchResult.class)) {
+                    container.removeAnnotation(SpectralSearchResult.class);
+                }
+                container.addAnnotation(SpectralSearchResult.class, result);
+                instance.updateCompound(container, SpectralSearchResult.class);
 
                 if (options.log > 0) {
                     logger.info("#####");
                     logger.info("Experiment: " + instance.getExperiment().getName());
 
-                    Map<Ms2Spectrum<? extends Peak>, List<SpectralLibrary.SearchResult>> resultMap = StreamSupport.stream(results.spliterator(), false).collect(Collectors.groupingBy(SpectralLibrary.SearchResult::getQuery));
-                    for (Ms2Spectrum<? extends Peak> query : resultMap.keySet()) {
+                    List<Ms2Spectrum<Peak>> queries = instance.getExperiment().getMs2Spectra();
+                    Map<Integer, List<SpectralSearchResult.SearchResult>> resultMap = StreamSupport.stream(result.spliterator(), false).collect(Collectors.groupingBy(SpectralSearchResult.SearchResult::getQuerySpectrumIndex));
+                    for (Integer queryIndex : resultMap.keySet()) {
+                        Ms2Spectrum<Peak> query = queries.get(queryIndex);
                         logger.info("Query spectrum: MS" + query.getMsLevel() + " with precursor " + query.getPrecursorMz() + " m/z at " + query.getCollisionEnergy());
-                        logger.info("Cosine similarity | Shared Peaks | Precursor ion | Precursor m/z | MS |  C.E. | Instrument | InChIKey | Smiles | Splash | Name | DB link");
-                        List<SpectralLibrary.SearchResult> resultList = resultMap.get(query);
-                        for (SpectralLibrary.SearchResult r : resultList.subList(0, Math.min(options.log, resultList.size()))) {
+                        logger.info("Similarity | Peaks | Precursor | Prec. m/z | MS | Coll. | Instrument | InChIKey | Smiles | Name | DB location | DB link | Splash");
+                        List<SpectralSearchResult.SearchResult> resultList = resultMap.get(queryIndex);
+                        for (SpectralSearchResult.SearchResult r : resultList.subList(0, Math.min(options.log, resultList.size()))) {
                             SpectralSimilarity similarity = r.getSimilarity();
-                            Ms2ReferenceSpectrum reference = r.getReference();
-                            logger.info(String.format("%17.3e | %12d | %13s | %13.3f | %2d | %5s | %10s | %s | %s | %s | %s | %s",
+                            SpectralLibrary db = SpectralDatabases.getSpectralLibrary(Path.of(r.getDbLocation())).orElseThrow(() -> new IOException("No such database: '" + r.getDbLocation() + "'"));
+                            Ms2ReferenceSpectrum reference = db.getReferenceSpectrum(r.getReferenceId());
+                            logger.info(String.format("%10.3e | %5d | %9s | %9.3f | %2d | %5s | %10s | %s | %s | %s  | %s | %s | %s",
                                     similarity.similarity,
                                     similarity.shardPeaks,
                                     reference.getPrecursorIonType(),
@@ -122,9 +169,10 @@ public class SpectraSearchWorkflow implements Workflow {
                                     reference.getInstrumentation(),
                                     reference.getCandidateInChiKey(),
                                     reference.getSmiles(),
-                                    reference.getSplash(),
                                     reference.getName(),
-                                    reference.getSpectralDbLink()));
+                                    r.getDbLocation(),
+                                    reference.getSpectralDbLink(),
+                                    reference.getSplash()));
                         }
                         if (resultList.size() > options.log) {
                             logger.info("... (" + (resultList.size() - options.log) + " more)");
@@ -132,10 +180,8 @@ public class SpectraSearchWorkflow implements Workflow {
                     }
                     logger.info("#####");
                 }
-
-                // TODO update instances
-                // TODO summary writing
             }
+
             if (options.log > 0) {
                 logger.info("#######################  END  #######################\n");
             }
