@@ -57,6 +57,7 @@ import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.sirius.scores.TreeScore;
+import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import org.apache.commons.collections4.map.AbstractReferenceMap;
 import org.apache.commons.collections4.map.ReferenceMap;
 import org.jetbrains.annotations.NotNull;
@@ -92,6 +93,8 @@ public class ProjectSpaceManager<I extends Instance> implements IterableWithSize
         config.registerContainer(CompoundContainer.class, new CompoundContainerSerializer());
         config.registerComponent(CompoundContainer.class, ProjectSpaceConfig.class, new ProjectSpaceConfigSerializer());
         config.registerComponent(CompoundContainer.class, Ms2Experiment.class, new MsExperimentSerializer());
+        //spectral search
+        config.registerComponent(CompoundContainer.class, SpectralSearchResult.class, new SpectralSearchResultSerializer());
         //configure formula result
         config.registerContainer(FormulaResult.class, new FormulaResultSerializer());
         config.registerComponent(FormulaResult.class, FTree.class, new TreeSerializer());
