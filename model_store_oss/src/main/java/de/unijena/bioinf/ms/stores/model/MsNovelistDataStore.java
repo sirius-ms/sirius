@@ -20,25 +20,15 @@
 
 package de.unijena.bioinf.ms.stores.model;
 
-import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 
-public interface CanopusDataStore extends CanopusClientDataStore {
+public interface MsNovelistDataStore extends CanopusClientDataStore {
 
     /**
-     * Get canopus-fast.data file for the given predictor
-     * @param type Positive or negative predictor type
-     * @return canopus-fast.data in binary format
+     * Get model file for MsNovelist
+     * @return msnovelist.data in binary format
      */
-    @Deprecated(forRemoval = true)
-    Optional<InputStream> getCanopusFastData(PredictorType type) throws IOException;
-
-    /**
-     * Get canopus-fast.data file for canopus
-     * @return canopus-fast.data in binary format
-     */
-    Optional<InputStream> getCanopusFastData() throws IOException;
+    Optional<InputStream> getMsNovelistData() throws IOException;
 }
