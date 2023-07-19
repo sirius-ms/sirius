@@ -38,7 +38,6 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import javax.swing.plaf.nimbus.AbstractRegionPainter;
 import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
@@ -57,17 +56,7 @@ public class GuiUtils {
     public final static int SMALL_GAP = 5;
     public final static int MEDIUM_GAP = 10;
     public final static int LARGE_GAP = 20;
-    public final static FontMetrics TOOL_TIP_FONT_METRIC = makeToolTipMetric();
 
-
-
-    public static FontMetrics makeToolTipMetric() {
-        UIDefaults uidefs=UIManager.getLookAndFeelDefaults();
-        Font font=uidefs.getFont("ToolTip.font");
-        GraphicsEnvironment ge=GraphicsEnvironment.getLocalGraphicsEnvironment();
-        Graphics2D g2d=ge.createGraphics(new BufferedImage(1,1,1));
-        return g2d.getFontMetrics(font);
-    }
     public static void initUI() {
         final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
         final String theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
@@ -231,7 +220,6 @@ public class GuiUtils {
     public static String formatToolTip(int width, java.util.List<String> lines) {
         if (lines == null || lines.isEmpty())
             return null;
-        width = Math.min(width, lines.stream().mapToInt(TOOL_TIP_FONT_METRIC::stringWidth).max().orElse(width));
         return "<html><p width=\"" + width + "\">"
                 + lines.stream().map(it -> it.replace("\n", "<br>")).collect(Collectors.joining("<br>"))
                 + "</p></html>";
