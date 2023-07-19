@@ -35,8 +35,8 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Locale;
 
 /**
  * Created by fleisch on 24.05.17.
@@ -44,6 +44,7 @@ import java.util.Locale;
 class CompoundStructureImage extends JPanel {
 
     protected static final Font nameFont, rankFont, matchFont;
+    private static final DecimalFormat decimalFormat = new DecimalFormat("#0.000");
 
     static {
         //init fonts
@@ -121,10 +122,10 @@ class CompoundStructureImage extends JPanel {
 //
 
         //todo change to gif
-        final String tanimotoText = molecule.getTanimotoScore() == null  ? "loading..." : String.format(Locale.US, "%.2f", molecule.getTanimotoScore() * 100d) + "%";
-        double tw = gg.getFontMetrics(matchFont).getStringBounds(tanimotoText, gg).getWidth();
+        final String scoreText = decimalFormat.format(molecule.getScore());
+        double tw = gg.getFontMetrics(matchFont).getStringBounds(scoreText, gg).getWidth();
 
         gg.setFont(matchFont);
-        gg.drawString(tanimotoText, (int) (getWidth() - (tw + 4)), getHeight() - 4);
+        gg.drawString(scoreText, (int) (getWidth() - (tw + 4)), getHeight() - 4);
     }
 }

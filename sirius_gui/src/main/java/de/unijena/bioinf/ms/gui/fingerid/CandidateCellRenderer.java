@@ -268,76 +268,9 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
         }
     }
 
-    public class XLogPLabel extends JPanel {
-
-        private double logP;
-        private final DecimalFormat format = new DecimalFormat("#0.000");
-        private Font font;
-
-        public XLogPLabel() {
-            this.logP = Double.NaN;
-            setPreferredSize(new Dimension(128, 20));
-            Map<TextAttribute, Object> map = new HashMap<TextAttribute, Object>();
-            map.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
-            map.put(TextAttribute.WEIGHT, TextAttribute.WEIGHT_BOLD);
-            font = nameFont.deriveFont(map);
-        }
-
-        @Override
-        public void paintComponent(Graphics g) {
-            ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            if (Double.isNaN(logP)) return;
-            g.setFont(font);
-            int widthB = g.getFontMetrics().stringWidth("XLogP: ");
-            g.drawString("XLogP:", 0, 14);
-            g.setFont(nameFont);
-            g.drawString(format.format(logP), widthB, 14);
-        }
-
-        public void setLogP(double logP) {
-            this.logP = logP;
-            repaint();
-        }
-    }
-
-    public class ScoreLabel extends JPanel {
-
-        private double score;
-        private final DecimalFormat format = new DecimalFormat("#0.000");
-        private Font scoreSuperscriptFont;
-
-        public ScoreLabel() {
-            this.score = Double.NaN;
-            setPreferredSize(new Dimension(128, 20));
-            final HashMap<AttributedCharacterIterator.Attribute, Object> attrs = new HashMap<>();
-            attrs.put(TextAttribute.SUPERSCRIPT, TextAttribute.SUPERSCRIPT_SUPER);
-            attrs.put(TextAttribute.SIZE, 15f);
-            scoreSuperscriptFont = nameFont.deriveFont(attrs);
-        }
-
-        @Override
-        public void paintComponent(Graphics g) {
-            ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            if (Double.isNaN(score)) return;
-            g.setFont(nameFont);
-            final String t1 = "Score: ";
-            int widthB = g.getFontMetrics().stringWidth(t1);
-            g.drawString(t1, 0, 14);
-            //g.setFont(scoreSuperscriptFont);
-            g.drawString(format.format(score), widthB, 14);
-        }
-
-        public void setScore(double score) {
-            this.score = score;
-            repaint();
-        }
-    }
-
     public class DescriptionPanel extends JPanel {
 
         protected JLabel inchi, agreements;
-        protected XLogPLabel xlogP;
-        protected ScoreLabel scoreL;
         protected FingerprintView ag;
         protected JPanel agpanel;
         protected DatabasePanel databasePanel;
@@ -350,12 +283,9 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             final JPanel namePanel = new JPanel(new BorderLayout());
             inchi = new JLabel("", SwingConstants.LEFT);
             inchi.setFont(nameFont);
-            xlogP = new XLogPLabel();
             namePanel.setOpaque(false);
             namePanel.add(inchi, BorderLayout.WEST);
-            namePanel.add(xlogP, BorderLayout.EAST);
             add(namePanel);
-
 
             Map<TextAttribute, Object> map = new HashMap<TextAttribute, Object>();
             map.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
@@ -376,10 +306,8 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
 
             final JLabel dbl = new JLabel("Sources");
             dbl.setFont(nameFont.deriveFont(map));
-            scoreL = new ScoreLabel();
             b1.setOpaque(false);
             b1.add(dbl, BorderLayout.WEST);
-            b1.add(scoreL, BorderLayout.EAST);
             add(b1);
 
             final Box b2 = Box.createHorizontalBox();
@@ -394,8 +322,6 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             setFont(propertyFont);
             inchi.setText(value.candidate.getInchi().key2D());
             databasePanel.setCompound(value);
-            xlogP.setLogP(value.candidate.getXlogp());
-            scoreL.setScore(value.getScore());
             ag.agreement = null;
 
             if (value.fp == null)
