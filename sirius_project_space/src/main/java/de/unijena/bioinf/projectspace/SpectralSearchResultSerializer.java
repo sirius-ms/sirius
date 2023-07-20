@@ -20,8 +20,13 @@
 
 package de.unijena.bioinf.projectspace;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
+import de.unijena.bioinf.spectraldb.entities.SimpleSerializers;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -31,7 +36,14 @@ import java.util.zip.GZIPOutputStream;
 
 public class SpectralSearchResultSerializer implements ComponentSerializer<CompoundContainerId, CompoundContainer, SpectralSearchResult> {
 
-    private final static ObjectMapper objectMapper = new ObjectMapper();
+    private final static ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+    static {
+        SimpleModule module = new SimpleModule();
+        module.addSerializer(Deviation.class, new ToStringSerializer());
+        module.addDeserializer(Deviation.class, new SimpleSerializers.DeviationDeserializer());
+        objectMapper.registerModule(module);
+    }
 
     @Override
     public @Nullable SpectralSearchResult read(ProjectReader reader, CompoundContainerId id, CompoundContainer container) throws IOException {
