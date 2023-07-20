@@ -32,6 +32,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.AdditionalFields;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
 import de.unijena.bioinf.ms.annotations.SpectrumAnnotation;
 
@@ -120,6 +121,15 @@ public class SimpleSerializers {
             af.putAll(map);
             return af;
         }
+    }
+
+    public static final class DeviationDeserializer extends FromStringDeserializer<Deviation> {
+
+        @Override
+        public Deviation getObject(String text) {
+            return Deviation.fromString(text);
+        }
+
     }
 
 }
