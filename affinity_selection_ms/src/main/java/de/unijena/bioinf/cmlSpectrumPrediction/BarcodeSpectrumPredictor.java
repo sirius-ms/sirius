@@ -19,38 +19,31 @@ import java.util.Map;
 public class BarcodeSpectrumPredictor extends AbstractMs2SpectrumPredictor<Peak>{
 
     private final boolean isPositiveMode;
-    private final HashMap<Peak, CombinatorialFragment> mapping;
 
     public BarcodeSpectrumPredictor(FragmentationPredictor fragPredictor, boolean positiveMode){
         super(fragPredictor, positiveMode ? PeriodicTable.getInstance().getPrecursorProtonation() : PeriodicTable.getInstance().getPrecursorDeprotonation());
         this.isPositiveMode = positiveMode;
-        this.mapping = new HashMap<>();
     }
 
     @Override
     public Ms2Spectrum<Peak> predictSpectrum() {
-        FragmentationPredictor fragPredictor = this.getFragmentationPredictor();
-        PrecursorIonType ionType = this.getPrecursorIonType();
-        List<CombinatorialFragment> predFragments = fragPredictor.getFragments();
-
+        List<CombinatorialFragment> predFragments = this.fragPredictor.getFragments();
         SimpleMutableSpectrum spec = new SimpleMutableSpectrum(predFragments.size());
+
         for(CombinatorialFragment fragment : predFragments){
             double neutralFragmentMass = fragment.getFormula().getMass();
-            double fragmentMz = ionType.neutralMassToPrecursorMass(neutralFragmentMass);
+            double fragmentMz = this.precursorIonType.neutralMassToPrecursorMass(neutralFragmentMass);
             SimplePeak peak = new SimplePeak(fragmentMz, 1d);
             spec.addPeak(peak);
-            this.mapping.put(peak, fragment);
+            this.peak2fragment.put(peak, fragment);
         }
         Spectrums.sortSpectrumByMass(spec);
 
-        MolecularGraph precursorMolecule = fragPredictor.getMolecule();
-        double precursorMz = ionType.neutralMassToPrecursorMass(precursorMolecule.getFormula().getMass());
-        this.mapping.put(new SimplePeak(precursorMz, 1d), precursorMolecule.asFragment());
-        return new MutableMs2Spectrum(spec, precursorMz, null, 2);
-    }
-
-    public Map<Peak, CombinatorialFragment> getPeakFragmentMapping() {
-        return this.mapping;
+        MolecularGraph precursorMolecule = this.fragPredictor.getMolecule();
+        double precursorMz = this.precursorIonType.neutralMassToPrecursorMass(precursorMolecule.getFormula().getMass());
+        this.peak2fragment.put(new SimplePeak(precursorMz, 1d), precursorMolecule.asFragment());
+        this.spectrum = new MutableMs2Spectrum(spec, precursorMz, null, 2);
+        return this.spectrum;
     }
 
     public boolean isPositiveMode(){
