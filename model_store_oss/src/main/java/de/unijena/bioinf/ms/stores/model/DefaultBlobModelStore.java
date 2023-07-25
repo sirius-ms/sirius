@@ -34,7 +34,7 @@ import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.Optional;
 
-public class DefaultBlobModelStore<Storage extends BlobStorage> extends AbstractBlobModelStore<Storage> implements CanopusDataStore, FingerIdDataStore {
+public class DefaultBlobModelStore<Storage extends BlobStorage> extends AbstractBlobModelStore<Storage> implements MsNovelistDataStore, CanopusDataStore, FingerIdDataStore {
 
     public DefaultBlobModelStore(@NotNull Storage blobStorage) {
         this(blobStorage, Compression.GZIP);
@@ -44,10 +44,16 @@ public class DefaultBlobModelStore<Storage extends BlobStorage> extends Abstract
     }
 
     @Override
-    public Optional<InputStream> getCanopusData(PredictorType type) throws IOException {
-        return getResource(Path.of("canopus.data"), type);
+    public Optional<InputStream> getMsNovelistData() throws IOException {
+        return getResource(Path.of("msnovelist.data"));
     }
 
+    @Override
+    public Optional<InputStream> getCanopusFastData() throws IOException {
+        return getResource(Path.of("canopus-fast.data"));
+    }
+
+    @Deprecated(forRemoval = true)
     @Override
     public Optional<InputStream> getCanopusFastData(PredictorType type) throws IOException {
         return getResource(Path.of("canopus-fast.data"), type);

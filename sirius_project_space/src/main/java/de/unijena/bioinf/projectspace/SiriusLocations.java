@@ -24,6 +24,9 @@ public interface SiriusLocations {
 
     String
             MS2_EXPERIMENT = "spectrum.ms",
+
+            SPECTRAL_SEARCH_JSON = "spectral_search.json.gz",
+
             COMPOUND_INFO = "compound.info",
             COMPOUND_CONFIG = "compound.config",
 //            LCMS_TRACES = "lcms.binary",

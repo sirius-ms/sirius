@@ -31,6 +31,9 @@ import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobOutput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobOutput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJob;
+import de.unijena.bioinf.ms.rest.model.msnovelist.MsNovelistJob;
+import de.unijena.bioinf.ms.rest.model.msnovelist.MsNovelistJobInput;
+import de.unijena.bioinf.ms.rest.model.msnovelist.MsNovelistJobOutput;
 
 /**
  * Defines available JobTable. A JobTable contains always the fields present {@link JobBase}
@@ -40,7 +43,8 @@ public enum JobTable {
 
     JOBS_FINGERID(FingerprintJob.class, FingerprintJobInput.class, FingerprintJobOutput.class),
     JOBS_CANOPUS(CanopusJob.class, CanopusJobInput.class, CanopusJobOutput.class),
-    JOBS_COVTREE(CovtreeJob.class, CovtreeJobInput.class, CovtreeJobOutput.class);
+    JOBS_COVTREE(CovtreeJob.class, CovtreeJobInput.class, CovtreeJobOutput.class),
+    JOBS_MSNOVELIST(MsNovelistJob .class, MsNovelistJobInput .class, MsNovelistJobOutput .class);
 
     public static final String JOBS_GENERIC = "GENERIC";
 
