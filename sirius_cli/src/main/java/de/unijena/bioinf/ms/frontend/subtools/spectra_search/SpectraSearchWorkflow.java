@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.frontend.subtools.spectra_search;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
@@ -148,11 +149,11 @@ public class SpectraSearchWorkflow implements Workflow {
                     logger.info("#####");
                     logger.info("Experiment: " + instance.getExperiment().getName());
 
-                    List<Ms2Spectrum<Peak>> queries = instance.getExperiment().getMs2Spectra();
+                    List<MutableMs2Spectrum> queries = instance.getExperiment().getMs2Spectra();
                     Map<Integer, List<SpectralSearchResult.SearchResult>> resultMap = StreamSupport.stream(result.spliterator(), false).collect(Collectors.groupingBy(SpectralSearchResult.SearchResult::getQuerySpectrumIndex));
                     for (Integer queryIndex : resultMap.keySet()) {
-                        Ms2Spectrum<Peak> query = queries.get(queryIndex);
-                        logger.info("Query spectrum: MS" + query.getMsLevel() + " with precursor " + query.getPrecursorMz() + " m/z at " + query.getCollisionEnergy());
+                        MutableMs2Spectrum query = queries.get(queryIndex);
+                        logger.info(String.format("Query: MS%d [#%d; %deV; %.3fm/z]", query.getMsLevel(), (query.getScanNumber() > -1) ? query.getScanNumber() : queryIndex + 1, Math.round(query.getCollisionEnergy().getMinEnergy()), query.getPrecursorMz()));
                         logger.info("Similarity | Peaks | Precursor | Prec. m/z | MS | Coll. | Instrument | InChIKey | Smiles | Name | DB location | DB link | Splash");
                         List<SpectralSearchResult.SearchResult> resultList = resultMap.get(queryIndex);
                         for (SpectralSearchResult.SearchResult r : resultList.subList(0, Math.min(options.log, resultList.size()))) {
