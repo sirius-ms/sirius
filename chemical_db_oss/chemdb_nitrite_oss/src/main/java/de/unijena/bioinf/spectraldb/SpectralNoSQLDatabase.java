@@ -53,6 +53,8 @@ import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.entities.SimpleSerializers;
 import de.unijena.bioinf.storage.db.nosql.*;
 import de.unijena.bionf.spectral_alignment.AbstractSpectralAlignment;
+import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
+import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
@@ -105,6 +107,7 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, Closeabl
         try {
             final List<SpectralSearchResult.SearchResult> results = new ArrayList<>();
             AbstractSpectralAlignment alignment = alignmentType.type.getConstructor(Deviation.class).newInstance(maxPeakDeviation);
+            CosineQueryUtils cosineQueryUtils = new CosineQueryUtils(alignment);
 
             int maxProgress = 0;
             List<Triple<Ms2Spectrum<P>, Integer, Filter>> params = new ArrayList<>();
@@ -119,13 +122,15 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, Closeabl
             int progress = 0;
             for (int i = 0; i < params.size(); i++) {
                 Triple<Ms2Spectrum<P>, Integer, Filter> param = params.get(i);
-                OrderedSpectrum<Peak> orderedQuery = new SimpleSpectrum(param.getLeft());
+                CosineQuerySpectrum cosineQuery = cosineQueryUtils.createQuery(new SimpleSpectrum(param.getLeft()), param.getLeft().getPrecursorMz());
 
                 int pageSize = 100;
                 for (int offset = 0; offset < param.getMiddle(); offset += pageSize) {
                     Iterable<Ms2ReferenceSpectrum> references = this.storage.find(param.getRight(), Ms2ReferenceSpectrum.class, offset, pageSize,"spectrum");
                     for (Ms2ReferenceSpectrum reference : references) {
-                        SpectralSimilarity similarity = alignment.score(orderedQuery, reference.getSpectrum());
+                        CosineQuerySpectrum cosineReference = cosineQueryUtils.createQuery(reference.getSpectrum(), reference.getPrecursorMz());
+                        SpectralSimilarity similarity = cosineQueryUtils.cosineProduct(cosineQuery, cosineReference);
+
                         if (similarity.shardPeaks > 0) {
                             SpectralSearchResult.SearchResult res = SpectralSearchResult.SearchResult.builder()
                                     .dbLocation(this.location())
