@@ -58,7 +58,12 @@ public class ResultPanel extends JTabbedPane {
     public ResultPanel(final FormulaList siriusResultElements, final CompoundList compoundList, WebAPI webAPI) {
         super();
         this.setToolTipText("Results");
-        spectralMatchingPanel = new SpectralMatchingPanel(compoundList);
+
+        if (PropertyManager.getBoolean("de.unijena.bioinf.sirius.spectralAlignment.show", false)) {
+            spectralMatchingPanel = new SpectralMatchingPanel(compoundList);
+        } else {
+            spectralMatchingPanel = null;
+        }
 
         formulasTab = new FormulaOverviewPanel(siriusResultElements);
         treeTab = new TreeVisualizationPanel();
@@ -93,7 +98,9 @@ public class ResultPanel extends JTabbedPane {
 
         addTab("Compound Classes", null, new FormulaListHeaderPanel(siriusResultElements, canopusTab), canopusTab.getDescription());
 
-        addTab("Reference Spectra", null, spectralMatchingPanel, spectralMatchingPanel.getDescription());
+        if (spectralMatchingPanel != null) {
+            addTab("Reference Spectra", null, spectralMatchingPanel, spectralMatchingPanel.getDescription());
+        }
 
         this.fl = siriusResultElements;
 
