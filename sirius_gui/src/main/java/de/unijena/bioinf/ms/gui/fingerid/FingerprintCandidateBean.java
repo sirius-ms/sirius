@@ -32,8 +32,6 @@ import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
-import de.unijena.bioinf.projectspace.SpectralSearchResultBean;
-import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import org.jetbrains.annotations.NotNull;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
@@ -99,6 +97,8 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
     protected FingerprintAgreement substructures; //todo fire property change???
     protected final DatabaseLabel[] labels;
 
+    protected final ReferenceLabel referenceLabel;
+
     protected boolean atomCoordinatesAreComputed = false;
     protected ReentrantLock compoundLock = new ReentrantLock();
 
@@ -155,6 +155,8 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
             Collections.sort(labels);
             this.labels = labels.toArray(DatabaseLabel[]::new);
         }
+
+        this.referenceLabel = new ReferenceLabel();
     }
 
    /* protected CSIPredictor getCorrespondingCSIPredictor() throws IOException {
@@ -163,6 +165,10 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
 
     public DatabaseLabel[] getLabels() {
         return labels;
+    }
+
+    public ReferenceLabel getReferenceLabel() {
+        return referenceLabel;
     }
 
     public void highlightInBackground() {
@@ -219,22 +225,6 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
 
     public FormulaResultBean getFormulaResult() {
         return parent;
-    }
-
-    public Optional<SpectralSearchResultBean> getSpectralSearchResults() {
-        if (this.parent != null) {
-            return this.parent.getSpectralSearchResults();
-        } else {
-            return Optional.empty();
-        }
-    }
-
-    public Ms2ReferenceSpectrum getMs2SpectralData(Ms2ReferenceSpectrum reference) {
-        if (this.parent != null) {
-            return this.parent.getMs2SpectralData(reference);
-        } else {
-            return reference;
-        }
     }
 
     public boolean canBeNeutralCharged() {

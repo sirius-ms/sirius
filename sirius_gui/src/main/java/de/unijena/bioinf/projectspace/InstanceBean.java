@@ -23,23 +23,19 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
-import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
-import de.unijena.bioinf.spectraldb.SpectralLibrary;
-import de.unijena.bioinf.spectraldb.SpectralNoSQLDBs;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
-import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -62,17 +58,6 @@ public class InstanceBean extends Instance implements SiriusPCS {
 
     //Project-space listener
     private List<ContainerListener.Defined> listeners;
-
-    private static final Path libraryPath = Path.of(System.getProperty("user.home"),"massbank.db");
-    private static final SpectralLibrary spectralLibrary;
-
-    static {
-        try {
-            spectralLibrary = (Files.exists(libraryPath)) ? SpectralNoSQLDBs.getLocalSpectralLibrary(libraryPath) : null;
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-    }
 
     private SpectralSearchResultBean spectralBean = null;
 
@@ -200,17 +185,6 @@ public class InstanceBean extends Instance implements SiriusPCS {
         CompoundContainer container = loadCompoundContainer(SpectralSearchResult.class);
         Optional<SpectralSearchResult> result = container.getAnnotation(SpectralSearchResult.class);
         return result.map(SpectralSearchResultBean::new);
-    }
-
-    public Ms2ReferenceSpectrum getSpectralData(Ms2ReferenceSpectrum reference) {
-        if (spectralLibrary != null && reference.getSpectrum() == null) {
-            try {
-                return spectralLibrary.getSpectralData(reference);
-            } catch (ChemicalDatabaseException e) {
-                LoggerFactory.getLogger(getClass()).error("Error when getting spectral data '" + reference.getCandidateInChiKey() + "' from '" + getID() + "'.");
-            }
-        }
-        return reference;
     }
 
     public double getIonMass() {

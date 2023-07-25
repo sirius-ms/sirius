@@ -20,7 +20,10 @@
 package de.unijena.bioinf.ms.gui.dialogs;
 
 
+import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
+import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.SpectralMatchingPanel;
 import de.unijena.bioinf.ms.gui.ms_viewer.WebViewSpectraViewer;
 import de.unijena.bioinf.ms.gui.ms_viewer.data.SpectraJSONWriter;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -31,81 +34,25 @@ import java.awt.*;
 
 public class SpectralMatchingDialog extends JDialog {
 
-    // FIXME content not visible?
-    private final WebViewSpectraViewer browser;
-
-    private final SpectraJSONWriter spectraWriter;
-
-//    private final FingerprintCandidateBean fpBean;
-
-    private final SpectralSearchResultBean searchResults;
-
-    private final InstanceBean instance;
-
-    private int minSharedPeaks;
-
-    private double minSimilarity;
-
-    public SpectralMatchingDialog(SpectralSearchResultBean searchResults, InstanceBean instance) {
-        super(MainFrame.MF, "Spectral comparison", false);
-//        this.fpBean = fpBean;
-        this.instance = instance;
-        this.searchResults = searchResults;
-
-        this.minSharedPeaks = 3;
-        this.minSimilarity = 0.9;
-
-        this.spectraWriter = new SpectraJSONWriter();
-        this.browser = new WebViewSpectraViewer();
-
+    public SpectralMatchingDialog(final CompoundList compoundList, final FingerprintCandidateBean fingerprintCandidateBean) {
+        super(MainFrame.MF, "Reference spectra", true);
         this.setLayout(new BorderLayout());
-
-        // TODO add filter
-        // TODO add selection table
-
-        this.add(this.browser, BorderLayout.CENTER);
-
-        pack();
-        setLocationRelativeTo(getParent());
-
-        selectionChanged(0);
-    }
-
-    private void setMinSharedPeaks(int minSharedPeaks) {
-        // TODO is there already a filtered list implementation?
-//        if (minSharedPeaks >= 3 && minSharedPeaks != this.minSharedPeaks) {
-//
-//        }
-    }
-
-    private void selectionChanged(int index) {
-//        if (index < searchResults.size() && searchResults.size() > 0) {
-//            Jobs.runEDTLater(() -> {
-//                SpectralSearchResult.SearchResult result = searchResults.get(index);
-//                try {
-//                    SpectralLibrary db = SpectralDatabases.getSpectralLibrary(Path.of(result.getDbLocation())).orElseThrow();
-//                    final Ms2ReferenceSpectrum reference = db.getSpectralData(db.getReferenceSpectrum(result.getReferenceId()));
-//                    final SimpleSpectrum query = new SimpleSpectrum(instance.getMs2Spectra().get(result.getQuerySpectrumIndex()));
-//                    final SimpleSpectrum referenceSpectrum = reference.getSpectrum();
-//                    String json = spectraWriter.ms2MirrorJSON(query, referenceSpectrum, reference.getName());
-//                    this.browser.loadData(json, null, null);
-//                } catch (Exception e) {
-//                    throw new RuntimeException(e);
-//                }
-//            });
-//        }
+        this.add(new SpectralMatchingPanel(compoundList, fingerprintCandidateBean), BorderLayout.CENTER);
     }
 
     @Override
     public void setVisible(boolean b) {
         if (b) {
-            setLocationRelativeTo(MainFrame.MF);
+
             Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
             setPreferredSize(new Dimension(
                     Math.min(screenSize.width, (int) Math.floor(0.8 * MainFrame.MF.getWidth())),
                     Math.min(screenSize.height, (int) Math.floor(0.8 * MainFrame.MF.getHeight())))
             );
+            setDefaultCloseOperation(DISPOSE_ON_CLOSE);
             pack();
+            setLocationRelativeTo(getParent());
+            setResizable(false);
         }
         super.setVisible(b);
     }

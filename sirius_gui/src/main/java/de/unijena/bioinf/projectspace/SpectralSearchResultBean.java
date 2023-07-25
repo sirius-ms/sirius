@@ -21,10 +21,13 @@
 package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
+import de.unijena.bioinf.chemdb.DBLink;
+import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_db.SpectralDatabases;
 import de.unijena.bioinf.spectraldb.SpectralLibrary;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
@@ -34,6 +37,10 @@ public class SpectralSearchResultBean {
 
     private SpectralSearchResult result;
     private final Map<String, List<SpectralSearchResult.SearchResult>> resultMap = new HashMap<>();
+
+    private static final int MIN_SHARED_PEAKS = 3;
+
+    private static final double MIN_SIMILARITY = 0.9;
 
     public SpectralSearchResultBean(SpectralSearchResult result) {
         for (SpectralSearchResult.SearchResult r : result) {
@@ -54,29 +61,67 @@ public class SpectralSearchResultBean {
         this.result = result;
     }
 
-    public boolean isFPCandidateInResults(String inchiKey, int minSharedPeaks, double minSimilarity) {
+    public boolean isFPCandidateInResults(String inchiKey) {
         if (resultMap.containsKey(inchiKey)) {
-            return resultMap.get(inchiKey).stream().anyMatch(r -> r.getSimilarity().shardPeaks >= minSharedPeaks && r.getSimilarity().similarity >= minSimilarity);
+            return resultMap.get(inchiKey).stream().anyMatch(r -> r.getSimilarity().shardPeaks >= MIN_SHARED_PEAKS && r.getSimilarity().similarity >= MIN_SIMILARITY);
         }
         return false;
     }
 
-    public Optional<List<SpectralSearchResult.SearchResult>> getMatchingSpectraForFPCandidate(String inchiKey, int minSharedPeaks, double minSimilarity) {
+    public Optional<List<SpectralSearchResult.SearchResult>> getMatchingSpectraForFPCandidate(String inchiKey) {
         if (resultMap.containsKey(inchiKey)) {
-            return Optional.of(resultMap.get(inchiKey).stream().filter(r -> r.getSimilarity().shardPeaks >= minSharedPeaks && r.getSimilarity().similarity >= minSimilarity).toList());
+            return Optional.of(resultMap.get(inchiKey).stream().filter(r -> r.getSimilarity().shardPeaks >= MIN_SHARED_PEAKS && r.getSimilarity().similarity >= MIN_SIMILARITY).toList());
         }
         return Optional.empty();
     }
 
-    public Optional<SpectralSearchResult.SearchResult> getBestMatchingSpectrumForFPCandidate(String inchiKey, int minSharedPeaks, double minSimilarity) {
+    public Optional<SpectralSearchResult.SearchResult> getBestMatchingSpectrumForFPCandidate(String inchiKey) {
         if (resultMap.containsKey(inchiKey)) {
-            return resultMap.get(inchiKey).stream().filter(r -> r.getSimilarity().shardPeaks >= minSharedPeaks && r.getSimilarity().similarity >= minSimilarity).findFirst();
+            return resultMap.get(inchiKey).stream().filter(r -> r.getSimilarity().shardPeaks >= MIN_SHARED_PEAKS && r.getSimilarity().similarity >= MIN_SIMILARITY).findFirst();
         }
         return Optional.empty();
     }
 
-    public SpectralSearchResult getAllResults() {
-        return result;
+    public List<SpectralSearchResult.SearchResult> getAllResults() {
+        return result.getResults();
+    }
+
+    public static class MatchBean implements SiriusPCS, Comparable<MatchBean> {
+
+        private final MutableHiddenChangeSupport pcs = new MutableHiddenChangeSupport(this, true);
+
+        private final SpectralSearchResult.SearchResult match;
+
+        private Ms2ReferenceSpectrum reference;
+
+        public MatchBean(SpectralSearchResult.SearchResult match) {
+            this.match = match;
+            try {
+                SpectralLibrary db = SpectralDatabases.getSpectralLibrary(Path.of(match.getDbLocation())).orElseThrow();
+                this.reference = db.getReferenceSpectrum(match.getReferenceId());
+            } catch (Exception e) {
+                LoggerFactory.getLogger(getClass()).error("Error retrieving spectral matching data.", e);
+                this.reference = null;
+            }
+        }
+
+        public SpectralSearchResult.SearchResult getMatch() {
+            return match;
+        }
+
+        public Ms2ReferenceSpectrum getReference() {
+            return reference;
+        }
+
+        @Override
+        public HiddenChangeSupport pcs() {
+            return pcs;
+        }
+
+        @Override
+        public int compareTo(@NotNull SpectralSearchResultBean.MatchBean o) {
+            return Integer.compare(match.getRank(), o.getMatch().getRank());
+        }
     }
 
 }

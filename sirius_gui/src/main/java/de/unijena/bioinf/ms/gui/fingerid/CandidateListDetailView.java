@@ -37,6 +37,7 @@ import de.unijena.bioinf.ms.gui.dialogs.SpectralMatchingDialog;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.MolecularPropertyMatcherEditor;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.SmartFilterMatcherEditor;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
@@ -88,7 +89,9 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     private JTextField smartFilterTextField;
     private MolecularPropertyMatcherEditor molecularPropertyMatcherEditor;
 
-    public CandidateListDetailView(StructureList sourceList) {
+    private CompoundList compoundList;
+
+    public CandidateListDetailView(final CompoundList compoundList, StructureList sourceList) {
         super(sourceList);
 
         getSource().addActiveResultChangedListener((experiment, sre, resultElements, selections) -> {
@@ -102,8 +105,10 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
 
         candidateList = new CandidateInnerList(new DefaultEventListModel<>(filteredSource));
 
+        this.compoundList = compoundList;
+
         ToolTipManager.sharedInstance().registerComponent(candidateList);
-        candidateList.setCellRenderer(new CandidateCellRenderer(sourceList.csiScoreStats, this));
+        candidateList.setCellRenderer(new CandidateCellRenderer(compoundList, sourceList.csiScoreStats, this));
         candidateList.setFixedCellHeight(-1);
         candidateList.setPrototypeCellValue(FingerprintCandidateBean.PROTOTYPE);
         final JScrollPane scrollPane = new JScrollPane(candidateList, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -261,6 +266,10 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
                 molecularPropertyMatcherEditor.highlightChanged(filterByMolecularPropertyButton.isSelected());
             }
 
+            if (candidate.getReferenceLabel().rect.contains(point.x, point.y)) {
+                clickOnSpectralMatching(candidate);
+            }
+
             for (DatabaseLabel l : candidate.labels) {
                 if (l.rect.contains(point.x, point.y)) {
                     clickOnDBLabel(l, candidate);
@@ -274,19 +283,13 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         }
     }
 
-    private void clickOnDBLabel(DatabaseLabel label, FingerprintCandidateBean candidate) {
-        // TODO move away from db label to extra button
-//        if (label.sourceName.equals("Spectra")) {
-//            final FingerprintCandidateBean c = candidateList.getModel().getElementAt(selectedCompoundId);
-//            Jobs.runEDTLater(() -> {
-//                c.getSpectralSearchResults().ifPresent(searchBean -> {
-//                    if (searchBean.isFPCandidateInResults(c.candidate.getInchiKey2D())) {
-//                        searchBean.getMatchingSpectraForFPCandidate(c.candidate.getInchiKey2D()).ifPresent(searchResults -> new SpectralMatchingDialog(candidate, searchResults).setVisible(true));
-//                    }
-//                });
-//            });
-//        }
+    private void clickOnSpectralMatching(FingerprintCandidateBean candidate) {
+        Jobs.runEDTLater(() -> {
+            new SpectralMatchingDialog(compoundList, candidate).setVisible(true);
+        });
+    }
 
+    private void clickOnDBLabel(DatabaseLabel label, FingerprintCandidateBean candidate) {
         DataSources.getSourceFromName(label.sourceName).ifPresent(s -> {
             if (label.values == null || label.values.length == 0 || s.URI == null)
                 return;
@@ -437,6 +440,10 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
             if (databaseLabel != null) {
                 if (databaseLabel.hasLinks()) setCursor(new Cursor(Cursor.HAND_CURSOR));
                 return databaseLabel.getToolTipOrNull();
+            }
+            if (candidate.getReferenceLabel().contains(point)) {
+                setCursor(new Cursor(Cursor.HAND_CURSOR));
+                return null;
             }
 
             //no tooltip or clickable component

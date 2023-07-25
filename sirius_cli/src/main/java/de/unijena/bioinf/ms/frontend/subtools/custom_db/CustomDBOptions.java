@@ -27,6 +27,7 @@ import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.chemdb.custom.CustomDatabaseImporter;
 import de.unijena.bioinf.chemdb.custom.CustomDatabaseSettings;
+import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -35,9 +36,14 @@ import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
+import de.unijena.bioinf.ms.frontend.subtools.spectra_db.SpectralDBOptions;
+import de.unijena.bioinf.ms.frontend.subtools.spectra_db.SpectralDatabases;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
+import de.unijena.bioinf.spectraldb.SpectralLibrary;
+import de.unijena.bioinf.spectraldb.SpectralNoSQLDBs;
+import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.storage.blob.Compressible;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
@@ -132,6 +138,8 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
         final InputFilesOptions input;
         private JJob<Boolean> dbjob = null;
 
+        private JJob<Boolean> sjob = null;
+
         public CustomDBWorkflow(InputFilesOptions input) {
             super(JJob.JobType.SCHEDULER);
             this.input = input;
@@ -164,7 +172,10 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 addDBToPropertiesIfNotExist(db);
                 logInfo("Database added to SIRIUS. Use 'structure --db=\"" + db.storageLocation() + "\"' to search in this database.");
 
-                if (input != null && input.msInput != null && !input.msInput.unknownFiles.isEmpty()) {
+                if (input == null || input.msInput == null)
+                    return true;
+
+                if (!input.msInput.unknownFiles.isEmpty()) {
                     logInfo("Importing new structures to custom database '" + mode.importParas.location + "'...");
                     final AtomicLong lines = new AtomicLong(0);
                     final List<Path> unknown = input.msInput.unknownFiles.keySet().stream().sorted().collect(Collectors.toList());
@@ -185,6 +196,33 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                     submitJob(dbjob).awaitResult();
                     logInfo("...New structures imported to custom database '" + mode.importParas.location + "'.");
                 }
+
+                if (!input.msInput.msParserfiles.isEmpty()) {
+                    logInfo("Importing reference spectra to custom database '" + mode.importParas.location + "'...");
+
+                    checkForInterruption();
+                    SpectralDBOptions.ModeParas smode = new SpectralDBOptions.ModeParas();
+                    smode.importParas = new SpectralDBOptions.Import();
+                    smode.importParas.location = mode.importParas.location;
+                    smode.importParas.writeBuffer = mode.importParas.writeBuffer;
+                    sjob = new SpectralDBOptions.SpectralDBWorkflow(input, smode);
+                    checkForInterruption();
+                    submitJob(sjob).awaitResult();
+                    logInfo("...New reference spectra imported to custom database '" + mode.importParas.location + "'.");
+                }
+
+                // TODO match SMILES/INCHI -> ISSUE: CustomDatabaseImporter merges SMILES (and forgets what was merged!)
+//                SpectralLibrary sdb = SpectralDatabases.getSpectralLibrary(Path.of(mode.importParas.location)).orElseThrow();
+//                sdb.updateReferenceSpectraPaginated(
+//                        (spectra) -> {
+//                            for (Ms2ReferenceSpectrum spectrum : spectra) {
+//                                // TODO set matching candidate inchi key
+//                                spectrum.setCandidateInChiKey("FOO");
+//                            }
+//                            return spectra;
+//                        },
+//                mode.importParas.writeBuffer);
+
                 return true;
             } else if (mode.removeParas != null) {
                 if (mode.removeParas.location == null ||mode.removeParas.location.isBlank())
@@ -226,6 +264,8 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
         public void cancel() {
             if (dbjob != null)
                 dbjob.cancel();
+            if (sjob != null)
+                sjob.cancel();
             cancel(false);
         }
     }
