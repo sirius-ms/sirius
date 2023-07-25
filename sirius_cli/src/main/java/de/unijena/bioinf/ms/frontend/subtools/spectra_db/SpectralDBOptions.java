@@ -30,9 +30,6 @@ import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
-import de.unijena.bioinf.ms.frontend.utils.Progressbar.ProgressVisualizer;
-import de.unijena.bioinf.ms.frontend.utils.Progressbar.ProgressbarDefaultCalculator;
-import de.unijena.bioinf.ms.frontend.utils.Progressbar.ProgressbarDefaultVisualizer;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.spectraldb.SpectralLibrary;
@@ -64,7 +61,7 @@ public class SpectralDBOptions implements StandaloneTool<Workflow> {
         @CommandLine.ArgGroup(exclusive = false, heading = "@|bold %n List spectral database(s): %n|@", order = 100)
         Show showParas;
         @CommandLine.ArgGroup(exclusive = false, heading = "@|bold %n Import spectral database: %n|@", order = 200)
-        Import importParas;
+        public Import importParas;
         @CommandLine.ArgGroup(exclusive = false, heading = "@|bold %n Remove spectral database: %n|@", order = 300)
         Remove removeParas;
 
@@ -76,7 +73,7 @@ public class SpectralDBOptions implements StandaloneTool<Workflow> {
                 description = {"Location of the custom database to import into.",
                         "If no input data is given (global --input) the database will just be added to SIRIUS"
                 }, order = 201)
-        String location = null;
+        public String location = null;
 
         @CommandLine.Option(names = {"--buffer-size", "--buffer"}, defaultValue = "1000",
                 description = {"Maximum number of imported spectra to keep in memory before writing them to disk (into the db)."},
@@ -107,23 +104,19 @@ public class SpectralDBOptions implements StandaloneTool<Workflow> {
 
     @Override
     public Workflow makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
-        return new SpectralDBWorkflow(rootOptions.getInput());
+        return new SpectralDBWorkflow(rootOptions.getInput(), mode);
     }
 
     private static class ParsingIterator implements Iterator<Ms2Experiment> {
 
         private final Iterator<File> files;
 
-        private final ProgressVisualizer progressbar;
-
         private final SpectralDbMsExperimentParser parser;
         private final Map<String, GenericParser<Ms2Experiment>> parsers;
 
         private final Queue<Ms2Experiment> buffer = new ArrayDeque<>();
 
-        public ParsingIterator(Iterator<File> files, int fileCount) {
-            this.progressbar = new ProgressbarDefaultVisualizer<>(System.out, new ProgressbarDefaultCalculator(fileCount));
-            this.progressbar.start();
+        public ParsingIterator(Iterator<File> files) {
             this.files = files;
             this.parsers = new HashMap<>();
             this.parser = new SpectralDbMsExperimentParser();
@@ -140,21 +133,13 @@ public class SpectralDBOptions implements StandaloneTool<Workflow> {
                             parsers.put(ext, parser.getParserByExt(ext));
                         }
                         buffer.addAll(parsers.get(ext).parseFromFile(next));
-                        progressbar.getCalculator().increaseProgress();
                         break;
                     } catch (Exception ignored) {
-                        progressbar.getCalculator().increaseProgress();
                     }
 
                 }
             }
-            if (buffer.size() > 0) {
-                return true;
-            } else {
-                progressbar.stop();
-                System.out.println();
-                return false;
-            }
+            return buffer.size() > 0;
         }
 
         @Override
@@ -164,13 +149,16 @@ public class SpectralDBOptions implements StandaloneTool<Workflow> {
 
     }
 
-    public class SpectralDBWorkflow extends BasicJJob<Boolean> implements Workflow {
+    public static class SpectralDBWorkflow extends BasicJJob<Boolean> implements Workflow {
 
         final InputFilesOptions input;
 
-        public SpectralDBWorkflow(InputFilesOptions input) {
+        final ModeParas mode;
+
+        public SpectralDBWorkflow(InputFilesOptions input, ModeParas mode) {
             super(JJob.JobType.SCHEDULER);
             this.input = input;
+            this.mode = mode;
         }
 
         @Override
@@ -191,7 +179,7 @@ public class SpectralDBOptions implements StandaloneTool<Workflow> {
 
                     Set<Path> files = input.msInput.msParserfiles.keySet();
 
-                    Iterator<Ms2Experiment> iterator = new ParsingIterator(files.stream().map(Path::toFile).iterator(), files.size());
+                    Iterator<Ms2Experiment> iterator = new ParsingIterator(files.stream().map(Path::toFile).iterator());
                     try {
                         int count = SpectralNoSQLDBs.importSpectraFromMs2Experiments((SpectralNoSQLDatabase<?>) db, () -> iterator, mode.importParas.writeBuffer);
 
