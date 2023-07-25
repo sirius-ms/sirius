@@ -25,48 +25,54 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
-import de.unijena.bionf.spectral_alignment.AbstractSpectralAlignment;
-import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
-import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 public interface SpectralLibrary {
 
-    default <P extends Peak> Iterable<SearchResult> matchingSpectra(
-            Ms2Spectrum<P> query,
-            Deviation precursorMzDeviation,
-            Deviation maxPeakDeviation
-    ) throws ChemicalDatabaseException {
-        return matchingSpectra(List.of(query), precursorMzDeviation, maxPeakDeviation);
-    }
-
-    default <P extends Peak, A extends AbstractSpectralAlignment> Iterable<SearchResult> matchingSpectra(
+    default <P extends Peak> SpectralSearchResult matchingSpectra(
             Ms2Spectrum<P> query,
             Deviation precursorMzDeviation,
             Deviation maxPeakDeviation,
-            Class<A> alignmentType
+            SpectralAlignmentType alignmentType
     ) throws ChemicalDatabaseException {
-        return matchingSpectra(List.of(query), precursorMzDeviation, maxPeakDeviation, alignmentType);
+        return matchingSpectra(List.of(query), precursorMzDeviation, maxPeakDeviation, alignmentType, null);
     }
 
-    default <P extends Peak> Iterable<SearchResult> matchingSpectra(
-            Iterable<Ms2Spectrum<P>> queries,
-            Deviation precursorMzDeviation,
-            Deviation maxPeakDeviation
-    ) throws ChemicalDatabaseException {
-        return matchingSpectra(queries, precursorMzDeviation, maxPeakDeviation, IntensityWeightedSpectralAlignment.class);
-    }
-
-    <P extends Peak, A extends AbstractSpectralAlignment> Iterable<SearchResult> matchingSpectra(
+    default <P extends Peak> SpectralSearchResult matchingSpectra(
             Iterable<Ms2Spectrum<P>> queries,
             Deviation precursorMzDeviation,
             Deviation maxPeakDeviation,
-            Class<A> alignmentType
+            SpectralAlignmentType alignmentType
+    ) throws ChemicalDatabaseException {
+        return matchingSpectra(queries, precursorMzDeviation, maxPeakDeviation, alignmentType, null);
+    }
+
+    default <P extends Peak> SpectralSearchResult matchingSpectra(
+            Ms2Spectrum<P> query,
+            Deviation precursorMzDeviation,
+            Deviation maxPeakDeviation,
+            SpectralAlignmentType alignmentType,
+            BiConsumer<Integer, Integer> progressConsumer
+    ) throws ChemicalDatabaseException {
+        return matchingSpectra(List.of(query), precursorMzDeviation, maxPeakDeviation, alignmentType, progressConsumer);
+    }
+
+    <P extends Peak> SpectralSearchResult matchingSpectra(
+            Iterable<Ms2Spectrum<P>> queries,
+            Deviation precursorMzDeviation,
+            Deviation maxPeakDeviation,
+            SpectralAlignmentType alignmentType,
+            BiConsumer<Integer, Integer> progressConsumer
     ) throws ChemicalDatabaseException;
+
+    String name();
+
+    String location();
+
+    int countAllSpectra() throws IOException;
 
     default Iterable<Ms2ReferenceSpectrum> lookupSpectra(double precursorMz, Deviation deviation) throws ChemicalDatabaseException {
         return lookupSpectra(precursorMz, deviation, false);
@@ -80,25 +86,11 @@ public interface SpectralLibrary {
 
     Iterable<Ms2ReferenceSpectrum> lookupSpectra(String inchiKey2d, boolean withData) throws ChemicalDatabaseException;
 
+    Ms2ReferenceSpectrum getReferenceSpectrum(long id) throws ChemicalDatabaseException;
+
     Iterable<Ms2ReferenceSpectrum> getSpectralData(Iterable<Ms2ReferenceSpectrum> references) throws ChemicalDatabaseException;
 
     Ms2ReferenceSpectrum getSpectralData(Ms2ReferenceSpectrum reference) throws ChemicalDatabaseException;
-
-    @Builder
-    @Getter
-    final class SearchResult {
-
-        private Ms2Spectrum<? extends Peak> query;
-
-        @Builder.Default
-        @Setter
-        private int rank = -1;
-
-        private SpectralSimilarity similarity;
-
-        private Ms2ReferenceSpectrum reference;
-
-    }
 
 
 }

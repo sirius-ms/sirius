@@ -22,6 +22,7 @@ package de.unijena.bioinf.storage.db.nosql;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -30,6 +31,8 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
     enum SortOrder {
         ASCENDING, DESCENDING
     }
+
+    Path location();
 
     //region CRUD operations
 

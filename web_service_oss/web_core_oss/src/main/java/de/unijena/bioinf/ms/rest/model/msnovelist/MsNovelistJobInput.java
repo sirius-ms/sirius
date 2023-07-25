@@ -18,27 +18,23 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.stores.model;
+package de.unijena.bioinf.ms.rest.model.msnovelist;
 
-import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
+/**
+ * Class containing the input for MsNovelist Jobs
+ * Will be (De-)Marshaled to/from json
+ * see {@link de.unijena.bioinf.ms.rest.model.JobTable}
+ */
+public class MsNovelistJobInput {
+    public final String formula;
+    public final byte[] fingerprint; // LITTLE ENDIAN BINARY ENCODED PLATT PROBABILITIES
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Optional;
+    public MsNovelistJobInput(String formula, byte[] fingerprint) {
+        this.formula = formula;
+        this.fingerprint = fingerprint;
+    }
 
-public interface CanopusDataStore extends CanopusClientDataStore {
-
-    /**
-     * Get canopus-fast.data file for the given predictor
-     * @param type Positive or negative predictor type
-     * @return canopus-fast.data in binary format
-     */
-    @Deprecated(forRemoval = true)
-    Optional<InputStream> getCanopusFastData(PredictorType type) throws IOException;
-
-    /**
-     * Get canopus-fast.data file for canopus
-     * @return canopus-fast.data in binary format
-     */
-    Optional<InputStream> getCanopusFastData() throws IOException;
+    private MsNovelistJobInput() {
+        this(null, null);
+    }
 }

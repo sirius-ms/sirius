@@ -18,27 +18,38 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.stores.model;
+package de.unijena.bioinf.ms.rest.model.msnovelist;
 
-import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Getter;
+import org.jdbi.v3.json.Json;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.util.List;
 import java.util.Optional;
 
-public interface CanopusDataStore extends CanopusClientDataStore {
+/**
+ * Output data of a MsNovelist Job, see {@link de.unijena.bioinf.ms.rest.model.JobTable}
+ */
+@Getter
+public class MsNovelistJobOutput {
+    // can be regularly null if there was not enough data to compute the tree
+    @Json
+    @Nullable protected List<MsNovelistCandidate> candidates;
 
-    /**
-     * Get canopus-fast.data file for the given predictor
-     * @param type Positive or negative predictor type
-     * @return canopus-fast.data in binary format
-     */
-    @Deprecated(forRemoval = true)
-    Optional<InputStream> getCanopusFastData(PredictorType type) throws IOException;
 
-    /**
-     * Get canopus-fast.data file for canopus
-     * @return canopus-fast.data in binary format
-     */
-    Optional<InputStream> getCanopusFastData() throws IOException;
+    public MsNovelistJobOutput(@Nullable List<MsNovelistCandidate> candidates) {
+        this.candidates = candidates;
+    }
+
+    private MsNovelistJobOutput() {
+        this(null);
+    }
+
+    @JsonIgnore
+    @NotNull
+    public Optional<List<MsNovelistCandidate>> getCandidatesOpt() {
+        return Optional.ofNullable(getCandidates());
+    }
 }

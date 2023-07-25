@@ -20,19 +20,13 @@
 
 package de.unijena.bioinf.ms.rest.client.canopus;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.ms.rest.client.AbstractCsiClient;
-import de.unijena.bioinf.ms.rest.model.JobUpdate;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
-import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
-import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobOutput;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,16 +55,6 @@ public class CanopusClient extends AbstractCsiClient {
                         .addQueryParameter("predictor", predictorType.toBitsAsString())
                         .build()).get(),
                 respHandling
-        );
-    }
-
-    public JobUpdate<CanopusJobOutput> postJobs(final CanopusJobInput input, OkHttpClient client) throws IOException {
-        return executeFromJson(client,
-                () -> new Request.Builder()
-                            .url(buildVersionSpecificWebapiURI("/canopus/" + CID + "/jobs").build())
-                            .post(RequestBody.create(new ObjectMapper().writeValueAsBytes(input), APPLICATION_JSON))
-                            /*.addHeader("Content-Type", APPLICATION_JSON.type())*/
-                , new TypeReference<>() {}
         );
     }
 }
