@@ -21,9 +21,9 @@
 package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
-import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_db.SpectralDatabases;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.spectraldb.SpectralLibrary;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
@@ -38,9 +38,9 @@ public class SpectralSearchResultBean {
     private SpectralSearchResult result;
     private final Map<String, List<SpectralSearchResult.SearchResult>> resultMap = new HashMap<>();
 
-    private static final int MIN_SHARED_PEAKS = 3;
+    private static final int MIN_SHARED_PEAKS = PropertyManager.getInteger("de.unijena.bioinf.sirius.spectralAlignment.minPeaks", 3);
 
-    private static final double MIN_SIMILARITY = 0.9;
+    private static final double MIN_SIMILARITY = PropertyManager.getDouble("de.unijena.bioinf.sirius.spectralAlignment.minScore", 0.9);
 
     public SpectralSearchResultBean(SpectralSearchResult result) {
         for (SpectralSearchResult.SearchResult r : result) {
