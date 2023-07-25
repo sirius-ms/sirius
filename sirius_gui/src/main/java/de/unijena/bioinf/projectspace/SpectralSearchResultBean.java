@@ -83,7 +83,7 @@ public class SpectralSearchResultBean {
     }
 
     public List<SpectralSearchResult.SearchResult> getAllResults() {
-        return result.getResults();
+        return result.getResults().stream().filter(r -> r.getSimilarity().shardPeaks >= MIN_SHARED_PEAKS && r.getSimilarity().similarity >= MIN_SIMILARITY).toList();
     }
 
     public static class MatchBean implements SiriusPCS, Comparable<MatchBean> {
