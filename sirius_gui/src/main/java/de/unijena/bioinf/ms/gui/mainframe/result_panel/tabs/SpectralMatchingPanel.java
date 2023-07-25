@@ -325,6 +325,8 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
             final SiriusResultTableCellRenderer defaultRenderer = new SiriusResultTableCellRenderer(tf.highlightColumnIndex());
             table.setDefaultRenderer(Object.class, defaultRenderer);
 
+            table.getColumnModel().getColumn(3).setCellRenderer(new BarTableCellRenderer(tf.highlightColumnIndex(), 0f, 1f, true));
+
             LinkedSiriusTableCellRenderer linkRenderer = new LinkedSiriusTableCellRenderer(defaultRenderer, (LinkedSiriusTableCellRenderer.LinkCreator<DBLink>) dbLink -> {
                 Optional<DataSource> ds = DataSources.getSourceFromName(dbLink.name);
                 if (ds.isEmpty() || ds.get().URI == null || dbLink.id == null)
