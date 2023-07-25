@@ -12,4 +12,5 @@ dependencies {
     api group: 'org.apache.maven', name: 'maven-artifact', version: '3.5.0'
     // jason marshalling
     api "com.squareup.okhttp3:okhttp:$okhttp_version"
+    api "org.jdbi:jdbi3-jackson2:$jdbi_version"
 }
