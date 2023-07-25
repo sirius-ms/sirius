@@ -32,13 +32,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class SpectralDatabases {
 
     private final static String PROP_KEY = "de.unijena.bioinf.chemdb.spectraldb.source";
 
-    private final static Map<Path, SpectralLibrary> openLibraries = new HashMap<>();
+    private final static Map<Path, SpectralLibrary> openLibraries = new ConcurrentHashMap<>();
 
     public static SpectralLibrary createAndAddSpectralLibrary(@NotNull Path path) throws IOException {
         if (!openLibraries.containsKey(path)) {

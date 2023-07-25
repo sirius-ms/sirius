@@ -23,6 +23,7 @@ package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
 import de.unijena.bioinf.ms.gui.fingerid.CandidateListDetailView;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
+import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 
 import javax.swing.*;
@@ -44,9 +45,9 @@ public class CandidateListDetailViewPanel extends JPanel implements /* ActiveEle
 
     protected CandidateListDetailView list;
 
-    public CandidateListDetailViewPanel(StructureList sourceList) {
+    public CandidateListDetailViewPanel(final CompoundList compoundList, StructureList sourceList) {
         super(new BorderLayout());
-        list = new CandidateListDetailView(sourceList);
+        list = new CandidateListDetailView(compoundList, sourceList);
         add(list, BorderLayout.CENTER);
     }
 }

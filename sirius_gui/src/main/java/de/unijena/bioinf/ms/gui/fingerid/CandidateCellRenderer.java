@@ -19,12 +19,15 @@
 
 package de.unijena.bioinf.ms.gui.fingerid;
 
+import ca.odell.glazedlists.EventList;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
+import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
 
 import javax.swing.*;
@@ -34,8 +37,6 @@ import java.awt.font.FontRenderContext;
 import java.awt.font.TextAttribute;
 import java.awt.font.TextLayout;
 import java.awt.geom.Rectangle2D;
-import java.text.AttributedCharacterIterator;
-import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -58,9 +59,11 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
 
     private final DoubleListStats stats;
 
+    private final CompoundList compoundList;
     protected final CandidateListDetailView candidateJList; //todo remove me to make conversion complete
 
-    public CandidateCellRenderer(DoubleListStats stats, CandidateListDetailView candidateJList) {
+    public CandidateCellRenderer(final CompoundList compoundList, DoubleListStats stats, CandidateListDetailView candidateJList) {
+        this.compoundList = compoundList;
         this.candidateJList = candidateJList;
         this.stats = stats;
         setLayout(new BorderLayout());
@@ -194,13 +197,13 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
     private static final int DB_LABEL_PADDING = 4;
 
     public static class DatabasePanel extends JPanel {
-        private final Font dbPanelFont = Fonts.FONT_BOLD.deriveFont(11f);
+        public static final Font DB_PANEL_FONT = Fonts.FONT_BOLD.deriveFont(11f);
 
         public DatabasePanel() {
             setOpaque(false);
             setLayout(new FlowLayout(FlowLayout.LEFT,2,2));
             setPreferredSize(new Dimension(Integer.MAX_VALUE,
-                    ((int) (new TextLayout("W", dbPanelFont, new FontRenderContext(null, false, false)).getBounds().getHeight()) +  2 * DB_LABEL_PADDING + 10) * 3));
+                    ((int) (new TextLayout("W", DB_PANEL_FONT, new FontRenderContext(null, false, false)).getBounds().getHeight()) +  2 * DB_LABEL_PADDING + 10) * 3));
         }
 
         public void setCompound(FingerprintCandidateBean candidate) {
@@ -208,12 +211,12 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             if (candidate == null || candidate.candidate == null) return;
 
             for (DatabaseLabel label : candidate.labels) {
-                final TextLayout tlayout = new TextLayout(label.name(), dbPanelFont, new FontRenderContext(null, false, false));
+                final TextLayout tlayout = new TextLayout(label.name(), DB_PANEL_FONT, new FontRenderContext(null, false, false));
                 final Rectangle2D r = tlayout.getBounds();
                 final int X = (int) r.getWidth() + 2 * DB_LABEL_PADDING + 6;
                 final int Y = (int) r.getHeight() + 2 * DB_LABEL_PADDING + 6;
 
-                add(new DatabaseLabelPanel(label, X, Y, dbPanelFont));
+                add(new DatabaseLabelPanel(label, X, Y, DB_PANEL_FONT));
             }
         }
     }
@@ -230,7 +233,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             setPreferredSize(new Dimension(width, height));
         }
 
-        private Color color() {
+        protected Color color() {
             CustomDataSources.Source s = CustomDataSources.getSourceFromName(label.sourceName);
             if (s == null) return Colors.DB_UNKNOWN;
             if (s.isCustomSource()) return Colors.DB_CUSTOM;
@@ -268,21 +271,40 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
         }
     }
 
+    private static class ReferenceLabelPanel extends DatabaseLabelPanel {
+
+        public ReferenceLabelPanel(ReferenceLabel label, int width, int height, Font font) {
+            super(label, width, height, font);
+        }
+
+        @Override
+        protected Color color() {
+            return Colors.DB_CUSTOM;
+        }
+
+    }
+
     public class DescriptionPanel extends JPanel {
 
         protected JLabel inchi, agreements;
+        protected ReferenceLabelPanel referencePanel;
         protected FingerprintView ag;
         protected JPanel agpanel;
         protected DatabasePanel databasePanel;
+
+        protected JPanel namePanel;
 
         public DescriptionPanel() {
             setOpaque(false);
             setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
             setBorder(new EmptyBorder(5, 2, 2, 2));
 
-            final JPanel namePanel = new JPanel(new BorderLayout());
+            namePanel = new JPanel(new BorderLayout());
             inchi = new JLabel("", SwingConstants.LEFT);
             inchi.setFont(nameFont);
+
+            referencePanel = null;
+
             namePanel.setOpaque(false);
             namePanel.add(inchi, BorderLayout.WEST);
             add(namePanel);
@@ -323,6 +345,25 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             inchi.setText(value.candidate.getInchi().key2D());
             databasePanel.setCompound(value);
             ag.agreement = null;
+
+            if (referencePanel != null) {
+                namePanel.remove(referencePanel);
+            }
+            EventList<InstanceBean> selectedInstances = compoundList.getCompoundListSelectionModel().getSelected();
+            if (!selectedInstances.isEmpty()) {
+                selectedInstances.get(0).getSpectralSearchResults().ifPresent(search -> {
+                    if (search.isFPCandidateInResults(value.getInChiKey())) {
+                        ReferenceLabel label = value.getReferenceLabel();
+                        final TextLayout tlayout = new TextLayout(label.name(), DatabasePanel.DB_PANEL_FONT, new FontRenderContext(null, false, false));
+                        final Rectangle2D r = tlayout.getBounds();
+                        final int X = (int) r.getWidth() + 2 * DB_LABEL_PADDING + 6;
+                        final int Y = (int) r.getHeight() + 2 * DB_LABEL_PADDING + 6;
+                        this.referencePanel = new ReferenceLabelPanel(label, X, Y, DatabasePanel.DB_PANEL_FONT);
+
+                        namePanel.add(referencePanel, BorderLayout.EAST);
+                    }
+                });
+            }
 
             if (value.fp == null)
                 return;

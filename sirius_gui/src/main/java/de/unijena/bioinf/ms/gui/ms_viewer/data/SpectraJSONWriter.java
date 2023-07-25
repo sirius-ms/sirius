@@ -85,8 +85,8 @@ public class SpectraJSONWriter{
 		}
 	}
 
-	public String ms2MirrorJSON(SimpleSpectrum query, SimpleSpectrum match, String matchName) {
-		ObjectNode spectra = ms2Mirror(query, match, matchName);
+	public String ms2MirrorJSON(SimpleSpectrum query, SimpleSpectrum match, String queryName, String matchName) {
+		ObjectNode spectra = ms2Mirror(query, match, queryName, matchName);
 		final ObjectMapper objectMapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
 		try {
 			return objectMapper.writeValueAsString(spectra);
@@ -186,13 +186,13 @@ public class SpectraJSONWriter{
 		return j;
 	}
 
-	protected ObjectNode ms2Mirror(SimpleSpectrum query, SimpleSpectrum match, String matchName) {
+	protected ObjectNode ms2Mirror(SimpleSpectrum query, SimpleSpectrum match, String queryName, String matchName) {
 		final ObjectMapper objectMapper = new ObjectMapper();
 		final ObjectNode j = objectMapper.createObjectNode();
 
 		ObjectNode spectrum1 = spectrum2json(query);
 		ObjectNode spectrum2 = spectrum2json(match);
-		spectrum1.put("name", "MS2");
+		spectrum1.put("name", queryName);
 		spectrum2.put("name", matchName);
 
 		ArrayNode spectra = objectMapper.createArrayNode();

@@ -326,6 +326,8 @@ public class DatabaseDialog extends JDialog {
                 }
             };
 
+            // TODO import spectrum files!
+
             setDropTarget(dropTarget);
             textArea.setDropTarget(dropTarget);
             pack();

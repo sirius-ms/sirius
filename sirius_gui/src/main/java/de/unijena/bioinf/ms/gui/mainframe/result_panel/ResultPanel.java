@@ -23,6 +23,7 @@ import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassList;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.fingerid.fingerprints.FingerprintTable;
 import de.unijena.bioinf.ms.gui.lcms_viewer.LCMSViewerPanel;
+import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.*;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaListHeaderPanel;
@@ -39,6 +40,8 @@ public class ResultPanel extends JTabbedPane {
 
     protected static final Logger logger = LoggerFactory.getLogger(ResultPanel.class);
 
+    public final SpectralMatchingPanel spectralMatchingPanel;
+
     public final FormulaOverviewPanel formulasTab;
     public final TreeVisualizationPanel treeTab;
     public final SpectraVisualizationPanel spectrumTab;
@@ -52,9 +55,10 @@ public class ResultPanel extends JTabbedPane {
 
     private final FormulaList fl;
 
-    public ResultPanel(final FormulaList siriusResultElements, WebAPI webAPI) {
+    public ResultPanel(final FormulaList siriusResultElements, final CompoundList compoundList, WebAPI webAPI) {
         super();
         this.setToolTipText("Results");
+        spectralMatchingPanel = new SpectralMatchingPanel(compoundList);
 
         formulasTab = new FormulaOverviewPanel(siriusResultElements);
         treeTab = new TreeVisualizationPanel();
@@ -63,7 +67,7 @@ public class ResultPanel extends JTabbedPane {
         this.lcmsTab = new LCMSViewerPanel(siriusResultElements);
 
         structureAnnoTab = new EpimetheusPanel(new StructureList(siriusResultElements, ActionList.DataSelectionStrategy.ALL));
-        structuresTab = new CandidateListDetailViewPanel(new StructureList(siriusResultElements));
+        structuresTab = new CandidateListDetailViewPanel(compoundList, new StructureList(siriusResultElements));
         FingerprintPanel fpTabTmp;
         try {
             fpTabTmp = new FingerprintPanel(new FingerprintTable(siriusResultElements, webAPI));
@@ -88,6 +92,8 @@ public class ResultPanel extends JTabbedPane {
         addTab("Substructure Annotation", null, structureAnnoTab, structureAnnoTab.getDescription());
 
         addTab("Compound Classes", null, new FormulaListHeaderPanel(siriusResultElements, canopusTab), canopusTab.getDescription());
+
+        addTab("Reference Spectra", null, spectralMatchingPanel, spectralMatchingPanel.getDescription());
 
         this.fl = siriusResultElements;
 

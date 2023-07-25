@@ -234,7 +234,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         //CREATE VIEWS
         jobDialog = new JobDialog(this);
         // results Panel
-        resultsPanel = new ResultPanel(formulaList, ApplicationCore.WEB_API);
+        resultsPanel = new ResultPanel(formulaList, compoundList, ApplicationCore.WEB_API);
         JPanel resultPanelContainer = new JPanel(new BorderLayout());
         resultPanelContainer.setBorder(BorderFactory.createEmptyBorder());
         resultPanelContainer.add(resultsPanel,BorderLayout.CENTER);
