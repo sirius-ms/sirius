@@ -120,7 +120,13 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
 
     @Override
     public String getDescription() {
-        return "Reference spectra";
+        return "<html>"
+                +"<b>Reference spectra</b>"
+                +"<br>"
+                + "Reference spectra from spectral libraries that match the spectra from your experiment."
+                +"<br>"
+                + "For the selected match in the upper panel, the bottom panel shows a comparison of the experimental and reference spectrum."
+                + "</html>";
     }
 
     public void showMatch(SimpleSpectrum query, SimpleSpectrum reference, String queryName, String referenceName) {
