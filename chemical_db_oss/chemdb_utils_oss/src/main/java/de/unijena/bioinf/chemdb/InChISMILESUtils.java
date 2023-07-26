@@ -20,9 +20,7 @@
 
 package de.unijena.bioinf.chemdb;
 
-import de.unijena.bioinf.ChemistryBase.chem.InChI;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.Smiles;
+import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.babelms.utils.SmilesUCdk;
 import io.github.dan2097.jnainchi.InchiFlag;
@@ -241,6 +239,21 @@ public class InChISMILESUtils {
         return SmilesUCdk.formulaFromSmiles(smiles);
     }
 
+
+    public static Smiles getMainConnectedComponentOrNull(Smiles smiles) throws CDKException {
+        if (SmilesU.isConnected(smiles.smiles)) return smiles;
+        IAtomContainer atomContainer = InChISMILESUtils.getAtomContainerFromSmiles(smiles.smiles);
+        IAtomContainer mainStructure = getMainConnectedComponentOrNull(atomContainer, true);
+        return new Smiles(InChISMILESUtils.getSmiles(mainStructure));
+    }
+
+    public static InChI getMainConnectedComponentOrNull(InChI inChI) throws CDKException {
+        if (InChIs.isConnected(inChI.in3D)) return inChI;
+        IAtomContainer atomContainer = InChISMILESUtils.getAtomContainerFromInchi(inChI.in3D);
+        IAtomContainer mainStructure = getMainConnectedComponentOrNull(atomContainer, true);
+        return InChISMILESUtils.getInchi(mainStructure, false); //standardization uses 2D inchi anyway //I don't want see these warning "Proton(s) added/removed" anymore
+    }
+
     /**
      * strips some salts and solvent. If only one connected component remains, it is returned. Else null.
      * @param atomContainer
@@ -284,6 +297,14 @@ public class InChISMILESUtils {
             }
         }
 
+        if (mainComponentIdx == -1 ) {
+            try {
+                LoggerFactory.getLogger(InChISMILESUtils.class).warn("No main component for: "+InChISMILESUtils.getSmiles(atomContainer));
+            } catch (CDKException e) {
+                LoggerFactory.getLogger(InChISMILESUtils.class).warn("No main component atomcontainer "+atomContainer.getID()+" | "+atomContainer.getTitle());
+            }
+            return null;
+        }
 
         IAtomContainer main = fragments.getAtomContainer(mainComponentIdx);
 
