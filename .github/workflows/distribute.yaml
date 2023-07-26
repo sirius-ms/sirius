@@ -80,7 +80,7 @@ jobs:
 #      - name: Sirius Run
 #        run: |
 #          TEMP_DIR="$(cd "$(dirname "sirius_cli/build/test/temp_results")"; pwd -P)/$(basename "sirius_cli/build/test/temp_results")"
-#          mkdir "${TEMP_DIR}" "${TEMP_DIR}/mgf_temp_output" "${TEMP_DIR}/mgf_temp_summary" "${TEMP_DIR}/ms_temp_output" "${TEMP_DIR}/ms_temp_summary" "${TEMP_DIR}/txt_temp_output" "${TEMP_DIR}/txt_temp_summary"
+#          mkdir -p "${TEMP_DIR}" "${TEMP_DIR}/mgf_temp_output" "${TEMP_DIR}/mgf_temp_summary" "${TEMP_DIR}/ms_temp_output" "${TEMP_DIR}/ms_temp_summary" "${TEMP_DIR}/txt_temp_output" "${TEMP_DIR}/txt_temp_summary"
 #          DEMO_DIR="$(cd "$(dirname "sirius_doc/manual/demo-data")"; pwd -P)/$(basename "sirius_doc/manual/demo-data")"
 #          MGF_DATA="${DEMO_DIR}/mgf/laudanosine.mgf"
 #          MS_DATA="${DEMO_DIR}/ms/Bicuculline.ms"
@@ -263,7 +263,7 @@ jobs:
       - name: Sirius Run
         run: |
           TEMP_DIR="$(cd "$(dirname "sirius_cli/build/test/temp_results")"; pwd -P)/$(basename "sirius_cli/build/test/temp_results")"
-          mkdir "${TEMP_DIR}" "${TEMP_DIR}/mgf_temp_output" "${TEMP_DIR}/mgf_temp_summary" "${TEMP_DIR}/ms_temp_output" "${TEMP_DIR}/ms_temp_summary" "${TEMP_DIR}/txt_temp_output" "${TEMP_DIR}/txt_temp_summary"
+          mkdir -p "${TEMP_DIR}" "${TEMP_DIR}/mgf_temp_output" "${TEMP_DIR}/mgf_temp_summary" "${TEMP_DIR}/ms_temp_output" "${TEMP_DIR}/ms_temp_summary" "${TEMP_DIR}/txt_temp_output" "${TEMP_DIR}/txt_temp_summary"
           DEMO_DIR="$(cd "$(dirname "sirius_doc/manual/demo-data")"; pwd -P)/$(basename "sirius_doc/manual/demo-data")"
           MGF_DATA="${DEMO_DIR}/mgf/laudanosine.mgf"
           MS_DATA="${DEMO_DIR}/ms/Bicuculline.ms"
