@@ -380,7 +380,8 @@ jobs:
     secrets: inherit
 
   release:
-    needs: [ distCLI, distGUI]
+    needs: [distGUI]
+#    needs: [ distCLI, distGUI]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
