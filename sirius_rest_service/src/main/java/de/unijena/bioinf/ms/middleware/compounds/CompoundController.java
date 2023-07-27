@@ -254,7 +254,7 @@ public class CompoundController extends BaseApiController {
                 .orElse(EnumSet.of(CompoundQuality.CompoundQualityFlag.UNKNOWN));
     }
 
-    private LCMSFeatureQuality asCompoundLCMSFeatureQualityData(Instance instance){
+    private LCMSFeatureQuality asCompoundLCMSFeatureQuality(Instance instance){
         final LCMSPeakInformation peakInformation = instance.loadCompoundContainer(LCMSPeakInformation.class).getAnnotation(LCMSPeakInformation.class, LCMSPeakInformation::empty);
         Ms2Experiment experiment = instance.getExperiment();
         Optional<CoelutingTraceSet> traceSet = peakInformation.getTracesFor(0);
@@ -277,7 +277,7 @@ public class CompoundController extends BaseApiController {
             if (includeMsData)
                 compoundId.setMsData(asCompoundMsData(instance));
             if (includeLCMSFeatureQuality)
-                compoundId.setLcmsFeatureQuality(asCompoundLCMSFeatureQualityData(instance));
+                compoundId.setLcmsFeatureQuality(asCompoundLCMSFeatureQuality(instance));
             if (includeMsQuality)
                 compoundId.setQualityFlags(asCompoundQualityData(instance));
         }
