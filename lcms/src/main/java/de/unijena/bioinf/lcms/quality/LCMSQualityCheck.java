@@ -57,6 +57,12 @@ public class LCMSQualityCheck {
     public String getDescription()  {
         return descriptionString;
     }
+
+    public ParameterValue[] getParameterValues()  {
+        return parameterValues;
+    }
+
+
     private String formatDescription(String descriptionFormatString, ParameterValue[] parameterValues)  {
         try {
             return String.format(Locale.US, descriptionFormatString, Arrays.stream(parameterValues).map(parameterValue -> parameterValue.v).toArray());
