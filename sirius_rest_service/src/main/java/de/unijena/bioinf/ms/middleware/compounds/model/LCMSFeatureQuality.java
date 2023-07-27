@@ -34,33 +34,33 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public class LCMSFeatureSummaryQualityData {
+public class LCMSFeatureQuality {
 
     /*
     Quality checks and overall quality for QualityCategory PEAK
      */
-    protected final LCMSQualityCheckResult peakQualityResult;
+    protected final LCMSQualityCheckResult peakQuality;
     /*
     Quality checks and overall quality for QualityCategory ISOTOPE
      */
-    protected final LCMSQualityCheckResult isotopeQualityResult;
+    protected final LCMSQualityCheckResult isotopeQuality;
     /*
     Quality checks and overall quality for QualityCategory ADDUCTS
      */
-    protected final LCMSQualityCheckResult adductQualityResult;
+    protected final LCMSQualityCheckResult adductQuality;
     /*
     Quality checks and overall quality for QualityCategory MSMS
      */
-    protected final LCMSQualityCheckResult ms2QualityResult;
+    protected final LCMSQualityCheckResult ms2Quality;
 
-    public LCMSFeatureSummaryQualityData(LCMSCompoundSummary lcmsCompoundSummary) {
+    public LCMSFeatureQuality(LCMSCompoundSummary lcmsCompoundSummary) {
         //LCMSQualityCheck.QualityCategory.PEAK
-        this.peakQualityResult = lcmsCompoundSummary.peakQualityResult;
+        this.peakQuality = lcmsCompoundSummary.peakQualityResult;
         //LCMSQualityCheck.QualityCategory.ISOTOPE
-        this.isotopeQualityResult = lcmsCompoundSummary.isotopeQualityResult;
+        this.isotopeQuality = lcmsCompoundSummary.isotopeQualityResult;
         //LCMSQualityCheck.QualityCategory.ADDUCTS
-        this.adductQualityResult = lcmsCompoundSummary.adductQualityResult;
+        this.adductQuality = lcmsCompoundSummary.adductQualityResult;
         //LCMSQualityCheck.QualityCategory.MSMS
-        this.ms2QualityResult = lcmsCompoundSummary.ms2QualityResult;
+        this.ms2Quality = lcmsCompoundSummary.ms2QualityResult;
     }
 }
