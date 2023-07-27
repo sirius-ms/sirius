@@ -34,7 +34,7 @@ import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.middleware.BaseApiController;
 import de.unijena.bioinf.ms.middleware.compounds.model.CompoundAnnotation;
 import de.unijena.bioinf.ms.middleware.compounds.model.CompoundId;
-import de.unijena.bioinf.ms.middleware.compounds.model.LCMSFeatureSummaryQualityData;
+import de.unijena.bioinf.ms.middleware.compounds.model.LCMSFeatureQuality;
 import de.unijena.bioinf.ms.middleware.compounds.model.MsData;
 import de.unijena.bioinf.ms.middleware.compute.model.ComputeContext;
 import de.unijena.bioinf.ms.middleware.compute.model.JobId;
@@ -254,13 +254,13 @@ public class CompoundController extends BaseApiController {
                 .orElse(EnumSet.of(CompoundQuality.CompoundQualityFlag.UNKNOWN));
     }
 
-    private LCMSFeatureSummaryQualityData asCompoundLCMSFeatureQualityData(Instance instance){
+    private LCMSFeatureQuality asCompoundLCMSFeatureQualityData(Instance instance){
         final LCMSPeakInformation peakInformation = instance.loadCompoundContainer(LCMSPeakInformation.class).getAnnotation(LCMSPeakInformation.class, LCMSPeakInformation::empty);
         Ms2Experiment experiment = instance.getExperiment();
         Optional<CoelutingTraceSet> traceSet = peakInformation.getTracesFor(0);
         if (traceSet.isPresent()) {
             final LCMSCompoundSummary summary = new LCMSCompoundSummary(traceSet.get(), traceSet.get().getIonTrace(), experiment);
-            return new LCMSFeatureSummaryQualityData(summary);
+            return new LCMSFeatureQuality(summary);
         } else {
             //todo is this allowed???
             return null;
@@ -268,7 +268,7 @@ public class CompoundController extends BaseApiController {
     }
 
 
-    private CompoundId asCompoundId(CompoundContainerId cid, ProjectSpaceManager<?> ps, boolean includeSummary, boolean includeMsData, boolean includeLCMSFeatureMsQuality, boolean includeMsQuality) {
+    private CompoundId asCompoundId(CompoundContainerId cid, ProjectSpaceManager<?> ps, boolean includeSummary, boolean includeMsData, boolean includeLCMSFeatureQuality, boolean includeMsQuality) {
         final CompoundId compoundId = CompoundId.of(cid);
         if (includeSummary || includeMsData) {
             Instance instance = ps.getInstanceFromCompound(cid);
@@ -276,8 +276,8 @@ public class CompoundController extends BaseApiController {
                 compoundId.setTopAnnotation(asCompoundSummary(instance));
             if (includeMsData)
                 compoundId.setMsData(asCompoundMsData(instance));
-            if (includeLCMSFeatureMsQuality)
-                compoundId.setLcmsCompoundSummaryQualityData(asCompoundLCMSFeatureQualityData(instance));
+            if (includeLCMSFeatureQuality)
+                compoundId.setLcmsFeatureQuality(asCompoundLCMSFeatureQualityData(instance));
             if (includeMsQuality)
                 compoundId.setQualityFlags(asCompoundQualityData(instance));
         }

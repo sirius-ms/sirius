@@ -67,7 +67,7 @@ public class CompoundId {
     /**
      * LCMS feature-based quality information as also provided in the LCMS-view in the GUI
      */
-    protected LCMSFeatureSummaryQualityData lcmsCompoundSummaryQualityData;
+    protected LCMSFeatureQuality lcmsFeatureQuality;
 
     //todo handle computing flag
     protected boolean computing = false;
