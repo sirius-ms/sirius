@@ -266,8 +266,12 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
                 molecularPropertyMatcherEditor.highlightChanged(filterByMolecularPropertyButton.isSelected());
             }
 
-            if (candidate.getReferenceLabel().rect.contains(point.x, point.y)) {
-                clickOnSpectralMatching(candidate);
+            if (candidate.referenceLabel.rect.contains(point.x, point.y)) {
+                clickOnDBLabel(candidate.referenceLabel, candidate);
+            }
+
+            if (candidate.moreLabel.rect.contains(point.x, point.y)) {
+                clickOnMore(candidate);
             }
 
             for (DatabaseLabel l : candidate.labels) {
@@ -283,7 +287,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         }
     }
 
-    private void clickOnSpectralMatching(FingerprintCandidateBean candidate) {
+    private void clickOnMore(FingerprintCandidateBean candidate) {
         Jobs.runEDTLater(() -> {
             new SpectralMatchingDialog(compoundList, candidate).setVisible(true);
         });
@@ -441,7 +445,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
                 if (databaseLabel.hasLinks()) setCursor(new Cursor(Cursor.HAND_CURSOR));
                 return databaseLabel.getToolTipOrNull();
             }
-            if (candidate.getReferenceLabel().contains(point)) {
+            if (candidate.referenceLabel.contains(point) || candidate.moreLabel.contains(point)) {
                 setCursor(new Cursor(Cursor.HAND_CURSOR));
                 return null;
             }
