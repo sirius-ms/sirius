@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
 import ca.odell.glazedlists.EventList;
+import ca.odell.glazedlists.FilterList;
 import ca.odell.glazedlists.GlazedLists;
 import ca.odell.glazedlists.SortedList;
 import ca.odell.glazedlists.event.ListEvent;
@@ -172,12 +173,12 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
                             SpectralSearchResultBean search = ec.getSpectralSearchResults().get();
                             List<SpectralSearchResultBean.MatchBean> matches;
                             if (candidateBean == null) {
-                                matches = search.getAllResults().stream().map(SpectralSearchResultBean.MatchBean::new).toList();
+                                matches = search.getAllResults().stream().map(r -> new SpectralSearchResultBean.MatchBean(r, ec)).toList();
                             } else {
                                 Optional<List<SpectralSearchResult.SearchResult>> bestResults = search.getMatchingSpectraForFPCandidate(candidateBean.getInChiKey());
                                 if (bestResults.isEmpty())
                                     return true;
-                                matches = bestResults.get().stream().map(SpectralSearchResultBean.MatchBean::new).toList();
+                                matches = bestResults.get().stream().map(r -> new SpectralSearchResultBean.MatchBean(r, ec)).toList();
                             }
                             try {
                                 refillElementsEDT(matches);
@@ -199,14 +200,8 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
 
         private static final int COL_COUNT = 10;
 
-        private InstanceBean instanceBean = null;
-
         protected MatchResultTableFormat(MatchList source) {
             super(matchBean -> matchBean.getMatch().getRank() == source.getElementList().stream().mapToInt(m -> m.getMatch().getRank()).min().orElse(0));
-        }
-
-        public void setInstanceBean(InstanceBean instanceBean) {
-            this.instanceBean = instanceBean;
         }
 
         @Override
@@ -241,14 +236,7 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
         public Object getColumnValue(SpectralSearchResultBean.MatchBean baseObject, int column) {
             return switch (column) {
                 case 0 -> baseObject.getMatch().getRank();
-                case 1 -> {
-                    if (instanceBean != null) {
-                        MutableMs2Spectrum query = instanceBean.getMs2Spectra().get(baseObject.getMatch().getQuerySpectrumIndex());
-                        yield SpectraSearchWorkflow.getQueryName(query, baseObject.getMatch().getQuerySpectrumIndex());
-                    } else {
-                        yield "";
-                    }
-                }
+                case 1 -> baseObject.getQueryName();
                 case 2 -> baseObject.getReference().getName();
                 case 3 -> baseObject.getReference().getSmiles();
                 case 4 -> baseObject.getMatch().getSimilarity().similarity;
@@ -265,12 +253,14 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
 
     private static class SpectralMatchingTableView extends ActionListDetailView<SpectralSearchResultBean.MatchBean, InstanceBean, MatchList> {
 
+        private SortedList<SpectralSearchResultBean.MatchBean> sortedSource;
+
         private JJob<Boolean> backgroundLoader = null;
         private final Lock backgroundLoaderLock = new ReentrantLock();
 
         public SpectralMatchingTableView(MatchList source, SpectralMatchingPanel parentPanel) {
             super(source, true);
-            SortedList<SpectralSearchResultBean.MatchBean> sortedSource = new SortedList<>(source.getElementList());
+            sortedSource = new SortedList<>(source.getElementList());
             final MatchResultTableFormat tf = new MatchResultTableFormat(source);
             ActionTable<SpectralSearchResultBean.MatchBean> table = new ActionTable<>(filteredSource, sortedSource, tf);
 
@@ -281,11 +271,6 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
                     showCenterCard(ActionList.ViewState.EMPTY);
                 else {
                     showCenterCard(ActionList.ViewState.DATA);
-                    getSource().readDataByConsumer(ec -> {
-                        if (ec != null) {
-                            tf.setInstanceBean(ec);
-                        }
-                    });
                 }
             });
 
