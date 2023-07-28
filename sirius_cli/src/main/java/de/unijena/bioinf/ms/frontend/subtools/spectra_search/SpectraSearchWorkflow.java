@@ -67,6 +67,21 @@ public class SpectraSearchWorkflow implements Workflow {
         this.ppj = ppj;
     }
 
+    public static String getQueryName(MutableMs2Spectrum query, int queryIndex) {
+        String q = String.format(
+                "MS%d; #%d",
+                query.getMsLevel(),
+                (query.getScanNumber() > -1) ? query.getScanNumber() : queryIndex + 1
+        );
+        if (query.getCollisionEnergy() != null) {
+            q += String.format("; CE %deV", Math.round(query.getCollisionEnergy().getMinEnergy()));
+        }
+        if (query.getIonization() != null) {
+            q += String.format("; %s", query.getIonization().toString());
+        }
+        return q;
+    }
+
     @Override
     public void run() {
         final JobManager jobManager = SiriusJobs.getGlobalJobManager();
@@ -153,7 +168,7 @@ public class SpectraSearchWorkflow implements Workflow {
                     Map<Integer, List<SpectralSearchResult.SearchResult>> resultMap = StreamSupport.stream(result.spliterator(), false).collect(Collectors.groupingBy(SpectralSearchResult.SearchResult::getQuerySpectrumIndex));
                     for (Integer queryIndex : resultMap.keySet()) {
                         MutableMs2Spectrum query = queries.get(queryIndex);
-                        logger.info(String.format("Query: MS%d [#%d; %deV; %.3fm/z]", query.getMsLevel(), (query.getScanNumber() > -1) ? query.getScanNumber() : queryIndex + 1, Math.round(query.getCollisionEnergy().getMinEnergy()), query.getPrecursorMz()));
+                        logger.info(getQueryName(query, queryIndex));
                         logger.info("Similarity | Peaks | Precursor | Prec. m/z | MS | Coll. | Instrument | InChIKey | Smiles | Name | DB location | DB link | Splash");
                         List<SpectralSearchResult.SearchResult> resultList = resultMap.get(queryIndex);
                         for (SpectralSearchResult.SearchResult r : resultList.subList(0, Math.min(options.log, resultList.size()))) {

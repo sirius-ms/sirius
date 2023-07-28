@@ -25,9 +25,9 @@ import java.awt.*;
 
 public class DatabaseLabel implements Comparable<DatabaseLabel> {
 
-    protected final String displayName;
-    protected final String sourceName;
-    protected final String[] values;
+    protected String displayName;
+    protected String sourceName;
+    protected String[] values;
     protected final Rectangle rect;
 
     public DatabaseLabel(String name, String[] values, Rectangle rect) {
