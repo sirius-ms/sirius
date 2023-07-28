@@ -91,7 +91,7 @@ public class CompoundController extends BaseApiController {
      * @return CompoundIds with additional annotations and MS/MS data (if specified).
      */
     @GetMapping(value = "/compounds", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<CompoundId> getCompounds(@PathVariable String projectId, @RequestParam(required = false, defaultValue = "false") boolean topAnnotation, @RequestParam(required = false, defaultValue = "false") boolean msData, @RequestParam(required = false, defaultValue = "false") boolean lcmsFeatureQuality,@RequestParam(required = false,defaultValue = "false") boolean msQuality) {
+    public List<CompoundId> getCompounds(@PathVariable String projectId, @RequestParam(required = false, defaultValue = "false") boolean topAnnotation, @RequestParam(required = false, defaultValue = "false") boolean msData, @RequestParam(required = false, defaultValue = "false") boolean lcmsFeatureQuality, @RequestParam(required = false,defaultValue = "false") boolean msQuality) {
         LoggerFactory.getLogger(CompoundController.class).info("Started collecting compounds...");
         final ProjectSpaceManager<?> space = projectSpace(projectId);
 
@@ -270,7 +270,7 @@ public class CompoundController extends BaseApiController {
 
     private CompoundId asCompoundId(CompoundContainerId cid, ProjectSpaceManager<?> ps, boolean includeSummary, boolean includeMsData, boolean includeLCMSFeatureQuality, boolean includeMsQuality) {
         final CompoundId compoundId = CompoundId.of(cid);
-        if (includeSummary || includeMsData) {
+        if (includeSummary || includeMsData || includeLCMSFeatureQuality || includeMsQuality) {
             Instance instance = ps.getInstanceFromCompound(cid);
             if (includeSummary)
                 compoundId.setTopAnnotation(asCompoundSummary(instance));
