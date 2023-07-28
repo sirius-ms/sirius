@@ -26,7 +26,9 @@ import ca.odell.glazedlists.GlazedLists;
 import ca.odell.glazedlists.SortedList;
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.matchers.MatcherEditor;
+import ca.odell.glazedlists.matchers.ThresholdMatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.chemdb.DBLink;
@@ -44,6 +46,9 @@ import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.ms_viewer.WebViewSpectraViewer;
 import de.unijena.bioinf.ms.gui.ms_viewer.data.SpectraJSONWriter;
 import de.unijena.bioinf.ms.gui.table.*;
+import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
+import de.unijena.bioinf.ms.gui.utils.NameFilterRangeSlider;
+import de.unijena.bioinf.ms.gui.utils.WrapLayout;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.projectspace.SpectralSearchResultBean;
 import de.unijena.bioinf.spectraldb.SpectralLibrary;
@@ -59,6 +64,7 @@ import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -144,11 +150,16 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
 
     private static class MatchList extends ActionList<SpectralSearchResultBean.MatchBean, InstanceBean> {
 
+        public final DoubleListStats scoreStats;
+        public final DoubleListStats peaksStats;
+
         private JJob<Boolean> backgroundLoader = null;
         private final Lock backgroundLoaderLock = new ReentrantLock();
 
         public MatchList() {
             super(SpectralSearchResultBean.MatchBean.class);
+            this.scoreStats = new DoubleListStats();
+            this.peaksStats = new DoubleListStats();
         }
 
         public void changeData(final InstanceBean ec, final FingerprintCandidateBean candidateBean) {
@@ -166,20 +177,29 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
                             old.getResult(); //await cancellation so that nothing strange can happen.
                         }
                         checkForInterruption();
-                        elementListSelectionModel.clearSelection();
-                        elementList.clear();
+
+                        Jobs.runEDTAndWait(() -> {
+                            scoreStats.reset();
+                            peaksStats.reset();
+                            elementListSelectionModel.clearSelection();
+                            elementList.clear();
+                        });
 
                         if (ec != null && ec.getSpectralSearchResults().isPresent()) {
                             SpectralSearchResultBean search = ec.getSpectralSearchResults().get();
-                            List<SpectralSearchResultBean.MatchBean> matches;
+                            List<SpectralSearchResult.SearchResult> searchResults;
+
                             if (candidateBean == null) {
-                                matches = search.getAllResults().stream().map(r -> new SpectralSearchResultBean.MatchBean(r, ec)).toList();
+                                searchResults = search.getAllResults();
                             } else {
                                 Optional<List<SpectralSearchResult.SearchResult>> bestResults = search.getMatchingSpectraForFPCandidate(candidateBean.getInChiKey());
-                                if (bestResults.isEmpty())
-                                    return true;
-                                matches = bestResults.get().stream().map(r -> new SpectralSearchResultBean.MatchBean(r, ec)).toList();
+                                searchResults = bestResults.orElseGet(ArrayList::new);
                             }
+                            List<SpectralSearchResultBean.MatchBean> matches = searchResults.stream().map(r -> {
+                                scoreStats.addValue(r.getSimilarity().similarity);
+                                peaksStats.addValue(r.getSimilarity().shardPeaks);
+                                return new SpectralSearchResultBean.MatchBean(r, ec);
+                            }).toList();
                             try {
                                 refillElementsEDT(matches);
                             } catch (InvocationTargetException | InterruptedException e) {
@@ -252,6 +272,9 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
     }
 
     private static class SpectralMatchingTableView extends ActionListDetailView<SpectralSearchResultBean.MatchBean, InstanceBean, MatchList> {
+
+        private FilterRangeSlider<MatchList, SpectralSearchResultBean.MatchBean, InstanceBean> scoreSlider;
+        private FilterRangeSlider<MatchList, SpectralSearchResultBean.MatchBean, InstanceBean> peaksSlider;
 
         private SortedList<SpectralSearchResultBean.MatchBean> sortedSource;
 
@@ -355,12 +378,45 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
 
         @Override
         protected JToolBar getToolBar() {
-            return null;
+            JToolBar tb = new JToolBar();
+            tb.setFloatable(false);
+            tb.setBorderPainted(false);
+            tb.setLayout(new WrapLayout(FlowLayout.LEFT, 0, 0));
+
+            scoreSlider = new FilterRangeSlider<>(source, source.scoreStats, true);
+            peaksSlider = new FilterRangeSlider<>(source, source.peaksStats);
+
+            tb.add(new NameFilterRangeSlider("Similarity:", scoreSlider));
+            tb.addSeparator();
+            tb.add(new NameFilterRangeSlider("Shared Peaks:", peaksSlider));
+            tb.addSeparator();
+
+            return tb;
         }
 
         @Override
         protected EventList<MatcherEditor<SpectralSearchResultBean.MatchBean>> getSearchFieldMatchers() {
-            return GlazedLists.eventListOf();
+            return GlazedLists.eventListOf(
+                    new TextComponentMatcherEditor<>(searchField.textField, (baseList, element) -> {
+                        baseList.add(element.getQueryName());
+                        baseList.add(element.getReference().getName());
+                        baseList.add(element.getReference().getSmiles());
+                        if (element.getReference().getPrecursorIonType() != null)
+                            baseList.add(element.getReference().getPrecursorIonType().toString());
+                        if (element.getReference().getCollisionEnergy() != null)
+                            baseList.add(element.getReference().getCollisionEnergy().toString());
+                        if (element.getReference().getInstrumentation() != null)
+                            baseList.add(element.getReference().getInstrumentation().toString());
+                    }),
+                    new MinMaxMatcherEditor<>(scoreSlider, (baseList, element) -> baseList.add(element.getMatch().getSimilarity().similarity)),
+                    new MinMaxMatcherEditor<>(peaksSlider, (baseList, element) -> baseList.add((double) element.getMatch().getSimilarity().shardPeaks))
+            );
+        }
+
+        @Override
+        protected FilterList<SpectralSearchResultBean.MatchBean> configureFiltering(EventList<SpectralSearchResultBean.MatchBean> source) {
+            sortedSource = new SortedList<>(source);
+            return super.configureFiltering(sortedSource);
         }
 
     }
