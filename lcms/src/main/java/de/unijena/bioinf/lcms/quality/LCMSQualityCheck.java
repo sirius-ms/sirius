@@ -18,19 +18,31 @@ public class LCMSQualityCheck {
 
 
     public static class ParameterValue<T> {
-        private final T v;
+        private final T value;
         private final String key;
         private final String description;
 
 
-        public ParameterValue(T v, String key, String description) {
-            this.v = v;
+        public ParameterValue(T value, String key, String description) {
+            this.value = value;
             this.key = key;
             this.description = description;
         }
 
-        public ParameterValue<T> withValue(T v) {
-            return new ParameterValue(v, key,description);
+        public ParameterValue<T> withValue(T value) {
+            return new ParameterValue(value, key,description);
+        }
+
+        public T getValue() {
+            return value;
+        }
+
+        public String getKey() {
+            return key;
+        }
+
+        public String getDescription() {
+            return description;
         }
     }
 
@@ -65,9 +77,9 @@ public class LCMSQualityCheck {
 
     private String formatDescription(String descriptionFormatString, ParameterValue[] parameterValues)  {
         try {
-            return String.format(Locale.US, descriptionFormatString, Arrays.stream(parameterValues).map(parameterValue -> parameterValue.v).toArray());
+            return String.format(Locale.US, descriptionFormatString, Arrays.stream(parameterValues).map(parameterValue -> parameterValue.value).toArray());
         } catch (IllegalFormatException e) {
-            LoggerFactory.getLogger(LCMSQualityCheck.class).error("Cannot format quality description string '"+descriptionFormatString+"' with values: "+ Arrays.stream(parameterValues).map(parameterValue -> parameterValue.v.toString()).collect(Collectors.joining(",")));
+            LoggerFactory.getLogger(LCMSQualityCheck.class).error("Cannot format quality description string '"+descriptionFormatString+"' with values: "+ Arrays.stream(parameterValues).map(parameterValue -> parameterValue.value.toString()).collect(Collectors.joining(",")));
             return descriptionFormatString;
         }
 
