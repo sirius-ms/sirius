@@ -20,9 +20,11 @@
 
 package de.unijena.bioinf.projectspace;
 
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_db.SpectralDatabases;
+import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchWorkflow;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.spectraldb.SpectralLibrary;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
@@ -94,14 +96,23 @@ public class SpectralSearchResultBean {
 
         private Ms2ReferenceSpectrum reference;
 
+        private String queryName;
+
         public MatchBean(SpectralSearchResult.SearchResult match) {
+            this(match, null);
+        }
+
+        public MatchBean(SpectralSearchResult.SearchResult match, InstanceBean instance) {
             this.match = match;
             try {
                 SpectralLibrary db = SpectralDatabases.getSpectralLibrary(Path.of(match.getDbLocation())).orElseThrow();
                 this.reference = db.getReferenceSpectrum(match.getReferenceId());
+                if (instance != null) {
+                    MutableMs2Spectrum query = instance.getMs2Spectra().get(match.getQuerySpectrumIndex());
+                    this.queryName = SpectraSearchWorkflow.getQueryName(query, match.getQuerySpectrumIndex());
+                }
             } catch (Exception e) {
                 LoggerFactory.getLogger(getClass()).error("Error retrieving spectral matching data.", e);
-                this.reference = null;
             }
         }
 
@@ -111,6 +122,10 @@ public class SpectralSearchResultBean {
 
         public Ms2ReferenceSpectrum getReference() {
             return reference;
+        }
+
+        public String getQueryName() {
+            return queryName;
         }
 
         @Override
