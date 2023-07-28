@@ -22,10 +22,10 @@ package de.unijena.bioinf.ms.gui.fingerid;
 
 import java.awt.*;
 
-class ReferenceLabel extends DatabaseLabel {
+public class EmptyLabel extends DatabaseLabel {
 
-    public ReferenceLabel() {
-        super("", "Reference Spectra", null, new Rectangle(0, 0, 0, 0));
+    public EmptyLabel() {
+        super("", "", null, new Rectangle(0, 0, 0, 0));
     }
 
     @Override

@@ -34,6 +34,7 @@ import de.unijena.bioinf.chemdb.DataSources;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_db.SpectralDatabases;
+import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchWorkflow;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
@@ -198,8 +199,14 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
 
         private static final int COL_COUNT = 10;
 
+        private InstanceBean instanceBean = null;
+
         protected MatchResultTableFormat(MatchList source) {
             super(matchBean -> matchBean.getMatch().getRank() == source.getElementList().stream().mapToInt(m -> m.getMatch().getRank()).min().orElse(0));
+        }
+
+        public void setInstanceBean(InstanceBean instanceBean) {
+            this.instanceBean = instanceBean;
         }
 
         @Override
@@ -216,12 +223,12 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
         public String getColumnName(int column) {
             return switch (column) {
                 case 0 -> "Rank";
-                case 1 -> "Name";
-                case 2 -> "SMILES";
-                case 3 -> "Similarity";
-                case 4 -> "Shared Peaks";
-                case 5 -> "Ionization";
-                case 6 -> "Precursor m/z";
+                case 1 -> "Query";
+                case 2 -> "Name";
+                case 3 -> "SMILES";
+                case 4 -> "Similarity";
+                case 5 -> "Shared Peaks";
+                case 6 -> "Ionization";
                 case 7 -> "Collision Energy";
                 case 8 -> "Instrument";
                 case 9 -> "DB link";
@@ -234,12 +241,19 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
         public Object getColumnValue(SpectralSearchResultBean.MatchBean baseObject, int column) {
             return switch (column) {
                 case 0 -> baseObject.getMatch().getRank();
-                case 1 -> baseObject.getReference().getName();
-                case 2 -> baseObject.getReference().getSmiles();
-                case 3 -> baseObject.getMatch().getSimilarity().similarity;
-                case 4 -> baseObject.getMatch().getSimilarity().shardPeaks;
-                case 5 -> baseObject.getReference().getPrecursorIonType() != null ? baseObject.getReference().getPrecursorIonType().toString() : "";
-                case 6 -> baseObject.getReference().getPrecursorMz();
+                case 1 -> {
+                    if (instanceBean != null) {
+                        MutableMs2Spectrum query = instanceBean.getMs2Spectra().get(baseObject.getMatch().getQuerySpectrumIndex());
+                        yield SpectraSearchWorkflow.getQueryName(query, baseObject.getMatch().getQuerySpectrumIndex());
+                    } else {
+                        yield "";
+                    }
+                }
+                case 2 -> baseObject.getReference().getName();
+                case 3 -> baseObject.getReference().getSmiles();
+                case 4 -> baseObject.getMatch().getSimilarity().similarity;
+                case 5 -> baseObject.getMatch().getSimilarity().shardPeaks;
+                case 6 -> baseObject.getReference().getPrecursorIonType() != null ? baseObject.getReference().getPrecursorIonType().toString() : "";
                 case 7 -> baseObject.getReference().getCollisionEnergy() != null ? baseObject.getReference().getCollisionEnergy().toString() : "";
                 case 8 -> baseObject.getReference().getInstrumentation() != null ? baseObject.getReference().getInstrumentation().toString() : "";
                 case 9 -> baseObject.getReference().getSpectralDbLink();
@@ -265,8 +279,14 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
                     showCenterCard(ActionList.ViewState.NOT_COMPUTED);
                 else if (resultElements.isEmpty())
                     showCenterCard(ActionList.ViewState.EMPTY);
-                else
+                else {
                     showCenterCard(ActionList.ViewState.DATA);
+                    getSource().readDataByConsumer(ec -> {
+                        if (ec != null) {
+                            tf.setInstanceBean(ec);
+                        }
+                    });
+                }
             });
 
             filteredSelectionModel.addListSelectionListener(e -> {
@@ -294,7 +314,7 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
                                     return null;
                                 MutableMs2Spectrum queryMS2 = ec.getMs2Spectra().get(matchBean.getMatch().getQuerySpectrumIndex());
                                 SimpleSpectrum query = new SimpleSpectrum(queryMS2);
-                                String queryName = String.format("MS%d [#%d; %deV]", queryMS2.getMsLevel(), (queryMS2.getScanNumber() > -1) ? queryMS2.getScanNumber() : matchBean.getMatch().getQuerySpectrumIndex() + 1, Math.round(queryMS2.getCollisionEnergy().getMinEnergy()));
+                                String queryName = SpectraSearchWorkflow.getQueryName(queryMS2, matchBean.getMatch().getQuerySpectrumIndex());
 
                                 if (matchBean.getReference().getSpectrum() == null) {
                                     try {
@@ -325,7 +345,7 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
             final SiriusResultTableCellRenderer defaultRenderer = new SiriusResultTableCellRenderer(tf.highlightColumnIndex());
             table.setDefaultRenderer(Object.class, defaultRenderer);
 
-            table.getColumnModel().getColumn(3).setCellRenderer(new BarTableCellRenderer(tf.highlightColumnIndex(), 0f, 1f, true));
+            table.getColumnModel().getColumn(4).setCellRenderer(new BarTableCellRenderer(tf.highlightColumnIndex(), 0f, 1f, true));
 
             LinkedSiriusTableCellRenderer linkRenderer = new LinkedSiriusTableCellRenderer(defaultRenderer, (LinkedSiriusTableCellRenderer.LinkCreator<DBLink>) dbLink -> {
                 Optional<DataSource> ds = DataSources.getSourceFromName(dbLink.name);
