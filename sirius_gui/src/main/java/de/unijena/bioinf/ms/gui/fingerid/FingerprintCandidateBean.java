@@ -97,7 +97,9 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
     protected FingerprintAgreement substructures; //todo fire property change???
     protected final DatabaseLabel[] labels;
 
-    protected final ReferenceLabel referenceLabel;
+    protected final EmptyLabel referenceLabel;
+
+    protected final EmptyLabel moreLabel;
 
     protected boolean atomCoordinatesAreComputed = false;
     protected ReentrantLock compoundLock = new ReentrantLock();
@@ -141,22 +143,12 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
                 else
                     labels.add(new DatabaseLabel(key, cleaned.toArray(String[]::new), new Rectangle(0, 0, 0, 0)));
             }
-
-            // TODO move away from db label to extra button
-//            this.getSpectralSearchResults().ifPresent(spectralBean -> {
-//                String inchiKey = this.candidate.getInchi().key2D();
-//                if (spectralBean.isFPCandidateInResults(inchiKey, 3, 0.9)) {
-//                        spectralBean.getMatchingSpectraForFPCandidate(inchiKey, 3, 0.9).ifPresent(searchResults -> {
-//                            labels.add(new DatabaseLabel("MassBank", searchResults.stream().map(m -> m.getReference().getLibraryId()).toArray(String[]::new), new Rectangle(0, 0, 0, 0)));
-//                            labels.add(new DatabaseLabel("Spectra", new String[]{}, new Rectangle(0, 0, 0, 0)));
-//                    });
-//                }
-//            });
             Collections.sort(labels);
             this.labels = labels.toArray(DatabaseLabel[]::new);
         }
 
-        this.referenceLabel = new ReferenceLabel();
+        this.referenceLabel = new EmptyLabel();
+        this.moreLabel = new EmptyLabel();
     }
 
    /* protected CSIPredictor getCorrespondingCSIPredictor() throws IOException {
@@ -165,10 +157,6 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
 
     public DatabaseLabel[] getLabels() {
         return labels;
-    }
-
-    public ReferenceLabel getReferenceLabel() {
-        return referenceLabel;
     }
 
     public void highlightInBackground() {
