@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
+import java.io.Serializable;
 import java.nio.ShortBuffer;
 import java.util.*;
 import java.util.function.Consumer;
