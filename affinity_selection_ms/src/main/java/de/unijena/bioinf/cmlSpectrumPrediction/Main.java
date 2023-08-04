@@ -1,15 +1,18 @@
 package de.unijena.bioinf.cmlSpectrumPrediction;
 
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.babelms.MsIO;
 import de.unijena.bioinf.cmlFragmentation.FragmentationPredictor;
 import de.unijena.bioinf.cmlFragmentation.FragmentationRules;
+import de.unijena.bioinf.cmlFragmentation.MostLikelyFragmentation;
 import de.unijena.bioinf.cmlFragmentation.RuleBasedFragmentation;
-import de.unijena.bioinf.fragmenter.CombinatorialFragment;
-import de.unijena.bioinf.fragmenter.CombinatorialFragmenter;
-import de.unijena.bioinf.fragmenter.EMFragmenterScoring2;
-import de.unijena.bioinf.fragmenter.MolecularGraph;
+import de.unijena.bioinf.fragmenter.*;
+import de.unijena.bioinf.sirius.PeakAnnotation;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
 import de.unijena.bioinf.sirius.Sirius;
@@ -21,6 +24,7 @@ import org.openscience.cdk.smiles.SmilesParser;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Main {
 
@@ -43,7 +47,7 @@ public class Main {
     public static void main(String[] args){
         try {
             // 1. Read the measured spectrum and construct an instance of Ms2Spectrum:
-            final File measuredSpectrumFile = new File("C:\\Users\\Nutzer\\Documents\\Bioinformatik (B.Sc. + M.Sc.)\\HiWi\\SiriusProjectSpaces\\TEST\\Demo_ProjectSpace\\2_Kaempferol_Kaempferol\\spectrum.ms");
+            final File measuredSpectrumFile = new File("C:\\Users\\Nutzer\\Documents\\Bioinformatik_PhD\\AS-MS-Project\\LCMS_Benzimidazole\\LCMS_230220_Benzimidazole\\ProjectSpaces\\filtered_by_hand_PS_5.7.2\\283_230220_BAMS-14-3_01_283\\spectrum.ms");
             Ms2Experiment ms2Experiment = MsIO.readExperimentFromFile(measuredSpectrumFile).next();
             ProcessedInput processedInput = getProcessedInput(ms2Experiment);
             List<ProcessedPeak> mergedPeaks = processedInput.getMergedPeaks();
@@ -52,42 +56,84 @@ public class Main {
             for(Peak peak : mergedPeaks) measuredSimpleSpectrum.addPeak(peak);
             Ms2Spectrum<Peak> measuredSpectrum = new MutableMs2Spectrum(measuredSimpleSpectrum, processedInput.getParentPeak().getMass(), null, 2);
 
-            // 2. Predict a spectrum regarding a specific molecule:
+            // 2. Initialisation:
             final String[] allowedElements = new String[]{"N", "O", "P", "S"};
             final SimpleFragmentationRule fragRule = new SimpleFragmentationRule(allowedElements);
             final CombinatorialFragmenter.Callback2 fragmentationConstraint = (node, numNodes, numEdges) -> true;
-            final int NUM_FRAGMENTS = 10;
+            final int NUM_FRAGMENTS = 25;
 
-            final String smiles = "O=c1c(O)c(-c2ccc(O)cc2)oc2cc(O)cc(O)c12";
+            final String smiles = "CCC(CC)N1C2=C(C=C(C=C2)C(=O)NC(CC3=CC=CC=C3)C(=O)N)N=C1C4=CSC=C4";
             final SmilesParser smiParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
             final MolecularGraph mol = new MolecularGraph(smiParser.parseSmiles(smiles));
-            final EMFragmenterScoring2 scoring = new EMFragmenterScoring2(mol, null);
+            final Scoring scoring = new Scoring(mol, null);
 
-            final RuleBasedFragmentation fragmentationPredictor = new RuleBasedFragmentation(mol, scoring, NUM_FRAGMENTS, fragRule, fragmentationConstraint);
-            final BarcodeSpectrumPredictor spectrumPredictor = new BarcodeSpectrumPredictor(fragmentationPredictor, true);
+            // PREDICTION:
+            final RuleBasedFragmentation rbFragmentationPredictor = new RuleBasedFragmentation(mol, scoring, NUM_FRAGMENTS, fragRule, fragmentationConstraint);
+            rbFragmentationPredictor.predictFragmentation(); // has to be called first!
+            final BarcodeSpectrumPredictor rbSpectrumPredictor = new BarcodeSpectrumPredictor(rbFragmentationPredictor, true);
 
-            fragmentationPredictor.predictFragmentation(); // has to be called first!
-            Ms2Spectrum<Peak> predictedSpectrum = spectrumPredictor.predictSpectrum();
-            Map<Peak, CombinatorialFragment> mapping = spectrumPredictor.getPeakFragmentMapping();
+            final MostLikelyFragmentation mlFragmentationPredictor = new MostLikelyFragmentation(mol, scoring, NUM_FRAGMENTS);
+            mlFragmentationPredictor.predictFragmentation(); // has to be called first!
+            final BarcodeSpectrumPredictor mlSpectrumPredictor = new BarcodeSpectrumPredictor(mlFragmentationPredictor, true);
 
-            // 3. Create a mirror plot:
-            String measuredSpectrumStr = getSpectrumString(measuredSpectrum);
-            String predictedSpectrumStr = getSpectrumString(predictedSpectrum);
-            ProcessBuilder pb = new ProcessBuilder("python","makeMirrorSpectrumPlot.py", measuredSpectrumStr, predictedSpectrumStr);
-            pb.directory(new File("C:\\Users\\Nutzer\\Desktop"));
-            pb.start();
+            // 3. Create mirror plot:
+            Thread rbDashApp = new Thread(predictAndPlotSpectrum(measuredSpectrum,null , rbSpectrumPredictor, smiles, "Rule based fragmentation"));
+            Thread mlDashApp = new Thread(predictAndPlotSpectrum(measuredSpectrum, null, mlSpectrumPredictor, smiles, "Most likely fragmentation"));
+
+            rbDashApp.start();
+            mlDashApp.start();
 
         } catch (InvalidSmilesException | IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private static String getSpectrumString(Ms2Spectrum<Peak> spectrum){
+    private static class Scoring extends EMFragmenterScoring2{
+
+
+        public Scoring(MolecularGraph graph, FTree tree) {
+            super(graph, tree);
+        }
+
+        @Override
+        public double scoreFragment(CombinatorialNode node){
+            return 0d;
+        }
+    }
+
+    private static Runnable predictAndPlotSpectrum(Ms2Spectrum<Peak> measuredSpectrum, HashMap<Peak, CombinatorialFragment> measuredPeak2Fragment, BarcodeSpectrumPredictor initialisedSpectrumPredictor, String smiles, String title){
+        Ms2Spectrum<Peak> predictedSpectrum = initialisedSpectrumPredictor.predictSpectrum();
+        String measuredSpectrumStr = getSpectrumString(measuredSpectrum, measuredPeak2Fragment);
+        String predictedSpectrumStr = getSpectrumString(predictedSpectrum, initialisedSpectrumPredictor.getPeak2FragmentMapping());
+
+        System.out.println("\"" + measuredSpectrumStr + "\" \"" + predictedSpectrumStr + "\" \"" + smiles + "\" \"" + title + "\"");
+        return () -> {
+            try {
+                ProcessBuilder pb = new ProcessBuilder("python", "makeMirrorSpectrumPlot.py", measuredSpectrumStr, predictedSpectrumStr, smiles, title);
+                pb.directory(new File("C:\\Users\\Nutzer\\Documents\\Repositories\\sirius-libs\\affinity_selection_ms\\src\\main\\resources"));
+                pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+                pb.start();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        };
+    }
+
+    private static String getSpectrumString(Ms2Spectrum<Peak> spectrum, HashMap<Peak, CombinatorialFragment> peak2Fragment){
         StringBuilder strBuilder = new StringBuilder();
         strBuilder.append("[");
         for(int i = 0; i < spectrum.size(); i++){
             Peak peak = spectrum.getPeakAt(i);
-            strBuilder.append("(").append(peak.getMass()).append(",").append(peak.getIntensity()).append(")");
+
+            String bitsetString;
+            if(peak2Fragment != null) {
+                CombinatorialFragment fragment = peak2Fragment.get(peak);
+                bitsetString = bitset2String(fragment.getBitSet());
+            }else{
+                bitsetString = " ";
+            }
+            strBuilder.append("(").append(peak.getMass()).append(",").append(peak.getIntensity()).append(",").
+                    append(bitsetString).append(")");
             if(i < spectrum.size() - 1){
                 strBuilder.append(";");
             }else{
@@ -97,6 +143,14 @@ public class Main {
         return strBuilder.toString();
     }
 
+    private static String bitset2String(BitSet bitSet){
+        StringBuilder strBuilder = new StringBuilder();
+        for(int idx = bitSet.nextSetBit(0); idx >= 0; idx = bitSet.nextSetBit(idx+1)){
+            strBuilder.append(idx).append(" ");
+        }
+        strBuilder.deleteCharAt(strBuilder.length()-1);
+        return strBuilder.toString();
+    }
     private static ProcessedInput getProcessedInput(Ms2Experiment ms2Experiment){
         addAnnotationToMs2Experiment(ms2Experiment);
         return new Sirius().preprocessForMs2Analysis(ms2Experiment);
