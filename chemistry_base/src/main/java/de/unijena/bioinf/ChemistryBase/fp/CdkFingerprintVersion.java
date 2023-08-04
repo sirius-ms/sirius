@@ -43,7 +43,7 @@ public class CdkFingerprintVersion extends FingerprintVersion {
 
 
     public static void main(String[] args) {
-        System.out.println(CdkFingerprintVersion.getDefault().getOffsetFor(USED_FINGERPRINTS.INSILICO));
+        System.out.println(CdkFingerprintVersion.getDefault().getOffsetFor(USED_FINGERPRINTS.MACCS));
         System.out.println(CdkFingerprintVersion.getDefault().size());
     }
 
@@ -165,7 +165,7 @@ public class CdkFingerprintVersion extends FingerprintVersion {
 
         BIOSMARTS(6, 283, false, true),
         RINGSYSTEMS(7, 463, false, true),
-        INSILICO(8, 5847, false, true);
+        INSILICO(8, 9104, false, true);
 
         public final int defaultPosition, length;
         /*
