@@ -154,7 +154,7 @@ public class CdkFingerprintVersion extends FingerprintVersion {
      * version string to reference the exact fingerprint computation code in the database (fp_version table)
      * TODO UPDATE everytime anything is changed on the code base of the fingerprint computation
      */
-    public static final String DEFAULT_SETUP_VERSION = "2023-01-10";
+    public static final String DEFAULT_SETUP_VERSION = "2023-08-04";
     private static final USED_FINGERPRINTS[] DEFAULT_SETUP = new USED_FINGERPRINTS[]{
         USED_FINGERPRINTS.OPENBABEL, USED_FINGERPRINTS.SUBSTRUCTURE, USED_FINGERPRINTS.MACCS, USED_FINGERPRINTS.PUBCHEM, USED_FINGERPRINTS.KLEKOTA_ROTH, USED_FINGERPRINTS.ECFP, USED_FINGERPRINTS.BIOSMARTS, USED_FINGERPRINTS.RINGSYSTEMS, USED_FINGERPRINTS.INSILICO};
 
