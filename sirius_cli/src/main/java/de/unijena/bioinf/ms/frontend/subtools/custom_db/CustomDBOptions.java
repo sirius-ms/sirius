@@ -25,9 +25,9 @@ import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.DataSources;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
+import de.unijena.bioinf.chemdb.custom.CustomDatabaseFactory;
 import de.unijena.bioinf.chemdb.custom.CustomDatabaseImporter;
 import de.unijena.bioinf.chemdb.custom.CustomDatabaseSettings;
-import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -36,20 +36,16 @@ import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
-import de.unijena.bioinf.ms.frontend.subtools.spectra_db.SpectralDBOptions;
-import de.unijena.bioinf.ms.frontend.subtools.spectra_db.SpectralDatabases;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
-import de.unijena.bioinf.spectraldb.SpectralLibrary;
-import de.unijena.bioinf.spectraldb.SpectralNoSQLDBs;
-import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.storage.blob.Compressible;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -85,7 +81,10 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                         "If no input data is given (global --input) the database will just be added to SIRIUS",
                         "The added db will also be available in the GUI",
 //                        "If just a name is given the db will be stored locally in '<SIRIUS_WORKSPACE>/csi_fingerid_cache/custom'.",
-                        "A location can either be a absolute local path OR a 's3' cloud storage location (experimental), e.g. 's3://my-bucket"
+                        "A location can either be:",
+                        "  1. An absolute local path to a directory",
+                        "  2. An absolute local path to a file (file name must end with '.db' !)",
+                        "  3. An 's3' cloud storage location (experimental), e.g. 's3://my-bucket"
 //                       , "The Location of the SIRIUS workspace can be set globally by (--workspace)."
                 }, order = 201)
         String location = null;
@@ -168,60 +167,35 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 CustomDatabaseSettings settings = new CustomDatabaseSettings(!mode.importParas.parentDBs.isEmpty(), DataSources.getDBFlag(mode.importParas.parentDBs),
                         List.of(ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion().getUsedFingerprints()), VersionsInfo.CUSTOM_DATABASE_SCHEMA, null);
 
-                final CustomDatabase<?> db = CustomDatabase.createOrOpen(mode.importParas.location, mode.importParas.compression, settings);
+                final CustomDatabase db = CustomDatabaseFactory.createOrOpen(mode.importParas.location, mode.importParas.compression, settings);
                 addDBToPropertiesIfNotExist(db);
                 logInfo("Database added to SIRIUS. Use 'structure --db=\"" + db.storageLocation() + "\"' to search in this database.");
 
                 if (input == null || input.msInput == null)
                     return true;
 
-                if (!input.msInput.unknownFiles.isEmpty()) {
+                if (!input.msInput.unknownFiles.isEmpty() || !input.msInput.msParserfiles.isEmpty()) {
                     logInfo("Importing new structures to custom database '" + mode.importParas.location + "'...");
                     final AtomicLong lines = new AtomicLong(0);
                     final List<Path> unknown = input.msInput.unknownFiles.keySet().stream().sorted().collect(Collectors.toList());
                     for (Path f : unknown)
                         lines.addAndGet(FileUtils.estimateNumOfLines(f));
+                    lines.addAndGet(input.msInput.msParserfiles.size());
 
                     final AtomicInteger count = new AtomicInteger(0);
 
                     checkForInterruption();
 
                     dbjob = db.importToDatabaseJob(
-                            unknown.stream().map(Path::toFile).collect(Collectors.toList()),
+                            input.msInput.msParserfiles.keySet().stream().map(Path::toFile).toList(),
+                            unknown.stream().map(Path::toFile).toList(),
                             inChI -> updateProgress(0, Math.max(lines.intValue(), count.incrementAndGet() + 1), count.get(), "Importing '" + inChI.key2D() + "'"),
                             ApplicationCore.WEB_API, mode.importParas.writeBuffer
-
                     );
                     checkForInterruption();
                     submitJob(dbjob).awaitResult();
                     logInfo("...New structures imported to custom database '" + mode.importParas.location + "'.");
                 }
-
-                if (!input.msInput.msParserfiles.isEmpty()) {
-                    logInfo("Importing reference spectra to custom database '" + mode.importParas.location + "'...");
-
-                    checkForInterruption();
-                    SpectralDBOptions.ModeParas smode = new SpectralDBOptions.ModeParas();
-                    smode.importParas = new SpectralDBOptions.Import();
-                    smode.importParas.location = mode.importParas.location;
-                    smode.importParas.writeBuffer = mode.importParas.writeBuffer;
-                    sjob = new SpectralDBOptions.SpectralDBWorkflow(input, smode);
-                    checkForInterruption();
-                    submitJob(sjob).awaitResult();
-                    logInfo("...New reference spectra imported to custom database '" + mode.importParas.location + "'.");
-                }
-
-                // TODO match SMILES/INCHI -> ISSUE: CustomDatabaseImporter merges SMILES (and forgets what was merged!)
-//                SpectralLibrary sdb = SpectralDatabases.getSpectralLibrary(Path.of(mode.importParas.location)).orElseThrow();
-//                sdb.updateReferenceSpectraPaginated(
-//                        (spectra) -> {
-//                            for (Ms2ReferenceSpectrum spectrum : spectra) {
-//                                // TODO set matching candidate inchi key
-//                                spectrum.setCandidateInChiKey("FOO");
-//                            }
-//                            return spectra;
-//                        },
-//                mode.importParas.writeBuffer);
 
                 return true;
             } else if (mode.removeParas != null) {
@@ -230,14 +204,19 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
 
                 SearchableDatabases.getCustomDatabase(mode.removeParas.location).ifPresentOrElse(db -> {
                             removeDBFromProperties(db);
-                            if (mode.removeParas.delete)
-                                db.deleteDatabase();
+                            if (mode.removeParas.delete) {
+                                try {
+                                    CustomDatabaseFactory.delete(db);
+                                } catch (IOException e) {
+                                    logError("Error deleting database.", e);
+                                }
+                            }
                         }, () -> logWarn("\n==> No custom database with location '" + mode.removeParas.location + "' found.\n")
                 );
                 return true;
             } else if (mode.showParas != null) {
                 if (mode.showParas.db == null) {
-                    @NotNull List<CustomDatabase<?>> dbs = SearchableDatabases.getCustomDatabases();
+                    @NotNull List<CustomDatabase> dbs = SearchableDatabases.getCustomDatabases();
                     if (dbs.isEmpty()){
                         logWarn("\n==> No Custom database found!\n");
                         return false;
@@ -270,13 +249,14 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
         }
     }
 
-    private void printDBInfo(CustomDatabase<?> db) {
+    private void printDBInfo(CustomDatabase db) {
         CustomDatabaseSettings s = db.getSettings();
         System.out.println("##########  BEGIN DB INFO  ##########");
         System.out.println("Name: " + db.name());
         System.out.println("Location: " + db.storageLocation());
         System.out.println("Number of Formulas: " + s.getStatistics().getFormulas());
         System.out.println("Number of Structures: " + s.getStatistics().getCompounds());
+        System.out.println("Number of Reference spectra: " + s.getStatistics().getSpectra());
         System.out.println("Is inherited: " + s.isInheritance());
         if (s.isInheritance())
             System.out.println("Inherited DBs: [ '" + String.join("','", s.getInheritedDBs()) + "' ]");
@@ -290,21 +270,21 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
         System.out.println("###############  END  ###############");
     }
 
-    public static void addDBToPropertiesIfNotExist(@NotNull CustomDatabase<?> db) {
-        Set<CustomDatabase<?>> customs = new HashSet<>(SearchableDatabases.getCustomDatabases());
+    public static void addDBToPropertiesIfNotExist(@NotNull CustomDatabase db) {
+        Set<CustomDatabase> customs = new HashSet<>(SearchableDatabases.getCustomDatabases());
         if (!customs.contains(db)) {
             customs.add(db);
             writeDBProperties(customs);
         }
     }
 
-    public static void removeDBFromProperties(@NotNull CustomDatabase<?> db) {
-        Set<CustomDatabase<?>> customs = new HashSet<>(SearchableDatabases.getCustomDatabases());
+    public static void removeDBFromProperties(@NotNull CustomDatabase db) {
+        Set<CustomDatabase> customs = new HashSet<>(SearchableDatabases.getCustomDatabases());
         customs.remove(db);
         writeDBProperties(customs);
     }
 
-    private static void writeDBProperties(Collection<CustomDatabase<?>> dbs) {
+    private static void writeDBProperties(Collection<CustomDatabase> dbs) {
         SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(SearchableDatabases.PROP_KEY, dbs.stream()
                 .sorted(Comparator.comparing(CustomDatabase::name))
                 .map(CustomDatabase::storageLocation)

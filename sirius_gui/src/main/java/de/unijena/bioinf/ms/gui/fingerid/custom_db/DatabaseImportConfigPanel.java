@@ -28,7 +28,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         this(null);
     }
 
-    public DatabaseImportConfigPanel(@Nullable CustomDatabase<?> db) {
+    public DatabaseImportConfigPanel(@Nullable CustomDatabase db) {
         super(CustomDBOptions.class);
 
         final TwoColumnPanel smalls = new TwoColumnPanel();
