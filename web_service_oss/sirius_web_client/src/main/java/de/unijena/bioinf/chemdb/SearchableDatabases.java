@@ -22,6 +22,7 @@ package de.unijena.bioinf.chemdb;
 
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
+import de.unijena.bioinf.chemdb.custom.CustomDatabaseFactory;
 import de.unijena.bioinf.chemdb.custom.OutdatedDBExeption;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
@@ -76,26 +77,24 @@ public class SearchableDatabases {
         return Paths.get(val);
     }
 
-    public static CustomDatabase<?> getCustomDatabaseByNameOrThrow(@NotNull String name) {
+    public static CustomDatabase getCustomDatabaseByNameOrThrow(@NotNull String name) {
         return getCustomDatabaseByName(name).
                 orElseThrow(() -> new IllegalArgumentException("Database with name: " + name + " does not exist!"));
     }
 
     @NotNull
-    public static Optional<CustomDatabase<?>> getCustomDatabaseByName(@NotNull String name) {
-        @NotNull List<CustomDatabase<?>> custom = getCustomDatabases();
-        for (CustomDatabase<?> customDatabase : custom)
+    public static Optional<CustomDatabase> getCustomDatabaseByName(@NotNull String name) {
+        @NotNull List<CustomDatabase> custom = getCustomDatabases();
+        for (CustomDatabase customDatabase : custom)
             if (customDatabase.name().equalsIgnoreCase(name))
                 return Optional.of(customDatabase);
         return Optional.empty();
     }
 
     @NotNull
-    public static Optional<CustomDatabase<?>> getCustomDatabaseByPath(@NotNull Path dbDir) {
-        if (!Files.isDirectory(dbDir))
-            return Optional.empty();
-
+    public static Optional<CustomDatabase> getCustomDatabaseByPath(@NotNull Path dbDir) {
         try {
+            // FIXME SEVERE  10:43:57 - NO2.2001: database is already opened in other process
             return Optional.of(getCustomDatabaseByPathOrThrow(dbDir));
         } catch (RuntimeException e) {
             LoggerFactory.getLogger(SearchableDatabases.class).error(e.getMessage(), e.getCause());
@@ -103,8 +102,8 @@ public class SearchableDatabases {
         }
     }
 
-    public static @NotNull Optional<CustomDatabase<?>> getCustomDatabase(@NotNull String nameOrPath) {
-        Optional<CustomDatabase<?>> it = getCustomDatabaseByName(nameOrPath);
+    public static @NotNull Optional<CustomDatabase> getCustomDatabase(@NotNull String nameOrPath) {
+        Optional<CustomDatabase> it = getCustomDatabaseByName(nameOrPath);
         if (it.isEmpty())
             it = getCustomDatabaseByPath(Path.of(nameOrPath));
         return it;
@@ -112,7 +111,7 @@ public class SearchableDatabases {
 
 
     @NotNull
-    public static CustomDatabase<?> getCustomDatabaseByPathOrThrow(@NotNull Path dbDir) {
+    public static CustomDatabase getCustomDatabaseByPathOrThrow(@NotNull Path dbDir) {
         try {
             return loadCustomDatabaseFromLocation(dbDir.toAbsolutePath().toString(), true);
         } catch (IOException e) {
@@ -144,12 +143,12 @@ public class SearchableDatabases {
     }
 
     @NotNull
-    public static List<CustomDatabase<?>> getCustomDatabases() {
+    public static List<CustomDatabase> getCustomDatabases() {
         return getCustomDatabases(true);
     }
 
     @NotNull
-    public static List<CustomDatabase<?>> getCustomDatabases(final boolean up2date) {
+    public static List<CustomDatabase> getCustomDatabases(final boolean up2date) {
         return loadCustomDatabases(up2date);
     }
 
@@ -166,8 +165,8 @@ public class SearchableDatabases {
     }
 
     @NotNull
-    public static List<CustomDatabase<?>> loadCustomDatabases(boolean up2date) {
-        final List<CustomDatabase<?>> databases = new ArrayList<>();
+    public static List<CustomDatabase> loadCustomDatabases(boolean up2date) {
+        final List<CustomDatabase> databases = new ArrayList<>();
         final Path custom = getCustomDatabaseDirectory();
 
         String customDBs = PropertyManager.getProperty(PROP_KEY);
@@ -177,7 +176,7 @@ public class SearchableDatabases {
                     bucketLocation = custom.resolve(bucketLocation).toAbsolutePath().toString();
 
                 try {
-                    final CustomDatabase<?> db = CustomDatabase.open(bucketLocation);//new CustomDatabase(dbDir.getName(), dbDir);
+                    final CustomDatabase db = CustomDatabaseFactory.open(bucketLocation);//new CustomDatabase(dbDir.getName(), dbDir);
                     if (up2date && db.needsUpgrade())
                         throw new OutdatedDBExeption("DB '" + db.name() + "' is outdated (DB-Version: " + db.getDatabaseVersion() + " vs. ReqVersion: " + VersionsInfo.CUSTOM_DATABASE_SCHEMA + ") . PLease reimport the structures. ");
 
@@ -191,8 +190,8 @@ public class SearchableDatabases {
     }
 
     @NotNull
-    public static CustomDatabase<?> loadCustomDatabaseFromLocation(String bucketLocation, boolean up2date) throws IOException {
-        final CustomDatabase<?> db = CustomDatabase.open(bucketLocation);
+    public static CustomDatabase loadCustomDatabaseFromLocation(String bucketLocation, boolean up2date) throws IOException {
+        final CustomDatabase db = CustomDatabaseFactory.open(bucketLocation);
         if (!up2date || !db.needsUpgrade())
             return db;
         throw new OutdatedDBExeption("DB '" + db.name() + "' is outdated (DB-Version: " + db.getDatabaseVersion() + " vs. ReqVersion: " + VersionsInfo.CUSTOM_DATABASE_SCHEMA + ") . PLease reimport the structures. ");

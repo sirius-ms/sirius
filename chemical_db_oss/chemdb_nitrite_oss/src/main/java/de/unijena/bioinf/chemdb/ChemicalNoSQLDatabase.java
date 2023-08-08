@@ -43,6 +43,8 @@ import static de.unijena.bioinf.chemdb.ChemDbTags.TAG_DATE;
 
 public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDatabase<Doctype> implements AbstractChemicalDatabase {
 
+    public static final String SETTINGS_COLLECTION = "CUSTOM-DB-SETTINGS";
+
     public ChemicalNoSQLDatabase(Database<Doctype> database) throws IOException {
         super(database);
     }
@@ -56,11 +58,14 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
                         new Index("inchikey", IndexType.UNIQUE)
                 ).addRepository(
                         FingerprintCandidateWrapper.class,
+                        "id",
                         new Index("formula", IndexType.NON_UNIQUE),
                         new Index("mass", IndexType.NON_UNIQUE),
                         new Index("candidate.inchikey", IndexType.UNIQUE),
                         new Index("candidate.bitset", IndexType.NON_UNIQUE),
                         new Index("candidate.name", IndexType.NON_UNIQUE)
+                ).addCollection(
+                        SETTINGS_COLLECTION
                 ).setOptionalFields(
                         FingerprintCandidateWrapper.class, "candidate"
                 ).addSerialization(

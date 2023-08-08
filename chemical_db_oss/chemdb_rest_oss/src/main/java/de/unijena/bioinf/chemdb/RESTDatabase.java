@@ -188,6 +188,11 @@ public class RESTDatabase implements FilterableChemicalDatabase {
     }
 
     @Override
+    public String getName() {
+        return "REST";
+    }
+
+    @Override
     public boolean containsFormula(MolecularFormula formula) throws ChemicalDatabaseException {
         throw new UnsupportedOperationException();
     }

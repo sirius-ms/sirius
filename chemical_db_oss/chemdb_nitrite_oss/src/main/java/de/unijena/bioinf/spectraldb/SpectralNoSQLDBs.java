@@ -95,7 +95,7 @@ public class SpectralNoSQLDBs extends ChemDBs {
             if (database.count(Filter.build().eq("key", ChemDbTags.TAG_DATE), SpectralNoSQLDatabase.Tag.class) > 0) {
                 SpectralNoSQLDatabase.Tag tag = database.find(Filter.build().eq("key", ChemDbTags.TAG_DATE), SpectralNoSQLDatabase.Tag.class).iterator().next();
                 tag.setValue(dbDate);
-                database.upsert(tag);
+                database.upsert(tag);                // TODO now change the spectrum inchis to the merged inchis
             } else {
                 database.insert(SpectralNoSQLDatabase.Tag.of(ChemDbTags.TAG_DATE, dbDate));
             }

@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 /**
  * Created by Marcus Ludwig on 15.11.16.
@@ -57,6 +58,11 @@ public class AbstractChemicalDatabaseSynchronousExecutor implements AbstractChem
 
     public synchronized void setFilter(long filter) {
         this.filter = filter;
+    }
+
+    @Override
+    public String getName() {
+        return Arrays.stream(this.databases).map(AbstractChemicalDatabase::getName).collect(Collectors.joining(","));
     }
 
     @Override
