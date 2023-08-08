@@ -20,18 +20,22 @@
 
 package de.unijena.bioinf.chemdb.custom;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
-import de.unijena.bioinf.chemdb.ChemicalBlobDatabase;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.chemdb.AbstractChemicalDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
+import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
-import de.unijena.bioinf.storage.blob.BlobStorage;
-import de.unijena.bioinf.storage.blob.BlobStorages;
+import de.unijena.bioinf.spectraldb.SpectralNoSQLDBs;
+import de.unijena.bioinf.spectraldb.SpectralNoSQLDatabase;
+import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
+import de.unijena.bioinf.spectraldb.io.ParsingIterator;
 import de.unijena.bioinf.storage.blob.Compressible;
-import de.unijena.bioinf.storage.blob.CompressibleBlobStorage;
+import de.unijena.bioinf.storage.db.nosql.Filter;
 import de.unijena.bioinf.webapi.WebAPI;
+import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.exception.CDKException;
@@ -40,79 +44,15 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
-import static de.unijena.bioinf.storage.blob.Compressible.TAG_COMPRESSION;
-
-public class CustomDatabase<Storage extends BlobStorage> implements SearchableDatabase {
+public abstract class CustomDatabase implements SearchableDatabase {
     protected static Logger logger = LoggerFactory.getLogger(CustomDatabase.class);
-    public static final String PROPERTY_PREFIX = "de.unijena.bioinf.stores.custom";
-
-    public synchronized void deleteDatabase() {
-        try {
-            storage.deleteBucket();
-        } catch (IOException e) {
-            LoggerFactory.getLogger(getClass()).error("Error when deleting data storage bucked. Please remove manually at your storage provider. ");
-        } finally {
-            CustomDataSources.removeCustomSource(storage.getName());
-        }
-    }
 
 
-    protected final CompressibleBlobStorage<Storage> storage;
+    public abstract void deleteDatabase();
+
     protected CustomDatabaseSettings settings;
-
-
-    public static CustomDatabase<?> createAndImportDatabase(
-            String bucketLocation,
-            Compressible.Compression compression,
-            CustomDatabaseSettings config,
-            List<File> files,
-            @Nullable CustomDatabaseImporter.Listener listener,
-            @NotNull WebAPI<?> api,
-            int bufferSize) throws IOException {
-        CustomDatabase<?> db = create(bucketLocation, compression, config);
-
-        try {
-            db.importToDatabase(files, listener, api, bufferSize);
-        } catch (CDKException e) {
-            throw new IOException("Error when loading CDK features during database import.", e);
-        }
-        return db;
-    }
-
-    public static CustomDatabase<?> create(String bucketLocation, Compressible.Compression compression, CustomDatabaseSettings config) throws IOException {
-        BlobStorage bs = BlobStorages.createDefault(PROPERTY_PREFIX, bucketLocation);
-        bs.setTags(Map.of(TAG_COMPRESSION, compression.name()));
-        CustomDatabase<?> db = new CustomDatabase<>(CompressibleBlobStorage.of(bs));
-        db.writeSettings(config);
-        CustomDataSources.addCustomSourceIfAbsent(db.name(), db.storageLocation());
-        return db;
-    }
-
-    public static CustomDatabase<?> open(String bucketLocation) throws IOException {
-        CustomDatabase<?> db = new CustomDatabase<>(CompressibleBlobStorage.of(BlobStorages.openDefault(PROPERTY_PREFIX, bucketLocation)));
-        db.readSettings();
-        CustomDataSources.addCustomSourceIfAbsent(db.name(), db.storageLocation());
-        return db;
-    }
-
-    public static CustomDatabase<?> createOrOpen(String bucketLocation, Compressible.Compression compression, CustomDatabaseSettings config) throws IOException {
-        if (BlobStorages.exists(PROPERTY_PREFIX, bucketLocation)) {
-            return open(bucketLocation);
-        }
-        return create(bucketLocation, compression, config);
-    }
-
-
-    private CustomDatabase(CompressibleBlobStorage<Storage> storage) {
-        this.storage = storage;
-    }
 
     public int getDatabaseVersion() {
         return settings.getSchemaVersion();
@@ -122,45 +62,9 @@ public class CustomDatabase<Storage extends BlobStorage> implements SearchableDa
         return settings.getSchemaVersion() != VersionsInfo.CUSTOM_DATABASE_SCHEMA;
     }
 
-    protected synchronized void readSettings() throws IOException {
-        if (storage.hasRawBlob(settingsBlob())) {
-            try (InputStream r = storage.rawReader(settingsBlob())) {
-                setSettings(new ObjectMapper().readValue(r, CustomDatabaseSettings.class));
-            }
-        } else {
-            throw new IOException("Custom DB settings file not found! Please reimport.");
-        }
-    }
+    public abstract Compressible.Compression compression();
 
-    protected synchronized void writeSettings(CustomDatabaseSettings settings) throws IOException {
-        setSettings(settings);
-        storage.withRawWriter(settingsBlob(), w -> new ObjectMapper().writeValue(w, settings));
-    }
-
-    protected synchronized void writeSettings() throws IOException {
-        writeSettings(settings);
-    }
-
-    private synchronized void setSettings(CustomDatabaseSettings config) {
-        settings = config;
-    }
-
-    protected Path settingsBlob() {
-        return Path.of(ChemicalBlobDatabase.BLOB_SETTINGS);
-    }
-
-    @Override
-    public String name() {
-        return storage.getName();
-    }
-
-    public Compressible.Compression compression() {
-        return storage.getCompression();
-    }
-
-    public String storageLocation() {
-        return storage.getBucketLocation();
-    }
+    public abstract String storageLocation();
 
     @Override
     public boolean isRestDb() {
@@ -182,9 +86,20 @@ public class CustomDatabase<Storage extends BlobStorage> implements SearchableDa
         return name();
     }
 
+    public abstract void readSettings() throws IOException;
+
+    public abstract void writeSettings(CustomDatabaseSettings settings) throws IOException;
+
+    public void writeSettings() throws IOException {
+        writeSettings(settings);
+    }
 
     public CustomDatabaseSettings getSettings() {
         return settings;
+    }
+
+    protected synchronized void setSettings(CustomDatabaseSettings config) {
+        settings = config;
     }
 
     public CustomDatabaseSettings.Statistics getStatistics() {
@@ -194,8 +109,7 @@ public class CustomDatabase<Storage extends BlobStorage> implements SearchableDa
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof CustomDatabase)) return false;
-        CustomDatabase<?> that = (CustomDatabase<?>) o;
+        if (!(o instanceof CustomDatabase that)) return false;
         return storageLocation().equals(that.storageLocation());
     }
 
@@ -204,11 +118,9 @@ public class CustomDatabase<Storage extends BlobStorage> implements SearchableDa
         return Objects.hash(storageLocation());
     }
 
-    public ChemicalBlobDatabase<Storage> toChemDBOrThrow(CdkFingerprintVersion version) throws IOException {
-        return new ChemicalBlobDatabase<>(version, storage.getRawStorage());
-    }
+    public abstract AbstractChemicalDatabase toChemDBOrThrow(CdkFingerprintVersion version) throws IOException;
 
-    public Optional<ChemicalBlobDatabase<Storage>> toChemDB(CdkFingerprintVersion version) {
+    public Optional<AbstractChemicalDatabase> toChemDB(CdkFingerprintVersion version) {
         try {
             return Optional.of(toChemDBOrThrow(version));
         } catch (IOException e) {
@@ -217,27 +129,71 @@ public class CustomDatabase<Storage extends BlobStorage> implements SearchableDa
         }
     }
 
-    public void importToDatabase(List<File> files, @Nullable CustomDatabaseImporter.Listener listener, @NotNull WebAPI<?> api, int bufferSize) throws IOException, CDKException {
-        importToDatabase(files, listener, new CustomDatabaseImporter(this, api.getCDKChemDBFingerprintVersion(), api, bufferSize));
-    }
-
-    public void importToDatabase(List<File> files, @Nullable CustomDatabaseImporter.Listener listener, CustomDatabaseImporter importer) throws IOException, CDKException {
+    public void importToDatabase(
+            List<File> spectrumFiles,
+            List<File> structureFiles,
+            @Nullable CustomDatabaseImporter.Listener listener,
+            CustomDatabaseImporter importer,
+            int bufferSize
+    ) throws IOException, CDKException {
         if (listener != null)
             importer.addListener(listener);
-        for (File f : files) {
+        if (!spectrumFiles.isEmpty() && !(this instanceof NoSQLCustomDatabase<?>)) {
+            throw new IllegalArgumentException();
+        }
+        Map<String, Pair<String, String>> spectrumSmiles = new HashMap<>();
+        if (!spectrumFiles.isEmpty()) {
+            SpectralNoSQLDatabase<?> db = ((NoSQLCustomDatabase<?>) this).database;
+            Iterator<Ms2Experiment> iterator = new ParsingIterator(spectrumFiles.iterator());
+            SpectralNoSQLDBs.importSpectraFromMs2Experiments(db, () -> iterator, bufferSize);
+            db.getStorage().findAllStr(Ms2ReferenceSpectrum.class).forEach(
+                    ref -> {
+                        String smiles = ref.getSmiles();
+                        if (!spectrumSmiles.containsKey(smiles)) {
+                            spectrumSmiles.put(smiles, Pair.of(ref.getLibraryId(), ref.getName()));
+                        }
+                    }
+            );
+            for (Map.Entry<String, Pair<String, String>> entry : spectrumSmiles.entrySet()) {
+                importer.importFromString(entry.getKey(), entry.getValue().getLeft(), entry.getValue().getRight());
+            }
+            importStructuresToDatabase(structureFiles, importer);
+            for (Map.Entry<String, String> entry : importer.inchiCache.entrySet()) {
+                List<Ms2ReferenceSpectrum> spectra = db.getStorage().findStr(Filter.build().eq("smiles", entry.getKey()), Ms2ReferenceSpectrum.class, "spectrum").peek(
+                        ref -> ref.setCandidateInChiKey(entry.getValue())
+                ).toList();
+                db.getStorage().upsertAll(spectra);
+            }
+            getStatistics().compounds().set(db.getStorage().countAll(FingerprintCandidateWrapper.class));
+            getStatistics().formulas().set(db.getStorage().findAllStr(FingerprintCandidateWrapper.class).map(FingerprintCandidateWrapper::getFormula).distinct().count());
+            getStatistics().spectra().set(db.countAllSpectra());
+            writeSettings();
+        } else {
+            importStructuresToDatabase(structureFiles, importer);
+        }
+    }
+
+    private void importStructuresToDatabase(List<File> structureFiles, CustomDatabaseImporter importer) throws IOException {
+        for (File f : structureFiles) {
             importer.importFrom(f);
         }
         importer.flushBuffer();
     }
 
-    public JJob<Boolean> importToDatabaseJob(List<File> files, @Nullable CustomDatabaseImporter.Listener listener, @NotNull WebAPI<?> api, int bufferSize) {
+    public JJob<Boolean> importToDatabaseJob(
+            List<File> spectrumFiles,
+            List<File> structureFiles,
+            @Nullable CustomDatabaseImporter.Listener listener,
+            @NotNull WebAPI<?> api,
+            int bufferSize
+    ) {
         return new BasicJJob<Boolean>() {
             CustomDatabaseImporter importer;
 
             @Override
             protected Boolean compute() throws Exception {
                 importer = new CustomDatabaseImporter(CustomDatabase.this, api.getCDKChemDBFingerprintVersion(), api, bufferSize);
-                importToDatabase(files, listener, importer);
+                importToDatabase(spectrumFiles, structureFiles, listener, importer, bufferSize);
                 return true;
             }
 

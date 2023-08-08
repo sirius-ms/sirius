@@ -123,8 +123,8 @@ public class WebWithCustomDatabase {
             });
         }
 
-        for (CustomDatabase<?> cdb : dbs.stream().filter(SearchableDatabase::isCustomDb).distinct().map(it -> (CustomDatabase<?>) it).collect(Collectors.toList())) {
-            Optional<? extends ChemicalBlobDatabase<?>> optDB = cdb.toChemDB(api.getCDKChemDBFingerprintVersion());
+        for (CustomDatabase cdb : dbs.stream().filter(SearchableDatabase::isCustomDb).distinct().map(it -> (CustomDatabase) it).toList()) {
+            Optional<? extends AbstractChemicalDatabase> optDB = cdb.toChemDB(api.getCDKChemDBFingerprintVersion());
 
             if (optDB.isPresent()) {
                 final List<FormulaCandidate> mfs = optDB.get().lookupMolecularFormulas(ionMass, deviation, ionType);
@@ -159,14 +159,14 @@ public class WebWithCustomDatabase {
             }
 
             // add candidates from requested custom dbs
-            for (CustomDatabase<?> cdb : dbs.stream().filter(SearchableDatabase::isCustomDb).distinct().map(it -> (CustomDatabase<?>) it).collect(Collectors.toList())) {
-                Optional<? extends ChemicalBlobDatabase<?>> optDB = cdb.toChemDB(api.getCDKChemDBFingerprintVersion());
+            for (CustomDatabase cdb : dbs.stream().filter(SearchableDatabase::isCustomDb).distinct().map(it -> (CustomDatabase) it).collect(Collectors.toList())) {
+                Optional<? extends AbstractChemicalDatabase> optDB = cdb.toChemDB(api.getCDKChemDBFingerprintVersion());
                 if (optDB.isPresent())
                     result.addRequestedCustom(cdb.name(), optDB.get().lookupStructuresAndFingerprintsByFormula(formula));
             }
 
             // add tags from non-requested custom dbs for compounds that are also part of the requested dbs
-            for (ChemicalBlobDatabase<?> custom : getAdditionalCustomDBs(dbs))
+            for (AbstractChemicalDatabase custom : getAdditionalCustomDBs(dbs))
                 result.addAdditionalCustom(custom.getName(), custom.lookupStructuresAndFingerprintsByFormula(formula));
 
             return result;
@@ -175,12 +175,12 @@ public class WebWithCustomDatabase {
         }
     }
 
-    protected List<ChemicalBlobDatabase<?>> getAdditionalCustomDBs(Collection<SearchableDatabase> dbs) throws IOException {
+    protected List<AbstractChemicalDatabase> getAdditionalCustomDBs(Collection<SearchableDatabase> dbs) throws IOException {
         final Set<String> customToSearch = dbs.stream().filter(SearchableDatabase::isCustomDb).map(SearchableDatabase::name).collect(Collectors.toSet());
-        List<ChemicalBlobDatabase<?>> fdbs = new ArrayList<>(CustomDataSources.size());
+        List<AbstractChemicalDatabase> fdbs = new ArrayList<>(CustomDataSources.size());
         for (CustomDataSources.Source customSource : CustomDataSources.sources()) {
             if (customSource.isCustomSource() && !customToSearch.contains(customSource.name())) {
-                @NotNull Optional<CustomDatabase<?>> opCustom = SearchableDatabases.getCustomDatabaseByName(customSource.name());
+                @NotNull Optional<CustomDatabase> opCustom = SearchableDatabases.getCustomDatabaseByName(customSource.name());
                 if (opCustom.isPresent())
                     opCustom.get().toChemDB(api.getCDKChemDBFingerprintVersion()).ifPresent(fdbs::add);
             }
@@ -193,7 +193,7 @@ public class WebWithCustomDatabase {
      * merge formulas with same Formula and IonType {@literal ->}  Merge the filterBits
      * It is also possible to add Custom dbs for additional flags
      */
-    public static Set<FormulaCandidate> mergeFormulas(Collection<FormulaCandidate> formulas, List<ChemicalBlobDatabase<?>> dbsToAddKeysFrom) {
+    public static Set<FormulaCandidate> mergeFormulas(Collection<FormulaCandidate> formulas, List<AbstractChemicalDatabase> dbsToAddKeysFrom) {
         HashMap<FormulaKey, AtomicLong> map = new HashMap<>();
         for (FormulaCandidate formula : formulas) {
             final FormulaKey key = new FormulaKey(formula);
@@ -203,8 +203,14 @@ public class WebWithCustomDatabase {
 
         //add non contained custom db flags
         for (Map.Entry<FormulaKey, AtomicLong> e : map.entrySet()) {
-            e.getValue().accumulateAndGet(CustomDataSources.getDBFlagsFromNames(dbsToAddKeysFrom.stream().filter(db -> db.containsFormula(e.getKey().formula))
-                    .map(ChemicalBlobDatabase::getName).collect(Collectors.toSet())), (a, b) -> a |= b);
+            e.getValue().accumulateAndGet(CustomDataSources.getDBFlagsFromNames(dbsToAddKeysFrom.stream().filter(db -> {
+                        try {
+                            return db.containsFormula(e.getKey().formula);
+                        } catch (ChemicalDatabaseException ex) {
+                            throw new RuntimeException(ex);
+                        }
+                    })
+                    .map(AbstractChemicalDatabase::getName).collect(Collectors.toSet())), (a, b) -> a |= b);
         }
 
         return map.entrySet().stream().map(e ->

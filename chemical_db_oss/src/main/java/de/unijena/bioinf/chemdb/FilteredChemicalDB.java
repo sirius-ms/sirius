@@ -57,6 +57,11 @@ public class FilteredChemicalDB<DB extends AbstractChemicalDatabase> implements 
     }
 
     @Override
+    public String getName() {
+        return wrappedDB.getName();
+    }
+
+    @Override
     public List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
         if (wrappedDB instanceof FilterableChemicalDatabase)
             return ((FilterableChemicalDatabase) wrappedDB).lookupMolecularFormulas(filter, mass, deviation, ionType);
