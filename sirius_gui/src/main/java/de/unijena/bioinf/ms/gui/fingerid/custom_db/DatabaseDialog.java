@@ -62,7 +62,7 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 public class DatabaseDialog extends JDialog {
     //todo: we should separate the Dialog from the Database Managing part.
     protected JList<String> dbList;
-    protected Map<String, CustomDatabase<?>> customDatabases;
+    protected Map<String, CustomDatabase> customDatabases;
 
     protected DatabaseView dbView;
     private final JDialog owner = this;
@@ -79,7 +79,7 @@ public class DatabaseDialog extends JDialog {
         add(header, BorderLayout.NORTH);
 
 
-        this.customDatabases = Jobs.runInBackgroundAndLoad(owner, "Loading DBs...", (Callable<List<CustomDatabase<?>>>) SearchableDatabases::getCustomDatabases).getResult()
+        this.customDatabases = Jobs.runInBackgroundAndLoad(owner, "Loading DBs...", (Callable<List<CustomDatabase>>) SearchableDatabases::getCustomDatabases).getResult()
                 .stream().collect(Collectors.toMap(CustomDatabase::name, k -> k));
         this.dbList = new DatabaseList(customDatabases.keySet().stream().sorted().collect(Collectors.toList()));
         JScrollPane scroll = new JScrollPane(dbList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -110,7 +110,7 @@ public class DatabaseDialog extends JDialog {
             if (i >= 0) {
                 final String s = dbList.getModel().getElementAt(i);
                 if (customDatabases.containsKey(s)) {
-                    final CustomDatabase<?> c = customDatabases.get(s);
+                    final CustomDatabase c = customDatabases.get(s);
                     dbView.updateContent(c);
                     editDB.setEnabled(!c.needsUpgrade());
                     deleteDB.setEnabled(true);
@@ -134,7 +134,7 @@ public class DatabaseDialog extends JDialog {
                 final int k = dbList.getSelectedIndex();
                 if (k >= 0 && k < dbList.getModel().getSize()) {
                     String key = dbList.getModel().getElementAt(k);
-                    CustomDatabase<?> db = customDatabases.get(key);
+                    CustomDatabase db = customDatabases.get(key);
                     new ImportDatabaseDialog(db);
                 }
 
@@ -146,7 +146,7 @@ public class DatabaseDialog extends JDialog {
             final int k = dbList.getSelectedIndex();
             if (k >= 0 && k < dbList.getModel().getSize()) {
                 String key = dbList.getModel().getElementAt(k);
-                CustomDatabase<?> db = customDatabases.get(key);
+                CustomDatabase db = customDatabases.get(key);
                 new ImportDatabaseDialog(db);
             }
         });
@@ -177,7 +177,7 @@ public class DatabaseDialog extends JDialog {
                     new StacktraceDialog(MF, "Fatal Error during Custom DB removal.", ex2);
                 }
 
-                final String[] dbs = Jobs.runInBackgroundAndLoad(owner, "Reloading DBs...", (Callable<List<CustomDatabase<?>>>) SearchableDatabases::getCustomDatabases).getResult()
+                final String[] dbs = Jobs.runInBackgroundAndLoad(owner, "Reloading DBs...", (Callable<List<CustomDatabase>>) SearchableDatabases::getCustomDatabases).getResult()
                         .stream().map(CustomDatabase::name).toArray(String[]::new);
                 dbList.setListData(dbs);
             }
@@ -192,7 +192,7 @@ public class DatabaseDialog extends JDialog {
     }
 
     protected void whenCustomDbIsAdded(final String dbName) {
-        CustomDatabase<?> db = SearchableDatabases.getCustomDatabaseByPathOrThrow(Path.of(dbName));
+        CustomDatabase db = SearchableDatabases.getCustomDatabaseByPathOrThrow(Path.of(dbName));
         this.customDatabases.put(db.name(), db);
         dbList.setListData(this.customDatabases.keySet().stream().sorted().toArray(String[]::new));
         dbList.setSelectedValue(db.name(), true);
@@ -210,7 +210,7 @@ public class DatabaseDialog extends JDialog {
             setPreferredSize(new Dimension(200, 240));
         }
 
-        public void updateContent(CustomDatabase<?> c) {
+        public void updateContent(CustomDatabase c) {
             if (c.getStatistics().getCompounds() > 0) {
                 content.setText("<html><b>" + c.name() + "</b>"
                         + "<br><b>"
@@ -245,7 +245,7 @@ public class DatabaseDialog extends JDialog {
             this(null);
         }
 
-        public ImportDatabaseDialog(@Nullable CustomDatabase<?> db) {
+        public ImportDatabaseDialog(@Nullable CustomDatabase db) {
             super(owner, db != null ? "Import into '" + db.name() + "' database" : "Create/Add custom database", false);
 
             setPreferredSize(new Dimension(640, 480));
