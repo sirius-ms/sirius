@@ -1,17 +1,42 @@
 package de.unijena.bioinf.cmlFragmentation;
 
 import de.unijena.bioinf.fragmenter.*;
-import org.openscience.cdk.exception.InvalidSmilesException;
-import org.openscience.cdk.silent.SilentChemObjectBuilder;
-import org.openscience.cdk.smiles.SmilesParser;
-
 import java.util.*;
 
-public class MostLikelyFragmentation extends AbstractFragmentationPredictor{
+/**
+ * An object of this class predicts the fragmentation process for a given molecular structure
+ * occurring during MS/MS acquisition in a prioritized breadth-first search approach.
+ * The simulation of the fragmentation process is comparable to a prioritized approach
+ * for generating a combinatorial fragmentation graph.<br>
+ *
+ * In every step, the fragment F with the most profitable path to the root is dequeued from Q and
+ * marked as predicted fragment. For this fragment, every direct subfragment F' is generated and:
+ * <li>if F' is novel, it's added to the graph G and to the priority queue Q</li>
+ * <li>if F' is already in G and Q, then add the edge (F,F') and update its placement in Q</li>
+ * <li>if F' is already in G and not in Q anymore, then add only the edge (F,F').</li>
+ * After a certain number of fragments were predicted, the remaining (unmarked) fragments in Q are removed from G.
+ */
+public class PrioritizedIterativeFragmentation extends AbstractFragmentationPredictor{
 
+    /**
+     * The scoring function to weigh each edge and node in the generated {@link CombinatorialGraph}.
+     */
     private final CombinatorialFragmenterScoring scoring;
+
+    /**
+     * The number of fragments which will be generated during fragmentation simulation.
+     */
     private final int numFragments;
-    public MostLikelyFragmentation(MolecularGraph molecule, CombinatorialFragmenterScoring scoring, int numFragments){
+
+    /**
+     * Constructs an object of {@link PrioritizedIterativeFragmentation}.
+     *
+     * @param molecule the molecular structure for which the fragmentation will be predicted
+     * @param scoring the scoring function for generating the {@link CombinatorialGraph},
+     *                and which determines which fragments will be chosen
+     * @param numFragments the number of generated fragments (excluding the intact molecule)
+     */
+    public PrioritizedIterativeFragmentation(MolecularGraph molecule, CombinatorialFragmenterScoring scoring, int numFragments){
         super(molecule);
         this.scoring = scoring;
         this.numFragments = numFragments;
