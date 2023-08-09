@@ -16,10 +16,27 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * An object of this class predicts a barcode tandem mass spectrum
+ * (each peak in the barcode spectrum has intensity one).
+ */
 public class BarcodeSpectrumPredictor extends AbstractMs2SpectrumPredictor<Peak>{
 
+    /**
+     * Determines whether [M+H]+ or [M-H]- is assumed.
+     */
     private final boolean isPositiveMode;
 
+    /**
+     * Constructs a BarcodeSpectrumPredictor.<br>
+     * If {@code positiveMode} is set to {@code true}, the considered {@link PrecursorIonType} will be [M+H]+;
+     * if it is set to {@code false}, the considered PrecursorIonType will be [M-H]-.
+     *
+     * @param fragPredictor the {@link FragmentationPredictor} used for predicting the fragments of the molecule
+     *                      generated during MS/MS acquisition
+     * @param positiveMode if {@code true}, the considered precursor ion type is [M+H]+;
+     *                     otherwise [M-H]-
+     */
     public BarcodeSpectrumPredictor(FragmentationPredictor fragPredictor, boolean positiveMode){
         super(fragPredictor, positiveMode ? PeriodicTable.getInstance().getPrecursorProtonation() : PeriodicTable.getInstance().getPrecursorDeprotonation());
         this.isPositiveMode = positiveMode;
