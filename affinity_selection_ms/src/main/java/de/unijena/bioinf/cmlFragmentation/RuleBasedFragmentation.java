@@ -5,13 +5,47 @@ import org.openscience.cdk.interfaces.IBond;
 
 import java.util.*;
 
+/**
+ * An instance of this class fragments a given molecular structure according to the specified
+ * {@link FragmentationRules fragmentation rules} and {@link CombinatorialFragmenter.Callback2 fragmentation constraint}.
+ * After this rule-based fragmentation, a certain number of the best fragments are selected
+ * respective to the specified {@link CombinatorialFragmenterScoring scoring}.
+ * The resulting {@link CombinatorialGraph} is induced by this set of selected/predicted fragments.
+ */
 public class RuleBasedFragmentation extends AbstractFragmentationPredictor{
 
+    /**
+     * The scoring function to weigh each edge and node in the generated {@link CombinatorialGraph}.
+     */
     private final CombinatorialFragmenterScoring scoring;
+
+    /**
+     * The fragmentation constraint which determines which fragments will be further fragmented.
+     */
     private final CombinatorialFragmenter.Callback2 fragmentationConstraint;
+
+    /**
+     * A {@link BitSet} object indicating which bonds in the given molecule will be cut during fragmentation.
+     */
     private final BitSet bondsToCut;
+
+    /**
+     * The number of fragments which will be generated during fragmentation simulation.
+     */
     private final int numFragments;
 
+    /**
+     * Initialises a {@link RuleBasedFragmentation} object.<br>
+     * {@code fragmentationRules} is used for iterating over all bonds of {@code molecule},
+     * and decide whether a certain bond will be cut during fragmentation or not.
+     *
+     * @param molecule the molecular structure for which the fragments will be predicted
+     * @param scoring the scoring function for generating the {@link CombinatorialGraph},
+     *                and which determines which fragments will be chosen
+     * @param numFragments the number of generated fragments (excluding the intact molecule)
+     * @param fragmentationRules an object of {@link FragmentationRules} specifying which bonds in {@code molecule} to cut
+     * @param fragmentationConstraint the fragmentation constraint which determines which fragments will be further fragmented
+     */
     public RuleBasedFragmentation(MolecularGraph molecule, CombinatorialFragmenterScoring scoring, int numFragments, FragmentationRules fragmentationRules, CombinatorialFragmenter.Callback2 fragmentationConstraint){
         super(molecule);
         this.numFragments = numFragments;
@@ -25,6 +59,18 @@ public class RuleBasedFragmentation extends AbstractFragmentationPredictor{
         }
     }
 
+    /**
+     * Initialises a {@link RuleBasedFragmentation} object which uses a default scoring.
+     * In this scoring function each broken bond is assigned with a score of -1 and each node has a score of 0;
+     * i.e. the length of a path from root to a fragment is equal to {@code -numberBrokenBonds}. <br>
+     * {@code fragmentationRules} is used for iterating over all bonds of {@code molecule},
+     * and decide whether a certain bond will be cut during fragmentation or not.
+     *
+     * @param molecule the molecular structure for which the fragments will be predicted
+     * @param numFragments the number of generated fragments (excluding the intact molecule)
+     * @param fragmentationRules an object of {@link FragmentationRules} specifying which bonds in {@code molecule} to cut
+     * @param fragmentationConstraint the fragmentation constraint which determines which fragments will be further fragmented
+     */
     public RuleBasedFragmentation(MolecularGraph molecule, int numFragments, FragmentationRules fragmentationRules, CombinatorialFragmenter.Callback2 fragmentationConstraint){
         this(molecule, null, numFragments, fragmentationRules, fragmentationConstraint);
     }
