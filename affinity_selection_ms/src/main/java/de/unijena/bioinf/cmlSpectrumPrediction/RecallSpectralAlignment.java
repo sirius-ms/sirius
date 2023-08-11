@@ -19,8 +19,8 @@ public class RecallSpectralAlignment extends AbstractSpectralAlignment {
     }
     @Override
     public SpectralSimilarity score(OrderedSpectrum<Peak> predictedSpectrum, OrderedSpectrum<Peak> measuredSpectrum){
-        if(predictedSpectrum.isEmpty() || measuredSpectrum.isEmpty()) return new SpectralSimilarity(0d, 0);
         this.matchedMeasuredPeaks.clear(); // necessary to maintain the functionality
+        if(predictedSpectrum.isEmpty() || measuredSpectrum.isEmpty()) return new SpectralSimilarity(0d, 0);
         SpectralSimilarity specSimilarity = this.scoreAllAgainstAll(predictedSpectrum, measuredSpectrum);// similarity := #MatchedPeaksInMeasuredSpectrum; shardPeaks := #SharedPeaksInBoth
         return new SpectralSimilarity(specSimilarity.similarity / measuredSpectrum.size(), specSimilarity.shardPeaks);
     }
