@@ -7,29 +7,31 @@ import de.unijena.bionf.spectral_alignment.AbstractSpectralAlignment;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 
 import java.util.HashSet;
-import java.util.List;
 
-public class RecallSpectralAlignment extends AbstractSpectralAlignment {
+public class WeightedRecallSpectralAlignment extends AbstractSpectralAlignment {
 
     private final HashSet<Peak> matchedMeasuredPeaks;
 
-    public RecallSpectralAlignment(Deviation deviation){
+    public WeightedRecallSpectralAlignment(Deviation deviation){
         super(deviation);
         this.matchedMeasuredPeaks = new HashSet<>();
     }
     @Override
-    public SpectralSimilarity score(OrderedSpectrum<Peak> predictedSpectrum, OrderedSpectrum<Peak> measuredSpectrum){
-        this.matchedMeasuredPeaks.clear(); // necessary to maintain the functionality
+    public SpectralSimilarity score(OrderedSpectrum<Peak> predictedSpectrum, OrderedSpectrum<Peak> measuredSpectrum) {
+        this.matchedMeasuredPeaks.clear();
         if(predictedSpectrum.isEmpty() || measuredSpectrum.isEmpty()) return new SpectralSimilarity(0d, 0);
-        SpectralSimilarity specSimilarity = this.scoreAllAgainstAll(predictedSpectrum, measuredSpectrum);// similarity := #MatchedPeaksInMeasuredSpectrum; shardPeaks := #SharedPeaksInBoth
-        return new SpectralSimilarity(specSimilarity.similarity / measuredSpectrum.size(), specSimilarity.shardPeaks);
+
+        double sum = 0d;
+        for(Peak measuredPeak : measuredSpectrum) sum += measuredPeak.getIntensity();
+        SpectralSimilarity spectralSimilarity = this.scoreAllAgainstAll(predictedSpectrum, measuredSpectrum);
+        return new SpectralSimilarity(spectralSimilarity.similarity / sum, spectralSimilarity.shardPeaks);
     }
 
     @Override
     protected double scorePeaks(Peak predictedPeak, Peak measuredPeak) {
         if(!this.matchedMeasuredPeaks.contains(measuredPeak)){
             this.matchedMeasuredPeaks.add(measuredPeak);
-            return 1d;
+            return measuredPeak.getIntensity();
         }
         return 0d;
     }
@@ -37,9 +39,5 @@ public class RecallSpectralAlignment extends AbstractSpectralAlignment {
     @Override
     protected double maxAllowedDifference(double mz) {
         return this.deviation.absoluteFor(mz);
-    }
-
-    public List<Peak> getPreviousMatchedMeasuredPeaks(){
-        return this.matchedMeasuredPeaks.stream().toList();
     }
 }
