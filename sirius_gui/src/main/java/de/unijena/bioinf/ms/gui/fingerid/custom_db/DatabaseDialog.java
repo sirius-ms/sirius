@@ -215,7 +215,8 @@ public class DatabaseDialog extends JDialog {
                 content.setText("<html><b>" + c.name() + "</b>"
                         + "<br><b>"
                         + c.getStatistics().getCompounds() + "</b> compounds with <b>" + c.getStatistics().getFormulas()
-                        + "</b> different molecular formulas."
+                        + "</b> different molecular formulas"
+                        + (c.getStatistics().getSpectra() > 0 ? " and <b>" + c.getStatistics().getSpectra() + "</b> reference spectra." : ".")
                         + "<br>"
                         + ((c.getSettings().isInheritance() ? "<br>This database will also include all compounds from '" + DataSources.getDataSourcesFromBitFlags(c.getFilterFlag()).stream().filter(n -> !SearchableDatabases.NON_SLECTABLE_LIST.contains(n)).collect(Collectors.joining("', '")) + "'." : "")
                                 + (c.needsUpgrade() ? "<br><b>This database schema is outdated. You have to upgrade the database before you can use it.</b>" : "")
@@ -261,7 +262,7 @@ public class DatabaseDialog extends JDialog {
             final Box box = Box.createVerticalBox();
             box.setAlignmentX(Component.LEFT_ALIGNMENT);
             final JLabel label = new JLabel(
-                    "<html>Please insert the compounds of your custom database as SMILES here (one compound per line). It is also possible to drag and drop files with SMILES into this text field.");
+                    "<html>Please insert the compounds of your custom database as SMILES here (one compound per line). It is also possible to drag and drop files with SMILES and reference spectrum files into this text field.");
             label.setAlignmentX(Component.LEFT_ALIGNMENT);
             box.add(label);
             final JTextArea textArea = new JTextAreaDropImage();
@@ -326,8 +327,6 @@ public class DatabaseDialog extends JDialog {
                 }
             };
 
-            // TODO import spectrum files!
-
             setDropTarget(dropTarget);
             textArea.setDropTarget(dropTarget);
             pack();
@@ -343,15 +342,19 @@ public class DatabaseDialog extends JDialog {
                 Jobs.runInBackgroundAndLoad(this, "Checking output location...", () -> {
                     Path p = Path.of(configPanel.dbLocationField.getFilePath());
                     if (Files.exists(p)) {
-                        if (Files.isRegularFile(p))
-                            throw new IOException("Illegal DB location: Found a file but DB location must either not exist, be an empty directory or an existing custom db.");
-
-                        if (FileUtils.listAndClose(p, s -> s.findAny().isPresent()))
+                        if (Files.isRegularFile(p)) {
                             try {
                                 return SearchableDatabases.loadCustomDatabaseFromLocation(p.toAbsolutePath().toString(), true);
                             } catch (IOException ex) {
-                                throw new IOException("Illegal DB location: Found non empty directory that is not a valid custom db. To create a new DB location must not exist or be an empty directory.", ex);
+                                throw new IOException("Illegal DB location: Found a file but DB location must either not exist, be an empty directory or an existing custom db.", ex);
                             }
+                        } else if (FileUtils.listAndClose(p, s -> s.findAny().isPresent())) {
+                            try {
+                                return SearchableDatabases.loadCustomDatabaseFromLocation(p.toAbsolutePath().toString(), true);
+                            } catch (IOException ex) {
+                                throw new IOException("Illegal DB location: Found non empty directory that is not a valid custom db. To create a new DB, location must not exist or be an empty directory.", ex);
+                            }
+                        }
                     }
                     return null;
                 }).awaitResult();
@@ -372,8 +375,12 @@ public class DatabaseDialog extends JDialog {
                 command.add(configPanel.toolCommand());
                 command.addAll(configPanel.asParameterList());
 
+                InputFilesOptions input = new InputFilesOptions();
+                input.msInput = new InputFilesOptions.MsInput();
+                input.msInput.setInputPath(sources);
+
                 Jobs.runCommandAndLoad(command, null,
-                                InputFilesOptions.createNonCompoundInput(sources), this,
+                                input, this,
                                 "Importing into '" + configPanel.dbLocationField.getFilePath() + "'...",
                                 false)
                         .awaitResult();
