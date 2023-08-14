@@ -3,6 +3,7 @@ package de.unijena.bioinf.fragmenter;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.babelms.MsIO;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import gurobi.GRBException;
@@ -13,6 +14,7 @@ import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
@@ -278,9 +280,24 @@ public class DataProcessor {
                 try {
                     MolecularGraph molecule = this.readMoleculeFromMsFile(fileName + ".ms");
                     FTree fTree = this.readFTree(fileName + ".json");
-                    DirectedBondTypeScoring scoring = new DirectedBondTypeScoring(molecule);
+                    EMFragmenterScoring2 scoring = new EMFragmenterScoring2(molecule, fTree);
 
-                    CombinatorialSubtreeCalculator subtreeCalc = SubtreeComputationMethod.getComputedSubtreeCalculator(fTree, molecule, scoring, fragmentationConstraint, subtreeCompMethod);
+                    final HashSet<MolecularFormula> mfSet = new HashSet<>();
+                    for (Fragment ft : fTree.getFragmentsWithoutRoot()) {
+                        mfSet.add(ft.getFormula());
+                        mfSet.add(ft.getFormula().add(MolecularFormula.getHydrogen()));
+                        mfSet.add(ft.getFormula().add(MolecularFormula.getHydrogen().multiply(2)));
+                        if (ft.getFormula().numberOfHydrogens()>0) mfSet.add(ft.getFormula().subtract(MolecularFormula.getHydrogen()));
+                        if (ft.getFormula().numberOfHydrogens()>1) mfSet.add(ft.getFormula().subtract(MolecularFormula.getHydrogen().multiply(2)));
+                    }
+
+                    final CriticalPathSubtreeCalculator subtreeCalc = new CriticalPathSubtreeCalculator(fTree, molecule, scoring, true);
+                    subtreeCalc.setMaxNumberOfNodes(100000);
+                    subtreeCalc.initialize((node, nnodes, nedges) -> {
+                        if(mfSet.contains(node.getFragment().getFormula())) return true;
+                        return (node.getTotalScore() > -5f);
+                    });
+                    subtreeCalc.computeSubtree();
 
                     CombinatorialSubtreeCalculatorJsonWriter.writeResultsToFile(subtreeCalc, new File(this.outputDir, fileName + ".json"));
                     this.unreference(molecule, fTree, scoring, subtreeCalc);
@@ -516,4 +533,58 @@ public class DataProcessor {
 
     }
 
+    /*
+    public static void main(String[] args){
+        File spectraDir = new File(args[0]);
+        File fTreeDir = new File(args[1]);
+        File outputDir = new File(args[2]);
+
+        DataProcessor dataProcessor = new DataProcessor(spectraDir, null, fTreeDir, outputDir);
+        try {
+            dataProcessor.computeCombinatorialSubtrees(null, null);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+     */
+
+    public static void main(String[] args){
+        try {
+            final File subtreeDir = new File("/vol/clusterdata/nils/Results/new_subtrees");
+            final File outputFile = new File("/vol/clusterdata/nils/Results/numFragmentationSteps.txt");
+
+            final String[] fileNames = subtreeDir.list();
+
+            final int NUM_CONCURRENT_THREADS = Runtime.getRuntime().availableProcessors();
+            ExecutorService executor = Executors.newFixedThreadPool(NUM_CONCURRENT_THREADS);
+            ArrayList<Callable<List<Integer>>> tasks = new ArrayList<>(fileNames.length);
+            for (final String fileName : fileNames) {
+                Callable<List<Integer>> task = () -> {
+                    final FileReader fileReader = new FileReader(new File(subtreeDir, fileName));
+                    CombinatorialSubtree subtree = CombinatorialSubtreeCalculatorJsonReader.readTreeFromJson(fileReader);
+                    return subtree.getTerminalNodes().stream().map(terminalNode -> {
+                        CombinatorialNode parentNode = terminalNode.getIncomingEdges().get(0).getSource();
+                        return parentNode.getDepth();
+                    }).toList();
+                };
+                tasks.add(task);
+            }
+
+            List<Future<List<Integer>>> futures = executor.invokeAll(tasks);
+            executor.shutdown();
+            try(BufferedWriter fileWriter = Files.newBufferedWriter(outputFile.toPath())){
+                for(Future<List<Integer>> future : futures){
+                    List<Integer> observedFragSteps = future.get();
+                    for(int numFragSteps : observedFragSteps){
+                        fileWriter.write(Integer.toString(numFragSteps));
+                        fileWriter.newLine();
+                    }
+                }
+            } catch (ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        } catch (InterruptedException | IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
