@@ -104,8 +104,6 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
 
     public final FingerprinterOptions fingerprinterOptions;
 
-    public final SpectraSearchOptions spectraSearchOptions;
-
     //postprocessing, project-space consuming tool, exporting tools,
     public final SummaryOptions summaryOptions;
     public final ExportPredictionsOptions exportPredictions;
@@ -132,6 +130,7 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
         this.additionalTools = additionalTools;
 
         toolChainTools = Map.of(
+                SpectraSearchOptions.class, new SpectraSearchOptions(configOptionLoader),
                 SiriusOptions.class, new SiriusOptions(configOptionLoader),
                 ZodiacOptions.class, new ZodiacOptions(configOptionLoader),
                 PassatuttoOptions.class, new PassatuttoOptions(configOptionLoader),
@@ -153,7 +152,6 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
         settingsOptions = new SettingsOptions();
         autocompleteOptions = new AutoCompletionScript();
         fingerprinterOptions = new FingerprinterOptions();
-        spectraSearchOptions = new SpectraSearchOptions();
     }
 
     public void initRootSpec() {
@@ -180,7 +178,7 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
 
     protected Object[] standaloneTools() {
         return Streams.concat(
-                Stream.of(projectSpaceOptions, customDBOptions, spectralDBOptions, similarityMatrixOptions, decompOptions, mgfExporterOptions, ftreeExporterOptions, exportPredictions, fingerprinterOptions, spectraSearchOptions),
+                Stream.of(projectSpaceOptions, customDBOptions, spectralDBOptions, similarityMatrixOptions, decompOptions, mgfExporterOptions, ftreeExporterOptions, exportPredictions, fingerprinterOptions),
                 additionalTools.stream(), Stream.of(loginOptions, settingsOptions, autocompleteOptions)
         ).toArray(Object[]::new);
 
