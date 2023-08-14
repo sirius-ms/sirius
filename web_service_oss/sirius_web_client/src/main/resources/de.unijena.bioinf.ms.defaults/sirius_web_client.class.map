@@ -1,3 +1,4 @@
+SpectralSearchDB=de.unijena.bioinf.chemdb.annotations.SpectralSearchDB
 NumberOfStructureCandidates=de.unijena.bioinf.fingerid.annotations.NumberOfStructureCandidates
 FormulaSearchDB=de.unijena.bioinf.chemdb.annotations.FormulaSearchDB
 StructureSearchDB=de.unijena.bioinf.chemdb.annotations.StructureSearchDB
