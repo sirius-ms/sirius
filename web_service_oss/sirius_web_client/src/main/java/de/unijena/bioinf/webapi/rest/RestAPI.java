@@ -43,6 +43,7 @@ import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.FingerprintWebResultConverter;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
+import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.client.account.AccountClient;
 import de.unijena.bioinf.ms.rest.client.canopus.CanopusClient;
@@ -105,7 +106,6 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
 
     private Subscription activeSubscription;
 
-
     public RestAPI(@Nullable AuthService authService, @NotNull AccountClient accountClient, @NotNull InfoClient infoClient, JobsClient jobsClient, @NotNull ChemDBClient chemDBClient, @NotNull FingerIdClient fingerIdClient, @NotNull CanopusClient canopusClient) {
         super(authService);
         this.accountClient = accountClient;
@@ -118,6 +118,9 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
 
 
     public RestAPI(@NotNull AuthService authService, @Nullable Subscription activeSubscription) {
+        this(FingerIDProperties.siriusFallbackWebHostContextPath(), authService, activeSubscription);
+    }
+    public RestAPI(@Nullable String contextPath, @NotNull AuthService authService, @Nullable Subscription activeSubscription) {
         super(authService);
         IOFunctions.IOConsumer<Request.Builder> subsDeco = (req) -> {
             if (getActiveSubscription() != null)
@@ -128,11 +131,11 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
                 URI.create(PropertyManager.getProperty("de.unijena.bioinf.sirius.web.licenseServer")),
                 PropertyManager.getProperty("de.unijena.bioinf.sirius.web.licenseServer.version"),
                 authService, authService, subsDeco);
-        this.serverInfoClient = new InfoClient(null, authService, subsDeco);
-        this.jobsClient = new JobsClient(null, authService, subsDeco);
-        this.chemDBClient = new ChemDBClient(null, authService, subsDeco);
-        this.fingerprintClient = new FingerIdClient(null, authService, subsDeco);
-        this.canopusClient = new CanopusClient(null, authService, subsDeco);
+        this.serverInfoClient = new InfoClient(null, contextPath, authService, subsDeco);
+        this.jobsClient = new JobsClient(null, contextPath, authService, subsDeco);
+        this.chemDBClient = new ChemDBClient(null, contextPath, authService, subsDeco);
+        this.fingerprintClient = new FingerIdClient(null, contextPath, authService, subsDeco);
+        this.canopusClient = new CanopusClient(null, contextPath, authService, subsDeco);
 
         if (activeSubscription != null)
             changeActiveSubscription(activeSubscription);
