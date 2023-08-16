@@ -56,25 +56,33 @@ public abstract class AbstractClient {
 
     @NotNull
     private Supplier<URI> serverUrl;
+
+    /**
+     * Allows to add a context path to a client that is added to the serverUrl before adding
+     * additional path segments af the respective request.
+     */
+    @NotNull
+    private Supplier<String> contextPath;
     @NotNull
     protected final List<IOFunctions.IOConsumer<Request.Builder>> requestDecorators;
 
     @SafeVarargs
-    protected AbstractClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<Request.Builder>... requestDecorators) {
-        this(serverUrl, List.of(requestDecorators));
+    protected AbstractClient(@Nullable URI serverUrl, @Nullable String contextPath, @NotNull IOFunctions.IOConsumer<Request.Builder>... requestDecorators) {
+        this(serverUrl, contextPath, List.of(requestDecorators));
     }
 
-    protected AbstractClient(@NotNull Supplier<URI> serverUrl, @NotNull IOFunctions.IOConsumer<Request.Builder>... requestDecorators) {
-        this(serverUrl, List.of(requestDecorators));
+    protected AbstractClient(@NotNull Supplier<URI> serverUrl, @NotNull Supplier<String> contextPath, @NotNull IOFunctions.IOConsumer<Request.Builder>... requestDecorators) {
+        this(serverUrl, contextPath, List.of(requestDecorators));
     }
 
 
-    protected AbstractClient(@Nullable URI serverUrl, @NotNull List<IOFunctions.IOConsumer<Request.Builder>> requestDecorators) {
-        this(() -> serverUrl, requestDecorators);
+    protected AbstractClient(@Nullable URI serverUrl, @Nullable String contextPath, @NotNull List<IOFunctions.IOConsumer<Request.Builder>> requestDecorators) {
+        this(() -> serverUrl, () -> contextPath, requestDecorators);
     }
 
-    protected AbstractClient(@NotNull Supplier<URI> serverUrl, @NotNull List<IOFunctions.IOConsumer<Request.Builder>> requestDecorators) {
+    protected AbstractClient(@NotNull Supplier<URI> serverUrl, @NotNull Supplier<String> contextPath,  @NotNull List<IOFunctions.IOConsumer<Request.Builder>> requestDecorators) {
         this.serverUrl = serverUrl;
+        this.contextPath = contextPath;
         this.requestDecorators = requestDecorators;
     }
 
@@ -208,9 +216,14 @@ public abstract class AbstractClient {
 
             b = serverUrl.newBuilder();
 
-            String v = makeVersionContext();
-            if (v != null && !v.isBlank())
-                b.addPathSegments(StringUtils.strip(v, "/"));
+            {
+                String v = contextPath.get();
+                if (v != null) {
+                    v = StringUtils.strip(v, "/");
+                    if (!v.isBlank())
+                        b.addPathSegments(v);
+                }
+            }
         }
 
         if (path != null && !path.isBlank())
@@ -218,8 +231,6 @@ public abstract class AbstractClient {
 
         return b;
     }
-
-    protected abstract String makeVersionContext();
 
     //endregion
     //#################################################################################################################
