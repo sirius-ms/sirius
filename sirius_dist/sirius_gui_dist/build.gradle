@@ -78,10 +78,10 @@ def mainJar = getRootProject().getChildProjects().get('sirius_rest_service').tas
 application {
     mainClass = project.mainClassName
     applicationDefaultJvmArgs = ['-Xms1G',
-                                 '-XX:MaxRAMPercentage=65',
-//                                 '-XX:+UseG1GC',
+                                 '-XX:MaxRAMPercentage=60',
+                                 '-XX:+UseG1GC',
 //                                 '-XX:+UseShenandoahGC',
-                                 '-XX:+UseZGC',
+//                                 '-XX:+UseZGC',
                                  '-XX:+UseStringDeduplication',
                                  '-XX:+ExitOnOutOfMemoryError']
     executableDir = 'bin'

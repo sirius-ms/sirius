@@ -14,8 +14,8 @@ dependencies {
 
 ext {
     // version for bundeled JRE
-    jre_version = '17.0.7'//'15.0.6'
-    zulu_jre_version = '17.42.19'//'15.38.17'
+    jre_version = '17.0.8'
+    zulu_jre_version = '17.44.15'
     jre_major = zulu_jre_version.split("[.]")[0]
 
     OS = DefaultNativePlatform.currentOperatingSystem
