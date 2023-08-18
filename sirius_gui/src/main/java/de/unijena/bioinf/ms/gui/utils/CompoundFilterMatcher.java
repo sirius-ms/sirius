@@ -19,13 +19,16 @@ package de.unijena.bioinf.ms.gui.utils;/*
  */
 
 import ca.odell.glazedlists.matchers.Matcher;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
+import de.unijena.bioinf.chemdb.ChemDBs;
 import de.unijena.bioinf.elgordo.LipidSpecies;
+import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.lcms.LCMSCompoundSummary;
 import de.unijena.bioinf.lcms.quality.LCMSQualityCheck;
@@ -86,6 +89,9 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
         if (filterModel.isLipidFilterEnabled())
             if (!matchesLipidFilter(item, filterModel)) return false;
 
+        if (filterModel.isDbFilterEnabled())
+            if (!matchesDBFilter(item, filterModel)) return false;
+
         return true;
     }
 
@@ -113,6 +119,21 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
                 .map(ft -> ft.getAnnotation(LipidSpecies.class)).flatMap(Optional::stream)
                 .findAny().isPresent();
         return (filterModel.getLipidFilter() == CompoundFilterModel.LipidFilter.ANY_LIPID_CLASS_DETECTED && hasAnyLipidHit) || (filterModel.getLipidFilter() == CompoundFilterModel.LipidFilter.NO_LIPID_CLASS_DETECTED && !hasAnyLipidHit);
+    }
+
+    private boolean matchesDBFilter(InstanceBean item, CompoundFilterModel filterModel) {
+        long requestFilter = filterModel.getDbFilterBits();
+
+        FBCandidates candidates = item.loadTopFormulaResult(List.of(TopCSIScore.class), FBCandidates.class)
+                .flatMap(i -> i.getAnnotation(FBCandidates.class)).orElse(null);
+
+        if (candidates == null)
+            return false;
+
+        if (requestFilter == 0)
+            return true;
+
+        return candidates.getResults().stream().map(SScored::getCandidate).anyMatch(c -> ChemDBs.inFilter(c.getBitset(), requestFilter));
     }
 
     private boolean matchesElementFilter(InstanceBean item, CompoundFilterModel filterModel) {
