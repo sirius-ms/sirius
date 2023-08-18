@@ -20,6 +20,7 @@ package de.unijena.bioinf.ms.gui.utils;/*
 
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.lcms.LCMSCompoundSummary;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -54,6 +56,10 @@ public class CompoundFilterModel implements SiriusPCS {
 
     @NotNull
     private ElementFilter elementFilter = ElementFilter.disabled();
+
+    @Nullable
+    private List<CustomDataSources.Source> dbFilter;
+
 
     /*
     min/max possible values
@@ -123,6 +129,26 @@ public class CompoundFilterModel implements SiriusPCS {
         LipidFilter oldValue = lipidFilter;
         lipidFilter = value;
         pcs.firePropertyChange("setLipidFilter", oldValue, value);
+    }
+
+    public void setDbFilter(@Nullable List<CustomDataSources.Source> dbFilter) {
+        this.dbFilter = dbFilter;
+    }
+
+    @Nullable
+    public List<CustomDataSources.Source> getDbFilter() {
+        return dbFilter;
+    }
+
+    public long getDbFilterBits() {
+        if (dbFilter == null || dbFilter.isEmpty())
+            return 0;
+        return dbFilter.stream().
+                mapToLong(CustomDataSources.Source::flag).reduce((a, b) -> a | b).orElse(0);
+    }
+
+    public boolean isDbFilterEnabled() {
+        return dbFilter != null && !dbFilter.isEmpty();
     }
 
     public boolean isElementFilterEnabled() {
@@ -267,7 +293,7 @@ public class CompoundFilterModel implements SiriusPCS {
                 currentMinConfidence != minConfidence || currentMaxConfidence != maxConfidence
         ) return true;
         if (!adducts.isEmpty()) return true;
-        if (isPeakShapeFilterEnabled() || isLipidFilterEnabled() || isElementFilterEnabled()) return true;
+        if (isPeakShapeFilterEnabled() || isLipidFilterEnabled() || isElementFilterEnabled() || isDbFilterEnabled()) return true;
 
         return false;
     }
@@ -308,6 +334,7 @@ public class CompoundFilterModel implements SiriusPCS {
         setCurrentMinConfidence(minConfidence);
         Arrays.fill(peakShapeQualities, true);
         setLipidFilter(LipidFilter.KEEP_ALL_COMPOUNDS);
+        setDbFilter(null);
         setElementFilter(ElementFilter.disabled());
         adducts = Set.of();
     }

@@ -22,6 +22,8 @@ package de.unijena.bioinf.ms.gui.dialogs;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
+import de.unijena.bioinf.ms.gui.compute.DBSelectionList;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
@@ -64,6 +66,8 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
     final PlaceholderTextField elementsField;
     final JCheckBox elementsMatchFormula;
     final JCheckBox elementsMatchPrecursorFormula;
+
+    final JCheckboxListPanel<CustomDataSources.Source> searchDBList;
 
     public CompoundFilterOptionsDialog(MainFrame owner, SearchTextField searchField, CompoundFilterModel filterModel, CompoundList compoundList) {
         super(owner, "Filter configuration", true);
@@ -134,7 +138,6 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             lipidFilterBox.setSelectedItem(filterModel.getLipidFilter());
         }
 
-
         // Element filter
         {
             smallParameters.add(new JXTitledSeparator("Elements"));
@@ -192,6 +195,15 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
 
         smallParameters.add(adductOptions);
         adductOptions.checkBoxList.checkAll(filterModel.getAdducts());
+
+        // db filter
+        {
+            searchDBList = new JCheckboxListPanel<>(new DBSelectionList(), "Hit in structure DB");
+            smallParameters.add(searchDBList);
+            searchDBList.checkBoxList.uncheckAll();
+            if (filterModel.isDbFilterEnabled()) //null check
+                searchDBList.checkBoxList.checkAll(filterModel.getDbFilter());
+        }
 
         smallParameters.add(new JXTitledSeparator("Filter options"));
 
@@ -288,6 +300,8 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
                 )
         );
 
+        filterModel.setDbFilter(searchDBList.checkBoxList.getCheckedItems());
+
         saveTextFilter();
     }
 
@@ -344,6 +358,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         }
         lipidFilterBox.setSelectedItem(CompoundFilterModel.LipidFilter.KEEP_ALL_COMPOUNDS);
         elementsField.setText(null);
+        searchDBList.checkBoxList.uncheckAll();
         searchFieldDialogCopy.setText("");
         invertFilter.setSelected(false);
         deleteSelection.setSelected(false);
