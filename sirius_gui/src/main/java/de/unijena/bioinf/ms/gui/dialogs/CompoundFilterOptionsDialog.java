@@ -52,7 +52,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
 
     final SearchTextField searchField;
     final JTextField searchFieldDialogCopy;
-    final JSpinner minMzSpinner, maxMzSpinner, minRtSpinner, maxRtSpinner, minConfidenceSpinner, maxConfidenceSpinner;
+    final JSpinner minMzSpinner, maxMzSpinner, minRtSpinner, maxRtSpinner, minConfidenceSpinner, maxConfidenceSpinner, candidateSpinner;
     public final JCheckboxListPanel<PrecursorIonType> adductOptions;
     JButton discard, apply, reset;
     JCheckBox invertFilter;
@@ -200,9 +200,15 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         {
             searchDBList = new JCheckboxListPanel<>(new DBSelectionList(), "Hit in structure DB");
             smallParameters.add(searchDBList);
+            searchDBList.remove(searchDBList.buttons);
             searchDBList.checkBoxList.uncheckAll();
-            if (filterModel.isDbFilterEnabled()) //null check
-                searchDBList.checkBoxList.checkAll(filterModel.getDbFilter());
+            candidateSpinner = makeSpinner(1, 1, 100, 1);
+            smallParameters.addNamed("Candidates to check: ", candidateSpinner);
+
+            if (filterModel.isDbFilterEnabled()) { //null check
+                searchDBList.checkBoxList.checkAll(filterModel.getDbFilter().getDbs());
+                candidateSpinner.setValue(filterModel.getDbFilter().getNumOfCandidates());
+            }
         }
 
         smallParameters.add(new JXTitledSeparator("Filter options"));
@@ -300,7 +306,8 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
                 )
         );
 
-        filterModel.setDbFilter(searchDBList.checkBoxList.getCheckedItems());
+        filterModel.setDbFilter(new CompoundFilterModel.DbFilter(searchDBList.checkBoxList.getCheckedItems(),
+                ((SpinnerNumberModel) candidateSpinner.getModel()).getNumber().intValue()));
 
         saveTextFilter();
     }
@@ -371,6 +378,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         maxRtSpinner.setValue(filterModel.getMaxRt());
         minConfidenceSpinner.setValue(filterModel.getMinConfidence());
         maxConfidenceSpinner.setValue(filterModel.getMaxConfidence());
+        candidateSpinner.setValue(1);
     }
 
     public double getMinMz() {
