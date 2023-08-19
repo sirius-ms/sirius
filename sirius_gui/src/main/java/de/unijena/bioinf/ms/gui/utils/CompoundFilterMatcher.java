@@ -20,6 +20,7 @@ package de.unijena.bioinf.ms.gui.utils;/*
 
 import ca.odell.glazedlists.matchers.Matcher;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
@@ -27,6 +28,7 @@ import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.chemdb.ChemDBs;
+import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.elgordo.LipidSpecies;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
@@ -39,6 +41,7 @@ import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -122,18 +125,37 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
     }
 
     private boolean matchesDBFilter(InstanceBean item, CompoundFilterModel filterModel) {
-        long requestFilter = filterModel.getDbFilterBits();
+        final int k;
+        final long requestFilter;
+        if (filterModel.isDbFilterEnabled()) {
+            k = filterModel.getDbFilter().getNumOfCandidates();
+            requestFilter = filterModel.getDbFilter().getDbFilterBits();
+        } else {
+            k = 1;
+            requestFilter = 0;
+        }
 
-        FBCandidates candidates = item.loadTopFormulaResult(List.of(TopCSIScore.class), FBCandidates.class)
-                .flatMap(i -> i.getAnnotation(FBCandidates.class)).orElse(null);
+        final List<Scored<CompoundCandidate>> candidates;
+        switch (k) {
+            case 0 -> {
+                return false;
+            }
+            case 1 -> candidates = item.loadTopFormulaResult(List.of(TopCSIScore.class), FBCandidates.class)
+                    .flatMap(i -> i.getAnnotation(FBCandidates.class).map(FBCandidates::getResults))
+                    .map(s -> s.stream().limit(k).toList()).orElse(null);
+            default -> candidates = item.loadTopKFormulaResults(k, List.of(TopCSIScore.class), FBCandidates.class)
+                    .stream().filter(i -> i.getCandidate().hasAnnotation(FBCandidates.class))
+                    .flatMap(i -> i.getCandidate().getAnnotation(FBCandidates.class)
+                            .map(FBCandidates::getResults).stream().flatMap(Collection::stream)).limit(k).toList();
+        }
 
-        if (candidates == null)
+        if (candidates == null || candidates.isEmpty())
             return false;
 
         if (requestFilter == 0)
             return true;
 
-        return candidates.getResults().stream().map(SScored::getCandidate).anyMatch(c -> ChemDBs.inFilter(c.getBitset(), requestFilter));
+        return candidates.stream().map(SScored::getCandidate).anyMatch(c -> ChemDBs.inFilter(c.getBitset(), requestFilter));
     }
 
     private boolean matchesElementFilter(InstanceBean item, CompoundFilterModel filterModel) {
