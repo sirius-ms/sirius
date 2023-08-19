@@ -142,11 +142,23 @@ public class Instance {
 
     @SafeVarargs
     private Optional<FormulaResult> getTop(List<? extends SScored<FormulaResult, ? extends FormulaScore>> sScoreds, Class<? extends DataAnnotation>... components) {
-        if (sScoreds.isEmpty()) return Optional.empty();
-        else {
-            FormulaResult candidate = sScoreds.get(0).getCandidate();
-            return loadFormulaResult(candidate.getId(), components);
-        }
+        if (sScoreds.isEmpty())
+            return Optional.empty();
+
+        FormulaResult candidate = sScoreds.get(0).getCandidate();
+        return loadFormulaResult(candidate.getId(), components);
+    }
+
+
+    @SafeVarargs
+    public final synchronized List<? extends SScored<FormulaResult, ? extends FormulaScore>> loadTopKFormulaResults(int k, List<Class<? extends FormulaScore>> rankingScoreTypes, Class<? extends DataAnnotation>... components) {
+        return getTopK(k, loadFormulaResults(rankingScoreTypes), components);
+    }
+
+    @SafeVarargs
+    private List<? extends SScored<FormulaResult, ? extends FormulaScore>> getTopK(int k, List<? extends SScored<FormulaResult, ? extends FormulaScore>> sScoreds, Class<? extends DataAnnotation>... components) {
+        return sScoreds.stream().limit(k).peek(ss -> loadFormulaResult(ss.getCandidate().getId(), components)
+                .ifPresent(r -> ss.getCandidate().setAnnotationsFrom(r))).toList();
     }
 
     @SafeVarargs

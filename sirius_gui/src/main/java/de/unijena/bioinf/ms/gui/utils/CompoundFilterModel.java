@@ -58,8 +58,7 @@ public class CompoundFilterModel implements SiriusPCS {
     private ElementFilter elementFilter = ElementFilter.disabled();
 
     @Nullable
-    private List<CustomDataSources.Source> dbFilter;
-
+    private DbFilter dbFilter;
 
     /*
     min/max possible values
@@ -131,24 +130,17 @@ public class CompoundFilterModel implements SiriusPCS {
         pcs.firePropertyChange("setLipidFilter", oldValue, value);
     }
 
-    public void setDbFilter(@Nullable List<CustomDataSources.Source> dbFilter) {
+    public void setDbFilter(@Nullable DbFilter dbFilter) {
         this.dbFilter = dbFilter;
     }
 
     @Nullable
-    public List<CustomDataSources.Source> getDbFilter() {
+    public DbFilter getDbFilter() {
         return dbFilter;
     }
 
-    public long getDbFilterBits() {
-        if (dbFilter == null || dbFilter.isEmpty())
-            return 0;
-        return dbFilter.stream().
-                mapToLong(CustomDataSources.Source::flag).reduce((a, b) -> a | b).orElse(0);
-    }
-
     public boolean isDbFilterEnabled() {
-        return dbFilter != null && !dbFilter.isEmpty();
+        return dbFilter != null && !dbFilter.dbs.isEmpty();
     }
 
     public boolean isElementFilterEnabled() {
@@ -341,6 +333,35 @@ public class CompoundFilterModel implements SiriusPCS {
 
     public enum LipidFilter {
         KEEP_ALL_COMPOUNDS, ANY_LIPID_CLASS_DETECTED, NO_LIPID_CLASS_DETECTED
+    }
+
+    public static class DbFilter {
+        final List<CustomDataSources.Source> dbs;
+        final int numOfCandidates;
+
+        public DbFilter(List<CustomDataSources.Source> dbs) {
+            this(dbs, 5);
+
+        }
+        public DbFilter(List<CustomDataSources.Source> dbFilter, int numOfCandidates) {
+            this.dbs = dbFilter;
+            this.numOfCandidates = numOfCandidates;
+        }
+
+        public long getDbFilterBits() {
+            if (dbs == null || dbs.isEmpty())
+                return 0;
+            return dbs.stream().
+                    mapToLong(CustomDataSources.Source::flag).reduce((a, b) -> a | b).orElse(0);
+        }
+
+        public int getNumOfCandidates() {
+            return numOfCandidates;
+        }
+
+        public List<CustomDataSources.Source> getDbs() {
+            return dbs;
+        }
     }
 
     public static class ElementFilter {
