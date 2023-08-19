@@ -308,7 +308,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
 
         public ScoreLabel() {
             this.score = Double.NaN;
-            setPreferredSize(new Dimension(128, 20));
+            setPreferredSize(new Dimension(230, 20));
             final HashMap<AttributedCharacterIterator.Attribute, Object> attrs = new HashMap<>();
             attrs.put(TextAttribute.SUPERSCRIPT, TextAttribute.SUPERSCRIPT_SUPER);
             attrs.put(TextAttribute.SIZE, 15f);
@@ -320,7 +320,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             if (Double.isNaN(score)) return;
             g.setFont(nameFont);
-            final String t1 = "Score: ";
+            final String t1 = "CSI:FingerID Score: ";
             int widthB = g.getFontMetrics().stringWidth(t1);
             g.drawString(t1, 0, 14);
             //g.setFont(scoreSuperscriptFont);
