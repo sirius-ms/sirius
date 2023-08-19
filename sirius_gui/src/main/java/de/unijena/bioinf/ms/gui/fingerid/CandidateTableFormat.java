@@ -40,7 +40,7 @@ public class CandidateTableFormat extends SiriusTableFormat<FingerprintCandidate
             "Molecular Formula",
             "Adduct",
             "CSI:FingerID Score",
-            "Similarity",
+            "Tanimoto Similarity",
             "#PubMed IDs",
             "XLogP",
             "InChIKey",
