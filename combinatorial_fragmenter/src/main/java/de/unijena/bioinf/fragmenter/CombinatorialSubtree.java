@@ -212,6 +212,19 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
         return terminalNodes;
     }
 
+    public ArrayList<CombinatorialNode> getAllParentsOf(CombinatorialNode node){
+        ArrayList<CombinatorialNode> parents = new ArrayList<>(node.depth);
+        CombinatorialNode currentNode = node;
+        while(!currentNode.getIncomingEdges().isEmpty()){
+            CombinatorialEdge inEdge = currentNode.getIncomingEdges().get(0);
+            CombinatorialNode parent = inEdge.getSource();
+            parents.add(parent);
+            currentNode = parent;
+        }
+        parents.add(currentNode); // currentNode == root
+        return parents;
+    }
+
     public double[][] getAdjacencyMatrix(){
         ArrayList<CombinatorialNode> sortedNodeList = this.getSortedNodeList();
         TObjectIntHashMap<CombinatorialNode> nodeIndices = new TObjectIntHashMap<>(this.numberOfNodes());
