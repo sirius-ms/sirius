@@ -55,6 +55,10 @@ public class CombinatorialFragment {
         this.peakIntensity = 0f;
     }
 
+    public BitSet getBitSet(){
+        return this.bitset;
+    }
+
     public IAtom[] getAtoms() {
         if(!this.innerNode) return new IAtom[0];
         IAtom[] atoms = new IAtom[bitset.cardinality()];
@@ -345,6 +349,16 @@ public class CombinatorialFragment {
             }
         }
         return losses.toArray(IAtomContainer[]::new);
+    }
+
+    public boolean isDirectFragmentOf(CombinatorialFragment parentFragment){
+        // naive approach: cut all bonds in parentFragment and check if this fragment is contained in the resulting list
+        final CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(this.parent);
+        final List<CombinatorialFragment> fragments = fragmenter.cutAllBonds(parentFragment, null);
+        for(final CombinatorialFragment fragment : fragments){
+            if(fragment.bitset.equals(this.bitset)) return true;
+        }
+        return false;
     }
 
     private IAtomContainer[] extractSubstructures(int[] atomids, boolean keepAromaticRingsIntact, boolean addCutEdges, int keepRingsSmallerIntactThanX, boolean isLoss) {
