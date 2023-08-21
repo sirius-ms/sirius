@@ -551,9 +551,9 @@ public class DataProcessor {
     public static void main(String[] args){
         try {
             final File subtreeDir = new File("/vol/clusterdata/nils/Results/new_subtrees");
-            final File outputFile = new File("/vol/clusterdata/nils/Results/numFragmentationSteps.txt");
+            final File outputFile = new File("/vol/clusterdata/nils/Results/numFragmentationSteps_pullUps.txt");
 
-            final String[] fileNames = subtreeDir.list();
+            final String[] fileNames = Objects.requireNonNull(subtreeDir.list());
 
             final int NUM_CONCURRENT_THREADS = Runtime.getRuntime().availableProcessors();
             ExecutorService executor = Executors.newFixedThreadPool(NUM_CONCURRENT_THREADS);
@@ -563,8 +563,30 @@ public class DataProcessor {
                     final FileReader fileReader = new FileReader(new File(subtreeDir, fileName));
                     CombinatorialSubtree subtree = CombinatorialSubtreeCalculatorJsonReader.readTreeFromJson(fileReader);
                     return subtree.getTerminalNodes().stream().map(terminalNode -> {
-                        CombinatorialNode parentNode = terminalNode.getIncomingEdges().get(0).getSource();
-                        return parentNode.getDepth();
+                        CombinatorialNode peakExplainingNode = terminalNode.getIncomingEdges().get(0).getSource();
+                        ArrayList<CombinatorialNode> nodesOnPath2Root = subtree.getAllParentsOf(peakExplainingNode);
+
+                        // 1. Pull-up for only 'peakExplainingNode':
+                        int minDepth = peakExplainingNode.getDepth();
+                        for(CombinatorialNode node : nodesOnPath2Root){
+                            if(peakExplainingNode.getFragment().isDirectFragmentOf(node.getFragment())){
+                                int depth = node.getDepth() + 1;
+                                if(depth < minDepth) minDepth = depth;
+                            }
+                        }
+
+                        // 2. Pull-up for a parent of 'peakExplainingNode':
+                        for(int i = 0; i < nodesOnPath2Root.size()-1; i++){
+                            final CombinatorialNode v = nodesOnPath2Root.get(i);
+                            for(int j = i+1; j < nodesOnPath2Root.size(); j++){
+                                final CombinatorialNode u = nodesOnPath2Root.get(j);
+                                if(v.getFragment().isDirectFragmentOf(u.getFragment())){
+                                    int depth = u.getDepth() + 1 + peakExplainingNode.getDepth() - v.getDepth();
+                                    if(depth < minDepth) minDepth = depth;
+                                }
+                            }
+                        }
+                        return minDepth;
                     }).toList();
                 };
                 tasks.add(task);
