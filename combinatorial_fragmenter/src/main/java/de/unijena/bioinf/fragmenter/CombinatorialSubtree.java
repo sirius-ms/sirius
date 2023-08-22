@@ -221,7 +221,6 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
             parents.add(parent);
             currentNode = parent;
         }
-        parents.add(currentNode); // currentNode == root
         return parents;
     }
 
