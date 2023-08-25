@@ -72,6 +72,8 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
                     (filterModel.isMaxConfidenceFilterActive() && confidence > filterModel.getCurrentMaxConfidence())) {
                 return false;
             }
+        } else {
+            return Double.compare(filterModel.getMinConfidence(), filterModel.getCurrentMinConfidence()) == 0;
         }
 
         final Set<PrecursorIonType> adducts = filterModel.getAdducts();
