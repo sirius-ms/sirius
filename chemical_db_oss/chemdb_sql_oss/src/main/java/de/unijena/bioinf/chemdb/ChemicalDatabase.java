@@ -178,6 +178,10 @@ public class ChemicalDatabase implements FilterableChemicalDatabase, PooledDB<Co
     }
 
 
+    @Override
+    public String getName() {
+        return "SQL";
+    }
 
     /**
      * Search for molecular formulas in the database

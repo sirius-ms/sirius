@@ -18,28 +18,27 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.chemdb.nitrite.wrappers;
+package de.unijena.bioinf.chemdb.annotations;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import de.unijena.bioinf.chemdb.DataSource;
+import de.unijena.bioinf.chemdb.SearchableDatabase;
+import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
+import de.unijena.bioinf.ms.properties.DefaultProperty;
+import org.jetbrains.annotations.Nullable;
 
-@NoArgsConstructor
-@AllArgsConstructor
-@Getter
-@Setter
-public class FingerprintCandidateWrapper {
+import java.util.Collection;
 
-    long id;
-    String formula;
-    double mass;
-    FingerprintCandidate candidate;
+public class SpectralSearchDB extends SearchableDBAnnotation {
 
-    public static FingerprintCandidateWrapper of(MolecularFormula formula, FingerprintCandidate candidate) {
-        return new FingerprintCandidateWrapper(-1, formula.toString(), formula.getMass(), candidate);
+    public SpectralSearchDB(Collection<SearchableDatabase> value) {
+        super(value);
+    }
+
+    @DefaultInstanceProvider
+    public static SpectralSearchDB fromString(@DefaultProperty @Nullable String value) {
+        if (value == null || value.isEmpty() || value.equalsIgnoreCase(NO_DB))
+            value = DataSource.ALL.realName;
+        return new SpectralSearchDB(makeDB(value));
     }
 
 }
