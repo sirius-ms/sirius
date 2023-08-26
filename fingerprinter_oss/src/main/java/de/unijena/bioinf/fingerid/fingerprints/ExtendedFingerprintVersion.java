@@ -48,6 +48,10 @@ public class ExtendedFingerprintVersion extends FingerprintVersion {
         }
 
 
+        @Override
+        public String getName() {
+            return innerDatabase.getName();
+        }
 
         @Override
         public List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
