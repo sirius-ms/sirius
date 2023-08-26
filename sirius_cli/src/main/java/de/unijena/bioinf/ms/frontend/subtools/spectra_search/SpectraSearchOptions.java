@@ -19,45 +19,69 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.spectra_search;
 
-import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
+import de.unijena.bioinf.ms.frontend.DefaultParameter;
+import de.unijena.bioinf.ms.frontend.completion.DataSourceCandidates;
+import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
-import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
-import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
-import de.unijena.bioinf.ms.properties.ParameterConfig;
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
-import de.unijena.bioinf.spectraldb.SpectralAlignmentType;
+import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
+import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
+import de.unijena.bioinf.projectspace.CompoundContainer;
+import de.unijena.bioinf.projectspace.Instance;
+import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import picocli.CommandLine;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 @CommandLine.Command(name = "spectra-search", aliases = {"spectral-search"}, description = "<STANDALONE> Computes the similarity between all compounds/features in the project-space (queries) one vs all compounds/features in the second project-space (library).",  versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
-public class SpectraSearchOptions implements StandaloneTool<SpectraSearchWorkflow> {
+public class SpectraSearchOptions implements ToolChainOptions<SpectraSearchSubtoolJob, InstanceJob.Factory<SpectraSearchSubtoolJob>> {
 
-    @CommandLine.Option(names = {"--db", "--dbs"}, required = true, description = {"Spectral database location(s)."}, split = ",")
-    List<String> dbLocations;
+    protected final DefaultParameterConfigLoader defaultConfigOptions;
 
-    @CommandLine.Option(names = {"--ppm-precursor"}, defaultValue = "20", description = {"Relative precursor mass error in ppm."})
-    int ppmPrecursor;
+    public SpectraSearchOptions(DefaultParameterConfigLoader defaultConfigOptions) {
+        this.defaultConfigOptions = defaultConfigOptions;
+    }
 
-    @CommandLine.Option(names = {"--abs-precursor"}, defaultValue = "0.001", description = {"Absolute precursor mass error in Dalton."})
-    double absPrecursor;
+    @CommandLine.Option(names = {"--database", "-d", "--db"}, descriptionKey = "SpectrumSearchDB" , paramLabel = DataSourceCandidates.PATAM_LABEL, completionCandidates = DataSourceCandidates.class,
+            description = {"Search spectra in the Union of the given databases. If no database is given, all database are used.", DataSourceCandidates.VALID_DATA_STRING})
+    public void setDatabase(DefaultParameter dbList) throws Exception {
+        defaultConfigOptions.changeOption("FormulaSearchDB", dbList);
+    }
 
-    @CommandLine.Option(names = {"--ppm-peak"}, defaultValue = "40", description = {"Relative peak mass error in ppm."})
-    int ppmPeak;
+    @CommandLine.Option(names = "--ppm-max", descriptionKey = "MS1MassDeviation.allowedMassDeviation", description = "Maximum allowed mass deviation in ppm for matching peaks.")
+    public void setPpmMax(DefaultParameter value) throws Exception {
+        defaultConfigOptions.changeOption("MS1MassDeviation.allowedMassDeviation", value + "ppm");
+    }
 
-    @CommandLine.Option(names = {"--abs-peak"}, defaultValue = "0.002", description = {"Absolute peak mass error in Dalton."})
-    double absPeak;
+    @CommandLine.Option(names = "--ppm-max-ms2", descriptionKey = "MS2MassDeviation.allowedMassDeviation", description = "Maximum allowed mass deviation in ppm for matching the precursor. If not specified, the same value as for the peaks is used.")
+    public void setPpmMaxMs2(DefaultParameter value) throws Exception {
+        defaultConfigOptions.changeOption("MS2MassDeviation.allowedMassDeviation", value + "ppm");
+    }
 
-    @CommandLine.Option(names = {"--print"}, defaultValue = "10", description = {"Print this many matches per query spectrum to the log."})
-    int log;
-
-    @CommandLine.Option(names = {"--alignment"}, defaultValue = "INTENSITY",
-            description = {"Set the spectral alignment type.","Possible types: INTENSITY (intensity weighted spectral alignment), GAUSSIAN (Gaussian spectral alignment)"})
-    SpectralAlignmentType alignmentType;
+    @CommandLine.Option(names = "--print", descriptionKey = "SpectralSearchLog.numberOfMatches", description = "Number of matches to print per experiment.")
+    public void setLogNum(DefaultParameter value) throws Exception {
+        defaultConfigOptions.changeOption("SpectralSearchLog.numberOfMatches", value);
+    }
 
     @Override
-    public SpectraSearchWorkflow makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
-        return new SpectraSearchWorkflow((PreprocessingJob<ProjectSpaceManager<?>>) rootOptions.makeDefaultPreprocessingJob(), this);
+    public Consumer<Instance> getInvalidator() {
+        return instance -> {
+            CompoundContainer container = instance.loadCompoundContainer(SpectralSearchResult.class);
+            if (container.hasAnnotation(SpectralSearchResult.class)) {
+                container.removeAnnotation(SpectralSearchResult.class);
+            }
+        };
+    }
+
+    @Override
+    public List<Class<? extends ToolChainOptions<?, ?>>> getDependentSubCommands() {
+        return List.of(SiriusOptions.class);
+    }
+
+    @Override
+    public InstanceJob.Factory<SpectraSearchSubtoolJob> call() throws Exception {
+        return new InstanceJob.Factory<>(SpectraSearchSubtoolJob::new, getInvalidator());
     }
 
 }

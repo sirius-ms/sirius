@@ -1,2 +1,3 @@
 PrintCitations=de.unijena.bioinf.ms.annotations.PrintCitations
 RecomputeResults=de.unijena.bioinf.ms.annotations.RecomputeResults
+SpectralSearchLog=de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectralSearchLog
