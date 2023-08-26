@@ -33,12 +33,13 @@ import lombok.Setter;
 @Setter
 public class FingerprintCandidateWrapper {
 
+    long id;
     String formula;
     double mass;
     FingerprintCandidate candidate;
 
     public static FingerprintCandidateWrapper of(MolecularFormula formula, FingerprintCandidate candidate) {
-        return new FingerprintCandidateWrapper(formula.toString(), formula.getMass(), candidate);
+        return new FingerprintCandidateWrapper(-1, formula.toString(), formula.getMass(), candidate);
     }
 
 }

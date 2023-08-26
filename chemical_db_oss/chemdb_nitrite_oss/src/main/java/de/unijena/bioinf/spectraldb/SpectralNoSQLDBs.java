@@ -52,6 +52,7 @@ import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.nitrite.SpectralNitriteDatabase;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
+import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.InvalidSmilesException;
 import org.slf4j.LoggerFactory;
 
@@ -102,16 +103,25 @@ public class SpectralNoSQLDBs extends ChemDBs {
             return StreamSupport.stream(Iterables.partition(spectra, chunkSize).spliterator(), false).mapToInt(chunk -> {
                 try {
                     List<Ms2ReferenceSpectrum> data = chunk.stream().filter(reference -> {
-                        if (reference.getSmiles() == null) {
-                            LoggerFactory.getLogger(SpectralNoSQLDBs.class).warn(reference.getName() + " has no SMILES. Skipping import.");
+                        if (reference.getSmiles() == null && reference.getCandidateInChiKey() == null) {
+                            LoggerFactory.getLogger(SpectralNoSQLDBs.class).warn(reference.getName() + " has no SMILES or InChI key. Skipping import.");
+                        } else if (reference.getSmiles() == null) {
+                            try {
+                                reference.setSmiles(InChISMILESUtils.getSmiles(InChISMILESUtils.getAtomContainerFromInchi(reference.getCandidateInChiKey())));
+                            } catch (CDKException e) {
+                                LoggerFactory.getLogger(SpectralNoSQLDBs.class).error(reference.getName() + " has malformed InChi key. Skipping import", e);
+                            }
+                        } else if (reference.getCandidateInChiKey() == null) {
+                            try {
+                                reference.setCandidateInChiKey(InChISMILESUtils.getInchiFromSmiles(reference.getSmiles(), false).key2D());
+                            } catch (CDKException e) {
+                                LoggerFactory.getLogger(SpectralNoSQLDBs.class).error(reference.getName() + " has malformed SMILES. Skipping import", e);
+                            }
                         }
                         if (reference.getPrecursorIonType() == null) {
                             LoggerFactory.getLogger(SpectralNoSQLDBs.class).warn(reference.getName() + " has no precursor ion type. Skipping import.");
                         }
-                        if (reference.getCandidateInChiKey() == null) {
-                            LoggerFactory.getLogger(SpectralNoSQLDBs.class).warn(reference.getName() + " has no candidate InChI key. Skipping import.");
-                        }
-                        return reference.getSmiles() != null && reference.getCandidateInChiKey() != null;
+                        return reference.getSmiles() != null && reference.getCandidateInChiKey() != null && reference.getPrecursorIonType() != null;
                     }).map(reference -> {
                         if (reference.getFormula() == null) {
                             try {

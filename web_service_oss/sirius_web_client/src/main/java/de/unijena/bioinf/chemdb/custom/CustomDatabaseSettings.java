@@ -44,7 +44,7 @@ public class CustomDatabaseSettings {
         this.filter = filter;
         this.fingerprintVersion = fingerprintVersion;
         this.schemaVersion = schemaVersion;
-        this.statistics = statistics == null ? new Statistics(0, 0) : statistics;
+        this.statistics = statistics == null ? new Statistics() : statistics;
     }
 
     //json constructor
@@ -56,18 +56,21 @@ public class CustomDatabaseSettings {
         private final AtomicLong compounds;
         private final AtomicLong formulas;
 
+        private final AtomicLong spectra;
+
         //json constructor
         private Statistics() {
-            this(0,0);
+            this(0, 0, 0);
         }
 
-        public Statistics(int compounds, int formulas) {
-            this(new AtomicLong(compounds),new AtomicLong(formulas));
+        public Statistics(int compounds, int formulas, int spectra) {
+            this(new AtomicLong(compounds), new AtomicLong(formulas), new AtomicLong(spectra));
         }
 
-        private Statistics(AtomicLong compounds, AtomicLong formulas) {
+        private Statistics(AtomicLong compounds, AtomicLong formulas, AtomicLong spectra) {
             this.compounds = compounds;
             this.formulas = formulas;
+            this.spectra = spectra;
         }
 
         @JsonIgnore
@@ -80,6 +83,11 @@ public class CustomDatabaseSettings {
             return formulas;
         }
 
+        @JsonIgnore
+        protected AtomicLong spectra() {
+            return spectra;
+        }
+
         public long getCompounds() {
             return compounds().get();
         }
@@ -88,6 +96,9 @@ public class CustomDatabaseSettings {
             return formulas().get();
         }
 
+        public long getSpectra() {
+            return spectra().get();
+        }
 
     }
 
