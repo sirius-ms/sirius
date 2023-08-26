@@ -22,7 +22,6 @@ package de.unijena.bioinf.ms.frontend.subtools.spectra_db;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
@@ -35,18 +34,18 @@ import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.spectraldb.SpectralLibrary;
 import de.unijena.bioinf.spectraldb.SpectralNoSQLDBs;
 import de.unijena.bioinf.spectraldb.SpectralNoSQLDatabase;
-import de.unijena.bioinf.spectraldb.io.SpectralDbMsExperimentParser;
-import org.apache.commons.io.FilenameUtils;
+import de.unijena.bioinf.spectraldb.io.ParsingIterator;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 @CommandLine.Command(name = "spectral-db", aliases = {"SDB"}, description = "<STANDALONE> Generate a custom spectral database. Import multiple MSn reference spectra into this DB. At the moment, supports only the MassBank file format. Required file fields are MS$FOCUSED_ION: PRECURSOR_M/Z, CH$LINK: INCHIKEY, and PK$PEAK:.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true, sortOptions = false)
@@ -105,48 +104,6 @@ public class SpectralDBOptions implements StandaloneTool<Workflow> {
     @Override
     public Workflow makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
         return new SpectralDBWorkflow(rootOptions.getInput(), mode);
-    }
-
-    private static class ParsingIterator implements Iterator<Ms2Experiment> {
-
-        private final Iterator<File> files;
-
-        private final SpectralDbMsExperimentParser parser;
-        private final Map<String, GenericParser<Ms2Experiment>> parsers;
-
-        private final Queue<Ms2Experiment> buffer = new ArrayDeque<>();
-
-        public ParsingIterator(Iterator<File> files) {
-            this.files = files;
-            this.parsers = new HashMap<>();
-            this.parser = new SpectralDbMsExperimentParser();
-        }
-
-        @Override
-        public boolean hasNext() {
-            if (buffer.isEmpty()) {
-                while (files.hasNext()) {
-                    try {
-                        File next = files.next();
-                        String ext = FilenameUtils.getExtension(next.getName());
-                        if (!parsers.containsKey(ext)) {
-                            parsers.put(ext, parser.getParserByExt(ext));
-                        }
-                        buffer.addAll(parsers.get(ext).parseFromFile(next));
-                        break;
-                    } catch (Exception ignored) {
-                    }
-
-                }
-            }
-            return buffer.size() > 0;
-        }
-
-        @Override
-        public Ms2Experiment next() {
-            return buffer.poll();
-        }
-
     }
 
     public static class SpectralDBWorkflow extends BasicJJob<Boolean> implements Workflow {

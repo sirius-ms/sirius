@@ -62,7 +62,7 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 public class DatabaseDialog extends JDialog {
     //todo: we should separate the Dialog from the Database Managing part.
     protected JList<String> dbList;
-    protected Map<String, CustomDatabase<?>> customDatabases;
+    protected Map<String, CustomDatabase> customDatabases;
 
     protected DatabaseView dbView;
     private final JDialog owner = this;
@@ -79,7 +79,7 @@ public class DatabaseDialog extends JDialog {
         add(header, BorderLayout.NORTH);
 
 
-        this.customDatabases = Jobs.runInBackgroundAndLoad(owner, "Loading DBs...", (Callable<List<CustomDatabase<?>>>) SearchableDatabases::getCustomDatabases).getResult()
+        this.customDatabases = Jobs.runInBackgroundAndLoad(owner, "Loading DBs...", (Callable<List<CustomDatabase>>) SearchableDatabases::getCustomDatabases).getResult()
                 .stream().collect(Collectors.toMap(CustomDatabase::name, k -> k));
         this.dbList = new DatabaseList(customDatabases.keySet().stream().sorted().collect(Collectors.toList()));
         JScrollPane scroll = new JScrollPane(dbList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -110,7 +110,7 @@ public class DatabaseDialog extends JDialog {
             if (i >= 0) {
                 final String s = dbList.getModel().getElementAt(i);
                 if (customDatabases.containsKey(s)) {
-                    final CustomDatabase<?> c = customDatabases.get(s);
+                    final CustomDatabase c = customDatabases.get(s);
                     dbView.updateContent(c);
                     editDB.setEnabled(!c.needsUpgrade());
                     deleteDB.setEnabled(true);
@@ -134,7 +134,7 @@ public class DatabaseDialog extends JDialog {
                 final int k = dbList.getSelectedIndex();
                 if (k >= 0 && k < dbList.getModel().getSize()) {
                     String key = dbList.getModel().getElementAt(k);
-                    CustomDatabase<?> db = customDatabases.get(key);
+                    CustomDatabase db = customDatabases.get(key);
                     new ImportDatabaseDialog(db);
                 }
 
@@ -146,7 +146,7 @@ public class DatabaseDialog extends JDialog {
             final int k = dbList.getSelectedIndex();
             if (k >= 0 && k < dbList.getModel().getSize()) {
                 String key = dbList.getModel().getElementAt(k);
-                CustomDatabase<?> db = customDatabases.get(key);
+                CustomDatabase db = customDatabases.get(key);
                 new ImportDatabaseDialog(db);
             }
         });
@@ -177,7 +177,7 @@ public class DatabaseDialog extends JDialog {
                     new StacktraceDialog(MF, "Fatal Error during Custom DB removal.", ex2);
                 }
 
-                final String[] dbs = Jobs.runInBackgroundAndLoad(owner, "Reloading DBs...", (Callable<List<CustomDatabase<?>>>) SearchableDatabases::getCustomDatabases).getResult()
+                final String[] dbs = Jobs.runInBackgroundAndLoad(owner, "Reloading DBs...", (Callable<List<CustomDatabase>>) SearchableDatabases::getCustomDatabases).getResult()
                         .stream().map(CustomDatabase::name).toArray(String[]::new);
                 dbList.setListData(dbs);
             }
@@ -192,7 +192,7 @@ public class DatabaseDialog extends JDialog {
     }
 
     protected void whenCustomDbIsAdded(final String dbName) {
-        CustomDatabase<?> db = SearchableDatabases.getCustomDatabaseByPathOrThrow(Path.of(dbName));
+        CustomDatabase db = SearchableDatabases.getCustomDatabaseByPathOrThrow(Path.of(dbName));
         this.customDatabases.put(db.name(), db);
         dbList.setListData(this.customDatabases.keySet().stream().sorted().toArray(String[]::new));
         dbList.setSelectedValue(db.name(), true);
@@ -210,12 +210,13 @@ public class DatabaseDialog extends JDialog {
             setPreferredSize(new Dimension(200, 240));
         }
 
-        public void updateContent(CustomDatabase<?> c) {
+        public void updateContent(CustomDatabase c) {
             if (c.getStatistics().getCompounds() > 0) {
                 content.setText("<html><b>" + c.name() + "</b>"
                         + "<br><b>"
                         + c.getStatistics().getCompounds() + "</b> compounds with <b>" + c.getStatistics().getFormulas()
-                        + "</b> different molecular formulas."
+                        + "</b> different molecular formulas"
+                        + (c.getStatistics().getSpectra() > 0 ? " and <b>" + c.getStatistics().getSpectra() + "</b> reference spectra." : ".")
                         + "<br>"
                         + ((c.getSettings().isInheritance() ? "<br>This database will also include all compounds from '" + DataSources.getDataSourcesFromBitFlags(c.getFilterFlag()).stream().filter(n -> !SearchableDatabases.NON_SLECTABLE_LIST.contains(n)).collect(Collectors.joining("', '")) + "'." : "")
                                 + (c.needsUpgrade() ? "<br><b>This database schema is outdated. You have to upgrade the database before you can use it.</b>" : "")
@@ -245,7 +246,7 @@ public class DatabaseDialog extends JDialog {
             this(null);
         }
 
-        public ImportDatabaseDialog(@Nullable CustomDatabase<?> db) {
+        public ImportDatabaseDialog(@Nullable CustomDatabase db) {
             super(owner, db != null ? "Import into '" + db.name() + "' database" : "Create/Add custom database", false);
 
             setPreferredSize(new Dimension(640, 480));
@@ -261,7 +262,7 @@ public class DatabaseDialog extends JDialog {
             final Box box = Box.createVerticalBox();
             box.setAlignmentX(Component.LEFT_ALIGNMENT);
             final JLabel label = new JLabel(
-                    "<html>Please insert the compounds of your custom database as SMILES here (one compound per line). It is also possible to drag and drop files with SMILES into this text field.");
+                    "<html>Please insert the compounds of your custom database as SMILES here (one compound per line). It is also possible to drag and drop files with SMILES and reference spectrum files into this text field.");
             label.setAlignmentX(Component.LEFT_ALIGNMENT);
             box.add(label);
             final JTextArea textArea = new JTextAreaDropImage();
@@ -326,8 +327,6 @@ public class DatabaseDialog extends JDialog {
                 }
             };
 
-            // TODO import spectrum files!
-
             setDropTarget(dropTarget);
             textArea.setDropTarget(dropTarget);
             pack();
@@ -343,15 +342,19 @@ public class DatabaseDialog extends JDialog {
                 Jobs.runInBackgroundAndLoad(this, "Checking output location...", () -> {
                     Path p = Path.of(configPanel.dbLocationField.getFilePath());
                     if (Files.exists(p)) {
-                        if (Files.isRegularFile(p))
-                            throw new IOException("Illegal DB location: Found a file but DB location must either not exist, be an empty directory or an existing custom db.");
-
-                        if (FileUtils.listAndClose(p, s -> s.findAny().isPresent()))
+                        if (Files.isRegularFile(p)) {
                             try {
                                 return SearchableDatabases.loadCustomDatabaseFromLocation(p.toAbsolutePath().toString(), true);
                             } catch (IOException ex) {
-                                throw new IOException("Illegal DB location: Found non empty directory that is not a valid custom db. To create a new DB location must not exist or be an empty directory.", ex);
+                                throw new IOException("Illegal DB location: Found a file but DB location must either not exist, be an empty directory or an existing custom db.", ex);
                             }
+                        } else if (FileUtils.listAndClose(p, s -> s.findAny().isPresent())) {
+                            try {
+                                return SearchableDatabases.loadCustomDatabaseFromLocation(p.toAbsolutePath().toString(), true);
+                            } catch (IOException ex) {
+                                throw new IOException("Illegal DB location: Found non empty directory that is not a valid custom db. To create a new DB, location must not exist or be an empty directory.", ex);
+                            }
+                        }
                     }
                     return null;
                 }).awaitResult();
@@ -372,8 +375,12 @@ public class DatabaseDialog extends JDialog {
                 command.add(configPanel.toolCommand());
                 command.addAll(configPanel.asParameterList());
 
+                InputFilesOptions input = new InputFilesOptions();
+                input.msInput = new InputFilesOptions.MsInput();
+                input.msInput.setInputPath(sources);
+
                 Jobs.runCommandAndLoad(command, null,
-                                InputFilesOptions.createNonCompoundInput(sources), this,
+                                input, this,
                                 "Importing into '" + configPanel.dbLocationField.getFilePath() + "'...",
                                 false)
                         .awaitResult();

@@ -26,7 +26,6 @@ import ca.odell.glazedlists.GlazedLists;
 import ca.odell.glazedlists.SortedList;
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.matchers.MatcherEditor;
-import ca.odell.glazedlists.matchers.ThresholdMatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
@@ -37,7 +36,7 @@ import de.unijena.bioinf.chemdb.DataSources;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_db.SpectralDatabases;
-import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchWorkflow;
+import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchSubtoolJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
@@ -322,7 +321,7 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
                                     return null;
                                 MutableMs2Spectrum queryMS2 = ec.getMs2Spectra().get(matchBean.getMatch().getQuerySpectrumIndex());
                                 SimpleSpectrum query = new SimpleSpectrum(queryMS2);
-                                String queryName = SpectraSearchWorkflow.getQueryName(queryMS2, matchBean.getMatch().getQuerySpectrumIndex());
+                                String queryName = SpectraSearchSubtoolJob.getQueryName(queryMS2, matchBean.getMatch().getQuerySpectrumIndex());
 
                                 if (matchBean.getReference().getSpectrum() == null) {
                                     try {
