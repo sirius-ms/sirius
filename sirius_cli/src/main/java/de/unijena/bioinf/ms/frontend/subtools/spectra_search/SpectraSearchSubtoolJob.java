@@ -81,7 +81,7 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
         container.addAnnotation(SpectralSearchResult.class, result);
         expRes.updateCompound(container, SpectralSearchResult.class);
 
-        int print = expRes.getExperiment().getAnnotationOrDefault(SpectralSearchLog.class).numberOfMatches;
+        int print = expRes.getExperiment().getAnnotationOrDefault(SpectralSearchLog.class).value;
 
         if (print < 1)
             return;

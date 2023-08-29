@@ -21,21 +21,18 @@
 package de.unijena.bioinf.ms.frontend.subtools.spectra_search;
 
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
-import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
 
+@DefaultProperty
 public class SpectralSearchLog implements Ms2ExperimentAnnotation {
 
-    public final int numberOfMatches;
+    public final int value;
 
-
-    public SpectralSearchLog(int numberOfMatches) {
-        this.numberOfMatches = numberOfMatches;
+    private SpectralSearchLog() {
+        value = 0;
     }
 
-    @DefaultInstanceProvider
-    public SpectralSearchLog newInstance(@DefaultProperty(propertyKey = "numberOfMatches") int numberOfMatches) {
-        return new SpectralSearchLog(numberOfMatches);
+    public SpectralSearchLog(int value) {
+        this.value = value;
     }
-
 }
