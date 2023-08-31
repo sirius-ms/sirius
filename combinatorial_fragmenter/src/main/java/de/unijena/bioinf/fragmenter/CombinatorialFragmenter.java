@@ -45,7 +45,7 @@ public class CombinatorialFragmenter {
     }
 
     public List<CombinatorialFragment> cutAllBonds(CombinatorialFragment fragment, Callback callback){
-        int[] bonds = fragment.bonds().toArray();
+        ArrayList<Integer> bonds = fragment.bonds();
         BitSet bondsToCut = new BitSet(fragment.parent.bonds.length);
         for(final int bond : bonds) bondsToCut.set(bond);
         return this.cutBonds(fragment, bondsToCut, callback);
@@ -98,7 +98,7 @@ public class CombinatorialFragmenter {
         while (!nodes.isEmpty()) {
             CombinatorialNode n = nodes.pollFirst();
 
-            TIntArrayList bondsInFragment = n.fragment.bonds();
+            ArrayList<Integer> bondsInFragment = n.fragment.bonds();
             BitSet bondsToCutInFragment = new BitSet(this.molecularGraph.bonds.length);
             for(int idx = 0; idx < bondsInFragment.size(); idx++){
                 final int bondIdx = bondsInFragment.get(idx);

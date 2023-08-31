@@ -69,7 +69,7 @@ public class CombinatorialFragment {
         return atoms;
     }
 
-    public IAtomContainer toMolecule() {
+    public IAtomContainer toMolecule() { //todo: add the hydrogen atom at the cutted site
         if(!this.innerNode) return new AtomContainer();
         final int cardinality = bitset.cardinality();
         if (cardinality==parent.natoms) return parent.molecule;
@@ -163,7 +163,7 @@ public class CombinatorialFragment {
     /**
      * This method computes the molecular formula of this fragment including the hydrogen atom.
      */
-    private void determineFormula() {
+    private void determineFormula() { //todo: add the hydrogen atom at the cutted site
         final TableSelection sel = parent.getTableSelectionOfFormula();
         short[] buffer = sel.makeCompomer();
         int[] labels = parent.getAtomLabels();
@@ -174,11 +174,11 @@ public class CombinatorialFragment {
         this.formula = MolecularFormula.fromCompomer(sel, buffer);
     }
 
-    public TIntArrayList bonds() {
-        if(!this.innerNode) return new TIntArrayList();
+    public ArrayList<Integer> bonds() {
+        if(!this.innerNode) return new ArrayList<>();
         final int[][] adj = parent.getAdjacencyList();
         final int[][] bondj = parent.bondList;
-        final TIntArrayList bonds = new TIntArrayList();
+        final ArrayList<Integer> bonds = new ArrayList<>();
         for (int node=bitset.nextSetBit(0); node >= 0; node=bitset.nextSetBit(node+1) ) {
             int[] l = adj[node];
             for (int bond = 0; bond < l.length; ++bond) {
