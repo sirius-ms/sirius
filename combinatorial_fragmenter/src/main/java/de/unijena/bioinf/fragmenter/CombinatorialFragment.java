@@ -4,13 +4,11 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.TableSelection;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.hash.TIntHashSet;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.silent.AtomContainer;
-import org.openscience.cdk.smarts.SmartsFragmentExtractor;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import org.slf4j.LoggerFactory;
@@ -57,6 +55,10 @@ public class CombinatorialFragment {
 
     public BitSet getBitSet(){
         return this.bitset;
+    }
+
+    public MolecularGraph getIntactMolecule(){
+        return this.parent;
     }
 
     public IAtom[] getAtoms() {
