@@ -5,15 +5,14 @@ import java.util.*;
 
 /**
  * An object of this class predicts the fragmentation process for a given molecular structure
- * occurring during MS/MS acquisition in a prioritized breadth-first search approach.
+ * (occurring during MS/MS acquisition) in a prioritized breadth-first search approach.
  * The simulation of the fragmentation process is comparable to a prioritized approach
  * for generating a combinatorial fragmentation graph.<br>
  *
- * In every step, the fragment F with the most profitable path to the root is dequeued from Q and
- * marked as predicted fragment. For this fragment, every direct subfragment F' is generated and:
+ * In every step, the fragment F with the most profitable path to the root is dequeued from the priority queue Q and
+ * marked as predicted fragment. For this fragment F, every direct subfragment F' is generated and:
  * <li>if F' is novel, it's added to the graph G and to the priority queue Q</li>
- * <li>if F' is already in G and Q, then add the edge (F,F') and update its placement in Q</li>
- * <li>if F' is already in G and not in Q anymore, then add only the edge (F,F').</li>
+ * <li>[two options: if F' is not novel, then do nothing or maybe replace the subtree under F' to F (I have to test that...)]</li>
  * After a certain number of fragments were predicted, the remaining (unmarked) fragments in Q are removed from G.
  */
 public class PrioritizedIterativeFragmentation extends AbstractFragmentationPredictor{
@@ -71,14 +70,10 @@ public class PrioritizedIterativeFragmentation extends AbstractFragmentationPred
             node.setState((byte) 1);
             currentNumFragments++;
 
+            // todo: this is the part of the code where I can try out new ideas
             fragmenter.cutAllBonds(node.getFragment(), (parent, bonds, fragments1) -> {
                 for(CombinatorialFragment fragment : fragments1){
-                    if(this.graph.contains(fragment)){
-                        CombinatorialNode w = this.graph.addReturnAlways(node, fragment, bonds[0], bonds.length > 1 ? bonds[1] : null, this.scoring, null);
-                        if(w.getState() == (byte) 0){
-                            queue.remove(w); queue.add(w); // update the queue because w.totalScore has possibly changed
-                        }
-                    }else{
+                    if(!this.graph.contains(fragment)){
                         CombinatorialNode w = this.graph.addReturnAlways(node, fragment, bonds[0], bonds.length > 1 ? bonds[1] : null, this.scoring, null);
                         w.setState((byte) 0);
                         queue.add(w);
