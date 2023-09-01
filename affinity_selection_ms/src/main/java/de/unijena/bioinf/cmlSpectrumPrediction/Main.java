@@ -1,18 +1,12 @@
 package de.unijena.bioinf.cmlSpectrumPrediction;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.MsIO;
-import de.unijena.bioinf.cmlFragmentation.FragmentationPredictor;
-import de.unijena.bioinf.cmlFragmentation.FragmentationRules;
-import de.unijena.bioinf.cmlFragmentation.MostLikelyFragmentation;
-import de.unijena.bioinf.cmlFragmentation.RuleBasedFragmentation;
-import de.unijena.bioinf.fragmenter.*;
-import de.unijena.bioinf.sirius.PeakAnnotation;
+import de.unijena.bioinf.cmlFragmentation.*;
+import de.unijena.bioinf.fragmenter.CombinatorialNode;
+import de.unijena.bioinf.fragmenter.MolecularGraph;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
 import de.unijena.bioinf.sirius.Sirius;
@@ -21,163 +15,116 @@ import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.nio.file.Files;
+import java.util.Arrays;
+import java.util.List;
 
 public class Main {
 
-    private static class SimpleFragmentationRule implements FragmentationRules{
+    public static class SimpleFragmentationRule implements FragmentationRules {
 
-        private final ArrayList<String> allowedElements;
+        private List<String> allowedElements;
 
         public SimpleFragmentationRule(String[] allowedElements){
-            this.allowedElements = new ArrayList<>(allowedElements.length);
-            this.allowedElements.addAll(Arrays.asList(allowedElements));
+            this.allowedElements = Arrays.asList(allowedElements);
         }
-        public boolean match(IBond bond){
+
+        @Override
+        public boolean match(IBond bond) {
             if(!bond.getOrder().equals(IBond.Order.SINGLE)) return false;
-            String atom1Symb = bond.getAtom(0).getSymbol();
-            String atom2Symb = bond.getAtom(1).getSymbol();
-            return this.allowedElements.contains(atom1Symb) || this.allowedElements.contains(atom2Symb);
+            String atom1Symbol = bond.getAtom(0).getSymbol();
+            String atom2Symbol = bond.getAtom(1).getSymbol();
+            return (this.allowedElements.contains(atom1Symbol) || this.allowedElements.contains(atom2Symbol));
         }
     }
 
-    public static void main(String[] args){
+    public enum FragmentationPredictorType {
+        ITERATIVE, RULE_BASED;
+    }
+
+    public static void main(String[] args) {
         try {
-            // 1. Read the measured spectrum and construct an instance of Ms2Spectrum:
-            final File measuredSpectrumFile = new File("C:\\Users\\Nutzer\\Documents\\Bioinformatik_PhD\\AS-MS-Project\\LCMS_Benzimidazole\\LCMS_230220_Benzimidazole\\ProjectSpaces\\filtered_by_hand_PS_5.7.2\\283_230220_BAMS-14-3_01_283\\spectrum.ms");
-            Ms2Experiment ms2Experiment = MsIO.readExperimentFromFile(measuredSpectrumFile).next();
-            ProcessedInput processedInput = getProcessedInput(ms2Experiment);
-            List<ProcessedPeak> mergedPeaks = processedInput.getMergedPeaks();
+            // GENERAL INITIALISATION:
+            String smiles = "CCC(CC)N1C2=C(C=C(C=C2)C(=O)NC(C(C)C)C(=O)N)N=C1C=CC3=CC=CC=C3";
+            File msFile = new File("C:\\Users\\Nutzer\\Documents\\Bioinformatik_PhD\\AS-MS-Project\\LCMS_Benzimidazole\\BAMS-14-3\\ProjectSpaces\\filtered_by_hand_PS_5.7.2\\1695_230220_BAMS-14-3_01_1695\\spectrum.ms");
 
-            SimpleMutableSpectrum measuredSimpleSpectrum = new SimpleMutableSpectrum(mergedPeaks.size());
-            for(Peak peak : mergedPeaks) measuredSimpleSpectrum.addPeak(peak);
-            Ms2Spectrum<Peak> measuredSpectrum = new MutableMs2Spectrum(measuredSimpleSpectrum, processedInput.getParentPeak().getMass(), null, 2);
+            SmilesParser smiParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+            MolecularGraph molecule = new MolecularGraph(smiParser.parseSmiles(smiles));
+            FragStepDependentScoring scoring = new FragStepDependentScoring(molecule);
+            int numFragments = 50;
 
-            // 2. Initialisation:
-            final String[] allowedElements = new String[]{"N", "O", "P", "S"};
-            final SimpleFragmentationRule fragRule = new SimpleFragmentationRule(allowedElements);
-            final CombinatorialFragmenter.Callback2 fragmentationConstraint = (node, numNodes, numEdges) -> true;
-            final int NUM_FRAGMENTS = 25;
+            // PREDICT THE FRAGMENTATION PROCESS & A SPECTRUM:
+            FragmentationPredictorType type = FragmentationPredictorType.ITERATIVE;
+            AbstractFragmentationPredictor fragmentationPredictor;
+            switch (type) {
+                case RULE_BASED -> {
+                    String[] allowedElements = new String[]{"N", "O", "P", "S"};
+                    SimpleFragmentationRule fragRule = new SimpleFragmentationRule(allowedElements);
+                    fragmentationPredictor = new RuleBasedFragmentation(molecule, scoring, numFragments, fragRule, (node, nnodes, nedges) -> true);
+                }
+                default -> fragmentationPredictor = new PrioritizedIterativeFragmentation(molecule, scoring, numFragments);
+            }
+            fragmentationPredictor.predictFragmentation();
+            for(CombinatorialNode node : fragmentationPredictor.getFragmentationGraph().getNodes()){
+                System.out.println(node.getIncomingEdges().size()+"\t"+node.getDepth());
+            }
 
-            final String smiles = "CCC(CC)N1C2=C(C=C(C=C2)C(=O)NC(CC3=CC=CC=C3)C(=O)N)N=C1C4=CSC=C4";
-            final SmilesParser smiParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
-            final MolecularGraph mol = new MolecularGraph(smiParser.parseSmiles(smiles));
-            final Scoring scoring = new Scoring(mol, null);
+            // Build a barcode spectrum:
+            BarcodeSpectrumPredictor spectrumPredictor = new BarcodeSpectrumPredictor(fragmentationPredictor, true);
+            SimpleSpectrum predictedSpectrum = new SimpleSpectrum(spectrumPredictor.predictSpectrum());
 
-            // PREDICTION:
-            final RuleBasedFragmentation rbFragmentationPredictor = new RuleBasedFragmentation(mol, scoring, NUM_FRAGMENTS, fragRule, fragmentationConstraint);
-            rbFragmentationPredictor.predictFragmentation(); // has to be called first!
-            final BarcodeSpectrumPredictor rbSpectrumPredictor = new BarcodeSpectrumPredictor(rbFragmentationPredictor, true);
+            // PARSE THE MEASURED SPECTRUM:
+            Ms2Experiment ms2Experiment = MsIO.readExperimentFromFile(msFile).next();
+            ProcessedInput processedMs2Experiment = new Sirius().preprocessForMs2Analysis(ms2Experiment);
+            List<ProcessedPeak> mergedPeaks = processedMs2Experiment.getMergedPeaks();
+            SimpleMutableSpectrum s = new SimpleMutableSpectrum(mergedPeaks.size());
+            for(ProcessedPeak peak : mergedPeaks) s.addPeak(peak);
+            SimpleSpectrum measuredSpectrum = new SimpleSpectrum(s);
 
-            final MostLikelyFragmentation mlFragmentationPredictor = new MostLikelyFragmentation(mol, scoring, NUM_FRAGMENTS);
-            mlFragmentationPredictor.predictFragmentation(); // has to be called first!
-            final BarcodeSpectrumPredictor mlSpectrumPredictor = new BarcodeSpectrumPredictor(mlFragmentationPredictor, true);
+            // COMPARE PREDICTED AND MEASURED SPECTRUM:
+            Deviation deviation = new Deviation(5d);
+            RecallSpectralAlignment recallScorer = new RecallSpectralAlignment(deviation);
+            WeightedRecallSpectralAlignment weightedRecallScorer = new WeightedRecallSpectralAlignment(deviation);
 
-            // 3. Create mirror plot:
-            Thread rbDashApp = new Thread(predictAndPlotSpectrum(measuredSpectrum,null , rbSpectrumPredictor, smiles, "Rule based fragmentation"));
-            Thread mlDashApp = new Thread(predictAndPlotSpectrum(measuredSpectrum, null, mlSpectrumPredictor, smiles, "Most likely fragmentation"));
+            System.out.println("Recall: " + recallScorer.score(predictedSpectrum, measuredSpectrum).similarity);
+            System.out.println("Weighted Recall: " + weightedRecallScorer.score(predictedSpectrum, measuredSpectrum).similarity);
 
-            rbDashApp.start();
-            mlDashApp.start();
+            // OUTPUT: save the measured and predicted spectrum in a .csv file
+            // Additional to the mz values and intensities, save which measured peaks were matched and
+            // which fragments explain which peak
+            File outputFile = new File("C:\\Users\\Nutzer\\Documents\\Repositories\\sirius-libs\\affinity_selection_ms\\src\\main\\resources\\msrdPredSpectrum.csv");
+            try(BufferedWriter fileWriter = Files.newBufferedWriter(outputFile.toPath())){
+                fileWriter.write("mz,intensity,type,matchedMsrdPeak,smiles,atomIndices");
+                fileWriter.newLine();
 
-        } catch (InvalidSmilesException | IOException e) {
+                //Write the measured spectrum:
+                List<Peak> matchedMsrdPeaks = recallScorer.getPreviousMatchedMeasuredPeaks();
+                for(Peak peak : measuredSpectrum){
+                    double mz = peak.getMass();
+                    double intensity = peak.getIntensity();
+                    int matchedMsrdPeak = matchedMsrdPeaks.contains(peak) ? 1 : 0;
+                    fileWriter.write(mz + "," + intensity + ",0," + matchedMsrdPeak + ",NaN,NaN");
+                    fileWriter.newLine();
+                }
+
+                // Write the predicted spectrum:
+                for(Peak peak : predictedSpectrum){
+                    double mz = peak.getMass();
+                    double intensity = peak.getIntensity();
+                    fileWriter.write(mz + "," + intensity + ",1,0,NaN,NaN");
+                    fileWriter.newLine();
+                }
+            }
+        } catch (InvalidSmilesException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private static class Scoring extends EMFragmenterScoring2{
-
-
-        public Scoring(MolecularGraph graph, FTree tree) {
-            super(graph, tree);
-        }
-
-        @Override
-        public double scoreFragment(CombinatorialNode node){
-            return 0d;
-        }
-    }
-
-    private static Runnable predictAndPlotSpectrum(Ms2Spectrum<Peak> measuredSpectrum, HashMap<Peak, CombinatorialFragment> measuredPeak2Fragment, BarcodeSpectrumPredictor initialisedSpectrumPredictor, String smiles, String title){
-        Ms2Spectrum<Peak> predictedSpectrum = initialisedSpectrumPredictor.predictSpectrum();
-        String measuredSpectrumStr = getSpectrumString(measuredSpectrum, measuredPeak2Fragment);
-        String predictedSpectrumStr = getSpectrumString(predictedSpectrum, initialisedSpectrumPredictor.getPeak2FragmentMapping());
-
-        System.out.println("\"" + measuredSpectrumStr + "\" \"" + predictedSpectrumStr + "\" \"" + smiles + "\" \"" + title + "\"");
-        return () -> {
-            try {
-                ProcessBuilder pb = new ProcessBuilder("python", "makeMirrorSpectrumPlot.py", measuredSpectrumStr, predictedSpectrumStr, smiles, title);
-                pb.directory(new File("C:\\Users\\Nutzer\\Documents\\Repositories\\sirius-libs\\affinity_selection_ms\\src\\main\\resources"));
-                pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-                pb.start();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        };
-    }
-
-    private static String getSpectrumString(Ms2Spectrum<Peak> spectrum, HashMap<Peak, CombinatorialFragment> peak2Fragment){
-        StringBuilder strBuilder = new StringBuilder();
-        strBuilder.append("[");
-        for(int i = 0; i < spectrum.size(); i++){
-            Peak peak = spectrum.getPeakAt(i);
-
-            String bitsetString;
-            if(peak2Fragment != null) {
-                CombinatorialFragment fragment = peak2Fragment.get(peak);
-                bitsetString = bitset2String(fragment.getBitSet());
-            }else{
-                bitsetString = " ";
-            }
-            strBuilder.append("(").append(peak.getMass()).append(",").append(peak.getIntensity()).append(",").
-                    append(bitsetString).append(")");
-            if(i < spectrum.size() - 1){
-                strBuilder.append(";");
-            }else{
-                strBuilder.append("]");
-            }
-        }
-        return strBuilder.toString();
-    }
-
-    private static String bitset2String(BitSet bitSet){
-        StringBuilder strBuilder = new StringBuilder();
-        for(int idx = bitSet.nextSetBit(0); idx >= 0; idx = bitSet.nextSetBit(idx+1)){
-            strBuilder.append(idx).append(" ");
-        }
-        strBuilder.deleteCharAt(strBuilder.length()-1);
-        return strBuilder.toString();
-    }
-    private static ProcessedInput getProcessedInput(Ms2Experiment ms2Experiment){
-        addAnnotationToMs2Experiment(ms2Experiment);
-        return new Sirius().preprocessForMs2Analysis(ms2Experiment);
-    }
-
-    private static void setMS2MassDeviation(Ms2Experiment ms2Experiment, double allowedMassDeviation, double standardMassDeviation){
-        ms2Experiment.setAnnotation(MS2MassDeviation.class, MS2MassDeviation.newInstance(new Deviation(allowedMassDeviation), new Deviation(standardMassDeviation)));
-    }
-
-    private static void addAnnotationToMs2Experiment(Ms2Experiment ms2Experiment){
-        MsInstrumentation instrumentation = ms2Experiment.getAnnotation(MsInstrumentation.class).orElse(MsInstrumentation.Unknown);
-        if(instrumentation.isInstrument("Orbitrap (LCMS)")){
-            setMS2MassDeviation(ms2Experiment, 5, 5);
-        }else if(instrumentation.isInstrument("Bruker Q-ToF (LCMS)")){
-            setMS2MassDeviation(ms2Experiment, 10, 10);
-        }else if(instrumentation.isInstrument("Q-ToF (LCMS)")){
-            setMS2MassDeviation(ms2Experiment, 10, 10);
-        }else if(instrumentation.isInstrument("FTICR (LCMS)")){
-            setMS2MassDeviation(ms2Experiment, 5, 5);
-        }else if(instrumentation.isInstrument("Ion Trap (LCMS)")){
-            setMS2MassDeviation(ms2Experiment, 20, 20);
-        }else if(instrumentation.isInstrument("Tripple-Quadrupole")){
-            setMS2MassDeviation(ms2Experiment, 100, 100);
-        }else{
-            setMS2MassDeviation(ms2Experiment, 10, 10);
-        }
-    }
 
 
 }
