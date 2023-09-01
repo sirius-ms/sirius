@@ -37,7 +37,7 @@ buildLinux64:
 trigger_sirius_frontend:
   stage: downstream
   trigger:
-    project: bioinf-mit/ms/sirius_frontend
+    project: "$SIRIUS_FRONTEND_PROJECT"
     strategy: depend
     branch: $CI_COMMIT_REF_NAME
   only:
