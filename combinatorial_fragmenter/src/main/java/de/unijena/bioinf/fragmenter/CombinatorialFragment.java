@@ -126,10 +126,27 @@ public class CombinatorialFragment {
         int count=0;
         for (int b = bitset.nextSetBit(0); b>=0; b = bitset.nextSetBit(b+1)) {
             if(atomLabels[b] == sel.hydrogenIndex()){
-                count++;
+                count++; //explicit hydrogen atoms
             }else {
-                count += parent.hydrogens[b];
+                count += parent.hydrogens[b]; // implicit hydrogen atoms
+                count += this.numberOfCutIncidentBonds(b); // hydrogen atoms which are bound to this atom after cutting the incident bond
             }
+        }
+        return count;
+    }
+
+    /**
+     * Returns the number of bonds which are incident to the atom with index {@code atomIdx} and disconnect in this fragment.
+     *
+     * @param atomIdx index of the atom in the {@link CombinatorialFragment#parent molecule}
+     * @return number of adjacent atoms in {@link CombinatorialFragment#parent molecule} which were removed
+     */
+    private int numberOfCutIncidentBonds(int atomIdx){
+        int[][] adjList = this.parent.adjacencyList;
+        int[] adjacentAtoms = adjList[atomIdx];
+        int count = 0;
+        for(int k : adjacentAtoms){
+            if(!this.bitset.get(k)) count++;
         }
         return count;
     }
@@ -165,7 +182,7 @@ public class CombinatorialFragment {
     /**
      * This method computes the molecular formula of this fragment including the hydrogen atom.
      */
-    private void determineFormula() { //todo: add the hydrogen atom at the cutted site
+    private void determineFormula() {
         final TableSelection sel = parent.getTableSelectionOfFormula();
         short[] buffer = sel.makeCompomer();
         int[] labels = parent.getAtomLabels();
