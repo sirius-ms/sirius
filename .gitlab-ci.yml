@@ -13,6 +13,9 @@ stages:
   - build-publish
   - downstream
 
+default:
+  tags: [$RUNNER_TAGS]
+
 buildLinux64:
   variables:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false"
@@ -22,8 +25,6 @@ buildLinux64:
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
-  tags:
-    - kubernetes
   only:
     refs:
       - master
