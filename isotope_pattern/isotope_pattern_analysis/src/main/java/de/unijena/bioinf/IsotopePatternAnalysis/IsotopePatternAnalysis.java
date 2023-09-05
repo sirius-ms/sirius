@@ -29,6 +29,7 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.IsotopicDistribution;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Ms1IsotopePattern;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -188,6 +189,38 @@ public class IsotopePatternAnalysis implements Parameterized {
         }
         return new SimpleSpectrum(spec);
     }
+
+    /*
+    I'm afraid using whiteset annotation, as I do not know how that will interfere with the rest of the pipeline
+     */
+    public boolean computeAndScoreIsotopePattern(ProcessedInput input, Whiteset whiteset) {
+        final Ms1IsotopePattern pattern = input.getAnnotation(Ms1IsotopePattern.class, Ms1IsotopePattern::none);
+        if (!pattern.isEmpty()) {
+            final HashMap<MolecularFormula, IsotopePattern> explanations = new HashMap<>();
+            final SimpleSpectrum spec = pattern.getSpectrum();
+            final MS1MassDeviation massDev = input.getAnnotationOrDefault(MS1MassDeviation.class);
+            final PossibleAdducts ionModes = input.getAnnotationOrDefault(PossibleAdducts.class);
+            final FormulaConstraints constraints = input.getAnnotationOrDefault(FormulaConstraints.class);
+            for (IonMode ionMode : ionModes.getIonModes()) {
+                List<MolecularFormula> formulas = new ArrayList<>();
+                if (whiteset.isStillAllowDeNovo())
+                    formulas.addAll(decomposer.getDecomposer(constraints.getChemicalAlphabet()).decomposeToFormulas(pattern.getPeaks()[0].getMass(), ionMode, massDev.allowedMassDeviation, constraints));
+                if (!whiteset.isEmpty()) {
+                    formulas.addAll(whiteset.getMeasuredFormulas());
+                }
+                PrecursorIonType precursorIonType = input.getExperimentInformation().getPrecursorIonType();
+                if (!precursorIonType.hasNeitherAdductNorInsource()) {
+                    formulas=formulas.stream().filter(f->precursorIonType.measuredNeutralMoleculeToNeutralMolecule(f).isAllPositiveOrZero()).collect(Collectors.toList());
+                }
+                for (IsotopePattern pat : scoreFormulas(spec, formulas, input.getExperimentInformation(), PrecursorIonType.getPrecursorIonType(ionMode))) {
+                    explanations.put(pat.getCandidate(), pat);
+                }
+            }
+            input.setAnnotation(ExtractedIsotopePattern.class, new ExtractedIsotopePattern(spec, explanations));
+            return true;
+        } else return false;
+    }
+
 
     public boolean computeAndScoreIsotopePattern(ProcessedInput input) {
         final Ms1IsotopePattern pattern = input.getAnnotation(Ms1IsotopePattern.class, Ms1IsotopePattern::none);
