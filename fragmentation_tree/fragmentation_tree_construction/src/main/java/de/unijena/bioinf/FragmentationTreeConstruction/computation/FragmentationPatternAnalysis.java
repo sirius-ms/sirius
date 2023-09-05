@@ -113,7 +113,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
 
 
 
-    private final HashMap<Class<?>, SiriusPlugin> siriusPlugins = new HashMap<>();
+    private final LinkedHashMap<Class<?>, SiriusPlugin> siriusPlugins = new LinkedHashMap<>();
 
     public void registerPlugin(SiriusPlugin plugin) {
         if (!siriusPlugins.containsKey(plugin.getClass())) {
