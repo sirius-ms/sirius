@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.ValenceFilter;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.SiriusPlugin;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.DBPairedScorer;
@@ -41,6 +42,42 @@ public class BottomUpSearch extends SiriusPlugin {
         initializer.addFragmentScorer(new DBPairedScorer());
     }
 
+    public static List<Decomposition> generateDecompositions(ProcessedInput input) {
+        final ValenceFilter filter = new ValenceFilter();
+
+        final Object2DoubleOpenHashMap<Decomposition> weighting = new Object2DoubleOpenHashMap<>();
+        final Deviation dev = input.getAnnotation(MS2MassDeviation.class).map(x->x.allowedMassDeviation).orElse(new Deviation(5));
+        final Set<IonMode> ionModes = input.getAnnotationOrThrow(PossibleAdducts.class).getIonModes();
+        if (!input.getExperimentInformation().getPrecursorIonType().isIonizationUnknown()) {
+            ionModes.clear();
+            ionModes.add((IonMode)input.getExperimentInformation().getPrecursorIonType().getIonization());
+        }
+        for (ProcessedPeak peak :input.getMergedPeaks()) {
+            final double rootLossMass = input.getExperimentInformation().getIonMass() - peak.getMass();
+            final MolecularFormula[] losses = MOLECULAR_FORMULA_MAP.searchMass(rootLossMass, dev);
+            for (Ionization ionMode : ionModes) {
+                final double mz = ionMode.subtractFromMass(peak.getMass());
+                if (mz < 1) continue;
+                for (MolecularFormula fragment : MOLECULAR_FORMULA_MAP.searchMass(mz, dev)) {
+                    for (MolecularFormula loss : losses) {
+                        final MolecularFormula together = fragment.add(loss);
+                        if (dev.inErrorWindow(input.getExperimentInformation().getIonMass(), ionMode.addToMass(together.getMass())) && !together.maybeCharged() && filter.isValid(together, ionMode)) {
+                            weighting.addTo(new Decomposition(together, ionMode, 0d), Math.max(peak.getRelativeIntensity(),  1e-3));
+                        }
+                    }
+                }
+            }
+        }
+        final HashSet<Decomposition> formulas = new HashSet<>();
+        weighting.forEach((formula, weight)->{
+            if (weight >= 0.05) {
+                formulas.add(formula);
+            }
+        });
+        return new ArrayList<>(formulas);
+    }
+
+    // TODO: refactor
     @Override
     protected void beforeDecomposing(ProcessedInput input) {
         super.beforeDecomposing(input);
