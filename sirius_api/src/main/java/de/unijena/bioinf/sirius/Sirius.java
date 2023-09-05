@@ -21,6 +21,7 @@
 
 package de.unijena.bioinf.sirius;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.chem.utils.biotransformation.BioTransformation;
@@ -635,7 +636,7 @@ public class Sirius {
             try {
                 final ProcessedInput input = preprocessForMs2Analysis(experiment);
                 if (experiment.getAnnotationOrDefault(IsotopeSettings.class).isEnabled())
-                    getMs1Analyzer().computeAndScoreIsotopePattern(input);
+                    computeIsotopeScoresAndMs1Decompositions(input);
                 final FasterTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), input);
                 instance.addJobProgressListener(evt -> updateProgress(0, 105,  evt.getProgress()));
                 submitSubJob(instance);
@@ -647,6 +648,17 @@ public class Sirius {
                 LoggerFactory.getLogger(Sirius.class).error("Error in instance " + experiment.getSourceString() + ": " + e.getMessage());
                 throw e;
             }
+        }
+
+        private void computeIsotopeScoresAndMs1Decompositions(ProcessedInput input) {
+            BottomUpSearchSettings settings = input.getAnnotation(BottomUpSearchSettings.class, BottomUpSearchSettings::disabled);
+            if (getMs2Analyzer().hasPlugin(BottomUpSearch.class)) {
+                if (settings.isEnabledFor(input.getExperimentInformation().getIonMass())) {
+                    getMs1Analyzer().computeAndScoreIsotopePattern(input, Whiteset.ofMeasuredFormulas(BottomUpSearch.generateDecompositions(input).stream().map(SScored::getCandidate).collect(Collectors.toList())).addDeNovo(settings.stillUseDeNovoFor(input.getExperimentInformation().getIonMass())));
+                    return;
+                }
+            }
+            getMs1Analyzer().computeAndScoreIsotopePattern(input);
         }
 
         /**
