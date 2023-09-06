@@ -119,6 +119,20 @@ public enum Format {
         }
     }
 
+    @Override
+    public long countAllFingerprints() throws ChemicalDatabaseException {
+        try {
+            return storage.size();
+        } catch (IOException e) {
+            throw new ChemicalDatabaseException(e);
+        }
+    }
+
+    @Override
+    public long countAllFormulas() throws ChemicalDatabaseException {
+        return formulas.length;
+    }
+
     protected void init() throws IOException {
         Map<String, String> tags = storage.getTags();
 
