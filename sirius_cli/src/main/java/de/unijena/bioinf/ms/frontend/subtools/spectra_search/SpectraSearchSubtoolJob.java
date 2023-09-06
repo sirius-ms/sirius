@@ -78,6 +78,10 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
         if (container.hasAnnotation(SpectralSearchResult.class)) {
             container.removeAnnotation(SpectralSearchResult.class);
         }
+
+        if (result == null)
+            return;
+
         container.addAnnotation(SpectralSearchResult.class, result);
         expRes.updateCompound(container, SpectralSearchResult.class);
 
@@ -104,9 +108,9 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
             for (SpectralSearchResult.SearchResult r : resultList.subList(0, Math.min(print, resultList.size()))) {
                 SpectralSimilarity similarity = r.getSimilarity();
 
-                CustomDatabaseFactory.open(r.getDbLocation()).toChemDB(ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion()).ifPresent(db -> {
+                CustomDatabaseFactory.open(r.getDbName()).toChemDB(ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion()).ifPresent(db -> {
                     try {
-                        Ms2ReferenceSpectrum reference = ((SpectralLibrary) db).getReferenceSpectrum(r.getReferenceId());
+                        Ms2ReferenceSpectrum reference = ((SpectralLibrary) db).getReferenceSpectrum(r.getReferenceUUID());
                         builder.append(String.format("\n%10.3e | %5d | %9s | %9.3f | %2d | %5s | %10s | %s | %s | %s  | %s | %s | %s",
                                 similarity.similarity,
                                 similarity.shardPeaks,
@@ -118,7 +122,7 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
                                 reference.getCandidateInChiKey(),
                                 reference.getSmiles(),
                                 reference.getName(),
-                                r.getDbLocation(),
+                                r.getDbName(),
                                 reference.getSpectralDbLink(),
                                 reference.getSplash()));
                     } catch (ChemicalDatabaseException e) {
