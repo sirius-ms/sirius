@@ -24,6 +24,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.chemdb.AbstractChemicalDatabase;
 import de.unijena.bioinf.chemdb.ChemicalBlobDatabase;
+import de.unijena.bioinf.chemdb.WriteableChemicalDatabase;
+import de.unijena.bioinf.spectraldb.SpectralLibrary;
+import de.unijena.bioinf.spectraldb.WriteableSpectralLibrary;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.storage.blob.Compressible;
 import de.unijena.bioinf.storage.blob.CompressibleBlobStorage;
@@ -102,4 +105,20 @@ public class BlobCustomDatabase<Storage extends BlobStorage> extends CustomDatab
     public AbstractChemicalDatabase toChemDBOrThrow(CdkFingerprintVersion version) throws IOException {
         return new ChemicalBlobDatabase<>(version, storage.getRawStorage());
     }
+
+    @Override
+    public WriteableChemicalDatabase toWriteableChemDBOrThrow() throws IOException {
+        throw new IOException("Writeable ChemDB API not implemented for blob storage");
+    }
+
+    @Override
+    public SpectralLibrary toSpectralLibraryOrThrow() throws IOException {
+        throw new IOException("Spectral library API not implemented for blob storage");
+    }
+
+    @Override
+    public WriteableSpectralLibrary toWriteableSpectralLibraryOrThrow() throws IOException {
+        throw new IOException("Writeable spectral library API not implemented for blob storage");
+    }
+
 }

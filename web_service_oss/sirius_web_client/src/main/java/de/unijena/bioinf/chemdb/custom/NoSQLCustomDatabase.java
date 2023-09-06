@@ -23,7 +23,10 @@ package de.unijena.bioinf.chemdb.custom;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.chemdb.AbstractChemicalDatabase;
 import de.unijena.bioinf.chemdb.ChemicalNoSQLDatabase;
+import de.unijena.bioinf.chemdb.WriteableChemicalDatabase;
 import de.unijena.bioinf.chemdb.nitrite.ChemicalNitriteDatabase;
+import de.unijena.bioinf.spectraldb.SpectralLibrary;
+import de.unijena.bioinf.spectraldb.WriteableSpectralLibrary;
 import de.unijena.bioinf.storage.blob.Compressible;
 import de.unijena.bioinf.storage.db.nosql.nitrite.NitriteDatabase;
 import org.dizitart.no2.Document;
@@ -104,6 +107,21 @@ public class NoSQLCustomDatabase<DB extends ChemicalNoSQLDatabase<?>> extends Cu
 
     @Override
     public AbstractChemicalDatabase toChemDBOrThrow(CdkFingerprintVersion version) throws IOException {
+        return database;
+    }
+
+    @Override
+    public WriteableChemicalDatabase toWriteableChemDBOrThrow() throws IOException {
+        return database;
+    }
+
+    @Override
+    public SpectralLibrary toSpectralLibraryOrThrow() throws IOException {
+        return database;
+    }
+
+    @Override
+    public WriteableSpectralLibrary toWriteableSpectralLibraryOrThrow() throws IOException {
         return database;
     }
 
