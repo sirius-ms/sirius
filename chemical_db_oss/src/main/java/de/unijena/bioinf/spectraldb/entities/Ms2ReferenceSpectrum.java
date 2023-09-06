@@ -42,6 +42,8 @@ public class Ms2ReferenceSpectrum {
     @Builder.Default
     private long id = -1L;
 
+    private String uuid;
+
     /**
      * This is the InChiKey (2D) to map spectra to a standardized SIRIUS structure candidate.
      * In rare cases ot might not match the actual smiles of the measured compound due to standardization.
@@ -102,5 +104,13 @@ public class Ms2ReferenceSpectrum {
     public void setSpectralDbLink(DBLink spectralDbLink) {
         this.libraryName = spectralDbLink.name;
         this.libraryId = spectralDbLink.id;
+    }
+
+    @Override
+    public String toString() {
+        return "Ms2ReferenceSpectrum{" +
+                "uuid='" + uuid + '\'' +
+                ", splash='" + splash + '\'' +
+                '}';
     }
 }
