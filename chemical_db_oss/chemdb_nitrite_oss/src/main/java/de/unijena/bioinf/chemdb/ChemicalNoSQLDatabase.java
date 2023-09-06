@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.chemdb;
 
+import com.google.common.collect.Iterables;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
@@ -27,21 +28,23 @@ import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.chemdb.nitrite.serializers.FingerprintCandidateDbSerializer;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
-import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintWrapper;
 import de.unijena.bioinf.spectraldb.SpectralNoSQLDatabase;
 import de.unijena.bioinf.storage.db.nosql.*;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.MissingResourceException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static de.unijena.bioinf.chemdb.ChemDbTags.TAG_DATE;
 
-public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDatabase<Doctype> implements AbstractChemicalDatabase {
+public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDatabase<Doctype> implements AbstractChemicalDatabase, WriteableChemicalDatabase {
 
     public static final String SETTINGS_COLLECTION = "CUSTOM-DB-SETTINGS";
 
@@ -51,12 +54,7 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
 
     protected static Metadata initMetadata(FingerprintVersion version) throws IOException {
         Metadata metadata = SpectralNoSQLDatabase.initMetadata();
-        return metadata
-                // TODO is the FingerprintWrapper actually necessary or does FingerprintCandidateWrapper work for all use cases?
-                .addRepository(
-                        FingerprintWrapper.class,
-                        new Index("inchikey", IndexType.UNIQUE)
-                ).addRepository(
+        return metadata.addRepository(
                         FingerprintCandidateWrapper.class,
                         "id",
                         new Index("formula", IndexType.NON_UNIQUE),
@@ -193,4 +191,116 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
     public void close() throws IOException {
         this.storage.close();
     }
+
+    @Override
+    public long countAllFingerprints() throws ChemicalDatabaseException {
+        try {
+            return this.storage.countAll(FingerprintCandidateWrapper.class);
+        } catch (IOException e) {
+            throw new ChemicalDatabaseException(e);
+        }
+    }
+
+    @Override
+    public long countAllFormulas() throws ChemicalDatabaseException {
+        try {
+            return this.storage.findAllStr(FingerprintCandidateWrapper.class).map(FingerprintCandidateWrapper::getFormula).distinct().count();
+        } catch (IOException e) {
+            throw new ChemicalDatabaseException(e);
+        }
+    }
+
+    @Override
+    public void updateTags(@Nullable String dbFlavor, int fpId) throws IOException {
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+        String dbDate = df.format(new Date());
+        upsertTag(ChemDbTags.TAG_DATE, dbDate);
+        if (dbFlavor != null && !dbFlavor.isBlank()) {
+            upsertTag(ChemDbTags.TAG_FLAVOR, dbFlavor);
+        }
+        if (fpId >= 0) {
+            upsertTag(ChemDbTags.TAG_FP_ID, String.valueOf(fpId));
+        }
+    }
+
+    private void upsertTag(String key, String value) throws IOException {
+        if (this.storage.count(Filter.build().eq("key", key), ChemicalNoSQLDatabase.Tag.class) > 0) {
+            ChemicalNoSQLDatabase.Tag tag = this.storage.find(Filter.build().eq("key", key), ChemicalNoSQLDatabase.Tag.class).iterator().next();
+            tag.setValue(value);
+            this.storage.upsert(tag);
+        } else {
+            this.storage.insert(ChemicalNoSQLDatabase.Tag.of(key, value));
+        }
+    }
+
+    @Override
+    public void updateAllFingerprints(Consumer<FingerprintCandidate> updater) throws ChemicalDatabaseException {
+        try {
+            Iterables.partition(this.storage.findAll(FingerprintCandidateWrapper.class, "candidate"), 50).forEach(chunk -> {
+                List<FingerprintCandidateWrapper> updated = chunk.stream().peek(wrapper -> updater.accept(wrapper.getCandidate())).toList();
+                try {
+                    this.storage.upsertAll(updated);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        } catch (RuntimeException | IOException e) {
+            throw new ChemicalDatabaseException(e);
+        }
+    }
+
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Tag {
+        private long id;
+        private String key;
+        private String value;
+
+        public static Tag of(String key, String value) {
+            return new Tag(-1L, key, value);
+        }
+
+        public static Tag of(Map.Entry<String, String> source) {
+            return of(source.getKey(), source.getValue());
+        }
+
+        public String getKey() {
+            return key;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        public String setValue(String value) {
+            String old = this.value;
+            this.value = value;
+            return old;
+        }
+
+        public void setKey(String key) {
+            this.key = key;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof ChemicalNoSQLDatabase.Tag tag)) return false;
+            return Objects.equals(key, tag.key) && Objects.equals(value, tag.value);
+        }
+
+        @Override
+        public String toString() {
+            return "Tag{" +
+                    "key='" + key + '\'' +
+                    ", value='" + value + '\'' +
+                    '}';
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(key, value);
+        }
+    }
+
 }
