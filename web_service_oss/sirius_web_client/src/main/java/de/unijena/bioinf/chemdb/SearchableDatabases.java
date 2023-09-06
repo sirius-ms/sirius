@@ -94,7 +94,6 @@ public class SearchableDatabases {
     @NotNull
     public static Optional<CustomDatabase> getCustomDatabaseByPath(@NotNull Path dbDir) {
         try {
-            // FIXME SEVERE  10:43:57 - NO2.2001: database is already opened in other process
             return Optional.of(getCustomDatabaseByPathOrThrow(dbDir));
         } catch (RuntimeException e) {
             LoggerFactory.getLogger(SearchableDatabases.class).error(e.getMessage(), e.getCause());
