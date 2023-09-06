@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.spectraldb;
 
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
@@ -69,10 +70,6 @@ public interface SpectralLibrary {
             BiConsumer<Integer, Integer> progressConsumer
     ) throws ChemicalDatabaseException;
 
-    String name();
-
-    String location();
-
     int countAllSpectra() throws IOException;
 
     default Iterable<Ms2ReferenceSpectrum> lookupSpectra(double precursorMz, Deviation deviation) throws ChemicalDatabaseException {
@@ -86,6 +83,13 @@ public interface SpectralLibrary {
     }
 
     Iterable<Ms2ReferenceSpectrum> lookupSpectra(String inchiKey2d, boolean withData) throws ChemicalDatabaseException;
+
+    default Iterable<Ms2ReferenceSpectrum> lookupSpectra(MolecularFormula formula) throws ChemicalDatabaseException {
+        return lookupSpectra(formula, false);
+    }
+
+    Iterable<Ms2ReferenceSpectrum> lookupSpectra(MolecularFormula formula, boolean withData) throws ChemicalDatabaseException;
+
 
     Ms2ReferenceSpectrum getReferenceSpectrum(String uuid) throws ChemicalDatabaseException;
 
