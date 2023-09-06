@@ -103,7 +103,7 @@ public class BlobCustomDatabase<Storage extends BlobStorage> extends CustomDatab
 
     @Override
     public AbstractChemicalDatabase toChemDBOrThrow(CdkFingerprintVersion version) throws IOException {
-        return new ChemicalBlobDatabase<>(version, storage.getRawStorage());
+        return new ChemicalBlobDatabase<>(version, storage.getRawStorage(), null);
     }
 
     @Override

@@ -84,7 +84,7 @@ public class SpectralUtils {
             Ms2ReferenceSpectrum.Ms2ReferenceSpectrumBuilder b = Ms2ReferenceSpectrum.builder()
                     .uuid(UUID.randomUUID().toString())
                     .formula(experiment.getMolecularFormula())
-                    .ionMass(experiment.getIonMass())
+                    .exactMass(experiment.getIonMass())
                     .name(experiment.getName())
                     .collisionEnergy(s.getCollisionEnergy())
                     .msLevel(s.getMsLevel())
