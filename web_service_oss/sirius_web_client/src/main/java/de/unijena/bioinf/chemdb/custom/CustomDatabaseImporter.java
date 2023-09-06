@@ -420,9 +420,9 @@ public class CustomDatabaseImporter {
                 Stream.concat(alreadyExisting.stream(), value.stream()).collect(Collectors.toList()));
 
         database.storage.withWriter(path, w -> CompoundCandidate.toJSONList(finalList, w));
-        database.getStatistics().compounds().addAndGet(finalList.size() - alreadyExisting.size());
-        if (alreadyExisting.isEmpty() && !finalList.isEmpty())
-            database.getStatistics().formulas().incrementAndGet();
+//        database.getStatistics().compounds().addAndGet(finalList.size() - alreadyExisting.size());
+//        if (alreadyExisting.isEmpty() && !finalList.isEmpty())
+//            database.getStatistics().formulas().incrementAndGet();
     }
 
     private void checkCancellation() {
