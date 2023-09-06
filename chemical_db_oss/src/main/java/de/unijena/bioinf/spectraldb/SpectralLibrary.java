@@ -29,6 +29,7 @@ import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import java.io.IOException;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public interface SpectralLibrary {
 
@@ -86,11 +87,12 @@ public interface SpectralLibrary {
 
     Iterable<Ms2ReferenceSpectrum> lookupSpectra(String inchiKey2d, boolean withData) throws ChemicalDatabaseException;
 
-    Ms2ReferenceSpectrum getReferenceSpectrum(long id) throws ChemicalDatabaseException;
+    Ms2ReferenceSpectrum getReferenceSpectrum(String uuid) throws ChemicalDatabaseException;
 
     Iterable<Ms2ReferenceSpectrum> getSpectralData(Iterable<Ms2ReferenceSpectrum> references) throws ChemicalDatabaseException;
 
     Ms2ReferenceSpectrum getSpectralData(Ms2ReferenceSpectrum reference) throws ChemicalDatabaseException;
 
+    void forEachSpectrum(Consumer<Ms2ReferenceSpectrum> consumer) throws IOException;
 
 }
