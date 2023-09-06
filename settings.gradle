@@ -48,6 +48,7 @@ include ':fingerid_base_oss'
 
 include ':chemical_db_oss'
 include ':chemical_db_oss:chemdb_sql_oss'
+include ':chemical_db_oss:chemdb_sql_jdbi_json_oss'
 include ':chemical_db_oss:chemdb_blob_oss'
 include ':chemical_db_oss:chemdb_nitrite_oss'
 include ':chemical_db_oss:chemdb_utils_oss'
