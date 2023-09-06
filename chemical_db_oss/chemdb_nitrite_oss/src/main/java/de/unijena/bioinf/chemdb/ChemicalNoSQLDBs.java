@@ -29,7 +29,6 @@ import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintWrapper;
 import de.unijena.bioinf.spectraldb.SpectralNoSQLDBs;
 import de.unijena.bioinf.spectraldb.SpectralNoSQLDatabase;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
-import de.unijena.bioinf.storage.db.nosql.Database;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -104,26 +103,24 @@ public class ChemicalNoSQLDBs extends SpectralNoSQLDBs {
     }
 
     public static void importCompoundsAndFingerprintsLazy(
-            @NotNull Database<?> database,
+            @NotNull SpectralNoSQLDatabase<?> database,
             @NotNull Map<MolecularFormula, Iterable<FingerprintCandidate>> candidates,
             @Nullable Iterable<Ms2ReferenceSpectrum> spectra,
             @NotNull String dbDate, @Nullable String dbFlavor, int fpId,
             int chunkSize
     ) throws ChemicalDatabaseException {
         try {
-            // set metainfo tags
-            database.insert(SpectralNoSQLDatabase.Tag.of(ChemDbTags.TAG_DATE, dbDate));
-            if (dbFlavor != null && !dbFlavor.isBlank())
-                database.insert(SpectralNoSQLDatabase.Tag.of(ChemDbTags.TAG_FLAVOR, dbFlavor));
-            database.insert(SpectralNoSQLDatabase.Tag.of(ChemDbTags.TAG_FP_ID, String.valueOf(fpId)));
+            if (database instanceof WriteableChemicalDatabase) {
+                ((WriteableChemicalDatabase) database).updateTags(dbFlavor, fpId);
+            }
 
             StreamSupport.stream(Iterables.partition(new FlatmapIterable<>(candidates), chunkSize).spliterator(), false)
                     .forEach(chunk -> {
                         try {
                             //candidates
-                            database.insertAll(chunk.stream().map(c -> FingerprintCandidateWrapper.of(c.getLeft(), c.getRight())).toList());
+                            database.getStorage().insertAll(chunk.stream().map(c -> FingerprintCandidateWrapper.of(c.getLeft(), c.getRight())).toList());
                             //fingerprints
-                            database.insertAll(chunk.stream().map(c -> FingerprintWrapper.of(c.getRight())).toList());
+                            database.getStorage().insertAll(chunk.stream().map(c -> FingerprintWrapper.of(c.getRight())).toList());
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }
@@ -131,7 +128,7 @@ public class ChemicalNoSQLDBs extends SpectralNoSQLDBs {
 
             //spectra
             if (spectra != null)
-                importSpectra(database, spectra, chunkSize);
+                SpectralUtils.importSpectra(database, spectra, chunkSize);
         } catch (RuntimeException e) {
             throw new ChemicalDatabaseException(e.getCause());
         } catch (IOException e) {
