@@ -23,13 +23,13 @@ package de.unijena.bioinf.projectspace;
 import java.nio.file.Path;
 import java.util.function.Function;
 
-public class Location {
+public class Location<ID extends ProjectSpaceContainerId> {
     final String relativePath;
     final String fileExt;
-    final Function<FormulaResultId, String> filename;
+    final Function<ID, String> filename;
 
 
-    public Location(String relativePath, String fileExt, Function<FormulaResultId, String> filenameFunction) {
+    public Location(String relativePath, String fileExt, Function<ID, String> filenameFunction) {
         this.relativePath = relativePath;
         this.filename = filenameFunction;
         this.fileExt = fileExt;
@@ -43,11 +43,11 @@ public class Location {
         return "." + fileExt();
     }
 
-    public String fileName(FormulaResultId id) {
+    public String fileName(ID id) {
         return filename.apply(id) + fileExtDot();
     }
 
-    public String relFilePath(FormulaResultId id) {
+    public String relFilePath(ID id) {
         return Path.of(relativePath).resolve(fileName(id)).toString();
     }
 
