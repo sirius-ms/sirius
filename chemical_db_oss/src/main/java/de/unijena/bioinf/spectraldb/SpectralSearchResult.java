@@ -60,7 +60,7 @@ public class SpectralSearchResult implements Iterable<SpectralSearchResult.Searc
     @AllArgsConstructor
     public static final class SearchResult {
 
-        private String dbLocation;
+        private String dbName;
 
         int querySpectrumIndex;
 
@@ -69,7 +69,9 @@ public class SpectralSearchResult implements Iterable<SpectralSearchResult.Searc
 
         private SpectralSimilarity similarity;
 
-        private long referenceId;
+        private String referenceUUID;
+
+        private String referenceSplash;
 
     }
 
