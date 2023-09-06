@@ -22,18 +22,15 @@ package de.unijena.bioinf.chemdb.custom;
 
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.chemdb.AbstractChemicalDatabase;
-import de.unijena.bioinf.chemdb.SearchableDatabase;
-import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
+import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
-import de.unijena.bioinf.spectraldb.SpectralNoSQLDBs;
-import de.unijena.bioinf.spectraldb.SpectralNoSQLDatabase;
+import de.unijena.bioinf.spectraldb.SpectralLibrary;
+import de.unijena.bioinf.spectraldb.WriteableSpectralLibrary;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.io.ParsingIterator;
 import de.unijena.bioinf.storage.blob.Compressible;
-import de.unijena.bioinf.storage.db.nosql.Filter;
 import de.unijena.bioinf.webapi.WebAPI;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +42,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public abstract class CustomDatabase implements SearchableDatabase {
     protected static Logger logger = LoggerFactory.getLogger(CustomDatabase.class);
@@ -121,10 +120,39 @@ public abstract class CustomDatabase implements SearchableDatabase {
     public abstract AbstractChemicalDatabase toChemDBOrThrow(CdkFingerprintVersion version) throws IOException;
 
     public Optional<AbstractChemicalDatabase> toChemDB(CdkFingerprintVersion version) {
+        return toOptional(() -> this.toChemDBOrThrow(version), AbstractChemicalDatabase.class);
+    }
+
+    public abstract WriteableChemicalDatabase toWriteableChemDBOrThrow() throws IOException;
+
+    public Optional<WriteableChemicalDatabase> toWriteableChemDB() {
+        return toOptional(this::toWriteableChemDBOrThrow, WriteableChemicalDatabase.class);
+    }
+
+    public abstract SpectralLibrary toSpectralLibraryOrThrow() throws IOException;
+
+    public Optional<SpectralLibrary> toSpectralLibrary() {
+        return toOptional(this::toSpectralLibraryOrThrow, SpectralLibrary.class);
+    }
+
+    public abstract WriteableSpectralLibrary toWriteableSpectralLibraryOrThrow() throws IOException;
+
+    public Optional<WriteableSpectralLibrary> toWriteableSpectralLibrary() {
+        return toOptional(this::toWriteableSpectralLibraryOrThrow, WriteableSpectralLibrary.class);
+    }
+
+    @FunctionalInterface
+    private interface ThrowingSupplier<T> {
+
+        T get() throws IOException;
+
+    }
+
+    private <S> Optional<S> toOptional(ThrowingSupplier<S> supplier, Class<S> type) {
         try {
-            return Optional.of(toChemDBOrThrow(version));
+            return Optional.of(supplier.get());
         } catch (IOException e) {
-            LoggerFactory.getLogger(getClass()).error("Could not create ChemDB from Custom database'" + name() + "'", e);
+            LoggerFactory.getLogger(getClass()).error("Could not create " + type + " from Custom database'" + name() + "'", e);
             return Optional.empty();
         }
     }
@@ -138,39 +166,66 @@ public abstract class CustomDatabase implements SearchableDatabase {
     ) throws IOException, CDKException {
         if (listener != null)
             importer.addListener(listener);
-        if (!spectrumFiles.isEmpty() && !(this instanceof NoSQLCustomDatabase<?>)) {
-            throw new IllegalArgumentException();
-        }
-        Map<String, Pair<String, String>> spectrumSmiles = new HashMap<>();
+
+        AbstractChemicalDatabase chemDb = this.toChemDBOrThrow(CdkFingerprintVersion.getDefault());
+        WriteableChemicalDatabase writeableChemDB = this.toWriteableChemDBOrThrow();
+
         if (!spectrumFiles.isEmpty()) {
-            SpectralNoSQLDatabase<?> db = ((NoSQLCustomDatabase<?>) this).database;
+            SpectralLibrary spectralLibrary = this.toSpectralLibraryOrThrow();
+
+
+            WriteableSpectralLibrary writeableSpectralLibrary = this.toWriteableSpectralLibraryOrThrow();
+
+
             Iterator<Ms2Experiment> iterator = new ParsingIterator(spectrumFiles.iterator());
-            SpectralNoSQLDBs.importSpectraFromMs2Experiments(db, () -> iterator, bufferSize);
-            db.getStorage().findAllStr(Ms2ReferenceSpectrum.class).forEach(
-                    ref -> {
-                        String smiles = ref.getSmiles();
-                        if (!spectrumSmiles.containsKey(smiles)) {
-                            spectrumSmiles.put(smiles, Pair.of(ref.getLibraryId(), ref.getName()));
-                        }
-                    }
-            );
+            Map<String, Pair<String, String>> spectrumSmiles = new HashMap<>();
+
+            // import all spectra files
+            SpectralUtils.importSpectraFromMs2Experiments(writeableSpectralLibrary, () -> iterator, bufferSize);
+
+            // get a map of <SMILES, <SPLASH, NAME>>
+            spectralLibrary.forEachSpectrum(ref -> {
+                String smiles = ref.getSmiles();
+                if (!spectrumSmiles.containsKey(smiles)) {
+                    spectrumSmiles.put(smiles, Pair.of(ref.getSplash(), ref.getName()));
+                }
+            });
+
+            // import structures from spectra with SMILES, SPLASH (as ID) and NAME
             for (Map.Entry<String, Pair<String, String>> entry : spectrumSmiles.entrySet()) {
                 importer.importFromString(entry.getKey(), entry.getValue().getLeft(), entry.getValue().getRight());
             }
             importStructuresToDatabase(structureFiles, importer);
+
+            // update spectrum INCHIs to match structure INCHIs
             for (Map.Entry<String, String> entry : importer.inchiCache.entrySet()) {
-                List<Ms2ReferenceSpectrum> spectra = db.getStorage().findStr(Filter.build().eq("smiles", entry.getKey()), Ms2ReferenceSpectrum.class, "spectrum").peek(
-                        ref -> ref.setCandidateInChiKey(entry.getValue())
-                ).toList();
-                db.getStorage().upsertAll(spectra);
+                writeableSpectralLibrary.updateSpectraMatchingSmiles(spectrum -> {
+                    spectrum.setCandidateInChiKey(entry.getValue());
+                }, entry.getKey());
             }
-            getStatistics().compounds().set(db.getStorage().countAll(FingerprintCandidateWrapper.class));
-            getStatistics().formulas().set(db.getStorage().findAllStr(FingerprintCandidateWrapper.class).map(FingerprintCandidateWrapper::getFormula).distinct().count());
-            getStatistics().spectra().set(db.countAllSpectra());
-            writeSettings();
+
+            // set list of matching spectra for each structure
+            writeableChemDB.updateAllFingerprints((fp) -> {
+                try {
+                    Stream<Ms2ReferenceSpectrum> stream = StreamSupport.stream(spectralLibrary.lookupSpectra(fp.getInchiKey2D()).spliterator(), false);
+                    List<String> splashes = stream.map(Ms2ReferenceSpectrum::getSplash).toList();
+                    fp.setReferenceSpectraSplash(splashes);
+                } catch (ChemicalDatabaseException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+
+            // update statistics
+            getStatistics().spectra().set(spectralLibrary.countAllSpectra());
         } else {
             importStructuresToDatabase(structureFiles, importer);
         }
+
+        // update tags & statistics
+        writeableChemDB.updateTags(null, -1);
+        getStatistics().compounds().set(chemDb.countAllFingerprints());
+        getStatistics().formulas().set(chemDb.countAllFormulas());
+        writeSettings();
     }
 
     private void importStructuresToDatabase(List<File> structureFiles, CustomDatabaseImporter importer) throws IOException {
