@@ -25,9 +25,9 @@ import de.unijena.bioinf.projectspace.Location;
 
 public interface CanopusLocations {
 
-    Location
-            CF = new Location("canopus", "fpt", FormulaResultId::fileName),
-            NPC = new Location("canopus_npc", "fpt", FormulaResultId::fileName);
+    Location<FormulaResultId>
+            CF = new Location<>("canopus", "fpt", FormulaResultId::fileName),
+            NPC = new Location<>("canopus_npc", "fpt", FormulaResultId::fileName);
 
 
     String
