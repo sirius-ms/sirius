@@ -2,26 +2,6 @@
  *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
- *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 3 of the License, or (at your option) any later version.
- *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
- *
- *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
- */
-
-/*
- *
- *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
- *
  *  Copyright (C) 2023 Bright Giant GmbH
  *
  *  This library is free software; you can redistribute it and/or
@@ -41,6 +21,7 @@
 package de.unijena.bioinf.spectraldb;
 
 import com.google.common.collect.Streams;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.AdditionalFields;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
@@ -57,6 +38,7 @@ import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
 import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import org.apache.commons.lang3.tuple.Triple;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -65,6 +47,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+//todo check when data/spectra should be included an when not
 
 public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, WriteableSpectralLibrary, Closeable {
 
@@ -82,7 +65,8 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, Writeabl
                         "id",
                         new Index("uuid", IndexType.UNIQUE),
                         new Index("splash", IndexType.NON_UNIQUE),
-                        new Index("ionMass", IndexType.NON_UNIQUE),
+                        new Index("exactMass", IndexType.NON_UNIQUE),
+                        new Index("precursorMz", IndexType.NON_UNIQUE),
                         new Index("formula", IndexType.NON_UNIQUE),
                         new Index("name", IndexType.NON_UNIQUE),
                         new Index("candidateInChiKey", IndexType.NON_UNIQUE)
@@ -172,12 +156,10 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, Writeabl
         return storage;
     }
 
-    @Override
     public String name() {
         return this.storage.location().getFileName().toString();
     }
 
-    @Override
     public String location() {
         return this.storage.location().toString();
     }
@@ -202,10 +184,13 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, Writeabl
         }
     }
 
-    @Override
-    public Iterable<Ms2ReferenceSpectrum> lookupSpectra(String inchiKey2d, boolean withData) throws ChemicalDatabaseException {
+    public Iterable<Ms2ReferenceSpectrum> lookupSpectraBy(@NotNull String field, @NotNull Object value) throws ChemicalDatabaseException {
+        return lookupSpectraBy(field, value, false);
+    }
+
+    public Iterable<Ms2ReferenceSpectrum> lookupSpectraBy(@NotNull String field, @NotNull Object value, boolean withData) throws ChemicalDatabaseException {
         try {
-            Filter filter = new Filter().eq("candidateInChiKey", inchiKey2d);
+            Filter filter = new Filter().eq(field, value);
             if (withData) {
                 return this.storage.find(filter, Ms2ReferenceSpectrum.class, "spectrum");
             } else {
@@ -214,6 +199,16 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, Writeabl
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }
+    }
+
+    @Override
+    public Iterable<Ms2ReferenceSpectrum> lookupSpectra(String inchiKey2d, boolean withData) throws ChemicalDatabaseException{
+        return lookupSpectraBy("candidateInChiKey", inchiKey2d, withData);
+    }
+
+    @Override
+    public Iterable<Ms2ReferenceSpectrum> lookupSpectra(MolecularFormula formula, boolean withData) throws ChemicalDatabaseException {
+        return lookupSpectraBy("formula", formula, withData);
     }
 
     @Override
@@ -263,5 +258,4 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, Writeabl
     public void close() throws IOException {
         this.storage.close();
     }
-
 }
