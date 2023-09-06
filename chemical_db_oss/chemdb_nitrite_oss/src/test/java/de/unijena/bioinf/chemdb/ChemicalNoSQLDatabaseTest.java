@@ -97,15 +97,15 @@ public class ChemicalNoSQLDatabaseTest {
         }
         Path tempDB = Files.createTempFile("chemDB-nitrite_", "_unitTest");
         chemDb = new ChemicalNitriteDatabase(tempDB);
-        ChemicalNoSQLDBs.importCompoundsAndFingerprintsLazy(chemDb.getStorage(), candidates, null, "2099-12-24", null, 5, 100);
+        ChemicalNoSQLDBs.importCompoundsAndFingerprintsLazy(chemDb, candidates, null, "2099-12-24", null, 5, 100);
     }
 
     @Test
     public void rawTestTags() throws IOException {
-        List<SpectralNoSQLDatabase.Tag> tags = chemDb.getStorage().findAllStr(SpectralNoSQLDatabase.Tag.class).toList();
+        List<ChemicalNoSQLDatabase.Tag> tags = chemDb.getStorage().findAllStr(ChemicalNoSQLDatabase.Tag.class).toList();
         assertEquals(2, tags.size());
-        assertTrue(tags.contains(SpectralNoSQLDatabase.Tag.of(ChemDbTags.TAG_DATE, "2099-12-24")));
-        assertTrue(tags.contains(SpectralNoSQLDatabase.Tag.of(ChemDbTags.TAG_FP_ID, String.valueOf(5))));
+        assertTrue(tags.contains(ChemicalNoSQLDatabase.Tag.of(ChemDbTags.TAG_DATE, "2099-12-24")));
+        assertTrue(tags.contains(ChemicalNoSQLDatabase.Tag.of(ChemDbTags.TAG_FP_ID, String.valueOf(5))));
     }
 
     @Test
