@@ -33,9 +33,9 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.DataSources;
+import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
-import de.unijena.bioinf.ms.frontend.subtools.spectra_db.SpectralDatabases;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchSubtoolJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
@@ -325,7 +325,7 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
 
                                 if (matchBean.getReference().getSpectrum() == null) {
                                     try {
-                                        SpectralLibrary db = SpectralDatabases.getSpectralLibrary(Path.of(matchBean.getMatch().getDbLocation())).orElseThrow();
+                                        SpectralLibrary db = SearchableDatabases.getCustomDatabase(matchBean.getMatch().getDbName()).orElseThrow().toSpectralLibraryOrThrow();
                                         db.getSpectralData(matchBean.getReference());
                                     } catch (Exception exc) {
                                         LoggerFactory.getLogger(SpectralMatchingTableView.class).error("Error retrieving spectral data", exc);

@@ -22,8 +22,8 @@ package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
+import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
-import de.unijena.bioinf.ms.frontend.subtools.spectra_db.SpectralDatabases;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchSubtoolJob;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.spectraldb.SpectralLibrary;
@@ -47,16 +47,16 @@ public class SpectralSearchResultBean {
     public SpectralSearchResultBean(SpectralSearchResult result) {
         for (SpectralSearchResult.SearchResult r : result) {
             try {
-                SpectralLibrary db = SpectralDatabases.getSpectralLibrary(Path.of(r.getDbLocation())).orElseThrow();
-                Ms2ReferenceSpectrum reference = db.getReferenceSpectrum(r.getReferenceId());
+                SpectralLibrary db = SearchableDatabases.getCustomDatabase(r.getDbName()).orElseThrow().toSpectralLibraryOrThrow();
+                Ms2ReferenceSpectrum reference = db.getReferenceSpectrum(r.getReferenceUUID());
                 if (!resultMap.containsKey(reference.getCandidateInChiKey())) {
                     resultMap.put(reference.getCandidateInChiKey(), new ArrayList<>());
                 }
                 resultMap.get(reference.getCandidateInChiKey()).add(r);
             } catch (ChemicalDatabaseException e) {
-                LoggerFactory.getLogger(this.getClass()).error("Error reading spectrum " + r.getReferenceId(), e);
+                LoggerFactory.getLogger(this.getClass()).error("Error reading spectrum " + r.getReferenceUUID(), e);
             }  catch (Exception e) {
-                LoggerFactory.getLogger(this.getClass()).error("No such database: '" + r.getDbLocation() + "'");
+                LoggerFactory.getLogger(this.getClass()).error("No such database: '" + r.getDbName() + "'");
                 break;
             }
         }
@@ -105,8 +105,8 @@ public class SpectralSearchResultBean {
         public MatchBean(SpectralSearchResult.SearchResult match, InstanceBean instance) {
             this.match = match;
             try {
-                SpectralLibrary db = SpectralDatabases.getSpectralLibrary(Path.of(match.getDbLocation())).orElseThrow();
-                this.reference = db.getReferenceSpectrum(match.getReferenceId());
+                SpectralLibrary db = SearchableDatabases.getCustomDatabase(match.getDbName()).orElseThrow().toSpectralLibraryOrThrow();
+                this.reference = db.getReferenceSpectrum(match.getReferenceUUID());
                 if (instance != null) {
                     MutableMs2Spectrum query = instance.getMs2Spectra().get(match.getQuerySpectrumIndex());
                     this.queryName = SpectraSearchSubtoolJob.getQueryName(query, match.getQuerySpectrumIndex());
