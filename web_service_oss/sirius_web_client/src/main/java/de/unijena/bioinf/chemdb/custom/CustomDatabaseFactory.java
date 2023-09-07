@@ -41,13 +41,13 @@ public class CustomDatabaseFactory {
 
     public static final String NOSQL_SUFFIX = ".db";
 
-    private final static Map<String, NoSQLCustomDatabase<?>> NOSQL_LIBRARIES = new ConcurrentHashMap<>();
+    private final static Map<String, NoSQLCustomDatabase<?, ?>> NOSQL_LIBRARIES = new ConcurrentHashMap<>();
 
-    private static NoSQLCustomDatabase<?> getNoSQLibrary(String location) throws IOException {
+    private static NoSQLCustomDatabase<?, ?> getNoSQLibrary(String location) throws IOException {
         synchronized (NOSQL_LIBRARIES) {
             if (!NOSQL_LIBRARIES.containsKey(location)) {
                 try {
-                    NoSQLCustomDatabase<?> db = new NoSQLCustomDatabase<>(new ChemicalNitriteDatabase(Path.of(location)));
+                    NoSQLCustomDatabase<?, ?> db = new NoSQLCustomDatabase<>(new ChemicalNitriteDatabase(Path.of(location)));
                     NOSQL_LIBRARIES.put(location, db);
                 } catch (Exception e) {
                     throw new IOException(e);
@@ -101,12 +101,12 @@ public class CustomDatabaseFactory {
     }
 
     public static void delete(CustomDatabase database) throws IOException {
-        if (database instanceof NoSQLCustomDatabase<?>) {
+        if (database instanceof NoSQLCustomDatabase<?, ?>) {
             synchronized (NOSQL_LIBRARIES) {
                 if (!NOSQL_LIBRARIES.containsKey(database.storageLocation())) {
                     throw new IllegalArgumentException("Unknown library: " + database.storageLocation());
                 }
-                NoSQLCustomDatabase<?> db = NOSQL_LIBRARIES.remove(database.storageLocation());
+                NoSQLCustomDatabase<?, ?> db = NOSQL_LIBRARIES.remove(database.storageLocation());
                 db.database.close();
                 Files.delete(Path.of(db.storageLocation()));
             }
