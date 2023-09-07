@@ -28,7 +28,6 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
-import de.unijena.bioinf.chemdb.ChemicalNoSQLDatabase;
 import de.unijena.bioinf.ms.annotations.SpectrumAnnotation;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.entities.SimpleSerializers;
@@ -49,7 +48,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 //todo check when data/spectra should be included an when not
 
-public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, WriteableSpectralLibrary, Closeable {
+public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, WriteableSpectralLibrary, Closeable {
 
     final protected Database<Doctype> storage;
 
@@ -59,7 +58,6 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, Writeabl
 
     protected static Metadata initMetadata() throws IOException {
         return Metadata.build()
-                .addRepository(ChemicalNoSQLDatabase.Tag.class, "id", new Index("key",IndexType.UNIQUE))
                 .addRepository(
                         Ms2ReferenceSpectrum.class,
                         "id",
@@ -78,6 +76,10 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, Writeabl
                         new SimpleSerializers.AnnotationDeserializer()
                 ).setOptionalFields(Ms2ReferenceSpectrum.class, "spectrum");
     }
+
+    public abstract <O> Doctype asDocument(O object);
+
+    public abstract <O> O asObject(Doctype document, Class<O> objectClass);
 
     @Override
     public <P extends Peak> SpectralSearchResult matchingSpectra(
