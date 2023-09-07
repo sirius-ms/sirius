@@ -54,7 +54,9 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
 
     protected static Metadata initMetadata(FingerprintVersion version) throws IOException {
         Metadata metadata = SpectralNoSQLDatabase.initMetadata();
-        return metadata.addRepository(
+        return metadata
+                .addRepository(ChemicalNoSQLDatabase.Tag.class, "id", new Index("key",IndexType.UNIQUE))
+                .addRepository(
                         FingerprintCandidateWrapper.class,
                         "id",
                         new Index("formula", IndexType.NON_UNIQUE),
