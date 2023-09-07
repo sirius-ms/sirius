@@ -33,6 +33,16 @@ public class SpectralNitriteDatabase extends SpectralNoSQLDatabase<Document> {
         super(new NitriteDatabase(file, SpectralNoSQLDatabase.initMetadata()));
     }
 
+    @Override
+    public <O> Document asDocument(O object) {
+        return this.getStorage().getJacksonMapper().asDocument(object);
+    }
+
+    @Override
+    public <O> O asObject(Document document, Class<O> objectClass) {
+        return this.getStorage().getJacksonMapper().asObject(document, objectClass);
+    }
+
     public NitriteDatabase getStorage(){
         return (NitriteDatabase) storage;
     }
