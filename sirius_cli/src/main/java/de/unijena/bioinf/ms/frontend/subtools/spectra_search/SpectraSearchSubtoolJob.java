@@ -24,7 +24,7 @@ import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
-import de.unijena.bioinf.chemdb.custom.CustomDatabaseFactory;
+import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
@@ -103,36 +103,35 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
         for (Integer queryIndex : resultMap.keySet()) {
             MutableMs2Spectrum query = queries.get(queryIndex);
             builder.append("\n").append(getQueryName(query, queryIndex));
-            builder.append("\nSimilarity | Peaks | Precursor | Prec. m/z | MS | Coll. | Instrument | InChIKey | Smiles | Name | DB location | DB link | Splash");
+            builder.append("\nSimilarity | Peaks | Precursor | Prec. m/z | MS | Coll. | Instrument | InChIKey | Smiles | Name | DB name | DB link | Splash");
             List<SpectralSearchResult.SearchResult> resultList = resultMap.get(queryIndex);
             for (SpectralSearchResult.SearchResult r : resultList.subList(0, Math.min(print, resultList.size()))) {
                 SpectralSimilarity similarity = r.getSimilarity();
 
-                CustomDatabaseFactory.open(r.getDbName()).toChemDB(ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion()).ifPresent(db -> {
-                    try {
-                        Ms2ReferenceSpectrum reference = ((SpectralLibrary) db).getReferenceSpectrum(r.getReferenceUUID());
-                        builder.append(String.format("\n%10.3e | %5d | %9s | %9.3f | %2d | %5s | %10s | %s | %s | %s  | %s | %s | %s",
-                                similarity.similarity,
-                                similarity.shardPeaks,
-                                reference.getPrecursorIonType(),
-                                reference.getPrecursorMz(),
-                                reference.getMsLevel(),
-                                reference.getCollisionEnergy(),
-                                reference.getInstrumentation(),
-                                reference.getCandidateInChiKey(),
-                                reference.getSmiles(),
-                                reference.getName(),
-                                r.getDbName(),
-                                reference.getSpectralDbLink(),
-                                reference.getSplash()));
-                    } catch (ChemicalDatabaseException e) {
-                        logger.error("Error fetching reference spectrum.", e);
-                    }
+                SpectralLibrary db = SearchableDatabases.getCustomDatabaseByNameOrThrow(r.getDbName()).toSpectralLibraryOrThrow();
+                try {
+                    Ms2ReferenceSpectrum reference = db.getReferenceSpectrum(r.getReferenceUUID());
+                    builder.append(String.format("\n%10.3e | %5d | %9s | %9.3f | %2d | %5s | %10s | %s | %s | %s  | %s | %s | %s",
+                            similarity.similarity,
+                            similarity.shardPeaks,
+                            reference.getPrecursorIonType(),
+                            reference.getPrecursorMz(),
+                            reference.getMsLevel(),
+                            reference.getCollisionEnergy(),
+                            reference.getInstrumentation(),
+                            reference.getCandidateInChiKey(),
+                            reference.getSmiles(),
+                            reference.getName(),
+                            r.getDbName(),
+                            reference.getSpectralDbLink(),
+                            reference.getSplash()));
+                } catch (ChemicalDatabaseException e) {
+                    logger.error("Error fetching reference spectrum.", e);
+                }
 
-                    if (resultList.size() > print) {
-                        builder.append("\n... (").append(resultList.size() - print).append(" more)");
-                    }
-                });
+                if (resultList.size() > print) {
+                    builder.append("\n... (").append(resultList.size() - print).append(" more)");
+                }
             }
             builder.append("\n######");
         }
