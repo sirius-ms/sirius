@@ -2,6 +2,6 @@ dependencies {
     //project
     implementation project(':chemical_db_oss')
     implementation project(':chemical_db_oss:chemdb_utils_oss')
-    implementation project(':db-storage')
+    implementation project(':document-storage')
     testImplementation project(':chemical_db_oss:chemdb_blob_oss')
 }
