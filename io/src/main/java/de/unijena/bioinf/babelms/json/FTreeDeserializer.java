@@ -26,7 +26,6 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.unijena.bioinf.ChemistryBase.data.JacksonDocument;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 
 import java.io.IOException;
@@ -35,6 +34,6 @@ public class FTreeDeserializer extends JsonDeserializer<FTree> {
     @Override
     public FTree deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JsonProcessingException {
         final JsonNode rootNode = new ObjectMapper().readTree(jsonParser);
-        return new FTJsonReader().treeFromJson(rootNode, new JacksonDocument(), null);
+        return new FTJsonReader().treeFromJson(rootNode, null);
     }
 }
