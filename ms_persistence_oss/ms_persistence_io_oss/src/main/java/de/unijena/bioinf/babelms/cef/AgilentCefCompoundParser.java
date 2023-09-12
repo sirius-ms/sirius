@@ -21,11 +21,15 @@
 package de.unijena.bioinf.babelms.cef;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
-import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.Parser;
+import de.unijena.bioinf.ms.persistence.model.core.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.Feature;
+import de.unijena.bioinf.ms.persistence.model.core.MSMSScan;
+import de.unijena.bioinf.ms.persistence.model.core.Scan;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import one.microstream.reference.Lazy;
 import org.apache.commons.io.input.ReaderInputStream;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -45,12 +49,14 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.text.DecimalFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 import static de.unijena.bioinf.babelms.cef.CEFUtils.*;
-
-public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
+public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.persistence.model.core.Compound> {
     private static final DecimalFormat NUMBER_FORMAT = new DecimalFormat("#0.000");
     private final static QName qName = new QName("Compound");
     private Unmarshaller unmarshaller;
@@ -60,14 +66,10 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
     private URI currentUrl = null;
 
 
-    private Iterator<Ms2Experiment> iterator = null;
-
     @Override
-    public <S extends Ms2Experiment> S parse(BufferedReader secondChoice, @Nullable URI source) throws IOException {
+    public <S extends de.unijena.bioinf.ms.persistence.model.core.Compound> S parse(BufferedReader secondChoice, @Nullable URI source) throws IOException {
         //XML parsing on readers works bad, so we create our own stream from url
-        if (iterator != null && iterator.hasNext()) {
-            return (S) iterator.next();
-        } else if (!Objects.equals(currentUrl, source) || xmlEventReader == null || unmarshaller == null) {
+        if (!Objects.equals(currentUrl, source) || xmlEventReader == null || unmarshaller == null) {
             try {
                 if (secondChoice == null && source == null)
                     throw new IllegalArgumentException("Neither Reader nor File is given, No Input to parse!");
@@ -103,8 +105,8 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
                 if (e.isStartElement() && ((StartElement) e).getName().equals(qName)) {
                     // unmarshall the compound
                     Compound compound = unmarshaller.unmarshal(xmlEventReader, Compound.class).getValue();
-                    iterator = experimentFromCompound(compound).iterator();
-                    return iterator.hasNext() ? (S) iterator.next() : null;
+                    de.unijena.bioinf.ms.persistence.model.core.Compound parsedCompound = parseCompound(compound);
+                    return (S) parsedCompound;
                 } else {
                     xmlEventReader.next();
                 }
@@ -117,27 +119,31 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
 
     }
 
-    private <S extends Ms2Experiment> List<S> experimentFromCompound(Compound compound) {
-
+    private de.unijena.bioinf.ms.persistence.model.core.Compound parseCompound(Compound compound) {
+        final List<Feature> siriusFeatures;
         if (compound.getSpectrum().stream().anyMatch(s -> s.getType().equalsIgnoreCase("MFE") || s.getType().equalsIgnoreCase("FBF"))) { //MFE/FBF data
-            return experimentFromMFECompound(compound);
-        } else if (compound.getSpectrum().stream().noneMatch(s -> s.getMSDetails().getScanType().equals("ProductIon"))) { //ms1 only data from raw format
-            return experimentFromMS1OnlyCompound(compound);
+            siriusFeatures =  fromMFECompound(compound);
+        } else if (compound.getSpectrum().stream().noneMatch(s -> s.getMSDetails().getScanType().equals("ProductIonProductIon"))) { //ms1 only data from raw format
+            siriusFeatures =  fromMS1OnlyCompound(compound);
         } else {
-            return experimentFromRawCompound(compound);
+            siriusFeatures =  fromRawCompound(compound);
         }
+        return de.unijena.bioinf.ms.persistence.model.core.Compound.builder()
+                .adductFeatures(Lazy.UnregisteredReference(
+                        siriusFeatures.stream().map(AlignedFeatures::singleton).toList())).build();
     }
 
     private static final Pattern UNSUPPORTED_IONTYPE_MATCHER = Pattern.compile("^\\d+M.*");
     private static final Pattern ISOTOPE_PEAK_MATCHER = Pattern.compile("\\+\\d+$");
 
-    private <S extends Ms2Experiment> List<S> experimentFromMFECompound(Compound compound) {
+    private List<Feature> fromMFECompound(Compound compound) {
         final Spectrum mfe = compound.getSpectrum().stream()
                 .filter(s ->
                         s.getType().equalsIgnoreCase("MFE") || s.getType().equalsIgnoreCase("FBF")
                 ).findAny().orElseThrow(() -> new IllegalArgumentException("Compound must contain a MFE/FBF spectrum to be parsed as MFE/FBF spectrum!"));
 
-        List<S> siriusCompounds = new ArrayList<>();
+
+        List<Feature> siriusFeatures = new ArrayList<>();
 
         mfe.msPeaks.getP().stream().filter(p -> {
             if (UNSUPPORTED_IONTYPE_MATCHER.matcher(p.getS()).find()) {
@@ -150,56 +156,58 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
                 return true;
             }
         }).forEach(p -> {
-            MutableMs2Experiment exp = new MutableMs2Experiment();
-            exp.setIonMass(p.getX().doubleValue());
-            exp.setPrecursorIonType(PrecursorIonType.fromString("[" + p.getS() + "]" + mfe.getMSDetails().p));
-            siriusCompounds.add(experimentFromCompound(compound, exp));
+            Feature feature = Feature.builder()
+                    .ionMass(p.getX().doubleValue())
+                    .ionType(PrecursorIonType.fromString("[" + p.getS() + "]" + mfe.getMSDetails().p))
+                    .build();
+            featureFromCompound(compound, feature);
+            siriusFeatures.add(feature);
         });
 
-        return siriusCompounds;
+
+        return siriusFeatures;
     }
 
-    private <S extends Ms2Experiment> List<S> experimentFromMS1OnlyCompound(Compound compound) {
-        MutableMs2Experiment exp = new MutableMs2Experiment();
+    private List<Feature> fromMS1OnlyCompound(Compound compound) {
+        Feature f = new Feature();
         Spectrum ms = compound.getSpectrum().stream()
                 .filter(s -> s.getMSDetails().getScanType().equals("Scan"))
                 .filter(s -> s.mzOfInterest != null)
                 .findFirst().orElseThrow(() -> new IllegalArgumentException("No spectrum (neither MS1 nor MS/MS) with precursor information (MzOfInterest) found for compound at rt " + compound.location.rt));
 
-        exp.setPrecursorIonType(ms.getMSDetails().p.equals("-") ? PrecursorIonType.unknownNegative() : PrecursorIonType.unknownPositive());
-        exp.setIonMass(ms.mzOfInterest.getMz().doubleValue());
-        return List.of(experimentFromCompound(compound, exp));
+        f.setIonType(ms.getMSDetails().p.equals("-") ? PrecursorIonType.unknownNegative() : PrecursorIonType.unknownPositive());
+        f.setIonMass(ms.mzOfInterest.getMz().doubleValue());
+        return List.of(featureFromCompound(compound, f));
     }
 
-    private <S extends Ms2Experiment> List<S> experimentFromRawCompound(Compound compound) {
-        MutableMs2Experiment exp = new MutableMs2Experiment();
+    private List<Feature> fromRawCompound(Compound compound) {
+        Feature f = new Feature();
 
         Spectrum s = compound.getSpectrum().stream().filter(spec -> spec.getMSDetails().getScanType().equals("ProductIon")).findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("No MS/MS spectrum found for compound at rt " + compound.location.rt));
-        exp.setPrecursorIonType(s.getMSDetails().p.equals("-") ? PrecursorIonType.unknownNegative() : PrecursorIonType.unknownPositive());
-        exp.setIonMass(s.mzOfInterest.getMz().doubleValue());
+        f.setIonType(s.getMSDetails().p.equals("-") ? PrecursorIonType.unknownNegative() : PrecursorIonType.unknownPositive());
+        f.setIonMass(s.mzOfInterest.getMz().doubleValue());
 
-        return List.of(experimentFromCompound(compound, exp));
+        return List.of(featureFromCompound(compound, f));
     }
 
-    private <S extends Ms2Experiment> S experimentFromCompound(Compound compound, MutableMs2Experiment exp) {
+    private <S extends Feature> S featureFromCompound(Compound compound, Feature feature) {
         //todo how do we get the real dev? maybe load profile/ from outside
         MS2MassDeviation dev = PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class);
-        exp.setName("rt=" + compound.location.rt + "-p=" + NUMBER_FORMAT.format(exp.getIonMass()));
-        if (currentUrl != null)
-            exp.setSource(new SpectrumFileSource(currentUrl));
+//        exp.setName("rt=" + compound.location.rt + "-p=" + NUMBER_FORMAT.format(exp.getIonMass()));
 
-        List<SimpleSpectrum> ms1Spectra = new ArrayList<>();
-        List<MutableMs2Spectrum> ms2Spectra = new ArrayList<>();
+        SimpleSpectrum isotopePattern = null; // is MFE spec
+        List<Scan> ms1Spectra = new ArrayList<>();
+        List<MSMSScan> ms2Spectra = new ArrayList<>();
+
+
         for (Spectrum spec : compound.getSpectrum()) {
             if (spec.type.equalsIgnoreCase("MFE") || spec.type.equalsIgnoreCase("FBF")) {
-                // ignore was already handled beforehand.
+                isotopePattern = makeMs1Spectrum(spec); // todo do we have to remove the adduct peaks?
             } else if (spec.getMSDetails().getScanType().equals("Scan")) {
-                ms1Spectra.add(makeMs1Spectrum(spec));
-                if (!exp.hasAnnotation(RetentionTime.class))
-                    parseRT(compound, spec).ifPresent(rt -> exp.addAnnotation(RetentionTime.class, rt));
-            } else if (spec.getMSDetails().getScanType().equals("ProductIon") && dev.standardMassDeviation.inErrorWindow(spec.mzOfInterest.mz.doubleValue(), exp.getIonMass())) {
-                ms2Spectra.add(makeMs2Spectrum(spec));
+                ms1Spectra.add(makeMs1Scan(spec));
+            } else if (spec.getMSDetails().getScanType().equals("ProductIon") && dev.standardMassDeviation.inErrorWindow(spec.mzOfInterest.mz.doubleValue(), feature.getIonMass())) {
+                ms2Spectra.add(makeMs2Scan(spec));
             } else {
                 Optional<Spectrum> s = Optional.of(spec);
                 LoggerFactory.getLogger(getClass()).warn("Spectrum of type '" + s.map(Spectrum::getType).orElse("N/A")
@@ -211,18 +219,36 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
         if (ms1Spectra.isEmpty()) { //if empty use MFE and FBF spectra
             for (Spectrum spec : compound.getSpectrum()) {
                 if (spec.getMSDetails().getScanType().equals("Scan")) {
-                    ms1Spectra.add(makeMs1Spectrum(spec));
-                    if (!exp.hasAnnotation(RetentionTime.class))
-                        parseRT(compound, spec).ifPresent(rt -> exp.addAnnotation(RetentionTime.class, rt));
+                    ms1Spectra.add(makeMs1Scan(spec));
                 }
             }
         }
 
-        if (!exp.hasAnnotation(RetentionTime.class))
-            parseRT(compound).ifPresent(rt -> exp.addAnnotation(RetentionTime.class, rt));
-        exp.setMs1Spectra(ms1Spectra);
-        exp.setMs2Spectra(ms2Spectra);
-        return (S) exp;
+        feature.setIsotopePattern(Lazy.UnregisteredReference(isotopePattern));
+        feature.setMsms(Lazy.UnregisteredReference(ms2Spectra));
+        feature.setApexScan(Lazy.UnregisteredReference(ms1Spectra.iterator().next()));
+
+        return (S) feature;
+    }
+
+    private MSMSScan makeMs2Scan(Spectrum spec) {
+        MSMSScan.MSMSScanBuilder b = MSMSScan.builderMsMs();
+        parseRT(spec).ifPresent(b::retentionTime);
+        return b.peaks(makeMs1Spectrum(spec))
+                .mzOfInterest(spec.getMzOfInterest().getMz().doubleValue())
+                .collisionEnergy(parseCE(spec))
+                .scanNumber(spec.scans.toString())
+                .build();
+    }
+
+
+    private Scan makeMs1Scan(Spectrum spec) {
+        Scan.ScanBuilder b = Scan.builder();
+        b.peaks(makeMs1Spectrum(spec));
+        parseRT(spec).ifPresent(b::retentionTime);
+        b.scanNumber(spec.scans.toString());
+
+        return b.build();
     }
 }
 
