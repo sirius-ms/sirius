@@ -63,9 +63,10 @@ public class SpectralSearchResultSerializer implements ComponentSerializer<Compo
                             .rank(Integer.parseInt(row[0]))
                             .querySpectrumIndex(Integer.parseInt(row[1]))
                             .dbName(row[2])
-                            .referenceUUID(row[3])
-                            .referenceSplash(row[4])
-                            .similarity(new SpectralSimilarity(Double.parseDouble(row[5]), Integer.parseInt(row[6])))
+                            .dbId(row[3])
+                            .referenceUUID(row[4])
+                            .referenceSplash(row[5])
+                            .similarity(new SpectralSimilarity(Double.parseDouble(row[6]), Integer.parseInt(row[7])))
                             .build()
             );
         });
@@ -92,17 +93,18 @@ public class SpectralSearchResultSerializer implements ComponentSerializer<Compo
         }}));
 
         final String[] header = new String[]{
-                "rank", "querySpectrumIndex", "dbName", "referenceUUID", "referenceSplash", "similarity", "sharedPeaks"
+                "rank", "querySpectrumIndex", "libraryName", "libraryId", "referenceUUID", "referenceSplash", "similarity", "sharedPeaks"
         };
         final String[] row = new String[header.length];
         writer.table(SpectralSearchLocations.SEARCH_RESULTS.relFilePath(id), header, searchResult.getResults().stream().map((hit) -> {
             row[0] = Integer.toString(hit.getRank());
             row[1] = Integer.toString(hit.getQuerySpectrumIndex());
             row[2] = hit.getDbName();
-            row[3] = hit.getReferenceUUID();
-            row[4] = hit.getReferenceSplash();
-            row[5] = Double.toString(hit.getSimilarity().similarity);
-            row[6] = Integer.toString(hit.getSimilarity().shardPeaks);
+            row[3] = hit.getDbId();
+            row[4] = hit.getReferenceUUID();
+            row[5] = hit.getReferenceSplash();
+            row[6] = Double.toString(hit.getSimilarity().similarity);
+            row[7] = Integer.toString(hit.getSimilarity().shardPeaks);
             return row;
         })::iterator);
     }
