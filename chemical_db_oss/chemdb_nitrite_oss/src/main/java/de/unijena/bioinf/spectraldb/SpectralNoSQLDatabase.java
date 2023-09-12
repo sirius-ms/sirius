@@ -121,7 +121,8 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
 
                         if (similarity.shardPeaks > 0) {
                             SpectralSearchResult.SearchResult res = SpectralSearchResult.SearchResult.builder()
-                                    .dbName(this.name())
+                                    .dbName(reference.getLibraryName())
+                                    .dbId(reference.getLibraryId())
                                     .querySpectrumIndex(i)
                                     .similarity(similarity)
                                     .referenceUUID(reference.getUuid())
