@@ -52,6 +52,10 @@ public class MicroStreamProjectDb implements AutoCloseable {
         return msProject;
     }
 
+    public EmbeddedStorageManager getStorageManager() {
+        return storageManager;
+    }
+
     public <T> T revert(T objectToRevert){
         return reloader.reloadFlat(objectToRevert);
     }

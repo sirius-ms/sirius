@@ -21,10 +21,16 @@
 package de.unijena.bioinf.ms.persistence.model;
 
 import de.unijena.bioinf.ms.persistence.model.core.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import one.microstream.collections.lazy.LazyList;
 
 import java.util.List;
 
+@Getter
+@Setter
+@NoArgsConstructor
 public class MsProject {
 
     private List<Run> run;
