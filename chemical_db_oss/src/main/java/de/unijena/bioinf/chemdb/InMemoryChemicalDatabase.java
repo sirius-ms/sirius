@@ -92,6 +92,11 @@ public class InMemoryChemicalDatabase implements AbstractChemicalDatabase {
 
 
     @Override
+    public String getName() {
+        return ":memory:";
+    }
+
+    @Override
     public List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
         final double exactMass = ionType.precursorMassToNeutralMass(mass);
         int index = Arrays.binarySearch(formulas, exactMass, new Comparator() {

@@ -45,7 +45,6 @@ import de.unijena.bioinf.ChemistryBase.ms.AdditionalFields;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.ms.annotations.SpectrumAnnotation;
@@ -163,6 +162,10 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, Closeabl
                  RuntimeException | IOException e) {
             throw new ChemicalDatabaseException(e);
         }
+    }
+
+    public Database<Doctype> getStorage() {
+        return storage;
     }
 
     @Override

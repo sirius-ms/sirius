@@ -36,6 +36,7 @@ import de.unijena.bioinf.ms.rest.client.AbstractCsiClient;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -61,13 +62,13 @@ public class StructureSearchClient extends AbstractCsiClient {
 
 
     @SafeVarargs
-    public StructureSearchClient(URI serverUrl, @NotNull IOFunctions.IOConsumer<Request.Builder>... requestDecorators) {
-        this(serverUrl, true, requestDecorators);
+    public StructureSearchClient(URI serverUrl, @Nullable String contextPath, @NotNull IOFunctions.IOConsumer<Request.Builder>... requestDecorators) {
+        this(serverUrl, contextPath,  true, requestDecorators);
     }
 
     @SafeVarargs
-    public StructureSearchClient(URI serverUrl, boolean cacheFpVersion, @NotNull IOFunctions.IOConsumer<Request.Builder>... requestDecorators) {
-        super(serverUrl, requestDecorators);
+    public StructureSearchClient(URI serverUrl, @Nullable String contextPath, boolean cacheFpVersion, @NotNull IOFunctions.IOConsumer<Request.Builder>... requestDecorators) {
+        super(serverUrl, contextPath, requestDecorators);
         this.cacheFpVersion = cacheFpVersion;
     }
 

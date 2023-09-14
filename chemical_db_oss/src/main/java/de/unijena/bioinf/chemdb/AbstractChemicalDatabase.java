@@ -37,6 +37,8 @@ public interface AbstractChemicalDatabase extends Closeable, Cloneable, SearchSt
     // temporary switch
     boolean USE_EXTENDED_FINGERPRINTS = PropertyManager.getBoolean("de.unijena.bioinf.chemdb.fingerprint.extended", null, false);
 
+    String getName();
+
     /**
      * Search for molecular formulas in the database
      *
