@@ -36,13 +36,15 @@ public class InMemoryChemicalDatabase implements AbstractChemicalDatabase {
     protected HashMap<String, FingerprintCandidate> candidatePerKey;
     protected MolecularFormula[] formulas;
     protected final String dbData;
+    protected final String name;
 
     public InMemoryChemicalDatabase(List<FingerprintCandidate> candidates) {
-        this(candidates, null);
+        this(candidates, null, null);
     }
 
-    public InMemoryChemicalDatabase(List<FingerprintCandidate> candidates, @Nullable String chemDBdate) {
+    public InMemoryChemicalDatabase(List<FingerprintCandidate> candidates, @Nullable String chemDBdate, @Nullable String name) {
         this.dbData = chemDBdate;
+        this.name = name;
         setCandidates(candidates);
     }
 
@@ -93,7 +95,7 @@ public class InMemoryChemicalDatabase implements AbstractChemicalDatabase {
 
     @Override
     public String getName() {
-        return ":memory:";
+        return name;
     }
 
     @Override
