@@ -35,21 +35,21 @@ public abstract class AbstractCsiClient extends AbstractClient {
     protected static final String API_ROOT = "/api";
 
     @SafeVarargs
-    protected AbstractCsiClient(@Nullable URI serverUrl, IOFunctions.IOConsumer<Request.Builder>... requestDecorators) {
-        super(serverUrl, requestDecorators);
+    protected AbstractCsiClient(@Nullable URI serverUrl, @Nullable String contextPath, IOFunctions.IOConsumer<Request.Builder>... requestDecorators) {
+        super(serverUrl, contextPath, requestDecorators);
     }
 
     @SafeVarargs
-    protected AbstractCsiClient(@NotNull Supplier<URI> serverUrl, IOFunctions.IOConsumer<Request.Builder>... requestDecorators) {
-        super(serverUrl, requestDecorators);
+    protected AbstractCsiClient(@NotNull Supplier<URI> serverUrl, @NotNull Supplier<String> contextPath, IOFunctions.IOConsumer<Request.Builder>... requestDecorators) {
+        super(serverUrl, contextPath, requestDecorators);
     }
 
-    protected AbstractCsiClient(@Nullable URI serverUrl, @NotNull List<IOFunctions.IOConsumer<Request.Builder>> requestDecorators) {
-        super(serverUrl, requestDecorators);
+    protected AbstractCsiClient(@Nullable URI serverUrl, @Nullable String contextPath, @NotNull List<IOFunctions.IOConsumer<Request.Builder>> requestDecorators) {
+        super(serverUrl, contextPath, requestDecorators);
     }
 
-    protected AbstractCsiClient(@NotNull Supplier<URI> serverUrl, @NotNull List<IOFunctions.IOConsumer<Request.Builder>> requestDecorators) {
-        super(serverUrl, requestDecorators);
+    protected AbstractCsiClient(@NotNull Supplier<URI> serverUrl, @NotNull Supplier<String> contextPath, @NotNull List<IOFunctions.IOConsumer<Request.Builder>> requestDecorators) {
+        super(serverUrl, contextPath, requestDecorators);
     }
 
     //region PathBuilderMethods
@@ -82,10 +82,6 @@ public abstract class AbstractCsiClient extends AbstractClient {
             throw new NullPointerException("Service URL is null. This might be caused by a missing login.");
 
         return super.getBaseURI(path);
-    }
-
-    protected String makeVersionContext() {
-        return "v" + FingerIDProperties.fingeridMinorVersion();
     }
     //endregion
 

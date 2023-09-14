@@ -37,8 +37,8 @@ import java.net.URI;
 public class CanopusClient extends AbstractCsiClient {
 
     @SafeVarargs
-    public CanopusClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<Request.Builder>... requestDecorators) {
-        super(serverUrl, requestDecorators);
+    public CanopusClient(@Nullable URI serverUrl, @Nullable String contextPath, @NotNull IOFunctions.IOConsumer<Request.Builder>... requestDecorators) {
+        super(serverUrl, contextPath, requestDecorators);
     }
 
     public CanopusCfData getCfData(PredictorType predictorType, OkHttpClient client) throws IOException {

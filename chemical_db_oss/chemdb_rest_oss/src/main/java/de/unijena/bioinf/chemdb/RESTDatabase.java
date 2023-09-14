@@ -94,19 +94,19 @@ public class RESTDatabase implements FilterableChemicalDatabase {
     // closes clients
 
     public RESTDatabase(@NotNull AuthService authService) {
-        this(URI.create(FingerIDProperties.siriusFallbackWebHost()), authService);
+        this(URI.create(FingerIDProperties.siriusFallbackWebHost()), FingerIDProperties.siriusFallbackWebHostContextPath(), authService);
     }
 
     public RESTDatabase() {
-        this(URI.create(FingerIDProperties.siriusFallbackWebHost()));
+        this(URI.create(FingerIDProperties.siriusFallbackWebHost()), FingerIDProperties.siriusFallbackWebHostContextPath());
     }
 
-    public RESTDatabase(@NotNull URI serverURL) {
-        this(RESTDatabase.defaultCache(), new ChemDBClient(serverURL), new OkHttpClient.Builder().build(), true);
+    public RESTDatabase(@NotNull URI serverURL, @Nullable String contextPath) {
+        this(RESTDatabase.defaultCache(), new ChemDBClient(serverURL, contextPath), new OkHttpClient.Builder().build(), true);
     }
 
-    public RESTDatabase(@NotNull URI serverURL, @NotNull AuthService authService) {
-        this(RESTDatabase.defaultCache(), new ChemDBClient(serverURL, authService), new OkHttpClient.Builder().build(), true);
+    public RESTDatabase(@NotNull URI serverURL, @Nullable String contextPath, @NotNull AuthService authService) {
+        this(RESTDatabase.defaultCache(), new ChemDBClient(serverURL, contextPath, authService), new OkHttpClient.Builder().build(), true);
     }
 
     public RESTDatabase(@NotNull StructureSearchClient chemDBClient) {
@@ -185,6 +185,11 @@ public class RESTDatabase implements FilterableChemicalDatabase {
     @Override
     public List<InChI> findInchiByNames(List<String> names) throws ChemicalDatabaseException {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getName() {
+        return "REST";
     }
 
     @Override
