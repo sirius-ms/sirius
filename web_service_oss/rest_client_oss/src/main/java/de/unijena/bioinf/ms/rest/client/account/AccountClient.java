@@ -41,18 +41,16 @@ import java.util.function.Supplier;
 @Deprecated
 public class AccountClient extends AbstractClient {
     private final AuthService authService;
-    private final String versionSuffix;
 
     @SafeVarargs
     public AccountClient(@Nullable URI serverUrl, @Nullable String versionSuffix, @NotNull AuthService authService, IOFunctions.@NotNull IOConsumer<Request.Builder>... requestDecorators) {
-        this(() -> serverUrl, versionSuffix, authService, requestDecorators);
+        this(() -> serverUrl, () -> versionSuffix, authService, requestDecorators);
     }
 
     @SafeVarargs
-    public AccountClient(@NotNull Supplier<URI> serverUrl, @Nullable String versionSuffix, @NotNull AuthService authService, IOFunctions.@NotNull IOConsumer<Request.Builder>... requestDecorators) {
-        super(serverUrl, requestDecorators);
+    public AccountClient(@NotNull Supplier<URI> serverUrl, @NotNull Supplier<String> contextPath, @NotNull AuthService authService, IOFunctions.@NotNull IOConsumer<Request.Builder>... requestDecorators) {
+        super(serverUrl, contextPath, requestDecorators);
         this.authService = authService;
-        this.versionSuffix = versionSuffix;
     }
 
     public boolean acceptTerms(@NotNull OkHttpClient client) {
@@ -65,12 +63,5 @@ public class AccountClient extends AbstractClient {
             LoggerFactory.getLogger(getClass()).warn("Error when accepting terms: " + e.getMessage());
             return false;
         }
-    }
-
-    @Override
-    protected String makeVersionContext() {
-        if (versionSuffix == null || versionSuffix.isBlank())
-            return "";
-        return versionSuffix;
     }
 }

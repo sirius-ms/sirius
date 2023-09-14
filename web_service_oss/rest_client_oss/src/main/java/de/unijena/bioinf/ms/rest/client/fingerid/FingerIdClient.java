@@ -45,9 +45,10 @@ import java.util.Map;
 public class FingerIdClient extends AbstractCsiClient {
     @SafeVarargs
     public FingerIdClient(@Nullable URI serverUrl,
+                          @Nullable String contextPath,
                           @NotNull IOFunctions.IOConsumer<Request.Builder>... requestDecorators
     ) {
-        super(serverUrl, requestDecorators);
+        super(serverUrl, contextPath, requestDecorators);
     }
 
     /**
