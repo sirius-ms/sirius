@@ -17,10 +17,11 @@
  *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.middleware.compounds.model;
+package de.unijena.bioinf.ms.middleware.features.model;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.CompoundQuality;
+import de.unijena.bioinf.ms.middleware.features.model.annotations.Annotations;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
 import lombok.Getter;
 import lombok.Setter;
@@ -28,12 +29,12 @@ import lombok.Setter;
 import java.util.EnumSet;
 
 /**
- * The CompoundId contains the ID of a compound together with some read-only information that might be displayed in
- * some summary view.
+ * The AlignedFeature contains the ID of a featured (aligned over runs) together with some read-only information
+ * that might be displayed in some summary view.
  */
 @Getter
 @Setter
-public class CompoundId {
+public class AlignedFeature {
 
     // identifier
     protected String id;
@@ -50,16 +51,16 @@ public class CompoundId {
     protected Double rtEndSeconds;
 
     //Summary of the results of the compounds
-    protected CompoundAnnotation topAnnotation;
+    protected Annotations topAnnotations;
     protected MsData msData;
 
     // Data and Result quality
     /**
      * Contains all pre-computation quality information that belong to
-     * this compound, such as information about the quality of the peak shape, MS2 spectrum etc.,
+     * this feature (aligned over runs), such as information about the quality of the peak shape, MS2 spectrum etc.,
      * see ({@link CompoundQuality.CompoundQualityFlag})
      * <p>
-     * Each Compound has a Set of Quality assessment flags.
+     * Each Feature has a Set of Quality assessment flags.
      */
     protected EnumSet<CompoundQuality.CompoundQualityFlag> qualityFlags;
     //todo we will add an additional MSQuality Object with many different quality checks produced by LCMS Compound// Summary.
@@ -72,8 +73,8 @@ public class CompoundId {
     //todo handle computing flag
     protected boolean computing = false;
 
-    public static CompoundId of(CompoundContainerId cid) {
-        final CompoundId id = new CompoundId();
+    public static AlignedFeature of(CompoundContainerId cid) {
+        final AlignedFeature id = new AlignedFeature();
         id.setId(cid.getDirectoryName());
         id.setName(cid.getCompoundName());
         id.setIndex(cid.getCompoundIndex());

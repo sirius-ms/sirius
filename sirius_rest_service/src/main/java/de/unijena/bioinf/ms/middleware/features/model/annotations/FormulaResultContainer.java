@@ -17,7 +17,7 @@
  *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.middleware.formulas.model;
+package de.unijena.bioinf.ms.middleware.features.model.annotations;
 
 import de.unijena.bioinf.projectspace.FormulaResultId;
 import lombok.Getter;
