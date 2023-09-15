@@ -19,13 +19,21 @@
 
 package de.unijena.bioinf.ms.middleware.projectspace;
 
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.SpectrumFileSource;
+import de.unijena.bioinf.babelms.CloseableIterator;
+import de.unijena.bioinf.babelms.GenericParser;
+import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.middleware.BaseApiController;
+import de.unijena.bioinf.ms.middleware.features.model.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.compute.model.ComputeContext;
 import de.unijena.bioinf.ms.middleware.compute.model.JobId;
 import de.unijena.bioinf.ms.middleware.projectspace.model.ProjectSpaceId;
+import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -33,15 +41,19 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/api/projects")
-@Tag(name = "Project-Spaces", description = "Manage SIRIUS project-spaces.")
+@Tag(name = "Projects", description = "Manage SIRIUS projects.")
 public class ProjectSpaceController extends BaseApiController {
     //todo add access to fingerprint definitions aka molecular property names
     private final ComputeContext computeContext;
@@ -126,4 +138,70 @@ public class ProjectSpaceController extends BaseApiController {
     public void closeProjectSpace(@PathVariable String projectId) throws IOException {
         context.closeProjectSpace(projectId);
     }
+
+    /**
+     * Import ms/ms data in given format from local filesystem into the specified project-space.
+     * The import will run in a background job
+     * Possible formats (ms, mgf, cef, msp, mzML, mzXML, project-space)
+     * <p>
+     *
+     * @param projectId     project-space to import into.
+     * @param inputPaths    List of file and directory paths to import
+     * @param alignLCMSRuns If true, multiple LCMS Runs (mzML, mzXML) will be aligned during import/feature finding
+     * @return JobId background job that imports given run/compounds/features.
+     */
+    @PostMapping(value = "/{projectId}/import/from-local-path", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    public JobId importCompounds(@PathVariable String projectId,
+                                 @RequestParam(required = false, defaultValue = "false") boolean alignLCMSRuns,
+                                 @RequestParam(required = false, defaultValue = "true") boolean allowMs1OnlyData,
+                                 @RequestParam(required = false, defaultValue = "false") boolean ignoreFormulas,
+                                 @RequestBody List<String> inputPaths) throws IOException {
+
+        InputFilesOptions inputFiles = new InputFilesOptions();
+        inputFiles.msInput = new InputFilesOptions.MsInput();
+        inputFiles.msInput.setAllowMS1Only(allowMs1OnlyData);
+        inputFiles.msInput.setIgnoreFormula(ignoreFormulas);
+        inputFiles.msInput.setInputPath(inputPaths.stream().map(Path::of).collect(Collectors.toList()));
+
+        alignLCMSRuns = alignLCMSRuns && inputFiles.msInput.msParserfiles.keySet().stream()
+                .anyMatch(p -> p.getFileName().toString().toLowerCase().endsWith("mzml")
+                        || p.getFileName().toString().toLowerCase().endsWith("mzxml"));
+        System.out.println("Alignment: " + alignLCMSRuns);
+
+        return computeContext.createAndSubmitJob(projectSpace(projectId), alignLCMSRuns ? List.of("lcms-align") : List.of("project-space", "--keep-open"),
+                null, inputFiles, true, true, true);
+    }
+
+    /**
+     * Import ms/ms data from the given format into the specified project-space
+     * Possible formats (ms, mgf, cef, msp, mzML, mzXML)
+     *
+     * @param projectId  project-space to import into.
+     * @param format     data format specified by the usual file extension of the format (without [.])
+     * @param sourceName name that specifies the data source. Can e.g. be a file path or just a name.
+     * @param body       data content in specified format
+     * @return CompoundIds of the imported run/compounds/feature.
+     */
+    @PostMapping(value = "/{projectId}/import/from-string", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.TEXT_PLAIN_VALUE)
+    public List<AlignedFeature> importCompoundsFromString(@PathVariable String projectId, @RequestParam String format, @RequestParam(required = false) String sourceName, @RequestBody String body) throws IOException {
+        List<AlignedFeature> ids = new ArrayList<>();
+        final ProjectSpaceManager<?> space = projectSpace(projectId);
+        GenericParser<Ms2Experiment> parser = new MsExperimentParser().getParserByExt(format.toLowerCase());
+        try (BufferedReader bodyStream = new BufferedReader(new StringReader(body))) {
+            try (CloseableIterator<Ms2Experiment> it = parser.parseIterator(bodyStream, null)) {
+                while (it.hasNext()) {
+                    Ms2Experiment next = it.next();
+                    if (sourceName != null)     //todo import handling needs to be improved ->  this naming hassle is ugly
+                        next.setAnnotation(SpectrumFileSource.class,
+                                new SpectrumFileSource(
+                                        new File("./" + (sourceName.endsWith(format) ? sourceName : sourceName + "." + format.toLowerCase())).toURI()));
+
+                    @NotNull Instance inst = space.newCompoundWithUniqueId(next);
+                    ids.add(AlignedFeature.of(inst.getID()));
+                }
+            }
+            return ids;
+        }
+    }
+
 }

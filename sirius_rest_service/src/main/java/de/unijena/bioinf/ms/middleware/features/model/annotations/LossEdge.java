@@ -18,25 +18,16 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.middleware.compounds.model;
+package de.unijena.bioinf.ms.middleware.features.model.annotations;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-/**
- *
- * Container object that stores content and file extension (format) of MS/MS data files for the
- * import via SIRIUS Nightsky REST API.
- */
-public class MsDataImport {
-    /**
-     * File format identifier (File extension without [.]).
-     */
-    String format;
-    /**
-     * File content as
-     */
-    byte[] body;
+public class LossEdge {
+    FragmentNode sourceFragment;
+    FragmentNode targetFragment;
+    String molecularFormula;
+    double score;
 }

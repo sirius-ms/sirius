@@ -19,7 +19,7 @@
  */
 
 
-package de.unijena.bioinf.ms.middleware.formulas.model;
+package de.unijena.bioinf.ms.middleware.features.model.annotations;
 
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;

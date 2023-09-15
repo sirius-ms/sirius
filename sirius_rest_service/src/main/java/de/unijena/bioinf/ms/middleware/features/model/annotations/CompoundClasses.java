@@ -19,7 +19,7 @@
  */
 
 
-package de.unijena.bioinf.ms.middleware.formulas.model;
+package de.unijena.bioinf.ms.middleware.features.model.annotations;
 
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.canopus.CanopusResult;
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Container class that holds the best matching compound class for different levels of each ontology for a
- * certain compound/feature/predicted fingerprint.
+ * certain feature/predicted fingerprint.
  */
 @Getter
 @Setter

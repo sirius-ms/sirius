@@ -18,7 +18,7 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.middleware.formulas.model;
+package de.unijena.bioinf.ms.middleware.features.model.annotations;
 
 import de.unijena.bioinf.ChemistryBase.fp.ClassyfireProperty;
 import de.unijena.bioinf.ChemistryBase.fp.NPCFingerprintVersion;
@@ -29,7 +29,7 @@ import lombok.Setter;
 
 /**
  * Predicted compound class with name, probability and id if available.
- * (ClassyFire and NPC). This can be seen as the set of classes a compound most likely belongs to
+ * (ClassyFire and NPC). This can be seen as the set of classes a feature most likely belongs to
  */
 @Getter
 @Setter
