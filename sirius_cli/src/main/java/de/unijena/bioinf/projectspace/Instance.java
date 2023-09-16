@@ -157,7 +157,12 @@ public class Instance {
 
     @SafeVarargs
     private List<? extends SScored<FormulaResult, ? extends FormulaScore>> getTopK(int k, List<? extends SScored<FormulaResult, ? extends FormulaScore>> sScoreds, Class<? extends DataAnnotation>... components) {
-        return sScoreds.stream().limit(k).peek(ss -> loadFormulaResult(ss.getCandidate().getId(), components)
+        return getPage(0,k,sScoreds,components);
+    }
+
+    @SafeVarargs
+    private List<? extends SScored<FormulaResult, ? extends FormulaScore>> getPage(long offset, long limit, List<? extends SScored<FormulaResult, ? extends FormulaScore>> sScoreds, Class<? extends DataAnnotation>... components) {
+        return sScoreds.stream().skip(offset).limit(limit).peek(ss -> loadFormulaResult(ss.getCandidate().getId(), components)
                 .ifPresent(r -> ss.getCandidate().setAnnotationsFrom(r))).toList();
     }
 

@@ -35,7 +35,11 @@ import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.springdoc.api.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -68,8 +72,11 @@ public class ProjectSpaceController extends BaseApiController {
      * List all opened project spaces.
      */
     @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<ProjectSpaceId> getProjectSpaces() {
-        return context.listAllProjectSpaces();
+    public Page<ProjectSpaceId> getProjectSpaces(@ParameterObject Pageable pageable) {
+        final List<ProjectSpaceId> all = context.listAllProjectSpaces();
+        return new PageImpl<>(
+                all.stream().skip(pageable.getOffset()).limit(pageable.getPageSize()).toList(), pageable, all.size()
+        );
     }
 
     /**
@@ -117,10 +124,10 @@ public class ProjectSpaceController extends BaseApiController {
         if (inputFiles != null) {
             JobId id = computeContext.createAndSubmitJob(space, List.of("project-space", "--keep-open"),
                     null, inputFiles, true, true, true);
-            if (awaitImport){
+            if (awaitImport) {
                 try {
                     computeContext.getJob(space, id.getId()).awaitResult();
-                    computeContext.deleteJob(id.getId(),false,false,false,false, true);
+                    computeContext.deleteJob(id.getId(), false, false, false, false, true);
                 } catch (ExecutionException e) {
                     throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error when waiting for import jobs '" + id.getId() + "'.", e);
                 }
@@ -183,10 +190,13 @@ public class ProjectSpaceController extends BaseApiController {
      * @return CompoundIds of the imported run/compounds/feature.
      */
     @PostMapping(value = "/{projectId}/import/from-string", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.TEXT_PLAIN_VALUE)
+    //Todo return compounds instead? or may ean object of created entity Ids?
+    //todo maybe return background job
     public List<AlignedFeature> importCompoundsFromString(@PathVariable String projectId, @RequestParam String format, @RequestParam(required = false) String sourceName, @RequestBody String body) throws IOException {
         List<AlignedFeature> ids = new ArrayList<>();
         final ProjectSpaceManager<?> space = projectSpace(projectId);
         GenericParser<Ms2Experiment> parser = new MsExperimentParser().getParserByExt(format.toLowerCase());
+
         try (BufferedReader bodyStream = new BufferedReader(new StringReader(body))) {
             try (CloseableIterator<Ms2Experiment> it = parser.parseIterator(bodyStream, null)) {
                 while (it.hasNext()) {

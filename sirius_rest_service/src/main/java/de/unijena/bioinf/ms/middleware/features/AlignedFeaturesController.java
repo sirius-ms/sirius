@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.middleware.features;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
@@ -37,11 +38,10 @@ import de.unijena.bioinf.lcms.LCMSCompoundSummary;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.middleware.BaseApiController;
-import de.unijena.bioinf.ms.middleware.features.model.annotations.Annotations;
+import de.unijena.bioinf.ms.middleware.compute.model.ComputeContext;
 import de.unijena.bioinf.ms.middleware.features.model.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.features.model.LCMSFeatureQuality;
 import de.unijena.bioinf.ms.middleware.features.model.MsData;
-import de.unijena.bioinf.ms.middleware.compute.model.ComputeContext;
 import de.unijena.bioinf.ms.middleware.features.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.spectrum.AnnotatedSpectrum;
 import de.unijena.bioinf.projectspace.*;
@@ -50,7 +50,11 @@ import de.unijena.bioinf.sirius.Sirius;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.LoggerFactory;
+import org.springdoc.api.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -60,6 +64,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 @RestController
 @RequestMapping(value = "/api/projects/{projectId}/aligned-features")
@@ -79,27 +85,27 @@ public class AlignedFeaturesController extends BaseApiController {
     /**
      * Get all available features (aligned over runs) in the given project-space.
      *
-     * @param projectId     project-space to read from.
-     * @param topAnnotation include the top annotation of this feature into the output (if available).
-     * @param msData        include corresponding source data (MS and MS/MS) into the output.
+     * @param projectId project-space to read from.
+     * @param optFields set of optional fields to be included
      * @return AlignedFeatures with additional annotations and MS/MS data (if specified).
      */
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<AlignedFeature> getAlignedFeatures(
+    public Page<AlignedFeature> getAlignedFeatures(
             @PathVariable String projectId,
-            @RequestParam(required = false, defaultValue = "false") boolean topAnnotation,
-            @RequestParam(required = false, defaultValue = "false") boolean msData,
-            @RequestParam(required = false, defaultValue = "false") boolean lcmsFeatureQuality,
-            @RequestParam(required = false, defaultValue = "false") boolean msQuality) {
-
+            @ParameterObject Pageable pageable,
+            @RequestParam(required = false, defaultValue = "") EnumSet<AlignedFeature.OptFields> optFields
+    ) {
+        System.out.println(optFields == null);
         LoggerFactory.getLogger(AlignedFeaturesController.class).info("Started collecting aligned features...");
         final ProjectSpaceManager<?> space = projectSpace(projectId);
 
-        final ArrayList<AlignedFeature> alignedFeatures = new ArrayList<>();
-        space.projectSpace().forEach(ccid -> alignedFeatures.add(asCompoundId(ccid, space, topAnnotation, msData, lcmsFeatureQuality, msQuality)));
+        final List<AlignedFeature> alignedFeatures = StreamSupport.stream(space.projectSpace().spliterator(), false)
+                .skip(pageable.getOffset()).limit(pageable.getPageSize())
+                .map(ccid -> asCompoundId(ccid, space, optFields))
+                .toList();
 
         LoggerFactory.getLogger(AlignedFeaturesController.class).info("Finished parsing aligned features...");
-        return alignedFeatures;
+        return new PageImpl(alignedFeatures, pageable, space.size());
     }
 
 
@@ -108,20 +114,17 @@ public class AlignedFeaturesController extends BaseApiController {
      *
      * @param projectId      project-space to read from.
      * @param alignFeatureId identifier of feature (aligned over runs) to access.
-     * @param topAnnotation  include the top annotation of this feature into the output (if available).
-     * @param msData         include corresponding source data (MS and MS/MS) into the output.
+     * @param optFields      set of optional fields to be included
      * @return AlignedFeature with additional annotations and MS/MS data (if specified).
      */
     @GetMapping(value = "/{alignFeatureId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public AlignedFeature getAlignedFeatures(
             @PathVariable String projectId, @PathVariable String alignFeatureId,
-            @RequestParam(required = false, defaultValue = "false") boolean topAnnotation,
-            @RequestParam(required = false, defaultValue = "false") boolean msData,
-            @RequestParam(required = false, defaultValue = "false") boolean lcmsFeatureQuality,
-            @RequestParam(required = false, defaultValue = "false") boolean msQuality) {
+            @RequestParam(required = false, defaultValue = "") EnumSet<AlignedFeature.OptFields> optFields
+    ) {
         final ProjectSpaceManager<?> space = projectSpace(projectId);
         final CompoundContainerId ccid = parseCID(space, alignFeatureId);
-        return asCompoundId(ccid, space, topAnnotation, msData, lcmsFeatureQuality, msQuality);
+        return asCompoundId(ccid, space, optFields);
     }
 
     /**
@@ -142,51 +145,72 @@ public class AlignedFeaturesController extends BaseApiController {
      * List of all FormulaResultContainers available for this feature with minimal information.
      * Can be enriched with an optional results overview.
      *
-     * @param projectId        project-space to read from.
-     * @param alignFeatureId   feature (aligned over runs) the formula result belongs to.
-     * @param resultOverview   add ResultOverview to the FormulaResultContainers
-     * @param formulaCandidate add extended formula candidate information to the FormulaResultContainers
-     * @return All FormulaResultContainers of this feature with.
+     * @param projectId      project-space to read from.
+     * @param alignFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param optFields      set of optional fields to be included
+     * @return All FormulaCandidate of this feature with.
      */
     @GetMapping(value = "/{alignFeatureId}/formulas", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<FormulaResultContainer> getFormulaIds(@PathVariable String projectId, @PathVariable String alignFeatureId,
-                                                      @RequestParam(defaultValue = "true") boolean resultOverview,
-                                                      @RequestParam(defaultValue = "false") boolean formulaCandidate) {
+    public Page<FormulaCandidate> getFormulaCandidates(
+            @PathVariable String projectId, @PathVariable String alignFeatureId,
+            @ParameterObject Pageable pageable,
+            @RequestParam(required = false, defaultValue = "") EnumSet<FormulaCandidate.OptFields> optFields
+    ) {
+        //todo filtering
+        //todo ordering
         LoggerFactory.getLogger(getClass()).info("Started collecting formulas...");
         Instance instance = loadInstance(projectId, alignFeatureId);
-        return instance.loadFormulaResults().stream().map(SScored::getCandidate).map(fr -> {
-            FormulaResultContainer formulaResultContainer = new FormulaResultContainer(fr.getId());
-            if (resultOverview)
-                fr.getAnnotation(FormulaScoring.class).ifPresent(fs -> formulaResultContainer.setResultOverview(new ResultOverview(fs)));
-            if (formulaCandidate) formulaResultContainer.setCandidate(FormulaCandidate.of(fr));
-            return formulaResultContainer;
-        }).collect(Collectors.toList());
+        Stream<FormulaResult> paged;
+        int size;
+        {
+            List<? extends SScored<FormulaResult, ? extends FormulaScore>> tmpSource = instance.loadFormulaResults();
+            paged = tmpSource.stream()
+                    .skip(pageable.getOffset())
+                    .limit(pageable.getPageSize())
+                    .map(SScored::getCandidate);
+            size = tmpSource.size();
+        }
+
+        if (Stream.of(FormulaCandidate.OptFields.statistics, FormulaCandidate.OptFields.fragmentationTree, FormulaCandidate.OptFields.simulatedIsotopePattern).anyMatch(optFields::contains)) {
+            return new PageImpl<>(paged.peek(fr -> instance.loadFormulaResult(fr.getId(), FTree.class)
+                    .ifPresent(fr::setAnnotationsFrom)).map(FormulaCandidate::of).toList(), pageable, size);
+        } else {
+            return new PageImpl<>(paged
+                    .map(fr -> FormulaCandidate.of(fr.getId(), fr.getAnnotation(FormulaScoring.class).orElse(null)))
+                    .toList(), pageable, size);
+        }
+        //todo add optional fields
     }
 
     /**
      * FormulaResultContainers for the given 'formulaId' with minimal information.
      * Can be enriched with an optional results overview and formula candidate information.
      *
-     * @param projectId        project-space to read from.
-     * @param alignFeatureId   feature (aligned over runs) the formula result belongs to.
-     * @param formulaId        identifier of the requested formula result
-     * @param resultOverview   add ResultOverview to the FormulaResultContainer
-     * @param formulaCandidate add extended formula candidate information to the FormulaResultContainer
-     * @return FormulaResultContainers of this feature (aligned over runs) with.
+     * @param projectId      project-space to read from.
+     * @param alignFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param formulaId      identifier of the requested formula result
+     * @param optFields      set of optional fields to be included
+     * @return FormulaCandidate of this feature (aligned over runs) with.
      */
     @GetMapping(value = "/{alignFeatureId}/formulas/{formulaId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public FormulaResultContainer getFormulaResult(@PathVariable String projectId, @PathVariable String alignFeatureId, @PathVariable String formulaId,
-                                                   @RequestParam(defaultValue = "true") boolean resultOverview,
-                                                   @RequestParam(defaultValue = "true") boolean formulaCandidate
+    public FormulaCandidate getFormulaCandidate(
+            @PathVariable String projectId, @PathVariable String alignFeatureId, @PathVariable String formulaId,
+            @RequestParam(required = false, defaultValue = "") EnumSet<FormulaCandidate.OptFields> optFields
+
     ) {
+        //todo filtering
+        //todo ordering
         Instance instance = loadInstance(projectId, alignFeatureId);
-        return instance.loadFormulaResult(parseFID(instance, formulaId), FormulaScoring.class).map(fr -> {
-            FormulaResultContainer formulaResultContainerObject = new FormulaResultContainer(fr.getId());
-            if (resultOverview)
-                fr.getAnnotation(FormulaScoring.class).ifPresent(fs -> formulaResultContainerObject.setResultOverview(new ResultOverview(fs)));
-            if (formulaCandidate) formulaResultContainerObject.setCandidate(FormulaCandidate.of(fr));
-            return formulaResultContainerObject;
-        }).orElse(null);
+        if (Stream.of(FormulaCandidate.OptFields.statistics, FormulaCandidate.OptFields.fragmentationTree, FormulaCandidate.OptFields.simulatedIsotopePattern).anyMatch(optFields::contains)) {
+            return instance.loadFormulaResult(parseFID(instance, formulaId), FormulaScoring.class, FTree.class)
+                    .map(FormulaCandidate::of)
+                    .orElse(null);
+        } else {
+            return instance.loadFormulaResult(parseFID(instance, formulaId), FormulaScoring.class)
+                    .map(fr -> FormulaCandidate.of(fr.getId(), fr.getAnnotation(FormulaScoring.class).orElse(null)))
+                    .orElse(null);
+        }
+        //todo add optional fields
     }
 
     /**
@@ -196,65 +220,72 @@ public class AlignedFeaturesController extends BaseApiController {
      * @param projectId      project-space to read from.
      * @param alignFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId      identifier of the requested formula result
-     * @param fingerprint    add molecular fingerprint to StructureCandidates
-     * @param dbLinks        add dbLinks to StructureCandidates
-     * @param pubMedIds      add PubMedIds (citation count) to StructureCandidates
-     * @param topK           retrieve only the top k StructureCandidates
-     * @return FormulaResultContainers of this (aligned over runs) with specified extensions.
+     * @param optFields      set of optional fields to be included
+     * @return StructureCandidate of this formula candidate with specified optional fields.
      */
     @GetMapping(value = "/{alignFeatureId}/formulas/{formulaId}/structures", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<StructureCandidate> getStructureCandidates(@PathVariable String projectId, @PathVariable String alignFeatureId, @PathVariable String formulaId,
-                                                           @RequestParam(defaultValue = "false") boolean fingerprint,
-                                                           @RequestParam(defaultValue = "false") boolean dbLinks,
-                                                           @RequestParam(defaultValue = "false") boolean pubMedIds,
+    public Page<StructureCandidate> getStructureCandidatesByFormula(
+            @PathVariable String projectId, @PathVariable String alignFeatureId, @PathVariable String formulaId,
+            @ParameterObject Pageable pageable,
+            @RequestParam(required = false, defaultValue = "") EnumSet<StructureCandidate.OptFields> optFields
+    ) {
 
-                                                           @RequestParam(defaultValue = "-1") int topK) {
-        List<Class<? extends DataAnnotation>> para = (fingerprint ? List.of(FormulaScoring.class, FBCandidates.class, FBCandidateFingerprints.class) : List.of(FormulaScoring.class, FBCandidates.class));
+        long topK = pageable.getOffset() + pageable.getPageSize();
+        List<Class<? extends DataAnnotation>> para = (optFields.contains(StructureCandidate.OptFields.fingerprint)
+                ? List.of(FormulaScoring.class, FBCandidates.class, FBCandidateFingerprints.class)
+                : List.of(FormulaScoring.class, FBCandidates.class));
+
         Instance instance = loadInstance(projectId, alignFeatureId);
         FormulaResultId fidObj = parseFID(instance, formulaId);
-        fidObj.setAnnotation(FBCandidateNumber.class, topK <= 0 ? FBCandidateNumber.ALL : new FBCandidateNumber(topK));
+        fidObj.setAnnotation(FBCandidateNumber.class, topK <= 0 ? FBCandidateNumber.ALL : new FBCandidateNumber((int) topK));
         FormulaResult fr = instance.loadFormulaResult(fidObj, (Class<? extends DataAnnotation>[]) para.toArray(Class[]::new)).orElseThrow();
         return fr.getAnnotation(FBCandidates.class).map(FBCandidates::getResults).map(l -> {
-            List<StructureCandidate> candidates = new ArrayList();
-            Iterator<Scored<CompoundCandidate>> it = l.iterator();
+                    List<StructureCandidate> candidates = new ArrayList();
 
-            if (fingerprint) {
-                Iterator<Fingerprint> fps = fr.getAnnotationOrThrow(FBCandidateFingerprints.class).getFingerprints().iterator();
+                    Iterator<Scored<CompoundCandidate>> it =
+                            l.stream().skip(pageable.getOffset()).limit(pageable.getPageSize()).iterator();
 
-                if (it.hasNext())//tophit
-                    candidates.add(StructureCandidate.of(it.next(), fps.next(),
-                            fr.getAnnotationOrThrow(FormulaScoring.class), dbLinks, pubMedIds));
+                    if (optFields.contains(StructureCandidate.OptFields.fingerprint)) {
+                        Iterator<Fingerprint> fps = fr.getAnnotationOrThrow(FBCandidateFingerprints.class).getFingerprints()
+                                .stream().skip(pageable.getOffset()).limit(pageable.getPageSize()).iterator();
 
-                while (it.hasNext())
-                    candidates.add(StructureCandidate.of(it.next(), fps.next(),
-                            null, dbLinks, pubMedIds));
-            } else {
-                if (it.hasNext())//tophit
-                    candidates.add(StructureCandidate.of(it.next(), null,
-                            fr.getAnnotationOrThrow(FormulaScoring.class), dbLinks, pubMedIds));
+                        if (it.hasNext())//tophit
+                            candidates.add(StructureCandidate.of(it.next(), fps.next(),
+                                    fr.getAnnotationOrNull(FormulaScoring.class), optFields));
 
-                while (it.hasNext())
-                    candidates.add(StructureCandidate.of(it.next(), null,
-                            null, dbLinks, pubMedIds));
-            }
-            return candidates;
-        }).orElse(null);
+                        while (it.hasNext())
+                            candidates.add(StructureCandidate.of(it.next(), fps.next(),
+                                    null,optFields));
+                    } else {
+                        if (it.hasNext())//tophit
+                            candidates.add(StructureCandidate.of(it.next(), null,
+                                    fr.getAnnotationOrNull(FormulaScoring.class), optFields));
+
+                        while (it.hasNext())
+                            candidates.add(StructureCandidate.of(it.next(), null,
+                                    null, optFields));
+                    }
+                    return candidates;
+                }).map(it -> (Page<StructureCandidate>) new PageImpl<>(it))
+                .orElse(Page.empty(pageable)); //todo number of candidates for page.
+
     }
 
 
     //todo add order by parameter?
 
-    /**
-     * Best Scoring StructureCandidate over all molecular formular results that belong to the specified
-     * feature (aligned over runs).
-     *
-     * @param projectId      project-space to read from.
-     * @param alignFeatureId feature (aligned over runs) the formula result belongs to.
-     * @param fingerprint    add molecular fingerprint to StructureCandidates
-     * @param dbLinks        add dbLinks to StructureCandidates
-     * @param pubMedIds      add PubMedIds (citation count) to StructureCandidates
-     * @return Best scoring FormulaResultContainers of this feature (aligned over runs) with specified extensions.
-     */
+//    /**
+//     * Best Scoring StructureCandidate over all molecular formular results that belong to the specified
+//     * feature (aligned over runs).
+//     *
+//     * @param projectId      project-space to read from.
+//     * @param alignFeatureId feature (aligned over runs) the formula result belongs to.
+//     * @param fingerprint    add molecular fingerprint to StructureCandidates
+//     * @param dbLinks        add dbLinks to StructureCandidates
+//     * @param pubMedIds      add PubMedIds (citation count) to StructureCandidates
+//     * @return Best scoring FormulaResultContainers of this feature (aligned over runs) with specified extensions.
+//     */
+    /*@Deprecated(forRemoval = true)
     @GetMapping(value = "/{alignFeatureId}/top-structure", produces = MediaType.APPLICATION_JSON_VALUE)
     public StructureCandidate getTopStructureCandidate(@PathVariable String projectId, @PathVariable String alignFeatureId, @RequestParam(defaultValue = "false") boolean fingerprint, @RequestParam(defaultValue = "false") boolean dbLinks, @RequestParam(defaultValue = "false") boolean pubMedIds) {
 
@@ -271,7 +302,7 @@ public class AlignedFeaturesController extends BaseApiController {
                                     : null, fr.getAnnotationOrThrow(FormulaScoring.class), dbLinks, pubMedIds))
                     );
         }).orElseThrow();
-    }
+    }*/
 
     @Hidden
     @GetMapping(value = "/{alignFeatureId}/formulas/{formulaId}/sirius-tree", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -308,10 +339,8 @@ public class AlignedFeaturesController extends BaseApiController {
     @GetMapping(value = "/{alignFeatureId}/formulas/{formulaId}/isotope-pattern", produces = MediaType.APPLICATION_JSON_VALUE)
     public AnnotatedSpectrum getSimulatedIsotopePattern(@PathVariable String projectId, @PathVariable String alignFeatureId, @PathVariable String formulaId) {
         Instance instance = loadInstance(projectId, alignFeatureId);
-        Sirius sirius = ApplicationCore.SIRIUS_PROVIDER.sirius(instance.loadCompoundContainer(ProjectSpaceConfig.class).getAnnotationOrThrow(ProjectSpaceConfig.class).config.getConfigValue("AlgorithmProfile"));
-        Optional<FormulaResult> fResult = instance.loadFormulaResult(parseFID(instance, formulaId), FTree.class);
-        return fResult.map(FormulaResult::getId).map(id -> sirius.simulateIsotopePattern(
-                        id.getMolecularFormula(), id.getIonType().getIonization())).map(AnnotatedSpectrum::new)
+        return instance.loadFormulaResult(parseFID(instance, formulaId), FTree.class)
+                .flatMap(fr -> asSimulatedIsotopePattern(instance, fr))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Isotope Pattern for '" + idString(projectId, alignFeatureId, formulaId) + "' not found!"));
     }
 
@@ -340,11 +369,11 @@ public class AlignedFeaturesController extends BaseApiController {
      * @param formulaId      identifier of the requested formula result
      * @return Predicted compound classes
      */
-    @GetMapping(value = "/{alignFeatureId}/formulas/{formulaId}/canopus-predictions", produces = MediaType.APPLICATION_JSON_VALUE)
-    public CanopusPredictions getCanopusPredictions(@PathVariable String projectId, @PathVariable String alignFeatureId, @PathVariable String formulaId) {
+    @GetMapping(value = "/{alignFeatureId}/formulas/{formulaId}/canopus-prediction", produces = MediaType.APPLICATION_JSON_VALUE)
+    public CanopusPrediction getCanopusPrediction(@PathVariable String projectId, @PathVariable String alignFeatureId, @PathVariable String formulaId) {
         Instance instance = loadInstance(projectId, alignFeatureId);
         Optional<FormulaResult> fResult = instance.loadFormulaResult(parseFID(instance, formulaId), CanopusResult.class);
-        return fResult.flatMap(fr -> fr.getAnnotation(CanopusResult.class).map(CanopusPredictions::of))
+        return fResult.flatMap(fr -> fr.getAnnotation(CanopusResult.class).map(CanopusPrediction::of))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Compound Classes for '" + idString(projectId, alignFeatureId, formulaId) + "' not found!"));
     }
 
@@ -357,14 +386,22 @@ public class AlignedFeaturesController extends BaseApiController {
      * @param formulaId      identifier of the requested formula result
      * @return Best matching Predicted compound classes
      */
-    @GetMapping(value = "/{alignFeatureId}/formulas/{formulaId}/best-canopus-predictions", produces = MediaType.APPLICATION_JSON_VALUE)
-    public CompoundClasses getBestMatchingCanopusPredictions(@PathVariable String projectId, @PathVariable String alignFeatureId, @PathVariable String formulaId) {
+    @GetMapping(value = "/{alignFeatureId}/formulas/{formulaId}/best-compound-classes", produces = MediaType.APPLICATION_JSON_VALUE)
+    public CompoundClasses getBestMatchingCompoundClasses(@PathVariable String projectId, @PathVariable String alignFeatureId, @PathVariable String formulaId) {
         Instance instance = loadInstance(projectId, alignFeatureId);
         Optional<FormulaResult> fResult = instance.loadFormulaResult(parseFID(instance, formulaId), CanopusResult.class);
         return fResult.flatMap(fr -> fr.getAnnotation(CanopusResult.class).map(CompoundClasses::of))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Compound Classes for '" + idString(projectId, alignFeatureId, formulaId) + "' not found!"));
     }
 
+
+    public Optional<AnnotatedSpectrum> asSimulatedIsotopePattern(Instance instance, FormulaResult fResult) {
+        Sirius sirius = ApplicationCore.SIRIUS_PROVIDER.sirius(instance.loadCompoundContainer(ProjectSpaceConfig.class).getAnnotationOrThrow(ProjectSpaceConfig.class).config.getConfigValue("AlgorithmProfile"));
+        return Optional.of(fResult)
+                .map(FormulaResult::getId)
+                .map(id -> sirius.simulateIsotopePattern(id.getMolecularFormula(), id.getIonType().getIonization()))
+                .map(AnnotatedSpectrum::new);
+    }
 
     private Annotations asCompoundSummary(Instance inst) {
         return inst.loadTopFormulaResult(List.of(TopCSIScore.class)).map(de.unijena.bioinf.projectspace.FormulaResult::getId).flatMap(frid -> {
@@ -380,7 +417,7 @@ public class AlignedFeaturesController extends BaseApiController {
                         topHit.getAnnotation(FBCandidates.class).map(FBCandidates::getResults)
                                 .filter(l -> !l.isEmpty()).map(r -> r.get(0)).map(s ->
                                         StructureCandidate.of(s, topHit.getAnnotationOrThrow(FormulaScoring.class),
-                                                true, true))
+                                                EnumSet.of(StructureCandidate.OptFields.dbLinks, StructureCandidate.OptFields.pubmedIds, StructureCandidate.OptFields.refSpectraLinks)))
                                 .ifPresent(cSum::setStructureAnnotation);
 
                         topHit.getAnnotation(CanopusResult.class).map(CompoundClasses::of).
@@ -436,17 +473,17 @@ public class AlignedFeaturesController extends BaseApiController {
     }
 
 
-    private AlignedFeature asCompoundId(CompoundContainerId cid, ProjectSpaceManager<?> ps, boolean includeSummary, boolean includeMsData, boolean includeLCMSFeatureQuality, boolean includeMsQuality) {
+    private AlignedFeature asCompoundId(CompoundContainerId cid, ProjectSpaceManager<?> ps, EnumSet<AlignedFeature.OptFields> optFields) {
         final AlignedFeature alignedFeature = AlignedFeature.of(cid);
-        if (includeSummary || includeMsData || includeLCMSFeatureQuality || includeMsQuality) {
+        if (!optFields.isEmpty()) {
             Instance instance = ps.getInstanceFromCompound(cid);
-            if (includeSummary)
+            if (optFields.contains(AlignedFeature.OptFields.topAnnotations))
                 alignedFeature.setTopAnnotations(asCompoundSummary(instance));
-            if (includeMsData)
+            if (optFields.contains(AlignedFeature.OptFields.msData))
                 alignedFeature.setMsData(asCompoundMsData(instance));
-            if (includeLCMSFeatureQuality)
+            if (optFields.contains(AlignedFeature.OptFields.lcmsFeatureQuality))
                 alignedFeature.setLcmsFeatureQuality(asCompoundLCMSFeatureQuality(instance));
-            if (includeMsQuality)
+            if (optFields.contains(AlignedFeature.OptFields.qualityFlags))
                 alignedFeature.setQualityFlags(asCompoundQualityData(instance));
         }
         return alignedFeature;

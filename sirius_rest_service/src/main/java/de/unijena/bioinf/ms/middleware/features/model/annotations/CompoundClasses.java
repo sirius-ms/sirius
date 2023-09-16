@@ -28,8 +28,8 @@ import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Container class that holds the best matching compound class for different levels of each ontology for a
- * certain feature/predicted fingerprint.
+ * Container class that holds the most likely compound class for different levels of each ontology for a
+ * certain compound/feature/formula candidate/predicted fingerprint.
  */
 @Getter
 @Setter
