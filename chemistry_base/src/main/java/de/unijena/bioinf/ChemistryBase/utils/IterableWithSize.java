@@ -20,9 +20,17 @@
 
 package de.unijena.bioinf.ChemistryBase.utils;
 
+import java.util.Spliterator;
+import java.util.Spliterators;
+
 public interface IterableWithSize<T> extends Iterable<T> {
     /**
      * @return size of this Iterable
      */
     int size();
+
+    @Override
+    default Spliterator<T> spliterator() {
+        return Spliterators.spliterator(iterator(), size(), 0);
+    }
 }
