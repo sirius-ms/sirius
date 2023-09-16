@@ -28,7 +28,7 @@ import java.util.Objects;
 
 @Getter
 public final class ProjectSpaceId {
-
+    //todo do we need meta information like size and description
     public final @NotNull String name;
     public final @NotNull String path;
 

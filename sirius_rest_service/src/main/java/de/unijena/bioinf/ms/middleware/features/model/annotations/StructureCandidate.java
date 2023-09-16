@@ -31,34 +31,42 @@ import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.EnumSet;
 import java.util.List;
 
 @Getter
 @Setter
 public class StructureCandidate {
+    public enum OptFields {fingerprint, dbLinks, refSpectraLinks, pubmedIds}
 
-    String structureName;
-    String smiles;
 
-    Double csiScore;
-    Double tanimotoSimilarity;
-    Double confidenceScore;
+    protected String structureName;
+    protected String smiles;
 
-    Integer numOfPubMedIds;
-    Double xlogP;
-    String inchiKey;
+    protected Double csiScore;
+    protected Double tanimotoSimilarity;
+    protected Double confidenceScore;
+
+    protected Integer numOfPubMedIds;
+    protected Double xlogP;
+    protected String inchiKey;
 
     //Extended Results
     /**
-     * Array containing the indices of the molecular fingerprint that are available in the structure (1)
+     * Array containing the indices of the molecular fingerprint that are available in the structure (1 if present)
      * OPTIONAL: needs to be added by parameter
      */
-    short[] fpBitsSet;
+    BinaryFingerprint fingerprint;
     /**
      * List of structure database links belonging to this structure candidate
      * OPTIONAL: needs to be added by parameter
      */
     List<DBLink> dbLinks;
+    /**
+     * List of spectral library links belonging to this structure candidate
+     * OPTIONAL: needs to be added by parameter
+     */
+    List<DBLink> refSpectraLinks;
     /**
      * PubMed IDs belonging to this structure candidate
      * OPTIONAL: needs to be added by parameter
@@ -66,12 +74,17 @@ public class StructureCandidate {
     int[] pubmedIds;
 
 
-    public static StructureCandidate of(Scored<CompoundCandidate> can, FormulaScoring scorings, boolean includeDB, boolean includePubMed) {
-        return of(can, null, scorings, includeDB, includePubMed);
+
+    //todo add spectral library
+
+
+    public static StructureCandidate of(Scored<CompoundCandidate> can, FormulaScoring scorings, EnumSet<OptFields> optFields) {
+        return of(can, null, scorings, optFields);
     }
 
-    public static StructureCandidate of(Scored<CompoundCandidate> can, @Nullable Fingerprint fp, @Nullable FormulaScoring confidenceScoreProvider,
-                                        boolean includeDB, boolean includePubMed) {
+    public static StructureCandidate of(Scored<CompoundCandidate> can, @Nullable Fingerprint fp,
+                                        @Nullable FormulaScoring confidenceScoreProvider,
+                                        EnumSet<OptFields> optFields) {
 
 
         final StructureCandidate sSum = new StructureCandidate();
@@ -96,16 +109,21 @@ public class StructureCandidate {
         PubmedLinks pubMedIds = can.getCandidate().getPubmedIDs();
         if (pubMedIds != null) {
             sSum.setNumOfPubMedIds(pubMedIds.getNumberOfPubmedIDs());
-            if (includePubMed)
+            if (optFields.contains(OptFields.pubmedIds))
                 sSum.setPubmedIds(pubMedIds.getCopyOfPubmedIDs());
         }
 
-        if (includeDB)
+        if (optFields.contains(OptFields.dbLinks))
             sSum.setDbLinks(can.getCandidate().getLinks());
 
+        if (optFields.contains(OptFields.refSpectraLinks))
+            sSum.setRefSpectraLinks(List.of());
+            //todo add reference spectra links
+//            sSum.setDbLinks(can.getCandidate().getReferenceSpectraSplash());
+
         //FP
-        if (fp != null)
-            sSum.setFpBitsSet(fp.toIndizesArray());
+        if (fp != null && optFields.contains(OptFields.fingerprint))
+            sSum.setFingerprint(BinaryFingerprint.from(fp));
 
         return sSum;
     }

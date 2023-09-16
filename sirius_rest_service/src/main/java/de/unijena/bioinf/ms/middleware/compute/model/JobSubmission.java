@@ -48,8 +48,18 @@ import java.util.stream.Stream;
 public class JobSubmission {
     /**
      * Compounds that should be the input for this Job
+     * Will be converted to the respective alignFeatureIds for computation.
+     *
+     * At least one compoundId or alignFeatureId needs to be specified.
      */
     List<String> compoundIds;
+
+    /**
+     * Features (aligned over runs) that should be the input for this Job
+     *
+     * At least one compoundId or alignFeatureId needs to be specified.
+     */
+    List<String> alignFeatureIds;
 
     /**
      * Describes how to deal with Adducts: Fallback adducts are considered if the auto detection did not find any indication for an ion mode.

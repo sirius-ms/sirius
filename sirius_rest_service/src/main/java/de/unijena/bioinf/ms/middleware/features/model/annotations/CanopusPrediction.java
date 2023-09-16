@@ -38,7 +38,7 @@ import java.util.List;
  */
 @Getter
 @Setter
-public class CanopusPredictions {
+public class CanopusPrediction {
     /**
      * All predicted ClassyFire classes
      */
@@ -49,12 +49,12 @@ public class CanopusPredictions {
     CompoundClass[] npcClasses;
 
 
-    public static CanopusPredictions of(CanopusResult canopusResult) {
+    public static CanopusPrediction of(CanopusResult canopusResult) {
         return of(canopusResult.getNpcFingerprint().orElse(null), canopusResult.getCanopusFingerprint());
     }
 
-    public static CanopusPredictions of(@Nullable ProbabilityFingerprint npcClassification, @Nullable ProbabilityFingerprint cfClassification) {
-        final CanopusPredictions sum = new CanopusPredictions();
+    public static CanopusPrediction of(@Nullable ProbabilityFingerprint npcClassification, @Nullable ProbabilityFingerprint cfClassification) {
+        final CanopusPrediction sum = new CanopusPrediction();
 
         if (npcClassification != null) {
             List<CompoundClass> cc = new ArrayList<>();

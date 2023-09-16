@@ -25,6 +25,7 @@ import de.unijena.bioinf.ms.middleware.features.model.annotations.Annotations;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
 import lombok.Getter;
 import lombok.Setter;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
 
@@ -35,9 +36,11 @@ import java.util.EnumSet;
 @Getter
 @Setter
 public class AlignedFeature {
+    public enum OptFields {topAnnotations, msData, qualityFlags, lcmsFeatureQuality}
 
     // identifier
-    protected String id;
+    @NotNull
+    protected String alignFeatureId;
 
     // identifier source //todo obsolete?
     protected String name;
@@ -55,6 +58,8 @@ public class AlignedFeature {
     protected MsData msData;
 
     // Data and Result quality
+
+    //todo revisit the quality stuff for the api v2
     /**
      * Contains all pre-computation quality information that belong to
      * this feature (aligned over runs), such as information about the quality of the peak shape, MS2 spectrum etc.,
@@ -75,7 +80,7 @@ public class AlignedFeature {
 
     public static AlignedFeature of(CompoundContainerId cid) {
         final AlignedFeature id = new AlignedFeature();
-        id.setId(cid.getDirectoryName());
+        id.setAlignFeatureId(cid.getDirectoryName());
         id.setName(cid.getCompoundName());
         id.setIndex(cid.getCompoundIndex());
         id.setIonMass(cid.getIonMass().orElse(0d));

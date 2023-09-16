@@ -24,27 +24,57 @@ package de.unijena.bioinf.ms.middleware.features.model.annotations;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
+import de.unijena.bioinf.ms.middleware.spectrum.AnnotatedSpectrum;
 import de.unijena.bioinf.projectspace.FormulaResult;
+import de.unijena.bioinf.projectspace.FormulaResultId;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.sirius.scores.TreeScore;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+/**
+ * Molecular formula candidate that holds a unique identifier (molecular formula + adduct).
+ * It can be extended with optional scoring metrics and the raw results
+ * such as fragmentation trees and simulated isotope pattern.
+ */
 @Getter
 @Setter
+@AllArgsConstructor
+@Builder
 public class FormulaCandidate {
+    public enum OptFields {statistics, fragmentationTree, simulatedIsotopePattern, predictedFingerprint, compoundClasses, canopusPredictions};
 
+    /**
+     * Unique identifier of this formula candidate
+     */
+    protected String formulaId;
+    /**
+     * molecular formula of this formula candidate
+     */
+    protected String molecularFormula;
+    /**
+     * Adduct of this formula candidate
+     */
+    protected String adduct;
+
+
+    //Additional Fields
+    /**
+     * Sirius Score (isotope + tree score) of the formula candidate.
+     * If NULL result is not available
+     */
     protected Double siriusScore;
     protected Double isotopeScore;
     protected Double treeScore;
+    /**
+     * Zodiac Score of the formula candidate.
+     * If NULL result is not available
+     */
     protected Double zodiacScore;
-
-    protected String molecularFormula;
-    protected String adduct;
 
     protected Integer numOfexplainedPeaks;
     protected Integer numOfexplainablePeaks;
@@ -52,23 +82,65 @@ public class FormulaCandidate {
     protected Double totalExplainedIntensity;
     protected Deviation medianMassDeviation;
 
+    /**
+     * The fragmentation tree that belongs to this molecular formula candidate (produces the treeScore).
+     */
+    protected FragmentationTree fragmentationTree;
+    /**
+     * The simulated isotope pattern that is compared against the measured isotope pattern to produce the isotopeScore.
+     */
+    protected AnnotatedSpectrum simulatedIsotopePattern;
+
+    /**
+     * Probabilistic molecular fingerprint predicted by CSI:FingerID
+     */
+    protected double[] predictedFingerprint;
+
+    /**
+     * Most likely compound classes for different levels of each ontology for this FormulaCandidate (predictedFingerprint)
+     */
+    protected CompoundClasses compoundClasses;
+
+    /**
+     * All classes predicted by canopus for this FormulaCandidate (predictedFingerprint)
+     */
+    protected CanopusPrediction canopusPrediction;
+
+
+
+
     //todo add LipidClass prediction
 
-    public static FormulaCandidate of(FormulaResult formulaResult){
-        final FormulaCandidate frs = new FormulaCandidate();
+    //todo move to Service layer
+    public static FormulaCandidate of(@NotNull FormulaResultId formulaId) {
+        return FormulaCandidate.builder()
+                .formulaId(formulaId.fileName())
+                .molecularFormula(formulaId.getMolecularFormula().toString())
+                .adduct(formulaId.getIonType().toString())
+                .build();
+    }
+
+    public static FormulaCandidate of(@NotNull FormulaResultId formulaId, @Nullable FormulaScoring scorings) {
+        final FormulaCandidate frs = of(formulaId);
+
+        if (scorings != null) {
+            scorings.getAnnotation(SiriusScore.class).
+                    ifPresent(sscore -> frs.setSiriusScore(sscore.score()));
+            scorings.getAnnotation(IsotopeScore.class).
+                    ifPresent(iscore -> frs.setIsotopeScore(iscore.score()));
+            scorings.getAnnotation(TreeScore.class).
+                    ifPresent(tscore -> frs.setTreeScore(tscore.score()));
+            scorings.getAnnotation(ZodiacScore.class).
+                    ifPresent(zscore -> frs.setZodiacScore(zscore.score()));
+        }
+
+        return frs;
+    }
+
+    public static FormulaCandidate of(@NotNull FormulaResult formulaResult) {
         @NotNull FormulaScoring scorings = formulaResult.getAnnotationOrThrow(FormulaScoring.class);
 
-        frs.setMolecularFormula(formulaResult.getId().getMolecularFormula().toString());
-        frs.setAdduct(formulaResult.getId().getIonType().toString());
-
-        scorings.getAnnotation(SiriusScore.class).
-                ifPresent(sscore -> frs.setSiriusScore(sscore.score()));
-        scorings.getAnnotation(IsotopeScore.class).
-                ifPresent(iscore -> frs.setIsotopeScore(iscore.score()));
-        scorings.getAnnotation(TreeScore.class).
-                ifPresent(tscore -> frs.setTreeScore(tscore.score()));
-        scorings.getAnnotation(ZodiacScore.class).
-                ifPresent(zscore -> frs.setZodiacScore(zscore.score()));
+        final FormulaCandidate frs = of(formulaResult.getId(), scorings);
 
         formulaResult.getAnnotation(FTree.class).
                 ifPresent(fTree -> {
