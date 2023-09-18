@@ -27,7 +27,7 @@ import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.ms.frontend.BackgroundRuns;
 import de.unijena.bioinf.ms.frontend.SiriusCLIApplication;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.ms.middleware.projectspace.model.ProjectSpaceId;
+import de.unijena.bioinf.ms.middleware.model.projects.ProjectId;
 import de.unijena.bioinf.projectspace.ProjectSpaceIO;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
@@ -117,10 +117,10 @@ public class SiriusContext implements DisposableBean {
     }
 
 
-    public List<ProjectSpaceId> listAllProjectSpaces() {
+    public List<ProjectId> listAllProjectSpaces() {
         projectSpaceLock.readLock().lock();
         try {
-            return projectSpaces.entrySet().stream().map(x -> ProjectSpaceId.of(x.getKey(), x.getValue().projectSpace().getLocation())).collect(Collectors.toList());
+            return projectSpaces.entrySet().stream().map(x -> ProjectId.of(x.getKey(), x.getValue().projectSpace().getLocation())).collect(Collectors.toList());
         } finally {
             projectSpaceLock.readLock().unlock();
         }
@@ -157,7 +157,7 @@ public class SiriusContext implements DisposableBean {
         }
     }
 
-    public ProjectSpaceId openProjectSpace(@NotNull ProjectSpaceId id) throws IOException {
+    public ProjectId openProjectSpace(@NotNull ProjectId id) throws IOException {
         final Lock lock = projectSpaceLock.writeLock();
         lock.lock();
         try {
@@ -175,18 +175,18 @@ public class SiriusContext implements DisposableBean {
         }
     }
 
-    public ProjectSpaceId addProjectSpace(@NotNull String nameSuggestion, @NotNull SiriusProjectSpace projectSpaceToAdd) {
+    public ProjectId addProjectSpace(@NotNull String nameSuggestion, @NotNull SiriusProjectSpace projectSpaceToAdd) {
         return ensureUniqueName(nameSuggestion, (name) -> {
             projectSpaces.put(name, projectSpaceManagerFactory.create(projectSpaceToAdd));
-            return ProjectSpaceId.of(name, projectSpaceToAdd.getLocation());
+            return ProjectId.of(name, projectSpaceToAdd.getLocation());
         });
     }
 
-    public ProjectSpaceId createProjectSpace(Path location) throws IOException {
+    public ProjectId createProjectSpace(Path location) throws IOException {
         return createProjectSpace(location.getFileName().toString(), location);
     }
 
-    public ProjectSpaceId createProjectSpace(@NotNull String nameSuggestion, @NotNull Path location) throws IOException {
+    public ProjectId createProjectSpace(@NotNull String nameSuggestion, @NotNull Path location) throws IOException {
         if (Files.exists(location) && !(Files.isDirectory(location) && FileUtils.listAndClose(location, s -> s.findAny().isEmpty())))
             throw new IllegalArgumentException("Location '" + location.toAbsolutePath() +
                     "' already exists and is not an empty directory. Cannot create new project space here.");
@@ -201,7 +201,7 @@ public class SiriusContext implements DisposableBean {
                     new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createNewProjectSpace(location));
 
             projectSpaces.put(name, project);
-            return ProjectSpaceId.of(name, location);
+            return ProjectId.of(name, location);
         } finally {
             projectSpaceLock.writeLock().unlock();
         }
@@ -218,12 +218,12 @@ public class SiriusContext implements DisposableBean {
         }
     }
 
-    public ProjectSpaceId createTemporaryProjectSpace() throws IOException {
+    public ProjectId createTemporaryProjectSpace() throws IOException {
         return ensureUniqueName("temporary", (name) -> {
             try {
                 SiriusProjectSpace space = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createTemporaryProjectSpace();
                 projectSpaces.put(name, projectSpaceManagerFactory.create(space));
-                return ProjectSpaceId.of(name, space.getLocation());
+                return ProjectId.of(name, space.getLocation());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
