@@ -20,7 +20,7 @@
 
 package de.unijena.bioinf.chemdb;
 
-import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.chemdb.nitrite.ChemicalNitriteDatabase;
@@ -36,64 +36,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Iterator;
+import java.util.Collection;
 import java.util.Map;
-import java.util.stream.StreamSupport;
+import java.util.stream.Stream;
 
 public class ChemicalNoSQLDBs extends SpectralNoSQLDBs {
-
-    private static class FlatmapIterable<K, V> implements Iterable<Pair<K, V>> {
-
-        final Map<K, Iterable<V>> source;
-
-        private FlatmapIterable(Map<K, Iterable<V>> source) {
-            this.source = source;
-        }
-
-        @NotNull
-        @Override
-        public Iterator<Pair<K, V>> iterator() {
-            return new FlatmapIterator();
-        }
-
-        private class FlatmapIterator implements Iterator<Pair<K, V>> {
-
-        K key;
-        Iterator<K> keyIt;
-        Iterator<V> valueIt;
-
-            public FlatmapIterator() {
-                this.key = null;
-                this.keyIt = source.keySet().iterator();
-                this.valueIt = null;
-            }
-
-            @Override
-            public boolean hasNext() {
-                if (valueIt == null || !valueIt.hasNext()) {
-                    if (keyIt.hasNext()) {
-                        key = keyIt.next();
-                        valueIt = source.get(key).iterator();
-                    } else {
-                        key = null;
-                        valueIt = null;
-                    }
-                }
-                if (valueIt == null)
-                    return false;
-                return valueIt.hasNext();
-            }
-
-            @Override
-            public Pair<K, V> next() {
-                if (valueIt == null)
-                    return Pair.of(null, null);
-                return Pair.of(key, valueIt.next());
-            }
-
-        }
-
-    }
 
     public static AbstractChemicalDatabase getLocalChemDB(Path file) throws IOException {
         return new ChemicalNitriteDatabase(file);
@@ -105,7 +52,7 @@ public class ChemicalNoSQLDBs extends SpectralNoSQLDBs {
 
     public static void importCompoundsAndFingerprintsLazy(
             @NotNull Database<?> database,
-            @NotNull Map<MolecularFormula, Iterable<FingerprintCandidate>> candidates,
+            @NotNull Map<MolecularFormula, ? extends Collection<FingerprintCandidate>> candidates,
             @Nullable Iterable<Ms2ReferenceSpectrum> spectra,
             @NotNull String dbDate, @Nullable String dbFlavor, int fpId,
             int chunkSize
@@ -117,8 +64,10 @@ public class ChemicalNoSQLDBs extends SpectralNoSQLDBs {
                 database.insert(SpectralNoSQLDatabase.Tag.of(ChemDbTags.TAG_FLAVOR, dbFlavor));
             database.insert(SpectralNoSQLDatabase.Tag.of(ChemDbTags.TAG_FP_ID, String.valueOf(fpId)));
 
-            StreamSupport.stream(Iterables.partition(new FlatmapIterable<>(candidates), chunkSize).spliterator(), false)
-                    .forEach(chunk -> {
+            Stream<Pair<MolecularFormula, FingerprintCandidate>> pairs = candidates.entrySet().stream().flatMap(e -> e.getValue().stream().map(c -> Pair.of(e.getKey(), c)));
+
+            Iterators.partition(pairs.iterator(), chunkSize).forEachRemaining(
+                    chunk -> {
                         try {
                             //candidates
                             database.insertAll(chunk.stream().map(c -> FingerprintCandidateWrapper.of(c.getLeft(), c.getRight())).toList());
