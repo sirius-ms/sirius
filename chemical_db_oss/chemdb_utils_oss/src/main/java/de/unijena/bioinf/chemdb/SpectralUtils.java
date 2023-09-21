@@ -22,6 +22,7 @@ package de.unijena.bioinf.chemdb;
 
 import com.google.common.collect.Iterables;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
+import de.unijena.bioinf.ChemistryBase.chem.InChIs;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.ms.*;
@@ -115,24 +116,35 @@ public class SpectralUtils {
     public static List<Ms2ReferenceSpectrum> validateSpectra(List<Ms2ReferenceSpectrum> data) {
         return data.stream().filter(reference -> {
             if (reference.getSmiles() == null && reference.getCandidateInChiKey() == null) {
-                LOGGER.warn(reference.getName() + " has no SMILES or InChI key.");
+                LOGGER.error(reference.getName() + " has no SMILES or InChI key.");
             } else if (reference.getSmiles() == null) {
                 try {
                     reference.setSmiles(InChISMILESUtils.getSmiles(InChISMILESUtils.getAtomContainerFromInchi(reference.getCandidateInChiKey())));
                 } catch (CDKException e) {
                     LOGGER.error(reference.getName() + " has malformed InChi key.", e);
+                    return false;
                 }
             } else if (reference.getCandidateInChiKey() == null) {
                 try {
                     reference.setCandidateInChiKey(InChISMILESUtils.getInchiFromSmiles(reference.getSmiles(), false).key2D());
                 } catch (CDKException e) {
                     LOGGER.error(reference.getName() + " has malformed SMILES.", e);
+                    return false;
+                }
+            } else if (!InChIs.isInchiKey(reference.getCandidateInChiKey())) {
+                try {
+                    LOGGER.error(reference.getName() + " has malformed InChI key, trying to replace.");
+                    reference.setCandidateInChiKey(InChISMILESUtils.getInchiFromSmiles(reference.getSmiles(), false).key2D());
+                } catch (CDKException e) {
+                    LOGGER.error(reference.getName() + " has malformed SMILES.", e);
+                    return false;
                 }
             }
             if (reference.getPrecursorIonType() == null) {
-                LOGGER.warn(reference.getName() + " has no precursor ion type.");
+                LOGGER.error(reference.getName() + " has no precursor ion type.");
+                return false;
             }
-            return reference.getSmiles() != null && reference.getCandidateInChiKey() != null && reference.getPrecursorIonType() != null;
+            return reference.getSmiles() != null && reference.getCandidateInChiKey() != null;
         }).map(reference -> {
             if (reference.getFormula() == null) {
                 try {
