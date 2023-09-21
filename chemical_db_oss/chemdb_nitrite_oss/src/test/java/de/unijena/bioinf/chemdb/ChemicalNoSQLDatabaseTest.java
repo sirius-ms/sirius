@@ -74,7 +74,7 @@ public class ChemicalNoSQLDatabaseTest {
     public static void importData() throws IOException {
 
         ChemicalBlobDatabase<?> source = new ChemicalBlobDatabase<>(new FileBlobStorage(Path.of("src/test/resources/test-blob-db").toAbsolutePath()));
-        Map<MolecularFormula, Iterable<FingerprintCandidate>> candidates = new HashMap<>();
+        Map<MolecularFormula, List<FingerprintCandidate>> candidates = new HashMap<>();
         for (MolecularFormula formula : source.formulas)
             candidates.put(formula, source.lookupStructuresAndFingerprintsByFormula(formula));
 
