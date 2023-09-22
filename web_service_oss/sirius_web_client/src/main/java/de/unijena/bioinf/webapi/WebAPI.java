@@ -27,8 +27,6 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.LoginException;
@@ -57,6 +55,8 @@ import de.unijena.bioinf.ms.rest.model.fingerid.TrainingData;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.ms.rest.model.license.SubscriptionConsumables;
+import de.unijena.bioinf.ms.rest.model.msnovelist.MsNovelistJobInput;
+import de.unijena.bioinf.ms.rest.model.msnovelist.MsNovelistJobOutput;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.webapi.WebJJob;
 import de.unijena.bioinf.rest.ConnectionError;
@@ -70,7 +70,6 @@ import javax.annotation.concurrent.ThreadSafe;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Date;
-import java.util.EnumSet;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -166,6 +165,19 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
         return applyStructureDB(filter, SearchableDatabases.getWebDatabaseCacheStorage(), doWithClient);
     }
 
+    //endregion
+
+    //region MsNovelist
+    default WebJJob<MsNovelistJobInput, ?, MsNovelistJobOutput, ?> submitMsNovelistJob(MolecularFormula formula, int charge, ProbabilityFingerprint fingerprint, @Nullable Integer countingHash) throws IOException {
+        return submitMsNovelistJob(formula, fingerprint, (charge > 0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_NEGATIVE), countingHash);
+    }
+
+    default WebJJob<MsNovelistJobInput, ?, MsNovelistJobOutput, ?> submitMsNovelistJob(MolecularFormula formula, ProbabilityFingerprint fingerprint, PredictorType type, @Nullable Integer countingHash) throws IOException {
+        return submitMsNovelistJob(new MsNovelistJobInput(formula.toString(), fingerprint.toProbabilityArrayBinary(), type), countingHash);
+    }
+
+
+    WebJJob<MsNovelistJobInput, ?, MsNovelistJobOutput, ?> submitMsNovelistJob(MsNovelistJobInput input, @Nullable Integer countingHash) throws IOException;
     //endregion
 
     //region Canopus
