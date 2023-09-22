@@ -24,7 +24,6 @@ import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
-import de.unijena.bioinf.babelms.descriptor.DescriptorRegistry;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -39,8 +38,6 @@ public class FragmentationTree {
     FragmentNode root;
 
     public static FragmentationTree fromFtree(FTree sourceTree) {
-        DescriptorRegistry registry = DescriptorRegistry.getInstance();
-
         final FragmentationTree tree = new FragmentationTree();
         Map<Integer, FragmentNode> fragmentNodes = new HashMap<>();
         List<LossEdge> lossEdges = new ArrayList<>();

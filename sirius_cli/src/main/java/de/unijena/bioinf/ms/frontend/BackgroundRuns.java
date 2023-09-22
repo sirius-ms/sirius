@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -42,11 +42,12 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 
 /**
- * Manage and execute command line (toolchain) runs in the background just if you had started it via the CLI.
+ * Manage and execute command line (toolchain) runs in the background as if you would have started it via the CLI.
  * Can be used to run the CLI tools from a GUI or a high level API
- * It runs the tool through the command line parser to that we can profit from the CLI parameter validation.
+ * It runs the tool through the command line parser and performs the CLI parameter validation.
  */
 public final class BackgroundRuns {
     private static final AtomicBoolean AUTOREMOVE = new AtomicBoolean(PropertyManager.getBoolean("de.unijena.bioinf.sirius.BackgroundRuns.autoremove", true));
@@ -154,6 +155,14 @@ public final class BackgroundRuns {
         return SiriusJobs.getGlobalJobManager().submitJob(makeBackgroundRun(command, instances, toImport, project));
     }
 
+    public static <P extends ProjectSpaceManager<I>, I extends Instance> BackgroundRunJob<P, I> runJob(
+            @Nullable Iterable<I> instances, @NotNull P project, BiConsumer<Iterable<I>, P> task
+    ) {
+        Workflow computation = () -> task.accept(instances == null ? project : instances, project);
+        return SiriusJobs.getGlobalJobManager().submitJob(
+                new BackgroundRunJob<>(computation, project, instances, RUN_COUNTER.incrementAndGet(), null)
+        );
+    }
 
     private static <P extends ProjectSpaceManager<I>, I extends Instance> Workflow makeWorkflow(
             List<String> command, ComputeRootOption<P, I> rootOptions) throws IOException {
@@ -180,7 +189,7 @@ public final class BackgroundRuns {
         @Nullable
         private List<CompoundContainerId> instanceIds;
 
-        @Deprecated(forRemoval = true) //needed until GUI works with rest API
+        @Deprecated(forRemoval = true) //todo needed until GUI works with rest API
         private BackgroundRunJob(@NotNull Workflow computation, @NotNull P project, @Nullable Iterable<I> instances, int runId, String command) {
             super(JobType.SCHEDULER);
             this.runId = runId;

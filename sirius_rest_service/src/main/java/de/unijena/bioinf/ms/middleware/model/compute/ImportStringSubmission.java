@@ -20,51 +20,59 @@
 
 package de.unijena.bioinf.ms.middleware.model.compute;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 
 /**
- * Identifier created by the SIRIUS Nightsky API for a newly created Job.
- * Object can be enriched with Job status/progress information ({@link JobProgress}) and/or Job command information.
+ * Parameter Object to submit a job that imports ms/ms data from the given format into the specified project
+ * Supported formats (ms, mgf, cef, msp, mzML, mzXML)
  */
 @Getter
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class JobId {
-    public enum OptFields {command, progress, affectedIds}
+@JsonIgnoreProperties(ignoreUnknown = true)
+@NoArgsConstructor
+public class ImportStringSubmission extends ImportSubmission {
+    public enum Format {
+        MS("ms"),
+        MGF("mgf"),
+        MZML("mzml"),
+        MZXML("mzxml"),
+        CEF("cef"),
+        MSP("msp"),
+        MAT("mat"),
+        MASSBANK("txt");
+
+        private final String ext;
+
+        Format(String ext) {
+            this.ext = ext;
+        }
+
+        public String getExtension() {
+            return ext;
+        }
+    }
 
     /**
-     * Unique identifier to access the job via the API
-     */
-    String id;
-    /**
-     * Command string of the executed Task
+     * Name that specifies the data source. Can e.g. be a file path  or just a name.
      */
     @Nullable
-    String command;
-
+    protected String sourceName;
     /**
-     * Optional progress information of this job
+     * Data format used in the data field.
      */
-    @Nullable
-    JobProgress progress;
-
+    @NotNull
+    protected Format format;
     /**
-     * List of compoundIds that are affected by this job.
-     * This lis will also contain compoundIds where not all features of the compound are affected by the job.
-     * If this job is creating compounds (e.g. data import jobs) this value will be NULL until the jobs has finished
+     * Data content in specified format
      */
-    @Nullable
-    List<String> affectedCompoundIds;
-
-    /**
-     * List of alignFeatureIds that are affected by this job.
-     * If this job is creating features (e.g. data import jobs) this value will be NULL until the jobs has finished
-     */
-    @Nullable
-    List<String> affectedAlignFeatureIds;
+    @NotNull
+    protected String data;
 }
