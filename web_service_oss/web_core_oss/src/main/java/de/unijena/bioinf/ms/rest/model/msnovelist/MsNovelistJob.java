@@ -21,10 +21,7 @@
 package de.unijena.bioinf.ms.rest.model.msnovelist;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import de.unijena.bioinf.ms.rest.model.Job;
-import de.unijena.bioinf.ms.rest.model.JobState;
-import de.unijena.bioinf.ms.rest.model.JobTable;
-import de.unijena.bioinf.ms.rest.model.JobUpdate;
+import de.unijena.bioinf.ms.rest.model.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.jdbi.v3.json.Json;
@@ -35,7 +32,7 @@ import java.util.List;
 import java.util.Optional;
 @Getter
 @Setter
-public class MsNovelistJob extends Job<MsNovelistJobOutput> {
+public class MsNovelistJob extends JobWithPredictor<MsNovelistJobOutput> {
 
     protected String formula;
     protected byte[] fingerprint; // LITTLE ENDIAN BINARY ENCODED PLATT PROBABILITIES
@@ -51,6 +48,7 @@ public class MsNovelistJob extends Job<MsNovelistJobOutput> {
         setUserID(userID);
         setCid(cid);
         setFormula(input.formula);
+        setPredictors(input.predictor.toBits());
     }
 
     public MsNovelistJob(@NotNull JobUpdate<MsNovelistJobOutput> update) {
