@@ -20,6 +20,8 @@
 package de.unijena.bioinf.ms.middleware;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.auth.AuthService;
+import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.ms.annotations.PrintCitations;
 import de.unijena.bioinf.ms.frontend.BackgroundRuns;
 import de.unijena.bioinf.ms.frontend.Run;
@@ -34,7 +36,10 @@ import de.unijena.bioinf.ms.frontend.subtools.middleware.MiddlewareAppOptions;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
-import de.unijena.bioinf.projectspace.SiriusProjectSpace;
+import de.unijena.bioinf.rest.ProxyManager;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.Banner;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -46,17 +51,17 @@ import org.springframework.boot.web.context.WebServerPortFileWriter;
 import org.springframework.context.ConfigurableApplicationContext;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
 
 @SpringBootApplication
-public class SiriusMiddlewareApplication extends SiriusCLIApplication implements CommandLineRunner {
-    protected static CLIRootOptions rootOptions;
-    protected final SiriusContext context;
-    protected static ConfigurableApplicationContext appContext = null;
+@Slf4j
+public class SiriusMiddlewareApplication extends SiriusCLIApplication implements CommandLineRunner, DisposableBean {
+    private static CLIRootOptions<?, ?> rootOptions;
 
-    public SiriusMiddlewareApplication(SiriusContext context) {
-        this.context = context;
+    public static CLIRootOptions<?, ?> getRootOptions() {
+        return rootOptions;
     }
 
     public static void main(String[] args) {
@@ -67,27 +72,16 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
 
         if (Arrays.stream(args).anyMatch(it ->
                 it.equalsIgnoreCase("asService") ||
-                it.equalsIgnoreCase("rest") ||
-                it.equalsIgnoreCase("-h") ||
-                it.equalsIgnoreCase("--help")
+                        it.equalsIgnoreCase("rest") ||
+                        it.equalsIgnoreCase("-h") ||
+                        it.equalsIgnoreCase("--help")
         )) {
             System.setProperty(APP_TYPE_PROPERTY_KEY, "SERVICE");
             SiriusJobs.enforceClassLoaderGlobally(Thread.currentThread().getContextClassLoader());
             ApplicationCore.DEFAULT_LOGGER.info("Starting Application Core");
 
-            //todo convert to a native spring based approach
+            // todo convert to a native spring based approach
             try {
-                Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                    ApplicationCore.DEFAULT_LOGGER.info("CLI shut down hook: SIRIUS is cleaning up threads and shuts down...");
-                    try {
-                        if (SiriusCLIApplication.RUN != null)
-                            SiriusCLIApplication.RUN.cancel();
-                    } finally {
-                        if (successfulParsed && PropertyManager.DEFAULTS.createInstanceWithDefaults(PrintCitations.class).value)
-                            ApplicationCore.BIBTEX.citeToSystemErr();
-                    }
-                }));
-
                 PropertyManager.setProperty("de.unijena.bioinf.sirius.BackgroundRuns.autoremove", "false");
                 final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
 
@@ -100,10 +94,10 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                 RUN = new Run(new WorkflowBuilder<>(rootOptions, configOptionLoader, BackgroundRuns.getBufferFactory(),
                         List.of(new GuiAppOptions(null), new MiddlewareAppOptions<>())));
                 measureTime("Start Parse args");
-                boolean b = RUN.parseArgs(args);
+                successfulParsed = RUN.parseArgs(args);
                 measureTime("Parse args Done!");
 
-                if (b) {
+                if (successfulParsed) {
                     // decides whether the app runs infinitely
                     WebApplicationType webType = WebApplicationType.NONE;
                     if (RUN.getFlow() instanceof MiddlewareAppOptions.Flow) //run rest service (infinitely)
@@ -120,26 +114,56 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                     SpringApplication app = appBuilder.application();
                     app.addListeners(new ApplicationPidFileWriter(Workspace.WORKSPACE.resolve("sirius.pid").toFile()));
                     app.addListeners(new WebServerPortFileWriter(Workspace.WORKSPACE.resolve("sirius.port").toFile()));
-                    appContext = app.run(args);
+                    ConfigurableApplicationContext appContext = app.run(args);
                     measureTime("Workflow DONE!");
                     System.err.println("SIRIUS Service started successfully!");
                 } else {
-                    System.exit(0); //todo real error codes
+                    System.exit(1); //todo real error codes
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }else {
+        } else {
             SiriusGUIApplication.main(args);
         }
     }
 
 
     @Override
-    public void run(String... args) throws Exception {
-        measureTime("Add PS to servlet Context");
-        final SiriusProjectSpace ps = rootOptions.getProjectSpace().projectSpace();
-        context.addProjectSpace(ps.getLocation().getFileName().toString(), ps);
+    public void run(String... args) {
+        System.out.println("Start Middleware workflow with preprocessing");
         RUN.compute();
+    }
+
+    @Override
+    public void destroy() {
+        System.out.println("SIRIUS context shutdown...");
+        log.info("LOMBOK: SIRIUS is cleaning up threads and shuts down...");
+        LoggerFactory.getLogger(getClass()).info("DEFAULT: SIRIUS is cleaning up threads and shuts down...");
+
+        // ensure that token is not in bad state after shut down.
+        try {
+            AuthService as = ApplicationCore.WEB_API.getAuthService();
+            if (as.isLoggedIn())
+                AuthServices.writeRefreshToken(ApplicationCore.WEB_API.getAuthService(), ApplicationCore.TOKEN_FILE, true);
+            else
+                Files.deleteIfExists(ApplicationCore.TOKEN_FILE);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            ProxyManager.disconnect();
+        }
+
+        ApplicationCore.DEFAULT_LOGGER.info("CLI shut down hook: SIRIUS is cleaning up threads and shuts down...");
+        try {
+            if (RUN != null) {
+                RUN.cancel();
+            }
+        } finally {
+            if (successfulParsed && PropertyManager.DEFAULTS.createInstanceWithDefaults(PrintCitations.class).value)
+                ApplicationCore.BIBTEX.citeToSystemErr();
+        }
+
+        System.out.println("SIRIUS context DONE");
     }
 }

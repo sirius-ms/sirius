@@ -3,47 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
- *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 3 of the License, or (at your option) any later version.
- *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
- *
- *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
- */
-
-/*
- *
- *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
- *
- *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
- *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 3 of the License, or (at your option) any later version.
- *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
- *
- *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
- */
-
-/*
- *
- *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
- *
- *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -64,14 +24,20 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.frontend.core.Workspace;
-import de.unijena.bioinf.ms.middleware.controller.BaseApiController;
-import de.unijena.bioinf.ms.middleware.model.compute.ComputeContext;
+import de.unijena.bioinf.ms.middleware.SiriusContext;
+import de.unijena.bioinf.ms.middleware.model.compute.ImportLocalFilesSubmission;
+import de.unijena.bioinf.ms.middleware.model.compute.ImportStringSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.JobId;
 import de.unijena.bioinf.ms.middleware.model.compute.JobSubmission;
-import de.unijena.bioinf.ms.middleware.model.compute.JobProgress;
+import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
+import de.unijena.bioinf.ms.middleware.service.projects.Project;
+import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.springdoc.api.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -82,19 +48,22 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/api")
 @Tag(name = "Computations", description = "Start, monitor and cancel compute jobs.")
-public class ComputeController extends BaseApiController {
+public class ComputeController {
     public final static String DEFAULT_PARAMETERS = "DEFAULT";
-    ComputeContext computeContext;
-
-    public ComputeController(ComputeContext computeContext) {
-        super(computeContext.siriusContext);
-        this.computeContext = computeContext;
+    private final ComputeService computeService;
+    private final ProjectsProvider projectsProvider;
+    private final SiriusContext siriusContext;
+    public ComputeController(SiriusContext siriusContext, ComputeService<?> computeService, ProjectsProvider<?> projectsProvider) {
+        this.siriusContext = siriusContext;
+        this.computeService = computeService;
+        this.projectsProvider = projectsProvider;
     }
 
 
@@ -102,19 +71,16 @@ public class ComputeController extends BaseApiController {
      * Get job information and its current state and progress (if available).
      *
      * @param projectId                project-space to run jobs on
-     * @param includeState             include {@link JobProgress} states.
-     * @param includeCommand           include job commands.
-     * @param includeAffectedCompounds include list of compound ids affected by this job (if available)
+     * @param optFields                set of optional fields to be included
      */
 
     @GetMapping(value = "/projects/{projectId}/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public List<JobId> getJobs(@PathVariable String projectId,
-                               @RequestParam(required = false, defaultValue = "false") boolean includeState,
-                               @RequestParam(required = false, defaultValue = "false") boolean includeCommand,
-                               @RequestParam(required = false, defaultValue = "false") boolean includeAffectedCompounds
+    public Page<JobId> getJobs(@PathVariable String projectId,
+                               @ParameterObject Pageable pageable,
+                               @RequestParam(defaultValue = "") EnumSet<JobId.OptFields> optFields
     ) {
-        return computeContext.getJobs(projectSpace(projectId), includeState, includeCommand, includeAffectedCompounds);
+        return computeService.getJobs(projectsProvider.getProjectOrThrow(projectId), pageable, optFields);
     }
 
     /**
@@ -122,18 +88,15 @@ public class ComputeController extends BaseApiController {
      *
      * @param projectId                project-space to run jobs on
      * @param jobId                    of the job to be returned
-     * @param includeState             include {@link JobProgress} state.
-     * @param includeCommand           include job command.
-     * @param includeAffectedCompounds include list of compound ids affected by this job (if available)
+     * @param optFields                set of optional fields to be included
      */
     @GetMapping(value = "/projects/{projectId}/jobs/{jobId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public JobId getJob(@PathVariable String projectId, @PathVariable String jobId,
-                        @RequestParam(required = false, defaultValue = "true") boolean includeState,
-                        @RequestParam(required = false, defaultValue = "false") boolean includeCommand,
-                        @RequestParam(required = false, defaultValue = "false") boolean includeAffectedCompounds
+                        @ParameterObject Pageable pageable,
+                        @RequestParam(defaultValue = "progress") EnumSet<JobId.OptFields> optFields
     ) {
-        return computeContext.getJob(projectSpace(projectId), jobId, includeState, includeCommand, includeAffectedCompounds);
+        return computeService.getJob(projectsProvider.getProjectOrThrow(projectId), jobId, optFields);
     }
 
     /**
@@ -141,18 +104,14 @@ public class ComputeController extends BaseApiController {
      *
      * @param projectId                project-space to run jobs on
      * @param jobSubmission            configuration of the job that will be submitted of the job to be returned
-     * @param includeState             include {@link JobProgress} state.
-     * @param includeCommand           include job command.
-     * @param includeAffectedCompounds include list of compound ids affected by this job (if available)
+     * @param optFields                set of optional fields to be included
      */
     @PostMapping(value = "/projects/{projectId}/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.ACCEPTED)
     public JobId startJob(@PathVariable String projectId, @RequestBody JobSubmission jobSubmission,
-                          @RequestParam(required = false, defaultValue = "true") boolean includeState,
-                          @RequestParam(required = false, defaultValue = "true") boolean includeCommand,
-                          @RequestParam(required = false, defaultValue = "false") boolean includeAffectedCompounds
+                          @RequestParam(defaultValue = "command, progress") EnumSet<JobId.OptFields> optFields
     ) {
-        return computeContext.createAndSubmitJob(projectSpace(projectId), jobSubmission, includeState, includeCommand, includeAffectedCompounds);
+        return computeService.createAndSubmitJob(projectsProvider.getProjectOrThrow(projectId), jobSubmission, optFields);
     }
 
 
@@ -163,24 +122,56 @@ public class ComputeController extends BaseApiController {
      * @param jobConfigName            name if the config to be used
      * @param compoundIds              compound ids to be computed
      * @param recompute                enable or disable recompute. If null the stored value will be used.
-     * @param includeState             include {@link JobProgress} state.
-     * @param includeCommand           include job command.
-     * @param includeAffectedCompounds include list of compound ids affected by this job (if available)
+     * @param optFields                set of optional fields to be included
      */
-    @PostMapping(value = "/projects/{projectId}/jobs-from-config", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/projects/{projectId}/jobs/from-config", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.ACCEPTED)
     public JobId startJobFromConfig(@PathVariable String projectId, @RequestParam String jobConfigName, @RequestBody List<String> compoundIds,
                                     @RequestParam(required = false) @Nullable Boolean recompute,
-                                    @RequestParam(required = false, defaultValue = "true") boolean includeState,
-                                    @RequestParam(required = false, defaultValue = "true") boolean includeCommand,
-                                    @RequestParam(required = false, defaultValue = "false") boolean includeAffectedCompounds
+                                    @RequestParam(defaultValue = "command, progress") EnumSet<JobId.OptFields> optFields
     ) {
         final JobSubmission js = getJobConfig(jobConfigName, true);
         js.setCompoundIds(compoundIds);
         if (recompute != null)
             js.setRecompute(recompute);
 
-        return computeContext.createAndSubmitJob(projectSpace(projectId), js, includeState, includeCommand, includeAffectedCompounds);
+        return computeService.createAndSubmitJob(projectsProvider.getProjectOrThrow(projectId), js, optFields);
+    }
+
+    /**
+     * Import ms/ms data in given format from local filesystem into the specified project.
+     * The import will run in a background job
+     * Possible formats (ms, mgf, cef, msp, mzML, mzXML, project-space)
+     * <p>
+     *
+     * @param projectId         project-space to import into.
+     * @param jobSubmission     configuration of the job that will be submitted
+     * @param optFields         set of optional fields to be included
+     * @return JobId of background job that imports given run/compounds/features.
+     */
+    @PostMapping(value = "/{projectId}/jobs/import-from-local-path", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    public JobId startImportFromPathJob(@PathVariable String projectId, @RequestBody ImportLocalFilesSubmission jobSubmission,
+                                        @RequestParam(defaultValue = "command, progress") EnumSet<JobId.OptFields> optFields
+    ) throws IOException {
+        Project p = projectsProvider.getProjectOrThrow(projectId);
+        return computeService.createAndSubmitImportJob(p, jobSubmission, optFields);
+    }
+
+    /**
+     * Import ms/ms data from the given format into the specified project-space
+     * Possible formats (ms, mgf, cef, msp, mzML, mzXML)
+     *
+     * @param projectId         project-space to import into.
+     * @param jobSubmission     configuration of the job that will be submitted
+     * @param optFields         set of optional fields to be included
+     * @return CompoundIds of the imported run/compounds/feature.
+     */
+    @PostMapping(value = "/{projectId}/jobs/import-from-string", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.TEXT_PLAIN_VALUE)
+    public JobId startImportFromStringJob(@PathVariable String projectId, @RequestBody ImportStringSubmission jobSubmission,
+                                          @RequestParam(defaultValue = "progress") EnumSet<JobId.OptFields> optFields
+    ) throws IOException {
+        Project p = projectsProvider.getProjectOrThrow(projectId);
+        return computeService.createAndSubmitImportJob(p, jobSubmission, optFields);
     }
 
     /**
@@ -199,7 +190,8 @@ public class ComputeController extends BaseApiController {
                           @PathVariable String jobId,
                           @RequestParam(required = false, defaultValue = "true") boolean cancelIfRunning,
                           @RequestParam(required = false, defaultValue = "true") boolean awaitDeletion) {
-        computeContext.deleteJob(projectSpace(projectId), jobId, false, false, false, cancelIfRunning, awaitDeletion);
+        computeService.deleteJob(projectsProvider.getProjectOrThrow(projectId), jobId, cancelIfRunning, awaitDeletion,
+                EnumSet.noneOf(JobId.OptFields.class));
     }
 
     /**

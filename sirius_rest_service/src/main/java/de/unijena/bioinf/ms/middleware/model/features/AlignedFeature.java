@@ -39,6 +39,7 @@
 
 package de.unijena.bioinf.ms.middleware.model.features;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.CompoundQuality;
 import de.unijena.bioinf.ms.middleware.model.features.annotations.Annotations;
@@ -55,6 +56,7 @@ import java.util.EnumSet;
  */
 @Getter
 @Setter
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class AlignedFeature {
     public enum OptFields {topAnnotations, msData, qualityFlags, lcmsFeatureQuality}
 

@@ -21,6 +21,7 @@
 
 package de.unijena.bioinf.ms.middleware.model.features.annotations;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
@@ -45,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 @Setter
 @AllArgsConstructor
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class FormulaCandidate {
     public enum OptFields {statistics, fragmentationTree, simulatedIsotopePattern, predictedFingerprint, compoundClasses, canopusPredictions};
 

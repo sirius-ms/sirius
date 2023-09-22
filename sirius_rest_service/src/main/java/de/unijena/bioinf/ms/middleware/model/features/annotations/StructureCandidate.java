@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.model.features.annotations;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
@@ -36,6 +37,7 @@ import java.util.List;
 
 @Getter
 @Setter
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class StructureCandidate {
     public enum OptFields {fingerprint, dbLinks, refSpectraLinks, pubmedIds}
 
