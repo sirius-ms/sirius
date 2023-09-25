@@ -39,6 +39,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -92,6 +93,14 @@ public abstract class AbstractClient {
         } else {
             this.serverUrl = serverUrl;
         }
+    }
+
+    /**
+     *
+     * @return Unmodifiable list of requestDecorators
+     */
+    public List<IOFunctions.IOConsumer<Request.Builder>> getRequestDecorators() {
+        return Collections.unmodifiableList(requestDecorators);
     }
 
     public URI getServerUrl() {
