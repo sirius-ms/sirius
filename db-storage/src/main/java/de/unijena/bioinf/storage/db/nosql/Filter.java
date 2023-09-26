@@ -20,9 +20,6 @@
 
 package de.unijena.bioinf.storage.db.nosql;
 
-import org.dizitart.no2.NitriteId;
-import org.dizitart.no2.objects.ObjectRepository;
-
 import javax.validation.constraints.NotNull;
 import java.util.ArrayDeque;
 import java.util.Arrays;
