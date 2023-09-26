@@ -222,11 +222,11 @@ public class ChemicalNoSQLDatabaseTest {
 
     @Test
     public void testIndexFilter() throws IOException {
-        List<FingerprintCandidateWrapper> candidates = chemDb.getStorage().findStr(new Filter().gt("mass", 0), FingerprintCandidateWrapper.class).toList();
+        List<FingerprintCandidateWrapper> candidates = chemDb.getStorage().findStr(new Filter().gt("mass", 0.0), FingerprintCandidateWrapper.class).toList();
         assertEquals(21, candidates.size());
-        candidates = chemDb.getStorage().findStr(new Filter().gt("mass", 9999), FingerprintCandidateWrapper.class).toList();
+        candidates = chemDb.getStorage().findStr(new Filter().gt("mass", 9999.0), FingerprintCandidateWrapper.class).toList();
         assertTrue(candidates.isEmpty());
-        candidates = chemDb.getStorage().findStr(new Filter().gt("mass", 500), FingerprintCandidateWrapper.class).toList();
+        candidates = chemDb.getStorage().findStr(new Filter().gt("mass", 500.0), FingerprintCandidateWrapper.class).toList();
         assertEquals(2, candidates.size());
     }
 
