@@ -393,7 +393,9 @@ public class CustomDatabaseImporter {
         List<FingerprintCandidateWrapper> toAdd = new ArrayList<>();
 
         WebWithCustomDatabase.mergeCompounds(
-                Stream.concat(alreadyExisting.stream().map(FingerprintCandidateWrapper::getCandidate), value.stream()).toList()
+                Stream.concat(alreadyExisting.stream()
+                        .map(FingerprintCandidateWrapper::getFingerprintCandidate), value.stream())
+                        .toList()
         ).forEach(fc -> {
             if (alreadyExistingMap.containsKey(fc.getInchiKey2D())) {
                 FingerprintCandidateWrapper fcw = alreadyExistingMap.get(fc.getInchiKey2D());
