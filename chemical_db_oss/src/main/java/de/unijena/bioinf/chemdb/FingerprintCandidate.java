@@ -23,10 +23,8 @@
 package de.unijena.bioinf.chemdb;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.FPIter;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 
@@ -51,24 +49,12 @@ public class FingerprintCandidate extends CompoundCandidate {
         return fingerprint;
     }
 
-    public Double getTanimoto() {
-        return tanimoto;
-    }
-
-    public void setTanimoto(Double tanimoto) {
-        this.tanimoto = tanimoto;
-    }
-
     public void setFingerprint(Fingerprint fp) {
         this.fingerprint = fp;
     }
 
     public CompoundCandidate toCompoundCandidate(){
         return new CompoundCandidate(this);
-    }
-
-    public FormulaCandidate toFormulaCandidate(PrecursorIonType ionization){
-        return new FormulaCandidate(inchi.extractFormulaOrThrow(), ionization ,bitset);
     }
 
     public static class Serializer extends BaseSerializer<FingerprintCandidate> {
