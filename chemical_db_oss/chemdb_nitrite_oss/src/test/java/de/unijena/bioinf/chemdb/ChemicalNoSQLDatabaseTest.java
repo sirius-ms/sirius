@@ -29,6 +29,7 @@ import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintWrapper;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.storage.blob.file.FileBlobStorage;
+import de.unijena.bioinf.storage.db.nosql.Filter;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -197,4 +198,15 @@ public class ChemicalNoSQLDatabaseTest {
     public void annotateCompoundsTest() throws ChemicalDatabaseException {
         chemDb.annotateCompounds(List.of());
     }
+
+    @Test
+    public void testIndexFilter() throws IOException {
+        List<FingerprintCandidateWrapper> candidates = chemDb.getStorage().findStr(new Filter().gt("mass", 0.0), FingerprintCandidateWrapper.class).toList();
+        assertEquals(21, candidates.size());
+        candidates = chemDb.getStorage().findStr(new Filter().gt("mass", 9999.0), FingerprintCandidateWrapper.class).toList();
+        assertTrue(candidates.isEmpty());
+        candidates = chemDb.getStorage().findStr(new Filter().gt("mass", 500.0), FingerprintCandidateWrapper.class).toList();
+        assertEquals(2, candidates.size());
+    }
+
 }
