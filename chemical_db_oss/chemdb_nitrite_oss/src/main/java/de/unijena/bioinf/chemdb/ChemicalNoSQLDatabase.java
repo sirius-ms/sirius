@@ -141,11 +141,6 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
     }
 
     @Override
-    public List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
-        return this.lookupFingerprintsByInchis(inchi_keys);
-    }
-
-    @Override
     public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws ChemicalDatabaseException {
         Iterable<String> inchiIt = () -> {
             Iterator<CompoundCandidate> it = compounds.iterator();

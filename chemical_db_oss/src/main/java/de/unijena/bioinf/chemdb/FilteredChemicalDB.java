@@ -102,11 +102,6 @@ public class FilteredChemicalDB<DB extends AbstractChemicalDatabase> implements 
     }
 
     @Override
-    public List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
-        return wrappedDB.lookupManyFingerprintsByInchis(inchi_keys);
-    }
-
-    @Override
     public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws ChemicalDatabaseException {
         return wrappedDB.lookupFingerprintsByInchi(compounds);
     }
