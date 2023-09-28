@@ -494,11 +494,6 @@ public class ChemicalDatabase implements FilterableChemicalDatabase, PooledDB<Co
         }
     }
 
-    @Override
-    public List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
-        return lookupFingerprintsByInchis(inchi_keys);
-    }
-
     public void createDatabaseDump(long flag, File file){
         try {
             BufferedWriter write = new BufferedWriter(new FileWriter(file));
