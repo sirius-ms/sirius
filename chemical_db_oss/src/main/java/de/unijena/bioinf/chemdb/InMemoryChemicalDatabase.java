@@ -183,13 +183,6 @@ public class InMemoryChemicalDatabase implements AbstractChemicalDatabase {
     }
 
     @Override
-    public List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
-        return lookupManyFingerprintsByInchis(inchi_keys);
-
-
-    }
-
-    @Override
     public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws ChemicalDatabaseException {
         final ArrayList<FingerprintCandidate> candidates = new ArrayList<>();
         for (CompoundCandidate key : compounds)
