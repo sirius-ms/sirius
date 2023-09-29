@@ -373,8 +373,8 @@ public class CustomDatabaseImporter {
             synchronized (database) {
                 if (database instanceof BlobCustomDatabase<?>) {
                     mergeAndWriteCompoundsBlob(key, value, (BlobCustomDatabase<?>) database);
-                } else if (database instanceof NoSQLCustomDatabase<?>){
-                    mergeAndWriteCompoundsNoSQL(key, value, (NoSQLCustomDatabase<?>) database);
+                } else if (database instanceof NoSQLCustomDatabase<?, ?>){
+                    mergeAndWriteCompoundsNoSQL(key, value, (NoSQLCustomDatabase<?, ?>) database);
                 } else {
                     throw new IllegalArgumentException();
                 }
@@ -384,7 +384,7 @@ public class CustomDatabaseImporter {
         }
     }
 
-    private void mergeAndWriteCompoundsNoSQL(MolecularFormula key, final Collection<FingerprintCandidate> value, NoSQLCustomDatabase<?> database) throws IOException {
+    private void mergeAndWriteCompoundsNoSQL(MolecularFormula key, final Collection<FingerprintCandidate> value, NoSQLCustomDatabase<?, ?> database) throws IOException {
         final List<FingerprintCandidateWrapper> alreadyExisting = database.database.getStorage().findStr(new Filter().eq("formula", key.toString()), FingerprintCandidateWrapper.class, "candidate").toList();
         Map<String, FingerprintCandidateWrapper> alreadyExistingMap = new HashMap<>();
         alreadyExisting.forEach(fcw -> alreadyExistingMap.put(fcw.getCandidate().getInchiKey2D(), fcw));
@@ -422,9 +422,9 @@ public class CustomDatabaseImporter {
                 Stream.concat(alreadyExisting.stream(), value.stream()).collect(Collectors.toList()));
 
         database.storage.withWriter(path, w -> CompoundCandidate.toJSONList(finalList, w));
-        database.getStatistics().compounds().addAndGet(finalList.size() - alreadyExisting.size());
-        if (alreadyExisting.isEmpty() && !finalList.isEmpty())
-            database.getStatistics().formulas().incrementAndGet();
+//        database.getStatistics().compounds().addAndGet(finalList.size() - alreadyExisting.size());
+//        if (alreadyExisting.isEmpty() && !finalList.isEmpty())
+//            database.getStatistics().formulas().incrementAndGet();
     }
 
     private void checkCancellation() {

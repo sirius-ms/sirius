@@ -738,4 +738,15 @@ public class ChemicalDatabase implements FilterableChemicalDatabase, PooledDB<Co
     public String getChemDbDate() throws ChemicalDatabaseException{
         return PropertyManager.getProperty("de.unijena.bioinf.fingerid.db.psqlDbDate");
     }
+
+    @Override
+    public long countAllFingerprints() throws ChemicalDatabaseException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public long countAllFormulas() throws ChemicalDatabaseException {
+        throw new UnsupportedOperationException();
+    }
+
 }
