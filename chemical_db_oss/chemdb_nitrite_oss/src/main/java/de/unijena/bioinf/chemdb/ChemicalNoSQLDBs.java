@@ -27,6 +27,7 @@ import de.unijena.bioinf.chemdb.nitrite.ChemicalNitriteDatabase;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
 import de.unijena.bioinf.spectraldb.SpectralNoSQLDBs;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
+import de.unijena.bioinf.storage.db.nosql.Database;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,9 +57,9 @@ public class ChemicalNoSQLDBs extends SpectralNoSQLDBs {
             int chunkSize
     ) throws ChemicalDatabaseException {
         try {
-            insertTags(database, dbDate, dbFlavor, fpId);
+            insertTags(database.getStorage(), dbDate, dbFlavor, fpId);
 
-            importCandidates(database, candidates, chunkSize);
+            importCandidates(database.getStorage(), candidates, chunkSize);
 
             if (spectra != null)
                 importSpectra(database, spectra, chunkSize);
@@ -70,7 +71,7 @@ public class ChemicalNoSQLDBs extends SpectralNoSQLDBs {
         }
     }
 
-    private static void importCandidates(@NotNull ChemicalNoSQLDatabase<?> database, @NotNull Map<MolecularFormula, ? extends Collection<FingerprintCandidate>> candidates, int chunkSize) {
+    private static void importCandidates(@NotNull Database<?> database, @NotNull Map<MolecularFormula, ? extends Collection<FingerprintCandidate>> candidates, int chunkSize) {
         Stream<FingerprintCandidateWrapper> candidateWrappers = candidates.entrySet().stream()
                 .flatMap(e -> e.getValue().stream().map(c -> FingerprintCandidateWrapper.of(e.getKey(), c)));
 
@@ -84,7 +85,7 @@ public class ChemicalNoSQLDBs extends SpectralNoSQLDBs {
                 });
     }
 
-    private static void insertTags(ChemicalNoSQLDatabase<?> database, @NotNull String dbDate, @Nullable String dbFlavor, int fpId) throws IOException {
+    private static void insertTags(Database<?> database, @NotNull String dbDate, @Nullable String dbFlavor, int fpId) throws IOException {
         database.insert(ChemicalNoSQLDatabase.Tag.of(ChemDbTags.TAG_DATE, dbDate));
         if (dbFlavor != null && !dbFlavor.isBlank())
             database.insert(ChemicalNoSQLDatabase.Tag.of(ChemDbTags.TAG_FLAVOR, dbFlavor));
