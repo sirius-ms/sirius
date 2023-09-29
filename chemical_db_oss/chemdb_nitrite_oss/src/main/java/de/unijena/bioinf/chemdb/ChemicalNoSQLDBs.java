@@ -25,11 +25,8 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.chemdb.nitrite.ChemicalNitriteDatabase;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
-import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintWrapper;
 import de.unijena.bioinf.spectraldb.SpectralNoSQLDBs;
-import de.unijena.bioinf.spectraldb.SpectralNoSQLDatabase;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
-import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +35,8 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Map;
 import java.util.stream.Stream;
+
+import static de.unijena.bioinf.chemdb.SpectralUtils.importSpectra;
 
 public class ChemicalNoSQLDBs extends SpectralNoSQLDBs {
 
@@ -49,39 +48,47 @@ public class ChemicalNoSQLDBs extends SpectralNoSQLDBs {
         return new ChemicalNitriteDatabase(file, version);
     }
 
-    public static void importCompoundsAndFingerprintsLazy(
-            @NotNull SpectralNoSQLDatabase<?> database,
+    public static void importCandidatesAndSpectra(
+            @NotNull ChemicalNoSQLDatabase<?> database,
             @NotNull Map<MolecularFormula, ? extends Collection<FingerprintCandidate>> candidates,
             @Nullable Iterable<Ms2ReferenceSpectrum> spectra,
             @NotNull String dbDate, @Nullable String dbFlavor, int fpId,
             int chunkSize
     ) throws ChemicalDatabaseException {
         try {
-            if (database instanceof WriteableChemicalDatabase) {
-                ((WriteableChemicalDatabase) database).updateTags(dbFlavor, fpId);
-            }
+            insertTags(database, dbDate, dbFlavor, fpId);
 
-            Stream<Pair<MolecularFormula, FingerprintCandidate>> pairs = candidates.entrySet().stream().flatMap(e -> e.getValue().stream().map(c -> Pair.of(e.getKey(), c)));
+            importCandidates(database, candidates, chunkSize);
 
-            Iterators.partition(pairs.iterator(), chunkSize).forEachRemaining(
-                    chunk -> {
-                        try {
-                            //candidates
-                            database.getStorage().insertAll(chunk.stream().map(c -> FingerprintCandidateWrapper.of(c.getLeft(), c.getRight())).toList());
-                            //fingerprints
-                            database.getStorage().insertAll(chunk.stream().map(c -> FingerprintWrapper.of(c.getRight())).toList());
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-
-            //spectra
             if (spectra != null)
-                SpectralUtils.importSpectra(database, spectra, chunkSize);
+                importSpectra(database, spectra, chunkSize);
+
         } catch (RuntimeException e) {
             throw new ChemicalDatabaseException(e.getCause());
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }
+    }
+
+    private static void importCandidates(@NotNull ChemicalNoSQLDatabase<?> database, @NotNull Map<MolecularFormula, ? extends Collection<FingerprintCandidate>> candidates, int chunkSize) {
+        Stream<FingerprintCandidateWrapper> candidateWrappers = candidates.entrySet().stream()
+                .flatMap(e -> e.getValue().stream().map(c -> FingerprintCandidateWrapper.of(e.getKey(), c)));
+
+        Iterators.partition(candidateWrappers.iterator(), chunkSize).forEachRemaining(
+                chunk -> {
+                    try {
+                        database.insertAll(chunk);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+    }
+
+    private static void insertTags(ChemicalNoSQLDatabase<?> database, @NotNull String dbDate, @Nullable String dbFlavor, int fpId) throws IOException {
+        database.insert(ChemicalNoSQLDatabase.Tag.of(ChemDbTags.TAG_DATE, dbDate));
+        if (dbFlavor != null && !dbFlavor.isBlank())
+            database.insert(ChemicalNoSQLDatabase.Tag.of(ChemDbTags.TAG_FLAVOR, dbFlavor));
+        database.insert(ChemicalNoSQLDatabase.Tag.of(ChemDbTags.TAG_FP_ID, String.valueOf(fpId)));
+
     }
 }

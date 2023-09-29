@@ -20,7 +20,11 @@
 
 package de.unijena.bioinf.chemdb.nitrite.wrappers;
 
+import de.unijena.bioinf.ChemistryBase.chem.InChIs;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
+import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
+import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -36,10 +40,18 @@ public class FingerprintCandidateWrapper {
     long id;
     String formula;
     double mass;
-    FingerprintCandidate candidate;
+    CompoundCandidate candidate;
+    Fingerprint fingerprint;
 
+    public FingerprintCandidate getFingerprintCandidate() {
+        return new FingerprintCandidate(candidate, fingerprint);
+    }
     public static FingerprintCandidateWrapper of(MolecularFormula formula, FingerprintCandidate candidate) {
-        return new FingerprintCandidateWrapper(-1, formula.toString(), formula.getMass(), candidate);
+        return new FingerprintCandidateWrapper(-1, formula.toString(), formula.getMass(), candidate.toCompoundCandidate(), candidate.getFingerprint());
     }
 
+    public static FingerprintCandidateWrapper of(FingerprintCandidate candidate) throws UnknownElementException {
+        MolecularFormula formula = InChIs.extractNeutralFormulaByAdjustingHsOrThrow(candidate.getInchi().in2D);
+        return FingerprintCandidateWrapper.of(formula, candidate);
+    }
 }
