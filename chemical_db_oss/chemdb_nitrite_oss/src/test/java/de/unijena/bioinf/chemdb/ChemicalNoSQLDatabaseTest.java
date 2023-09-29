@@ -27,6 +27,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.chemdb.nitrite.ChemicalNitriteDatabase;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintWrapper;
+import de.unijena.bioinf.spectraldb.SpectralNoSQLDatabase;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.storage.blob.file.FileBlobStorage;
 import de.unijena.bioinf.storage.db.nosql.Filter;
@@ -77,7 +78,7 @@ public class ChemicalNoSQLDatabaseTest {
         }
         Path tempDB = Files.createTempFile("chemDB-nitrite_", "_unitTest");
         chemDb = new ChemicalNitriteDatabase(tempDB);
-        ChemicalNoSQLDBs.importCompoundsAndFingerprintsLazy(chemDb, candidates, null, "2099-12-24", null, 5, 100);
+        ChemicalNoSQLDBs.importCandidatesAndSpectra(chemDb, candidates, null, "2099-12-24", null, 5, 100);
     }
 
     @Test
@@ -92,19 +93,12 @@ public class ChemicalNoSQLDatabaseTest {
     public void rawTestCompounds() throws IOException {
         List<FingerprintCandidateWrapper> fcs = chemDb.getStorage().findAllStr(FingerprintCandidateWrapper.class).toList();
         assertEquals(21, fcs.size());
-        fcs.forEach(fc -> assertNull(fc.getCandidate()));
-
-        fcs = chemDb.getStorage().findAllStr(FingerprintCandidateWrapper.class, "candidate").toList();
-        assertEquals(21, fcs.size());
         fcs.forEach(fc -> assertNotNull(fc.getCandidate()));
-        fcs.forEach(fc -> assertNotNull(fc.getCandidate().getFingerprint()));
-    }
+        fcs.forEach(fc -> assertNull(fc.getFingerprint()));
 
-    @Test
-    public void rawTestFps() throws IOException {
-        List<FingerprintWrapper> fps = chemDb.getStorage().findAllStr(FingerprintWrapper.class).toList();
-        assertEquals(21, fps.size());
-        fps.forEach(fc -> assertNotNull(fc.getFingerprint()));
+        fcs = chemDb.getStorage().findAllStr(FingerprintCandidateWrapper.class, "fingerprint").toList();
+        assertEquals(21, fcs.size());
+        fcs.forEach(fc -> assertNotNull(fc.getFingerprint()));
     }
 
     @Test
