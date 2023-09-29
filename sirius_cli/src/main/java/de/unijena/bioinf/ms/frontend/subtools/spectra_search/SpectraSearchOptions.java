@@ -46,7 +46,7 @@ public class SpectraSearchOptions implements ToolChainOptions<SpectraSearchSubto
     @CommandLine.Option(names = {"--database", "-d", "--db"}, descriptionKey = "SpectrumSearchDB" , paramLabel = DataSourceCandidates.PATAM_LABEL, completionCandidates = DataSourceCandidates.class,
             description = {"Search spectra in the Union of the given databases. If no database is given, all database are used.", DataSourceCandidates.VALID_DATA_STRING})
     public void setDatabase(DefaultParameter dbList) throws Exception {
-        defaultConfigOptions.changeOption("FormulaSearchDB", dbList);
+        defaultConfigOptions.changeOption("SpectralSearchDB", dbList);
     }
 
     @CommandLine.Option(names = "--ppm-max", descriptionKey = "MS1MassDeviation.allowedMassDeviation", description = "Maximum allowed mass deviation in ppm for matching peaks.")
@@ -59,9 +59,9 @@ public class SpectraSearchOptions implements ToolChainOptions<SpectraSearchSubto
         defaultConfigOptions.changeOption("MS2MassDeviation.allowedMassDeviation", value + "ppm");
     }
 
-    @CommandLine.Option(names = "--print", descriptionKey = "SpectralSearchLog.numberOfMatches", description = "Number of matches to print per experiment.")
+    @CommandLine.Option(names = "--print", descriptionKey = "SpectralSearchLog.value", description = "Number of matches to print per experiment.")
     public void setLogNum(DefaultParameter value) throws Exception {
-        defaultConfigOptions.changeOption("SpectralSearchLog.numberOfMatches", value);
+        defaultConfigOptions.changeOption("SpectralSearchLog.value", value);
     }
 
     @Override

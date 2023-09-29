@@ -33,9 +33,9 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.DataSources;
+import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
-import de.unijena.bioinf.ms.frontend.subtools.spectra_db.SpectralDatabases;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchSubtoolJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
@@ -217,7 +217,7 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
 
     private static class MatchResultTableFormat extends SiriusTableFormat<SpectralSearchResultBean.MatchBean> {
 
-        private static final int COL_COUNT = 10;
+        private static final int COL_COUNT = 11;
 
         protected MatchResultTableFormat(MatchList source) {
             super(matchBean -> matchBean.getMatch().getRank() == source.getElementList().stream().mapToInt(m -> m.getMatch().getRank()).min().orElse(0));
@@ -245,8 +245,9 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
                 case 6 -> "Ionization";
                 case 7 -> "Collision Energy";
                 case 8 -> "Instrument";
-                case 9 -> "DB link";
-                case 10 -> "Best";
+                case 9 -> "Database";
+                case 10 -> "DB Link";
+                case 11 -> "Best";
                 default -> throw new IllegalStateException();
             };
         }
@@ -263,8 +264,9 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
                 case 6 -> baseObject.getReference().getPrecursorIonType() != null ? baseObject.getReference().getPrecursorIonType().toString() : "";
                 case 7 -> baseObject.getReference().getCollisionEnergy() != null ? baseObject.getReference().getCollisionEnergy().toString() : "";
                 case 8 -> baseObject.getReference().getInstrumentation() != null ? baseObject.getReference().getInstrumentation().toString() : "";
-                case 9 -> baseObject.getReference().getSpectralDbLink();
-                case 10 -> isBest.apply(baseObject);
+                case 9 -> baseObject.getMatch().getDbName();
+                case 10 -> baseObject.getReference().getSpectralDbLink();
+                case 11 -> isBest.apply(baseObject);
                 default -> throw new IllegalStateException();
             };
         }
@@ -325,7 +327,7 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
 
                                 if (matchBean.getReference().getSpectrum() == null) {
                                     try {
-                                        SpectralLibrary db = SpectralDatabases.getSpectralLibrary(Path.of(matchBean.getMatch().getDbLocation())).orElseThrow();
+                                        SpectralLibrary db = SearchableDatabases.getCustomDatabase(matchBean.getMatch().getDbName()).orElseThrow().toSpectralLibraryOrThrow();
                                         db.getSpectralData(matchBean.getReference());
                                     } catch (Exception exc) {
                                         LoggerFactory.getLogger(SpectralMatchingTableView.class).error("Error retrieving spectral data", exc);
@@ -369,7 +371,7 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
                     return null;
                 }
             });
-            linkRenderer.registerToTable(table, 9);
+            linkRenderer.registerToTable(table, 10);
 
             addToCenterCard(ActionList.ViewState.DATA, new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED));
             showCenterCard(ActionList.ViewState.NOT_COMPUTED);
