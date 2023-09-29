@@ -26,7 +26,6 @@ import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.chemdb.nitrite.ChemicalNitriteDatabase;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
 import de.unijena.bioinf.spectraldb.SpectralNoSQLDBs;
-import de.unijena.bioinf.spectraldb.SpectralNoSQLDatabase;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +36,8 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Map;
 import java.util.stream.Stream;
+
+import static de.unijena.bioinf.chemdb.SpectralUtils.importSpectra;
 
 public class ChemicalNoSQLDBs extends SpectralNoSQLDBs {
 
@@ -49,16 +50,16 @@ public class ChemicalNoSQLDBs extends SpectralNoSQLDBs {
     }
 
     public static void importCandidatesAndSpectra(
-            @NotNull Database<?> database,
+            @NotNull ChemicalNoSQLDatabase<?> database,
             @NotNull Map<MolecularFormula, ? extends Collection<FingerprintCandidate>> candidates,
             @Nullable Iterable<Ms2ReferenceSpectrum> spectra,
             @NotNull String dbDate, @Nullable String dbFlavor, int fpId,
             int chunkSize
     ) throws ChemicalDatabaseException {
         try {
-            insertTags(database, dbDate, dbFlavor, fpId);
+            insertTags(database.getStorage(), dbDate, dbFlavor, fpId);
 
-            importCandidates(database, candidates, chunkSize);
+            importCandidates(database.getStorage(), candidates, chunkSize);
 
             if (spectra != null)
                 importSpectra(database, spectra, chunkSize);
@@ -85,10 +86,10 @@ public class ChemicalNoSQLDBs extends SpectralNoSQLDBs {
     }
 
     private static void insertTags(Database<?> database, @NotNull String dbDate, @Nullable String dbFlavor, int fpId) throws IOException {
-        database.insert(SpectralNoSQLDatabase.Tag.of(ChemDbTags.TAG_DATE, dbDate));
+        database.insert(ChemicalNoSQLDatabase.Tag.of(ChemDbTags.TAG_DATE, dbDate));
         if (dbFlavor != null && !dbFlavor.isBlank())
-            database.insert(SpectralNoSQLDatabase.Tag.of(ChemDbTags.TAG_FLAVOR, dbFlavor));
-        database.insert(SpectralNoSQLDatabase.Tag.of(ChemDbTags.TAG_FP_ID, String.valueOf(fpId)));
+            database.insert(ChemicalNoSQLDatabase.Tag.of(ChemDbTags.TAG_FLAVOR, dbFlavor));
+        database.insert(ChemicalNoSQLDatabase.Tag.of(ChemDbTags.TAG_FP_ID, String.valueOf(fpId)));
 
     }
 }

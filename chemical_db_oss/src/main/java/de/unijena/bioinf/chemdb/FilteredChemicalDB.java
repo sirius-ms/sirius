@@ -140,4 +140,15 @@ public class FilteredChemicalDB<DB extends AbstractChemicalDatabase> implements 
     public String getChemDbDate() throws ChemicalDatabaseException {
         return wrappedDB.getChemDbDate();
     }
+
+    @Override
+    public long countAllFingerprints() throws ChemicalDatabaseException {
+        return wrappedDB.countAllFingerprints();
+    }
+
+    @Override
+    public long countAllFormulas() throws ChemicalDatabaseException {
+        return wrappedDB.countAllFormulas();
+    }
+
 }

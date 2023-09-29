@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -116,6 +117,24 @@ public class AbstractChemicalDatabaseSynchronousExecutor implements AbstractChem
     @Override
     public String getChemDbDate() {
         return null;
+    }
+
+    @Override
+    public long countAllFingerprints() throws ChemicalDatabaseException {
+        int sum = 0;
+        for (AbstractChemicalDatabase database : this.databases) {
+            sum += database.countAllFingerprints();
+        }
+        return sum;
+    }
+
+    @Override
+    public long countAllFormulas() throws ChemicalDatabaseException {
+        long sum = 0;
+        for (AbstractChemicalDatabase database : this.databases) {
+            sum += database.countAllFormulas();
+        }
+        return sum;
     }
 
     @Override

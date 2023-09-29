@@ -117,6 +117,16 @@ public class ExtendedFingerprintVersion extends FingerprintVersion {
         }
 
         @Override
+        public long countAllFingerprints() throws ChemicalDatabaseException {
+            return innerDatabase.countAllFingerprints();
+        }
+
+        @Override
+        public long countAllFormulas() throws ChemicalDatabaseException {
+            return innerDatabase.countAllFormulas();
+        }
+
+        @Override
         public void close() throws IOException {
             innerDatabase.close();
         }

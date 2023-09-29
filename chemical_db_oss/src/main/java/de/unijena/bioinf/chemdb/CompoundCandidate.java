@@ -65,15 +65,13 @@ public class CompoundCandidate {
     @Nullable //this is the tanimoto to a matched fingerprint.
     protected Double tanimoto = null;
 
-    protected ArrayList<DBLink> referenceSpectraLinks;
-    @Nullable
-    protected Map<DBLink, Ms2ReferenceSpectrum> referenceSpectra;
+    protected List<String> referenceSpectraSplash;
 
-    public CompoundCandidate(InChI inchi, String name, String smiles, int pLayer, int qLayer, double xlogp, @Nullable Double tanimoto, long bitset, DBLink[] links, PubmedLinks pubmedIDs) {
-        this(inchi, name, smiles, pLayer, qLayer, xlogp, tanimoto, bitset, new ArrayList<>(List.of(links)), pubmedIDs);
+    public CompoundCandidate(InChI inchi, String name, String smiles, int pLayer, int qLayer, double xlogp, @Nullable Double tanimoto, long bitset, DBLink[] links, PubmedLinks pubmedIDs, List<String> referenceSpectraSplash) {
+        this(inchi, name, smiles, pLayer, qLayer, xlogp, tanimoto, bitset, new ArrayList<>(List.of(links)), pubmedIDs, referenceSpectraSplash);
     }
 
-    public CompoundCandidate(InChI inchi, String name, String smiles, int pLayer, int qLayer, double xlogp, @Nullable Double tanimoto, long bitset, ArrayList<DBLink> links, PubmedLinks pubmedIDs) {
+    public CompoundCandidate(InChI inchi, String name, String smiles, int pLayer, int qLayer, double xlogp, @Nullable Double tanimoto, long bitset, ArrayList<DBLink> links, PubmedLinks pubmedIDs, List<String> referenceSpectraSplash) {
         this.inchi = inchi;
         this.name = name;
         this.smiles = smiles;
@@ -84,6 +82,7 @@ public class CompoundCandidate {
         this.bitset = bitset;
         this.links = links;
         this.pubmedIDs = pubmedIDs;
+        this.referenceSpectraSplash = referenceSpectraSplash;
     }
 
     public CompoundCandidate(CompoundCandidate c) {
@@ -100,7 +99,7 @@ public class CompoundCandidate {
             this.pubmedIDs = c.pubmedIDs;
         this.taxonomicScore = c.taxonomicScore;
         this.taxonomicSpecies = c.taxonomicSpecies;
-        this.referenceSpectra = c.referenceSpectra;
+        this.referenceSpectraSplash = c.referenceSpectraSplash;
     }
 
 
@@ -218,6 +217,14 @@ public class CompoundCandidate {
         this.taxonomicSpecies = taxonomicSpecies;
     }
 
+    public List<String> getReferenceSpectraSplash() {
+        return referenceSpectraSplash;
+    }
+
+    public void setReferenceSpectraSplash(List<String> referenceSpectraSplashes) {
+        this.referenceSpectraSplash = referenceSpectraSplashes;
+    }
+
     @Deprecated
     public boolean canBeNeutralCharged() {
         return hasChargeState(CompoundCandidateChargeState.NEUTRAL_CHARGE);
@@ -263,7 +270,7 @@ public class CompoundCandidate {
     }
 
     public boolean hasReferenceSpectra() {
-        return referenceSpectra != null && !referenceSpectra.isEmpty();
+        return referenceSpectraSplash != null && !referenceSpectraSplash.isEmpty();
     }
 
 
@@ -302,6 +309,13 @@ public class CompoundCandidate {
                 gen.writeArrayFieldStart("pubmedIDs");
                 for (int id : value.pubmedIDs.getCopyOfPubmedIDs()) {
                     gen.writeNumber(id);
+                }
+                gen.writeEndArray();
+            }
+            if (value.referenceSpectraSplash != null && !value.referenceSpectraSplash.isEmpty()) {
+                gen.writeArrayFieldStart("referenceSpectraSplash");
+                for (String splash : value.referenceSpectraSplash) {
+                    gen.writeString(splash);
                 }
                 gen.writeEndArray();
             }

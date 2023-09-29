@@ -97,6 +97,10 @@ public class JSONDocumentType extends DataDocument<JsonNode, ObjectNode, ArrayNo
 
     @Override
     public double getDoubleFromDictionary(ObjectNode dict, String key) {
+       return getDoubleFromDictionary((JsonNode) dict, key);
+    }
+
+    public double getDoubleFromDictionary(JsonNode dict, String key) {
         final JsonNode elem = dict.get(key);
         if (elem == null) throw new NullPointerException("Key is not contained in dictionary: '" + key + "'\n");
         return elem.asDouble();
@@ -222,6 +226,10 @@ public class JSONDocumentType extends DataDocument<JsonNode, ObjectNode, ArrayNo
 
     @Override
     public JsonNode getFromDictionary(final ObjectNode dict, final String key) {
+        return getFromDictionary((JsonNode) dict, key);
+    }
+
+    public JsonNode getFromDictionary(final JsonNode dict, final String key) {
         return dict.get(key);
     }
 
@@ -242,6 +250,10 @@ public class JSONDocumentType extends DataDocument<JsonNode, ObjectNode, ArrayNo
 
     @Override
     public Set<String> keySetOfDictionary(final ObjectNode dict) {
+       return keySetOfDictionary((JsonNode) dict);
+    }
+
+    public Set<String> keySetOfDictionary(final JsonNode dict) {
         Set<String> s = new HashSet<>(dict.size());
         dict.fieldNames().forEachRemaining(s::add);
         return s;

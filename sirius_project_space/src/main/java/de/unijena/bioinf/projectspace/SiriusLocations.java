@@ -24,17 +24,15 @@ public interface SiriusLocations {
 
     String
             MS2_EXPERIMENT = "spectrum.ms",
-
-            SPECTRAL_SEARCH_JSON = "spectral_search.json.gz",
-
             COMPOUND_INFO = "compound.info",
             COMPOUND_CONFIG = "compound.config",
 //            LCMS_TRACES = "lcms.binary",
             LCMS_JSON = "lcms.json.gz";
 
-    Location
-            SPECTRA = new Location("spectra", "tsv", FormulaResultId::fileName),
-            TREES = new Location("trees", "json", FormulaResultId::fileName),
-            SCORES = new Location("scores", "info", FormulaResultId::fileName),
-            DECOYS = new Location("decoys", "tsv", FormulaResultId::fileName);
+    Location<FormulaResultId>
+            SPECTRA = new Location<>("spectra", "tsv", FormulaResultId::fileName),
+            TREES = new Location<>("trees", "json", FormulaResultId::fileName),
+            SCORES = new Location<>("scores", "info", FormulaResultId::fileName),
+            DECOYS = new Location<>("decoys", "tsv", FormulaResultId::fileName);
+
 }
