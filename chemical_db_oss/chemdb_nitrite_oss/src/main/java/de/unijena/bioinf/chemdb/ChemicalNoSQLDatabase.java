@@ -57,10 +57,7 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
                         FingerprintCandidateWrapper.class,
                         "id",
                         new Index("formula", IndexType.NON_UNIQUE),
-                        new Index("mass", IndexType.NON_UNIQUE),
-                        new Index("candidate.inchikey", IndexType.UNIQUE),
-                        new Index("candidate.bitset", IndexType.NON_UNIQUE),
-                        new Index("candidate.name", IndexType.NON_UNIQUE)
+                        new Index("mass", IndexType.NON_UNIQUE)
                 ).addCollection(
                         SETTINGS_COLLECTION
                 ).setOptionalFields(
