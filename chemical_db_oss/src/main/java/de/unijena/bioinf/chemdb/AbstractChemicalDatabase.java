@@ -97,4 +97,9 @@ public interface AbstractChemicalDatabase extends Closeable, Cloneable, SearchSt
      */
 
     String getChemDbDate() throws ChemicalDatabaseException;
+
+    long countAllFingerprints() throws ChemicalDatabaseException;
+
+    long countAllFormulas() throws ChemicalDatabaseException;
+
 }

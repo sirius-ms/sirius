@@ -12,6 +12,7 @@ import org.junit.rules.ExpectedException;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,23 +25,23 @@ import static org.junit.Assert.assertNotNull;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class FTioTest {
-    final String input = getClass().getResource("/de/unijena/bioinf/babelms/ms/C12H25N7O3.json").getFile();
+    final String input ="/de/unijena/bioinf/babelms/ms/C12H25N7O3_[M+H]+.json";
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
     @Test
     public void testFTJsonRead() throws IOException {
-        final JsonNode json = JSONDocumentType.getJSON("test.json", input);
+        final JsonNode json = JSONDocumentType.read( new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(input), Charset.defaultCharset())));
         assertNotNull(json);
     }
 
     @Test
     public void testJsonToFTree() throws IOException {
-        final JsonNode json = JSONDocumentType.getJSON("test.json", input);
+        final JsonNode json = JSONDocumentType.read(new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(input), Charset.defaultCharset())));
         assertNotNull(json);
 
-        BufferedReader b = Files.newBufferedReader(Paths.get(input), Charset.defaultCharset());
+        BufferedReader b = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(input), Charset.defaultCharset()));
         FTJsonReader r = new FTJsonReader();
         FTree tree = r.parse(b);
         assertNotNull(tree);
@@ -51,7 +52,7 @@ public class FTioTest {
 
     @Test
     public void testJsonToFTreeToJson() throws IOException {
-        BufferedReader b = Files.newBufferedReader(Paths.get(input), Charset.defaultCharset());
+        BufferedReader b = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(input), Charset.defaultCharset()));
         FTJsonReader r = new FTJsonReader();
         FTree tree = r.parse(b);
         b.close();

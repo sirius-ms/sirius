@@ -32,7 +32,7 @@ dependencies {
     api project(':canopus_predict_oss')
     api project (':sirius_api')
     api project (':model_store_oss')
-    api project(':db-storage')
+    api project(':document-storage')
 
     for (module in ["interfaces", "data", "io", "interfaces", "smiles", "silent"])
         api "org.openscience.cdk:cdk-$module:$cdk_version"
