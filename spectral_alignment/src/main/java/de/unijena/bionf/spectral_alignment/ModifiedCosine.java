@@ -2,12 +2,13 @@ package de.unijena.bionf.spectral_alignment;
 
 import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.list.array.TShortArrayList;
 
 import java.util.Arrays;
 import java.util.BitSet;
@@ -41,12 +42,12 @@ public class ModifiedCosine {
 
     }
 
-    private SimpleSpectrum left, right;
+    private OrderedSpectrum<Peak> left, right;
     // assigns peak from left to right
     private final int[] assignment;
     private final double score;
 
-    public static SimpleSpectrum prepare(SimpleSpectrum spectrum, double precursorMz, Deviation dev) {
+    public static SimpleSpectrum prepare(OrderedSpectrum<Peak> spectrum, double precursorMz, Deviation dev) {
         int[] indizes = MatrixUtils.argsort(spectrum.size(), (i, j)->Double.compare(spectrum.getIntensityAt(j),spectrum.getIntensityAt(i)));
         SimpleMutableSpectrum buf = new SimpleMutableSpectrum();
         final double thr = precursorMz-0.5;
@@ -61,21 +62,21 @@ public class ModifiedCosine {
     }
 
 
-    public ModifiedCosine(SimpleSpectrum left, SimpleSpectrum right, double precursorLeft, double precursorRight, Deviation deviation) {
+    public ModifiedCosine(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right, double precursorLeft, double precursorRight, Deviation deviation) {
         this(left,right,precursorLeft,precursorRight,deviation,1.0d);
     }
 
-    public ModifiedCosine(SimpleSpectrum left, SimpleSpectrum right, double precursorLeft, double precursorRight, Deviation deviation, double powerIntensity) {
+    public ModifiedCosine(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right, double precursorLeft, double precursorRight, Deviation deviation, double powerIntensity) {
         if (precursorLeft <= precursorRight) {
             final DP dp = new DP(left, right, precursorLeft, precursorRight, deviation, powerIntensity);
             dp.compute();
             this.score = dp.score;
-            this.assignment = dp.assignments.toArray();;
+            this.assignment = dp.assignments.toArray();
         } else {
             final DP dp = new DP(right, left, precursorRight, precursorLeft, deviation, powerIntensity);
             dp.compute();
             this.score = dp.score;
-            this.assignment = dp.assignments.toArray();;
+            this.assignment = dp.assignments.toArray();
             for (int k=0; k < this.assignment.length; k+=2) {
                 int swap = assignment[k];
                 assignment[k] = assignment[k+1];
@@ -97,7 +98,7 @@ public class ModifiedCosine {
     }
 
     protected static class DP {
-        SimpleSpectrum left, right;
+        OrderedSpectrum<Peak> left, right;
         double precursorLeft, precursorRight;
         Deviation dev;
         final BitSet visited;
@@ -111,7 +112,7 @@ public class ModifiedCosine {
         final TIntArrayList dpi;
 
 
-        public DP(SimpleSpectrum left, SimpleSpectrum right, double precursorLeft, double precursorRight, Deviation dev, double powerIntensity) {
+        public DP(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right, double precursorLeft, double precursorRight, Deviation dev, double powerIntensity) {
             this.dev = dev;
             this.left = left;
             this.right = right;
