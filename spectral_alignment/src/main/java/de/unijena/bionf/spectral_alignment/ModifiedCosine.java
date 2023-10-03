@@ -3,8 +3,6 @@ package de.unijena.bionf.spectral_alignment;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 
@@ -16,30 +14,6 @@ import java.util.BitSet;
  * and v are within the allowed mass tolerance.
  */
 public class ModifiedCosine implements SpectralAlignmentScorer {
-
-    public static void main(String[] args) {
-
-        final SimpleMutableSpectrum A = new SimpleMutableSpectrum();
-        A.addPeak(1, 1);
-        A.addPeak(5, 1);
-        A.addPeak(8, 1);
-        A.addPeak(15, 0.5);
-        final SimpleMutableSpectrum B = new SimpleMutableSpectrum();
-        B.addPeak(1, 1);
-        B.addPeak(8, 1);
-        B.addPeak(15, 1);
-        B.addPeak(18, 1);
-        B.addPeak(20, 1);
-        B.addPeak(25, 1);
-
-        final ModifiedCosine modifiedCosine = new ModifiedCosine();
-        modifiedCosine.score(new SimpleSpectrum(A), new SimpleSpectrum(B), 20, 30, new Deviation(10));
-
-        for (int i=0; i < modifiedCosine.assignment.length; i+=2) {
-            System.out.println("ASSIGN " + A.getMzAt(modifiedCosine.assignment[i]) + " WITH " + B.getMzAt(modifiedCosine.assignment[i+1]));
-        }
-        System.out.println("SCORE = " + modifiedCosine.score);
-    }
 
     // assigns peak from left to right
     private int[] assignment;
