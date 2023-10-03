@@ -5,8 +5,8 @@ import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import gnu.trove.list.array.TDoubleArrayList;
-import gnu.trove.list.array.TIntArrayList;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 import java.util.Arrays;
 import java.util.BitSet;
@@ -55,12 +55,12 @@ public class ModifiedCosine implements SpectralAlignmentScorer {
             final DP dp = new DP(left, right, precursorLeft, precursorRight, deviation, powerIntensity);
             dp.compute();
             this.score = dp.score;
-            this.assignment = dp.assignments.toArray();
+            this.assignment = dp.assignments.toArray(new int[0]);
         } else {
             final DP dp = new DP(right, left, precursorRight, precursorLeft, deviation, powerIntensity);
             dp.compute();
             this.score = dp.score;
-            this.assignment = dp.assignments.toArray();
+            this.assignment = dp.assignments.toArray(new int[0]);
             for (int k=0; k < this.assignment.length; k+=2) {
                 int swap = assignment[k];
                 assignment[k] = assignment[k+1];
@@ -87,14 +87,14 @@ public class ModifiedCosine implements SpectralAlignmentScorer {
         double precursorLeft, precursorRight;
         Deviation dev;
         final BitSet visited;
-        TIntArrayList assignments;
+        IntArrayList assignments;
         double score;
         final double delta;
         final double powerIntensity;
 
         final short[] matches, reverseMatches, backref;
-        final TDoubleArrayList dp;
-        final TIntArrayList dpi;
+        final DoubleArrayList dp;
+        final IntArrayList dpi;
 
 
         public DP(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right, double precursorLeft, double precursorRight, Deviation dev, double powerIntensity) {
@@ -104,7 +104,7 @@ public class ModifiedCosine implements SpectralAlignmentScorer {
             this.precursorLeft = precursorLeft;
             this.precursorRight = precursorRight;
             this.visited = new BitSet(left.size());
-            this.assignments = new TIntArrayList();
+            this.assignments = new IntArrayList();
             delta = precursorRight - precursorLeft;
 
             this.matches = new short[left.size()];
@@ -113,8 +113,8 @@ public class ModifiedCosine implements SpectralAlignmentScorer {
             this.backref = new short[right.size()];
             Arrays.fill(backref, (short) -1);
 
-            dp = new TDoubleArrayList();
-            dpi = new TIntArrayList();
+            dp = new DoubleArrayList();
+            dpi = new IntArrayList();
             this.powerIntensity = powerIntensity;
         }
 
@@ -217,8 +217,8 @@ public class ModifiedCosine implements SpectralAlignmentScorer {
         }
 
         private void dp(int leftNode, int directMatch, int reverseMatch, int conflictingMatch) {
-            dpi.clearQuick();
-            dp.clearQuick();
+            dpi.clear();
+            dp.clear();
             dp.add(scoreFor(leftNode, directMatch));
             dp.add(scoreFor(leftNode, reverseMatch));
             dp.add(0);
@@ -227,7 +227,7 @@ public class ModifiedCosine implements SpectralAlignmentScorer {
             int u = conflictingMatch;
             while (u >= 0) {
                 final int n = dp.size();
-                final double no = dp.getQuick(n - 1), rev = dp.getQuick(n - 2), match = dp.getQuick(n - 3);
+                final double no = dp.getDouble(n - 1), rev = dp.getDouble(n - 2), match = dp.getDouble(n - 3);
                 // match
                 double matchScore = scoreFor(u, matches[u]);
                 dp.add(Math.max(no, match) + matchScore);
@@ -254,24 +254,24 @@ public class ModifiedCosine implements SpectralAlignmentScorer {
             loop: while (true) {
                 switch (previousAssignment) {
                     case 0: { // match
-                        final int node = dpi.getQuick(nodeIndex);
+                        final int node = dpi.getInt(nodeIndex);
                         assignments.add(node);
                         assignments.add(matches[node]);
                         if (column < 0) break loop;
                         // last entry can be either match or nothing
-                        previousAssignment = dp.getQuick(column) > dp.getQuick(column + 2) ? 0 : 2;
+                        previousAssignment = dp.getDouble(column) > dp.getDouble(column + 2) ? 0 : 2;
                         break;
                     }
                     case 1: // reverse match
                     {
-                        final int node = dpi.getQuick(nodeIndex);
+                        final int node = dpi.getInt(nodeIndex);
                         assignments.add(node);
                         assignments.add(reverseMatches[node]);
                         if (column < 0) break loop;
                         // last entry can be either anything
                         previousAssignment = 0;
                         for (int r = 0; r < 3; ++r) {
-                            if (dp.getQuick(column + r) > dp.getQuick(column + previousAssignment)) {
+                            if (dp.getDouble(column + r) > dp.getDouble(column + previousAssignment)) {
                                 previousAssignment = r;
                             }
                         }
@@ -282,7 +282,7 @@ public class ModifiedCosine implements SpectralAlignmentScorer {
                         // last entry can be either anything
                         previousAssignment = 0;
                         for (int r = 0; r < 3; ++r) {
-                            if (dp.getQuick(column + r) > dp.getQuick(column + previousAssignment)) {
+                            if (dp.getDouble(column + r) > dp.getDouble(column + previousAssignment)) {
                                 previousAssignment = r;
                             }
                         }
@@ -296,7 +296,7 @@ public class ModifiedCosine implements SpectralAlignmentScorer {
             // score is maximum of the last three dp entries
             double mxScore = 0d;
             for (int k=dp.size()-3; k < dp.size(); ++k) {
-                mxScore = Math.max(dp.getQuick(k), mxScore);
+                mxScore = Math.max(dp.getDouble(k), mxScore);
             }
             score += mxScore;
         }
