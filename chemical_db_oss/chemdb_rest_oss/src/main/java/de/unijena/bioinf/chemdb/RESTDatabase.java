@@ -178,11 +178,6 @@ public class RESTDatabase implements FilterableChemicalDatabase {
     }
 
     @Override
-    public List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
-        return lookupFingerprintsByInchis(inchi_keys);
-    }
-
-    @Override
     public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws ChemicalDatabaseException {
         throw new UnsupportedOperationException();
     }

@@ -30,6 +30,8 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -341,6 +343,10 @@ public class CompoundCandidate {
         new ObjectMapper().writeValue(generator, fpcs);
         generator.writeEndObject();
         generator.flush();
+    }
+
+    public FormulaCandidate toFormulaCandidate(PrecursorIonType ionization){
+        return new FormulaCandidate(inchi.extractFormulaOrThrow(), ionization ,bitset);
     }
 }
 
