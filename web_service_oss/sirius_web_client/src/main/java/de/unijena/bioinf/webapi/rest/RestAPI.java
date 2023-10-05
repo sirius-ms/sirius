@@ -65,6 +65,8 @@ import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.ms.rest.model.license.SubscriptionConsumables;
+import de.unijena.bioinf.ms.rest.model.msnovelist.MsNovelistJobInput;
+import de.unijena.bioinf.ms.rest.model.msnovelist.MsNovelistJobOutput;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.webapi.WebJJob;
 import de.unijena.bioinf.rest.ConnectionError;
@@ -366,6 +368,17 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
             }
         });
     }
+    //endregion
+
+    //region MsNovelist
+
+    @Override
+    public WebJJob<MsNovelistJobInput, ?, MsNovelistJobOutput, ?> submitMsNovelistJob(MsNovelistJobInput input, @Nullable Integer countingHash) throws IOException {
+        RestWebJJob<MsNovelistJobInput, MsNovelistJobOutput, MsNovelistJobOutput> job = new RestWebJJob<>(input, msNovelistJobOutput -> msNovelistJobOutput);
+        job.setCountingHash(countingHash);
+        return jobWatcher.submitAndWatchJob(JobTable.JOBS_MSNOVELIST, job);
+    }
+
     //endregion
 
     //region Canopus

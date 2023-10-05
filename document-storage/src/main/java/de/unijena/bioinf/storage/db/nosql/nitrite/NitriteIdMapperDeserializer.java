@@ -91,7 +91,7 @@ public class NitriteIdMapperDeserializer<T> extends JsonDeserializer<T> {
             for (token = p.nextToken(); token != null  && !token.isStructEnd(); token = p.nextToken()) {
                 if (token == JsonToken.FIELD_NAME) {
                     String currentName = p.currentName();
-                    if ("_id".equals(currentName) || idField.getName().equals(currentName)) {
+                    if ("_id".equals(currentName)) {
                         id = p.nextLongValue(-1L);
                     } else {
                         buffer.copyCurrentStructure(p);
