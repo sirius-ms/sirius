@@ -217,7 +217,7 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
 
     private static class MatchResultTableFormat extends SiriusTableFormat<SpectralSearchResultBean.MatchBean> {
 
-        private static final int COL_COUNT = 10;
+        private static final int COL_COUNT = 11;
 
         protected MatchResultTableFormat(MatchList source) {
             super(matchBean -> matchBean.getMatch().getRank() == source.getElementList().stream().mapToInt(m -> m.getMatch().getRank()).min().orElse(0));
@@ -245,8 +245,9 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
                 case 6 -> "Ionization";
                 case 7 -> "Collision Energy";
                 case 8 -> "Instrument";
-                case 9 -> "DB link";
-                case 10 -> "Best";
+                case 9 -> "Database";
+                case 10 -> "DB Link";
+                case 11 -> "Best";
                 default -> throw new IllegalStateException();
             };
         }
@@ -263,8 +264,9 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
                 case 6 -> baseObject.getReference().getPrecursorIonType() != null ? baseObject.getReference().getPrecursorIonType().toString() : "";
                 case 7 -> baseObject.getReference().getCollisionEnergy() != null ? baseObject.getReference().getCollisionEnergy().toString() : "";
                 case 8 -> baseObject.getReference().getInstrumentation() != null ? baseObject.getReference().getInstrumentation().toString() : "";
-                case 9 -> baseObject.getReference().getSpectralDbLink();
-                case 10 -> isBest.apply(baseObject);
+                case 9 -> baseObject.getMatch().getDbName();
+                case 10 -> baseObject.getReference().getSpectralDbLink();
+                case 11 -> isBest.apply(baseObject);
                 default -> throw new IllegalStateException();
             };
         }
@@ -369,7 +371,7 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
                     return null;
                 }
             });
-            linkRenderer.registerToTable(table, 9);
+            linkRenderer.registerToTable(table, 10);
 
             addToCenterCard(ActionList.ViewState.DATA, new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED));
             showCenterCard(ActionList.ViewState.NOT_COMPUTED);
