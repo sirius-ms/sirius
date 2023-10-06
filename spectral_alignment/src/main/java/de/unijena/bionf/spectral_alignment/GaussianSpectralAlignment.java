@@ -29,13 +29,18 @@ import java.util.BitSet;
 /**
  * treat peaks as (unnormalized) Gaussians and score overlapping areas of PDFs. Each peak might score agains multiple peaks in the other spectrum.
  */
-public class GaussianSpectralAlignment implements SpectralAlignmentScorer {
+public class GaussianSpectralAlignment extends AbstractSpectralAlignment {
 
-    protected Deviation deviation;
+    public GaussianSpectralAlignment(Deviation deviation) {
+        super(deviation);
+    }
 
     @Override
-    public SpectralSimilarity score(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right, double precursorLeft, double precursorRight, Deviation deviation) {
-        this.deviation = deviation;
+    public SpectralSimilarity score(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right, double precursorLeft, double precursorRight) {
+        return scoreAllAgainstAll(left, right);
+    }
+
+    public SpectralSimilarity score(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right) {
         return scoreAllAgainstAll(left, right);
     }
 

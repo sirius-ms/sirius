@@ -28,8 +28,8 @@ public class ModifiedCosineTest {
         B.addPeak(20, 1);
         B.addPeak(25, 1);
 
-        final ModifiedCosine modifiedCosine = new ModifiedCosine();
-        SpectralSimilarity spectralSimilarity = modifiedCosine.score(new SimpleSpectrum(A), new SimpleSpectrum(B), 20, 30, new Deviation(10));
+        final ModifiedCosine modifiedCosine = new ModifiedCosine(new Deviation(10));
+        SpectralSimilarity spectralSimilarity = modifiedCosine.score(new SimpleSpectrum(A), new SimpleSpectrum(B), 20, 30);
 
         assertEquals(3.5, spectralSimilarity.similarity, 1e-9);
         assertEquals(4, spectralSimilarity.shardPeaks);
