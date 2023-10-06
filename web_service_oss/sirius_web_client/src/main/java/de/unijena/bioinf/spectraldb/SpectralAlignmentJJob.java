@@ -67,9 +67,8 @@ public class SpectralAlignmentJJob extends BasicMasterJJob<SpectralSearchResult>
                     BasicJJob<SpectralSearchResult> job = new BasicJJob<>() {
                         @Override
                         protected SpectralSearchResult compute() throws Exception {
-                            return ((SpectralLibrary) db).matchingSpectra(queries, precursorDev, peakDev, SpectralAlignmentType.INTENSITY, (progress, max) -> {
-                                this.updateProgress(max, progress, "Aligning spectra from " + experiment.getName() + " with database '" + db.getName() + "'...");
-                            });
+                            return ((SpectralLibrary) db).matchingSpectra(queries, precursorDev, peakDev, SpectralAlignmentType.MODIFIED_COSINE,
+                                    (progress, max) -> this.updateProgress(max, progress, "Aligning spectra from " + experiment.getName() + " with database '" + db.getName() + "'..."));
                         }
                     };
                     jobs.add(submitSubJob(job));
