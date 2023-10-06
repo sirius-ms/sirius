@@ -31,7 +31,6 @@ public abstract class AbstractSpectralAlignment {
 
     protected Deviation deviation;
 
-
     /**
      * @param deviation should be higher than usual expected mass deviation to not punish mz errors too much. this results in low cosine scores even for the same compounds
      */
