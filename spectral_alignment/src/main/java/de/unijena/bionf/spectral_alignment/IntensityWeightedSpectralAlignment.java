@@ -32,13 +32,18 @@ import java.util.Set;
 /**
  * find best scoring alignment, intensity weighted. Each peak matches at most one peak in the other spectrum.
  */
-public class IntensityWeightedSpectralAlignment implements SpectralAlignmentScorer {
+public class IntensityWeightedSpectralAlignment extends AbstractSpectralAlignment {
 
-    protected Deviation deviation;
+    public IntensityWeightedSpectralAlignment(Deviation deviation) {
+        super(deviation);
+    }
 
     @Override
-    public SpectralSimilarity score(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right, double precursorLeft, double precursorRight, Deviation deviation) {
-        this.deviation = deviation;
+    public SpectralSimilarity score(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right, double precursorLeft, double precursorRight) {
+        return score1To1(left, right);
+    }
+
+    public SpectralSimilarity score(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right) {
         return score1To1(left, right);
     }
 

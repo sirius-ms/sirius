@@ -31,9 +31,13 @@ public abstract class AbstractSpectralAlignment {
 
     protected Deviation deviation;
 
+
+    /**
+     * @param deviation should be higher than usual expected mass deviation to not punish mz errors too much. this results in low cosine scores even for the same compounds
+     */
     public AbstractSpectralAlignment(Deviation deviation) {
         this.deviation = deviation;
     }
 
-    public abstract SpectralSimilarity score(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right);
+    public abstract SpectralSimilarity score(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right, double precursorLeft, double precursorRight);
 }
