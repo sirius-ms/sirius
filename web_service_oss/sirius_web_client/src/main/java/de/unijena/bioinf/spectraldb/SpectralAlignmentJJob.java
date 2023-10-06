@@ -34,14 +34,16 @@ import java.util.List;
 
 public class SpectralAlignmentJJob extends BasicMasterJJob<SpectralSearchResult> {
 
-    private WebAPI<?> api;
+    private final WebAPI<?> api;
 
-    private Ms2Experiment experiment;
+    private final Ms2Experiment experiment;
+    private final SpectralAlignmentType alignmentType;
 
-    public SpectralAlignmentJJob(WebAPI<?> api, Ms2Experiment experiment) {
+    public SpectralAlignmentJJob(WebAPI<?> api, Ms2Experiment experiment, SpectralAlignmentType alignmentType) {
         super(JobType.SCHEDULER);
         this.experiment = experiment;
         this.api = api;
+        this.alignmentType = alignmentType;
     }
 
     @Override
@@ -67,7 +69,7 @@ public class SpectralAlignmentJJob extends BasicMasterJJob<SpectralSearchResult>
                     BasicJJob<SpectralSearchResult> job = new BasicJJob<>() {
                         @Override
                         protected SpectralSearchResult compute() throws Exception {
-                            return ((SpectralLibrary) db).matchingSpectra(queries, precursorDev, peakDev, SpectralAlignmentType.MODIFIED_COSINE,
+                            return ((SpectralLibrary) db).matchingSpectra(queries, precursorDev, peakDev, alignmentType,
                                     (progress, max) -> this.updateProgress(max, progress, "Aligning spectra from " + experiment.getName() + " with database '" + db.getName() + "'..."));
                         }
                     };
