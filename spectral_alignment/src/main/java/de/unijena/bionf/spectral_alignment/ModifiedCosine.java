@@ -13,18 +13,22 @@ import java.util.BitSet;
  * This algorithm requires that there is at most one pair of peaks (u,v) where the m/z of u
  * and v are within the allowed mass tolerance.
  */
-public class ModifiedCosine implements SpectralAlignmentScorer {
+public class ModifiedCosine extends AbstractSpectralAlignment {
 
     // assigns peak from left to right
     private int[] assignment;
     private double score;
 
-    @Override
-    public SpectralSimilarity score(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right, double precursorLeft, double precursorRight, Deviation deviation) {
-        return score(left,right,precursorLeft,precursorRight,deviation,1.0d);
+    public ModifiedCosine(Deviation deviation) {
+        super(deviation);
     }
 
-    public SpectralSimilarity score(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right, double precursorLeft, double precursorRight, Deviation deviation, double powerIntensity) {
+    @Override
+    public SpectralSimilarity score(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right, double precursorLeft, double precursorRight) {
+        return score(left, right, precursorLeft, precursorRight, 1.0d);
+    }
+
+    public SpectralSimilarity score(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right, double precursorLeft, double precursorRight, double powerIntensity) {
         if (precursorLeft <= precursorRight) {
             final DP dp = new DP(left, right, precursorLeft, precursorRight, deviation, powerIntensity);
             dp.compute();
