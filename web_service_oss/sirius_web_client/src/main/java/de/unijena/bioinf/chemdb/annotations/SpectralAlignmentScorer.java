@@ -26,8 +26,6 @@ import de.unijena.bioinf.ms.properties.DefaultProperty;
 import de.unijena.bioinf.spectraldb.SpectralAlignmentType;
 import org.jetbrains.annotations.Nullable;
 
-import static de.unijena.bioinf.spectraldb.SpectralAlignmentType.MODIFIED_COSINE;
-
 public class SpectralAlignmentScorer implements Ms2ExperimentAnnotation {
 
     public final SpectralAlignmentType spectralAlignmentType;
@@ -38,7 +36,7 @@ public class SpectralAlignmentScorer implements Ms2ExperimentAnnotation {
 
     @DefaultInstanceProvider
     public static SpectralAlignmentScorer fromString(@DefaultProperty @Nullable String value) {
-        return new SpectralAlignmentScorer(value == null || value.isEmpty() ? MODIFIED_COSINE : SpectralAlignmentType.valueOf(value));
+        return new SpectralAlignmentScorer(SpectralAlignmentType.valueOf(value));
     }
 
     @Override
