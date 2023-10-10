@@ -28,6 +28,7 @@ import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoade
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.projectspace.CompoundContainer;
 import de.unijena.bioinf.projectspace.Instance;
+import de.unijena.bioinf.spectraldb.SpectralAlignmentType;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import picocli.CommandLine;
 
@@ -62,6 +63,11 @@ public class SpectraSearchOptions implements ToolChainOptions<SpectraSearchSubto
     @CommandLine.Option(names = "--print", descriptionKey = "SpectralSearchLog.value", description = "Number of matches to print per experiment.")
     public void setLogNum(DefaultParameter value) throws Exception {
         defaultConfigOptions.changeOption("SpectralSearchLog.value", value);
+    }
+
+    @CommandLine.Option(names = "--scorer", descriptionKey = "SpectralAlignmentScorer", description = "Scoring function for alignment. Valid values: ${COMPLETION-CANDIDATES}.", defaultValue = "MODIFIED_COSINE")
+    public void setScorer(SpectralAlignmentType alignmentType) throws Exception {
+        defaultConfigOptions.changeOption("SpectralAlignmentScorer", alignmentType.toString());
     }
 
     @Override
