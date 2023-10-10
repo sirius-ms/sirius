@@ -23,6 +23,7 @@ package de.unijena.bioinf.spectraldb;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
+import de.unijena.bioinf.chemdb.annotations.SpectralAlignmentScorer;
 import de.unijena.bioinf.chemdb.annotations.SpectralSearchDB;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.jjobs.BasicJJob;
@@ -37,13 +38,11 @@ public class SpectralAlignmentJJob extends BasicMasterJJob<SpectralSearchResult>
     private final WebAPI<?> api;
 
     private final Ms2Experiment experiment;
-    private final SpectralAlignmentType alignmentType;
 
-    public SpectralAlignmentJJob(WebAPI<?> api, Ms2Experiment experiment, SpectralAlignmentType alignmentType) {
+    public SpectralAlignmentJJob(WebAPI<?> api, Ms2Experiment experiment) {
         super(JobType.SCHEDULER);
         this.experiment = experiment;
         this.api = api;
-        this.alignmentType = alignmentType;
     }
 
     @Override
@@ -56,6 +55,8 @@ public class SpectralAlignmentJJob extends BasicMasterJJob<SpectralSearchResult>
         List<Ms2Spectrum<Peak>> queries = experiment.getMs2Spectra();
 
         CdkFingerprintVersion version = api.getCDKChemDBFingerprintVersion();
+
+        SpectralAlignmentType alignmentType = experiment.getAnnotationOrDefault(SpectralAlignmentScorer.class).spectralAlignmentType;
 
         List<BasicJJob<SpectralSearchResult>> jobs = new ArrayList<>();
 
