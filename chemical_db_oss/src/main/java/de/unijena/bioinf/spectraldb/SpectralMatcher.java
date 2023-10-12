@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A class for matching multiple query spectra each against multiple reference spectra.
+ * A class for matching multiple query spectra, each against multiple reference spectra.
  * Intended usage:
  * <pre>
  * {@code matcher = new SpectralMatcher(...);}
@@ -26,7 +26,6 @@ import java.util.List;
  */
 public class SpectralMatcher {
 
-
     private final SpectralAlignmentType alignmentType;
     private final Deviation maxPeakDeviation;
     private final Deviation precursorMzDeviation;
@@ -36,7 +35,6 @@ public class SpectralMatcher {
 
     private CosineQuerySpectrum currentQuerySpectrum;
     private int currentQueryIndex;
-
 
     public SpectralMatcher(SpectralAlignmentType alignmentType, Deviation maxPeakDeviation, Deviation precursorMzDeviation, String dbName) {
         this.alignmentType = alignmentType;
@@ -84,7 +82,7 @@ public class SpectralMatcher {
     /**
      * @return {@code SpectralSearchResult} with results sorted by decreasing similarity over all queries
      */
-    public SpectralSearchResult getResults() {
+    public SpectralSearchResult getResult() {
         results.sort((a, b) -> Double.compare(b.getSimilarity().similarity, a.getSimilarity().similarity));
 
         return SpectralSearchResult.builder()
