@@ -108,7 +108,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
 
                 int pageSize = 100;
                 for (int offset = 0; offset < referenceCount; offset += pageSize) {
-                    Iterable<Ms2ReferenceSpectrum> references = this.storage.find(filter, Ms2ReferenceSpectrum.class, offset, pageSize,"spectrum");
+                    Iterable<Ms2ReferenceSpectrum> references = this.storage.find(filter, Ms2ReferenceSpectrum.class, offset, pageSize, "spectrum");
 
                     matcher.addMatches(references);
 
@@ -119,7 +119,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
                 }
             }
 
-            return matcher.getResults();
+            return matcher.getResult();
 
         } catch (RuntimeException | IOException e) {
             throw new ChemicalDatabaseException(e);
