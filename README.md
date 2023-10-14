@@ -63,7 +63,7 @@ Therefore, we highly recommend using the [**signed** installers](https://github.
 [Bright Giant](https://bright-giant.com) (also linked above).
 These installers ease the installation process by triggering no (or less) security issues of the respective OS.
 
-See the [documenntation](https://boecker-lab.github.io/docs.sirius.github.io/install) for details.
+See the [documentation](https://boecker-lab.github.io/docs.sirius.github.io/install) for details.
 
 
 ### [Creating a user account](https://boecker-lab.github.io/docs.sirius.github.io/account-and-license/)
