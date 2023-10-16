@@ -28,6 +28,11 @@ public class BarcodeSpectrumPredictor extends AbstractMs2SpectrumPredictor<Peak>
     private final boolean isPositiveMode;
 
     /**
+     * The number of considered hydrogen shifts occurring during fragmentation.
+     */
+    private final int numHydrogenShifts;
+
+    /**
      * Constructs a BarcodeSpectrumPredictor.<br>
      * If {@code positiveMode} is set to {@code true}, the considered {@link PrecursorIonType} will be [M+H]+;
      * if it is set to {@code false}, the considered PrecursorIonType will be [M-H]-.
@@ -36,23 +41,44 @@ public class BarcodeSpectrumPredictor extends AbstractMs2SpectrumPredictor<Peak>
      *                      generated during MS/MS acquisition
      * @param positiveMode if {@code true}, the considered precursor ion type is [M+H]+;
      *                     otherwise [M-H]-
+     * @param numHydrogenShifts the number of possible hydrogen rearrangements which can occur during fragmentation
      */
-    public BarcodeSpectrumPredictor(FragmentationPredictor fragPredictor, boolean positiveMode){
+    public BarcodeSpectrumPredictor(FragmentationPredictor fragPredictor, boolean positiveMode, int numHydrogenShifts){
         super(fragPredictor, positiveMode ? PeriodicTable.getInstance().getPrecursorProtonation() : PeriodicTable.getInstance().getPrecursorDeprotonation());
         this.isPositiveMode = positiveMode;
+        this.numHydrogenShifts = numHydrogenShifts;
     }
+
+    /**
+    * Constructs a BarcodeSpectrumPredictor.<br>
+    * If {@code positiveMode} is set to {@code true}, the considered {@link PrecursorIonType} will be [M+H]+;
+    * if it is set to {@code false}, the considered PrecursorIonType will be [M-H]-.
+    *
+    * @param fragPredictor the {@link FragmentationPredictor} used for predicting the fragments of the molecule
+    *                      generated during MS/MS acquisition
+    * @param positiveMode if {@code true}, the considered precursor ion type is [M+H]+;
+    *                     otherwise [M-H]-
+    */
+    public BarcodeSpectrumPredictor(FragmentationPredictor fragPredictor, boolean positiveMode){
+        this(fragPredictor, positiveMode, 0);
+    }
+
 
     @Override
     public Ms2Spectrum<Peak> predictSpectrum() {
         List<CombinatorialFragment> predFragments = this.fragPredictor.getFragments();
-        SimpleMutableSpectrum spec = new SimpleMutableSpectrum(predFragments.size());
+        SimpleMutableSpectrum spec = new SimpleMutableSpectrum(predFragments.size()*(2*this.numHydrogenShifts+1));
 
         for(CombinatorialFragment fragment : predFragments){
             double neutralFragmentMass = fragment.getFormula().getMass();
             double fragmentMz = this.precursorIonType.neutralMassToPrecursorMass(neutralFragmentMass);
-            SimplePeak peak = new SimplePeak(fragmentMz, 1d);
-            spec.addPeak(peak);
-            this.peak2fragment.put(peak, fragment);
+
+            for(int h = -this.numHydrogenShifts; h <= this.numHydrogenShifts; h++){
+                double shiftedFragmentMz = fragmentMz + h * 1.007276;
+                SimplePeak peak = new SimplePeak(shiftedFragmentMz, 1d);
+                spec.addPeak(peak);
+                this.peak2fragment.put(peak, fragment);
+            }
         }
         Spectrums.sortSpectrumByMass(spec);
 
