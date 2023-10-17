@@ -1,87 +1,51 @@
 package de.unijena.bionf.spectral_alignment;
 
-import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import gnu.trove.list.array.TDoubleArrayList;
-import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.list.array.TShortArrayList;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 import java.util.Arrays;
 import java.util.BitSet;
 
-//
-// this algorithm requires that there is at most one pair of peaks (u,v) where the m/z of u
-// and v are within the allowed mass tolerance.
-public class ModifiedCosine {
+/**
+ * This algorithm requires that there is at most one pair of peaks (u,v) where the m/z of u
+ * and v are within the allowed mass tolerance.
+ */
+public class ModifiedCosine extends AbstractSpectralAlignment {
 
-    public static void main(String[] args) {
-
-        final SimpleMutableSpectrum A = new SimpleMutableSpectrum();
-        A.addPeak(1, 1);
-        A.addPeak(5, 1);
-        A.addPeak(8, 1);
-        A.addPeak(15, 0.5);
-        final SimpleMutableSpectrum B = new SimpleMutableSpectrum();
-        B.addPeak(1, 1);
-        B.addPeak(8, 1);
-        B.addPeak(15, 1);
-        B.addPeak(18, 1);
-        B.addPeak(20, 1);
-        B.addPeak(25, 1);
-
-        final ModifiedCosine modifiedCosine = new ModifiedCosine(new SimpleSpectrum(A), new SimpleSpectrum(B), 20, 30, new Deviation(10));
-        for (int i=0; i < modifiedCosine.assignment.length; i+=2) {
-            System.out.println("ASSIGN " + A.getMzAt(modifiedCosine.assignment[i]) + " WITH " + B.getMzAt(modifiedCosine.assignment[i+1]));
-        }
-        System.out.println("SCORE = " + modifiedCosine.score);
-
-
-    }
-
-    private SimpleSpectrum left, right;
     // assigns peak from left to right
-    private final int[] assignment;
-    private final double score;
+    private int[] assignment;
+    private double score;
 
-    public static SimpleSpectrum prepare(SimpleSpectrum spectrum, double precursorMz, Deviation dev) {
-        int[] indizes = MatrixUtils.argsort(spectrum.size(), (i, j)->Double.compare(spectrum.getIntensityAt(j),spectrum.getIntensityAt(i)));
-        SimpleMutableSpectrum buf = new SimpleMutableSpectrum();
-        final double thr = precursorMz-0.5;
-        for (int index : indizes) {
-            if (spectrum.getMzAt(index) >= thr) continue;
-            final int i = Spectrums.mostIntensivePeakWithin(spectrum, spectrum.getMzAt(index), dev);
-            if (i==index) {
-                buf.addPeak(spectrum.getMzAt(i),spectrum.getIntensityAt(i));
-            }
-        }
-        return new SimpleSpectrum(buf);
+    public ModifiedCosine(Deviation deviation) {
+        super(deviation);
     }
 
-
-    public ModifiedCosine(SimpleSpectrum left, SimpleSpectrum right, double precursorLeft, double precursorRight, Deviation deviation) {
-        this(left,right,precursorLeft,precursorRight,deviation,1.0d);
+    @Override
+    public SpectralSimilarity score(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right, double precursorLeft, double precursorRight) {
+        return score(left, right, precursorLeft, precursorRight, 1.0d);
     }
 
-    public ModifiedCosine(SimpleSpectrum left, SimpleSpectrum right, double precursorLeft, double precursorRight, Deviation deviation, double powerIntensity) {
+    public SpectralSimilarity score(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right, double precursorLeft, double precursorRight, double powerIntensity) {
         if (precursorLeft <= precursorRight) {
             final DP dp = new DP(left, right, precursorLeft, precursorRight, deviation, powerIntensity);
             dp.compute();
             this.score = dp.score;
-            this.assignment = dp.assignments.toArray();;
+            this.assignment = dp.assignments.toArray(new int[0]);
         } else {
             final DP dp = new DP(right, left, precursorRight, precursorLeft, deviation, powerIntensity);
             dp.compute();
             this.score = dp.score;
-            this.assignment = dp.assignments.toArray();;
+            this.assignment = dp.assignments.toArray(new int[0]);
             for (int k=0; k < this.assignment.length; k+=2) {
                 int swap = assignment[k];
                 assignment[k] = assignment[k+1];
                 assignment[k+1] = swap;
             }
         }
+        return getSimilarity();
     }
 
     public double getScore() {
@@ -97,28 +61,28 @@ public class ModifiedCosine {
     }
 
     protected static class DP {
-        SimpleSpectrum left, right;
+        OrderedSpectrum<Peak> left, right;
         double precursorLeft, precursorRight;
         Deviation dev;
         final BitSet visited;
-        TIntArrayList assignments;
+        IntArrayList assignments;
         double score;
         final double delta;
         final double powerIntensity;
 
         final short[] matches, reverseMatches, backref;
-        final TDoubleArrayList dp;
-        final TIntArrayList dpi;
+        final DoubleArrayList dp;
+        final IntArrayList dpi;
 
 
-        public DP(SimpleSpectrum left, SimpleSpectrum right, double precursorLeft, double precursorRight, Deviation dev, double powerIntensity) {
+        public DP(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right, double precursorLeft, double precursorRight, Deviation dev, double powerIntensity) {
             this.dev = dev;
             this.left = left;
             this.right = right;
             this.precursorLeft = precursorLeft;
             this.precursorRight = precursorRight;
             this.visited = new BitSet(left.size());
-            this.assignments = new TIntArrayList();
+            this.assignments = new IntArrayList();
             delta = precursorRight - precursorLeft;
 
             this.matches = new short[left.size()];
@@ -127,8 +91,8 @@ public class ModifiedCosine {
             this.backref = new short[right.size()];
             Arrays.fill(backref, (short) -1);
 
-            dp = new TDoubleArrayList();
-            dpi = new TIntArrayList();
+            dp = new DoubleArrayList();
+            dpi = new IntArrayList();
             this.powerIntensity = powerIntensity;
         }
 
@@ -231,8 +195,8 @@ public class ModifiedCosine {
         }
 
         private void dp(int leftNode, int directMatch, int reverseMatch, int conflictingMatch) {
-            dpi.clearQuick();
-            dp.clearQuick();
+            dpi.clear();
+            dp.clear();
             dp.add(scoreFor(leftNode, directMatch));
             dp.add(scoreFor(leftNode, reverseMatch));
             dp.add(0);
@@ -241,7 +205,7 @@ public class ModifiedCosine {
             int u = conflictingMatch;
             while (u >= 0) {
                 final int n = dp.size();
-                final double no = dp.getQuick(n - 1), rev = dp.getQuick(n - 2), match = dp.getQuick(n - 3);
+                final double no = dp.getDouble(n - 1), rev = dp.getDouble(n - 2), match = dp.getDouble(n - 3);
                 // match
                 double matchScore = scoreFor(u, matches[u]);
                 dp.add(Math.max(no, match) + matchScore);
@@ -268,24 +232,24 @@ public class ModifiedCosine {
             loop: while (true) {
                 switch (previousAssignment) {
                     case 0: { // match
-                        final int node = dpi.getQuick(nodeIndex);
+                        final int node = dpi.getInt(nodeIndex);
                         assignments.add(node);
                         assignments.add(matches[node]);
                         if (column < 0) break loop;
                         // last entry can be either match or nothing
-                        previousAssignment = dp.getQuick(column) > dp.getQuick(column + 2) ? 0 : 2;
+                        previousAssignment = dp.getDouble(column) > dp.getDouble(column + 2) ? 0 : 2;
                         break;
                     }
                     case 1: // reverse match
                     {
-                        final int node = dpi.getQuick(nodeIndex);
+                        final int node = dpi.getInt(nodeIndex);
                         assignments.add(node);
                         assignments.add(reverseMatches[node]);
                         if (column < 0) break loop;
                         // last entry can be either anything
                         previousAssignment = 0;
                         for (int r = 0; r < 3; ++r) {
-                            if (dp.getQuick(column + r) > dp.getQuick(column + previousAssignment)) {
+                            if (dp.getDouble(column + r) > dp.getDouble(column + previousAssignment)) {
                                 previousAssignment = r;
                             }
                         }
@@ -296,7 +260,7 @@ public class ModifiedCosine {
                         // last entry can be either anything
                         previousAssignment = 0;
                         for (int r = 0; r < 3; ++r) {
-                            if (dp.getQuick(column + r) > dp.getQuick(column + previousAssignment)) {
+                            if (dp.getDouble(column + r) > dp.getDouble(column + previousAssignment)) {
                                 previousAssignment = r;
                             }
                         }
@@ -310,19 +274,14 @@ public class ModifiedCosine {
             // score is maximum of the last three dp entries
             double mxScore = 0d;
             for (int k=dp.size()-3; k < dp.size(); ++k) {
-                mxScore = Math.max(dp.getQuick(k), mxScore);
+                mxScore = Math.max(dp.getDouble(k), mxScore);
             }
             score += mxScore;
         }
-
 
         private double scoreFor(int a, int b) {
             if (a < 0 || b < 0) return Double.NEGATIVE_INFINITY;
             return Math.pow(left.getIntensityAt(a) * right.getIntensityAt(b), powerIntensity);
         }
-
-
     }
-
-
 }

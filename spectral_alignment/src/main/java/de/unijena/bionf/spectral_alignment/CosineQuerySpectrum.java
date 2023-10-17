@@ -93,12 +93,12 @@ public class CosineQuerySpectrum implements Spectrum<Peak> {
 
     protected static CosineQuerySpectrum newInstance(OrderedSpectrum<Peak> spectrum, double precursorMz, AbstractSpectralAlignment spectralAlignment) {
         SimpleSpectrum inverseSpectrum = Spectrums.getInversedSpectrum(spectrum, precursorMz);
-        double selfSimilarity = spectralAlignment.score(spectrum, spectrum).similarity;
-        double selfSimilarityLosses = spectralAlignment.score(inverseSpectrum, inverseSpectrum).similarity;
+        double selfSimilarity = spectralAlignment.score(spectrum, spectrum, precursorMz, precursorMz).similarity;
+        double selfSimilarityLosses = spectralAlignment.score(inverseSpectrum, inverseSpectrum, precursorMz, precursorMz).similarity;
         return new CosineQuerySpectrum(spectrum, precursorMz, inverseSpectrum, selfSimilarity, selfSimilarityLosses);
     }
     protected static CosineQuerySpectrum newInstanceWithoutLoss(OrderedSpectrum<Peak> spectrum, double precursorMz, AbstractSpectralAlignment spectralAlignment) {
-        double selfSimilarity = spectralAlignment.score(spectrum, spectrum).similarity;
+        double selfSimilarity = spectralAlignment.score(spectrum, spectrum, precursorMz, precursorMz).similarity;
         return new CosineQuerySpectrum(spectrum, precursorMz, null, selfSimilarity, 0d);
     }
 
