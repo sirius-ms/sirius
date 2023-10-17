@@ -24,17 +24,76 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 
+import java.util.BitSet;
+
 /**
  * treat peaks as (unnormalized) Gaussians and score overlapping areas of PDFs. Each peak might score agains multiple peaks in the other spectrum.
  */
 public class GaussianSpectralAlignment extends AbstractSpectralAlignment {
+
     public GaussianSpectralAlignment(Deviation deviation) {
         super(deviation);
     }
 
     @Override
+    public SpectralSimilarity score(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right, double precursorLeft, double precursorRight) {
+        return scoreAllAgainstAll(left, right);
+    }
+
     public SpectralSimilarity score(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right) {
         return scoreAllAgainstAll(left, right);
+    }
+
+    public SpectralSimilarity scoreAllAgainstAll(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right) {
+        final BitSet usedIndicesLeft = new BitSet();
+        final BitSet usedIndicesRight = new BitSet();
+
+        int i = 0, j = 0;
+        double score = 0d;
+
+        final int nl=left.size(), nr=right.size();
+        while (i < nl && left.getMzAt(i) < 0.5d) ++i; //skip negative peaks of inversed spectra
+        while (j < nr && right.getMzAt(j) < 0.5d) ++j;
+        while (i < nl && j < nr) {
+            Peak lp = left.getPeakAt(i);
+            Peak rp = right.getPeakAt(j);
+            final double difference = lp.getMass()- rp.getMass();
+            final double allowedDifference = maxAllowedDifference(Math.min(lp.getMass(), rp.getMass()));
+
+            if (Math.abs(difference) <= allowedDifference) {
+                double matchScore = scorePeaks(lp,rp);
+                score += matchScore;
+                usedIndicesLeft.set(i);
+                usedIndicesRight.set(j);
+                for (int k=i+1; k < nl; ++k) {
+                    Peak lp2 = left.getPeakAt(k);
+                    final double difference2 = lp2.getMass()- rp.getMass();
+                    if (Math.abs(difference2) <= allowedDifference) {
+                        matchScore = scorePeaks(lp2,rp);
+                        score += matchScore;
+                        usedIndicesLeft.set(k);
+                    } else break;
+                }
+                for (int l=j+1; l < nr; ++l) {
+                    Peak rp2 = right.getPeakAt(l);
+                    final double difference2 = lp.getMass()- rp2.getMass();
+                    if (Math.abs(difference2) <= allowedDifference) {
+                        matchScore = scorePeaks(lp,rp2);
+                        score += matchScore;
+                        usedIndicesRight.set(l);
+                    } else break;
+                }
+                ++i; ++j;
+            } else if (difference > 0) {
+                ++j;
+
+            } else {
+                ++i;
+            }
+        }
+        int matchedPeaks = Math.min(usedIndicesLeft.cardinality(), usedIndicesRight.cardinality());
+        return  new SpectralSimilarity(score, matchedPeaks);
+
     }
 
     protected double scorePeaks(Peak lp, Peak rp) {
