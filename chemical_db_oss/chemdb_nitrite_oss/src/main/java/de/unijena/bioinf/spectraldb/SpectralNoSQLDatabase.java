@@ -41,7 +41,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -52,7 +51,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
 
     final protected Database<Doctype> storage;
 
-    public SpectralNoSQLDatabase(Database<Doctype> storage) throws IOException {
+    public SpectralNoSQLDatabase(Database<Doctype> storage) {
         this.storage = storage;
     }
 
@@ -94,7 +93,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
         // TODO modified cosine
         try {
             final List<SpectralSearchResult.SearchResult> results = new ArrayList<>();
-            AbstractSpectralAlignment alignment = alignmentType.type.getConstructor(Deviation.class).newInstance(maxPeakDeviation);
+            AbstractSpectralAlignment alignment = alignmentType.getScorer(maxPeakDeviation);
             CosineQueryUtils cosineQueryUtils = new CosineQueryUtils(alignment);
 
             int maxProgress = 0;
@@ -148,8 +147,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
                     }).toList())
                     .build();
 
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException |
-                 RuntimeException | IOException e) {
+        } catch (RuntimeException | IOException e) {
             throw new ChemicalDatabaseException(e);
         }
     }
