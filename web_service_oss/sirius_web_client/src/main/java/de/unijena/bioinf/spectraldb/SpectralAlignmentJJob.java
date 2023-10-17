@@ -23,6 +23,7 @@ package de.unijena.bioinf.spectraldb;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
+import de.unijena.bioinf.chemdb.annotations.SpectralAlignmentScorer;
 import de.unijena.bioinf.chemdb.annotations.SpectralSearchDB;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.jjobs.BasicJJob;
@@ -34,9 +35,9 @@ import java.util.List;
 
 public class SpectralAlignmentJJob extends BasicMasterJJob<SpectralSearchResult> {
 
-    private WebAPI<?> api;
+    private final WebAPI<?> api;
 
-    private Ms2Experiment experiment;
+    private final Ms2Experiment experiment;
 
     public SpectralAlignmentJJob(WebAPI<?> api, Ms2Experiment experiment) {
         super(JobType.SCHEDULER);
@@ -55,6 +56,8 @@ public class SpectralAlignmentJJob extends BasicMasterJJob<SpectralSearchResult>
 
         CdkFingerprintVersion version = api.getCDKChemDBFingerprintVersion();
 
+        SpectralAlignmentType alignmentType = experiment.getAnnotationOrDefault(SpectralAlignmentScorer.class).spectralAlignmentType;
+
         List<BasicJJob<SpectralSearchResult>> jobs = new ArrayList<>();
 
         // TODO other databases besides custom databases
@@ -67,9 +70,8 @@ public class SpectralAlignmentJJob extends BasicMasterJJob<SpectralSearchResult>
                     BasicJJob<SpectralSearchResult> job = new BasicJJob<>() {
                         @Override
                         protected SpectralSearchResult compute() throws Exception {
-                            return ((SpectralLibrary) db).matchingSpectra(queries, precursorDev, peakDev, SpectralAlignmentType.INTENSITY, (progress, max) -> {
-                                this.updateProgress(max, progress, "Aligning spectra from " + experiment.getName() + " with database '" + db.getName() + "'...");
-                            });
+                            return ((SpectralLibrary) db).matchingSpectra(queries, precursorDev, peakDev, alignmentType,
+                                    (progress, max) -> this.updateProgress(max, progress, "Aligning spectra from " + experiment.getName() + " with database '" + db.getName() + "'..."));
                         }
                     };
                     jobs.add(submitSubJob(job));

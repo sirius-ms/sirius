@@ -20,7 +20,5 @@
 
 version =  parent.siriusVersion
 dependencies {
-    // deprecated for removal ->  use fastutil instead
-    implementation 'net.sf.trove4j:core:3.1.0'
     api project(':chemistry_base')
 }
