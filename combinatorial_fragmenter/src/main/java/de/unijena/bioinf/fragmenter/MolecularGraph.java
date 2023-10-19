@@ -125,6 +125,10 @@ public class MolecularGraph {
         return bonds;
     }
 
+    public int[] getHydrogens(){
+        return this.hydrogens;
+    }
+
     private void calculateRingMembership() {
         final TIntArrayList[] memberships = new TIntArrayList[bonds.length];
         for (int i=0; i < memberships.length; ++i) memberships[i] = new TIntArrayList();
@@ -154,8 +158,24 @@ public class MolecularGraph {
         return adjacencyList;
     }
 
+    public int[][] getBondList(){
+        return this.bondList;
+    }
+
     TableSelection getTableSelectionOfFormula() {
         return formula.getTableSelection();
+    }
+
+    public int[][] getRingMemberships(){
+        return this.ringMemberships;
+    }
+
+    public int[][] getSSSR(){
+        return this.sssr;
+    }
+
+    public ArrayList<IBond>[] getBondsOfRings(){
+        return this.bondsOfRings;
     }
 
     private String[] getBondTypeName(IBond bond, boolean specificBondName){
