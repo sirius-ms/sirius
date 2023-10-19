@@ -42,7 +42,7 @@ import java.util.Map;
  *
  * Blob Listing
  * @param <Source> Blob storage to be cached (Slower)
- * @param <Cache> Blob storage user as the cache (Faster)
+ * @param <Cache> Blob storage used as the cache (Faster)
  */
 public class ReadCachedBlobStorage<Source extends BlobStorage, Cache extends BlobStorage> implements BlobStorage {
 

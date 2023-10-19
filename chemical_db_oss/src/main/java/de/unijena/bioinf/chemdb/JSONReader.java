@@ -20,7 +20,9 @@
 
 package de.unijena.bioinf.chemdb;
 
-import com.fasterxml.jackson.core.*;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
@@ -168,6 +170,8 @@ public class JSONReader extends CompoundReader {
             TIntArrayList pubmedIds = null;
             JsonToken jsonToken = p.nextToken();
             ArrayList<DBLink> links = new ArrayList<>();
+            ArrayList<String> referenceSpectraSplash = new ArrayList<>();
+
             while (true) {
                 if (jsonToken.isStructEnd()) break;
 
@@ -242,6 +246,15 @@ public class JSONReader extends CompoundReader {
                         } while (true);
 
                         break;
+                    case "referenceSpectraSplash":
+                        if (p.nextToken() != JsonToken.START_ARRAY)
+                            throw new IOException("malformed json. expected array"); // array start
+                        do {
+                            jsonToken = p.nextToken();
+                            if (jsonToken == JsonToken.END_ARRAY) break;
+                            else referenceSpectraSplash.add(p.getText());
+                        } while (true);
+                        break;
                     default:
                         p.nextToken();
                         break;
@@ -251,7 +264,8 @@ public class JSONReader extends CompoundReader {
 
             final CompoundCandidate c = new CompoundCandidate(
                     new InChI(inchikey, inchi), name, smiles, player, qlayer, xlogp, null, bitset, links.toArray(DBLink[]::new),
-                    pubmedIds == null ? null : new PubmedLinks(pubmedIds.toArray())
+                    pubmedIds == null ? null : new PubmedLinks(pubmedIds.toArray()),
+                    referenceSpectraSplash
             );
 
             return Pair.of(c, (indizes == null || version == null) ? null : new ArrayFingerprint(version, indizes.toArray()));

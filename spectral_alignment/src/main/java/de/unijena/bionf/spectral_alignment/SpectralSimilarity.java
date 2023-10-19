@@ -24,6 +24,11 @@ public class SpectralSimilarity {
     public final double similarity;
     public final int shardPeaks;
 
+    public SpectralSimilarity() {
+        this.similarity = 0;
+        this.shardPeaks = 0;
+    }
+
     public SpectralSimilarity(double similarity, int shardPeaks) {
         this.similarity = similarity;
         this.shardPeaks = shardPeaks;

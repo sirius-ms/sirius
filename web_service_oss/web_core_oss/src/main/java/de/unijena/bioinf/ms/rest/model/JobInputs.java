@@ -39,7 +39,7 @@ public class JobInputs {
     private List<FingerprintJobInput> fingerprintJobInputs = new ArrayList<>();
     private List<CanopusJobInput> canopusJobInputs = new ArrayList<>();
     private List<CovtreeJobInput> covtreeJobInputs = new ArrayList<>();
-    private List<MsNovelistJobInput> msnovelistJobInputs = new ArrayList<>();
+    private List<MsNovelistJobInput> msNovelistJobInputs = new ArrayList<>();
 
     public List<FingerprintJobInput> getFingerprintJobInputs() {
         return Collections.unmodifiableList(fingerprintJobInputs);
@@ -118,28 +118,28 @@ public class JobInputs {
     }
 
     public List<MsNovelistJobInput> getMsNovelistJobInputs() {
-        return Collections.unmodifiableList(msnovelistJobInputs);
+        return Collections.unmodifiableList(msNovelistJobInputs);
     }
 
     @JsonIgnore
     public boolean hasMsNovelistJobs(){
-        return msnovelistJobInputs != null && !msnovelistJobInputs.isEmpty();
+        return msNovelistJobInputs != null && !msNovelistJobInputs.isEmpty();
     }
 
-    public void setMsNovelistSSJobInputs(List<MsNovelistJobInput> msnovelistJobInputs) {
-        this.msnovelistJobInputs = msnovelistJobInputs;
-    }
-
-    @JsonIgnore
-    public void addMsNovelistJobInput(MsNovelistJobInput msnovelistJobInputs) {
-        addMsNovelistJobInputs(List.of(msnovelistJobInputs));
+    public void setMsNovelistJobInputs(List<MsNovelistJobInput> msNovelistJobInputs) {
+        this.msNovelistJobInputs = msNovelistJobInputs;
     }
 
     @JsonIgnore
-    public void addMsNovelistJobInputs(List<MsNovelistJobInput> msnovelistJobInputs) {
-        if (this.msnovelistJobInputs == null)
-            this.msnovelistJobInputs = new ArrayList<>();
-        this.msnovelistJobInputs.addAll(msnovelistJobInputs);
+    public void addMsNovelistJobInput(MsNovelistJobInput msNovelistJobInputs) {
+        addMsNovelistJobInputs(List.of(msNovelistJobInputs));
+    }
+
+    @JsonIgnore
+    public void addMsNovelistJobInputs(List<MsNovelistJobInput> msNovelistJobInputs) {
+        if (this.msNovelistJobInputs == null)
+            this.msNovelistJobInputs = new ArrayList<>();
+        this.msNovelistJobInputs.addAll(msNovelistJobInputs);
     }
 
     @JsonIgnore
@@ -148,7 +148,7 @@ public class JobInputs {
                 JobTable.JOBS_FINGERID, fingerprintJobInputs,
                 JobTable.JOBS_CANOPUS, canopusJobInputs,
                 JobTable.JOBS_COVTREE, covtreeJobInputs,
-                JobTable.JOBS_MSNOVELIST, msnovelistJobInputs
+                JobTable.JOBS_MSNOVELIST, msNovelistJobInputs
         );
     }
     @JsonIgnore
@@ -168,6 +168,6 @@ public class JobInputs {
 
     @JsonIgnore
     public int size(){
-        return fingerprintJobInputs.size() + canopusJobInputs.size() + covtreeJobInputs.size() + msnovelistJobInputs.size();
+        return fingerprintJobInputs.size() + canopusJobInputs.size() + covtreeJobInputs.size() + msNovelistJobInputs.size();
     }
 }

@@ -57,6 +57,11 @@ public class FilteredChemicalDB<DB extends AbstractChemicalDatabase> implements 
     }
 
     @Override
+    public String getName() {
+        return wrappedDB.getName();
+    }
+
+    @Override
     public List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
         if (wrappedDB instanceof FilterableChemicalDatabase)
             return ((FilterableChemicalDatabase) wrappedDB).lookupMolecularFormulas(filter, mass, deviation, ionType);
@@ -94,11 +99,6 @@ public class FilteredChemicalDB<DB extends AbstractChemicalDatabase> implements 
     @Override
     public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         return wrappedDB.lookupManyInchisByInchiKeys(inchi_keys);
-    }
-
-    @Override
-    public List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
-        return wrappedDB.lookupManyFingerprintsByInchis(inchi_keys);
     }
 
     @Override
@@ -140,4 +140,15 @@ public class FilteredChemicalDB<DB extends AbstractChemicalDatabase> implements 
     public String getChemDbDate() throws ChemicalDatabaseException {
         return wrappedDB.getChemDbDate();
     }
+
+    @Override
+    public long countAllFingerprints() throws ChemicalDatabaseException {
+        return wrappedDB.countAllFingerprints();
+    }
+
+    @Override
+    public long countAllFormulas() throws ChemicalDatabaseException {
+        return wrappedDB.countAllFormulas();
+    }
+
 }
