@@ -20,36 +20,21 @@
 
 package de.unijena.bioinf.ms.persistence.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
-
-import java.awt.*;
-import java.util.Objects;
-
+import it.unimi.dsi.fastutil.longs.LongSet;
+import jakarta.persistence.*;
 
 /**
  * General Tags for many Entities in the project.
- * Allo to create tag from compound class (e.g.)
+ * Allows to create tags e.g. from compound classes or for different conditions
  */
-@AllArgsConstructor
-@Builder
-@Getter
-@Setter
 public class Tag {
+
+    @Id
+    private long tagId;
     private String name;
-    private Color color;
+    private LongSet compoundIds;
+    private LongSet featureAlignmentIds;
+    private LongSet featureIds;
+    private LongSet runIds;
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Tag tag)) return false;
-        return Objects.equals(name, tag.name);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(name);
-    }
 }

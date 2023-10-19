@@ -1,5 +1,4 @@
 /*
- *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
@@ -18,39 +17,24 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.persistence.model.core;
+package de.unijena.bioinf.ms.persistence.storage;
 
-import it.unimi.dsi.fastutil.doubles.DoubleList;
-import it.unimi.dsi.fastutil.longs.LongList;
-import lombok.*;
+import de.unijena.bioinf.storage.db.nosql.Database;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class Trace {
-    /**
-     * ID of the Run this trace belongs to
-     */
-    long runId;
+import java.io.IOException;
 
-    /**
-     * Ids of the scans this trace is build from
-     * should be sorted by RT
-     */
-    LongList scanIds;
+public class SiriusProjectDatabaseImpl<Storage extends Database<?>> implements SiriusProjectDocumentDatabase<Storage> {
 
-    /**
-     * RTs of all scans in ascending order
-     */
-    DoubleList rts;
-    /**
-     * mz of all peaks ordered by RT
-     */
-    DoubleList mzs;
-    /**
-     * intensities of all peaks ordered by RT
-     */
-    DoubleList intensities;
+    protected Storage storage;
+
+    public SiriusProjectDatabaseImpl(Storage storage) throws IOException {
+        this.storage = storage;
+    }
+
+
+
+    @Override
+    public Storage getStorage() {
+        return storage;
+    }
 }

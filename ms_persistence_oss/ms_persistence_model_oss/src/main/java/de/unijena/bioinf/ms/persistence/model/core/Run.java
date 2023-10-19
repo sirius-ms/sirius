@@ -20,14 +20,14 @@
 
 package de.unijena.bioinf.ms.persistence.model.core;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- *
- */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -37,6 +37,12 @@ public class Run {
         SAMPLE,
         BLANK
     }
+
+    /**
+     * Run ID: unique identifier of this run within the project
+     */
+    @Id
+    private long runId;
 
     /**
      * Informative, human-readable name of this run. Defaults to file name.
@@ -53,10 +59,21 @@ public class Run {
     private FragmentationType fragmentation;
     private MassAnalyzerType massAnalyzer;
 
+
     /**
-     * Source file. If source file is embedded this object contains the gzipped datastream.
-     * If not it contains the path to the source file.
+     * Path of the source file. If source file is embedded this contains the filename of the source file
      */
     @NotNull
-    SourceFile sourceFile;
+    private String sourcePath;
+
+    //region Foreign Fields
+    /**
+     * Embedded source file. Might be NULL if source file is references instead.
+     */
+    @Nullable
+    @JsonIgnore
+    private SourceFile sourceFile;
+    //endregion
+
+
 }

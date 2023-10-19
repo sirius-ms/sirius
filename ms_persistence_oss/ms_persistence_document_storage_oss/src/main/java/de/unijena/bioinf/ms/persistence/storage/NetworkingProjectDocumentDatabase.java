@@ -18,33 +18,27 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.persistence.model.core;
+package de.unijena.bioinf.ms.persistence.storage;
 
-import jakarta.persistence.Id;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import de.unijena.bioinf.storage.db.nosql.Database;
+import de.unijena.bioinf.storage.db.nosql.Metadata;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Edge between two {@link AlignedFeatures}s
- */
-@Getter
-@Setter
-@NoArgsConstructor
-public class CorrelatedIonPair {
-    enum Type {ADDUCT, INSOURCE, MULTIMERE, ISOMERE}
+import java.io.IOException;
 
-    @Id
-    private long ionPairId;
+public interface NetworkingProjectDocumentDatabase<Storage extends Database<?>> extends MsProjectDocumentDatabase<Storage> {
 
-    private long alignFeatureId1;
-    private long alignFeatureId2;
 
-    @NotNull
-    private Type type;
+    static Metadata buildMetadata() throws IOException {
+        return buildMetadata(Metadata.build());
+    }
 
-    //MetaInformation...
-    private Double score;
-    private Double correlationCoefficient;
+    static Metadata buildMetadata(@NotNull Metadata sourceMetadata) throws IOException {
+        MsProjectDocumentDatabase.buildMetadata(sourceMetadata);
+        return sourceMetadata; //todo fill me with result Objects
+//                .addRepository(SourceFile.class,
+//                        new Index("fileName", IndexType.UNIQUE))
+//                .setOptionalFields(SourceFile.class, "data");
+
+    }
 }

@@ -19,7 +19,9 @@
  */
 dependencies {
     api project(':ms_persistence_oss:ms_persistence_model_oss')
+    api project(':ms_persistence_oss:ms_persistence_document_storage_oss')
     api project(':io')
+    api project(':document-storage')
 
     implementation 'one.microstream:microstream-storage-embedded:08.01.01-MS-GA'
     implementation 'one.microstream:microstream-afs-sql:08.01.01-MS-GA'

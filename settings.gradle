@@ -66,6 +66,7 @@ include ':model_store_oss'
 include ':ms_persistence_oss'
 include ':ms_persistence_oss:ms_persistence_model_oss'
 include ':ms_persistence_oss:ms_persistence_io_oss'
+include ':ms_persistence_oss:ms_persistence_document_storage_oss'
 
 
 include ':confidence_score_predict_oss'

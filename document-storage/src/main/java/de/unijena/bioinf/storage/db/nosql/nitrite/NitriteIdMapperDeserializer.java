@@ -33,6 +33,7 @@ import com.fasterxml.jackson.databind.deser.Deserializers;
 import com.fasterxml.jackson.databind.module.SimpleDeserializers;
 import com.fasterxml.jackson.databind.type.ClassKey;
 import com.fasterxml.jackson.databind.util.TokenBuffer;
+import de.unijena.bioinf.storage.db.nosql.utils.ExtFieldUtils;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -56,7 +57,7 @@ public class NitriteIdMapperDeserializer<T> extends JsonDeserializer<T> {
         this.database = database;
         this.jsonDeserializer = null;
         this.clazz = clazz;
-        this.idField = clazz.getDeclaredField(idField);
+        this.idField = ExtFieldUtils.getAllField(clazz, idField);
         this.idField.setAccessible(true);
     }
 
@@ -65,7 +66,7 @@ public class NitriteIdMapperDeserializer<T> extends JsonDeserializer<T> {
         this.database = null;
         this.jsonDeserializer = jsonDeserializer;
         this.clazz = clazz;
-        this.idField = clazz.getDeclaredField(idField);
+        this.idField = ExtFieldUtils.getAllField(clazz, idField);
         this.idField.setAccessible(true);
     }
 

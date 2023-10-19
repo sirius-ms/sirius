@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -20,8 +20,8 @@
 
 package de.unijena.bioinf.ms.persistence.model.core;
 
-import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import jakarta.persistence.Id;
 import lombok.*;
 
 /**
@@ -30,31 +30,16 @@ import lombok.*;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class Scan {
-    /**
-     * The MS Run this scan belongs to
-     */
-    protected Run run;
+public class Scan extends AbstractScan{
+    @Builder
+    public Scan(long scanId, Long runId, String scanNumber, Double scanTime, Double ccs, SimpleSpectrum peaks) {
+        super(runId, scanNumber, scanTime, ccs, peaks);
+        this.scanId = scanId;
+    }
 
     /**
-     * scan number from the mzml run.
+     * Database ID
      */
-    protected String scanNumber;
-
-    /**
-     * Retention Time (RT) in minutes
-     */
-    protected RetentionTime retentionTime;
-
-    /**
-     * Collisional Cross-Section (CCS) in Å^2
-     */
-    protected Double ccs;
-
-    /**
-     * The actual spectrum that has been measured (masses and intensities)
-     */
-    protected SimpleSpectrum peaks;
+    @Id
+    protected long scanId;
 }

@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -20,12 +20,14 @@
 
 package de.unijena.bioinf.ms.persistence.model.core;
 
-import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import lombok.*;
-import one.microstream.reference.Lazy;
+import jakarta.persistence.Id;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * A measured MS/MS Spectrum (usually MS2) with metadata.
@@ -33,12 +35,12 @@ import one.microstream.reference.Lazy;
 @Getter
 @Setter
 @NoArgsConstructor
-public class MSMSScan extends Scan {
-
-    @Builder(builderMethodName = "builderMsMs")
-    public MSMSScan(Run run, String scanNumber, RetentionTime retentionTime, Double ccs, SimpleSpectrum peaks, Lazy<Scan> precursorScan, byte msLevel, IsolationWindow isolationWindow, CollisionEnergy collisionEnergy, Double mzOfInterest) {
-        super(run, scanNumber, retentionTime, ccs, peaks);
-        this.precursorScan = precursorScan;
+public class MSMSScan extends AbstractScan {
+    @Builder
+    public MSMSScan(long scanId, Long runId, String scanNumber, Double scanTime, Double ccs, SimpleSpectrum peaks, Long precursorScanId, byte msLevel, IsolationWindow isolationWindow, CollisionEnergy collisionEnergy, Double mzOfInterest) {
+        super(runId, scanNumber, scanTime, ccs, peaks);
+        this.scanId = scanId;
+        this.precursorScanId = precursorScanId;
         this.msLevel = msLevel;
         this.isolationWindow = isolationWindow;
         this.collisionEnergy = collisionEnergy;
@@ -46,14 +48,18 @@ public class MSMSScan extends Scan {
     }
 
     /**
-     * MS1 scan of the precursion ion.
+     * Database ID
      */
-    protected Lazy<Scan> precursorScan;
+    @Id
+    protected long scanId;
+
+    protected Long featureId;
+    protected Long precursorScanId;
 
     protected byte msLevel;
 
     /**
-     * Isolation window used to filter the precursor ions
+     * Isolation window used to filter the precursor ions in Da
      */
     protected IsolationWindow isolationWindow;
 
@@ -68,5 +74,5 @@ public class MSMSScan extends Scan {
      */
     protected CollisionEnergy collisionEnergy;
 
-    //just add measurement parameters for other fragmentation techniques as separate fields if needed
+    //we can add measurement parameters for other fragmentation techniques as separate fields if needed
 }

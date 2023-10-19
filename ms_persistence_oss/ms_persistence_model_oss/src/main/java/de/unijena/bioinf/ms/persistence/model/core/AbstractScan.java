@@ -20,37 +20,40 @@
 
 package de.unijena.bioinf.ms.persistence.model.core;
 
-import it.unimi.dsi.fastutil.doubles.DoubleList;
-import it.unimi.dsi.fastutil.longs.LongList;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import jakarta.persistence.Id;
 import lombok.*;
 
+/**
+ * A measured Mass Spectrum (usually MS1) with metadata.
+ */
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class Trace {
+@NoArgsConstructor
+public class AbstractScan {
     /**
-     * ID of the Run this trace belongs to
+     * Database ID of the Run this Scan belongs to
      */
-    long runId;
+    protected Long runId;
 
     /**
-     * Ids of the scans this trace is build from
-     * should be sorted by RT
+     * scan number from the mzml run.
      */
-    LongList scanIds;
+    protected String scanNumber;
 
     /**
-     * RTs of all scans in ascending order
+     * Time this scan took place (in minutes)
      */
-    DoubleList rts;
+    protected Double scanTime;
+
     /**
-     * mz of all peaks ordered by RT
+     * Collisional Cross-Section (CCS) in Å^2
      */
-    DoubleList mzs;
+    protected Double ccs;
+
     /**
-     * intensities of all peaks ordered by RT
+     * The actual spectrum that has been measured (masses and intensities)
      */
-    DoubleList intensities;
+    protected SimpleSpectrum peaks;
 }
