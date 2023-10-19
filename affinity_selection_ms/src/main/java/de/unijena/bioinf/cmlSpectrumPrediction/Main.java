@@ -3,8 +3,10 @@ package de.unijena.bioinf.cmlSpectrumPrediction;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.babelms.MsIO;
 import de.unijena.bioinf.cmlFragmentation.*;
+import de.unijena.bioinf.fragmenter.CombinatorialFragment;
 import de.unijena.bioinf.fragmenter.CombinatorialNode;
 import de.unijena.bioinf.fragmenter.MolecularGraph;
 import de.unijena.bioinf.sirius.ProcessedInput;
@@ -48,8 +50,8 @@ public class Main {
     public static void main(String[] args) {
         try {
             // GENERAL INITIALISATION:
-            String smiles = "CCC(CC)N1C2=C(C=C(C=C2)C(=O)NC(C(C)C)C(=O)N)N=C1C=CC3=CC=CC=C3";
-            File msFile = new File("C:\\Users\\Nutzer\\Documents\\Bioinformatik_PhD\\AS-MS-Project\\LCMS_Benzimidazole\\BAMS-14-3\\ProjectSpaces\\filtered_by_hand_PS_5.7.2\\1695_230220_BAMS-14-3_01_1695\\spectrum.ms");
+            String smiles = "CCC(CC)N1C2=C(C=C(C=C2)C(=O)NC(C(C)C)C(=O)N)N=C1CC(C)C";
+            File msFile = new File("C:\\Users\\Nutzer\\Documents\\Bioinformatik_PhD\\AS-MS-Project\\LCMS_Benzimidazole\\BAMS-14-3\\ProjectSpaces\\filtered_by_hand_PS_5.7.2\\1915_230220_BAMS-14-3_01_1915\\spectrum.ms");
 
             SmilesParser smiParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
             MolecularGraph molecule = new MolecularGraph(smiParser.parseSmiles(smiles));
@@ -68,12 +70,10 @@ public class Main {
                 default -> fragmentationPredictor = new PrioritizedIterativeFragmentation(molecule, scoring, numFragments);
             }
             fragmentationPredictor.predictFragmentation();
-            for(CombinatorialNode node : fragmentationPredictor.getFragmentationGraph().getNodes()){
-                System.out.println(node.getIncomingEdges().size()+"\t"+node.getDepth());
-            }
 
             // Build a barcode spectrum:
-            BarcodeSpectrumPredictor spectrumPredictor = new BarcodeSpectrumPredictor(fragmentationPredictor, true);
+            int numHydrogenShifts = 2;
+            BarcodeSpectrumPredictor spectrumPredictor = new BarcodeSpectrumPredictor(fragmentationPredictor, true, numHydrogenShifts);
             SimpleSpectrum predictedSpectrum = new SimpleSpectrum(spectrumPredictor.predictSpectrum());
 
             // PARSE THE MEASURED SPECTRUM:
@@ -82,6 +82,7 @@ public class Main {
             List<ProcessedPeak> mergedPeaks = processedMs2Experiment.getMergedPeaks();
             SimpleMutableSpectrum s = new SimpleMutableSpectrum(mergedPeaks.size());
             for(ProcessedPeak peak : mergedPeaks) s.addPeak(peak);
+            s.removePeakAt(s.size()-1); // remove parent peak
             SimpleSpectrum measuredSpectrum = new SimpleSpectrum(s);
 
             // COMPARE PREDICTED AND MEASURED SPECTRUM:
