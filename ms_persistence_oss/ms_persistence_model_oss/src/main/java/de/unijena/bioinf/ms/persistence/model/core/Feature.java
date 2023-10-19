@@ -20,16 +20,15 @@
 
 package de.unijena.bioinf.ms.persistence.model.core;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.ms.persistence.microstream.LazySupplier;
+import jakarta.persistence.Id;
 import lombok.*;
-import one.microstream.reference.Lazy;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 @Getter
@@ -38,32 +37,67 @@ import java.util.stream.Stream;
 @AllArgsConstructor
 @Builder
 public class Feature {
-    long featureId;
+
+
+    /**
+     * ID of this feature
+     */
+    @Id
+    private long featureId;
+    /**
+     * ID of the aligned feature this feature belongs to
+     */
+    protected Long alignedFeatureId;
 
     protected double ionMass;
     protected PrecursorIonType ionType;
-    //todo do we need alternative ionTypes?
-
+    protected boolean blank;
+    //todo do we need a list of alternative ionTypes? we probably want to reference the ion network?
 
     /**
-     * MS1 spectrum that defines the Apex (max intensity)
+     * ID of the apexScan
      */
-    protected Lazy<Scan> apexScan;
-    protected Lazy<SimpleSpectrum> isotopePattern; //artificial spectrum -> no scan
-    protected Lazy<List<MSMSScan>> msms;
+    protected long apexScanId;
+    /**
+     * MS1 spectrum that defines the Apex (max intensity)
+     * Foreign Field by apexScanId
+     */
+    @JsonIgnore
+    protected Scan apexScan;
 
-    public Lazy<Stream<Ms2Spectrum<Peak>>> getMsmsSpectra(){ //todo maybe without supplier? but it ensures that we knwot that is is IO
-        return LazySupplier.from(getMsms(),
-                (msms) -> msms.stream().map(scan -> new MutableMs2Spectrum(scan.getPeaks(), ionMass, scan.getCollisionEnergy(), scan.getMsLevel())));
+    public Optional<Scan> getApexScan() {
+        return Optional.ofNullable(apexScan);
     }
 
+    protected SimpleSpectrum getApexSpectrum() {
+        return getApexScan().map(Scan::getPeaks).orElse(null);
+    }
 
+    /**
+     * Extracted isotope pattern of this feature
+     */
+    protected SimpleSpectrum isotopePattern; //artificial spectrum -> no scan
+
+    /**
+     * MS/MS spectra belonging to this feature, referenced by the feature id
+     * Foreign Field by featureId
+     */
+    @JsonIgnore
+    protected List<MSMSScan> msms;
+
+    public Optional<List<MSMSScan>> getMsms() {
+        return Optional.ofNullable(msms);
+    }
+
+    public Stream<MutableMs2Spectrum> getMSMSSpectra(){
+        return getMsms().map(l -> l.stream().map(scan ->
+                        new MutableMs2Spectrum(scan.getPeaks(), ionMass, scan.getCollisionEnergy(), scan.getMsLevel())))
+                .orElse(null);
+    }
 
     /**
      * Traces of this feature (mono-isotopic + isotope peaks)
-     * OPTIONAL
+     * Optional Field
      */
-    protected Lazy<List<Trace>> traces;
-
-    protected boolean blank;
+    protected List<Trace> traces;
 }

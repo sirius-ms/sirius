@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -21,22 +21,36 @@
 package de.unijena.bioinf.ms.persistence.model.core;
 
 import it.unimi.dsi.fastutil.doubles.DoubleList;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import one.microstream.reference.Lazy;
-
-import java.util.List;
+import it.unimi.dsi.fastutil.longs.LongList;
+import lombok.*;
 
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Trace {
-    Lazy<List<Scan>> scanIds;
-    DoubleList rts;
-    DoubleList mzs;
-    DoubleList intensities;
+    /**
+     * ID of the Run this trace belongs to
+     */
+    long runId;
 
-    int start;
-    int end;
+    /**
+     * Ids of the scans this trace is build from
+     * should be sorted by RT
+     */
+    LongList scanIds;
+
+    /**
+     * RTs of all scans in ascending order
+     */
+    DoubleList rts;
+    /**
+     * mz of all peaks ordered by RT
+     */
+    DoubleList mzs;
+    /**
+     * intensities of all peaks ordered by RT
+     */
+    DoubleList intensities;
 }

@@ -23,19 +23,19 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * Summary of the results of a Compound. Can be added to a Feature.
- * It is null within a Feature if it was not requested und non-null otherwise.
- * The different summary fields within this summary object are null if the corresponding
- * features does not contain the represented results. If fields are non-null
- * the corresponding result has been computed but might still be empty.
+ * Summary of the results of a Compound.
+ * The different summary fields within this summary object are null if
+ * the respective results are not available. If fields are non-null
+ * the corresponding result has been computed but might still be empty (e.g. no db hit).
  * */
 @Getter
 @Setter
 public class CompoundAnnotation {
     //result previews
-    protected SpectraCandidate spectralLibraryAnnotation; // Reference spectra available for the structure candidate
-
-    protected FormulaCandidate formulaAnnotation; // SIRIUS + ZODIAC
-    protected StructureCandidate structureAnnotation; // CSI:FingerID
-    protected CompoundClasses compoundClassAnnotation; // CANOPUS
+    //todo fill me
+//    protected SpectraCandidate spectralLibraryAnnotation; // Reference spectra available for the structure candidate
+//
+//    protected FormulaCandidate formulaAnnotation; // SIRIUS + ZODIAC
+//    protected StructureCandidate structureAnnotation; // CSI:FingerID
+//    protected CompoundClasses compoundClassAnnotation; // CANOPUS
 }

@@ -18,26 +18,30 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.persistence.model;
+package de.unijena.bioinf.storage.db.nosql.utils;
 
-import de.unijena.bioinf.ms.persistence.model.core.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import one.microstream.collections.lazy.LazyList;
+import org.apache.commons.lang3.reflect.FieldUtils;
 
-import java.util.List;
+import java.lang.reflect.Field;
+import java.util.Objects;
 
-@Getter
-@Setter
-@NoArgsConstructor
-public class MsProject {
+public class ExtFieldUtils extends FieldUtils {
+    public static <T> Field getAllField(Class<T> clz, String name) {
+        Field field = null;
+        for (Field tmpfield : FieldUtils.getAllFields(clz)) {
+            if (tmpfield.getName().equals(name)) {
+                field = tmpfield;
+                break;
+            }
+        }
+        Objects.requireNonNull(field, "Field with name '" + name + "' could not be found in class '" + clz.getName() + '.');
+        field.setAccessible(true);
 
-    private List<Run> run;
-    private LazyList<Scan> scans;
-    private LazyList<MSMSScan> msmsScans;
+        return field;
+    }
 
-    private List<Compound> compounds;
-    private List<AlignedFeatures> alignedFeatures;
-    private List<Feature> features;
+    public static <T> Object getAllFieldValue(T object, String name) throws IllegalAccessException {
+        Field field = getAllField(object.getClass(), name);
+        return field.get(object);
+    }
 }

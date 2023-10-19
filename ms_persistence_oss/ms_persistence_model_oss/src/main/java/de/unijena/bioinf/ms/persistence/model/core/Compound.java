@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -20,34 +20,49 @@
 
 package de.unijena.bioinf.ms.persistence.model.core;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import it.unimi.dsi.fastutil.longs.LongList;
+import jakarta.persistence.Id;
 import lombok.*;
-import one.microstream.reference.Lazy;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Multiple {@link AlignedFeatures} (e.g. Adducts, Isotope peals)that belong to the same Ion (Compound/IonGroup)
  */
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class Compound {
-
-    protected String name;
-
+    @Id
+    private long compoundId;
     protected RetentionTime rt;
     protected double neutralMass;
+    protected String name;
 
-    /**
-     * List of adduct features that belong to the same (this) compound
-     */
-    Lazy<List<AlignedFeatures>> adductFeatures;
     /**
      * Group of edges between pairs of feature alignments that correlate among each other. Connected components
      * from the whole graph of correlated pairs (whole dataset)
      */
-    Lazy<List<CorrelatedIonPair>> correlatedIonPairs;
+    LongList correlatedIonPairIds; //todo denormalize instead?
+
+    //foreign fields
+    @JsonIgnore
+    List<AlignedFeatures> adductFeatures;
+
+    public Optional<List<AlignedFeatures>> getAdductFeatures() {
+        return Optional.ofNullable(adductFeatures);
+    }
+
+    @JsonIgnore
+    List<CorrelatedIonPair> correlatedIonPairs;
+
+    public Optional<List<CorrelatedIonPair>> getCorrelatedIonPairs() {
+        return Optional.ofNullable(correlatedIonPairs);
+    }
+    //todo add annotations/identifications
 }

@@ -28,6 +28,7 @@ subprojects {
         api project(":chemical_db_oss")
         // external
         implementation 'it.unimi.dsi:fastutil:8.5.12'
+        implementation 'jakarta.persistence:jakarta.persistence-api:3.1.0'
 
         testImplementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:"$jackson_version"
         testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.9.2'
