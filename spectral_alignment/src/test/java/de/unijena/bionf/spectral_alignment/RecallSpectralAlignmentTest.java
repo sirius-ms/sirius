@@ -1,10 +1,10 @@
+package de.unijena.bionf.spectral_alignment;
+
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.cmlSpectrumPrediction.RecallSpectralAlignment;
-import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import org.junit.Test;
 
 import java.util.List;
@@ -18,10 +18,10 @@ public class RecallSpectralAlignmentTest {
         OrderedSpectrum<Peak> measuredSpectrum = Spectrums.empty();
         OrderedSpectrum<Peak> predictedSpectrum = Spectrums.empty();
         RecallSpectralAlignment recallSpectralAlignment = new RecallSpectralAlignment(new Deviation(5,0.01));
-        SpectralSimilarity spectralSimilarity = recallSpectralAlignment.score(predictedSpectrum, measuredSpectrum);
+        SpectralSimilarity spectralSimilarity = recallSpectralAlignment.score(measuredSpectrum, predictedSpectrum);
         assertEquals(0d, spectralSimilarity.similarity, 0);
         assertEquals(0, spectralSimilarity.shardPeaks);
-        assertTrue(recallSpectralAlignment.getPreviousMatchedMeasuredPeaks().isEmpty());
+        assertTrue(recallSpectralAlignment.getMatchedMsrdPeaks(measuredSpectrum, predictedSpectrum).isEmpty());
     }
 
     @Test
@@ -36,11 +36,11 @@ public class RecallSpectralAlignmentTest {
 
         // Test score:
         RecallSpectralAlignment recallSpectralAlignment = new RecallSpectralAlignment(new Deviation(10, 0.001));
-        SpectralSimilarity spectralSimilarity = recallSpectralAlignment.score(predictedSpectrum, measuredSpectrum);
+        SpectralSimilarity spectralSimilarity = recallSpectralAlignment.score(measuredSpectrum, predictedSpectrum);
         assertEquals(5d / 8, spectralSimilarity.similarity, 0);
 
         // Test matched peaks:
-        List<Peak> matchedMeasuredPeaks = recallSpectralAlignment.getPreviousMatchedMeasuredPeaks();
+        List<Peak> matchedMeasuredPeaks = recallSpectralAlignment.getMatchedMsrdPeaks(measuredSpectrum, predictedSpectrum);
         Double[] mzValuesOfMatchedPeaks = matchedMeasuredPeaks.stream().map(Peak::getMass).sorted().toArray(Double[]::new);
 
         assertEquals(5, matchedMeasuredPeaks.size());
@@ -58,10 +58,10 @@ public class RecallSpectralAlignmentTest {
         OrderedSpectrum<Peak> predictedSpectrum = new SimpleSpectrum(predictedMzVals, predictedIntensities);
 
         RecallSpectralAlignment recallSpectralAlignment = new RecallSpectralAlignment(new Deviation(10, 0.001));
-        SpectralSimilarity spectralSimilarity = recallSpectralAlignment.score(predictedSpectrum, measuredSpectrum);
+        SpectralSimilarity spectralSimilarity = recallSpectralAlignment.score(measuredSpectrum, predictedSpectrum);
         assertEquals(0.6, spectralSimilarity.similarity, 0);
 
-        List<Peak> matchedMeasuredPeaks = recallSpectralAlignment.getPreviousMatchedMeasuredPeaks();
+        List<Peak> matchedMeasuredPeaks = recallSpectralAlignment.getMatchedMsrdPeaks(measuredSpectrum, predictedSpectrum);
         Double[] mzValuesOfMatchedPeaks = matchedMeasuredPeaks.stream().map(Peak::getMass).sorted().toArray(Double[]::new);
 
         assertEquals(6, matchedMeasuredPeaks.size());
@@ -79,40 +79,10 @@ public class RecallSpectralAlignmentTest {
         OrderedSpectrum<Peak> predictedSpectrum = new SimpleSpectrum(predictedMzVals, predictedIntensities);
 
         RecallSpectralAlignment recallSpectralAlignment = new RecallSpectralAlignment(new Deviation(10, 0.001));
-        SpectralSimilarity spectralSimilarity = recallSpectralAlignment.score(predictedSpectrum, measuredSpectrum);
+        SpectralSimilarity spectralSimilarity = recallSpectralAlignment.score(measuredSpectrum, predictedSpectrum);
         assertEquals(0d, spectralSimilarity.similarity, 0);
 
-        List<Peak> matchedMeasuredPeaks = recallSpectralAlignment.getPreviousMatchedMeasuredPeaks();
+        List<Peak> matchedMeasuredPeaks = recallSpectralAlignment.getMatchedMsrdPeaks(measuredSpectrum, predictedSpectrum);
         assertTrue(matchedMeasuredPeaks.isEmpty());
     }
-
-    @Test
-    public void testMultipleMethodCallings(){
-        RecallSpectralAlignment recallSpectralAlignment = new RecallSpectralAlignment(new Deviation(10, 0.001));
-        double[][] measuredMzVals = new double[][]{
-                {75d, 105d, 135d, 165d, 215d},
-                {60d, 90d, 120d, 150d, 200d}};
-        double[][] predictedMzVals = new double[][]{
-                {75d, 105d, 135d, 165d, 215d},
-                {40d, 95, 100d, 149.9998, 200.003}
-        };
-        double[] intensities = new double[]{1d, 1d, 1d, 1d, 1d};
-
-        // 1. First call of recallSpectralAlignment.score(predictedSpectrum, measuredSpectrum):
-        OrderedSpectrum<Peak> measuredSpectrum = new SimpleSpectrum(measuredMzVals[0], intensities);
-        OrderedSpectrum<Peak> predictedSpectrum = new SimpleSpectrum(predictedMzVals[0], intensities);
-        SpectralSimilarity spectralSimilarity = recallSpectralAlignment.score(predictedSpectrum, measuredSpectrum);
-        List<Peak> matchedMeasuredPeaks = recallSpectralAlignment.getPreviousMatchedMeasuredPeaks();
-        assertEquals(1d, spectralSimilarity.similarity, 0d);
-        assertEquals(5, matchedMeasuredPeaks.size());
-
-        // 2. Second call of recallSpectralAlignment.score(predictedSpectrum, measuredSpectrum):
-        measuredSpectrum = new SimpleSpectrum(measuredMzVals[1], intensities);
-        predictedSpectrum = new SimpleSpectrum(predictedMzVals[1], intensities);
-        spectralSimilarity = recallSpectralAlignment.score(predictedSpectrum, measuredSpectrum);
-        matchedMeasuredPeaks = recallSpectralAlignment.getPreviousMatchedMeasuredPeaks();
-        assertEquals(0.2, spectralSimilarity.similarity, 0d);
-        assertEquals(1, matchedMeasuredPeaks.size());
-    }
-
 }
