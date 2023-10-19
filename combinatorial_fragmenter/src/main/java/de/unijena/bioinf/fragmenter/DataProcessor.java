@@ -586,6 +586,11 @@ public class DataProcessor {
                                 }
                             }
                         }
+
+                        if(minDepth >= Integer.parseInt(args[0])){
+                            printFragmentationPath(fileName, minDepth, terminalNode, peakExplainingNode, nodesOnPath2Root);
+                        }
+
                         return minDepth;
                     }).toList();
                 };
@@ -608,5 +613,16 @@ public class DataProcessor {
         } catch (InterruptedException | IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private static synchronized void printFragmentationPath(String fileName, int minDepth, CombinatorialNode terminalNode, CombinatorialNode peakExplainingNode, ArrayList<CombinatorialNode> nodesOnPath2Root){
+        System.out.println("----------------------------------------------------------------------------------------");
+        System.out.println("Instance: " + fileName + " | molecular formula: " + terminalNode.getFragment().getFormula()
+                + " | Depth after pull up: " + minDepth + "\n");
+        System.out.print(peakExplainingNode.getFragment().toSMILES());
+        for(CombinatorialNode node : nodesOnPath2Root){
+            System.out.print(" <-- " + node.getFragment().toSMILES());
+        }
+        System.out.println("\n\n----------------------------------------------------------------------------------------");
     }
 }
