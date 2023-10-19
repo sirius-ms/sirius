@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.persistence.model.core;
 
+import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -34,12 +35,14 @@ import org.jetbrains.annotations.NotNull;
 public class CorrelatedIonPair {
     enum Type {ADDUCT, INSOURCE, MULTIMERE, ISOMERE}
 
+    @Id
+    private long ionPairId;
+
+    private long alignFeatureId1;
+    private long alignFeatureId2;
+
     @NotNull
     private Type type;
-
-    private AlignedFeatures alignFeatureId1;
-    private AlignedFeatures alignFeatureId2;
-
 
     //MetaInformation...
     private Double score;

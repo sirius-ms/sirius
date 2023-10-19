@@ -21,15 +21,13 @@
 package de.unijena.bioinf.babelms.cef;
 
 import de.unijena.bioinf.babelms.GenericParser;
-import de.unijena.bioinf.ms.persistence.model.MicroStreamProjectDb;
+import de.unijena.bioinf.ms.persistence.model.core.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
-import one.microstream.afs.sql.types.SqlConnector;
-import one.microstream.afs.sql.types.SqlFileSystem;
-import one.microstream.afs.sql.types.SqlProviderSqlite;
-import one.microstream.storage.embedded.types.EmbeddedStorage;
-import one.microstream.storage.embedded.types.EmbeddedStorageManager;
+import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
+import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
+import de.unijena.bioinf.storage.db.nosql.nitrite.NitriteDatabase;
+import org.junit.Assert;
 import org.junit.Test;
-import org.sqlite.SQLiteDataSource;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -38,6 +36,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 public class AgilentCefCompoundParserTest {
 
@@ -56,22 +55,12 @@ public class AgilentCefCompoundParserTest {
 
     @Test
     public void testReadFMEStore() throws IOException {
-//        NioFileSystem fileSystem = NioFileSystem.New();
-        SQLiteDataSource dataSource = new SQLiteDataSource();
-        String path = "/tmp/MICRO-" + UUID.randomUUID();
-        System.out.println(path);
-        dataSource.setUrl("jdbc:sqlite:" + path);
-
-        SqlFileSystem fileSystem = SqlFileSystem.New(
-                SqlConnector.Caching(SqlProviderSqlite.New(dataSource))
-        );
-
-        try (EmbeddedStorageManager store = EmbeddedStorage.start(fileSystem.ensureDirectoryPath("microstream"))) {
-            MicroStreamProjectDb project = new MicroStreamProjectDb(store);
+        try (NitriteDatabase store = new NitriteDatabase(Path.of("/tmp/NITRITE-Project-" + UUID.randomUUID() + ".nitrite"), SiriusProjectDocumentDatabase.buildMetadata())) {
+            SiriusProjectDatabaseImpl<?> ps = new SiriusProjectDatabaseImpl<>(store);
             final List<Compound> compounds = new ArrayList<>();
-//        try (Buff)eredReader reader = Files.newBufferedReader(Path.of("/home/fleisch/sirius-testing/demo/000_sirius_test/compounds/ForTox_TestMix_AMSMS(1 Cmpd).cef"))){
-//        try (BufferedReader reader = Files.newBufferedReader(Path.of("/home/fleisch/sirius-testing/demo/000_sirius_test/compounds/ForTox_TestMix_AMSMS(15 cmpds).cef"))){
+
             String[] locations = new String[]{
+                    //todo make targeted ms data working
                     "/home/fleisch/sirius-testing/demo/000_sirius_test/compounds/ForTox_TestMix_AMSMS_MFE+MS2Extr(15 Cmpds).cef",
                     "/home/fleisch/sirius-testing/demo/000_sirius_test/compounds/ForTox_TestMix_AMSMS(15 cmpds).cef",
 //                    "/home/fleisch/sirius-testing/demo/000_sirius_test/compounds/ForTox_TestMix_TMSMS(13 cmpds).cef",
@@ -85,6 +74,7 @@ public class AgilentCefCompoundParserTest {
                     "/home/fleisch/sirius-testing/demo/000_sirius_test/compounds/ForTox_TestMix_AMSMS(15 cmpds).cef",
 //                    "/home/fleisch/sirius-testing/demo/000_sirius_test/compounds/ForTox_TestMix_TMSMS(13 cmpds).cef",
             };
+
             for (String location : locations) {
                 try (BufferedReader reader = Files.newBufferedReader(Path.of(location))) {
                     GenericParser<Compound> parser = new GenericParser<>(new AgilentCefCompoundParser());
@@ -94,9 +84,13 @@ public class AgilentCefCompoundParserTest {
 
 
             System.out.println(compounds);
-            project.getProject().setCompounds(compounds);
-            project.getStorageManager().storeRoot();
+            ps.importCompounds(compounds);
             System.out.println(compounds);
+            List<Compound> compoundsFetche = ps.getAllCompounds().toList();
+            System.out.println("alignedFeatures");
+            List<AlignedFeatures> features = ps.getAllAlignedFeatures().peek(ps::fetchMsmsScans).toList();
+
+            Assert.assertEquals(compounds.size(), compoundsFetche.size());
         }
         System.out.println();
 

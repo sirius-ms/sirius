@@ -21,6 +21,7 @@
 package de.unijena.bioinf.babelms.cef;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.Parser;
@@ -29,7 +30,6 @@ import de.unijena.bioinf.ms.persistence.model.core.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.MSMSScan;
 import de.unijena.bioinf.ms.persistence.model.core.Scan;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import one.microstream.reference.Lazy;
 import org.apache.commons.io.input.ReaderInputStream;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -56,6 +56,7 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 
 import static de.unijena.bioinf.babelms.cef.CEFUtils.*;
+
 public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.persistence.model.core.Compound> {
     private static final DecimalFormat NUMBER_FORMAT = new DecimalFormat("#0.000");
     private final static QName qName = new QName("Compound");
@@ -120,30 +121,41 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
     }
 
     private de.unijena.bioinf.ms.persistence.model.core.Compound parseCompound(Compound compound) {
-        final List<Feature> siriusFeatures;
+        final List<AlignedFeatures> siriusFeatures;
         if (compound.getSpectrum().stream().anyMatch(s -> s.getType().equalsIgnoreCase("MFE") || s.getType().equalsIgnoreCase("FBF"))) { //MFE/FBF data
-            siriusFeatures =  fromMFECompound(compound);
+            siriusFeatures = fromMFECompound(compound);
         } else if (compound.getSpectrum().stream().noneMatch(s -> s.getMSDetails().getScanType().equals("ProductIonProductIon"))) { //ms1 only data from raw format
-            siriusFeatures =  fromMS1OnlyCompound(compound);
+            siriusFeatures = fromMS1OnlyCompound(compound);
         } else {
-            siriusFeatures =  fromRawCompound(compound);
+            siriusFeatures = fromRawCompound(compound);
         }
-        return de.unijena.bioinf.ms.persistence.model.core.Compound.builder()
-                .adductFeatures(Lazy.UnregisteredReference(
-                        siriusFeatures.stream().map(AlignedFeatures::singleton).toList())).build();
+
+        de.unijena.bioinf.ms.persistence.model.core.Compound.CompoundBuilder b =
+                de.unijena.bioinf.ms.persistence.model.core.Compound.builder()
+                        .adductFeatures(siriusFeatures);
+        Optional.ofNullable(compound.location)
+                .map(Location::getM)
+                .map(BigDecimal::doubleValue)
+                .ifPresent(b::neutralMass);
+        parseRT(compound).ifPresent(b::rt);
+
+        return b.build();
+
+
+
     }
 
     private static final Pattern UNSUPPORTED_IONTYPE_MATCHER = Pattern.compile("^\\d+M.*");
     private static final Pattern ISOTOPE_PEAK_MATCHER = Pattern.compile("\\+\\d+$");
 
-    private List<Feature> fromMFECompound(Compound compound) {
+    private List<AlignedFeatures> fromMFECompound(Compound compound) {
         final Spectrum mfe = compound.getSpectrum().stream()
                 .filter(s ->
                         s.getType().equalsIgnoreCase("MFE") || s.getType().equalsIgnoreCase("FBF")
                 ).findAny().orElseThrow(() -> new IllegalArgumentException("Compound must contain a MFE/FBF spectrum to be parsed as MFE/FBF spectrum!"));
 
 
-        List<Feature> siriusFeatures = new ArrayList<>();
+        List<AlignedFeatures> siriusFeatures = new ArrayList<>();
 
         mfe.msPeaks.getP().stream().filter(p -> {
             if (UNSUPPORTED_IONTYPE_MATCHER.matcher(p.getS()).find()) {
@@ -161,14 +173,17 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
                     .ionType(PrecursorIonType.fromString("[" + p.getS() + "]" + mfe.getMSDetails().p))
                     .build();
             featureFromCompound(compound, feature);
-            siriusFeatures.add(feature);
+            AlignedFeatures al = AlignedFeatures.singleton(feature);
+            if (al.getMergedRT() == null)
+                parseRT(mfe).ifPresent(al::setMergedRT);
+            siriusFeatures.add(al);
         });
 
 
         return siriusFeatures;
     }
 
-    private List<Feature> fromMS1OnlyCompound(Compound compound) {
+    private List<AlignedFeatures> fromMS1OnlyCompound(Compound compound) {
         Feature f = new Feature();
         Spectrum ms = compound.getSpectrum().stream()
                 .filter(s -> s.getMSDetails().getScanType().equals("Scan"))
@@ -177,10 +192,16 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
 
         f.setIonType(ms.getMSDetails().p.equals("-") ? PrecursorIonType.unknownNegative() : PrecursorIonType.unknownPositive());
         f.setIonMass(ms.mzOfInterest.getMz().doubleValue());
-        return List.of(featureFromCompound(compound, f));
+
+        featureFromCompound(compound, f);
+
+        AlignedFeatures al = AlignedFeatures.singleton(f);
+        if (al.getMergedRT() == null)
+            parseRT(ms).ifPresent(al::setMergedRT);
+        return List.of(al);
     }
 
-    private List<Feature> fromRawCompound(Compound compound) {
+    private List<AlignedFeatures> fromRawCompound(Compound compound) {
         Feature f = new Feature();
 
         Spectrum s = compound.getSpectrum().stream().filter(spec -> spec.getMSDetails().getScanType().equals("ProductIon")).findFirst()
@@ -188,7 +209,12 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
         f.setIonType(s.getMSDetails().p.equals("-") ? PrecursorIonType.unknownNegative() : PrecursorIonType.unknownPositive());
         f.setIonMass(s.mzOfInterest.getMz().doubleValue());
 
-        return List.of(featureFromCompound(compound, f));
+        featureFromCompound(compound, f);
+
+        AlignedFeatures al = AlignedFeatures.singleton(f);
+        if (al.getMergedRT() == null)
+            parseRT(s).ifPresent(al::setMergedRT);
+        return List.of(al);
     }
 
     private <S extends Feature> S featureFromCompound(Compound compound, Feature feature) {
@@ -224,16 +250,17 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
             }
         }
 
-        feature.setIsotopePattern(Lazy.UnregisteredReference(isotopePattern));
-        feature.setMsms(Lazy.UnregisteredReference(ms2Spectra));
-        feature.setApexScan(Lazy.UnregisteredReference(ms1Spectra.iterator().next()));
+        feature.setIsotopePattern(isotopePattern);
+        feature.setMsms(ms2Spectra);
+        feature.setApexScan(ms1Spectra.iterator().next());
 
         return (S) feature;
     }
 
     private MSMSScan makeMs2Scan(Spectrum spec) {
-        MSMSScan.MSMSScanBuilder b = MSMSScan.builderMsMs();
-        parseRT(spec).ifPresent(b::retentionTime);
+        MSMSScan.MSMSScanBuilder b = MSMSScan.builder();
+        //MFE scans are not real scans. so there is rt range instead of a scan time?
+        parseRT(spec).map(RetentionTime::getMiddleTime).ifPresent(b::scanTime);
         return b.peaks(makeMs1Spectrum(spec))
                 .mzOfInterest(spec.getMzOfInterest().getMz().doubleValue())
                 .collisionEnergy(parseCE(spec))
@@ -245,7 +272,7 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
     private Scan makeMs1Scan(Spectrum spec) {
         Scan.ScanBuilder b = Scan.builder();
         b.peaks(makeMs1Spectrum(spec));
-        parseRT(spec).ifPresent(b::retentionTime);
+        parseRT(spec).map(RetentionTime::getMiddleTime).ifPresent(b::scanTime);
         b.scanNumber(spec.scans.toString());
 
         return b.build();

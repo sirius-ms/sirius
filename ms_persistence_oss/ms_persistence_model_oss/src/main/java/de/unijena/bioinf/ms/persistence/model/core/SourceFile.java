@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -20,45 +20,44 @@
 
 package de.unijena.bioinf.ms.persistence.model.core;
 
+import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import one.microstream.reference.Lazy;
-
-import java.nio.file.Path;
-import java.util.Optional;
 
 @Getter
 @Setter
 @NoArgsConstructor
 public class SourceFile {
-    enum Type{
+    enum Format {
         //todo do we need more info here?
-        MZML("Open MzML format"), MZXML("Open MzXML format (Deprecated)");
+        MZML("Open MzML format"), MZXML("Open MzXML format (Deprecated)"), OTHER("Unknown or unspecified format");
 
         public final String fullName;
 
-        Type(String fullName) {
+        Format(String fullName) {
             this.fullName = fullName;
         }
     }
 
+    /**
+     * Uses the same primary key as {@link Run}
+     */
+
+    @Id
+    private long runId;
 
     /**
-     * path of this source file
+     * name of this source file
      */
-    private Path filePath;
-
-    public String getFileName(){
-        return Optional.ofNullable(filePath).map(f -> f.getFileName().toString()).orElse(null);
-    }
+    private String fileName;
 
     /**
-     * File Type, needed for parsing.
+     * File Format, needed for parsing the data if included.
      */
-    private Type type;
+    private Format format;
     /**
      * File contents stored as gzipped byte stream
      */
-    private Lazy<byte[]> data;
+    private byte[] data;
 }

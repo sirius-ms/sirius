@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.storage.db.nosql.nitrite;
 
+import de.unijena.bioinf.storage.db.nosql.utils.ExtFieldUtils;
 import org.apache.commons.lang3.ClassUtils;
 import org.dizitart.no2.Document;
 import org.dizitart.no2.NitriteCollection;
@@ -136,7 +137,7 @@ public class InjectingIterable<T> implements Iterable<T> {
 
         long id;
         try {
-            Field idf = original.getClass().getDeclaredField(idField);
+            Field idf = ExtFieldUtils.getAllField(original.getClass(), idField);
             idf.setAccessible(true);
             id = idf.getLong(original);
         } catch (Exception e) {
