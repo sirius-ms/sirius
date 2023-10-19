@@ -24,6 +24,7 @@ dependencies {
     annotationProcessor project(':default_properties:processor')
     api project(":web_service_oss:rest_client_oss")
     api project(':chemical_db_oss:chemdb_rest_oss')
+    api project(':chemical_db_oss:chemdb_nitrite_oss')
     api project(':chemical_db_oss:chemdb_utils_oss')
     api project(':fingerprinter_oss')
     api project(':fingerblast_oss')
@@ -31,6 +32,7 @@ dependencies {
     api project(':canopus_predict_oss')
     api project (':sirius_api')
     api project (':model_store_oss')
+    api project(':document-storage')
 
     for (module in ["interfaces", "data", "io", "interfaces", "smiles", "silent"])
         api "org.openscience.cdk:cdk-$module:$cdk_version"

@@ -41,13 +41,13 @@ public class ChemDBClient extends StructureSearchClient {
     public static final int MAX_NUM_OF_INCHIS = 1000; //todo this should be requested from server!
 
     @SafeVarargs
-    public ChemDBClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<Request.Builder>... requestDecorators) {
-        super(serverUrl, requestDecorators);
+    public ChemDBClient(@Nullable URI serverUrl, @Nullable String contextPath, @NotNull IOFunctions.IOConsumer<Request.Builder>... requestDecorators) {
+        super(serverUrl, contextPath, requestDecorators);
     }
 
     @SafeVarargs
-    public ChemDBClient(URI serverUrl, boolean cacheFpVersion, @NotNull IOFunctions.IOConsumer<Request.Builder>... requestDecorators) {
-        super(serverUrl, cacheFpVersion, requestDecorators);
+    public ChemDBClient(URI serverUrl, @Nullable String contextPath, boolean cacheFpVersion, @NotNull IOFunctions.IOConsumer<Request.Builder>... requestDecorators) {
+        super(serverUrl, contextPath, cacheFpVersion, requestDecorators);
     }
 
     public List<FingerprintCandidate> postCompounds(@NotNull List<String> inChIs2d, OkHttpClient client) throws IOException {

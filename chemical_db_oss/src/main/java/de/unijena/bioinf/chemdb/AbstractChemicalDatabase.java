@@ -37,6 +37,8 @@ public interface AbstractChemicalDatabase extends Closeable, Cloneable, SearchSt
     // temporary switch
     boolean USE_EXTENDED_FINGERPRINTS = PropertyManager.getBoolean("de.unijena.bioinf.chemdb.fingerprint.extended", null, false);
 
+    String getName();
+
     /**
      * Search for molecular formulas in the database
      *
@@ -77,8 +79,6 @@ public interface AbstractChemicalDatabase extends Closeable, Cloneable, SearchSt
 
     List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws ChemicalDatabaseException;
 
-    List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException;
-
     List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws ChemicalDatabaseException;
 
     default Fingerprint lookupFingerprintByInChI(InChI inchi) throws ChemicalDatabaseException {
@@ -97,4 +97,9 @@ public interface AbstractChemicalDatabase extends Closeable, Cloneable, SearchSt
      */
 
     String getChemDbDate() throws ChemicalDatabaseException;
+
+    long countAllFingerprints() throws ChemicalDatabaseException;
+
+    long countAllFormulas() throws ChemicalDatabaseException;
+
 }

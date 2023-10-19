@@ -30,6 +30,8 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * Created by Marcus Ludwig on 15.11.16.
@@ -57,6 +59,11 @@ public class AbstractChemicalDatabaseSynchronousExecutor implements AbstractChem
 
     public synchronized void setFilter(long filter) {
         this.filter = filter;
+    }
+
+    @Override
+    public String getName() {
+        return Arrays.stream(this.databases).map(AbstractChemicalDatabase::getName).collect(Collectors.joining(","));
     }
 
     @Override
@@ -90,12 +97,6 @@ public class AbstractChemicalDatabaseSynchronousExecutor implements AbstractChem
     }
 
     @Override
-    public List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
-        ChemicalDatabaseFuture<List<FingerprintCandidate>> future = new ChemicalDatabaseFuture<>(executor, "lookupManyFingerprintsByInchis", new Class<?>[]{Iterable.class}, new Object[]{inchi_keys});
-        return future.get();
-    }
-
-    @Override
     public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws ChemicalDatabaseException {
         ChemicalDatabaseFuture<List<FingerprintCandidate>> future = new ChemicalDatabaseFuture<>(executor, "lookupFingerprintsByInchi", new Class<?>[]{Iterable.class}, new Object[]{compounds});
         return future.get();
@@ -116,6 +117,24 @@ public class AbstractChemicalDatabaseSynchronousExecutor implements AbstractChem
     @Override
     public String getChemDbDate() {
         return null;
+    }
+
+    @Override
+    public long countAllFingerprints() throws ChemicalDatabaseException {
+        int sum = 0;
+        for (AbstractChemicalDatabase database : this.databases) {
+            sum += database.countAllFingerprints();
+        }
+        return sum;
+    }
+
+    @Override
+    public long countAllFormulas() throws ChemicalDatabaseException {
+        long sum = 0;
+        for (AbstractChemicalDatabase database : this.databases) {
+            sum += database.countAllFormulas();
+        }
+        return sum;
     }
 
     @Override

@@ -53,8 +53,8 @@ public class InfoClient extends AbstractCsiClient {
     private static final String WEBAPI_WORKER_JSON = "/workers.json";
 
     @SafeVarargs
-    public InfoClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<Request.Builder>... requestDecorators) {
-        super(serverUrl, requestDecorators);
+    public InfoClient(@Nullable URI serverUrl, @Nullable String contextPath, @NotNull IOFunctions.IOConsumer<Request.Builder>... requestDecorators) {
+        super(serverUrl, contextPath, requestDecorators);
     }
 
     @NotNull

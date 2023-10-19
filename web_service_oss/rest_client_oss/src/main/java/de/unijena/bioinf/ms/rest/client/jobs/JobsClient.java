@@ -52,8 +52,8 @@ public class JobsClient extends AbstractCsiClient {
     private final ObjectMapper postJobMapper;
 
     @SafeVarargs
-    public JobsClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<Request.Builder>... requestDecorator) {
-        super(serverUrl, requestDecorator);
+    public JobsClient(@Nullable URI serverUrl, @Nullable String contextPath, @NotNull IOFunctions.IOConsumer<Request.Builder>... requestDecorator) {
+        super(serverUrl, contextPath, requestDecorator);
         postJobMapper = new ObjectMapper();
         postJobMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         SimpleModule m = new SimpleModule();

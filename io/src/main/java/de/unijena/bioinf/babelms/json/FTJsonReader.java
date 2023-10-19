@@ -21,18 +21,15 @@
 
 package de.unijena.bioinf.babelms.json;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.HashMultimap;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.data.DataSource;
-import de.unijena.bioinf.ChemistryBase.data.JacksonDocument;
+import de.unijena.bioinf.ChemistryBase.data.JSONDocumentType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.babelms.descriptor.Descriptor;
@@ -91,27 +88,25 @@ public class FTJsonReader implements Parser<FTree> {
     }
 
     public FTree treeFromJson(Reader reader, URI source) throws IOException {
-        final JacksonDocument json = new JacksonDocument();
-        final JsonNode docRoot = json.fromReader(reader);
-        return treeFromJson(docRoot, json, source);
+        final JsonNode docRoot = new ObjectMapper().readTree(reader);
+        return treeFromJson(docRoot, source);
     }
 
-    public FTree treeFromJson(@NotNull final JsonNode docRoot, @NotNull final JacksonDocument json,
-                              @Nullable URI source) throws IOException {
+    public FTree treeFromJson(@NotNull final JsonNode docRoot, @Nullable URI source) throws IOException {
         final DescriptorRegistry registry = DescriptorRegistry.getInstance();
         double score = 0d;
         double scoreBoost = 0d;
 
-        final JsonNode fragments = json.getFromDictionary(docRoot, "fragments");
+        final JsonNode fragments = docRoot.get("fragments");
         final HashMap<MolecularFormula, FragmentInfo> fragmentByFormulaMap = new HashMap<>(fragments.size());
         final TIntObjectHashMap<FragmentInfo> fragmentByIdMap = new TIntObjectHashMap<>();
 //        final TObjectIntHashMap<Fragment> treeFragmentToIdMap = new TObjectIntHashMap<>();
         final TIntIntHashMap treeFragmentIdToIdMap = new TIntIntHashMap();
         for (int k = 0; k < fragments.size(); ++k) {
             final JsonNode fragment = fragments.get(k);
-            final int id = (int) json.getIntFromDictionary(fragment, "id");
-            final MolecularFormula vertex = MolecularFormula.parseOrThrow(json.getStringFromDictionary(fragment, "molecularFormula"));
-            final Ionization vertexIon = PrecursorIonType.getPrecursorIonType(json.getStringFromDictionary(fragment, "ion")).getIonization();
+            final int id = fragment.get("id").asInt();
+            final MolecularFormula vertex = MolecularFormula.parseOrThrow(fragment.get("molecularFormula").asText());
+            final Ionization vertexIon = PrecursorIonType.getPrecursorIonType(fragment.get("ion").asText()).getIonization();
 //            fragmentByFormulaMap.put(vertex, new Object[]{fragment, vertexIon});
             fragmentByFormulaMap.put(vertex, new FragmentInfo(id, vertex, vertexIon, fragment));
             fragmentByIdMap.put(id, new FragmentInfo(id, vertex, vertexIon, fragment));
@@ -127,7 +122,7 @@ public class FTJsonReader implements Parser<FTree> {
 //        final HashMultimap<MolecularFormula, MolecularFormula> edges = HashMultimap.create();
 //        final HashMultimap<FragmentInfo, FragmentInfo> edges = HashMultimap.create();
         final HashMultimap<Integer, Integer> edges = HashMultimap.create();
-        final JsonNode losses = json.getListFromDictionary(docRoot, "losses");
+        final JsonNode losses = docRoot.get("losses");
         for (int k = 0; k < losses.size(); ++k) {
             final JsonNode loss = losses.get(k);
 
@@ -199,7 +194,7 @@ public class FTJsonReader implements Parser<FTree> {
             final String[] keywords = getKeyArray(treeAnnotations);
             final Descriptor[] descriptors = registry.getByKeywords(FTree.class, keywords);
             for (Descriptor<DataAnnotation> descriptor : descriptors) {
-                final DataAnnotation annotation = descriptor.read(json, treeAnnotations);
+                final DataAnnotation annotation = descriptor.read(new JSONDocumentType(), (ObjectNode) treeAnnotations);
                 if (annotation != null) {
                     tree.setAnnotation(descriptor.getAnnotationClass(), annotation);
                 }
@@ -218,7 +213,7 @@ public class FTJsonReader implements Parser<FTree> {
             final String[] keywords = getKeyArray(jsonfragment);
             final Descriptor[] descriptors = registry.getByKeywords(Fragment.class, keywords);
             for (Descriptor<DataAnnotation> descriptor : descriptors) {
-                final DataAnnotation annotation = descriptor.read(json, jsonfragment);
+                final DataAnnotation annotation = descriptor.read(new JSONDocumentType(), (ObjectNode)  jsonfragment);
                 if (annotation != null) {
                     FragmentAnnotation<DataAnnotation> fano = tree.getOrCreateFragmentAnnotation(descriptor.getAnnotationClass());
                     fano.set(f, annotation);
@@ -239,7 +234,7 @@ public class FTJsonReader implements Parser<FTree> {
             final String[] keywords = getKeyArray(jsonloss);
             final Descriptor[] descriptors = registry.getByKeywords(Loss.class, keywords);
             for (Descriptor<DataAnnotation> descriptor : descriptors) {
-                final DataAnnotation annotation = descriptor.read(json, jsonloss);
+                final DataAnnotation annotation = descriptor.read(new JSONDocumentType(), (ObjectNode) jsonloss);
                 if (annotation != null) {
                     LossAnnotation<DataAnnotation> lano = tree.getOrCreateLossAnnotation(descriptor.getAnnotationClass());
                     lano.set(l, annotation);
