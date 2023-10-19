@@ -28,10 +28,12 @@ import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.chemdb.*;
+import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
 import de.unijena.bioinf.fingerid.fingerprints.FixedFingerprinter;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.storage.blob.file.FileBlobStorage;
+import de.unijena.bioinf.storage.db.nosql.Filter;
 import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.NotNull;
 import org.openscience.cdk.AtomContainer;
@@ -59,7 +61,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class CustomDatabaseImporter {
-    final CustomDatabase<?> database;
+    final CustomDatabase database;
     Queue<Listener> listeners = new ConcurrentLinkedQueue<>();
 
     // fingerprint buffer
@@ -78,7 +80,9 @@ public class CustomDatabaseImporter {
     protected CdkFingerprintVersion fingerprintVersion;
     protected final WebAPI<?> api;
 
-    protected CustomDatabaseImporter(@NotNull CustomDatabase<?> database, CdkFingerprintVersion version, WebAPI<?> api, int bufferSize) {
+    protected final Map<String, String> inchiCache = new HashMap<>();
+
+    protected CustomDatabaseImporter(@NotNull CustomDatabase database, CdkFingerprintVersion version, WebAPI<?> api, int bufferSize) {
         this.api = api;
         this.database = database;
         this.fingerprintVersion = version;
@@ -220,9 +224,18 @@ public class CustomDatabaseImporter {
                     final String inchi2d;
                     try {
                         inchi2d = InChISMILESUtils.getInchi(c.container, false).in2D;
-                        Comp comp = new Comp(inchi2d);
-                        comp.molecule = c;
-                        dict.put(inchi2d, comp);
+                        if (dict.containsKey(inchi2d)) {
+                            Comp comp = dict.get(inchi2d);
+                            if (comp.molecule.id == null && c.id != null)
+                                comp.molecule.id = c.id;
+                            if (comp.molecule.name == null && c.name != null)
+                                comp.molecule.name = c.name;
+                        } else {
+                            Comp comp = new Comp(inchi2d);
+                            comp.molecule = c;
+                            dict.put(inchi2d, comp);
+                        }
+                        inchiCache.put(c.smiles.smiles, inchi2d);
                     } catch (CDKException | IllegalArgumentException e) {
                         CustomDatabase.logger.error(e.getMessage(), e);
                     }
@@ -356,25 +369,62 @@ public class CustomDatabaseImporter {
     }
 
     private void mergeAndWriteCompounds(MolecularFormula key, final Collection<FingerprintCandidate> value) throws IOException {
-        Path path = Path.of(key.toString() + ".json");
         try {
             synchronized (database) {
-                final List<FingerprintCandidate> alreadyExisting = new ArrayList<>();
-                try (InputStream in = database.storage.reader(path)) {
-                    if (in != null)
-                        alreadyExisting.addAll(JSONReader.fromJSONList(fingerprintVersion, in));
+                if (database instanceof BlobCustomDatabase<?>) {
+                    mergeAndWriteCompoundsBlob(key, value, (BlobCustomDatabase<?>) database);
+                } else if (database instanceof NoSQLCustomDatabase<?, ?>){
+                    mergeAndWriteCompoundsNoSQL(key, value, (NoSQLCustomDatabase<?, ?>) database);
+                } else {
+                    throw new IllegalArgumentException();
                 }
-                final List<FingerprintCandidate> finalList = WebWithCustomDatabase.mergeCompounds(
-                        Stream.concat(alreadyExisting.stream(), value.stream()).collect(Collectors.toList()));
-
-                database.storage.withWriter(path, w -> CompoundCandidate.toJSONList(finalList, w));
-                database.getStatistics().compounds().addAndGet(finalList.size() - alreadyExisting.size());
-                if (alreadyExisting.isEmpty() && !finalList.isEmpty())
-                    database.getStatistics().formulas().incrementAndGet();
             }
         } catch (IOException e) {
-            throw new IOException("Error while merging into: " + path, e);
+            throw new IOException("Error while merging into: " + key, e);
         }
+    }
+
+    private void mergeAndWriteCompoundsNoSQL(MolecularFormula key, final Collection<FingerprintCandidate> value, NoSQLCustomDatabase<?, ?> database) throws IOException {
+        final List<FingerprintCandidateWrapper> alreadyExisting = database.database.getStorage().findStr(new Filter().eq("formula", key.toString()), FingerprintCandidateWrapper.class, "candidate").toList();
+        Map<String, FingerprintCandidateWrapper> alreadyExistingMap = new HashMap<>();
+        alreadyExisting.forEach(fcw -> alreadyExistingMap.put(fcw.getCandidate().getInchiKey2D(), fcw));
+
+        List<FingerprintCandidateWrapper> toUpdate = new ArrayList<>();
+        List<FingerprintCandidateWrapper> toAdd = new ArrayList<>();
+
+        WebWithCustomDatabase.mergeCompounds(
+                Stream.concat(alreadyExisting.stream()
+                        .map(FingerprintCandidateWrapper::getFingerprintCandidate), value.stream())
+                        .toList()
+        ).forEach(fc -> {
+            if (alreadyExistingMap.containsKey(fc.getInchiKey2D())) {
+                FingerprintCandidateWrapper fcw = alreadyExistingMap.get(fc.getInchiKey2D());
+                fcw.setCandidate(fc);
+                toUpdate.add(fcw);
+            } else {
+                toAdd.add(FingerprintCandidateWrapper.of(key, fc));
+            }
+        });
+
+        database.database.getStorage().upsertAll(toUpdate);
+        database.database.getStorage().insertAll(toAdd);
+    }
+
+    private void mergeAndWriteCompoundsBlob(MolecularFormula key, final Collection<FingerprintCandidate> value, BlobCustomDatabase<?> database) throws IOException {
+        Path path = Path.of(key.toString() + ".json");
+
+        final List<FingerprintCandidate> alreadyExisting = new ArrayList<>();
+        try (InputStream in = database.storage.reader(path)) {
+            if (in != null)
+                alreadyExisting.addAll(JSONReader.fromJSONList(fingerprintVersion, in));
+        }
+        final List<FingerprintCandidate> finalList = WebWithCustomDatabase.mergeCompounds(
+                Stream.concat(alreadyExisting.stream(), value.stream()).collect(Collectors.toList()));
+
+        database.storage.withWriter(path, w -> CompoundCandidate.toJSONList(finalList, w));
+//        database.getStatistics().compounds().addAndGet(finalList.size() - alreadyExisting.size());
+//        if (alreadyExisting.isEmpty() && !finalList.isEmpty())
+//            database.getStatistics().formulas().incrementAndGet();
     }
 
     private void checkCancellation() {

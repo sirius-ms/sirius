@@ -20,45 +20,97 @@
 
 package de.unijena.bioinf.projectspace;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.spectraldb.SpectralAlignmentType;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
+import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class SpectralSearchResultSerializer implements ComponentSerializer<CompoundContainerId, CompoundContainer, SpectralSearchResult> {
 
-    private final static ObjectMapper objectMapper = new ObjectMapper();
-
     @Override
     public @Nullable SpectralSearchResult read(ProjectReader reader, CompoundContainerId id, CompoundContainer container) throws IOException {
-        if (reader.exists(SiriusLocations.SPECTRAL_SEARCH_JSON)) {
-            return reader.binaryFile(SiriusLocations.SPECTRAL_SEARCH_JSON, (io)->{
-                try (GZIPInputStream zipped = new GZIPInputStream(io)) {
-                    return objectMapper.readValue(zipped, SpectralSearchResult.class);
-                }
-            });
-        }
-        return null;
+        String relPath = SpectralSearchLocations.SEARCH_RESULTS.relFilePath(id);
+        String relPathParams = SpectralSearchLocations.SEARCH_PARAMS.relFilePath(id);
+
+        if (!reader.exists(relPath) || !reader.exists(relPathParams))
+            return null;
+
+        AtomicReference<Deviation> precursorDev = new AtomicReference<>();
+        AtomicReference<Deviation> peakDev = new AtomicReference<>();
+        AtomicReference<SpectralAlignmentType> alignmentType = new AtomicReference<>();
+        AtomicInteger numOfResults = new AtomicInteger(0);
+
+        reader.table(relPathParams, true, 0, 1, (row) -> {
+            precursorDev.set(Deviation.fromString(row[0]));
+            peakDev.set(Deviation.fromString(row[1]));
+            alignmentType.set(SpectralAlignmentType.valueOf(row[2]));
+            numOfResults.set(Integer.parseInt(row[3]));
+        });
+
+        List<SpectralSearchResult.SearchResult> results = new ArrayList<>();
+
+        reader.table(relPath, true, 0, numOfResults.get(), (row) -> {
+            results.add(
+                    SpectralSearchResult.SearchResult.builder()
+                            .rank(Integer.parseInt(row[0]))
+                            .querySpectrumIndex(Integer.parseInt(row[1]))
+                            .dbName(row[2])
+                            .referenceUUID(row[3])
+                            .referenceSplash(row[4])
+                            .similarity(new SpectralSimilarity(Double.parseDouble(row[5]), Integer.parseInt(row[6])))
+                            .build()
+            );
+        });
+
+        return SpectralSearchResult.builder()
+                .precursorDeviation(precursorDev.get())
+                .peakDeviation(peakDev.get())
+                .alignmentType(alignmentType.get())
+                .results(results)
+                .build();
     }
 
     @Override
     public void write(ProjectWriter writer, CompoundContainerId id, CompoundContainer container, Optional<SpectralSearchResult> component) throws IOException {
-        if (component.isPresent()) {
-            writer.binaryFile(SiriusLocations.SPECTRAL_SEARCH_JSON, bufferedOutputStream -> {
-                try (GZIPOutputStream zipped = new GZIPOutputStream(bufferedOutputStream)) {
-                    objectMapper.writeValue(zipped, component.get());
-                }
-            });
-        }
+        final SpectralSearchResult searchResult = component.orElseThrow(() -> new IllegalArgumentException("Could not find SpectralSearchResult to write for ID: " + id));
+
+        writer.table(SpectralSearchLocations.SEARCH_PARAMS.relFilePath(id), new String[]{
+                "precursorDeviation", "peakDeviation", "alignmentType", "numOfResults"
+        }, List.of(new String[][]{{
+            searchResult.getPrecursorDeviation().toString(),
+            searchResult.getPeakDeviation().toString(),
+            searchResult.getAlignmentType().toString(),
+            Integer.toString(searchResult.getResults().size())
+        }}));
+
+        final String[] header = new String[]{
+                "rank", "querySpectrumIndex", "dbName", "referenceUUID", "referenceSplash", "similarity", "sharedPeaks"
+        };
+        final String[] row = new String[header.length];
+        writer.table(SpectralSearchLocations.SEARCH_RESULTS.relFilePath(id), header, searchResult.getResults().stream().map((hit) -> {
+            row[0] = Integer.toString(hit.getRank());
+            row[1] = Integer.toString(hit.getQuerySpectrumIndex());
+            row[2] = hit.getDbName();
+            row[3] = hit.getReferenceUUID();
+            row[4] = hit.getReferenceSplash();
+            row[5] = Double.toString(hit.getSimilarity().similarity);
+            row[6] = Integer.toString(hit.getSimilarity().shardPeaks);
+            return row;
+        })::iterator);
     }
 
     @Override
     public void delete(ProjectWriter writer, CompoundContainerId id) throws IOException {
-        writer.delete(SiriusLocations.SPECTRAL_SEARCH_JSON);
+        writer.delete(SpectralSearchLocations.SEARCH_RESULTS.relFilePath(id));
+        writer.delete(SpectralSearchLocations.SEARCH_PARAMS.relFilePath(id));
     }
 
 }
