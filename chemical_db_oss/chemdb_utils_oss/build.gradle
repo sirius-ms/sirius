@@ -24,4 +24,6 @@ dependencies {
     // CDK
     for (module in ["inchi", "io", "data", "smiles", "ctab", 'formula', 'qsarmolecular', "bundle"])
         api "org.openscience.cdk:cdk-$module:$cdk_version"
+    // SPLASH
+    api 'edu.ucdavis.fiehnlab.splash:core:1.8'
 }	

@@ -97,11 +97,6 @@ public class ExtendedFingerprintVersion extends FingerprintVersion {
         }
 
         @Override
-        public List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
-            return wrap(new ArrayList<FingerprintCandidate>(), innerDatabase.lookupManyFingerprintsByInchis(inchi_keys));
-        }
-
-        @Override
         public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws ChemicalDatabaseException {
             return wrap(new ArrayList<FingerprintCandidate>(), innerDatabase.lookupFingerprintsByInchi(compounds));
         }
@@ -119,6 +114,16 @@ public class ExtendedFingerprintVersion extends FingerprintVersion {
         @Override
         public String getChemDbDate() throws ChemicalDatabaseException {
             return innerDatabase.getChemDbDate();
+        }
+
+        @Override
+        public long countAllFingerprints() throws ChemicalDatabaseException {
+            return innerDatabase.countAllFingerprints();
+        }
+
+        @Override
+        public long countAllFormulas() throws ChemicalDatabaseException {
+            return innerDatabase.countAllFormulas();
         }
 
         @Override

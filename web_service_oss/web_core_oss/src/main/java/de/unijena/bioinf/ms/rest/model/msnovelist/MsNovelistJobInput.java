@@ -20,6 +20,8 @@
 
 package de.unijena.bioinf.ms.rest.model.msnovelist;
 
+import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
+
 /**
  * Class containing the input for MsNovelist Jobs
  * Will be (De-)Marshaled to/from json
@@ -28,13 +30,16 @@ package de.unijena.bioinf.ms.rest.model.msnovelist;
 public class MsNovelistJobInput {
     public final String formula;
     public final byte[] fingerprint; // LITTLE ENDIAN BINARY ENCODED PLATT PROBABILITIES
+    public final PredictorType predictor;
 
-    public MsNovelistJobInput(String formula, byte[] fingerprint) {
+
+    public MsNovelistJobInput(String formula, byte[] fingerprint, PredictorType predictor) {
         this.formula = formula;
         this.fingerprint = fingerprint;
+        this.predictor = predictor;
     }
 
     private MsNovelistJobInput() {
-        this(null, null);
+        this(null, null, null);
     }
 }

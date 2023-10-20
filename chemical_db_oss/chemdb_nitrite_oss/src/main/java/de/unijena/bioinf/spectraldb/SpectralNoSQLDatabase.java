@@ -2,26 +2,6 @@
  *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
- *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 3 of the License, or (at your option) any later version.
- *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
- *
- *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
- */
-
-/*
- *
- *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
- *
  *  Copyright (C) 2023 Bright Giant GmbH
  *
  *  This library is free software; you can redistribute it and/or
@@ -41,6 +21,7 @@
 package de.unijena.bioinf.spectraldb;
 
 import com.google.common.collect.Streams;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.AdditionalFields;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
@@ -55,34 +36,34 @@ import de.unijena.bionf.spectral_alignment.AbstractSpectralAlignment;
 import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
 import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.tuple.Triple;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+//todo check when data/spectra should be included an when not
 
-public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, Closeable {
+public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, WriteableSpectralLibrary, Closeable {
 
     final protected Database<Doctype> storage;
 
-    public SpectralNoSQLDatabase(Database<Doctype> storage) throws IOException {
+    public SpectralNoSQLDatabase(Database<Doctype> storage) {
         this.storage = storage;
     }
 
     protected static Metadata initMetadata() throws IOException {
         return Metadata.build()
-                .addRepository(Tag.class, "id", new Index("key",IndexType.UNIQUE))
                 .addRepository(
                         Ms2ReferenceSpectrum.class,
                         "id",
-                        new Index("ionMass", IndexType.NON_UNIQUE),
+                        new Index("uuid", IndexType.UNIQUE),
+                        new Index("splash", IndexType.NON_UNIQUE),
+                        new Index("exactMass", IndexType.NON_UNIQUE),
+                        new Index("precursorMz", IndexType.NON_UNIQUE),
                         new Index("formula", IndexType.NON_UNIQUE),
                         new Index("name", IndexType.NON_UNIQUE),
                         new Index("candidateInChiKey", IndexType.NON_UNIQUE)
@@ -95,6 +76,10 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, Closeabl
                 ).setOptionalFields(Ms2ReferenceSpectrum.class, "spectrum");
     }
 
+    public abstract <O> Doctype asDocument(O object);
+
+    public abstract <O> O asObject(Doctype document, Class<O> objectClass);
+
     @Override
     public <P extends Peak> SpectralSearchResult matchingSpectra(
             Iterable<Ms2Spectrum<P>> queries,
@@ -103,9 +88,12 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, Closeabl
             SpectralAlignmentType alignmentType,
             BiConsumer<Integer, Integer> progressConsumer
     ) throws ChemicalDatabaseException {
+        // TODO move matching away from persistence layer
+        // TODO when combined databases (or not nitrite with possible equal splashes) -> query only unique splashes? -> too slow? maybe give spectra with same splash same rank when sorting the results
+        // TODO modified cosine
         try {
             final List<SpectralSearchResult.SearchResult> results = new ArrayList<>();
-            AbstractSpectralAlignment alignment = alignmentType.type.getConstructor(Deviation.class).newInstance(maxPeakDeviation);
+            AbstractSpectralAlignment alignment = alignmentType.getScorer(maxPeakDeviation);
             CosineQueryUtils cosineQueryUtils = new CosineQueryUtils(alignment);
 
             int maxProgress = 0;
@@ -132,10 +120,11 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, Closeabl
 
                         if (similarity.shardPeaks > 0) {
                             SpectralSearchResult.SearchResult res = SpectralSearchResult.SearchResult.builder()
-                                    .dbLocation(this.location())
+                                    .dbName(this.name())
                                     .querySpectrumIndex(i)
                                     .similarity(similarity)
-                                    .referenceId(reference.getId())
+                                    .referenceUUID(reference.getUuid())
+                                    .referenceSplash(reference.getSplash())
                                     .build();
                             results.add(res);
                         }
@@ -158,8 +147,7 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, Closeabl
                     }).toList())
                     .build();
 
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException |
-                 RuntimeException | IOException e) {
+        } catch (RuntimeException | IOException e) {
             throw new ChemicalDatabaseException(e);
         }
     }
@@ -168,12 +156,10 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, Closeabl
         return storage;
     }
 
-    @Override
     public String name() {
         return this.storage.location().getFileName().toString();
     }
 
-    @Override
     public String location() {
         return this.storage.location().toString();
     }
@@ -198,10 +184,13 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, Closeabl
         }
     }
 
-    @Override
-    public Iterable<Ms2ReferenceSpectrum> lookupSpectra(String inchiKey2d, boolean withData) throws ChemicalDatabaseException {
+    public Iterable<Ms2ReferenceSpectrum> lookupSpectraBy(@NotNull String field, @NotNull Object value) throws ChemicalDatabaseException {
+        return lookupSpectraBy(field, value, false);
+    }
+
+    public Iterable<Ms2ReferenceSpectrum> lookupSpectraBy(@NotNull String field, @NotNull Object value, boolean withData) throws ChemicalDatabaseException {
         try {
-            Filter filter = new Filter().eq("candidateInChiKey", inchiKey2d);
+            Filter filter = new Filter().eq(field, value);
             if (withData) {
                 return this.storage.find(filter, Ms2ReferenceSpectrum.class, "spectrum");
             } else {
@@ -213,9 +202,19 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, Closeabl
     }
 
     @Override
-    public Ms2ReferenceSpectrum getReferenceSpectrum(long id) throws ChemicalDatabaseException {
+    public Iterable<Ms2ReferenceSpectrum> lookupSpectra(String inchiKey2d, boolean withData) throws ChemicalDatabaseException{
+        return lookupSpectraBy("candidateInChiKey", inchiKey2d, withData);
+    }
+
+    @Override
+    public Iterable<Ms2ReferenceSpectrum> lookupSpectra(MolecularFormula formula, boolean withData) throws ChemicalDatabaseException {
+        return lookupSpectraBy("formula", formula, withData);
+    }
+
+    @Override
+    public Ms2ReferenceSpectrum getReferenceSpectrum(String uuid) throws ChemicalDatabaseException {
         try {
-            return this.storage.getById(id, Ms2ReferenceSpectrum.class);
+            return this.storage.find(Filter.build().eq("uuid", uuid), Ms2ReferenceSpectrum.class).iterator().next();
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }
@@ -240,61 +239,23 @@ public class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, Closeabl
     }
 
     @Override
-    public void close() throws IOException {
-        this.storage.close();
+    public int upsertSpectra(List<Ms2ReferenceSpectrum> data) throws IOException {
+        return storage.insertAll(data);
     }
 
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class Tag {
-        private long id;
-        private String key;
-        private String value;
+    @Override
+    public void forEachSpectrum(Consumer<Ms2ReferenceSpectrum> consumer) throws IOException {
+        this.storage.findAllStr(Ms2ReferenceSpectrum.class).forEach(consumer);
+    }
 
-        public static Tag of(String key, String value) {
-            return new Tag(-1L, key, value);
-        }
+    @Override
+    public void updateSpectraMatchingSmiles(Consumer<Ms2ReferenceSpectrum> updater, String smiles) throws IOException {
+        List<Ms2ReferenceSpectrum> spectra = this.storage.findStr(Filter.build().eq("smiles", smiles), Ms2ReferenceSpectrum.class, "spectrum").peek(updater).toList();
+        this.storage.upsertAll(spectra);
+    }
 
-        public static Tag of(Map.Entry<String, String> source) {
-            return of(source.getKey(), source.getValue());
-        }
-
-        public String getKey() {
-            return key;
-        }
-
-        public String getValue() {
-            return value;
-        }
-
-        public String setValue(String value) {
-            String old = this.value;
-            this.value = value;
-            return old;
-        }
-
-        public void setKey(String key) {
-            this.key = key;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof SpectralNoSQLDatabase.Tag tag)) return false;
-            return Objects.equals(key, tag.key) && Objects.equals(value, tag.value);
-        }
-
-        @Override
-        public String toString() {
-            return "Tag{" +
-                    "key='" + key + '\'' +
-                    ", value='" + value + '\'' +
-                    '}';
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(key, value);
-        }
+    @Override
+    public void close() throws IOException {
+        this.storage.close();
     }
 }

@@ -20,18 +20,18 @@
 
 package de.unijena.bioinf.spectraldb;
 
-import de.unijena.bionf.spectral_alignment.AbstractSpectralAlignment;
-import de.unijena.bionf.spectral_alignment.GaussianSpectralAlignment;
-import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bionf.spectral_alignment.*;
 
 public enum SpectralAlignmentType {
 
-    INTENSITY(IntensityWeightedSpectralAlignment.class), GAUSSIAN(GaussianSpectralAlignment.class);
+    INTENSITY, GAUSSIAN, MODIFIED_COSINE;
 
-    public final Class<? extends AbstractSpectralAlignment> type;
-
-    private SpectralAlignmentType(Class<? extends AbstractSpectralAlignment> type) {
-        this.type = type;
+    public AbstractSpectralAlignment getScorer(Deviation deviation) {
+        return switch (this) {
+            case INTENSITY -> new IntensityWeightedSpectralAlignment(deviation);
+            case GAUSSIAN -> new GaussianSpectralAlignment(deviation);
+            case MODIFIED_COSINE -> new ModifiedCosine(deviation);
+        };
     }
-
 }
