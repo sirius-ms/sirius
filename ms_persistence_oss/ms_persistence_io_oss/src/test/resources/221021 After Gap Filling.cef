@@ -1,0 +1,620 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<CEF version="1.0.0.0">
+  <CompoundList instrumentConfiguration="">
+    <Compound algo="FindByFormula">
+      <Location m="310.07361" rt="1.235" a="1248115" y="456467" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <MatchScores>
+            <Match algo="tgt" score="0.00" />
+          </MatchScores>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Spectrum type="FbF" cpdAlgo="FindByFormula">
+        <MSDetails scanType="Scan" p="+" />
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p x="311.08101" y="348954.75" z="1" s="M+H" />
+          <p x="312.08313" y="44234.39" z="1" s="M+H+1" />
+          <p x="313.07856" y="17594.79" z="1" s="M+H+2" />
+          <p x="333.06255" y="107512.86" z="1" s="M+Na" />
+          <p x="334.06529" y="14058.09" z="1" s="M+Na+1" />
+          <p x="335.06091" y="6028.02" z="1" s="M+Na+2" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByFormula">
+      <Location m="278.08417" rt="0.789" a="1217024" y="415390" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <MatchScores>
+            <Match algo="tgt" score="0.00" />
+          </MatchScores>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Spectrum type="FbF" cpdAlgo="FindByFormula">
+        <MSDetails scanType="Scan" p="+" />
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p x="279.09150" y="378541.28" z="1" s="M+H" />
+          <p x="280.09390" y="51393.18" z="1" s="M+H+1" />
+          <p x="281.08967" y="17641.87" z="1" s="M+H+2" />
+          <p x="301.07326" y="36848.93" z="1" s="M+Na" />
+          <p x="302.07675" y="6090.54" z="1" s="M+Na+1" />
+          <p x="303.07283" y="1800.23" z="1" s="M+Na+2" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByFormula">
+      <Location m="270.02456" rt="0.326" a="259064" y="110460" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <MatchScores>
+            <Match algo="tgt" score="0.00" />
+          </MatchScores>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Spectrum type="FbF" cpdAlgo="FindByFormula">
+        <MSDetails scanType="Scan" p="+" />
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p x="271.03186" y="67805.70" z="1" s="M+H" />
+          <p x="272.03314" y="7928.52" z="1" s="M+H+1" />
+          <p x="293.01379" y="42654.45" z="1" s="M+Na" />
+          <p x="294.01496" y="4726.52" z="1" s="M+Na+1" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByFormula">
+      <Location m="260.10246" rt="1.896" a="151459" y="17319" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <MatchScores>
+            <Match algo="tgt" score="0.00" />
+          </MatchScores>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Spectrum type="FbF" cpdAlgo="FindByFormula">
+        <MSDetails scanType="Scan" p="+" />
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p x="261.10976" y="17319.90" z="1" s="M+H" />
+          <p x="262.11302" y="2268.07" z="1" s="M+H+1" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByFormula">
+      <Location m="284.01328" rt="0.524" a="143448" y="50984" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <MatchScores>
+            <Match algo="tgt" score="0.00" />
+          </MatchScores>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Spectrum type="FbF" cpdAlgo="FindByFormula">
+        <MSDetails scanType="Scan" p="+" />
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p x="285.02078" y="31914.90" z="1" s="M+H" />
+          <p x="286.02372" y="4878.50" z="1" s="M+H+1" />
+          <p x="287.01747" y="10669.23" z="1" s="M+H+2" />
+          <p x="288.02075" y="1945.48" z="1" s="M+H+3" />
+          <p x="289.01497" y="885.16" z="1" s="M+H+4" />
+          <p x="307.00192" y="6406.27" z="1" s="M+Na" />
+          <p x="308.00560" y="662.45" z="1" s="M+Na+1" />
+          <p x="308.99988" y="1993.66" z="1" s="M+Na+2" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByFormula">
+      <Location m="442.22149" rt="1.748" a="79304" y="15297" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <MatchScores>
+            <Match algo="tgt" score="0.00" />
+          </MatchScores>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Spectrum type="FbF" cpdAlgo="FindByFormula">
+        <MSDetails scanType="Scan" p="+" />
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p x="443.22863" y="15297.28" z="1" s="M+H" />
+          <p x="444.23139" y="4281.21" z="1" s="M+H+1" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByFormula">
+      <Location m="220.05192" rt="0.574" a="69644" y="21260" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <MatchScores>
+            <Match algo="tgt" score="0.00" />
+          </MatchScores>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Spectrum type="FbF" cpdAlgo="FindByFormula">
+        <MSDetails scanType="Scan" p="+" />
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p x="221.05914" y="16095.09" z="1" s="M+H" />
+          <p x="222.06168" y="1882.93" z="1" s="M+H+1" />
+          <p x="223.05618" y="5165.06" z="1" s="M+H+2" />
+          <p x="224.05677" y="719.75" z="1" s="M+H+3" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByFormula">
+      <Location m="400.20085" rt="1.748" a="43714" y="9927" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <MatchScores>
+            <Match algo="tgt" score="0.00" />
+          </MatchScores>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Spectrum type="FbF" cpdAlgo="FindByFormula">
+        <MSDetails scanType="Scan" p="+" />
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p x="401.20855" y="9927.54" z="1" s="M+H" />
+          <p x="402.21176" y="3406.33" z="1" s="M+H+1" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByFormula">
+      <Location m="194.11525" rt="0.293" a="47162" y="17330" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="85.7" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <MatchScores>
+            <Match algo="tgt" score="0.00" />
+          </MatchScores>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Spectrum type="FbF" cpdAlgo="FindByFormula">
+        <MSDetails scanType="Scan" p="+" />
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p x="195.12251" y="24910.27" z="1" s="M+H" />
+          <p x="212.14923" y="3080.29" z="1" s="M+NH4" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByFormula">
+      <Location m="265.16608" rt="1.516" a="41719" y="4926" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="99.2" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <MatchScores>
+            <Match algo="tgt" score="0.00" />
+          </MatchScores>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Spectrum type="FbF" cpdAlgo="FindByFormula">
+        <MSDetails scanType="Scan" p="+" />
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p x="266.17335" y="4926.73" z="1" s="M+H" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByFormula">
+      <Location m="417.22617" rt="1.665" a="29397" y="6987" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <MatchScores>
+            <Match algo="tgt" score="0.00" />
+          </MatchScores>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Spectrum type="FbF" cpdAlgo="FindByFormula">
+        <MSDetails scanType="Scan" p="+" />
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p x="418.23400" y="7469.65" z="1" s="M+H" />
+          <p x="419.23520" y="2041.59" z="1" s="M+H+1" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByFormula">
+      <Location m="113.08446" rt="0.475" a="34414" y="13834" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <MatchScores>
+            <Match algo="tgt" score="0.00" />
+          </MatchScores>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Spectrum type="FbF" cpdAlgo="FindByFormula">
+        <MSDetails scanType="Scan" p="+" />
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p x="114.09170" y="15218.73" z="1" s="M+H" />
+          <p x="115.09161" y="1026.61" z="1" s="M+H+1" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByFormula">
+      <Location m="272.02101" rt="0.326" a="21968" y="9603" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <MatchScores>
+            <Match algo="tgt" score="0.00" />
+          </MatchScores>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Spectrum type="FbF" cpdAlgo="FindByFormula">
+        <MSDetails scanType="Scan" p="+" />
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p x="273.02848" y="5711.38" z="1" s="M+H" />
+          <p x="274.03228" y="829.97" z="1" s="M+H+1" />
+          <p x="295.00978" y="3892.48" z="1" s="M+Na" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByFormula">
+      <Location m="423.16556" rt="1.797" a="17458" y="4417" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <MatchScores>
+            <Match algo="tgt" score="0.00" />
+          </MatchScores>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Spectrum type="FbF" cpdAlgo="FindByFormula">
+        <MSDetails scanType="Scan" p="+" />
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p x="424.17270" y="4417.17" z="1" s="M+H" />
+          <p x="425.17916" y="1340.53" z="1" s="M+H+1" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByFormula">
+      <Location m="314.06212" rt="0.326" a="17276" y="7181" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <MatchScores>
+            <Match algo="tgt" score="0.00" />
+          </MatchScores>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Spectrum type="FbF" cpdAlgo="FindByFormula">
+        <MSDetails scanType="Scan" p="+" />
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p x="315.06953" y="7181.67" z="1" s="M+H" />
+          <p x="316.06995" y="1431.31" z="1" s="M+H+1" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByFormula">
+      <Location m="458.15674" rt="1.450" a="14325" y="2961" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <MatchScores>
+            <Match algo="tgt" score="0.00" />
+          </MatchScores>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Spectrum type="FbF" cpdAlgo="FindByFormula">
+        <MSDetails scanType="Scan" p="+" />
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p x="459.16353" y="2961.88" z="1" s="M+H" />
+          <p x="460.16764" y="578.06" z="1" s="M+H+1" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByFormula">
+      <Location m="484.24482" rt="1.648" a="13609" y="2798" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="71.8" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <MatchScores>
+            <Match algo="tgt" score="0.00" />
+          </MatchScores>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Spectrum type="FbF" cpdAlgo="FindByFormula">
+        <MSDetails scanType="Scan" p="+" />
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p x="485.25294" y="2034.63" z="1" s="M+H" />
+          <p x="486.25049" y="763.49" z="1" s="M+H+1" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByFormula">
+      <Location m="460.23024" rt="1.682" a="9869" y="2249" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <MatchScores>
+            <Match algo="tgt" score="0.00" />
+          </MatchScores>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Spectrum type="FbF" cpdAlgo="FindByFormula">
+        <MSDetails scanType="Scan" p="+" />
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p x="461.23723" y="1818.74" z="1" s="M+H" />
+          <p x="462.25085" y="718.03" z="1" s="M+H+1" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByFormula">
+      <Location m="413.01897" rt="1.219" a="11519" y="4270" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <MatchScores>
+            <Match algo="tgt" score="0.00" />
+          </MatchScores>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Spectrum type="FbF" cpdAlgo="FindByFormula">
+        <MSDetails scanType="Scan" p="+" />
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p x="414.02620" y="2709.43" z="1" s="M+H" />
+          <p x="415.03146" y="572.95" z="1" s="M+H+1" />
+          <p x="416.02553" y="1560.88" z="1" s="M+H+2" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByFormula">
+      <Location m="418.21051" rt="1.797" a="7024" y="2417" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <MatchScores>
+            <Match algo="tgt" score="0.00" />
+          </MatchScores>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Spectrum type="FbF" cpdAlgo="FindByFormula">
+        <MSDetails scanType="Scan" p="+" />
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p x="419.21778" y="2417.82" z="1" s="M+H" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByFormula">
+      <Location m="313.07152" rt="1.219" a="8496" y="3501" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="98.1" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <MatchScores>
+            <Match algo="tgt" score="0.00" />
+          </MatchScores>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Spectrum type="FbF" cpdAlgo="FindByFormula">
+        <MSDetails scanType="Scan" p="+" />
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p x="314.07861" y="2412.55" z="1" s="M+H" />
+          <p x="336.06092" y="1088.79" z="1" s="M+Na" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByFormula">
+      <Location m="1064.66146" rt="1.648" a="6339" y="1701" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="83.3" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <MatchScores>
+            <Match algo="tgt" score="0.00" />
+          </MatchScores>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Spectrum type="FbF" cpdAlgo="FindByFormula">
+        <MSDetails scanType="Scan" p="+" />
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p x="533.33801" y="836.53" z="2" s="M+2H" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByFormula">
+      <Location m="976.61387" rt="1.582" a="4402" y="1574" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="79.1" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <MatchScores>
+            <Match algo="tgt" score="0.00" />
+          </MatchScores>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Spectrum type="FbF" cpdAlgo="FindByFormula">
+        <MSDetails scanType="Scan" p="+" />
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p x="489.31314" y="1339.40" z="2" s="M+2H" />
+          <p x="489.82060" y="617.84" z="2" s="M+2H+1" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+  </CompoundList>
+</CEF>
