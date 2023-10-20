@@ -30,10 +30,10 @@ subprojects {
         implementation 'it.unimi.dsi:fastutil:8.5.12'
         implementation 'jakarta.persistence:jakarta.persistence-api:3.1.0'
 
-        testImplementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:"$jackson_version"
-        testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.9.2'
+        testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
+        testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.0'
+        testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
     }
-
 
     test {
         useJUnitPlatform()

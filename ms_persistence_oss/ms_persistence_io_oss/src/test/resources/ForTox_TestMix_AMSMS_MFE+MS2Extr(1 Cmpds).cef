@@ -1,0 +1,219 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<CEF version="1.0.0.0">
+  <CompoundList instrumentConfiguration="LCQTOF">
+    <Compound algo="FindByMolecularFeature">
+      <Location m="284.0715" rt="8.304" y="210252" v="1162325" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+      </CompoundScores>
+      <Chromatogram type="ECC" cpdAlgo="FindByMolecularFeature">
+        <ChromPeaks>
+          <p rt="8.304" rts="8.226" rte="8.370" rtw="0" />
+        </ChromPeaks>
+      </Chromatogram>
+      <Spectrum type="MFE" satLimit="3815424" cpdAlgo="FindByMolecularFeature">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="8.226" max="8.370" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p rt="8.304" x="285.0787" y="210252.13" v="686444" z="1" s="M+H" />
+          <p rt="8.303" x="286.0821" y="36306.57" v="118044" z="1" s="M+H+1" />
+          <p rt="8.304" x="287.0767" y="69946.53" v="229861" z="1" s="M+H+2" />
+          <p rt="8.304" x="288.0791" y="12284.56" v="39353" z="1" s="M+H+3" />
+          <p rt="8.300" x="289.0833" y="1037.72" v="3190" z="1" s="M+H+4" />
+          <p rt="8.305" x="307.0608" y="16236.22" v="49856" z="1" s="M+Na" />
+          <p rt="8.304" x="308.0647" y="2805.32" v="8355" z="1" s="M+Na+1" />
+          <p rt="8.303" x="309.0581" y="5348.16" v="15318" z="1" s="M+Na+2" />
+          <p rt="8.304" x="310.0600" y="702.98" v="2060" z="1" s="M+Na+3" />
+          <p rt="8.306" x="591.1327" y="2358.24" v="4921" z="1" s="2M+Na" />
+        </MSPeaks>
+      </Spectrum>
+      <Spectrum type="TOF-MS1" satLimit="3815424" scans="14" cpdAlgo="FindByMolecularFeature">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="8.226" max="8.370" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.00057300679291501678</C_0>
+            <C_1>1025.5848934679657</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="121.0509" y="416122.81" z="1" />
+          <p x="121.1891" y="15360.42" />
+          <p x="122.0534" y="27637.76" z="1" />
+          <p x="143.0327" y="22535.29" />
+          <p x="285.0789" y="210252.13" z="1" s="M+H" />
+          <p x="285.2913" y="7209.99" />
+          <p x="286.0822" y="36264.31" z="1" s="M+H+1" />
+          <p x="287.0766" y="70364.01" z="1" s="M+H+2" />
+          <p x="288.0791" y="12274.46" z="1" s="M+H+3" />
+          <p x="289.0840" y="1037.72" z="1" s="M+H+4" />
+          <p x="307.0611" y="15258.40" s="M+Na" />
+          <p x="308.0649" y="2805.32" z="1" s="M+Na+1" />
+          <p x="309.0584" y="4928.61" s="M+Na+2" />
+          <p x="310.0617" y="702.98" z="1" s="M+Na+3" />
+          <p x="591.1330" y="2358.24" z="1" s="2M+Na" />
+          <p x="922.0098" y="130444.88" z="1" />
+          <p x="923.0123" y="24525.17" z="1" />
+          <p x="943.9911" y="9950.28" />
+          <p x="959.9649" y="7048.04" />
+        </MSPeaks>
+      </Spectrum>
+      <Spectrum type="TOF-MS2" satLimit="8008704" scans="6" cpdAlgo="FindByMolecularFeature">
+        <MSDetails scanType="ProductIon" is="Esi" p="+" ce="21.1V" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="8.246" max="8.364" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest z="1">
+          <mz>285.07872</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.00057300683343357566</C_0>
+            <C_1>1025.588951618877</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="91.0545" y="317.62" />
+          <p x="105.0333" y="503.78" />
+          <p x="154.0415" y="3030.97" />
+          <p x="167.0116" y="240.42" />
+          <p x="172.0628" y="297.89" />
+          <p x="179.0369" y="207.02" />
+          <p x="180.0199" y="349.96" />
+          <p x="182.0367" y="780.00" />
+          <p x="193.0883" y="1824.38" />
+          <p x="221.1065" y="307.91" />
+          <p x="222.1147" y="2002.34" />
+          <p x="228.0573" y="1800.88" />
+          <p x="241.0527" y="301.77" />
+          <p x="255.0662" y="207.54" />
+          <p x="257.0839" y="3000.70" />
+          <p x="285.0787" y="18479.91" />
+          <p x="285.2895" y="268.90" />
+        </MSPeaks>
+      </Spectrum>
+      <Spectrum type="TOF-MS2" satLimit="8008704" scans="5" cpdAlgo="FindByMolecularFeature">
+        <MSDetails scanType="ProductIon" is="Esi" p="+" ce="22.4V" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="8.261" max="8.367" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest z="1">
+          <mz>307.06080</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.00057300673614779315</C_0>
+            <C_1>1025.5835914601887</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="57.0677" y="14.66" />
+          <p x="57.1278" y="11.91" />
+          <p x="65.8891" y="11.46" />
+          <p x="149.0238" y="25.78" />
+          <p x="163.0406" y="12.37" />
+          <p x="165.0898" y="10.06" />
+          <p x="187.0713" y="17.24" />
+          <p x="247.1309" y="17.40" />
+        </MSPeaks>
+      </Spectrum>
+      <Spectrum type="TOF-MS2" satLimit="8008704" scans="2" cpdAlgo="FindByMolecularFeature">
+        <MSDetails scanType="ProductIon" is="Esi" p="+" ce="39.5V" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="8.302" max="8.334" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest z="1">
+          <mz>591.13266</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.00057300704660127226</C_0>
+            <C_1>1025.6076532043778</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="50.8393" y="17.08" />
+          <p x="57.7276" y="10.46" z="2" />
+          <p x="71.5655" y="12.39" z="2" />
+          <p x="91.1423" y="14.70" />
+          <p x="121.0488" y="54.67" />
+          <p x="150.4645" y="12.69" z="2" />
+          <p x="153.0956" y="12.00" />
+          <p x="159.6273" y="10.83" z="2" />
+          <p x="187.9714" y="11.04" />
+          <p x="189.2475" y="11.50" />
+          <p x="197.4164" y="10.78" z="2" />
+          <p x="200.8714" y="23.45" />
+          <p x="241.6688" y="10.05" z="2" />
+          <p x="256.6669" y="14.02" z="2" />
+          <p x="271.7430" y="12.73" />
+          <p x="273.1379" y="25.63" />
+          <p x="307.0571" y="30.72" />
+          <p x="313.5759" y="16.96" z="2" />
+          <p x="361.1030" y="11.19" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+  </CompoundList>
+</CEF>
