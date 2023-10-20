@@ -20,6 +20,8 @@
 
 package de.unijena.bionf.spectral_alignment;
 
+import java.util.Objects;
+
 public class SpectralSimilarity {
     public final double similarity;
     public final int shardPeaks;
@@ -36,5 +38,19 @@ public class SpectralSimilarity {
 
     @Override
     public String toString() {
-        return "cosine = " + similarity + ", " + shardPeaks + " shared peaks.";}
+        return "cosine = " + similarity + ", " + shardPeaks + " shared peaks.";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SpectralSimilarity that = (SpectralSimilarity) o;
+        return Double.compare(similarity, that.similarity) == 0 && shardPeaks == that.shardPeaks;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(similarity, shardPeaks);
+    }
 }
