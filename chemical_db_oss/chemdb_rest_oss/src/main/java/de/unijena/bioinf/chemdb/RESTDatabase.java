@@ -69,6 +69,16 @@ public class RESTDatabase implements FilterableChemicalDatabase {
         }
     }
 
+    @Override
+    public long countAllFingerprints() throws ChemicalDatabaseException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public long countAllFormulas() throws ChemicalDatabaseException {
+        throw new UnsupportedOperationException();
+    }
+
     public RESTDatabase(@Nullable BlobStorage cacheDir, @NotNull StructureSearchClient chemDBClient, @NotNull OkHttpClient client) {
         this(cacheDir, chemDBClient, client, false);
     }
@@ -165,11 +175,6 @@ public class RESTDatabase implements FilterableChemicalDatabase {
     @Override
     public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
-        return lookupFingerprintsByInchis(inchi_keys);
     }
 
     @Override

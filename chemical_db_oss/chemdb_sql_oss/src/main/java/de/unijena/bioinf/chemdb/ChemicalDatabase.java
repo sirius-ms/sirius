@@ -494,11 +494,6 @@ public class ChemicalDatabase implements FilterableChemicalDatabase, PooledDB<Co
         }
     }
 
-    @Override
-    public List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
-        return lookupFingerprintsByInchis(inchi_keys);
-    }
-
     public void createDatabaseDump(long flag, File file){
         try {
             BufferedWriter write = new BufferedWriter(new FileWriter(file));
@@ -743,4 +738,15 @@ public class ChemicalDatabase implements FilterableChemicalDatabase, PooledDB<Co
     public String getChemDbDate() throws ChemicalDatabaseException{
         return PropertyManager.getProperty("de.unijena.bioinf.fingerid.db.psqlDbDate");
     }
+
+    @Override
+    public long countAllFingerprints() throws ChemicalDatabaseException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public long countAllFormulas() throws ChemicalDatabaseException {
+        throw new UnsupportedOperationException();
+    }
+
 }

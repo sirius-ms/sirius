@@ -53,6 +53,16 @@ public class InMemoryChemicalDatabase implements AbstractChemicalDatabase {
         return dbData;
     }
 
+    @Override
+    public long countAllFingerprints() throws ChemicalDatabaseException {
+        return fingerprintCandidates.size();
+    }
+
+    @Override
+    public long countAllFormulas() throws ChemicalDatabaseException {
+        return formulas.length;
+    }
+
     public void addCandidates(Iterable<FingerprintCandidate> candidates) {
         for (FingerprintCandidate fc : candidates)
             addCandidate(fc);
@@ -172,13 +182,6 @@ public class InMemoryChemicalDatabase implements AbstractChemicalDatabase {
             if (candidatePerKey.containsKey(key))
                 candidates.add(candidatePerKey.get(key).getInchi());
         return candidates;
-    }
-
-    @Override
-    public List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
-        return lookupManyFingerprintsByInchis(inchi_keys);
-
-
     }
 
     @Override

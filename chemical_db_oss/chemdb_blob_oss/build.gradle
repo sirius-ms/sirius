@@ -19,6 +19,9 @@
  */
 
 dependencies {
+    implementation"org.jdbi:jdbi3-jackson2:$jdbi_version"
+    implementation "org.jdbi:jdbi3-core:$jdbi_version"
+    implementation "org.jdbi:jdbi3-sqlobject:$jdbi_version"
 	//project
     api project(':chemical_db_oss')
     api project(':blob-storage')

@@ -23,15 +23,19 @@ package de.unijena.bioinf.chemdb.custom;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.chemdb.AbstractChemicalDatabase;
 import de.unijena.bioinf.chemdb.ChemicalNoSQLDatabase;
+import de.unijena.bioinf.chemdb.WriteableChemicalDatabase;
 import de.unijena.bioinf.chemdb.nitrite.ChemicalNitriteDatabase;
+import de.unijena.bioinf.spectraldb.SpectralLibrary;
+import de.unijena.bioinf.spectraldb.WriteableSpectralLibrary;
 import de.unijena.bioinf.storage.blob.Compressible;
 import de.unijena.bioinf.storage.db.nosql.nitrite.NitriteDatabase;
 import org.dizitart.no2.Document;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
-public class NoSQLCustomDatabase<DB extends ChemicalNoSQLDatabase<?>> extends CustomDatabase {
+public class NoSQLCustomDatabase<Doctype, DB extends ChemicalNoSQLDatabase<Doctype>> extends CustomDatabase {
 
     final DB database;
 
@@ -61,49 +65,46 @@ public class NoSQLCustomDatabase<DB extends ChemicalNoSQLDatabase<?>> extends Cu
 
     @Override
     public void readSettings() throws IOException {
-        if (database instanceof ChemicalNitriteDatabase) {
-            NitriteDatabase db = ((ChemicalNitriteDatabase) database).getStorage();
-            List<Document> settingsDocs = db.findAllStr(ChemicalNoSQLDatabase.SETTINGS_COLLECTION).toList();
-            if (settingsDocs.isEmpty()) {
-                throw new IllegalArgumentException("No custom DB settings! Please reimport.");
-            } else if (settingsDocs.size() > 1) {
-                throw new IllegalArgumentException("Too many custom DB settings! Please reimport.");
-            } else {
-                Document settingsDoc = settingsDocs.get(0);
-                settings = db.getJacksonMapper().asObject(settingsDoc, CustomDatabaseSettings.class);
-            }
-        } else {
-            throw new UnsupportedOperationException();
+        setSettings(database.asObject(getSettingsFromDB().orElseThrow(() -> new IllegalArgumentException("No custom DB settings! Please reimport.")), CustomDatabaseSettings.class));
+    }
+
+    private Optional<Doctype> getSettingsFromDB() throws IOException {
+        List<Doctype> settingsDocs = database.getStorage().findAllStr(ChemicalNoSQLDatabase.SETTINGS_COLLECTION).toList();
+        if (settingsDocs.isEmpty()) {
+            return Optional.empty();
+        } else if (settingsDocs.size() > 1) {
+            throw new IllegalArgumentException("Too many custom DB settings! Please reimport.");
         }
+        return Optional.of(settingsDocs.get(0));
     }
 
     @Override
     public synchronized void writeSettings(CustomDatabaseSettings settings) throws IOException {
         setSettings(settings);
-        if (database instanceof ChemicalNitriteDatabase) {
-            NitriteDatabase db = ((ChemicalNitriteDatabase) database).getStorage();
-            List<Document> settingsDocs = db.findAllStr(ChemicalNoSQLDatabase.SETTINGS_COLLECTION).toList();
-            if (settingsDocs.size() > 1) {
-                throw new IllegalArgumentException("Too many custom DB settings! Please reimport.");
-            } else {
-                Document settingsDoc = db.getJacksonMapper().asDocument(settings);
-                if (settingsDocs.isEmpty()) {
-                    db.insert(ChemicalNoSQLDatabase.SETTINGS_COLLECTION, settingsDoc);
-                } else {
-                    Document oldSettingDoc = settingsDocs.get(0);
-                    for (String key : settingsDoc.keySet()) {
-                        oldSettingDoc.put(key, settingsDoc.get(key));
-                    }
-                    db.upsert(ChemicalNoSQLDatabase.SETTINGS_COLLECTION, oldSettingDoc);
-                }
-            }
-        } else {
-            throw new UnsupportedOperationException();
+        Optional<Doctype> dbSettings = getSettingsFromDB();
+        if (dbSettings.isPresent()) {
+            database.getStorage().remove(ChemicalNoSQLDatabase.SETTINGS_COLLECTION, dbSettings.get());
         }
+        database.getStorage().insert(ChemicalNoSQLDatabase.SETTINGS_COLLECTION, database.asDocument(settings));
     }
 
     @Override
     public AbstractChemicalDatabase toChemDBOrThrow(CdkFingerprintVersion version) throws IOException {
+        return database;
+    }
+
+    @Override
+    public WriteableChemicalDatabase toWriteableChemDBOrThrow() throws IOException {
+        return database;
+    }
+
+    @Override
+    public SpectralLibrary toSpectralLibraryOrThrow() throws IOException {
+        return database;
+    }
+
+    @Override
+    public WriteableSpectralLibrary toWriteableSpectralLibraryOrThrow() throws IOException {
         return database;
     }
 

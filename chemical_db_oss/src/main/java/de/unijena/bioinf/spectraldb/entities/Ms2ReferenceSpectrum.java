@@ -42,9 +42,12 @@ public class Ms2ReferenceSpectrum {
     @Builder.Default
     private long id = -1L;
 
+    private String uuid;
+
     /**
      * This is the InChiKey (2D) to map spectra to a standardized SIRIUS structure candidate.
      * In rare cases ot might not match the actual smiles of the measured compound due to standardization.
+     * NOTE: Indexed field (mandatory)
      */
     private String candidateInChiKey;
 
@@ -55,9 +58,15 @@ public class Ms2ReferenceSpectrum {
     @JsonDeserialize(using = SimpleSerializers.PrecursorIonTypeDeserializer.class)
     private PrecursorIonType precursorIonType;
 
+    /**
+     * NOTE: Indexed field (mandatory)
+     */
     private double precursorMz;
 
-    private double ionMass;
+    /**
+     * NOTE: Indexed field (mandatory)
+     */
+    private double exactMass;
 
     private int msLevel = 0;
 
@@ -69,7 +78,8 @@ public class Ms2ReferenceSpectrum {
     private MsInstrumentation instrumentation;
 
     /**
-     * Molecular formula of the measured compound. Must match candidateInChiKey and  smiles
+     * Molecular formula of the measured compound. Must match candidateInChiKey and smiles
+     * NOTE: Indexed field (mandatory)
      */
     @JsonSerialize(using = ToStringSerializer.class)
     @JsonDeserialize(using = SimpleSerializers.MolecularFormulaDeserializer.class)
@@ -81,13 +91,20 @@ public class Ms2ReferenceSpectrum {
      */
     private String smiles;
 
+    /**
+     * NOTE: Indexed field (mandatory)
+     */
     private String libraryName;
     /**
      * Identifier of the spectral library, e,g. nist or massbank id
      * Most libraries seem to use splash now anyway.
+     * NOTE: Indexed field (mandatory)
      */
     private String libraryId;
 
+    /**
+     * NOTE: Indexed field (mandatory)
+     */
     private String splash;
 
     private SimpleSpectrum spectrum;
@@ -102,5 +119,13 @@ public class Ms2ReferenceSpectrum {
     public void setSpectralDbLink(DBLink spectralDbLink) {
         this.libraryName = spectralDbLink.name;
         this.libraryId = spectralDbLink.id;
+    }
+
+    @Override
+    public String toString() {
+        return "Ms2ReferenceSpectrum{" +
+                "uuid='" + uuid + '\'' +
+                ", splash='" + splash + '\'' +
+                '}';
     }
 }
