@@ -31,6 +31,7 @@ import lombok.*;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -110,14 +111,16 @@ public class AlignedFeatures {
             List<Double> times = Stream.concat(
                     feature.getApexScan().stream(),
                     feature.getMsms().stream().flatMap(Collection::stream)
-            ).map(AbstractScan::getScanTime).toList();
+            ).map(AbstractScan::getScanTime).filter(Objects::nonNull).toList();
 
-            for (Double time : times) {
-                min = Math.min(min, time);
-                max = Math.max(max, time);
+            if (!times.isEmpty()) {
+                for (Double time : times) {
+                    min = Math.min(min, time);
+                    max = Math.max(max, time);
+                }
+
+                b.mergedRT(Double.compare(min, max) == 0 ? new RetentionTime(min) : new RetentionTime(min, max));
             }
-
-            b.mergedRT(Double.compare(min,max) == 0 ? new RetentionTime(min) : new RetentionTime(min, max));
         }
 
         return b.build();
