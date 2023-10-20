@@ -40,9 +40,6 @@ public class CosineQueryUtils {
 
     /**
      * create a query for cosine computation
-     * @param spectrum
-     * @param precursorMz
-     * @return
      */
     public CosineQuerySpectrum createQuery(OrderedSpectrum<Peak> spectrum, double precursorMz){
         return CosineQuerySpectrum.newInstance(spectrum, precursorMz, spectralAlignmentMethod);
@@ -65,7 +62,7 @@ public class CosineQueryUtils {
             mutableSpectrum = new SimpleMutableSpectrum(spectrum);
         }
 
-        mutableSpectrum =  Spectrums.transform(mutableSpectrum, intensityTransformation);
+        Spectrums.transform(mutableSpectrum, intensityTransformation);
         Spectrums.cutByMassThreshold(mutableSpectrum, precursorMz-20);
 
         Spectrums.normalize(mutableSpectrum, NORMALIZATION);
@@ -90,7 +87,7 @@ public class CosineQueryUtils {
             mutableSpectrum = new SimpleMutableSpectrum(spectrum);
         }
 
-        mutableSpectrum =  Spectrums.transform(mutableSpectrum, intensityTransformation);
+        Spectrums.transform(mutableSpectrum, intensityTransformation);
         Spectrums.cutByMassThreshold(mutableSpectrum, precursorMz-20);
 
         Spectrums.normalize(mutableSpectrum, NORMALIZATION);
@@ -107,9 +104,6 @@ public class CosineQueryUtils {
 
     /**
      * compute cosine of 2 instances
-     * @param query1
-     * @param query2
-     * @return
      */
     public SpectralSimilarity cosineProductWithLosses(CosineQuerySpectrum query1, CosineQuerySpectrum query2) {
         SpectralSimilarity similarity = cosineProduct(query1, query2);
@@ -119,12 +113,12 @@ public class CosineQueryUtils {
     }
 
     public SpectralSimilarity cosineProduct(CosineQuerySpectrum query1, CosineQuerySpectrum query2) {
-        SpectralSimilarity similarity = spectralAlignmentMethod.score(query1.spectrum, query2.spectrum);
+        SpectralSimilarity similarity = spectralAlignmentMethod.score(query1.spectrum, query2.spectrum, query1.precursorMz, query2.precursorMz);
         return new SpectralSimilarity(similarity.similarity /Math.sqrt(query1.selfSimilarity*query2.selfSimilarity), similarity.shardPeaks);
     }
 
     public SpectralSimilarity cosineProductOfInverse(CosineQuerySpectrum query, CosineQuerySpectrum query2) {
-        SpectralSimilarity similarity = spectralAlignmentMethod.score(query.inverseSpectrum, query2.inverseSpectrum);
+        SpectralSimilarity similarity = spectralAlignmentMethod.score(query.inverseSpectrum, query2.inverseSpectrum, query.precursorMz, query2.precursorMz);
         return new SpectralSimilarity(similarity.similarity /(Math.sqrt(query.selfSimilarityLosses*query2.selfSimilarityLosses)), similarity.shardPeaks);
     }
 
