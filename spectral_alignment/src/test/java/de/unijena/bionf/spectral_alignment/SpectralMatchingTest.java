@@ -21,6 +21,8 @@
 package de.unijena.bionf.spectral_alignment;
 
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import org.junit.Test;
 
@@ -62,4 +64,25 @@ public class SpectralMatchingTest {
         assertEquals(expectedMatches, matches);
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testOrderedSpectraMatcherWithModifiedCosine() {
+        new OrderedSpectraMatcher(SpectralAlignmentType.MODIFIED_COSINE, new Deviation(10));
+    }
+
+    @Test
+    public void testOrderedSpectraMatcher() {
+        OrderedSpectraMatcher matcher = new OrderedSpectraMatcher(SpectralAlignmentType.INTENSITY, new Deviation(10));
+
+        CosineQueryUtils utilsIntensity = new CosineQueryUtils(SpectralAlignmentType.INTENSITY.getScorer(new Deviation(10)));
+
+        List<OrderedSpectrum<Peak>> queries = Arrays.asList(s1.spectrum, s2.spectrum);
+
+        List<List<SpectralSimilarity>> matches = matcher.matchAllParallel(queries);
+
+        List<List<SpectralSimilarity>> expectedMatches = Arrays.asList(
+                Arrays.asList(utilsIntensity.cosineProduct(s1, s1), utilsIntensity.cosineProduct(s1, s2)),
+                Arrays.asList(utilsIntensity.cosineProduct(s2, s1), utilsIntensity.cosineProduct(s2, s2)));
+
+        assertEquals(expectedMatches, matches);
+    }
 }
