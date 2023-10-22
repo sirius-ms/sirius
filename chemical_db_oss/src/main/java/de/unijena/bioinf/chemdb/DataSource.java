@@ -44,7 +44,7 @@ public enum DataSource {
     MACONDA("Maconda", 1024, "maconda_id","maconda", "http://www.maconda.bham.ac.uk/contaminant.php?id=%d", new Publication("Weber RJM et al., MaConDa: a publicly accessible mass spectrometry contaminants database. Bioinformatics. 2012", "10.1093/bioinformatics/bts527")),
     METACYC("Biocyc", 2048, "unique_id","biocyc", "http://biocyc.org/compound?orgid=META&id=%s", new Publication("Caspi R et al., The MetaCyc database of metabolic pathways and enzymes - a 2019 update, Nucleic Acids Res, 2020", "10.1093/nar/gkz862")),
     GNPS("GNPS", 4096, "id","gnps", "https://gnps.ucsd.edu/ProteoSAFe/gnpslibraryspectrum.jsp?SpectrumID=%s", null), //todo this should be part only of a spectral library search tool.
-    ZINCBIO("ZINC bio", 8192, "zinc_id","zincbio", "http://zinc.docking.org/substances/%s",new Publication("Sterling Tand Irwin JJ, ZINC 15 - Ligand Discovery for Everyone. J Chem Inf Model. 2015", "10.1021/acs.jcim.5b00559")),
+    ZINCBIO("ZINC bio", 8192, null,null, "http://zinc.docking.org/substances/%s",new Publication("Sterling Tand Irwin JJ, ZINC 15 - Ligand Discovery for Everyone. J Chem Inf Model. 2015", "10.1021/acs.jcim.5b00559")),
     TRAIN("Training Set", 16384, null, null, null, null), //not part of the PSQL database anymore but assigned for each predictor individually //todo but we still need that flag, right?
     YMDB("YMDB", 65536, "ymdb_id","ymdb", "http://www.ymdb.ca/compounds/%s", new Publication("Ramirez-Gaona M et al., YMDB 2.0: a significantly expanded version of the yeast metabolome database. Nucleic Acids Res. 2017", "10.1093/nar/gkw1058")),
     PLANTCYC("Plantcyc", 131072, "compound_id","plantcyc",  "http://pmn.plantcyc.org/compound?orgid=PLANT&id=%s", new Publication("Hawkins C et al., Plant Metabolic Network 15: A resource of genome-wide metabolism databases for 126 plants and algae. J Integr Plant Biol. 2021", "10.1111/jipb.13163")),
@@ -78,7 +78,7 @@ public enum DataSource {
     //////////////////////////////////////////
 
 
-    DSSTox("DSSTox", 137438953472L,  "DSSTox_Substance_id","DSSTox", "https://comptox.epa.gov/dashboard/%s", new Publication("Grulke CM at al., EPA’s DSSTox database: History of development of a curated chemistry resource supporting computational toxicology research. Comput Toxicol. 2019", "10.1016/j.comtox.2019.100096"));
+    DSSTox("DSSTox", 137438953472L,  "dsstox_substance_id","dsstox", "https://comptox.epa.gov/dashboard/%s", new Publication("Grulke CM at al., EPA’s DSSTox database: History of development of a curated chemistry resource supporting computational toxicology research. Comput Toxicol. 2019", "10.1016/j.comtox.2019.100096"));
 
 
     // additional field
