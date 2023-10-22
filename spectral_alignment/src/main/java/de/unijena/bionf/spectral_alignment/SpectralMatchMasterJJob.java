@@ -24,6 +24,7 @@ import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A JJob class for scheduling spectral alignment matches for given pairs of spectra
@@ -46,7 +47,17 @@ public class SpectralMatchMasterJJob extends BasicMasterJJob<List<SpectralSimila
         queryUtils = null;
         queries = null;
 
-        jobs.forEach(this::submitSubJob);
+        int maxProgress = jobs.size();
+        AtomicInteger progress = new AtomicInteger(0);
+
+        jobs.forEach(job -> {
+            job.addJobProgressListener(evt -> {
+                if (evt.getProgress() == evt.getMaxValue()) {
+                    updateProgress(0, maxProgress,  progress.incrementAndGet());
+                }
+            } );
+            submitSubJob(job);
+        });
         return jobs.stream().map(SpectralMatchJJob::takeResult).toList();
     }
 }

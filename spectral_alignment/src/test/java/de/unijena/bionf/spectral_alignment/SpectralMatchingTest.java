@@ -20,12 +20,14 @@
 
 package de.unijena.bionf.spectral_alignment;
 
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -62,6 +64,22 @@ public class SpectralMatchingTest {
                 Arrays.asList(utils.cosineProduct(s3, s1), utils.cosineProduct(s3, s2), utils.cosineProduct(s3, s3)));
 
         assertEquals(expectedMatches, matches);
+    }
+
+    @Test
+    public void testProgressReporting() {
+        List<CosineQuerySpectrum> queries = Arrays.asList(s1, s2);
+
+        CosineSpectraMatcher matcher = new CosineSpectraMatcher(utils);
+        SpectralMatchMasterJJob job = matcher.matchAllParallelJob(queries);
+
+        List<Long> progressSequence = new ArrayList<>();
+        job.addJobProgressListener(evt -> progressSequence.add(evt.getProgress()));
+
+        SiriusJobs.getGlobalJobManager().submitJob(job);
+        job.takeResult();
+
+        assertEquals(Arrays.asList(0L, 1L,2L,3L,4L, 4L), progressSequence);  // first and last are from the Master JJob itself
     }
 
     @Test(expected = IllegalArgumentException.class)
