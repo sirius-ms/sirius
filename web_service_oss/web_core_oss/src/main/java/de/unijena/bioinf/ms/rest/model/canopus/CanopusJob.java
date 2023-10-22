@@ -45,7 +45,7 @@ public class CanopusJob extends JobWithPredictor<CanopusJobOutput> {
         this(null, update.getStateEnum());
         setJobId(update.getJobId());
         setErrorMessage(update.getErrorMessage());
-        Optional.ofNullable(update.getData()).map(s -> s.compoundClasses).ifPresent(this::setCompoundClasses);
+        Optional.ofNullable(update.getData()).map(CanopusJobOutput::getCompoundClasses).ifPresent(this::setCompoundClasses);
     }
 
     public CanopusJob(String workerPrefix, String userID, String cid, @NotNull CanopusJobInput input) {
