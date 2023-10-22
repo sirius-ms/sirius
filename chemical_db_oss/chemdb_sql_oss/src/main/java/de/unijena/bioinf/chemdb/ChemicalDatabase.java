@@ -180,7 +180,7 @@ public class ChemicalDatabase implements FilterableChemicalDatabase, PooledDB<Co
 
     @Override
     public String getName() {
-        return "SQL";
+        return PUBCHEM_SCHEME;
     }
 
     /**
