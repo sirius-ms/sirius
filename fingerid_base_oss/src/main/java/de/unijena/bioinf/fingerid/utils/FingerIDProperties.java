@@ -54,7 +54,7 @@ public class FingerIDProperties {
     }
 
     public static String siriusFallbackWebHost() {
-        return PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.host");
+        return PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.host",null ,"http://localhost:8080");
     }
 
     public static String siriusVersion() {
