@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.ms.frontend.io;
 
-import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 
@@ -111,8 +110,6 @@ public class FileChooserPanel extends JPanel {
             } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
                 ex.printStackTrace();
             }
-
-            String s = ApplicationCore.VERSION_STRING();
             JFrame frame = new JFrame("Testing");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.add(new FileChooserPanel(System.getProperty("user.home"), 1));
