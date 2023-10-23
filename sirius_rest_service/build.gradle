@@ -23,9 +23,6 @@ repositories {
         }
     }
     maven {
-        url "https://www.xypron.de/repository" //glpk repo
-    }
-    maven {
         url "https://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/"
     }
 }
