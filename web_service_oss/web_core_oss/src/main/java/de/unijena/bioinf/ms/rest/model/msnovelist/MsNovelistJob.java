@@ -69,7 +69,7 @@ public class MsNovelistJob extends JobWithPredictor<MsNovelistJobOutput> {
     }
 
     public MsNovelistJob(String workerPrefix, Long jobId, JobState state) {
-        super(workerPrefix, jobId, state, JobTable.JOBS_COVTREE);
+        super(workerPrefix, jobId, state, JobTable.JOBS_MSNOVELIST);
     }
 
 
