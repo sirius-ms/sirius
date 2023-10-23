@@ -43,19 +43,20 @@ public class MsNovelistJob extends JobWithPredictor<MsNovelistJobOutput> {
         this(null, null, null);
     }
 
-    public MsNovelistJob(String workerPrefix, String userID, String cid, @NotNull MsNovelistJobInput input) {
-        this(workerPrefix, JobState.SUBMITTED);
-        setUserID(userID);
-        setCid(cid);
-        setFormula(input.formula);
-        setPredictors(input.predictor.toBits());
-    }
-
     public MsNovelistJob(@NotNull JobUpdate<MsNovelistJobOutput> update) {
         this(null, update.getStateEnum());
         setJobId(update.getJobId());
         setErrorMessage(update.getErrorMessage());
         Optional.ofNullable(update.getData()).map(MsNovelistJobOutput::getCandidates).ifPresent(this::setCandidates);
+    }
+
+    public MsNovelistJob(String workerPrefix, String userID, String cid, @NotNull MsNovelistJobInput input) {
+        this(workerPrefix, JobState.SUBMITTED);
+        setUserID(userID);
+        setCid(cid);
+        setFingerprint(input.fingerprint);
+        setFormula(input.formula);
+        setPredictors(input.predictor.toBits());
     }
 
     public MsNovelistJob(String workerPrefix, long lockedByWorker) {
