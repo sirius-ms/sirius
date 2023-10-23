@@ -22,53 +22,13 @@ package de.unijena.bioinf.spectraldb;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public interface SpectralLibrary {
-
-    default <P extends Peak> SpectralSearchResult matchingSpectra(
-            Ms2Spectrum<P> query,
-            Deviation precursorMzDeviation,
-            Deviation maxPeakDeviation,
-            SpectralAlignmentType alignmentType
-    ) throws ChemicalDatabaseException {
-        return matchingSpectra(List.of(query), precursorMzDeviation, maxPeakDeviation, alignmentType, null);
-    }
-
-    default <P extends Peak> SpectralSearchResult matchingSpectra(
-            Iterable<Ms2Spectrum<P>> queries,
-            Deviation precursorMzDeviation,
-            Deviation maxPeakDeviation,
-            SpectralAlignmentType alignmentType
-    ) throws ChemicalDatabaseException {
-        return matchingSpectra(queries, precursorMzDeviation, maxPeakDeviation, alignmentType, null);
-    }
-
-    default <P extends Peak> SpectralSearchResult matchingSpectra(
-            Ms2Spectrum<P> query,
-            Deviation precursorMzDeviation,
-            Deviation maxPeakDeviation,
-            SpectralAlignmentType alignmentType,
-            BiConsumer<Integer, Integer> progressConsumer
-    ) throws ChemicalDatabaseException {
-        return matchingSpectra(List.of(query), precursorMzDeviation, maxPeakDeviation, alignmentType, progressConsumer);
-    }
-
-    <P extends Peak> SpectralSearchResult matchingSpectra(
-            Iterable<Ms2Spectrum<P>> queries,
-            Deviation precursorMzDeviation,
-            Deviation maxPeakDeviation,
-            SpectralAlignmentType alignmentType,
-            BiConsumer<Integer, Integer> progressConsumer
-    ) throws ChemicalDatabaseException;
 
     int countAllSpectra() throws IOException;
 
