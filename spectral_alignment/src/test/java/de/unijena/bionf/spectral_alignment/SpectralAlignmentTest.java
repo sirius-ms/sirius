@@ -18,8 +18,8 @@ public class SpectralAlignmentTest {
     private static double precursorMzLeft, precursorMzRight;
 
     private final IntensityWeightedSpectralAlignment intensityScorer = new IntensityWeightedSpectralAlignment(new Deviation(10));
-    private final IntensityWeightedSpectralAlignment gaussianScorer = new IntensityWeightedSpectralAlignment(new Deviation(10));
-    private final IntensityWeightedSpectralAlignment modifiedCosineScorer = new IntensityWeightedSpectralAlignment(new Deviation(10));
+    private final GaussianSpectralAlignment gaussianScorer = new GaussianSpectralAlignment(new Deviation(10));
+    private final ModifiedCosine modifiedCosineScorer = new ModifiedCosine(new Deviation(10));
 
     private final AbstractSpectralAlignment[] scorers = {intensityScorer, gaussianScorer, modifiedCosineScorer};
 
