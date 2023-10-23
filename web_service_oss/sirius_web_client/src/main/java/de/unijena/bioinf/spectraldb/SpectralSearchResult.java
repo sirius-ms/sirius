@@ -23,6 +23,7 @@ package de.unijena.bioinf.spectraldb;
 import com.google.common.collect.Streams;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ms.annotations.ResultAnnotation;
+import de.unijena.bionf.spectral_alignment.SpectralAlignmentType;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import lombok.*;
 import org.jetbrains.annotations.NotNull;
