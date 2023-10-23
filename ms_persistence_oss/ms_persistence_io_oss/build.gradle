@@ -27,4 +27,8 @@ dependencies {
     implementation 'one.microstream:microstream-afs-sql:08.01.01-MS-GA'
     implementation 'org.xerial:sqlite-jdbc:3.43.0.0'
     implementation 'org.apache.lucene:lucene-core:9.7.0'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
 }
