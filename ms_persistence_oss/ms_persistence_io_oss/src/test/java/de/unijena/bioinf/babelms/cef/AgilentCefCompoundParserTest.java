@@ -30,6 +30,8 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.BufferedReader;
@@ -40,30 +42,36 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 
 public class AgilentCefCompoundParserTest {
     //todo add more tests
+
+    private static Stream<Arguments> provideParameters() {
+        return Stream.of(
+                Arguments.of("/ForTox_TestMix_AMSMS_MFE+MS2Extr(1 Cmpds).cef", 1),
+                Arguments.of("/ForTox_TestMix_AMSMS_MFE+MS2Extr(15 Cmpds).cef", 15),
+                Arguments.of("/ForTox_TestMix_AMSMS(1 Cmpd).cef", 1),
+                Arguments.of("/ForTox_TestMix_AMSMS(15 cmpds).cef", 15),
+                Arguments.of("/ForTox_TestMix_TMSMS(1 Cmpd).cef", 1),
+                Arguments.of("/ForTox_TestMix_TMSMS(13 cmpds).cef", 13),
+                Arguments.of("/221021 Before Gap Filling.cef", 23),
+                Arguments.of("/221021 After Gap Filling.cef", 23)
+        );
+    }
+
     @ParameterizedTest
-    @ValueSource(strings = {
-            "/ForTox_TestMix_AMSMS_MFE+MS2Extr(1 Cmpds).cef",
-            "/ForTox_TestMix_AMSMS_MFE+MS2Extr(15 Cmpds).cef",
-            "/ForTox_TestMix_AMSMS(1 Cmpd).cef",
-            "/ForTox_TestMix_AMSMS(15 cmpds).cef",
-            "/ForTox_TestMix_TMSMS(1 Cmpd).cef",
-            "/ForTox_TestMix_TMSMS(13 cmpds).cef",
-            "/221021 Before Gap Filling.cef",
-            "/221021 After Gap Filling.cef",
-    }) // six numbers
-    public void testReadCefInput(String file) throws IOException {
+    @MethodSource("provideParameters")
+    public void testReadCefInput(String file, int numCompounds) throws IOException {
         final List<Compound> compounds = new ArrayList<>();
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(file)))){
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(file)))) {
             GenericParser<Compound> parser = new GenericParser<>(new AgilentCefCompoundParser());
             parser.parseIterator(reader, null).forEachRemaining(compounds::add);
         }
-
         System.out.println(compounds.size());
+        Assert.assertEquals(numCompounds, compounds.size());
     }
 
     @Test
@@ -73,19 +81,9 @@ public class AgilentCefCompoundParserTest {
         try (NitriteDatabase store = new NitriteDatabase(Path.of("/tmp/NITRITE-Project-" + UUID.randomUUID() + ".nitrite"), SiriusProjectDocumentDatabase.buildMetadata())) {
             SiriusProjectDatabaseImpl<?> ps = new SiriusProjectDatabaseImpl<>(store);
             final List<Compound> compounds = new ArrayList<>();
+            final List<String> locations = provideParameters().map(arguments -> (String)arguments.get()[0]).toList();
 
             final int iterations = 1;
-            String[] locations = new String[]{
-                    "/home/fleisch/sirius-testing/demo/000_sirius_test/compounds/ForTox_TestMix_AMSMS_MFE+MS2Extr(1 Cmpds).cef",
-                    "/home/fleisch/sirius-testing/demo/000_sirius_test/compounds/ForTox_TestMix_AMSMS_MFE+MS2Extr(15 Cmpds).cef",
-                    "/home/fleisch/sirius-testing/demo/000_sirius_test/compounds/ForTox_TestMix_AMSMS(1 Cmpd).cef",
-                    "/home/fleisch/sirius-testing/demo/000_sirius_test/compounds/ForTox_TestMix_AMSMS(15 cmpds).cef",
-                    "/home/fleisch/sirius-testing/demo/000_sirius_test/compounds/ForTox_TestMix_TMSMS(1 Cmpd).cef",
-                    "/home/fleisch/sirius-testing/demo/000_sirius_test/compounds/ForTox_TestMix_TMSMS(13 cmpds).cef",
-                    "/home/fleisch/sirius-testing/demo/000_sirius_test/compounds/221021 Before Gap Filling.cef",
-                    "/home/fleisch/sirius-testing/demo/000_sirius_test/compounds/221021 After Gap Filling.cef",
-            };
-
             for (int i = 0; i < iterations; i++) {
                 for (String location : locations) {
                     try (BufferedReader reader = Files.newBufferedReader(Path.of(location))) {
@@ -95,14 +93,14 @@ public class AgilentCefCompoundParserTest {
                 }
             }
 
-            System.out.println("Parsed '" +compounds.size()+ "' compounds from cef in " + watch);
+            System.out.println("Parsed '" + compounds.size() + "' compounds from cef in " + watch);
 
             ps.importCompounds(compounds);
-            System.out.println("Imported '" +compounds.size()+ "' compounds into project in " + watch);
+            System.out.println("Imported '" + compounds.size() + "' compounds into project in " + watch);
             List<Compound> compoundsFetched = ps.getAllCompounds().toList();
-            System.out.println("Fetched '" +compoundsFetched.size()+ "' compounds without data in " + watch);
+            System.out.println("Fetched '" + compoundsFetched.size() + "' compounds without data in " + watch);
             List<AlignedFeatures> features = ps.getAllAlignedFeatures().peek(ps::fetchMsmsScans).toList();
-            System.out.println("Fetched '" +features.size()+ "'aligned features with data in " + watch);
+            System.out.println("Fetched '" + features.size() + "'aligned features with data in " + watch);
 
             Assert.assertEquals(compounds.size(), compoundsFetched.size());
         }
