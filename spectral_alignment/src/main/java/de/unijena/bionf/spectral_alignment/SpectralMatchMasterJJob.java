@@ -47,15 +47,15 @@ public class SpectralMatchMasterJJob extends BasicMasterJJob<List<SpectralSimila
         queryUtils = null;
         queries = null;
 
-        int maxProgress = jobs.size();
+        int maxProgress = jobs.size() + 1;  // The last unit of progress is added after the master task is done
         AtomicInteger progress = new AtomicInteger(0);
 
         jobs.forEach(job -> {
             job.addJobProgressListener(evt -> {
-                if (evt.getProgress() == evt.getMaxValue()) {
+                if (evt.isDone()) {
                     updateProgress(0, maxProgress,  progress.incrementAndGet());
                 }
-            } );
+            });
             submitSubJob(job);
         });
         return jobs.stream().map(SpectralMatchJJob::takeResult).toList();

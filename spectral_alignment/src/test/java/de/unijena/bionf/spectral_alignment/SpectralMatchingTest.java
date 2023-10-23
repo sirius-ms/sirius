@@ -79,7 +79,7 @@ public class SpectralMatchingTest {
         SiriusJobs.getGlobalJobManager().submitJob(job);
         job.takeResult();
 
-        assertEquals(Arrays.asList(0L, 1L,2L,3L,4L, 4L), progressSequence);  // first and last are from the Master JJob itself
+        assertEquals(Arrays.asList(0L,1L,2L,3L,4L,5L), progressSequence);  // first and last are from the Master JJob itself
     }
 
     @Test(expected = IllegalArgumentException.class)
