@@ -29,6 +29,7 @@ import de.unijena.bioinf.storage.db.nosql.Filter;
 import de.unijena.bioinf.storage.db.nosql.Index;
 import de.unijena.bioinf.storage.db.nosql.IndexType;
 import de.unijena.bioinf.storage.db.nosql.*;
+import de.unijena.bioinf.storage.db.nosql.utils.ExtFieldUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.dizitart.no2.*;
 import org.dizitart.no2.filters.Filters;
@@ -174,7 +175,7 @@ public class NitriteDatabase implements Database<Document> {
 
     private void initIdField(Class<?> clazz, String idFieldName, ObjectRepository<?> repository) throws IOException {
         try {
-            Field idField = clazz.getDeclaredField(idFieldName);
+            Field idField = ExtFieldUtils.getAllField(clazz, idFieldName);
             Field fieldField = repository.getClass().getDeclaredField("idField");
             fieldField.setAccessible(true);
             fieldField.set(repository, idField);

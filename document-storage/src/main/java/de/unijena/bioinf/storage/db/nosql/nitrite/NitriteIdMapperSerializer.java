@@ -33,6 +33,7 @@ import com.fasterxml.jackson.databind.ser.BeanSerializerFactory;
 import com.fasterxml.jackson.databind.ser.Serializers;
 import com.fasterxml.jackson.databind.type.ClassKey;
 import com.fasterxml.jackson.databind.util.TokenBuffer;
+import de.unijena.bioinf.storage.db.nosql.utils.ExtFieldUtils;
 import org.dizitart.no2.NitriteId;
 
 import java.io.IOException;
@@ -59,7 +60,7 @@ public class NitriteIdMapperSerializer<T> extends JsonSerializer<T> {
         this.jsonSerializer = null;
         this.force = forceGenerateID;
         this.clazz = clazz;
-        this.idField = clazz.getDeclaredField(idField);
+        this.idField = ExtFieldUtils.getAllField(clazz, idField);
         this.idField.setAccessible(true);
     }
 
@@ -69,7 +70,7 @@ public class NitriteIdMapperSerializer<T> extends JsonSerializer<T> {
         this.jsonSerializer = jsonSerializer;
         this.force = forceGenerateID;
         this.clazz = clazz;
-        this.idField = clazz.getDeclaredField(idField);
+        this.idField = ExtFieldUtils.getAllField(clazz, idField);
         this.idField.setAccessible(true);
     }
 

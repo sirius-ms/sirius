@@ -21,6 +21,11 @@
 
 package de.unijena.bioinf.ChemistryBase.chem;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
+
 import java.util.Arrays;
 import java.util.BitSet;
 
@@ -37,6 +42,8 @@ import java.util.BitSet;
  * MolecularFormula f = MolecularFormula.from(m); // immutable form
  * }}
  */
+@JsonSerialize(using = ToStringSerializer.class)
+@JsonDeserialize(using = SimpleSerializers.MolecularFormulaDeserializer.class)
 public class MutableMolecularFormula extends MolecularFormula {
 
     private short[] amounts;
@@ -112,39 +119,4 @@ public class MutableMolecularFormula extends MolecularFormula {
     public MutableMolecularFormula clone() {
         return new MutableMolecularFormula(this);
     }
-    /*
-
-    public void doUnion(MolecularFormula other) {
-        if (selection.equals(other.getTableSelection())) {
-            final short[] buffer = other.buffer();
-            if (amounts.length > buffer.length)
-                amounts = Arrays.copyOf(amounts, buffer.length);
-            for (int i=0; i < amounts.length; ++i) {
-                amounts[i] = (short)Math.max(amounts[i], buffer[i]);
-            }
-        } else {
-
-        }
-    }
-
-    @Override
-    public void doAdd(MolecularFormula other) {
-        return super.add(other);
-    }
-
-    @Override
-    public void doNegate() {
-        return super.negate();
-    }
-
-    @Override
-    public void doSubtract(MolecularFormula other) {
-        return super.subtract(other);
-    }
-
-    @Override
-    public void doMultiply(int scalar) {
-        return super.multiply(scalar);
-    }
-    */
 }
