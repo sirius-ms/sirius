@@ -115,11 +115,12 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
 
     Iterable<DocType> joinChildren(String childCollectionName, Filter childFilter, Iterable<DocType> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException;
 
-    default <P, C> Database<DocType> fetchChild(P parent, String matchingField, String targetField, Class<C> childClass, String... withOptionalChildFields) throws IOException {
+    //todo @MEL implement stream based join/fetch api for documents as well.
+    default <P, C> P fetchChild(final P parent, String matchingField, String targetField, Class<C> childClass, String... withOptionalChildFields) throws IOException {
         return fetchChild(parent, matchingField, matchingField, targetField, childClass, withOptionalChildFields);
     }
 
-    default <P, C> Database<DocType> fetchChild(P parent, String localField, String foreignField, String targetField, Class<C> childClass, String... withOptionalChildFields) throws IOException {
+    default <P, C> P fetchChild(final P parent, String localField, String foreignField, String targetField, Class<C> childClass, String... withOptionalChildFields) throws IOException {
         try {
             Object matchingValue = getAllFieldValue(parent, localField);
             Field target = getAllField(parent.getClass(), targetField);
@@ -137,11 +138,12 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }
-        return this;
+        return parent;
     }
 
-    private static <P, C> void fetchChildren(P parent, String targetField, Collection<? extends C> targetChildren) throws IOException {
+    private static <P, C> P fetchChildren(final P parent, String targetField, Collection<? extends C> targetChildren) throws IOException {
         try {
+            //todo @MEL can we call join here. This might be duplicated code with the Joining interator.
             final Field field = getAllField(parent.getClass(), targetField);
 
             if (!targetChildren.isEmpty()) {
@@ -168,24 +170,26 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
                 collection.addAll(targetChildren);
                 field.set(parent, collection);
             }
+            return parent;
         } catch (IllegalAccessException | InstantiationException | InvocationTargetException |
                  NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
+
     }
 
 
-    default <P, C> Database<DocType> fetchChildren(P parent, String targetField, Filter childFilter, Class<C> childClass, String... withOptionalChildFields) throws IOException {
+    default <P, C> P fetchChildren(final P parent, String targetField, Filter childFilter, Class<C> childClass, String... withOptionalChildFields) throws IOException {
         List<C> targetChildren = findStr(childFilter, childClass, withOptionalChildFields).toList();
         fetchChildren(parent, targetField, targetChildren);
-        return this;
+        return parent;
     }
 
-    default <P, C> Database<DocType> fetchAllChildren(P parent, String matchingField, String targetField, Class<C> childClass, String... withOptionalChildFields) throws IOException {
+    default <P, C> P fetchAllChildren(final P parent, String matchingField, String targetField, Class<C> childClass, String... withOptionalChildFields) throws IOException {
         return fetchAllChildren(parent, matchingField, matchingField, targetField, childClass, withOptionalChildFields);
     }
 
-    default <P, C> Database<DocType> fetchAllChildren(P parent, String localField, String foreignField, String targetField, Class<C> childClass, String... withOptionalChildFields) throws IOException {
+    default <P, C> P fetchAllChildren(final P parent, String localField, String foreignField, String targetField, Class<C> childClass, String... withOptionalChildFields) throws IOException {
         try {
             Object matchingValue = getAllFieldValue(parent, localField);
 
@@ -197,7 +201,7 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }
-        return this;
+        return parent;
     }
 
     <T> int count(Filter filter, Class<T> clazz) throws IOException;
