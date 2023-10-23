@@ -23,6 +23,7 @@ package de.unijena.bioinf.ms.rest.client;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
+import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.client.utils.HTTPSupplier;
 import de.unijena.bioinf.ms.rest.model.SecurityService;
@@ -50,11 +51,6 @@ public abstract class AbstractClient {
 
     public static final MediaType APPLICATION_JSON = MediaType.parse("application/json;charset=UTF-8");
 
-    static {
-        if (NetUtils.DEBUG)
-            PropertyManager.setProperty("de.unijena.bioinf.fingerid.web.host", "http://localhost:8080");
-    }
-
     @NotNull
     private Supplier<URI> serverUrl;
 
@@ -81,7 +77,7 @@ public abstract class AbstractClient {
         this(() -> serverUrl, () -> contextPath, requestDecorators);
     }
 
-    protected AbstractClient(@NotNull Supplier<URI> serverUrl, @NotNull Supplier<String> contextPath,  @NotNull List<IOFunctions.IOConsumer<Request.Builder>> requestDecorators) {
+    protected AbstractClient(@NotNull Supplier<URI> serverUrl, @NotNull Supplier<String> contextPath, @NotNull List<IOFunctions.IOConsumer<Request.Builder>> requestDecorators) {
         this.serverUrl = serverUrl;
         this.contextPath = contextPath;
         this.requestDecorators = requestDecorators;
@@ -89,14 +85,13 @@ public abstract class AbstractClient {
 
     public void setServerUrl(@NotNull Supplier<URI> serverUrl) {
         if (NetUtils.DEBUG) {
-            this.serverUrl = () -> URI.create("http://localhost:8080");
+            this.serverUrl = () -> URI.create(FingerIDProperties.siriusFallbackWebHost());
         } else {
             this.serverUrl = serverUrl;
         }
     }
 
     /**
-     *
      * @return Unmodifiable list of requestDecorators
      */
     public List<IOFunctions.IOConsumer<Request.Builder>> getRequestDecorators() {
@@ -215,23 +210,18 @@ public abstract class AbstractClient {
     //region PathBuilderMethods
     public HttpUrl.Builder getBaseURI(@Nullable String path) {
 
-        HttpUrl.Builder b;
-        if (NetUtils.DEBUG) {
-            b = new HttpUrl.Builder().scheme("http").host("localhost").port(8080);
-        } else {
-            HttpUrl serverUrl = HttpUrl.get(getServerUrl());
-            if (serverUrl == null)
-                throw new NullPointerException("Server URL is null!");
+        HttpUrl serverUrl = HttpUrl.get(getServerUrl());
+        if (serverUrl == null)
+            throw new NullPointerException("Server URL is null!");
 
-            b = serverUrl.newBuilder();
+        HttpUrl.Builder b = serverUrl.newBuilder();
 
-            {
-                String v = contextPath.get();
-                if (v != null) {
-                    v = StringUtils.strip(v, "/");
-                    if (!v.isBlank())
-                        b.addPathSegments(v);
-                }
+        {
+            String v = contextPath.get();
+            if (v != null) {
+                v = StringUtils.strip(v, "/");
+                if (!v.isBlank())
+                    b.addPathSegments(v);
             }
         }
 
