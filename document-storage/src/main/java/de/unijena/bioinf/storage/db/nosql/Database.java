@@ -22,9 +22,16 @@ package de.unijena.bioinf.storage.db.nosql;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import static de.unijena.bioinf.storage.db.nosql.utils.ExtFieldUtils.getAllField;
+import static de.unijena.bioinf.storage.db.nosql.utils.ExtFieldUtils.getAllFieldValue;
 
 public interface Database<DocType> extends Closeable, AutoCloseable {
 
@@ -107,6 +114,95 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
     Iterable<DocType> joinAllChildren(String childCollection, Iterable<DocType> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException;
 
     Iterable<DocType> joinChildren(String childCollectionName, Filter childFilter, Iterable<DocType> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException;
+
+    //todo @MEL implement stream based join/fetch api for documents as well.
+    default <P, C> P fetchChild(final P parent, String matchingField, String targetField, Class<C> childClass, String... withOptionalChildFields) throws IOException {
+        return fetchChild(parent, matchingField, matchingField, targetField, childClass, withOptionalChildFields);
+    }
+
+    default <P, C> P fetchChild(final P parent, String localField, String foreignField, String targetField, Class<C> childClass, String... withOptionalChildFields) throws IOException {
+        try {
+            Object matchingValue = getAllFieldValue(parent, localField);
+            Field target = getAllField(parent.getClass(), targetField);
+
+            List<C> targetChildren =
+                    findStr(Filter.build().eq(foreignField, matchingValue), childClass, withOptionalChildFields)
+                            .toList();
+
+            if (targetChildren.isEmpty())
+                target.set(parent, null);
+            else if (targetChildren.size() == 1)
+                target.set(parent, targetChildren.get(0));
+            else
+                throw new IllegalStateException("Multiple matching children objects found but single candidate expected");
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+        return parent;
+    }
+
+    private static <P, C> P fetchChildren(final P parent, String targetField, Collection<? extends C> targetChildren) throws IOException {
+        try {
+            //todo @MEL can we call join here. This might be duplicated code with the Joining interator.
+            final Field field = getAllField(parent.getClass(), targetField);
+
+            if (!targetChildren.isEmpty()) {
+                Collection<C> collection = (Collection<C>) field.get(parent);
+                if (collection == null) {
+                    if (field.getType() == List.class) {
+                        collection = new ArrayList<>(targetChildren);
+                    } else if (field.getType() == BlockingDeque.class) {
+                        collection = new LinkedBlockingDeque<>();
+                    } else if (field.getType() == BlockingQueue.class) {
+                        collection = new LinkedBlockingQueue<>();
+                    } else if (field.getType() == Deque.class || field.getType() == Queue.class) {
+                        collection = new ArrayDeque<>();
+                    } else if (field.getType() == Set.class) {
+                        collection = new HashSet<>();
+                    } else if (field.getType() == SortedSet.class) {
+                        collection = new TreeSet<>();
+                    } else if (field.getType() == TransferQueue.class) {
+                        collection = new LinkedTransferQueue<>();
+                    } else {
+                        collection = (Collection<C>) field.getType().getDeclaredConstructor().newInstance();
+                    }
+                }
+                collection.addAll(targetChildren);
+                field.set(parent, collection);
+            }
+            return parent;
+        } catch (IllegalAccessException | InstantiationException | InvocationTargetException |
+                 NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+
+    default <P, C> P fetchChildren(final P parent, String targetField, Filter childFilter, Class<C> childClass, String... withOptionalChildFields) throws IOException {
+        List<C> targetChildren = findStr(childFilter, childClass, withOptionalChildFields).toList();
+        fetchChildren(parent, targetField, targetChildren);
+        return parent;
+    }
+
+    default <P, C> P fetchAllChildren(final P parent, String matchingField, String targetField, Class<C> childClass, String... withOptionalChildFields) throws IOException {
+        return fetchAllChildren(parent, matchingField, matchingField, targetField, childClass, withOptionalChildFields);
+    }
+
+    default <P, C> P fetchAllChildren(final P parent, String localField, String foreignField, String targetField, Class<C> childClass, String... withOptionalChildFields) throws IOException {
+        try {
+            Object matchingValue = getAllFieldValue(parent, localField);
+
+            List<C> targetChildren =
+                    findStr(Filter.build().eq(foreignField, matchingValue), childClass, withOptionalChildFields)
+                            .toList();
+
+            fetchChildren(parent, targetField, targetChildren);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+        return parent;
+    }
 
     <T> int count(Filter filter, Class<T> clazz) throws IOException;
 
@@ -235,13 +331,12 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
         return StreamSupport.stream(joinChildren(targetClass, childClass, childFilter, parents, localField, foreignField, targetField, withOptionalChildFields).spliterator(), false);
     }
 
-    default Stream<DocType> joinAllChildrenStr(String childCollectionName, Iterable<DocType> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException  {
+    default Stream<DocType> joinAllChildrenStr(String childCollectionName, Iterable<DocType> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException {
         return StreamSupport.stream(joinAllChildren(childCollectionName, parents, localField, foreignField, targetField, withOptionalChildFields).spliterator(), false);
     }
 
     default Stream<DocType> joinChildrenStr(String childCollectionName, Filter childFilter, Iterable<DocType> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException {
         return StreamSupport.stream(joinChildren(childCollectionName, childFilter, parents, localField, foreignField, targetField, withOptionalChildFields).spliterator(), false);
     }
-
     //endregion
 }

@@ -62,6 +62,8 @@ public class SpectralSearchResult implements Iterable<SpectralSearchResult.Searc
 
         private String dbName;
 
+        private String dbId;
+
         int querySpectrumIndex;
 
         @Builder.Default
