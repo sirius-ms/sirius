@@ -54,6 +54,9 @@ dependencies {
 //    providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
     providedRuntime 'org.springframework.boot:spring-boot-starter-jetty'
 
+    //spring data for pagination and sorting
+    implementation 'org.springframework.data:spring-data-commons'
+
     // expose operational information about the running application via /actuator
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation 'it.unimi.dsi:fastutil:8.5.8' //replaces old spring version
@@ -61,8 +64,9 @@ dependencies {
 
     ////////////////////// API DOC ///////////////////
     // Generate interactive documentation from a Swagger-compliant API
-    implementation 'org.springdoc:springdoc-openapi-ui:1.6.9'
-    implementation 'org.springdoc:springdoc-openapi-javadoc:1.6.9'
+    implementation 'org.springdoc:springdoc-openapi-ui:1.7.0'
+    implementation 'org.springdoc:springdoc-openapi-javadoc:1.7.0'
+    implementation "org.springdoc:springdoc-openapi-data-rest:1.7.0"
     //process javadoc for swagger/openapi
     annotationProcessor 'com.github.therapi:therapi-runtime-javadoc-scribe:0.13.0'
 //    implementation 'org.springdoc:springdoc-openapi-security:1.5.13'

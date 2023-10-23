@@ -17,33 +17,25 @@
  *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.middleware;
+package de.unijena.bioinf.ms.middleware.model.features.annotations;
 
-import org.springframework.boot.actuate.context.ShutdownEndpoint;
-import org.springframework.boot.actuate.endpoint.annotation.WriteOperation;
-import org.springframework.stereotype.Component;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Getter;
+import lombok.Setter;
 
-import java.util.Collections;
-import java.util.Map;
-
-@Component
-public class ShutDown extends ShutdownEndpoint {
-    private static final Map<String, String> SHUTDOWN_MESSAGE = Collections.singletonMap("message", "Shutting down SpringBootApp and SIRIUS afterwards, bye...");
-
-    @Override
-    @WriteOperation
-    public Map<String, String> shutdown() {
-        try {
-            return SHUTDOWN_MESSAGE;
-        } finally {
-            new Thread(() -> {
-                try {
-                    Thread.sleep(500L);
-                } catch (InterruptedException ex) {
-                    Thread.currentThread().interrupt();
-                }
-                System.exit(0);
-            }).start();
-        }
-    }
+/**
+ * Summary of the results of a feature (aligned over runs). Can be added to a AlignedFeature.
+ * It is null within a AlignedFeature if it was not requested und non-null otherwise.
+ * The different annotation fields within this summary object are null if the corresponding
+ * feature does not contain the represented results. If fields are non-null
+ * the corresponding result has been computed but might still be empty.
+ * */
+@Getter
+@Setter
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class Annotations {
+    //result previews
+    protected FormulaCandidate formulaAnnotation; // SIRIUS + ZODIAC
+    protected StructureCandidate structureAnnotation; // CSI:FingerID
+    protected CompoundClasses compoundClassAnnotation; // CANOPUS
 }
