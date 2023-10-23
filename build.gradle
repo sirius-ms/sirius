@@ -122,10 +122,6 @@ allprojects {
             url "https://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/"
         }
         maven {
-            url "https://www.xypron.de/repository" //glpk repo
-        }
-
-        maven {
             url "https://repo1.maven.org/maven2/" //glazed lists
         }
         maven {
