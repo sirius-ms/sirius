@@ -23,12 +23,8 @@ package de.unijena.bioinf.chemdb;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.spectraldb.SpectralAlignmentType;
 import de.unijena.bioinf.spectraldb.SpectralLibrary;
-import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import org.jdbi.v3.core.ConnectionFactory;
 import org.jdbi.v3.core.Jdbi;
@@ -40,9 +36,7 @@ import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.List;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.StreamSupport;
 //todo check when data/spectra should be included an when not
@@ -60,14 +54,8 @@ public class SpectralSqlJdbiJsonDatabase implements SpectralLibrary {
         this.jdbi = jdbi;
     }
 
-
     @Override
-    public <P extends Peak> SpectralSearchResult matchingSpectra(Iterable<Ms2Spectrum<P>> queries, Deviation precursorMzDeviation, Deviation maxPeakDeviation, SpectralAlignmentType alignmentType, BiConsumer<Integer, Integer> progressConsumer) throws ChemicalDatabaseException {
-        return null; //todo tobe removed
-    }
-
-    @Override
-    public int countAllSpectra() throws IOException {
+    public int countAllSpectra() {
         return jdbi.withExtension(Dao.class, Dao::countAll);
     }
 
@@ -113,7 +101,7 @@ public class SpectralSqlJdbiJsonDatabase implements SpectralLibrary {
     }
 
     @Override
-    public void forEachSpectrum(@NotNull final Consumer<Ms2ReferenceSpectrum> consumer) throws IOException {
+    public void forEachSpectrum(@NotNull final Consumer<Ms2ReferenceSpectrum> consumer) {
         jdbi.useExtension(Dao.class, db -> db.findAllLazy().forEach(consumer));
     }
 
