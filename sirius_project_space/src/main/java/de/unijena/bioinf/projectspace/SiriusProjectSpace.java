@@ -52,6 +52,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SiriusProjectSpace implements IterableWithSize<CompoundContainerId>, AutoCloseable {
 
@@ -168,7 +169,7 @@ public class SiriusProjectSpace implements IterableWithSize<CompoundContainerId>
             idLock.readLock().unlock();
         }
 
-        this.compoundCounter.set(maxIndex + 1);
+        this.compoundCounter.set(maxIndex);
         flush();
         fireProjectSpaceChange(ProjectSpaceEvent.OPENED);
     }
@@ -341,7 +342,7 @@ public class SiriusProjectSpace implements IterableWithSize<CompoundContainerId>
 
 
     public Optional<CompoundContainerId> newUniqueCompoundId(String compoundName, IntFunction<String> index2dirName, double ioMass, PrecursorIonType ionType, RetentionTime rt, Double confidence, String featureId) {
-        int index = compoundCounter.getAndIncrement();
+        int index = compoundCounter.incrementAndGet();
         String dirName = index2dirName.apply(index);
 
         Optional<CompoundContainerId> cidOpt = tryCreateCompoundContainer(dirName, compoundName, index, ioMass, ionType, rt, confidence, featureId);
@@ -722,10 +723,20 @@ public class SiriusProjectSpace implements IterableWithSize<CompoundContainerId>
         }, containerId);
     }
 
+
+    @NotNull
+    public Stream<CompoundContainerId> stream() {
+        return ids.values().stream();
+    }
+
     @NotNull
     @Override
     public Iterator<CompoundContainerId> iterator() {
-        return ids.values().stream().iterator();
+        return ids.values().iterator();
+    }
+
+    public Spliterator<CompoundContainerId> spliterator() {
+        return ids.values().stream().spliterator();
     }
 
     public Iterator<CompoundContainerId> filteredIterator(Predicate<CompoundContainerId> predicate) {
