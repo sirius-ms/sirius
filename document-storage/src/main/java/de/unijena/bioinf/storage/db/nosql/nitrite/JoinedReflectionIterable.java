@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.storage.db.nosql.nitrite;
 
+import de.unijena.bioinf.storage.db.nosql.utils.ExtFieldUtils;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.dizitart.no2.Document;
@@ -115,7 +116,7 @@ public class JoinedReflectionIterable<P, C> implements Iterable<P> {
             this.parentIterator = parents.iterator();
             this.children = children;
             this.localField = localField;
-            this.targetField = parentClass.getDeclaredField(targetField);
+            this.targetField = ExtFieldUtils.getAllField(parentClass, targetField);
             if (!ClassUtils.getAllInterfaces(this.targetField.getType()).contains(Collection.class)) {
                 throw new IOException("targetField must be a collection.");
             }
@@ -145,6 +146,7 @@ public class JoinedReflectionIterable<P, C> implements Iterable<P> {
                 if (localF == null) {
                     throw new NoSuchFieldException(localField);
                 }
+                localF.setAccessible(true);
                 Object localObject = localF.get(target);
 
                 Set<C> targetChildren = new HashSet<>();
