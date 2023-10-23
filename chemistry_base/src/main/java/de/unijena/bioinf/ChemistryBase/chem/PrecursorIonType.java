@@ -20,7 +20,11 @@
 
 package de.unijena.bioinf.ChemistryBase.chem;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
+import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
 import de.unijena.bioinf.ms.annotations.TreeAnnotation;
 import org.slf4j.LoggerFactory;
 
@@ -59,6 +63,8 @@ import java.util.Optional;
  *
  *
  */
+@JsonSerialize(using = ToStringSerializer.class)
+@JsonDeserialize(using = SimpleSerializers.PrecursorIonTypeDeserializer.class)
 public class PrecursorIonType implements TreeAnnotation {
 
 

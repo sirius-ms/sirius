@@ -21,6 +21,10 @@
 
 package de.unijena.bioinf.ChemistryBase.ms;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -28,6 +32,11 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.Comparator;
 
+/**
+ * Collision Energy in eV
+ */
+@JsonSerialize(using = ToStringSerializer.class)
+@JsonDeserialize(using = SimpleSerializers.CollisionEnergyDeserializer.class)
 public class CollisionEnergy {
 
 

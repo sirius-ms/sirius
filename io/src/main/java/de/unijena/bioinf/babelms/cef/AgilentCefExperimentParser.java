@@ -27,7 +27,6 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.apache.commons.io.input.ReaderInputStream;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +47,8 @@ import java.net.URI;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.regex.Pattern;
+
+import static de.unijena.bioinf.babelms.cef.CEFUtils.*;
 
 public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
     private static final DecimalFormat NUMBER_FORMAT = new DecimalFormat("#0.000");
@@ -223,64 +224,5 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
         exp.setMs2Spectra(ms2Spectra);
         return (S) exp;
     }
-
-    private CollisionEnergy parseCE(Spectrum spec) {
-        try {
-            return CollisionEnergy.fromString(spec.msDetails.getCe().replace("V", "ev"));
-        } catch (Exception e) {
-            LoggerFactory.getLogger(getClass()).warn("Could not parse collision energy! Cause: " + e.getMessage());
-            LoggerFactory.getLogger(getClass()).debug("Could not parse collision energy!", e);
-            return CollisionEnergy.none();
-        }
-    }
-
-    private Optional<RetentionTime> parseRT(@NotNull Compound c) {
-        return parseRT(c, null);
-    }
-
-    private Optional<RetentionTime> parseRT(@NotNull Compound c, @Nullable Spectrum ms1) {
-        try {
-            double middle = Optional.ofNullable(c.getLocation()).map(Location::getRt).map(it -> it.doubleValue() * 60).orElse(Double.NaN);
-            double min = Optional.ofNullable(ms1).map(Spectrum::getRTRanges).map(RTRanges::getRTRange).map(RTRange::getMin).map(it -> it.doubleValue() * 60).orElse(Double.NaN);
-            double max = Optional.ofNullable(ms1).map(Spectrum::getRTRanges).map(RTRanges::getRTRange).map(RTRange::getMax).map(it -> it.doubleValue() * 60).orElse(Double.NaN);
-
-            RetentionTime rt = null;
-            if (Double.isNaN(middle)) {
-                if (min < max)
-                    rt = new RetentionTime(min, max);
-                else if (!Double.isNaN(min))
-                    rt = new RetentionTime(min);
-                else if (!Double.isNaN(max))
-                    rt = new RetentionTime(max);
-            } else if (min < middle && middle < max) {
-                rt = new RetentionTime(min, max, middle);
-            } else {
-                rt = new RetentionTime(middle);
-            }
-
-            return Optional.ofNullable(rt);
-        } catch (Exception e) {
-            LoggerFactory.getLogger(getClass()).warn("Could not parse Retention time!", e);
-            return Optional.empty();
-        }
-    }
-
-    private MutableMs2Spectrum makeMs2Spectrum(Spectrum spec) {
-        return new MutableMs2Spectrum(
-                makeMs1Spectrum(spec),
-                spec.getMzOfInterest().getMz().doubleValue(),
-                parseCE(spec),
-                2
-        );
-    }
-
-
-    SimpleSpectrum makeMs1Spectrum(Spectrum spec) {
-        return new SimpleSpectrum(
-                spec.msPeaks.p.stream().map(P::getX).mapToDouble(BigDecimal::doubleValue).toArray(),
-                spec.msPeaks.p.stream().map(P::getY).mapToDouble(BigDecimal::doubleValue).toArray()
-        );
-    }
-
 }
 
