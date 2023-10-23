@@ -4,6 +4,8 @@
 #image: gradle:alpine
 default:
   image: azul/zulu-openjdk:17-latest
+  tags: [$RUNNER_TAGS]
+
 #  image: git.bio.informatik.uni-jena.de:5050/bioinf-mit/docker-images/ubuntu-zulu-fx-gradle:22.04-15.42.15-6.9.2-12
 # Disable the Gradle daemon for Continuous Integration servers as correctness
 # is usually a priority over speed in CI environments. Using a fresh
@@ -44,8 +46,6 @@ buildCLI:
     paths:
       - ./maven_artifacts/$VSNAP
     expire_in: 3 days
-  tags:
-    - kubernetes
   only:
     refs:
       - master
@@ -64,8 +64,6 @@ buildGUI:
     paths:
       - ./maven_artifacts/$VSNAP
     expire_in: 3 days
-  tags:
-    - kubernetes
   only:
     refs:
       - master
@@ -84,8 +82,6 @@ testCLI:
   needs: [buildCLI]
   dependencies:
     - buildCLI
-  tags:
-    - kubernetes
   only:
     refs:
       - master
@@ -104,8 +100,6 @@ testGUI:
   needs: [buildGUI]
   dependencies:
     - buildGUI
-  tags:
-    - kubernetes
   only:
     refs:
       - master
@@ -125,8 +119,6 @@ publishCLI:
   needs: [buildCLI, testCLI]
   dependencies:
     - buildCLI
-  tags:
-    - kubernetes
   only:
     refs:
       - master
@@ -146,8 +138,6 @@ publishGUI:
   needs: [buildGUI, testGUI]
   dependencies:
     - buildGUI
-  tags:
-    - kubernetes
   only:
     refs:
       - master
@@ -167,8 +157,6 @@ pushToGitHub:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
   needs: [testCLI, testGUI]
-  tags:
-    - kubernetes
   only:
     refs:
       - stable
