@@ -20,15 +20,24 @@
 
 package de.unijena.bioinf.spectraldb;
 
+import com.google.common.collect.Streams;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.chemdb.annotations.SpectralAlignmentScorer;
 import de.unijena.bioinf.chemdb.annotations.SpectralSearchDB;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
-import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
+import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.jjobs.JobProgressEvent;
+import de.unijena.bioinf.jjobs.JobProgressMerger;
+import de.unijena.bioinf.projectspace.SpectralSearchResult;
+import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.webapi.WebAPI;
+import de.unijena.bionf.spectral_alignment.*;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +48,9 @@ public class SpectralAlignmentJJob extends BasicMasterJJob<SpectralSearchResult>
 
     private final Ms2Experiment experiment;
 
+    private CosineQueryUtils queryUtils;
+    private Deviation precursorDev;
+
     public SpectralAlignmentJJob(WebAPI<?> api, Ms2Experiment experiment) {
         super(JobType.SCHEDULER);
         this.experiment = experiment;
@@ -48,7 +60,7 @@ public class SpectralAlignmentJJob extends BasicMasterJJob<SpectralSearchResult>
     @Override
     protected SpectralSearchResult compute() throws Exception {
         Deviation peakDev = experiment.getAnnotationOrDefault(MS1MassDeviation.class).allowedMassDeviation;
-        Deviation precursorDev = experiment.getAnnotationOrDefault(MS2MassDeviation.class).allowedMassDeviation;
+        precursorDev = experiment.getAnnotationOrDefault(MS2MassDeviation.class).allowedMassDeviation;
 
         List<SearchableDatabase> databases = experiment.getAnnotationOrDefault(SpectralSearchDB.class).searchDBs;
 
@@ -58,23 +70,57 @@ public class SpectralAlignmentJJob extends BasicMasterJJob<SpectralSearchResult>
 
         SpectralAlignmentType alignmentType = experiment.getAnnotationOrDefault(SpectralAlignmentScorer.class).spectralAlignmentType;
 
-        List<BasicJJob<SpectralSearchResult>> jobs = new ArrayList<>();
+        queryUtils = new CosineQueryUtils(alignmentType.getScorer(peakDev));
+        List<CosineQuerySpectrum> cosineQueries = queries.stream().map(q -> queryUtils.createQueryWithoutLoss(new SimpleSpectrum(q), q.getPrecursorMz())).toList();
+
+        List<SpectralMatchMasterJJob> jobs = new ArrayList<>();
 
         // TODO other databases besides custom databases
         // TODO spectral libraries now need to be imported via DB CLI command -> remove SDB command in CLI
+
+        JobProgressMerger progressMonitor = new JobProgressMerger(this);
+        progressMonitor.addPropertyChangeListener(evt -> {
+            JobProgressEvent progressEvt = (JobProgressEvent) evt;
+            updateProgress(progressEvt.getMaxValue(), progressEvt.getProgress(), "Aligning spectra from " + experiment.getName());
+        });
+
+        List<SpectralSearchResult.SearchResult> results = new ArrayList<>();
 
         databases.stream().filter(SearchableDatabase::isCustomDb).forEach(sdb -> {
             CustomDatabase custom = (CustomDatabase) sdb;
             if (custom.getStatistics().getSpectra() > 0) {
                 custom.toChemDB(version).ifPresent(db -> {
-                    BasicJJob<SpectralSearchResult> job = new BasicJJob<>() {
-                        @Override
-                        protected SpectralSearchResult compute() throws Exception {
-                            return ((SpectralLibrary) db).matchingSpectra(queries, precursorDev, peakDev, alignmentType,
-                                    (progress, max) -> this.updateProgress(max, progress, "Aligning spectra from " + experiment.getName() + " with database '" + db.getName() + "'..."));
-                        }
-                    };
-                    jobs.add(submitSubJob(job));
+                    SpectralLibrary spectralDb = (SpectralLibrary) db;
+
+                    for (int i = 0; i < cosineQueries.size(); i++) {
+                        CosineQuerySpectrum query = cosineQueries.get(i);
+                        List<Ms2ReferenceSpectrum> references = getReferenceSpectra(query, spectralDb);
+                        SpectralMatchMasterJJob job = new SpectralMatchMasterJJob(queryUtils, references.stream().map(r -> Pair.of(query, queryUtils.createQueryWithoutLoss(r.getSpectrum(), r.getPrecursorMz()))).toList());
+                        int queryIndex = i;
+                        job.addJobProgressListener(evt -> {
+                            if (evt.isDone()) {
+                                List<SpectralSimilarity> similarities = job.result();
+
+                                for (int j = 0; j < similarities.size(); j++) {
+                                    SpectralSimilarity similarity = similarities.get(j);
+                                    if (similarity.shardPeaks > 0) {
+                                        Ms2ReferenceSpectrum reference = references.get(j);
+                                        SpectralSearchResult.SearchResult res = SpectralSearchResult.SearchResult.builder()
+                                                .dbName(reference.getLibraryName())
+                                                .dbId(reference.getLibraryId())
+                                                .querySpectrumIndex(queryIndex)
+                                                .similarity(similarity)
+                                                .referenceUUID(reference.getUuid())
+                                                .referenceSplash(reference.getSplash())
+                                                .build();
+                                        results.add(res);
+                                    }
+                                }
+                            }
+                        });
+                        job.addJobProgressListener(progressMonitor);
+                        jobs.add(submitSubJob(job));
+                    }
                 });
             }
         });
@@ -82,14 +128,28 @@ public class SpectralAlignmentJJob extends BasicMasterJJob<SpectralSearchResult>
         if (jobs.isEmpty())
             return null;
 
-        SpectralSearchResult result = jobs.get(0).awaitResult();
-        if (jobs.size() > 1) {
-            for (BasicJJob<SpectralSearchResult> job : jobs.subList(1, jobs.size())) {
-                result.join(job.awaitResult());
-            }
-        }
+        jobs.forEach(JJob::takeResult);
 
-        return result;
+        results.sort((a, b) -> Double.compare(b.getSimilarity().similarity, a.getSimilarity().similarity));
+
+        return SpectralSearchResult.builder()
+                .precursorDeviation(precursorDev)
+                .peakDeviation(peakDev)
+                .alignmentType(alignmentType)
+                .results(Streams.mapWithIndex(results.stream(), (r, index) -> {
+                    r.setRank((int) index + 1);
+                    return r;
+                }).toList())
+                .build();
     }
 
+    private List<Ms2ReferenceSpectrum> getReferenceSpectra(CosineQuerySpectrum query, SpectralLibrary db) {
+        List<Ms2ReferenceSpectrum> result = new ArrayList<>();
+        try {
+            db.lookupSpectra(query.getPrecursorMz(), precursorDev, true).forEach(result::add);
+        } catch (ChemicalDatabaseException e) {
+            throw new RuntimeException(e);
+        }
+        return result;
+    }
 }
