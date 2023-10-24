@@ -21,14 +21,6 @@ stages:
 before_script:
   - rm /etc/apt/sources.list.d/zulu-openjdk.list
   - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install openssh-client wget gnupg unzip liblapack-dev curl git -y )'
-#  - eval $(ssh-agent -s)
-#  - echo "$ID_RSA" | tr -d '\r' | ssh-add -
-#  - mkdir -p ~/.ssh
-#  - touch ~/.ssh/config
-#  - touch ~/.ssh/known_hosts
-#  - chmod -R 400 ~/.ssh
-#  - echo "$GITLAB_GITHUB_SIRIUS_PUBLIC_KEY" >> ~/.ssh/id_ed25519.pub
-#  - '[[ -f /.dockerinit ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
   - VSNAP=$(head -2 sirius_cli/src/main/resources/sirius_frontend.build.properties | tail -1 | cut -d '=' -f 2)
 
 
@@ -38,6 +30,7 @@ buildCLI:
   script:
     - ./gradlew :sirius_dist:sirius_cli_single_os:publishSiriusMSPublicationToMavenLocal -P "build.sirius.starter.jdk.include=true"
     - mkdir maven_artifacts
+    - ls -lah ../../../../
     - mv ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/$VSNAP maven_artifacts
   cache:
     key: "$CI_COMMIT_REF_NAME"
@@ -56,6 +49,7 @@ buildGUI:
   script:
     - ./gradlew :sirius_dist:sirius_gui_dist:publishSiriusMSPublicationToMavenLocal -P "build.sirius.native.openjfx.exclude=true" -P "build.sirius.starter.jdk.include=true"
     - mkdir maven_artifacts
+    - ls -lah ../../../../
     - mv ../../../../root/.m2/repository/de/unijena/bioinf/ms/siriusMS/$VSNAP maven_artifacts
   cache:
     key: "$CI_COMMIT_REF_NAME"
