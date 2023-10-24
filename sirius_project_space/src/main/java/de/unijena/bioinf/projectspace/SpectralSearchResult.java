@@ -18,20 +18,17 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.spectraldb;
+package de.unijena.bioinf.projectspace;
 
-import com.google.common.collect.Streams;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ms.annotations.ResultAnnotation;
 import de.unijena.bionf.spectral_alignment.SpectralAlignmentType;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import lombok.*;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Stream;
 
 @Builder
 @NoArgsConstructor
@@ -77,26 +74,4 @@ public class SpectralSearchResult implements Iterable<SpectralSearchResult.Searc
         private String referenceSplash;
 
     }
-
-    public <Result extends SpectralSearchResult> void join(Result other) {
-
-        if (precursorDeviation != other.getPrecursorDeviation()) {
-            LoggerFactory.getLogger(this.getClass()).warn("Mismatching precursor deviation! [Expected: " + precursorDeviation + ", actual: " + other.getPrecursorDeviation() + "]");
-        }
-        if (peakDeviation != other.getPeakDeviation()) {
-            LoggerFactory.getLogger(this.getClass()).warn("Mismatching peak deviation! [Expected: " + peakDeviation + ", actual: " + other.getPeakDeviation() + "]");
-        }
-        if (alignmentType != other.getAlignmentType()) {
-            LoggerFactory.getLogger(this.getClass()).warn("Mismatching alignment type! [Expected: " + alignmentType + ", actual: " + other.getAlignmentType() + "]");
-        }
-
-        Stream<SearchResult> sortedStream = Stream.concat(results.stream(), other.getResults().stream()).sorted((a, b) -> Double.compare(b.getSimilarity().similarity, a.getSimilarity().similarity));
-
-        results = Streams.mapWithIndex(sortedStream, (r, index) -> {
-            r.setRank((int) index + 1);
-            return r;
-        }).toList();
-
-    }
-
 }
