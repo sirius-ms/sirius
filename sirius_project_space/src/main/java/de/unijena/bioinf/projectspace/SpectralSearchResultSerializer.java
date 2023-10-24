@@ -21,8 +21,7 @@
 package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.spectraldb.SpectralAlignmentType;
-import de.unijena.bioinf.spectraldb.SpectralSearchResult;
+import de.unijena.bionf.spectral_alignment.SpectralAlignmentType;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,18 +56,16 @@ public class SpectralSearchResultSerializer implements ComponentSerializer<Compo
 
         List<SpectralSearchResult.SearchResult> results = new ArrayList<>();
 
-        reader.table(relPath, true, 0, numOfResults.get(), (row) -> {
-            results.add(
-                    SpectralSearchResult.SearchResult.builder()
-                            .rank(Integer.parseInt(row[0]))
-                            .querySpectrumIndex(Integer.parseInt(row[1]))
-                            .dbName(row[2])
-                            .referenceUUID(row[3])
-                            .referenceSplash(row[4])
-                            .similarity(new SpectralSimilarity(Double.parseDouble(row[5]), Integer.parseInt(row[6])))
-                            .build()
-            );
-        });
+        reader.table(relPath, true, 0, numOfResults.get(), (row) -> results.add(
+                SpectralSearchResult.SearchResult.builder()
+                        .rank(Integer.parseInt(row[0]))
+                        .querySpectrumIndex(Integer.parseInt(row[1]))
+                        .dbName(row[2])
+                        .referenceUUID(row[3])
+                        .referenceSplash(row[4])
+                        .similarity(new SpectralSimilarity(Double.parseDouble(row[5]), Integer.parseInt(row[6])))
+                        .build()
+        ));
 
         return SpectralSearchResult.builder()
                 .precursorDeviation(precursorDev.get())
