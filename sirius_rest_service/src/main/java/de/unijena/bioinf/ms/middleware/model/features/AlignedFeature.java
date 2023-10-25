@@ -58,7 +58,7 @@ import java.util.EnumSet;
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AlignedFeature {
-    public enum OptFields {topAnnotations, msData, qualityFlags, lcmsFeatureQuality}
+    public enum OptFields {topAnnotations, msData}
 
     // identifier
     @NotNull
@@ -78,24 +78,6 @@ public class AlignedFeature {
     //Summary of the results of the compounds
     protected Annotations topAnnotations;
     protected MsData msData;
-
-    // Data and Result quality
-
-    //todo revisit the quality stuff for the api v2
-    /**
-     * Contains all pre-computation quality information that belong to
-     * this feature (aligned over runs), such as information about the quality of the peak shape, MS2 spectrum etc.,
-     * see ({@link CompoundQuality.CompoundQualityFlag})
-     * <p>
-     * Each Feature has a Set of Quality assessment flags.
-     */
-    protected EnumSet<CompoundQuality.CompoundQualityFlag> qualityFlags;
-    //todo we will add an additional MSQuality Object with many different quality checks produced by LCMS Compound// Summary.
-
-    /**
-     * LCMS feature-based quality information as also provided in the LCMS-view in the GUI
-     */
-    protected LCMSFeatureQuality lcmsFeatureQuality;
 
     //todo handle computing flag
     protected boolean computing = false;
