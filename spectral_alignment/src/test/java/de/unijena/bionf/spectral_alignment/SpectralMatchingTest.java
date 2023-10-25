@@ -29,9 +29,10 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 public class SpectralMatchingTest {
 
@@ -102,5 +103,24 @@ public class SpectralMatchingTest {
                 Arrays.asList(utilsIntensity.cosineProduct(s2, s1), utilsIntensity.cosineProduct(s2, s2)));
 
         assertEquals(expectedMatches, matches);
+    }
+
+    @Test
+    public void testClearInputs() {
+        List<CosineQuerySpectrum> queries = Collections.singletonList(s1);
+
+        CosineSpectraMatcher matcher = new CosineSpectraMatcher(utils);
+        SpectralMatchMasterJJob job1 = matcher.matchAllParallelJob(queries);
+        SpectralMatchMasterJJob job2 = matcher.matchAllParallelJob(queries);
+
+        job1.setClearInput(false);
+
+        SiriusJobs.getGlobalJobManager().submitJob(job1);
+        SiriusJobs.getGlobalJobManager().submitJob(job2);
+        job1.takeResult();
+        job2.takeResult();
+
+        assertNotNull(job1.getQueries());
+        assertNull(job2.getQueries());
     }
 }
