@@ -93,7 +93,7 @@ public class NPCFingerprintVersion extends FingerprintVersion {
     }
 
     public static enum NPCLevel {
-        PATHWAY("Pathway", 0), SUPERCLASS("Superclass", 1), CLASS("class", 2);
+        PATHWAY("Pathway", 0), SUPERCLASS("Superclass", 1), CLASS("Class", 2);
         public final String name;
         public final int level;
 
