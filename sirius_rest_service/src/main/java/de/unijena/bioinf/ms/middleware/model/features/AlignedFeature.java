@@ -64,7 +64,7 @@ public class AlignedFeature {
     @NotNull
     protected String alignedFeatureId;
 
-    // identifier source //todo obsolete?
+    // identifier source
     protected String name;
     protected long index;
 
@@ -79,25 +79,5 @@ public class AlignedFeature {
     protected Annotations topAnnotations;
     protected MsData msData;
 
-    //todo handle computing flag
     protected boolean computing = false;
-
-    public static AlignedFeature of(CompoundContainerId cid) {
-        final AlignedFeature id = new AlignedFeature();
-        id.setAlignedFeatureId(cid.getDirectoryName());
-        id.setName(cid.getCompoundName());
-        id.setIndex(cid.getCompoundIndex());
-        id.setIonMass(cid.getIonMass().orElse(0d));
-        cid.getIonType().map(PrecursorIonType::toString).ifPresent(id::setIonType);
-        cid.getRt().ifPresent(rt -> {
-            if (rt.isInterval()) {
-                id.setRtStartSeconds(rt.getStartTime());
-                id.setRtEndSeconds(rt.getEndTime());
-            }else {
-                id.setRtStartSeconds(rt.getRetentionTimeInSeconds());
-                id.setRtEndSeconds(rt.getRetentionTimeInSeconds());
-            }
-        });
-        return id;
-    }
 }
