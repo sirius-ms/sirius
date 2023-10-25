@@ -31,7 +31,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
