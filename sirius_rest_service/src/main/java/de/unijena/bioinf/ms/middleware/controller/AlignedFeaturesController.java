@@ -72,27 +72,27 @@ public class AlignedFeaturesController {
      * Get feature (aligned over runs) with the given identifier from the specified project-space.
      *
      * @param projectId      project-space to read from.
-     * @param alignFeatureId identifier of feature (aligned over runs) to access.
+     * @param alignedFeatureId identifier of feature (aligned over runs) to access.
      * @param optFields      set of optional fields to be included
      * @return AlignedFeature with additional annotations and MS/MS data (if specified).
      */
-    @GetMapping(value = "/{alignFeatureId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/{alignedFeatureId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public AlignedFeature getAlignedFeatures(
-            @PathVariable String projectId, @PathVariable String alignFeatureId,
+            @PathVariable String projectId, @PathVariable String alignedFeatureId,
             @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptFields> optFields
     ) {
-        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeaturesById(alignFeatureId, optFields);
+        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeaturesById(alignedFeatureId, optFields);
     }
 
     /**
      * Delete feature (aligned over runs) with the given identifier from the specified project-space.
      *
      * @param projectId      project-space to delete from.
-     * @param alignFeatureId identifier of feature (aligned over runs) to delete.
+     * @param alignedFeatureId identifier of feature (aligned over runs) to delete.
      */
-    @DeleteMapping(value = "/{alignFeatureId}")
-    public void deleteAlignedFeature(@PathVariable String projectId, @PathVariable String alignFeatureId) {
-        projectsProvider.getProjectOrThrow(projectId).deleteAlignedFeaturesById(alignFeatureId);
+    @DeleteMapping(value = "/{alignedFeatureId}")
+    public void deleteAlignedFeature(@PathVariable String projectId, @PathVariable String alignedFeatureId) {
+        projectsProvider.getProjectOrThrow(projectId).deleteAlignedFeaturesById(alignedFeatureId);
     }
 
 
@@ -101,17 +101,17 @@ public class AlignedFeaturesController {
      * Can be enriched with an optional results overview.
      *
      * @param projectId      project-space to read from.
-     * @param alignFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param optFields      set of optional fields to be included
      * @return All FormulaCandidate of this feature with.
      */
-    @GetMapping(value = "/{alignFeatureId}/formulas", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/{alignedFeatureId}/formulas", produces = MediaType.APPLICATION_JSON_VALUE)
     public Page<FormulaCandidate> getFormulaCandidates(
-            @PathVariable String projectId, @PathVariable String alignFeatureId,
+            @PathVariable String projectId, @PathVariable String alignedFeatureId,
             @ParameterObject Pageable pageable,
             @RequestParam(defaultValue = "") EnumSet<FormulaCandidate.OptFields> optFields
     ) {
-        return projectsProvider.getProjectOrThrow(projectId).findFormulaCandidatesByFeatureId(alignFeatureId, pageable, optFields);
+        return projectsProvider.getProjectOrThrow(projectId).findFormulaCandidatesByFeatureId(alignedFeatureId, pageable, optFields);
         //todo filtering
         //todo ordering
     }
@@ -121,18 +121,18 @@ public class AlignedFeaturesController {
      * Can be enriched with an optional results overview and formula candidate information.
      *
      * @param projectId      project-space to read from.
-     * @param alignFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId      identifier of the requested formula result
      * @param optFields      set of optional fields to be included
      * @return FormulaCandidate of this feature (aligned over runs) with.
      */
-    @GetMapping(value = "/{alignFeatureId}/formulas/{formulaId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public FormulaCandidate getFormulaCandidate(
-            @PathVariable String projectId, @PathVariable String alignFeatureId, @PathVariable String formulaId,
+            @PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId,
             @RequestParam(defaultValue = "") EnumSet<FormulaCandidate.OptFields> optFields
 
     ) {
-        return projectsProvider.getProjectOrThrow(projectId).findFormulaCandidateByFeatureIdAndId(formulaId, alignFeatureId, optFields);
+        return projectsProvider.getProjectOrThrow(projectId).findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, optFields);
         //todo filtering
         //todo ordering
     }
@@ -142,29 +142,29 @@ public class AlignedFeaturesController {
      * StructureCandidates can be enriched with molecular fingerprint, structure database links and pubmed ids,
      *
      * @param projectId      project-space to read from.
-     * @param alignFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId      identifier of the requested formula result
      * @param optFields      set of optional fields to be included
      * @return StructureCandidate of this formula candidate with specified optional fields.
      */
-    @GetMapping(value = "/{alignFeatureId}/formulas/{formulaId}/structures", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/structures", produces = MediaType.APPLICATION_JSON_VALUE)
     public Page<StructureCandidate> getStructureCandidatesByFormula(
-            @PathVariable String projectId, @PathVariable String alignFeatureId, @PathVariable String formulaId,
+            @PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId,
             @ParameterObject Pageable pageable,
             @RequestParam(defaultValue = "") EnumSet<StructureCandidate.OptFields> optFields
     ) {
-        return projectsProvider.getProjectOrThrow(projectId).findStructureCandidatesByFeatureIdAndFormulaId(formulaId, alignFeatureId, pageable, optFields);
+        return projectsProvider.getProjectOrThrow(projectId).findStructureCandidatesByFeatureIdAndFormulaId(formulaId, alignedFeatureId, pageable, optFields);
     }
 
 
     //todo add order by parameter?
     //todo reanable if needed for SIRIUS GUI
 //    @Hidden
-//    @GetMapping(value = "/{alignFeatureId}/formulas/{formulaId}/sirius-tree", produces = MediaType.APPLICATION_JSON_VALUE)
-//    public String getFTree(@PathVariable String projectId, @PathVariable String alignFeatureId, @PathVariable String formulaId) {
-//        Instance instance = loadInstance(projectId, alignFeatureId);
+//    @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/sirius-tree", produces = MediaType.APPLICATION_JSON_VALUE)
+//    public String getFTree(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
+//        Instance instance = loadInstance(projectId, alignedFeatureId);
 //        final FTJsonWriter ftWriter = new FTJsonWriter();
-//        return instance.loadFormulaResult(parseFID(instance, formulaId), FTree.class).flatMap(fr -> fr.getAnnotation(FTree.class)).map(ftWriter::treeToJsonString).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "FragmentationTree for '" + idString(projectId, alignFeatureId, formulaId) + "' not found!"));
+//        return instance.loadFormulaResult(parseFID(instance, formulaId), FTree.class).flatMap(fr -> fr.getAnnotation(FTree.class)).map(ftWriter::treeToJsonString).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "FragmentationTree for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!"));
 //    }
 
     /**
@@ -172,18 +172,18 @@ public class AlignedFeaturesController {
      * This tree is used to rank formula candidates (treeScore).
      *
      * @param projectId      project-space to read from.
-     * @param alignFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId      identifier of the requested formula result
      * @return Fragmentation Tree
      */
     @Hidden
-    @GetMapping(value = "/{alignFeatureId}/formulas/{formulaId}/tree", produces = MediaType.APPLICATION_JSON_VALUE)
-    public FragmentationTree getFragTree(@PathVariable String projectId, @PathVariable String alignFeatureId, @PathVariable String formulaId) {
+    @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/tree", produces = MediaType.APPLICATION_JSON_VALUE)
+    public FragmentationTree getFragTree(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         FragmentationTree res = projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidateByFeatureIdAndId(alignFeatureId, formulaId, FormulaCandidate.OptFields.fragmentationTree)
+                .findFormulaCandidateByFeatureIdAndId(alignedFeatureId, formulaId, FormulaCandidate.OptFields.fragmentationTree)
                 .getFragmentationTree();
         if (res == null)
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "FragmentationTree for '" + idString(projectId, alignFeatureId, formulaId) + "' not found!");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "FragmentationTree for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");
         return res;
     }
 
@@ -192,18 +192,18 @@ public class AlignedFeaturesController {
      * This simulated isotope pattern is used to rank formula candidates (treeScore).
      *
      * @param projectId      project-space to read from.
-     * @param alignFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId      identifier of the requested formula result
      * @return Simulated isotope pattern
      */
     @Hidden
-    @GetMapping(value = "/{alignFeatureId}/formulas/{formulaId}/isotope-pattern", produces = MediaType.APPLICATION_JSON_VALUE)
-    public AnnotatedSpectrum getSimulatedIsotopePattern(@PathVariable String projectId, @PathVariable String alignFeatureId, @PathVariable String formulaId) {
+    @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/isotope-pattern", produces = MediaType.APPLICATION_JSON_VALUE)
+    public AnnotatedSpectrum getSimulatedIsotopePattern(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         AnnotatedSpectrum res = projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidateByFeatureIdAndId(alignFeatureId, formulaId, FormulaCandidate.OptFields.simulatedIsotopePattern)
+                .findFormulaCandidateByFeatureIdAndId(alignedFeatureId, formulaId, FormulaCandidate.OptFields.simulatedIsotopePattern)
                 .getSimulatedIsotopePattern();
         if (res == null)
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Isotope Pattern for '" + idString(projectId, alignFeatureId, formulaId) + "' not found!");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Isotope Pattern for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");
         return res;
     }
 
@@ -212,18 +212,18 @@ public class AlignedFeaturesController {
      * This fingerprint is used to perform structure database search and predict compound classes.
      *
      * @param projectId      project-space to read from.
-     * @param alignFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId      identifier of the requested formula result
      * @return probabilistic fingerprint predicted by CSI:FingerID
      */
     @Hidden
-    @GetMapping(value = "/{alignFeatureId}/formulas/{formulaId}/fingerprint", produces = MediaType.APPLICATION_JSON_VALUE)
-    public double[] getFingerprintPrediction(@PathVariable String projectId, @PathVariable String alignFeatureId, @PathVariable String formulaId) {
+    @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/fingerprint", produces = MediaType.APPLICATION_JSON_VALUE)
+    public double[] getFingerprintPrediction(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         double[] res = projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidateByFeatureIdAndId(alignFeatureId, formulaId, FormulaCandidate.OptFields.predictedFingerprint)
+                .findFormulaCandidateByFeatureIdAndId(alignedFeatureId, formulaId, FormulaCandidate.OptFields.predictedFingerprint)
                 .getPredictedFingerprint();
         if (res == null)
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Fingerprint for '" + idString(projectId, alignFeatureId, formulaId) + "' not found!");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Fingerprint for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");
         return res;
     }
 
@@ -231,18 +231,18 @@ public class AlignedFeaturesController {
      * All predicted compound classes (CANOPUS) from ClassyFire and NPC and their probabilities,
      *
      * @param projectId      project-space to read from.
-     * @param alignFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId      identifier of the requested formula result
      * @return Predicted compound classes
      */
     @Hidden
-    @GetMapping(value = "/{alignFeatureId}/formulas/{formulaId}/canopus-prediction", produces = MediaType.APPLICATION_JSON_VALUE)
-    public CanopusPrediction getCanopusPrediction(@PathVariable String projectId, @PathVariable String alignFeatureId, @PathVariable String formulaId) {
+    @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/canopus-prediction", produces = MediaType.APPLICATION_JSON_VALUE)
+    public CanopusPrediction getCanopusPrediction(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         CanopusPrediction res = projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidateByFeatureIdAndId(alignFeatureId, formulaId, FormulaCandidate.OptFields.canopusPredictions)
+                .findFormulaCandidateByFeatureIdAndId(alignedFeatureId, formulaId, FormulaCandidate.OptFields.canopusPredictions)
                 .getCanopusPrediction();
         if (res == null)
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Compound Classes for '" + idString(projectId, alignFeatureId, formulaId) + "' not found!");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Compound Classes for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");
         return res;
     }
 
@@ -251,18 +251,18 @@ public class AlignedFeaturesController {
      * Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
      *
      * @param projectId      project-space to read from.
-     * @param alignFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId      identifier of the requested formula result
      * @return Best matching Predicted compound classes
      */
     @Hidden
-    @GetMapping(value = "/{alignFeatureId}/formulas/{formulaId}/best-compound-classes", produces = MediaType.APPLICATION_JSON_VALUE)
-    public CompoundClasses getBestMatchingCompoundClasses(@PathVariable String projectId, @PathVariable String alignFeatureId, @PathVariable String formulaId) {
+    @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/best-compound-classes", produces = MediaType.APPLICATION_JSON_VALUE)
+    public CompoundClasses getBestMatchingCompoundClasses(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         CompoundClasses res = projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidateByFeatureIdAndId(alignFeatureId, formulaId, FormulaCandidate.OptFields.compoundClasses)
+                .findFormulaCandidateByFeatureIdAndId(alignedFeatureId, formulaId, FormulaCandidate.OptFields.compoundClasses)
                 .getCompoundClasses();
         if (res == null)
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Compound Classes for '" + idString(projectId, alignFeatureId, formulaId) + "' not found!");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Compound Classes for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");
         return res;
     }
 
