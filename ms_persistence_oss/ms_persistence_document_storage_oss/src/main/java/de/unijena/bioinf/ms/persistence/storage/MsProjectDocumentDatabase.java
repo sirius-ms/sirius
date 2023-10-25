@@ -76,8 +76,8 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
                 .setOptionalFields(AlignedFeatures.class, "topAnnotation", "manualAnnotation")
 
                 .addRepository(CorrelatedIonPair.class,
-                        new Index("alignFeatureId1", IndexType.NON_UNIQUE),
-                        new Index("alignFeatureId2", IndexType.NON_UNIQUE),
+                        new Index("alignedFeatureId1", IndexType.NON_UNIQUE),
+                        new Index("alignedFeatureId2", IndexType.NON_UNIQUE),
                         new Index("type", IndexType.NON_UNIQUE))
 
                 .addRepository(Compound.class,

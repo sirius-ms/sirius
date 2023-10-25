@@ -38,8 +38,8 @@ public class CorrelatedIonPair {
     @Id
     private long ionPairId;
 
-    private long alignFeatureId1;
-    private long alignFeatureId2;
+    private long alignedFeatureId1;
+    private long alignedFeatureId2;
 
     @NotNull
     private Type type;
