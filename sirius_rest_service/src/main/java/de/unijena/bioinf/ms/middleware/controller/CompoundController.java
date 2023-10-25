@@ -21,9 +21,8 @@
 package de.unijena.bioinf.ms.middleware.controller;
 
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
-import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
+import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.slf4j.LoggerFactory;
 import org.springdoc.api.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -35,20 +34,21 @@ import java.util.EnumSet;
 
 @RestController
 @RequestMapping(value = "/api/projects/{projectId}/compounds")
-@Tag(name = "Compound based API", description = "This allows to retrieve all AlignedFeatures that belong to the same " +
-        "compound (also known as a group of ion identities). It also provides for each AlignedFeature the corresponding " +
-        "annotation results (which are usually computed on a per-feature basis)")
-
+@Tag(name = "Compound based API", description = "This allows to retrieve all AlignedFeatures that belong to the same "
+        + "compound (also known as a group of ion identities). It also provides for each AlignedFeature the "
+        + "corresponding annotation results (which are usually computed on a per-feature basis)")
 public class CompoundController {
-    private final ComputeService computeService;
+
+
+    private final ProjectsProvider<?> projectsProvider;
 
     @Autowired
-    public CompoundController(ComputeService context) {
-        this.computeService = context;
+    public CompoundController(ProjectsProvider<?> projectsProvider) {
+        this.projectsProvider = projectsProvider;
     }
 
     /**
-     * Get all available compounds in the given project-space.
+     * Get all available compounds (group of ion identities) in the given project-space.
      *
      * @param projectId project-space to read from.
      * @param optFields set of optional fields to be included
@@ -56,33 +56,36 @@ public class CompoundController {
      */
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<Compound> getCompounds(
-            @PathVariable String projectId,
-            @ParameterObject Pageable pageable,
-            @RequestParam(required = false, defaultValue = "") EnumSet<Compound.OptFields> optFields
-    ) {
-        //todo fill me
-        LoggerFactory.getLogger(AlignedFeaturesController.class).info("Started collecting aligned features...");
-
-        LoggerFactory.getLogger(AlignedFeaturesController.class).info("Finished parsing aligned features...");
-        return Page.empty();
+    public Page<Compound> getCompounds(@PathVariable String projectId, @ParameterObject Pageable pageable,
+                                       @RequestParam(required = false, defaultValue = "") EnumSet<Compound.OptFields> optFields) {
+        return projectsProvider.getProjectOrThrow(projectId).findCompounds(pageable, optFields);
     }
 
 
     /**
-     * Get feature (aligned over runs) with the given identifier from the specified project-space.
+     * Get compound (group of ion identities) with the given identifier from the specified project-space.
      *
      * @param projectId  project-space to read from.
-     * @param compoundId identifier of the compound (io-identity) to access.
-     * @param optFields set of optional fields to be included
+     * @param compoundId identifier of the compound (group of ion identities) to access.
+     * @param optFields  set of optional fields to be included
      * @return Compounds with additional optional fields (if specified).
      */
     @GetMapping(value = "/{compoundId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Compound getAlignedFeatures(
-            @PathVariable String projectId, @PathVariable String compoundId,
-            @RequestParam(required = false, defaultValue = "") EnumSet<Compound.OptFields> optFields
-    ) {
-        return null;
-        //todo fill me
+    public Compound getCompound(@PathVariable String projectId, @PathVariable String compoundId,
+                                @RequestParam(required = false, defaultValue = "") EnumSet<Compound.OptFields> optFields) {
+        return projectsProvider.getProjectOrThrow(projectId).findCompoundById(compoundId, optFields);
+    }
+
+
+    /**
+     * Delete compound (group of ion identities) with the given identifier (and the included features) from the
+     * specified project-space.
+     *
+     * @param projectId  project-space to delete from.
+     * @param compoundId identifier of the compound to delete.
+     */
+    @DeleteMapping(value = "/{compoundId}")
+    public void deleteAlignedFeature(@PathVariable String projectId, @PathVariable String compoundId) {
+        projectsProvider.getProjectOrThrow(projectId).deleteCompoundById(compoundId);
     }
 }

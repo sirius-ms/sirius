@@ -148,7 +148,7 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
                                             new File("./" + (sourceName.endsWith(ext) ? sourceName : sourceName + "." + ext.toLowerCase())).toURI()));
 
                         @NotNull Instance inst = psm.newCompoundWithUniqueId(next);
-                        ids.add(AlignedFeature.of(inst.getID())); //todo how to add add features to hob update
+                        ids.add(SiriusProjectSpaceImpl.asAlignedFeature(inst.getID())); //todo how to add features to job update
                     }
                 }
             } catch (IOException e) {

@@ -108,51 +108,5 @@ public class FormulaCandidate {
      */
     protected CanopusPrediction canopusPrediction;
 
-
-
-
     //todo add LipidClass prediction
-
-    //todo move to Service layer
-    public static FormulaCandidate of(@NotNull FormulaResultId formulaId) {
-        return FormulaCandidate.builder()
-                .formulaId(formulaId.fileName())
-                .molecularFormula(formulaId.getMolecularFormula().toString())
-                .adduct(formulaId.getIonType().toString())
-                .build();
-    }
-
-    public static FormulaCandidate of(@NotNull FormulaResultId formulaId, @Nullable FormulaScoring scorings) {
-        final FormulaCandidate frs = of(formulaId);
-
-        if (scorings != null) {
-            scorings.getAnnotation(SiriusScore.class).
-                    ifPresent(sscore -> frs.setSiriusScore(sscore.score()));
-            scorings.getAnnotation(IsotopeScore.class).
-                    ifPresent(iscore -> frs.setIsotopeScore(iscore.score()));
-            scorings.getAnnotation(TreeScore.class).
-                    ifPresent(tscore -> frs.setTreeScore(tscore.score()));
-            scorings.getAnnotation(ZodiacScore.class).
-                    ifPresent(zscore -> frs.setZodiacScore(zscore.score()));
-        }
-
-        return frs;
-    }
-
-    public static FormulaCandidate of(@NotNull FormulaResult formulaResult) {
-        @NotNull FormulaScoring scorings = formulaResult.getAnnotationOrThrow(FormulaScoring.class);
-
-        final FormulaCandidate frs = of(formulaResult.getId(), scorings);
-
-        formulaResult.getAnnotation(FTree.class).
-                ifPresent(fTree -> {
-                    final FTreeMetricsHelper metrHelp = new FTreeMetricsHelper(fTree);
-                    frs.setNumOfexplainedPeaks(metrHelp.getNumOfExplainedPeaks());
-                    frs.setNumOfexplainablePeaks(metrHelp.getNumberOfExplainablePeaks());
-                    frs.setTotalExplainedIntensity(metrHelp.getExplainedIntensityRatio());
-                    frs.setMedianMassDeviation(metrHelp.getMedianMassDeviation());
-                });
-
-        return frs;
-    }
 }

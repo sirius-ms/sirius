@@ -56,20 +56,20 @@ import lombok.Setter;
 @Setter
 public class LCMSFeatureQuality {
 
-    /*
-    Quality checks and overall quality for QualityCategory PEAK
+    /**
+     * Quality checks and overall quality for QualityCategory PEAK
      */
     protected final LCMSQualityCheckResult peakQuality;
-    /*
-    Quality checks and overall quality for QualityCategory ISOTOPE
+    /**
+     * Quality checks and overall quality for QualityCategory ISOTOPE
      */
     protected final LCMSQualityCheckResult isotopeQuality;
-    /*
-    Quality checks and overall quality for QualityCategory ADDUCTS
+    /**
+     * Quality checks and overall quality for QualityCategory ADDUCTS
      */
     protected final LCMSQualityCheckResult adductQuality;
-    /*
-    Quality checks and overall quality for QualityCategory MSMS
+    /**
+     * Quality checks and overall quality for QualityCategory MSMS
      */
     protected final LCMSQualityCheckResult ms2Quality;
 

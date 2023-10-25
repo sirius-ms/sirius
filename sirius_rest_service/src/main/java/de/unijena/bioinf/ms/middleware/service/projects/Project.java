@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.service.projects;
 
+import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeatureQuality;
 import de.unijena.bioinf.ms.middleware.model.features.annotations.FormulaCandidate;
@@ -31,6 +32,20 @@ import java.util.EnumSet;
 import java.util.List;
 
 public interface Project {
+
+    Page<Compound> findCompounds(Pageable pageable, EnumSet<Compound.OptFields> optFields);
+
+    default Page<Compound> findCompounds(Pageable pageable, Compound.OptFields... optFields) {
+        return findCompounds(pageable, EnumSet.copyOf(List.of(optFields)));
+    }
+
+    Compound findCompoundById(String compoundId, EnumSet<Compound.OptFields> optFields);
+
+    default Compound findCompoundById(String compoundId, Compound.OptFields... optFields) {
+        return findCompoundById(compoundId, EnumSet.copyOf(List.of(optFields)));
+    }
+
+    void deleteCompoundById(String compoundId);
 
     @Deprecated
     Page<AlignedFeatureQuality> findAlignedFeaturesQuality(Pageable pageable, EnumSet<AlignedFeatureQuality.OptFields> optFields);

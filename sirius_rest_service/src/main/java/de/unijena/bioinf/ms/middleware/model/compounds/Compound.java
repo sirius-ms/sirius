@@ -50,7 +50,7 @@ import java.util.List;
 @Getter
 @Setter
 public class Compound {
-    public enum OptFields {consensusAnnotations}
+    public enum OptFields {consensusAnnotations, customAnnotations}
 
     /**
      * uid of this compound Entity
