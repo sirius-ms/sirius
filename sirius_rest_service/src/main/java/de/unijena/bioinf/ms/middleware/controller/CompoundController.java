@@ -35,9 +35,10 @@ import java.util.EnumSet;
 
 @RestController
 @RequestMapping(value = "/api/projects/{projectId}/compounds")
-@Tag(name = "Compound (Ion-Identity) based API", description = "This api allows to access all AlignedFeatures and " +
-        "there annotation results (which are usually computed on a per feature basis) " +
-        "that belong to the same compound.")
+@Tag(name = "Compound based API", description = "This allows to retrieve all AlignedFeatures that belong to the same " +
+        "compound (also known as a group of ion identities). It also provides for each AlignedFeature the corresponding " +
+        "annotation results (which are usually computed on a per-feature basis)")
+
 public class CompoundController {
     private final ComputeService computeService;
 
