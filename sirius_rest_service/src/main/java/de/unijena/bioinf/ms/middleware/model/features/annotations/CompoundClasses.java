@@ -27,29 +27,41 @@ import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 /**
  * Container class that holds the most likely compound class for different levels of each ontology for a
- * certain compound/feature/formula candidate/predicted fingerprint.
+ * certain Compound/Feature/FormulaCandidate/PredictedFingerprint.
  */
 @Getter
 @Setter
 public class CompoundClasses {
 
+    /**
+     * Pathway level NPC class with the highest probability
+     */
     protected CompoundClass npcPathway;
-
+    /**
+     * Superclass level NPC class with the highest probability
+     */
     protected CompoundClass npcSuperclass;
-
+    /**
+     * Class level NPC class with the highest probability
+     */
     protected CompoundClass npcClass;
-
-    protected CompoundClass classyFireMostSpecific;
-
-    protected CompoundClass classyFireLevel5;
-
-    protected CompoundClass classyFireClass;
-
-    protected CompoundClass classyFireSubClass;
-
-    protected CompoundClass classyFireSuperClass;
+    /**
+     * Most likely ClassyFire lineage from ordered from least specific to most specific class
+     * classyFireLineage.get(classyFireLineage.size() - 1) gives the most specific ClassyFire compound class annotation
+     */
+    protected List<CompoundClass> classyFireLineage;
+    /**
+     * Alternative ClassyFire classes with high probability that do not fit into the linage
+     */
+    protected List<CompoundClass> classyFireAlternatives;
 
     public static CompoundClasses of(CanopusResult canopusResult) {
         return of(canopusResult.getNpcFingerprint().orElse(null), canopusResult.getCanopusFingerprint());
@@ -80,28 +92,21 @@ public class CompoundClasses {
             if (v instanceof MaskedFingerprintVersion) v = ((MaskedFingerprintVersion) v).getMaskedFingerprintVersion();
             ClassyFireFingerprintVersion CLF = (ClassyFireFingerprintVersion) v;
             ClassyfireProperty primaryClass = CLF.getPrimaryClass(cfClassification);
-            final ClassyfireProperty[] lineage = primaryClass.getLineage();
+            final List<ClassyfireProperty> lineage = Stream.of(primaryClass.getLineage()).toList();
+            final Set<ClassyfireProperty> alternatives =
+                    Stream.of(CLF.getPredictedLeafs(cfClassification, 0.5)).collect(Collectors.toSet());
+            lineage.forEach(alternatives::remove);
 
-            sum.setClassyFireMostSpecific(CompoundClass.of(primaryClass,
-                    cfClassification.getProbability(CLF.getIndexOfMolecularProperty(primaryClass))));
+            sum.setClassyFireLineage(lineage.stream().map(cp -> CompoundClass.of(cp,
+                    cfClassification.getProbability(CLF.getIndexOfMolecularProperty(cp)))
+            ).toList());
 
-            if (lineage.length > 5)
-                sum.setClassyFireLevel5(CompoundClass.of(lineage[5],
-                        cfClassification.getProbability(CLF.getIndexOfMolecularProperty(lineage[5]))));
-
-            if (lineage.length > 4)
-                sum.setClassyFireSubClass(CompoundClass.of(lineage[4],
-                        cfClassification.getProbability(CLF.getIndexOfMolecularProperty(lineage[4]))));
-
-            if (lineage.length > 3)
-                sum.setClassyFireClass(CompoundClass.of(lineage[3],
-                        cfClassification.getProbability(CLF.getIndexOfMolecularProperty(lineage[3]))));
-
-            if (lineage.length > 2)
-                sum.setClassyFireSuperClass(CompoundClass.of(lineage[2],
-                        cfClassification.getProbability(CLF.getIndexOfMolecularProperty(lineage[2]))));
+            sum.setClassyFireAlternatives(alternatives.stream()
+                    .sorted(Comparator.comparingInt(x -> -x.getPriority()))
+                    .map(cp -> CompoundClass.of(cp,
+                            cfClassification.getProbability(CLF.getIndexOfMolecularProperty(cp)))
+                    ).toList());
         }
-
         return sum;
     }
 }

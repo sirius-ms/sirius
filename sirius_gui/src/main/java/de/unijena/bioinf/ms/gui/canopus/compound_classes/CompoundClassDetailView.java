@@ -54,9 +54,7 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
     protected static String[] typeNames = new String[]{
             "Kingdom", "Superclass", "Class", "Subclass"
     };
-    protected static String[] npcTypeNames = new String[]{
-            "Class", "Superclass", "Pathway"
-    };
+
     private final JScrollPane containerSP;
     protected ClassyfireProperty mainClass;
     protected ClassyfireProperty[] lineage;
