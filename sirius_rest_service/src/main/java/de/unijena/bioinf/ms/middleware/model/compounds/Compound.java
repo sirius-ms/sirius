@@ -82,5 +82,5 @@ public class Compound {
     /**
      * List of aligned features (adducts) that belong to the same (this) compound
      */
-    List<AlignedFeature> features;
+    protected List<AlignedFeature> features;
 }

@@ -22,10 +22,7 @@ package de.unijena.bioinf.ms.middleware.model.features.annotations;
 
 import de.unijena.bioinf.ChemistryBase.fp.ClassyfireProperty;
 import de.unijena.bioinf.ChemistryBase.fp.NPCFingerprintVersion;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 /**
  * Predicted compound class with name, probability and id if available.
@@ -34,7 +31,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-@NoArgsConstructor
+@Builder
 public class CompoundClass {
     /**
      * Defines compound class ontologies that are available.
@@ -45,6 +42,11 @@ public class CompoundClass {
      * Specifies the classification ontology the CompoundClass belongs to.
      */
     protected Type type;
+
+    /**
+     * Name of the level this compound class belongs to
+     */
+    protected String level;
 
     /**
      * Name of the compound class.
@@ -66,10 +68,24 @@ public class CompoundClass {
     protected Double probability;
 
     public static CompoundClass of(NPCFingerprintVersion.NPCProperty npcClass, Double probability){
-        return new CompoundClass(Type.NPC, npcClass.getName(), npcClass.getDescription(), npcClass.npcIndex, probability);
+        return CompoundClass.builder()
+                .type(Type.NPC)
+                .level(npcClass.getLevel().name())
+                .name(npcClass.getName())
+                .description(npcClass.getDescription())
+                .id(npcClass.getNpcIndex())
+                .probability(probability)
+                .build();
     }
 
     public static CompoundClass of(ClassyfireProperty cfClass, Double probability){
-        return new CompoundClass(Type.ClassyFire, cfClass.getName(), cfClass.getDescription(), cfClass.getChemOntId(), probability);
+        return CompoundClass.builder()
+                .type(Type.ClassyFire)
+                .level(CanopusLevels.getClassyFireLevelName(cfClass.getLevel()))
+                .name(cfClass.getName())
+                .description(cfClass.getDescription())
+                .id(cfClass.getChemOntId())
+                .probability(probability)
+                .build();
     }
 }
