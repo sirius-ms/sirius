@@ -46,13 +46,13 @@ public abstract class AbstractComputeService<P extends Project> implements Compu
         if (optFields.contains(JobId.OptFields.progress))
             id.setProgress(extractProgress(runJob));
         if (optFields.contains(JobId.OptFields.affectedIds)){
-            id.setAffectedAlignFeatureIds(extractEffectedAlignFeatures(runJob));
+            id.setAffectedAlignedFeatureIds(extractEffectedalignedFeatures(runJob));
         }
 
         return id;
     }
 
-    protected List<String> extractEffectedAlignFeatures(BackgroundRuns.BackgroundRunJob<?, ?> runJob) {
+    protected List<String> extractEffectedalignedFeatures(BackgroundRuns.BackgroundRunJob<?, ?> runJob) {
 
         if (runJob.getInstanceIds() == null || runJob.getInstanceIds().isEmpty())
             return List.of();

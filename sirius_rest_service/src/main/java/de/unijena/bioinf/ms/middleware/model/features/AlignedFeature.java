@@ -62,7 +62,7 @@ public class AlignedFeature {
 
     // identifier
     @NotNull
-    protected String alignFeatureId;
+    protected String alignedFeatureId;
 
     // identifier source //todo obsolete?
     protected String name;
@@ -102,7 +102,7 @@ public class AlignedFeature {
 
     public static AlignedFeature of(CompoundContainerId cid) {
         final AlignedFeature id = new AlignedFeature();
-        id.setAlignFeatureId(cid.getDirectoryName());
+        id.setAlignedFeatureId(cid.getDirectoryName());
         id.setName(cid.getCompoundName());
         id.setIndex(cid.getCompoundIndex());
         id.setIonMass(cid.getIonMass().orElse(0d));

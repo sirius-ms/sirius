@@ -215,10 +215,10 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
 
     @Override
     public JobId createAndSubmitJob(SiriusProjectSpaceImpl psm, List<String> commandList,
-                                    @Nullable Iterable<String> alignFeatureIds,
+                                    @Nullable Iterable<String> alignedFeatureIds,
                                     @Nullable InputFilesOptions toImport,
                                     @NotNull EnumSet<JobId.OptFields> optFields) {
-        return createAndSubmitJob(psm.getProjectSpaceManager(), commandList, alignFeatureIds, toImport, optFields);
+        return createAndSubmitJob(psm.getProjectSpaceManager(), commandList, alignedFeatureIds, toImport, optFields);
     }
 
     @Override

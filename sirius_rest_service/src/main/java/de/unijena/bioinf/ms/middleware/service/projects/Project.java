@@ -37,35 +37,35 @@ public interface Project {
         return findAlignedFeatures(pageable, EnumSet.copyOf(List.of(optFields)));
     }
 
-    AlignedFeature findAlignedFeaturesById(String alignFeatureId, EnumSet<AlignedFeature.OptFields> optFields);
+    AlignedFeature findAlignedFeaturesById(String alignedFeatureId, EnumSet<AlignedFeature.OptFields> optFields);
 
-    default AlignedFeature findAlignedFeaturesById(String alignFeatureId, AlignedFeature.OptFields... optFields) {
-        return findAlignedFeaturesById(alignFeatureId, EnumSet.copyOf(List.of(optFields)));
+    default AlignedFeature findAlignedFeaturesById(String alignedFeatureId, AlignedFeature.OptFields... optFields) {
+        return findAlignedFeaturesById(alignedFeatureId, EnumSet.copyOf(List.of(optFields)));
     }
 
-    void deleteAlignedFeaturesById(String alignFeatureId);
+    void deleteAlignedFeaturesById(String alignedFeatureId);
 
-    Page<FormulaCandidate> findFormulaCandidatesByFeatureId(String alignFeatureId, Pageable pageable, EnumSet<FormulaCandidate.OptFields> optFields);
+    Page<FormulaCandidate> findFormulaCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, EnumSet<FormulaCandidate.OptFields> optFields);
 
-    default Page<FormulaCandidate> findFormulaCandidatesByFeatureId(String alignFeatureId, Pageable pageable, FormulaCandidate.OptFields... optFields) {
-        return findFormulaCandidatesByFeatureId(alignFeatureId, pageable, EnumSet.copyOf(List.of(optFields)));
+    default Page<FormulaCandidate> findFormulaCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, FormulaCandidate.OptFields... optFields) {
+        return findFormulaCandidatesByFeatureId(alignedFeatureId, pageable, EnumSet.copyOf(List.of(optFields)));
     }
 
-    FormulaCandidate findFormulaCandidateByFeatureIdAndId(String formulaId, String alignFeatureId, EnumSet<FormulaCandidate.OptFields> optFields);
+    FormulaCandidate findFormulaCandidateByFeatureIdAndId(String formulaId, String alignedFeatureId, EnumSet<FormulaCandidate.OptFields> optFields);
 
-    default FormulaCandidate findFormulaCandidateByFeatureIdAndId(String formulaId, String alignFeatureId, FormulaCandidate.OptFields... optFields) {
-        return findFormulaCandidateByFeatureIdAndId(formulaId, alignFeatureId, EnumSet.copyOf(List.of(optFields)));
+    default FormulaCandidate findFormulaCandidateByFeatureIdAndId(String formulaId, String alignedFeatureId, FormulaCandidate.OptFields... optFields) {
+        return findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, EnumSet.copyOf(List.of(optFields)));
     }
 
-    Page<StructureCandidate> findStructureCandidatesByFeatureIdAndFormulaId(String formulaId, String alignFeatureId, Pageable pageable, EnumSet<StructureCandidate.OptFields> optFields);
+    Page<StructureCandidate> findStructureCandidatesByFeatureIdAndFormulaId(String formulaId, String alignedFeatureId, Pageable pageable, EnumSet<StructureCandidate.OptFields> optFields);
 
-    default Page<StructureCandidate> findStructureCandidatesByFeatureIdAndFormulaId(String formulaId, String alignFeatureId, Pageable pageable, StructureCandidate.OptFields... optFields) {
-        return findStructureCandidatesByFeatureIdAndFormulaId(formulaId, alignFeatureId, pageable, EnumSet.copyOf(List.of(optFields)));
+    default Page<StructureCandidate> findStructureCandidatesByFeatureIdAndFormulaId(String formulaId, String alignedFeatureId, Pageable pageable, StructureCandidate.OptFields... optFields) {
+        return findStructureCandidatesByFeatureIdAndFormulaId(formulaId, alignedFeatureId, pageable, EnumSet.copyOf(List.of(optFields)));
     }
 
-    StructureCandidate findTopStructureCandidatesByFeatureId(String alignFeatureId, EnumSet<StructureCandidate.OptFields> optFields);
+    StructureCandidate findTopStructureCandidatesByFeatureId(String alignedFeatureId, EnumSet<StructureCandidate.OptFields> optFields);
 
-    default StructureCandidate findTopStructureCandidatesByFeatureId(String alignFeatureId, StructureCandidate.OptFields... optFields) {
-        return findTopStructureCandidatesByFeatureId(alignFeatureId, EnumSet.copyOf(List.of(optFields)));
+    default StructureCandidate findTopStructureCandidatesByFeatureId(String alignedFeatureId, StructureCandidate.OptFields... optFields) {
+        return findTopStructureCandidatesByFeatureId(alignedFeatureId, EnumSet.copyOf(List.of(optFields)));
     }
 }

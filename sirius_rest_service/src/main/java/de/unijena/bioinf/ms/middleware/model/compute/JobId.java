@@ -62,9 +62,9 @@ public class JobId {
     List<String> affectedCompoundIds;
 
     /**
-     * List of alignFeatureIds that are affected by this job.
+     * List of alignedFeatureIds that are affected by this job.
      * If this job is creating features (e.g. data import jobs) this value will be NULL until the jobs has finished
      */
     @Nullable
-    List<String> affectedAlignFeatureIds;
+    List<String> affectedAlignedFeatureIds;
 }

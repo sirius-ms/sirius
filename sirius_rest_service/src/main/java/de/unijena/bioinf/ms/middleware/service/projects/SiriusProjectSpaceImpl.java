@@ -89,28 +89,28 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     @Override
-    public AlignedFeature findAlignedFeaturesById(String alignFeatureId, EnumSet<AlignedFeature.OptFields> optFields) {
-        final CompoundContainerId ccid = parseCID(alignFeatureId);
+    public AlignedFeature findAlignedFeaturesById(String alignedFeatureId, EnumSet<AlignedFeature.OptFields> optFields) {
+        final CompoundContainerId ccid = parseCID(alignedFeatureId);
         return asCompoundId(ccid, optFields);
     }
 
     @Override
-    public void deleteAlignedFeaturesById(String alignFeatureId) {
-        CompoundContainerId compound = projectSpaceManager.projectSpace().findCompound(alignFeatureId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NO_CONTENT, "AlignedFeature with id '" + alignFeatureId + "' does not exist."));
+    public void deleteAlignedFeaturesById(String alignedFeatureId) {
+        CompoundContainerId compound = projectSpaceManager.projectSpace().findCompound(alignedFeatureId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NO_CONTENT, "AlignedFeature with id '" + alignedFeatureId + "' does not exist."));
         try {
             projectSpaceManager.projectSpace().deleteCompound(compound);
         } catch (IOException e) {
-            log.error("Error when deleting feature with Id " + alignFeatureId, e);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when deleting feature with Id " + alignFeatureId);
+            log.error("Error when deleting feature with Id " + alignedFeatureId, e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when deleting feature with Id " + alignedFeatureId);
         }
     }
 
     @Override
-    public Page<FormulaCandidate> findFormulaCandidatesByFeatureId(String alignFeatureId, Pageable pageable, EnumSet<FormulaCandidate.OptFields> optFields) {
+    public Page<FormulaCandidate> findFormulaCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, EnumSet<FormulaCandidate.OptFields> optFields) {
         LoggerFactory.getLogger(getClass()).info("Started collecting formulas...");
         Class<? extends DataAnnotation>[] annotations = resolveFormulaCandidateAnnotations(optFields);
-        Instance instance = loadInstance(alignFeatureId);
+        Instance instance = loadInstance(alignedFeatureId);
         Stream<FormulaResult> paged;
         int size;
         {
@@ -128,22 +128,22 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     @Override
-    public FormulaCandidate findFormulaCandidateByFeatureIdAndId(String formulaId, String alignFeatureId, EnumSet<FormulaCandidate.OptFields> optFields) {
+    public FormulaCandidate findFormulaCandidateByFeatureIdAndId(String formulaId, String alignedFeatureId, EnumSet<FormulaCandidate.OptFields> optFields) {
         Class<? extends DataAnnotation>[] annotations = resolveFormulaCandidateAnnotations(optFields);
-        Instance instance = loadInstance(alignFeatureId);
+        Instance instance = loadInstance(alignedFeatureId);
         return instance.loadFormulaResult(parseFID(instance, formulaId), annotations)
                 .map(res -> makeFormulaCandidate(instance, res, optFields)).orElse(null);
     }
 
     @Override
 
-    public Page<StructureCandidate> findStructureCandidatesByFeatureIdAndFormulaId(String formulaId, String alignFeatureId, Pageable pageable, EnumSet<StructureCandidate.OptFields> optFields) {
+    public Page<StructureCandidate> findStructureCandidatesByFeatureIdAndFormulaId(String formulaId, String alignedFeatureId, Pageable pageable, EnumSet<StructureCandidate.OptFields> optFields) {
         long topK = pageable.getOffset() + pageable.getPageSize();
         List<Class<? extends DataAnnotation>> para = (optFields.contains(StructureCandidate.OptFields.fingerprint)
                 ? List.of(FormulaScoring.class, FBCandidates.class, FBCandidateFingerprints.class)
                 : List.of(FormulaScoring.class, FBCandidates.class));
 
-        Instance instance = loadInstance(alignFeatureId);
+        Instance instance = loadInstance(alignedFeatureId);
         FormulaResultId fidObj = parseFID(instance, formulaId);
         fidObj.setAnnotation(FBCandidateNumber.class, topK <= 0 ? FBCandidateNumber.ALL : new FBCandidateNumber((int) topK));
         FormulaResult fr = instance.loadFormulaResult(fidObj, (Class<? extends DataAnnotation>[]) para.toArray(Class[]::new)).orElseThrow();
@@ -179,10 +179,10 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     @Override
-    public StructureCandidate findTopStructureCandidatesByFeatureId(String alignFeatureId, EnumSet<StructureCandidate.OptFields> optFields) {
+    public StructureCandidate findTopStructureCandidatesByFeatureId(String alignedFeatureId, EnumSet<StructureCandidate.OptFields> optFields) {
         boolean fingerprint = optFields.contains(StructureCandidate.OptFields.fingerprint);
         List<Class<? extends DataAnnotation>> para = (fingerprint ? List.of(FormulaScoring.class, FBCandidates.class, FBCandidateFingerprints.class) : List.of(FormulaScoring.class, FBCandidates.class));
-        Instance instance = loadInstance(alignFeatureId);
+        Instance instance = loadInstance(alignedFeatureId);
 
         return instance.loadTopFormulaResult(List.of(TopCSIScore.class)).flatMap(fr -> {
             fr.getId().setAnnotation(FBCandidateNumber.class, new FBCandidateNumber(1));

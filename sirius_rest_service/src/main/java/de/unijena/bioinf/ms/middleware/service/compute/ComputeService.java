@@ -33,7 +33,6 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import javax.annotation.PreDestroy;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -41,7 +40,7 @@ public interface ComputeService<P extends Project> extends DisposableBean {
 
     JobId createAndSubmitJob(P psm, JobSubmission jobSubmission, @NotNull EnumSet<JobId.OptFields> optFields);
 
-    JobId createAndSubmitJob(P psm, List<String> commandList, @Nullable Iterable<String> alignFeatureIds, @Nullable InputFilesOptions toImport, @NotNull EnumSet<JobId.OptFields> optFields);
+    JobId createAndSubmitJob(P psm, List<String> commandList, @Nullable Iterable<String> alignedFeatureIds, @Nullable InputFilesOptions toImport, @NotNull EnumSet<JobId.OptFields> optFields);
 
     JobId createAndSubmitImportJob(P psm, ImportLocalFilesSubmission jobSubmission, @NotNull EnumSet<JobId.OptFields> optFields);
 
