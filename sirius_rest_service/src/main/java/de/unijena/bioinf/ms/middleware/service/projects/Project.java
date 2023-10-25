@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.middleware.service.projects;
 
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
+import de.unijena.bioinf.ms.middleware.model.features.AlignedFeatureQuality;
 import de.unijena.bioinf.ms.middleware.model.features.annotations.FormulaCandidate;
 import de.unijena.bioinf.ms.middleware.model.features.annotations.StructureCandidate;
 import org.springframework.data.domain.Page;
@@ -30,6 +31,23 @@ import java.util.EnumSet;
 import java.util.List;
 
 public interface Project {
+
+    @Deprecated
+    Page<AlignedFeatureQuality> findAlignedFeaturesQuality(Pageable pageable, EnumSet<AlignedFeatureQuality.OptFields> optFields);
+
+    @Deprecated
+    default Page<AlignedFeatureQuality> findAlignedFeaturesQuality(Pageable pageable, AlignedFeatureQuality.OptFields... optFields) {
+        return findAlignedFeaturesQuality(pageable, EnumSet.copyOf(List.of(optFields)));
+    }
+
+    @Deprecated
+    AlignedFeatureQuality findAlignedFeaturesQualityById(String alignedFeatureId, EnumSet<AlignedFeatureQuality.OptFields> optFields);
+
+    @Deprecated
+    default AlignedFeatureQuality findAlignedFeaturesQualityById(String alignedFeatureId, AlignedFeatureQuality.OptFields... optFields) {
+        return findAlignedFeaturesQualityById(alignedFeatureId, EnumSet.copyOf(List.of(optFields)));
+    }
+
 
     Page<AlignedFeature> findAlignedFeatures(Pageable pageable, EnumSet<AlignedFeature.OptFields> optFields);
 
