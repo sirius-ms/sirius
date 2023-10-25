@@ -21,6 +21,8 @@
 package de.unijena.bionf.spectral_alignment;
 
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
@@ -32,20 +34,31 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class SpectralMatchMasterJJob extends BasicMasterJJob<List<SpectralSimilarity>> {
 
     private CosineQueryUtils queryUtils;
+
+    @Getter
     private List<Pair<CosineQuerySpectrum, CosineQuerySpectrum>> queries;
+
+    /**
+     * By default, clear references to input values when they are no longer needed
+     */
+    @Setter
+    private boolean clearInput;
 
     public SpectralMatchMasterJJob(CosineQueryUtils queryUtils, List<Pair<CosineQuerySpectrum, CosineQuerySpectrum>> queries) {
         super(JobType.CPU);
         this.queryUtils = queryUtils;
         this.queries = queries;
+        this.clearInput = true;
     }
 
     @Override
     protected List<SpectralSimilarity> compute() throws Exception {
         List<SpectralMatchJJob> jobs = queries.stream().map(q -> new SpectralMatchJJob(queryUtils, q.getLeft(), q.getRight())).toList();
 
-        queryUtils = null;
-        queries = null;
+        if (clearInput) {
+            queryUtils = null;
+            queries = null;
+        }
 
         int maxProgress = jobs.size() + 1;  // The last unit of progress is added after the master task is done
         AtomicInteger progress = new AtomicInteger(0);
