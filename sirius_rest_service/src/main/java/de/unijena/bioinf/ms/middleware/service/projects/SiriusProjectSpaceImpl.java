@@ -39,6 +39,7 @@ import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.middleware.controller.AlignedFeaturesController;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
+import de.unijena.bioinf.ms.middleware.model.features.AlignedFeatureQuality;
 import de.unijena.bioinf.ms.middleware.model.features.LCMSFeatureQuality;
 import de.unijena.bioinf.ms.middleware.model.features.MsData;
 import de.unijena.bioinf.ms.middleware.model.features.annotations.*;
@@ -76,12 +77,31 @@ public class SiriusProjectSpaceImpl implements Project {
         return projectSpaceManager;
     }
 
+
+    @Override
+    public Page<AlignedFeatureQuality> findAlignedFeaturesQuality(Pageable pageable, EnumSet<AlignedFeatureQuality.OptFields> optFields) {
+        LoggerFactory.getLogger(AlignedFeaturesController.class).info("Started collecting aligned features quality...");
+        final List<AlignedFeatureQuality> alignedFeatureQualities = projectSpaceManager.projectSpace().stream()
+                .skip(pageable.getOffset()).limit(pageable.getPageSize())
+                .map(ccid -> asAlignedFeatureQuality(ccid, optFields))
+                .toList();
+        LoggerFactory.getLogger(AlignedFeaturesController.class).info("Finished parsing aligned features quality...");
+
+        return new PageImpl<>(alignedFeatureQualities, pageable, projectSpaceManager.size());
+    }
+
+    @Override
+    public AlignedFeatureQuality findAlignedFeaturesQualityById(String alignedFeatureId, EnumSet<AlignedFeatureQuality.OptFields> optFields) {
+        final CompoundContainerId ccid = parseCID(alignedFeatureId);
+        return asAlignedFeatureQuality(ccid, optFields);
+    }
+
     @Override
     public Page<AlignedFeature> findAlignedFeatures(Pageable pageable, EnumSet<AlignedFeature.OptFields> optFields) {
         LoggerFactory.getLogger(AlignedFeaturesController.class).info("Started collecting aligned features...");
         final List<AlignedFeature> alignedFeatures = projectSpaceManager.projectSpace().stream()
                 .skip(pageable.getOffset()).limit(pageable.getPageSize())
-                .map(ccid -> asCompoundId(ccid, optFields))
+                .map(ccid -> asAlignedFeature(ccid, optFields))
                 .toList();
         LoggerFactory.getLogger(AlignedFeaturesController.class).info("Finished parsing aligned features...");
 
@@ -91,7 +111,7 @@ public class SiriusProjectSpaceImpl implements Project {
     @Override
     public AlignedFeature findAlignedFeaturesById(String alignedFeatureId, EnumSet<AlignedFeature.OptFields> optFields) {
         final CompoundContainerId ccid = parseCID(alignedFeatureId);
-        return asCompoundId(ccid, optFields);
+        return asAlignedFeature(ccid, optFields);
     }
 
     @Override
@@ -199,7 +219,7 @@ public class SiriusProjectSpaceImpl implements Project {
         }).orElseThrow();
     }
 
-    private AlignedFeature asCompoundId(CompoundContainerId cid, EnumSet<AlignedFeature.OptFields> optFields) {
+    private AlignedFeature asAlignedFeature(CompoundContainerId cid, EnumSet<AlignedFeature.OptFields> optFields) {
         final AlignedFeature alignedFeature = AlignedFeature.of(cid);
         if (!optFields.isEmpty()) {
             Instance instance = projectSpaceManager.getInstanceFromCompound(cid);
@@ -207,12 +227,21 @@ public class SiriusProjectSpaceImpl implements Project {
                 alignedFeature.setTopAnnotations(asCompoundSummary(instance));
             if (optFields.contains(AlignedFeature.OptFields.msData))
                 alignedFeature.setMsData(asCompoundMsData(instance));
-            if (optFields.contains(AlignedFeature.OptFields.lcmsFeatureQuality))
-                alignedFeature.setLcmsFeatureQuality(asCompoundLCMSFeatureQuality(instance));
-            if (optFields.contains(AlignedFeature.OptFields.qualityFlags))
-                alignedFeature.setQualityFlags(asCompoundQualityData(instance));
         }
         return alignedFeature;
+    }
+
+    private AlignedFeatureQuality asAlignedFeatureQuality(CompoundContainerId cid, EnumSet<AlignedFeatureQuality.OptFields> optFields) {
+        final AlignedFeatureQuality.AlignedFeatureQualityBuilder builder = AlignedFeatureQuality.builder()
+                .alignedFeatureId(cid.getDirectoryName());
+        if (!optFields.isEmpty()) {
+            Instance instance = projectSpaceManager.getInstanceFromCompound(cid);
+            if (optFields.contains(AlignedFeatureQuality.OptFields.lcmsFeatureQuality))
+                builder.lcmsFeatureQuality(asCompoundLCMSFeatureQuality(instance));
+            if (optFields.contains(AlignedFeatureQuality.OptFields.qualityFlags))
+                builder.qualityFlags(asCompoundQualityData(instance));
+        }
+        return builder.build();
     }
 
 
@@ -344,12 +373,11 @@ public class SiriusProjectSpaceImpl implements Project {
             final LCMSCompoundSummary summary = new LCMSCompoundSummary(traceSet.get(), traceSet.get().getIonTrace(), experiment);
             return new LCMSFeatureQuality(summary);
         } else {
-            //todo is this allowed???
             return null;
         }
     }
 
-    private static  <S, T> Optional<T> opt(S input, Function<S, T> convert) {
+    private static <S, T> Optional<T> opt(S input, Function<S, T> convert) {
         return Optional.ofNullable(input).map(convert);
     }
 }
