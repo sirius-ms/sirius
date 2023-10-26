@@ -92,7 +92,7 @@ public class CompoundClasses {
             if (v instanceof MaskedFingerprintVersion) v = ((MaskedFingerprintVersion) v).getMaskedFingerprintVersion();
             ClassyFireFingerprintVersion CLF = (ClassyFireFingerprintVersion) v;
             ClassyfireProperty primaryClass = CLF.getPrimaryClass(cfClassification);
-            final List<ClassyfireProperty> lineage = Stream.of(primaryClass.getLineage()).toList();
+            final List<ClassyfireProperty> lineage = Stream.of(primaryClass.getLineageRootToNode(false)).toList();
             final Set<ClassyfireProperty> alternatives =
                     Stream.of(CLF.getPredictedLeafs(cfClassification, 0.5)).collect(Collectors.toSet());
             lineage.forEach(alternatives::remove);
