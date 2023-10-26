@@ -1627,46 +1627,12 @@ public class Spectrums {
         list[b] = z;
     }
 
-    private static class AlreadyOrderedSpectrum<T extends Peak> implements OrderedSpectrum<T> {
-
-        private final Spectrum<T> delegate;
-
-        public AlreadyOrderedSpectrum(Spectrum<T> delegate) {
-            this.delegate = delegate;
-        }
-
-        @Override
-        public double getMzAt(int index) {
-            return delegate.getMzAt(index);
-        }
-
-        @Override
-        public double getIntensityAt(int index) {
-            return delegate.getIntensityAt(index);
-        }
-
-        @Override
-        public T getPeakAt(int index) {
-            return delegate.getPeakAt(index);
-        }
-
-        @Override
-        public int size() {
-            return delegate.size();
-        }
-
-        @Override
-        public Iterator<T> iterator() {
-            return delegate.iterator();
-        }
-    }
-
     /**
      * Can be used (but is not encouraged!) when you are 100% sure that your spectrum is ordered and just
      * want to cast it to an OrderedSpectrum
      */
-    public static <T extends Peak, S extends Spectrum<T>> AlreadyOrderedSpectrum<T> getAlreadyOrderedSpectrum(S spec) {
-        return new AlreadyOrderedSpectrum<>(spec);
+    public static <T extends Peak, S extends Spectrum<T>> OrderedSpectrumDelegate<T> getAlreadyOrderedSpectrum(S spec) {
+        return new OrderedSpectrumDelegate<>(spec);
     }
 
     public static void writePeaks(BufferedWriter writer, Spectrum spec) throws IOException {
