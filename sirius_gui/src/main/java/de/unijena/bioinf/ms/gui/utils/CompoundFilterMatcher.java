@@ -56,7 +56,8 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
     public boolean matches(InstanceBean item) {
         double mz = item.getIonMass();
         double rt = item.getID().getRt().map(RetentionTime::getRetentionTimeInSeconds).orElse(Double.NaN);
-        double confidence = item.getID().getConfidenceScore().orElse(Double.NaN);
+        //todo hotfix, since the confidence score is a FormulaScore which sets all NaN to -Infinity (after computation, and thus also in project space)
+        double confidence = item.getID().getConfidenceScore().map(conf -> Double.isInfinite(conf) ? Double.NaN : conf).orElse(Double.NaN);
         if ((mz < filterModel.getCurrentMinMz()) ||
                 (filterModel.isMaxMzFilterActive() && mz > filterModel.getCurrentMaxMz())) {
             return false;
