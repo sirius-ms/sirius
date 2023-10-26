@@ -119,31 +119,54 @@ public class ClassyfireProperty extends MolecularProperty {
         return parent;
     }
 
-    /*
-        @return the path from root to this node (inclusive)
+    /**
+     *
+     * @param includeChemicalEntity if true, includes the true root of the ontology, "chemical entity" which is not predicted by CANOPUS.
+     * @return the path from root to this node (inclusive)
      */
-    public ClassyfireProperty[] getLineage() {
-        ArrayList<ClassyfireProperty> prop = new ArrayList<>();
-        prop.add(this);
-        ClassyfireProperty node = this;
-        while (node.parent!=null) {
-            node=node.parent;
-            prop.add(node);
-        }
+    public ClassyfireProperty[] getLineageRootToNode(boolean includeChemicalEntity) {
+        ArrayList<ClassyfireProperty> prop = getAncestorsList(true, includeChemicalEntity);
         return Lists.reverse(prop).toArray(ClassyfireProperty[]::new);
     }
 
     /**
+     *
+     * @param includeChemicalEntity if true, includes the true root of the ontology, "chemical entity" which is not predicted by CANOPUS.
+     * @return the path from this node (inclusive) to root
+     */
+    public ClassyfireProperty[] getLineageNodeToRoot(boolean includeChemicalEntity) {
+        ArrayList<ClassyfireProperty> prop = getAncestorsList(true, includeChemicalEntity);
+        return prop.toArray(ClassyfireProperty[]::new);
+    }
+
+    /**
+     *
+     * @param includeChemicalEntity if true, includes the true root of the ontology, "chemical entity" which is not predicted by CANOPUS.
      * @return all ancestors of this class, from direct parent up to the root
      */
-    public ClassyfireProperty[] getAncestors() {
+    public ClassyfireProperty[] getAncestors(boolean includeChemicalEntity) {
+        return getAncestorsList(false, includeChemicalEntity).toArray(ClassyfireProperty[]::new);
+    }
+
+    /**
+     *
+     * @param includeThisNode includes the current node in the list
+     * @param includeChemicalEntity if true, includes the true root of the ontology, "chemical entity" which is not predicted by CANOPUS.
+     * @return all ancestors of this class, from direct parent up to the root
+     */
+    private ArrayList<ClassyfireProperty> getAncestorsList(boolean includeThisNode, boolean includeChemicalEntity) {
         ArrayList<ClassyfireProperty> prop = new ArrayList<>();
+        if (includeThisNode) prop.add(this);
         ClassyfireProperty node = this;
         while (node.parent!=null) {
             node=node.parent;
             prop.add(node);
         }
-        return prop.toArray(ClassyfireProperty[]::new);
+        if (!includeChemicalEntity) {
+            assert prop.get(prop.size()-1).name.equals("Chemical entities");
+            prop.remove(prop.size()-1);
+        }
+        return prop;
     }
 
     /**
