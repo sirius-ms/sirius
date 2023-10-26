@@ -34,8 +34,8 @@ public class CanopusLevels {
 
     }
     public static String getClassyFireLevelName(int level){
-        if (level >= classyFireLevelNames.length)
-            return "level-" + level;
-        return classyFireLevelNames[level];
+        if (level > classyFireLevelNames.length)
+            return "Level-" + level;
+        return classyFireLevelNames[level-1];
     }
 }
