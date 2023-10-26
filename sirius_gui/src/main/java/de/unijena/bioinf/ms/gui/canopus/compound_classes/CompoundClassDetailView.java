@@ -188,15 +188,7 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
         ClassyfireProperty main = classif.getPrimaryClass(classyfireFingerprint);
         Set<ClassyfireProperty> alternatives = new HashSet<>(Arrays.asList(classif.getPredictedLeafs(classyfireFingerprint, 0.5)));
         alternatives.remove(main);
-        ClassyfireProperty[] anc = main.getAncestors();
-        ClassyfireProperty[] lin = new ClassyfireProperty[anc.length];
-        int k=0;
-        lin[0] = main;
-        // ignore chemical entities
-        for (int j=0; j < anc.length-1; ++j) {
-            lin[++k] = anc[j];
-        }
-        this.lineage = lin;
+        this.lineage = main.getLineageNodeToRoot(false); // ignore chemical entities
         this.mainClass = main;
         this.secondaryClasses = new ArrayList<>(alternatives);
         secondaryClasses.sort(Comparator.comparingInt(x->-x.getPriority()));

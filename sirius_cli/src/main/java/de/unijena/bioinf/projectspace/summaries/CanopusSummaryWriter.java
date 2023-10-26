@@ -257,7 +257,7 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
             try {
                 final CanopusSummaryRow row = rows.get(k);
                 final ClassyfireProperty primaryClass = row.mostSpecificClasses[row.best];
-                final ClassyfireProperty[] lineage = primaryClass.getLineage();
+                final ClassyfireProperty[] lineage = primaryClass.getLineageRootToNode(true);
 
                 int i = 0;
                 cols[i++] = row.id;
@@ -343,7 +343,7 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
             try {
                 final CanopusSummaryRow row = rows.get(k);
                 final ClassyfireProperty primaryClass = row.mostSpecificClasses[j];
-                final ClassyfireProperty[] lineage = primaryClass.getLineage();
+                final ClassyfireProperty[] lineage = primaryClass.getLineageRootToNode(true);
                 int i = 0;
 
                 cols[i++] = row.id;
