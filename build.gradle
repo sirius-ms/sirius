@@ -120,6 +120,7 @@ allprojects {
         testImplementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
         testImplementation group: 'de.unijena.bioinf', name: 'jjobs-swing', version:"$jjobs_version"
         testImplementation group: 'junit', name: 'junit', version: '4.13.1'
+        testImplementation group: 'org.mockito', name: 'mockito-core', version: '5.6.0'
     }
 
     task sourceJar(type: Jar) {
