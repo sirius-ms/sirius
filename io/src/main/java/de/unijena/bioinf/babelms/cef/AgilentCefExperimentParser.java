@@ -20,6 +20,9 @@
 
 package de.unijena.bioinf.babelms.cef;
 
+import com.github.f4b6a3.tsid.Tsid;
+import com.github.f4b6a3.tsid.TsidCreator;
+import de.unijena.bioinf.ChemistryBase.chem.FeatureGroup;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.*;
@@ -118,14 +121,33 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
     }
 
     private <S extends Ms2Experiment> List<S> experimentFromCompound(Compound compound) {
+        Tsid cuuid = TsidCreator.getTsid();
+        RetentionTime rt = compound.getSpectrum().stream()
+                .filter(s -> s.getMSDetails().scanType.equals("Scan"))
+                .map(s -> parseRT(compound, s))
+                .filter(Optional::isPresent).flatMap(Optional::stream)
+                .reduce(RetentionTime::merge).orElse(parseRT(compound).orElse(null));
 
+        final FeatureGroup fg = FeatureGroup.builder()
+                .groupId(cuuid.toString())
+                .groupRt(rt)
+                .build();
+
+        List<S> exps = null;
         if (compound.getSpectrum().stream().anyMatch(s -> s.getType().equalsIgnoreCase("MFE") || s.getType().equalsIgnoreCase("FBF"))) { //MFE/FBF data
-            return experimentFromMFECompound(compound);
+            exps = experimentFromMFECompound(compound);
         } else if (compound.getSpectrum().stream().noneMatch(s -> s.getMSDetails().getScanType().equals("ProductIon"))) { //ms1 only data from raw format
-            return experimentFromMS1OnlyCompound(compound);
+            exps = experimentFromMS1OnlyCompound(compound);
         } else {
-            return experimentFromRawCompound(compound);
+            exps = experimentFromRawCompound(compound);
         }
+
+        exps.forEach(exp -> {
+            exp.setAnnotation(FeatureGroup.class, fg);
+            exp.addAnnotationIfAbsend(RetentionTime.class, fg.getGroupRt());
+        });
+
+        return exps;
     }
 
     private static final Pattern UNSUPPORTED_IONTYPE_MATCHER = Pattern.compile("^\\d+M.*");
@@ -183,23 +205,25 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
     }
 
     private <S extends Ms2Experiment> S experimentFromCompound(Compound compound, MutableMs2Experiment exp) {
-        //todo how do we get the real dev? maybe load profile/ from outside
         MS2MassDeviation dev = PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class);
-        exp.setName("rt=" + compound.location.rt + "-p=" + NUMBER_FORMAT.format(exp.getIonMass()));
+        exp.setName("rt" + NUMBER_FORMAT.format(compound.location.rt) + "-p" + NUMBER_FORMAT.format(exp.getIonMass()));
         if (currentUrl != null)
             exp.setSource(new SpectrumFileSource(currentUrl));
 
         List<SimpleSpectrum> ms1Spectra = new ArrayList<>();
+        List<RetentionTime> ms1Rts = new ArrayList<>();
         List<MutableMs2Spectrum> ms2Spectra = new ArrayList<>();
+        List<RetentionTime> ms2Rts = new ArrayList<>();
+
         for (Spectrum spec : compound.getSpectrum()) {
             if (spec.type.equalsIgnoreCase("MFE") || spec.type.equalsIgnoreCase("FBF")) {
                 // ignore was already handled beforehand.
             } else if (spec.getMSDetails().getScanType().equals("Scan")) {
                 ms1Spectra.add(makeMs1Spectrum(spec));
-                if (!exp.hasAnnotation(RetentionTime.class))
-                    parseRT(compound, spec).ifPresent(rt -> exp.addAnnotation(RetentionTime.class, rt));
+                parseRT(spec).ifPresent(ms1Rts::add);
             } else if (spec.getMSDetails().getScanType().equals("ProductIon") && dev.standardMassDeviation.inErrorWindow(spec.mzOfInterest.mz.doubleValue(), exp.getIonMass())) {
                 ms2Spectra.add(makeMs2Spectrum(spec));
+                parseRT(spec).ifPresent(ms2Rts::add);
             } else {
                 Optional<Spectrum> s = Optional.of(spec);
                 LoggerFactory.getLogger(getClass()).warn("Spectrum of type '" + s.map(Spectrum::getType).orElse("N/A")
@@ -213,13 +237,18 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
                 if (spec.getMSDetails().getScanType().equals("Scan")) {
                     ms1Spectra.add(makeMs1Spectrum(spec));
                     if (!exp.hasAnnotation(RetentionTime.class))
-                        parseRT(compound, spec).ifPresent(rt -> exp.addAnnotation(RetentionTime.class, rt));
+                        parseRT(spec).ifPresent(ms1Rts::add);
                 }
             }
         }
 
-        if (!exp.hasAnnotation(RetentionTime.class))
-            parseRT(compound).ifPresent(rt -> exp.addAnnotation(RetentionTime.class, rt));
+        //parse RT
+        RetentionTime rt = ms2Rts.stream().reduce(RetentionTime::merge).orElse(
+                ms1Rts.stream().reduce(RetentionTime::merge).orElse(null));
+
+        if (rt != null)
+            exp.setAnnotation(RetentionTime.class, rt);
+
         exp.setMs1Spectra(ms1Spectra);
         exp.setMs2Spectra(ms2Spectra);
         return (S) exp;
