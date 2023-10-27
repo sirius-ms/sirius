@@ -50,8 +50,21 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
     @NotNull
     private String compoundName;
 
+    /**
+     * feature id (might be external) of this aligned feature
+     */
     @Nullable
     private String featureId;
+
+    /**
+     * ID of the compound this feature belongs to
+     * ATTENTION: this means compound in the sense of a group of adduct ions that come from the same compound.
+     * The term CompoundId refers to an aligned feature -,-
+     */
+    @Nullable
+    private String groupId;
+    @Nullable
+    private RetentionTime groupRt;
 
     // fields for fast compound filtering
     @Nullable
@@ -68,13 +81,13 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
     private Double confidenceScore;
 
     protected CompoundContainerId(@NotNull String directoryName, @NotNull String compoundName, int compoundIndex) {
-        this(directoryName, compoundName, compoundIndex, null, null, null, null, null);
+        this(directoryName, compoundName, compoundIndex, null, null, null, null, null, null, null);
     }
 
     protected CompoundContainerId(@NotNull String directoryName, @NotNull String compoundName, int compoundIndex,
                                   @Nullable Double ionMass, @Nullable PrecursorIonType ionType,
                                   @Nullable RetentionTime rt, @Nullable Double confidenceScore,
-                                  @Nullable String featureId ) {
+                                  @Nullable String featureId, @Nullable String groupId,  @Nullable RetentionTime groupRt) {
         this.directoryName = directoryName;
         this.compoundName = compoundName;
         this.compoundIndex = compoundIndex;
@@ -83,6 +96,7 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         this.rt = rt;
         this.confidenceScore = confidenceScore;
         this.featureId = featureId;
+        this.groupId = groupId;
     }
 
     public boolean hasFlag(Flag flag) {
@@ -160,6 +174,23 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         this.featureId = featureId;
     }
 
+    public Optional<String> getGroupId() {
+        return Optional.ofNullable(groupId);
+    }
+
+    public void setGroupId(@Nullable String groupId) {
+        this.groupId = groupId;
+    }
+
+    @NotNull
+    public Optional<RetentionTime> getGroupRt() {
+        return Optional.ofNullable(groupRt);
+    }
+
+    public void setGroupRt(@Nullable RetentionTime rt) {
+        this.groupRt = rt;
+    }
+
     @SafeVarargs
     public final void setRankingScoreTypes(@NotNull Class<? extends FormulaScore>... rankingScores) {
         setRankingScoreTypes(Arrays.asList(rankingScores));
@@ -192,6 +223,9 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         getRt().ifPresent(rt -> kv.put("rt", RetentionTime.asStringValue(rt)));
         getConfidenceScore().ifPresent(cs -> kv.put("confidenceScore", String.valueOf(cs)));
         getFeatureId().ifPresent(fid -> kv.put("featureId", featureId));
+        getGroupId().ifPresent(fid -> kv.put("groupId", groupId));
+        getGroupRt().ifPresent(rt -> kv.put("groupRt", RetentionTime.asStringValue(rt)));
+
 
         if (!rankingScores.isEmpty())
             kv.put(RANKING_KEY, rankingScores.stream().map(Score::simplify).collect(Collectors.joining(",")));
@@ -209,5 +243,7 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         setRt(cid.rt);
         setConfidenceScore(cid.confidenceScore);
         setFeatureId(cid.featureId);
+        setGroupId(cid.groupId);
+        setGroupRt(cid.groupRt);
     }
 }

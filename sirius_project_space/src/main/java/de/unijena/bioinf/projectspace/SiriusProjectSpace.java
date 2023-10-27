@@ -22,6 +22,7 @@ package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
+import de.unijena.bioinf.ChemistryBase.chem.FeatureGroup;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
@@ -146,8 +147,11 @@ public class SiriusProjectSpace implements IterableWithSize<CompoundContainerId>
                         final Double confidenceScore = Optional.ofNullable(keyValues.get("confidenceScore")).map(Double::parseDouble).orElse(null);
 
                         final String featureId = keyValues.get("featureId");
+                        final String groupId = keyValues.get("groupId");
+                        final RetentionTime groupRt = Optional.ofNullable(keyValues.get("groupRt")).map(RetentionTime::fromStringValue).orElse(null);
 
-                        final CompoundContainerId cid = new CompoundContainerId(dirName, name, index, ionMass, ionType, rt, confidenceScore, featureId);
+                        final CompoundContainerId cid = new CompoundContainerId(dirName, name, index, ionMass, ionType,
+                                rt, confidenceScore, featureId, groupId, groupRt);
 
                         cid.setDetectedAdducts(
                                 Optional.ofNullable(keyValues.get("detectedAdducts")).map(DetectedAdducts::fromString).orElse(null));
@@ -315,7 +319,11 @@ public class SiriusProjectSpace implements IterableWithSize<CompoundContainerId>
         PrecursorIonType iontype = exp != null ? exp.getPrecursorIonType() : null;
         String featureId = exp != null ? exp.getFeatureId() : null;
 
-        return newUniqueCompoundId(compoundName, index2dirName, ionMass, iontype, rt, null, featureId)
+        Optional<FeatureGroup> fg = Optional.ofNullable(exp).flatMap(e -> e.getAnnotation(FeatureGroup.class));
+        String groupId = fg.map(FeatureGroup::getGroupId).orElse(null);
+        RetentionTime groupRt = fg.map(FeatureGroup::getGroupRt).orElse(null);
+
+        return newUniqueCompoundId(compoundName, index2dirName, ionMass, iontype, rt, null, featureId, groupId, groupRt)
                 .map(idd -> {
                     try {
                         idd.containerLock.writeLock().lock();
@@ -337,15 +345,15 @@ public class SiriusProjectSpace implements IterableWithSize<CompoundContainerId>
 
 
     public Optional<CompoundContainerId> newUniqueCompoundId(String compoundName, IntFunction<String> index2dirName) {
-        return newUniqueCompoundId(compoundName, index2dirName, Double.NaN, null, null, null, null);
+        return newUniqueCompoundId(compoundName, index2dirName, Double.NaN, null, null, null, null, null, null);
     }
 
 
-    public Optional<CompoundContainerId> newUniqueCompoundId(String compoundName, IntFunction<String> index2dirName, double ioMass, PrecursorIonType ionType, RetentionTime rt, Double confidence, String featureId) {
+    public Optional<CompoundContainerId> newUniqueCompoundId(String compoundName, IntFunction<String> index2dirName, double ioMass, PrecursorIonType ionType, RetentionTime rt, Double confidence, String featureId, String groupId, RetentionTime groupRt) {
         int index = compoundCounter.incrementAndGet();
         String dirName = index2dirName.apply(index);
 
-        Optional<CompoundContainerId> cidOpt = tryCreateCompoundContainer(dirName, compoundName, index, ioMass, ionType, rt, confidence, featureId);
+        Optional<CompoundContainerId> cidOpt = tryCreateCompoundContainer(dirName, compoundName, index, ioMass, ionType, rt, confidence, featureId, groupId, groupRt);
         cidOpt.ifPresent(cid ->
                 fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.ID_CREATED, cid, Collections.emptySet())));
         return cidOpt;
@@ -401,12 +409,12 @@ public class SiriusProjectSpace implements IterableWithSize<CompoundContainerId>
         }
     }
 
-    protected Optional<CompoundContainerId> tryCreateCompoundContainer(String directoryName, String compoundName, int compoundIndex, double ionMass, PrecursorIonType ionType, RetentionTime rt, Double confidence, String featureId) {
+    protected Optional<CompoundContainerId> tryCreateCompoundContainer(String directoryName, String compoundName, int compoundIndex, double ionMass, PrecursorIonType ionType, RetentionTime rt, Double confidence, String featureId, String groupId, RetentionTime groupRt) {
         if (containsCompound(directoryName)) return Optional.empty();
         idLock.writeLock().lock();
         try {
             final ProjectWriter writer = ioProvider.newWriter(this::getProjectSpaceProperty);
-            final CompoundContainerId id = new CompoundContainerId(directoryName, compoundName, compoundIndex, ionMass, ionType, rt, confidence, featureId);
+            final CompoundContainerId id = new CompoundContainerId(directoryName, compoundName, compoundIndex, ionMass, ionType, rt, confidence, featureId, groupId, groupRt);
             try {
                 if (writer.exists(directoryName))
                     return Optional.empty();
