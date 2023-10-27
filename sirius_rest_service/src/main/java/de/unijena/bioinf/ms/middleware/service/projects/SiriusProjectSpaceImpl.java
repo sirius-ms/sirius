@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -54,6 +55,7 @@ import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.sirius.scores.TreeScore;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +66,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.swing.border.CompoundBorder;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -87,18 +91,35 @@ public class SiriusProjectSpaceImpl implements Project {
 
 
     @Override
-    public Page<Compound> findCompounds(Pageable pageable, EnumSet<Compound.OptFields> optFields) {
-        throw new UnsupportedOperationException("TO BE IMPLEMTED"); //todo implement
+    public Page<Compound> findCompounds(Pageable pageable, EnumSet<Compound.OptFields> optFields,
+                                        EnumSet<AlignedFeature.OptFields> featureOptFields) {
+        Map<String, List<CompoundContainerId>> featureGroups = projectSpaceManager.projectSpace()
+                .stream().filter(c -> c.getGroupId().isPresent())
+                .collect(Collectors.groupingBy(c -> c.getGroupId().get()));
+
+        List<Compound> compounds = featureGroups.entrySet().stream().sorted(Map.Entry.comparingByKey())
+                .skip(pageable.getOffset()).limit(pageable.getPageSize())
+                .map(e -> asCompound(e.getValue(), optFields, featureOptFields))
+                .toList();
+
+        return new PageImpl<>(compounds, pageable, featureGroups.size());
     }
 
     @Override
-    public Compound findCompoundById(String compoundId, EnumSet<Compound.OptFields> optFields) {
-        throw new UnsupportedOperationException("TO BE IMPLEMTED"); //todo implement
+    public Compound findCompoundById(String compoundId, EnumSet<Compound.OptFields> optFields,
+                                     EnumSet<AlignedFeature.OptFields> featureOptFields) {
+        List<CompoundContainerId> groupFeatures = projectSpaceManager.projectSpace()
+                .stream().filter(c -> c.getGroupId().map(compoundId::equals).orElse(false))
+                .toList();
+        if (groupFeatures.isEmpty())
+            return null;
+
+        return asCompound(groupFeatures, optFields, featureOptFields);
     }
 
     @Override
     public void deleteCompoundById(String compoundId) {
-        throw new UnsupportedOperationException("TO BE IMPLEMTED"); //todo implement
+        findCompoundById(compoundId).getFeatures().forEach(f -> deleteAlignedFeaturesById(f.getAlignedFeatureId()));
     }
 
     @Override
@@ -267,6 +288,48 @@ public class SiriusProjectSpaceImpl implements Project {
         return builder.build();
     }
 
+    private static final DecimalFormat NUMBER_FORMAT = new DecimalFormat("#0.000");
+    private Compound asCompound(List<CompoundContainerId> cids, EnumSet<Compound.OptFields> optFields,
+                                EnumSet<AlignedFeature.OptFields> optFeatureFields) {
+        //todo handle optional if available fields
+        //compound with ID
+        Compound.CompoundBuilder c = Compound.builder()
+                .compoundId(cids.stream().map(CompoundContainerId::getGroupId)
+                        .filter(Optional::isPresent).flatMap(Optional::stream).findFirst().orElseThrow());
+
+        // features
+        List<AlignedFeature> features = cids.stream().map(cid -> asAlignedFeature(cid, optFeatureFields)).toList();
+        c.features(features);
+
+        //compound RT
+        RetentionTime rt = cids.stream().map(CompoundContainerId::getGroupRt)
+                .filter(Optional::isPresent).flatMap(Optional::stream).filter(RetentionTime::isInterval).findFirst()
+                .orElse (cids.stream().map(CompoundContainerId::getRt).filter(Optional::isPresent)
+                        .flatMap(Optional::stream).reduce(RetentionTime::merge).orElse(null)
+                );
+
+        c.rtStartSeconds(rt.getStartTime());
+        c.rtStartSeconds(rt.getEndTime());
+
+        //neutral mass
+        DoubleArrayList neutralMasses = cids.stream()
+                .filter(cid -> cid.getIonType().map(p -> !p.isIonizationUnknown()).orElse(false))
+                .map(cid -> cid.getIonMass().map(m -> cid.getIonType().get().precursorMassToNeutralMass(m)))
+                .flatMap(Optional::stream).sorted().collect(Collectors.toCollection(DoubleArrayList::new));
+
+        if (neutralMasses.size() == 1)
+            c.neutralMass(neutralMasses.getDouble(0));
+        else if (!neutralMasses.isEmpty()) {
+            if (!new Deviation(10).inErrorWindow(neutralMasses.getDouble(0), neutralMasses.topDouble()))
+                log.warn("Mass deviation of calculated neutral mass of compound with id '" + c.build() + "' higher than 10ppm");
+            c.neutralMass(neutralMasses.getDouble(neutralMasses.size() / 2));
+        }
+
+        Compound co = c.build();
+        co.setName("rt" + NUMBER_FORMAT.format(rt.getMiddleTime()/60) + "-m" + NUMBER_FORMAT.format(co.getNeutralMass()));
+        return co;
+    }
+
 
     protected Instance loadInstance(String cid) {
         return projectSpaceManager.getInstanceFromCompound(parseCID(cid));
@@ -315,7 +378,7 @@ public class SiriusProjectSpaceImpl implements Project {
             if (rt.isInterval()) {
                 id.setRtStartSeconds(rt.getStartTime());
                 id.setRtEndSeconds(rt.getEndTime());
-            }else {
+            } else {
                 id.setRtStartSeconds(rt.getRetentionTimeInSeconds());
                 id.setRtEndSeconds(rt.getRetentionTimeInSeconds());
             }

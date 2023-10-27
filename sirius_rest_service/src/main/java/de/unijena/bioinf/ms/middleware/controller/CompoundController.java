@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.middleware.controller;
 
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
+import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springdoc.api.annotations.ParameterObject;
@@ -57,8 +58,9 @@ public class CompoundController {
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public Page<Compound> getCompounds(@PathVariable String projectId, @ParameterObject Pageable pageable,
-                                       @RequestParam(required = false, defaultValue = "") EnumSet<Compound.OptFields> optFields) {
-        return projectsProvider.getProjectOrThrow(projectId).findCompounds(pageable, optFields);
+                                       @RequestParam(required = false, defaultValue = "") EnumSet<Compound.OptFields> optFields,
+                                       @RequestParam(required = false, defaultValue = "") EnumSet<AlignedFeature.OptFields> optFieldsFeatures) {
+        return projectsProvider.getProjectOrThrow(projectId).findCompounds(pageable, optFields, optFieldsFeatures);
     }
 
 
@@ -72,8 +74,9 @@ public class CompoundController {
      */
     @GetMapping(value = "/{compoundId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public Compound getCompound(@PathVariable String projectId, @PathVariable String compoundId,
-                                @RequestParam(required = false, defaultValue = "") EnumSet<Compound.OptFields> optFields) {
-        return projectsProvider.getProjectOrThrow(projectId).findCompoundById(compoundId, optFields);
+                                @RequestParam(required = false, defaultValue = "") EnumSet<Compound.OptFields> optFields,
+                                @RequestParam(required = false, defaultValue = "") EnumSet<AlignedFeature.OptFields> optFieldsFeatures) {
+        return projectsProvider.getProjectOrThrow(projectId).findCompoundById(compoundId, optFields, optFieldsFeatures);
     }
 
 

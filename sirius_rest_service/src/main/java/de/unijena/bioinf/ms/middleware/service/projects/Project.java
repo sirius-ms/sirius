@@ -33,16 +33,20 @@ import java.util.List;
 
 public interface Project {
 
-    Page<Compound> findCompounds(Pageable pageable, EnumSet<Compound.OptFields> optFields);
+    Page<Compound> findCompounds(Pageable pageable, EnumSet<Compound.OptFields> optFields,
+                                 EnumSet<AlignedFeature.OptFields> optFeatureFields);
 
     default Page<Compound> findCompounds(Pageable pageable, Compound.OptFields... optFields) {
-        return findCompounds(pageable, EnumSet.copyOf(List.of(optFields)));
+        return findCompounds(pageable, EnumSet.copyOf(List.of(optFields)),
+                EnumSet.of(AlignedFeature.OptFields.topAnnotations));
     }
 
-    Compound findCompoundById(String compoundId, EnumSet<Compound.OptFields> optFields);
+    Compound findCompoundById(String compoundId, EnumSet<Compound.OptFields> optFields,
+                              EnumSet<AlignedFeature.OptFields> optFeatureFields);
 
     default Compound findCompoundById(String compoundId, Compound.OptFields... optFields) {
-        return findCompoundById(compoundId, EnumSet.copyOf(List.of(optFields)));
+        return findCompoundById(compoundId, EnumSet.copyOf(List.of(optFields)),
+                EnumSet.of(AlignedFeature.OptFields.topAnnotations));
     }
 
     void deleteCompoundById(String compoundId);

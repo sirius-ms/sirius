@@ -41,6 +41,7 @@
 package de.unijena.bioinf.ms.middleware.model.compounds;
 
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
@@ -49,6 +50,7 @@ import java.util.List;
 
 @Getter
 @Setter
+@Builder
 public class Compound {
     public enum OptFields {consensusAnnotations, customAnnotations}
 

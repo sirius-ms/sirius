@@ -121,7 +121,7 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
                         || p.getFileName().toString().toLowerCase().endsWith("mzxml"));
         System.out.println("Alignment: " + alignLCMSRuns);
 
-        return createAndSubmitJob(psm, alignLCMSRuns ? List.of("lcms-align") : List.of("project-space"),
+        return createAndSubmitJob(psm, alignLCMSRuns ? List.of("lcms-align") : List.of("project-space", "--keep-open"),
                 null, inputFiles, optFields);
     }
 
