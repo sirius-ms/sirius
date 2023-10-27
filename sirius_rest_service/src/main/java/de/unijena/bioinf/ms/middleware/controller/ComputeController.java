@@ -166,7 +166,7 @@ public class ComputeController {
      * @param optFields         set of optional fields to be included
      * @return CompoundIds of the imported run/compounds/feature.
      */
-    @PostMapping(value = "/{projectId}/jobs/import-from-string", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.TEXT_PLAIN_VALUE)
+    @PostMapping(value = "/{projectId}/jobs/import-from-string", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public JobId startImportFromStringJob(@PathVariable String projectId, @RequestBody ImportStringSubmission jobSubmission,
                                           @RequestParam(defaultValue = "progress") EnumSet<JobId.OptFields> optFields
     ) throws IOException {
