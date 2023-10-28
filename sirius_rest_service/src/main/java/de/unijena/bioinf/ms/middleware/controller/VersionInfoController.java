@@ -20,9 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.controller;
 
-import de.unijena.bioinf.ms.middleware.SiriusContext;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -30,14 +28,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class VersionInfoController {
-
-    private final SiriusContext context;
-
-    @Autowired
-    public VersionInfoController(SiriusContext context) {
-        this.context = context;
-    }
-
 
     @RequestMapping(value = "/version.json", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public String getVersionInfo() {
