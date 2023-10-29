@@ -46,16 +46,25 @@ public abstract class AbstractComputeService<P extends Project> implements Compu
         if (optFields.contains(Job.OptFields.progress))
             id.setProgress(extractProgress(runJob));
         if (optFields.contains(Job.OptFields.affectedIds)){
-            id.setAffectedAlignedFeatureIds(extractEffectedalignedFeatures(runJob));
+            id.setAffectedAlignedFeatureIds(extractEffectedAlignedFeatures(runJob));
+            id.setAffectedCompoundIds(extractCompoundIds(runJob));
         }
 
         return id;
     }
 
-    protected List<String> extractEffectedalignedFeatures(BackgroundRuns.BackgroundRunJob<?, ?> runJob) {
+    protected List<String> extractEffectedAlignedFeatures(BackgroundRuns.BackgroundRunJob<?, ?> runJob) {
         if (runJob.getInstanceIds() == null || runJob.getInstanceIds().isEmpty())
             return List.of();
         return runJob.getInstanceIds().stream().map(CompoundContainerId::getDirectoryName).collect(Collectors.toList());
+    }
+
+    protected List<String> extractCompoundIds(BackgroundRuns.BackgroundRunJob<?, ?> runJob) {
+        if (runJob.getInstanceIds() == null || runJob.getInstanceIds().isEmpty())
+            return List.of();
+        return runJob.getInstanceIds().stream()
+                .map(CompoundContainerId::getGroupId).filter(Optional::isPresent).flatMap(Optional::stream)
+                .distinct().collect(Collectors.toList());
     }
 
     protected JobProgress extractProgress(BackgroundRuns.BackgroundRunJob<?, ?> runJob) {
