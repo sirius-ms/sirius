@@ -57,7 +57,6 @@ public class SiriusContext{
         SiriusProjectSpaceProviderImpl projectsProvider = new SiriusProjectSpaceProviderImpl();
         final SiriusProjectSpace ps = cliRootOptions.getProjectSpace().projectSpace();
         projectsProvider.addProjectSpace(ps.getLocation().getFileName().toString(), ps);
-        System.out.println("added project to projectprovider");
         return projectsProvider;
     }
 
