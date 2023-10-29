@@ -17,7 +17,6 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FasterTreeComputationInstance;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.babelms.MsIO;
@@ -27,11 +26,9 @@ import de.unijena.bioinf.fragmenter.CriticalPathSubtreeCalculator;
 import de.unijena.bioinf.fragmenter.EMFragmenterScoring2;
 import de.unijena.bioinf.fragmenter.MolecularGraph;
 import de.unijena.bioinf.jjobs.JobManager;
-import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
 import de.unijena.bioinf.sirius.Sirius;
-import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bionf.spectral_alignment.RecallSpectralAlignment;
 import de.unijena.bionf.spectral_alignment.WeightedRecallSpectralAlignment;
 import org.openscience.cdk.exception.InvalidSmilesException;
@@ -39,11 +36,9 @@ import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.*;
 
 public class Main {
@@ -107,30 +102,17 @@ public class Main {
         return peak2Fragment;
     }
 
-    private static FTree computeFTree(ProcessedInput processedMs2Experiment){
-        final Sirius sirius = new Sirius();
-        sirius.getMs1Analyzer().computeAndScoreIsotopePattern(processedMs2Experiment);
-        final FragmentationPatternAnalysis analysis = sirius.getMs2Analyzer();
-
-        FasterTreeComputationInstance instance = new FasterTreeComputationInstance(analysis, processedMs2Experiment);
-        JobManager jobs = SiriusJobs.getGlobalJobManager();
-        jobs.submitJob(instance);
-
-        FasterTreeComputationInstance.FinalResult finalResult = instance.takeResult();
-        return finalResult.getResults().get(0);
-    }
-
-    private static void writeSpectrumComparison2Json(JsonGenerator jsonGenerator, String fieldName, Deviation deviation, OrderedSpectrum<Peak> msrdSpectrum, OrderedSpectrum<Peak> predSpectrum, Map<Peak, CombinatorialFragment> msrdPeak2Fragment, Map<Peak, CombinatorialFragment> predPeak2Fragment) throws IOException {
+    private static void writeSpectrumComparison2Json(JsonGenerator jsonGenerator, String name, Deviation deviation, OrderedSpectrum<Peak> msrdSpectrum, OrderedSpectrum<Peak> predSpectrum, Map<Peak, CombinatorialFragment> msrdPeak2Fragment, Map<Peak, CombinatorialFragment> predPeak2Fragment) throws IOException {
         RecallSpectralAlignment recall = new RecallSpectralAlignment(deviation);
         WeightedRecallSpectralAlignment weightedRecall = new WeightedRecallSpectralAlignment(deviation);
         List<Peak> matchedMsrdPeaks = recall.getMatchedMsrdPeaks(msrdSpectrum, predSpectrum);
 
-        jsonGenerator.writeFieldName(fieldName);
         jsonGenerator.writeStartObject();
+        jsonGenerator.writeStringField("name", name);
         jsonGenerator.writeNumberField("recall", recall.score(msrdSpectrum, predSpectrum).similarity);
         jsonGenerator.writeNumberField("weighted_recall", weightedRecall.score(msrdSpectrum, predSpectrum).similarity);
         writeSpectrum2Json(jsonGenerator, "msrd_spectrum", msrdSpectrum, msrdPeak2Fragment, matchedMsrdPeaks);
-        writeSpectrum2Json(jsonGenerator, "pred_spectrum", predSpectrum, predPeak2Fragment, null);
+        writeSpectrum2Json(jsonGenerator, "pred_spectrum", predSpectrum, predPeak2Fragment, Collections.emptyList());
         jsonGenerator.writeEndObject();
     }
 
@@ -139,13 +121,13 @@ public class Main {
 
         jsonGenerator.writeStartArray();
         for(Peak peak : spectrum){
-            BitSet bitSet = Optional.of(peak2Fragment.get(peak)).map(CombinatorialFragment::getBitSet).orElse(new BitSet());
+            BitSet bitSet = Optional.ofNullable(peak2Fragment.get(peak)).map(CombinatorialFragment::getBitSet).orElse(new BitSet());
             int[] atomIndices = new int[bitSet.cardinality()];
             int k = 0;
             for(int idx = bitSet.nextSetBit(0); idx >= 0; idx = bitSet.nextSetBit(idx+1))
                 atomIndices[k++] = idx;
 
-            writePeak2Json(jsonGenerator, peak, atomIndices, Optional.of(matchedMsrdPeaks).orElse(Collections.emptyList()).contains(peak));
+            writePeak2Json(jsonGenerator, peak, atomIndices, matchedMsrdPeaks.contains(peak));
         }
         jsonGenerator.writeEndArray();
     }
@@ -161,6 +143,7 @@ public class Main {
         jsonGenerator.writeBooleanField("isMatched", isMatchedMsrdPeak);
         jsonGenerator.writeEndObject();
     }
+
 
 
 
@@ -185,7 +168,7 @@ public class Main {
             ms2Experiment.setAnnotation(Whiteset.class, Whiteset.ofMeasuredOrNeutral(wh));
 
             final ProcessedInput processedMs2Experiment = new Sirius().preprocessForMs2Analysis(ms2Experiment);
-            final FTree fTree = computeFTree(processedMs2Experiment);
+            final FTree fTree = new Sirius().compute(processedMs2Experiment.getExperimentInformation(), mf).getTree();
 
             final SimpleSpectrum msrdSpectrum = parseMsrdSpectrum(processedMs2Experiment);
             final HashMap<Peak, CombinatorialFragment> epimetheusPeak2Fragment = getEpimetheusMapping(molecule, fTree, msrdSpectrum);
@@ -214,7 +197,7 @@ public class Main {
 
 
             // WRITE RESULTS INTO A JSON-FILE:
-            String outputFilePath = "C:\\Users\\Nutzer\\Documents\\Repositories\\sirius-libs\\affinity_selection_ms\\src\\main\\resources\\visulaization.json";
+            String outputFilePath = "C:\\Users\\Nutzer\\Documents\\Repositories\\sirius-libs\\affinity_selection_ms\\src\\main\\resources\\visualization.json";
             try(FileWriter writer = new FileWriter(outputFilePath)) {
                 JsonFactory factory = new JsonFactory();
                 factory.enable(JsonParser.Feature.ALLOW_NON_NUMERIC_NUMBERS);
@@ -242,7 +225,4 @@ public class Main {
             throw new RuntimeException(e);
         }
     }
-
-
-
 }
