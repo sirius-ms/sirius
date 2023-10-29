@@ -24,7 +24,7 @@ import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.middleware.model.compute.ImportLocalFilesSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.ImportStringSubmission;
-import de.unijena.bioinf.ms.middleware.model.compute.JobId;
+import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.compute.JobSubmission;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import org.jetbrains.annotations.NotNull;
@@ -38,28 +38,28 @@ import java.util.List;
 
 public interface ComputeService<P extends Project> extends DisposableBean {
 
-    JobId createAndSubmitJob(P psm, JobSubmission jobSubmission, @NotNull EnumSet<JobId.OptFields> optFields);
+    Job createAndSubmitJob(P psm, JobSubmission jobSubmission, @NotNull EnumSet<Job.OptFields> optFields);
 
-    JobId createAndSubmitJob(P psm, List<String> commandList, @Nullable Iterable<String> alignedFeatureIds, @Nullable InputFilesOptions toImport, @NotNull EnumSet<JobId.OptFields> optFields);
+    Job createAndSubmitJob(P psm, List<String> commandList, @Nullable Iterable<String> alignedFeatureIds, @Nullable InputFilesOptions toImport, @NotNull EnumSet<Job.OptFields> optFields);
 
-    JobId createAndSubmitImportJob(P psm, ImportLocalFilesSubmission jobSubmission, @NotNull EnumSet<JobId.OptFields> optFields);
+    Job createAndSubmitImportJob(P psm, ImportLocalFilesSubmission jobSubmission, @NotNull EnumSet<Job.OptFields> optFields);
 
-    JobId createAndSubmitImportJob(P psm, ImportStringSubmission jobSubmission, @NotNull EnumSet<JobId.OptFields> optFields);
+    Job createAndSubmitImportJob(P psm, ImportStringSubmission jobSubmission, @NotNull EnumSet<Job.OptFields> optFields);
 
 
-    default JobId deleteJob(String jobId, boolean cancelIfRunning, boolean awaitDeletion, @NotNull EnumSet<JobId.OptFields> optFields) {
+    default Job deleteJob(String jobId, boolean cancelIfRunning, boolean awaitDeletion, @NotNull EnumSet<Job.OptFields> optFields) {
         return deleteJob(null, jobId, cancelIfRunning, awaitDeletion, optFields);
     }
 
-    JobId deleteJob(@Nullable P psm, String jobId, boolean cancelIfRunning, boolean awaitDeletion, @NotNull EnumSet<JobId.OptFields> optFields);
+    Job deleteJob(@Nullable P psm, String jobId, boolean cancelIfRunning, boolean awaitDeletion, @NotNull EnumSet<Job.OptFields> optFields);
 
-    JobId getJob(@Nullable P psm, String jobId, @NotNull EnumSet<JobId.OptFields> optFields);
+    Job getJob(@Nullable P psm, String jobId, @NotNull EnumSet<Job.OptFields> optFields);
 
-    default Page<JobId> getJobs(@NotNull Pageable pageable, @NotNull EnumSet<JobId.OptFields> optFields) {
+    default Page<Job> getJobs(@NotNull Pageable pageable, @NotNull EnumSet<Job.OptFields> optFields) {
         return getJobs(null, pageable, optFields);
     }
 
-    Page<JobId> getJobs(@Nullable P psm, @NotNull Pageable pageable, @NotNull EnumSet<JobId.OptFields> optFields);
+    Page<Job> getJobs(@Nullable P psm, @NotNull Pageable pageable, @NotNull EnumSet<Job.OptFields> optFields);
 
     JJob<?> getJJob(String jobId);
 }
