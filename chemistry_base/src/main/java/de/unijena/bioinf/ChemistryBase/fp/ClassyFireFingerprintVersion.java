@@ -167,7 +167,7 @@ public class ClassyFireFingerprintVersion extends FingerprintVersion {
         }
         ClassyfireProperty[] nodes = predictedClasses.toArray(ClassyfireProperty[]::new);
         for (ClassyfireProperty node : nodes) {
-            for (ClassyfireProperty ancestor : node.getAncestors()) {
+            for (ClassyfireProperty ancestor : node.getAncestors(true)) {
                 predictedClasses.remove(ancestor);
             }
         }

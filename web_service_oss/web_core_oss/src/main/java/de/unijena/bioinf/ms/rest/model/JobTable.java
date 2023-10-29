@@ -44,7 +44,7 @@ public enum JobTable {
     JOBS_FINGERID(FingerprintJob.class, FingerprintJobInput.class, FingerprintJobOutput.class),
     JOBS_CANOPUS(CanopusJob.class, CanopusJobInput.class, CanopusJobOutput.class),
     JOBS_COVTREE(CovtreeJob.class, CovtreeJobInput.class, CovtreeJobOutput.class),
-    JOBS_MSNOVELIST(MsNovelistJob .class, MsNovelistJobInput .class, MsNovelistJobOutput .class);
+    JOBS_MSNOVELIST(MsNovelistJob.class, MsNovelistJobInput.class, MsNovelistJobOutput.class);
 
     public static final String JOBS_GENERIC = "GENERIC";
 
