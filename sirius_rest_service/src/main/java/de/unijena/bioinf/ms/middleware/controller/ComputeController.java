@@ -59,9 +59,7 @@ public class ComputeController {
     public final static String DEFAULT_PARAMETERS = "DEFAULT";
     private final ComputeService computeService;
     private final ProjectsProvider projectsProvider;
-    private final SiriusContext siriusContext;
-    public ComputeController(SiriusContext siriusContext, ComputeService<?> computeService, ProjectsProvider<?> projectsProvider) {
-        this.siriusContext = siriusContext;
+    public ComputeController(ComputeService<?> computeService, ProjectsProvider<?> projectsProvider) {
         this.computeService = computeService;
         this.projectsProvider = projectsProvider;
     }

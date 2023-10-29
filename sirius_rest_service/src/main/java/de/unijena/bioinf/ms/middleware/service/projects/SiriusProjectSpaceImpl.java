@@ -66,7 +66,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
-import javax.swing.border.CompoundBorder;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.*;
@@ -200,52 +199,45 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     @Override
-
     public Page<StructureCandidate> findStructureCandidatesByFeatureIdAndFormulaId(String formulaId, String alignedFeatureId, Pageable pageable, EnumSet<StructureCandidate.OptFields> optFields) {
-        long topK = pageable.getOffset() + pageable.getPageSize();
         List<Class<? extends DataAnnotation>> para = (optFields.contains(StructureCandidate.OptFields.fingerprint)
                 ? List.of(FormulaScoring.class, FBCandidates.class, FBCandidateFingerprints.class)
                 : List.of(FormulaScoring.class, FBCandidates.class));
 
         Instance instance = loadInstance(alignedFeatureId);
         FormulaResultId fidObj = parseFID(instance, formulaId);
-        fidObj.setAnnotation(FBCandidateNumber.class, topK <= 0 ? FBCandidateNumber.ALL : new FBCandidateNumber((int) topK));
-        FormulaResult fr = instance.loadFormulaResult(fidObj, (Class<? extends DataAnnotation>[]) para.toArray(Class[]::new)).orElseThrow();
-        return fr.getAnnotation(FBCandidates.class).map(FBCandidates::getResults).map(l -> {
-                    List<StructureCandidate> candidates = new ArrayList();
-
-                    Iterator<Scored<CompoundCandidate>> it =
-                            l.stream().skip(pageable.getOffset()).limit(pageable.getPageSize()).iterator();
-
-                    if (optFields.contains(StructureCandidate.OptFields.fingerprint)) {
-                        Iterator<Fingerprint> fps = fr.getAnnotationOrThrow(FBCandidateFingerprints.class).getFingerprints()
-                                .stream().skip(pageable.getOffset()).limit(pageable.getPageSize()).iterator();
-
-                        if (it.hasNext())//tophit
-                            candidates.add(StructureCandidate.of(it.next(), fps.next(),
-                                    fr.getAnnotationOrNull(FormulaScoring.class), optFields));
-
-                        while (it.hasNext())
-                            candidates.add(StructureCandidate.of(it.next(), fps.next(),
-                                    null, optFields));
-                    } else {
-                        if (it.hasNext())//tophit
-                            candidates.add(StructureCandidate.of(it.next(), null,
-                                    fr.getAnnotationOrNull(FormulaScoring.class), optFields));
-
-                        while (it.hasNext())
-                            candidates.add(StructureCandidate.of(it.next(), null,
-                                    null, optFields));
-                    }
-                    return candidates;
-                }).map(it -> (Page<StructureCandidate>) new PageImpl<>(it))
+        return loadStructureCandidates(instance, fidObj, pageable, para, optFields)
+                .map(l -> l.stream().map(c -> (StructureCandidate)c).toList())
+                .map(it -> (Page<StructureCandidate>) new PageImpl<>(it))
                 .orElse(Page.empty(pageable)); //todo number of candidates for page.
     }
 
     @Override
-    public StructureCandidate findTopStructureCandidatesByFeatureId(String alignedFeatureId, EnumSet<StructureCandidate.OptFields> optFields) {
-        boolean fingerprint = optFields.contains(StructureCandidate.OptFields.fingerprint);
-        List<Class<? extends DataAnnotation>> para = (fingerprint ? List.of(FormulaScoring.class, FBCandidates.class, FBCandidateFingerprints.class) : List.of(FormulaScoring.class, FBCandidates.class));
+    public Page<StructureCandidateExt> findStructureCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, EnumSet<StructureCandidate.OptFields> optFields) {
+        List<Class<? extends DataAnnotation>> para = (optFields.contains(StructureCandidate.OptFields.fingerprint)
+                ? List.of(FormulaScoring.class, FBCandidates.class, FBCandidateFingerprints.class)
+                : List.of(FormulaScoring.class, FBCandidates.class));
+
+        Instance instance = loadInstance(alignedFeatureId);
+        List<StructureCandidateExt> candidates = instance.loadFormulaResults(FormulaScoring.class).stream()
+                .filter(fr -> fr.getCandidate().getAnnotation(FormulaScoring.class)
+                        .flatMap(s -> s.getAnnotation(TopCSIScore.class)).isPresent())
+                .map(fr -> fr.getCandidate().getId())
+                .map(fid -> loadStructureCandidates(instance, fid, pageable, para, optFields))
+                .filter(Optional::isPresent).flatMap(Optional::stream).flatMap(List::stream)
+                .sorted(Comparator.comparing(StructureCandidate::getCsiScore).reversed())
+                .skip(pageable.getOffset())
+                .limit(pageable.getPageSize()).toList();
+
+        return new PageImpl<>(candidates); //todo number of candidates for page.
+    }
+
+    @Override
+    public StructureCandidateExt findTopStructureCandidateByFeatureId(String alignedFeatureId, EnumSet<StructureCandidate.OptFields> optFields) {
+        List<Class<? extends DataAnnotation>> para = (optFields.contains(StructureCandidate.OptFields.fingerprint)
+                ? List.of(FormulaScoring.class, FBCandidates.class, FBCandidateFingerprints.class)
+                : List.of(FormulaScoring.class, FBCandidates.class));
+
         Instance instance = loadInstance(alignedFeatureId);
 
         return instance.loadTopFormulaResult(List.of(TopCSIScore.class)).flatMap(fr -> {
@@ -253,12 +245,12 @@ public class SiriusProjectSpaceImpl implements Project {
             return instance.loadFormulaResult(fr.getId(), (Class<? extends DataAnnotation>[]) para.toArray(Class[]::new))
                     .flatMap(fr2 -> fr2.getAnnotation(FBCandidates.class).map(FBCandidates::getResults)
                             .filter(l -> !l.isEmpty()).map(r -> r.get(0))
-                            .map(sc -> StructureCandidate.of(sc,
+                            .map(sc -> StructureCandidateExt.of(sc,
                                     fr2.getAnnotation(FBCandidateFingerprints.class)
                                             .map(FBCandidateFingerprints::getFingerprints)
                                             .map(fps -> fps.isEmpty() ? null : fps.get(0))
                                             .orElse(null),
-                                    fr.getAnnotationOrThrow(FormulaScoring.class), optFields))
+                                    fr.getAnnotationOrThrow(FormulaScoring.class), optFields, fr.getId()))
                     );
         }).orElseThrow();
     }
@@ -289,6 +281,7 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     private static final DecimalFormat NUMBER_FORMAT = new DecimalFormat("#0.000");
+
     private Compound asCompound(List<CompoundContainerId> cids, EnumSet<Compound.OptFields> optFields,
                                 EnumSet<AlignedFeature.OptFields> optFeatureFields) {
         //todo handle optional if available fields
@@ -304,7 +297,7 @@ public class SiriusProjectSpaceImpl implements Project {
         //compound RT
         RetentionTime rt = cids.stream().map(CompoundContainerId::getGroupRt)
                 .filter(Optional::isPresent).flatMap(Optional::stream).filter(RetentionTime::isInterval).findFirst()
-                .orElse (cids.stream().map(CompoundContainerId::getRt).filter(Optional::isPresent)
+                .orElse(cids.stream().map(CompoundContainerId::getRt).filter(Optional::isPresent)
                         .flatMap(Optional::stream).reduce(RetentionTime::merge).orElse(null)
                 );
 
@@ -326,7 +319,7 @@ public class SiriusProjectSpaceImpl implements Project {
         }
 
         Compound co = c.build();
-        co.setName("rt" + NUMBER_FORMAT.format(rt.getMiddleTime()/60) + "-m" + NUMBER_FORMAT.format(co.getNeutralMass()));
+        co.setName("rt" + NUMBER_FORMAT.format(rt.getMiddleTime() / 60) + "-m" + NUMBER_FORMAT.format(co.getNeutralMass()));
         return co;
     }
 
@@ -346,6 +339,45 @@ public class SiriusProjectSpaceImpl implements Project {
     protected FormulaResultId parseFID(Instance instance, String fid) {
         return instance.loadCompoundContainer().findResult(fid).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "FormulaResult with FID '" + fid + "' not found!"));
 
+    }
+
+    private static Optional<List<StructureCandidateExt>> loadStructureCandidates(
+            Instance instance, FormulaResultId fidObj,
+            Pageable pageable,
+            List<Class<? extends DataAnnotation>> para,
+            EnumSet<StructureCandidate.OptFields> optFields
+    ) {
+        long topK = pageable.getOffset() + pageable.getPageSize();
+        fidObj.setAnnotation(FBCandidateNumber.class, topK <= 0 ? FBCandidateNumber.ALL : new FBCandidateNumber((int) topK));
+        FormulaResult fr = instance.loadFormulaResult(fidObj, (Class<? extends DataAnnotation>[]) para.toArray(Class[]::new)).orElseThrow();
+        return fr.getAnnotation(FBCandidates.class).map(FBCandidates::getResults).map(l -> {
+            List<StructureCandidateExt> candidates = new ArrayList();
+
+            Iterator<Scored<CompoundCandidate>> it =
+                    l.stream().skip(pageable.getOffset()).limit(pageable.getPageSize()).iterator();
+
+            if (optFields.contains(StructureCandidate.OptFields.fingerprint)) {
+                Iterator<Fingerprint> fps = fr.getAnnotationOrThrow(FBCandidateFingerprints.class).getFingerprints()
+                        .stream().skip(pageable.getOffset()).limit(pageable.getPageSize()).iterator();
+
+                if (it.hasNext())//tophit
+                    candidates.add(StructureCandidateExt.of(it.next(), fps.next(),
+                            fr.getAnnotationOrNull(FormulaScoring.class), optFields, fidObj));
+
+                while (it.hasNext())
+                    candidates.add(StructureCandidateExt.of(it.next(), fps.next(),
+                            null, optFields, fidObj));
+            } else {
+                if (it.hasNext())//tophit
+                    candidates.add(StructureCandidateExt.of(it.next(), null,
+                            fr.getAnnotationOrNull(FormulaScoring.class), optFields, fidObj));
+
+                while (it.hasNext())
+                    candidates.add(StructureCandidateExt.of(it.next(), null,
+                            null, optFields, fidObj));
+            }
+            return candidates;
+        });
     }
 
     public static FormulaCandidate makeFormulaCandidate(Instance inst, FormulaResult res, EnumSet<FormulaCandidate.OptFields> optFields) {
@@ -445,7 +477,7 @@ public class SiriusProjectSpaceImpl implements Project {
                 .anyMatch(optFields::contains))
             classes.add(CanopusResult.class);
 
-        return (Class<? extends DataAnnotation>[]) classes.toArray();
+        return classes.toArray(Class[]::new);
     }
 
     public static Optional<AnnotatedSpectrum> asSimulatedIsotopePattern(Instance instance, FormulaResult fResult) {
@@ -469,8 +501,8 @@ public class SiriusProjectSpaceImpl implements Project {
                         // fingerid result
                         topHit.getAnnotation(FBCandidates.class).map(FBCandidates::getResults)
                                 .filter(l -> !l.isEmpty()).map(r -> r.get(0)).map(s ->
-                                        StructureCandidate.of(s, topHit.getAnnotationOrThrow(FormulaScoring.class),
-                                                EnumSet.of(StructureCandidate.OptFields.dbLinks, StructureCandidate.OptFields.pubmedIds, StructureCandidate.OptFields.refSpectraLinks)))
+                                        StructureCandidateExt.of(s, topHit.getAnnotationOrThrow(FormulaScoring.class),
+                                                EnumSet.of(StructureCandidate.OptFields.dbLinks, StructureCandidate.OptFields.pubmedIds, StructureCandidate.OptFields.refSpectraLinks), topHit.getId()))
                                 .ifPresent(cSum::setStructureAnnotation);
 
                         topHit.getAnnotation(CanopusResult.class).map(CompoundClasses::of).

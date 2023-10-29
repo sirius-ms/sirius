@@ -25,6 +25,7 @@ import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeatureQuality;
 import de.unijena.bioinf.ms.middleware.model.features.annotations.FormulaCandidate;
 import de.unijena.bioinf.ms.middleware.model.features.annotations.StructureCandidate;
+import de.unijena.bioinf.ms.middleware.model.features.annotations.StructureCandidateExt;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -100,9 +101,15 @@ public interface Project {
         return findStructureCandidatesByFeatureIdAndFormulaId(formulaId, alignedFeatureId, pageable, EnumSet.copyOf(List.of(optFields)));
     }
 
-    StructureCandidate findTopStructureCandidatesByFeatureId(String alignedFeatureId, EnumSet<StructureCandidate.OptFields> optFields);
+    Page<StructureCandidateExt> findStructureCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, EnumSet<StructureCandidate.OptFields> optFields);
 
-    default StructureCandidate findTopStructureCandidatesByFeatureId(String alignedFeatureId, StructureCandidate.OptFields... optFields) {
-        return findTopStructureCandidatesByFeatureId(alignedFeatureId, EnumSet.copyOf(List.of(optFields)));
+    default Page<StructureCandidateExt> findStructureCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, StructureCandidate.OptFields... optFields) {
+        return findStructureCandidatesByFeatureId(alignedFeatureId, pageable, EnumSet.copyOf(List.of(optFields)));
+    }
+
+    StructureCandidate findTopStructureCandidateByFeatureId(String alignedFeatureId, EnumSet<StructureCandidate.OptFields> optFields);
+
+    default StructureCandidate findTopStructureCandidateByFeatureId(String alignedFeatureId, StructureCandidate.OptFields... optFields) {
+        return findTopStructureCandidateByFeatureId(alignedFeatureId, EnumSet.copyOf(List.of(optFields)));
     }
 }

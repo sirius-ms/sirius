@@ -20,27 +20,20 @@
 
 package de.unijena.bioinf.ms.middleware.model.features.annotations;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
-import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
-import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.DBLink;
-import de.unijena.bioinf.chemdb.PubmedLinks;
-import de.unijena.bioinf.fingerid.ConfidenceScore;
-import de.unijena.bioinf.projectspace.FormulaScoring;
 import lombok.Getter;
 import lombok.Setter;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.EnumSet;
 import java.util.List;
 
 @Getter
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties({ "molecularFormula", "adduct"})
 public class StructureCandidate {
     public enum OptFields {fingerprint, dbLinks, refSpectraLinks, pubmedIds}
-
 
     protected String structureName;
     protected String smiles;
@@ -78,55 +71,4 @@ public class StructureCandidate {
 
 
     //todo add spectral library
-
-
-    public static StructureCandidate of(Scored<CompoundCandidate> can, FormulaScoring scorings, EnumSet<OptFields> optFields) {
-        return of(can, null, scorings, optFields);
-    }
-
-    public static StructureCandidate of(Scored<CompoundCandidate> can, @Nullable Fingerprint fp,
-                                        @Nullable FormulaScoring confidenceScoreProvider,
-                                        EnumSet<OptFields> optFields) {
-
-
-        final StructureCandidate sSum = new StructureCandidate();
-
-        // scores
-        sSum.setCsiScore(can.getScore());
-        sSum.setTanimotoSimilarity(can.getCandidate().getTanimoto());
-        if (confidenceScoreProvider != null)
-            confidenceScoreProvider.getAnnotation(ConfidenceScore.class).map(ConfidenceScore::score).ifPresent(sSum::setConfidenceScore);
-
-        //Structure information
-        //check for "null" strings since the database might not be perfectly curated
-        final String n = can.getCandidate().getName();
-        if (n != null && !n.isEmpty() && !n.equals("null"))
-            sSum.setStructureName(n);
-
-        sSum.setSmiles(can.getCandidate().getSmiles());
-        sSum.setInchiKey(can.getCandidate().getInchiKey2D());
-        sSum.setXlogP(can.getCandidate().getXlogp());
-
-        //meta data
-        PubmedLinks pubMedIds = can.getCandidate().getPubmedIDs();
-        if (pubMedIds != null) {
-            sSum.setNumOfPubMedIds(pubMedIds.getNumberOfPubmedIDs());
-            if (optFields.contains(OptFields.pubmedIds))
-                sSum.setPubmedIds(pubMedIds.getCopyOfPubmedIDs());
-        }
-
-        if (optFields.contains(OptFields.dbLinks))
-            sSum.setDbLinks(can.getCandidate().getLinks());
-
-        if (optFields.contains(OptFields.refSpectraLinks))
-            sSum.setRefSpectraLinks(List.of());
-            //todo add reference spectra links
-//            sSum.setDbLinks(can.getCandidate().getReferenceSpectraSplash());
-
-        //FP
-        if (fp != null && optFields.contains(OptFields.fingerprint))
-            sSum.setFingerprint(BinaryFingerprint.from(fp));
-
-        return sSum;
-    }
 }
