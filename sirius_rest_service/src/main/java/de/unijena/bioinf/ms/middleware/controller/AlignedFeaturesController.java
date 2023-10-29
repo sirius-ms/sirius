@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.middleware.controller;
 
+import de.unijena.bioinf.ms.middleware.model.SearchQueryType;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.features.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
@@ -56,12 +57,15 @@ public class AlignedFeaturesController {
      *
      * @param projectId project-space to read from.
      * @param optFields set of optional fields to be included
+     * @param searchQuery optional search query in specified format
+     * @param querySyntax query syntax used fpr searchQuery
      * @return AlignedFeatures with additional annotations and MS/MS data (if specified).
      */
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public Page<AlignedFeature> getAlignedFeatures(
-            @PathVariable String projectId,
-            @ParameterObject Pageable pageable,
+            @PathVariable String projectId, @ParameterObject Pageable pageable,
+            @RequestParam(required = false) String searchQuery,
+            @RequestParam(defaultValue = "LUCENE") SearchQueryType querySyntax,
             @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptFields> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId).findAlignedFeatures(pageable, optFields);
@@ -95,6 +99,28 @@ public class AlignedFeaturesController {
         projectsProvider.getProjectOrThrow(projectId).deleteAlignedFeaturesById(alignedFeatureId);
     }
 
+    /**
+     * List of StructureCandidates for the given 'alignedFeatureId' with minimal information.
+     * StructureCandidates can be enriched with molecular fingerprint, structure database links and pubmed ids.
+     *
+     * @param projectId      project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @param optFields      set of optional fields to be included
+     * @param searchQuery optional search query in specified format
+     * @param querySyntax query syntax used fpr searchQuery
+     * @return StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.
+     */
+    @GetMapping(value = "/{alignedFeatureId}/structures", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Page<StructureCandidateExt> getStructureCandidates(
+            @PathVariable String projectId, @PathVariable String alignedFeatureId,
+            @ParameterObject Pageable pageable,
+            @RequestParam(required = false) String searchQuery,
+            @RequestParam(defaultValue = "LUCENE") SearchQueryType querySyntax,
+            @RequestParam(defaultValue = "") EnumSet<StructureCandidate.OptFields> optFields
+    ) {
+        return projectsProvider.getProjectOrThrow(projectId)
+                .findStructureCandidatesByFeatureId(alignedFeatureId, pageable, optFields);
+    }
 
     /**
      * List of all FormulaResultContainers available for this feature with minimal information.
@@ -103,17 +129,19 @@ public class AlignedFeaturesController {
      * @param projectId      project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param optFields      set of optional fields to be included
+     * @param searchQuery optional search query in specified format
+     * @param querySyntax query syntax used fpr searchQuery
      * @return All FormulaCandidate of this feature with.
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas", produces = MediaType.APPLICATION_JSON_VALUE)
     public Page<FormulaCandidate> getFormulaCandidates(
-            @PathVariable String projectId, @PathVariable String alignedFeatureId,
-            @ParameterObject Pageable pageable,
+            @PathVariable String projectId, @PathVariable String alignedFeatureId, @ParameterObject Pageable pageable,
+            @RequestParam(required = false) String searchQuery,
+            @RequestParam(defaultValue = "LUCENE") SearchQueryType querySyntax,
             @RequestParam(defaultValue = "") EnumSet<FormulaCandidate.OptFields> optFields
     ) {
-        return projectsProvider.getProjectOrThrow(projectId).findFormulaCandidatesByFeatureId(alignedFeatureId, pageable, optFields);
-        //todo filtering
-        //todo ordering
+        return projectsProvider.getProjectOrThrow(projectId)
+                .findFormulaCandidatesByFeatureId(alignedFeatureId, pageable, optFields);
     }
 
     /**
@@ -132,9 +160,8 @@ public class AlignedFeaturesController {
             @RequestParam(defaultValue = "") EnumSet<FormulaCandidate.OptFields> optFields
 
     ) {
-        return projectsProvider.getProjectOrThrow(projectId).findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, optFields);
-        //todo filtering
-        //todo ordering
+        return projectsProvider.getProjectOrThrow(projectId)
+                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, optFields);
     }
 
     /**
@@ -145,19 +172,23 @@ public class AlignedFeaturesController {
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId      identifier of the requested formula result
      * @param optFields      set of optional fields to be included
+     * @param searchQuery optional search query in specified format
+     * @param querySyntax query syntax used fpr searchQuery
      * @return StructureCandidate of this formula candidate with specified optional fields.
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/structures", produces = MediaType.APPLICATION_JSON_VALUE)
     public Page<StructureCandidate> getStructureCandidatesByFormula(
             @PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId,
             @ParameterObject Pageable pageable,
+            @RequestParam(required = false) String searchQuery,
+            @RequestParam(defaultValue = "LUCENE") SearchQueryType querySyntax,
             @RequestParam(defaultValue = "") EnumSet<StructureCandidate.OptFields> optFields
     ) {
-        return projectsProvider.getProjectOrThrow(projectId).findStructureCandidatesByFeatureIdAndFormulaId(formulaId, alignedFeatureId, pageable, optFields);
+        return projectsProvider.getProjectOrThrow(projectId)
+                .findStructureCandidatesByFeatureIdAndFormulaId(formulaId, alignedFeatureId, pageable, optFields);
     }
 
 
-    //todo add order by parameter?
     //todo reanable if needed for SIRIUS GUI
 //    @Hidden
 //    @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/sirius-tree", produces = MediaType.APPLICATION_JSON_VALUE)

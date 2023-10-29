@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.middleware.controller;
 
+import de.unijena.bioinf.ms.middleware.model.SearchQueryType;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeatureQuality;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,7 +35,7 @@ import java.util.EnumSet;
 
 @RestController
 @RequestMapping(value = "/api/projects/{projectId}/aligned-features-quality")
-@Tag(name = "Data Quality API", description = "Access data quality information for various entities of a specified project-space.")
+@Tag(name = "[Experimental] Data Quality API", description = "Access data quality information for various entities of a specified project-space.")
 @ConditionalOnProperty("de.unijena.bioinf.ms.middleware.controller.quality.enabled")
 public class AlignedFeaturesQualityController {
 
@@ -51,12 +52,15 @@ public class AlignedFeaturesQualityController {
      *
      * @param projectId project-space to read from.
      * @param optFields set of optional fields to be included
+     * @param searchQuery optional search query in specified format
+     * @param querySyntax query syntax used fpr searchQuery
      * @return AlignedFeatureQuality quality information of the respective feature.
      */
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public Page<AlignedFeatureQuality> getAlignedFeaturesQuality(
-            @PathVariable String projectId,
-            @ParameterObject Pageable pageable,
+            @PathVariable String projectId, @ParameterObject Pageable pageable,
+            @RequestParam(required = false) String searchQuery,
+            @RequestParam(defaultValue = "LUCENE") SearchQueryType querySyntax,
             @RequestParam(defaultValue = "qualityFlags, lcmsFeatureQuality") EnumSet<AlignedFeatureQuality.OptFields> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId).findAlignedFeaturesQuality(pageable, optFields);

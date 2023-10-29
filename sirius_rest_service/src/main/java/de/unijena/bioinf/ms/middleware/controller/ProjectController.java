@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.middleware.controller;
 
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
+import de.unijena.bioinf.ms.middleware.model.SearchQueryType;
 import de.unijena.bioinf.ms.middleware.model.compute.JobId;
 import de.unijena.bioinf.ms.middleware.model.projects.ProjectId;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
@@ -58,10 +59,14 @@ public class ProjectController {
     }
 
     /**
-     * List all opened project spaces.
+     * List opened project spaces.
+     * @param searchQuery optional search query in specified format
+     * @param querySyntax query syntax used fpr searchQuery
      */
     @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<ProjectId> getProjectSpaces(@ParameterObject Pageable pageable) {
+    public Page<ProjectId> getProjectSpaces(@ParameterObject Pageable pageable,
+                                            @RequestParam(required = false) String searchQuery,
+                                            @RequestParam(defaultValue = "LUCENE") SearchQueryType querySyntax) {
         final List<ProjectId> all = projectsProvider.listAllProjectSpaces();
         return new PageImpl<>(
                 all.stream().skip(pageable.getOffset()).limit(pageable.getPageSize()).toList(), pageable, all.size()
