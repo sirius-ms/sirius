@@ -99,6 +99,28 @@ public class AlignedFeaturesController {
         projectsProvider.getProjectOrThrow(projectId).deleteAlignedFeaturesById(alignedFeatureId);
     }
 
+    /**
+     * List of StructureCandidates for the given 'alignedFeatureId' with minimal information.
+     * StructureCandidates can be enriched with molecular fingerprint, structure database links and pubmed ids.
+     *
+     * @param projectId      project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @param optFields      set of optional fields to be included
+     * @param searchQuery optional search query in specified format
+     * @param querySyntax query syntax used fpr searchQuery
+     * @return StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.
+     */
+    @GetMapping(value = "/{alignedFeatureId}/structures", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Page<StructureCandidateExt> getStructureCandidates(
+            @PathVariable String projectId, @PathVariable String alignedFeatureId,
+            @ParameterObject Pageable pageable,
+            @RequestParam(required = false) String searchQuery,
+            @RequestParam(defaultValue = "LUCENE") SearchQueryType querySyntax,
+            @RequestParam(defaultValue = "") EnumSet<StructureCandidate.OptFields> optFields
+    ) {
+        return projectsProvider.getProjectOrThrow(projectId)
+                .findStructureCandidatesByFeatureId(alignedFeatureId, pageable, optFields);
+    }
 
     /**
      * List of all FormulaResultContainers available for this feature with minimal information.
