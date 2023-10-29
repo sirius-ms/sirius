@@ -34,7 +34,7 @@ import java.util.List;
 @Getter
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class JobId {
+public class Job {
     public enum OptFields {command, progress, affectedIds}
 
     /**
