@@ -49,9 +49,9 @@ import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
 import de.unijena.bioinf.ms.gui.utils.NameFilterRangeSlider;
 import de.unijena.bioinf.ms.gui.utils.WrapLayout;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import de.unijena.bioinf.projectspace.SpectralSearchResult;
 import de.unijena.bioinf.projectspace.SpectralSearchResultBean;
 import de.unijena.bioinf.spectraldb.SpectralLibrary;
-import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.LoggerFactory;
 
@@ -62,7 +62,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;

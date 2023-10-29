@@ -27,12 +27,10 @@ import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchSubtoolJob;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.spectraldb.SpectralLibrary;
-import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
-import java.nio.file.Path;
 import java.util.*;
 
 public class SpectralSearchResultBean {
