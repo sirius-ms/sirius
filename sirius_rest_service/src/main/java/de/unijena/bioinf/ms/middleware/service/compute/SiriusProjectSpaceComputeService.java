@@ -20,11 +20,6 @@
 
 package de.unijena.bioinf.ms.middleware.service.compute;
 
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.SpectrumFileSource;
-import de.unijena.bioinf.babelms.CloseableIterator;
-import de.unijena.bioinf.babelms.GenericParser;
-import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobStateEvent;
 import de.unijena.bioinf.ms.frontend.BackgroundRuns;
@@ -33,7 +28,6 @@ import de.unijena.bioinf.ms.middleware.model.compute.ImportLocalFilesSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.ImportStringSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.compute.JobSubmission;
-import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceImpl;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.Instance;
@@ -48,8 +42,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
 import java.io.StringReader;
 import java.nio.file.Path;
 import java.util.*;
@@ -145,33 +137,10 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
     private <I extends Instance, P extends ProjectSpaceManager<I>> Job createAndSubmitImportJob(
             P psm, ImportStringSubmission jobSubmission,
             @NotNull EnumSet<Job.OptFields> optFields) {
-
-        return extractJobId(BackgroundRuns.runJob(null, psm, (instances, project) -> {
-            List<AlignedFeature> ids = new ArrayList<>();
-            final @Nullable String sourceName = jobSubmission.getSourceName();
-            final String ext = jobSubmission.getFormat().getExtension();
-
-            GenericParser<Ms2Experiment> parser = new MsExperimentParser()
-                    .getParserByExt(ext);
-
-
-            try (BufferedReader bodyStream = new BufferedReader(new StringReader(jobSubmission.getData()))) {
-                try (CloseableIterator<Ms2Experiment> it = parser.parseIterator(bodyStream, null)) {
-                    while (it.hasNext()) {
-                        Ms2Experiment next = it.next();
-                        if (sourceName != null)     //todo import handling needs to be improved ->  this naming hassle is ugly
-                            next.setAnnotation(SpectrumFileSource.class,
-                                    new SpectrumFileSource(
-                                            new File("./" + (sourceName.endsWith(ext) ? sourceName : sourceName + "." + ext.toLowerCase())).toURI()));
-
-                        @NotNull Instance inst = psm.newCompoundWithUniqueId(next);
-                        ids.add(SiriusProjectSpaceImpl.asAlignedFeature(inst.getID())); //todo how to add features to job update
-                    }
-                }
-            } catch (IOException e) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()); //todo io error usually means bad input data at this stage
-            }
-        }), optFields);
+        final @Nullable String sourceName = jobSubmission.getSourceName();
+        final String ext = jobSubmission.getFormat().getExtension();
+        return extractJobId(BackgroundRuns.runImport(
+                psm, () -> new BufferedReader(new StringReader(jobSubmission.getData())), sourceName, ext), optFields);
     }
 
 
