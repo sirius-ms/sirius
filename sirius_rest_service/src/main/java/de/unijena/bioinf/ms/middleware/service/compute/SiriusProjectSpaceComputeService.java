@@ -58,16 +58,31 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SiriusProjectSpaceComputeService extends AbstractComputeService<SiriusProjectSpaceImpl> {
 
-    private <I extends Instance, P extends ProjectSpaceManager<I>> JobId createAndSubmitJob(P psm, JobSubmission jobSubmission, @NotNull EnumSet<JobId.OptFields> optFields) {
+    private <I extends Instance, P extends ProjectSpaceManager<I>> JobId createAndSubmitJob(
+            P psm, JobSubmission jobSubmission, @NotNull EnumSet<JobId.OptFields> optFields
+    ) {
         List<CompoundContainerId> compounds = null;
 
-        if (jobSubmission.getCompoundIds() != null && !jobSubmission.getCompoundIds().isEmpty()) {
-            compounds = new ArrayList<>(jobSubmission.getCompoundIds().size());
-            for (String cid : jobSubmission.getCompoundIds()) {
-                compounds.add(psm.projectSpace().findCompound(cid)
-                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NO_CONTENT,
-                                "Compound with id '" + cid + "' does not exist!'. No job has been started!")));
+        if (jobSubmission.getCompoundIds() == null || jobSubmission.getCompoundIds().isEmpty()) {
+            if (jobSubmission.getAlignedFeatureIds() != null && !jobSubmission.getAlignedFeatureIds().isEmpty()) {
+                compounds = new ArrayList<>();
+                for (String cid : jobSubmission.getAlignedFeatureIds()) {
+                    compounds.add(psm.projectSpace().findCompound(cid)
+                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NO_CONTENT,
+                                    "Compound with id '" + cid + "' does not exist!'. No job has been started!")));
+                }
             }
+        } else {
+            compounds = new ArrayList<>();
+            Set<String> cids = new HashSet<>(jobSubmission.getCompoundIds());
+            Set<String> fids = jobSubmission.getAlignedFeatureIds() != null
+                    ? new HashSet<>(jobSubmission.getAlignedFeatureIds())
+                    : Set.of();
+
+            psm.projectSpace()
+                    .filteredIterator(id -> id.getGroupId().map(cids::contains).orElse(false)
+                            || fids.contains(id.getDirectoryName()))
+                    .forEachRemaining(compounds::add);
         }
 
         try {
@@ -121,7 +136,9 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
                         || p.getFileName().toString().toLowerCase().endsWith("mzxml"));
         System.out.println("Alignment: " + alignLCMSRuns);
 
-        return createAndSubmitJob(psm, alignLCMSRuns ? List.of("lcms-align") : List.of("project-space", "--keep-open"),
+        return createAndSubmitJob(psm, alignLCMSRuns
+                        ? List.of("lcms-align")
+                        : List.of("project-space", "--keep-open"),
                 null, inputFiles, optFields);
     }
 
@@ -158,7 +175,8 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
     }
 
 
-    private JobId deleteJob(@Nullable ProjectSpaceManager<?> psm, String jobId, boolean cancelIfRunning, boolean awaitDeletion, @NotNull EnumSet<JobId.OptFields> optFields) {
+    private JobId deleteJob(@Nullable ProjectSpaceManager<?> psm, String jobId, boolean cancelIfRunning,
+                            boolean awaitDeletion, @NotNull EnumSet<JobId.OptFields> optFields) {
         BackgroundRuns.BackgroundRunJob<?, ?> j = getJob(psm, jobId);
         if (j.isFinished()) {
             BackgroundRuns.removeRun(j.getRunId());
