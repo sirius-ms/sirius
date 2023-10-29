@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.projectspace;
 
+import de.unijena.bioinf.ChemistryBase.chem.FeatureGroup;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
@@ -39,9 +40,15 @@ public class MsExperimentSerializer implements ComponentSerializer<CompoundConta
 
         final Ms2Experiment exp = reader.textFile(SiriusLocations.MS2_EXPERIMENT, (b) -> new JenaMsParser().parse(b, Path.of(id.getDirectoryName(), SiriusLocations.MS2_EXPERIMENT).toUri()));
 
-        if (exp != null)
+        if (exp != null) {
             id.getDetectedAdducts().ifPresent(pa -> exp.setAnnotation(DetectedAdducts.class, pa));
-
+            if (id.getGroupId().isPresent() || id.getGroupRt().isPresent()) {
+                exp.setAnnotation(FeatureGroup.class, FeatureGroup.builder()
+                        .groupId(id.getGroupId().orElse(null))
+                        .groupRt(id.getGroupRt().orElse(null))
+                        .build());
+            }
+        }
         return exp;
     }
 
@@ -55,6 +62,10 @@ public class MsExperimentSerializer implements ComponentSerializer<CompoundConta
         id.setIonType(experiment.getPrecursorIonType());
         id.setRt(experiment.getAnnotationOrNull(RetentionTime.class));
         id.setDetectedAdducts(experiment.getAnnotationOrNull(DetectedAdducts.class));
+        experiment.getAnnotation(FeatureGroup.class).ifPresent(fg -> {
+            id.setGroupRt(fg.getGroupRt());
+            id.setGroupId(fg.getGroupId());
+        });
 
         writer.keyValues(SiriusLocations.COMPOUND_INFO, id.asKeyValuePairs());
     }
