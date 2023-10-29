@@ -131,7 +131,6 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
 
     @Override
     public void run(String... args) {
-        System.out.println("Start Middleware workflow with preprocessing");
         RUN.compute();
     }
 
