@@ -28,8 +28,8 @@ import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoade
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.projectspace.CompoundContainer;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.spectraldb.SpectralAlignmentType;
-import de.unijena.bioinf.spectraldb.SpectralSearchResult;
+import de.unijena.bioinf.projectspace.SpectralSearchResult;
+import de.unijena.bionf.spectral_alignment.SpectralAlignmentType;
 import picocli.CommandLine;
 
 import java.util.List;
