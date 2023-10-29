@@ -5,6 +5,12 @@ dependencies {
     implementation group: 'org.jfree', name: 'jfreechart', version: '1.5.2'
     implementation project(path: ':combinatorial_fragmenter')
 
+    implementation project(path: ':fragmentation_tree')
+    api project(path: ":fragmentation_tree:ft_cbc")
+    api project(path: ":fragmentation_tree:ft_cplex")
+    api project(path: ":fragmentation_tree:ft_gurobi")
+    api project(path: ":fragmentation_tree:ft_glpk")
+
     testImplementation project(':chemistry_base')
     testImplementation "org.openscience.cdk:cdk-bundle:$cdk_version"
 
