@@ -38,9 +38,6 @@ public class SpectralMatchMasterJJob extends BasicMasterJJob<List<SpectralSimila
     @Getter
     private List<Pair<CosineQuerySpectrum, CosineQuerySpectrum>> queries;
 
-    /**
-     * By default, clear references to input values when they are no longer needed
-     */
     @Setter
     private boolean clearInput;
 
@@ -48,7 +45,7 @@ public class SpectralMatchMasterJJob extends BasicMasterJJob<List<SpectralSimila
         super(JobType.CPU);
         this.queryUtils = queryUtils;
         this.queries = queries;
-        this.clearInput = true;
+        this.clearInput = true;  // by default, clear references to input values when they are no longer needed
     }
 
     @Override
