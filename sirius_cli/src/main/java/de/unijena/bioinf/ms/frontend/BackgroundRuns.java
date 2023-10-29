@@ -25,24 +25,25 @@ import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.ms.frontend.subtools.ComputeRootOption;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.ms.frontend.subtools.projectspace.ImportFromMemoryWorkflow;
 import de.unijena.bioinf.ms.frontend.subtools.projectspace.ProjectSpaceWorkflow;
 import de.unijena.bioinf.ms.frontend.workflow.*;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.projectspace.CompoundContainerId;
-import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.projectspace.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 /**
  * Manage and execute command line (toolchain) runs in the background as if you would have started it via the CLI.
@@ -164,6 +165,14 @@ public final class BackgroundRuns {
         );
     }
 
+    public static <P extends ProjectSpaceManager<I>, I extends Instance> BackgroundRunJob<P, I> runImport(
+            @NotNull P project, Supplier<BufferedReader> data, @Nullable String source, @NotNull String ext
+    ) {
+        Workflow computation = new ImportFromMemoryWorkflow(project, data, source, ext);
+        return SiriusJobs.getGlobalJobManager().submitJob(
+                new BackgroundRunJob<>(computation, project, (Iterable<I>) null, RUN_COUNTER.incrementAndGet(), null));
+    }
+
     private static <P extends ProjectSpaceManager<I>, I extends Instance> Workflow makeWorkflow(
             List<String> command, ComputeRootOption<P, I> rootOptions) throws IOException {
         final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader(PropertyManager.DEFAULTS.newIndependentInstance("BATCH_COMPUTE"));
@@ -278,6 +287,10 @@ public final class BackgroundRuns {
                 } else if (computation instanceof ProjectSpaceWorkflow) {
                     logInfo("Collecting imported compounds...");
                     instanceIds = ((ProjectSpaceWorkflow) computation).getImportedCompounds();
+                    logInfo("Imported compounds collected...");
+                } else if (computation instanceof ImportFromMemoryWorkflow) {
+                    logInfo("Collecting imported compounds...");
+                    instanceIds = ((ImportFromMemoryWorkflow) computation).getImportedCompounds();
                     logInfo("Imported compounds collected...");
                 }
                 logInfo("Freeing up memory...");

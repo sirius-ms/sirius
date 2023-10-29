@@ -20,20 +20,14 @@
 
 package de.unijena.bioinf.ms.middleware.service.compute;
 
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.SpectrumFileSource;
-import de.unijena.bioinf.babelms.CloseableIterator;
-import de.unijena.bioinf.babelms.GenericParser;
-import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobStateEvent;
 import de.unijena.bioinf.ms.frontend.BackgroundRuns;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.middleware.model.compute.ImportLocalFilesSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.ImportStringSubmission;
-import de.unijena.bioinf.ms.middleware.model.compute.JobId;
+import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.compute.JobSubmission;
-import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceImpl;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.Instance;
@@ -48,8 +42,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
 import java.io.StringReader;
 import java.nio.file.Path;
 import java.util.*;
@@ -58,16 +50,31 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SiriusProjectSpaceComputeService extends AbstractComputeService<SiriusProjectSpaceImpl> {
 
-    private <I extends Instance, P extends ProjectSpaceManager<I>> JobId createAndSubmitJob(P psm, JobSubmission jobSubmission, @NotNull EnumSet<JobId.OptFields> optFields) {
+    private <I extends Instance, P extends ProjectSpaceManager<I>> Job createAndSubmitJob(
+            P psm, JobSubmission jobSubmission, @NotNull EnumSet<Job.OptFields> optFields
+    ) {
         List<CompoundContainerId> compounds = null;
 
-        if (jobSubmission.getCompoundIds() != null && !jobSubmission.getCompoundIds().isEmpty()) {
-            compounds = new ArrayList<>(jobSubmission.getCompoundIds().size());
-            for (String cid : jobSubmission.getCompoundIds()) {
-                compounds.add(psm.projectSpace().findCompound(cid)
-                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NO_CONTENT,
-                                "Compound with id '" + cid + "' does not exist!'. No job has been started!")));
+        if (jobSubmission.getCompoundIds() == null || jobSubmission.getCompoundIds().isEmpty()) {
+            if (jobSubmission.getAlignedFeatureIds() != null && !jobSubmission.getAlignedFeatureIds().isEmpty()) {
+                compounds = new ArrayList<>();
+                for (String cid : jobSubmission.getAlignedFeatureIds()) {
+                    compounds.add(psm.projectSpace().findCompound(cid)
+                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NO_CONTENT,
+                                    "Compound with id '" + cid + "' does not exist!'. No job has been started!")));
+                }
             }
+        } else {
+            compounds = new ArrayList<>();
+            Set<String> cids = new HashSet<>(jobSubmission.getCompoundIds());
+            Set<String> fids = jobSubmission.getAlignedFeatureIds() != null
+                    ? new HashSet<>(jobSubmission.getAlignedFeatureIds())
+                    : Set.of();
+
+            psm.projectSpace()
+                    .filteredIterator(id -> id.getGroupId().map(cids::contains).orElse(false)
+                            || fids.contains(id.getDirectoryName()))
+                    .forEachRemaining(compounds::add);
         }
 
         try {
@@ -80,12 +87,12 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
         }
     }
 
-    private <I extends Instance, P extends ProjectSpaceManager<I>> JobId createAndSubmitJob(
+    private <I extends Instance, P extends ProjectSpaceManager<I>> Job createAndSubmitJob(
             P psm,
             List<String> commandList,
             @Nullable Iterable<String> featureAlignId,
             @Nullable InputFilesOptions toImport,
-            @NotNull EnumSet<JobId.OptFields> optFields
+            @NotNull EnumSet<Job.OptFields> optFields
     ) {
         try {
 
@@ -105,9 +112,9 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
         }
     }
 
-    private <I extends Instance, P extends ProjectSpaceManager<I>> JobId createAndSubmitImportJob(
+    private <I extends Instance, P extends ProjectSpaceManager<I>> Job createAndSubmitImportJob(
             P psm, ImportLocalFilesSubmission jobSubmission,
-            @NotNull EnumSet<JobId.OptFields> optFields
+            @NotNull EnumSet<Job.OptFields> optFields
     ) {
         InputFilesOptions inputFiles = new InputFilesOptions();
         inputFiles.msInput = new InputFilesOptions.MsInput();
@@ -121,44 +128,24 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
                         || p.getFileName().toString().toLowerCase().endsWith("mzxml"));
         System.out.println("Alignment: " + alignLCMSRuns);
 
-        return createAndSubmitJob(psm, alignLCMSRuns ? List.of("lcms-align") : List.of("project-space", "--keep-open"),
+        return createAndSubmitJob(psm, alignLCMSRuns
+                        ? List.of("lcms-align")
+                        : List.of("project-space", "--keep-open"),
                 null, inputFiles, optFields);
     }
 
-    private <I extends Instance, P extends ProjectSpaceManager<I>> JobId createAndSubmitImportJob(
+    private <I extends Instance, P extends ProjectSpaceManager<I>> Job createAndSubmitImportJob(
             P psm, ImportStringSubmission jobSubmission,
-            @NotNull EnumSet<JobId.OptFields> optFields) {
-
-        return extractJobId(BackgroundRuns.runJob(null, psm, (instances, project) -> {
-            List<AlignedFeature> ids = new ArrayList<>();
-            final @Nullable String sourceName = jobSubmission.getSourceName();
-            final String ext = jobSubmission.getFormat().getExtension();
-
-            GenericParser<Ms2Experiment> parser = new MsExperimentParser()
-                    .getParserByExt(ext);
-
-
-            try (BufferedReader bodyStream = new BufferedReader(new StringReader(jobSubmission.getData()))) {
-                try (CloseableIterator<Ms2Experiment> it = parser.parseIterator(bodyStream, null)) {
-                    while (it.hasNext()) {
-                        Ms2Experiment next = it.next();
-                        if (sourceName != null)     //todo import handling needs to be improved ->  this naming hassle is ugly
-                            next.setAnnotation(SpectrumFileSource.class,
-                                    new SpectrumFileSource(
-                                            new File("./" + (sourceName.endsWith(ext) ? sourceName : sourceName + "." + ext.toLowerCase())).toURI()));
-
-                        @NotNull Instance inst = psm.newCompoundWithUniqueId(next);
-                        ids.add(SiriusProjectSpaceImpl.asAlignedFeature(inst.getID())); //todo how to add features to job update
-                    }
-                }
-            } catch (IOException e) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()); //todo io error usually means bad input data at this stage
-            }
-        }), optFields);
+            @NotNull EnumSet<Job.OptFields> optFields) {
+        final @Nullable String sourceName = jobSubmission.getSourceName();
+        final String ext = jobSubmission.getFormat().getExtension();
+        return extractJobId(BackgroundRuns.runImport(
+                psm, () -> new BufferedReader(new StringReader(jobSubmission.getData())), sourceName, ext), optFields);
     }
 
 
-    private JobId deleteJob(@Nullable ProjectSpaceManager<?> psm, String jobId, boolean cancelIfRunning, boolean awaitDeletion, @NotNull EnumSet<JobId.OptFields> optFields) {
+    private Job deleteJob(@Nullable ProjectSpaceManager<?> psm, String jobId, boolean cancelIfRunning,
+                          boolean awaitDeletion, @NotNull EnumSet<Job.OptFields> optFields) {
         BackgroundRuns.BackgroundRunJob<?, ?> j = getJob(psm, jobId);
         if (j.isFinished()) {
             BackgroundRuns.removeRun(j.getRunId());
@@ -208,33 +195,33 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
     }
 
     @Override
-    public JobId createAndSubmitJob(SiriusProjectSpaceImpl psm, JobSubmission jobSubmission,
-                                    @NotNull EnumSet<JobId.OptFields> optFields) {
+    public Job createAndSubmitJob(SiriusProjectSpaceImpl psm, JobSubmission jobSubmission,
+                                  @NotNull EnumSet<Job.OptFields> optFields) {
         return createAndSubmitJob(psm.getProjectSpaceManager(), jobSubmission, optFields);
     }
 
     @Override
-    public JobId createAndSubmitJob(SiriusProjectSpaceImpl psm, List<String> commandList,
-                                    @Nullable Iterable<String> alignedFeatureIds,
-                                    @Nullable InputFilesOptions toImport,
-                                    @NotNull EnumSet<JobId.OptFields> optFields) {
+    public Job createAndSubmitJob(SiriusProjectSpaceImpl psm, List<String> commandList,
+                                  @Nullable Iterable<String> alignedFeatureIds,
+                                  @Nullable InputFilesOptions toImport,
+                                  @NotNull EnumSet<Job.OptFields> optFields) {
         return createAndSubmitJob(psm.getProjectSpaceManager(), commandList, alignedFeatureIds, toImport, optFields);
     }
 
     @Override
-    public JobId createAndSubmitImportJob(SiriusProjectSpaceImpl psm, ImportLocalFilesSubmission jobSubmission,
-                                          @NotNull EnumSet<JobId.OptFields> optFields) {
+    public Job createAndSubmitImportJob(SiriusProjectSpaceImpl psm, ImportLocalFilesSubmission jobSubmission,
+                                        @NotNull EnumSet<Job.OptFields> optFields) {
         return createAndSubmitImportJob(psm.getProjectSpaceManager(), jobSubmission, optFields);
     }
 
     @Override
-    public JobId createAndSubmitImportJob(SiriusProjectSpaceImpl psm, ImportStringSubmission jobSubmission,
-                                          @NotNull EnumSet<JobId.OptFields> optFields) {
+    public Job createAndSubmitImportJob(SiriusProjectSpaceImpl psm, ImportStringSubmission jobSubmission,
+                                        @NotNull EnumSet<Job.OptFields> optFields) {
         return createAndSubmitImportJob(psm.getProjectSpaceManager(), jobSubmission, optFields);
     }
 
     @Override
-    public JobId deleteJob(@Nullable SiriusProjectSpaceImpl psm, String jobId, boolean cancelIfRunning, boolean awaitDeletion, @NotNull EnumSet<JobId.OptFields> optFields) {
+    public Job deleteJob(@Nullable SiriusProjectSpaceImpl psm, String jobId, boolean cancelIfRunning, boolean awaitDeletion, @NotNull EnumSet<Job.OptFields> optFields) {
         return deleteJob(psm.getProjectSpaceManager(), jobId, cancelIfRunning, awaitDeletion, optFields);
     }
 
@@ -243,20 +230,20 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
     }
 
     @Override
-    public JobId getJob(@Nullable SiriusProjectSpaceImpl psm, String jobId, @NotNull EnumSet<JobId.OptFields> optFields) {
+    public Job getJob(@Nullable SiriusProjectSpaceImpl psm, String jobId, @NotNull EnumSet<Job.OptFields> optFields) {
         return getJob(psm.getProjectSpaceManager(), jobId, optFields);
     }
 
-    public JobId getJob(@Nullable ProjectSpaceManager<?> psm, String jobId, @NotNull EnumSet<JobId.OptFields> optFields) {
+    public Job getJob(@Nullable ProjectSpaceManager<?> psm, String jobId, @NotNull EnumSet<Job.OptFields> optFields) {
         return extractJobId(getJob(psm, jobId), optFields);
     }
 
     @Override
-    public Page<JobId> getJobs(@Nullable SiriusProjectSpaceImpl psm, @NotNull Pageable pageable, @NotNull EnumSet<JobId.OptFields> optFields) {
+    public Page<Job> getJobs(@Nullable SiriusProjectSpaceImpl psm, @NotNull Pageable pageable, @NotNull EnumSet<Job.OptFields> optFields) {
         return getJobs(psm.getProjectSpaceManager(), pageable, optFields);
     }
 
-    public Page<JobId> getJobs(@Nullable ProjectSpaceManager<?> psm, @NotNull Pageable pageable, @NotNull EnumSet<JobId.OptFields> optFields) {
+    public Page<Job> getJobs(@Nullable ProjectSpaceManager<?> psm, @NotNull Pageable pageable, @NotNull EnumSet<Job.OptFields> optFields) {
         long size = BackgroundRuns.getActiveRunIdMap().values().stream()
                 .filter(j -> psm == null || psm.equals(j.getProject())).count();
         return new PageImpl<>(BackgroundRuns.getActiveRunIdMap().values().stream()

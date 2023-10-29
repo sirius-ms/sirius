@@ -22,7 +22,7 @@ package de.unijena.bioinf.ms.middleware.controller;
 
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.middleware.model.SearchQueryType;
-import de.unijena.bioinf.ms.middleware.model.compute.JobId;
+import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.projects.ProjectId;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
@@ -120,12 +120,12 @@ public class ProjectController {
         ProjectId pid = projectsProvider.createProjectSpace(projectId, Path.of(pathToProject));
         Project project = projectsProvider.getProjectOrThrow(projectId);
         if (inputFiles != null) {
-            JobId id = computeContext.createAndSubmitJob(project, List.of("project-space", "--keep-open"),
-                    null, inputFiles, EnumSet.allOf(JobId.OptFields.class));
+            Job id = computeContext.createAndSubmitJob(project, List.of("project-space", "--keep-open"),
+                    null, inputFiles, EnumSet.allOf(Job.OptFields.class));
             if (awaitImport) { //todo maybe separate endpoint for non waiting.
                 try {
                     computeContext.getJJob(id.getId()).awaitResult();
-                    computeContext.deleteJob(id.getId(), false, true, EnumSet.noneOf(JobId.OptFields.class));
+                    computeContext.deleteJob(id.getId(), false, true, EnumSet.noneOf(Job.OptFields.class));
                 } catch (ExecutionException e) {
                     throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error when waiting for import jobs '" + id.getId() + "'.", e);
                 }

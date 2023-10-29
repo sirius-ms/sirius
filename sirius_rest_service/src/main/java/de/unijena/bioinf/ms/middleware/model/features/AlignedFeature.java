@@ -79,5 +79,9 @@ public class AlignedFeature {
     protected Annotations topAnnotations;
     protected MsData msData;
 
-    protected boolean computing = false;
+    /**
+     * Wirte lock for this feature. If the feature is locked no write operations are possible.
+     * True if any computation is modifying this feature or its results
+     */
+    protected boolean computing;
 }

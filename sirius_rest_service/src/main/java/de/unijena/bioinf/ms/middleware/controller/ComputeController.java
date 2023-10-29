@@ -24,10 +24,9 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.frontend.core.Workspace;
-import de.unijena.bioinf.ms.middleware.SiriusContext;
 import de.unijena.bioinf.ms.middleware.model.compute.ImportLocalFilesSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.ImportStringSubmission;
-import de.unijena.bioinf.ms.middleware.model.compute.JobId;
+import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.compute.JobSubmission;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
@@ -74,9 +73,9 @@ public class ComputeController {
 
     @GetMapping(value = "/projects/{projectId}/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public Page<JobId> getJobs(@PathVariable String projectId,
-                               @ParameterObject Pageable pageable,
-                               @RequestParam(defaultValue = "") EnumSet<JobId.OptFields> optFields
+    public Page<Job> getJobs(@PathVariable String projectId,
+                             @ParameterObject Pageable pageable,
+                             @RequestParam(defaultValue = "") EnumSet<Job.OptFields> optFields
     ) {
         return computeService.getJobs(projectsProvider.getProjectOrThrow(projectId), pageable, optFields);
     }
@@ -90,9 +89,9 @@ public class ComputeController {
      */
     @GetMapping(value = "/projects/{projectId}/jobs/{jobId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public JobId getJob(@PathVariable String projectId, @PathVariable String jobId,
-                        @ParameterObject Pageable pageable,
-                        @RequestParam(defaultValue = "progress") EnumSet<JobId.OptFields> optFields
+    public Job getJob(@PathVariable String projectId, @PathVariable String jobId,
+                      @ParameterObject Pageable pageable,
+                      @RequestParam(defaultValue = "progress") EnumSet<Job.OptFields> optFields
     ) {
         return computeService.getJob(projectsProvider.getProjectOrThrow(projectId), jobId, optFields);
     }
@@ -106,8 +105,8 @@ public class ComputeController {
      */
     @PostMapping(value = "/projects/{projectId}/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public JobId startJob(@PathVariable String projectId, @RequestBody JobSubmission jobSubmission,
-                          @RequestParam(defaultValue = "command, progress") EnumSet<JobId.OptFields> optFields
+    public Job startJob(@PathVariable String projectId, @RequestBody JobSubmission jobSubmission,
+                        @RequestParam(defaultValue = "command, progress") EnumSet<Job.OptFields> optFields
     ) {
         return computeService.createAndSubmitJob(projectsProvider.getProjectOrThrow(projectId), jobSubmission, optFields);
     }
@@ -124,9 +123,9 @@ public class ComputeController {
      */
     @PostMapping(value = "/projects/{projectId}/jobs/from-config", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public JobId startJobFromConfig(@PathVariable String projectId, @RequestParam String jobConfigName, @RequestBody List<String> compoundIds,
-                                    @RequestParam(required = false) @Nullable Boolean recompute,
-                                    @RequestParam(defaultValue = "command, progress") EnumSet<JobId.OptFields> optFields
+    public Job startJobFromConfig(@PathVariable String projectId, @RequestParam String jobConfigName, @RequestBody List<String> compoundIds,
+                                  @RequestParam(required = false) @Nullable Boolean recompute,
+                                  @RequestParam(defaultValue = "command, progress") EnumSet<Job.OptFields> optFields
     ) {
         final JobSubmission js = getJobConfig(jobConfigName, true);
         js.setCompoundIds(compoundIds);
@@ -148,8 +147,8 @@ public class ComputeController {
      * @return JobId of background job that imports given run/compounds/features.
      */
     @PostMapping(value = "/{projectId}/jobs/import-from-local-path", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public JobId startImportFromPathJob(@PathVariable String projectId, @RequestBody ImportLocalFilesSubmission jobSubmission,
-                                        @RequestParam(defaultValue = "command, progress") EnumSet<JobId.OptFields> optFields
+    public Job startImportFromPathJob(@PathVariable String projectId, @RequestBody ImportLocalFilesSubmission jobSubmission,
+                                      @RequestParam(defaultValue = "command, progress") EnumSet<Job.OptFields> optFields
     ) throws IOException {
         Project p = projectsProvider.getProjectOrThrow(projectId);
         return computeService.createAndSubmitImportJob(p, jobSubmission, optFields);
@@ -165,8 +164,8 @@ public class ComputeController {
      * @return CompoundIds of the imported run/compounds/feature.
      */
     @PostMapping(value = "/{projectId}/jobs/import-from-string", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public JobId startImportFromStringJob(@PathVariable String projectId, @RequestBody ImportStringSubmission jobSubmission,
-                                          @RequestParam(defaultValue = "progress") EnumSet<JobId.OptFields> optFields
+    public Job startImportFromStringJob(@PathVariable String projectId, @RequestBody ImportStringSubmission jobSubmission,
+                                        @RequestParam(defaultValue = "progress") EnumSet<Job.OptFields> optFields
     ) throws IOException {
         Project p = projectsProvider.getProjectOrThrow(projectId);
         return computeService.createAndSubmitImportJob(p, jobSubmission, optFields);
@@ -189,7 +188,7 @@ public class ComputeController {
                           @RequestParam(required = false, defaultValue = "true") boolean cancelIfRunning,
                           @RequestParam(required = false, defaultValue = "true") boolean awaitDeletion) {
         computeService.deleteJob(projectsProvider.getProjectOrThrow(projectId), jobId, cancelIfRunning, awaitDeletion,
-                EnumSet.noneOf(JobId.OptFields.class));
+                EnumSet.noneOf(Job.OptFields.class));
     }
 
     /**
