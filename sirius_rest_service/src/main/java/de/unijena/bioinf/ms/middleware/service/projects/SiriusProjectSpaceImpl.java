@@ -483,8 +483,8 @@ public class SiriusProjectSpaceImpl implements Project {
         formulaResult.getAnnotation(FTree.class).
                 ifPresent(fTree -> {
                     final FTreeMetricsHelper metrHelp = new FTreeMetricsHelper(fTree);
-                    frs.setNumOfexplainedPeaks(metrHelp.getNumOfExplainedPeaks());
-                    frs.setNumOfexplainablePeaks(metrHelp.getNumberOfExplainablePeaks());
+                    frs.setNumOfExplainedPeaks(metrHelp.getNumOfExplainedPeaks());
+                    frs.setNumOfExplainablePeaks(metrHelp.getNumberOfExplainablePeaks());
                     frs.setTotalExplainedIntensity(metrHelp.getExplainedIntensityRatio());
                     frs.setMedianMassDeviation(metrHelp.getMedianMassDeviation());
                 });
