@@ -109,27 +109,27 @@ public class JobSubmission {
      * Parameter Object for molecular formula identification tool (CLI-Tool: formula, sirius).
      * If NULL the tool will not be executed.
      */
-    Sirius formulaIdParas;
+    Sirius formulaIdParams;
     /**
      * Parameter Object for network  based molecular formula re-ranking (CLI-Tool: zodiac).
      * If NULL the tool will not be executed.
      */
-    Zodiac zodiacParas;
+    Zodiac zodiacParams;
     /**
      * Parameter Object for Fingerprint prediction with CSI:FingerID (CLI-Tool: fingerint).
      * If NULL the tool will not be executed.
      */
-    FingerprintPrediction fingerprintPredictionParas;
+    FingerprintPrediction fingerprintPredictionParams;
     /**
      * Parameter Object for structure database search with CSI:FingerID (CLI-Tool: structure).
      * If NULL the tool will not be executed.
      */
-    StructureDbSearch structureDbSearchParas;
+    StructureDbSearch structureDbSearchParams;
     /**
      * Parameter Object for CANOPUS compound class prediction tool (CLI-Tool: canopus).
      * If NULL the tool will not be executed.
      */
-    Canopus canopusParas;
+    Canopus canopusParams;
 
     //todo passatutto api.
 
@@ -147,11 +147,11 @@ public class JobSubmission {
         j.setEnforcedAdducts(settings.getEnforced().stream().map(PrecursorIonType::toString).collect(Collectors.toList()));
         j.setDetectableAdducts(settings.getDetectable().stream().map(PrecursorIonType::toString).collect(Collectors.toList()));
         j.setRecompute(false);
-        j.setFormulaIdParas(new Sirius());
-        j.setZodiacParas(new Zodiac());
-        j.setFingerprintPredictionParas(new FingerprintPrediction());
-        j.setStructureDbSearchParas(new StructureDbSearch());
-        j.setCanopusParas(new Canopus());
+        j.setFormulaIdParams(new Sirius());
+        j.setZodiacParams(new Zodiac());
+        j.setFingerprintPredictionParams(new FingerprintPrediction());
+        j.setStructureDbSearchParams(new StructureDbSearch());
+        j.setCanopusParams(new Canopus());
         if (includeConfigMap) {
             final Map<String, String> configMap = new HashMap<>();
             PropertyManager.DEFAULTS.getConfigKeys().forEachRemaining(k ->
@@ -164,7 +164,7 @@ public class JobSubmission {
 
     @JsonIgnore
     public List<Tool<?>> getEnabledTools() {
-        return Stream.of(formulaIdParas, zodiacParas, fingerprintPredictionParas, structureDbSearchParas, canopusParas)
+        return Stream.of(formulaIdParams, zodiacParams, fingerprintPredictionParams, structureDbSearchParams, canopusParams)
                 .filter(Objects::nonNull).filter(Tool::isEnabled).collect(Collectors.toList());
     }
 }

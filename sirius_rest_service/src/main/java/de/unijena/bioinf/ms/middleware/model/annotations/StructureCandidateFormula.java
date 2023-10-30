@@ -27,7 +27,6 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
-import de.unijena.bioinf.chemdb.PubmedLinks;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.projectspace.FormulaResultId;
 import de.unijena.bioinf.projectspace.FormulaScoring;
@@ -103,13 +102,6 @@ public class StructureCandidateFormula extends StructureCandidateScored {
         sSum.setXlogP(can.getCandidate().getXlogp());
 
         //meta data
-        PubmedLinks pubMedIds = can.getCandidate().getPubmedIDs();
-        if (pubMedIds != null) {
-            sSum.setNumOfPubMedIds(pubMedIds.getNumberOfPubmedIDs());
-            if (optFields.contains(OptFields.pubmedIds))
-                sSum.setPubmedIds(pubMedIds.getCopyOfPubmedIDs());
-        }
-
         if (optFields.contains(OptFields.dbLinks))
             sSum.setDbLinks(can.getCandidate().getLinks());
 

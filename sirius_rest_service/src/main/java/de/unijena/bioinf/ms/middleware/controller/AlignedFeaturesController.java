@@ -101,7 +101,7 @@ public class AlignedFeaturesController {
 
     /**
      * List of StructureCandidates for the given 'alignedFeatureId' with minimal information.
-     * StructureCandidates can be enriched with molecular fingerprint, structure database links and pubmed ids.
+     * StructureCandidates can be enriched with molecular fingerprint, structure database links.
      *
      * @param projectId      project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
@@ -166,7 +166,7 @@ public class AlignedFeaturesController {
 
     /**
      * List of StructureCandidates the given 'formulaId' with minimal information.
-     * StructureCandidates can be enriched with molecular fingerprint, structure database links and pubmed ids,
+     * StructureCandidates can be enriched with molecular fingerprint, structure database links.
      *
      * @param projectId      project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.

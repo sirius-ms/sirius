@@ -66,8 +66,8 @@ public class FormulaCandidate {
      */
     protected Double zodiacScore;
 
-    protected Integer numOfexplainedPeaks;
-    protected Integer numOfexplainablePeaks;
+    protected Integer numOfExplainedPeaks;
+    protected Integer numOfExplainablePeaks;
 
     protected Double totalExplainedIntensity;
     protected Deviation medianMassDeviation;

@@ -483,8 +483,8 @@ public class SiriusProjectSpaceImpl implements Project {
         formulaResult.getAnnotation(FTree.class).
                 ifPresent(fTree -> {
                     final FTreeMetricsHelper metrHelp = new FTreeMetricsHelper(fTree);
-                    frs.setNumOfexplainedPeaks(metrHelp.getNumOfExplainedPeaks());
-                    frs.setNumOfexplainablePeaks(metrHelp.getNumberOfExplainablePeaks());
+                    frs.setNumOfExplainedPeaks(metrHelp.getNumOfExplainedPeaks());
+                    frs.setNumOfExplainablePeaks(metrHelp.getNumberOfExplainablePeaks());
                     frs.setTotalExplainedIntensity(metrHelp.getExplainedIntensityRatio());
                     frs.setMedianMassDeviation(metrHelp.getMedianMassDeviation());
                 });
@@ -533,7 +533,7 @@ public class SiriusProjectSpaceImpl implements Project {
 //                        topHit.getAnnotation(FBCandidates.class).map(FBCandidates::getResults)
 //                                .filter(l -> !l.isEmpty()).map(r -> r.get(0)).map(s ->
 //                                        StructureCandidateFormula.of(s, topHit.getAnnotationOrThrow(FormulaScoring.class),
-//                                                EnumSet.of(StructureCandidateScored.OptFields.dbLinks, StructureCandidateScored.OptFields.pubmedIds, StructureCandidateScored.OptFields.refSpectraLinks), topHit.getId()))
+//                                                EnumSet.of(StructureCandidateScored.OptFields.dbLinks, StructureCandidateScored.OptFields.refSpectraLinks), topHit.getId()))
 //                                .ifPresent(cSum::setStructureAnnotation);
 
                             topHit.getAnnotation(CanopusResult.class).map(CompoundClasses::of).
@@ -557,7 +557,7 @@ public class SiriusProjectSpaceImpl implements Project {
                         topHit.getAnnotation(FBCandidates.class).map(FBCandidates::getResults)
                                 .filter(l -> !l.isEmpty()).map(r -> r.get(0)).map(s ->
                                         StructureCandidateFormula.of(s, topHit.getAnnotationOrThrow(FormulaScoring.class),
-                                                EnumSet.of(StructureCandidateScored.OptFields.dbLinks, StructureCandidateScored.OptFields.pubmedIds, StructureCandidateScored.OptFields.refSpectraLinks), topHit.getId()))
+                                                EnumSet.of(StructureCandidateScored.OptFields.dbLinks, StructureCandidateScored.OptFields.refSpectraLinks), topHit.getId()))
                                 .ifPresent(cSum::setStructureAnnotation);
 
                         topHit.getAnnotation(CanopusResult.class).map(CompoundClasses::of).
