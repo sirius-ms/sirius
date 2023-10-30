@@ -71,11 +71,7 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
     @Override
     protected void computeAndAnnotateResult(@NotNull Instance expRes) throws Exception {
         SpectralAlignmentJJob job = new SpectralAlignmentJJob(ApplicationCore.WEB_API, expRes.getExperiment());
-//        job.addJobProgressListener(evt -> updateProgress(evt.getMinValue(), evt.getMaxValue(), evt.getProgress()));
-        job.addJobProgressListener(evt -> {
-            logger.info(evt.getMinValue() + " " + evt.getMaxValue() + " " + evt.getProgress() + " " + evt.getMessage());
-            updateProgress(evt.getMinValue(), evt.getMaxValue(), evt.getProgress());
-        });
+        job.addJobProgressListener(evt -> updateProgress(evt.getMinValue(), evt.getMaxValue(), evt.getProgress()));
         SpectralSearchResult result = submitSubJob(job).awaitResult();
 
         CompoundContainer container = expRes.loadCompoundContainer(SpectralSearchResult.class);
@@ -112,8 +108,7 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
             for (SpectralSearchResult.SearchResult r : resultList.subList(0, Math.min(print, resultList.size()))) {
                 SpectralSimilarity similarity = r.getSimilarity();
 
-//                SpectralLibrary db = SearchableDatabases.getCustomDatabaseByNameOrThrow(r.getDbName()).toSpectralLibraryOrThrow();
-                SpectralLibrary db = SearchableDatabases.getCustomDatabaseByNameOrThrow("wa.db").toSpectralLibraryOrThrow();
+                SpectralLibrary db = SearchableDatabases.getCustomDatabaseByNameOrThrow(r.getDbName()).toSpectralLibraryOrThrow();
                 try {
                     Ms2ReferenceSpectrum reference = db.getReferenceSpectrum(r.getReferenceUUID());
                     builder.append(String.format("\n%10.3e | %5d | %9s | %9.3f | %2d | %5s | %10s | %s | %s | %s  | %s | %s | %s",
