@@ -23,6 +23,7 @@ package de.unijena.bioinf.ms.frontend.subtools.summaries;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ChemistryBase.utils.ZipCompressionMethod;
+import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.PostprocessingJob;
@@ -34,6 +35,7 @@ import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.SiriusProjectSpace;
+import de.unijena.bioinf.projectspace.summaries.PredictionsSummarizer;
 import de.unijena.bioinf.projectspace.summaries.SummaryLocations;
 import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
@@ -100,28 +102,41 @@ public class SummarySubToolJob extends PostprocessingJob<Boolean> implements Wor
             job.removePropertyChangeListener(listener);
 
             if (options.isAnyPredictionOptionSet()) { // this includes options.predictionsOptions null check
+                boolean writeIntoProjectSpace = (options.location == null);
                 Path root = options.compress
                         ? FileUtils.asZipFSPath(options.location, false, true, ZipCompressionMethod.DEFLATED)
                         : options.location;
                 try {
                     LOG.info("Writing positive ion mode predictions table...");
-                    ExportPredictionsOptions.ExportPredictionJJob posJob = new ExportPredictionsOptions.ExportPredictionJJob(
-                            options.predictionsOptions, 1, compounds,
-                            () -> Files.newBufferedWriter(root.resolve(SummaryLocations.PREDICTIONS)));
+                    BasicJJob posJob;
+                    if (writeIntoProjectSpace) {
+                        posJob = project.projectSpace()
+                                .makeSummarizerJob(options.location, options.compress, ids, new PredictionsSummarizer(listener, compounds, 1, SummaryLocations.PREDICTIONS, options.predictionsOptions));
+                    } else {
+                        posJob = new ExportPredictionsOptions.ExportPredictionJJob(
+                                options.predictionsOptions, 1, compounds,
+                                () -> Files.newBufferedWriter(root.resolve(SummaryLocations.PREDICTIONS)));
+                    }
                     posJob.addJobProgressListener(listener);
                     SiriusJobs.getGlobalJobManager().submitJob(posJob).awaitResult();
                     posJob.removePropertyChangeListener(listener);
 
                     LOG.info("Writing negative ion mode predictions table...");
-                    ExportPredictionsOptions.ExportPredictionJJob negJob = new ExportPredictionsOptions.ExportPredictionJJob(
-                            options.predictionsOptions, -1, compounds,
-                            () -> Files.newBufferedWriter(root.resolve(SummaryLocations.PREDICTIONS_NEG)));
+                    BasicJJob negJob;
+                    if (writeIntoProjectSpace) {
+                        negJob = project.projectSpace()
+                        .makeSummarizerJob(options.location, options.compress, ids, new PredictionsSummarizer(listener, compounds, -1, SummaryLocations.PREDICTIONS_NEG, options.predictionsOptions));
+                    } else {
+                        negJob = new ExportPredictionsOptions.ExportPredictionJJob(
+                                options.predictionsOptions, -1, compounds,
+                                () -> Files.newBufferedWriter(root.resolve(SummaryLocations.PREDICTIONS_NEG)));
+                    }
                     negJob.addJobProgressListener(listener);
                     SiriusJobs.getGlobalJobManager().submitJob(negJob).awaitResult();
                     negJob.removePropertyChangeListener(listener);
                 }finally {
                     //close and write zip file
-                    if (!root.getFileSystem().equals(FileSystems.getDefault()))
+                    if (!writeIntoProjectSpace && !root.getFileSystem().equals(FileSystems.getDefault()))
                         root.getFileSystem().close();
                 }
             }
