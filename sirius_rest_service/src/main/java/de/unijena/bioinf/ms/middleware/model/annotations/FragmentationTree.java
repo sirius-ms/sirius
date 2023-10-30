@@ -61,7 +61,7 @@ public class FragmentationTree {
                 if (anoPeak.get(f).isMeasured()) {
                     Deviation dev = sourceTree.getMassError(f);
                     fn.setMassDeviationDa(dev.getAbsolute());
-                    fn.setMassErrorPpm(dev.getPpm());
+                    fn.setMassDeviationPpm(dev.getPpm());
                 }
             }
 

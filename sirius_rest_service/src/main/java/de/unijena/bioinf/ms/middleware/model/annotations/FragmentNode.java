@@ -33,7 +33,7 @@ public class FragmentNode {
     String molecularFormula;
     String ionType;
     double massDeviationDa;
-    double massErrorPpm;
+    double massDeviationPpm;
     double score;
 
     double intensity;
