@@ -93,7 +93,7 @@ public class CompoundController {
      * @param compoundId identifier of the compound to delete.
      */
     @DeleteMapping(value = "/{compoundId}")
-    public void deleteAlignedFeature(@PathVariable String projectId, @PathVariable String compoundId) {
+    public void deleteCompound(@PathVariable String projectId, @PathVariable String compoundId) {
         projectsProvider.getProjectOrThrow(projectId).deleteCompoundById(compoundId);
     }
 }
