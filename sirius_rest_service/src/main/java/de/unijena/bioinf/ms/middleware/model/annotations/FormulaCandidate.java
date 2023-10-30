@@ -18,24 +18,12 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-
-package de.unijena.bioinf.ms.middleware.model.features.annotations;
+package de.unijena.bioinf.ms.middleware.model.annotations;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
-import de.unijena.bioinf.projectspace.FormulaResult;
-import de.unijena.bioinf.projectspace.FormulaResultId;
-import de.unijena.bioinf.projectspace.FormulaScoring;
-import de.unijena.bioinf.sirius.FTreeMetricsHelper;
-import de.unijena.bioinf.sirius.scores.IsotopeScore;
-import de.unijena.bioinf.sirius.scores.SiriusScore;
-import de.unijena.bioinf.sirius.scores.TreeScore;
 import lombok.*;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Molecular formula candidate that holds a unique identifier (molecular formula + adduct).

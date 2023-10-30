@@ -17,7 +17,7 @@
  *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.middleware.model.features.annotations;
+package de.unijena.bioinf.ms.middleware.model.annotations;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
@@ -25,7 +25,6 @@ import lombok.Setter;
 
 /**
  * Summary of the results of a feature (aligned over runs). Can be added to a AlignedFeature.
- * It is null within a AlignedFeature if it was not requested und non-null otherwise.
  * The different annotation fields within this summary object are null if the corresponding
  * feature does not contain the represented results. If fields are non-null
  * the corresponding result has been computed but might still be empty.
@@ -33,9 +32,17 @@ import lombok.Setter;
 @Getter
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Annotations {
-    //result previews
+public class FeatureAnnotations {
+    /**
+     * Best matching FormulaCandidate.
+     */
     protected FormulaCandidate formulaAnnotation; // SIRIUS + ZODIAC
-    protected StructureCandidate structureAnnotation; // CSI:FingerID
+    /**
+     * Best matching StructureCandidate ranked by CSI:FingerID Score over all FormulaCandidates.
+     */
+    protected StructureCandidateScored structureAnnotation; // CSI:FingerID or MSNovelist
+    /**
+     * Best matching compound classes that correspond to the formulaAnnotation
+     */
     protected CompoundClasses compoundClassAnnotation; // CANOPUS
 }

@@ -18,7 +18,7 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.middleware.model.features.annotations;
+package de.unijena.bioinf.ms.middleware.model.annotations;
 
 import de.unijena.bioinf.ChemistryBase.fp.ClassyfireProperty;
 import de.unijena.bioinf.ChemistryBase.fp.FPIter;
