@@ -18,30 +18,24 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.middleware.model.features.annotations;
+package de.unijena.bioinf.ms.middleware.model.annotations;
 
-import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
-import lombok.Getter;
-import lombok.Setter;
+import de.unijena.bioinf.ChemistryBase.fp.NPCFingerprintVersion;
 
-@Getter
-@Setter
-public class BinaryFingerprint {
-    /**
-     * Array that contains all indices of bits that are set (are 1)
-     */
-    short[] bitsSet;
-    /**
-     * Size of the fingerprint, e.g. to reconstruct the binary array from the array of set bits
-     */
-    int length;
+public class CanopusLevels {
+    public static final String[] classyFireLevelNames = new String[]{
+            "Kingdom", "Superclass", "Class", "Subclass"
+    };
 
+    public static String getNPCLevelName(int level){
+        if (level > 2)
+            throw new IllegalArgumentException("NPC level must be between 0 and 2");
+        return NPCFingerprintVersion.NPCLevel.values()[level].name();
 
-    //todo move to service layer
-    public static BinaryFingerprint from (Fingerprint fingerprint){
-        BinaryFingerprint fp = new BinaryFingerprint();
-        fp.setLength(fingerprint.cardinality());
-        fp.setBitsSet(fingerprint.toIndizesArray());
-        return fp;
+    }
+    public static String getClassyFireLevelName(int level){
+        if (level > classyFireLevelNames.length)
+            return "Level-" + level;
+        return classyFireLevelNames[level-1];
     }
 }
