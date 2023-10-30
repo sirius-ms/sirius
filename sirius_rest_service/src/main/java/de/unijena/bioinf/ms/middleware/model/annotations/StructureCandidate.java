@@ -37,7 +37,6 @@ public class StructureCandidate {
     protected String structureName;
     protected String smiles;
 
-    protected Integer numOfPubMedIds;
     protected Double xlogP;
     protected String inchiKey;
 
@@ -52,11 +51,6 @@ public class StructureCandidate {
      * OPTIONAL: needs to be added by parameter
      */
     List<DBLink> refSpectraLinks;
-    /**
-     * PubMed IDs belonging to this structure candidate
-     * OPTIONAL: needs to be added by parameter
-     */
-    int[] pubmedIds;
 
 
 
