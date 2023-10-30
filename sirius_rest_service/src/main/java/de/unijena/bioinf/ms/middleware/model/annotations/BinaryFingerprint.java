@@ -18,24 +18,30 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.middleware.model.features.annotations;
+package de.unijena.bioinf.ms.middleware.model.annotations;
 
+import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import lombok.Getter;
 import lombok.Setter;
 
-//@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
-//@JsonIdentityReference(alwaysAsId = false)
-//todo efficient json that is parsable by all clients
 @Getter
 @Setter
-public class FragmentNode {
-    int id;
-    String molecularFormula;
-    String ionType;
-    double massDeviationDa;
-    double massErrorPpm;
-    double score;
+public class BinaryFingerprint {
+    /**
+     * Array that contains all indices of bits that are set (are 1)
+     */
+    short[] bitsSet;
+    /**
+     * Size of the fingerprint, e.g. to reconstruct the binary array from the array of set bits
+     */
+    int length;
 
-    double intensity;
-    double mz;
+
+    //todo move to service layer
+    public static BinaryFingerprint from (Fingerprint fingerprint){
+        BinaryFingerprint fp = new BinaryFingerprint();
+        fp.setLength(fingerprint.cardinality());
+        fp.setBitsSet(fingerprint.toIndizesArray());
+        return fp;
+    }
 }

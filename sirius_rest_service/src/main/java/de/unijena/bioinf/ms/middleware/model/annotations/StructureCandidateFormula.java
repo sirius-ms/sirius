@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -18,8 +18,9 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.middleware.model.features.annotations;
+package de.unijena.bioinf.ms.middleware.model.annotations;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
@@ -40,7 +41,8 @@ import java.util.List;
 @Getter
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class StructureCandidateExt extends StructureCandidate {
+@JsonIgnoreProperties({})
+public class StructureCandidateFormula extends StructureCandidateScored {
     /**
      * molecular formula of this candidate
      */
@@ -50,45 +52,45 @@ public class StructureCandidateExt extends StructureCandidate {
      */
     protected String adduct;
 
-    public static StructureCandidateExt of(Scored<CompoundCandidate> can, FormulaScoring scorings,
-                                           EnumSet<OptFields> optFields,
-                                           FormulaResultId fid
+    public static StructureCandidateFormula of(Scored<CompoundCandidate> can, FormulaScoring scorings,
+                                               EnumSet<OptFields> optFields,
+                                               FormulaResultId fid
     ) {
         return of(can, null, scorings, optFields, fid.getMolecularFormula(), fid.getIonType());
     }
 
-    public static StructureCandidateExt of(Scored<CompoundCandidate> can, FormulaScoring scorings,
-                                           EnumSet<OptFields> optFields,
-                                           MolecularFormula formula,
-                                           PrecursorIonType adduct
+    public static StructureCandidateFormula of(Scored<CompoundCandidate> can, FormulaScoring scorings,
+                                               EnumSet<OptFields> optFields,
+                                               MolecularFormula formula,
+                                               PrecursorIonType adduct
     ) {
         return of(can, null, scorings, optFields, formula, adduct);
     }
 
-    public static StructureCandidateExt of(Scored<CompoundCandidate> can, @Nullable Fingerprint fp,
-                                           @Nullable FormulaScoring confidenceScoreProvider,
-                                           EnumSet<OptFields> optFields,
-                                           FormulaResultId fid
+    public static StructureCandidateFormula of(Scored<CompoundCandidate> can, @Nullable Fingerprint fp,
+                                               @Nullable FormulaScoring confidenceScoreProvider,
+                                               EnumSet<OptFields> optFields,
+                                               FormulaResultId fid
     ) {
         return of(can, fp, confidenceScoreProvider, optFields, fid.getMolecularFormula(), fid.getIonType());
     }
 
-    public static StructureCandidateExt of(Scored<CompoundCandidate> can, @Nullable Fingerprint fp,
-                                           @Nullable FormulaScoring confidenceScoreProvider,
-                                           EnumSet<OptFields> optFields,
-                                           MolecularFormula formula,
-                                           PrecursorIonType adduct
+    public static StructureCandidateFormula of(Scored<CompoundCandidate> can, @Nullable Fingerprint fp,
+                                               @Nullable FormulaScoring confidenceScoreProvider,
+                                               EnumSet<OptFields> optFields,
+                                               MolecularFormula formula,
+                                               PrecursorIonType adduct
     ) {
 
 
-        final StructureCandidateExt sSum = new StructureCandidateExt();
+        final StructureCandidateFormula sSum = new StructureCandidateFormula();
         sSum.setMolecularFormula(formula.toString());
         sSum.setAdduct(adduct.toString());
         // scores
         sSum.setCsiScore(can.getScore());
         sSum.setTanimotoSimilarity(can.getCandidate().getTanimoto());
         if (confidenceScoreProvider != null)
-            confidenceScoreProvider.getAnnotation(ConfidenceScore.class).map(ConfidenceScore::score).ifPresent(sSum::setConfidenceScore);
+            confidenceScoreProvider.getAnnotation(ConfidenceScore.class).map(ConfidenceScore::score).ifPresent(sSum::setConfidenceExactMatch);
 
         //Structure information
         //check for "null" strings since the database might not be perfectly curated

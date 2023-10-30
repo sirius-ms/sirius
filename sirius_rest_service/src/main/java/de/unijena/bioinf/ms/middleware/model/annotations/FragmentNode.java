@@ -18,24 +18,24 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.middleware.model.features.annotations;
+package de.unijena.bioinf.ms.middleware.model.annotations;
 
-import de.unijena.bioinf.ChemistryBase.fp.NPCFingerprintVersion;
+import lombok.Getter;
+import lombok.Setter;
 
-public class CanopusLevels {
-    public static final String[] classyFireLevelNames = new String[]{
-            "Kingdom", "Superclass", "Class", "Subclass"
-    };
+//@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+//@JsonIdentityReference(alwaysAsId = false)
+//todo efficient json that is parsable by all clients
+@Getter
+@Setter
+public class FragmentNode {
+    int id;
+    String molecularFormula;
+    String ionType;
+    double massDeviationDa;
+    double massErrorPpm;
+    double score;
 
-    public static String getNPCLevelName(int level){
-        if (level > 2)
-            throw new IllegalArgumentException("NPC level must be between 0 and 2");
-        return NPCFingerprintVersion.NPCLevel.values()[level].name();
-
-    }
-    public static String getClassyFireLevelName(int level){
-        if (level > classyFireLevelNames.length)
-            return "Level-" + level;
-        return classyFireLevelNames[level-1];
-    }
+    double intensity;
+    double mz;
 }

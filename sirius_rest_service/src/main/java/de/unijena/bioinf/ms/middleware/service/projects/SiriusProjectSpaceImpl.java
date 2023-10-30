@@ -41,13 +41,14 @@ import de.unijena.bioinf.lcms.LCMSCompoundSummary;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.middleware.controller.AlignedFeaturesController;
+import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeatureQuality;
 import de.unijena.bioinf.ms.middleware.model.features.LCMSFeatureQuality;
 import de.unijena.bioinf.ms.middleware.model.features.MsData;
-import de.unijena.bioinf.ms.middleware.model.features.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
+import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
 import de.unijena.bioinf.projectspace.*;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidateNumber;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
@@ -199,33 +200,33 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     @Override
-    public Page<StructureCandidate> findStructureCandidatesByFeatureIdAndFormulaId(String formulaId, String alignedFeatureId, Pageable pageable, EnumSet<StructureCandidate.OptFields> optFields) {
-        List<Class<? extends DataAnnotation>> para = (optFields.contains(StructureCandidate.OptFields.fingerprint)
+    public Page<StructureCandidateScored> findStructureCandidatesByFeatureIdAndFormulaId(String formulaId, String alignedFeatureId, Pageable pageable, EnumSet<StructureCandidateScored.OptFields> optFields) {
+        List<Class<? extends DataAnnotation>> para = (optFields.contains(StructureCandidateScored.OptFields.fingerprint)
                 ? List.of(FormulaScoring.class, FBCandidates.class, FBCandidateFingerprints.class)
                 : List.of(FormulaScoring.class, FBCandidates.class));
 
         Instance instance = loadInstance(alignedFeatureId);
         FormulaResultId fidObj = parseFID(instance, formulaId);
         return loadStructureCandidates(instance, fidObj, pageable, para, optFields)
-                .map(l -> l.stream().map(c -> (StructureCandidate)c).toList())
-                .map(it -> (Page<StructureCandidate>) new PageImpl<>(it))
+                .map(l -> l.stream().map(c -> (StructureCandidateScored) c).toList())
+                .map(it -> (Page<StructureCandidateScored>) new PageImpl<>(it))
                 .orElse(Page.empty(pageable)); //todo number of candidates for page.
     }
 
     @Override
-    public Page<StructureCandidateExt> findStructureCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, EnumSet<StructureCandidate.OptFields> optFields) {
-        List<Class<? extends DataAnnotation>> para = (optFields.contains(StructureCandidate.OptFields.fingerprint)
+    public Page<StructureCandidateFormula> findStructureCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, EnumSet<StructureCandidateScored.OptFields> optFields) {
+        List<Class<? extends DataAnnotation>> para = (optFields.contains(StructureCandidateScored.OptFields.fingerprint)
                 ? List.of(FormulaScoring.class, FBCandidates.class, FBCandidateFingerprints.class)
                 : List.of(FormulaScoring.class, FBCandidates.class));
 
         Instance instance = loadInstance(alignedFeatureId);
-        List<StructureCandidateExt> candidates = instance.loadFormulaResults(FormulaScoring.class).stream()
+        List<StructureCandidateFormula> candidates = instance.loadFormulaResults(FormulaScoring.class).stream()
                 .filter(fr -> fr.getCandidate().getAnnotation(FormulaScoring.class)
                         .flatMap(s -> s.getAnnotation(TopCSIScore.class)).isPresent())
                 .map(fr -> fr.getCandidate().getId())
                 .map(fid -> loadStructureCandidates(instance, fid, pageable, para, optFields))
                 .filter(Optional::isPresent).flatMap(Optional::stream).flatMap(List::stream)
-                .sorted(Comparator.comparing(StructureCandidate::getCsiScore).reversed())
+                .sorted(Comparator.comparing(StructureCandidateScored::getCsiScore).reversed())
                 .skip(pageable.getOffset())
                 .limit(pageable.getPageSize()).toList();
 
@@ -233,8 +234,8 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     @Override
-    public StructureCandidateExt findTopStructureCandidateByFeatureId(String alignedFeatureId, EnumSet<StructureCandidate.OptFields> optFields) {
-        List<Class<? extends DataAnnotation>> para = (optFields.contains(StructureCandidate.OptFields.fingerprint)
+    public StructureCandidateFormula findTopStructureCandidateByFeatureId(String alignedFeatureId, EnumSet<StructureCandidateScored.OptFields> optFields) {
+        List<Class<? extends DataAnnotation>> para = (optFields.contains(StructureCandidateScored.OptFields.fingerprint)
                 ? List.of(FormulaScoring.class, FBCandidates.class, FBCandidateFingerprints.class)
                 : List.of(FormulaScoring.class, FBCandidates.class));
 
@@ -245,7 +246,7 @@ public class SiriusProjectSpaceImpl implements Project {
             return instance.loadFormulaResult(fr.getId(), (Class<? extends DataAnnotation>[]) para.toArray(Class[]::new))
                     .flatMap(fr2 -> fr2.getAnnotation(FBCandidates.class).map(FBCandidates::getResults)
                             .filter(l -> !l.isEmpty()).map(r -> r.get(0))
-                            .map(sc -> StructureCandidateExt.of(sc,
+                            .map(sc -> StructureCandidateFormula.of(sc,
                                     fr2.getAnnotation(FBCandidateFingerprints.class)
                                             .map(FBCandidateFingerprints::getFingerprints)
                                             .map(fps -> fps.isEmpty() ? null : fps.get(0))
@@ -260,7 +261,9 @@ public class SiriusProjectSpaceImpl implements Project {
         if (!optFields.isEmpty()) {
             Instance instance = projectSpaceManager.getInstanceFromCompound(cid);
             if (optFields.contains(AlignedFeature.OptFields.topAnnotations))
-                alignedFeature.setTopAnnotations(asCompoundSummary(instance));
+                alignedFeature.setTopAnnotations(extractTopAnnotations(instance));
+            if (optFields.contains(AlignedFeature.OptFields.topAnnotationsDeNovo))
+                alignedFeature.setTopAnnotationsDeNovo(extractTopAnnotationsDeNovo(instance));
             if (optFields.contains(AlignedFeature.OptFields.msData))
                 alignedFeature.setMsData(asCompoundMsData(instance));
         }
@@ -284,15 +287,36 @@ public class SiriusProjectSpaceImpl implements Project {
 
     private Compound asCompound(List<CompoundContainerId> cids, EnumSet<Compound.OptFields> optFields,
                                 EnumSet<AlignedFeature.OptFields> optFeatureFields) {
-        //todo handle optional if available fields
         //compound with ID
         Compound.CompoundBuilder c = Compound.builder()
                 .compoundId(cids.stream().map(CompoundContainerId::getGroupId)
                         .filter(Optional::isPresent).flatMap(Optional::stream).findFirst().orElseThrow());
 
-        // features
-        List<AlignedFeature> features = cids.stream().map(cid -> asAlignedFeature(cid, optFeatureFields)).toList();
-        c.features(features);
+        {
+            // merge optional field config
+            final EnumSet<AlignedFeature.OptFields> mergedFeatureFields = EnumSet.copyOf(optFeatureFields);
+            if (optFields.contains(Compound.OptFields.consensusAnnotations))
+                mergedFeatureFields.add(AlignedFeature.OptFields.topAnnotations);
+            if (optFields.contains(Compound.OptFields.consensusAnnotationsDeNovo))
+                mergedFeatureFields.add(AlignedFeature.OptFields.topAnnotationsDeNovo);
+
+            // features
+            List<AlignedFeature> features = cids.stream().map(cid -> asAlignedFeature(cid, mergedFeatureFields)).toList();
+            c.features(features);
+
+            if (optFields.contains(Compound.OptFields.consensusAnnotations))
+                c.consensusAnnotations(AnnotationUtils.buildConsensusAnnotationsCSI(features));
+            if (optFields.contains(Compound.OptFields.consensusAnnotationsDeNovo))
+                c.consensusAnnotationsDeNovo(AnnotationUtils.buildConsensusAnnotationsDeNovo(features));
+            if (optFields.contains(Compound.OptFields.customAnnotations))
+                c.customAnnotations(ConsensusAnnotationsCSI.builder().build()); //todo implement custom annotations -> storage needed
+
+            //remove optionals if not requested
+            if (!optFeatureFields.contains(AlignedFeature.OptFields.topAnnotations))
+                features.forEach(f -> f.setTopAnnotations(null));
+            if (!optFeatureFields.contains(AlignedFeature.OptFields.topAnnotationsDeNovo))
+                features.forEach(f -> f.setTopAnnotationsDeNovo(null));
+        }
 
         //compound RT
         RetentionTime rt = cids.stream().map(CompoundContainerId::getGroupRt)
@@ -301,8 +325,15 @@ public class SiriusProjectSpaceImpl implements Project {
                         .flatMap(Optional::stream).reduce(RetentionTime::merge).orElse(null)
                 );
 
-        c.rtStartSeconds(rt.getStartTime());
-        c.rtStartSeconds(rt.getEndTime());
+        if (rt != null) {
+            if (rt.isInterval()) {
+                c.rtStartSeconds(rt.getStartTime());
+                c.rtEndSeconds(rt.getEndTime());
+            } else {
+                c.rtStartSeconds(rt.getMiddleTime());
+                c.rtEndSeconds(rt.getMiddleTime());
+            }
+        }
 
         //neutral mass
         DoubleArrayList neutralMasses = cids.stream()
@@ -319,7 +350,7 @@ public class SiriusProjectSpaceImpl implements Project {
         }
 
         Compound co = c.build();
-        co.setName("rt" + NUMBER_FORMAT.format(rt.getMiddleTime() / 60) + "-m" + NUMBER_FORMAT.format(co.getNeutralMass()));
+        co.setName("rt" + Optional.ofNullable(rt).map(r -> NUMBER_FORMAT.format(r.getMiddleTime() / 60)).orElse("N/A") + "-m" + NUMBER_FORMAT.format(co.getNeutralMass()));
         return co;
     }
 
@@ -341,39 +372,39 @@ public class SiriusProjectSpaceImpl implements Project {
 
     }
 
-    private static Optional<List<StructureCandidateExt>> loadStructureCandidates(
+    private static Optional<List<StructureCandidateFormula>> loadStructureCandidates(
             Instance instance, FormulaResultId fidObj,
             Pageable pageable,
             List<Class<? extends DataAnnotation>> para,
-            EnumSet<StructureCandidate.OptFields> optFields
+            EnumSet<StructureCandidateScored.OptFields> optFields
     ) {
         long topK = pageable.getOffset() + pageable.getPageSize();
         fidObj.setAnnotation(FBCandidateNumber.class, topK <= 0 ? FBCandidateNumber.ALL : new FBCandidateNumber((int) topK));
         FormulaResult fr = instance.loadFormulaResult(fidObj, (Class<? extends DataAnnotation>[]) para.toArray(Class[]::new)).orElseThrow();
         return fr.getAnnotation(FBCandidates.class).map(FBCandidates::getResults).map(l -> {
-            List<StructureCandidateExt> candidates = new ArrayList();
+            List<StructureCandidateFormula> candidates = new ArrayList();
 
             Iterator<Scored<CompoundCandidate>> it =
                     l.stream().skip(pageable.getOffset()).limit(pageable.getPageSize()).iterator();
 
-            if (optFields.contains(StructureCandidate.OptFields.fingerprint)) {
+            if (optFields.contains(StructureCandidateScored.OptFields.fingerprint)) {
                 Iterator<Fingerprint> fps = fr.getAnnotationOrThrow(FBCandidateFingerprints.class).getFingerprints()
                         .stream().skip(pageable.getOffset()).limit(pageable.getPageSize()).iterator();
 
                 if (it.hasNext())//tophit
-                    candidates.add(StructureCandidateExt.of(it.next(), fps.next(),
+                    candidates.add(StructureCandidateFormula.of(it.next(), fps.next(),
                             fr.getAnnotationOrNull(FormulaScoring.class), optFields, fidObj));
 
                 while (it.hasNext())
-                    candidates.add(StructureCandidateExt.of(it.next(), fps.next(),
+                    candidates.add(StructureCandidateFormula.of(it.next(), fps.next(),
                             null, optFields, fidObj));
             } else {
                 if (it.hasNext())//tophit
-                    candidates.add(StructureCandidateExt.of(it.next(), null,
+                    candidates.add(StructureCandidateFormula.of(it.next(), null,
                             fr.getAnnotationOrNull(FormulaScoring.class), optFields, fidObj));
 
                 while (it.hasNext())
-                    candidates.add(StructureCandidateExt.of(it.next(), null,
+                    candidates.add(StructureCandidateFormula.of(it.next(), null,
                             null, optFields, fidObj));
             }
             return candidates;
@@ -489,12 +520,35 @@ public class SiriusProjectSpaceImpl implements Project {
                 .map(AnnotatedSpectrum::new);
     }
 
-    public static Annotations asCompoundSummary(Instance inst) {
-        return inst.loadTopFormulaResult(List.of(TopCSIScore.class)).map(de.unijena.bioinf.projectspace.FormulaResult::getId).flatMap(frid -> {
+    public static FeatureAnnotations extractTopAnnotationsDeNovo(Instance inst) {
+        return inst.loadTopFormulaResult(List.of(SiriusScore.class)).map(FormulaResult::getId)
+                .flatMap(frid -> inst.loadFormulaResult(frid, FormulaScoring.class, FTree.class, CanopusResult.class)
+                        .map(topHit -> {
+                            final FeatureAnnotations cSum = new FeatureAnnotations();
+//
+                            //add formula summary
+                            cSum.setFormulaAnnotation(asFormulaCandidate(topHit));
+
+                            // todo add msnovelist candidatas
+//                        topHit.getAnnotation(FBCandidates.class).map(FBCandidates::getResults)
+//                                .filter(l -> !l.isEmpty()).map(r -> r.get(0)).map(s ->
+//                                        StructureCandidateFormula.of(s, topHit.getAnnotationOrThrow(FormulaScoring.class),
+//                                                EnumSet.of(StructureCandidateScored.OptFields.dbLinks, StructureCandidateScored.OptFields.pubmedIds, StructureCandidateScored.OptFields.refSpectraLinks), topHit.getId()))
+//                                .ifPresent(cSum::setStructureAnnotation);
+
+                            topHit.getAnnotation(CanopusResult.class).map(CompoundClasses::of).
+                                    ifPresent(cSum::setCompoundClassAnnotation);
+                            return cSum;
+
+                        })).orElseGet(FeatureAnnotations::new);
+    }
+
+    public static FeatureAnnotations extractTopAnnotations(Instance inst) {
+        return inst.loadTopFormulaResult(List.of(TopCSIScore.class, SiriusScore.class)).map(FormulaResult::getId).flatMap(frid -> {
             frid.setAnnotation(FBCandidateNumber.class, new FBCandidateNumber(1));
             return inst.loadFormulaResult(frid, FormulaScoring.class, FTree.class, FBCandidates.class, CanopusResult.class)
                     .map(topHit -> {
-                        final Annotations cSum = new Annotations();
+                        final FeatureAnnotations cSum = new FeatureAnnotations();
 //
                         //add formula summary
                         cSum.setFormulaAnnotation(asFormulaCandidate(topHit));
@@ -502,8 +556,8 @@ public class SiriusProjectSpaceImpl implements Project {
                         // fingerid result
                         topHit.getAnnotation(FBCandidates.class).map(FBCandidates::getResults)
                                 .filter(l -> !l.isEmpty()).map(r -> r.get(0)).map(s ->
-                                        StructureCandidateExt.of(s, topHit.getAnnotationOrThrow(FormulaScoring.class),
-                                                EnumSet.of(StructureCandidate.OptFields.dbLinks, StructureCandidate.OptFields.pubmedIds, StructureCandidate.OptFields.refSpectraLinks), topHit.getId()))
+                                        StructureCandidateFormula.of(s, topHit.getAnnotationOrThrow(FormulaScoring.class),
+                                                EnumSet.of(StructureCandidateScored.OptFields.dbLinks, StructureCandidateScored.OptFields.pubmedIds, StructureCandidateScored.OptFields.refSpectraLinks), topHit.getId()))
                                 .ifPresent(cSum::setStructureAnnotation);
 
                         topHit.getAnnotation(CanopusResult.class).map(CompoundClasses::of).
@@ -511,7 +565,7 @@ public class SiriusProjectSpaceImpl implements Project {
                         return cSum;
 
                     });
-        }).orElseGet(Annotations::new);
+        }).orElseGet(FeatureAnnotations::new);
     }
 
     public static MsData asCompoundMsData(Instance instance) {
