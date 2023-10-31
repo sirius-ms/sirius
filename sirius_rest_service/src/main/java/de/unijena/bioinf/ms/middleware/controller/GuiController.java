@@ -29,7 +29,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping(value = "/api/projects/{projectId}/gui")
-@Tag(name = "[Experimental] Graphical user Interface", description = "Open, control and close SIRIUS GUI on the specified project-space.")
+@Tag(name = "[Experimental] GUI",
+        description = "Open, control and close SIRIUS Graphical User Interface (GUI) on the specified project-space.")
 public class GuiController {
 
     /**

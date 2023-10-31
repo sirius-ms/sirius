@@ -39,15 +39,15 @@ import java.util.EnumSet;
 
 @RestController
 @RequestMapping(value = "/api/projects/{projectId}/aligned-features")
-@Tag(name = "Feature based API", description = "Access features (aligned over runs) and there Annotations of " +
+@Tag(name = "Features", description = "This feature based API allows access features (aligned over runs) and there Annotations of " +
         "a specified project-space. This is the entry point to access all raw annotation results an there summaries.")
-public class AlignedFeaturesController {
+public class AlignedFeatureController {
 
 
     private final ProjectsProvider<?> projectsProvider;
 
     @Autowired
-    public AlignedFeaturesController(ProjectsProvider<?> projectsProvider) {
+    public AlignedFeatureController(ProjectsProvider<?> projectsProvider) {
         this.projectsProvider = projectsProvider;
     }
 

@@ -40,7 +40,7 @@ import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.lcms.LCMSCompoundSummary;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.ms.middleware.controller.AlignedFeaturesController;
+import de.unijena.bioinf.ms.middleware.controller.AlignedFeatureController;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
@@ -124,12 +124,12 @@ public class SiriusProjectSpaceImpl implements Project {
 
     @Override
     public Page<AlignedFeatureQuality> findAlignedFeaturesQuality(Pageable pageable, EnumSet<AlignedFeatureQuality.OptFields> optFields) {
-        LoggerFactory.getLogger(AlignedFeaturesController.class).info("Started collecting aligned features quality...");
+        LoggerFactory.getLogger(AlignedFeatureController.class).info("Started collecting aligned features quality...");
         final List<AlignedFeatureQuality> alignedFeatureQualities = projectSpaceManager.projectSpace().stream()
                 .skip(pageable.getOffset()).limit(pageable.getPageSize())
                 .map(ccid -> asAlignedFeatureQuality(ccid, optFields))
                 .toList();
-        LoggerFactory.getLogger(AlignedFeaturesController.class).info("Finished parsing aligned features quality...");
+        LoggerFactory.getLogger(AlignedFeatureController.class).info("Finished parsing aligned features quality...");
 
         return new PageImpl<>(alignedFeatureQualities, pageable, projectSpaceManager.size());
     }
@@ -142,12 +142,12 @@ public class SiriusProjectSpaceImpl implements Project {
 
     @Override
     public Page<AlignedFeature> findAlignedFeatures(Pageable pageable, EnumSet<AlignedFeature.OptFields> optFields) {
-        LoggerFactory.getLogger(AlignedFeaturesController.class).info("Started collecting aligned features...");
+        LoggerFactory.getLogger(AlignedFeatureController.class).info("Started collecting aligned features...");
         final List<AlignedFeature> alignedFeatures = projectSpaceManager.projectSpace().stream()
                 .skip(pageable.getOffset()).limit(pageable.getPageSize())
                 .map(ccid -> asAlignedFeature(ccid, optFields))
                 .toList();
-        LoggerFactory.getLogger(AlignedFeaturesController.class).info("Finished parsing aligned features...");
+        LoggerFactory.getLogger(AlignedFeatureController.class).info("Finished parsing aligned features...");
 
         return new PageImpl<>(alignedFeatures, pageable, projectSpaceManager.size());
     }
