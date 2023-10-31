@@ -35,7 +35,7 @@ import java.util.EnumSet;
 
 @RestController
 @RequestMapping(value = "/api/projects/{projectId}/aligned-features-quality")
-@Tag(name = "[Experimental] Data Quality API", description = "Access data quality information for various entities of a specified project-space.")
+@Tag(name = "[Experimental] Data Quality", description = "Access data quality information for various entities of a specified project-space.")
 @ConditionalOnProperty("de.unijena.bioinf.ms.middleware.controller.quality.enabled")
 public class AlignedFeaturesQualityController {
 

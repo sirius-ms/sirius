@@ -53,12 +53,12 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/api")
-@Tag(name = "Computations", description = "Start, monitor and cancel compute jobs.")
-public class ComputeController {
+@Tag(name = "Jobs", description = "Start, monitor and cancel background jobs.")
+public class JobController {
     public final static String DEFAULT_PARAMETERS = "DEFAULT";
     private final ComputeService computeService;
     private final ProjectsProvider projectsProvider;
-    public ComputeController(ComputeService<?> computeService, ProjectsProvider<?> projectsProvider) {
+    public JobController(ComputeService<?> computeService, ProjectsProvider<?> projectsProvider) {
         this.computeService = computeService;
         this.projectsProvider = projectsProvider;
     }
