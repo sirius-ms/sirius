@@ -39,15 +39,15 @@ public class Zodiac extends Tool<ZodiacOptions> {
     /**
      * Maximum number of candidate molecular formulas (fragmentation trees computed by SIRIUS) per compound which are considered by ZODIAC for compounds below 300 m/z.
      */
-    ZodiacNumberOfConsideredCandidatesAt300Mz consideredCandidatesAt300Mz = PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacNumberOfConsideredCandidatesAt300Mz.class);
+    Integer consideredCandidatesAt300Mz = PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacNumberOfConsideredCandidatesAt300Mz.class).value;
     /**
      * Maximum number of candidate molecular formulas (fragmentation trees computed by SIRIUS) per compound which are considered by ZODIAC for compounds above 800 m/z.
      */
-    ZodiacNumberOfConsideredCandidatesAt800Mz consideredCandidatesAt800Mz = PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacNumberOfConsideredCandidatesAt800Mz.class);
+    Integer consideredCandidatesAt800Mz = PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacNumberOfConsideredCandidatesAt800Mz.class).value;
     /**
      * As default ZODIAC runs a 2-step approach. First running 'good quality compounds' only, and afterwards including the remaining.
      */
-    ZodiacRunInTwoSteps runInTwoSteps = PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacRunInTwoSteps.class);
+    Boolean runInTwoSteps = PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacRunInTwoSteps.class).value;
 
     /**
      * thresholdFilter = Defines the proportion of edges of the complete network which will be ignored.
@@ -70,9 +70,9 @@ public class Zodiac extends Tool<ZodiacOptions> {
     @Override
     public Map<String, String> asConfigMap() {
         return Map.of(
-                "ZodiacNumberOfConsideredCandidatesAt300Mz", String.valueOf(consideredCandidatesAt300Mz.value),
-                "ZodiacNumberOfConsideredCandidatesAt800Mz", String.valueOf(consideredCandidatesAt800Mz.value),
-                "ZodiacRunInTwoSteps", String.valueOf(runInTwoSteps.value),
+                "ZodiacNumberOfConsideredCandidatesAt300Mz", String.valueOf(consideredCandidatesAt300Mz),
+                "ZodiacNumberOfConsideredCandidatesAt800Mz", String.valueOf(consideredCandidatesAt800Mz),
+                "ZodiacRunInTwoSteps", String.valueOf(runInTwoSteps),
 
                 "ZodiacEpochs.iterations", String.valueOf(gibbsSamplerParameters.iterations),
                 "ZodiacEpochs.burnInPeriod", String.valueOf(gibbsSamplerParameters.burnInPeriod),

@@ -59,18 +59,18 @@ public class Sirius extends Tool<SiriusOptions> {
     /**
      * Number of formula candidates to keep as result list (Formula Candidates).
      */
-    int numberOfCandidates;
+    Integer numberOfCandidates;
     /**
      * Use this parameter if you want to force SIRIUS to report at least
      * NumberOfCandidatesPerIon results per ionization.
      * if <= 0, this parameter will have no effect and just the top
      * NumberOfCandidates results will be reported.
      */
-    int numberOfCandidatesPerIon;
+    Integer numberOfCandidatesPerIon;
     /**
      * Maximum allowed mass accuracy. Only molecular formulas within this mass window are considered.
      */
-    double massAccuracyMS2ppm;
+    Double massAccuracyMS2ppm;
 
     /**
      * Specify how isotope patterns in MS/MS should be handled.
