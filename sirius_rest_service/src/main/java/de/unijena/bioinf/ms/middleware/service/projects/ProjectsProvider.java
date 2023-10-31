@@ -20,7 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.service.projects;
 
-import de.unijena.bioinf.ms.middleware.model.projects.ProjectId;
+import de.unijena.bioinf.ms.middleware.model.projects.Project;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.http.HttpStatus;
@@ -31,29 +31,29 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
-public interface ProjectsProvider<P extends Project> extends DisposableBean {
+public interface ProjectsProvider<P extends de.unijena.bioinf.ms.middleware.service.projects.Project> extends DisposableBean {
 
-    List<ProjectId> listAllProjectSpaces();
+    List<Project> listAllProjectSpaces();
 
     default P getProjectOrThrow(String projectId) throws ResponseStatusException {
         return getProject(projectId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no project with name '" + projectId + "'"));
     }
 
     Optional<P> getProject(String projectId);
-    Optional<ProjectId> getProjectId(String projectId);
+    Optional<Project> getProjectId(String projectId);
 
-    default ProjectId getProjectIdOrThrow(String projectId) throws ResponseStatusException{
+    default Project getProjectIdOrThrow(String projectId) throws ResponseStatusException{
         return getProjectId(projectId).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no project space with name '" + projectId + "'"));
     }
 
-    ProjectId openProjectSpace(@NotNull ProjectId id) throws IOException;
+    Project openProjectSpace(@NotNull Project id) throws IOException;
 
-    ProjectId createProjectSpace(Path location) throws IOException;
+    Project createProjectSpace(Path location) throws IOException;
 
-    ProjectId createProjectSpace(@NotNull String nameSuggestion, @NotNull Path location) throws IOException;
+    Project createProjectSpace(@NotNull String nameSuggestion, @NotNull Path location) throws IOException;
 
-    ProjectId createTemporaryProjectSpace() throws IOException;
+    Project createTemporaryProjectSpace() throws IOException;
 
     boolean containsProject(@NotNull String name);
 
