@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.middleware.model.compute;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +36,8 @@ import java.util.List;
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Job {
-    public enum OptFields {command, progress, affectedIds}
+    @Schema(enumAsRef = true, name = "JobOptField")
+    public enum OptField {command, progress, affectedIds}
 
     /**
      * Unique identifier to access the job via the API

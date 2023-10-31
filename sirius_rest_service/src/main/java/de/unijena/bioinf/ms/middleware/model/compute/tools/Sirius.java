@@ -33,6 +33,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.UseHeuristic;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -49,6 +50,7 @@ import java.util.stream.Collectors;
 @Getter
 @Setter
 public class Sirius extends Tool<SiriusOptions> {
+    @Schema(enumAsRef = true)
     enum Instrument {QTOF, ORBI, FTICR}
 
     /**

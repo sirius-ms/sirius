@@ -23,6 +23,7 @@ package de.unijena.bioinf.ms.middleware.model.annotations;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 /**
@@ -36,7 +37,8 @@ import lombok.*;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FormulaCandidate {
-    public enum OptFields {statistics, fragmentationTree, simulatedIsotopePattern, predictedFingerprint, compoundClasses, canopusPredictions};
+    @Schema(enumAsRef = true, name = "FormulaCandidateOptField")
+    public enum OptField {statistics, fragmentationTree, simulatedIsotopePattern, predictedFingerprint, compoundClasses, canopusPredictions};
 
     /**
      * Unique identifier of this formula candidate

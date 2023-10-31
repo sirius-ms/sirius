@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.model.annotations;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
@@ -28,6 +29,7 @@ import lombok.experimental.SuperBuilder;
 @Setter
 @SuperBuilder
 public class ConsensusAnnotationsCSI extends ConsensusAnnotations {
+    @Schema(enumAsRef = true, name = "ConsensusCriterionCSI")
     public enum Criterion {
         MAJORITY_STRUCTURE,
         CONFIDENCE_STRUCTURE,

@@ -91,8 +91,8 @@ public class SiriusProjectSpaceImpl implements Project {
 
 
     @Override
-    public Page<Compound> findCompounds(Pageable pageable, EnumSet<Compound.OptFields> optFields,
-                                        EnumSet<AlignedFeature.OptFields> featureOptFields) {
+    public Page<Compound> findCompounds(Pageable pageable, EnumSet<Compound.OptField> optFields,
+                                        EnumSet<AlignedFeature.OptField> featureOptFields) {
         Map<String, List<CompoundContainerId>> featureGroups = projectSpaceManager.projectSpace()
                 .stream().filter(c -> c.getGroupId().isPresent())
                 .collect(Collectors.groupingBy(c -> c.getGroupId().get()));
@@ -106,8 +106,8 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     @Override
-    public Compound findCompoundById(String compoundId, EnumSet<Compound.OptFields> optFields,
-                                     EnumSet<AlignedFeature.OptFields> featureOptFields) {
+    public Compound findCompoundById(String compoundId, EnumSet<Compound.OptField> optFields,
+                                     EnumSet<AlignedFeature.OptField> featureOptFields) {
         List<CompoundContainerId> groupFeatures = projectSpaceManager.projectSpace()
                 .stream().filter(c -> c.getGroupId().map(compoundId::equals).orElse(false))
                 .toList();
@@ -123,7 +123,7 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     @Override
-    public Page<AlignedFeatureQuality> findAlignedFeaturesQuality(Pageable pageable, EnumSet<AlignedFeatureQuality.OptFields> optFields) {
+    public Page<AlignedFeatureQuality> findAlignedFeaturesQuality(Pageable pageable, EnumSet<AlignedFeatureQuality.OptField> optFields) {
         LoggerFactory.getLogger(AlignedFeatureController.class).info("Started collecting aligned features quality...");
         final List<AlignedFeatureQuality> alignedFeatureQualities = projectSpaceManager.projectSpace().stream()
                 .skip(pageable.getOffset()).limit(pageable.getPageSize())
@@ -135,13 +135,13 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     @Override
-    public AlignedFeatureQuality findAlignedFeaturesQualityById(String alignedFeatureId, EnumSet<AlignedFeatureQuality.OptFields> optFields) {
+    public AlignedFeatureQuality findAlignedFeaturesQualityById(String alignedFeatureId, EnumSet<AlignedFeatureQuality.OptField> optFields) {
         final CompoundContainerId ccid = parseCID(alignedFeatureId);
         return asAlignedFeatureQuality(ccid, optFields);
     }
 
     @Override
-    public Page<AlignedFeature> findAlignedFeatures(Pageable pageable, EnumSet<AlignedFeature.OptFields> optFields) {
+    public Page<AlignedFeature> findAlignedFeatures(Pageable pageable, EnumSet<AlignedFeature.OptField> optFields) {
         LoggerFactory.getLogger(AlignedFeatureController.class).info("Started collecting aligned features...");
         final List<AlignedFeature> alignedFeatures = projectSpaceManager.projectSpace().stream()
                 .skip(pageable.getOffset()).limit(pageable.getPageSize())
@@ -153,7 +153,7 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     @Override
-    public AlignedFeature findAlignedFeaturesById(String alignedFeatureId, EnumSet<AlignedFeature.OptFields> optFields) {
+    public AlignedFeature findAlignedFeaturesById(String alignedFeatureId, EnumSet<AlignedFeature.OptField> optFields) {
         final CompoundContainerId ccid = parseCID(alignedFeatureId);
         return asAlignedFeature(ccid, optFields);
     }
@@ -171,7 +171,7 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     @Override
-    public Page<FormulaCandidate> findFormulaCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, EnumSet<FormulaCandidate.OptFields> optFields) {
+    public Page<FormulaCandidate> findFormulaCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, EnumSet<FormulaCandidate.OptField> optFields) {
         LoggerFactory.getLogger(getClass()).info("Started collecting formulas...");
         Class<? extends DataAnnotation>[] annotations = resolveFormulaCandidateAnnotations(optFields);
         Instance instance = loadInstance(alignedFeatureId);
@@ -192,7 +192,7 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     @Override
-    public FormulaCandidate findFormulaCandidateByFeatureIdAndId(String formulaId, String alignedFeatureId, EnumSet<FormulaCandidate.OptFields> optFields) {
+    public FormulaCandidate findFormulaCandidateByFeatureIdAndId(String formulaId, String alignedFeatureId, EnumSet<FormulaCandidate.OptField> optFields) {
         Class<? extends DataAnnotation>[] annotations = resolveFormulaCandidateAnnotations(optFields);
         Instance instance = loadInstance(alignedFeatureId);
         return instance.loadFormulaResult(parseFID(instance, formulaId), annotations)
@@ -200,8 +200,8 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     @Override
-    public Page<StructureCandidateScored> findStructureCandidatesByFeatureIdAndFormulaId(String formulaId, String alignedFeatureId, Pageable pageable, EnumSet<StructureCandidateScored.OptFields> optFields) {
-        List<Class<? extends DataAnnotation>> para = (optFields.contains(StructureCandidateScored.OptFields.fingerprint)
+    public Page<StructureCandidateScored> findStructureCandidatesByFeatureIdAndFormulaId(String formulaId, String alignedFeatureId, Pageable pageable, EnumSet<StructureCandidateScored.OptField> optFields) {
+        List<Class<? extends DataAnnotation>> para = (optFields.contains(StructureCandidateScored.OptField.fingerprint)
                 ? List.of(FormulaScoring.class, FBCandidates.class, FBCandidateFingerprints.class)
                 : List.of(FormulaScoring.class, FBCandidates.class));
 
@@ -214,8 +214,8 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     @Override
-    public Page<StructureCandidateFormula> findStructureCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, EnumSet<StructureCandidateScored.OptFields> optFields) {
-        List<Class<? extends DataAnnotation>> para = (optFields.contains(StructureCandidateScored.OptFields.fingerprint)
+    public Page<StructureCandidateFormula> findStructureCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, EnumSet<StructureCandidateScored.OptField> optFields) {
+        List<Class<? extends DataAnnotation>> para = (optFields.contains(StructureCandidateScored.OptField.fingerprint)
                 ? List.of(FormulaScoring.class, FBCandidates.class, FBCandidateFingerprints.class)
                 : List.of(FormulaScoring.class, FBCandidates.class));
 
@@ -234,8 +234,8 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     @Override
-    public StructureCandidateFormula findTopStructureCandidateByFeatureId(String alignedFeatureId, EnumSet<StructureCandidateScored.OptFields> optFields) {
-        List<Class<? extends DataAnnotation>> para = (optFields.contains(StructureCandidateScored.OptFields.fingerprint)
+    public StructureCandidateFormula findTopStructureCandidateByFeatureId(String alignedFeatureId, EnumSet<StructureCandidateScored.OptField> optFields) {
+        List<Class<? extends DataAnnotation>> para = (optFields.contains(StructureCandidateScored.OptField.fingerprint)
                 ? List.of(FormulaScoring.class, FBCandidates.class, FBCandidateFingerprints.class)
                 : List.of(FormulaScoring.class, FBCandidates.class));
 
@@ -256,28 +256,28 @@ public class SiriusProjectSpaceImpl implements Project {
         }).orElseThrow();
     }
 
-    private AlignedFeature asAlignedFeature(CompoundContainerId cid, EnumSet<AlignedFeature.OptFields> optFields) {
+    private AlignedFeature asAlignedFeature(CompoundContainerId cid, EnumSet<AlignedFeature.OptField> optFields) {
         final AlignedFeature alignedFeature = asAlignedFeature(cid);
         if (!optFields.isEmpty()) {
             Instance instance = projectSpaceManager.getInstanceFromCompound(cid);
-            if (optFields.contains(AlignedFeature.OptFields.topAnnotations))
+            if (optFields.contains(AlignedFeature.OptField.topAnnotations))
                 alignedFeature.setTopAnnotations(extractTopAnnotations(instance));
-            if (optFields.contains(AlignedFeature.OptFields.topAnnotationsDeNovo))
+            if (optFields.contains(AlignedFeature.OptField.topAnnotationsDeNovo))
                 alignedFeature.setTopAnnotationsDeNovo(extractTopAnnotationsDeNovo(instance));
-            if (optFields.contains(AlignedFeature.OptFields.msData))
+            if (optFields.contains(AlignedFeature.OptField.msData))
                 alignedFeature.setMsData(asCompoundMsData(instance));
         }
         return alignedFeature;
     }
 
-    private AlignedFeatureQuality asAlignedFeatureQuality(CompoundContainerId cid, EnumSet<AlignedFeatureQuality.OptFields> optFields) {
+    private AlignedFeatureQuality asAlignedFeatureQuality(CompoundContainerId cid, EnumSet<AlignedFeatureQuality.OptField> optFields) {
         final AlignedFeatureQuality.AlignedFeatureQualityBuilder builder = AlignedFeatureQuality.builder()
                 .alignedFeatureId(cid.getDirectoryName());
         if (!optFields.isEmpty()) {
             Instance instance = projectSpaceManager.getInstanceFromCompound(cid);
-            if (optFields.contains(AlignedFeatureQuality.OptFields.lcmsFeatureQuality))
+            if (optFields.contains(AlignedFeatureQuality.OptField.lcmsFeatureQuality))
                 builder.lcmsFeatureQuality(asCompoundLCMSFeatureQuality(instance));
-            if (optFields.contains(AlignedFeatureQuality.OptFields.qualityFlags))
+            if (optFields.contains(AlignedFeatureQuality.OptField.qualityFlags))
                 builder.qualityFlags(asCompoundQualityData(instance));
         }
         return builder.build();
@@ -285,8 +285,8 @@ public class SiriusProjectSpaceImpl implements Project {
 
     private static final DecimalFormat NUMBER_FORMAT = new DecimalFormat("#0.000");
 
-    private Compound asCompound(List<CompoundContainerId> cids, EnumSet<Compound.OptFields> optFields,
-                                EnumSet<AlignedFeature.OptFields> optFeatureFields) {
+    private Compound asCompound(List<CompoundContainerId> cids, EnumSet<Compound.OptField> optFields,
+                                EnumSet<AlignedFeature.OptField> optFeatureFields) {
         //compound with ID
         Compound.CompoundBuilder c = Compound.builder()
                 .compoundId(cids.stream().map(CompoundContainerId::getGroupId)
@@ -294,27 +294,27 @@ public class SiriusProjectSpaceImpl implements Project {
 
         {
             // merge optional field config
-            final EnumSet<AlignedFeature.OptFields> mergedFeatureFields = EnumSet.copyOf(optFeatureFields);
-            if (optFields.contains(Compound.OptFields.consensusAnnotations))
-                mergedFeatureFields.add(AlignedFeature.OptFields.topAnnotations);
-            if (optFields.contains(Compound.OptFields.consensusAnnotationsDeNovo))
-                mergedFeatureFields.add(AlignedFeature.OptFields.topAnnotationsDeNovo);
+            final EnumSet<AlignedFeature.OptField> mergedFeatureFields = EnumSet.copyOf(optFeatureFields);
+            if (optFields.contains(Compound.OptField.consensusAnnotations))
+                mergedFeatureFields.add(AlignedFeature.OptField.topAnnotations);
+            if (optFields.contains(Compound.OptField.consensusAnnotationsDeNovo))
+                mergedFeatureFields.add(AlignedFeature.OptField.topAnnotationsDeNovo);
 
             // features
             List<AlignedFeature> features = cids.stream().map(cid -> asAlignedFeature(cid, mergedFeatureFields)).toList();
             c.features(features);
 
-            if (optFields.contains(Compound.OptFields.consensusAnnotations))
+            if (optFields.contains(Compound.OptField.consensusAnnotations))
                 c.consensusAnnotations(AnnotationUtils.buildConsensusAnnotationsCSI(features));
-            if (optFields.contains(Compound.OptFields.consensusAnnotationsDeNovo))
+            if (optFields.contains(Compound.OptField.consensusAnnotationsDeNovo))
                 c.consensusAnnotationsDeNovo(AnnotationUtils.buildConsensusAnnotationsDeNovo(features));
-            if (optFields.contains(Compound.OptFields.customAnnotations))
+            if (optFields.contains(Compound.OptField.customAnnotations))
                 c.customAnnotations(ConsensusAnnotationsCSI.builder().build()); //todo implement custom annotations -> storage needed
 
             //remove optionals if not requested
-            if (!optFeatureFields.contains(AlignedFeature.OptFields.topAnnotations))
+            if (!optFeatureFields.contains(AlignedFeature.OptField.topAnnotations))
                 features.forEach(f -> f.setTopAnnotations(null));
-            if (!optFeatureFields.contains(AlignedFeature.OptFields.topAnnotationsDeNovo))
+            if (!optFeatureFields.contains(AlignedFeature.OptField.topAnnotationsDeNovo))
                 features.forEach(f -> f.setTopAnnotationsDeNovo(null));
         }
 
@@ -376,7 +376,7 @@ public class SiriusProjectSpaceImpl implements Project {
             Instance instance, FormulaResultId fidObj,
             Pageable pageable,
             List<Class<? extends DataAnnotation>> para,
-            EnumSet<StructureCandidateScored.OptFields> optFields
+            EnumSet<StructureCandidateScored.OptField> optFields
     ) {
         long topK = pageable.getOffset() + pageable.getPageSize();
         fidObj.setAnnotation(FBCandidateNumber.class, topK <= 0 ? FBCandidateNumber.ALL : new FBCandidateNumber((int) topK));
@@ -387,7 +387,7 @@ public class SiriusProjectSpaceImpl implements Project {
             Iterator<Scored<CompoundCandidate>> it =
                     l.stream().skip(pageable.getOffset()).limit(pageable.getPageSize()).iterator();
 
-            if (optFields.contains(StructureCandidateScored.OptFields.fingerprint)) {
+            if (optFields.contains(StructureCandidateScored.OptField.fingerprint)) {
                 Iterator<Fingerprint> fps = fr.getAnnotationOrThrow(FBCandidateFingerprints.class).getFingerprints()
                         .stream().skip(pageable.getOffset()).limit(pageable.getPageSize()).iterator();
 
@@ -411,21 +411,21 @@ public class SiriusProjectSpaceImpl implements Project {
         });
     }
 
-    public static FormulaCandidate makeFormulaCandidate(Instance inst, FormulaResult res, EnumSet<FormulaCandidate.OptFields> optFields) {
-        FormulaCandidate candidate = optFields.contains(FormulaCandidate.OptFields.statistics)
+    public static FormulaCandidate makeFormulaCandidate(Instance inst, FormulaResult res, EnumSet<FormulaCandidate.OptField> optFields) {
+        FormulaCandidate candidate = optFields.contains(FormulaCandidate.OptField.statistics)
                 ? asFormulaCandidate(res)
                 : asFormulaCandidate(res.getId(), res.getAnnotationOrThrow(FormulaScoring.class));
 
-        if (optFields.contains(FormulaCandidate.OptFields.fragmentationTree))
+        if (optFields.contains(FormulaCandidate.OptField.fragmentationTree))
             res.getAnnotation(FTree.class).map(FragmentationTree::fromFtree).ifPresent(candidate::setFragmentationTree);
-        if (optFields.contains(FormulaCandidate.OptFields.simulatedIsotopePattern))
+        if (optFields.contains(FormulaCandidate.OptField.simulatedIsotopePattern))
             asSimulatedIsotopePattern(inst, res).ifPresent(candidate::setSimulatedIsotopePattern);
-        if (optFields.contains(FormulaCandidate.OptFields.predictedFingerprint))
+        if (optFields.contains(FormulaCandidate.OptField.predictedFingerprint))
             res.getAnnotation(FingerprintResult.class).map(fpResult -> fpResult.fingerprint.toProbabilityArray())
                     .ifPresent(candidate::setPredictedFingerprint);
-        if (optFields.contains(FormulaCandidate.OptFields.canopusPredictions))
+        if (optFields.contains(FormulaCandidate.OptField.canopusPredictions))
             res.getAnnotation(CanopusResult.class).map(CanopusPrediction::of).ifPresent(candidate::setCanopusPrediction);
-        if (optFields.contains(FormulaCandidate.OptFields.compoundClasses))
+        if (optFields.contains(FormulaCandidate.OptField.compoundClasses))
             res.getAnnotation(CanopusResult.class).map(CompoundClasses::of).ifPresent(candidate::setCompoundClasses);
         return candidate;
     }
@@ -492,20 +492,20 @@ public class SiriusProjectSpaceImpl implements Project {
         return frs;
     }
 
-    public static Class<? extends DataAnnotation>[] resolveFormulaCandidateAnnotations(EnumSet<FormulaCandidate.OptFields> optFields) {
+    public static Class<? extends DataAnnotation>[] resolveFormulaCandidateAnnotations(EnumSet<FormulaCandidate.OptField> optFields) {
         List<Class<? extends DataAnnotation>> classes = new ArrayList<>();
         classes.add(FormulaScoring.class);
         if (Stream.of(
-                        FormulaCandidate.OptFields.statistics,
-                        FormulaCandidate.OptFields.fragmentationTree,
-                        FormulaCandidate.OptFields.simulatedIsotopePattern)
+                        FormulaCandidate.OptField.statistics,
+                        FormulaCandidate.OptField.fragmentationTree,
+                        FormulaCandidate.OptField.simulatedIsotopePattern)
                 .anyMatch(optFields::contains))
             classes.add(FTree.class);
 
-        if (optFields.contains(FormulaCandidate.OptFields.predictedFingerprint))
+        if (optFields.contains(FormulaCandidate.OptField.predictedFingerprint))
             classes.add(FingerprintResult.class);
 
-        if (Stream.of(FormulaCandidate.OptFields.compoundClasses, FormulaCandidate.OptFields.canopusPredictions)
+        if (Stream.of(FormulaCandidate.OptField.compoundClasses, FormulaCandidate.OptField.canopusPredictions)
                 .anyMatch(optFields::contains))
             classes.add(CanopusResult.class);
 
@@ -533,7 +533,7 @@ public class SiriusProjectSpaceImpl implements Project {
 //                        topHit.getAnnotation(FBCandidates.class).map(FBCandidates::getResults)
 //                                .filter(l -> !l.isEmpty()).map(r -> r.get(0)).map(s ->
 //                                        StructureCandidateFormula.of(s, topHit.getAnnotationOrThrow(FormulaScoring.class),
-//                                                EnumSet.of(StructureCandidateScored.OptFields.dbLinks, StructureCandidateScored.OptFields.refSpectraLinks), topHit.getId()))
+//                                                EnumSet.of(StructureCandidateScored.OptField.dbLinks, StructureCandidateScored.OptField.refSpectraLinks), topHit.getId()))
 //                                .ifPresent(cSum::setStructureAnnotation);
 
                             topHit.getAnnotation(CanopusResult.class).map(CompoundClasses::of).
@@ -557,7 +557,7 @@ public class SiriusProjectSpaceImpl implements Project {
                         topHit.getAnnotation(FBCandidates.class).map(FBCandidates::getResults)
                                 .filter(l -> !l.isEmpty()).map(r -> r.get(0)).map(s ->
                                         StructureCandidateFormula.of(s, topHit.getAnnotationOrThrow(FormulaScoring.class),
-                                                EnumSet.of(StructureCandidateScored.OptFields.dbLinks, StructureCandidateScored.OptFields.refSpectraLinks), topHit.getId()))
+                                                EnumSet.of(StructureCandidateScored.OptField.dbLinks, StructureCandidateScored.OptField.refSpectraLinks), topHit.getId()))
                                 .ifPresent(cSum::setStructureAnnotation);
 
                         topHit.getAnnotation(CanopusResult.class).map(CompoundClasses::of).

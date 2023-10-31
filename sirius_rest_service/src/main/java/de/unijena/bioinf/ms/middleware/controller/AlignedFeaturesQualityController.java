@@ -61,7 +61,7 @@ public class AlignedFeaturesQualityController {
             @PathVariable String projectId, @ParameterObject Pageable pageable,
             @RequestParam(required = false) String searchQuery,
             @RequestParam(defaultValue = "LUCENE") SearchQueryType querySyntax,
-            @RequestParam(defaultValue = "qualityFlags, lcmsFeatureQuality") EnumSet<AlignedFeatureQuality.OptFields> optFields
+            @RequestParam(defaultValue = "qualityFlags, lcmsFeatureQuality") EnumSet<AlignedFeatureQuality.OptField> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId).findAlignedFeaturesQuality(pageable, optFields);
     }
@@ -78,7 +78,7 @@ public class AlignedFeaturesQualityController {
     @GetMapping(value = "/{alignedFeatureId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public AlignedFeatureQuality getAlignedFeaturesQuality(
             @PathVariable String projectId, @PathVariable String alignedFeatureId,
-            @RequestParam(defaultValue = "qualityFlags, lcmsFeatureQuality") EnumSet<AlignedFeatureQuality.OptFields> optFields
+            @RequestParam(defaultValue = "qualityFlags, lcmsFeatureQuality") EnumSet<AlignedFeatureQuality.OptField> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId).findAlignedFeaturesQualityById(alignedFeatureId, optFields);
     }

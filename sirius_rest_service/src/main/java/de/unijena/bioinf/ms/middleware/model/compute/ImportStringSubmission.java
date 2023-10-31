@@ -39,26 +39,6 @@ import org.jetbrains.annotations.Nullable;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @NoArgsConstructor
 public class ImportStringSubmission extends ImportSubmission {
-    public enum Format {
-        MS("ms"),
-        MGF("mgf"),
-        MZML("mzml"),
-        MZXML("mzxml"),
-        CEF("cef"),
-        MSP("msp"),
-        MAT("mat"),
-        MASSBANK("txt");
-
-        private final String ext;
-
-        Format(String ext) {
-            this.ext = ext;
-        }
-
-        public String getExtension() {
-            return ext;
-        }
-    }
 
     /**
      * Name that specifies the data source. Can e.g. be a file path  or just a name.
@@ -69,7 +49,7 @@ public class ImportStringSubmission extends ImportSubmission {
      * Data format used in the data field.
      */
     @NotNull
-    protected Format format;
+    protected ImportFormat format;
     /**
      * Data content in specified format
      */

@@ -23,6 +23,7 @@ package de.unijena.bioinf.ms.middleware.model.compounds;
 import de.unijena.bioinf.ms.middleware.model.annotations.ConsensusAnnotationsCSI;
 import de.unijena.bioinf.ms.middleware.model.annotations.ConsensusAnnotationsDeNovo;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -34,7 +35,8 @@ import java.util.List;
 @Setter
 @Builder
 public class Compound {
-    public enum OptFields {consensusAnnotations, consensusAnnotationsDeNovo, customAnnotations}
+    @Schema(enumAsRef = true, name = "CompoundOptField")
+    public enum OptField {consensusAnnotations, consensusAnnotationsDeNovo, customAnnotations}
 
     /**
      * uid of this compound Entity

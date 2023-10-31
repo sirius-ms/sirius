@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.model.annotations;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
@@ -28,6 +29,8 @@ import lombok.experimental.SuperBuilder;
 @Setter
 @SuperBuilder
 public class ConsensusAnnotationsDeNovo extends ConsensusAnnotations{
+
+    @Schema(enumAsRef = true, name = "ConsensusCriterionDeNovo")
     public enum Criterion {
         MAJORITY_FORMULA,
         TOP_FORMULA,

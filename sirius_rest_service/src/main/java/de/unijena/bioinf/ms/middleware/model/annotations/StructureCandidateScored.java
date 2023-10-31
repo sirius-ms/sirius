@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.middleware.model.annotations;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -30,7 +31,8 @@ import lombok.Setter;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties({ "molecularFormula", "adduct"})
 public class StructureCandidateScored extends StructureCandidate {
-    public enum OptFields {fingerprint, dbLinks, refSpectraLinks}
+    @Schema(enumAsRef = true, name = "StructureCandidateOptField")
+    public enum OptField {fingerprint, dbLinks, refSpectraLinks}
 
     protected Double csiScore;
     protected Double tanimotoSimilarity;
