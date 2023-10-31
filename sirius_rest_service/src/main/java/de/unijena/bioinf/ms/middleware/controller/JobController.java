@@ -90,7 +90,6 @@ public class JobController {
     @GetMapping(value = "/projects/{projectId}/jobs/{jobId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public Job getJob(@PathVariable String projectId, @PathVariable String jobId,
-                      @ParameterObject Pageable pageable,
                       @RequestParam(defaultValue = "progress") EnumSet<Job.OptFields> optFields
     ) {
         return computeService.getJob(projectsProvider.getProjectOrThrow(projectId), jobId, optFields);
