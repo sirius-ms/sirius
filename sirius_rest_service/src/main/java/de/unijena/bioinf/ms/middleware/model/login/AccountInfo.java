@@ -56,15 +56,12 @@ import java.util.Optional;
 @Setter
 @NoArgsConstructor
 public class AccountInfo {
-    //todo maybe move CLASS to auth service module
     String userID;
     String username;
     String userEmail;
     String gravatarURL;
     List<Subscription> subscriptions;
 
-//    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class)
-//    @JsonIdentityReference(alwaysAsId = true)
     String activeSubscriptionId;
 
 
