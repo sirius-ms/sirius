@@ -50,7 +50,7 @@ public class StructureDbSearch extends Tool<FingerblastOptions> {
      * If this parameter is set to 'false' El Gordo will still be executed and e.g. improve the fragmentation
      * tree, but the matching structure candidates will not be tagged if they match lipid class.
      */
-    boolean tagLipids;
+    Boolean tagLipids;
 
     public StructureDbSearch() {
         super(FingerblastOptions.class);
