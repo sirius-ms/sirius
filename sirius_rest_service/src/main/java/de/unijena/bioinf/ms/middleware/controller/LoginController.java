@@ -24,7 +24,7 @@ import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.UserPortal;
 import de.unijena.bioinf.ms.middleware.model.login.AccountCredentials;
 import de.unijena.bioinf.ms.middleware.model.login.AccountInfo;
-import de.unijena.bioinf.ms.rest.model.license.Subscription;
+import de.unijena.bioinf.ms.middleware.model.login.Subscription;
 import de.unijena.bioinf.webapi.Tokens;
 import de.unijena.bioinf.webapi.WebAPI;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -46,7 +46,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @RequestMapping(value = "/api/account")
 @Tag(name = "Login and Account", description = "Perform signIn, signOut and signUp. Get tokens and account information.")
 public class LoginController {
-    //todo change subscription
     private static final ReadWriteLock lock = new ReentrantReadWriteLock();
     
     private final WebAPI<?> webAPI;
@@ -147,7 +146,8 @@ public class LoginController {
         try {
             return webAPI.getAuthService()
                     .getToken().map(Tokens::getSubscriptions)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not Logged in. Please log in to retrieve subscriptions."));
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not Logged in. Please log in to retrieve subscriptions."))
+                    .stream().map(Subscription::of).toList();
         } finally {
             lock.readLock().unlock();
         }
