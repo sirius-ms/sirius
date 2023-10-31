@@ -24,10 +24,11 @@ import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.UserPortal;
 import de.unijena.bioinf.ms.middleware.model.login.AccountCredentials;
 import de.unijena.bioinf.ms.middleware.model.login.AccountInfo;
-import de.unijena.bioinf.ms.rest.model.license.Subscription;
+import de.unijena.bioinf.ms.middleware.model.login.Subscription;
 import de.unijena.bioinf.webapi.Tokens;
 import de.unijena.bioinf.webapi.WebAPI;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -46,7 +47,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @RequestMapping(value = "/api/account")
 @Tag(name = "Login and Account", description = "Perform signIn, signOut and signUp. Get tokens and account information.")
 public class LoginController {
-    //todo change subscription
     private static final ReadWriteLock lock = new ReentrantReadWriteLock();
     
     private final WebAPI<?> webAPI;
@@ -147,7 +147,29 @@ public class LoginController {
         try {
             return webAPI.getAuthService()
                     .getToken().map(Tokens::getSubscriptions)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not Logged in. Please log in to retrieve subscriptions."));
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not Logged in. Please log in to retrieve subscriptions."))
+                    .stream().map(Subscription::of).toList();
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    /**
+     * Select a subscription as active subscription to be used for computations.
+     * @return Account information with updated active subscription
+     */
+    @PutMapping(value = "/subscriptions/select-active", produces = MediaType.APPLICATION_JSON_VALUE)
+    public AccountInfo getSubscriptions(@RequestParam @NotNull String sid) {
+        lock.readLock().lock();
+        try {
+            de.unijena.bioinf.ms.rest.model.license.Subscription sub = webAPI.getAuthService().getToken()
+                    .map(Tokens::getSubscriptions)
+                    .flatMap(l -> l.stream().filter(s -> sid.equals(s.getSid())).findFirst())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                            "The subscription has not been found in your account and cannot be selected as active subscription"));
+
+            webAPI.changeActiveSubscription(sub);
+            return getAccountInfo(false);
         } finally {
             lock.readLock().unlock();
         }
