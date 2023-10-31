@@ -159,7 +159,7 @@ public class LoginController {
      * @return Account information with updated active subscription
      */
     @PutMapping(value = "/subscriptions/select-active", produces = MediaType.APPLICATION_JSON_VALUE)
-    public AccountInfo getSubscriptions(@RequestParam @NotNull String sid) {
+    public AccountInfo selectSubscription(@RequestParam @NotNull String sid) {
         lock.readLock().lock();
         try {
             de.unijena.bioinf.ms.rest.model.license.Subscription sub = webAPI.getAuthService().getToken()
