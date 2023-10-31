@@ -63,8 +63,8 @@ public class CompoundController {
     public Page<Compound> getCompounds(@PathVariable String projectId, @ParameterObject Pageable pageable,
                                        @RequestParam(required = false) String searchQuery,
                                        @RequestParam(defaultValue = "LUCENE") SearchQueryType querySyntax,
-                                       @RequestParam(defaultValue = "") EnumSet<Compound.OptFields> optFields,
-                                       @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptFields> optFieldsFeatures) {
+                                       @RequestParam(defaultValue = "") EnumSet<Compound.OptField> optFields,
+                                       @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
         return projectsProvider.getProjectOrThrow(projectId).findCompounds(pageable, optFields, optFieldsFeatures);
     }
 
@@ -79,8 +79,8 @@ public class CompoundController {
      */
     @GetMapping(value = "/{compoundId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public Compound getCompound(@PathVariable String projectId, @PathVariable String compoundId,
-                                @RequestParam(required = false, defaultValue = "") EnumSet<Compound.OptFields> optFields,
-                                @RequestParam(required = false, defaultValue = "") EnumSet<AlignedFeature.OptFields> optFieldsFeatures) {
+                                @RequestParam(required = false, defaultValue = "") EnumSet<Compound.OptField> optFields,
+                                @RequestParam(required = false, defaultValue = "") EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
         return projectsProvider.getProjectOrThrow(projectId).findCompoundById(compoundId, optFields, optFieldsFeatures);
     }
 

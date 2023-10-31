@@ -52,14 +52,14 @@ public class StructureCandidateFormula extends StructureCandidateScored {
     protected String adduct;
 
     public static StructureCandidateFormula of(Scored<CompoundCandidate> can, FormulaScoring scorings,
-                                               EnumSet<OptFields> optFields,
+                                               EnumSet<OptField> optFields,
                                                FormulaResultId fid
     ) {
         return of(can, null, scorings, optFields, fid.getMolecularFormula(), fid.getIonType());
     }
 
     public static StructureCandidateFormula of(Scored<CompoundCandidate> can, FormulaScoring scorings,
-                                               EnumSet<OptFields> optFields,
+                                               EnumSet<OptField> optFields,
                                                MolecularFormula formula,
                                                PrecursorIonType adduct
     ) {
@@ -68,7 +68,7 @@ public class StructureCandidateFormula extends StructureCandidateScored {
 
     public static StructureCandidateFormula of(Scored<CompoundCandidate> can, @Nullable Fingerprint fp,
                                                @Nullable FormulaScoring confidenceScoreProvider,
-                                               EnumSet<OptFields> optFields,
+                                               EnumSet<OptField> optFields,
                                                FormulaResultId fid
     ) {
         return of(can, fp, confidenceScoreProvider, optFields, fid.getMolecularFormula(), fid.getIonType());
@@ -76,7 +76,7 @@ public class StructureCandidateFormula extends StructureCandidateScored {
 
     public static StructureCandidateFormula of(Scored<CompoundCandidate> can, @Nullable Fingerprint fp,
                                                @Nullable FormulaScoring confidenceScoreProvider,
-                                               EnumSet<OptFields> optFields,
+                                               EnumSet<OptField> optFields,
                                                MolecularFormula formula,
                                                PrecursorIonType adduct
     ) {
@@ -102,16 +102,16 @@ public class StructureCandidateFormula extends StructureCandidateScored {
         sSum.setXlogP(can.getCandidate().getXlogp());
 
         //meta data
-        if (optFields.contains(OptFields.dbLinks))
+        if (optFields.contains(OptField.dbLinks))
             sSum.setDbLinks(can.getCandidate().getLinks());
 
-        if (optFields.contains(OptFields.refSpectraLinks))
+        if (optFields.contains(OptField.refSpectraLinks))
             sSum.setRefSpectraLinks(List.of());
         //todo add reference spectra links
 //            sSum.setDbLinks(can.getCandidate().getReferenceSpectraSplash());
 
         //FP
-        if (fp != null && optFields.contains(OptFields.fingerprint))
+        if (fp != null && optFields.contains(OptField.fingerprint))
             sSum.setFingerprint(BinaryFingerprint.from(fp));
 
         return sSum;

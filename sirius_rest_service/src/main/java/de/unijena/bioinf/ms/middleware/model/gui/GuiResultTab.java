@@ -60,9 +60,12 @@
 
 package de.unijena.bioinf.ms.middleware.model.gui;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * Available result tabs in the SIRIUS GUI. Name correspond to the names in the GUI.
  */
+@Schema(enumAsRef = true)
 public enum GuiResultTab {
     FORMULAS,
     SPECTRA,

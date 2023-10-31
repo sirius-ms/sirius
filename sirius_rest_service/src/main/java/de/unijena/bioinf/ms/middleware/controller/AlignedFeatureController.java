@@ -66,7 +66,7 @@ public class AlignedFeatureController {
             @PathVariable String projectId, @ParameterObject Pageable pageable,
             @RequestParam(required = false) String searchQuery,
             @RequestParam(defaultValue = "LUCENE") SearchQueryType querySyntax,
-            @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptFields> optFields
+            @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId).findAlignedFeatures(pageable, optFields);
     }
@@ -83,7 +83,7 @@ public class AlignedFeatureController {
     @GetMapping(value = "/{alignedFeatureId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public AlignedFeature getAlignedFeatures(
             @PathVariable String projectId, @PathVariable String alignedFeatureId,
-            @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptFields> optFields
+            @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId).findAlignedFeaturesById(alignedFeatureId, optFields);
     }
@@ -116,7 +116,7 @@ public class AlignedFeatureController {
             @ParameterObject Pageable pageable,
             @RequestParam(required = false) String searchQuery,
             @RequestParam(defaultValue = "LUCENE") SearchQueryType querySyntax,
-            @RequestParam(defaultValue = "") EnumSet<StructureCandidateScored.OptFields> optFields
+            @RequestParam(defaultValue = "") EnumSet<StructureCandidateScored.OptField> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId)
                 .findStructureCandidatesByFeatureId(alignedFeatureId, pageable, optFields);
@@ -138,7 +138,7 @@ public class AlignedFeatureController {
             @PathVariable String projectId, @PathVariable String alignedFeatureId, @ParameterObject Pageable pageable,
             @RequestParam(required = false) String searchQuery,
             @RequestParam(defaultValue = "LUCENE") SearchQueryType querySyntax,
-            @RequestParam(defaultValue = "") EnumSet<FormulaCandidate.OptFields> optFields
+            @RequestParam(defaultValue = "") EnumSet<FormulaCandidate.OptField> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId)
                 .findFormulaCandidatesByFeatureId(alignedFeatureId, pageable, optFields);
@@ -157,7 +157,7 @@ public class AlignedFeatureController {
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public FormulaCandidate getFormulaCandidate(
             @PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId,
-            @RequestParam(defaultValue = "") EnumSet<FormulaCandidate.OptFields> optFields
+            @RequestParam(defaultValue = "") EnumSet<FormulaCandidate.OptField> optFields
 
     ) {
         return projectsProvider.getProjectOrThrow(projectId)
@@ -182,7 +182,7 @@ public class AlignedFeatureController {
             @ParameterObject Pageable pageable,
             @RequestParam(required = false) String searchQuery,
             @RequestParam(defaultValue = "LUCENE") SearchQueryType querySyntax,
-            @RequestParam(defaultValue = "") EnumSet<StructureCandidateScored.OptFields> optFields
+            @RequestParam(defaultValue = "") EnumSet<StructureCandidateScored.OptField> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId)
                 .findStructureCandidatesByFeatureIdAndFormulaId(formulaId, alignedFeatureId, pageable, optFields);
@@ -211,7 +211,7 @@ public class AlignedFeatureController {
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/tree", produces = MediaType.APPLICATION_JSON_VALUE)
     public FragmentationTree getFragTree(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         FragmentationTree res = projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidateByFeatureIdAndId(alignedFeatureId, formulaId, FormulaCandidate.OptFields.fragmentationTree)
+                .findFormulaCandidateByFeatureIdAndId(alignedFeatureId, formulaId, FormulaCandidate.OptField.fragmentationTree)
                 .getFragmentationTree();
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "FragmentationTree for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");
@@ -231,7 +231,7 @@ public class AlignedFeatureController {
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/isotope-pattern", produces = MediaType.APPLICATION_JSON_VALUE)
     public AnnotatedSpectrum getSimulatedIsotopePattern(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         AnnotatedSpectrum res = projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidateByFeatureIdAndId(alignedFeatureId, formulaId, FormulaCandidate.OptFields.simulatedIsotopePattern)
+                .findFormulaCandidateByFeatureIdAndId(alignedFeatureId, formulaId, FormulaCandidate.OptField.simulatedIsotopePattern)
                 .getSimulatedIsotopePattern();
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Isotope Pattern for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");
@@ -251,7 +251,7 @@ public class AlignedFeatureController {
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/fingerprint", produces = MediaType.APPLICATION_JSON_VALUE)
     public double[] getFingerprintPrediction(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         double[] res = projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidateByFeatureIdAndId(alignedFeatureId, formulaId, FormulaCandidate.OptFields.predictedFingerprint)
+                .findFormulaCandidateByFeatureIdAndId(alignedFeatureId, formulaId, FormulaCandidate.OptField.predictedFingerprint)
                 .getPredictedFingerprint();
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Fingerprint for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");
@@ -270,7 +270,7 @@ public class AlignedFeatureController {
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/canopus-prediction", produces = MediaType.APPLICATION_JSON_VALUE)
     public CanopusPrediction getCanopusPrediction(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         CanopusPrediction res = projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidateByFeatureIdAndId(alignedFeatureId, formulaId, FormulaCandidate.OptFields.canopusPredictions)
+                .findFormulaCandidateByFeatureIdAndId(alignedFeatureId, formulaId, FormulaCandidate.OptField.canopusPredictions)
                 .getCanopusPrediction();
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Compound Classes for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");
@@ -290,7 +290,7 @@ public class AlignedFeatureController {
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/best-compound-classes", produces = MediaType.APPLICATION_JSON_VALUE)
     public CompoundClasses getBestMatchingCompoundClasses(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         CompoundClasses res = projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidateByFeatureIdAndId(alignedFeatureId, formulaId, FormulaCandidate.OptFields.compoundClasses)
+                .findFormulaCandidateByFeatureIdAndId(alignedFeatureId, formulaId, FormulaCandidate.OptField.compoundClasses)
                 .getCompoundClasses();
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Compound Classes for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");

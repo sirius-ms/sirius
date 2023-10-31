@@ -38,28 +38,28 @@ import java.util.List;
 
 public interface ComputeService<P extends Project> extends DisposableBean {
 
-    Job createAndSubmitJob(P psm, JobSubmission jobSubmission, @NotNull EnumSet<Job.OptFields> optFields);
+    Job createAndSubmitJob(P psm, JobSubmission jobSubmission, @NotNull EnumSet<Job.OptField> optFields);
 
-    Job createAndSubmitJob(P psm, List<String> commandList, @Nullable Iterable<String> alignedFeatureIds, @Nullable InputFilesOptions toImport, @NotNull EnumSet<Job.OptFields> optFields);
+    Job createAndSubmitJob(P psm, List<String> commandList, @Nullable Iterable<String> alignedFeatureIds, @Nullable InputFilesOptions toImport, @NotNull EnumSet<Job.OptField> optFields);
 
-    Job createAndSubmitImportJob(P psm, ImportLocalFilesSubmission jobSubmission, @NotNull EnumSet<Job.OptFields> optFields);
+    Job createAndSubmitImportJob(P psm, ImportLocalFilesSubmission jobSubmission, @NotNull EnumSet<Job.OptField> optFields);
 
-    Job createAndSubmitImportJob(P psm, ImportStringSubmission jobSubmission, @NotNull EnumSet<Job.OptFields> optFields);
+    Job createAndSubmitImportJob(P psm, ImportStringSubmission jobSubmission, @NotNull EnumSet<Job.OptField> optFields);
 
 
-    default Job deleteJob(String jobId, boolean cancelIfRunning, boolean awaitDeletion, @NotNull EnumSet<Job.OptFields> optFields) {
+    default Job deleteJob(String jobId, boolean cancelIfRunning, boolean awaitDeletion, @NotNull EnumSet<Job.OptField> optFields) {
         return deleteJob(null, jobId, cancelIfRunning, awaitDeletion, optFields);
     }
 
-    Job deleteJob(@Nullable P psm, String jobId, boolean cancelIfRunning, boolean awaitDeletion, @NotNull EnumSet<Job.OptFields> optFields);
+    Job deleteJob(@Nullable P psm, String jobId, boolean cancelIfRunning, boolean awaitDeletion, @NotNull EnumSet<Job.OptField> optFields);
 
-    Job getJob(@Nullable P psm, String jobId, @NotNull EnumSet<Job.OptFields> optFields);
+    Job getJob(@Nullable P psm, String jobId, @NotNull EnumSet<Job.OptField> optFields);
 
-    default Page<Job> getJobs(@NotNull Pageable pageable, @NotNull EnumSet<Job.OptFields> optFields) {
+    default Page<Job> getJobs(@NotNull Pageable pageable, @NotNull EnumSet<Job.OptField> optFields) {
         return getJobs(null, pageable, optFields);
     }
 
-    Page<Job> getJobs(@Nullable P psm, @NotNull Pageable pageable, @NotNull EnumSet<Job.OptFields> optFields);
+    Page<Job> getJobs(@Nullable P psm, @NotNull Pageable pageable, @NotNull EnumSet<Job.OptField> optFields);
 
     JJob<?> getJJob(String jobId);
 }

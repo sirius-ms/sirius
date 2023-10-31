@@ -18,15 +18,31 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.middleware.model;
+package de.unijena.bioinf.ms.middleware.model.compute;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+/**
+ * Selection of formats that are supported by the data importers.
+ */
 @Schema(enumAsRef = true)
-public enum SearchQueryType {
-    /**
-     * Apache Lucene Query Syntax
-     * @see <a href="https://lucene.apache.org/core/2_9_4/queryparsersyntax.html"></a>
-     */
-    LUCENE
+public enum ImportFormat {
+    MS("ms"),
+    MGF("mgf"),
+    MZML("mzml"),
+    MZXML("mzxml"),
+    CEF("cef"),
+    MSP("msp"),
+    MAT("mat"),
+    MASSBANK("txt");
+
+    private final String ext;
+
+    ImportFormat(String ext) {
+        this.ext = ext;
+    }
+
+    public String getExtension() {
+        return ext;
+    }
 }

@@ -121,11 +121,11 @@ public class ProjectController {
         Project project = projectsProvider.getProjectOrThrow(projectId);
         if (inputFiles != null) {
             Job id = computeContext.createAndSubmitJob(project, List.of("project-space", "--keep-open"),
-                    null, inputFiles, EnumSet.allOf(Job.OptFields.class));
+                    null, inputFiles, EnumSet.allOf(Job.OptField.class));
             if (awaitImport) { //todo maybe separate endpoint for non waiting.
                 try {
                     computeContext.getJJob(id.getId()).awaitResult();
-                    computeContext.deleteJob(id.getId(), false, true, EnumSet.noneOf(Job.OptFields.class));
+                    computeContext.deleteJob(id.getId(), false, true, EnumSet.noneOf(Job.OptField.class));
                 } catch (ExecutionException e) {
                     throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error when waiting for import jobs '" + id.getId() + "'.", e);
                 }

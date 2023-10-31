@@ -38,14 +38,14 @@ import java.util.stream.Collectors;
 public abstract class AbstractComputeService<P extends Project> implements ComputeService<P> {
 
 
-    protected Job extractJobId(BackgroundRuns.BackgroundRunJob<?, ?> runJob, @NotNull EnumSet<Job.OptFields> optFields) {
+    protected Job extractJobId(BackgroundRuns.BackgroundRunJob<?, ?> runJob, @NotNull EnumSet<Job.OptField> optFields) {
         Job id = new Job();
         id.setId(String.valueOf(runJob.getRunId()));
-        if (optFields.contains(Job.OptFields.command))
+        if (optFields.contains(Job.OptField.command))
             id.setCommand(runJob.getCommand());
-        if (optFields.contains(Job.OptFields.progress))
+        if (optFields.contains(Job.OptField.progress))
             id.setProgress(extractProgress(runJob));
-        if (optFields.contains(Job.OptFields.affectedIds)){
+        if (optFields.contains(Job.OptField.affectedIds)){
             id.setAffectedAlignedFeatureIds(extractEffectedAlignedFeatures(runJob));
             id.setAffectedCompoundIds(extractCompoundIds(runJob));
         }

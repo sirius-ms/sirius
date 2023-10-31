@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.middleware.model.annotations;
 
 import de.unijena.bioinf.ChemistryBase.fp.ClassyfireProperty;
 import de.unijena.bioinf.ChemistryBase.fp.NPCFingerprintVersion;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 /**
@@ -36,6 +37,7 @@ public class CompoundClass {
     /**
      * Defines compound class ontologies that are available.
      */
+    @Schema(enumAsRef = true, name = "CompoundClassType")
     public enum Type {ClassyFire, NPC}
 
     /**
