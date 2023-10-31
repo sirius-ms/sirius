@@ -22,7 +22,7 @@ package de.unijena.bioinf.ms.middleware.service.projects;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.middleware.SiriusMiddlewareApplication;
-import de.unijena.bioinf.ms.middleware.model.projects.ProjectId;
+import de.unijena.bioinf.ms.middleware.model.projects.Project;
 import de.unijena.bioinf.projectspace.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
@@ -51,10 +51,10 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
     protected final ReadWriteLock projectSpaceLock = new ReentrantReadWriteLock();
 
 
-    public List<ProjectId> listAllProjectSpaces() {
+    public List<Project> listAllProjectSpaces() {
         projectSpaceLock.readLock().lock();
         try {
-            return projectSpaces.entrySet().stream().map(x -> ProjectId.of(x.getKey(), x.getValue().projectSpace().getLocation())).collect(Collectors.toList());
+            return projectSpaces.entrySet().stream().map(x -> Project.of(x.getKey(), x.getValue().projectSpace().getLocation())).collect(Collectors.toList());
         } finally {
             projectSpaceLock.readLock().unlock();
         }
@@ -74,8 +74,8 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
     }
 
     @Override
-    public Optional<ProjectId> getProjectId(String name) {
-        return getProjectSpace(name).map(x -> ProjectId.of(name, x.projectSpace().getLocation()));
+    public Optional<Project> getProjectId(String name) {
+        return getProjectSpace(name).map(x -> Project.of(name, x.projectSpace().getLocation()));
     }
 
     /**
@@ -100,40 +100,40 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
         }
     }
 
-    public ProjectId openProjectSpace(@NotNull ProjectId id) throws IOException {
+    public Project openProjectSpace(@NotNull Project id) throws IOException {
         final Lock lock = projectSpaceLock.writeLock();
         lock.lock();
         try {
-            if (projectSpaces.containsKey(id.name)) {
-                throw new ResponseStatusException(HttpStatus.SEE_OTHER, "project space with name '" + id.name + "' already exists.");
+            if (projectSpaces.containsKey(id.projectId)) {
+                throw new ResponseStatusException(HttpStatus.SEE_OTHER, "project space with name '" + id.projectId + "' already exists.");
             }
             Path p = id.getAsPath();
             if (!ProjectSpaceIO.isExistingProjectspaceDirectory(p) && !ProjectSpaceIO.isZipProjectSpace(p)) {
-                throw new IllegalArgumentException("'" + id.name + "' is no valid SIRIUS project space.");
+                throw new IllegalArgumentException("'" + id.projectId + "' is no valid SIRIUS project space.");
             }
-            projectSpaces.put(id.name, projectSpaceManagerFactory.create(new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(p)));
+            projectSpaces.put(id.projectId, projectSpaceManagerFactory.create(new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(p)));
             return id;
         } finally {
             lock.unlock();
         }
     }
 
-    public ProjectId addProjectSpace(@NotNull String nameSuggestion, @NotNull SiriusProjectSpace projectSpaceToAdd) {
+    public Project addProjectSpace(@NotNull String nameSuggestion, @NotNull SiriusProjectSpace projectSpaceToAdd) {
         return addProjectSpace(nameSuggestion, projectSpaceManagerFactory.create(projectSpaceToAdd));
     }
 
-    public ProjectId addProjectSpace(@NotNull String nameSuggestion, @NotNull ProjectSpaceManager<?> projectSpaceToAdd) {
+    public Project addProjectSpace(@NotNull String nameSuggestion, @NotNull ProjectSpaceManager<?> projectSpaceToAdd) {
         return ensureUniqueName(nameSuggestion, (name) -> {
             projectSpaces.put(name, projectSpaceToAdd);
-            return ProjectId.of(name, projectSpaceToAdd.projectSpace().getLocation());
+            return Project.of(name, projectSpaceToAdd.projectSpace().getLocation());
         });
     }
 
-    public ProjectId createProjectSpace(Path location) throws IOException {
+    public Project createProjectSpace(Path location) throws IOException {
         return createProjectSpace(location.getFileName().toString(), location);
     }
 
-    public ProjectId createProjectSpace(@NotNull String nameSuggestion, @NotNull Path location) throws IOException {
+    public Project createProjectSpace(@NotNull String nameSuggestion, @NotNull Path location) throws IOException {
         if (Files.exists(location) && !(Files.isDirectory(location) && FileUtils.listAndClose(location, s -> s.findAny().isEmpty())))
             throw new IllegalArgumentException("Location '" + location.toAbsolutePath() +
                     "' already exists and is not an empty directory. Cannot create new project space here.");
@@ -148,18 +148,18 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
                     new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createNewProjectSpace(location));
 
             projectSpaces.put(name, project);
-            return ProjectId.of(name, location);
+            return Project.of(name, location);
         } finally {
             projectSpaceLock.writeLock().unlock();
         }
     }
 
-    public ProjectId createTemporaryProjectSpace() throws IOException {
+    public Project createTemporaryProjectSpace() throws IOException {
         return ensureUniqueName("temporary", (name) -> {
             try {
                 SiriusProjectSpace space = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createTemporaryProjectSpace();
                 projectSpaces.put(name, projectSpaceManagerFactory.create(space));
-                return ProjectId.of(name, space.getLocation());
+                return Project.of(name, space.getLocation());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
