@@ -23,9 +23,8 @@ package de.unijena.bioinf.ms.middleware.controller;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.middleware.model.SearchQueryType;
 import de.unijena.bioinf.ms.middleware.model.compute.Job;
-import de.unijena.bioinf.ms.middleware.model.projects.ProjectId;
+import de.unijena.bioinf.ms.middleware.model.projects.Project;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
-import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springdoc.api.annotations.ParameterObject;
@@ -64,10 +63,10 @@ public class ProjectController {
      * @param querySyntax query syntax used fpr searchQuery
      */
     @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<ProjectId> getProjectSpaces(@ParameterObject Pageable pageable,
-                                            @RequestParam(required = false) String searchQuery,
-                                            @RequestParam(defaultValue = "LUCENE") SearchQueryType querySyntax) {
-        final List<ProjectId> all = projectsProvider.listAllProjectSpaces();
+    public Page<Project> getProjectSpaces(@ParameterObject Pageable pageable,
+                                          @RequestParam(required = false) String searchQuery,
+                                          @RequestParam(defaultValue = "LUCENE") SearchQueryType querySyntax) {
+        final List<Project> all = projectsProvider.listAllProjectSpaces();
         return new PageImpl<>(
                 all.stream().skip(pageable.getOffset()).limit(pageable.getPageSize()).toList(), pageable, all.size()
         );
@@ -79,7 +78,7 @@ public class ProjectController {
      * @param projectId unique name/identifier tof the project-space to be accessed.
      */
     @GetMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ProjectId getProjectSpace(@PathVariable String projectId) {
+    public Project getProjectSpace(@PathVariable String projectId) {
         //todo add infos like size and number of compounds?
         return projectsProvider.getProjectIdOrThrow(projectId);
     }
@@ -90,8 +89,8 @@ public class ProjectController {
      * @param projectId unique name/identifier that shall be used to access the opened project-space.
      */
     @PutMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ProjectId openProjectSpace(@PathVariable String projectId, @RequestParam String pathToProject) throws IOException {
-        return projectsProvider.openProjectSpace(new ProjectId(projectId, pathToProject));
+    public Project openProjectSpace(@PathVariable String projectId, @RequestParam String pathToProject) throws IOException {
+        return projectsProvider.openProjectSpace(new Project(projectId, pathToProject));
     }
 
     /**
@@ -100,10 +99,10 @@ public class ProjectController {
      * @param projectId unique name/identifier that shall be used to access the newly created project-space.
      */
     @PostMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ProjectId createProjectSpace(@PathVariable String projectId,
-                                        @RequestParam String pathToProject,
-                                        @RequestParam(required = false) String pathToSourceProject,
-                                        @RequestParam(required = false, defaultValue = "true") boolean awaitImport
+    public Project createProjectSpace(@PathVariable String projectId,
+                                      @RequestParam String pathToProject,
+                                      @RequestParam(required = false) String pathToSourceProject,
+                                      @RequestParam(required = false, defaultValue = "true") boolean awaitImport
     ) throws IOException {
         InputFilesOptions inputFiles = null;
         if (pathToSourceProject != null) {
@@ -117,8 +116,8 @@ public class ProjectController {
 
         }
 
-        ProjectId pid = projectsProvider.createProjectSpace(projectId, Path.of(pathToProject));
-        Project project = projectsProvider.getProjectOrThrow(projectId);
+        Project pid = projectsProvider.createProjectSpace(projectId, Path.of(pathToProject));
+        de.unijena.bioinf.ms.middleware.service.projects.Project project = projectsProvider.getProjectOrThrow(projectId);
         if (inputFiles != null) {
             Job id = computeContext.createAndSubmitJob(project, List.of("project-space", "--keep-open"),
                     null, inputFiles, EnumSet.allOf(Job.OptField.class));
