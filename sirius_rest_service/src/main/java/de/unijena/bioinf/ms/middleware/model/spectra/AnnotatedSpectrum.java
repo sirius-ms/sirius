@@ -39,7 +39,7 @@
 
 package de.unijena.bioinf.ms.middleware.model.spectra;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
@@ -47,22 +47,27 @@ import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Iterator;
 
+@NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE, setterVisibility = JsonAutoDetect.Visibility.NONE, creatorVisibility = JsonAutoDetect.Visibility.NONE)
 public class AnnotatedSpectrum implements OrderedSpectrum<Peak> {
     /**
      * MS level of the measured spectrum.
      * Artificial spectra with no msLevel (e.g. Simulated Isotope patterns) use 0
      */
     @Schema(nullable = true)
-    @Nullable private Integer msLevel = 0;
+    @Nullable
+    private Integer msLevel = 0;
     @Schema(nullable = true)
-    @Nullable private CollisionEnergy collisionEnergy = null;
+    @Nullable
+    private String collisionEnergy = null;
     private AnnotatedPeak[] peaks;
 
     public AnnotatedSpectrum(@NotNull Spectrum<Peak> spec) {
@@ -92,57 +97,40 @@ public class AnnotatedSpectrum implements OrderedSpectrum<Peak> {
         }
     }
 
-    public AnnotatedPeak[] getPeaks() {
-        return peaks;
-    }
-
-    public void setPeaks(AnnotatedPeak[] peaks) {
-        this.peaks = peaks;
-    }
-
-    @JsonIgnore
     public double[] getMasses() {
         return Arrays.stream(peaks).mapToDouble(AnnotatedPeak::getMass).toArray();
     }
 
-    @JsonIgnore
     public double[] getIntensities() {
         return Arrays.stream(peaks).mapToDouble(AnnotatedPeak::getIntensity).toArray();
     }
 
     @Override
-    @JsonIgnore
     public double getMzAt(int index) {
         return peaks[index].getMass();
     }
 
     @Override
-    @JsonIgnore
     public double getIntensityAt(int index) {
         return peaks[index].getMass();
     }
 
-    @JsonIgnore
     public PeakAnnotation getPeakAnnotationAt(int index) {
         return peaks[index].getPeakAnnotation();
     }
 
-
     @Override
-    @JsonIgnore
     public Peak getPeakAt(int index) {
         return peaks[index];
     }
 
     @Override
-    @JsonIgnore
     public int size() {
         return peaks.length;
     }
 
     @NotNull
     @Override
-    @JsonIgnore
     public Iterator<Peak> iterator() {
         return new Iterator<>() {
             int index = 0;
@@ -160,36 +148,46 @@ public class AnnotatedSpectrum implements OrderedSpectrum<Peak> {
     }
 
     @Override
-    @JsonIgnore
     public boolean isEmpty() {
         return peaks.length == 0;
     }
 
-    @Nullable
-    public CollisionEnergy getCollisionEnergy() {
-        return collisionEnergy;
+    public boolean hasMsLevel() {
+        return msLevel != null && msLevel > 0;
     }
 
     @Override
     public int getMsLevel() {
+        if (msLevel == null)
+            return 0;
         return msLevel;
     }
 
-    public void setMsLevel(int msLevel) {
+    public void setMsLevel(@Nullable Integer msLevel) {
         this.msLevel = msLevel;
     }
 
-    @JsonIgnore
-    public boolean hasMsLevel(){
-        return getMsLevel() > 0;
+    public double getMaxIntensity() {
+        return Arrays.stream(peaks).mapToDouble(AnnotatedPeak::getIntensity).max().orElse(Double.NaN);
     }
 
-    public void setCollisionEnergy(@Nullable CollisionEnergy collisionEnergy) {
+    @Nullable
+    public String getCollisionEnergyStr() {
+        return collisionEnergy;
+    }
+
+    public void setCollisionEnergyStr(@Nullable String collisionEnergy) {
         this.collisionEnergy = collisionEnergy;
     }
 
-    @JsonIgnore
-    public double getMaxIntensity() {
-        return Arrays.stream(peaks).mapToDouble(AnnotatedPeak::getIntensity).max().orElse(Double.NaN);
+    @Override
+    public CollisionEnergy getCollisionEnergy() {
+        if (getCollisionEnergyStr() == null || getCollisionEnergyStr().isBlank())
+            return null;
+        return CollisionEnergy.fromString(getCollisionEnergyStr());
+    }
+
+    public void setCollisionEnergy(@Nullable CollisionEnergy collisionEnergy) {
+            setCollisionEnergyStr(collisionEnergy == null ? null : collisionEnergy.toString());
     }
 }
