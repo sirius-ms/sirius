@@ -48,7 +48,7 @@ public class InfoController {
 
     @RequestMapping(value = "/api/info", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public Info getVersionInfo() {
+    public Info getInfo() {
         String dbDate = Optional.ofNullable(siriusContext.webAPI().getChemDbDate()).orElse("M/A");
 
         return Info.builder()
