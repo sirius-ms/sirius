@@ -30,7 +30,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 public class ConsensusAnnotationsDeNovo extends ConsensusAnnotations{
 
-    @Schema(enumAsRef = true, name = "ConsensusCriterionDeNovo")
+    @Schema(enumAsRef = true, name = "ConsensusCriterionDeNovo", nullable = true)
     public enum Criterion {
         MAJORITY_FORMULA,
         TOP_FORMULA,

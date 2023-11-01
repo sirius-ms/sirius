@@ -25,7 +25,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 /**
  * Selection of formats that are supported by the data importers.
  */
-@Schema(enumAsRef = true)
+@Schema(enumAsRef = true, nullable = true)
 public enum ImportFormat {
     MS("ms"),
     MGF("mgf"),

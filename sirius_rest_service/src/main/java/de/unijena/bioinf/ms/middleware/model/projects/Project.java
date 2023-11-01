@@ -49,14 +49,17 @@ import java.util.Objects;
 @Getter
 public final class Project {
     //todo do we need meta information like size and description
+    /**
+     * a user selected unique name of the project for easy access.
+     */
     public final @NotNull String projectId;
     public final @NotNull String path;
 
     /*public ProjectSpaceId(@NotNull  String name, @NotNull Path path) {
             this()
     }*/
-    public Project(@NotNull String name, @NotNull String path) {
-        this.projectId = name;
+    public Project(@NotNull String projectId, @NotNull String path) {
+        this.projectId = projectId;
         this.path = path;
     }
 

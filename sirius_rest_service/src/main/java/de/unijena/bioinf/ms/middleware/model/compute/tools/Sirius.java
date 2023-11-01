@@ -50,7 +50,7 @@ import java.util.stream.Collectors;
 @Getter
 @Setter
 public class Sirius extends Tool<SiriusOptions> {
-    @Schema(enumAsRef = true)
+    @Schema(enumAsRef = true, nullable = true)
     enum Instrument {QTOF, ORBI, FTICR}
 
     /**

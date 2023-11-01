@@ -37,7 +37,7 @@ public class CompoundClass {
     /**
      * Defines compound class ontologies that are available.
      */
-    @Schema(enumAsRef = true, name = "CompoundClassType")
+    @Schema(enumAsRef = true, name = "CompoundClassType", nullable = true)
     public enum Type {ClassyFire, NPC}
 
     /**
