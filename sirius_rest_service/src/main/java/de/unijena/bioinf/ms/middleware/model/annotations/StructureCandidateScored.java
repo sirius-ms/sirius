@@ -35,8 +35,11 @@ public class StructureCandidateScored extends StructureCandidate {
     public enum OptField {fingerprint, dbLinks, refSpectraLinks}
 
     protected Double csiScore;
+    @Schema(nullable = true)
     protected Double tanimotoSimilarity;
+    @Schema(nullable = true)
     protected Double confidenceExactMatch;
+    @Schema(nullable = true)
     protected Double confidenceApproxMatch;
 
     //Extended Results
@@ -44,5 +47,6 @@ public class StructureCandidateScored extends StructureCandidate {
      * Array containing the indices of the molecular fingerprint that are available in the structure (1 if present)
      * OPTIONAL: needs to be added by parameter
      */
+    @Schema(nullable = true)
     BinaryFingerprint fingerprint;
 }

@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.middleware.model.annotations;
 
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.canopus.CanopusResult;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
@@ -43,23 +44,28 @@ public class CompoundClasses {
     /**
      * Pathway level NPC class with the highest probability
      */
+    @Schema(nullable = true)
     protected CompoundClass npcPathway;
     /**
      * Superclass level NPC class with the highest probability
      */
+    @Schema(nullable = true)
     protected CompoundClass npcSuperclass;
     /**
      * Class level NPC class with the highest probability
      */
+    @Schema(nullable = true)
     protected CompoundClass npcClass;
     /**
      * Most likely ClassyFire lineage from ordered from least specific to most specific class
      * classyFireLineage.get(classyFireLineage.size() - 1) gives the most specific ClassyFire compound class annotation
      */
+    @Schema(nullable = true)
     protected List<CompoundClass> classyFireLineage;
     /**
      * Alternative ClassyFire classes with high probability that do not fit into the linage
      */
+    @Schema(nullable = true)
     protected List<CompoundClass> classyFireAlternatives;
 
     public static CompoundClasses of(CanopusResult canopusResult) {

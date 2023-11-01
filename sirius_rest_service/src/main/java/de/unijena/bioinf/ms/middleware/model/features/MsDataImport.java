@@ -40,16 +40,17 @@
 
 package de.unijena.bioinf.ms.middleware.model.features;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.Setter;
-
-@Getter
-@Setter
 /**
  *
  * Container object that stores content and file extension (format) of MS/MS data files for the
  * import via SIRIUS Nightsky REST API.
  */
+@Getter
+@Setter
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class MsDataImport {
     /**
      * File format identifier (File extension without [.]).

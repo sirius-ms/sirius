@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.fp.FPIter;
 import de.unijena.bioinf.ChemistryBase.fp.NPCFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.canopus.CanopusResult;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
@@ -42,10 +43,12 @@ public class CanopusPrediction {
     /**
      * All predicted ClassyFire classes
      */
+    @Schema(nullable = true)
     CompoundClass[] classyFireClasses;
     /**
      * All predicted NPC classes
      */
+    @Schema(nullable = true)
     CompoundClass[] npcClasses;
 
 

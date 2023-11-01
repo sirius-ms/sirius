@@ -23,6 +23,8 @@ package de.unijena.bioinf.ms.middleware.model.annotations;
 import de.unijena.bioinf.ChemistryBase.fp.NPCFingerprintVersion;
 
 public class CanopusLevels {
+
+    private CanopusLevels(){}
     public static final String[] classyFireLevelNames = new String[]{
             "Kingdom", "Superclass", "Class", "Subclass"
     };

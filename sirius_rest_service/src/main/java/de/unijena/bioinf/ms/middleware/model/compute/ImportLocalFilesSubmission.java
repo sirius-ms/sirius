@@ -22,9 +22,10 @@ package de.unijena.bioinf.ms.middleware.model.compute;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -32,8 +33,8 @@ import java.util.List;
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@NoArgsConstructor
 public class ImportLocalFilesSubmission extends ImportSubmission {
+    @Schema(nullable = true)
+    @NotNull
     protected List<String> inputPaths;
-
 }

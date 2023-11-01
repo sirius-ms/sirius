@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.middleware.model.annotations;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -36,13 +37,16 @@ public class FeatureAnnotations {
     /**
      * Best matching FormulaCandidate.
      */
+    @Schema(nullable = true)
     protected FormulaCandidate formulaAnnotation; // SIRIUS + ZODIAC
     /**
      * Best matching StructureCandidate ranked by CSI:FingerID Score over all FormulaCandidates.
      */
+    @Schema(nullable = true)
     protected StructureCandidateScored structureAnnotation; // CSI:FingerID or MSNovelist
     /**
      * Best matching compound classes that correspond to the formulaAnnotation
      */
+    @Schema(nullable = true)
     protected CompoundClasses compoundClassAnnotation; // CANOPUS
 }

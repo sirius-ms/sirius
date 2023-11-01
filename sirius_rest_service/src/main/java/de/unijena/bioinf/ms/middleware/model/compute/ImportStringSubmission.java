@@ -22,8 +22,8 @@ package de.unijena.bioinf.ms.middleware.model.compute;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,13 +37,13 @@ import org.jetbrains.annotations.Nullable;
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@NoArgsConstructor
 public class ImportStringSubmission extends ImportSubmission {
 
     /**
      * Name that specifies the data source. Can e.g. be a file path  or just a name.
      */
     @Nullable
+    @Schema(nullable = true)
     protected String sourceName;
     /**
      * Data format used in the data field.

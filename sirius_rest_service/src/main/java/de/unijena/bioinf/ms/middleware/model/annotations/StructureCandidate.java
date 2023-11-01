@@ -23,6 +23,7 @@ package de.unijena.bioinf.ms.middleware.model.annotations;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.chemdb.DBLink;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -34,25 +35,28 @@ import java.util.List;
 @JsonIgnoreProperties({ "molecularFormula", "adduct", "csiScore", "tanimotoSimilarity", "confidenceExactMatch", "confidenceApproxMatch", "fingerprint"})
 public class StructureCandidate {
 
-    protected String structureName;
+    protected String inchiKey;
     protected String smiles;
 
+
+    @Schema(nullable = true)
+    protected String structureName;
+
+    @Schema(nullable = true)
     protected Double xlogP;
-    protected String inchiKey;
 
     //Extended Results
     /**
      * List of structure database links belonging to this structure candidate
      * OPTIONAL: needs to be added by parameter
      */
+    @Schema(nullable = true)
     List<DBLink> dbLinks;
     /**
      * List of spectral library links belonging to this structure candidate
      * OPTIONAL: needs to be added by parameter
      */
+    @Schema(nullable = true)
     List<DBLink> refSpectraLinks;
-
-
-
     //todo add spectral library
 }
