@@ -37,7 +37,7 @@ import lombok.*;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FormulaCandidate {
-    @Schema(enumAsRef = true, name = "FormulaCandidateOptField")
+    @Schema(enumAsRef = true, name = "FormulaCandidateOptField", nullable = true)
     public enum OptField {statistics, fragmentationTree, simulatedIsotopePattern, predictedFingerprint, compoundClasses, canopusPredictions};
 
     /**
