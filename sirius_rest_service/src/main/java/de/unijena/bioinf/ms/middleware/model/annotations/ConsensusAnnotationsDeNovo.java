@@ -37,6 +37,7 @@ public class ConsensusAnnotationsDeNovo extends ConsensusAnnotations{
         SINGLETON_FORMULA
     }
 
+    @Schema(nullable = true)
     protected Criterion selectionCriterion;
 
 //    /**

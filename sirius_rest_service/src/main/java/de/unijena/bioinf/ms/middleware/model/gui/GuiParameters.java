@@ -60,6 +60,7 @@
 
 package de.unijena.bioinf.ms.middleware.model.gui;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -72,22 +73,27 @@ public class GuiParameters {
     /**
      * Selected Result ab.
      */
+    @Schema(nullable = true)
     GuiResultTab selectedTab;
     /**
      * ID of Selected compound.
      */
+    @Schema(nullable = true)
     String cid;
     /**
      * ID of Selected Formula candidate of the selected compound.
      */
+    @Schema(nullable = true)
     String fid;
     /**
      * InChIKey of selected structure candidate of selected formula candidate.
      */
+    @Schema(nullable = true)
     String structureCandidateInChIKey;
     /**
      * If true bring SIRIUS GUI window to foreground.
      */
+    @Schema(nullable = true)
     boolean bringToFront;
 
 }

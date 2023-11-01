@@ -20,22 +20,27 @@
 
 package de.unijena.bioinf.ms.middleware.model.annotations;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
-//@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
-//@JsonIdentityReference(alwaysAsId = false)
-//todo efficient json that is parsable by all clients
 @Getter
 @Setter
 public class FragmentNode {
     int id;
+    @Schema(nullable = true)
     String molecularFormula;
+    @Schema(nullable = true)
     String ionType;
+    @Schema(nullable = true)
     double massDeviationDa;
+    @Schema(nullable = true)
     double massDeviationPpm;
+    @Schema(nullable = true)
     double score;
 
+    @Schema(nullable = true)
     double intensity;
+    @Schema(nullable = true)
     double mz;
 }

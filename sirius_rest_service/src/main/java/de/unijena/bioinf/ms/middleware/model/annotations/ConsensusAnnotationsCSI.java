@@ -43,18 +43,21 @@ public class ConsensusAnnotationsCSI extends ConsensusAnnotations {
     /**
      * Null if this is a custom selection
      */
+    @Schema(nullable = true)
     protected Criterion selectionCriterion;
 
     /**
      * Database structure candidate (searched with CSI:FingerID), that also defines the molecularFormula
      * Might be null if no consensus structure is available.
      */
+    @Schema(nullable = true)
     protected StructureCandidate csiFingerIdStructure;
 
     /**
      * Confidence value that represents the certainty that reported consensus structure is exactly the measured one
      * If multiple features support this consensus structure the maximum confidence is reported
      */
+    @Schema(nullable = true)
     protected Double confidenceExactMatch;
 
     /**
@@ -62,5 +65,6 @@ public class ConsensusAnnotationsCSI extends ConsensusAnnotations {
      * structure (e.g. measured by Maximum Common Edge Subgraph Distance) is the measured one.
      * If multiple features support this consensus structure the maximum confidence is reported
      */
+    @Schema(nullable = true)
     protected Double confidenceApproxMatch;
 }

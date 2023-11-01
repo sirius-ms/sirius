@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.model.login;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -30,6 +31,9 @@ import java.sql.Date;
 @Setter
 @Builder
 public class Subscription {
+    /**
+     * Unique identifier of this subscription
+     */
     private String sid;
 
     /**
@@ -39,41 +43,56 @@ public class Subscription {
      */
     private String subscriberId;
 
+    /**
+     * Optional name of the owner of this subscription
+     */
+    @Schema(nullable = true)
     private String subscriberName;
 
+    @Schema(nullable = true)
     private Date expirationDate;
 
+    @Schema(nullable = true)
     private Date startDate;
 
-    private Boolean countQueries;
+    @Schema(nullable = true)
+    private boolean countQueries;
 
     /**
      * Limit of instances (features) that can be computed with this subscription
      */
+    @Schema(nullable = true)
     private Integer instanceLimit;
 
     /**
      * Hash is used to allow recomputing identical data without increasing counted instances (features).
      * The recording time is the amount of time an instance is memorized is
      */
+    @Schema(nullable = true)
     private Integer instanceHashRecordingTime;
 
     /**
      * Maximum number of queries (e.g. prediction) that can be performed
      * for one instance before it is counted another time.
      */
+    @Schema(nullable = true)
     private Integer maxQueriesPerInstance;
 
+    @Schema(nullable = true)
     private Integer maxUserAccounts;
 
     private String serviceUrl;
 
+    @Schema(nullable = true)
     private String description;
 
+    @Schema(nullable = true)
     private String name;
 
+    @Schema(nullable = true)
     private String tos;
 
+    @Schema(nullable = true)
     private String pp;
 
     public static Subscription of(de.unijena.bioinf.ms.rest.model.license.Subscription s){

@@ -59,43 +59,56 @@ public class FormulaCandidate {
      * Sirius Score (isotope + tree score) of the formula candidate.
      * If NULL result is not available
      */
+    @Schema(nullable = true)
     protected Double siriusScore;
+    @Schema(nullable = true)
     protected Double isotopeScore;
+    @Schema(nullable = true)
     protected Double treeScore;
     /**
      * Zodiac Score of the formula candidate.
      * If NULL result is not available
      */
+    @Schema(nullable = true)
     protected Double zodiacScore;
 
+    @Schema(nullable = true)
     protected Integer numOfExplainedPeaks;
+    @Schema(nullable = true)
     protected Integer numOfExplainablePeaks;
 
+    @Schema(nullable = true)
     protected Double totalExplainedIntensity;
+    @Schema(nullable = true)
     protected Deviation medianMassDeviation;
 
     /**
      * The fragmentation tree that belongs to this molecular formula candidate (produces the treeScore).
      */
+    @Schema(nullable = true)
     protected FragmentationTree fragmentationTree;
     /**
      * The simulated isotope pattern that is compared against the measured isotope pattern to produce the isotopeScore.
      */
+    @Schema(nullable = true)
     protected AnnotatedSpectrum simulatedIsotopePattern;
 
     /**
      * Probabilistic molecular fingerprint predicted by CSI:FingerID
      */
+    @Schema(nullable = true)
     protected double[] predictedFingerprint;
 
     /**
      * Most likely compound classes for different levels of each ontology for this FormulaCandidate (predictedFingerprint)
      */
+    @Schema(nullable = true)
     protected CompoundClasses compoundClasses;
 
     /**
      * All classes predicted by canopus for this FormulaCandidate (predictedFingerprint)
      */
+    @Schema(nullable = true)
     protected CanopusPrediction canopusPrediction;
 
     //todo add LipidClass prediction

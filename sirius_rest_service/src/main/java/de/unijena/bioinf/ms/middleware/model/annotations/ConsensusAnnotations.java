@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.model.annotations;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
@@ -35,16 +36,19 @@ abstract class ConsensusAnnotations {
      * Molecular formula of the consensus annotation
      * Might be null if no consensus formula is available.
      */
+    @Schema(nullable = true)
     protected String molecularFormula;
 
     /**
      * Compound classes (predicted with CANOPUS) corresponding to the molecularFormula
      * Might be null if no fingerprints or compound classes are available.
      */
+    @Schema(nullable = true)
     protected CompoundClasses compoundClasses;
 
     /**
      * FeatureIds where the topAnnotation supports this annotation.
      */
+    @Schema(nullable = true)
     protected List<String> supportingFeatureIds;
 }

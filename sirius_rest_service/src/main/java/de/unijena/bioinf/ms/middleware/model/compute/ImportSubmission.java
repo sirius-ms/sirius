@@ -22,17 +22,19 @@ package de.unijena.bioinf.ms.middleware.model.compute;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public abstract class ImportSubmission {
+    @Schema(nullable = true)
     protected boolean allowMs1OnlyData;
+    @Schema(nullable = true)
     protected boolean ignoreFormulas;
+    @Schema(nullable = true)
     protected boolean alignLCMSRuns;
 }

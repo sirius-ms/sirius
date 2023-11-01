@@ -46,6 +46,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +59,9 @@ public class AnnotatedSpectrum implements OrderedSpectrum<Peak> {
      * MS level of the measured spectrum.
      * Artificial spectra with no msLevel (e.g. Simulated Isotope patterns) use 0
      */
-    @Nullable private int msLevel = 0;
+    @Schema(nullable = true)
+    @Nullable private Integer msLevel = 0;
+    @Schema(nullable = true)
     @Nullable private CollisionEnergy collisionEnergy = null;
     private AnnotatedPeak[] peaks;
 

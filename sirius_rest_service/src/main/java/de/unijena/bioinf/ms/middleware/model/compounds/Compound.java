@@ -47,22 +47,26 @@ public class Compound {
     /**
      * Some (optional) human-readable name
      */
+    @Schema(nullable = true)
     protected String name;
 
     /**
      * The merged/consensus retention time start (earliest rt) of this compound
      */
+    @Schema(nullable = true)
     protected Double rtStartSeconds;
 
     /**
      * The merged/consensus retention time end (latest rt) of this compound
      */
+    @Schema(nullable = true)
     protected Double rtEndSeconds;
 
     /**
      * Neutral mass of this compound. Ion masse minus the mass of the assigned adduct of each feature assigned
      * to this compound should result in the same neutral mass
      */
+    @Schema(nullable = true)
     protected double neutralMass;
 
     /**
@@ -74,16 +78,19 @@ public class Compound {
      * The consensus of the top annotations from all the features of this compound.
      * Null if it was not requested und non-null otherwise. Might contain empty fields if results are not available
      */
+    @Schema(nullable = true)
     ConsensusAnnotationsCSI consensusAnnotations;
 
     /**
      * The consensus of the top de novo annotations from all the features of this compound.
      * Null if it was not requested und non-null otherwise. Might contain empty fields if results are not available
      */
+    @Schema(nullable = true)
     ConsensusAnnotationsDeNovo consensusAnnotationsDeNovo;
 
     /**
      * Alternative annotations selected by the User.
      */
+    @Schema(nullable = true)
     ConsensusAnnotationsCSI customAnnotations;
 }

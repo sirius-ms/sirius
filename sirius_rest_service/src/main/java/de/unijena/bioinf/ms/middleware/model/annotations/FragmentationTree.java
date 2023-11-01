@@ -24,17 +24,19 @@ import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.*;
 import java.util.stream.Collectors;
+//todo create tree serialization that does not store every node multiple times
 @Getter
 @Setter
 public class FragmentationTree {
     protected List<FragmentNode> fragments;
     protected List<LossEdge> losses;
-    double treeScore;
+    Double treeScore;
     FragmentNode root;
 
     public static FragmentationTree fromFtree(FTree sourceTree) {

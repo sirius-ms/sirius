@@ -31,7 +31,6 @@ import lombok.*;
  */
 @Getter
 @Setter
-@AllArgsConstructor
 @Builder
 public class CompoundClass {
     /**
@@ -48,22 +47,25 @@ public class CompoundClass {
     /**
      * Name of the level this compound class belongs to
      */
+    @Schema(nullable = true)
     protected String level;
 
     /**
      * Name of the compound class.
      */
+    @Schema(nullable = true)
     protected String name;
 
     /**
      * Description of the compound class.
      */
+    @Schema(nullable = true)
     protected String description;
 
     /**
      * Unique id of the class. Might be undefined for certain classification ontologies.
      */
-    protected int id;
+    protected Integer id;
     /**
      * prediction probability
      */

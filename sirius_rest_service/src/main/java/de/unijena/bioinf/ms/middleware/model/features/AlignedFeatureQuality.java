@@ -31,8 +31,8 @@ import java.util.EnumSet;
 
 @Getter
 @Setter
-@JsonInclude(JsonInclude.Include.NON_NULL)
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class AlignedFeatureQuality {
     @Schema(enumAsRef = true, name = "AlignedFeatureQualityOptField", nullable = true)
     public enum OptField {qualityFlags, lcmsFeatureQuality}
@@ -47,10 +47,12 @@ public class AlignedFeatureQuality {
      * <p>
      * Each Feature has a Set of Quality assessment flags.
      */
+    @Schema(nullable = true)
     protected EnumSet<CompoundQuality.CompoundQualityFlag> qualityFlags;
 
     /**
      * LCMS feature-based quality information as also provided in the LCMS-view in the GUI
      */
+    @Schema(nullable = true)
     protected LCMSFeatureQuality lcmsFeatureQuality;
 }

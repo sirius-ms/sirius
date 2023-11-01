@@ -49,12 +49,15 @@ public class AlignedFeature {
     protected Double ionMass;
     protected String ionType;
 
+    @Schema(nullable = true)
     protected Double rtStartSeconds;
+    @Schema(nullable = true)
     protected Double rtEndSeconds;
 
     /**
      * Mass Spec data of this feature (input data)
      */
+    @Schema(nullable = true)
     protected MsData msData;
 
     /**
@@ -65,6 +68,7 @@ public class AlignedFeature {
      *
      * Null if it was not requested und non-null otherwise.
      */
+    @Schema(nullable = true)
     protected FeatureAnnotations topAnnotations;
 
     /**
@@ -74,6 +78,7 @@ public class AlignedFeature {
      *
      * Null if it was not requested und non-null otherwise.
      */
+    @Schema(nullable = true)
     protected FeatureAnnotations topAnnotationsDeNovo;
 
 

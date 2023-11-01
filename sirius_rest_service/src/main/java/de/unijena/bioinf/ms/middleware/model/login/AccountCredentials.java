@@ -41,6 +41,7 @@
 package de.unijena.bioinf.ms.middleware.model.login;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -52,7 +53,10 @@ import lombok.Setter;
 @Getter
 @Setter
 public class AccountCredentials {
+    @Schema(nullable = true)
     String username;
+    @Schema(nullable = true)
     String password;
+    @Schema(nullable = true)
     String refreshToken;
 }

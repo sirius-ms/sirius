@@ -42,6 +42,7 @@ package de.unijena.bioinf.ms.middleware.model.compute;
 
 
 import de.unijena.bioinf.jjobs.JJob;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -56,6 +57,7 @@ public class JobProgress {
     /**
      * Is the progress indeterminate or not
      */
+    @Schema(nullable = true)
     boolean indeterminate;
     /**
      * Current state of the Jobs in the SIRIUS internal Job scheduler
@@ -73,17 +75,21 @@ public class JobProgress {
     /**
      * Current progress value of the job.
      */
+    @Schema(nullable = true)
     Long currentProgress;
     /**
      * Progress value to reach (might also change during execution)
      */
+    @Schema(nullable = true)
     Long maxProgress;
     /**
      * Progress information and warnings.
      */
+    @Schema(nullable = true)
     String message;
     /**
      * Error message if the job did not finish successfully failed.
      */
+    @Schema(nullable = true)
     String errorMessage;
 }

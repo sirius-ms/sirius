@@ -42,6 +42,7 @@ package de.unijena.bioinf.ms.middleware.model.login;
 
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.webapi.Tokens;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -57,11 +58,13 @@ import java.util.Optional;
 @NoArgsConstructor
 public class AccountInfo {
     String userID;
+    @Schema(nullable = true)
     String username;
     String userEmail;
+    @Schema(nullable = true)
     String gravatarURL;
     List<Subscription> subscriptions;
-
+    @Schema(nullable = true)
     String activeSubscriptionId;
 
 

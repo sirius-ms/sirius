@@ -1,24 +1,4 @@
 /*
- *
- *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
- *
- *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
- *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 3 of the License, or (at your option) any later version.
- *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
- *
- *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
- */
-
-/*
  *  This file is part of the SIRIUS Software for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer, Marvin Meusel and Sebastian Böcker,
@@ -39,8 +19,10 @@
 
 package de.unijena.bioinf.ms.middleware.model.features;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.lcms.LCMSCompoundSummary;
 import de.unijena.bioinf.lcms.quality.LCMSQualityCheckResult;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -54,23 +36,28 @@ import lombok.Setter;
  */
 @Getter
 @Setter
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class LCMSFeatureQuality {
 
     /**
      * Quality checks and overall quality for QualityCategory PEAK
      */
+    @Schema(nullable = true)
     protected final LCMSQualityCheckResult peakQuality;
     /**
      * Quality checks and overall quality for QualityCategory ISOTOPE
      */
+    @Schema(nullable = true)
     protected final LCMSQualityCheckResult isotopeQuality;
     /**
      * Quality checks and overall quality for QualityCategory ADDUCTS
      */
+    @Schema(nullable = true)
     protected final LCMSQualityCheckResult adductQuality;
     /**
      * Quality checks and overall quality for QualityCategory MSMS
      */
+    @Schema(nullable = true)
     protected final LCMSQualityCheckResult ms2Quality;
 
     public LCMSFeatureQuality(LCMSCompoundSummary lcmsCompoundSummary) {
