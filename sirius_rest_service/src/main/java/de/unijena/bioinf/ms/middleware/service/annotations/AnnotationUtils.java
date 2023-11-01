@@ -20,8 +20,8 @@
 
 package de.unijena.bioinf.ms.middleware.service.annotations;
 
+import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
-import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import lombok.extern.slf4j.Slf4j;
 
@@ -192,5 +192,12 @@ public class AnnotationUtils {
                         ? List.of(topConf.getAlignedFeatureId())
                         : features.stream().map(AlignedFeature::getAlignedFeatureId).toList()
                 ).build();
+    }
+
+    public static BinaryFingerprint asBinaryFingerprint (Fingerprint fingerprint){
+        BinaryFingerprint fp = new BinaryFingerprint();
+        fp.setLength(fingerprint.cardinality());
+        fp.setBitsSet(fingerprint.toIndizesArray());
+        return fp;
     }
 }

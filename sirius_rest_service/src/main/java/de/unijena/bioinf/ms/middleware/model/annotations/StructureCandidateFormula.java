@@ -28,6 +28,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
+import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
 import de.unijena.bioinf.projectspace.FormulaResultId;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import lombok.Getter;
@@ -112,7 +113,7 @@ public class StructureCandidateFormula extends StructureCandidateScored {
 
         //FP
         if (fp != null && optFields.contains(OptField.fingerprint))
-            sSum.setFingerprint(BinaryFingerprint.from(fp));
+            sSum.setFingerprint(AnnotationUtils.asBinaryFingerprint(fp));
 
         return sSum;
     }
