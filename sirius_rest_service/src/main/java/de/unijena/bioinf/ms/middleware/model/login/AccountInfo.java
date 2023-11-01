@@ -41,11 +41,11 @@
 package de.unijena.bioinf.ms.middleware.model.login;
 
 import de.unijena.bioinf.auth.AuthService;
-import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.webapi.Tokens;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
@@ -72,10 +72,12 @@ public class AccountInfo {
         Tokens.getUserEmail(token).ifPresent(ai::setUsername);
         Tokens.getUserImage(token).map(URI::toString).ifPresent(ai::setGravatarURL);
         if (includeSubscription) {
-            ai.setSubscriptions(Tokens.getSubscriptions(token));
+            @NotNull List<de.unijena.bioinf.ms.rest.model.license.Subscription> subs = Tokens.getSubscriptions(token);
+            ai.setSubscriptions(subs.stream().map(Subscription::of).toList());
             ai.setActiveSubscriptionId(
-                    Optional.ofNullable(Tokens.getActiveSubscription(ai.getSubscriptions(),
-                    activeSubscription== null ? null : activeSubscription.getSid())).map(Subscription::getSid).orElse(null));
+                    Optional.ofNullable(Tokens.getActiveSubscription(subs,
+                    activeSubscription== null ? null : activeSubscription.getSid()))
+                            .map(s -> s.getSid()).orElse(null));
         }
         return ai;
     }

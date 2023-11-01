@@ -45,7 +45,7 @@ public class Subscription {
 
     private Date startDate;
 
-    private boolean countQueries;
+    private Boolean countQueries;
 
     /**
      * Limit of instances (features) that can be computed with this subscription

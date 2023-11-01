@@ -39,6 +39,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -116,7 +117,8 @@ public class LoginController {
         lock.readLock().lock();
         try {
             return webAPI.getAuthService()
-                    .getToken().map(t -> AccountInfo.of(t, webAPI.getActiveSubscription(), includeSubs))
+                    .getToken().map(t -> AccountInfo.of(t, Optional.ofNullable(webAPI.getActiveSubscription())
+                            .map(Subscription::of).orElse(null), includeSubs))
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not Logged in. Please log in to retrieve account information."));
         } finally {
             lock.readLock().unlock();
