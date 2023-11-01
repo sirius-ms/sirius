@@ -36,7 +36,7 @@ import java.util.List;
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Job {
-    @Schema(enumAsRef = true, name = "JobOptField")
+    @Schema(enumAsRef = true, name = "JobOptField", nullable = true)
     public enum OptField {command, progress, affectedIds}
 
     /**

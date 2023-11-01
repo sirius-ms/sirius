@@ -65,7 +65,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 /**
  * Available result tabs in the SIRIUS GUI. Name correspond to the names in the GUI.
  */
-@Schema(enumAsRef = true)
+@Schema(enumAsRef = true, nullable = true)
 public enum GuiResultTab {
     FORMULAS,
     SPECTRA,

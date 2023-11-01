@@ -183,7 +183,7 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
             int intId = Integer.parseInt(jobId);
             BackgroundRuns.BackgroundRunJob<?, ?> j = BackgroundRuns.getActiveRunIdMap().get(intId);
             if (j == null)
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Job with ID '" + jobId + " does not Exist! Hint: It is either already finished an has bess auto removed (if enabled) or the ID never existed.");
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Job with ID '" + jobId + " does not Exist! Hint: It is either already finished and has been auto removed (if enabled) or the ID never existed.");
 
             if (psm != null && !psm.equals(j.getProject()))
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Job with ID '" + jobId + " is not part of the requested project but does exist! Hint: Request the job with the correct projectId.");
