@@ -222,7 +222,12 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
 
     @Override
     public Job deleteJob(@Nullable SiriusProjectSpaceImpl psm, String jobId, boolean cancelIfRunning, boolean awaitDeletion, @NotNull EnumSet<Job.OptField> optFields) {
-        return deleteJob(psm.getProjectSpaceManager(), jobId, cancelIfRunning, awaitDeletion, optFields);
+        if (psm != null) {
+            return deleteJob(psm.getProjectSpaceManager(), jobId, cancelIfRunning, awaitDeletion, optFields);
+        }else {
+            return deleteJob((ProjectSpaceManager<?>) null, jobId, cancelIfRunning, awaitDeletion, optFields);
+
+        }
     }
 
     public BackgroundRuns.BackgroundRunJob<?, ?> getJob(@Nullable SiriusProjectSpaceImpl psm, String jobId) {
