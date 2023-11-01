@@ -47,16 +47,16 @@ import java.nio.file.Path;
 import java.util.Objects;
 
 @Getter
-public final class ProjectId {
+public final class Project {
     //todo do we need meta information like size and description
-    public final @NotNull String name;
+    public final @NotNull String projectId;
     public final @NotNull String path;
 
     /*public ProjectSpaceId(@NotNull  String name, @NotNull Path path) {
             this()
     }*/
-    public ProjectId(@NotNull String name, @NotNull String path) {
-        this.name = name;
+    public Project(@NotNull String name, @NotNull String path) {
+        this.projectId = name;
         this.path = path;
     }
 
@@ -70,17 +70,17 @@ public final class ProjectId {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        ProjectId that = (ProjectId) o;
-        return name.equals(that.name) &&
+        Project that = (Project) o;
+        return projectId.equals(that.projectId) &&
                 path.equals(that.path);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, path);
+        return Objects.hash(projectId, path);
     }
 
-    public static ProjectId of(String projectId, Path location) {
-        return new ProjectId(projectId, location.toAbsolutePath().toString());
+    public static Project of(String projectId, Path location) {
+        return new Project(projectId, location.toAbsolutePath().toString());
     }
 }
