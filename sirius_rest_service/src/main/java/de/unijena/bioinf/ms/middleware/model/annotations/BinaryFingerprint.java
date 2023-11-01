@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.ms.middleware.model.annotations;
 
-import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -35,13 +34,4 @@ public class BinaryFingerprint {
      * Size of the fingerprint, e.g. to reconstruct the binary array from the array of set bits
      */
     int length;
-
-
-    //todo move to service layer
-    public static BinaryFingerprint from (Fingerprint fingerprint){
-        BinaryFingerprint fp = new BinaryFingerprint();
-        fp.setLength(fingerprint.cardinality());
-        fp.setBitsSet(fingerprint.toIndizesArray());
-        return fp;
-    }
 }

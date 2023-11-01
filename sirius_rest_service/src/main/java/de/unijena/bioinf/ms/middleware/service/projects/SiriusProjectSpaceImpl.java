@@ -218,7 +218,7 @@ public class SiriusProjectSpaceImpl implements Project {
         FormulaResultId fidObj = parseFID(instance, formulaId);
         return loadStructureCandidates(instance, fidObj, pageable, para, optFields)
                 .map(l -> l.stream().map(c -> (StructureCandidateScored) c).toList())
-                .map(it -> (Page<StructureCandidateScored>) new PageImpl<>(it))
+                .map(it -> (Page<StructureCandidateScored>) new PageImpl<>(it, pageable, Long.MAX_VALUE))
                 .orElse(Page.empty(pageable)); //todo number of candidates for page.
     }
 
@@ -239,7 +239,7 @@ public class SiriusProjectSpaceImpl implements Project {
                 .skip(pageable.getOffset())
                 .limit(pageable.getPageSize()).toList();
 
-        return new PageImpl<>(candidates); //todo number of candidates for page.
+        return new PageImpl<>(candidates, pageable, Long.MAX_VALUE);  //todo number of candidates for page.
     }
 
     @Override
