@@ -91,8 +91,8 @@ public class SiriusProjectSpaceImpl implements Project {
 
 
     @Override
-    public Page<Compound> findCompounds(Pageable pageable, EnumSet<Compound.OptField> optFields,
-                                        EnumSet<AlignedFeature.OptField> featureOptFields) {
+    public Page<Compound> findCompounds(Pageable pageable, @NotNull EnumSet<Compound.OptField> optFields,
+                                        @NotNull EnumSet<AlignedFeature.OptField> featureOptFields) {
         Map<String, List<CompoundContainerId>> featureGroups = projectSpaceManager.projectSpace()
                 .stream().filter(c -> c.getGroupId().isPresent())
                 .collect(Collectors.groupingBy(c -> c.getGroupId().get()));
@@ -106,24 +106,33 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     @Override
-    public Compound findCompoundById(String compoundId, EnumSet<Compound.OptField> optFields,
-                                     EnumSet<AlignedFeature.OptField> featureOptFields) {
+    public Compound findCompoundById(String compoundId, @NotNull EnumSet<Compound.OptField> optFields,
+                                     @NotNull EnumSet<AlignedFeature.OptField> featureOptFields) {
         List<CompoundContainerId> groupFeatures = projectSpaceManager.projectSpace()
                 .stream().filter(c -> c.getGroupId().map(compoundId::equals).orElse(false))
                 .toList();
         if (groupFeatures.isEmpty())
-            return null;
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "No Features found that belong to Compound with id '" + compoundId + "'. Compound does not exist.");
 
         return asCompound(groupFeatures, optFields, featureOptFields);
     }
 
     @Override
     public void deleteCompoundById(String compoundId) {
-        findCompoundById(compoundId).getFeatures().forEach(f -> deleteAlignedFeaturesById(f.getAlignedFeatureId()));
+        Compound compound;
+        try {
+            compound = findCompoundById(compoundId, EnumSet.noneOf(Compound.OptField.class), EnumSet.noneOf(AlignedFeature.OptField.class));
+        } catch (ResponseStatusException e) {
+            if (e.getStatus().equals(HttpStatus.NOT_FOUND))
+                throw new ResponseStatusException(HttpStatus.NO_CONTENT, "AlignedFeature with id '" + compoundId + "' does not exist. Already removed?");
+            throw e;
+        }
+        compound.getFeatures().forEach(f -> deleteAlignedFeaturesById(f.getAlignedFeatureId()));
     }
 
     @Override
-    public Page<AlignedFeatureQuality> findAlignedFeaturesQuality(Pageable pageable, EnumSet<AlignedFeatureQuality.OptField> optFields) {
+    public Page<AlignedFeatureQuality> findAlignedFeaturesQuality(Pageable pageable, @NotNull EnumSet<AlignedFeatureQuality.OptField> optFields) {
         LoggerFactory.getLogger(AlignedFeatureController.class).info("Started collecting aligned features quality...");
         final List<AlignedFeatureQuality> alignedFeatureQualities = projectSpaceManager.projectSpace().stream()
                 .skip(pageable.getOffset()).limit(pageable.getPageSize())
@@ -135,13 +144,13 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     @Override
-    public AlignedFeatureQuality findAlignedFeaturesQualityById(String alignedFeatureId, EnumSet<AlignedFeatureQuality.OptField> optFields) {
+    public AlignedFeatureQuality findAlignedFeaturesQualityById(String alignedFeatureId, @NotNull EnumSet<AlignedFeatureQuality.OptField> optFields) {
         final CompoundContainerId ccid = parseCID(alignedFeatureId);
         return asAlignedFeatureQuality(ccid, optFields);
     }
 
     @Override
-    public Page<AlignedFeature> findAlignedFeatures(Pageable pageable, EnumSet<AlignedFeature.OptField> optFields) {
+    public Page<AlignedFeature> findAlignedFeatures(Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         LoggerFactory.getLogger(AlignedFeatureController.class).info("Started collecting aligned features...");
         final List<AlignedFeature> alignedFeatures = projectSpaceManager.projectSpace().stream()
                 .skip(pageable.getOffset()).limit(pageable.getPageSize())
@@ -153,7 +162,7 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     @Override
-    public AlignedFeature findAlignedFeaturesById(String alignedFeatureId, EnumSet<AlignedFeature.OptField> optFields) {
+    public AlignedFeature findAlignedFeaturesById(String alignedFeatureId, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         final CompoundContainerId ccid = parseCID(alignedFeatureId);
         return asAlignedFeature(ccid, optFields);
     }
@@ -161,7 +170,7 @@ public class SiriusProjectSpaceImpl implements Project {
     @Override
     public void deleteAlignedFeaturesById(String alignedFeatureId) {
         CompoundContainerId compound = projectSpaceManager.projectSpace().findCompound(alignedFeatureId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NO_CONTENT, "AlignedFeature with id '" + alignedFeatureId + "' does not exist."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NO_CONTENT, "AlignedFeature with id '" + alignedFeatureId + "' does not exist. Already removed?"));
         try {
             projectSpaceManager.projectSpace().deleteCompound(compound);
         } catch (IOException e) {
@@ -171,7 +180,7 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     @Override
-    public Page<FormulaCandidate> findFormulaCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, EnumSet<FormulaCandidate.OptField> optFields) {
+    public Page<FormulaCandidate> findFormulaCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, @NotNull EnumSet<FormulaCandidate.OptField> optFields) {
         LoggerFactory.getLogger(getClass()).info("Started collecting formulas...");
         Class<? extends DataAnnotation>[] annotations = resolveFormulaCandidateAnnotations(optFields);
         Instance instance = loadInstance(alignedFeatureId);
@@ -192,7 +201,7 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     @Override
-    public FormulaCandidate findFormulaCandidateByFeatureIdAndId(String formulaId, String alignedFeatureId, EnumSet<FormulaCandidate.OptField> optFields) {
+    public FormulaCandidate findFormulaCandidateByFeatureIdAndId(String formulaId, String alignedFeatureId, @NotNull EnumSet<FormulaCandidate.OptField> optFields) {
         Class<? extends DataAnnotation>[] annotations = resolveFormulaCandidateAnnotations(optFields);
         Instance instance = loadInstance(alignedFeatureId);
         return instance.loadFormulaResult(parseFID(instance, formulaId), annotations)
@@ -200,7 +209,7 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     @Override
-    public Page<StructureCandidateScored> findStructureCandidatesByFeatureIdAndFormulaId(String formulaId, String alignedFeatureId, Pageable pageable, EnumSet<StructureCandidateScored.OptField> optFields) {
+    public Page<StructureCandidateScored> findStructureCandidatesByFeatureIdAndFormulaId(String formulaId, String alignedFeatureId, Pageable pageable, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
         List<Class<? extends DataAnnotation>> para = (optFields.contains(StructureCandidateScored.OptField.fingerprint)
                 ? List.of(FormulaScoring.class, FBCandidates.class, FBCandidateFingerprints.class)
                 : List.of(FormulaScoring.class, FBCandidates.class));
@@ -214,7 +223,7 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     @Override
-    public Page<StructureCandidateFormula> findStructureCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, EnumSet<StructureCandidateScored.OptField> optFields) {
+    public Page<StructureCandidateFormula> findStructureCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
         List<Class<? extends DataAnnotation>> para = (optFields.contains(StructureCandidateScored.OptField.fingerprint)
                 ? List.of(FormulaScoring.class, FBCandidates.class, FBCandidateFingerprints.class)
                 : List.of(FormulaScoring.class, FBCandidates.class));
@@ -234,7 +243,7 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     @Override
-    public StructureCandidateFormula findTopStructureCandidateByFeatureId(String alignedFeatureId, EnumSet<StructureCandidateScored.OptField> optFields) {
+    public StructureCandidateFormula findTopStructureCandidateByFeatureId(String alignedFeatureId, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
         List<Class<? extends DataAnnotation>> para = (optFields.contains(StructureCandidateScored.OptField.fingerprint)
                 ? List.of(FormulaScoring.class, FBCandidates.class, FBCandidateFingerprints.class)
                 : List.of(FormulaScoring.class, FBCandidates.class));
@@ -285,8 +294,8 @@ public class SiriusProjectSpaceImpl implements Project {
 
     private static final DecimalFormat NUMBER_FORMAT = new DecimalFormat("#0.000");
 
-    private Compound asCompound(List<CompoundContainerId> cids, EnumSet<Compound.OptField> optFields,
-                                EnumSet<AlignedFeature.OptField> optFeatureFields) {
+    private Compound asCompound(List<CompoundContainerId> cids, @NotNull EnumSet<Compound.OptField> optFields,
+                                @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields) {
         //compound with ID
         Compound.CompoundBuilder c = Compound.builder()
                 .compoundId(cids.stream().map(CompoundContainerId::getGroupId)
@@ -360,7 +369,10 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     protected CompoundContainerId parseCID(String cid) {
-        return projectSpaceManager.projectSpace().findCompound(cid).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no Compound with ID '" + cid + "' in project with name '" + projectSpaceManager.projectSpace().getLocation() + "'"));
+        return projectSpaceManager.projectSpace().findCompound(cid)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "There is no Compound with ID '" + cid + "' in project with name '" +
+                                projectSpaceManager.projectSpace().getLocation() + "'"));
     }
 
     protected FormulaResultId parseFID(String cid, String fid) {
@@ -368,7 +380,9 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     protected FormulaResultId parseFID(Instance instance, String fid) {
-        return instance.loadCompoundContainer().findResult(fid).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "FormulaResult with FID '" + fid + "' not found!"));
+        return instance.loadCompoundContainer().findResult(fid)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "FormulaResult with FID '" + fid + "' not found!"));
 
     }
 
