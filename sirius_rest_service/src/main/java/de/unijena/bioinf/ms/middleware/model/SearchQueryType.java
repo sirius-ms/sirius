@@ -22,7 +22,7 @@ package de.unijena.bioinf.ms.middleware.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-@Schema(enumAsRef = true)
+@Schema(enumAsRef = true, nullable = true)
 public enum SearchQueryType {
     /**
      * Apache Lucene Query Syntax

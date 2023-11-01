@@ -29,7 +29,7 @@ import lombok.experimental.SuperBuilder;
 @Setter
 @SuperBuilder
 public class ConsensusAnnotationsCSI extends ConsensusAnnotations {
-    @Schema(enumAsRef = true, name = "ConsensusCriterionCSI")
+    @Schema(enumAsRef = true, name = "ConsensusCriterionCSI", nullable = true)
     public enum Criterion {
         MAJORITY_STRUCTURE,
         CONFIDENCE_STRUCTURE,

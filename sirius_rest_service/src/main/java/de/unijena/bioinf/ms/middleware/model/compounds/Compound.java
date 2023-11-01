@@ -35,7 +35,7 @@ import java.util.List;
 @Setter
 @Builder
 public class Compound {
-    @Schema(enumAsRef = true, name = "CompoundOptField")
+    @Schema(enumAsRef = true, name = "CompoundOptField", nullable = true)
     public enum OptField {consensusAnnotations, consensusAnnotationsDeNovo, customAnnotations}
 
     /**
