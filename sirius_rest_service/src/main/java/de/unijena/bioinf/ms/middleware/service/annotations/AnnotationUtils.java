@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.middleware.service.annotations;
 
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
+import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import lombok.extern.slf4j.Slf4j;
 
@@ -31,6 +32,12 @@ import java.util.stream.Collectors;
 public class AnnotationUtils {
     private AnnotationUtils() {
         // just to prevent instantiation
+    }
+
+    public static <T extends Enum<T>> EnumSet<T> toEnumSet(Class<T> clz, T... input){
+        return input != null && input.length > 0
+                ? EnumSet.copyOf(List.of(input))
+                : EnumSet.noneOf(clz);
     }
 
     public static ConsensusAnnotationsDeNovo buildConsensusAnnotationsDeNovo(Collection<AlignedFeature> features) {
