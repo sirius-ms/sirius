@@ -81,7 +81,7 @@ public class AlignedFeatureController {
      * @return AlignedFeature with additional annotations and MS/MS data (if specified).
      */
     @GetMapping(value = "/{alignedFeatureId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public AlignedFeature getAlignedFeatures(
+    public AlignedFeature getAlignedFeature(
             @PathVariable String projectId, @PathVariable String alignedFeatureId,
             @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFields
     ) {
