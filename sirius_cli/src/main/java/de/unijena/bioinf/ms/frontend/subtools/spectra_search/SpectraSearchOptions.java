@@ -60,9 +60,9 @@ public class SpectraSearchOptions implements ToolChainOptions<SpectraSearchSubto
         defaultConfigOptions.changeOption("MS2MassDeviation.allowedMassDeviation", value + "ppm");
     }
 
-    @CommandLine.Option(names = "--print", descriptionKey = "SpectralSearchLog.value", description = "Number of matches to print per experiment.")
+    @CommandLine.Option(names = "--print", descriptionKey = "SpectralSearchLog", description = "Number of matches to print per experiment.")
     public void setLogNum(DefaultParameter value) throws Exception {
-        defaultConfigOptions.changeOption("SpectralSearchLog.value", value);
+        defaultConfigOptions.changeOption("SpectralSearchLog", value);
     }
 
     @CommandLine.Option(names = "--scorer", descriptionKey = "SpectralAlignmentScorer", description = "Scoring function for alignment. Valid values: ${COMPLETION-CANDIDATES}.", defaultValue = "MODIFIED_COSINE")
