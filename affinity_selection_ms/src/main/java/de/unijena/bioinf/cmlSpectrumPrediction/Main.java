@@ -3,29 +3,17 @@ package de.unijena.bioinf.cmlSpectrumPrediction;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.data.JSONDocumentType;
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.FasterTreeComputationInstance;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.babelms.MsIO;
 import de.unijena.bioinf.cmlFragmentation.*;
-import de.unijena.bioinf.fragmenter.CombinatorialFragment;
-import de.unijena.bioinf.fragmenter.CriticalPathSubtreeCalculator;
-import de.unijena.bioinf.fragmenter.EMFragmenterScoring2;
-import de.unijena.bioinf.fragmenter.MolecularGraph;
-import de.unijena.bioinf.jjobs.JobManager;
+import de.unijena.bioinf.fragmenter.*;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
 import de.unijena.bioinf.sirius.Sirius;
@@ -45,7 +33,7 @@ public class Main {
 
     public static class SimpleFragmentationRule implements FragmentationRules {
 
-        private List<String> allowedElements;
+        private final List<String> allowedElements;
 
         public SimpleFragmentationRule(String[] allowedElements){
             this.allowedElements = Arrays.asList(allowedElements);
@@ -53,15 +41,11 @@ public class Main {
 
         @Override
         public boolean match(IBond bond) {
-            if(!bond.getOrder().equals(IBond.Order.SINGLE)) return false;
             String atom1Symbol = bond.getAtom(0).getSymbol();
             String atom2Symbol = bond.getAtom(1).getSymbol();
-            return (this.allowedElements.contains(atom1Symbol) || this.allowedElements.contains(atom2Symbol));
+            return (this.allowedElements.contains(atom1Symbol) && !this.allowedElements.contains(atom2Symbol)) ||
+                    (!this.allowedElements.contains(atom1Symbol) && this.allowedElements.contains(atom2Symbol));
         }
-    }
-
-    public enum FragmentationPredictorType {
-        ITERATIVE, RULE_BASED;
     }
 
     private static SimpleSpectrum parseMsrdSpectrum(ProcessedInput processedMs2Experiment) throws IOException {
@@ -150,8 +134,8 @@ public class Main {
     public static void main(String[] args) {
         try {
             // GENERAL INITIALISATION:
-            final String smiles = "CCC(CC)N1C2=C(C=C(C=C2)C(=O)NC(C(C)C)C(=O)N)N=C1CC(C)C";
-            final File msFile = new File("C:\\Users\\Nutzer\\Documents\\Bioinformatik_PhD\\AS-MS-Project\\LCMS_Benzimidazole\\BAMS-14-3\\ProjectSpaces\\filtered_by_hand_PS_5.7.2\\1915_230220_BAMS-14-3_01_1915\\spectrum.ms");
+            final String smiles = "CCC(CC)N1C2=C(C=C(C=C2)C(=O)NC(CCC(=O)N)C(=O)N)N=C1C=CC3=CC=CC=C3";
+            final File msFile = new File("C:\\Users\\Nutzer\\Documents\\Bioinformatik_PhD\\AS-MS-Project\\LCMS_Benzimidazole\\BAMS-14-3\\ProjectSpaces\\filtered_by_hand_PS_5.7.2\\794_230220_BAMS-14-3_01_794\\spectrum.ms");
             final int NUM_FRAGMENTS = 50;
             final int NUM_H_SHIFTS = 2;
             final PrecursorIonType ionization = PrecursorIonType.fromString("[M+H]+");
@@ -164,9 +148,7 @@ public class Main {
             // PROCESS MS-INPUT AND COMPUTE PEAK-FRAGMENT MAPPING WITH EPIMETHEUS:
             final MutableMs2Experiment ms2Experiment = new MutableMs2Experiment(MsIO.readExperimentFromFile(msFile).next());
             ms2Experiment.setMolecularFormula(mf);
-            Set<MolecularFormula> wh = Collections.singleton(mf);
-            ms2Experiment.setAnnotation(Whiteset.class, Whiteset.ofMeasuredOrNeutral(wh));
-
+            ms2Experiment.setPrecursorIonType(ionization);
             final ProcessedInput processedMs2Experiment = new Sirius().preprocessForMs2Analysis(ms2Experiment);
             final FTree fTree = new Sirius().compute(processedMs2Experiment.getExperimentInformation(), mf).getTree();
 
@@ -177,27 +159,29 @@ public class Main {
             final ICEBERGSpectrumPredictor icebergPredictor = new ICEBERGSpectrumPredictor(smiles, ionization, NUM_FRAGMENTS);
             final SimpleSpectrum icebergSpectrum = new SimpleSpectrum(icebergPredictor.predictSpectrum());
 
-            // PREDICT THE FRAGMENTATION PROCESS & A SPECTRUM WITH MY METHOD:
-            final FragStepDependentScoring scoring = new FragStepDependentScoring(molecule);
-            final FragmentationPredictorType type = FragmentationPredictorType.ITERATIVE;
-            AbstractFragmentationPredictor fragmentationPredictor;
-            switch (type) {
-                case RULE_BASED -> {
-                    String[] allowedElements = new String[]{"N", "O", "P", "S"};
-                    SimpleFragmentationRule fragRule = new SimpleFragmentationRule(allowedElements);
-                    fragmentationPredictor = new RuleBasedFragmentation(molecule, scoring, NUM_FRAGMENTS, fragRule, (node, nnodes, nedges) -> true);
-                }
-                default -> fragmentationPredictor = new PrioritizedIterativeFragmentation(molecule, scoring, NUM_FRAGMENTS);
-            }
-            fragmentationPredictor.predictFragmentation();
+            // PREDICT THE FRAGMENTATION PROCESS & A SPECTRUM WITH MY METHODS:
+            DirectedBondTypeScoring.loadScoringFromFile(new File("C:\\Users\\Nutzer\\Documents\\Bioinformatik_PhD\\Epimetheus\\Daten\\Scoring_Files\\3rd-Iteration-parameters\\scoring_model.txt"));
+            final DirectedBondTypeScoring scoring = new DirectedBondTypeScoring(molecule);
+            //final FragStepDependentScoring scoring = new FragStepDependentScoring(molecule);
 
-            // Build a barcode spectrum:
-            BarcodeSpectrumPredictor spectrumPredictor = new BarcodeSpectrumPredictor(fragmentationPredictor, ionization.isPositive(), NUM_H_SHIFTS);
-            SimpleSpectrum predictedSpectrum = new SimpleSpectrum(spectrumPredictor.predictSpectrum());
+            // 1. PrioritizedIterativeFragmentationPredictor:
+            final PrioritizedIterativeFragmentationPredictor iterFragPredictor = new PrioritizedIterativeFragmentationPredictor(molecule, scoring, NUM_FRAGMENTS);
+            iterFragPredictor.predictFragmentation();
 
+            final BarcodeSpectrumPredictor iterSpectrumPredictor = new BarcodeSpectrumPredictor(iterFragPredictor, ionization.isPositive(), NUM_H_SHIFTS);
+            final SimpleSpectrum iterSpectrum = new SimpleSpectrum(iterSpectrumPredictor.predictSpectrum());
+
+            // 2. RuleBasedFragmentationPredictor:
+            final String[] allowedElements = new String[]{"N","O", "P", "S"};
+            final SimpleFragmentationRule fragRule = new SimpleFragmentationRule(allowedElements);
+            final RuleBasedFragmentationPredictor ruleBasedFragPredictor = new RuleBasedFragmentationPredictor(molecule, scoring, NUM_FRAGMENTS, fragRule, (node, nnodes, nedges) -> true);
+            ruleBasedFragPredictor.predictFragmentation();
+
+            final BarcodeSpectrumPredictor ruleBasedSpectrumPredictor = new BarcodeSpectrumPredictor(ruleBasedFragPredictor, ionization.isPositive(), NUM_H_SHIFTS);
+            final SimpleSpectrum ruleBasedSpectrum = new SimpleSpectrum(ruleBasedSpectrumPredictor.predictSpectrum());
 
             // WRITE RESULTS INTO A JSON-FILE:
-            String outputFilePath = "C:\\Users\\Nutzer\\Documents\\Repositories\\sirius-libs\\affinity_selection_ms\\src\\main\\resources\\visualization.json";
+            final String outputFilePath = "C:\\Users\\Nutzer\\Documents\\Repositories\\sirius-libs\\affinity_selection_ms\\src\\main\\resources\\visualization.json";
             try(FileWriter writer = new FileWriter(outputFilePath)) {
                 JsonFactory factory = new JsonFactory();
                 factory.enable(JsonParser.Feature.ALLOW_NON_NUMERIC_NUMBERS);
@@ -211,17 +195,16 @@ public class Main {
 
                 jsonGenerator.writeFieldName("spectra");
                 jsonGenerator.writeStartArray();
-                writeSpectrumComparison2Json(jsonGenerator, "my_prediction", deviation, msrdSpectrum, predictedSpectrum, epimetheusPeak2Fragment, spectrumPredictor.getPeak2FragmentMapping());
-                writeSpectrumComparison2Json(jsonGenerator, "iceberg_prediction", deviation, msrdSpectrum, icebergSpectrum, epimetheusPeak2Fragment, icebergPredictor.getPeak2FragmentMapping());
+                writeSpectrumComparison2Json(jsonGenerator, "Prioritized Iterative Fragmentation", deviation, msrdSpectrum, iterSpectrum, epimetheusPeak2Fragment, iterSpectrumPredictor.getPeak2FragmentMapping());
+                writeSpectrumComparison2Json(jsonGenerator, "Rule Based Fragmentation", deviation, msrdSpectrum, ruleBasedSpectrum, epimetheusPeak2Fragment, ruleBasedSpectrumPredictor.getPeak2FragmentMapping());
+                writeSpectrumComparison2Json(jsonGenerator, "ICEBERG", deviation, msrdSpectrum, icebergSpectrum, epimetheusPeak2Fragment, icebergPredictor.getPeak2FragmentMapping());
                 jsonGenerator.writeEndArray();
                 jsonGenerator.writeEndObject();
 
                 jsonGenerator.close();
             }
 
-        } catch (InvalidSmilesException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
+        } catch (InvalidSmilesException | IOException e) {
             throw new RuntimeException(e);
         }
     }

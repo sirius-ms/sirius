@@ -15,7 +15,7 @@ import java.util.*;
  * <li>[two options: if F' is not novel, then do nothing or maybe replace the subtree under F' to F (I have to test that...)]</li>
  * After a certain number of fragments were predicted, the remaining (unmarked) fragments in Q are removed from G.
  */
-public class PrioritizedIterativeFragmentation extends AbstractFragmentationPredictor{
+public class PrioritizedIterativeFragmentationPredictor extends AbstractFragmentationPredictor{
 
     /**
      * The scoring function to weigh each edge and node in the generated {@link CombinatorialGraph}.
@@ -28,14 +28,14 @@ public class PrioritizedIterativeFragmentation extends AbstractFragmentationPred
     private final int numFragments;
 
     /**
-     * Constructs an object of {@link PrioritizedIterativeFragmentation}.
+     * Constructs an object of {@link PrioritizedIterativeFragmentationPredictor}.
      *
      * @param molecule the molecular structure for which the fragmentation will be predicted
      * @param scoring the scoring function for generating the {@link CombinatorialGraph},
      *                and which determines which fragments will be chosen
      * @param numFragments the number of generated fragments (excluding the intact molecule)
      */
-    public PrioritizedIterativeFragmentation(MolecularGraph molecule, CombinatorialFragmenterScoring scoring, int numFragments){
+    public PrioritizedIterativeFragmentationPredictor(MolecularGraph molecule, CombinatorialFragmenterScoring scoring, int numFragments){
         super(molecule);
         this.scoring = scoring;
         this.numFragments = numFragments;
