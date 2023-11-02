@@ -42,6 +42,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.validation.Valid;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -148,9 +149,9 @@ public class JobController {
      * @return JobId of background job that imports given run/compounds/features.
      */
     @PostMapping(value = "/{projectId}/jobs/import-from-local-path", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public Job startImportFromPathJob(@PathVariable String projectId, @RequestBody ImportLocalFilesSubmission jobSubmission,
+    public Job startImportFromPathJob(@PathVariable String projectId, @Valid @RequestBody ImportLocalFilesSubmission jobSubmission,
                                       @RequestParam(defaultValue = "command, progress") EnumSet<Job.OptField> optFields
-    ) throws IOException {
+    ) {
         Project p = projectsProvider.getProjectOrThrow(projectId);
         return computeService.createAndSubmitImportJob(p, jobSubmission, removeNone(optFields));
     }
@@ -165,9 +166,9 @@ public class JobController {
      * @return CompoundIds of the imported run/compounds/feature.
      */
     @PostMapping(value = "/{projectId}/jobs/import-from-string", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public Job startImportFromStringJob(@PathVariable String projectId, @RequestBody ImportStringSubmission jobSubmission,
+    public Job startImportFromStringJob(@PathVariable String projectId, @Valid @RequestBody ImportStringSubmission jobSubmission,
                                         @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
-    ) throws IOException {
+    ) {
         Project p = projectsProvider.getProjectOrThrow(projectId);
         return computeService.createAndSubmitImportJob(p, jobSubmission, removeNone(optFields));
     }

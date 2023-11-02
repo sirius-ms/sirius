@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.projectspace;
 
+import com.github.f4b6a3.ksuid.KsuidCreator;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.SpectrumFileSource;
 import de.unijena.bioinf.babelms.CloseableIterator;
@@ -102,10 +103,11 @@ public class ImportFromMemoryWorkflow implements Workflow, ProgressSupport {
             try (CloseableIterator<Ms2Experiment> it = parser.parseIterator(bodyStream, null)) {
                 while (it.hasNext()) {
                     Ms2Experiment next = it.next();
-                    if (sourceName != null)  // workaround to fake import file
-                        next.setAnnotation(SpectrumFileSource.class,
-                                new SpectrumFileSource(
-                                        new File("./" + (sourceName.endsWith(ext) ? sourceName : sourceName + "." + ext.toLowerCase())).toURI()));
+                    if (sourceName == null)  // workaround to fake import file
+                        sourceName = "Unknown-" + KsuidCreator.getKsuid().toString();
+                    next.setAnnotation(SpectrumFileSource.class,
+                            new SpectrumFileSource(
+                                    new File((sourceName.endsWith(ext) ? sourceName : sourceName + "." + ext.toLowerCase())).toURI()));
 
                     @NotNull Instance inst = psm.newCompoundWithUniqueId(next);
                     importedCompounds.add(inst.getID());
