@@ -373,6 +373,10 @@ public class BayesianScoringUtils {
      * @return list of edges of between molecular properties. Only properties from masedFingerprint version used but saved with absolute indices
      */
     private List<int[]> computeDefaultTreeTopology(ChemicalDatabase sqlChemDB) throws ChemicalDatabaseException {
+        Log.debug("database flag is "+DATABASE_FLAG_FOR_TREE_TOPOLOGY_COMP);
+        Log.debug("structures table "+ChemicalDatabase.STRUCTURES_TABLE);
+        Log.debug("fingerprints table "+ChemicalDatabase.FINGERPRINT_TABLE);
+        Log.debug("fingerprint id "+ChemicalDatabase.FINGERPRINT_ID);
         Log.warn("retrieve fingerprints");
         long startTime = System.currentTimeMillis();
         List<FingerprintCandidate>  candidates = getFingerprints(DATABASE_FLAG_FOR_TREE_TOPOLOGY_COMP, sqlChemDB);
@@ -559,7 +563,7 @@ public class BayesianScoringUtils {
             keys = sqlChemDB.useConnection(connection -> {
                 connection.connection.setNetworkTimeout(Runnable::run,3000000);
                 final List<FingerprintCandidate> k = new ArrayList<>();
-                try (PreparedStatement st = connection.connection.prepareStatement(String.format("SELECT s.inchi_key_1, s.inchi, f.fingerprint FROM structures s INNER JOIN fingerprints f ON s.inchi_key_1=f.inchi_key_1 AND s.flags&%d>0 AND f.fp_id=%s", mask, ChemicalDatabase.FINGERPRINT_ID))) {
+                try (PreparedStatement st = connection.connection.prepareStatement(String.format("SELECT s.inchi_key_1, s.inchi, f.fingerprint FROM %s s INNER JOIN %s f ON s.inchi_key_1=f.inchi_key_1 AND s.flags&%d>0 AND f.fp_id=%s", ChemicalDatabase.STRUCTURES_TABLE, ChemicalDatabase.FINGERPRINT_TABLE, mask, ChemicalDatabase.FINGERPRINT_ID))) {
                     try (ResultSet set = st.executeQuery()) {
                         while (set.next()) {
                             k.add(new FingerprintCandidate(

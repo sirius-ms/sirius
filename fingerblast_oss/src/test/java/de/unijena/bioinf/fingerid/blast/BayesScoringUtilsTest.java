@@ -185,5 +185,10 @@ public class BayesScoringUtilsTest {
             if (fingerprintVersion instanceof TestFingerprintVersion) return true;
             return false;
         }
+
+        @Override
+        public boolean identical(FingerprintVersion fingerprintVersion) {
+            return fingerprintVersion instanceof TestFingerprintVersion && size() == fingerprintVersion.size();
+        }
     }
 }
