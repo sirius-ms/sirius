@@ -20,6 +20,9 @@
 
 package de.unijena.bioinf.babelms.cef;
 
+import com.github.f4b6a3.tsid.Tsid;
+import com.github.f4b6a3.tsid.TsidCreator;
+import de.unijena.bioinf.ChemistryBase.chem.FeatureGroup;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.*;
@@ -27,7 +30,6 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.apache.commons.io.input.ReaderInputStream;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +50,8 @@ import java.net.URI;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.regex.Pattern;
+
+import static de.unijena.bioinf.babelms.cef.CEFUtils.*;
 
 public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
     private static final DecimalFormat NUMBER_FORMAT = new DecimalFormat("#0.000");
@@ -117,14 +121,33 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
     }
 
     private <S extends Ms2Experiment> List<S> experimentFromCompound(Compound compound) {
+        Tsid cuuid = TsidCreator.getTsid();
+        RetentionTime rt = compound.getSpectrum().stream()
+                .filter(s -> s.getMSDetails().scanType.equals("Scan"))
+                .map(s -> parseRT(compound, s))
+                .filter(Optional::isPresent).flatMap(Optional::stream)
+                .reduce(RetentionTime::merge).orElse(parseRT(compound).orElse(null));
 
+        final FeatureGroup fg = FeatureGroup.builder()
+                .groupId(cuuid.toString())
+                .groupRt(rt)
+                .build();
+
+        List<S> exps = null;
         if (compound.getSpectrum().stream().anyMatch(s -> s.getType().equalsIgnoreCase("MFE") || s.getType().equalsIgnoreCase("FBF"))) { //MFE/FBF data
-            return experimentFromMFECompound(compound);
+            exps = experimentFromMFECompound(compound);
         } else if (compound.getSpectrum().stream().noneMatch(s -> s.getMSDetails().getScanType().equals("ProductIon"))) { //ms1 only data from raw format
-            return experimentFromMS1OnlyCompound(compound);
+            exps = experimentFromMS1OnlyCompound(compound);
         } else {
-            return experimentFromRawCompound(compound);
+            exps = experimentFromRawCompound(compound);
         }
+
+        exps.forEach(exp -> {
+            exp.setAnnotation(FeatureGroup.class, fg);
+            exp.addAnnotationIfAbsend(RetentionTime.class, fg.getGroupRt());
+        });
+
+        return exps;
     }
 
     private static final Pattern UNSUPPORTED_IONTYPE_MATCHER = Pattern.compile("^\\d+M.*");
@@ -182,23 +205,25 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
     }
 
     private <S extends Ms2Experiment> S experimentFromCompound(Compound compound, MutableMs2Experiment exp) {
-        //todo how do we get the real dev? maybe load profile/ from outside
         MS2MassDeviation dev = PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class);
-        exp.setName("rt=" + compound.location.rt + "-p=" + NUMBER_FORMAT.format(exp.getIonMass()));
+        exp.setName("rt" + NUMBER_FORMAT.format(compound.location.rt) + "-p" + NUMBER_FORMAT.format(exp.getIonMass()));
         if (currentUrl != null)
             exp.setSource(new SpectrumFileSource(currentUrl));
 
         List<SimpleSpectrum> ms1Spectra = new ArrayList<>();
+        List<RetentionTime> ms1Rts = new ArrayList<>();
         List<MutableMs2Spectrum> ms2Spectra = new ArrayList<>();
+        List<RetentionTime> ms2Rts = new ArrayList<>();
+
         for (Spectrum spec : compound.getSpectrum()) {
             if (spec.type.equalsIgnoreCase("MFE") || spec.type.equalsIgnoreCase("FBF")) {
                 // ignore was already handled beforehand.
             } else if (spec.getMSDetails().getScanType().equals("Scan")) {
                 ms1Spectra.add(makeMs1Spectrum(spec));
-                if (!exp.hasAnnotation(RetentionTime.class))
-                    parseRT(compound, spec).ifPresent(rt -> exp.addAnnotation(RetentionTime.class, rt));
+                parseRT(spec).ifPresent(ms1Rts::add);
             } else if (spec.getMSDetails().getScanType().equals("ProductIon") && dev.standardMassDeviation.inErrorWindow(spec.mzOfInterest.mz.doubleValue(), exp.getIonMass())) {
                 ms2Spectra.add(makeMs2Spectrum(spec));
+                parseRT(spec).ifPresent(ms2Rts::add);
             } else {
                 Optional<Spectrum> s = Optional.of(spec);
                 LoggerFactory.getLogger(getClass()).warn("Spectrum of type '" + s.map(Spectrum::getType).orElse("N/A")
@@ -212,75 +237,21 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
                 if (spec.getMSDetails().getScanType().equals("Scan")) {
                     ms1Spectra.add(makeMs1Spectrum(spec));
                     if (!exp.hasAnnotation(RetentionTime.class))
-                        parseRT(compound, spec).ifPresent(rt -> exp.addAnnotation(RetentionTime.class, rt));
+                        parseRT(spec).ifPresent(ms1Rts::add);
                 }
             }
         }
 
-        if (!exp.hasAnnotation(RetentionTime.class))
-            parseRT(compound).ifPresent(rt -> exp.addAnnotation(RetentionTime.class, rt));
+        //parse RT
+        RetentionTime rt = ms2Rts.stream().reduce(RetentionTime::merge).orElse(
+                ms1Rts.stream().reduce(RetentionTime::merge).orElse(null));
+
+        if (rt != null)
+            exp.setAnnotation(RetentionTime.class, rt);
+
         exp.setMs1Spectra(ms1Spectra);
         exp.setMs2Spectra(ms2Spectra);
         return (S) exp;
     }
-
-    private CollisionEnergy parseCE(Spectrum spec) {
-        try {
-            return CollisionEnergy.fromString(spec.msDetails.getCe().replace("V", "ev"));
-        } catch (Exception e) {
-            LoggerFactory.getLogger(getClass()).warn("Could not parse collision energy! Cause: " + e.getMessage());
-            LoggerFactory.getLogger(getClass()).debug("Could not parse collision energy!", e);
-            return CollisionEnergy.none();
-        }
-    }
-
-    private Optional<RetentionTime> parseRT(@NotNull Compound c) {
-        return parseRT(c, null);
-    }
-
-    private Optional<RetentionTime> parseRT(@NotNull Compound c, @Nullable Spectrum ms1) {
-        try {
-            double middle = Optional.ofNullable(c.getLocation()).map(Location::getRt).map(it -> it.doubleValue() * 60).orElse(Double.NaN);
-            double min = Optional.ofNullable(ms1).map(Spectrum::getRTRanges).map(RTRanges::getRTRange).map(RTRange::getMin).map(it -> it.doubleValue() * 60).orElse(Double.NaN);
-            double max = Optional.ofNullable(ms1).map(Spectrum::getRTRanges).map(RTRanges::getRTRange).map(RTRange::getMax).map(it -> it.doubleValue() * 60).orElse(Double.NaN);
-
-            RetentionTime rt = null;
-            if (Double.isNaN(middle)) {
-                if (min < max)
-                    rt = new RetentionTime(min, max);
-                else if (!Double.isNaN(min))
-                    rt = new RetentionTime(min);
-                else if (!Double.isNaN(max))
-                    rt = new RetentionTime(max);
-            } else if (min < middle && middle < max) {
-                rt = new RetentionTime(min, max, middle);
-            } else {
-                rt = new RetentionTime(middle);
-            }
-
-            return Optional.ofNullable(rt);
-        } catch (Exception e) {
-            LoggerFactory.getLogger(getClass()).warn("Could not parse Retention time!", e);
-            return Optional.empty();
-        }
-    }
-
-    private MutableMs2Spectrum makeMs2Spectrum(Spectrum spec) {
-        return new MutableMs2Spectrum(
-                makeMs1Spectrum(spec),
-                spec.getMzOfInterest().getMz().doubleValue(),
-                parseCE(spec),
-                2
-        );
-    }
-
-
-    SimpleSpectrum makeMs1Spectrum(Spectrum spec) {
-        return new SimpleSpectrum(
-                spec.msPeaks.p.stream().map(P::getX).mapToDouble(BigDecimal::doubleValue).toArray(),
-                spec.msPeaks.p.stream().map(P::getY).mapToDouble(BigDecimal::doubleValue).toArray()
-        );
-    }
-
 }
 

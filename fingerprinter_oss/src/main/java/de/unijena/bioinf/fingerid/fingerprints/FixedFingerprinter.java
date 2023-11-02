@@ -56,22 +56,52 @@ public class FixedFingerprinter {
 
     protected CdkFingerprintVersion cdkFingerprintVersion;
 
+    protected boolean useFastMode;
+    protected FastCdkFingerprinter fastCdkFingerprinter;
+
     public FixedFingerprinter(CdkFingerprintVersion cdkFingerprintVersion) {
         this.cdkFingerprintVersion = cdkFingerprintVersion;
+        useFastMode=false;
+    }
+    public FixedFingerprinter(CdkFingerprintVersion cdkFingerprintVersion, boolean useFastMode) {
+        this.cdkFingerprintVersion = cdkFingerprintVersion;
+        setFastMode(useFastMode);
+    }
+
+    public boolean isUseFastMode() {
+        return useFastMode;
+    }
+
+    public void setFastMode(boolean useFastMode) {
+        this.useFastMode = useFastMode;
+        if (useFastMode) {
+            this.fastCdkFingerprinter = new FastCdkFingerprinter();
+            if (!fastCdkFingerprinter.mask.getMaskedFingerprintVersion().compatible(cdkFingerprintVersion)) {
+                throw new RuntimeException("Cdk fingerprint not compatible with fast fingerprint");
+            }
+        } else {
+            this.fastCdkFingerprinter = null;
+        }
     }
 
     public ArrayFingerprint computeFingerprintFromSMILES(String smiles) {
+        if (fastCdkFingerprinter!=null) return fastCdkFingerprinter.getArrayFingerprint(FixedFingerprinter.parseStructureFromStandardizedSMILES(smiles));
         return new BooleanFingerprint(cdkFingerprintVersion, new FixedFingerprinterInstance(FixedFingerprinter.parseStructureFromStandardizedSMILES(smiles),false).getAsBooleanArray()).asArray();
     }
 
+    @Deprecated
     public ArrayFingerprint computeFingerprint(String inchi) {
+        if (fastCdkFingerprinter!=null) throw new RuntimeException("Never compute fingerprints from InChI!");
         return new BooleanFingerprint(cdkFingerprintVersion, new FixedFingerprinterInstance(inchi).getAsBooleanArray()).asArray();
     }
+    @Deprecated
     public ArrayFingerprint computeFingerprint(InChI inchi) {
+        if (fastCdkFingerprinter!=null) throw new RuntimeException("Never compute fingerprints from InChI!");
         return computeFingerprint(inchi.in2D);
     }
     public ArrayFingerprint computeFingerprint(IAtomContainer molecule) {
         try {
+            if (fastCdkFingerprinter!=null) return fastCdkFingerprinter.getArrayFingerprint(molecule.clone());
             return new BooleanFingerprint(cdkFingerprintVersion, new FixedFingerprinterInstance(molecule.clone(),false).getAsBooleanArray()).asArray();
         } catch (CloneNotSupportedException e) {
             throw new RuntimeException(e);

@@ -20,9 +20,16 @@
 
 package de.unijena.bioinf.ChemistryBase.chem;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import org.jetbrains.annotations.NotNull;
 
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
+
+@JsonAutoDetect(fieldVisibility = ANY, getterVisibility = NONE, setterVisibility = NONE, isGetterVisibility = NONE)
 public final class RetentionTime implements Ms2ExperimentAnnotation, Comparable<RetentionTime> {
 
     private final double start, middle, end;
@@ -32,7 +39,14 @@ public final class RetentionTime implements Ms2ExperimentAnnotation, Comparable<
         this(start, end, start + (end - start) / 2d);
     }
 
-    public RetentionTime(double start, double end, double maximum) {
+    /**
+     *
+     * @param start end start of window
+     * @param end end of window
+     * @param maximum maximum intensity (apex) time
+     */
+    @JsonCreator
+    public RetentionTime(@JsonProperty("start") double start, @JsonProperty("end") double end, @JsonProperty("middle") double maximum) {
         if (!Double.isNaN(start)) {
             if (start >= end)
                 throw new IllegalArgumentException("No proper interval given: [" + start + ", " + end + "]" );
