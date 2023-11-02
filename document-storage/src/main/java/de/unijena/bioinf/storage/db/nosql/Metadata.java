@@ -22,10 +22,15 @@ package de.unijena.bioinf.storage.db.nosql;
 
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
+import de.unijena.bioinf.storage.db.nosql.utils.ExtFieldUtils;
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.dizitart.no2.NitriteId;
+import org.dizitart.no2.objects.Id;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -45,7 +50,8 @@ public class Metadata {
 
     final public Map<String, String[]> optionalCollectionFields = new HashMap<>();
 
-    private Metadata() {}
+    private Metadata() {
+    }
 
     public static Metadata build() {
         return new Metadata();
@@ -54,8 +60,12 @@ public class Metadata {
     public <T> Metadata addRepository(
             Class<T> clazz,
             Index... indices
-    ) {
-        this.repoIndices.put(clazz, indices);
+    ) throws IOException {
+        String id = findIdField(clazz);
+        if (id != null)
+            addRepository(clazz, id, indices);
+        else
+            this.repoIndices.put(clazz, indices);
         return this;
     }
 
@@ -79,10 +89,11 @@ public class Metadata {
         return this;
     }
 
+
     public <T> Metadata addSerialization(
             Class<T> clazz,
             JsonSerializer<T> jsonSerializer,
-            JsonDeserializer jsonDeserializer
+            JsonDeserializer<T> jsonDeserializer
     ) {
         addSerializer(clazz, jsonSerializer);
         addDeserializer(clazz, jsonDeserializer);
@@ -129,16 +140,19 @@ public class Metadata {
         return this;
     }
 
+    private static String findIdField(Class<?> clazz) {
+        return Arrays.stream(FieldUtils.getAllFields(clazz))
+                .filter(f -> f.getAnnotationsByType(Id.class).length
+                        + f.getAnnotationsByType(jakarta.persistence.Id.class).length > 0)
+                .findFirst().map(Field::getName).orElse(null);
+    }
+
     private static void validateIdField(Class<?> clazz, String idField) throws IOException {
-        try {
-            clazz.getModule().addOpens(clazz.getPackageName(), Metadata.class.getModule());
-            Field field = clazz.getDeclaredField(idField);
-            field.setAccessible(true);
-            if (!(Long.class.equals(field.getType()) || long.class.equals(field.getType()))) {
-                throw new IOException(idField + " in " + clazz + " must be long or Long!");
-            }
-        } catch (NoSuchFieldException e) {
-            throw new IOException(e);
+        clazz.getModule().addOpens(clazz.getPackageName(), Metadata.class.getModule());
+        Field field = ExtFieldUtils.getAllField(clazz, idField);
+        field.setAccessible(true);
+        if (!(Long.class.equals(field.getType()) || long.class.equals(field.getType()) || NitriteId.class.equals(field.getType()))) {
+            throw new IOException(idField + " in " + clazz + " must be long or Long!");
         }
     }
 

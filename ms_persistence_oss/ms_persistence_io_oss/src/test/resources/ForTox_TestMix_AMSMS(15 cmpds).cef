@@ -1,0 +1,1487 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<CEF version="1.0.0.0">
+  <CompoundList instrumentConfiguration="LCQTOF">
+    <Compound algo="FindByAutoMsMs">
+      <Location rt="1.812" y="39022" />
+      <CompoundScores />
+      <Chromatogram type="ECC" cpdAlgo="FindByAutoMsMs" />
+      <Spectrum type="TOF-MS1" satLimit="3815424" scans="10" cpdAlgo="FindByAutoMsMs">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="1.699" max="1.912" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest>
+          <mz>286.14337</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.00057300715940699774</C_0>
+            <C_1>1025.6027193228776</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="121.0509" y="94960.79" z="1" />
+          <p x="121.1889" y="3085.46" />
+          <p x="122.0530" y="6648.24" z="1" />
+          <p x="143.0327" y="3670.45" />
+          <p x="286.1437" y="20990.85" z="1" />
+          <p x="287.1467" y="4093.98" z="1" />
+          <p x="922.0098" y="44356.04" z="1" />
+          <p x="923.0125" y="8216.79" z="1" />
+          <p x="924.0156" y="1339.82" z="1" />
+          <p x="943.9910" y="4379.65" />
+          <p x="959.9640" y="1974.74" />
+        </MSPeaks>
+      </Spectrum>
+      <Spectrum type="TOF-MS2" satLimit="8008704" scans="10" cpdAlgo="FindByAutoMsMs">
+        <MSDetails scanType="ProductIon" is="Esi" p="+" ce="21.2V" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="1.707" max="1.917" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest z="1">
+          <mz>286.14337</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.00057300715940699774</C_0>
+            <C_1>1025.6027193228776</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="58.0660" y="139.00" />
+          <p x="155.0843" y="82.69" />
+          <p x="157.0649" y="76.85" />
+          <p x="165.0734" y="133.61" />
+          <p x="173.0591" y="115.23" />
+          <p x="183.0802" y="174.72" />
+          <p x="185.0579" y="176.94" />
+          <p x="193.0645" y="82.38" />
+          <p x="201.0897" y="455.89" />
+          <p x="209.0596" y="99.78" />
+          <p x="211.0741" y="239.78" />
+          <p x="229.0854" y="398.87" />
+          <p x="268.1337" y="116.46" />
+          <p x="286.1435" y="7555.70" />
+          <p x="286.3549" y="88.22" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByAutoMsMs">
+      <Location rt="2.594" y="47066" />
+      <CompoundScores />
+      <Chromatogram type="ECC" cpdAlgo="FindByAutoMsMs" />
+      <Spectrum type="TOF-MS1" satLimit="3815424" scans="6" cpdAlgo="FindByAutoMsMs">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="2.534" max="2.644" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest>
+          <mz>286.14337</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.00057300688367148032</C_0>
+            <C_1>1025.5954976093419</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="121.0509" y="102914.15" z="1" />
+          <p x="121.1887" y="3468.23" />
+          <p x="122.0530" y="7070.50" z="1" />
+          <p x="143.0325" y="4847.22" />
+          <p x="286.1437" y="28178.80" z="1" />
+          <p x="287.1465" y="5362.82" z="1" />
+          <p x="308.1255" y="3399.79" />
+          <p x="922.0098" y="44402.58" z="1" />
+          <p x="923.0125" y="8720.25" z="1" />
+          <p x="924.0122" y="1176.03" z="1" />
+          <p x="943.9905" y="4821.62" />
+          <p x="959.9641" y="2638.61" />
+        </MSPeaks>
+      </Spectrum>
+      <Spectrum type="TOF-MS2" satLimit="8008704" scans="6" cpdAlgo="FindByAutoMsMs">
+        <MSDetails scanType="ProductIon" is="Esi" p="+" ce="21.2V" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="2.539" max="2.649" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest>
+          <mz>286.14337</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.00057300688367148032</C_0>
+            <C_1>1025.5954976093419</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="157.0644" y="132.94" />
+          <p x="183.0795" y="169.57" />
+          <p x="185.0591" y="1477.74" />
+          <p x="199.0755" y="233.68" />
+          <p x="211.0746" y="158.75" />
+          <p x="227.0702" y="430.07" />
+          <p x="229.0858" y="262.06" />
+          <p x="243.1009" y="121.81" />
+          <p x="286.1434" y="8804.01" />
+          <p x="286.3556" y="110.31" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByAutoMsMs">
+      <Location rt="3.079" y="73376" />
+      <CompoundScores />
+      <Chromatogram type="ECC" cpdAlgo="FindByAutoMsMs" />
+      <Spectrum type="TOF-MS1" satLimit="3815424" scans="10" cpdAlgo="FindByAutoMsMs">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="2.952" max="3.195" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest>
+          <mz>300.15950</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.00057300680966412929</C_0>
+            <C_1>1025.5944069599802</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="121.0509" y="110344.35" z="1" />
+          <p x="121.1889" y="3804.20" />
+          <p x="122.0533" y="7465.84" z="1" />
+          <p x="143.0326" y="5458.04" />
+          <p x="300.1594" y="50557.99" z="1" />
+          <p x="300.3772" y="1572.55" z="2" />
+          <p x="301.1626" y="9612.55" z="1" />
+          <p x="302.1656" y="1104.74" z="1" />
+          <p x="317.1856" y="3561.62" z="1" />
+          <p x="318.1803" y="1346.87" z="1" />
+          <p x="322.1411" y="11191.32" z="1" />
+          <p x="323.1444" y="2356.16" z="1" />
+          <p x="621.2937" y="3672.55" z="1" />
+          <p x="622.2955" y="1566.37" z="1" />
+          <p x="922.0098" y="46300.72" z="1" />
+          <p x="923.0122" y="8962.30" z="1" />
+          <p x="924.0149" y="1436.70" z="1" />
+          <p x="943.9899" y="4059.50" />
+          <p x="959.9642" y="2342.33" />
+        </MSPeaks>
+      </Spectrum>
+      <Spectrum type="TOF-MS2" satLimit="8008704" scans="10" cpdAlgo="FindByAutoMsMs">
+        <MSDetails scanType="ProductIon" is="Esi" p="+" ce="22.0V" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="2.957" max="3.200" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest z="1">
+          <mz>300.15950</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.00057300680966412929</C_0>
+            <C_1>1025.5944069599802</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="58.0660" y="318.93" />
+          <p x="165.0698" y="164.65" />
+          <p x="171.0798" y="194.96" />
+          <p x="183.0800" y="505.93" />
+          <p x="187.0761" y="177.93" />
+          <p x="199.0750" y="2034.59" />
+          <p x="211.0742" y="173.93" />
+          <p x="213.0898" y="304.64" />
+          <p x="215.1062" y="829.77" />
+          <p x="225.0906" y="386.31" />
+          <p x="241.0868" y="638.87" />
+          <p x="243.1008" y="842.18" />
+          <p x="257.1176" y="257.17" />
+          <p x="282.1476" y="331.93" />
+          <p x="300.1589" y="16050.30" />
+          <p x="300.3758" y="200.53" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByAutoMsMs">
+      <Location rt="3.172" y="22983" />
+      <CompoundScores />
+      <Chromatogram type="ECC" cpdAlgo="FindByAutoMsMs" />
+      <Spectrum type="TOF-MS1" satLimit="3815424" scans="6" cpdAlgo="FindByAutoMsMs">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="3.106" max="3.229" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest>
+          <mz>317.18511</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.00057300668451030687</C_0>
+            <C_1>1025.583932840691</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="121.0509" y="111333.62" z="1" />
+          <p x="121.1890" y="3841.51" />
+          <p x="122.0533" y="7436.67" z="1" />
+          <p x="143.0327" y="5606.38" />
+          <p x="300.1593" y="55608.10" z="1" />
+          <p x="300.3774" y="1880.95" z="2" />
+          <p x="301.1625" y="10902.35" z="1" />
+          <p x="302.1659" y="1261.83" z="1" />
+          <p x="317.1859" y="8667.96" z="1" />
+          <p x="318.1885" y="1706.15" z="1" />
+          <p x="322.1412" y="12186.79" z="1" />
+          <p x="323.1442" y="2449.43" z="1" />
+          <p x="338.1143" y="1198.36" />
+          <p x="621.2935" y="8632.53" z="1" />
+          <p x="622.2952" y="3235.52" z="1" />
+          <p x="922.0099" y="45913.70" z="1" />
+          <p x="923.0116" y="9089.10" z="1" />
+          <p x="924.0137" y="1331.42" z="1" />
+          <p x="943.9912" y="3908.56" />
+          <p x="959.9647" y="2268.51" />
+        </MSPeaks>
+      </Spectrum>
+      <Spectrum type="TOF-MS2" satLimit="8008704" scans="6" cpdAlgo="FindByAutoMsMs">
+        <MSDetails scanType="ProductIon" is="Esi" p="+" ce="23.0V" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="3.111" max="3.234" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest>
+          <mz>317.18511</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.00057300668451030687</C_0>
+            <C_1>1025.583932840691</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="181.0639" y="75.71" />
+          <p x="183.0794" y="56.53" />
+          <p x="197.0966" y="91.21" />
+          <p x="199.0741" y="347.98" />
+          <p x="213.0916" y="80.03" />
+          <p x="215.1070" y="48.91" />
+          <p x="225.0923" y="70.98" />
+          <p x="241.0840" y="107.71" />
+          <p x="243.1026" y="73.53" />
+          <p x="257.1175" y="520.06" />
+          <p x="300.1592" y="3989.97" z="1" />
+          <p x="300.3765" y="48.37" z="2" />
+          <p x="301.1584" y="45.38" z="1" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByAutoMsMs">
+      <Location rt="3.462" y="89195" />
+      <CompoundScores />
+      <Chromatogram type="ECC" cpdAlgo="FindByAutoMsMs" />
+      <Spectrum type="TOF-MS1" satLimit="3815424" scans="10" cpdAlgo="FindByAutoMsMs">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="3.346" max="3.568" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest>
+          <mz>150.12746</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.00057300699835392084</C_0>
+            <C_1>1025.5928473602746</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="91.0544" y="1800.61" />
+          <p x="119.0852" y="2001.02" />
+          <p x="121.0509" y="111314.85" z="1" />
+          <p x="121.1890" y="3917.79" />
+          <p x="122.0531" y="7203.47" z="1" />
+          <p x="143.0325" y="6136.63" />
+          <p x="150.1276" y="27281.38" z="1" />
+          <p x="151.1306" y="3052.10" z="1" />
+          <p x="163.0751" y="10111.27" />
+          <p x="194.1171" y="46899.96" z="1" />
+          <p x="194.2929" y="1895.89" />
+          <p x="195.1208" y="6048.13" z="1" />
+          <p x="922.0099" y="44838.18" z="1" />
+          <p x="923.0132" y="8445.47" z="1" />
+          <p x="924.0157" y="1267.34" z="1" />
+          <p x="943.9916" y="5133.80" />
+          <p x="959.9656" y="3367.10" />
+        </MSPeaks>
+      </Spectrum>
+      <Spectrum type="TOF-MS2" satLimit="8008704" scans="10" cpdAlgo="FindByAutoMsMs">
+        <MSDetails scanType="ProductIon" is="Esi" p="+" ce="13.0V" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="3.351" max="3.574" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest>
+          <mz>150.12746</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.00057300699835392084</C_0>
+            <C_1>1025.5928473602746</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="65.0393" y="501.45" />
+          <p x="91.0545" y="12888.54" />
+          <p x="91.1737" y="250.55" />
+          <p x="119.0852" y="1056.03" />
+          <p x="150.1270" y="538.20" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByAutoMsMs">
+      <Location rt="3.486" y="79158" />
+      <CompoundScores />
+      <Chromatogram type="ECC" cpdAlgo="FindByAutoMsMs" />
+      <Spectrum type="TOF-MS1" satLimit="3815424" scans="10" cpdAlgo="FindByAutoMsMs">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="3.368" max="3.587" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest>
+          <mz>194.11698</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.00057300683791745648</C_0>
+            <C_1>1025.5914970902734</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="91.0545" y="2452.23" />
+          <p x="119.0852" y="2831.02" />
+          <p x="121.0509" y="111000.77" z="1" />
+          <p x="121.1889" y="3852.76" />
+          <p x="122.0531" y="7055.52" z="1" />
+          <p x="143.0324" y="6267.78" />
+          <p x="150.1276" y="37507.79" z="1" />
+          <p x="150.2815" y="1169.55" />
+          <p x="151.1306" y="3923.75" z="1" />
+          <p x="163.0750" y="8516.21" />
+          <p x="194.1172" y="41676.15" z="1" />
+          <p x="194.2926" y="1540.79" />
+          <p x="195.1207" y="5466.19" z="1" />
+          <p x="922.0099" y="44314.77" z="1" />
+          <p x="923.0123" y="8280.29" z="1" />
+          <p x="924.0144" y="1327.45" z="1" />
+          <p x="943.9909" y="5109.73" />
+          <p x="959.9651" y="3327.54" />
+        </MSPeaks>
+      </Spectrum>
+      <Spectrum type="TOF-MS2" satLimit="8008704" scans="10" cpdAlgo="FindByAutoMsMs">
+        <MSDetails scanType="ProductIon" is="Esi" p="+" ce="15.7V" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="3.377" max="3.596" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest>
+          <mz>194.11698</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.00057300683791745648</C_0>
+            <C_1>1025.5914970902734</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="55.0187" y="76.23" />
+          <p x="58.0660" y="516.69" />
+          <p x="77.0388" y="209.46" />
+          <p x="79.0547" y="314.47" />
+          <p x="103.0543" y="211.32" />
+          <p x="105.0699" y="2819.12" />
+          <p x="107.0482" y="49.42" />
+          <p x="122.0363" y="97.15" />
+          <p x="133.0645" y="2648.81" />
+          <p x="135.0437" y="3000.10" />
+          <p x="163.0749" y="4915.51" />
+          <p x="163.2336" y="68.42" />
+          <p x="194.1172" y="158.86" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByAutoMsMs">
+      <Location rt="3.746" y="25270" />
+      <CompoundScores />
+      <Chromatogram type="ECC" cpdAlgo="FindByAutoMsMs" />
+      <Spectrum type="TOF-MS1" satLimit="3815424" scans="10" cpdAlgo="FindByAutoMsMs">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="3.616" max="3.866" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest>
+          <mz>150.12746</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.00057300677363660967</C_0>
+            <C_1>1025.588661759673</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="91.0544" y="1555.10" />
+          <p x="121.0509" y="113751.10" z="1" />
+          <p x="121.1890" y="3965.86" />
+          <p x="122.0532" y="7539.05" z="1" />
+          <p x="133.1012" y="4050.47" />
+          <p x="143.0328" y="5835.87" />
+          <p x="150.1277" y="7547.64" />
+          <p x="922.0098" y="47561.41" z="1" />
+          <p x="923.0120" y="8868.08" z="1" />
+          <p x="924.0156" y="1371.95" z="1" />
+          <p x="943.9911" y="5269.78" />
+          <p x="959.9651" y="3618.61" />
+        </MSPeaks>
+      </Spectrum>
+      <Spectrum type="TOF-MS2" satLimit="8008704" scans="10" cpdAlgo="FindByAutoMsMs">
+        <MSDetails scanType="ProductIon" is="Esi" p="+" ce="13.0V" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="3.621" max="3.871" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest>
+          <mz>150.12746</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.00057300677363660967</C_0>
+            <C_1>1025.588661759673</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="55.0556" y="45.16" />
+          <p x="65.0394" y="217.05" />
+          <p x="91.0545" y="4487.00" z="1" />
+          <p x="91.1745" y="68.46" />
+          <p x="92.0577" y="49.19" z="1" />
+          <p x="105.0692" y="173.90" />
+          <p x="119.0838" y="53.04" />
+          <p x="133.1019" y="350.97" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByAutoMsMs">
+      <Location rt="3.843" y="16327" />
+      <CompoundScores />
+      <Chromatogram type="ECC" cpdAlgo="FindByAutoMsMs" />
+      <Spectrum type="TOF-MS1" satLimit="3815424" scans="6" cpdAlgo="FindByAutoMsMs">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="3.781" max="3.890" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest>
+          <mz>133.10084</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.00057300672323292465</C_0>
+            <C_1>1025.5910841370162</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="91.0545" y="2804.15" />
+          <p x="121.0509" y="107452.57" z="1" />
+          <p x="121.1276" y="1148.53" />
+          <p x="121.1889" y="3654.01" />
+          <p x="122.0531" y="7305.79" z="1" />
+          <p x="133.1010" y="6423.92" />
+          <p x="143.0328" y="5615.75" />
+          <p x="150.1276" y="11073.39" z="1" />
+          <p x="151.1306" y="1548.10" z="1" />
+          <p x="922.0098" y="46551.20" z="1" />
+          <p x="923.0125" y="8601.39" z="1" />
+          <p x="924.0165" y="1266.77" z="1" />
+          <p x="943.9905" y="4915.11" />
+          <p x="959.9640" y="3521.64" />
+        </MSPeaks>
+      </Spectrum>
+      <Spectrum type="TOF-MS2" satLimit="8008704" scans="6" cpdAlgo="FindByAutoMsMs">
+        <MSDetails scanType="ProductIon" is="Esi" p="+" ce="12.0V" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="3.786" max="3.899" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest>
+          <mz>133.10084</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.00057300672323292465</C_0>
+            <C_1>1025.5910841370162</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="55.0550" y="88.75" />
+          <p x="65.0390" y="622.75" />
+          <p x="77.0388" y="70.66" />
+          <p x="91.0543" y="5103.33" />
+          <p x="91.1733" y="73.82" />
+          <p x="105.0703" y="208.34" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByAutoMsMs">
+      <Location rt="4.005" y="92838" />
+      <CompoundScores />
+      <Chromatogram type="ECC" cpdAlgo="FindByAutoMsMs" />
+      <Spectrum type="TOF-MS1" satLimit="3815424" scans="8" cpdAlgo="FindByAutoMsMs">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="3.909" max="4.091" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest>
+          <mz>290.13850</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.00057300680065371383</C_0>
+            <C_1>1025.591286853801</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="121.0509" y="119877.38" z="1" />
+          <p x="121.1282" y="1239.86" />
+          <p x="121.1891" y="4299.21" />
+          <p x="122.0533" y="8044.15" z="1" />
+          <p x="143.0328" y="6357.34" />
+          <p x="290.1387" y="45448.53" z="1" />
+          <p x="290.3535" y="1758.49" />
+          <p x="291.1423" y="8197.81" z="1" />
+          <p x="312.1206" y="2808.23" />
+          <p x="922.0098" y="48534.00" z="1" />
+          <p x="923.0123" y="8974.69" z="1" />
+          <p x="924.0147" y="1366.08" z="1" />
+          <p x="943.9906" y="4778.50" />
+          <p x="959.9642" y="3562.47" />
+        </MSPeaks>
+      </Spectrum>
+      <Spectrum type="TOF-MS2" satLimit="8008704" scans="8" cpdAlgo="FindByAutoMsMs">
+        <MSDetails scanType="ProductIon" is="Esi" p="+" ce="21.4V" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="3.914" max="4.096" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest>
+          <mz>290.13850</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.00057300680065371383</C_0>
+            <C_1>1025.591286853801</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="77.0389" y="167.84" />
+          <p x="82.0656" y="1049.21" z="1" />
+          <p x="83.0742" y="108.13" z="1" />
+          <p x="91.0545" y="226.82" />
+          <p x="93.0701" y="210.26" />
+          <p x="94.0653" y="100.85" />
+          <p x="96.0807" y="113.68" />
+          <p x="100.0755" y="202.23" />
+          <p x="105.0335" y="1902.66" />
+          <p x="108.0809" y="107.81" />
+          <p x="119.0483" y="423.04" />
+          <p x="122.0953" y="265.85" />
+          <p x="124.1115" y="331.39" />
+          <p x="150.0905" y="775.48" />
+          <p x="168.1015" y="9762.59" />
+          <p x="168.2638" y="167.12" />
+          <p x="272.1276" y="346.12" />
+          <p x="290.1384" y="1912.71" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByAutoMsMs">
+      <Location rt="5.266" y="97728" />
+      <CompoundScores />
+      <Chromatogram type="ECC" cpdAlgo="FindByAutoMsMs" />
+      <Spectrum type="TOF-MS1" satLimit="3815424" scans="10" cpdAlgo="FindByAutoMsMs">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="5.151" max="5.371" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest>
+          <mz>244.20608</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.00057300650336875134</C_0>
+            <C_1>1025.5842692868405</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="86.0969" y="5534.91" />
+          <p x="121.0509" y="127585.02" z="1" />
+          <p x="121.1891" y="4676.02" />
+          <p x="122.0533" y="8813.90" z="1" />
+          <p x="143.0326" y="7016.30" />
+          <p x="159.1167" y="4112.40" />
+          <p x="244.2057" y="64044.80" z="1" />
+          <p x="244.4032" y="2737.57" z="2" />
+          <p x="245.2094" y="12482.19" z="1" />
+          <p x="922.0098" y="47234.79" z="1" />
+          <p x="923.0124" y="9120.25" z="1" />
+          <p x="924.0130" y="1301.68" z="1" />
+          <p x="943.9908" y="4557.51" />
+          <p x="959.9653" y="3876.08" />
+        </MSPeaks>
+      </Spectrum>
+      <Spectrum type="TOF-MS2" satLimit="8008704" scans="10" cpdAlgo="FindByAutoMsMs">
+        <MSDetails scanType="ProductIon" is="Esi" p="+" ce="18.7V" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="5.156" max="5.376" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest>
+          <mz>244.20608</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.00057300650336875134</C_0>
+            <C_1>1025.5842692868405</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="67.0549" y="118.96" />
+          <p x="81.0704" y="1166.15" />
+          <p x="86.0968" y="7940.15" />
+          <p x="86.2129" y="147.18" />
+          <p x="91.0546" y="5346.10" />
+          <p x="91.1747" y="88.45" />
+          <p x="117.0697" y="317.85" />
+          <p x="159.1165" y="3195.72" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByAutoMsMs">
+      <Location rt="5.516" y="187297" />
+      <CompoundScores />
+      <Chromatogram type="ECC" cpdAlgo="FindByAutoMsMs" />
+      <Spectrum type="TOF-MS1" satLimit="3815424" scans="10" cpdAlgo="FindByAutoMsMs">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="5.397" max="5.622" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest>
+          <mz>372.15771</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.00057300651360455335</C_0>
+            <C_1>1025.5846790309126</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="121.0509" y="127557.39" z="1" />
+          <p x="121.1891" y="4654.32" />
+          <p x="122.0532" y="8654.90" z="1" />
+          <p x="143.0327" y="7262.71" />
+          <p x="372.1582" y="66374.63" z="1" />
+          <p x="372.4025" y="2913.13" />
+          <p x="373.1616" y="14852.76" z="1" />
+          <p x="374.1566" y="22232.94" z="1" />
+          <p x="375.1587" y="4326.99" z="1" />
+          <p x="922.0098" y="46003.73" z="1" />
+          <p x="923.0120" y="8611.56" z="1" />
+          <p x="924.0142" y="1315.18" z="1" />
+          <p x="943.9898" y="4330.96" />
+          <p x="959.9644" y="3587.92" />
+        </MSPeaks>
+      </Spectrum>
+      <Spectrum type="TOF-MS2" satLimit="8008704" scans="10" cpdAlgo="FindByAutoMsMs">
+        <MSDetails scanType="ProductIon" is="Esi" p="+" ce="26.3V" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="5.402" max="5.630" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest z="1">
+          <mz>372.15771</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.00057300651360455335</C_0>
+            <C_1>1025.5846790309126</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="78.0342" y="639.29" />
+          <p x="133.0763" y="375.10" />
+          <p x="148.0519" y="8666.09" />
+          <p x="176.0815" y="20865.46" />
+          <p x="176.2478" y="428.18" />
+          <p x="237.1158" y="281.57" />
+          <p x="372.1583" y="4193.87" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByAutoMsMs">
+      <Location rt="7.266" y="22441" />
+      <CompoundScores />
+      <Chromatogram type="ECC" cpdAlgo="FindByAutoMsMs" />
+      <Spectrum type="TOF-MS1" satLimit="3815424" scans="4" cpdAlgo="FindByAutoMsMs">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="7.221" max="7.293" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest>
+          <mz>261.18075</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.000573006571134712</C_0>
+            <C_1>1025.5809031899039</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="121.0509" y="128211.70" z="1" />
+          <p x="121.1279" y="1458.17" />
+          <p x="121.1889" y="4680.61" />
+          <p x="122.0532" y="9342.23" z="1" />
+          <p x="143.0324" y="5516.44" />
+          <p x="158.1175" y="4024.56" />
+          <p x="163.0752" y="1698.45" />
+          <p x="176.1281" y="13775.60" z="1" />
+          <p x="177.1312" y="1362.54" z="1" />
+          <p x="200.1642" y="4389.23" />
+          <p x="237.1464" y="1588.34" />
+          <p x="239.1295" y="2071.19" />
+          <p x="261.1105" y="4497.99" />
+          <p x="261.1808" y="23100.08" z="1" />
+          <p x="262.1840" y="3467.67" z="1" />
+          <p x="283.1630" y="33624.26" z="1" />
+          <p x="284.1663" y="4607.81" z="1" />
+          <p x="299.1379" y="1467.45" />
+          <p x="543.3355" y="3821.73" />
+          <p x="922.0098" y="46048.95" z="1" />
+          <p x="923.0126" y="8690.03" z="1" />
+          <p x="943.9907" y="2414.38" />
+          <p x="959.9672" y="1691.60" />
+        </MSPeaks>
+      </Spectrum>
+      <Spectrum type="TOF-MS2" satLimit="8008704" scans="4" cpdAlgo="FindByAutoMsMs">
+        <MSDetails scanType="ProductIon" is="Esi" p="+" ce="19.7V" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="7.229" max="7.302" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest z="1">
+          <mz>261.18075</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.000573006571134712</C_0>
+            <C_1>1025.5809031899039</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="43.0547" y="80.37" />
+          <p x="45.0331" y="49.21" />
+          <p x="55.0552" y="2660.06" />
+          <p x="55.1491" y="42.68" />
+          <p x="57.0685" y="33.46" />
+          <p x="59.0504" y="191.23" />
+          <p x="62.0242" y="3119.77" />
+          <p x="62.1217" y="52.38" />
+          <p x="69.0705" y="530.14" />
+          <p x="71.0847" y="53.83" />
+          <p x="73.0642" y="93.51" />
+          <p x="86.0600" y="90.19" />
+          <p x="97.1016" y="2215.29" />
+          <p x="97.2244" y="31.59" />
+          <p x="104.0712" y="342.13" />
+          <p x="115.1127" y="409.99" />
+          <p x="158.1173" y="217.83" />
+          <p x="176.1264" y="73.43" />
+          <p x="200.1632" y="321.51" />
+          <p x="261.1304" y="39.60" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByAutoMsMs">
+      <Location rt="7.406" y="97328" />
+      <CompoundScores />
+      <Chromatogram type="ECC" cpdAlgo="FindByAutoMsMs" />
+      <Spectrum type="TOF-MS1" satLimit="3815424" scans="6" cpdAlgo="FindByAutoMsMs">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="7.337" max="7.465" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest>
+          <mz>309.09018</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.0005730067348752308</C_0>
+            <C_1>1025.583603525278</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="121.0509" y="133037.17" z="1" />
+          <p x="121.1891" y="4891.85" />
+          <p x="122.0531" y="8908.10" z="1" />
+          <p x="143.0328" y="6484.22" />
+          <p x="261.1118" y="1709.09" />
+          <p x="309.0903" y="49041.30" z="1" />
+          <p x="309.3110" y="1635.01" />
+          <p x="310.0931" y="10319.11" z="1" />
+          <p x="311.0876" y="16068.13" z="1" />
+          <p x="312.0896" y="3003.86" z="1" />
+          <p x="331.0717" y="5799.15" />
+          <p x="333.0687" y="1986.16" />
+          <p x="639.1548" y="6580.24" z="1" />
+          <p x="640.1577" y="2738.31" z="1" />
+          <p x="641.1520" y="4473.06" z="1" />
+          <p x="642.1541" y="1678.72" z="1" />
+          <p x="922.0098" y="44013.92" z="1" />
+          <p x="923.0130" y="8094.29" z="1" />
+          <p x="943.9913" y="2826.81" />
+          <p x="959.9639" y="2287.82" />
+        </MSPeaks>
+      </Spectrum>
+      <Spectrum type="TOF-MS2" satLimit="8008704" scans="6" cpdAlgo="FindByAutoMsMs">
+        <MSDetails scanType="ProductIon" is="Esi" p="+" ce="22.6V" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="7.342" max="7.470" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest z="1">
+          <mz>309.09018</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.0005730067348752308</C_0>
+            <C_1>1025.583603525278</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="138.0100" y="230.11" />
+          <p x="165.0214" y="391.34" />
+          <p x="172.0850" y="146.99" />
+          <p x="205.0771" y="575.10" />
+          <p x="206.0476" y="468.95" />
+          <p x="227.0495" y="214.78" />
+          <p x="240.0569" y="155.04" />
+          <p x="241.0518" y="828.32" />
+          <p x="245.1056" y="158.64" />
+          <p x="251.0367" y="456.69" />
+          <p x="255.0688" y="292.13" />
+          <p x="274.1210" y="2098.07" />
+          <p x="280.0652" y="230.66" />
+          <p x="281.0716" y="7294.34" />
+          <p x="309.0900" y="13669.92" />
+          <p x="309.3090" y="162.45" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByAutoMsMs">
+      <Location rt="8.360" y="107025" />
+      <CompoundScores />
+      <Chromatogram type="ECC" cpdAlgo="FindByAutoMsMs" />
+      <Spectrum type="TOF-MS1" satLimit="3815424" scans="9" cpdAlgo="FindByAutoMsMs">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="8.240" max="8.467" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest>
+          <mz>285.07905</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.00057300685751804662</C_0>
+            <C_1>1025.5871063014738</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="121.0509" y="134608.53" z="1" />
+          <p x="121.1275" y="1404.26" />
+          <p x="121.1892" y="4992.43" />
+          <p x="122.0535" y="9055.16" z="1" />
+          <p x="143.0328" y="7128.51" />
+          <p x="285.0788" y="50845.26" z="1" />
+          <p x="285.2917" y="1918.26" />
+          <p x="286.0822" y="8969.85" z="1" />
+          <p x="287.0767" y="17636.28" z="1" />
+          <p x="288.0792" y="2971.85" z="1" />
+          <p x="307.0611" y="3712.70" />
+          <p x="922.0098" y="43100.36" z="1" />
+          <p x="923.0126" y="7959.90" z="1" />
+          <p x="943.9905" y="3242.80" />
+          <p x="959.9647" y="2340.23" />
+        </MSPeaks>
+      </Spectrum>
+      <Spectrum type="TOF-MS2" satLimit="8008704" scans="9" cpdAlgo="FindByAutoMsMs">
+        <MSDetails scanType="ProductIon" is="Esi" p="+" ce="21.1V" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="8.246" max="8.475" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest>
+          <mz>285.07905</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.00057300685751804662</C_0>
+            <C_1>1025.5871063014738</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="91.0545" y="211.74" />
+          <p x="105.0333" y="335.85" />
+          <p x="154.0416" y="2046.51" />
+          <p x="167.0116" y="161.96" />
+          <p x="172.0628" y="198.59" />
+          <p x="179.0369" y="138.01" />
+          <p x="180.0199" y="233.31" />
+          <p x="182.0367" y="520.00" />
+          <p x="193.0884" y="1216.26" />
+          <p x="221.1065" y="208.96" />
+          <p x="222.1148" y="1352.26" />
+          <p x="228.0572" y="1222.75" />
+          <p x="241.0527" y="201.18" />
+          <p x="255.0662" y="138.36" />
+          <p x="257.0839" y="2009.72" />
+          <p x="285.0788" y="12434.90" />
+          <p x="285.2895" y="180.06" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByAutoMsMs">
+      <Location rt="8.986" y="18697" />
+      <CompoundScores />
+      <Chromatogram type="ECC" cpdAlgo="FindByAutoMsMs" />
+      <Spectrum type="TOF-MS1" satLimit="3815424" scans="9" cpdAlgo="FindByAutoMsMs">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="8.864" max="9.090" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest>
+          <mz>342.22743</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.00057300679022990846</C_0>
+            <C_1>1025.5759519523856</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="121.0509" y="140257.45" z="1" />
+          <p x="121.1892" y="5238.64" />
+          <p x="122.0532" y="9696.64" z="1" />
+          <p x="143.0328" y="7607.25" />
+          <p x="149.0596" y="2604.24" />
+          <p x="325.2003" y="3207.81" />
+          <p x="337.1046" y="5142.74" />
+          <p x="342.2271" y="10198.92" z="1" />
+          <p x="343.2303" y="1952.33" z="1" />
+          <p x="347.1832" y="1806.82" />
+          <p x="922.0098" y="42997.11" z="1" />
+          <p x="923.0122" y="8089.78" z="1" />
+          <p x="943.9905" y="2998.48" />
+          <p x="959.9639" y="2344.92" />
+        </MSPeaks>
+      </Spectrum>
+      <Spectrum type="TOF-MS2" satLimit="8008704" scans="9" cpdAlgo="FindByAutoMsMs">
+        <MSDetails scanType="ProductIon" is="Esi" p="+" ce="24.5V" fv="150.0V" />
+        <RTRanges>
+          <RTRange min="8.869" max="9.102" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MzOfInterest>
+          <mz>342.22743</mz>
+        </MzOfInterest>
+        <MassCalibration>
+          <CalStep form="Traditional">
+            <Count>2</Count>
+            <C_0>0.00057300679022990846</C_0>
+            <C_1>1025.5759519523856</C_1>
+          </CalStep>
+          <CalStep form="Polynomial">
+            <CoefficientUse>99</CoefficientUse>
+            <Count>8</Count>
+            <C_0>19990.04483792977</C_0>
+            <C_1>69109.364708252862</C_1>
+            <C_2>0.0045508689007881693</C_2>
+            <C_3>-2.1595124084973117E-07</C_3>
+            <C_4>3.6472857028365761E-26</C_4>
+            <C_5>-3.9040544918114722E-31</C_5>
+            <C_6>0</C_6>
+            <C_7>0</C_7>
+          </CalStep>
+        </MassCalibration>
+        <MSPeaks>
+          <p x="57.0705" y="533.71" />
+          <p x="83.0488" y="13.40" />
+          <p x="85.0620" y="12.99" />
+          <p x="107.0860" y="142.22" z="1" />
+          <p x="108.0919" y="14.01" z="1" />
+          <p x="109.0645" y="16.92" />
+          <p x="109.1000" y="27.54" />
+          <p x="111.0781" y="13.68" />
+          <p x="119.0871" y="27.21" />
+          <p x="121.1037" y="37.17" />
+          <p x="123.0800" y="18.70" />
+          <p x="127.0758" y="11.97" />
+          <p x="133.0630" y="12.35" />
+          <p x="133.1012" y="52.14" />
+          <p x="135.0803" y="15.58" />
+          <p x="137.0923" y="14.95" />
+          <p x="145.0996" y="63.16" />
+          <p x="149.0958" y="491.17" />
+          <p x="151.1470" y="10.28" />
+          <p x="159.1168" y="89.67" />
+          <p x="161.1318" y="51.66" />
+          <p x="163.1096" y="31.97" />
+          <p x="165.0900" y="106.84" />
+          <p x="171.1120" y="32.60" />
+          <p x="173.0962" y="28.28" />
+          <p x="173.1273" y="13.43" />
+          <p x="173.1331" y="11.22" />
+          <p x="175.1099" y="47.56" />
+          <p x="175.1508" y="18.23" />
+          <p x="176.1183" y="11.13" />
+          <p x="179.1084" y="11.24" />
+          <p x="181.0885" y="17.00" />
+          <p x="185.1335" y="35.41" />
+          <p x="187.1106" y="51.93" />
+          <p x="187.1432" y="102.18" />
+          <p x="189.1247" y="61.66" />
+          <p x="191.1061" y="202.63" />
+          <p x="198.1418" y="11.05" />
+          <p x="198.6936" y="16.54" z="2" />
+          <p x="199.1470" y="84.46" />
+          <p x="200.1181" y="15.02" />
+          <p x="201.1259" y="10.07" />
+          <p x="201.1639" y="336.99" />
+          <p x="203.1801" y="68.09" />
+          <p x="209.0800" y="31.75" />
+          <p x="211.1489" y="33.54" />
+          <p x="213.1619" y="37.78" />
+          <p x="214.1324" y="12.64" />
+          <p x="215.1419" y="77.13" />
+          <p x="219.1011" y="71.95" />
+          <p x="219.1716" y="49.68" />
+          <p x="223.1311" y="44.25" />
+          <p x="229.1583" y="516.90" z="1" />
+          <p x="230.1591" y="13.22" z="1" />
+          <p x="231.1740" y="73.55" />
+          <p x="233.1123" y="23.29" />
+          <p x="233.1259" y="34.69" />
+          <p x="233.1493" y="66.96" />
+          <p x="239.1413" y="24.59" />
+          <p x="247.1691" y="315.40" z="1" />
+          <p x="248.1629" y="11.10" z="1" />
+          <p x="249.1822" y="11.71" />
+          <p x="257.1522" y="193.35" />
+          <p x="264.1693" y="19.63" />
+          <p x="275.1634" y="431.80" />
+          <p x="279.1956" y="997.47" />
+          <p x="293.1734" y="111.62" />
+          <p x="342.2626" y="11.27" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+  </CompoundList>
+</CEF>

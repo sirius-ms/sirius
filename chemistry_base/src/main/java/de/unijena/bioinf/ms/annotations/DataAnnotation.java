@@ -20,6 +20,8 @@
 
 package de.unijena.bioinf.ms.annotations;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 /**
  * Any kind of annotation for input, intermediates and output.
  *
@@ -33,6 +35,7 @@ public interface DataAnnotation {
         return annotationType.getName();
     }
 
+    @JsonIgnore
     default String getIdentifier() {
         return getIdentifier(getClass());
     }
