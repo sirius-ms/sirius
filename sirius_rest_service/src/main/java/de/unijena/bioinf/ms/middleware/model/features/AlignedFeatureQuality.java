@@ -35,7 +35,7 @@ import java.util.EnumSet;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AlignedFeatureQuality {
     @Schema(enumAsRef = true, name = "AlignedFeatureQualityOptField", nullable = true)
-    public enum OptField {qualityFlags, lcmsFeatureQuality}
+    public enum OptField {none, qualityFlags, lcmsFeatureQuality}
 
     protected String alignedFeatureId;
 

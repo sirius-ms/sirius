@@ -33,6 +33,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.EnumSet;
 
+import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.removeNone;
+
 @RestController
 @RequestMapping(value = "/api/projects/{projectId}/aligned-features-quality")
 @Tag(name = "[Experimental] Data Quality", description = "Access data quality information for various entities of a specified project-space.")
@@ -51,7 +53,7 @@ public class AlignedFeaturesQualityController {
      * Get data quality information for features (aligned over runs) in the given project-space.
      *
      * @param projectId project-space to read from.
-     * @param optFields set of optional fields to be included
+     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
      * @param searchQuery optional search query in specified format
      * @param querySyntax query syntax used fpr searchQuery
      * @return AlignedFeatureQuality quality information of the respective feature.
@@ -63,7 +65,7 @@ public class AlignedFeaturesQualityController {
             @RequestParam(defaultValue = "LUCENE") SearchQueryType querySyntax,
             @RequestParam(defaultValue = "qualityFlags, lcmsFeatureQuality") EnumSet<AlignedFeatureQuality.OptField> optFields
     ) {
-        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeaturesQuality(pageable, optFields);
+        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeaturesQuality(pageable, removeNone(optFields));
     }
 
 
@@ -72,7 +74,7 @@ public class AlignedFeaturesQualityController {
      *
      * @param projectId      project-space to read from.
      * @param alignedFeatureId identifier of feature (aligned over runs) to access.
-     * @param optFields      set of optional fields to be included
+     * @param optFields      set of optional fields to be included. Use 'none' only to override defaults.
      * @return AlignedFeatureQuality quality information of the respective feature.
      */
     @GetMapping(value = "/{alignedFeatureId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -80,7 +82,7 @@ public class AlignedFeaturesQualityController {
             @PathVariable String projectId, @PathVariable String alignedFeatureId,
             @RequestParam(defaultValue = "qualityFlags, lcmsFeatureQuality") EnumSet<AlignedFeatureQuality.OptField> optFields
     ) {
-        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeaturesQualityById(alignedFeatureId, optFields);
+        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeaturesQualityById(alignedFeatureId, removeNone(optFields));
     }
 }
 

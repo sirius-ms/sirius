@@ -37,7 +37,7 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Job {
     @Schema(enumAsRef = true, name = "JobOptField", nullable = true)
-    public enum OptField {command, progress, affectedIds}
+    public enum OptField {none, command, progress, affectedIds}
 
     /**
      * Unique identifier to access the job via the API

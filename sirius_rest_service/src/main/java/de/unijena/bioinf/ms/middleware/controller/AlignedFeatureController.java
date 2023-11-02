@@ -37,6 +37,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.EnumSet;
 
+import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.removeNone;
+
 @RestController
 @RequestMapping(value = "/api/projects/{projectId}/aligned-features")
 @Tag(name = "Features", description = "This feature based API allows access features (aligned over runs) and there Annotations of " +
@@ -56,7 +58,7 @@ public class AlignedFeatureController {
      * Get all available features (aligned over runs) in the given project-space.
      *
      * @param projectId project-space to read from.
-     * @param optFields set of optional fields to be included
+     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
      * @param searchQuery optional search query in specified format
      * @param querySyntax query syntax used fpr searchQuery
      * @return AlignedFeatures with additional annotations and MS/MS data (if specified).
@@ -68,7 +70,7 @@ public class AlignedFeatureController {
             @RequestParam(defaultValue = "LUCENE") SearchQueryType querySyntax,
             @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFields
     ) {
-        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeatures(pageable, optFields);
+        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeatures(pageable, removeNone(optFields));
     }
 
 
@@ -77,7 +79,7 @@ public class AlignedFeatureController {
      *
      * @param projectId      project-space to read from.
      * @param alignedFeatureId identifier of feature (aligned over runs) to access.
-     * @param optFields      set of optional fields to be included
+     * @param optFields      set of optional fields to be included. Use 'none' only to override defaults.
      * @return AlignedFeature with additional annotations and MS/MS data (if specified).
      */
     @GetMapping(value = "/{alignedFeatureId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -85,7 +87,7 @@ public class AlignedFeatureController {
             @PathVariable String projectId, @PathVariable String alignedFeatureId,
             @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFields
     ) {
-        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeaturesById(alignedFeatureId, optFields);
+        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeaturesById(alignedFeatureId, removeNone(optFields));
     }
 
     /**
@@ -105,7 +107,7 @@ public class AlignedFeatureController {
      *
      * @param projectId      project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
-     * @param optFields      set of optional fields to be included
+     * @param optFields      set of optional fields to be included. Use 'none' only to override defaults.
      * @param searchQuery optional search query in specified format
      * @param querySyntax query syntax used fpr searchQuery
      * @return StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.
@@ -119,7 +121,7 @@ public class AlignedFeatureController {
             @RequestParam(defaultValue = "") EnumSet<StructureCandidateScored.OptField> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId)
-                .findStructureCandidatesByFeatureId(alignedFeatureId, pageable, optFields);
+                .findStructureCandidatesByFeatureId(alignedFeatureId, pageable, removeNone(optFields));
     }
 
     /**
@@ -128,7 +130,7 @@ public class AlignedFeatureController {
      *
      * @param projectId      project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
-     * @param optFields      set of optional fields to be included
+     * @param optFields      set of optional fields to be included. Use 'none' only to override defaults.
      * @param searchQuery optional search query in specified format
      * @param querySyntax query syntax used fpr searchQuery
      * @return All FormulaCandidate of this feature with.
@@ -141,7 +143,7 @@ public class AlignedFeatureController {
             @RequestParam(defaultValue = "") EnumSet<FormulaCandidate.OptField> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidatesByFeatureId(alignedFeatureId, pageable, optFields);
+                .findFormulaCandidatesByFeatureId(alignedFeatureId, pageable, removeNone(optFields));
     }
 
     /**
@@ -151,7 +153,7 @@ public class AlignedFeatureController {
      * @param projectId      project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId      identifier of the requested formula result
-     * @param optFields      set of optional fields to be included
+     * @param optFields      set of optional fields to be included. Use 'none' only to override defaults.
      * @return FormulaCandidate of this feature (aligned over runs) with.
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -161,7 +163,7 @@ public class AlignedFeatureController {
 
     ) {
         return projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, optFields);
+                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, removeNone(optFields));
     }
 
     /**
@@ -171,7 +173,7 @@ public class AlignedFeatureController {
      * @param projectId      project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId      identifier of the requested formula result
-     * @param optFields      set of optional fields to be included
+     * @param optFields      set of optional fields to be included. Use 'none' only to override defaults.
      * @param searchQuery optional search query in specified format
      * @param querySyntax query syntax used fpr searchQuery
      * @return StructureCandidate of this formula candidate with specified optional fields.
@@ -185,7 +187,7 @@ public class AlignedFeatureController {
             @RequestParam(defaultValue = "") EnumSet<StructureCandidateScored.OptField> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId)
-                .findStructureCandidatesByFeatureIdAndFormulaId(formulaId, alignedFeatureId, pageable, optFields);
+                .findStructureCandidatesByFeatureIdAndFormulaId(formulaId, alignedFeatureId, pageable, removeNone(optFields));
     }
 
 

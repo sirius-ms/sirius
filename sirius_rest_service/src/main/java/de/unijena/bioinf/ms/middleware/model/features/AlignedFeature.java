@@ -35,7 +35,7 @@ import org.jetbrains.annotations.NotNull;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AlignedFeature {
     @Schema(enumAsRef = true, name = "AlignedFeatureOptField", nullable = true)
-    public enum OptField {msData, topAnnotations, topAnnotationsDeNovo}
+    public enum OptField {none, msData, topAnnotations, topAnnotationsDeNovo}
 
     // identifier
     @NotNull
