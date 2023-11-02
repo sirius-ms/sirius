@@ -72,7 +72,7 @@ public class SiriusProjectSpace implements IterableWithSize<CompoundContainerId>
     protected SiriusProjectSpace(ProjectSpaceConfiguration configuration, ProjectIOProvider<?, ?, ?> ioProvider) {
         this.configuration = configuration;
         this.ioProvider = ioProvider;
-        this.ids = new HashMap<>();
+        this.ids = new ConcurrentHashMap<>();
         this.compoundCounter = new AtomicInteger(0);
         this.projectSpaceListeners = new ConcurrentLinkedQueue<>();
         this.projectSpaceProperties = new ConcurrentHashMap<>();
