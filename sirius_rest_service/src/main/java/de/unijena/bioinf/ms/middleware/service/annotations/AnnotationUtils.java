@@ -34,6 +34,11 @@ public class AnnotationUtils {
         // just to prevent instantiation
     }
 
+    public static  <T extends Enum<T>> EnumSet<T> removeNone(EnumSet<T> optFields) {
+        optFields.removeIf(e -> e.name().equals("none"));
+        return optFields;
+    }
+
     public static <T extends Enum<T>> EnumSet<T> toEnumSet(Class<T> clz, T... input){
         return input != null && input.length > 0
                 ? EnumSet.copyOf(List.of(input))

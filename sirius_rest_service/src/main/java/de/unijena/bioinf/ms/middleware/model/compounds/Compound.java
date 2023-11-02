@@ -36,7 +36,7 @@ import java.util.List;
 @Builder
 public class Compound {
     @Schema(enumAsRef = true, name = "CompoundOptField", nullable = true)
-    public enum OptField {consensusAnnotations, consensusAnnotationsDeNovo, customAnnotations}
+    public enum OptField {none, consensusAnnotations, consensusAnnotationsDeNovo, customAnnotations}
 
     /**
      * uid of this compound Entity

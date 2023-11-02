@@ -34,6 +34,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.EnumSet;
 
+import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.removeNone;
+
 @RestController
 @RequestMapping(value = "/api/projects/{projectId}/compounds")
 @Tag(name = "Compounds", description = "This compound based API allows to retrieve all AlignedFeatures that belong to the same "
@@ -53,7 +55,7 @@ public class CompoundController {
      * Get all available compounds (group of ion identities) in the given project-space.
      *
      * @param projectId project-space to read from.
-     * @param optFields set of optional fields to be included
+     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
      * @param searchQuery optional search query in specified format
      * @param querySyntax query syntax used fpr searchQuery
      * @return Compounds with additional optional fields (if specified).
@@ -65,7 +67,7 @@ public class CompoundController {
                                        @RequestParam(defaultValue = "LUCENE") SearchQueryType querySyntax,
                                        @RequestParam(defaultValue = "") EnumSet<Compound.OptField> optFields,
                                        @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
-        return projectsProvider.getProjectOrThrow(projectId).findCompounds(pageable, optFields, optFieldsFeatures);
+        return projectsProvider.getProjectOrThrow(projectId).findCompounds(pageable, removeNone(optFields), removeNone(optFieldsFeatures));
     }
 
 
@@ -74,14 +76,14 @@ public class CompoundController {
      *
      * @param projectId  project-space to read from.
      * @param compoundId identifier of the compound (group of ion identities) to access.
-     * @param optFields  set of optional fields to be included
+     * @param optFields  set of optional fields to be included. Use 'none' only to override defaults.
      * @return Compounds with additional optional fields (if specified).
      */
     @GetMapping(value = "/{compoundId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public Compound getCompound(@PathVariable String projectId, @PathVariable String compoundId,
                                 @RequestParam(required = false, defaultValue = "") EnumSet<Compound.OptField> optFields,
                                 @RequestParam(required = false, defaultValue = "") EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
-        return projectsProvider.getProjectOrThrow(projectId).findCompoundById(compoundId, optFields, optFieldsFeatures);
+        return projectsProvider.getProjectOrThrow(projectId).findCompoundById(compoundId, removeNone(optFields), removeNone(optFieldsFeatures));
     }
 
 

@@ -32,7 +32,7 @@ import lombok.Setter;
 @JsonIgnoreProperties({ "molecularFormula", "adduct"})
 public class StructureCandidateScored extends StructureCandidate {
     @Schema(enumAsRef = true, name = "StructureCandidateOptField", nullable = true)
-    public enum OptField {fingerprint, dbLinks, refSpectraLinks}
+    public enum OptField {none, fingerprint, dbLinks, refSpectraLinks}
 
     protected Double csiScore;
     @Schema(nullable = true)

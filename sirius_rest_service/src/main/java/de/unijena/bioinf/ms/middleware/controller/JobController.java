@@ -51,6 +51,8 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.removeNone;
+
 @RestController
 @RequestMapping(value = "/api")
 @Tag(name = "Jobs", description = "Start, monitor and cancel background jobs.")
@@ -68,7 +70,7 @@ public class JobController {
      * Get job information and its current state and progress (if available).
      *
      * @param projectId                project-space to run jobs on
-     * @param optFields                set of optional fields to be included
+     * @param optFields                set of optional fields to be included. Use 'none' only to override defaults.
      */
 
     @GetMapping(value = "/projects/{projectId}/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -77,7 +79,7 @@ public class JobController {
                              @ParameterObject Pageable pageable,
                              @RequestParam(defaultValue = "") EnumSet<Job.OptField> optFields
     ) {
-        return computeService.getJobs(projectsProvider.getProjectOrThrow(projectId), pageable, optFields);
+        return computeService.getJobs(projectsProvider.getProjectOrThrow(projectId), pageable, removeNone(optFields));
     }
 
     /**
@@ -85,14 +87,14 @@ public class JobController {
      *
      * @param projectId                project-space to run jobs on
      * @param jobId                    of the job to be returned
-     * @param optFields                set of optional fields to be included
+     * @param optFields                set of optional fields to be included. Use 'none' only to override defaults.
      */
     @GetMapping(value = "/projects/{projectId}/jobs/{jobId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public Job getJob(@PathVariable String projectId, @PathVariable String jobId,
                       @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
     ) {
-        return computeService.getJob(projectsProvider.getProjectOrThrow(projectId), jobId, optFields);
+        return computeService.getJob(projectsProvider.getProjectOrThrow(projectId), jobId, removeNone(optFields));
     }
 
     /**
@@ -100,14 +102,14 @@ public class JobController {
      *
      * @param projectId                project-space to run jobs on
      * @param jobSubmission            configuration of the job that will be submitted of the job to be returned
-     * @param optFields                set of optional fields to be included
+     * @param optFields                set of optional fields to be included. Use 'none' only to override defaults.
      */
     @PostMapping(value = "/projects/{projectId}/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.ACCEPTED)
     public Job startJob(@PathVariable String projectId, @RequestBody JobSubmission jobSubmission,
                         @RequestParam(defaultValue = "command, progress") EnumSet<Job.OptField> optFields
     ) {
-        return computeService.createAndSubmitJob(projectsProvider.getProjectOrThrow(projectId), jobSubmission, optFields);
+        return computeService.createAndSubmitJob(projectsProvider.getProjectOrThrow(projectId), jobSubmission, removeNone(optFields));
     }
 
 
@@ -118,7 +120,7 @@ public class JobController {
      * @param jobConfigName            name if the config to be used
      * @param compoundIds              compound ids to be computed
      * @param recompute                enable or disable recompute. If null the stored value will be used.
-     * @param optFields                set of optional fields to be included
+     * @param optFields                set of optional fields to be included. Use 'none' only to override defaults.
      */
     @PostMapping(value = "/projects/{projectId}/jobs/from-config", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.ACCEPTED)
@@ -131,7 +133,7 @@ public class JobController {
         if (recompute != null)
             js.setRecompute(recompute);
 
-        return computeService.createAndSubmitJob(projectsProvider.getProjectOrThrow(projectId), js, optFields);
+        return computeService.createAndSubmitJob(projectsProvider.getProjectOrThrow(projectId), js, removeNone(optFields));
     }
 
     /**
@@ -142,7 +144,7 @@ public class JobController {
      *
      * @param projectId         project-space to import into.
      * @param jobSubmission     configuration of the job that will be submitted
-     * @param optFields         set of optional fields to be included
+     * @param optFields         set of optional fields to be included. Use 'none' only to override defaults.
      * @return JobId of background job that imports given run/compounds/features.
      */
     @PostMapping(value = "/{projectId}/jobs/import-from-local-path", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -150,7 +152,7 @@ public class JobController {
                                       @RequestParam(defaultValue = "command, progress") EnumSet<Job.OptField> optFields
     ) throws IOException {
         Project p = projectsProvider.getProjectOrThrow(projectId);
-        return computeService.createAndSubmitImportJob(p, jobSubmission, optFields);
+        return computeService.createAndSubmitImportJob(p, jobSubmission, removeNone(optFields));
     }
 
     /**
@@ -159,7 +161,7 @@ public class JobController {
      *
      * @param projectId         project-space to import into.
      * @param jobSubmission     configuration of the job that will be submitted
-     * @param optFields         set of optional fields to be included
+     * @param optFields         set of optional fields to be included. Use 'none' only to override defaults.
      * @return CompoundIds of the imported run/compounds/feature.
      */
     @PostMapping(value = "/{projectId}/jobs/import-from-string", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -167,7 +169,7 @@ public class JobController {
                                         @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
     ) throws IOException {
         Project p = projectsProvider.getProjectOrThrow(projectId);
-        return computeService.createAndSubmitImportJob(p, jobSubmission, optFields);
+        return computeService.createAndSubmitImportJob(p, jobSubmission, removeNone(optFields));
     }
 
     /**
