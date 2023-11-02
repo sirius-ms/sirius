@@ -12,7 +12,7 @@ import java.util.*;
  * respective to the specified {@link CombinatorialFragmenterScoring scoring}.
  * The resulting {@link CombinatorialGraph} is induced by this set of selected/predicted fragments.
  */
-public class RuleBasedFragmentation extends AbstractFragmentationPredictor{
+public class RuleBasedFragmentationPredictor extends AbstractFragmentationPredictor{
 
     /**
      * The scoring function to weigh each edge and node in the generated {@link CombinatorialGraph}.
@@ -35,7 +35,7 @@ public class RuleBasedFragmentation extends AbstractFragmentationPredictor{
     private final int numFragments;
 
     /**
-     * Initialises a {@link RuleBasedFragmentation} object.<br>
+     * Initialises a {@link RuleBasedFragmentationPredictor} object.<br>
      * {@code fragmentationRules} is used for iterating over all bonds of {@code molecule},
      * and decide whether a certain bond will be cut during fragmentation or not.
      *
@@ -46,7 +46,7 @@ public class RuleBasedFragmentation extends AbstractFragmentationPredictor{
      * @param fragmentationRules an object of {@link FragmentationRules} specifying which bonds in {@code molecule} to cut
      * @param fragmentationConstraint the fragmentation constraint which determines which fragments will be further fragmented
      */
-    public RuleBasedFragmentation(MolecularGraph molecule, CombinatorialFragmenterScoring scoring, int numFragments, FragmentationRules fragmentationRules, CombinatorialFragmenter.Callback2 fragmentationConstraint){
+    public RuleBasedFragmentationPredictor(MolecularGraph molecule, CombinatorialFragmenterScoring scoring, int numFragments, FragmentationRules fragmentationRules, CombinatorialFragmenter.Callback2 fragmentationConstraint){
         super(molecule);
         this.numFragments = numFragments;
         this.scoring = scoring;
@@ -60,7 +60,7 @@ public class RuleBasedFragmentation extends AbstractFragmentationPredictor{
     }
 
     /**
-     * Initialises a {@link RuleBasedFragmentation} object which uses a default scoring.
+     * Initialises a {@link RuleBasedFragmentationPredictor} object which uses a default scoring.
      * In this scoring function each broken bond is assigned with a score of -1 and each node has a score of 0;
      * i.e. the length of a path from root to a fragment is equal to {@code -numberBrokenBonds}. <br>
      * {@code fragmentationRules} is used for iterating over all bonds of {@code molecule},
@@ -71,8 +71,16 @@ public class RuleBasedFragmentation extends AbstractFragmentationPredictor{
      * @param fragmentationRules an object of {@link FragmentationRules} specifying which bonds in {@code molecule} to cut
      * @param fragmentationConstraint the fragmentation constraint which determines which fragments will be further fragmented
      */
-    public RuleBasedFragmentation(MolecularGraph molecule, int numFragments, FragmentationRules fragmentationRules, CombinatorialFragmenter.Callback2 fragmentationConstraint){
+    public RuleBasedFragmentationPredictor(MolecularGraph molecule, int numFragments, FragmentationRules fragmentationRules, CombinatorialFragmenter.Callback2 fragmentationConstraint){
         this(molecule, null, numFragments, fragmentationRules, fragmentationConstraint);
+    }
+
+    public RuleBasedFragmentationPredictor(MolecularGraph molecule, CombinatorialFragmenterScoring scoring, FragmentationRules fragmentationRules, CombinatorialFragmenter.Callback2 fragmentationConstraint){
+        this(molecule, scoring, Integer.MAX_VALUE, fragmentationRules, fragmentationConstraint);
+    }
+
+    public RuleBasedFragmentationPredictor(MolecularGraph molecule, FragmentationRules fragmentationRules, CombinatorialFragmenter.Callback2 fragmentationConstraint){
+        this(molecule, null, Integer.MAX_VALUE, fragmentationRules, fragmentationConstraint);
     }
 
     @Override
