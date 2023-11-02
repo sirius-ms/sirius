@@ -168,7 +168,7 @@ public class Main {
             final PrioritizedIterativeFragmentationPredictor iterFragPredictor = new PrioritizedIterativeFragmentationPredictor(molecule, scoring, NUM_FRAGMENTS);
             iterFragPredictor.predictFragmentation();
 
-            final BarcodeSpectrumPredictor iterSpectrumPredictor = new BarcodeSpectrumPredictor(iterFragPredictor, ionization.isPositive(), NUM_H_SHIFTS);
+            final BarcodeSpectrumPredictor iterSpectrumPredictor = new BarcodeSpectrumPredictor(iterFragPredictor, ionization, NUM_H_SHIFTS);
             final SimpleSpectrum iterSpectrum = new SimpleSpectrum(iterSpectrumPredictor.predictSpectrum());
 
             // 2. RuleBasedFragmentationPredictor:
@@ -177,7 +177,7 @@ public class Main {
             final RuleBasedFragmentationPredictor ruleBasedFragPredictor = new RuleBasedFragmentationPredictor(molecule, scoring, NUM_FRAGMENTS, fragRule, (node, nnodes, nedges) -> true);
             ruleBasedFragPredictor.predictFragmentation();
 
-            final BarcodeSpectrumPredictor ruleBasedSpectrumPredictor = new BarcodeSpectrumPredictor(ruleBasedFragPredictor, ionization.isPositive(), NUM_H_SHIFTS);
+            final BarcodeSpectrumPredictor ruleBasedSpectrumPredictor = new BarcodeSpectrumPredictor(ruleBasedFragPredictor, ionization, NUM_H_SHIFTS);
             final SimpleSpectrum ruleBasedSpectrum = new SimpleSpectrum(ruleBasedSpectrumPredictor.predictSpectrum());
 
             // WRITE RESULTS INTO A JSON-FILE:
