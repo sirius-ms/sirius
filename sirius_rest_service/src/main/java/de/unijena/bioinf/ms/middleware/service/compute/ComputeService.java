@@ -53,6 +53,8 @@ public interface ComputeService<P extends Project> extends DisposableBean {
 
     Job deleteJob(@Nullable P psm, String jobId, boolean cancelIfRunning, boolean awaitDeletion, @NotNull EnumSet<Job.OptField> optFields);
 
+    List<Job> deleteJobs(@Nullable P psm, boolean cancelIfRunning, boolean awaitDeletion, @NotNull EnumSet<Job.OptField> optFields);
+
     Job getJob(@Nullable P psm, String jobId, @NotNull EnumSet<Job.OptField> optFields);
 
     default Page<Job> getJobs(@NotNull Pageable pageable, @NotNull EnumSet<Job.OptField> optFields) {

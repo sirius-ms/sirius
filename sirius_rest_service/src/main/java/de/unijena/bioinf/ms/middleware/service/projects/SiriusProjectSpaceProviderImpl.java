@@ -22,7 +22,7 @@ package de.unijena.bioinf.ms.middleware.service.projects;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.middleware.SiriusMiddlewareApplication;
-import de.unijena.bioinf.ms.middleware.model.projects.Project;
+import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
 import de.unijena.bioinf.projectspace.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
@@ -51,10 +51,10 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
     protected final ReadWriteLock projectSpaceLock = new ReentrantReadWriteLock();
 
 
-    public List<Project> listAllProjectSpaces() {
+    public List<ProjectInfo> listAllProjectSpaces() {
         projectSpaceLock.readLock().lock();
         try {
-            return projectSpaces.entrySet().stream().map(x -> Project.of(x.getKey(), x.getValue().projectSpace().getLocation())).collect(Collectors.toList());
+            return projectSpaces.entrySet().stream().map(x -> ProjectInfo.of(x.getKey(), x.getValue().projectSpace().getLocation())).collect(Collectors.toList());
         } finally {
             projectSpaceLock.readLock().unlock();
         }
@@ -74,8 +74,8 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
     }
 
     @Override
-    public Optional<Project> getProjectId(String name) {
-        return getProjectSpace(name).map(x -> Project.of(name, x.projectSpace().getLocation()));
+    public Optional<ProjectInfo> getProjectId(String name) {
+        return getProjectSpace(name).map(x -> ProjectInfo.of(name, x.projectSpace().getLocation()));
     }
 
     /**
@@ -100,7 +100,7 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
         }
     }
 
-    public Project openProjectSpace(@NotNull Project id) throws IOException {
+    public ProjectInfo openProjectSpace(@NotNull ProjectInfo id) throws IOException {
         final Lock lock = projectSpaceLock.writeLock();
         lock.lock();
         try {
@@ -118,22 +118,22 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
         }
     }
 
-    public Project addProjectSpace(@NotNull String nameSuggestion, @NotNull SiriusProjectSpace projectSpaceToAdd) {
+    public ProjectInfo addProjectSpace(@NotNull String nameSuggestion, @NotNull SiriusProjectSpace projectSpaceToAdd) {
         return addProjectSpace(nameSuggestion, projectSpaceManagerFactory.create(projectSpaceToAdd));
     }
 
-    public Project addProjectSpace(@NotNull String nameSuggestion, @NotNull ProjectSpaceManager<?> projectSpaceToAdd) {
+    public ProjectInfo addProjectSpace(@NotNull String nameSuggestion, @NotNull ProjectSpaceManager<?> projectSpaceToAdd) {
         return ensureUniqueName(nameSuggestion, (name) -> {
             projectSpaces.put(name, projectSpaceToAdd);
-            return Project.of(name, projectSpaceToAdd.projectSpace().getLocation());
+            return ProjectInfo.of(name, projectSpaceToAdd.projectSpace().getLocation());
         });
     }
 
-    public Project createProjectSpace(Path location) throws IOException {
+    public ProjectInfo createProjectSpace(Path location) throws IOException {
         return createProjectSpace(location.getFileName().toString(), location);
     }
 
-    public Project createProjectSpace(@NotNull String nameSuggestion, @NotNull Path location) throws IOException {
+    public ProjectInfo createProjectSpace(@NotNull String nameSuggestion, @NotNull Path location) throws IOException {
         if (Files.exists(location) && !(Files.isDirectory(location) && FileUtils.listAndClose(location, s -> s.findAny().isEmpty())))
             throw new IllegalArgumentException("Location '" + location.toAbsolutePath() +
                     "' already exists and is not an empty directory. Cannot create new project space here.");
@@ -148,18 +148,18 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
                     new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createNewProjectSpace(location));
 
             projectSpaces.put(name, project);
-            return Project.of(name, location);
+            return ProjectInfo.of(name, location);
         } finally {
             projectSpaceLock.writeLock().unlock();
         }
     }
 
-    public Project createTemporaryProjectSpace() throws IOException {
+    public ProjectInfo createTemporaryProjectSpace() throws IOException {
         return ensureUniqueName("temporary", (name) -> {
             try {
                 SiriusProjectSpace space = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createTemporaryProjectSpace();
                 projectSpaces.put(name, projectSpaceManagerFactory.create(space));
-                return Project.of(name, space.getLocation());
+                return ProjectInfo.of(name, space.getLocation());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

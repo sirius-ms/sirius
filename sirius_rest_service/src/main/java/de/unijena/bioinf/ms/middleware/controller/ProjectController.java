@@ -23,8 +23,9 @@ package de.unijena.bioinf.ms.middleware.controller;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.middleware.model.SearchQueryType;
 import de.unijena.bioinf.ms.middleware.model.compute.Job;
-import de.unijena.bioinf.ms.middleware.model.projects.Project;
+import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
+import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springdoc.api.annotations.ParameterObject;
@@ -59,14 +60,15 @@ public class ProjectController {
 
     /**
      * List opened project spaces.
+     *
      * @param searchQuery optional search query in specified format
      * @param querySyntax query syntax used fpr searchQuery
      */
     @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<Project> getProjectSpaces(@ParameterObject Pageable pageable,
-                                          @RequestParam(required = false) String searchQuery,
-                                          @RequestParam(defaultValue = "LUCENE") SearchQueryType querySyntax) {
-        final List<Project> all = projectsProvider.listAllProjectSpaces();
+    public Page<ProjectInfo> getProjectSpaces(@ParameterObject Pageable pageable,
+                                              @RequestParam(required = false) String searchQuery,
+                                              @RequestParam(defaultValue = "LUCENE") SearchQueryType querySyntax) {
+        final List<ProjectInfo> all = projectsProvider.listAllProjectSpaces();
         return new PageImpl<>(
                 all.stream().skip(pageable.getOffset()).limit(pageable.getPageSize()).toList(), pageable, all.size()
         );
@@ -78,7 +80,7 @@ public class ProjectController {
      * @param projectId unique name/identifier tof the project-space to be accessed.
      */
     @GetMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Project getProjectSpace(@PathVariable String projectId) {
+    public ProjectInfo getProjectSpace(@PathVariable String projectId) {
         //todo add infos like size and number of compounds?
         return projectsProvider.getProjectIdOrThrow(projectId);
     }
@@ -89,8 +91,8 @@ public class ProjectController {
      * @param projectId unique name/identifier that shall be used to access the opened project-space.
      */
     @PutMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Project openProjectSpace(@PathVariable String projectId, @RequestParam String pathToProject) throws IOException {
-        return projectsProvider.openProjectSpace(new Project(projectId, pathToProject));
+    public ProjectInfo openProjectSpace(@PathVariable String projectId, @RequestParam String pathToProject) throws IOException {
+        return projectsProvider.openProjectSpace(new ProjectInfo(projectId, pathToProject));
     }
 
     /**
@@ -99,10 +101,10 @@ public class ProjectController {
      * @param projectId unique name/identifier that shall be used to access the newly created project-space.
      */
     @PostMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Project createProjectSpace(@PathVariable String projectId,
-                                      @RequestParam String pathToProject,
-                                      @RequestParam(required = false) String pathToSourceProject,
-                                      @RequestParam(required = false, defaultValue = "true") boolean awaitImport
+    public ProjectInfo createProjectSpace(@PathVariable String projectId,
+                                          @RequestParam String pathToProject,
+                                          @RequestParam(required = false) String pathToSourceProject,
+                                          @RequestParam(required = false, defaultValue = "true") boolean awaitImport
     ) throws IOException {
         InputFilesOptions inputFiles = null;
         if (pathToSourceProject != null) {
@@ -116,7 +118,7 @@ public class ProjectController {
 
         }
 
-        Project pid = projectsProvider.createProjectSpace(projectId, Path.of(pathToProject));
+        ProjectInfo pid = projectsProvider.createProjectSpace(projectId, Path.of(pathToProject));
         de.unijena.bioinf.ms.middleware.service.projects.Project project = projectsProvider.getProjectOrThrow(projectId);
         if (inputFiles != null) {
             Job id = computeContext.createAndSubmitJob(project, List.of("project-space", "--keep-open"),
@@ -134,12 +136,20 @@ public class ProjectController {
     }
 
     /**
-     * Close project-space and remove it from application. Project-space will NOT be deleted from disk.
+     * Close project-space and remove it from application. Project will NOT be deleted from disk.
+     *
+     * ATTENTION: This will cancel and remove all jobs running on this Project before closing it.
+     * If there are many jobs, this might take some time.
      *
      * @param projectId unique name/identifier of the  project-space to be closed.
      */
     @DeleteMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public void closeProjectSpace(@PathVariable String projectId) throws IOException {
+    public void closeProjectSpace(@PathVariable String projectId) throws Throwable {
+        Project ps = (Project) projectsProvider.getProject(projectId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NO_CONTENT,
+                        "Project space with identifier '" + projectId + "' not found!"));
+        computeContext.deleteJobs(ps, true, true, EnumSet.noneOf(Job.OptField.class));
+        //todo check if we can make wait for deletion aync
         projectsProvider.closeProjectSpace(projectId);
     }
 }

@@ -20,7 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.service.projects;
 
-import de.unijena.bioinf.ms.middleware.model.projects.Project;
+import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.http.HttpStatus;
@@ -33,27 +33,27 @@ import java.util.Optional;
 
 public interface ProjectsProvider<P extends de.unijena.bioinf.ms.middleware.service.projects.Project> extends DisposableBean {
 
-    List<Project> listAllProjectSpaces();
+    List<ProjectInfo> listAllProjectSpaces();
 
     default P getProjectOrThrow(String projectId) throws ResponseStatusException {
         return getProject(projectId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no project with name '" + projectId + "'"));
     }
 
     Optional<P> getProject(String projectId);
-    Optional<Project> getProjectId(String projectId);
+    Optional<ProjectInfo> getProjectId(String projectId);
 
-    default Project getProjectIdOrThrow(String projectId) throws ResponseStatusException{
+    default ProjectInfo getProjectIdOrThrow(String projectId) throws ResponseStatusException{
         return getProjectId(projectId).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no project space with name '" + projectId + "'"));
     }
 
-    Project openProjectSpace(@NotNull Project id) throws IOException;
+    ProjectInfo openProjectSpace(@NotNull ProjectInfo id) throws IOException;
 
-    Project createProjectSpace(Path location) throws IOException;
+    ProjectInfo createProjectSpace(Path location) throws IOException;
 
-    Project createProjectSpace(@NotNull String nameSuggestion, @NotNull Path location) throws IOException;
+    ProjectInfo createProjectSpace(@NotNull String nameSuggestion, @NotNull Path location) throws IOException;
 
-    Project createTemporaryProjectSpace() throws IOException;
+    ProjectInfo createTemporaryProjectSpace() throws IOException;
 
     boolean containsProject(@NotNull String name);
 
