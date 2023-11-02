@@ -47,7 +47,7 @@ import java.nio.file.Path;
 import java.util.Objects;
 
 @Getter
-public final class Project {
+public final class ProjectInfo {
     //todo do we need meta information like size and description
     /**
      * a user selected unique name of the project for easy access.
@@ -58,7 +58,7 @@ public final class Project {
     /*public ProjectSpaceId(@NotNull  String name, @NotNull Path path) {
             this()
     }*/
-    public Project(@NotNull String projectId, @NotNull String path) {
+    public ProjectInfo(@NotNull String projectId, @NotNull String path) {
         this.projectId = projectId;
         this.path = path;
     }
@@ -73,7 +73,7 @@ public final class Project {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Project that = (Project) o;
+        ProjectInfo that = (ProjectInfo) o;
         return projectId.equals(that.projectId) &&
                 path.equals(that.path);
     }
@@ -83,7 +83,7 @@ public final class Project {
         return Objects.hash(projectId, path);
     }
 
-    public static Project of(String projectId, Path location) {
-        return new Project(projectId, location.toAbsolutePath().toString());
+    public static ProjectInfo of(String projectId, Path location) {
+        return new ProjectInfo(projectId, location.toAbsolutePath().toString());
     }
 }

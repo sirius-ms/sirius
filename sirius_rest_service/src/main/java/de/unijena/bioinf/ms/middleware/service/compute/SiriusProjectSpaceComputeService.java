@@ -230,6 +230,12 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
         }
     }
 
+    @Override
+    public List<Job> deleteJobs(@Nullable SiriusProjectSpaceImpl psm, boolean cancelIfRunning, boolean awaitDeletion, @NotNull EnumSet<Job.OptField> optFields) {
+        return getJobs(psm, Pageable.unpaged(), EnumSet.noneOf(Job.OptField.class))
+                .stream().map(j -> deleteJob(j.getId(), cancelIfRunning, awaitDeletion, optFields)).toList();
+    }
+
     public BackgroundRuns.BackgroundRunJob<?, ?> getJob(@Nullable SiriusProjectSpaceImpl psm, String jobId) {
         return getJob(psm.getProjectSpaceManager(), jobId);
     }
@@ -249,6 +255,11 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
     }
 
     public Page<Job> getJobs(@Nullable ProjectSpaceManager<?> psm, @NotNull Pageable pageable, @NotNull EnumSet<Job.OptField> optFields) {
+        if (pageable.isUnpaged())
+            return new PageImpl<>(BackgroundRuns.getActiveRunIdMap().values().stream()
+                    .filter(j -> psm == null || psm.equals(j.getProject()))
+                    .map(j -> extractJobId(j, optFields)).toList());
+
         long size = BackgroundRuns.getActiveRunIdMap().values().stream()
                 .filter(j -> psm == null || psm.equals(j.getProject())).count();
         return new PageImpl<>(BackgroundRuns.getActiveRunIdMap().values().stream()
