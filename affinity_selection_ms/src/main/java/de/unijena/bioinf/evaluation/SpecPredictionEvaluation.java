@@ -166,4 +166,20 @@ public class SpecPredictionEvaluation {
         }
     }
 
+    public static void main(String[] args) {
+        try {
+            final File msrdSpectraDir = new File(args[0]);
+            final File outputFile = new File(args[1]);
+            final File scoringFile = new File(args[2]);
+            final Deviation deviation = new Deviation(Double.parseDouble(args[3]));
+            final SimpleFragmentationRule fragRule = new SimpleFragmentationRule(new String[]{"N", "O", "P", "S"});
+            final int numFragments = Integer.parseInt(args[4]);
+            final int numHydrogenShifts = Integer.parseInt(args[5]);
+
+            SpecPredictionEvaluation eval = new SpecPredictionEvaluation(msrdSpectraDir, outputFile, scoringFile, deviation, fragRule, numFragments, numHydrogenShifts);
+            eval.evaluate();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
