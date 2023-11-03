@@ -283,7 +283,7 @@ jobs:
             *) echo "Error: Could not find OS."; exit 1 ;;
           esac
           ${SIRIUS} login --user-env SIRIUS_USER --password-env SIRIUS_PW
-          ${SIRIUS} login --select-license ${{ env.GITHUB_REF_SLUG == 'stable' && "${SIRIUS_SUB}" || "${SIRIUS_SUB_DEV}" }}
+          ${SIRIUS} login --select-license ${{ env.GITHUB_REF_SLUG == 'stable' && secrets.SIRIUS_SUB || secrets.SIRIUS_SUB_DEV }}
           ${SIRIUS} --input ${MGF_DATA} --output ${MGF_OUTPUT} formula -p orbitrap fingerprint structure compound-classes write-summaries --output ${MGF_SUMMARY}
           ${SIRIUS} -1 ${TXT_DATA_1} -2 ${TXT_DATA_2} -z 354.134704589844 -o ${TXT_OUTPUT} formula -p orbitrap write-summaries --output ${TXT_SUMMARY}
           ${SIRIUS} -o ${MS_OUTPUT} -i ${MS_DATA} --ignore-formula formula -p orbitrap -c 5 fingerprint structure compound-classes write-summaries --output ${MS_SUMMARY}
