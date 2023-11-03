@@ -78,4 +78,12 @@ public class PredictionsOptions {
     public boolean isAnyPredictionSet(){
         return classyfire || npc || fingerprints || pubchem || maccs;
     }
+
+    public boolean requiresCanopusResult(){
+        return classyfire || npc;
+    }
+
+    public boolean requiresFingerprintResult(){
+        return fingerprints || pubchem || maccs;
+    }
 }
