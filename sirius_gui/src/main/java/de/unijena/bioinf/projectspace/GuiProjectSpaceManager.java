@@ -155,6 +155,7 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager<InstanceBean> {
     //ATTENTION Synchronizing around background tasks that block gui thread is dangerous
     public synchronized void importOneExperimentPerLocation(@NotNull final InputFilesOptions input) {
         input.msInput.setAllowMS1Only(PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.allowMs1Only", true));
+        input.msInput.setIgnoreFormula(PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.ignoreFormulas", true));
         boolean align = Jobs.runInBackgroundAndLoad(MF, "Checking for alignable input...", () ->
                         (input.msInput.msParserfiles.size() > 1 && input.msInput.projects.size() == 0 && input.msInput.msParserfiles.keySet().stream().map(p -> p.getFileName().toString().toLowerCase()).allMatch(n -> n.endsWith(".mzml") || n.endsWith(".mzxml"))))
                 .getResult();
