@@ -55,7 +55,7 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
     final JComboBox<String> solver;
     private boolean restartRequired = false;
 
-    final JCheckBox allowMS1Only;
+    final JCheckBox allowMS1Only, ignoreFormulas;
 
     public GerneralSettingsPanel(Properties properties) {
         super();
@@ -81,6 +81,10 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         allowMS1Only.setSelected(Boolean.parseBoolean(props.getProperty("de.unijena.bioinf.sirius.ui.allowMs1Only","true")));
         allowMS1Only.setToolTipText(GuiUtils.formatToolTip("If checked data without MS/MS spectra will be imported. Otherwise they will be skipped during import."));
         addNamed("Import data without MS/MS", allowMS1Only);
+        ignoreFormulas = new JCheckBox();
+        ignoreFormulas.setSelected(Boolean.parseBoolean(props.getProperty("de.unijena.bioinf.sirius.ui.ignoreFormulas","false")));
+        ignoreFormulas.setToolTipText(GuiUtils.formatToolTip("If checked molecular formula and structure annotations will be ignored during import when  given in the input file."));
+        addNamed("Ignore formulas", ignoreFormulas);
 
         add(new JXTitledSeparator("ILP solver"));
         Vector<String> items = new Vector<>(Arrays.asList("clp,cplex,gurobi,glpk", "cplex,gurobi,clp,glpk", "cplex,clp,glpk", "gurobi,clp,glpk", "clp,glpk", "glpk,clp", "gurobi", "cplex", "clp", "glpk"));
