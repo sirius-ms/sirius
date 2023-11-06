@@ -45,6 +45,10 @@ public class CosineQueryUtils {
         return CosineQuerySpectrum.newInstance(spectrum, precursorMz, spectralAlignmentMethod);
     }
 
+    public CosineQuerySpectrum createQueryWithoutLoss(OrderedSpectrum<Peak> spectrum, double precursorMz){
+        return CosineQuerySpectrum.newInstanceWithoutLoss(spectrum, precursorMz, spectralAlignmentMethod);
+    }
+
     public CosineQuerySpectrum createQueryWithIntensityTransformation(Spectrum<Peak> spectrum, double precursorMz, boolean transformSqrtIntensity){
         return createQuery(spectrum, precursorMz, false, transformSqrtIntensity);
     }

@@ -18,15 +18,31 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
+package de.unijena.bionf.spectral_alignment;
 
-dependencies {
-    // external
-    implementation 'org.dizitart:nitrite:3.4.4'
-    implementation 'com.esotericsoftware:reflectasm:1.11.9'
-    implementation 'it.unimi.dsi:fastutil:8.5.12'
-    implementation 'jakarta.persistence:jakarta.persistence-api:3.1.0'
+import de.unijena.bioinf.jjobs.BasicJJob;
+import lombok.AllArgsConstructor;
 
+/**
+ * JJob class for executing one spectral alignment match between two spectra
+ */
+@AllArgsConstructor
+public class SpectralMatchJJob extends BasicJJob<SpectralSimilarity> {
 
-    testImplementation 'org.burningwave:core:12.62.7'
-    testImplementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:"$jackson_version"
+    private CosineQueryUtils queryUtils;
+    private CosineQuerySpectrum left;
+    private CosineQuerySpectrum right;
+
+    @Override
+    protected SpectralSimilarity compute() throws Exception {
+        return queryUtils.cosineProduct(left, right);
+    }
+
+    @Override
+    protected void cleanup() {
+        queryUtils = null;
+        left = null;
+        right = null;
+        super.cleanup();
+    }
 }

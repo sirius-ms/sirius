@@ -25,10 +25,12 @@ import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 
+@Getter
 public class CosineQuerySpectrum implements Spectrum<Peak> {
     final OrderedSpectrum<Peak> spectrum;
     final SimpleSpectrum inverseSpectrum;
@@ -56,22 +58,6 @@ public class CosineQuerySpectrum implements Spectrum<Peak> {
         return buf.toString();
     }
 
-    public double getPrecursorMz() {
-        return precursorMz;
-    }
-
-    public SimpleSpectrum getInverseSpectrum() {
-        return inverseSpectrum;
-    }
-
-    public double getSelfSimilarity() {
-        return selfSimilarity;
-    }
-
-    public double getSelfSimilarityLosses() {
-        return selfSimilarityLosses;
-    }
-
     @Override
     public double getMzAt(int index) {
         return spectrum.getMzAt(index);
@@ -87,6 +73,7 @@ public class CosineQuerySpectrum implements Spectrum<Peak> {
         return spectrum.getPeakAt(index);
     }
 
+    @Override
     public int size() {
         return spectrum.size();
     }

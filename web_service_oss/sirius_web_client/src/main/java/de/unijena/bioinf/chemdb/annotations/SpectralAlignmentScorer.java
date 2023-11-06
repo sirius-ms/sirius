@@ -23,7 +23,7 @@ package de.unijena.bioinf.chemdb.annotations;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
-import de.unijena.bioinf.spectraldb.SpectralAlignmentType;
+import de.unijena.bionf.spectral_alignment.SpectralAlignmentType;
 import org.jetbrains.annotations.Nullable;
 
 public class SpectralAlignmentScorer implements Ms2ExperimentAnnotation {

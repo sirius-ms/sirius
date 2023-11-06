@@ -18,15 +18,20 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
+package de.unijena.bioinf.spectraldb;
 
-dependencies {
-    // external
-    implementation 'org.dizitart:nitrite:3.4.4'
-    implementation 'com.esotericsoftware:reflectasm:1.11.9'
-    implementation 'it.unimi.dsi:fastutil:8.5.12'
-    implementation 'jakarta.persistence:jakarta.persistence-api:3.1.0'
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrumDelegate;
+import lombok.Getter;
 
+@Getter
+public class IndexedQuerySpectrumWrapper extends OrderedSpectrumDelegate<Peak> {
 
-    testImplementation 'org.burningwave:core:12.62.7'
-    testImplementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:"$jackson_version"
+    private final int queryIndex;
+
+    public IndexedQuerySpectrumWrapper(OrderedSpectrum<Peak> querySpectrum, int queryIndex) {
+        super(querySpectrum);
+        this.queryIndex = queryIndex;
+    }
 }
