@@ -20,30 +20,19 @@
 
 package de.unijena.bioinf.spectraldb;
 
-import com.google.common.collect.Streams;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.AdditionalFields;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.ms.annotations.SpectrumAnnotation;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
-import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
 import de.unijena.bioinf.storage.db.nosql.*;
-import de.unijena.bionf.spectral_alignment.AbstractSpectralAlignment;
-import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
-import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
-import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
-import org.apache.commons.lang3.tuple.Triple;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 //todo check when data/spectra should be included an when not
 
@@ -79,79 +68,6 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
     public abstract <O> Doctype asDocument(O object);
 
     public abstract <O> O asObject(Doctype document, Class<O> objectClass);
-
-    @Override
-    public <P extends Peak> SpectralSearchResult matchingSpectra(
-            Iterable<Ms2Spectrum<P>> queries,
-            Deviation precursorMzDeviation,
-            Deviation maxPeakDeviation,
-            SpectralAlignmentType alignmentType,
-            BiConsumer<Integer, Integer> progressConsumer
-    ) throws ChemicalDatabaseException {
-        // TODO move matching away from persistence layer
-        // TODO when combined databases (or not nitrite with possible equal splashes) -> query only unique splashes? -> too slow? maybe give spectra with same splash same rank when sorting the results
-        // TODO modified cosine
-        try {
-            final List<SpectralSearchResult.SearchResult> results = new ArrayList<>();
-            AbstractSpectralAlignment alignment = alignmentType.getScorer(maxPeakDeviation);
-            CosineQueryUtils cosineQueryUtils = new CosineQueryUtils(alignment);
-
-            int maxProgress = 0;
-            List<Triple<Ms2Spectrum<P>, Integer, Filter>> params = new ArrayList<>();
-            for (Ms2Spectrum<P> query : queries) {
-                double abs = precursorMzDeviation.absoluteFor(query.getPrecursorMz());
-                Filter filter = new Filter().and().gte("precursorMz", query.getPrecursorMz() - abs).lte("precursorMz", query.getPrecursorMz() + abs);
-                int count = this.storage.count(filter, Ms2ReferenceSpectrum.class);
-                maxProgress += count;
-                params.add(Triple.of(query, count, filter));
-            }
-
-            int progress = 0;
-            for (int i = 0; i < params.size(); i++) {
-                Triple<Ms2Spectrum<P>, Integer, Filter> param = params.get(i);
-                CosineQuerySpectrum cosineQuery = cosineQueryUtils.createQuery(new SimpleSpectrum(param.getLeft()), param.getLeft().getPrecursorMz());
-
-                int pageSize = 100;
-                for (int offset = 0; offset < param.getMiddle(); offset += pageSize) {
-                    Iterable<Ms2ReferenceSpectrum> references = this.storage.find(param.getRight(), Ms2ReferenceSpectrum.class, offset, pageSize,"spectrum");
-                    for (Ms2ReferenceSpectrum reference : references) {
-                        CosineQuerySpectrum cosineReference = cosineQueryUtils.createQuery(reference.getSpectrum(), reference.getPrecursorMz());
-                        SpectralSimilarity similarity = cosineQueryUtils.cosineProduct(cosineQuery, cosineReference);
-
-                        if (similarity.shardPeaks > 0) {
-                            SpectralSearchResult.SearchResult res = SpectralSearchResult.SearchResult.builder()
-                                    .dbName(reference.getLibraryName())
-                                    .dbId(reference.getLibraryId())
-                                    .querySpectrumIndex(i)
-                                    .similarity(similarity)
-                                    .referenceUUID(reference.getUuid())
-                                    .referenceSplash(reference.getSplash())
-                                    .build();
-                            results.add(res);
-                        }
-                        if (progressConsumer != null) {
-                            progressConsumer.accept(++progress, maxProgress);
-                        }
-                    }
-                }
-            }
-
-            results.sort((a, b) -> Double.compare(b.getSimilarity().similarity, a.getSimilarity().similarity));
-
-            return SpectralSearchResult.builder()
-                    .precursorDeviation(precursorMzDeviation)
-                    .peakDeviation(maxPeakDeviation)
-                    .alignmentType(alignmentType)
-                    .results(Streams.mapWithIndex(results.stream(), (r, index) -> {
-                        r.setRank((int) index + 1);
-                        return r;
-                    }).toList())
-                    .build();
-
-        } catch (RuntimeException | IOException e) {
-            throw new ChemicalDatabaseException(e);
-        }
-    }
 
     public Database<Doctype> getStorage() {
         return storage;
