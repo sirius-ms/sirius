@@ -15,28 +15,37 @@ import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.util.BitSet;
-import java.util.Objects;
 
 public class ICEBERGSpectrumPredictor extends AbstractMs2SpectrumPredictor<Peak>{
 
     private final MolecularGraph molecule;
     private final String smiles;
     private final int numFragments;
+    private final String fileName;
+
     private final static String DEVICE = "cpu";
     private final static double THRESHOLD = 0d;
     private final static boolean BINNED_OUT = false;
 
-    public ICEBERGSpectrumPredictor(String smiles, PrecursorIonType precursorIonType, int numFragments) throws InvalidSmilesException {
+    private static File PYTHON_ENV_PATH;
+    private static File ICEBERG_SCRIPT;
+    private static File ICEBERG_MODELS_DIR;
+    private static File OUTPUT_DIR;
+
+    public ICEBERGSpectrumPredictor(String smiles, PrecursorIonType precursorIonType, int numFragments, String fileName) throws InvalidSmilesException {
         super(null, precursorIonType);
         this.smiles = smiles;
         this.molecule = new MolecularGraph(new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles(smiles));
         this.numFragments = numFragments;
+        this.fileName = fileName;
+    }
+
+    public ICEBERGSpectrumPredictor(String smiles, PrecursorIonType precursorIonType, int numFragments) throws InvalidSmilesException{
+        this(smiles, precursorIonType, numFragments, "iceberg_prediction_output.json");
     }
 
     @Override
@@ -44,15 +53,11 @@ public class ICEBERGSpectrumPredictor extends AbstractMs2SpectrumPredictor<Peak>
         double moleculeMass = this.molecule.getFormula().getMass();
         double precursorMz = this.precursorIonType.neutralMassToPrecursorMass(moleculeMass);
         try {
-            // Retrieve the "ms-gen" environment path:
-            File envPath = this.getCondaEnvPath();
-            File pythonEnvPath = new File(envPath, "python");
-
             // Run ICEBERG through the python script 'iceberg_predictMol.py':
-            if(!this.startPrediction(pythonEnvPath)) throw new RuntimeException("Unexpected termination during python call.");
+            if(!this.startPrediction()) throw new RuntimeException("Unexpected termination during python call.");
 
             // This produced a .json file containing the predicted fragments together with the predicted intensities:
-            File outputFile = new File(Objects.requireNonNull(this.getClass().getClassLoader().getResource("iceberg_prediction_output.json")).toURI());
+            File outputFile = new File(OUTPUT_DIR, this.fileName);
             JsonNode frags = JSONDocumentType.readFromFile(outputFile);
             SimpleMutableSpectrum spec = new SimpleMutableSpectrum();
 
@@ -87,27 +92,10 @@ public class ICEBERGSpectrumPredictor extends AbstractMs2SpectrumPredictor<Peak>
         }
     }
 
-    private File getCondaEnvPath() throws IOException, InterruptedException {
-        ProcessBuilder pb = new ProcessBuilder("python", "-m", "conda", "env", "list");
-        Process process = pb.start();
-        if(process.waitFor() != 0) throw new RuntimeException("Retrieving conda environment path resulted in abnormal termination.");
-
-        try(BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))){
-            String line = reader.readLine();
-            while(line != null){
-                String[] envData = line.split("\\s+");
-                if(envData[0].equals("ms-gen")) return new File(envData[1]);
-                line = reader.readLine();
-            }
-        }
-        return null;
-    }
-
-    private boolean startPrediction(File pythonEnvPath) throws IOException, InterruptedException, URISyntaxException {
-        File icebergScript = new File(Objects.requireNonNull(this.getClass().getClassLoader().getResource("iceberg_predictMol.py")).toURI());
-        ProcessBuilder pb = new ProcessBuilder(pythonEnvPath.getPath(), icebergScript.getPath(), this.smiles, this.precursorIonType.toString(),
+    private boolean startPrediction() throws IOException, InterruptedException, URISyntaxException {
+        ProcessBuilder pb = new ProcessBuilder(PYTHON_ENV_PATH.getPath(), ICEBERG_SCRIPT.getPath(), this.smiles, this.precursorIonType.toString(),
                 DEVICE, Integer.toString(this.numFragments), Double.toString(THRESHOLD),
-                Boolean.toString(BINNED_OUT), icebergScript.getParent());
+                Boolean.toString(BINNED_OUT), ICEBERG_MODELS_DIR.getPath(), OUTPUT_DIR.getPath(), this.fileName);
         pb.redirectErrorStream(true);
         pb.inheritIO();
 
@@ -120,6 +108,13 @@ public class ICEBERGSpectrumPredictor extends AbstractMs2SpectrumPredictor<Peak>
         BitSet bitset = new BitSet(this.molecule.getMolecule().getAtomCount());
         for(JsonNode indexNode : node) bitset.set(indexNode.asInt());
         return bitset;
+    }
+
+    public static void initializeClass(File pythonEnvPath, File icebergScriptPath, File modelsDir, File outputDir){
+        PYTHON_ENV_PATH = pythonEnvPath;
+        ICEBERG_SCRIPT = icebergScriptPath;
+        ICEBERG_MODELS_DIR = modelsDir;
+        OUTPUT_DIR = outputDir;
     }
 
 }
