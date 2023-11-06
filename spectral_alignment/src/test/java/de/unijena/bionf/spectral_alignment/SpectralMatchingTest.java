@@ -29,7 +29,6 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -38,8 +37,11 @@ public class SpectralMatchingTest {
 
     private final CosineQueryUtils utils = new CosineQueryUtils(new ModifiedCosine(new Deviation(10)));
     private final CosineQuerySpectrum s1 = utils.createQueryWithoutLoss(new SimpleSpectrum(new double[]{1d}, new double[]{1d}), 1d);
-    private final CosineQuerySpectrum s2 = utils.createQueryWithoutLoss(new SimpleSpectrum(new double[] {1d, 2d}, new double[] {0.5d, 1d}), 3d);
-    private final CosineQuerySpectrum s3 = utils.createQueryWithoutLoss(new SimpleSpectrum(new double[]{2d}, new double[]{1d}), 2d);
+    private final CosineQuerySpectrum s2 = utils.createQueryWithoutLoss(new SimpleSpectrum(new double[]{1d, 2d}, new double[]{0.5d, 1d}), 3d);
+    private final CosineQuerySpectrum s3 = utils.createQueryWithoutLoss(new SimpleSpectrum(new double[]{1.001d, 2d}, new double[]{3d, 2d}), 2d);
+    private final CosineQuerySpectrum s4 = utils.createQueryWithoutLoss(new SimpleSpectrum(new double[]{1.002d, 2.003d}, new double[]{1.7d, 2.1d}), 2d);
+    private final CosineQuerySpectrum s5 = utils.createQueryWithoutLoss(new SimpleSpectrum(new double[]{1.003d, 2.002d}, new double[]{1.5d, 1.6d}), 2d);
+    private final CosineQuerySpectrum s6 = utils.createQueryWithoutLoss(new SimpleSpectrum(new double[]{.999d, 2.001d}, new double[]{1d, 1.2d}), 2d);
 
 
     @Test
@@ -54,14 +56,17 @@ public class SpectralMatchingTest {
 
     @Test
     public void testMatchAllParallel() {
-        List<CosineQuerySpectrum> queries = Arrays.asList(s1, s2, s3);
+        List<CosineQuerySpectrum> queries = Arrays.asList(s1, s2, s3, s4, s5, s6);
 
         CosineSpectraMatcher matcher = new CosineSpectraMatcher(utils);
         List<List<SpectralSimilarity>> matches = matcher.matchAllParallel(queries);
 
         List<List<SpectralSimilarity>> expectedMatches = List.of(
-                List.of(utils.cosineProduct(s1, s2), utils.cosineProduct(s1, s3)),
-                List.of(utils.cosineProduct(s2, s3))
+                List.of(utils.cosineProduct(s1, s2), utils.cosineProduct(s1, s3), utils.cosineProduct(s1, s4), utils.cosineProduct(s1, s5), utils.cosineProduct(s1, s6)),
+                List.of(utils.cosineProduct(s2, s3), utils.cosineProduct(s2, s4), utils.cosineProduct(s2, s5), utils.cosineProduct(s2, s6)),
+                List.of(utils.cosineProduct(s3, s4), utils.cosineProduct(s3, s5), utils.cosineProduct(s3, s6)),
+                List.of(utils.cosineProduct(s4, s5), utils.cosineProduct(s4, s6)),
+                List.of(utils.cosineProduct(s5, s6))
         );
 
         assertEquals(expectedMatches, matches);
