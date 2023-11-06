@@ -89,7 +89,7 @@ public class CosineSpectraMatcher {
     /**
      * @param flatResult matches between a list of spectra
      * @return a nested list containing the upper triangle without diagonal of the matrix [i][j],
-     * where element[i][j] is a similarity between spectra[i] and spectra[j]
+     * where element[i][j] is a similarity between spectra[i] and spectra[j], i < j
      */
     public List<List<SpectralSimilarity>> unflattenMatchAllResult(List<SpectralSimilarity> flatResult) {
         if (!(flatResult instanceof ArrayList<SpectralSimilarity>))
@@ -97,9 +97,9 @@ public class CosineSpectraMatcher {
 
         List<List<SpectralSimilarity>> unflattend = new ArrayList<>();
 
-        int i = 1;
-        for (int k = flatResult.size(); k > 0; k -= i++)
-            unflattend.add(flatResult.subList(k-i, k));
+        int sublistLen = 1;
+        for (int k = flatResult.size(); k > 0; k -= sublistLen++)
+            unflattend.add(flatResult.subList(k - sublistLen, k));
 
         return Lists.reverse(unflattend);
     }
