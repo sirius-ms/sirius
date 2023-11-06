@@ -59,10 +59,10 @@ public class SpectralMatchingTest {
         CosineSpectraMatcher matcher = new CosineSpectraMatcher(utils);
         List<List<SpectralSimilarity>> matches = matcher.matchAllParallel(queries);
 
-        List<List<SpectralSimilarity>> expectedMatches = Arrays.asList(
-                Arrays.asList(utils.cosineProduct(s1, s1), utils.cosineProduct(s1, s2), utils.cosineProduct(s1, s3)),
-                Arrays.asList(utils.cosineProduct(s2, s1), utils.cosineProduct(s2, s2), utils.cosineProduct(s2, s3)),
-                Arrays.asList(utils.cosineProduct(s3, s1), utils.cosineProduct(s3, s2), utils.cosineProduct(s3, s3)));
+        List<List<SpectralSimilarity>> expectedMatches = List.of(
+                List.of(utils.cosineProduct(s1, s2), utils.cosineProduct(s1, s3)),
+                List.of(utils.cosineProduct(s2, s3))
+        );
 
         assertEquals(expectedMatches, matches);
     }
@@ -80,7 +80,7 @@ public class SpectralMatchingTest {
         SiriusJobs.getGlobalJobManager().submitJob(job);
         job.takeResult();
 
-        assertEquals(Arrays.asList(0L,1L,2L,3L,4L,5L), progressSequence);  // first and last are from the Master JJob itself
+        assertEquals(Arrays.asList(0L,1L,2L), progressSequence);  // first and last are from the Master JJob itself
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -99,15 +99,14 @@ public class SpectralMatchingTest {
         List<List<SpectralSimilarity>> matches = matcher.matchAllParallel(queries);
 
         List<List<SpectralSimilarity>> expectedMatches = Arrays.asList(
-                Arrays.asList(utilsIntensity.cosineProduct(s1, s1), utilsIntensity.cosineProduct(s1, s2)),
-                Arrays.asList(utilsIntensity.cosineProduct(s2, s1), utilsIntensity.cosineProduct(s2, s2)));
+                Arrays.asList(utilsIntensity.cosineProduct(s1, s2)));
 
         assertEquals(expectedMatches, matches);
     }
 
     @Test
     public void testClearInputs() {
-        List<CosineQuerySpectrum> queries = Collections.singletonList(s1);
+        List<CosineQuerySpectrum> queries = List.of(s1,s2);
 
         CosineSpectraMatcher matcher = new CosineSpectraMatcher(utils);
         SpectralMatchMasterJJob job1 = matcher.matchAllParallelJob(queries);

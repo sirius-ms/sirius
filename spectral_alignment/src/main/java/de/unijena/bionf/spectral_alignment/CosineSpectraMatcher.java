@@ -25,8 +25,8 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.IntStream;
 
 /**
  * A class that provides an API for spectral alignment over {@link CosineQuerySpectrum}
@@ -89,11 +89,13 @@ public class CosineSpectraMatcher {
      * @return a nested list, where element[i][j] is a similarity between spectra[i] and spectra[j]
      */
     public List<List<SpectralSimilarity>> unflattenMatchAllResult(List<SpectralSimilarity> flatResult) {
-        int n = (int) Math.round(Math.sqrt(flatResult.size()));
-        if (n * n != flatResult.size()) {
-            throw new IllegalArgumentException("Expected a list with a square number of elements, got a list with " + flatResult.size() + " elements.");
+        int n = (int) Math.ceil((double) flatResult.size() / 2);
+        List<List<SpectralSimilarity>> it = new ArrayList<>(n);
+        int k = 0;
+        for (int i = 0; i < n; i++) {
+            it.add(flatResult.subList(k, k+(n-i)));
+            k += n-i;
         }
-
-        return IntStream.range(0, n).mapToObj(i -> flatResult.subList(i*n, (i+1)*n)).toList();
+        return it;
     }
 }
