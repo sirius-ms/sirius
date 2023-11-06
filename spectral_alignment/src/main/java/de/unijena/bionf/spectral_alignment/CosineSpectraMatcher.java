@@ -22,6 +22,7 @@ package de.unijena.bionf.spectral_alignment;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
@@ -80,9 +81,7 @@ public class CosineSpectraMatcher {
      * This job returns a flat list of similarities, which can be unflattened with {@link CosineSpectraMatcher#unflattenMatchAllResult(List)}
      */
     SpectralMatchMasterJJob matchAllParallelJob(List<CosineQuerySpectrum> spectra) {
-        List<Pair<CosineQuerySpectrum, CosineQuerySpectrum>> flatPairs = spectra.stream()
-                .flatMap(s1 -> spectra.stream().map(s2 -> Pair.of(s1, s2))).toList();
-        return new SpectralMatchMasterJJob(queryUtils, flatPairs);
+        return new SpectralMatchMasterJJob(queryUtils, Utils.pairsHalfNoDiag(spectra, spectra.size()));
     }
 
     /**

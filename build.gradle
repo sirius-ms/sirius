@@ -116,8 +116,18 @@ allprojects {
 
         testImplementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
         testImplementation group: 'de.unijena.bioinf', name: 'jjobs-swing', version:"$jjobs_version"
-        testImplementation group: 'junit', name: 'junit', version: '4.13.1'
+        // Aggregator dependency that also brings JUnit 5 parameterized tests etc.
+        testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
+        testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.0")
+        // The Vintage engine is needed to be able to run JUnit 4 tests
+        testImplementation("org.junit.vintage:junit-vintage-engine:5.10.0")
+        testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
         testImplementation group: 'org.mockito', name: 'mockito-core', version: '5.6.0'
+    }
+
+    test {
+        useJUnitPlatform()
+        maxHeapSize = "16G"
     }
 
     task sourceJar(type: Jar) {
@@ -149,24 +159,6 @@ allprojects {
             }
         }
     }
-
-   /* sourceSets {
-        main {
-            resources {
-                srcDirs "src/main/resources", "configs"
-            }
-        }
-    }
-*/
-    /*task cleanConfig {
-        group = 'build'
-        doLast {
-            def f = file("${projectDir}/configs")
-            if (f.exists())
-                f.deleteDir()
-        }
-    }
-    clean.dependsOn cleanConfig*/
 }
 
 def javaProjects() {
