@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -81,35 +80,28 @@ public class Utils {
      * Compute upper half of an all against all matrix (without diagonal) in (n^2-n)/2 time without needing index access.
      *
      * @param values Iterable of elements to create pairs from.
-     * @param size   Optional size of the Iterable.
+     * @param size Optional size of the Iterable.
      * @return List of pairs
      */
     public static <T> ArrayList<Pair<T, T>> pairsHalfNoDiag(@NotNull Iterable<T> values, @Nullable Integer size) {
         ArrayList<Pair<T, T>> pairs = size == null ? new ArrayList<>() : new ArrayList<>((size * size - size) / 2);
 
-        Iterator<T> sIt = values.iterator();
-        if (!sIt.hasNext())
-            throw new IllegalArgumentException("At least 2 values are needed to compute a pair. Found 0");
-        T first = sIt.next();
+        ArrayList<T> input;
+        if (values instanceof ArrayList) {
+            input = (ArrayList<T>) values;
+        } else {
+            input = new ArrayList<>();
+            values.forEach(input::add);
+        }
 
-        if (!sIt.hasNext())
-            throw new IllegalArgumentException("At least 2 values are needed to compute a pair. Found 1");
-        pairs.add(Pair.of(first, sIt.next()));
+        if (input.size() < 2) {
+            return pairs;
+        }
 
-        int j = 0;
-        int k = 1;
-        while (sIt.hasNext()) {
-            T current = sIt.next();
-            T lastRight = null;
-            int currentSize = pairs.size();
-            for (int i = j; i < currentSize; i++) {
-                Pair<T, T> pair = pairs.get(i);
-                pairs.add(Pair.of(pair.getLeft(), current));
-                lastRight = pair.getRight();
-
+        for (int left = 0; left < input.size() - 1; left++) {
+            for (int right = left + 1; right < input.size(); right++) {
+                pairs.add(Pair.of(input.get(left), input.get(right)));
             }
-            pairs.add(Pair.of(lastRight, current));
-            j += k++;
         }
 
         return pairs;
