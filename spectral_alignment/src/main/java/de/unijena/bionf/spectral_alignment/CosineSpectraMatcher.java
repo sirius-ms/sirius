@@ -20,6 +20,7 @@
 
 package de.unijena.bionf.spectral_alignment;
 
+import com.google.common.collect.Lists;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
@@ -78,24 +79,28 @@ public class CosineSpectraMatcher {
     /**
      * @param spectra list of spectra to match with each other
      * @return a job that computes similarities between all pairs in spectra.
-     * This job returns a flat list of similarities, which can be unflattened with {@link CosineSpectraMatcher#unflattenMatchAllResult(List)}
+     * This job returns a flat list of similarities, which can be unflattened with
+     * {@link CosineSpectraMatcher#unflattenMatchAllResult(List)}
      */
     SpectralMatchMasterJJob matchAllParallelJob(List<CosineQuerySpectrum> spectra) {
-        return new SpectralMatchMasterJJob(queryUtils, Utils.pairsHalfNoDiag(spectra, spectra.size()));
+        return new SpectralMatchMasterJJob(queryUtils, Utils.pairsHalfNoDiag(spectra));
     }
 
     /**
      * @param flatResult matches between a list of spectra
-     * @return a nested list, where element[i][j] is a similarity between spectra[i] and spectra[j]
+     * @return a nested list containing the upper triangle without diagonal of the matrix [i][j],
+     * where element[i][j] is a similarity between spectra[i] and spectra[j], i < j
      */
     public List<List<SpectralSimilarity>> unflattenMatchAllResult(List<SpectralSimilarity> flatResult) {
-        int n = (int) Math.ceil((double) flatResult.size() / 2);
-        List<List<SpectralSimilarity>> it = new ArrayList<>(n);
-        int k = 0;
-        for (int i = 0; i < n; i++) {
-            it.add(flatResult.subList(k, k+(n-i)));
-            k += n-i;
-        }
-        return it;
+        if (!(flatResult instanceof ArrayList<SpectralSimilarity>))
+            flatResult = new ArrayList<>(flatResult);
+
+        List<List<SpectralSimilarity>> unflattend = new ArrayList<>();
+
+        int sublistLen = 1;
+        for (int k = flatResult.size(); k > 0; k -= sublistLen++)
+            unflattend.add(flatResult.subList(k - sublistLen, k));
+
+        return Lists.reverse(unflattend);
     }
 }
