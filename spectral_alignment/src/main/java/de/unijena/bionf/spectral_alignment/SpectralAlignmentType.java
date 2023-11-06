@@ -18,10 +18,9 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.spectraldb;
+package de.unijena.bionf.spectral_alignment;
 
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bionf.spectral_alignment.*;
 
 public enum SpectralAlignmentType {
 
