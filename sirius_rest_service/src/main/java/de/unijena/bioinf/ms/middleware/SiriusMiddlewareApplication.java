@@ -118,7 +118,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                     measureTime("Workflow DONE!");
                     System.err.println("SIRIUS Service started successfully!");
                 } else {
-                    System.exit(1); //todo real error codes
+                    System.exit(0);// null because this is the help message case
                 }
             } catch (IOException e) {
                 e.printStackTrace();

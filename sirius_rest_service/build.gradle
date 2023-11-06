@@ -33,6 +33,7 @@ ext['okhttp.version'] = '4.8.1'
 
 dependencies {
     api project(':sirius_gui')
+    //implementation 'me.friwi:jcefmaven:116.0.19.1'
 
     //////////// configure logging ///////////////////
     //logging bridges
