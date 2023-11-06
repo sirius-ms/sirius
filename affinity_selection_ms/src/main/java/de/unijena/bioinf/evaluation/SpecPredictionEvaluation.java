@@ -107,13 +107,13 @@ public class SpecPredictionEvaluation {
                 final PrecursorIonType ionization = ms2Experiment.getPrecursorIonType();
 
                 // 1. ICEBERG: predict a spectrum using ICEBERG
-                final ICEBERGSpectrumPredictor icebergPredictor = new ICEBERGSpectrumPredictor(smiles, ionization, this.NUM_FRAGMENTS);
+                final ICEBERGSpectrumPredictor icebergPredictor = new ICEBERGSpectrumPredictor(smiles, ionization, this.NUM_FRAGMENTS, fileName.replaceAll("\\.ms", ".json"));
                 final SimpleSpectrum icebergSpectrum = new SimpleSpectrum(icebergPredictor.predictSpectrum());
                 final double icebergRecall = recallScorer.score(msrdSpectrum, icebergSpectrum).similarity;
                 final double icebergWeightedRecall = weightedRecallScorer.score(msrdSpectrum, icebergSpectrum).similarity;
 
                 final StringBuilder strBuilder = new StringBuilder();
-                strBuilder.append(icebergRecall).append(',').append(icebergWeightedRecall);
+                strBuilder.append(fileName.replaceAll("\\.ms", "")).append(',').append(icebergRecall).append(',').append(icebergWeightedRecall);
 
                 // For each scoring and for each prediction method (except ICEBERG),
                 // predict a spectrum and compute the (weighted) recall:
@@ -143,7 +143,7 @@ public class SpecPredictionEvaluation {
             executor.shutdown();
 
             System.out.println("Tasks completed. Write results to the output file...");
-            StringBuilder strBuilder = new StringBuilder("ICEBERG:Recall,ICEBERG:WeightedRecall");
+            StringBuilder strBuilder = new StringBuilder("instanceName,ICEBERG:Recall,ICEBERG:WeightedRecall");
             for(String fragMethod : fragMethods){
                 for(String scoringMethod : scoringMethods){
                     strBuilder.append(',');
@@ -176,6 +176,12 @@ public class SpecPredictionEvaluation {
             final int numFragments = Integer.parseInt(args[4]);
             final int numHydrogenShifts = Integer.parseInt(args[5]);
 
+            final File pythonPath = new File(args[6]);
+            final File icebergScriptPath = new File(args[7]);
+            final File icebergModelsDir = new File(args[8]);
+            final File icebergOutputDir = new File(args[9]);
+
+            ICEBERGSpectrumPredictor.initializeClass(pythonPath, icebergScriptPath, icebergModelsDir, icebergOutputDir);
             SpecPredictionEvaluation eval = new SpecPredictionEvaluation(msrdSpectraDir, outputFile, scoringFile, deviation, fragRule, numFragments, numHydrogenShifts);
             eval.evaluate();
         } catch (IOException e) {
