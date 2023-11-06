@@ -40,7 +40,7 @@ public class FingerprinterOptions implements StandaloneTool<FingerprinterWorkflo
     @CommandLine.Option(names = {"--version", "-v"}, description = "Specify file to write fingerprint version information to", required = false)
     private Path version;
 
-    @CommandLine.Option(names = {"--bufferSize", "-b"}, description = "Specify buffer size for memory usage", required = false)
+    @CommandLine.Option(names = {"--bufferSize", "-b"}, description = "Specify buffer size to adjust memory usage. If not given buffer size is set to 5x CPU threads.", required = false)
     private int bufferSize;
 
     @Override
