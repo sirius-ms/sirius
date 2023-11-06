@@ -18,15 +18,18 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
+package de.unijena.bionf.spectral_alignment;
 
-dependencies {
-    // external
-    implementation 'org.dizitart:nitrite:3.4.4'
-    implementation 'com.esotericsoftware:reflectasm:1.11.9'
-    implementation 'it.unimi.dsi:fastutil:8.5.12'
-    implementation 'jakarta.persistence:jakarta.persistence-api:3.1.0'
+import org.junit.Test;
 
+import static org.junit.Assert.assertTrue;
 
-    testImplementation 'org.burningwave:core:12.62.7'
-    testImplementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:"$jackson_version"
+public class SpectralAlignmentTypeTest {
+
+    @Test
+    public void testGetScorer() {
+        assertTrue(SpectralAlignmentType.GAUSSIAN.getScorer(null) instanceof GaussianSpectralAlignment);
+        assertTrue(SpectralAlignmentType.INTENSITY.getScorer(null) instanceof IntensityWeightedSpectralAlignment);
+        assertTrue(SpectralAlignmentType.MODIFIED_COSINE.getScorer(null) instanceof ModifiedCosine);
+    }
 }

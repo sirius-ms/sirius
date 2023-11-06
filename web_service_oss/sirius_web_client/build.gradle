@@ -33,6 +33,7 @@ dependencies {
     api project (':sirius_api')
     api project (':model_store_oss')
     api project(':document-storage')
+    api project(':spectral_alignment')
 
     for (module in ["interfaces", "data", "io", "interfaces", "smiles", "silent"])
         api "org.openscience.cdk:cdk-$module:$cdk_version"

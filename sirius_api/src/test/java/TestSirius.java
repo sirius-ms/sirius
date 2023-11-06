@@ -60,15 +60,15 @@ public class TestSirius {
         ));
     }
 
-    public MutableMs2Experiment getStandardExample() throws IOException {
+    public MutableMs2Experiment getStandardExample() throws IOException, URISyntaxException {
         return getStandardExample("/Bicuculline.ms");
     }
 
-    public MutableMs2Experiment getStandardExample(String resourcePath) throws IOException {
+    public MutableMs2Experiment getStandardExample(String resourcePath) throws IOException, URISyntaxException {
         JenaMsParser p = new JenaMsParser();
         URL str = getClass().getResource(resourcePath);
         BufferedReader buf = new BufferedReader(new InputStreamReader(str.openStream()));
-        Ms2Experiment exp = p.parse(buf, str);
+        Ms2Experiment exp = p.parse(buf, str.toURI());
         return (MutableMs2Experiment) exp;
     }
 
@@ -157,7 +157,7 @@ public class TestSirius {
     }
 
     @Test
-    public void testCLPSolver() throws IOException {
+    public void testCLPSolver() throws IOException, URISyntaxException {
         // for profiling
         final Ms2Experiment experiment = getStandardExample();
         final Ms2Preprocessor preprocessor = new Ms2Preprocessor();
