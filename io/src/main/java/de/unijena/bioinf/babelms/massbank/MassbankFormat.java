@@ -22,9 +22,10 @@ package de.unijena.bioinf.babelms.massbank;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -36,6 +37,8 @@ import java.util.stream.Collectors;
  * MassBankRecordFormat as described in
  * @see <a href="https://github.com/MassBank/MassBank-web/blob/main/Documentation/MassBankRecordFormat.md">http://google.com</a>
  */
+@Getter
+@Slf4j
 public enum MassbankFormat {
     ACCESSION(),
     RECORD_TITLE(),
@@ -116,32 +119,16 @@ public enum MassbankFormat {
         return getKey();
     }
 
-    public String getKey() {
-        return key;
-    }
-
     public boolean isMandatory() {
         return !isOptional();
-    }
-
-    public boolean isOptional() {
-        return optional;
     }
 
     public boolean isUnique() {
         return !isIterative();
     }
 
-    public boolean isIterative() {
-        return iterative;
-    }
-
     public boolean isSingleLine() {
-        return isMultiline();
-    }
-
-    public boolean isMultiline() {
-        return multiline;
+        return !isMultiline();
     }
 
     public static void withKeyValue(@Nullable String v, @NotNull BiConsumer<String, String> doWith) {
@@ -154,7 +141,7 @@ public enum MassbankFormat {
                 return;
             }
         }
-        LoggerFactory.getLogger(MassbankFormat.class).debug("Non supported Key, Ignoring!");
+        log.debug("Non supported Key, Ignoring!");
     }
 
     public static Optional<RetentionTime> parseRetentionTime(Map<String, String> metaInfo) {
@@ -172,9 +159,11 @@ public enum MassbankFormat {
 
         if (!retentionTimeParams.isEmpty()) {
             double from = Double.parseDouble(retentionTimeParams.get("from"));
-            String unit = retentionTimeParams.getOrDefault("unit",
-                    from < RETENTION_TIME_UNIT_GUESS_THRESHOLD ? "min" : "s");
-
+            String unit = retentionTimeParams.get("unit");
+            if (unit == null) {
+                unit = from < RETENTION_TIME_UNIT_GUESS_THRESHOLD ? "min" : "s";
+                log.warn("Retention time unit not specified for record " + metaInfo.get(ACCESSION.k()) + ", assuming \"" + unit + "\".");
+            }
             int unitFactor = unit.equals("min") ? 60 : 1;
 
             if (retentionTimeParams.containsKey("to")) {
