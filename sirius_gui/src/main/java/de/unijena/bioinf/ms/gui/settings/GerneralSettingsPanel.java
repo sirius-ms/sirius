@@ -129,6 +129,7 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         }
         props.setProperty("de.unijena.bioinf.sirius.treebuilder.solvers", (String) solver.getSelectedItem());
         props.setProperty("de.unijena.bioinf.sirius.ui.allowMs1Only", String.valueOf(allowMS1Only.isSelected()));
+        props.setProperty("de.unijena.bioinf.sirius.ui.ignoreFormulas", String.valueOf(ignoreFormulas.isSelected()));
 //        props.setProperty("de.unijena.bioinf.sirius.treebuilder.timeout", treeTimeout.getNumber().toString());
         final Path dir = Paths.get(db.getFilePath());
         if (Files.isDirectory(dir)) {
