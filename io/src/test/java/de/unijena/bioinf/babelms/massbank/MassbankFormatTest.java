@@ -31,13 +31,19 @@ public class MassbankFormatTest {
         return Stream.of(
                 Arguments.of(Map.of(RETENTION, "5 s"), 5),
                 Arguments.of(Map.of(RETENTION, "100 s"), 100),
+                Arguments.of(Map.of(RETENTION, "10s"), 10),
                 Arguments.of(Map.of(RETENTION, "10 sec"), 10),
                 Arguments.of(Map.of(RETENTION, "1 min"), 60),
                 Arguments.of(Map.of(RETENTION, "1", TITLE, "Chemical; something; RT: 1 s"), 1),
                 Arguments.of(Map.of(RETENTION, "1", TITLE, "Chemical; something; RT: 1 min; something"), 60),
+                Arguments.of(Map.of(RETENTION, "1", TITLE, "Chemical; something; RT: 2 min; something"), 120),
                 Arguments.of(Map.of(RETENTION, "" + RETENTION_TIME_UNIT_GUESS_THRESHOLD, TITLE, "Nothing"), RETENTION_TIME_UNIT_GUESS_THRESHOLD),
                 Arguments.of(Map.of(RETENTION, "" + (RETENTION_TIME_UNIT_GUESS_THRESHOLD - 1)), (RETENTION_TIME_UNIT_GUESS_THRESHOLD - 1) * 60),
-                Arguments.of(Map.of(RETENTION, "50"), 50)
+                Arguments.of(Map.of(RETENTION, "50"), 50),
+                Arguments.of(Map.of(RETENTION, "1 some remark"), 60),
+                Arguments.of(Map.of(RETENTION, "1 se"), 60),
+                Arguments.of(Map.of(TITLE, "Title; RT: 5 s"), 5),
+                Arguments.of(Map.of(TITLE, "Title: 2 min; RT: 1; Something: 10 s"), 60)
         );
     }
 
@@ -51,11 +57,7 @@ public class MassbankFormatTest {
     private static Stream<Map<String, String>> testNoRetentionTime() {
         return Stream.of(
                 Map.of(),
-                Map.of(RETENTION, "100s"),
-                Map.of(RETENTION, "invalid"),
-                Map.of(RETENTION, "1000 ms"),
-                Map.of(RETENTION, "1 hour"),
-                Map.of(TITLE, "Title ignored; RT: 1 s")
+                Map.of(RETENTION, "invalid")
         );
     }
 
@@ -76,7 +78,7 @@ public class MassbankFormatTest {
         assertEquals(120, retentionTime.getEndTime(), 1e-9);
         assertEquals(90, retentionTime.getMiddleTime(), 1e-9);
 
-        retentionTime = MassbankFormat.parseRetentionTime(Map.of(RETENTION, (RETENTION_TIME_UNIT_GUESS_THRESHOLD - 1) + "-" + (RETENTION_TIME_UNIT_GUESS_THRESHOLD + 1))).orElseThrow();
-        assertEquals(RETENTION_TIME_UNIT_GUESS_THRESHOLD, retentionTime.getMiddleTime(), 1e-9);
+        retentionTime = MassbankFormat.parseRetentionTime(Map.of(RETENTION, RETENTION_TIME_UNIT_GUESS_THRESHOLD + "-" + (RETENTION_TIME_UNIT_GUESS_THRESHOLD + 1))).orElseThrow();
+        assertEquals(RETENTION_TIME_UNIT_GUESS_THRESHOLD + 0.5, retentionTime.getMiddleTime(), 1e-9);
     }
 }
