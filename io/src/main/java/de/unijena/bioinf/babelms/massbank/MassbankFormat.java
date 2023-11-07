@@ -141,7 +141,7 @@ public enum MassbankFormat {
                 return;
             }
         }
-        log.debug("Non supported Key, Ignoring!");
+        log.warn("Non supported Key in " + v + ", Ignoring!");
     }
 
     public static Optional<RetentionTime> parseRetentionTime(Map<String, String> metaInfo) {
