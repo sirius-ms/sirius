@@ -302,6 +302,10 @@ public class CompoundFilterModel implements SiriusPCS {
         return currentMaxConfidence != maxConfidence;
     }
 
+    public boolean isMinConfidenceFilterActive() {
+        return currentMinConfidence != minConfidence;
+    }
+
 
     public void setAdducts(Set<PrecursorIonType> adducts) {
         this.adducts = adducts;
@@ -310,6 +314,11 @@ public class CompoundFilterModel implements SiriusPCS {
     public Set<PrecursorIonType> getAdducts() {
         return Collections.unmodifiableSet(adducts);
     }
+    public boolean isAdductFilterActive() {
+        return adducts != null && !adducts.isEmpty();
+    }
+
+
 
     @Override
     public HiddenChangeSupport pcs() {

@@ -57,28 +57,32 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
         double mz = item.getIonMass();
         double rt = item.getID().getRt().map(RetentionTime::getRetentionTimeInSeconds).orElse(Double.NaN);
         //todo hotfix, since the confidence score is a FormulaScore which sets all NaN to -Infinity (after computation, and thus also in project space)
-        double confidence = item.getID().getConfidenceScore().map(conf -> Double.isInfinite(conf) ? Double.NaN : conf).orElse(Double.NaN);
-        if ((mz < filterModel.getCurrentMinMz()) ||
-                (filterModel.isMaxMzFilterActive() && mz > filterModel.getCurrentMaxMz())) {
-            return false;
-        }
-        if (!Double.isNaN(rt)) {
-            if ((rt < filterModel.getCurrentMinRt()) ||
-                    (filterModel.isMaxRtFilterActive() && rt > filterModel.getCurrentMaxRt())) {
+        double confidence = item.getID().getConfidenceScore().filter(conf -> !Double.isInfinite(conf)).orElse(Double.NaN);
+
+        {
+            if (mz < filterModel.getCurrentMinMz())
                 return false;
-            }
-        }
-        if (!Double.isNaN(confidence)) {
-            if ((confidence < filterModel.getCurrentMinConfidence()) ||
-                    (filterModel.isMaxConfidenceFilterActive() && confidence > filterModel.getCurrentMaxConfidence())) {
+            if (filterModel.isMaxMzFilterActive() && mz > filterModel.getCurrentMaxMz())
                 return false;
-            }
-        } else {
-            return Double.compare(filterModel.getMinConfidence(), filterModel.getCurrentMinConfidence()) == 0;
         }
 
-        final Set<PrecursorIonType> adducts = filterModel.getAdducts();
-        if (!adducts.isEmpty() && !adducts.contains(item.getIonization()))
+        if (!Double.isNaN(rt)) { //never filter NaN because RT is just not available
+            if (rt < filterModel.getCurrentMinRt())
+                return false;
+            if (filterModel.isMaxRtFilterActive() && rt > filterModel.getCurrentMaxRt())
+                return false;
+        }
+
+        if (!Double.isNaN(confidence)) {
+            if (filterModel.isMinConfidenceFilterActive() && confidence < filterModel.getCurrentMinConfidence())
+                return false;
+            if (filterModel.isMaxConfidenceFilterActive() && confidence > filterModel.getCurrentMaxConfidence())
+                return false;
+        } else if (filterModel.isMinConfidenceFilterActive()) { // filter NaN if min filter is set
+                return false;
+        }
+
+        if (filterModel.isAdductFilterActive() && !filterModel.getAdducts().contains(item.getIonization()))
             return false;
 
         return anyIOIntenseFilterMatches(item, filterModel);
@@ -166,8 +170,8 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
         boolean r1 = item.loadTopFormulaResult(List.of(TopCSIScore.class)).map(FormulaResult::getId)
                 .map(id ->
                         (filter.matchFormula && constraints.isSatisfied(id.getMolecularFormula(), id.getIonType().getIonization()))
-                        ||
-                        (filter.matchPrecursorFormula && constraints.isSatisfied(id.getPrecursorFormula(), id.getIonType().getIonization()))
+                                ||
+                                (filter.matchPrecursorFormula && constraints.isSatisfied(id.getPrecursorFormula(), id.getIonType().getIonization()))
                 ).orElse(false);
 
         boolean r2 = item.loadTopFormulaResult(List.of(ZodiacScore.class, SiriusScore.class)).map(FormulaResult::getId)
