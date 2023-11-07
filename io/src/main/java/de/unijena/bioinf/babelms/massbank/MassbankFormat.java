@@ -82,6 +82,11 @@ public enum MassbankFormat {
     private final boolean multiline;
     public static final List<String> KEYS_BY_LENGTH = Arrays.stream(values()).map(MassbankFormat::k).sorted(Comparator.comparing(String::length).reversed()).collect(Collectors.toList());
 
+    /**
+     * When parsing a retention time without a unit, everything less is considered in minutes, everything greater or equal - in seconds.
+     */
+    public static final double RETENTION_TIME_UNIT_GUESS_THRESHOLD = 50;
+
     MassbankFormat() {
         this(false, false);
     }
