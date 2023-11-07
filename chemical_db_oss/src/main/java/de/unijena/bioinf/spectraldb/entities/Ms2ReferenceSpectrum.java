@@ -110,6 +110,8 @@ public class Ms2ReferenceSpectrum {
 
     private SimpleSpectrum spectrum;
 
+    private double retentionTime;
+
     @JsonIgnore
     public DBLink getSpectralDbLink() {
         return new DBLink(libraryName, libraryId);

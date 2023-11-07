@@ -39,7 +39,8 @@ public class SpectralDbMsExperimentParser extends MsExperimentParser {
             "de.unijena.bioinf.ChemistryBase.chem.Smiles",
             "de.unijena.bioinf.ChemistryBase.chem.InChI",
             "de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation$Instrument",
-            "de.unijena.bioinf.ChemistryBase.ms.SpectrumFileSource"
+            "de.unijena.bioinf.ChemistryBase.ms.SpectrumFileSource",
+            "de.unijena.bioinf.ChemistryBase.chem.RetentionTime"
     );
 
     public static final Consumer<Ms2Experiment> ANNOTATION_FILTER = exp -> {
