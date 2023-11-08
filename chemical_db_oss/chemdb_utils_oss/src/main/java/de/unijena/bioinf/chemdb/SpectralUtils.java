@@ -23,6 +23,7 @@ package de.unijena.bioinf.chemdb;
 import com.google.common.collect.Iterables;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.InChIs;
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.ms.*;
@@ -101,6 +102,7 @@ public class SpectralUtils {
             experiment.getAnnotation(Smiles.class).map(Smiles::toString).ifPresent(b::smiles);
             experiment.getAnnotation(InChI.class).map(inchi -> (inchi.key != null) ? inchi.key2D() : null).ifPresent(b::candidateInChiKey);
             experiment.getAnnotation(MsInstrumentation.class).ifPresent(b::instrumentation);
+            experiment.getAnnotation(RetentionTime.class).ifPresent(rt -> b.retentionTime(rt.getMiddleTime()));
 
             s.getAnnotation(AdditionalFields.class).ifPresent(fields -> {
                 if (fields.containsKey(MassbankFormat.ACCESSION.k())) {
