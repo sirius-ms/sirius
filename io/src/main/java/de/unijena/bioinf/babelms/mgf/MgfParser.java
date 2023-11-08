@@ -268,7 +268,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                     if (e instanceof MultipleChargeException || e instanceof MultimereException) {
                         LoggerFactory.getLogger(this.getClass()).warn("Compound " + lastErrorFeatureId + " ignored because of: " + e.getMessage());
                     } else {
-                        LoggerFactory.getLogger(this.getClass()).error("Compund " + lastErrorFeatureId + " ignored because of unexpected parsing error.", e);
+                        LoggerFactory.getLogger(this.getClass()).error("Compound " + lastErrorFeatureId + " ignored because of unexpected parsing error.", e);
                     }
 
                     if (reading) {
