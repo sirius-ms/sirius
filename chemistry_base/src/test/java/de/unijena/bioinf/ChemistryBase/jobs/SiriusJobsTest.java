@@ -7,21 +7,22 @@ import javax.swing.*;
 import java.util.concurrent.TimeUnit;
 
 public class SiriusJobsTest {
-
+    public static boolean SHOW_GUI = false;
     @Test
     public void testRandom() throws InterruptedException {
         SiriusJobs.setGlobalJobManager(new SwingJobManager(4));
         SwingJobManager manager = (SwingJobManager) SiriusJobs.getGlobalJobManager();
-        JJobTable table = new JJobTable(manager);
-        JJobManagerPanel jobPanel = new JJobManagerPanel(table);
 
-
-        JFrame frame = new JFrame("JFrame Example");
-        frame.add(jobPanel);
-        frame.setSize(300, 300);
-        frame.setLocationRelativeTo(null);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setVisible(true);
+        if (SHOW_GUI) {
+            JJobTable table = new JJobTable(manager);
+            JJobManagerPanel jobPanel = new JJobManagerPanel(table);
+            JFrame frame = new JFrame("JFrame Example");
+            frame.add(jobPanel);
+            frame.setSize(300, 300);
+            frame.setLocationRelativeTo(null);
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setVisible(true);
+        }
 
         int num = 10;
 
@@ -36,13 +37,13 @@ public class SiriusJobsTest {
 
         }
 
-        TimeUnit.SECONDS.sleep(5);
+        TimeUnit.SECONDS.sleep(1);
 
         for (int i = 0; i < num; i++) {
             manager.submitSwingJob(new SwingJJobContainer(new RandomSwingJob(JJob.JobType.IO), "job-" + i));
         }
 
-        TimeUnit.SECONDS.sleep(5);
+        TimeUnit.SECONDS.sleep(1);
 
         for (int i = 0; i < num; i++) {
             manager.submitSwingJob(new SwingJJobContainer(new RandomSwingJob(JJob.JobType.REMOTE), "job-" + i));
