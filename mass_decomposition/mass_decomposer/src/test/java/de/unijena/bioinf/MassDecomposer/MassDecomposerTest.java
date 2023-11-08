@@ -25,7 +25,7 @@ public class MassDecomposerTest {
         double mass = 212.11;
         final MassToFormulaDecomposer decomposer = new MassToFormulaDecomposer();
         final FormulaConstraints constraints = new FormulaConstraints("CHNO[1-3]");
-        final List<MolecularFormula> formulas = decomposer.decomposeToFormulas(mass, new Deviation(10), constraints);
+        final List<MolecularFormula> formulas = decomposer.decomposeNeutralMassToFormulas(mass, new Deviation(10), constraints);
         String violation=null;
         for (MolecularFormula formula : formulas) {
             if (formula.numberOfOxygens() < 1 || formula.numberOfOxygens() > 3) {
@@ -41,11 +41,11 @@ public class MassDecomposerTest {
 
         double mass = 212.11;
         final MassToFormulaDecomposer decomposer = new MassToFormulaDecomposer();
-        final List<MolecularFormula> ref = decomposer.decomposeToFormulas(mass, new Deviation(20, 1e-3));
+        final List<MolecularFormula> ref = decomposer.decomposeNeutralMassToFormulas(mass, new Deviation(20, 1e-3));
 
         final HashMap<Element, Interval> map = new HashMap<Element, Interval>();
         map.put(PeriodicTable.getInstance().getByName("C"), new Interval(0, 10));
-        final List<MolecularFormula> result1 = decomposer.decomposeToFormulas(mass, new Deviation(20, 1e-3), map );
+        final List<MolecularFormula> result1 = decomposer.decomposeNeutralMassToFormulas(mass, new Deviation(20, 1e-3), map );
         assertTrue("filtered list should be smaller that unfiltered list", ref.size() > result1.size());
         for (MolecularFormula f : result1) {
             assertTrue("formula should have maximal 10 carbon atoms", f.numberOfCarbons() <= 10);
@@ -56,7 +56,7 @@ public class MassDecomposerTest {
         }
         assertEquals(expectedSize1, result1.size());
         map.put(PeriodicTable.getInstance().getByName("C"), new Interval(7, 10));
-        final List<MolecularFormula> result2 = decomposer.decomposeToFormulas(mass, new Deviation(20, 1e-3), map );
+        final List<MolecularFormula> result2 = decomposer.decomposeNeutralMassToFormulas(mass, new Deviation(20, 1e-3), map );
         assertTrue("strict filtered list should be smaller that permissive filtered list", result1.size() > result2.size());
         for (MolecularFormula f : result2) {
             assertTrue("formula should have at least 7 carbon atoms", f.numberOfCarbons() >= 7);
@@ -489,8 +489,8 @@ public class MassDecomposerTest {
         // test mf iterator
         {
             MassToFormulaDecomposer mf = new MassToFormulaDecomposer(alphabet);
-            Iterator<MolecularFormula> molecularFormulaIterator = mf.formulaIterator(222.1, dev, new FormulaConstraints("CHNOPS"));
-            final HashSet<MolecularFormula> tosearchin = new HashSet<>(mf.decomposeToFormulas(222.1, dev, new FormulaConstraints("CHNOPS")));
+            Iterator<MolecularFormula> molecularFormulaIterator = mf.neutralMassFormulaIterator(222.1, dev, new FormulaConstraints("CHNOPS"));
+            final HashSet<MolecularFormula> tosearchin = new HashSet<>(mf.decomposeNeutralMassToFormulas(222.1, dev, new FormulaConstraints("CHNOPS")));
             while (molecularFormulaIterator.hasNext())
                 assertTrue(tosearchin.remove(molecularFormulaIterator.next()));
             assertTrue(tosearchin.isEmpty());
