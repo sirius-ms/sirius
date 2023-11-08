@@ -22,18 +22,23 @@ package de.unijena.bioinf.babelms.massbank;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
  * MassBankRecordFormat as described in
  * @see <a href="https://github.com/MassBank/MassBank-web/blob/main/Documentation/MassBankRecordFormat.md">http://google.com</a>
  */
+@Getter
+@Slf4j
 public enum MassbankFormat {
     ACCESSION(),
     RECORD_TITLE(),
@@ -82,6 +87,11 @@ public enum MassbankFormat {
     private final boolean multiline;
     public static final List<String> KEYS_BY_LENGTH = Arrays.stream(values()).map(MassbankFormat::k).sorted(Comparator.comparing(String::length).reversed()).collect(Collectors.toList());
 
+    /**
+     * When parsing a retention time without a unit, everything less is considered in minutes, everything greater or equal - in seconds.
+     */
+    public static final double RETENTION_TIME_UNIT_GUESS_THRESHOLD = 50;
+
     MassbankFormat() {
         this(false, false);
     }
@@ -109,32 +119,16 @@ public enum MassbankFormat {
         return getKey();
     }
 
-    public String getKey() {
-        return key;
-    }
-
     public boolean isMandatory() {
         return !isOptional();
-    }
-
-    public boolean isOptional() {
-        return optional;
     }
 
     public boolean isUnique() {
         return !isIterative();
     }
 
-    public boolean isIterative() {
-        return iterative;
-    }
-
     public boolean isSingleLine() {
-        return isMultiline();
-    }
-
-    public boolean isMultiline() {
-        return multiline;
+        return !isMultiline();
     }
 
     public static void withKeyValue(@Nullable String v, @NotNull BiConsumer<String, String> doWith) {
@@ -147,21 +141,61 @@ public enum MassbankFormat {
                 return;
             }
         }
-        LoggerFactory.getLogger(MassbankFormat.class).debug("Non supported Key, Ignoring!");
+        log.warn("Non supported Key in " + v + ", Ignoring!");
     }
 
     public static Optional<RetentionTime> parseRetentionTime(Map<String, String> metaInfo) {
-        String value = metaInfo.get(AC_CHROMATOGRAPHY_RETENTION_TIME.k());
-        if (value != null) {
-            String[] times = value.split("\\s+")[0].split("\\s*[-]\\s*");
+        String value = metaInfo.getOrDefault(AC_CHROMATOGRAPHY_RETENTION_TIME.k(), "");
+        Map<String, String> retentionTimeParams = tryParseRetentionTime(value);
+        if (!retentionTimeParams.containsKey("unit")) {
+            String title = metaInfo.getOrDefault(RECORD_TITLE.k(), "");
+            if (title.contains("RT:")) {
+                Map<String, String> titleRetentionParams = tryParseRetentionTime(title.split("RT:")[1]);
+                if (titleRetentionParams.containsKey("unit") || retentionTimeParams.isEmpty()) {
+                    retentionTimeParams = titleRetentionParams;
+                }
+            }
+        }
 
-            if (times.length < 2) {
-                return Optional.of(new RetentionTime(Double.parseDouble(times[0]) * 60));
+        if (!retentionTimeParams.isEmpty()) {
+            double from = Double.parseDouble(retentionTimeParams.get("from"));
+            String unit = retentionTimeParams.get("unit");
+            if (unit == null) {
+                unit = from < RETENTION_TIME_UNIT_GUESS_THRESHOLD ? "min" : "s";
+                log.warn("Retention time unit not specified for record " + metaInfo.get(ACCESSION.k()) + ", assuming \"" + unit + "\".");
+            }
+            int unitFactor = unit.equals("min") ? 60 : 1;
+
+            if (retentionTimeParams.containsKey("to")) {
+                double to = Double.parseDouble(retentionTimeParams.get("to"));
+                return Optional.of(new RetentionTime(from * unitFactor, to * unitFactor));
             } else {
-                return Optional.of(new RetentionTime(Double.parseDouble(times[0]) * 60, Double.parseDouble(times[1]) * 60));
+                return Optional.of(new RetentionTime(from * unitFactor));
             }
         }
         return Optional.empty();
+    }
+
+    /**
+     * @param s string such as "2.5 min" or "1-2 s" or "0.5"
+     * @return map with relevant substrings with optional keys "from", "to", "unit". Can be empty if nothing could be extracted
+     */
+    private static Map<String, String> tryParseRetentionTime(String s) {
+        Pattern pattern = Pattern.compile("(?<from>\\d+\\.?\\d*)(\\s*-\\s*(?<to>\\d+\\.?\\d*))?(\\s*(?<unit>s|sec|min)(\\W|$))?");
+        Matcher matcher = pattern.matcher(s);
+        if (matcher.find()) {
+            Map<String, String> result = new HashMap<>();
+            result.put("from", matcher.group("from"));
+            if (matcher.group("to") != null) {
+                result.put("to", matcher.group("to"));
+            }
+            if (matcher.group("unit") != null) {
+                result.put("unit", matcher.group("unit"));
+            }
+            return result;
+        } else {
+            return Map.of();
+        }
     }
 
 
