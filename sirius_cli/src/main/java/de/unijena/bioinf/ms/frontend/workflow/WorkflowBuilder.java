@@ -48,7 +48,6 @@ import picocli.CommandLine;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -238,13 +237,15 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
         protected Workflow handle(CommandLine.ParseResult parseResult) throws CommandLine.ExecutionException {
             //here we create the workflow that we will execute later
             if (!(parseResult.commandSpec().commandLine().getCommand() == rootOptions))
-                throw new CommandLine.ExecutionException(parseResult.commandSpec().commandLine(), "Illegal root CLI found!");
+                throw new CommandLine.ExecutionException(parseResult.commandSpec().commandLine(), "Illegal root Options object found!");
 
 
             // init special preprocessing and config jobs
             PreprocessingJob<?> preproJob = null;
 
-            List<Object> toolchain = new ArrayList<>();
+            List<ToolChainJob.Factory<?>> toolchain = new ArrayList<>();
+            List<ToolChainOptions<?, ?>> toolchainOptions = new ArrayList<>();
+
             // look for an alternative input in the first subtool that is not the CONFIG subtool.
             if (parseResult.hasSubcommand()) {
                 parseResult = parseResult.subcommand();
@@ -255,7 +256,7 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
                 if (parseResult.commandSpec().commandLine().getCommand() instanceof PreprocessingTool)
                     preproJob = ((PreprocessingTool<?>) parseResult.commandSpec().commandLine().getCommand()).makePreprocessingJob(rootOptions, configOptionLoader.config);
                 else
-                    execute(parseResult.commandSpec().commandLine(), toolchain);
+                    execute(parseResult.commandSpec().commandLine(), toolchain, toolchainOptions);
             } else {
                 return () -> LoggerFactory.getLogger(getClass()).warn("No execution steps have been Specified!");
             }
@@ -269,7 +270,7 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
                     postproJob = ((PostprocessingTool<?>) parseResult.commandSpec().commandLine().getCommand()).makePostprocessingJob(rootOptions, configOptionLoader.config);
                     break;
                 } else {
-                    execute(parseResult.commandSpec().commandLine(), toolchain);
+                    execute(parseResult.commandSpec().commandLine(), toolchain, toolchainOptions);
                 }
             }
 
@@ -278,11 +279,31 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
             if (postproJob == null)
                 postproJob = rootOptions.makeDefaultPostprocessingJob();
 
+            //find dependent jobs
+            assignEarliestInputProvider(toolchain, toolchainOptions);
+
             final ToolChainWorkflow wf = new ToolChainWorkflow(preproJob, postproJob, configOptionLoader.config, toolchain, bufferFactory);
             return returnResultOrExit(wf);
         }
 
-        private void execute(CommandLine parsed, List<Object> executionResult) {
+        //searches for the jobtype another job really depends so that it can be assigned as dependency instead of
+        // "just" the previous job in the command.
+        private void assignEarliestInputProvider(List<ToolChainJob.Factory<?>> toolchain, List<ToolChainOptions<?, ?>> toolchainOptions) {
+            for (int i = 0; i < toolchain.size(); i++) {
+                ToolChainJob.Factory<?> factory = toolchain.get(i);
+                ToolChainOptions<?, ?> options = toolchainOptions.get(i);
+                for (int j = 0; j < i; j++) {
+                    ToolChainOptions<?, ?> probableInputProvider = toolchainOptions.get(j);
+                    if (probableInputProvider.getDependentSubCommands().contains(options.getClass())){
+                        factory.setRelInputProviderIndex(i-j);
+                        break;
+                    }
+                }
+
+            }
+        }
+
+        private void execute(CommandLine parsed, List<ToolChainJob.Factory<?>> executionResult, List<ToolChainOptions<?, ?>> executionOptions) {
             Object command = parsed.getCommand();
             if (command instanceof ToolChainOptions) {
                 try {
@@ -294,28 +315,14 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
                     configureInvalidator(toolChainOptions, task);
 
                     executionResult.add(task);
+                    executionOptions.add(toolChainOptions);
                 } catch (CommandLine.ParameterException | CommandLine.ExecutionException ex) {
                     throw ex;
                 } catch (Exception ex) {
                     throw new CommandLine.ExecutionException(parsed, "Error while calling command (" + command + "): " + ex, ex);
                 }
-            } else if (command instanceof Runnable) {
-                try {
-                    ((Runnable) command).run();
-                } catch (CommandLine.ParameterException | CommandLine.ExecutionException ex) {
-                    throw ex;
-                } catch (Exception ex) {
-                    throw new CommandLine.ExecutionException(parsed, "Error while running command (" + command + "): " + ex, ex);
-                }
-            } else if (command instanceof Callable) {
-                try {
-                    @SuppressWarnings("unchecked") Callable<Object> callable = (Callable<Object>) command;
-                    executionResult.add(callable.call());
-                } catch (CommandLine.ParameterException | CommandLine.ExecutionException ex) {
-                    throw ex;
-                } catch (Exception ex) {
-                    throw new CommandLine.ExecutionException(parsed, "Error while calling command (" + command + "): " + ex, ex);
-                }
+            } else {
+                throw new IllegalArgumentException("Found " + command.getClass().getName() + " but Expected " + ToolChainOptions.class.getName());
             }
         }
 
