@@ -34,7 +34,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * This is a job for Scheduling an workflow synchronization
+ * This is a job for Scheduling a workflow synchronization
  * it should just be used to organize the workflow, wait for results and input dependencies
  * NOT for CPU intense task -> use a nested CPU job instead.
  * Note: Scheduler Jobs like this can be blocked without any problems so subjob submission is
@@ -42,7 +42,7 @@ import java.util.function.Function;
  */
 
 public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements ToolChainJob<Instance> {
-    //todo store only Id and use Cache in projectspace manage instead -> allows for larger InstanceBuffer sizes.
+    //todo store only Id and use Cache in projectspace manager instead -> allows for larger InstanceBuffer sizes.
     protected Instance input = null;
 
     public InstanceJob(JobSubmitter submitter) {
