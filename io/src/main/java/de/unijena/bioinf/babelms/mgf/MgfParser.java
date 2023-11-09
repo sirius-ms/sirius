@@ -41,8 +41,8 @@ import java.util.regex.Pattern;
 import static de.unijena.bioinf.ChemistryBase.chem.InChIs.newInChI;
 
 public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
-    private static enum SpecType {
-        UNKNOWN, MS1, MSMS, CORRELATED;
+    private enum SpecType {
+        UNKNOWN, MS1, MSMS, CORRELATED
     }
 
     private static class MgfSpec {
@@ -92,7 +92,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
             this.reader = reader;
             this.prototype = new MgfSpec();
             this.prototype.spectrum = new MutableMs2Spectrum();
-            this.buffer = new ArrayDeque<MgfSpec>();
+            this.buffer = new ArrayDeque<>();
             this.ignoreUnsupportedIonTypes = ignoreUnsupportedIonTypes;
         }
 
@@ -118,8 +118,8 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                 buffer.addLast(s);
         }
 
-        private static Pattern CHARGE_PATTERN = Pattern.compile("([+-]?)(\\d+)([+-]?)");
-        private static Pattern NOT_AVAILABLE = Pattern.compile("\\s*N/A\\s*");
+        private static final Pattern CHARGE_PATTERN = Pattern.compile("([+-]?)(\\d+)([+-]?)");
+        private static final Pattern NOT_AVAILABLE = Pattern.compile("\\s*N/A\\s*");
 
         private void handleKeyword(MgfSpec spec, String keyword, String value) throws IOException {
             keyword = keyword.toUpperCase();
@@ -137,7 +137,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                     spec.retentionTime = new RetentionTime(Double.parseDouble(parts[parts.length - 1]));
                 } else {
                     double a = Double.parseDouble(parts[0]), b = Double.parseDouble(parts[1]);
-                    spec.retentionTime = new RetentionTime(a, b, a + (b - a) / 2d);
+                    spec.retentionTime = new RetentionTime(a, b);
                 }
             } else if (keyword.equals("SOURCE_INSTRUMENT")) {
                 for (MsInstrumentation.Instrument i : MsInstrumentation.Instrument.values()) {
@@ -283,7 +283,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                             } else if (!increasedIndex && line.toUpperCase().startsWith("FEATURE_ID")) {
                                 final int i = line.indexOf('=');
                                 String id = line.substring(i + 1).trim();
-                                if (id.length() > 0 && !id.equals(lastErrorFeatureId)) {
+                                if (!id.isEmpty() && !id.equals(lastErrorFeatureId)) {
                                     ++specIndex;
                                     increasedIndex = true;
                                     lastErrorFeatureId = id;
@@ -298,8 +298,8 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
     }
 
     @Override
-    public Iterator<Ms2Spectrum<Peak>> parseSpectra(final BufferedReader reader) throws IOException {
-        return new Iterator<Ms2Spectrum<Peak>>() {
+    public Iterator<Ms2Spectrum<Peak>> parseSpectra(final BufferedReader reader) {
+        return new Iterator<>() {
 
             private final MgfParserInstance inst = new MgfParserInstance(reader);
 
