@@ -1,16 +1,18 @@
 package de.unijena.bioinf.babelms.ms;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidates;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.IsotopeMs2Settings;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.MsExperimentParser;
-import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -42,5 +44,10 @@ public class MsParserTest{
         //test default parameters
         assertTrue("NumberOfCandidates not set", experiment.hasAnnotation(NumberOfCandidates.class));
         assertEquals("NumberOfCandidates differs from DEFAULT", PropertyManager.DEFAULTS.createInstanceWithDefaults(NumberOfCandidates.class).value, experiment.getAnnotationOrThrow(NumberOfCandidates.class).value);
+
+        assertTrue(experiment.hasAnnotation(RetentionTime.class));
+        RetentionTime rt = experiment.getAnnotationOrThrow(RetentionTime.class);
+        assertEquals(89.8151, rt.getStartTime(), 1e-9);
+        assertEquals(93.6412, rt.getEndTime(), 1e-9);
     }
 }
