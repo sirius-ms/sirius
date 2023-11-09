@@ -66,7 +66,14 @@ public abstract class DataSetJob extends ToolChainJobImpl<Iterable<Instance>> im
 
         if (!hasResults || recompute) {
             if (hasResults) {
-                inputInstances.forEach(this::invalidateResults);
+                inputInstances.forEach(ins->{
+                    //one corrupted instance should not make the whole dataset job fail
+                    try{
+                        invalidateResults(ins);
+                    } catch (Exception e){
+                        logWarn("Cannot invalidate results for "+ins.getID().getDirectoryName()+". Hence, this instance may be ignored in further computations. Error: "+e.getMessage());
+                    }
+                });
             }
             updateProgress(Math.round(.9 * inputInstances.size()), "Invalidate existing Results and Recompute!");
 
