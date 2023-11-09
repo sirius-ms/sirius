@@ -115,14 +115,14 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
                     final Instance instance = instances.next();
                     final InstanceJobCollectorJob collector = new InstanceJobCollectorJob(instance, invalidate);
                     JJob<Instance> jobToWaitOn = (DymmyExpResultJob) () -> instance;
-                    List<JJob<Instance>> createdJobs = new ArrayList<>(tasks.size());
-                    for (int i = 0; i < tasks.size(); i++) {
-                        InstanceJob.Factory<?> task = tasks.get(i);
-                        if (task.getRelInputProviderIndex() >= 0 && (i-task.getRelInputProviderIndex()) < createdJobs.size())
-                            jobToWaitOn = task.createToolJob(createdJobs.get(i-task.getRelInputProviderIndex()));
-                        else
+                    Map<InstanceJob.Factory<?>, JJob<Instance>> createdJobs = new HashMap<>(tasks.size());
+                    for (InstanceJob.Factory<?> task : tasks) {
+                        if (task.getInputProvidingFactory() != null && createdJobs.containsKey(task.getInputProvidingFactory())) {
+                            jobToWaitOn = task.createToolJob(createdJobs.get(task.getInputProvidingFactory()));
+                        } else
                             jobToWaitOn = task.createToolJob(jobToWaitOn);
-                        createdJobs.add(jobToWaitOn);
+
+                        createdJobs.put(task, jobToWaitOn);
                         jobToWaitOn.addPropertyChangeListener(progressSupport);
                         submitJob(jobToWaitOn);
                         collector.addRequiredJob(jobToWaitOn);

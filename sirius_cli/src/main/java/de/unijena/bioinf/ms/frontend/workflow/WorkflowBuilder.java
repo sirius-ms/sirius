@@ -295,12 +295,12 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
             for (int i = 0; i < toolchain.size(); i++) {
                 ToolChainJob.Factory<?> factory = toolchain.get(i);
                 ToolChainOptions<?, ?> options = toolchainOptions.get(i);
-                for (int j = 0; j < i; j++) {
+                for (int j = i-1; j >= 0; j--) {
                     ToolChainOptions<?, ?> probableInputProvider = toolchainOptions.get(j);
-                    if (probableInputProvider.getDependentSubCommands().contains(options.getClass())){
-                        factory.setRelInputProviderIndex(i-j);
-                        break;
-                    }
+                    ToolChainJob.Factory<?> probableInputProviderFactory = toolchain.get(j);
+
+                    if (probableInputProvider.getDependentSubCommands().contains(options.getClass()))
+                        factory.setInputProvidingFactory(probableInputProviderFactory);
                 }
 
             }
