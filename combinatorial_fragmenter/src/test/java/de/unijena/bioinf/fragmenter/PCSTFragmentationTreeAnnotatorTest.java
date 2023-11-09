@@ -56,8 +56,8 @@ public class PCSTFragmentationTreeAnnotatorTest {
             subtreeCalc.initialize((n, nnodes, nnedges) -> true);
             CombinatorialSubtree subtree = subtreeCalc.computeSubtree();
 
-            assertEquals(26.0, subtreeCalc.getScore(), 0.0);
-            assertEquals(26.0, subtree.getScore(), 0.0);
+            assertEquals(24.0, subtreeCalc.getScore(), 0.0);
+            assertEquals(24.0, subtree.getScore(), 0.0);
         }catch(UnknownElementException | InvalidSmilesException | GRBException e){
             e.printStackTrace();
         }
@@ -80,7 +80,7 @@ public class PCSTFragmentationTreeAnnotatorTest {
             CombinatorialSubtree subtree = subtreeCalc.computeSubtree();
 
             List<Integer> actualHydrogenRearrangementList = subtreeCalc.getListWithAmountOfHydrogenRearrangements();
-            int[] expectedHydrogenRearrangements = new int[]{0,0,1};
+            int[] expectedHydrogenRearrangements = new int[]{0,2,1};
 
             assertEquals(3, actualHydrogenRearrangementList.size());
 

@@ -14,11 +14,13 @@ device = sys.argv[3]
 max_nodes = int(sys.argv[4])
 threshold = float(sys.argv[5])
 binned_out = sys.argv[6] == "true"
-script_dir = os.path.abspath(sys.argv[7])
+models_dir = os.path.abspath(sys.argv[7])
+output_dir = os.path.abspath(sys.argv[8])
+output_file_name = sys.argv[9]
 
 # Load the ICEBERG-generate and -score models:
-gen_ckpt = os.path.join(script_dir, "nist_iceberg_generate.ckpt")
-inten_ckpt = os.path.join(script_dir, "nist_iceberg_score.ckpt")
+gen_ckpt = os.path.join(models_dir, "nist_iceberg_generate.ckpt")
+inten_ckpt = os.path.join(models_dir, "nist_iceberg_score.ckpt")
 model = joint_model.JointModel.from_checkpoints(gen_checkpoint=gen_ckpt, inten_checkpoint=inten_ckpt)
 
 # PREDICTION:
@@ -34,5 +36,5 @@ for key in frags.keys():
     frags[key]['atom_indices'], _ = fragmentation_engine.get_present_atoms(frag_bin_repr)
 
 # Return frags dictionary as a JSON string to the standard output:
-with open(os.path.join(script_dir, "iceberg_prediction_output.json"), 'w') as file_writer:
+with open(os.path.join(output_dir, output_file_name), 'w') as file_writer:
     file_writer.write(json.dumps(frags))
