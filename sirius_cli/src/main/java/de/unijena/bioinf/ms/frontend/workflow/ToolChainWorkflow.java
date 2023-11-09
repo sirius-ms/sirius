@@ -21,10 +21,7 @@ package de.unijena.bioinf.ms.frontend.workflow;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.*;
-import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
-import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
-import de.unijena.bioinf.ms.frontend.subtools.PostprocessingJob;
-import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
+import de.unijena.bioinf.ms.frontend.subtools.*;
 import de.unijena.bioinf.ms.frontend.subtools.config.AddConfigsJob;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -59,13 +56,13 @@ public class ToolChainWorkflow implements Workflow, ProgressSupport {
         return postprocessingJob;
     }
 
-    protected List<Object> toolchain;
+    protected List<ToolChainJob.Factory<?>> toolchain;
 
     private final AtomicBoolean canceled = new AtomicBoolean(false);
     private InstanceBuffer submitter = null;
     private JobProgressEvent progress = null;
 
-    public ToolChainWorkflow(@NotNull PreprocessingJob<?> preprocessingJob, @Nullable PostprocessingJob<?> postprocessingJob, @NotNull ParameterConfig parameters, @NotNull List<Object> toolchain, InstanceBufferFactory<?> bufferFactory) {
+    public ToolChainWorkflow(@NotNull PreprocessingJob<?> preprocessingJob, @Nullable PostprocessingJob<?> postprocessingJob, @NotNull ParameterConfig parameters, @NotNull List<ToolChainJob.Factory<?>> toolchain, InstanceBufferFactory<?> bufferFactory) {
         this.preprocessingJob = preprocessingJob;
         this.parameters = parameters;
         this.toolchain = toolchain;
@@ -85,9 +82,7 @@ public class ToolChainWorkflow implements Workflow, ProgressSupport {
             throw new InterruptedException("Workflow was canceled");
     }
 
-    //todo add PROGRESS support!
-    //todo allow dataset jobs da do not have to put all exps into memory
-    //todo low io mode: if instance buffer is infinity we do never have to read instances from disk (write only)
+    //todo allow dataset jobs that do not have to put all exps into memory
     @Override
     public void run() {
         try {
@@ -102,10 +97,6 @@ public class ToolChainWorkflow implements Workflow, ProgressSupport {
 
             Iterable<? extends Instance> iteratorSource = SiriusJobs.getGlobalJobManager().submitJob(preprocessingJob).awaitResult();
             int iteratorSourceSize = InstIterProvider.getResultSizeEstimate(iteratorSource);
-//            System.out.println("Instance Estimate: " + iteratorSourceSize);
-//            System.out.println("Toolchain Size: " + toolchain.size());
-//            System.out.println("Max Progress: " + (toolchain.size()) * iteratorSourceSize * 100);
-
 
             progressSupport.setEstimatedGlobalMaximum(Optional.ofNullable(preprocessingJob.currentProgress())
                     .map(JobProgressEvent::getMaxDelta).orElse(0L) + (long) (toolchain.size() + 1) * iteratorSourceSize * 100);

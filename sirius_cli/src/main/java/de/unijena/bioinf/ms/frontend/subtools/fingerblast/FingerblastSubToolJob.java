@@ -66,7 +66,7 @@ public class FingerblastSubToolJob extends InstanceJob {
 
     public FingerblastSubToolJob(JobSubmitter submitter) {
         super(submitter);
-        asWEBSERVICE();
+        asSCHEDULER();
     }
 
     @Override
