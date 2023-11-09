@@ -77,7 +77,13 @@ public class ZodiacSubToolJob extends DataSetJob {
 
     @Override
     public boolean isAlreadyComputed(@NotNull Instance inst) {
-        return inst.loadCompoundContainer().hasResults() && inst.loadFormulaResults(FormulaScoring.class).stream().anyMatch(res -> res.getCandidate().getAnnotationOrThrow(FormulaScoring.class).hasAnnotation(ZodiacScore.class));
+        try {
+            return inst.loadCompoundContainer().hasResults() && inst.loadFormulaResults(FormulaScoring.class).stream().anyMatch(res -> res.getCandidate().getAnnotationOrThrow(FormulaScoring.class).hasAnnotation(ZodiacScore.class));
+        } catch (Exception e) {
+            //only debug output, since the same instance will fail again below in computeAndAnnotateResult
+            logDebug("Error while reading molecular formula scores for "+inst.getID().getDirectoryName()+". Error: "+e.getMessage());
+            return false;
+        }
     }
 
     @Override
@@ -85,8 +91,13 @@ public class ZodiacSubToolJob extends DataSetJob {
         logInfo("START ZODIAC JOB");
         final Map<Ms2Experiment, List<FormulaResult>> input = instances.stream()
                 .distinct().collect(Collectors.toMap(
-                        Instance::getExperiment,
-                        in -> in.loadFormulaResults(List.of(SiriusScore.class), FormulaScoring.class, FTree.class).stream().map(SScored::getCandidate).collect(Collectors.toList())
+                        Instance::getExperiment, in -> {
+                            try {
+                                return in.loadFormulaResults(List.of(SiriusScore.class), FormulaScoring.class, FTree.class).stream().map(SScored::getCandidate).collect(Collectors.toList());
+                            } catch (Exception e) {
+                                logWarn("Error while reading molecular formula scores for "+in.getID().getDirectoryName()+". Exclude it from ZODIAC computation. Error: "+e.getMessage());
+                                return Collections.emptyList(); //empty lists are filtered below.
+                            }}
                 ));
 
         //remove instances from input which don't have a single FTree
