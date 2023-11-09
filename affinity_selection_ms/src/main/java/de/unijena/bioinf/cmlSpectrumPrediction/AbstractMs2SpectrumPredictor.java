@@ -7,6 +7,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.cmlFragmentation.FragmentationPredictor;
 import de.unijena.bioinf.fragmenter.CombinatorialFragment;
 import de.unijena.bioinf.fragmenter.MolecularGraph;
+import lombok.Getter;
 
 import java.util.HashMap;
 
@@ -16,6 +17,7 @@ public abstract class AbstractMs2SpectrumPredictor<P extends Peak> implements Sp
     /**
      * The considered ion type of the precursor molecule.
      */
+    @Getter
     protected final PrecursorIonType precursorIonType;
 
     /**
@@ -27,6 +29,7 @@ public abstract class AbstractMs2SpectrumPredictor<P extends Peak> implements Sp
     /**
      * The predicted tandem mass spectrum for the given molecular structure.
      */
+    @Getter
     protected Ms2Spectrum<P> spectrum;
 
     /**
@@ -57,20 +60,12 @@ public abstract class AbstractMs2SpectrumPredictor<P extends Peak> implements Sp
      */
     public abstract Ms2Spectrum<P> predictSpectrum();
 
-    public Ms2Spectrum<P> getSpectrum(){
-        return this.spectrum;
-    }
-
     public HashMap<P, CombinatorialFragment> getPeak2FragmentMapping(){
         return this.peak2fragment;
     }
 
     public FragmentationPredictor getFragmentationPredictor(){
         return this.fragPredictor;
-    }
-
-    public PrecursorIonType getPrecursorIonType(){
-        return this.precursorIonType;
     }
 
     public MolecularGraph getPrecursorMolecule(){
