@@ -62,6 +62,9 @@ public interface ToolChainJob<T> extends ProgressJJob<T> {
         J makeJob(@NotNull JobSubmitter submitter);
 
         Factory<J> addInvalidator(Consumer<Instance> invalidator);
+
+        void setRelInputProviderIndex(int idx);
+        int getRelInputProviderIndex();
     }
 
     abstract class FactoryImpl<J extends ToolChainJob<?>> implements Factory<J> {
@@ -70,6 +73,7 @@ public interface ToolChainJob<T> extends ProgressJJob<T> {
         @NotNull
         protected Consumer<Instance> invalidator;
 
+        protected int relativeInputProviderIndex = -1;
         public FactoryImpl(@NotNull Function<JobSubmitter, J> jobCreator, @Nullable Consumer<Instance> baseInvalidator) {
             this.jobCreator = jobCreator;
             invalidator = baseInvalidator != null ? baseInvalidator : (instance -> {});
@@ -86,6 +90,16 @@ public interface ToolChainJob<T> extends ProgressJJob<T> {
         public Factory<J> addInvalidator(Consumer<Instance> invalidator) {
             this.invalidator = this.invalidator.andThen(invalidator);
             return this;
+        }
+
+        @Override
+        public void setRelInputProviderIndex(int idx) {
+            this.relativeInputProviderIndex = idx;
+        }
+
+        @Override
+        public int getRelInputProviderIndex() {
+            return relativeInputProviderIndex;
         }
     }
 }
