@@ -135,11 +135,11 @@ public class Main {
     public static void main(String[] args) {
         try {
             // GENERAL INITIALISATION:
-            final String smiles = "C1=CC(=CC=C1C2=COC3=CC(=CC(=C3C2=O)O)O)OC4C(C(C(C(O4)CO)O)O)O";
-            final File msFile = new File("C:\\Users\\Nutzer\\Documents\\Bioinformatik_PhD\\Epimetheus\\Daten\\training_data\\spectra\\nist_1291738.ms");
+            final String smiles = "C1=CC(=C(C=C1C2=C(C(=O)C3=C(C=C(C=C3O2)O)O)O)O)OC4C(C(C(C(O4)CO)O)O)O";
+            final File msFile = new File("C:\\Users\\Nutzer\\Documents\\Bioinformatik_PhD\\Epimetheus\\Daten\\training_data\\spectra\\nist_1291819.ms");
             final int NUM_FRAGMENTS = 50;
             final int NUM_H_SHIFTS = 2;
-            final PrecursorIonType ionization = PrecursorIonType.fromString("[M+H]+");
+            final PrecursorIonType ionization = PrecursorIonType.fromString("[M + Na]+");
             final Deviation deviation = new Deviation(5);
 
             final SmilesParser smiParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
