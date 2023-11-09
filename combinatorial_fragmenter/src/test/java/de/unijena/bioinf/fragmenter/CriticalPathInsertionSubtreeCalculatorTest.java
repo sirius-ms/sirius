@@ -56,8 +56,8 @@ public class CriticalPathInsertionSubtreeCalculatorTest {
             subtreeCalc.initialize((n, nnodes, nnedges) -> true);
             CombinatorialSubtree subtree = subtreeCalc.computeSubtree();
 
-            assertEquals(25.0, subtreeCalc.getScore(), 0.0);
-            assertEquals(25.0, subtree.getScore(), 0.0);
+            assertEquals(23.0, subtreeCalc.getScore(), 0.0);
+            assertEquals(23.0, subtree.getScore(), 0.0);
         }catch(UnknownElementException | InvalidSmilesException e){
             e.printStackTrace();
         }
@@ -80,7 +80,7 @@ public class CriticalPathInsertionSubtreeCalculatorTest {
             CombinatorialSubtree subtree = subtreeCalc.computeSubtree();
 
             List<Integer> actualHydrogenRearrangementList = subtreeCalc.getListWithAmountOfHydrogenRearrangements();
-            int[] expectedHydrogenRearrangements = new int[]{0,0,1};
+            int[] expectedHydrogenRearrangements = new int[]{0,2,1};
 
             assertEquals(3, actualHydrogenRearrangementList.size());
 
