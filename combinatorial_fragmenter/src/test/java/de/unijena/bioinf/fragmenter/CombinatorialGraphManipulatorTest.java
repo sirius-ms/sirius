@@ -109,17 +109,17 @@ public class CombinatorialGraphManipulatorTest {
             assertArrayEquals(new int[]{1,2,3,4,5,6,7,8,9,10,11}, bitSet2NumList);
             assertArrayEquals(new int[]{2,2,2,2,2,2,0,0,2,2,2}, bondbreaks);
             assertArrayEquals(new int[]{1,1,1,1,1,1,0,1,2,2,2}, depths);
-            assertArrayEquals(new double[]{-2.0,-2.0,-2.0,-2.0,-2.0,-2.0,0.0,-2.0,-3.0,-3.0,-2.0},totalScores, 0.0);
-            assertArrayEquals(new double[]{-2.0,-2.0,-2.0,-2.0,-2.0,-2.0,0.0,-2.0,-1.0,-1.0,0.0}, scores, 0.0);
+            assertArrayEquals(new double[]{-2.0,-2.0,-2.0,-2.0,-2.0,-2.0,0.0,-2.0,-3.0,-3.0,-4.0},totalScores, 0.0);
+            assertArrayEquals(new double[]{-2.0,-2.0,-2.0,-2.0,-2.0,-2.0,0.0,-2.0,-1.0,-1.0,-2.0}, scores, 0.0);
 
             // Compare adjacency matrix:
             double minusInf = Double.NEGATIVE_INFINITY;
             double[][] adjMatrix = graph.getAdjacencyMatrix();
             double[][] expAdjMatrix = new double[][]{
-                    {minusInf,minusInf,minusInf,minusInf,minusInf,minusInf,minusInf,minusInf,-1.0,minusInf,0.0},
-                    {minusInf,minusInf,minusInf,minusInf,minusInf,minusInf,minusInf,minusInf,-1.0,minusInf,0.0},
+                    {minusInf,minusInf,minusInf,minusInf,minusInf,minusInf,minusInf,minusInf,-1.0,minusInf,-2.0},
+                    {minusInf,minusInf,minusInf,minusInf,minusInf,minusInf,minusInf,minusInf,-1.0,minusInf,-2.0},
                     {-1.0,-1.0,minusInf,minusInf,minusInf,minusInf,minusInf, minusInf,minusInf, -1.0, minusInf},
-                    {minusInf,minusInf,minusInf,minusInf,minusInf,minusInf,minusInf,minusInf,-1.0,minusInf,0.0},
+                    {minusInf,minusInf,minusInf,minusInf,minusInf,minusInf,minusInf,minusInf,-1.0,minusInf,-2.0},
                     {-1.0,minusInf, minusInf, -1.0, minusInf, minusInf, minusInf, minusInf, minusInf, -1.0, minusInf},
                     {minusInf,-1.0,minusInf,-1.0,minusInf,minusInf,minusInf,minusInf,minusInf,-1.0, minusInf},
                     {-2.0,-2.0,-2.0,-2.0,-2.0,-2.0,minusInf,-2.0,minusInf,minusInf,minusInf},
