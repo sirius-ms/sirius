@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
@@ -134,11 +135,11 @@ public class Main {
     public static void main(String[] args) {
         try {
             // GENERAL INITIALISATION:
-            final String smiles = "CCC(CC)N1C2=C(C=C(C=C2)C(=O)NC(CCC(=O)N)C(=O)N)N=C1C=CC3=CC=CC=C3";
-            final File msFile = new File("C:\\Users\\Nutzer\\Documents\\Bioinformatik_PhD\\AS-MS-Project\\LCMS_Benzimidazole\\BAMS-14-3\\ProjectSpaces\\filtered_by_hand_PS_5.7.2\\794_230220_BAMS-14-3_01_794\\spectrum.ms");
+            final String smiles = "C1=CC(=C(C=C1C2=C(C(=O)C3=C(C=C(C=C3O2)O)O)O)O)OC4C(C(C(C(O4)CO)O)O)O";
+            final File msFile = new File("C:\\Users\\Nutzer\\Documents\\Bioinformatik_PhD\\Epimetheus\\Daten\\training_data\\spectra\\nist_1291819.ms");
             final int NUM_FRAGMENTS = 50;
             final int NUM_H_SHIFTS = 2;
-            final PrecursorIonType ionization = PrecursorIonType.fromString("[M+H]+");
+            final PrecursorIonType ionization = PrecursorIonType.fromString("[M + Na]+");
             final Deviation deviation = new Deviation(5);
 
             final SmilesParser smiParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
@@ -156,6 +157,7 @@ public class Main {
             final HashMap<Peak, CombinatorialFragment> epimetheusPeak2Fragment = getEpimetheusMapping(molecule, fTree, msrdSpectrum);
 
             // PREDICTION WITH ICEBERG:
+            initICEBERG();
             final ICEBERGSpectrumPredictor icebergPredictor = new ICEBERGSpectrumPredictor(smiles, ionization, NUM_FRAGMENTS);
             final SimpleSpectrum icebergSpectrum = new SimpleSpectrum(icebergPredictor.predictSpectrum());
 
@@ -168,7 +170,7 @@ public class Main {
             final PrioritizedIterativeFragmentationPredictor iterFragPredictor = new PrioritizedIterativeFragmentationPredictor(molecule, scoring, NUM_FRAGMENTS);
             iterFragPredictor.predictFragmentation();
 
-            final BarcodeSpectrumPredictor iterSpectrumPredictor = new BarcodeSpectrumPredictor(iterFragPredictor, ionization.isPositive(), NUM_H_SHIFTS);
+            final BarcodeSpectrumPredictor iterSpectrumPredictor = new BarcodeSpectrumPredictor(iterFragPredictor, ionization, NUM_H_SHIFTS);
             final SimpleSpectrum iterSpectrum = new SimpleSpectrum(iterSpectrumPredictor.predictSpectrum());
 
             // 2. RuleBasedFragmentationPredictor:
@@ -177,7 +179,7 @@ public class Main {
             final RuleBasedFragmentationPredictor ruleBasedFragPredictor = new RuleBasedFragmentationPredictor(molecule, scoring, NUM_FRAGMENTS, fragRule, (node, nnodes, nedges) -> true);
             ruleBasedFragPredictor.predictFragmentation();
 
-            final BarcodeSpectrumPredictor ruleBasedSpectrumPredictor = new BarcodeSpectrumPredictor(ruleBasedFragPredictor, ionization.isPositive(), NUM_H_SHIFTS);
+            final BarcodeSpectrumPredictor ruleBasedSpectrumPredictor = new BarcodeSpectrumPredictor(ruleBasedFragPredictor, ionization, NUM_H_SHIFTS);
             final SimpleSpectrum ruleBasedSpectrum = new SimpleSpectrum(ruleBasedSpectrumPredictor.predictSpectrum());
 
             // WRITE RESULTS INTO A JSON-FILE:
@@ -207,5 +209,12 @@ public class Main {
         } catch (InvalidSmilesException | IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private static void initICEBERG(){
+        ICEBERGSpectrumPredictor.initializeClass(new File("C:\\Users\\Nutzer\\.conda\\envs\\ms-gen\\python"),
+                new File("C:\\Users\\Nutzer\\Documents\\Repositories\\sirius-libs\\affinity_selection_ms\\src\\main\\resources\\iceberg_predictMol.py"),
+                new File("C:\\Users\\Nutzer\\Documents\\Bioinformatik_PhD\\AS-MS-Project\\Fragmentation_and_Intensity_Prediction\\iceberg_scarf\\trained_models\\ICEBERG\\nist20"),
+                new File("C:\\Users\\Nutzer\\Documents\\Repositories\\sirius-libs\\affinity_selection_ms\\src\\main\\resources"));
     }
 }
