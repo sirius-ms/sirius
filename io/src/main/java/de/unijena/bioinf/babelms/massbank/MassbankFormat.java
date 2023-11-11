@@ -29,8 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.BiConsumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -87,11 +85,6 @@ public enum MassbankFormat {
     private final boolean multiline;
     public static final List<String> KEYS_BY_LENGTH = Arrays.stream(values()).map(MassbankFormat::k).sorted(Comparator.comparing(String::length).reversed()).collect(Collectors.toList());
 
-    /**
-     * When parsing a retention time without a unit, everything less is considered in minutes, everything greater or equal - in seconds.
-     */
-    public static final double RETENTION_TIME_UNIT_GUESS_THRESHOLD = 50;
-
     MassbankFormat() {
         this(false, false);
     }
@@ -146,58 +139,19 @@ public enum MassbankFormat {
 
     public static Optional<RetentionTime> parseRetentionTime(Map<String, String> metaInfo) {
         String value = metaInfo.getOrDefault(AC_CHROMATOGRAPHY_RETENTION_TIME.k(), "");
-        Map<String, String> retentionTimeParams = tryParseRetentionTime(value);
-        if (!retentionTimeParams.containsKey("unit")) {
+        RetentionTime.ParsedParameters retentionTimeParams = RetentionTime.parseRetentionTimeParameters(value);
+        if (retentionTimeParams.unit() == null) {
             String title = metaInfo.getOrDefault(RECORD_TITLE.k(), "");
             if (title.contains("RT:")) {
-                Map<String, String> titleRetentionParams = tryParseRetentionTime(title.split("RT:")[1]);
-                if (titleRetentionParams.containsKey("unit") || retentionTimeParams.isEmpty()) {
+                RetentionTime.ParsedParameters titleRetentionParams = RetentionTime.parseRetentionTimeParameters(title.split("RT:")[1]);
+                if (titleRetentionParams.unit() != null || retentionTimeParams.from() == null) {
                     retentionTimeParams = titleRetentionParams;
                 }
             }
         }
 
-        if (!retentionTimeParams.isEmpty()) {
-            double from = Double.parseDouble(retentionTimeParams.get("from"));
-            String unit = retentionTimeParams.get("unit");
-            if (unit == null) {
-                unit = from < RETENTION_TIME_UNIT_GUESS_THRESHOLD ? "min" : "s";
-                log.warn("Retention time unit not specified for record " + metaInfo.get(ACCESSION.k()) + ", assuming \"" + unit + "\".");
-            }
-            int unitFactor = unit.equals("min") ? 60 : 1;
-
-            if (retentionTimeParams.containsKey("to")) {
-                double to = Double.parseDouble(retentionTimeParams.get("to"));
-                return Optional.of(new RetentionTime(from * unitFactor, to * unitFactor));
-            } else {
-                return Optional.of(new RetentionTime(from * unitFactor));
-            }
-        }
-        return Optional.empty();
+        return Optional.ofNullable(RetentionTime.fromParameters(retentionTimeParams));
     }
-
-    /**
-     * @param s string such as "2.5 min" or "1-2 s" or "0.5"
-     * @return map with relevant substrings with optional keys "from", "to", "unit". Can be empty if nothing could be extracted
-     */
-    private static Map<String, String> tryParseRetentionTime(String s) {
-        Pattern pattern = Pattern.compile("(?<from>\\d+\\.?\\d*)(\\s*-\\s*(?<to>\\d+\\.?\\d*))?(\\s*(?<unit>s|sec|min)(\\W|$))?");
-        Matcher matcher = pattern.matcher(s);
-        if (matcher.find()) {
-            Map<String, String> result = new HashMap<>();
-            result.put("from", matcher.group("from"));
-            if (matcher.group("to") != null) {
-                result.put("to", matcher.group("to"));
-            }
-            if (matcher.group("unit") != null) {
-                result.put("unit", matcher.group("unit"));
-            }
-            return result;
-        } else {
-            return Map.of();
-        }
-    }
-
 
     public static Optional<PrecursorIonType> parsePrecursorIonType(Map<String, String> metaInfo) {
         String value = metaInfo.get(MS_FOCUSED_ION_PRECURSOR_TYPE.k());
