@@ -128,7 +128,7 @@ public final class RetentionTime implements Ms2ExperimentAnnotation, Comparable<
     /**
      * Parses a string with retention time
      * @param s string in format "from[-to][unit]", such as "2.5 min" or "120s" or "1-2 sec" or "0.5". Expected units - s, sec, min
-     * @return ParsedParameters map with relevant substrings parsed ("sec" unit will be substituted with "s"). Can contain nulls if parameters could be extracted
+     * @return ParsedParameters map with relevant substrings parsed ("sec" unit will be substituted with "s"). Can contain nulls if parameters could not be extracted
      */
     public static ParsedParameters parseRetentionTimeParameters(String s) {
         Pattern pattern = Pattern.compile("(?<from>\\d+\\.?\\d*)(\\s*-\\s*(?<to>\\d+\\.?\\d*))?(\\s*(?<unit>s|sec|min)(\\W|$))?");
