@@ -22,15 +22,20 @@ package de.unijena.bioinf.babelms.msp;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChIs;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
+import de.unijena.bioinf.ChemistryBase.exceptions.MultimereException;
+import de.unijena.bioinf.ChemistryBase.exceptions.MultipleChargeException;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.babelms.Parser;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Optional;
 
 public class MSPExperimentParser extends MSPSpectralParser implements Parser<Ms2Experiment> {
     private final boolean clearSpectrum;
@@ -47,70 +52,92 @@ public class MSPExperimentParser extends MSPSpectralParser implements Parser<Ms2
 
     @Override
     public synchronized Ms2Experiment parse(BufferedReader reader, URI source) throws IOException {
+        boolean errorOccurred = false;
         AdditionalFields fields = null;
         MutableMs2Experiment exp = null;
         while (true) {
-            if (spectrum == null)
-                spectrum = parseSpectrum(reader, fields);
+            try {
+                if (spectrum == null)
+                    spectrum = parseSpectrum(reader, fields);
 
-            if (spectrum == null)
-                return exp;
+                if (spectrum == null) // stream end
+                    if (errorOccurred)
+                        return null;
+                    else
+                        return exp;
 
-            final boolean additionalSpec = spectrum.getAnnotation(AdditionalFields.class).map(f -> f.containsKey("MAT_ADDITIONAL_SPEC")).orElse(false);
-            if (fields != null && !additionalSpec)
-                return exp;
-
-            if (fields == null)
-                exp = new MutableMs2Experiment();
-
-            fields = spectrum.getAnnotation(AdditionalFields.class).orElse(null);
-            if (spectrum instanceof Ms2Spectrum) {
-                exp.getMs2Spectra().add((MutableMs2Spectrum) spectrum);
-            } else {
-                exp.getMs1Spectra().add((SimpleSpectrum) spectrum);
-            }
-
-            //set metadata
-            if (fields != null) {
-                if (!additionalSpec) {
-                    final AdditionalFields finFields = fields;
-                    // mandatory
-                    exp.setSource(new SpectrumFileSource(source));
-                    MSP.parseName(fields).ifPresent(exp::setName);
-                    MSP.parseFeatureId(fields).ifPresent(exp::setFeatureId);
-                    fields.getField(MSP.FORMULA)
-                            .filter(s -> !"null".equalsIgnoreCase(s))
-                            .filter(s -> !s.isBlank())
-                            .map(MolecularFormula::parseOrThrow)
-                            .filter(m -> !m.isEmpty()).ifPresent(exp::setMolecularFormula);
-                    MSP.parsePrecursorIonType(fields)
-                            .ifPresent(exp::setPrecursorIonType);
-                    MSP.parsePrecursorMZ(fields).ifPresent(exp::setIonMass);
-                    //optional
-                    fields.getField(MSP.INCHI)
-                            .filter(s -> !"null".equalsIgnoreCase(s))
-                            .filter(s -> !s.isBlank())
-                            .map(inchi -> MSP.getWithSynonyms(finFields, MSP.INCHI_KEY).filter(s -> !s.isBlank()).map(key -> InChIs.newInChI(key, inchi)).
-                            orElse(InChIs.newInChI(inchi))).ifPresent(exp::annotate);
-                    fields.getField(MSP.SMILES)
-                            .filter(s -> !"null".equalsIgnoreCase(s))
-                            .filter(s -> !s.isBlank())
-                            .map(Smiles::new).ifPresent(exp::annotate);
-                    fields.getField(MSP.SPLASH)
-                            .filter(s -> !"null".equalsIgnoreCase(s))
-                            .filter(s -> !s.isBlank())
-                            .map(Splash::new).ifPresent(exp::annotate);
-                    MSP.getWithSynonyms(fields, MSP.INSTRUMENT_TYPE).map(MsInstrumentation::getBestFittingInstrument).ifPresent(exp::annotate);
-                    MSP.parseRetentionTime(fields).ifPresent(exp::annotate);
+                final boolean additionalSpec = spectrum.getAnnotation(AdditionalFields.class).map(f -> f.containsKey("MAT_ADDITIONAL_SPEC")).orElse(false);
+                if (fields != null && !additionalSpec) {
+                    if (errorOccurred) {
+                        errorOccurred = false;
+                        fields = null;
+                        exp = null;
+                    } else {
+                        return exp;
+                    }
                 }
-            } else {
-                LoggerFactory.getLogger(getClass()).warn("Cannot find additional meta data fields. Experiment might be incomplete!");
+
+                if (fields == null)
+                    exp = new MutableMs2Experiment();
+                fields = spectrum.getAnnotation(AdditionalFields.class).orElse(null);
+
+                if (spectrum instanceof Ms2Spectrum) {
+                    exp.getMs2Spectra().add((MutableMs2Spectrum) spectrum);
+                } else {
+                    exp.getMs1Spectra().add((SimpleSpectrum) spectrum);
+                }
+
+                //set metadata
+                if (fields != null) {
+                    if (!additionalSpec) {
+                        final AdditionalFields finFields = fields;
+                        // mandatory
+                        exp.setSource(new SpectrumFileSource(source));
+                        MSP.parseName(fields).ifPresent(exp::setName);
+                        MSP.parseFeatureId(fields).ifPresent(exp::setFeatureId);
+                        fields.getField(MSP.FORMULA)
+                                .filter(s -> !"null".equalsIgnoreCase(s))
+                                .filter(s -> !s.isBlank())
+                                .map(MolecularFormula::parseOrThrow)
+                                .filter(m -> !m.isEmpty()).ifPresent(exp::setMolecularFormula);
+                        MSP.parsePrecursorIonType(fields)
+                                .ifPresent(exp::setPrecursorIonType);
+                        MSP.parsePrecursorMZ(fields).ifPresent(exp::setIonMass);
+                        //optional
+                        fields.getField(MSP.INCHI)
+                                .filter(s -> !"null".equalsIgnoreCase(s))
+                                .filter(s -> !s.isBlank())
+                                .map(inchi -> MSP.getWithSynonyms(finFields, MSP.INCHI_KEY).filter(s -> !s.isBlank()).map(key -> InChIs.newInChI(key, inchi)).
+                                        orElse(InChIs.newInChI(inchi))).ifPresent(exp::annotate);
+                        fields.getField(MSP.SMILES)
+                                .filter(s -> !"null".equalsIgnoreCase(s))
+                                .filter(s -> !s.isBlank())
+                                .map(Smiles::new).ifPresent(exp::annotate);
+                        fields.getField(MSP.SPLASH)
+                                .filter(s -> !"null".equalsIgnoreCase(s))
+                                .filter(s -> !s.isBlank())
+                                .map(Splash::new).ifPresent(exp::annotate);
+                        MSP.getWithSynonyms(fields, MSP.INSTRUMENT_TYPE).map(MsInstrumentation::getBestFittingInstrument).ifPresent(exp::annotate);
+                        fields.getField(MSP.RT).filter(s -> !s.isBlank()).map(Utils::parseDoubleWithUnknownDezSep).filter(v -> v > 0).map(v -> new RetentionTime(v * 60)).ifPresent(exp::annotate);
+                    }
+                } else {
+                    LoggerFactory.getLogger(getClass()).warn("Cannot find additional meta data fields. Experiment might be incomplete!");
+                }
+
+                if (clearSpectrum)
+                    spectrum.removeAnnotation(AdditionalFields.class);
+
+                spectrum = null; //critically, might produce infinity loop otherwise
+            } catch (RuntimeException e) {
+                if (e instanceof MultipleChargeException || e instanceof MultimereException) {
+                    LoggerFactory.getLogger(this.getClass()).warn("Compound '" + Optional.ofNullable(exp).map(Ms2Experiment::getFeatureId).orElse("N/A") + "' ignored because of: " + e.getMessage());
+                } else {
+                    LoggerFactory.getLogger(this.getClass()).error("Compound '" + Optional.ofNullable(exp).map(Ms2Experiment::getFeatureId).orElse("N/A") + "' ignored because of unexpected parsing error.", e);
+                }
+                //skipping exp
+                errorOccurred = true;
+                spectrum = null; //critically, might produce infinity loop otherwise
             }
-
-            if (clearSpectrum)
-                spectrum.removeAnnotation(AdditionalFields.class);
-
-            spectrum = null;
         }
     }
 }

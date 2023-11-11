@@ -29,7 +29,6 @@ import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.ms.annotations.AnnotationJJob;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobInput;
-import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.webapi.WebJJob;
 import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.webapi.WebAPI;
@@ -142,11 +141,16 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
         final BayesnetScoring[] scorings = NetUtils.tryAndWait(() -> {
             BayesnetScoring[] s = new BayesnetScoring[idResult.size()];
             webAPI.executeBatch((api, client) -> {
-                final FingerIdData csi = api.fingerprintClient().getFingerIdData(predictor.predictorType, client);
                 for (int i = 0; i < idResult.size(); i++) {
                     final FingerIdResult fingeridInput = idResult.get(i);
                     // fingerblast job: score candidate fingerprints against predicted fingerprint
-                    s[i] = api.fingerprintClient().getCovarianceScoring(predictor.predictorType, csi.getFingerprintVersion(), fingeridInput.getMolecularFormula(), csi.getPerformances(), client);
+                    s[i] = api.fingerprintClient().getCovarianceScoring(
+                            predictor.predictorType,
+                            predictor.getFingerprintVersion(),
+                            fingeridInput.getMolecularFormula(),
+                            predictor.getPerformances(),
+                            client
+                    );
                 }
             });
             return s;

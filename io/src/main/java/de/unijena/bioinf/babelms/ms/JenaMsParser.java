@@ -74,7 +74,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
     // todo quickn dirty hack
     BufferedReader lastReader = null;
-    String lastCompundName = null;
+    String lastCompoundName = null;
 
     @Override
     public Ms2Experiment parse(BufferedReader reader, URI source) throws IOException {
@@ -88,7 +88,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             try {
                 if (reader == lastReader) {
                     p = new ParserInstance(source, reader, config);
-                    p.newCompound(lastCompundName);
+                    p.newCompound(lastCompoundName);
                     return p.parse();
                 } else {
                     p = new ParserInstance(source, reader, config);
@@ -102,7 +102,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                     if (p.compoundName != null) {
                         lastReader = reader;
                     }
-                    lastCompundName = p.compoundName;
+                    lastCompoundName = p.compoundName;
                 }
             }
         }

@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
 
-public class FragStepDependentScoring extends EMFragmenterScoring2 {
+public class FragStepDependentScoring implements CombinatorialFragmenterScoring{
 
     // FragStepProbabilities[0] = 1d has several reasons:
     // 1. we can write (FragStepProbabilities[t+1] / FragStepProbabilities[t]) without checking t > 0
@@ -18,15 +18,21 @@ public class FragStepDependentScoring extends EMFragmenterScoring2 {
             4.228902709200913e-05, 1.1194154230237714e-05, 4.975179657883428e-06 };
 
     private final HashMap<BitSet, Double> fragment2BondScoresSum;
+    private final CombinatorialFragmenterScoring scoring;
 
-    public FragStepDependentScoring(MolecularGraph graph) {
-        super(graph, null);
+    public FragStepDependentScoring(CombinatorialFragmenterScoring scoring) {
+        this.scoring = scoring;
         this.fragment2BondScoresSum = new HashMap<>();
     }
 
     @Override
     public double scoreFragment(CombinatorialNode fragment){
         return 0d;
+    }
+
+    @Override
+    public double scoreBond(IBond bond, boolean direction){
+        return this.scoring.scoreBond(bond, direction);
     }
 
     @Override
@@ -45,16 +51,16 @@ public class FragStepDependentScoring extends EMFragmenterScoring2 {
             double sum = 0d;
             for(final int bondIdx : bondsInFragment){
                 IBond bond = molecule.getBonds()[bondIdx];
-                sum += Math.exp(super.scoreBond(bond, true));
-                sum += Math.exp(super.scoreBond(bond, false)); // EMFragmenterScoring2 is directed!
+                sum += Math.exp(this.scoring.scoreBond(bond, true));
+                sum += Math.exp(this.scoring.scoreBond(bond, false)); // EMFragmenterScoring2 is directed!
             }
             this.fragment2BondScoresSum.put(sourceFragment.getFragment().getBitSet(), sum);
         }
 
         final double bondProbSum = Math.log(this.fragment2BondScoresSum.get(sourceFragment.getFragment().getBitSet()));
-        final double logBondBreak1 = super.scoreBond(edge.getCut1(), edge.getDirectionOfFirstCut()) - bondProbSum;
+        final double logBondBreak1 = this.scoring.scoreBond(edge.getCut1(), edge.getDirectionOfFirstCut()) - bondProbSum;
         final double logBondBreak2 = edge.getCut2() != null ?
-                super.scoreBond(edge.getCut2(), edge.getDirectionOfSecondCut()) - bondProbSum : 0d;
+                this.scoring.scoreBond(edge.getCut2(), edge.getDirectionOfSecondCut()) - bondProbSum : 0d;
 
         return logFragStep + logBondBreak1 + logBondBreak2;
     }
