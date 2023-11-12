@@ -24,10 +24,6 @@ import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.SpectralMatchingPanel;
-import de.unijena.bioinf.ms.gui.ms_viewer.WebViewSpectraViewer;
-import de.unijena.bioinf.ms.gui.ms_viewer.data.SpectraJSONWriter;
-import de.unijena.bioinf.projectspace.InstanceBean;
-import de.unijena.bioinf.projectspace.SpectralSearchResultBean;
 
 import javax.swing.*;
 import java.awt.*;
