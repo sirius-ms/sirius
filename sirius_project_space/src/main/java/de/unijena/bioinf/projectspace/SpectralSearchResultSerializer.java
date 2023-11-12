@@ -62,8 +62,7 @@ public class SpectralSearchResultSerializer implements ComponentSerializer<Compo
                         .querySpectrumIndex(Integer.parseInt(row[1]))
                         .dbName(row[2])
                         .referenceUUID(row[3])
-                        .referenceSplash(row[4])
-                        .similarity(new SpectralSimilarity(Double.parseDouble(row[5]), Integer.parseInt(row[6])))
+                        .similarity(new SpectralSimilarity(Double.parseDouble(row[4]), Integer.parseInt(row[5])))
                         .build()
         ));
 
@@ -97,9 +96,8 @@ public class SpectralSearchResultSerializer implements ComponentSerializer<Compo
             row[1] = Integer.toString(hit.getQuerySpectrumIndex());
             row[2] = hit.getDbName();
             row[3] = hit.getReferenceUUID();
-            row[4] = hit.getReferenceSplash();
-            row[5] = Double.toString(hit.getSimilarity().similarity);
-            row[6] = Integer.toString(hit.getSimilarity().shardPeaks);
+            row[4] = Double.toString(hit.getSimilarity().similarity);
+            row[5] = Integer.toString(hit.getSimilarity().shardPeaks);
             return row;
         })::iterator);
     }
