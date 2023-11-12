@@ -31,7 +31,6 @@ import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
-import java.nio.file.Path;
 import java.util.*;
 
 public class SpectralSearchResultBean {
