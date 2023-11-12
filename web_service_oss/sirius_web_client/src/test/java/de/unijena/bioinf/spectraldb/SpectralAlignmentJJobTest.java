@@ -173,7 +173,6 @@ public class SpectralAlignmentJJobTest {
         String libraryId = "library id";
         String libraryName = "library name";
         String UUID = "UUID";
-        String splash = "splash";
 
         SimpleSpectrum referenceSpectrum = new SimpleSpectrum(new double[] {1d, 2d}, new double[] {0.5d, 1d});
         Ms2ReferenceSpectrum reference = Ms2ReferenceSpectrum.builder()
@@ -182,7 +181,6 @@ public class SpectralAlignmentJJobTest {
                 .libraryId(libraryId)
                 .libraryName(libraryName)
                 .uuid(UUID)
-                .splash(splash)
                 .build();
         CosineQuerySpectrum cosineReference = utils.createQueryWithoutLoss(new Ms2ReferenceSpectrumWrapper(reference), 3);
 
@@ -199,7 +197,6 @@ public class SpectralAlignmentJJobTest {
         assertEquals(libraryId, result.getDbId());
         assertEquals(libraryName, result.getDbName());
         assertEquals(UUID, result.getReferenceUUID());
-        assertEquals(splash, result.getReferenceSplash());
         assertEquals(utils.cosineProduct(cosineQuery, cosineReference), result.getSimilarity());
     }
 }

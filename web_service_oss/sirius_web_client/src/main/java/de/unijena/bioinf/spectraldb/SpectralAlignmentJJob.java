@@ -164,7 +164,6 @@ public class SpectralAlignmentJJob extends BasicMasterJJob<SpectralSearchResult>
                             .querySpectrumIndex(queryIndex)
                             .similarity(similarities.get(i))
                             .referenceUUID(reference.getUuid())
-                            .referenceSplash(reference.getSplash())
                             .build();
                 });
     }
