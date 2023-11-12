@@ -1,0 +1,24 @@
+
+
+# StructureCandidateScored
+
+
+
+## Properties
+
+| Name | Type | Description | Notes |
+|------------ | ------------- | ------------- | -------------|
+|**inchiKey** | **String** |  |  [optional] |
+|**smiles** | **String** |  |  [optional] |
+|**structureName** | **String** |  |  [optional] |
+|**xlogP** | **Double** |  |  [optional] |
+|**dbLinks** | [**List&lt;DBLink&gt;**](DBLink.md) | List of structure database links belonging to this structure candidate  OPTIONAL: needs to be added by parameter |  [optional] |
+|**refSpectraLinks** | [**List&lt;DBLink&gt;**](DBLink.md) | List of spectral library links belonging to this structure candidate  OPTIONAL: needs to be added by parameter |  [optional] |
+|**csiScore** | **Double** |  |  [optional] |
+|**tanimotoSimilarity** | **Double** |  |  [optional] |
+|**confidenceExactMatch** | **Double** |  |  [optional] |
+|**confidenceApproxMatch** | **Double** |  |  [optional] |
+|**fingerprint** | [**BinaryFingerprint**](BinaryFingerprint.md) |  |  [optional] |
+
+
+

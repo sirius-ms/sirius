@@ -29,6 +29,8 @@ wrapper {
 
 //Global Properties
 ext {
+    jackson_version = "2.14.3"
+    spring_boot_version = "2.7.17"
     //version for external libraries
     slf4j_version = '1.7.36'
     jjobs_version = '0.9.35'
