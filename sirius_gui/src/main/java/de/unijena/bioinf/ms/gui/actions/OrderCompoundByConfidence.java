@@ -24,19 +24,18 @@ import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.projectspace.InstanceBean;
 
-import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Comparator;
 
-public class OrderCompoundByConfidence extends AbstractAction {
+public class OrderCompoundByConfidence extends AbstractMainFrameAction {
 
-    public OrderCompoundByConfidence() {
-        super("Order by " + FormulaScore.NA(ConfidenceScore.class).shortName());
+    public OrderCompoundByConfidence(MainFrame mainFrame) {
+        super("Order by " + FormulaScore.NA(ConfidenceScore.class).shortName(), mainFrame);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        MainFrame.MF.getCompoundList().orderBy(Comparator
+        MF.getCompoundList().orderBy(Comparator
                 .comparingDouble((InstanceBean o) -> o.getID().getConfidenceScore().orElse(Double.NEGATIVE_INFINITY))
                         .reversed());
     }

@@ -72,7 +72,7 @@ public class ResultPanel extends JTabbedPane {
         this.lcmsTab = new LCMSViewerPanel(siriusResultElements);
 
         structureAnnoTab = new EpimetheusPanel(new StructureList(siriusResultElements, ActionList.DataSelectionStrategy.ALL));
-        structuresTab = new CandidateListDetailViewPanel(compoundList, new StructureList(siriusResultElements));
+        structuresTab = new CandidateListDetailViewPanel(this, compoundList, new StructureList(siriusResultElements));
         FingerprintPanel fpTabTmp;
         try {
             fpTabTmp = new FingerprintPanel(new FingerprintTable(siriusResultElements, webAPI));

@@ -32,13 +32,14 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 public class OpenOnlineDocumentationAction extends AbstractAction {
-    public OpenOnlineDocumentationAction() {
+    protected final Frame popupOwner;
+    public OpenOnlineDocumentationAction(Frame popupOwner) {
         super("Help");
         putValue(Action.LARGE_ICON_KEY, Icons.HELP_32);
         putValue(Action.SHORT_DESCRIPTION,"Open online documentation");
+        this.popupOwner = popupOwner;
     }
 
     @Override
@@ -47,19 +48,19 @@ public class OpenOnlineDocumentationAction extends AbstractAction {
         try {
             URI uri = new URI(url);
             try {
-                GuiUtils.openURL(uri, "Open Online Documentation", true);
+                GuiUtils.openURL(popupOwner, uri, "Open Online Documentation", true);
             } catch (IOException er) {
                 LoggerFactory.getLogger(getClass()).error("Could not 'Online Documentation' in system browser, Try internal browser as fallback.", er);
                 try {
-                    GuiUtils.openURL(uri, "Open Online Documentation (internal)", false);
+                    GuiUtils.openURL(popupOwner, uri, "Open Online Documentation (internal)", false);
                 } catch (IOException ex2) {
                     LoggerFactory.getLogger(getClass()).error("Could neither open 'Online Documentation' in system browser nor in internal Browser." +   System.lineSeparator() + "Please copy the url to your browser: " + uri, ex2);
-                    new ExceptionDialog(MF, "Could neither open 'Online Documentation' in system browser nor in SIRIUS' internal browser: " + ex2.getMessage() + System.lineSeparator() + "Please copy the url to your browser: " + uri);
+                    new ExceptionDialog(popupOwner, "Could neither open 'Online Documentation' in system browser nor in SIRIUS' internal browser: " + ex2.getMessage() + System.lineSeparator() + "Please copy the url to your browser: " + uri);
                 }
                 LoggerFactory.getLogger(this.getClass()).error(er.getMessage(), er);
             }
         } catch (URISyntaxException ex) {
-            new ExceptionDialog(MF,"Malformed URL '" + url + "'. Cause: " + ex.getMessage());
+            new ExceptionDialog(popupOwner,"Malformed URL '" + url + "'. Cause: " + ex.getMessage());
         }
     }
 }

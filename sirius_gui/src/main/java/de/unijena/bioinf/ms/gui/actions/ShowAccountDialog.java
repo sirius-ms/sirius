@@ -23,6 +23,7 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.login.AccountDialog;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.webapi.Tokens;
 import org.jetbrains.annotations.Nullable;
@@ -35,15 +36,13 @@ import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.net.URI;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
-
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ShowAccountDialog extends AbstractAction {
+public class ShowAccountDialog extends AbstractMainFrameAction {
 
-    public ShowAccountDialog() {
-        super("Account");
+    public ShowAccountDialog(MainFrame mainFrame) {
+        super("Account", mainFrame);
         putValue(Action.LARGE_ICON_KEY, Icons.USER_32);
         putValue(Action.SHORT_DESCRIPTION, "Show user account information and settings.");
 

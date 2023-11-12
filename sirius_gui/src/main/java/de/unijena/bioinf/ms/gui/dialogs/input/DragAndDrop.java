@@ -20,9 +20,9 @@
 package de.unijena.bioinf.ms.gui.dialogs.input;
 
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import org.slf4j.LoggerFactory;
 
+import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.DnDConstants;
@@ -35,7 +35,7 @@ import java.util.List;
 
 public class DragAndDrop {
 
-    public static List<File> getFileListFromDrop(DropTargetDropEvent evt) {
+    public static List<File> getFileListFromDrop(Window popupOwner, DropTargetDropEvent evt) {
         evt.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
 
         try {
@@ -49,7 +49,11 @@ public class DragAndDrop {
             LoggerFactory.getLogger(DragAndDrop.class).error(e.getMessage(), e);
             return Collections.emptyList();
         } catch (ToManyFilesException e) {
-            new ExceptionDialog(MainFrame.MF, e.getMessage());
+            if (popupOwner instanceof Frame)
+                new ExceptionDialog((Frame) popupOwner, e.getMessage());
+            else
+                new ExceptionDialog((Dialog) popupOwner, e.getMessage());
+
             LoggerFactory.getLogger(DragAndDrop.class).error(e.getMessage(), e);
             return Collections.emptyList();
         }

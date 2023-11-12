@@ -21,21 +21,20 @@ package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
-
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class AcceptTermsAction extends AbstractAction {
+public class AcceptTermsAction extends AbstractMainFrameAction {
 
-    public AcceptTermsAction() {
-        super("Accept Terms");
+    public AcceptTermsAction(MainFrame owner) {
+        super("Accept Terms", owner);
         putValue(Action.SHORT_DESCRIPTION, "Accept Terms of Service and Privacy Policy of the current Webservice.");
     }
 

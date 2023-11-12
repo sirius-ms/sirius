@@ -28,7 +28,6 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
-import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ErrorListDialog;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
@@ -42,6 +41,7 @@ import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.ExperimentEditPanel;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.projectspace.InstanceBean;
 import gnu.trove.list.array.TDoubleArrayList;
 
 import javax.swing.*;
@@ -50,7 +50,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class LoadController implements LoadDialogListener {
-    private final JFrame owner;
+    private final MainFrame mainFrame;
     private DefaultLoadDialog loadDialog;
 
     private final MutableMs2Experiment expToModify;
@@ -58,14 +58,14 @@ public class LoadController implements LoadDialogListener {
 
     private final EventList<SpectrumContainer> spectra;
 
-    public LoadController(JFrame owner, InstanceBean inst) {
-        this.owner = owner;
+    public LoadController(MainFrame mainFrame, InstanceBean inst) {
+        this.mainFrame = mainFrame;
 
         instance = inst;
         if (instance != null) {
             expToModify = (MutableMs2Experiment) inst.getExperiment();
             spectra = new BasicEventList<>(expToModify.getMs1Spectra().size() + expToModify.getMs2Spectra().size());
-            loadDialog = new DefaultLoadDialog(owner, spectra);
+            loadDialog = new DefaultLoadDialog(mainFrame, spectra);
 
             loadDialog.ionizationChanged(expToModify.getPrecursorIonType() != null ? expToModify.getPrecursorIonType() : PrecursorIonType.unknown(1));
 
@@ -80,7 +80,7 @@ public class LoadController implements LoadDialogListener {
         } else {
             expToModify = new MutableMs2Experiment();
             spectra = GlazedListsSwing.swingThreadProxyList(new BasicEventList<>());
-            loadDialog = new DefaultLoadDialog(owner, spectra);
+            loadDialog = new DefaultLoadDialog(mainFrame, spectra);
             loadDialog.ionizationChanged(PrecursorIonType.unknown(1));
             loadDialog.experimentNameChanged("");
             loadDialog.editPanel.formulaTF.setText("");
@@ -89,8 +89,8 @@ public class LoadController implements LoadDialogListener {
         loadDialog.addLoadDialogListener(this);
     }
 
-    public LoadController(JFrame owner) {
-        this(owner, null);
+    public LoadController(MainFrame mainFrame) {
+        this(mainFrame, null);
     }
 
     public void showDialog() {
@@ -130,7 +130,7 @@ public class LoadController implements LoadDialogListener {
     }
 
     private void importSpectra(List<File> files) {
-        FileImportDialog idi = new FileImportDialog(owner, files);
+        FileImportDialog idi = new FileImportDialog(mainFrame, files);
         importSpectra(idi.getCSVFiles(), idi.getMSFiles(), idi.getMGFFiles());
     }
 
@@ -254,9 +254,9 @@ public class LoadController implements LoadDialogListener {
 
 
         if (errorStorage.size() > 1) {
-            new ErrorListDialog(this.owner, errorStorage);
+            new ErrorListDialog(this.mainFrame, errorStorage);
         } else if (errorStorage.size() == 1) {
-            new ExceptionDialog(this.owner, errorStorage.get(0));
+            new ExceptionDialog(this.mainFrame, errorStorage.get(0));
         }
 
     }
@@ -313,9 +313,9 @@ public class LoadController implements LoadDialogListener {
                     expToModify.setMolecularFormula(loadDialog.editPanel.getMolecularFormula());
                 }
 
-                Jobs.runInBackgroundAndLoad(owner, () -> MainFrame.MF.ps().newCompoundWithUniqueId(expToModify));
+                Jobs.runInBackgroundAndLoad(mainFrame, () -> mainFrame.ps().newCompoundWithUniqueId(expToModify));
             } else {
-                Jobs.runInBackgroundAndLoad(owner, () -> completeExisting(instance, loadDialog.editPanel));
+                Jobs.runInBackgroundAndLoad(mainFrame, () -> completeExisting(instance, loadDialog.editPanel));
             }
         }
     }

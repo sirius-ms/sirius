@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.gui.login;
 
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,23 +32,15 @@ import java.beans.PropertyChangeListener;
 
 public class AccountDialog extends JDialog implements PropertyChangeListener {
     private final AuthService service;
-    private final Action signIn = SiriusActions.SIGN_IN.getInstance();
-    private final Action signOut = SiriusActions.SIGN_OUT.getInstance();
+    private final Action signIn;
+    private final Action signOut;
+
+    private final ActionMap actionMap = new ActionMap();
     private AccountPanel center;
 
-    public AccountDialog(Frame owner, AuthService service) {
-        super(owner, true);
+    public AccountDialog(MainFrame mainFrame, AuthService service) {
+        super(mainFrame, true);
         this.service = service;
-        build();
-    }
-
-    public AccountDialog(Dialog owner, AuthService service) {
-        super(owner, true);
-        this.service = service;
-        build();
-    }
-
-    private void build() {
         setTitle("Account");
         setLayout(new BorderLayout());
 
@@ -56,10 +49,13 @@ public class AccountDialog extends JDialog implements PropertyChangeListener {
 
 
         //============= CENTER =================
-        center = new AccountPanel(service);
+        center = new AccountPanel(mainFrame, service);
         add(center, BorderLayout.CENTER);
 
+        signIn = SiriusActions.SIGN_IN.getInstance(mainFrame, true, actionMap);
         signIn.addPropertyChangeListener(this);
+
+        signOut = SiriusActions.SIGN_OUT.getInstance(mainFrame, true,  actionMap);
         signOut.addPropertyChangeListener(this);
 
         configureActions();

@@ -24,6 +24,7 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.io.filefilter.ProjectArchivedFilter;
 import de.unijena.bioinf.ms.gui.io.filefilter.ProjectDirectoryFilter;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 
 import javax.swing.*;
@@ -31,15 +32,14 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.Objects;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ProjectSaveAction extends AbstractAction {
+public class ProjectSaveAction extends AbstractMainFrameAction {
 
-    public ProjectSaveAction() {
-        super("Save As");
+    public ProjectSaveAction(MainFrame mainFrame) {
+        super("Save As", mainFrame);
         putValue(Action.LARGE_ICON_KEY, Icons.FOLDER_CLOSE_32);
         putValue(Action.SHORT_DESCRIPTION, "Save (copy) the current project to a new location.");
         setEnabled(true);

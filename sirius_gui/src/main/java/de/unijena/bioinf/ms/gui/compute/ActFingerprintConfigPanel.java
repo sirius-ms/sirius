@@ -20,12 +20,13 @@
 package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import org.jetbrains.annotations.NotNull;
 
 public class ActFingerprintConfigPanel extends ActivatableConfigPanel<FingerprintConfigPanel> {
-    public ActFingerprintConfigPanel(@NotNull final JCheckBoxList<String> sourceIonization) {
-        super("Predict FPs", Icons.FINGER_32, true, () -> new FingerprintConfigPanel(sourceIonization));
+    public ActFingerprintConfigPanel(@NotNull MainFrame mainFrame, @NotNull final JCheckBoxList<String> sourceIonization) {
+        super(mainFrame, "Predict FPs", Icons.FINGER_32, true, () -> new FingerprintConfigPanel(sourceIonization));
     }
 
     @Override

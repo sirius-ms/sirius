@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
 
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 
 import javax.swing.*;
 
@@ -28,21 +29,21 @@ import javax.swing.*;
  */
 public class CompoundContextMenu extends JPopupMenu {
 
-    public CompoundContextMenu() {
-        add(new JMenuItem(SiriusActions.COMPUTE.getInstance()));
-        add(new JMenuItem(SiriusActions.SUMMARIZE_EXP.getInstance()));
-        add(new JMenuItem(SiriusActions.DELETE_EXP.getInstance()));
+    public CompoundContextMenu(MainFrame mf) {
+        add(new JMenuItem(SiriusActions.COMPUTE.getInstance(mf, true, getActionMap())));
+        add(new JMenuItem(SiriusActions.SUMMARIZE_EXP.getInstance(mf, true, getActionMap())));
+        add(new JMenuItem(SiriusActions.DELETE_EXP.getInstance(mf, true, getActionMap())));
         addSeparator();
-        add(new JMenuItem(SiriusActions.EDIT_EXP.getInstance()));
-        add(new JMenuItem(SiriusActions.REMOVE_FORMULA_EXP.getInstance()));
-        add(new JMenuItem(SiriusActions.CHANGE_ADDCUCT_EXP.getInstance()));
+        add(new JMenuItem(SiriusActions.EDIT_EXP.getInstance(mf, true, getActionMap())));
+        add(new JMenuItem(SiriusActions.REMOVE_FORMULA_EXP.getInstance(mf, true, getActionMap())));
+        add(new JMenuItem(SiriusActions.CHANGE_ADDCUCT_EXP.getInstance(mf, true, getActionMap())));
         addSeparator();
-        add(new JMenuItem(SiriusActions.ORDER_BY_INDEX.getInstance()));
-        add(new JMenuItem(SiriusActions.ORDER_BY_RT.getInstance()));
-        add(new JMenuItem(SiriusActions.ORDER_BY_MASS.getInstance()));
-        add(new JMenuItem(SiriusActions.ORDER_BY_NAME.getInstance()));
-        add(new JMenuItem(SiriusActions.ORDER_BY_CONFIDENCE.getInstance()));
+        add(new JMenuItem(SiriusActions.ORDER_BY_INDEX.getInstance(mf, true, getActionMap())));
+        add(new JMenuItem(SiriusActions.ORDER_BY_RT.getInstance(mf, true, getActionMap())));
+        add(new JMenuItem(SiriusActions.ORDER_BY_MASS.getInstance(mf, true, getActionMap())));
+        add(new JMenuItem(SiriusActions.ORDER_BY_NAME.getInstance(mf, true, getActionMap())));
+        add(new JMenuItem(SiriusActions.ORDER_BY_CONFIDENCE.getInstance(mf, true, getActionMap())));
         addSeparator();
-        add(new JMenuItem(SiriusActions.RESET_FILTER.getInstance()));
+        add(new JMenuItem(SiriusActions.RESET_FILTER.getInstance(mf, true, getActionMap())));
     }
 }

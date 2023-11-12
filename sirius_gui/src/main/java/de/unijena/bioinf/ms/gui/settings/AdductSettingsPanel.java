@@ -22,7 +22,6 @@ package de.unijena.bioinf.ms.gui.settings;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 
@@ -70,7 +69,7 @@ public class AdductSettingsPanel extends TwoColumnPanel implements SettingsPanel
                     throw new IllegalArgumentException("Illegal IonType");
                 }
             } catch (Exception e) {
-                new ExceptionDialog(MainFrame.MF, "Invalid Adduct Syntax");
+                new ExceptionDialog((Frame) SwingUtilities.getWindowAncestor(AdductSettingsPanel.this), "Invalid Adduct Syntax");
             }
         });
 

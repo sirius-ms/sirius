@@ -19,29 +19,28 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
-import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
-import de.unijena.bioinf.ms.gui.io.filefilter.ProjectArchivedFilter;
-import de.unijena.bioinf.ms.gui.io.filefilter.ProjectDirectoryFilter;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.FilePresentDialog;
+import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
+import de.unijena.bioinf.ms.gui.io.filefilter.ProjectArchivedFilter;
+import de.unijena.bioinf.ms.gui.io.filefilter.ProjectDirectoryFilter;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
-
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ProjectSaveCopyAction extends AbstractAction {
+public class ProjectSaveCopyAction extends AbstractMainFrameAction {
 
-    public ProjectSaveCopyAction() {
-        super("Save Copy");
+    public ProjectSaveCopyAction(MainFrame mainFrame) {
+        super("Save Copy", mainFrame);
         putValue(Action.LARGE_ICON_KEY, Icons.FOLDER_FILE_32);
         putValue(Action.SHORT_DESCRIPTION, "Save a copy of the current project. (current location stays active)");
         setEnabled(true);

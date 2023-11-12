@@ -55,7 +55,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
     public static final String DONT_ASK_RECOMPUTE_KEY = "de.unijena.bioinf.sirius.computeDialog.recompute.dontAskAgain";
@@ -109,15 +108,15 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             addConfigPanel("SIRIUS - Molecular Formula Identification", formulaIDConfigPanel);
 
             zodiacConfigs = new ActZodiacConfigPanel();
-            csiPredictConfigs = new ActFingerprintConfigPanel(formulaIDConfigPanel.content.ionizationList.checkBoxList);
-            csiSearchConfigs = new ActFingerblastConfigPanel(formulaIDConfigPanel.content.searchDBList.checkBoxList);
-            canopusConfigPanel = new ActCanopusConfigPanel();
+            csiPredictConfigs = new ActFingerprintConfigPanel(mf(), formulaIDConfigPanel.content.ionizationList.checkBoxList);
+            csiSearchConfigs = new ActFingerblastConfigPanel(mf(), formulaIDConfigPanel.content.searchDBList.checkBoxList);
+            canopusConfigPanel = new ActCanopusConfigPanel(mf());
 
             if (compoundsToProcess.size() > 1 && ms2){
                 zodiacConfigs.addEnableChangeListener((s, enabled) -> {
                     if (enabled) {
                         if (!PropertyManager.getBoolean(DO_NOT_SHOW_AGAIN_KEY_Z_COMP, false)) {
-                            if (new QuestionDialog(MainFrame.MF, "Low number of Compounds",
+                            if (new QuestionDialog(mf(), "Low number of Compounds",
                                     GuiUtils.formatToolTip("Please note that ZODIAC is meant to improve molecular formula annotations on complete LC-MS/MS datasets. Using a low number of compounds may not result in improvements.", "", "Do you wish to continue anyways?"),
                                     DO_NOT_SHOW_AGAIN_KEY_Z_COMP).isAbort()) {
                                 zodiacConfigs.activationButton.setSelected(false);
@@ -127,7 +126,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
 
                         if ((compoundsToProcess.size() > 2000 && (Runtime.getRuntime().maxMemory() / 1024 / 1024 / 1024) < 8)
                                 && !PropertyManager.getBoolean(DO_NOT_SHOW_AGAIN_KEY_Z_MEM, false)) {
-                            if (new QuestionDialog(MainFrame.MF, "High Memory Consumption",
+                            if (new QuestionDialog(mf(), "High Memory Consumption",
                                     GuiUtils.formatToolTip("Your ZODIAC analysis contains `" + compoundsToProcess.size() + "` compounds and may therefore consume more system memory than available.", "", "Do you wish to continue anyways?"),
                                     DO_NOT_SHOW_AGAIN_KEY_Z_MEM).isAbort()) {
                                 zodiacConfigs.activationButton.setSelected(false);
@@ -210,6 +209,10 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         setVisible(true);
     }
 
+    private MainFrame mf(){
+        return (MainFrame) getOwner();
+    }
+
     private JPanel addConfigPanel(String header, JPanel configPanel, JPanel appendHorizontally) {
         JPanel stack = new JPanel();
         stack.setLayout(new BorderLayout());
@@ -280,13 +283,13 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         if (csiPredictConfigs.isToolSelected() || csiSearchConfigs.isToolSelected() || canopusConfigPanel.isToolSelected() && !PropertyManager.getBoolean(DO_NOT_SHOW_AGAIN_KEY_OUTDATED_PS, false)) {
             //CHECK Server connection
             if (checkResult == null)
-                checkResult = CheckConnectionAction.checkConnectionAndLoad();
+                checkResult = CheckConnectionAction.checkConnectionAndLoad(mf());
 
             if (checkResult.isConnected()) {
-                boolean compCheck = Jobs.runInBackgroundAndLoad(MF, "Checking FP version...", new TinyBackgroundJJob<Boolean>() {
+                boolean compCheck = Jobs.runInBackgroundAndLoad(mf(), "Checking FP version...", new TinyBackgroundJJob<Boolean>() {
                     @Override
                     protected Boolean compute() throws Exception {
-                        return MF.ps().checkAndFixDataFiles(this::checkForInterruption);
+                        return mf().ps().checkAndFixDataFiles(this::checkForInterruption);
                     }
 
                 }).getResult();
@@ -309,8 +312,8 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         }
         // todo hotfix to prevent gui from going crazy
         {
-            int index = MF.getCompoundListSelectionModel().getMinSelectionIndex();
-            MF.getCompoundListSelectionModel().setSelectionInterval(index, index);
+            int index = mf().getCompoundListSelectionModel().getMinSelectionIndex();
+            mf().getCompoundListSelectionModel().setSelectionInterval(index, index);
         }
 
 
@@ -325,7 +328,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
                     int highMass = finalComps.size() - lowMass.size();
                     final AtomicBoolean success = new AtomicBoolean(false);
                     if (highMass > 1 && !PropertyManager.getBoolean(DO_NOT_SHOW_AGAIN_KEY_S_MASS, false)) //do not ask for a single compound
-                        Jobs.runEDTAndWait(() -> success.set(new QuestionDialog(MainFrame.MF, "High mass Compounds detected!",
+                        Jobs.runEDTAndWait(() -> success.set(new QuestionDialog(mf(), "High mass Compounds detected!",
                                 GuiUtils.formatToolTip("Your analysis contains '" + highMass + "' compounds with a mass higher than 850Da. Fragmentation tree computation may take very long (days) to finish. You might want to exclude compounds with mass >850Da and compute them on individual basis afterwards.", "", "Do you wish to exclude the high mass compounds?"),
                                 DO_NOT_SHOW_AGAIN_KEY_S_MASS).isSuccess()));
                     if (success.get())
@@ -357,7 +360,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
                     final List<String> c = makeCommand(toolList);
                     Jobs.runCommand(c, finalComps, String.join(" > ", toolList));
                 } catch (Exception e) {
-                    new ExceptionDialog(MF, e.getMessage());
+                    new ExceptionDialog(mf(), e.getMessage());
                 }
 
                 updateProgress(0, 100, 100, "Computation Configured!");
@@ -427,7 +430,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
 
     private void checkConnection() {
         if (checkResult == null)
-            checkResult = CheckConnectionAction.checkConnectionAndLoad();
+            checkResult = CheckConnectionAction.checkConnectionAndLoad(mf());
 
         if (checkResult != null) {
             if (checkResult.isConnected()) {
@@ -437,17 +440,17 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
                                     && compoundsToProcess.stream().anyMatch(it -> it.getIonization().isNegative())) ||
                             (!checkResult.workerInfo.supportsAllPredictorTypes(ConnectionMonitor.neededTypes.stream().filter(WorkerWithCharge::isPositive).collect(Collectors.toSet()))
                                     && compoundsToProcess.stream().anyMatch(it -> it.getIonization().isPositive()))
-                    ) new WorkerWarningDialog(MF, checkResult.workerInfo == null);
+                    ) new WorkerWarningDialog(mf(), checkResult.workerInfo == null);
                 }
             } else {
                 if (formulaIDConfigPanel.content.getFormulaSearchDBs() != null) {
-                    new WarnFormulaSourceDialog(MF);
+                    new WarnFormulaSourceDialog(mf());
                     formulaIDConfigPanel.content.searchDBList.checkBoxList.uncheckAll();
                 }
             }
         } else {
             if (formulaIDConfigPanel.content.getFormulaSearchDBs() != null) {
-                new WarnFormulaSourceDialog(MF);
+                new WarnFormulaSourceDialog(mf());
                 formulaIDConfigPanel.content.searchDBList.checkBoxList.uncheckAll();
             }
         }

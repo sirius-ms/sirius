@@ -25,6 +25,7 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.CitationDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
@@ -37,8 +38,8 @@ public class ActCanopusConfigPanel extends ActivatableConfigPanel<SubToolConfigP
     public static final String BIBTEX_KEY_CF = "djoumbou-feunang16classyfire";
     public static final String BIBTEX_KEY_NPC = "kim21npclassifier";
 
-    public ActCanopusConfigPanel() {
-        super("CANOPUS", Icons.WORM_32, true, () -> {
+    public ActCanopusConfigPanel(@NotNull MainFrame mainFrame) {
+        super(mainFrame, "CANOPUS", Icons.WORM_32, true, () -> {
             SubToolConfigPanel<CanopusOptions> p = new SubToolConfigPanel<>(CanopusOptions.class) {
             };
             p.add(new JLabel("Parameter-Free! Nothing to set up here. =)"));
@@ -51,7 +52,7 @@ public class ActCanopusConfigPanel extends ActivatableConfigPanel<SubToolConfigP
     protected void setComponentsEnabled(boolean enabled) {
         super.setComponentsEnabled(enabled);
         if (enabled && !PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.cite.canopus", false)) {
-            new CitationDialog(MainFrame.MF, "de.unijena.bioinf.sirius.ui.cite.canopus", List.of(BIBTEX_KEY_CF, BIBTEX_KEY_NPC), () ->
+            new CitationDialog(SwingUtilities.getWindowAncestor(this), "de.unijena.bioinf.sirius.ui.cite.canopus", List.of(BIBTEX_KEY_CF, BIBTEX_KEY_NPC), () ->
                     "<html><h3> CANOPUS would not have been possible without the awesome work of the ClassyFire and NPClassifier people.</h3> "
                             + "So please also cite the ClassyFire and NPClassifier publications when using CANOPUS:<br><br>" +
                             "<p>"

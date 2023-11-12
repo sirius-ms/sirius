@@ -20,7 +20,6 @@
 package de.unijena.bioinf.ms.gui.dialogs;
 
 import com.google.common.collect.Multimap;
-import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
@@ -37,7 +36,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 /**
- * Created by Marcus Ludwig on 17.11.16.
+ * @author Marcus Ludwig
  */
 public final class ConnectionDialog extends JDialog implements ActionListener {
     private final static String name = "Webservice Connection";
@@ -48,14 +47,14 @@ public final class ConnectionDialog extends JDialog implements ActionListener {
 
     private static ConnectionDialog instance;
 
-    public static synchronized ConnectionDialog of(Frame owner, @NotNull Multimap<ConnectionError.Klass, ConnectionError> errors, @Nullable WorkerList workerList, @NotNull LicenseInfo license) {
+    public static synchronized ConnectionDialog of(MainFrame owner, @NotNull Multimap<ConnectionError.Klass, ConnectionError> errors, @Nullable WorkerList workerList, @NotNull LicenseInfo license) {
         if (instance != null)
             instance.dispose();
         instance = new ConnectionDialog(owner, errors, workerList, license);
         return instance;
     }
 
-    private ConnectionDialog(Frame owner, @NotNull Multimap<ConnectionError.Klass, ConnectionError> errors, @Nullable WorkerList workerList,  @NotNull LicenseInfo license) {
+    private ConnectionDialog(MainFrame owner, @NotNull Multimap<ConnectionError.Klass, ConnectionError> errors, @Nullable WorkerList workerList,  @NotNull LicenseInfo license) {
         super(owner, name, ModalityType.APPLICATION_MODAL);
         initDialog(errors, workerList, license);
     }
@@ -67,7 +66,7 @@ public final class ConnectionDialog extends JDialog implements ActionListener {
         JPanel header = new DialogHeader(Icons.NET_64);
         add(header, BorderLayout.NORTH);
 
-        connectionCheck = new ConnectionCheckPanel(this, errors, workerList, license);
+        connectionCheck = new ConnectionCheckPanel(this, (MainFrame) getOwner(), errors, workerList, license);
         add(connectionCheck, BorderLayout.CENTER);
 
 
@@ -110,8 +109,13 @@ public final class ConnectionDialog extends JDialog implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         this.dispose();
         if (e.getSource().equals(network))
-            Jobs.runEDTLater(() -> new SettingsDialog(MainFrame.MF, 2));
+            Jobs.runEDTLater(() -> new SettingsDialog(mf(), 2));
         if (e.getSource().equals(account))
-            Jobs.runEDTLater(() -> SiriusActions.SHOW_ACCOUNT.getInstance().actionPerformed(e));
+            Jobs.runEDTLater(() -> mf().getToolbar().getAccount().getAction().actionPerformed(e));
     }
+
+    private MainFrame mf(){
+        return (MainFrame) getOwner();
+    }
+
 }

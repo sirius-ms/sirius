@@ -25,22 +25,21 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.webapi.Tokens;
 
 import javax.swing.*;
+import java.awt.*;
 import java.net.URI;
-
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class OpenPortalAction extends AbstractUserPortalAction {
-    public OpenPortalAction() {
-        super("Manage Account");
+    public OpenPortalAction(Frame popupOwner) {
+        super("Manage Account", popupOwner);
         putValue(Action.SHORT_DESCRIPTION, "Manage your user account in the User Portal.");
     }
 
     @Override
     URI path() {
-        return Jobs.runInBackgroundAndLoad(MF, () -> ApplicationCore.WEB_API.getAuthService().getToken()
+        return Jobs.runInBackgroundAndLoad(owner, () -> ApplicationCore.WEB_API.getAuthService().getToken()
                 .flatMap(Tokens::getUsername)
                 .map(UserPortal::signInURL).orElse(UserPortal.signInURL())).getResult();
     }

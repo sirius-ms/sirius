@@ -31,16 +31,15 @@ import javax.annotation.concurrent.ThreadSafe;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 /**
  * Created by fleisch on 08.06.17.
  */
 @ThreadSafe
-public class CheckConnectionAction extends AbstractAction {
+public class CheckConnectionAction extends AbstractMainFrameAction {
 
-    protected CheckConnectionAction() {
-        super("Webservice");
+    protected CheckConnectionAction(MainFrame mainFrame) {
+        super("Webservice", mainFrame);
         putValue(Action.SHORT_DESCRIPTION, "Check and refresh webservice connection");
 
         MF.CONNECTION_MONITOR().addConnectionStateListener(evt -> {
@@ -48,7 +47,7 @@ public class CheckConnectionAction extends AbstractAction {
             Jobs.runEDTLater(() -> {
                 setIcon(check);
                 if (!check.isConnected())
-                    ConnectionDialog.of(MainFrame.MF, check.errors, check.workerInfo, check.licenseInfo);
+                    ConnectionDialog.of(MF, check.errors, check.workerInfo, check.licenseInfo);
             });
         });
 
@@ -59,10 +58,10 @@ public class CheckConnectionAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         try {
-            ConnectionMonitor.ConnectionCheck r = checkConnectionAndLoad();
+            ConnectionMonitor.ConnectionCheck r = checkConnectionAndLoad(MF);
             if (r != null) {
                 setIcon(r);
-                ConnectionDialog.of(MainFrame.MF, r.errors, r.workerInfo, r.licenseInfo);
+                ConnectionDialog.of(MF, r.errors, r.workerInfo, r.licenseInfo);
             }
         } catch (Exception e1) {
             LoggerFactory.getLogger(getClass()).error("Error when checking connection by action", e1);
@@ -70,9 +69,9 @@ public class CheckConnectionAction extends AbstractAction {
     }
 
 
-    public static ConnectionMonitor.ConnectionCheck checkConnectionAndLoad() {
-        return Jobs.runInBackgroundAndLoad(MF, "Checking connection...",
-                () -> MF.CONNECTION_MONITOR().checkConnection()).getResult();
+    public static ConnectionMonitor.ConnectionCheck checkConnectionAndLoad(MainFrame mainFrame) {
+        return Jobs.runInBackgroundAndLoad(mainFrame, "Checking connection...",
+                () -> mainFrame.CONNECTION_MONITOR().checkConnection()).getResult();
     }
 
     protected synchronized void setIcon(final @Nullable ConnectionMonitor.ConnectionCheck check) {

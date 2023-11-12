@@ -30,6 +30,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoColumnPanel {
@@ -40,11 +41,17 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
 
     protected LinkedHashSet<EnableChangeListener<C>> listeners = new LinkedHashSet<>();
 
-    public ActivatableConfigPanel(String toolname, Icon buttonIcon, boolean needsCSIConnection, Supplier<C> contentSuppl) {
-        this(toolname, null, buttonIcon, needsCSIConnection, contentSuppl);
+    protected ActivatableConfigPanel(String toolname, Icon buttonIcon, Supplier<C> contentSuppl) {
+        this(null, toolname, buttonIcon, false, contentSuppl);
+    }
+    protected ActivatableConfigPanel(@Nullable MainFrame mainFrame, String toolname, Icon buttonIcon, boolean needsCSIConnection, Supplier<C> contentSuppl) {
+        this(mainFrame, toolname, null, buttonIcon, needsCSIConnection, contentSuppl);
     }
 
-    public ActivatableConfigPanel(String toolname, String toolDescription, Icon buttonIcon, boolean needsCSIConnection, Supplier<C> contentSuppl) {
+    protected ActivatableConfigPanel(String toolname, String toolDescription, Icon buttonIcon, Supplier<C> contentSuppl) {
+        this(null, toolname, toolDescription, buttonIcon, false, contentSuppl);
+    }
+    protected ActivatableConfigPanel(@Nullable MainFrame mainFrame, String toolname, String toolDescription, Icon buttonIcon, boolean needsCSIConnection, Supplier<C> contentSuppl) {
         super();
         this.toolName = toolname;
         this.content = contentSuppl.get();
@@ -61,7 +68,10 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
 
 
         if (needsCSIConnection) {
-            MainFrame.MF.CONNECTION_MONITOR().addConnectionStateListener(evt -> setButtonEnabled(((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck().isConnected()));
+            Objects.requireNonNull(mainFrame, "MainFrame needs to be given if csi check is true!")
+                    .CONNECTION_MONITOR().addConnectionStateListener(evt ->
+                            setButtonEnabled(((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck()
+                                    .isConnected()));
         } else {
             setButtonEnabled(true);
         }

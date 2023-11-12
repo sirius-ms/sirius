@@ -23,6 +23,7 @@ import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ExecutionDialog;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
 import de.unijena.bioinf.ms.gui.subtools.summaries.SummaryConfigPanel;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -32,12 +33,10 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
+public class SummarizeAllAction extends AbstractMainFrameAction {
 
-public class SummarizeAllAction extends AbstractAction {
-
-    public SummarizeAllAction() {
-        super("Summaries");
+    public SummarizeAllAction(MainFrame mainFrame) {
+        super("Summaries", mainFrame);
         putValue(Action.LARGE_ICON_KEY, Icons.EXPORT_32);
         putValue(Action.SMALL_ICON, Icons.EXPORT_16);
         putValue(Action.SHORT_DESCRIPTION, "Write/Export Summary .tsv files.");

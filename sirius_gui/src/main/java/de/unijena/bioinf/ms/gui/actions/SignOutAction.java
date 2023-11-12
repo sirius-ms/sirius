@@ -23,6 +23,7 @@ import de.unijena.bioinf.ChemistryBase.utils.ExFunctions;
 import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.rest.ProxyManager;
 import org.slf4j.LoggerFactory;
 
@@ -30,15 +31,13 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
-
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class SignOutAction extends AbstractAction {
+public class SignOutAction extends AbstractMainFrameAction {
 
-    public SignOutAction() {
-        super("Log out");
+    public SignOutAction(MainFrame mainFrame) {
+        super("Log out", mainFrame);
         putValue(Action.SHORT_DESCRIPTION, "Logout from the current account.");
     }
 

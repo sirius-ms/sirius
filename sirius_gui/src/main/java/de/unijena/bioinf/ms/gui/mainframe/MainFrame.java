@@ -23,7 +23,6 @@ import ca.odell.glazedlists.BasicEventList;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
-import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.gui.GuiAppOptions;
@@ -44,6 +43,7 @@ import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.rest.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +52,6 @@ import java.awt.*;
 import java.awt.dnd.*;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.nio.file.Path;
@@ -65,7 +64,6 @@ import java.util.stream.Collectors;
 public class MainFrame extends JFrame implements DropTargetListener {
 
     public static final CookieManager cookieGuard = new CookieManager();
-    public static final MainFrame MF = new MainFrame();
 
     static {
         CookieHandler.setDefault(cookieGuard);
@@ -144,7 +142,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
     private final ConnectionMonitor CONNECTION_MONITOR;
 
     // methods for creating the mainframe
-    private MainFrame() {
+    public MainFrame() {
         super(ApplicationCore.VERSION_STRING());
         //inti connection monitor
         CONNECTION_MONITOR = new ConnectionMonitor();
@@ -183,35 +181,36 @@ public class MainFrame extends JFrame implements DropTargetListener {
     protected void changeProject(IOFunctions.IOSupplier<SiriusProjectSpace> makeSpace) {
         final BasicEventList<InstanceBean> psList = compoundBaseList;
         final AtomicBoolean compatible = new AtomicBoolean(true);
-        this.ps = Jobs.runInBackgroundAndLoad(MF, "Opening new Project...", () -> {
+        this.ps = Jobs.runInBackgroundAndLoad(this, "Opening new Project...", () -> {
             GuiProjectSpaceManager old = this.ps;
             try {
                 final SiriusProjectSpace ps = makeSpace.get();
                 compatible.set(InstanceImporter.checkDataCompatibility(ps, NetUtils.checkThreadInterrupt(Thread.currentThread())) == null);
                 Jobs.cancelAllRuns();
-                final GuiProjectSpaceManager gps = new GuiProjectSpaceManager(ps, psList, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY, 10));
-                inEDTAndWait(() -> MF.setTitlePath(gps.projectSpace().getLocation().toString()));
+                final GuiProjectSpaceManager gps = new GuiProjectSpaceManager(this, ps, psList, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY, 10));
+                Jobs.runEDTAndWaitLazy(() -> setTitlePath(gps.projectSpace().getLocation().toString()));
 
                 gps.projectSpace().addProjectSpaceListener(event -> {
                     if (event.equals(ProjectSpaceEvent.LOCATION_CHANGED))
-                        inEDTAndWait(() -> MF.setTitlePath(gps.projectSpace().getLocation().toString()));
+                        Jobs.runEDTAndWaitLazy(() -> setTitlePath(gps.projectSpace().getLocation().toString()));
                 });
                 return gps;
             } finally {
                 old.close();
             }
         }).getResult();
+        Jobs.setProject(ps);
 
         if (this.ps == null) {
             try {
                 LoggerFactory.getLogger(getClass()).warn("Error when changing project-space. Falling back to tmp project-space");
                 createNewProjectSpace(ProjectSpaceIO.createTmpProjectSpaceLocation());
             } catch (IOException e) {
-                new StacktraceDialog(MF, "Cannot recreate a valid project-space due to: " + e.getMessage() + "'.  SIRIUS will not work properly without valid project-space. Please restart SIRIUS.", e);
+                new StacktraceDialog(this, "Cannot recreate a valid project-space due to: " + e.getMessage() + "'.  SIRIUS will not work properly without valid project-space. Please restart SIRIUS.", e);
             }
         }
         if (!compatible.get())
-            if (new QuestionDialog(MF, "<html><body>" +
+            if (new QuestionDialog(this, "<html><body>" +
                     "The opened project-space contains results based on an outdated fingerprint version.<br><br>" +
                     "You can either convert the project to the new fingerprint version and <b>lose all fingerprint related results</b> (e.g. CSI:FingerID an CANOPUS),<br>" +
                     "or you stay with the old fingerprint version but without being able to execute any fingerprint related computations (e.g. for data visualization).<br><br>" +
@@ -223,11 +222,13 @@ public class MainFrame extends JFrame implements DropTargetListener {
     public void decoradeMainFrameInstance(@NotNull GuiProjectSpaceManager projectSpaceManager) {
         //add project-space
         ps = projectSpaceManager;
+        Jobs.setProject(ps);
+
         compoundBaseList = ps.INSTANCE_LIST;
-        inEDTAndWait(() -> MF.setTitlePath(ps.projectSpace().getLocation().toString()));
+        Jobs.runEDTAndWaitLazy(() -> setTitlePath(ps.projectSpace().getLocation().toString()));
 
         // create models for views
-        compoundList = new CompoundList(ps);
+        compoundList = new CompoundList(this, ps);
         formulaList = new FormulaList(compoundList);
 
 
@@ -242,7 +243,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
             resultPanelContainer.add(new WebServiceInfoPanel(CONNECTION_MONITOR()), BorderLayout.SOUTH);
 
         // toolbar
-        toolbar = new SiriusToolbar();
+        toolbar = new SiriusToolbar(this);
 
         final JSplitPane mainPanel = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 
@@ -251,7 +252,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         add(mainPanel, BorderLayout.CENTER);
 
         //build left sidepane
-        FilterableExperimentListPanel experimentListPanel = new FilterableExperimentListPanel(new ExperimentListView(compoundList));
+        FilterableExperimentListPanel experimentListPanel = new FilterableExperimentListPanel(new ExperimentListView(this, compoundList));
         experimentListPanel.setPreferredSize(new Dimension(228, (int) experimentListPanel.getPreferredSize().getHeight()));
         mainPanel.setDividerLocation(232);
 
@@ -262,7 +263,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
         Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
         setSize(new Dimension((int) (screen.width * .7), (int) (screen.height * .7)));
-        MainFrame.MF.setLocationRelativeTo(null); //init mainframe
+        setLocationRelativeTo(null); //init mainframe
         setVisible(true);
     }
 
@@ -302,15 +303,15 @@ public class MainFrame extends JFrame implements DropTargetListener {
         boolean openNewProject = false;
 
         final InputFilesOptions inputF = new InputFilesOptions();
-        inputF.msInput = Jobs.runInBackgroundAndLoad(MF, "Analyzing Dropped Files...", false,
-                InstanceImporter.makeExpandFilesJJob(DragAndDrop.getFileListFromDrop(dtde))).getResult();
+        inputF.msInput = Jobs.runInBackgroundAndLoad(this, "Analyzing Dropped Files...", false,
+                InstanceImporter.makeExpandFilesJJob(DragAndDrop.getFileListFromDrop(this, dtde))).getResult();
 
         if (!inputF.msInput.isEmpty()) {
             if (inputF.msInput.isSingleProject())
-                openNewProject = new QuestionDialog(MF, "<html><body>Do you want to open the dropped Project instead of importing it? <br> The currently opened project will be closed!</br></body></html>"/*, DONT_ASK_OPEN_KEY*/).isSuccess();
+                openNewProject = new QuestionDialog(this, "<html><body>Do you want to open the dropped Project instead of importing it? <br> The currently opened project will be closed!</br></body></html>"/*, DONT_ASK_OPEN_KEY*/).isSuccess();
 
             if (openNewProject) {
-                MF.openNewProjectSpace(inputF.msInput.projects.keySet().iterator().next());
+                openNewProjectSpace(inputF.msInput.projects.keySet().iterator().next());
             } else {
                 importDragAndDropFiles(inputF);
             }
@@ -335,17 +336,5 @@ public class MainFrame extends JFrame implements DropTargetListener {
         LoadController lc = new LoadController(this);
         lc.addSpectra(csvFiles, msFiles, mgfFiles);
         lc.showDialog();
-    }
-
-    public static void inEDTAndWait(@NotNull final Runnable run) {
-        if (SwingUtilities.isEventDispatchThread()) {
-            run.run();
-        } else {
-            try {
-                Jobs.runEDTAndWait(run);
-            } catch (InterruptedException | InvocationTargetException e) {
-                throw new RuntimeException(e);
-            }
-        }
     }
 }

@@ -60,13 +60,6 @@ public class MgfExporterOptions implements StandaloneTool<MgfExporterWorkflow> {
         this.ppmDev = value.asDouble();
     }
 
-    //fewer parameter is probably better // todo hidden then?
-//    @CommandLine.Option(names = "--merge-abs", description = "Maximum allowed absolute difference for peaks of MS2 spectra to be merged.", defaultValue = "0.005")
-//    public void setMergeAbs(DefaultParameter value) throws Exception {
-//        this.absDev = value.asDouble();
-//    }
-
-
     @CommandLine.Option(names = {"--output", "-o"}, description = "Specify the mgf file destination.")
     public void setOutput(String outputPath) {
         output = Paths.get(outputPath);

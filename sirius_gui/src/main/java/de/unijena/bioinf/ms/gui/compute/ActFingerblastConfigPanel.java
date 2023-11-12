@@ -21,12 +21,14 @@ package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ActFingerblastConfigPanel extends ActivatableConfigPanel<FingerblastConfigPanel> {
-    public ActFingerblastConfigPanel(@Nullable final JCheckBoxList<CustomDataSources.Source> syncSource) {
-        super("Search DBs", Icons.DB_LENS_32, true, () -> new FingerblastConfigPanel(syncSource));
+    public ActFingerblastConfigPanel(@NotNull MainFrame mainFrame, @Nullable final JCheckBoxList<CustomDataSources.Source> syncSource) {
+        super(mainFrame, "Search DBs", Icons.DB_LENS_32, true, () -> new FingerblastConfigPanel(syncSource));
         //todo change icon
     }
 

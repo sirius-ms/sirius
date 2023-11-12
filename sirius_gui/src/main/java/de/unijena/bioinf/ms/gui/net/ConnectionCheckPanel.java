@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.gui.net;
 import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ms.gui.actions.ActionUtils;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.BooleanJlabel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.webView.WebviewHTMLTextJPanel;
@@ -31,8 +32,8 @@ import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerWithCharge;
-import de.unijena.bioinf.webapi.Tokens;
 import de.unijena.bioinf.rest.ConnectionError;
+import de.unijena.bioinf.webapi.Tokens;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,8 +42,10 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.awt.*;
 import java.time.Instant;
-import java.util.*;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.rest.ConnectionError.Klass.*;
@@ -81,13 +84,15 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
     final BooleanJlabel auth = new BooleanJlabel();
     final BooleanJlabel authLicense = new BooleanJlabel();
     private final JDialog owner;
+    private final MainFrame mf;
 
     JLabel authLabel = new JLabel("Authenticated ?  ");
     JPanel resultPanel = null;
 
-    public ConnectionCheckPanel(@Nullable JDialog owner, @NotNull Multimap<ConnectionError.Klass, ConnectionError> errors, @Nullable WorkerList workerInfoList, @NotNull LicenseInfo licenseInfo) {
+    public ConnectionCheckPanel(@NotNull JDialog owner, @NotNull MainFrame mf, @NotNull Multimap<ConnectionError.Klass, ConnectionError> errors, @Nullable WorkerList workerInfoList, @NotNull LicenseInfo licenseInfo) {
         super(GridBagConstraints.WEST, GridBagConstraints.EAST);
         this.owner = owner;
+        this.mf = mf;
 
         Optional<Subscription> sub = Optional.ofNullable(licenseInfo.getSubscription());
 
@@ -238,12 +243,12 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
                         + addHtmlErrorText(err));
                 resultPanel.add(new JButton(ActionUtils.deriveFrom(
                         evt -> Optional.ofNullable(owner).ifPresent(JDialog::dispose),
-                        SiriusActions.SIGN_OUT.getInstance())));
+                        SiriusActions.SIGN_OUT.getInstance(mf, mf.getToolbar().getActionMap()))));
                 case LOGIN:
                     addHTMLTextPanel(resultPanel, err + READ_MORE_LICENSING + addHtmlErrorText(err));
                     resultPanel.add(new JButton(ActionUtils.deriveFrom(
                             evt -> Optional.ofNullable(owner).ifPresent(JDialog::dispose),
-                            SiriusActions.SIGN_IN.getInstance())));
+                            SiriusActions.SIGN_IN.getInstance(mf, mf.getToolbar().getActionMap()))));
                     break;
                 case LICENSE:
                     addHTMLTextPanel(resultPanel, err + READ_MORE_LICENSING + addHtmlErrorText(err));
@@ -253,7 +258,7 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
                             " for the selected Webservice have not been accepted.</b><br> Click Accept to get Access:");
                     resultPanel.add(new JButton(ActionUtils.deriveFrom(
                             evt -> Optional.ofNullable(owner).ifPresent(JDialog::dispose),
-                            SiriusActions.ACCEPT_TERMS.getInstance())));
+                            SiriusActions.ACCEPT_TERMS.getInstance(mf, mf.getToolbar().getActionMap()))));
                     break;
                 case APP_SERVER:
                     addHTMLTextPanel(resultPanel, err + "<br>" +

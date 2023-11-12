@@ -23,27 +23,27 @@ import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.io.LoadController;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
 import de.unijena.bioinf.projectspace.InstanceBean;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class EditExperimentAction extends AbstractAction {
+public class EditExperimentAction extends AbstractMainFrameAction {
 
-    public EditExperimentAction() {
-        super("Edit");
+    public EditExperimentAction(MainFrame mainFrame) {
+        super("Edit", mainFrame);
         putValue(Action.SMALL_ICON, Icons.EDIT_16);
         putValue(Action.SHORT_DESCRIPTION, "Edit the selected data");
 
-        setEnabled(SiriusActions.notComputingOrEmptyFirstSelected(MF.getCompoundListSelectionModel()));
+        setEnabled(SiriusActions.notComputingOrEmptyFirstSelected(this.MF.getCompoundListSelectionModel()));
 
-        MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
+        this.MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
             public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {
             }

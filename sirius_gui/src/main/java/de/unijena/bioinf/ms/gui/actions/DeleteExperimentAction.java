@@ -26,11 +26,12 @@ package de.unijena.bioinf.ms.gui.actions;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.CloseDialogNoSaveReturnValue;
 import de.unijena.bioinf.ms.gui.dialogs.CloseDialogReturnValue;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 
 import javax.swing.*;
@@ -38,28 +39,29 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class DeleteExperimentAction extends AbstractAction {
+public class DeleteExperimentAction extends AbstractMainFrameAction {
     public static final String NEVER_ASK_AGAIN_KEY = PropertyManager.PROPERTY_BASE + ".sirius.dialog.delete_experiment_action.ask_again";
     private final List<InstanceBean> toRemove;
 
-    public DeleteExperimentAction(List<InstanceBean> toRemove) {
+    public DeleteExperimentAction(List<InstanceBean> toRemove, MainFrame mainFrame) {
+        super(mainFrame);
         this.toRemove = toRemove;
     }
 
-    public DeleteExperimentAction() {
-        super("Delete");
+    public DeleteExperimentAction(MainFrame mainFrame) {
+        super("Delete", mainFrame);
         toRemove = null;
         putValue(Action.SMALL_ICON, Icons.REMOVE_DOC_16);
         putValue(Action.SHORT_DESCRIPTION, "Delete the selected data");
 
-        setEnabled(SiriusActions.notComputingOrEmptySelected(MF.getCompoundListSelectionModel()));
 
-        MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
+        setEnabled(SiriusActions.notComputingOrEmptySelected(this.MF.getCompoundListSelectionModel()));
+
+        this.MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
             public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {
             }
@@ -77,14 +79,14 @@ public class DeleteExperimentAction extends AbstractAction {
     }
 
     public void deleteCompounds() {
-        if (!PropertyManager.getBoolean(NEVER_ASK_AGAIN_KEY,false)) {
+        if (!PropertyManager.getBoolean(NEVER_ASK_AGAIN_KEY, false)) {
             CloseDialogNoSaveReturnValue diag = new CloseDialogNoSaveReturnValue(MF, "When removing the selected compound(s) you will loose all computed identification results?", NEVER_ASK_AGAIN_KEY);
             CloseDialogReturnValue val = diag.getReturnValue();
             if (val == CloseDialogReturnValue.abort) return;
         }
 
         //use provided list or remove selected.
-        List<InstanceBean> toRemove = this.toRemove!=null ? new ArrayList<>(this.toRemove) : new ArrayList<>(MF.getCompoundList().getCompoundListSelectionModel().getSelected());
+        List<InstanceBean> toRemove = this.toRemove != null ? new ArrayList<>(this.toRemove) : new ArrayList<>(MF.getCompoundList().getCompoundListSelectionModel().getSelected());
         MF.getCompoundList().getCompoundListSelectionModel().clearSelection();
         MF.ps().deleteCompounds(toRemove);
     }

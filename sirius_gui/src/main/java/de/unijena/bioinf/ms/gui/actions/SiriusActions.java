@@ -20,12 +20,17 @@
 package de.unijena.bioinf.ms.gui.actions;
 
 import ca.odell.glazedlists.swing.AdvancedListSelectionModel;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import java.awt.*;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -33,9 +38,9 @@ import java.util.Collection;
 public enum SiriusActions {
 
     COMPUTE(ComputeAction.class),
-//    CANCEL_COMPUTE(CancelComputeAction.class),
+    //    CANCEL_COMPUTE(CancelComputeAction.class),
     COMPUTE_ALL(ComputeAllAction.class),
-//    CANCEL_ALL(CancelComputeAllAction.class),
+    //    CANCEL_ALL(CancelComputeAllAction.class),
     ORDER_BY_INDEX(OrderCompoundByIndex.class),
     ORDER_BY_RT(OrderCompoundByRT.class),
     ORDER_BY_MASS(OrderCompoundByMass.class),
@@ -83,33 +88,37 @@ public enum SiriusActions {
     CHECK_CONNECTION(CheckConnectionAction.class);
 
 
-    public static final ActionMap ROOT_MANAGER = new ActionMap();
     public final Class<? extends Action> actionClass;
 
-    public synchronized Action getInstance(final boolean createIfNull, final ActionMap map) {
+    public synchronized Action getInstance(@NotNull MainFrame mf, final boolean createIfNull, final ActionMap map) {
         Action a = map.get(name());
         if (a == null && createIfNull) {
             try {
-                a = actionClass.getDeclaredConstructor().newInstance();
+                for (Constructor<?> constructor : actionClass.getDeclaredConstructors()) {
+                    List<Class<?>> paras = List.of(constructor.getParameterTypes());
+                    if (paras.size() == 1 && (paras.contains(MainFrame.class) || paras.contains(Frame.class))) {
+                        a = (Action) constructor.newInstance(mf);
+                        break;
+                    } else if (paras.isEmpty()){
+                        a = actionClass.getDeclaredConstructor().newInstance();
+                        break;
+                    }
+                }
+                if (a == null)
+                    throw new NullPointerException("could not find valid constructor for action!");
                 map.put(name(), a);
-            } catch ( InstantiationException | IllegalAccessException |NoSuchMethodException | InvocationTargetException e) {
+            } catch (InstantiationException | IllegalAccessException | NoSuchMethodException |
+                     InvocationTargetException e) {
                 LoggerFactory.getLogger(this.getClass()).error("Could not load following Sirius Action: " + name(), e);
             }
         }
         return a;
     }
 
-    public Action getInstance(final ActionMap map) {
-        return getInstance(false, map);
+    public Action getInstance(@NotNull MainFrame mf, final ActionMap map) {
+        return getInstance(mf, false, map);
     }
 
-    public Action getInstance(boolean createIfNull) {
-        return getInstance(createIfNull, ROOT_MANAGER);
-    }
-
-    public Action getInstance() {
-        return getInstance(true, ROOT_MANAGER);
-    }
 
     SiriusActions(Class<? extends Action> action) {
         this.actionClass = action;

@@ -25,6 +25,7 @@ import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.compute.SubToolConfigPanel;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.logging.TextAreaJJobContainer;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,53 +39,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
 
-    public ExecutionDialog(@NotNull P configPanel) {
-        init(configPanel, compounds, nonCompoundInput);
-    }
 
-    public ExecutionDialog(@NotNull P configPanel, @Nullable List<InstanceBean> compounds, @Nullable List<Path> nonCompoundInput, Frame owner) {
-        super(owner);
-        init(configPanel, compounds, nonCompoundInput);
-    }
 
-    public ExecutionDialog(@NotNull P configPanel, @Nullable List<InstanceBean> compounds, @Nullable List<Path> nonCompoundInput, Frame owner, boolean modal) {
-        super(owner, modal);
-        init(configPanel, compounds, nonCompoundInput);
-    }
-
-    public ExecutionDialog(@NotNull P configPanel, @Nullable List<InstanceBean> compounds, @Nullable List<Path> nonCompoundInput, Frame owner, String title) {
-        super(owner, title);
-        init(configPanel, compounds, nonCompoundInput);
-    }
-
-    public ExecutionDialog(@NotNull P configPanel, @Nullable List<InstanceBean> compounds, @Nullable List<Path> nonCompoundInput, Frame owner, String title, boolean modal) {
+    public ExecutionDialog(@NotNull P configPanel, @Nullable List<InstanceBean> compounds, @Nullable List<Path> nonCompoundInput, MainFrame owner, String title, boolean modal) {
         super(owner, title, modal);
         init(configPanel, compounds, nonCompoundInput);
     }
-
-
-    public ExecutionDialog(@NotNull P configPanel, @Nullable List<InstanceBean> compounds, @Nullable List<Path> nonCompoundInput, Dialog owner) {
-        super(owner);
-        init(configPanel, compounds, nonCompoundInput);
-    }
-
-    public ExecutionDialog(@NotNull P configPanel, @Nullable List<InstanceBean> compounds, @Nullable List<Path> nonCompoundInput, Dialog owner, boolean modal) {
-        super(owner, modal);
-        init(configPanel, compounds, nonCompoundInput);
-    }
-
-    public ExecutionDialog(@NotNull P configPanel, @Nullable List<InstanceBean> compounds, @Nullable List<Path> nonCompoundInput, Dialog owner, String title) {
-        super(owner, title);
-        init(configPanel, compounds, nonCompoundInput);
-    }
-
-    public ExecutionDialog(@NotNull P configPanel, @Nullable List<InstanceBean> compounds, @Nullable List<Path> nonCompoundInput, Dialog owner, String title, boolean modal) {
-        super(owner, title, modal);
-        init(configPanel, compounds, nonCompoundInput);
+    private MainFrame mf(){
+        return (MainFrame) getOwner();
     }
 
     protected JButton execute, cancel;
@@ -152,11 +117,11 @@ public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
             command.addAll(configPanel.asParameterList());
 
             final TextAreaJJobContainer<Boolean> j = Jobs.runCommand(command, compounds, getInputFilesOptions(), configPanel.toolCommand());
-            LoadingBackroundTask.connectToJob(this.getOwner() != null ? this.getOwner() : MF, "Running '" + configPanel.toolCommand() + "'...", indeterminateProgress, j);
+            LoadingBackroundTask.connectToJob(mf(), "Running '" + configPanel.toolCommand() + "'...", indeterminateProgress, j);
 
         } catch (Exception e) {
             LoggerFactory.getLogger(getClass()).error("Error when running '" + configPanel.toolCommand() + "'.", e);
-            new ExceptionDialog(MF, e.getMessage());
+            new ExceptionDialog(mf(), e.getMessage());
         }
     }
 

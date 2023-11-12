@@ -24,6 +24,7 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.io.filefilter.ProjectArchivedFilter;
 import de.unijena.bioinf.ms.gui.io.filefilter.ProjectDirectoryFilter;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceIO;
 
@@ -31,15 +32,14 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
-
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ProjectOpenAction extends AbstractAction {
+public class ProjectOpenAction extends AbstractMainFrameAction {
 
-    public ProjectOpenAction() {
-        super("Open");
+
+    public ProjectOpenAction(MainFrame mainFrame) {
+        super("Open", mainFrame);
         putValue(Action.LARGE_ICON_KEY, Icons.FOLDER_OPEN_32);
         putValue(Action.SHORT_DESCRIPTION, "Open previously saved project (directory or .sirius). This closes the current Project.");
     }
