@@ -26,7 +26,6 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.webView.WebViewJPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 
@@ -98,7 +97,7 @@ public class AboutDialog extends JDialog {
         defineActions();
 
         setMinimumSize(new Dimension(Icons.SIRIUS_SPLASH.getIconWidth(), Icons.SIRIUS_SPLASH.getIconHeight() + south.getPreferredSize().height + 100));
-        setPreferredSize(new Dimension(Icons.SIRIUS_SPLASH.getIconWidth(), MainFrame.MF.getHeight()));
+        setPreferredSize(new Dimension(Icons.SIRIUS_SPLASH.getIconWidth(),getOwner().getHeight()));
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         pack();

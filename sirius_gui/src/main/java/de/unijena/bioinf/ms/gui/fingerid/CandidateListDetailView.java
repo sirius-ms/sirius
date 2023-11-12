@@ -36,7 +36,6 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.SpectralMatchingDialog;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.MolecularPropertyMatcherEditor;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.SmartFilterMatcherEditor;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.table.ActionList;
@@ -90,8 +89,9 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     private MolecularPropertyMatcherEditor molecularPropertyMatcherEditor;
 
     private CompoundList compoundList;
+    private ResultPanel resultPanel;
 
-    public CandidateListDetailView(final CompoundList compoundList, StructureList sourceList) {
+    public CandidateListDetailView(ResultPanel resultPanel, CompoundList compoundList, StructureList sourceList) {
         super(sourceList);
 
         getSource().addActiveResultChangedListener((experiment, sre, resultElements, selections) -> {
@@ -106,6 +106,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         candidateList = new CandidateInnerList(new DefaultEventListModel<>(filteredSource));
 
         this.compoundList = compoundList;
+        this.resultPanel = resultPanel;
 
         ToolTipManager.sharedInstance().registerComponent(candidateList);
         candidateList.setCellRenderer(new CandidateCellRenderer(compoundList, sourceList.csiScoreStats, this));
@@ -219,10 +220,10 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
             });
 
         } else if (c != null && e.getSource() == this.annotateSpectrum) {
-            final ResultPanel rp = MainFrame.MF.getResultsPanel();
-            final int idx = Jobs.runInBackgroundAndLoad(MainFrame.MF, () -> {
+
+            final int idx = Jobs.runInBackgroundAndLoad(SwingUtilities.getWindowAncestor(this), () -> {
                 int i = 0;
-                for (FingerprintCandidateBean fpc : rp.structureAnnoTab.getCandidateTable().getFilteredSource()) {
+                for (FingerprintCandidateBean fpc : resultPanel.structureAnnoTab.getCandidateTable().getFilteredSource()) {
                     if (fpc.getInChiKey().equals(c.getInChiKey()))
                         return i;
                     i++;
@@ -231,8 +232,8 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
             }).getResult();
 
             Jobs.runEDTLater(() -> {
-                rp.setSelectedComponent(MainFrame.MF.getResultsPanel().structureAnnoTab);
-                rp.structureAnnoTab.getStructureList().getTopLevelSelectionModel().setSelectionInterval(idx, idx);
+                resultPanel.setSelectedComponent(resultPanel.structureAnnoTab);
+                resultPanel.structureAnnoTab.getStructureList().getTopLevelSelectionModel().setSelectionInterval(idx, idx);
             });
         }
     }
@@ -289,7 +290,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
 
     private void clickOnMore(FingerprintCandidateBean candidate) {
         Jobs.runEDTLater(() -> {
-            new SpectralMatchingDialog(compoundList, candidate).setVisible(true);
+            new SpectralMatchingDialog((Frame) SwingUtilities.getWindowAncestor(CandidateListDetailView.this), compoundList, candidate).setVisible(true);
         });
     }
 

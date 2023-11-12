@@ -19,24 +19,24 @@
 
 package de.unijena.bioinf.ms.gui.dialogs;
 
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionCheckPanel;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 
 import javax.swing.*;
-import java.awt.*;
 
 public class WorkerWarningDialog extends WarningDialog {
 
     public static final String NEVER_ASK_AGAIN_KEY = PropertyManager.PROPERTY_BASE + ".sirius.dialog.check_worker_action.never_ask_again";
 
 
-    public WorkerWarningDialog(Window owner) {
+    public WorkerWarningDialog(MainFrame owner) {
         this(owner, false);
     }
 
-    public WorkerWarningDialog(Window owner, final boolean noWorkerInfoError) {
+    public WorkerWarningDialog(MainFrame owner, final boolean noWorkerInfoError) {
         super(owner
                 , "<html>" + (
                         noWorkerInfoError
@@ -57,7 +57,7 @@ public class WorkerWarningDialog extends WarningDialog {
     protected void addOpenConnectionDialogButton(JPanel boxedButtonPanel) {
         final JButton details = new JButton("Details");
         details.setToolTipText("Open Webservice information for details.");
-        details.setAction(SiriusActions.CHECK_CONNECTION.getInstance());
+        details.setAction(SiriusActions.CHECK_CONNECTION.getInstance((MainFrame) getOwner(), ((MainFrame)getOwner()).getToolbar().getActionMap()));
         details.setIcon(Icons.NET_16);
         boxedButtonPanel.add(details);
     }

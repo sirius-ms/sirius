@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.gui.actions;
 import de.unijena.bioinf.ms.gui.compute.BatchComputeDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -29,21 +30,20 @@ import java.awt.event.ActionEvent;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ComputeAllAction extends AbstractAction {
+public class ComputeAllAction extends AbstractMainFrameAction {
     private final static AtomicBoolean isActive = new AtomicBoolean(false);
 
-    public ComputeAllAction() {
-        super();
+    public ComputeAllAction(MainFrame mainFrame) {
+        super(mainFrame);
         computationCanceled();
         setEnabled(false);
 
         //filtered Workspace Listener
-        MF.getCompoundList().getCompoundList().addListEventListener(listChanges ->
+        this.MF.getCompoundList().getCompoundList().addListEventListener(listChanges ->
                 setEnabled(listChanges.getSourceList().size() > 0));
 
         //Listen if there are active gui jobs

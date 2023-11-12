@@ -36,7 +36,6 @@ import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.dialogs.FilePresentDialog;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
-import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.ms_viewer.InSilicoSelectionBox;
 import de.unijena.bioinf.ms.gui.ms_viewer.InsilicoFragmenter;
@@ -71,7 +70,6 @@ import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 public class SpectraVisualizationPanel
 	extends JPanel implements ActionListener, ItemListener, PanelDescription,
@@ -113,7 +111,7 @@ public class SpectraVisualizationPanel
 	String preferredMode;
 
     JButton saveButton;
-
+	JFrame popupOwner;
 	private InsilicoFragmenter fragmenter;
 
     public WebViewSpectraViewer browser;
@@ -126,6 +124,7 @@ public class SpectraVisualizationPanel
 		this.setLayout(new BorderLayout());
 		this.fragmenter = new InsilicoFragmenter();
 		this.preferredMode = preferredMode;
+		this.popupOwner = (JFrame) SwingUtilities.getWindowAncestor(this);
 
 		toolBar = new JToolBar();
 		toolBar.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
@@ -569,7 +568,7 @@ public class SpectraVisualizationPanel
                 }
 
                 if (selFile.exists()) {
-                    FilePresentDialog fpd = new FilePresentDialog(MF, selFile.getName());
+                    FilePresentDialog fpd = new FilePresentDialog(popupOwner, selFile.getName());
                     ReturnValue rv = fpd.getReturnValue();
                     if (rv == ReturnValue.Success) {
                         selectedFile = selFile;
@@ -594,12 +593,12 @@ public class SpectraVisualizationPanel
         if (selectedFile != null && ff != FileFormat.none) {
             final FileFormat fff = ff;
             final File fSelectedFile = selectedFile;
-            Jobs.runInBackgroundAndLoad(MF, "Exporting Spectra...", () -> {
+            Jobs.runInBackgroundAndLoad(popupOwner, "Exporting Spectra...", () -> {
                 try {
                     // for SVG/PDF ask whether to export structure
                     boolean exportStructure = false;
                     if ((fff == FileFormat.svg || fff == FileFormat.pdf) && insilicoResult != null){
-                        QuestionDialog exportStructureDialog = new QuestionDialog(MF,
+                        QuestionDialog exportStructureDialog = new QuestionDialog(popupOwner,
                                 "Do you want to export the corresponding compound structure as well?");
                         ReturnValue rv = exportStructureDialog.getReturnValue();
                         exportStructure = rv == ReturnValue.Success;
@@ -635,7 +634,7 @@ public class SpectraVisualizationPanel
                         }
                     }
                 } catch (Exception e2) {
-                    new StacktraceDialog(MF, e2.getMessage(), e2);
+                    new StacktraceDialog(popupOwner, e2.getMessage(), e2);
                     LoggerFactory.getLogger(this.getClass()).error(e2.getMessage(), e2);
                 }
             });

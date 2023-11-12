@@ -27,7 +27,6 @@ import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
@@ -40,6 +39,7 @@ import de.unijena.bioinf.webapi.WebAPI;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -58,7 +58,7 @@ public class FingerprintTable extends ActionList<FingerIdPropertyBean, FormulaRe
         this(source, api, FingerprintVisualization.read());
     }
 
-    public FingerprintTable(final FormulaList source, WebAPI api, FingerprintVisualization[] visualizations) {
+    public FingerprintTable(final FormulaList source, WebAPI<?> api, FingerprintVisualization[] visualizations) {
         super(FingerIdPropertyBean.class, DataSelectionStrategy.FIRST_SELECTED);
         this.csiApi = api;
         source.addActiveResultChangedListener(this);
@@ -69,7 +69,7 @@ public class FingerprintTable extends ActionList<FingerIdPropertyBean, FormulaRe
         if (this.predictorType == predictorType && fscores != null) return;
         this.predictorType = predictorType;
 
-        final FingerIdData csiData = MainFrame.MF.ps().loadProjectSpaceProperty(FingerIdDataProperty.class)
+        final FingerIdData csiData = Jobs.getProject().loadProjectSpaceProperty(FingerIdDataProperty.class)
                 .map(p -> p.getByCharge(predictorType.toCharge())).orElseThrow(() -> new IOException("Could not load FingerID data from Project-Space!"));
 
         final PredictionPerformance[] performances = csiData.getPerformances();
@@ -116,7 +116,8 @@ public class FingerprintTable extends ActionList<FingerIdPropertyBean, FormulaRe
                                 Jobs.runEDTAndWait(() -> elementList.addAll(tmp));
                             } catch (IOException e) {
                                 checkForInterruption();
-                                new ExceptionDialog(MainFrame.MF, GuiUtils.formatToolTip("Could not get Fingerprint information for Fingerprint View! This project might be Corrupted!"));
+                                //todo hack missing owner
+                                new ExceptionDialog((Frame) null, GuiUtils.formatToolTip("Could not get Fingerprint information for Fingerprint View! This project might be Corrupted!"));
                                 LoggerFactory.getLogger(getClass()).warn("Could not get Fingerprint information!", e);
                             }
                         }

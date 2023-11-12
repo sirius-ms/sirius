@@ -26,15 +26,15 @@ import java.awt.event.ActionEvent;
 /**
  * this allows to invert the compound list filter.
  */
-public class InvertFilterAction extends AbstractAction {
+public class InvertFilterAction extends AbstractMainFrameAction {
 
-    public InvertFilterAction() {
-        super("Invert filter");
+    public InvertFilterAction(MainFrame mainFrame) {
+        super("Invert filter", mainFrame);
     }
     @Override
     public void actionPerformed(ActionEvent e) {
-        MainFrame.MF.getCompoundList().toggleInvertFilter();
-        if (MainFrame.MF.getCompoundList().isFilterInverted()) {
+        MF.getCompoundList().toggleInvertFilter();
+        if (MF.getCompoundList().isFilterInverted()) {
             this.putValue(Action.NAME, "Revert filter");
         } else {
             this.putValue(Action.NAME, "Invert filter");

@@ -29,10 +29,12 @@ import de.unijena.bioinf.projectspace.InstanceBean;
 import java.awt.event.ActionEvent;
 import java.util.List;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
-
 
 public class SummarizeSelectedAction extends SummarizeAllAction {
+    public SummarizeSelectedAction(MainFrame mainFrame) {
+        super(mainFrame);
+    }
+
     @Override
     protected void initListeners(){
         setEnabled(SiriusActions.notComputingOrEmptySelected(MF.getCompoundListSelectionModel()));
@@ -51,6 +53,6 @@ public class SummarizeSelectedAction extends SummarizeAllAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        run(List.copyOf(MainFrame.MF.getCompoundListSelectionModel().getSelected()), "Write Summaries for selected Compounds");
+        run(List.copyOf(MF.getCompoundListSelectionModel().getSelected()), "Write Summaries for selected Compounds");
     }
 }

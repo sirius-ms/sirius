@@ -23,6 +23,7 @@ import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.actions.CheckConnectionAction;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.settings.AdductSettingsPanel;
 import de.unijena.bioinf.ms.gui.settings.GerneralSettingsPanel;
 import de.unijena.bioinf.ms.gui.settings.NetworkSettingsPanel;
@@ -46,11 +47,11 @@ public class SettingsDialog extends JDialog implements ActionListener {
     private GerneralSettingsPanel genSettings;
     private JTabbedPane settingsPane;
 
-    public SettingsDialog(Frame owner) {
+    public SettingsDialog(MainFrame owner) {
         this(owner, -1);
     }
 
-    public SettingsDialog(Frame owner, int activeTab) {
+    public SettingsDialog(MainFrame owner, int activeTab) {
         super(owner, true);
         setTitle("Settings");
         setLayout(new BorderLayout());
@@ -72,7 +73,7 @@ public class SettingsDialog extends JDialog implements ActionListener {
         /*ilpSettings = new ILPSettings(nuProps);
         settingsPane.add(ilpSettings.name(),ilpSettings);*/
 
-        proxSettings = new NetworkSettingsPanel(nuProps);
+        proxSettings = new NetworkSettingsPanel(mf(), nuProps);
         settingsPane.add(proxSettings.name(), proxSettings);
 
 //        accountSettings = new AccountSettingsPanel(nuProps, ApplicationCore.WEB_API.getAuthService());
@@ -122,18 +123,23 @@ public class SettingsDialog extends JDialog implements ActionListener {
         return restartMessage;
     }
 
+    private MainFrame mf(){
+        return (MainFrame) getOwner();
+    }
+
+
 
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == discard) {
             this.dispose();
         } else {
-            final boolean rm = Jobs.runInBackgroundAndLoad(this, "Applying Changes...", () ->  {
+            final boolean rm = Jobs.runInBackgroundAndLoad(mf(), "Applying Changes...", () ->  {
                 boolean restartMessage = collectChangedProps();
                 Jobs.runInBackground(() -> {
                     LoggerFactory.getLogger(this.getClass()).info("Saving settings to properties File");
                     SiriusProperties.SIRIUS_PROPERTIES_FILE().store();
-                    CheckConnectionAction.checkConnectionAndLoad().isConnected();
+                    CheckConnectionAction.checkConnectionAndLoad(mf()).isConnected();
                 });
                 return restartMessage;
             }).getResult();

@@ -28,7 +28,10 @@ import ca.odell.glazedlists.swing.GlazedListsSwing;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
 import de.unijena.bioinf.ms.gui.dialogs.CompoundFilterOptionsDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
-import de.unijena.bioinf.ms.gui.utils.*;
+import de.unijena.bioinf.ms.gui.utils.CompoundFilterMatcherEditor;
+import de.unijena.bioinf.ms.gui.utils.CompoundFilterModel;
+import de.unijena.bioinf.ms.gui.utils.MatcherEditorWithOptionalInvert;
+import de.unijena.bioinf.ms.gui.utils.SearchTextField;
 import de.unijena.bioinf.ms.gui.utils.matchers.BackgroundJJobMatcheEditor;
 import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -61,7 +64,7 @@ public class CompoundList {
 
     private final Queue<ExperimentListChangeListener> listeners = new ConcurrentLinkedQueue<>();
 
-    public CompoundList(@NotNull final GuiProjectSpaceManager ps) {
+    public CompoundList(@NotNull MainFrame mf, @NotNull final GuiProjectSpaceManager ps) {
         searchField = new SearchTextField("Hit enter to search...");
         obsevableScource = new ObservableElementList<>(ps.INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class));
         sortedSource = new SortedList<>(obsevableScource, Comparator.comparing(b -> b.getID().getCompoundIndex()));
@@ -88,7 +91,7 @@ public class CompoundList {
         //filter dialog
         openFilterPanelButton = new JButton("...");
         openFilterPanelButton.addActionListener(e -> {
-            new CompoundFilterOptionsDialog(MainFrame.MF, searchField, compoundFilterModel, this);
+            new CompoundFilterOptionsDialog(mf, searchField, compoundFilterModel, this);
             colorByActiveFilter(openFilterPanelButton, compoundFilterModel);
         });
 

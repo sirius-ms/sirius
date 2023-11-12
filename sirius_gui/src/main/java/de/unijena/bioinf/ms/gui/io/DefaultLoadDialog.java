@@ -68,7 +68,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 
     private static Pattern NUMPATTERN = Pattern.compile("^[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?$");
 
-    public DefaultLoadDialog(JFrame owner, EventList<SpectrumContainer> list) {
+    public DefaultLoadDialog(Frame owner, EventList<SpectrumContainer> list) {
         super(owner, "Import as Single Compound", true);
 
         this.cEFormat = new DecimalFormat("#0.0");
@@ -443,7 +443,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 
     @Override
     public void drop(DropTargetDropEvent dtde) {
-        final List<File> newFiles = DragAndDrop.getFileListFromDrop(dtde);
+        final List<File> newFiles = DragAndDrop.getFileListFromDrop(this, dtde);
         for (LoadDialogListener li : listeners) {
             li.addSpectra(newFiles);
         }

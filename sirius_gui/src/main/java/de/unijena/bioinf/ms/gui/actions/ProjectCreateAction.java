@@ -25,6 +25,7 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.io.filefilter.ProjectArchivedFilter;
 import de.unijena.bioinf.ms.gui.io.filefilter.ProjectDirectoryFilter;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 
 import javax.swing.*;
@@ -32,15 +33,14 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.Objects;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ProjectCreateAction extends AbstractAction {
+public class ProjectCreateAction extends AbstractMainFrameAction {
 
-    public ProjectCreateAction() {
-        super("New");
+    public ProjectCreateAction(MainFrame mainFrame) {
+        super("New", mainFrame);
         putValue(Action.LARGE_ICON_KEY, Icons.ADD_DOC_32);
         putValue(Action.SHORT_DESCRIPTION, "Create a new empty project at the given location (.sirius or directory)");
         setEnabled(true);

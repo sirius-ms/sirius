@@ -37,8 +37,8 @@ import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.webView.WebviewHTMLTextJPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.info.Term;
-import de.unijena.bioinf.webapi.Tokens;
 import de.unijena.bioinf.rest.ProxyManager;
+import de.unijena.bioinf.webapi.Tokens;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -59,19 +59,9 @@ public class UserLoginDialog extends JDialog {
     Action signInAction;
     Action cancelAction;
 
-    public UserLoginDialog(Frame owner, AuthService service) {
+    public UserLoginDialog(MainFrame owner, AuthService service) {
         super(owner, true);
         this.service = service;
-        build();
-    }
-
-    public UserLoginDialog(Dialog owner, AuthService service) {
-        super(owner, true);
-        this.service = service;
-        build();
-    }
-
-    private void build() {
         setTitle("Login");
         setLayout(new BorderLayout());
 
@@ -118,16 +108,16 @@ public class UserLoginDialog extends JDialog {
                         } catch (InvocationTargetException | InterruptedException ignored) {
                         }
                     } finally {
-                        MainFrame.MF.CONNECTION_MONITOR().checkConnection();
+                        owner.CONNECTION_MONITOR().checkConnection();
                     }
                 });
             }
         };
         final JButton login = new JButton(signInAction);
-
         Box buttons = Box.createHorizontalBox();
         buttons.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        buttons.add(new JButton(SiriusActions.SIGN_UP.getInstance()));
+
+        buttons.add(new JButton(SiriusActions.SIGN_UP.getInstance(owner, true, getRootPane().getActionMap())));
         buttons.add(Box.createHorizontalGlue());
         buttons.add(cancel);
         buttons.add(login);
@@ -139,7 +129,7 @@ public class UserLoginDialog extends JDialog {
         center.addNamed("Email", username);
         center.addNamed("Password", password);
         JPanel flow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
-        flow.add(new ActionJLabel("Forgot your Password?", SiriusActions.RESET_PWD.getInstance()));
+        flow.add(new ActionJLabel("Forgot your Password?", SiriusActions.RESET_PWD.getInstance(owner, true, getRootPane().getActionMap())));
         center.add(null,  flow, 0, true);
 
         if (PropertyManager.getBoolean("de.unijena.bioinf.webservice.login.terms", false))

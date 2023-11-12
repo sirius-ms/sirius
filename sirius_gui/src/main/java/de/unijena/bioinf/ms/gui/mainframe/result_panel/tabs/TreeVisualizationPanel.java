@@ -34,10 +34,10 @@ import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.tree_viewer.*;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
+import de.unijena.bioinf.ms.gui.webView.WebViewIO;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
-import de.unijena.bioinf.ms.gui.webView.WebViewIO;
 import javafx.embed.swing.JFXPanel;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +57,6 @@ import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 
 public class TreeVisualizationPanel extends JPanel
@@ -91,8 +90,11 @@ public class TreeVisualizationPanel extends JPanel
     TreeViewerSettings settings;
     TreeConfig localConfig;
 
+    JFrame popupOwner;
+
     public TreeVisualizationPanel() {
         this.setLayout(new BorderLayout());
+        this.popupOwner = (JFrame) SwingUtilities.getWindowAncestor(this);
 
         localConfig = new TreeConfig();
         localConfig.setFromString(
@@ -453,7 +455,7 @@ public class TreeVisualizationPanel extends JPanel
                 }
 
                 if (selFile.exists()) {
-                    FilePresentDialog fpd = new FilePresentDialog(MF, selFile.getName());
+                    FilePresentDialog fpd = new FilePresentDialog(popupOwner, selFile.getName());
                     ReturnValue rv = fpd.getReturnValue();
                     if (rv == ReturnValue.Success) {
                         selectedFile = selFile;
@@ -478,7 +480,7 @@ public class TreeVisualizationPanel extends JPanel
         if (selectedFile != null && ff != FileFormat.none) {
             final FileFormat fff = ff;
             final File fSelectedFile = selectedFile;
-            Jobs.runInBackgroundAndLoad(MF, "Exporting Tree...", () -> {
+            Jobs.runInBackgroundAndLoad(popupOwner, "Exporting Tree...", () -> {
                 try {
                     if (fff == FileFormat.dot) {
                         new FTDotWriter().writeTreeToFile(fSelectedFile, ftree);
@@ -494,7 +496,7 @@ public class TreeVisualizationPanel extends JPanel
                         new FTJsonWriter().writeTreeToFile(fSelectedFile, ftree);
                     }
                 } catch (Exception e2) {
-                    new StacktraceDialog(MF, e2.getMessage(), e2);
+                    new StacktraceDialog(popupOwner, e2.getMessage(), e2);
                     LoggerFactory.getLogger(this.getClass()).error(e2.getMessage(), e2);
                 }
             });

@@ -43,8 +43,6 @@ import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
-
 /**
  * Dialog allows to adjust filter criteria of the {@link CompoundFilterModel} which is used to filter compound list.
  */
@@ -68,6 +66,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
     final JCheckBox elementsMatchPrecursorFormula;
 
     final JCheckboxListPanel<CustomDataSources.Source> searchDBList;
+
 
     public CompoundFilterOptionsDialog(MainFrame owner, SearchTextField searchField, CompoundFilterModel filterModel, CompoundList compoundList) {
         super(owner, "Filter configuration", true);
@@ -247,6 +246,9 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         setVisible(true);
     }
 
+    private MainFrame mf(){
+        return (MainFrame) getOwner();
+    }
     private void configureActions() {
         InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         KeyStroke enterKey = KeyStroke.getKeyStroke("ENTER");
@@ -342,16 +344,16 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         dispose();
 
         // clear selection to prevent unnecessary updates during deletions
-        MF.getCompoundList().getCompoundListSelectionModel().clearSelection();
+        mf().getCompoundList().getCompoundListSelectionModel().clearSelection();
 
         // collect instances to delete
-        List<InstanceBean> toDelete = Jobs.runInBackgroundAndLoad(MF, "Collecting Instances...", () -> invertFilter.isSelected()
+        List<InstanceBean> toDelete = Jobs.runInBackgroundAndLoad(mf(), "Collecting Instances...", () -> invertFilter.isSelected()
                 ? compoundList.getCompoundList().stream().filter(matcher::matches).collect(Collectors.toList())
                 : compoundList.getCompoundList().stream().filter(i -> !matcher.matches(i)).collect(Collectors.toList())
         ).getResult();
 
         //delete instances
-        MF.ps().deleteCompounds(toDelete);
+        mf().ps().deleteCompounds(toDelete);
     }
 
     /**

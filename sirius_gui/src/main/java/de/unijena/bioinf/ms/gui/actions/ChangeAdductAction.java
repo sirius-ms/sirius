@@ -25,6 +25,7 @@ import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ChangeAdductDialog;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
 import de.unijena.bioinf.projectspace.InstanceBean;
 
@@ -33,20 +34,17 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
-
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ChangeAdductAction extends AbstractAction {
-    public ChangeAdductAction() {
-        super("Change adduct");
+public class ChangeAdductAction extends AbstractMainFrameAction {
+    public ChangeAdductAction(MainFrame mainFrame) {
+        super("Change adduct", mainFrame);
         putValue(Action.SMALL_ICON, Icons.LIST_EDIT_16);
         putValue(Action.SHORT_DESCRIPTION, "Change adduct type of selected compounds");
+        setEnabled(SiriusActions.notComputingOrEmptySelected(this.MF.getCompoundListSelectionModel()));
 
-        setEnabled(SiriusActions.notComputingOrEmptySelected(MF.getCompoundListSelectionModel()));
-
-        MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
+        this.MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
             public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {
             }

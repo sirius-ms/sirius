@@ -33,6 +33,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jetbrains.annotations.NotNull;
@@ -42,15 +43,13 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
-
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class RemoveFormulaAction extends AbstractAction {
+public class RemoveFormulaAction extends AbstractMainFrameAction {
 
-    public RemoveFormulaAction() {
-        super("Remove Formula");
+    public RemoveFormulaAction(MainFrame mainFrame) {
+        super("Remove Formula", mainFrame);
         putValue(Action.SMALL_ICON, Icons.REMOVE_DOC_16);
         putValue(Action.SHORT_DESCRIPTION, "Remove the preset molecular formula from the selected data.");
 

@@ -23,6 +23,7 @@ import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.io.filefilter.MsBatchDataFormatFilter;
 import de.unijena.bioinf.ms.gui.io.filefilter.ProjectArchivedFilter;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 
 import javax.swing.*;
@@ -30,15 +31,13 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.Arrays;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
-
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ImportAction extends AbstractAction {
+public class ImportAction extends AbstractMainFrameAction {
 
-    public ImportAction() {
-        super("Import");
+    public ImportAction(MainFrame mainFrame) {
+        super("Import", mainFrame);
         putValue(Action.LARGE_ICON_KEY, Icons.DOCS_32);
         putValue(Action.SMALL_ICON, Icons.BATCH_DOC_16);
         putValue(Action.SHORT_DESCRIPTION, "<html>" +

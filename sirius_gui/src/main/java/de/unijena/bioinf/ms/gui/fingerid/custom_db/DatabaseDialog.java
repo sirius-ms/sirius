@@ -57,7 +57,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 public class DatabaseDialog extends JDialog {
     //todo: we should separate the Dialog from the Database Managing part.
@@ -174,7 +173,10 @@ public class DatabaseDialog extends JDialog {
                         new StacktraceDialog(this, "Unexpected error when removing custom DB!", ex);
                 } catch (Exception ex2) {
                     LoggerFactory.getLogger(getClass()).error("Fatal Error during Custom DB removal.", ex2);
-                    new StacktraceDialog(MF, "Fatal Error during Custom DB removal.", ex2);
+                    if (getOwner() instanceof Frame)
+                        new StacktraceDialog((Frame) getOwner(), "Fatal Error during Custom DB removal.", ex2);
+                    else
+                        new StacktraceDialog((Dialog) getOwner(), "Fatal Error during Custom DB removal.", ex2);
                 }
 
                 final String[] dbs = Jobs.runInBackgroundAndLoad(owner, "Reloading DBs...", (Callable<List<CustomDatabase>>) SearchableDatabases::getCustomDatabases).getResult()
@@ -319,7 +321,7 @@ public class DatabaseDialog extends JDialog {
                     dispose();
                     String t = textArea.getText();
                     runImportJob(
-                            DragAndDrop.getFileListFromDrop(evt).stream().map(File::toPath).collect(Collectors.toList()),
+                            DragAndDrop.getFileListFromDrop(((Frame) DatabaseDialog.this.getOwner()), evt).stream().map(File::toPath).collect(Collectors.toList()),
                             t != null && !t.isBlank()
                                     ? Arrays.asList(t.split("\n"))
                                     : null
@@ -395,7 +397,10 @@ public class DatabaseDialog extends JDialog {
                     new StacktraceDialog(this, "Unexpected error when importing custom DB!", ex);
             } catch (Exception e) {
                 LoggerFactory.getLogger(getClass()).error("Fatal Error during Custom DB import.", e);
-                new StacktraceDialog(MF, "Fatal Error during Custom DB import.", e);
+                if (getOwner() instanceof Frame)
+                    new StacktraceDialog((Frame) getOwner(), "Fatal Error during Custom DB import.", e);
+                else
+                    new StacktraceDialog((Dialog) getOwner(), "Fatal Error during Custom DB import.", e);
             }
         }
     }

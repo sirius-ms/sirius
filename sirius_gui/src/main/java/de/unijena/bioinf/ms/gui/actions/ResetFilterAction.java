@@ -20,19 +20,18 @@ package de.unijena.bioinf.ms.gui.actions;/*
 
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 
-import javax.swing.*;
 import java.awt.event.ActionEvent;
 
 /**
  * this allows to invert the compound list filter.
  */
-public class ResetFilterAction extends AbstractAction {
+public class ResetFilterAction extends AbstractMainFrameAction {
 
-    public ResetFilterAction() {
-        super("Reset filter");
+    public ResetFilterAction(MainFrame mainFrame) {
+        super("Reset filter", mainFrame);
     }
     @Override
     public void actionPerformed(ActionEvent e) {
-        MainFrame.MF.getCompoundList().resetFilter();
+        MF.getCompoundList().resetFilter();
     }
 }

@@ -41,7 +41,7 @@ public class FileImportDialog extends JDialog implements ActionListener{
 	
 	private ReturnValue rv;
 
-	public FileImportDialog(JFrame owner, List<File> rawFiles) {
+	public FileImportDialog(Frame owner, List<File> rawFiles) {
 		super(owner,true);
 		this.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 

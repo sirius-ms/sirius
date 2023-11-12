@@ -23,6 +23,7 @@ import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ExecutionDialog;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
 import de.unijena.bioinf.ms.gui.subtools.export.mgf.MgfExporterConfigPanel;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -31,12 +32,11 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
-public class FBMNExportAction extends AbstractAction {
+public class FBMNExportAction extends AbstractMainFrameAction {
 
-    public FBMNExportAction() {
-        super("FBMN Export");
+    public FBMNExportAction(MainFrame mainFrame) {
+        super("FBMN Export", mainFrame);
         putValue(Action.LARGE_ICON_KEY, Icons.FBMN_32);
         putValue(Action.SHORT_DESCRIPTION, "Export project for GNPS Feature Based Molecular Networking.");
         initListeners();

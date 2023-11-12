@@ -29,15 +29,15 @@ import java.awt.event.ComponentListener;
 import java.awt.event.WindowListener;
 import java.awt.event.WindowStateListener;
 
-public class OpenLogAction extends AbstractAction {
+public class OpenLogAction extends AbstractMainFrameAction {
 
     private final LogDialog source;
 
-    public OpenLogAction() {
-        super("Log"); //todo add log icon
+    public OpenLogAction(MainFrame mainFrame) {
+        super("Log", mainFrame); //todo add log icon
         putValue(Action.LARGE_ICON_KEY, Icons.CLIP_BOARD_32);
         putValue(Action.SHORT_DESCRIPTION, "Show SIRIUS logs in Popup Dialog.");
-        source = MainFrame.MF.getLogConsole();
+        source = MF.getLogConsole();
     }
 
     @Override
