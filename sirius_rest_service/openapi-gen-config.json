@@ -1,0 +1,10 @@
+{
+	"invokerPackage": "de.unijena.bioinf.ms.nightsky.sdk.client",
+	"modelPackage": "de.unijena.bioinf.ms.nightsky.sdk.model",
+	"apiPackage": "de.unijena.bioinf.ms.nightsky.sdk.api",
+	"artifactId": "sirius_nightsky_sdk",
+	"groupId:": "de.unijena.bioinf.ms",
+	"library": "native",
+	"serializationLibrary": "jackson",
+	"webclientBlockingOperations": false
+}
