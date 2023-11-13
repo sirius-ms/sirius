@@ -25,10 +25,11 @@ import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Comparator;
 
-public class CollisionEnergy {
+public class CollisionEnergy implements Serializable {
 
 
     /**
