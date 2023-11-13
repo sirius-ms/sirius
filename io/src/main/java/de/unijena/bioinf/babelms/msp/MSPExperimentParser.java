@@ -22,13 +22,11 @@ package de.unijena.bioinf.babelms.msp;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChIs;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.exceptions.MultimereException;
 import de.unijena.bioinf.ChemistryBase.exceptions.MultipleChargeException;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.babelms.Parser;
 import org.slf4j.LoggerFactory;
 
@@ -118,7 +116,7 @@ public class MSPExperimentParser extends MSPSpectralParser implements Parser<Ms2
                                 .filter(s -> !s.isBlank())
                                 .map(Splash::new).ifPresent(exp::annotate);
                         MSP.getWithSynonyms(fields, MSP.INSTRUMENT_TYPE).map(MsInstrumentation::getBestFittingInstrument).ifPresent(exp::annotate);
-                        fields.getField(MSP.RT).filter(s -> !s.isBlank()).map(Utils::parseDoubleWithUnknownDezSep).filter(v -> v > 0).map(v -> new RetentionTime(v * 60)).ifPresent(exp::annotate);
+                        MSP.parseRetentionTime(fields).ifPresent(exp::annotate);
                     }
                 } else {
                     LoggerFactory.getLogger(getClass()).warn("Cannot find additional meta data fields. Experiment might be incomplete!");
