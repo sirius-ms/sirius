@@ -70,8 +70,5 @@ public class SpectralSearchResult implements Iterable<SpectralSearchResult.Searc
         private SpectralSimilarity similarity;
 
         private String referenceUUID;
-
-        private String referenceSplash;
-
     }
 }
