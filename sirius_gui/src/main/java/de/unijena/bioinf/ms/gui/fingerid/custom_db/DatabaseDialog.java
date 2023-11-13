@@ -67,10 +67,12 @@ public class DatabaseDialog extends JDialog {
     protected DatabaseView dbView;
     private final JDialog owner = this;
     JButton deleteDB, editDB, addCustomDb;
+    private BackgroundRunsGui backgroundRuns;
 
 
-    public DatabaseDialog(final Frame owner) {
+    public DatabaseDialog(BackgroundRunsGui backgroundRuns, final Frame owner) {
         super(owner, true);
+        this.backgroundRuns = backgroundRuns;
         setTitle("Custom Databases");
         setLayout(new BorderLayout());
 
@@ -160,7 +162,7 @@ public class DatabaseDialog extends JDialog {
             if (new QuestionDialog(getOwner(), msg).isSuccess()) {
 
                 try {
-                    BackgroundRunsGui.runCommandAndLoad(Arrays.asList(
+                    backgroundRuns.runCommandAndLoad(Arrays.asList(
                                             CustomDBOptions.class.getAnnotation(CommandLine.Command.class).name(),
                                             "--remove", name), null, null, owner,
                                     "Deleting database '" + name + "'...", true)
@@ -382,7 +384,7 @@ public class DatabaseDialog extends JDialog {
                 input.msInput = new InputFilesOptions.MsInput();
                 input.msInput.setInputPath(sources);
 
-                BackgroundRunsGui.runCommandAndLoad(command, null,
+                backgroundRuns.runCommandAndLoad(command, null,
                                 input, this,
                                 "Importing into '" + configPanel.dbLocationField.getFilePath() + "'...",
                                 false)

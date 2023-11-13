@@ -26,7 +26,6 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuil
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.actions.CheckConnectionAction;
-import de.unijena.bioinf.ms.gui.compute.jjobs.BackgroundRunsGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.*;
 import de.unijena.bioinf.ms.gui.io.LoadController;
@@ -359,7 +358,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
                 try {
                     final List<String> toolList = new ArrayList<>();
                     final List<String> c = makeCommand(toolList);
-                    BackgroundRunsGui.runCommand(c, finalComps, String.join(" > ", toolList));
+                    mf().getBackgroundRuns().runCommand(c, finalComps, String.join(" > ", toolList));
                 } catch (Exception e) {
                     new ExceptionDialog(mf(), e.getMessage());
                 }

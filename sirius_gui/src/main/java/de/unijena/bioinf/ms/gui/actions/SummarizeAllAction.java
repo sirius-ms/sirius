@@ -31,7 +31,9 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
 public class SummarizeAllAction extends AbstractMainFrameAction {
 
@@ -64,7 +66,7 @@ public class SummarizeAllAction extends AbstractMainFrameAction {
     }
 
     protected void run(@NotNull List<InstanceBean> compounds, String title) {
-        ExecutionDialog<SummaryConfigPanel> d = new ExecutionDialog<>(new SummaryConfigPanel(), compounds, null, MF, title, true);
+        ExecutionDialog<SummaryConfigPanel> d = new ExecutionDialog<>(MF.getBackgroundRuns(), new SummaryConfigPanel(Optional.ofNullable(MF.ps().projectSpace().getLocation().getParent()).map(Path::toString).orElse("")), compounds, null, MF, title, true);
         d.setIndeterminateProgress(false);
         d.start();
     }

@@ -30,6 +30,7 @@ import de.unijena.bioinf.projectspace.InstanceBean;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.nio.file.Path;
 import java.util.List;
 
 
@@ -58,6 +59,7 @@ public class FBMNExportAction extends AbstractMainFrameAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        new ExecutionDialog<>(new MgfExporterConfigPanel(), List.copyOf(MF.getCompounds()), null, MF, "Export Project for GNPS FBMN", true).start();
+        Path p = MF.ps().projectSpace().getLocation();
+        new ExecutionDialog<>(MF.getBackgroundRuns(), new MgfExporterConfigPanel(p.getParent().toString(), p.getFileName().toString()), List.copyOf(MF.getCompounds()), null, MF, "Export Project for GNPS FBMN", true).start();
     }
 }

@@ -30,7 +30,6 @@ import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoade
 import de.unijena.bioinf.ms.frontend.subtools.gui.GuiAppOptions;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.frontend.workfow.GuiInstanceBufferFactory;
-import de.unijena.bioinf.ms.gui.compute.jjobs.BackgroundRunsGui;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.FormulaResult;
 import de.unijena.bioinf.projectspace.GuiProjectSpaceManagerFactory;
@@ -125,11 +124,6 @@ public class SiriusGUIApplication extends SiriusCLIApplication {
 
                         measureTime("Setting GUI Instance Buffer factory");
                         BackgroundRuns.setBufferFactory(new GuiInstanceBufferFactory());
-
-                        configureShutDownHook(() -> {
-                            BackgroundRunsGui.cancelAllRuns();
-                            shutdownWebservice().run();
-                        });
 
                         measureTime("Start Run method");
                         updateProgress(0, 7, 3, "Configure Workflows... ");

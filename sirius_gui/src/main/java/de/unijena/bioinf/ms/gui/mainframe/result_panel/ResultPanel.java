@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.gui.mainframe.result_panel;
 
 import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassList;
+import de.unijena.bioinf.ms.gui.compute.jjobs.BackgroundRunsGui;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.fingerid.fingerprints.FingerprintTable;
 import de.unijena.bioinf.ms.gui.lcms_viewer.LCMSViewerPanel;
@@ -55,7 +56,7 @@ public class ResultPanel extends JTabbedPane {
 
     private final FormulaList fl;
 
-    public ResultPanel(final FormulaList siriusResultElements, final CompoundList compoundList, WebAPI webAPI) {
+    public ResultPanel(final FormulaList siriusResultElements, final CompoundList compoundList, WebAPI webAPI, BackgroundRunsGui backgroundRuns) {
         super();
         this.setToolTipText("Results");
 
@@ -72,10 +73,10 @@ public class ResultPanel extends JTabbedPane {
         this.lcmsTab = new LCMSViewerPanel(siriusResultElements);
 
         structureAnnoTab = new EpimetheusPanel(new StructureList(siriusResultElements, ActionList.DataSelectionStrategy.ALL));
-        structuresTab = new CandidateListDetailViewPanel(this, compoundList, new StructureList(siriusResultElements));
+        structuresTab = new CandidateListDetailViewPanel(this, compoundList, new StructureList(siriusResultElements), backgroundRuns);
         FingerprintPanel fpTabTmp;
         try {
-            fpTabTmp = new FingerprintPanel(new FingerprintTable(siriusResultElements, webAPI));
+            fpTabTmp = new FingerprintPanel(new FingerprintTable(siriusResultElements, webAPI, backgroundRuns));
         } catch (IOException e) {
             logger.error(e.getMessage(), e);
             fpTabTmp = null;
