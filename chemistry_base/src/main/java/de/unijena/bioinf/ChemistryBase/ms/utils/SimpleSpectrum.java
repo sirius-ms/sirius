@@ -42,7 +42,7 @@ import java.util.Arrays;
 		isGetterVisibility = JsonAutoDetect.Visibility.NONE,
 		creatorVisibility = JsonAutoDetect.Visibility.NONE
 )
-public class SimpleSpectrum extends BasicSpectrum<Peak> implements OrderedSpectrum<Peak>, Serializable {
+public class SimpleSpectrum extends BasicSpectrum<Peak> implements OrderedSpectrum<Peak> {
 
 	private static SimpleSpectrum EMPTY = new SimpleSpectrum(new double[0], new double[0]);
 
@@ -55,6 +55,18 @@ public class SimpleSpectrum extends BasicSpectrum<Peak> implements OrderedSpectr
 
 	private SimpleSpectrum() {
 		super(new double[0], new double[0]);
+	}
+
+	// fast method that does only copy references. This is possible because SimpleSpectrum is immutable
+	public SimpleSpectrum(SimpleSpectrum spec) {
+		this(spec.masses, spec.intensities, true);
+	}
+
+	protected SimpleSpectrum(double[] masses, double[] intensities, boolean NoCopyAndOrder) {
+		super(masses, intensities, NoCopyAndOrder);
+		if (!NoCopyAndOrder) {
+			Spectrums.sortSpectrumByMass(new ArrayWrapperSpectrum(masses, intensities));
+		}
 	}
 
 	public SimpleSpectrum(double[] masses, double[] intensities) {
