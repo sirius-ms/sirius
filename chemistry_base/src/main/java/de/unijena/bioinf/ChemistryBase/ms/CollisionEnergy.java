@@ -29,6 +29,7 @@ import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -37,7 +38,7 @@ import java.util.Comparator;
  */
 @JsonSerialize(using = ToStringSerializer.class)
 @JsonDeserialize(using = SimpleSerializers.CollisionEnergyDeserializer.class)
-public class CollisionEnergy {
+public class CollisionEnergy implements Serializable {
 
 
     /**
