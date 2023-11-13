@@ -23,7 +23,7 @@ package de.unijena.bioinf.ms.gui.dialogs;
 import de.unijena.bioinf.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.compute.SubToolConfigPanel;
-import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.compute.jjobs.BackgroundRunsGui;
 import de.unijena.bioinf.ms.gui.logging.TextAreaJJobContainer;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -116,7 +116,7 @@ public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
             command.add(configPanel.toolCommand());
             command.addAll(configPanel.asParameterList());
 
-            final TextAreaJJobContainer<Boolean> j = Jobs.runCommand(command, compounds, getInputFilesOptions(), configPanel.toolCommand());
+            final TextAreaJJobContainer<Boolean> j = BackgroundRunsGui.runCommand(command, compounds, getInputFilesOptions(), configPanel.toolCommand());
             LoadingBackroundTask.connectToJob(mf(), "Running '" + configPanel.toolCommand() + "'...", indeterminateProgress, j);
 
         } catch (Exception e) {

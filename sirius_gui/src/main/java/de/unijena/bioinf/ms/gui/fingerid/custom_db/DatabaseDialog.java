@@ -25,6 +25,7 @@ import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
+import de.unijena.bioinf.ms.gui.compute.jjobs.BackgroundRunsGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.configs.Icons;
@@ -159,7 +160,7 @@ public class DatabaseDialog extends JDialog {
             if (new QuestionDialog(getOwner(), msg).isSuccess()) {
 
                 try {
-                    Jobs.runCommandAndLoad(Arrays.asList(
+                    BackgroundRunsGui.runCommandAndLoad(Arrays.asList(
                                             CustomDBOptions.class.getAnnotation(CommandLine.Command.class).name(),
                                             "--remove", name), null, null, owner,
                                     "Deleting database '" + name + "'...", true)
@@ -381,7 +382,7 @@ public class DatabaseDialog extends JDialog {
                 input.msInput = new InputFilesOptions.MsInput();
                 input.msInput.setInputPath(sources);
 
-                Jobs.runCommandAndLoad(command, null,
+                BackgroundRunsGui.runCommandAndLoad(command, null,
                                 input, this,
                                 "Importing into '" + configPanel.dbLocationField.getFilePath() + "'...",
                                 false)

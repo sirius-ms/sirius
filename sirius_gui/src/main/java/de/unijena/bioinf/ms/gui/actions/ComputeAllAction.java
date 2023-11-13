@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.gui.compute.BatchComputeDialog;
+import de.unijena.bioinf.ms.gui.compute.jjobs.BackgroundRunsGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
@@ -60,7 +61,7 @@ public class ComputeAllAction extends AbstractMainFrameAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (isActive.get()) {
-            Jobs.runInBackgroundAndLoad(MF, "Canceling Jobs...", Jobs::cancelAllRuns);
+            Jobs.runInBackgroundAndLoad(MF, "Canceling Jobs...", BackgroundRunsGui::cancelAllRuns);
         } else {
             if (MF.getCompounds().isEmpty()){
                 LoggerFactory.getLogger(getClass()).warn("Not instances to compute! Closing Compute Dialog...");

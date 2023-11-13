@@ -29,6 +29,7 @@ import de.unijena.bioinf.ms.frontend.splash.Splash;
 import de.unijena.bioinf.ms.frontend.subtools.*;
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastSubToolJob;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
+import de.unijena.bioinf.ms.gui.compute.jjobs.BackgroundRunsGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.*;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
@@ -109,7 +110,7 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                         try {
                             ApplicationCore.DEFAULT_LOGGER.info("Saving properties file before termination.");
                             SiriusProperties.SIRIUS_PROPERTIES_FILE().store();
-                            Jobs.runInBackgroundAndLoad(MF, "Cancelling running jobs...", Jobs::cancelAllRuns);
+                            Jobs.runInBackgroundAndLoad(MF, "Cancelling running jobs...", BackgroundRunsGui::cancelAllRuns);
 
                             ApplicationCore.DEFAULT_LOGGER.info("Closing Project-Space");
                             Jobs.runInBackgroundAndLoad(MF, "Closing Project-Space", true, new TinyBackgroundJJob<Boolean>() {
