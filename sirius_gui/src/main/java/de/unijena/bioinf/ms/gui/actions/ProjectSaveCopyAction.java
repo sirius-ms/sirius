@@ -94,7 +94,8 @@ public class ProjectSaveCopyAction extends AbstractMainFrameAction {
 
         if (selectedFile != null) {
             try {
-                MF.ps().saveCopy(selectedFile.toPath());
+                MF.ps().saveCopy(selectedFile.toPath(), MF);
+                Jobs.runEDTAndWait(() -> MF.setTitlePath(MF.ps().projectSpace().getLocation().toString()));
             } catch (Exception e2) {
                 new StacktraceDialog(MF, e2.getMessage(), e2);
             }

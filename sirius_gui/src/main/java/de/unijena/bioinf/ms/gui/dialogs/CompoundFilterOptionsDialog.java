@@ -353,7 +353,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         ).getResult();
 
         //delete instances
-        mf().ps().deleteCompounds(toDelete);
+        mf().ps().deleteCompounds(toDelete, mf());
     }
 
     /**

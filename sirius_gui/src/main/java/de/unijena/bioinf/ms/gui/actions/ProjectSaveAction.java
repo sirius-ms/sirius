@@ -20,7 +20,9 @@
 package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.io.filefilter.ProjectArchivedFilter;
 import de.unijena.bioinf.ms.gui.io.filefilter.ProjectDirectoryFilter;
@@ -70,7 +72,12 @@ public class ProjectSaveAction extends AbstractMainFrameAction {
                 SiriusProperties.
                         setAndStoreInBackground(SiriusProperties.DEFAULT_SAVE_DIR_PATH, selFile.getParentFile().getAbsolutePath());
 
-                MF.ps().saveAs(selFile.toPath());
+                try {
+                    MF.ps().saveAs(selFile.toPath(), MF);
+                    Jobs.runEDTAndWait(() -> MF.setTitlePath(MF.ps().projectSpace().getLocation().toString()));
+                } catch (Exception e2) {
+                    new StacktraceDialog(MF, e2.getMessage(), e2);
+                }
                 break;
             } else {
                 new WarningDialog(MF, "'" + selFile.getAbsolutePath() + "' does not contain valid SIRIUS project.");

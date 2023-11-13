@@ -18,11 +18,6 @@
  */
 
 package de.unijena.bioinf.ms.gui.actions;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 29.01.17.
- */
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
@@ -88,6 +83,6 @@ public class DeleteExperimentAction extends AbstractMainFrameAction {
         //use provided list or remove selected.
         List<InstanceBean> toRemove = this.toRemove != null ? new ArrayList<>(this.toRemove) : new ArrayList<>(MF.getCompoundList().getCompoundListSelectionModel().getSelected());
         MF.getCompoundList().getCompoundListSelectionModel().clearSelection();
-        MF.ps().deleteCompounds(toRemove);
+        MF.ps().deleteCompounds(toRemove, MF);
     }
 }

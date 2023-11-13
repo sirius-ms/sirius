@@ -188,7 +188,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
                 final SiriusProjectSpace ps = makeSpace.get();
                 compatible.set(InstanceImporter.checkDataCompatibility(ps, NetUtils.checkThreadInterrupt(Thread.currentThread())) == null);
                 BackgroundRunsGui.cancelAllRuns();
-                final GuiProjectSpaceManager gps = new GuiProjectSpaceManager(this, ps, psList, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY, 10));
+                final GuiProjectSpaceManager gps = new GuiProjectSpaceManager(ps, psList, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY, 10));
                 Jobs.runEDTAndWaitLazy(() -> setTitlePath(gps.projectSpace().getLocation().toString()));
 
                 gps.projectSpace().addProjectSpaceListener(event -> {
@@ -217,7 +217,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
                     "or you stay with the old fingerprint version but without being able to execute any fingerprint related computations (e.g. for data visualization).<br><br>" +
                     "Do you wish to convert and lose all fingerprint related results?" +
                     "</body></html>").isSuccess())
-                ps().updateFingerprintData();
+                ps().updateFingerprintData(this);
     }
 
     public void decoradeMainFrameInstance(@NotNull GuiProjectSpaceManager projectSpaceManager) {
@@ -321,7 +321,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
 
     private void importDragAndDropFiles(InputFilesOptions files) {
-        ps.importOneExperimentPerLocation(files); //import all batch mode importable file types (e.g. .sirius, project-dir, .ms, .mgf, .mzml, .mzxml)
+        ps.importOneExperimentPerLocation(files, this); //import all batch mode importable file types (e.g. .sirius, project-dir, .ms, .mgf, .mzml, .mzxml)
 
         // check if unknown files contain csv files with spectra
         final CSVFormatReader csvChecker = new CSVFormatReader();

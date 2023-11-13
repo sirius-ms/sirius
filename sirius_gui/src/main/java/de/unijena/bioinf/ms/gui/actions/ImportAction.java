@@ -66,7 +66,7 @@ public class ImportAction extends AbstractMainFrameAction {
             if (files.length > 0) {
                 SiriusProperties.
                         setAndStoreInBackground(SiriusProperties.DEFAULT_LOAD_DIALOG_PATH, files[0].getParentFile().getAbsolutePath());
-                MF.ps().importOneExperimentPerLocation(Arrays.asList(files));
+                MF.ps().importOneExperimentPerLocation(Arrays.asList(files), MF);
             }
 
         }
