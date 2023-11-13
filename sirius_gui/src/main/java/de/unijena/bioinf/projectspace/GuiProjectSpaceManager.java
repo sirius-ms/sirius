@@ -31,7 +31,6 @@ import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignSubToolJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.table.SiriusGlazedLists;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -43,10 +42,12 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -57,23 +58,21 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager<InstanceBean> {
     public final BasicEventList<InstanceBean> INSTANCE_LIST;
 
     protected final InstanceBuffer ringBuffer;
-    private final MainFrame mainFrame;
 
     private ContainerListener.Defined createListener;
     private ContainerListener.Defined computeListener;
 
 
-    public GuiProjectSpaceManager(@NotNull MainFrame mainFrame, @NotNull SiriusProjectSpace space, int maxBufferSize) {
-        this(mainFrame, space, new BasicEventList<>(), maxBufferSize);
+    public GuiProjectSpaceManager(@NotNull SiriusProjectSpace space, int maxBufferSize) {
+        this(space, new BasicEventList<>(), maxBufferSize);
     }
 
-    public GuiProjectSpaceManager(@NotNull MainFrame mainFrame, @NotNull SiriusProjectSpace space, BasicEventList<InstanceBean> compoundList, int maxBufferSize) {
-        this(mainFrame, space, compoundList, null, maxBufferSize);
+    public GuiProjectSpaceManager(@NotNull SiriusProjectSpace space, BasicEventList<InstanceBean> compoundList, int maxBufferSize) {
+        this(space, compoundList, null, maxBufferSize);
     }
 
-    public GuiProjectSpaceManager(@NotNull MainFrame mainFrame, @NotNull SiriusProjectSpace space, BasicEventList<InstanceBean> compoundList, @Nullable Function<Ms2Experiment, String> formatter, int maxBufferSize) {
+    public GuiProjectSpaceManager(@NotNull SiriusProjectSpace space, BasicEventList<InstanceBean> compoundList, @Nullable Function<Ms2Experiment, String> formatter, int maxBufferSize) {
         super(space, new InstanceBeanFactory(), formatter);
-        this.mainFrame = mainFrame;
         this.ringBuffer = new InstanceBuffer(maxBufferSize);
         this.INSTANCE_LIST = compoundList;
         final ArrayList<InstanceBean> buf = new ArrayList<>(size());
@@ -99,7 +98,7 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager<InstanceBean> {
                 return;
             Set<CompoundContainerId> eff = new HashSet<>(event.getAffectedIDs());
             Set<InstanceBean> upt = INSTANCE_LIST.stream().filter(i -> eff.contains(i.getID())).collect(Collectors.toSet());
-            Jobs.runEDTLater(() -> SiriusGlazedLists.multiUpdate(mainFrame.getCompoundList().getCompoundList(), upt));
+            Jobs.runEDTLater(() -> SiriusGlazedLists.multiUpdate(INSTANCE_LIST, upt));
         }).register();
     }
 
@@ -109,10 +108,10 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager<InstanceBean> {
     }
 
 
-    public void deleteCompounds(@Nullable final List<InstanceBean> insts) {
+    public void deleteCompounds(@Nullable final List<InstanceBean> insts, Window popupOwner) {
         if (insts == null || insts.isEmpty())
             return;
-        Jobs.runInBackgroundAndLoad(mainFrame, "Deleting Compounds...", false, new TinyBackgroundJJob<Boolean>() {
+        Jobs.runInBackgroundAndLoad(popupOwner, "Deleting Compounds...", false, new TinyBackgroundJJob<Boolean>() {
             @Override
             protected Boolean compute() throws Exception {
                 synchronized (GuiProjectSpaceManager.this) {
@@ -139,40 +138,40 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager<InstanceBean> {
 
     }
 
-    public void deleteAll() {
-        deleteCompounds(INSTANCE_LIST);
+    public void deleteAll(Window popupOwner) {
+        deleteCompounds(INSTANCE_LIST, popupOwner);
     }
 
     //ATTENTION Synchronizing around background tasks that block gui thread is dangerous
-    public synchronized void importOneExperimentPerLocation(@NotNull final List<File> inputFiles) {
+    public synchronized void importOneExperimentPerLocation(@NotNull final List<File> inputFiles, Window popupOwner) {
         final InputFilesOptions inputF = new InputFilesOptions();
-        inputF.msInput = Jobs.runInBackgroundAndLoad(mainFrame, "Analyzing Files...", false,
+        inputF.msInput = Jobs.runInBackgroundAndLoad(popupOwner, "Analyzing Files...", false,
                 InstanceImporter.makeExpandFilesJJob(inputFiles)).getResult();
-        importOneExperimentPerLocation(inputF);
+        importOneExperimentPerLocation(inputF, popupOwner);
     }
 
     //ATTENTION Synchronizing around background tasks that block gui thread is dangerous
-    public synchronized void importOneExperimentPerLocation(@NotNull final InputFilesOptions input) {
+    public synchronized void importOneExperimentPerLocation(@NotNull final InputFilesOptions input, Window popupOwner) {
         input.msInput.setAllowMS1Only(PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.allowMs1Only", true));
         input.msInput.setIgnoreFormula(PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.ignoreFormulas", false));
-        boolean align = Jobs.runInBackgroundAndLoad(mainFrame, "Checking for alignable input...", () ->
+        boolean align = Jobs.runInBackgroundAndLoad(popupOwner, "Checking for alignable input...", () ->
                         (input.msInput.msParserfiles.size() > 1 && input.msInput.projects.size() == 0 && input.msInput.msParserfiles.keySet().stream().map(p -> p.getFileName().toString().toLowerCase()).allMatch(n -> n.endsWith(".mzml") || n.endsWith(".mzxml"))))
                 .getResult();
 
         // todo this is hacky we need some real view for that at some stage.
         if (align)
-            align = new QuestionDialog(mainFrame, "<html><body> You inserted multiple LC-MS/MS Runs. <br> Do you want to Align them during import?</br></body></html>"/*, DONT_ASK_OPEN_KEY*/).isSuccess();
+            align = new QuestionDialog(popupOwner, "<html><body> You inserted multiple LC-MS/MS Runs. <br> Do you want to Align them during import?</br></body></html>"/*, DONT_ASK_OPEN_KEY*/).isSuccess();
         try {
             createListener.unregister();
             if (align) {
                 //todo would be nice to update all at once!
                 final LcmsAlignSubToolJob j = new LcmsAlignSubToolJob(input, this, null, new LcmsAlignOptions());
-                Jobs.runInBackgroundAndLoad(mainFrame, j);
+                Jobs.runInBackgroundAndLoad(popupOwner, j);
                 INSTANCE_LIST.addAll(j.getImportedCompounds().stream()
-                        .map(id -> (InstanceBean) getInstanceFromCompound(id))
-                        .collect(Collectors.toList()));
+                        .map(this::getInstanceFromCompound)
+                        .toList());
             } else {
-                final List<Path> outdated = Jobs.runInBackgroundAndLoad(mainFrame, "Checking for incompatible data...", new TinyBackgroundJJob<List<Path>>() {
+                final List<Path> outdated = Jobs.runInBackgroundAndLoad(popupOwner, "Checking for incompatible data...", new TinyBackgroundJJob<List<Path>>() {
                     @Override
                     protected List<Path> compute() throws Exception {
                         if (input.msInput.projects.size() == 0)
@@ -186,7 +185,7 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager<InstanceBean> {
                     }
                 }).getResult();
 
-                boolean updateIfNeeded = !outdated.isEmpty() && new QuestionDialog(mainFrame, GuiUtils.formatToolTip(
+                boolean updateIfNeeded = !outdated.isEmpty() && new QuestionDialog(popupOwner, GuiUtils.formatToolTip(
                         "The following input projects are incompatible with the target", "'" + this.projectSpace().getLocation() + "'", "",
                         outdated.stream().map(Path::getFileName).map(Path::toString).collect(Collectors.joining(",")), "",
                         "Do you wish to import and update the fingerprint data?", "WARNING: All fingerprint related results will be excluded during import (CSI:FingerID, CANOPUS)")).isSuccess();
@@ -202,10 +201,10 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager<InstanceBean> {
                         },
                         x -> true, false, updateIfNeeded
                 );
-                List<InstanceBean> imported = Optional.ofNullable(Jobs.runInBackgroundAndLoad(mainFrame, "Auto-Importing supported Files...", importer.makeImportJJob(input))
-                        .getResult()).map(c -> c.stream().map(id -> (InstanceBean) getInstanceFromCompound(id)).collect(Collectors.toList())).orElse(List.of());
+                List<InstanceBean> imported = Optional.ofNullable(Jobs.runInBackgroundAndLoad(popupOwner, "Auto-Importing supported Files...", importer.makeImportJJob(input))
+                        .getResult()).map(c -> c.stream().map(this::getInstanceFromCompound).collect(Collectors.toList())).orElse(List.of());
 
-                Jobs.runInBackgroundAndLoad(mainFrame, "Showing imported data...",
+                Jobs.runInBackgroundAndLoad(popupOwner, "Showing imported data...",
                         () -> Jobs.runEDTLater(() -> INSTANCE_LIST.addAll(imported)));
             }
         } finally {
@@ -213,13 +212,12 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager<InstanceBean> {
         }
     }
 
-    protected void copy(Path newlocation, boolean switchLocation) {
+    protected void copy(Path newlocation, boolean switchLocation, Frame popupOwner) {
         final String header = switchLocation ? "Saving Project to" : "Saving a Copy to";
-        final IOException ex = Jobs.runInBackgroundAndLoad(mainFrame, header + " '" + newlocation.toString() + "'...", () -> {
+        final IOException ex = Jobs.runInBackgroundAndLoad(popupOwner, header + " '" + newlocation.toString() + "'...", () -> {
             synchronized (GuiProjectSpaceManager.this) {
                 try {
                     ProjectSpaceIO.copyProject(projectSpace(), newlocation, switchLocation);
-                    Jobs.runEDTAndWait(() -> mainFrame.setTitlePath(projectSpace().getLocation().toString()));
                     return null;
                 } catch (IOException e) {
                     return e;
@@ -228,11 +226,11 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager<InstanceBean> {
         }).getResult();
 
         if (ex != null)
-            new ExceptionDialog(mainFrame, ex.getMessage());
+            new ExceptionDialog(popupOwner, ex.getMessage());
     }
 
-    public void updateFingerprintData() {
-        Jobs.runInBackgroundAndLoad(mainFrame, new TinyBackgroundJJob<Boolean>() {
+    public void updateFingerprintData(Window popupOwner) {
+        Jobs.runInBackgroundAndLoad(popupOwner, new TinyBackgroundJJob<Boolean>() {
             @Override
             protected Boolean compute() throws Exception {
                 synchronized (GuiProjectSpaceManager.this) {
@@ -268,18 +266,17 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager<InstanceBean> {
      * @param newlocation The path where the project will be saved
      * @throws IOException Thrown if writing of archive fails
      */
-    public void saveAs(Path newlocation) {
-        copy(newlocation, true);
+    public void saveAs(Path newlocation, Frame popupOwner) {
+        copy(newlocation, true, popupOwner);
     }
 
     /**
      * Saves a copy of the project to a new location. Original location will be the active project.
      *
      * @param copyLocation The path where the project will be saved
-     * @throws IOException Thrown if writing of archive fails
      */
-    public void saveCopy(Path copyLocation) throws IOException {
-        copy(copyLocation, false);
+    public void saveCopy(Path copyLocation, Frame popupOwner) {
+        copy(copyLocation, false, popupOwner);
     }
 
     @Override

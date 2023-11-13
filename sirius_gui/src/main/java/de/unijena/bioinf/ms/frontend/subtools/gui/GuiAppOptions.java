@@ -22,14 +22,17 @@ package de.unijena.bioinf.ms.frontend.subtools.gui;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.ms.gui.compute.jjobs.BackgroundRunsGui;
 import de.unijena.bioinf.ms.frontend.SiriusCLIApplication;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.splash.Splash;
-import de.unijena.bioinf.ms.frontend.subtools.*;
+import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
+import de.unijena.bioinf.ms.frontend.subtools.Provide;
+import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
+import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastSubToolJob;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
-import de.unijena.bioinf.ms.gui.compute.jjobs.BackgroundRunsGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.*;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
@@ -39,9 +42,7 @@ import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
-import de.unijena.bioinf.projectspace.GuiProjectSpaceManagerFactory;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
-import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidateFingerprintsTopK;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidatesTopK;
 import org.jetbrains.annotations.Nullable;
@@ -69,18 +70,17 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
 
     @Override
     public Flow makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
-        return new Flow((CLIRootOptions<?, ?>) rootOptions, config);
+        return new Flow(rootOptions, config);
 
     }
 
     public class Flow implements Workflow {
-//        private final PreprocessingJob<GuiProjectSpaceManager> preproJob;
+        private final PreprocessingJob<GuiProjectSpaceManager> preproJob;
         private final ParameterConfig config;
 
-        private  final  CLIRootOptions<?,?> rootOptions;
-        private Flow(CLIRootOptions<?,?> rootOptions, ParameterConfig config) {
-            this.rootOptions = rootOptions;
-//            this.preproJob = (PreprocessingJob<GuiProjectSpaceManager>) rootOptions.makeDefaultPreprocessingJob();
+
+        private Flow(RootOptions<?,?, ?, ?> rootOptions, ParameterConfig config) {
+            this.preproJob = (PreprocessingJob<GuiProjectSpaceManager>) rootOptions.makeDefaultPreprocessingJob();
             this.config = config;
         }
 
@@ -99,8 +99,6 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
             ApplicationCore.DEFAULT_LOGGER.info("Swing parameters for GUI initialized");
 
             final MainFrame MF =  new MainFrame();
-            rootOptions.setSpaceManagerFactory((ProjectSpaceManagerFactory) new GuiProjectSpaceManagerFactory(MF));
-
             MF.addWindowListener(new WindowAdapter() {
                 @Override
                 public void windowClosing(WindowEvent event) {
@@ -142,7 +140,6 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                         updateProgress(0, max, progress++, "Initializing available DBs");
                         SearchableDatabases.getAvailableDatabases();
                         updateProgress(0, max, progress++, "Initializing Project-Space...");
-                        PreprocessingJob<GuiProjectSpaceManager> preproJob = (PreprocessingJob<GuiProjectSpaceManager>) rootOptions.makeDefaultPreprocessingJob();
                         // run prepro job. this jobs imports all existing data into the projectspace we use for the GUI session
                         final ProjectSpaceManager<?> projectSpace = SiriusJobs.getGlobalJobManager().submitJob(preproJob).takeResult();
                         updateProgress(0, max, progress++, "Painting GUI...");

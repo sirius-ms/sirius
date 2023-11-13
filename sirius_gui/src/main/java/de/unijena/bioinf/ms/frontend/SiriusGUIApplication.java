@@ -135,7 +135,7 @@ public class SiriusGUIApplication extends SiriusCLIApplication {
                         updateProgress(0, 7, 3, "Configure Workflows... ");
                         run(finalArgs, () -> {
                             final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
-                            CLIRootOptions<?,?> rootOptions = new CLIRootOptions<>(configOptionLoader, (GuiProjectSpaceManagerFactory) null); //todo tmp workaround during transformation
+                            CLIRootOptions<?,?> rootOptions = new CLIRootOptions<>(configOptionLoader, new GuiProjectSpaceManagerFactory());
                             updateProgress(0, 7, 4, "Firing up SIRIUS... ");
                             removePropertyChangeListener(splash);
                             return new WorkflowBuilder<>(rootOptions, configOptionLoader,

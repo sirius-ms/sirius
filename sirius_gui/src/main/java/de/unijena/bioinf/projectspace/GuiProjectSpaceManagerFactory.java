@@ -22,7 +22,6 @@ package de.unijena.bioinf.projectspace;
 import ca.odell.glazedlists.BasicEventList;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ms.frontend.subtools.gui.GuiAppOptions;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,11 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Function;
 
 public class GuiProjectSpaceManagerFactory implements ProjectSpaceManagerFactory<InstanceBean, GuiProjectSpaceManager> {
-    private final MainFrame mf;
-
-    public GuiProjectSpaceManagerFactory(MainFrame mf) {
-        this.mf = mf;
-    }
 
     @Override
     public GuiProjectSpaceManager create(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<Instance> factory, @Nullable Function<Ms2Experiment, String> formatter) {
@@ -42,6 +36,6 @@ public class GuiProjectSpaceManagerFactory implements ProjectSpaceManagerFactory
     }
 
     public GuiProjectSpaceManager create(@NotNull SiriusProjectSpace space, @NotNull BasicEventList<InstanceBean> actionList, @Nullable Function<Ms2Experiment, String> formatter) {
-        return new GuiProjectSpaceManager(mf, space,actionList,formatter, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY,10));
+        return new GuiProjectSpaceManager(space,actionList,formatter, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY,10));
     }
 }
