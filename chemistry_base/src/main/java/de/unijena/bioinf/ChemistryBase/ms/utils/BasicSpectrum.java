@@ -24,17 +24,23 @@ package de.unijena.bioinf.ChemistryBase.ms.utils;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 
+import java.io.Serializable;
+
 public abstract class BasicSpectrum<P extends Peak> extends AbstractSpectrum<P> {
 	
 	protected final double[] masses;
 	protected final double[] intensities;
-	
-	public BasicSpectrum(double[] masses, double[] intensities) {
+
+	protected BasicSpectrum(double[] masses, double[] intensities, boolean noCopy) {
 		super();
 		if (masses.length != intensities.length)
 			throw new IllegalArgumentException("size of masses and intensities differ");
-		this.masses = masses.clone();
-		this.intensities = intensities.clone();
+		this.masses = noCopy ? masses : masses.clone();
+		this.intensities = noCopy ? intensities : intensities.clone();
+	}
+
+	public BasicSpectrum(double[] masses, double[] intensities) {
+		this(masses,intensities,false);
 	}
 	
 	public <T extends Peak, S extends Spectrum<T>> BasicSpectrum(S s) {

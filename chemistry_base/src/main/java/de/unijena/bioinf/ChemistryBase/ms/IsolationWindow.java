@@ -23,9 +23,10 @@ package de.unijena.bioinf.ChemistryBase.ms;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.Range;
 
+import java.io.Serializable;
 import java.util.Locale;
 
-public class IsolationWindow {
+public class IsolationWindow implements Serializable {
 
     protected final double windowOffset;
     protected final double windowWidth;
