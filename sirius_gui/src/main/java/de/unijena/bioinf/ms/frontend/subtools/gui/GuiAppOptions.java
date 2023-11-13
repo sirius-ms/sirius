@@ -22,7 +22,6 @@ package de.unijena.bioinf.ms.frontend.subtools.gui;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
-import de.unijena.bioinf.ms.gui.compute.jjobs.BackgroundRunsGui;
 import de.unijena.bioinf.ms.frontend.SiriusCLIApplication;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
@@ -108,7 +107,7 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                         try {
                             ApplicationCore.DEFAULT_LOGGER.info("Saving properties file before termination.");
                             SiriusProperties.SIRIUS_PROPERTIES_FILE().store();
-                            Jobs.runInBackgroundAndLoad(MF, "Cancelling running jobs...", BackgroundRunsGui::cancelAllRuns);
+                            Jobs.runInBackgroundAndLoad(MF, "Cancelling running jobs...",  () -> MF.getBackgroundRuns().cancelAllRuns());
 
                             ApplicationCore.DEFAULT_LOGGER.info("Closing Project-Space");
                             Jobs.runInBackgroundAndLoad(MF, "Closing Project-Space", true, new TinyBackgroundJJob<Boolean>() {

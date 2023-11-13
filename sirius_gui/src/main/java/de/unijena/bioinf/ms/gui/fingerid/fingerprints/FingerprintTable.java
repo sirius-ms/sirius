@@ -54,14 +54,17 @@ public class FingerprintTable extends ActionList<FingerIdPropertyBean, FormulaRe
     protected PredictorType predictorType;
     protected int[] trainingExamples;
     protected final WebAPI csiApi;
+    private final BackgroundRunsGui backgroundRuns;
 
-    public FingerprintTable(final FormulaList source, WebAPI api) throws IOException {
-        this(source, api, FingerprintVisualization.read());
+    public FingerprintTable(final FormulaList source, WebAPI api, BackgroundRunsGui backgroundRuns) throws IOException {
+        this(source, api, FingerprintVisualization.read(), backgroundRuns);
+
     }
 
-    public FingerprintTable(final FormulaList source, WebAPI<?> api, FingerprintVisualization[] visualizations) {
+    public FingerprintTable(final FormulaList source, WebAPI<?> api, FingerprintVisualization[] visualizations, BackgroundRunsGui backgroundRuns) {
         super(FingerIdPropertyBean.class, DataSelectionStrategy.FIRST_SELECTED);
         this.csiApi = api;
+        this.backgroundRuns = backgroundRuns;
         source.addActiveResultChangedListener(this);
         this.visualizations = visualizations;
     }
@@ -70,7 +73,7 @@ public class FingerprintTable extends ActionList<FingerIdPropertyBean, FormulaRe
         if (this.predictorType == predictorType && fscores != null) return;
         this.predictorType = predictorType;
 
-        final FingerIdData csiData = BackgroundRunsGui.getProject().loadProjectSpaceProperty(FingerIdDataProperty.class)
+        final FingerIdData csiData = backgroundRuns.getProject().loadProjectSpaceProperty(FingerIdDataProperty.class)
                 .map(p -> p.getByCharge(predictorType.toCharge())).orElseThrow(() -> new IOException("Could not load FingerID data from Project-Space!"));
 
         final PredictionPerformance[] performances = csiData.getPerformances();

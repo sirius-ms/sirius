@@ -43,9 +43,11 @@ import java.util.stream.Collectors;
 public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
 
 
+    private final BackgroundRunsGui backgroundRuns;
 
-    public ExecutionDialog(@NotNull P configPanel, @Nullable List<InstanceBean> compounds, @Nullable List<Path> nonCompoundInput, MainFrame owner, String title, boolean modal) {
+    public ExecutionDialog(BackgroundRunsGui backgroundRuns, @NotNull P configPanel, @Nullable List<InstanceBean> compounds, @Nullable List<Path> nonCompoundInput, MainFrame owner, String title, boolean modal) {
         super(owner, title, modal);
+        this.backgroundRuns = backgroundRuns;
         init(configPanel, compounds, nonCompoundInput);
     }
     private MainFrame mf(){
@@ -116,7 +118,7 @@ public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
             command.add(configPanel.toolCommand());
             command.addAll(configPanel.asParameterList());
 
-            final TextAreaJJobContainer<Boolean> j = BackgroundRunsGui.runCommand(command, compounds, getInputFilesOptions(), configPanel.toolCommand());
+            final TextAreaJJobContainer<Boolean> j = backgroundRuns.runCommand(command, compounds, getInputFilesOptions(), configPanel.toolCommand());
             LoadingBackroundTask.connectToJob(mf(), "Running '" + configPanel.toolCommand() + "'...", indeterminateProgress, j);
 
         } catch (Exception e) {

@@ -77,11 +77,14 @@ public class MainFrame extends JFrame implements DropTargetListener {
         return log;
     }
 
-    // Project Space
-    private GuiProjectSpaceManager ps;
+    // Project Space and Commands
+    private BackgroundRunsGui backgroundRuns;
 
+    public BackgroundRunsGui getBackgroundRuns() {
+        return backgroundRuns;
+    }
     public GuiProjectSpaceManager ps() {
-        return ps;
+        return backgroundRuns.getProject();
     }
 
     private BasicEventList<InstanceBean> compoundBaseList;
@@ -182,12 +185,12 @@ public class MainFrame extends JFrame implements DropTargetListener {
     protected void changeProject(IOFunctions.IOSupplier<SiriusProjectSpace> makeSpace) {
         final BasicEventList<InstanceBean> psList = compoundBaseList;
         final AtomicBoolean compatible = new AtomicBoolean(true);
-        this.ps = Jobs.runInBackgroundAndLoad(this, "Opening new Project...", () -> {
-            GuiProjectSpaceManager old = this.ps;
+        backgroundRuns.setProject(Jobs.runInBackgroundAndLoad(this, "Opening new Project...", () -> {
+            GuiProjectSpaceManager old = ps();
             try {
                 final SiriusProjectSpace ps = makeSpace.get();
                 compatible.set(InstanceImporter.checkDataCompatibility(ps, NetUtils.checkThreadInterrupt(Thread.currentThread())) == null);
-                BackgroundRunsGui.cancelAllRuns();
+                backgroundRuns.cancelAllRuns();
                 final GuiProjectSpaceManager gps = new GuiProjectSpaceManager(ps, psList, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY, 10));
                 Jobs.runEDTAndWaitLazy(() -> setTitlePath(gps.projectSpace().getLocation().toString()));
 
@@ -199,10 +202,9 @@ public class MainFrame extends JFrame implements DropTargetListener {
             } finally {
                 old.close();
             }
-        }).getResult();
-        BackgroundRunsGui.setProject(ps);
+        }).getResult());
 
-        if (this.ps == null) {
+        if (ps() == null) {
             try {
                 LoggerFactory.getLogger(getClass()).warn("Error when changing project-space. Falling back to tmp project-space");
                 createNewProjectSpace(ProjectSpaceIO.createTmpProjectSpaceLocation());
@@ -222,21 +224,20 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     public void decoradeMainFrameInstance(@NotNull GuiProjectSpaceManager projectSpaceManager) {
         //add project-space
-        ps = projectSpaceManager;
-        BackgroundRunsGui.setProject(ps);
+        backgroundRuns = new BackgroundRunsGui(projectSpaceManager);
 
-        compoundBaseList = ps.INSTANCE_LIST;
-        Jobs.runEDTAndWaitLazy(() -> setTitlePath(ps.projectSpace().getLocation().toString()));
+        compoundBaseList = ps().INSTANCE_LIST;
+        Jobs.runEDTAndWaitLazy(() -> setTitlePath(ps().projectSpace().getLocation().toString()));
 
         // create models for views
-        compoundList = new CompoundList(this, ps);
+        compoundList = new CompoundList(this, ps());
         formulaList = new FormulaList(compoundList);
 
 
         //CREATE VIEWS
         jobDialog = new JobDialog(this);
         // results Panel
-        resultsPanel = new ResultPanel(formulaList, compoundList, ApplicationCore.WEB_API);
+        resultsPanel = new ResultPanel(formulaList, compoundList, ApplicationCore.WEB_API, backgroundRuns);
         JPanel resultPanelContainer = new JPanel(new BorderLayout());
         resultPanelContainer.setBorder(BorderFactory.createEmptyBorder());
         resultPanelContainer.add(resultsPanel,BorderLayout.CENTER);
@@ -321,7 +322,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
 
     private void importDragAndDropFiles(InputFilesOptions files) {
-        ps.importOneExperimentPerLocation(files, this); //import all batch mode importable file types (e.g. .sirius, project-dir, .ms, .mgf, .mzml, .mzxml)
+        ps().importOneExperimentPerLocation(files, this); //import all batch mode importable file types (e.g. .sirius, project-dir, .ms, .mgf, .mzml, .mzxml)
 
         // check if unknown files contain csv files with spectra
         final CSVFormatReader csvChecker = new CSVFormatReader();

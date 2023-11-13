@@ -31,6 +31,7 @@ import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.DataSources;
 import de.unijena.bioinf.chemdb.InChISMILESUtils;
 import de.unijena.bioinf.elgordo.LipidClass;
+import de.unijena.bioinf.ms.gui.compute.jjobs.BackgroundRunsGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.SpectralMatchingDialog;
@@ -91,7 +92,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     private CompoundList compoundList;
     private ResultPanel resultPanel;
 
-    public CandidateListDetailView(ResultPanel resultPanel, CompoundList compoundList, StructureList sourceList) {
+    public CandidateListDetailView(ResultPanel resultPanel, CompoundList compoundList, StructureList sourceList, BackgroundRunsGui backgroundRuns) {
         super(sourceList);
 
         getSource().addActiveResultChangedListener((experiment, sre, resultElements, selections) -> {
@@ -109,7 +110,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         this.resultPanel = resultPanel;
 
         ToolTipManager.sharedInstance().registerComponent(candidateList);
-        candidateList.setCellRenderer(new CandidateCellRenderer(compoundList, sourceList.csiScoreStats, this));
+        candidateList.setCellRenderer(new CandidateCellRenderer(compoundList, sourceList.csiScoreStats, this, backgroundRuns));
         candidateList.setFixedCellHeight(-1);
         candidateList.setPrototypeCellValue(FingerprintCandidateBean.PROTOTYPE);
         final JScrollPane scrollPane = new JScrollPane(candidateList, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);

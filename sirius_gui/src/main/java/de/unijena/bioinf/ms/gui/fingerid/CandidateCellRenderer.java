@@ -62,11 +62,13 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
 
     private final CompoundList compoundList;
     protected final CandidateListDetailView candidateJList; //todo remove me to make conversion complete
+    private BackgroundRunsGui backgroundRuns;
 
-    public CandidateCellRenderer(final CompoundList compoundList, DoubleListStats stats, CandidateListDetailView candidateJList) {
+    public CandidateCellRenderer(final CompoundList compoundList, DoubleListStats stats, CandidateListDetailView candidateJList, BackgroundRunsGui backgroundRuns) {
         this.compoundList = compoundList;
         this.candidateJList = candidateJList;
         this.stats = stats;
+        this.backgroundRuns = backgroundRuns;
         setLayout(new BorderLayout());
 
         //init fonts
@@ -390,7 +392,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
                 return;
 
             //todo is this down in background. i am not competley sure which methods run im background and which in EDT here.
-            BackgroundRunsGui.getProject().getProjectSpaceProperty(FingerIdDataProperty.class).map(p -> p.getByIonType(value.adduct)).ifPresent(f ->
+            backgroundRuns.getProject().getProjectSpaceProperty(FingerIdDataProperty.class).map(p -> p.getByIonType(value.adduct)).ifPresent(f ->
                     ag.setAgreement(value.getSubstructures(value.getPlatts(), f.getPerformances())));
         }
     }
