@@ -3,7 +3,7 @@ package de.unijena.bioinf.ms.gui.subtools.summaries;
 import de.unijena.bioinf.ms.frontend.io.FileChooserPanel;
 import de.unijena.bioinf.ms.frontend.subtools.summaries.SummaryOptions;
 import de.unijena.bioinf.ms.gui.compute.SubToolConfigPanel;
-import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.compute.jjobs.BackgroundRunsGui;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import org.jdesktop.swingx.JXTitledSeparator;
@@ -40,7 +40,7 @@ public class SummaryConfigPanel extends SubToolConfigPanel<SummaryOptions> {
         paras.add(new JXTitledSeparator("Summary Output Location"));
         paras.add(makeGenericOptionCheckBox("Zip Compression", "compress"));
         FileChooserPanel summaryLocation = new FileChooserPanel(
-                Optional.ofNullable(Jobs.getProject().projectSpace().getLocation().getParent()).map(Path::toString).orElse(""), "",
+                Optional.ofNullable(BackgroundRunsGui.getProject().projectSpace().getLocation().getParent()).map(Path::toString).orElse(""), "",
                 JFileChooser.FILES_AND_DIRECTORIES,JFileChooser.SAVE_DIALOG);
         summaryLocation.field.setPlaceholder("Writes to project-space if empty");
         parameterBindings.put("output", summaryLocation::getFilePath);

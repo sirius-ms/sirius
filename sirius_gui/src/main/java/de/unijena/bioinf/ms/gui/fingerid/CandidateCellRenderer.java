@@ -22,7 +22,7 @@ package de.unijena.bioinf.ms.gui.fingerid;
 import ca.odell.glazedlists.EventList;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
-import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.compute.jjobs.BackgroundRunsGui;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
@@ -390,7 +390,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
                 return;
 
             //todo is this down in background. i am not competley sure which methods run im background and which in EDT here.
-            Jobs.getProject().getProjectSpaceProperty(FingerIdDataProperty.class).map(p -> p.getByIonType(value.adduct)).ifPresent(f ->
+            BackgroundRunsGui.getProject().getProjectSpaceProperty(FingerIdDataProperty.class).map(p -> p.getByIonType(value.adduct)).ifPresent(f ->
                     ag.setAgreement(value.getSubstructures(value.getPlatts(), f.getPerformances())));
         }
     }

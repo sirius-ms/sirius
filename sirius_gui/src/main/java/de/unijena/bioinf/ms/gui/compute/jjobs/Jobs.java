@@ -21,22 +21,15 @@ package de.unijena.bioinf.ms.gui.compute.jjobs;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.*;
-import de.unijena.bioinf.ms.frontend.BackgroundRuns;
-import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.logging.TextAreaJJobContainer;
-import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
-import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.sirius.Sirius;
 import javafx.application.Platform;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Supplier;
@@ -45,23 +38,11 @@ import java.util.function.Supplier;
 /**
  * Central access point for Background jobs from the GUI
  * 1. It connects/executes GUI rendered background jobs to {@link SiriusJobs} job manager
- * 2. It provides access to {@link BackgroundRuns} service to execute commandline runs.
  * 3. Allows to manage task execution in Swing and JFX GUI threads.
  */
-@Deprecated
 public class Jobs { //todo convert to nonstatic class
     public static SwingJobManager MANAGER() {
         return (SwingJobManager) SiriusJobs.getGlobalJobManager();
-    }
-
-    private static GuiProjectSpaceManager PS;
-    @Deprecated
-    public static synchronized void setProject(GuiProjectSpaceManager project) {
-        PS = project;
-    }
-    @Deprecated
-    public static synchronized GuiProjectSpaceManager getProject() {
-        return PS;
     }
 
     private static final HashMap<String, Sirius> siriusPerProfile = new HashMap<>();
@@ -215,44 +196,6 @@ public class Jobs { //todo convert to nonstatic class
         } catch (InterruptedException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
-    }
-
-
-
-    public static TextAreaJJobContainer<Boolean> runCommand(@Nullable List<String> command, List<InstanceBean> compoundsToProcess, @Nullable String description) throws IOException {
-        return runCommand(command, compoundsToProcess, null, description);
-    }
-
-    public static TextAreaJJobContainer<Boolean> runCommand(@Nullable List<String> command, List<InstanceBean> compoundsToProcess, @Nullable InputFilesOptions input, @Nullable String description) throws IOException {
-        BackgroundRuns.BackgroundRunJob<GuiProjectSpaceManager, InstanceBean> job =
-                BackgroundRuns.makeBackgroundRun(command, compoundsToProcess, input, PS);
-
-        return submit(job, job.getRunId() + ": " + (description == null ? "" : description),
-                "Computation");
-    }
-
-    public static LoadingBackroundTask<Boolean> runCommandAndLoad(@Nullable List<String> command,
-                                                                  List<InstanceBean> compoundsToProcess,
-                                                                  @Nullable InputFilesOptions input,
-                                                                  Window owner, String title, boolean indeterminateProgress
-    ) throws IOException {
-        BackgroundRuns.BackgroundRunJob<GuiProjectSpaceManager, InstanceBean> job =
-                BackgroundRuns.makeBackgroundRun(command, compoundsToProcess, input, PS);
-        return runInBackgroundAndLoad(owner, title, indeterminateProgress, job);
-    }
-
-    public static LoadingBackroundTask<Boolean> runCommandAndLoad(@Nullable List<String> command,
-                                                                  List<InstanceBean> compoundsToProcess,
-                                                                  @Nullable InputFilesOptions input,
-                                                                  Dialog owner, String title, boolean indeterminateProgress
-    ) throws IOException {
-        BackgroundRuns.BackgroundRunJob<GuiProjectSpaceManager, InstanceBean> job =
-                BackgroundRuns.makeBackgroundRun(command, compoundsToProcess, input, PS);
-        return runInBackgroundAndLoad(owner, title, indeterminateProgress, job);
-    }
-
-    public static void cancelAllRuns() {
-        BackgroundRuns.cancelAllRuns();
     }
 
     public static Sirius getSiriusByProfile(String profile) {

@@ -25,6 +25,7 @@ import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.ms.gui.compute.jjobs.BackgroundRunsGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
@@ -69,7 +70,7 @@ public class FingerprintTable extends ActionList<FingerIdPropertyBean, FormulaRe
         if (this.predictorType == predictorType && fscores != null) return;
         this.predictorType = predictorType;
 
-        final FingerIdData csiData = Jobs.getProject().loadProjectSpaceProperty(FingerIdDataProperty.class)
+        final FingerIdData csiData = BackgroundRunsGui.getProject().loadProjectSpaceProperty(FingerIdDataProperty.class)
                 .map(p -> p.getByCharge(predictorType.toCharge())).orElseThrow(() -> new IOException("Could not load FingerID data from Project-Space!"));
 
         final PredictionPerformance[] performances = csiData.getPerformances();

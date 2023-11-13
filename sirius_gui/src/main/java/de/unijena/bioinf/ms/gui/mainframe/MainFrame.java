@@ -27,6 +27,7 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.gui.GuiAppOptions;
 import de.unijena.bioinf.ms.gui.compute.JobDialog;
+import de.unijena.bioinf.ms.gui.compute.jjobs.BackgroundRunsGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
@@ -186,7 +187,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
             try {
                 final SiriusProjectSpace ps = makeSpace.get();
                 compatible.set(InstanceImporter.checkDataCompatibility(ps, NetUtils.checkThreadInterrupt(Thread.currentThread())) == null);
-                Jobs.cancelAllRuns();
+                BackgroundRunsGui.cancelAllRuns();
                 final GuiProjectSpaceManager gps = new GuiProjectSpaceManager(this, ps, psList, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY, 10));
                 Jobs.runEDTAndWaitLazy(() -> setTitlePath(gps.projectSpace().getLocation().toString()));
 
@@ -199,7 +200,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
                 old.close();
             }
         }).getResult();
-        Jobs.setProject(ps);
+        BackgroundRunsGui.setProject(ps);
 
         if (this.ps == null) {
             try {
@@ -222,7 +223,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
     public void decoradeMainFrameInstance(@NotNull GuiProjectSpaceManager projectSpaceManager) {
         //add project-space
         ps = projectSpaceManager;
-        Jobs.setProject(ps);
+        BackgroundRunsGui.setProject(ps);
 
         compoundBaseList = ps.INSTANCE_LIST;
         Jobs.runEDTAndWaitLazy(() -> setTitlePath(ps.projectSpace().getLocation().toString()));
