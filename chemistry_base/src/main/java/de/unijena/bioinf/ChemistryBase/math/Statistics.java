@@ -32,6 +32,7 @@ import java.util.Random;
  */
 public class Statistics {
 
+
     public static double robustAverage(double[] xs) {
         if (xs.length < 4) return expectation(xs);
         final double[] ys = xs.clone();

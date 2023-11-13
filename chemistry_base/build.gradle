@@ -20,7 +20,9 @@
 
 version =  parent.siriusVersion
 dependencies {
-    // deprecated for removal ->  use fastutil instead
+    implementation 'it.unimi.dsi:fastutil:8.5.12'
+
+    // deprecated
     implementation 'net.sf.trove4j:core:3.1.0'
 
     annotationProcessor project(':default_properties:processor')
