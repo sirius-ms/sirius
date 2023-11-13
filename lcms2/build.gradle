@@ -1,0 +1,38 @@
+allprojects {
+    version =  parent.siriusVersion
+}
+
+dependencies {
+    implementation 'it.unimi.dsi:fastutil:8.5.12'
+
+    // https://mvnrepository.com/artifact/org.dizitart/nitrite
+    implementation 'org.dizitart:nitrite:3.4.4'
+
+    implementation "com.h2database:h2-mvstore"
+    
+
+    api project(':chemistry_base')
+    api project(':spectral_alignment')
+    api project(':mass_decomposition:mass_decomposer')
+    api project(':lcms')
+    //internal
+    api group: 'de.unijena.bioinf.ms', name: 'Recalibration', version: '1.0'
+    // external
+    implementation ('uk.ac.ebi.jmzml:jmzml:1.7.11') {
+        exclude group: 'uk.ac.ebi.pride.architectural', module: 'pride-logging' //pom dependency that does not work
+        exclude group: 'uk.ac.ebi.pride.architectural', module: 'pride-xml-handling' //pom dependency that does not work
+        exclude group: 'commons-codec', module: 'commons-codec' //pom dependency that does not work
+        exclude group: 'net.sourceforge.cpdetector', module: 'cpdetector'
+
+    }
+    implementation ('psidev.psi.tools:xxindex:0.23'){
+        exclude group: 'uk.ac.ebi.pride.architectural', module: 'pride-logging' //pom dependency that does not work
+        exclude group: 'net.sourceforge.cpdetector', module: 'cpdetector'
+
+    } //jmzml dep. from excluded pom dep
+
+
+    implementation group: 'commons-codec', name: 'commons-codec', version:  '1.15'
+    implementation group: 'com.github.jiangxincode', name: 'cpdetector', version:  '1.0.10'
+    api 'org.glassfish.jaxb:jaxb-runtime:2.3.3'
+}
