@@ -22,9 +22,8 @@ package de.unijena.bioinf.ms.frontend.subtools.gui;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
-import de.unijena.bioinf.ms.frontend.SiriusCLIApplication;
+import de.unijena.bioinf.ms.frontend.SiriusGui;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.splash.Splash;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
@@ -33,10 +32,12 @@ import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastSubToolJob;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.dialogs.*;
+import de.unijena.bioinf.ms.gui.dialogs.AboutDialog;
+import de.unijena.bioinf.ms.gui.dialogs.NewsDialog;
+import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
+import de.unijena.bioinf.ms.gui.dialogs.UpdateDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
-import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
@@ -48,13 +49,10 @@ import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import picocli.CommandLine;
 
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.IOException;
 
 @CommandLine.Command(name = "gui", aliases = {"GUI"}, description = "Starts the graphical user interface of SIRIUS", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
 public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
-    public static final String DONT_ASK_CLOSE_KEY = "de.unijena.bioinf.sirius.mainframe.close.dontAskAgain";
     public static final String COMPOUND_BUFFER_KEY = "de.unijena.bioinf.sirius.gui.instanceBuffer";
     private final Splash splash;
 
@@ -78,7 +76,7 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
         private final ParameterConfig config;
 
 
-        private Flow(RootOptions<?,?, ?, ?> rootOptions, ParameterConfig config) {
+        private Flow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
             this.preproJob = (PreprocessingJob<GuiProjectSpaceManager>) rootOptions.makeDefaultPreprocessingJob();
             this.config = config;
         }
@@ -88,49 +86,16 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
             // modify fingerid subtool so that it works with reduced GUI candidate list.
             FingerblastSubToolJob.formulaResultComponentsToClear.add(FBCandidatesTopK.class);
             FingerblastSubToolJob.formulaResultComponentsToClear.add(FBCandidateFingerprintsTopK.class);
-            //todo minor: cancellation handling
 
             // NOTE: we do not want to run ConfigJob here because we want to set
             // final configs for experient if something will be computed and that is not the case here
-            //todo maybe invalidate cache here!
-            //todo 3: init GUI with given project space.
-            GuiUtils.initUI();
-            ApplicationCore.DEFAULT_LOGGER.info("Swing parameters for GUI initialized");
 
-            final MainFrame MF =  new MainFrame();
-            MF.addWindowListener(new WindowAdapter() {
-                @Override
-                public void windowClosing(WindowEvent event) {
-                    if (!Jobs.MANAGER().hasActiveJobs() || new QuestionDialog(MF,
-                            "<html>Do you really want close SIRIUS?" +
-                                    "<br> <b>There are still some Jobs running.</b> Running Jobs will be canceled when closing SIRIUS.</html>", DONT_ASK_CLOSE_KEY).isSuccess()) {
-                        try {
-                            ApplicationCore.DEFAULT_LOGGER.info("Saving properties file before termination.");
-                            SiriusProperties.SIRIUS_PROPERTIES_FILE().store();
-                            Jobs.runInBackgroundAndLoad(MF, "Cancelling running jobs...",  () -> MF.getBackgroundRuns().cancelAllRuns());
-
-                            ApplicationCore.DEFAULT_LOGGER.info("Closing Project-Space");
-                            Jobs.runInBackgroundAndLoad(MF, "Closing Project-Space", true, new TinyBackgroundJJob<Boolean>() {
-                                @Override
-                                protected Boolean compute() throws Exception {
-                                    if (MF.ps() != null)
-                                        MF.ps().close();
-                                    return true;
-                                }
-                            });
-                            Jobs.runInBackgroundAndLoad(MF, "Disconnecting from webservice...", SiriusCLIApplication::shutdownWebservice);
-                        } finally {
-                            MF.CONNECTION_MONITOR().close();
-                            System.exit(0);
-                        }
-                    }
-                }
-            });
 
             // run prepro job. this jobs imports all existing data into the projectspace we use for the GUI session
-            TinyBackgroundJJob<Boolean> j = new TinyBackgroundJJob<>() {
+            TinyBackgroundJJob<MainFrame> j = new TinyBackgroundJJob<>() {
                 @Override
-                protected Boolean compute() throws Exception {
+                protected MainFrame compute() throws Exception {
+                    SiriusGui gui = null;
                     try {
                         int progress = 0;
                         int max = 8;
@@ -142,31 +107,32 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                         // run prepro job. this jobs imports all existing data into the projectspace we use for the GUI session
                         final ProjectSpaceManager<?> projectSpace = SiriusJobs.getGlobalJobManager().submitJob(preproJob).takeResult();
                         updateProgress(0, max, progress++, "Painting GUI...");
-                        MF.decoradeMainFrameInstance((GuiProjectSpaceManager) projectSpace);
+                        gui = new SiriusGui((GuiProjectSpaceManager) projectSpace);
                         updateProgress(0, max, progress++, "Checking Webservice connection...");
-                        ConnectionMonitor.ConnectionCheck cc = MF.CONNECTION_MONITOR().checkConnection();
+                        ConnectionMonitor.ConnectionCheck cc = gui.getMainFrame().CONNECTION_MONITOR().checkConnection();
 
                         if (cc.isConnected() || cc.hasOnlyWarning()) {
                             try {
                                 ApplicationCore.DEFAULT_LOGGER.info("Checking for Update... ");
                                 @Nullable VersionsInfo versionInfo = ApplicationCore.WEB_API.getVersionInfo(true);
-                                if (versionInfo != null){
+                                if (versionInfo != null) {
                                     ApplicationCore.DEFAULT_LOGGER.info("Latest Release: " + versionInfo.getLatestSiriusVersion() + " (Installed: " + ApplicationCore.VERSION() + ")");
 
-                                    if ((!UpdateDialog.isDontAskMe()  && ApplicationCore.VERSION_OBJ().compareTo(versionInfo.getLatestSiriusVersion()) < 0) || versionInfo.expired()) {
-                                        new UpdateDialog(MF, versionInfo);
+                                    if ((!UpdateDialog.isDontAskMe() && ApplicationCore.VERSION_OBJ().compareTo(versionInfo.getLatestSiriusVersion()) < 0) || versionInfo.expired()) {
+                                        new UpdateDialog(gui.getMainFrame(), versionInfo);
                                     }
                                     if (versionInfo.hasNews()) {
-                                        new NewsDialog(MF, versionInfo.getNews());
+                                        new NewsDialog(gui.getMainFrame(), versionInfo.getNews());
                                     }
                                 }
                             } catch (IOException e) {
                                 ApplicationCore.DEFAULT_LOGGER.error("Error when fetching update/release information form GitHub.", e);
                             }
                         }
-                        return true;
+                        return gui.getMainFrame();
                     } catch (Exception e) {
-                        new StacktraceDialog(MF, "Unexpected error!", e);
+                        if (gui != null)
+                            new StacktraceDialog(gui.getMainFrame(), "Unexpected error!", e);
                         throw e;
                     }
                 }
@@ -175,7 +141,7 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
             if (splash != null)
                 j.addPropertyChangeListener(splash);
 
-            Jobs.runInBackground(j).takeResult();
+            MainFrame MF = Jobs.runInBackground(j).takeResult();
 
             if (splash != null) {
                 splash.setVisible(false);
