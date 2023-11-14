@@ -132,11 +132,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
         return toolbar;
     }
 
-
-    //drop target for file input
-    private DropTarget dropTarget;
-
-
     public ConnectionMonitor CONNECTION_MONITOR() {
         return CONNECTION_MONITOR;
     }
@@ -221,7 +216,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
                 ps().updateFingerprintData(this);
     }
 
-    public void decoradeMainFrameInstance(@NotNull GuiProjectSpaceManager projectSpaceManager) {
+    public void decoradeMainFrame(@NotNull GuiProjectSpaceManager projectSpaceManager) {
         //add project-space
         backgroundRuns = new BackgroundRunsGui(projectSpaceManager);
 
