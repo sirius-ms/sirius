@@ -22,7 +22,7 @@ package de.unijena.bioinf.ms.gui.fingerid;
 import ca.odell.glazedlists.EventList;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
-import de.unijena.bioinf.ms.gui.compute.jjobs.BackgroundRunsGui;
+import de.unijena.bioinf.ms.gui.mainframe.BackgroundRunsGui;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;

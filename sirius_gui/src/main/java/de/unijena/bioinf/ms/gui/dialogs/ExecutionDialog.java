@@ -23,7 +23,7 @@ package de.unijena.bioinf.ms.gui.dialogs;
 import de.unijena.bioinf.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.compute.SubToolConfigPanel;
-import de.unijena.bioinf.ms.gui.compute.jjobs.BackgroundRunsGui;
+import de.unijena.bioinf.ms.gui.mainframe.BackgroundRunsGui;
 import de.unijena.bioinf.ms.gui.logging.TextAreaJJobContainer;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.projectspace.InstanceBean;

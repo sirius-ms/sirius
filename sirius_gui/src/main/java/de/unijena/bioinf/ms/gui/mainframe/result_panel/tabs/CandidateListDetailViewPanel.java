@@ -21,7 +21,7 @@
 
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
-import de.unijena.bioinf.ms.gui.compute.jjobs.BackgroundRunsGui;
+import de.unijena.bioinf.ms.gui.mainframe.BackgroundRunsGui;
 import de.unijena.bioinf.ms.gui.fingerid.CandidateListDetailView;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;

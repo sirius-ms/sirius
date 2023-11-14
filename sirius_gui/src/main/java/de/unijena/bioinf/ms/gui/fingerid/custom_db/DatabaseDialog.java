@@ -25,7 +25,7 @@ import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
-import de.unijena.bioinf.ms.gui.compute.jjobs.BackgroundRunsGui;
+import de.unijena.bioinf.ms.gui.mainframe.BackgroundRunsGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.configs.Icons;
