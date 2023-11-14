@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -18,11 +18,12 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.gui.compute.jjobs;
+package de.unijena.bioinf.ms.gui.mainframe;
 
 import de.unijena.bioinf.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.frontend.BackgroundRuns;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.logging.TextAreaJJobContainer;
 import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -40,7 +41,7 @@ import java.util.List;
  * WILL BE REPLACED BY NIGHTSKY CALLS!
  */
 @Deprecated
-public class BackgroundRunsGui {
+public final class BackgroundRunsGui {
 
     @NotNull
     private GuiProjectSpaceManager ps;
@@ -50,7 +51,7 @@ public class BackgroundRunsGui {
     }
 
     @Deprecated
-    public void setProject(@NotNull GuiProjectSpaceManager project) {
+    void setProject(@NotNull GuiProjectSpaceManager project) {
         ps = project;
     }
 

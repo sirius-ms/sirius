@@ -31,7 +31,7 @@ import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.DataSources;
 import de.unijena.bioinf.chemdb.InChISMILESUtils;
 import de.unijena.bioinf.elgordo.LipidClass;
-import de.unijena.bioinf.ms.gui.compute.jjobs.BackgroundRunsGui;
+import de.unijena.bioinf.ms.gui.mainframe.BackgroundRunsGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.SpectralMatchingDialog;

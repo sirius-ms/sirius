@@ -20,7 +20,7 @@
 package de.unijena.bioinf.ms.gui.mainframe.result_panel;
 
 import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassList;
-import de.unijena.bioinf.ms.gui.compute.jjobs.BackgroundRunsGui;
+import de.unijena.bioinf.ms.gui.mainframe.BackgroundRunsGui;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.fingerid.fingerprints.FingerprintTable;
 import de.unijena.bioinf.ms.gui.lcms_viewer.LCMSViewerPanel;
