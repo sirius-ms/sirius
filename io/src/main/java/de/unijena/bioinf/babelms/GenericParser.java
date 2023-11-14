@@ -41,59 +41,60 @@ public class GenericParser<T> implements Parser<T> {
         this(parser, t -> {}); //default not postprocessing
     }
 
-    public GenericParser(Parser<T> parser, @NotNull Consumer<T> postProcessor) {
+    public GenericParser(@NotNull Parser<T> parser, @NotNull Consumer<T> postProcessor) {
         this.parser = parser;
         this.postProcessor = postProcessor;
     }
 
 
     @Deprecated
-    public <S extends T> S parse(BufferedReader reader) throws IOException {
+    public T parse(BufferedReader reader) throws IOException {
         return parse(reader, null);
     }
 
-    public <S extends T> S parse(InputStream input) throws IOException {
+    public T parse(InputStream input) throws IOException {
         final BufferedReader reader = FileUtils.ensureBuffering(new InputStreamReader(input));
         return parse(reader);
     }
 
     @Deprecated
-    public <S extends T> CloseableIterator<S> parseIterator(InputStream input) throws IOException {
+    public CloseableIterator<T> parseIterator(InputStream input) throws IOException {
         return parseIterator(input, null);
     }
 
     @Deprecated
-    public <S extends T> CloseableIterator<S> parseIterator(BufferedReader input) throws IOException {
+    public CloseableIterator<T> parseIterator(BufferedReader input) throws IOException {
         return parseIterator(input, null);
     }
 
-    public <S extends T> CloseableIterator<S> parseIterator(InputStream input, URI source) throws IOException {
+    public CloseableIterator<T> parseIterator(InputStream input, URI source) throws IOException {
         final BufferedReader reader = FileUtils.ensureBuffering(new InputStreamReader(input));
         return parseIterator(reader, source);
     }
 
-    public <S extends T> CloseableIterator<S> parseIterator(final BufferedReader r, final URI source) throws IOException {
-        return new CloseableIterator<S>() {
+    public CloseableIterator<T> parseIterator(final BufferedReader r, final URI source) throws IOException {
+        return new CloseableIterator<>() {
             @Override
-            public void close() throws IOException {
+            public void close() {
                 //todo reader should only be closed outside and not inside this class here.
                 tryclose();
             }
 
             BufferedReader reader = r;
-            S elem = parse(reader, source);
+            T elem = parse(reader, source);
+
             @Override
             public boolean hasNext() {
-                if (elem==null) tryclose(); //for reader without any element
-                return reader!=null;
+                if (elem == null) tryclose(); //for reader without any element
+                return reader != null;
             }
 
             @Override
-            public S next() {
-                S mem = elem;
+            public T next() {
+                T mem = elem;
                 try {
                     if (parser.isClosingAfterParsing()) {
-                        reader=null;
+                        reader = null;
                         elem = null;
                         return mem;
                     }
@@ -102,7 +103,7 @@ public class GenericParser<T> implements Parser<T> {
                     tryclose();
                     throw new RuntimeException(e);
                 }
-                if (elem==null) tryclose();
+                if (elem == null) tryclose();
                 return mem;
             }
 
@@ -110,11 +111,9 @@ public class GenericParser<T> implements Parser<T> {
                 try {
                     if (reader != null) {
                         reader.close();
-                        reader=null;
+                        reader = null;
                     }
-                } catch (IOException e) {
-
-                }
+                } catch (IOException ignored) {}
             }
 
             @Override
@@ -124,24 +123,24 @@ public class GenericParser<T> implements Parser<T> {
         };
     }
 
-    public <S extends T> CloseableIterator<S> parseFromFileIterator(File file) throws IOException {
+    public CloseableIterator<T> parseFromFileIterator(File file) throws IOException {
         final BufferedReader r = FileUtils.ensureBuffering(new FileReader(file));
         return parseIterator(r, file.toURI());
     }
 
-    public <S extends T> CloseableIterator<S> parseFromPathIterator(Path file) throws IOException {
+    public CloseableIterator<T> parseFromPathIterator(Path file) throws IOException {
         final BufferedReader r = Files.newBufferedReader(file);
         return parseIterator(r, file.toUri());
     }
 
 
-    public <S extends T> List<S> parseFromFile(File file) throws IOException {
+    public List<T> parseFromFile(File file) throws IOException {
         BufferedReader reader = null;
         final URI source = file.toURI();
         try {
             reader = FileUtils.ensureBuffering(new FileReader(file));
-            final ArrayList<S> list = new ArrayList<S>();
-            S elem = parse(reader,source);
+            final ArrayList<T> list = new ArrayList<>();
+            T elem = parse(reader,source);
             if (parser.isClosingAfterParsing()) {
                 list.add(elem);
             } else {
@@ -159,7 +158,7 @@ public class GenericParser<T> implements Parser<T> {
     }
 
     @Deprecated
-    public <S extends T> S parseFile(File file) throws IOException {
+    public T parseFile(File file) throws IOException {
         BufferedReader reader = null;
         final URI source = file.toURI();
         try {
@@ -173,8 +172,8 @@ public class GenericParser<T> implements Parser<T> {
     }
 
     @Override
-    public <S extends T> S parse(BufferedReader reader, URI source) throws IOException {
-        S it = parser.parse(reader, source);
+    public T parse(BufferedReader reader, URI source) throws IOException {
+        T it = parser.parse(reader, source);
         if (it != null)
             postProcessor.accept(it);
         return it;
