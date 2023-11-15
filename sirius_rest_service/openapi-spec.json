@@ -1,0 +1,4180 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "SIRIUS Nightsky API",
+    "description": "REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT",
+    "version": "2.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Generated server url"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Info",
+      "description": "Status und Information"
+    },
+    {
+      "name": "Jobs",
+      "description": "Start, monitor and cancel background jobs."
+    },
+    {
+      "name": "Compounds",
+      "description": "This compound based API allows to retrieve all AlignedFeatures that belong to the same compound (also known as a group of ion identities). It also provides for each AlignedFeature the corresponding annotation results (which are usually computed on a per-feature basis)"
+    },
+    {
+      "name": "Login and Account",
+      "description": "Perform signIn, signOut and signUp. Get tokens and account information."
+    },
+    {
+      "name": "Features",
+      "description": "This feature based API allows access features (aligned over runs) and there Annotations of a specified project-space. This is the entry point to access all raw annotation results an there summaries."
+    },
+    {
+      "name": "[Experimental] GUI",
+      "description": "Open, control and close SIRIUS Graphical User Interface (GUI) on the specified project-space."
+    },
+    {
+      "name": "Projects",
+      "description": "Manage SIRIUS projects."
+    }
+  ],
+  "paths": {
+    "/api/projects/{projectId}": {
+      "get": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Get project space info by its projectId.",
+        "description": "Get project space info by its projectId.",
+        "operationId": "getProjectSpace",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "unique name/identifier tof the project-space to be accessed.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectInfo"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Open an existing project-space and make it accessible via the given projectId.",
+        "description": "Open an existing project-space and make it accessible via the given projectId.",
+        "operationId": "openProjectSpace",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "unique name/identifier that shall be used to access the opened project-space.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pathToProject",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectInfo"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Create and open a new project-space at given location and make it accessible via the given projectId.",
+        "description": "Create and open a new project-space at given location and make it accessible via the given projectId.",
+        "operationId": "createProjectSpace",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "unique name/identifier that shall be used to access the newly created project-space.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pathToProject",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pathToSourceProject",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "awaitImport",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectInfo"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Close project-space and remove it from application.",
+        "description": "Close project-space and remove it from application. Project will NOT be deleted from disk.\n\n ATTENTION: This will cancel and remove all jobs running on this Project before closing it.\n If there are many jobs, this might take some time.",
+        "operationId": "closeProjectSpace",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "unique name/identifier of the  project-space to be closed.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/account/subscriptions/select-active": {
+      "put": {
+        "tags": [
+          "Login and Account"
+        ],
+        "summary": "Select a subscription as active subscription to be used for computations.",
+        "description": "Select a subscription as active subscription to be used for computations.",
+        "operationId": "selectSubscription",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Account information with updated active subscription",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/{projectId}/jobs/import-from-string": {
+      "post": {
+        "tags": [
+          "Jobs"
+        ],
+        "summary": "Import ms/ms data from the given format into the specified project-space\n Possible formats (ms, mgf, cef, msp, mzML, mzXML)",
+        "description": "Import ms/ms data from the given format into the specified project-space\n Possible formats (ms, mgf, cef, msp, mzML, mzXML)",
+        "operationId": "startImportFromStringJob",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to import into.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/JobOptField"
+              },
+              "default": [
+                "progress"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "configuration of the job that will be submitted",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportStringSubmission"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "CompoundIds of the imported run/compounds/feature.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/{projectId}/jobs/import-from-local-path": {
+      "post": {
+        "tags": [
+          "Jobs"
+        ],
+        "summary": "Import ms/ms data in given format from local filesystem into the specified project",
+        "description": "Import ms/ms data in given format from local filesystem into the specified project.\n The import will run in a background job\n Possible formats (ms, mgf, cef, msp, mzML, mzXML, project-space)\n \u003cp\u003e",
+        "operationId": "startImportFromPathJob",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to import into.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/JobOptField"
+              },
+              "default": [
+                "command",
+                "progress"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "configuration of the job that will be submitted",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportLocalFilesSubmission"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "JobId of background job that imports given run/compounds/features.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/jobs": {
+      "get": {
+        "tags": [
+          "Jobs"
+        ],
+        "summary": "Get job information and its current state and progress (if available).",
+        "description": "Get job information and its current state and progress (if available).",
+        "operationId": "getJobs",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to run jobs on",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/JobOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageJob"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Jobs"
+        ],
+        "summary": "Start computation for given compounds and with given parameters.",
+        "description": "Start computation for given compounds and with given parameters.",
+        "operationId": "startJob",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to run jobs on",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/JobOptField"
+              },
+              "default": [
+                "command",
+                "progress"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "configuration of the job that will be submitted of the job to be returned",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobSubmission"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/jobs/from-config": {
+      "post": {
+        "tags": [
+          "Jobs"
+        ],
+        "summary": "Start computation for given compounds and with parameters from a stored job-config.",
+        "description": "Start computation for given compounds and with parameters from a stored job-config.",
+        "operationId": "startJobFromConfig",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to run jobs on",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "jobConfigName",
+            "in": "query",
+            "description": "name if the config to be used",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "recompute",
+            "in": "query",
+            "description": "enable or disable recompute. If null the stored value will be used.",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/JobOptField"
+              },
+              "default": [
+                "command",
+                "progress"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "compound ids to be computed",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/gui": {
+      "post": {
+        "tags": [
+          "[Experimental] GUI"
+        ],
+        "summary": "Open GUI instance on specified project-space and bring the GUI window to foreground.",
+        "description": "Open GUI instance on specified project-space and bring the GUI window to foreground.",
+        "operationId": "openGui",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "of project-space the GUI instance will connect to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "readOnly",
+            "in": "query",
+            "description": "open in read-only mode.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "[Experimental] GUI"
+        ],
+        "summary": "Close GUI instance of given project-space if available.",
+        "description": "Close GUI instance of given project-space if available.",
+        "operationId": "closeGui",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "if project-space the GUI instance is connected to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "[Experimental] GUI"
+        ],
+        "summary": "Apply given changes to the running GUI instance.",
+        "description": "Apply given changes to the running GUI instance.",
+        "operationId": "applyToGui",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "of project-space the GUI instance is connected to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "parameters that should be applied.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuiParameters"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/job-configs/{name}": {
+      "get": {
+        "tags": [
+          "Jobs"
+        ],
+        "summary": "Request job configuration with given name.",
+        "description": "Request job configuration with given name.",
+        "operationId": "getJobConfig",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "description": "name of the job-config to return",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "includeConfigMap",
+            "in": "query",
+            "description": "if true the generic configmap will be part of the output",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{@link JobSubmission JobSubmission} for given name.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobSubmission"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Jobs"
+        ],
+        "summary": "Add new job configuration with given name.",
+        "description": "Add new job configuration with given name.",
+        "operationId": "postJobConfig",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "description": "name of the job-config to add",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "overrideExisting",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "to add",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobSubmission"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Probably modified name of the config (to ensure filesystem path compatibility).",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Jobs"
+        ],
+        "summary": "Delete job configuration with given name.",
+        "description": "Delete job configuration with given name.",
+        "operationId": "deleteJobConfig",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "description": "name of the job-config to delete",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          }
+        }
+      }
+    },
+    "/api/account/logout": {
+      "post": {
+        "tags": [
+          "Login and Account"
+        ],
+        "summary": "Logout from SIRIUS web services.",
+        "description": "Logout from SIRIUS web services.",
+        "operationId": "logout",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/account/login": {
+      "post": {
+        "tags": [
+          "Login and Account"
+        ],
+        "summary": "Login into SIRIUS web services and activate default subscription if available.",
+        "description": "Login into SIRIUS web services and activate default subscription if available.",
+        "operationId": "login",
+        "parameters": [
+          {
+            "name": "acceptTerms",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "failWhenLoggedIn",
+            "in": "query",
+            "description": "if true request fails if an active login already exists.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "includeSubs",
+            "in": "query",
+            "description": "include available and active subscriptions in {@link AccountInfo AccountInfo}.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "used to log in.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountCredentials"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Basic information about the account that has been logged in and its subscriptions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects": {
+      "get": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "List opened project spaces.",
+        "description": "List opened project spaces.",
+        "operationId": "getProjectSpaces",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "searchQuery",
+            "in": "query",
+            "description": "optional search query in specified format",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "querySyntax",
+            "in": "query",
+            "description": "query syntax used fpr searchQuery",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SearchQueryType"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageProjectInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/jobs/{jobId}": {
+      "get": {
+        "tags": [
+          "Jobs"
+        ],
+        "summary": "Get job information and its current state and progress (if available).",
+        "description": "Get job information and its current state and progress (if available).",
+        "operationId": "getJob",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to run jobs on",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "jobId",
+            "in": "path",
+            "description": "of the job to be returned",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/JobOptField"
+              },
+              "default": [
+                "progress"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Jobs"
+        ],
+        "summary": "Delete job.",
+        "description": "Delete job. Specify how to behave for running jobs.",
+        "operationId": "deleteJob",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to run jobs on",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "jobId",
+            "in": "path",
+            "description": "of the job to be deleted",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cancelIfRunning",
+            "in": "query",
+            "description": "If true job will be canceled if it is not finished. Otherwise,\n                        deletion will fail for running jobs or request will block until job has finished.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "awaitDeletion",
+            "in": "query",
+            "description": "If true request will block until deletion succeeded or failed.\n                        If the job is still running the request will wait until the job has finished.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/compounds": {
+      "get": {
+        "tags": [
+          "Compounds"
+        ],
+        "summary": "Get all available compounds (group of ion identities) in the given project-space.",
+        "description": "Get all available compounds (group of ion identities) in the given project-space.",
+        "operationId": "getCompounds",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "searchQuery",
+            "in": "query",
+            "description": "optional search query in specified format",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "querySyntax",
+            "in": "query",
+            "description": "query syntax used fpr searchQuery",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SearchQueryType"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/CompoundOptField"
+              },
+              "default": []
+            }
+          },
+          {
+            "name": "optFieldsFeatures",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/AlignedFeatureOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Compounds with additional optional fields (if specified).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageCompound"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/compounds/{compoundId}": {
+      "get": {
+        "tags": [
+          "Compounds"
+        ],
+        "summary": "Get compound (group of ion identities) with the given identifier from the specified project-space.",
+        "description": "Get compound (group of ion identities) with the given identifier from the specified project-space.",
+        "operationId": "getCompound",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "compoundId",
+            "in": "path",
+            "description": "identifier of the compound (group of ion identities) to access.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/CompoundOptField"
+              },
+              "default": []
+            }
+          },
+          {
+            "name": "optFieldsFeatures",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/AlignedFeatureOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Compounds with additional optional fields (if specified).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Compound"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Compounds"
+        ],
+        "summary": "Delete compound (group of ion identities) with the given identifier (and the included features) from the\n specified project-space.",
+        "description": "Delete compound (group of ion identities) with the given identifier (and the included features) from the\n specified project-space.",
+        "operationId": "deleteCompound",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to delete from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "compoundId",
+            "in": "path",
+            "description": "identifier of the compound to delete.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "Get all available features (aligned over runs) in the given project-space.",
+        "description": "Get all available features (aligned over runs) in the given project-space.",
+        "operationId": "getAlignedFeatures",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "searchQuery",
+            "in": "query",
+            "description": "optional search query in specified format",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "querySyntax",
+            "in": "query",
+            "description": "query syntax used fpr searchQuery",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SearchQueryType"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/AlignedFeatureOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlignedFeatures with additional annotations and MS/MS data (if specified).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageAlignedFeature"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "Get feature (aligned over runs) with the given identifier from the specified project-space.",
+        "description": "Get feature (aligned over runs) with the given identifier from the specified project-space.",
+        "operationId": "getAlignedFeature",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "identifier of feature (aligned over runs) to access.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/AlignedFeatureOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlignedFeature with additional annotations and MS/MS data (if specified).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlignedFeature"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "Delete feature (aligned over runs) with the given identifier from the specified project-space.",
+        "description": "Delete feature (aligned over runs) with the given identifier from the specified project-space.",
+        "operationId": "deleteAlignedFeature",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to delete from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "identifier of feature (aligned over runs) to delete.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/structures": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "List of StructureCandidates for the given \u0027alignedFeatureId\u0027 with minimal information.",
+        "description": "List of StructureCandidates for the given \u0027alignedFeatureId\u0027 with minimal information.\n StructureCandidates can be enriched with molecular fingerprint, structure database links.",
+        "operationId": "getStructureCandidates",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) the structure candidates belong to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "searchQuery",
+            "in": "query",
+            "description": "optional search query in specified format",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "querySyntax",
+            "in": "query",
+            "description": "query syntax used fpr searchQuery",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SearchQueryType"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/StructureCandidateOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageStructureCandidateFormula"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "List of all FormulaResultContainers available for this feature with minimal information.",
+        "description": "List of all FormulaResultContainers available for this feature with minimal information.\n Can be enriched with an optional results overview.",
+        "operationId": "getFormulaCandidates",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) the formula result belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "searchQuery",
+            "in": "query",
+            "description": "optional search query in specified format",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "querySyntax",
+            "in": "query",
+            "description": "query syntax used fpr searchQuery",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SearchQueryType"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/FormulaCandidateOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "All FormulaCandidate of this feature with.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageFormulaCandidate"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "FormulaResultContainers for the given \u0027formulaId\u0027 with minimal information.",
+        "description": "FormulaResultContainers for the given \u0027formulaId\u0027 with minimal information.\n Can be enriched with an optional results overview and formula candidate information.",
+        "operationId": "getFormulaCandidate",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) the formula result belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "formulaId",
+            "in": "path",
+            "description": "identifier of the requested formula result",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/FormulaCandidateOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "FormulaCandidate of this feature (aligned over runs) with.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormulaCandidate"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "List of StructureCandidates the given \u0027formulaId\u0027 with minimal information.",
+        "description": "List of StructureCandidates the given \u0027formulaId\u0027 with minimal information.\n StructureCandidates can be enriched with molecular fingerprint, structure database links.",
+        "operationId": "getStructureCandidatesByFormula",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) the formula result belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "formulaId",
+            "in": "path",
+            "description": "identifier of the requested formula result",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "searchQuery",
+            "in": "query",
+            "description": "optional search query in specified format",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "querySyntax",
+            "in": "query",
+            "description": "query syntax used fpr searchQuery",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SearchQueryType"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/StructureCandidateOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "StructureCandidate of this formula candidate with specified optional fields.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageStructureCandidateScored"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/job-configs": {
+      "get": {
+        "tags": [
+          "Jobs"
+        ],
+        "summary": "Request all available job configurations",
+        "description": "Request all available job configurations",
+        "operationId": "getJobConfigs",
+        "parameters": [
+          {
+            "name": "includeConfigMap",
+            "in": "query",
+            "description": "if true the generic configmap will be part of the output",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "list of available {@link JobSubmission JobSubmission}s",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/JobSubmission"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/info": {
+      "get": {
+        "tags": [
+          "Info"
+        ],
+        "operationId": "getInfo",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Info"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/default-job-config": {
+      "get": {
+        "tags": [
+          "Jobs"
+        ],
+        "summary": "Request default job configuration",
+        "description": "Request default job configuration",
+        "operationId": "getDefaultJobConfig",
+        "parameters": [
+          {
+            "name": "includeConfigMap",
+            "in": "query",
+            "description": "if true, generic configmap with-defaults will be included",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{@link JobSubmission JobSubmission} with all parameters set to default values.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobSubmission"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/connection-status": {
+      "get": {
+        "tags": [
+          "Info"
+        ],
+        "operationId": "getConnectionCheck",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionCheck"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/account/subscriptions": {
+      "get": {
+        "tags": [
+          "Login and Account"
+        ],
+        "summary": "Get available subscriptions of the account currently logged in.",
+        "description": "Get available subscriptions of the account currently logged in. Fails if not logged in.",
+        "operationId": "getSubscriptions",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Subscription"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/account/signUp": {
+      "get": {
+        "tags": [
+          "Login and Account"
+        ],
+        "summary": "Open SignUp window in system browser and return signUp link.",
+        "description": "Open SignUp window in system browser and return signUp link.",
+        "operationId": "signUp",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain;charset\u003dUTF-8": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/account/signUpURL": {
+      "get": {
+        "tags": [
+          "Login and Account"
+        ],
+        "summary": "Get SignUp URL (For signUp via web browser)",
+        "description": "Get SignUp URL (For signUp via web browser)",
+        "operationId": "getSignUpURL",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain;charset\u003dUTF-8": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/account/openPortal": {
+      "get": {
+        "tags": [
+          "Login and Account"
+        ],
+        "summary": "Open User portal in browser.",
+        "description": "Open User portal in browser. If user is logged in SIRIUS tries to transfer the login state to the browser.",
+        "operationId": "openPortal",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/account/isLoggedIn": {
+      "get": {
+        "tags": [
+          "Login and Account"
+        ],
+        "summary": "Check if a user is logged in.",
+        "description": "Check if a user is logged in.",
+        "operationId": "isLoggedIn",
+        "responses": {
+          "200": {
+            "description": "true if the user is logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/account/": {
+      "get": {
+        "tags": [
+          "Login and Account"
+        ],
+        "summary": "Get information about the account currently logged in.",
+        "description": "Get information about the account currently logged in. Fails if not logged in.",
+        "operationId": "getAccountInfo",
+        "parameters": [
+          {
+            "name": "includeSubs",
+            "in": "query",
+            "description": "include available and active subscriptions in {@link AccountInfo AccountInfo}.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Basic information about the account that has been logged in and its subscriptions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ProjectInfo": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "description": "a user selected unique name of the project for easy access."
+          },
+          "path": {
+            "type": "string"
+          }
+        },
+        "description": ""
+      },
+      "AccountInfo": {
+        "type": "object",
+        "properties": {
+          "userID": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string",
+            "nullable": true
+          },
+          "userEmail": {
+            "type": "string"
+          },
+          "gravatarURL": {
+            "type": "string",
+            "nullable": true
+          },
+          "subscriptions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Subscription"
+            }
+          },
+          "activeSubscriptionId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "description": ""
+      },
+      "Subscription": {
+        "type": "object",
+        "properties": {
+          "sid": {
+            "type": "string",
+            "description": "Unique identifier of this subscription"
+          },
+          "subscriberId": {
+            "type": "string",
+            "description": "ID of the owner of the subscription.\n This can be the ID of any SubscriptionOwner (e.g.  Group or  User)\n depending on the level on which a subscription should be is valid."
+          },
+          "subscriberName": {
+            "type": "string",
+            "description": "Optional name of the owner of this subscription",
+            "nullable": true
+          },
+          "expirationDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "countQueries": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "instanceLimit": {
+            "type": "integer",
+            "description": "Limit of instances (features) that can be computed with this subscription",
+            "format": "int32",
+            "nullable": true
+          },
+          "instanceHashRecordingTime": {
+            "type": "integer",
+            "description": "Hash is used to allow recomputing identical data without increasing counted instances (features).\n The recording time is the amount of time an instance is memorized is",
+            "format": "int32",
+            "nullable": true
+          },
+          "maxQueriesPerInstance": {
+            "type": "integer",
+            "description": "Maximum number of queries (e.g. prediction) that can be performed\n for one instance before it is counted another time.",
+            "format": "int32",
+            "nullable": true
+          },
+          "maxUserAccounts": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "serviceUrl": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "tos": {
+            "type": "string",
+            "nullable": true
+          },
+          "pp": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "description": ""
+      },
+      "ImportFormat": {
+        "type": "string",
+        "description": "Selection of formats that are supported by the data importers.",
+        "nullable": true,
+        "enum": [
+          "MS",
+          "MGF",
+          "MZML",
+          "MZXML",
+          "CEF",
+          "MSP",
+          "MAT",
+          "MASSBANK"
+        ]
+      },
+      "ImportStringSubmission": {
+        "required": [
+          "data",
+          "format"
+        ],
+        "type": "object",
+        "properties": {
+          "allowMs1OnlyData": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "ignoreFormulas": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "alignLCMSRuns": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "sourceName": {
+            "type": "string",
+            "description": "Name that specifies the data source. Can e.g. be a file path  or just a name.",
+            "nullable": true
+          },
+          "format": {
+            "$ref": "#/components/schemas/ImportFormat"
+          },
+          "data": {
+            "type": "string",
+            "description": "Data content in specified format"
+          }
+        },
+        "description": "Parameter Object to submit a job that imports ms/ms data from the given format into the specified project\n Supported formats (ms, mgf, cef, msp, mzML, mzXML)"
+      },
+      "JobOptField": {
+        "type": "string",
+        "description": "",
+        "nullable": true,
+        "enum": [
+          "none",
+          "command",
+          "progress",
+          "affectedIds"
+        ]
+      },
+      "Job": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier to access the job via the API"
+          },
+          "command": {
+            "type": "string",
+            "description": "Command string of the executed Task"
+          },
+          "progress": {
+            "$ref": "#/components/schemas/JobProgress"
+          },
+          "affectedCompoundIds": {
+            "type": "array",
+            "description": "List of compoundIds that are affected by this job.\n This lis will also contain compoundIds where not all features of the compound are affected by the job.\n If this job is creating compounds (e.g. data import jobs) this value will be NULL until the jobs has finished",
+            "items": {
+              "type": "string"
+            }
+          },
+          "affectedAlignedFeatureIds": {
+            "type": "array",
+            "description": "List of alignedFeatureIds that are affected by this job.\n If this job is creating features (e.g. data import jobs) this value will be NULL until the jobs has finished",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "Identifier created by the SIRIUS Nightsky API for a newly created Job.\n Object can be enriched with Job status/progress information ({@link JobProgress JobProgress}) and/or Job command information."
+      },
+      "JobProgress": {
+        "type": "object",
+        "properties": {
+          "indeterminate": {
+            "type": "boolean",
+            "description": "Is the progress indeterminate or not",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "description": "Current state of the Jobs in the SIRIUS internal Job scheduler\n\n         WAITING: Waiting for submission to ExecutorService (e.g. due to dependent jobs)\n         READY: Ready for submission but not yet enqueued for submission to ExecutorService.\n         QUEUED: Enqueued for submission to ExecutorService.\n         SUBMITTED: Submitted and waiting to be executed.\n         RUNNING: Job is running.\n         CANCELED: Jobs is finished due to cancellation by suer or dependent jobs.\n         FAILED: Job is finished but failed.\n         DONE: Job finished successfully.",
+            "enum": [
+              "WAITING",
+              "READY",
+              "QUEUED",
+              "SUBMITTED",
+              "RUNNING",
+              "CANCELED",
+              "FAILED",
+              "DONE"
+            ]
+          },
+          "currentProgress": {
+            "type": "integer",
+            "description": "Current progress value of the job.",
+            "format": "int64",
+            "nullable": true
+          },
+          "maxProgress": {
+            "type": "integer",
+            "description": "Progress value to reach (might also change during execution)",
+            "format": "int64",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Progress information and warnings.",
+            "nullable": true
+          },
+          "errorMessage": {
+            "type": "string",
+            "description": "Error message if the job did not finish successfully failed.",
+            "nullable": true
+          }
+        },
+        "description": "Progress information of a computation job that has already been submitted to SIRIUS.\n if  currentProgress \u003d\u003d maxProgress job is finished and should change to state done soon.\n if a job is DONE all results can be accessed via the Project-Spaces api."
+      },
+      "ImportLocalFilesSubmission": {
+        "required": [
+          "inputPaths"
+        ],
+        "type": "object",
+        "properties": {
+          "allowMs1OnlyData": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "ignoreFormulas": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "alignLCMSRuns": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "inputPaths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": ""
+      },
+      "Canopus": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "tags whether the tool is enabled"
+          }
+        },
+        "description": "User/developer friendly parameter subset for the CANOPUS tool\n CANOPUS is parameter free, so this Object is just a flag that canopus should be executed."
+      },
+      "FingerprintPrediction": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "tags whether the tool is enabled"
+          },
+          "useScoreThreshold": {
+            "type": "boolean",
+            "description": "If true, an adaptive soft threshold will be applied to only compute Fingerprints for promising formula candidates\n Enabling is highly recommended."
+          }
+        },
+        "description": "User/developer friendly parameter subset for the CSI:FingerID Fingerprint tool"
+      },
+      "Instrument": {
+        "type": "string",
+        "description": "",
+        "nullable": true,
+        "enum": [
+          "QTOF",
+          "ORBI",
+          "FTICR"
+        ]
+      },
+      "JobSubmission": {
+        "type": "object",
+        "properties": {
+          "compoundIds": {
+            "type": "array",
+            "description": "Compounds that should be the input for this Job\n Will be converted to the respective alignedFeatureIds for computation.\n\n At least one compoundId or alignedFeatureId needs to be specified.",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          "alignedFeatureIds": {
+            "type": "array",
+            "description": "Features (aligned over runs) that should be the input for this Job\n\n At least one compoundId or alignedFeatureId needs to be specified.",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          "fallbackAdducts": {
+            "type": "array",
+            "description": "Describes how to deal with Adducts: Fallback adducts are considered if the auto detection did not find any indication for an ion mode.\n Pos Examples: [M+H]+,[M]+,[M+K]+,[M+Na]+,[M+H-H2O]+,[M+Na2-H]+,[M+2K-H]+,[M+NH4]+,[M+H3O]+,[M+MeOH+H]+,[M+ACN+H]+,[M+2ACN+H]+,[M+IPA+H]+,[M+ACN+Na]+,[M+DMSO+H]+\n Neg Examples: [M-H]-,[M]-,[M+K-2H]-,[M+Cl]-,[M-H2O-H]-,[M+Na-2H]-,M+FA-H]-,[M+Br]-,[M+HAc-H]-,[M+TFA-H]-,[M+ACN-H]-",
+            "items": {
+              "type": "string"
+            }
+          },
+          "enforcedAdducts": {
+            "type": "array",
+            "description": "Describes how to deal with Adducts:  Enforced adducts that are always considered.\n Pos Examples: [M+H]+,[M]+,[M+K]+,[M+Na]+,[M+H-H2O]+,[M+Na2-H]+,[M+2K-H]+,[M+NH4]+,[M+H3O]+,[M+MeOH+H]+,[M+ACN+H]+,[M+2ACN+H]+,[M+IPA+H]+,[M+ACN+Na]+,[M+DMSO+H]+\n Neg Examples: [M-H]-,[M]-,[M+K-2H]-,[M+Cl]-,[M-H2O-H]-,[M+Na-2H]-,M+FA-H]-,[M+Br]-,[M+HAc-H]-,[M+TFA-H]-,[M+ACN-H]-",
+            "items": {
+              "type": "string"
+            }
+          },
+          "detectableAdducts": {
+            "type": "array",
+            "description": "Describes how to deal with Adducts: Detectable adducts which are only considered if there is an indication in the MS1 scan (e.g. correct mass delta).\n Pos Examples: [M+H]+,[M]+,[M+K]+,[M+Na]+,[M+H-H2O]+,[M+Na2-H]+,[M+2K-H]+,[M+NH4]+,[M+H3O]+,[M+MeOH+H]+,[M+ACN+H]+,[M+2ACN+H]+,[M+IPA+H]+,[M+ACN+Na]+,[M+DMSO+H]+\n Neg Examples: [M-H]-,[M]-,[M+K-2H]-,[M+Cl]-,[M-H2O-H]-,[M+Na-2H]-,M+FA-H]-,[M+Br]-,[M+HAc-H]-,[M+TFA-H]-,[M+ACN-H]-",
+            "items": {
+              "type": "string"
+            }
+          },
+          "recompute": {
+            "type": "boolean",
+            "description": "Indicate if already existing result for a tool to be executed should be overwritten or not."
+          },
+          "formulaIdParams": {
+            "$ref": "#/components/schemas/Sirius"
+          },
+          "zodiacParams": {
+            "$ref": "#/components/schemas/Zodiac"
+          },
+          "fingerprintPredictionParams": {
+            "$ref": "#/components/schemas/FingerprintPrediction"
+          },
+          "structureDbSearchParams": {
+            "$ref": "#/components/schemas/StructureDbSearch"
+          },
+          "canopusParams": {
+            "$ref": "#/components/schemas/Canopus"
+          },
+          "configMap": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "As an alternative to the object based parameters, this map allows to store key value pairs\n of ALL SIRIUS parameters. All possible parameters can be retrieved from SIRIUS via the respective endpoint."
+          }
+        },
+        "description": "Object to submit a job to be executed by SIRIUS"
+      },
+      "Sirius": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "tags whether the tool is enabled"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/Instrument"
+          },
+          "numberOfCandidates": {
+            "type": "integer",
+            "description": "Number of formula candidates to keep as result list (Formula Candidates).",
+            "format": "int32"
+          },
+          "numberOfCandidatesPerIon": {
+            "type": "integer",
+            "description": "Use this parameter if you want to force SIRIUS to report at least\n NumberOfCandidatesPerIon results per ionization.\n if \u003c\u003d 0, this parameter will have no effect and just the top\n NumberOfCandidates results will be reported.",
+            "format": "int32"
+          },
+          "massAccuracyMS2ppm": {
+            "type": "number",
+            "description": "Maximum allowed mass accuracy. Only molecular formulas within this mass window are considered.",
+            "format": "double"
+          },
+          "isotopeMs2Settings": {
+            "type": "string",
+            "description": "Specify how isotope patterns in MS/MS should be handled.\n \u003cp\u003e\n FILTER: When filtering is enabled, molecular formulas are excluded if their\n theoretical isotope pattern does not match the theoretical one, even if their MS/MS pattern has high score.\n \u003cp\u003e\n SCORE: Use them for SCORING. To use this the instrument should produce clear MS/MS isotope patterns\n \u003cp\u003e\n IGNORE: Ignore that there might be isotope patterns in MS/MS",
+            "enum": [
+              "IGNORE",
+              "FILTER",
+              "SCORE"
+            ]
+          },
+          "formulaSearchDBs": {
+            "type": "array",
+            "description": "List Structure database to extract molecular formulas from to reduce formula search space.\n SIRIUS is quite good at de novo formula annotation, so only enable if you have a good reason.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "ALL",
+                "ALL_BUT_INSILICO",
+                "BIO",
+                "PUBCHEM",
+                "MESH",
+                "HMDB",
+                "KNAPSACK",
+                "CHEBI",
+                "PUBMED",
+                "KEGG",
+                "HSDB",
+                "MACONDA",
+                "METACYC",
+                "GNPS",
+                "ZINCBIO",
+                "TRAIN",
+                "YMDB",
+                "PLANTCYC",
+                "NORMAN",
+                "SUPERNATURAL",
+                "COCONUT",
+                "BloodExposome",
+                "TeroMol",
+                "PUBCHEMANNOTATIONBIO",
+                "PUBCHEMANNOTATIONDRUG",
+                "PUBCHEMANNOTATIONSAFETYANDTOXIC",
+                "PUBCHEMANNOTATIONFOOD",
+                "LOTUS",
+                "FooDB",
+                "MiMeDB",
+                "LIPIDMAPS",
+                "LIPID",
+                "KEGGMINE",
+                "ECOCYCMINE",
+                "YMDBMINE",
+                "MASSBANK",
+                "DSSTox"
+              ]
+            }
+          },
+          "enforcedFormulaConstraints": {
+            "type": "string",
+            "description": "These configurations hold the information how to autodetect elements based on the given formula constraints.\n Note: If the compound is already assigned to a specific molecular formula, this annotation is ignored.\n \u003cp\u003e\n Enforced: Enforced elements are always considered"
+          },
+          "fallbackFormulaConstraints": {
+            "type": "string",
+            "description": "These configurations hold the information how to autodetect elements based on the given formula constraints.\n Note: If the compound is already assigned to a specific molecular formula, this annotation is ignored.\n \u003cp\u003e\n Fallback: Fallback elements are used, if the auto-detection fails (e.g. no isotope pattern available)"
+          },
+          "detectableElements": {
+            "type": "array",
+            "description": "These configurations hold the information how to autodetect elements based on the given formula constraints.\n Note: If the compound is already assigned to a specific molecular formula, this annotation is ignored.\n \u003cp\u003e\n Detectable: Detectable elements are added to the chemical alphabet, if there are indications for them (e.g. in isotope pattern)",
+            "items": {
+              "type": "string"
+            }
+          },
+          "ilpTimeout": {
+            "$ref": "#/components/schemas/Timeout"
+          },
+          "useHeuristic": {
+            "$ref": "#/components/schemas/UseHeuristic"
+          }
+        },
+        "description": "User/developer friendly parameter subset for the Formula/SIRIUS tool"
+      },
+      "StructureDbSearch": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "tags whether the tool is enabled"
+          },
+          "structureSearchDBs": {
+            "type": "array",
+            "description": "Structure databases to search in",
+            "items": {
+              "type": "string",
+              "enum": [
+                "ALL",
+                "ALL_BUT_INSILICO",
+                "BIO",
+                "PUBCHEM",
+                "MESH",
+                "HMDB",
+                "KNAPSACK",
+                "CHEBI",
+                "PUBMED",
+                "KEGG",
+                "HSDB",
+                "MACONDA",
+                "METACYC",
+                "GNPS",
+                "ZINCBIO",
+                "TRAIN",
+                "YMDB",
+                "PLANTCYC",
+                "NORMAN",
+                "SUPERNATURAL",
+                "COCONUT",
+                "BloodExposome",
+                "TeroMol",
+                "PUBCHEMANNOTATIONBIO",
+                "PUBCHEMANNOTATIONDRUG",
+                "PUBCHEMANNOTATIONSAFETYANDTOXIC",
+                "PUBCHEMANNOTATIONFOOD",
+                "LOTUS",
+                "FooDB",
+                "MiMeDB",
+                "LIPIDMAPS",
+                "LIPID",
+                "KEGGMINE",
+                "ECOCYCMINE",
+                "YMDBMINE",
+                "MASSBANK",
+                "DSSTox"
+              ]
+            }
+          },
+          "tagLipids": {
+            "type": "boolean",
+            "description": "Candidates matching the lipid class estimated by El Gordo will be tagged.\n The lipid class will only be available if El Gordo predicts that the MS/MS is a lipid spectrum.\n If this parameter is set to \u0027false\u0027 El Gordo will still be executed and e.g. improve the fragmentation\n tree, but the matching structure candidates will not be tagged if they match lipid class."
+          }
+        },
+        "description": "User/developer friendly parameter subset for the CSI:FingerID structure db search tool."
+      },
+      "Timeout": {
+        "type": "object",
+        "properties": {
+          "numberOfSecondsPerDecomposition": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfSecondsPerInstance": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "description": ""
+      },
+      "UseHeuristic": {
+        "type": "object",
+        "properties": {
+          "mzToUseHeuristic": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "mzToUseHeuristicOnly": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "description": ""
+      },
+      "Zodiac": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "tags whether the tool is enabled"
+          },
+          "consideredCandidatesAt300Mz": {
+            "type": "integer",
+            "description": "Maximum number of candidate molecular formulas (fragmentation trees computed by SIRIUS) per compound which are considered by ZODIAC for compounds below 300 m/z.",
+            "format": "int32"
+          },
+          "consideredCandidatesAt800Mz": {
+            "type": "integer",
+            "description": "Maximum number of candidate molecular formulas (fragmentation trees computed by SIRIUS) per compound which are considered by ZODIAC for compounds above 800 m/z.",
+            "format": "int32"
+          },
+          "runInTwoSteps": {
+            "type": "boolean",
+            "description": "As default ZODIAC runs a 2-step approach. First running \u0027good quality compounds\u0027 only, and afterwards including the remaining."
+          },
+          "edgeFilterThresholds": {
+            "$ref": "#/components/schemas/ZodiacEdgeFilterThresholds"
+          },
+          "gibbsSamplerParameters": {
+            "$ref": "#/components/schemas/ZodiacEpochs"
+          }
+        },
+        "description": "User/developer friendly parameter subset for the ZODIAC tool (Network base molecular formula re-ranking)."
+      },
+      "ZodiacEdgeFilterThresholds": {
+        "type": "object",
+        "properties": {
+          "thresholdFilter": {
+            "type": "number",
+            "format": "double"
+          },
+          "minLocalCandidates": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "minLocalConnections": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "description": ""
+      },
+      "ZodiacEpochs": {
+        "type": "object",
+        "properties": {
+          "iterations": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "burnInPeriod": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfMarkovChains": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "description": ""
+      },
+      "AccountCredentials": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "nullable": true
+          },
+          "password": {
+            "type": "string",
+            "nullable": true
+          },
+          "refreshToken": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "description": "Simple object to hold account credentials, e.g. to perform login operations.\n If refreshToken is given, it is usually preferred over password based authentication.\n But in the end this is up to the respective web service."
+      },
+      "GuiParameters": {
+        "type": "object",
+        "properties": {
+          "selectedTab": {
+            "$ref": "#/components/schemas/GuiResultTab"
+          },
+          "cid": {
+            "type": "string",
+            "description": "ID of Selected compound.",
+            "nullable": true
+          },
+          "fid": {
+            "type": "string",
+            "description": "ID of Selected Formula candidate of the selected compound.",
+            "nullable": true
+          },
+          "structureCandidateInChIKey": {
+            "type": "string",
+            "description": "InChIKey of selected structure candidate of selected formula candidate.",
+            "nullable": true
+          },
+          "bringToFront": {
+            "type": "boolean",
+            "description": "If true bring SIRIUS GUI window to foreground.",
+            "nullable": true
+          }
+        },
+        "description": "Parameters to \"remote control\" the SIRIUS GUI."
+      },
+      "GuiResultTab": {
+        "type": "string",
+        "description": "Available result tabs in the SIRIUS GUI. Name correspond to the names in the GUI.",
+        "nullable": true,
+        "enum": [
+          "FORMULAS",
+          "SPECTRA",
+          "TREES",
+          "PREDICTED_FINGERPRINT",
+          "STRUCTURES",
+          "STRUCTURE_ANNOTATION",
+          "COMPOUND_CLASSES"
+        ]
+      },
+      "SearchQueryType": {
+        "type": "string",
+        "description": "",
+        "nullable": true,
+        "enum": [
+          "LUCENE"
+        ]
+      },
+      "PageProjectInfo": {
+        "type": "object",
+        "properties": {
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectInfo"
+            }
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PageableObject": {
+        "type": "object",
+        "properties": {
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "paged": {
+            "type": "boolean"
+          },
+          "unpaged": {
+            "type": "boolean"
+          },
+          "offset": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "SortObject": {
+        "type": "object",
+        "properties": {
+          "sorted": {
+            "type": "boolean"
+          },
+          "unsorted": {
+            "type": "boolean"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        },
+        "description": ""
+      },
+      "PageJob": {
+        "type": "object",
+        "properties": {
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Job"
+            }
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CompoundOptField": {
+        "type": "string",
+        "description": "",
+        "nullable": true,
+        "enum": [
+          "none",
+          "consensusAnnotations",
+          "consensusAnnotationsDeNovo",
+          "customAnnotations"
+        ]
+      },
+      "AlignedFeatureOptField": {
+        "type": "string",
+        "description": "",
+        "nullable": true,
+        "enum": [
+          "none",
+          "msData",
+          "topAnnotations",
+          "topAnnotationsDeNovo"
+        ]
+      },
+      "AlignedFeature": {
+        "type": "object",
+        "properties": {
+          "alignedFeatureId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "index": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "ionMass": {
+            "type": "number",
+            "format": "double"
+          },
+          "ionType": {
+            "type": "string"
+          },
+          "rtStartSeconds": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "rtEndSeconds": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "msData": {
+            "$ref": "#/components/schemas/MsData"
+          },
+          "topAnnotations": {
+            "$ref": "#/components/schemas/FeatureAnnotations"
+          },
+          "topAnnotationsDeNovo": {
+            "$ref": "#/components/schemas/FeatureAnnotations"
+          },
+          "computing": {
+            "type": "boolean",
+            "description": "Write lock for this feature. If the feature is locked no write operations are possible.\n True if any computation is modifying this feature or its results"
+          }
+        },
+        "description": "The AlignedFeature contains the ID of a featured (aligned over runs) together with some read-only information\n that might be displayed in some summary view."
+      },
+      "AnnotatedPeak": {
+        "type": "object",
+        "properties": {
+          "mass": {
+            "type": "number",
+            "format": "double"
+          },
+          "intensity": {
+            "type": "number",
+            "format": "double"
+          },
+          "peakAnnotation": {
+            "$ref": "#/components/schemas/PeakAnnotation"
+          }
+        },
+        "description": ""
+      },
+      "AnnotatedSpectrum": {
+        "type": "object",
+        "properties": {
+          "msLevel": {
+            "type": "integer",
+            "description": "MS level of the measured spectrum.\n Artificial spectra with no msLevel (e.g. Simulated Isotope patterns) use 0",
+            "format": "int32",
+            "nullable": true
+          },
+          "collisionEnergy": {
+            "type": "string",
+            "nullable": true
+          },
+          "peaks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnnotatedPeak"
+            }
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        },
+        "description": "",
+        "nullable": true
+      },
+      "BinaryFingerprint": {
+        "type": "object",
+        "properties": {
+          "bitsSet": {
+            "type": "array",
+            "description": "Array that contains all indices of bits that are set (are 1)",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "length": {
+            "type": "integer",
+            "description": "Size of the fingerprint, e.g. to reconstruct the binary array from the array of set bits",
+            "format": "int32"
+          }
+        },
+        "description": "",
+        "nullable": true
+      },
+      "CanopusPrediction": {
+        "type": "object",
+        "properties": {
+          "classyFireClasses": {
+            "type": "array",
+            "description": "All predicted ClassyFire classes",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/CompoundClass"
+            }
+          },
+          "npcClasses": {
+            "type": "array",
+            "description": "All predicted NPC classes",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/CompoundClass"
+            }
+          }
+        },
+        "description": "Container class that holds the CANOPUS compound class predictions for alle predictable compound classes.\n This is the full CANOPUS result.",
+        "nullable": true
+      },
+      "Compound": {
+        "type": "object",
+        "properties": {
+          "compoundId": {
+            "type": "string",
+            "description": "uid of this compound Entity"
+          },
+          "name": {
+            "type": "string",
+            "description": "Some (optional) human-readable name",
+            "nullable": true
+          },
+          "rtStartSeconds": {
+            "type": "number",
+            "description": "The merged/consensus retention time start (earliest rt) of this compound",
+            "format": "double",
+            "nullable": true
+          },
+          "rtEndSeconds": {
+            "type": "number",
+            "description": "The merged/consensus retention time end (latest rt) of this compound",
+            "format": "double",
+            "nullable": true
+          },
+          "neutralMass": {
+            "type": "number",
+            "description": "Neutral mass of this compound. Ion masse minus the mass of the assigned adduct of each feature assigned\n to this compound should result in the same neutral mass",
+            "format": "double",
+            "nullable": true
+          },
+          "features": {
+            "type": "array",
+            "description": "List of aligned features (adducts) that belong to the same (this) compound",
+            "items": {
+              "$ref": "#/components/schemas/AlignedFeature"
+            }
+          },
+          "consensusAnnotations": {
+            "$ref": "#/components/schemas/ConsensusAnnotationsCSI"
+          },
+          "consensusAnnotationsDeNovo": {
+            "$ref": "#/components/schemas/ConsensusAnnotationsDeNovo"
+          },
+          "customAnnotations": {
+            "$ref": "#/components/schemas/ConsensusAnnotationsCSI"
+          }
+        },
+        "description": ""
+      },
+      "CompoundClass": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/CompoundClassType"
+          },
+          "level": {
+            "type": "string",
+            "description": "Name of the level this compound class belongs to",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the compound class.",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the compound class.",
+            "nullable": true
+          },
+          "id": {
+            "type": "integer",
+            "description": "Unique id of the class. Might be undefined for certain classification ontologies.",
+            "format": "int32"
+          },
+          "probability": {
+            "type": "number",
+            "description": "prediction probability",
+            "format": "double"
+          }
+        },
+        "description": "Predicted compound class with name, probability and id if available.\n (ClassyFire and NPC). This can be seen as the set of classes a feature most likely belongs to",
+        "nullable": true
+      },
+      "CompoundClassType": {
+        "type": "string",
+        "description": "Defines compound class ontologies that are available.",
+        "nullable": true,
+        "enum": [
+          "ClassyFire",
+          "NPC"
+        ]
+      },
+      "CompoundClasses": {
+        "type": "object",
+        "properties": {
+          "npcPathway": {
+            "$ref": "#/components/schemas/CompoundClass"
+          },
+          "npcSuperclass": {
+            "$ref": "#/components/schemas/CompoundClass"
+          },
+          "npcClass": {
+            "$ref": "#/components/schemas/CompoundClass"
+          },
+          "classyFireLineage": {
+            "type": "array",
+            "description": "Most likely ClassyFire lineage from ordered from least specific to most specific class\n classyFireLineage.get(classyFireLineage.size() - 1) gives the most specific ClassyFire compound class annotation",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/CompoundClass"
+            }
+          },
+          "classyFireAlternatives": {
+            "type": "array",
+            "description": "Alternative ClassyFire classes with high probability that do not fit into the linage",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/CompoundClass"
+            }
+          }
+        },
+        "description": "Container class that holds the most likely compound class for different levels of each ontology for a\n certain Compound/Feature/FormulaCandidate/PredictedFingerprint.",
+        "nullable": true
+      },
+      "ConsensusAnnotationsCSI": {
+        "type": "object",
+        "properties": {
+          "molecularFormula": {
+            "type": "string",
+            "description": "Molecular formula of the consensus annotation\n Might be null if no consensus formula is available.",
+            "nullable": true
+          },
+          "compoundClasses": {
+            "$ref": "#/components/schemas/CompoundClasses"
+          },
+          "supportingFeatureIds": {
+            "type": "array",
+            "description": "FeatureIds where the topAnnotation supports this annotation.",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          "selectionCriterion": {
+            "$ref": "#/components/schemas/ConsensusCriterionCSI"
+          },
+          "csiFingerIdStructure": {
+            "$ref": "#/components/schemas/StructureCandidate"
+          },
+          "confidenceExactMatch": {
+            "type": "number",
+            "description": "Confidence value that represents the certainty that reported consensus structure is exactly the measured one\n If multiple features support this consensus structure the maximum confidence is reported",
+            "format": "double",
+            "nullable": true
+          },
+          "confidenceApproxMatch": {
+            "type": "number",
+            "description": "Confidence value that represents the certainty that the exact consensus structure or a very similar\n structure (e.g. measured by Maximum Common Edge Subgraph Distance) is the measured one.\n If multiple features support this consensus structure the maximum confidence is reported",
+            "format": "double",
+            "nullable": true
+          }
+        },
+        "description": "",
+        "nullable": true
+      },
+      "ConsensusAnnotationsDeNovo": {
+        "type": "object",
+        "properties": {
+          "molecularFormula": {
+            "type": "string",
+            "description": "Molecular formula of the consensus annotation\n Might be null if no consensus formula is available.",
+            "nullable": true
+          },
+          "compoundClasses": {
+            "$ref": "#/components/schemas/CompoundClasses"
+          },
+          "supportingFeatureIds": {
+            "type": "array",
+            "description": "FeatureIds where the topAnnotation supports this annotation.",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          "selectionCriterion": {
+            "$ref": "#/components/schemas/ConsensusCriterionDeNovo"
+          }
+        },
+        "description": "",
+        "nullable": true
+      },
+      "ConsensusCriterionCSI": {
+        "type": "string",
+        "description": "",
+        "nullable": true,
+        "enum": [
+          "MAJORITY_STRUCTURE",
+          "CONFIDENCE_STRUCTURE",
+          "SINGLETON_STRUCTURE",
+          "MAJORITY_FORMULA",
+          "TOP_FORMULA",
+          "SINGLETON_FORMULA"
+        ]
+      },
+      "ConsensusCriterionDeNovo": {
+        "type": "string",
+        "description": "",
+        "nullable": true,
+        "enum": [
+          "MAJORITY_FORMULA",
+          "TOP_FORMULA",
+          "SINGLETON_FORMULA"
+        ]
+      },
+      "DBLink": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "description": "",
+        "nullable": true
+      },
+      "Deviation": {
+        "type": "object",
+        "properties": {
+          "ppm": {
+            "type": "number",
+            "format": "double"
+          },
+          "absolute": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "description": "",
+        "nullable": true
+      },
+      "FeatureAnnotations": {
+        "type": "object",
+        "properties": {
+          "formulaAnnotation": {
+            "$ref": "#/components/schemas/FormulaCandidate"
+          },
+          "structureAnnotation": {
+            "$ref": "#/components/schemas/StructureCandidateScored"
+          },
+          "compoundClassAnnotation": {
+            "$ref": "#/components/schemas/CompoundClasses"
+          }
+        },
+        "description": "Summary of the results of a feature (aligned over runs). Can be added to a AlignedFeature.\n The different annotation fields within this summary object are null if the corresponding\n feature does not contain the represented results. If fields are non-null\n the corresponding result has been computed but might still be empty.",
+        "nullable": true
+      },
+      "FormulaCandidate": {
+        "type": "object",
+        "properties": {
+          "formulaId": {
+            "type": "string",
+            "description": "Unique identifier of this formula candidate"
+          },
+          "molecularFormula": {
+            "type": "string",
+            "description": "molecular formula of this formula candidate"
+          },
+          "adduct": {
+            "type": "string",
+            "description": "Adduct of this formula candidate"
+          },
+          "siriusScore": {
+            "type": "number",
+            "description": "Sirius Score (isotope + tree score) of the formula candidate.\n If NULL result is not available",
+            "format": "double",
+            "nullable": true
+          },
+          "isotopeScore": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "treeScore": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "zodiacScore": {
+            "type": "number",
+            "description": "Zodiac Score of the formula candidate.\n If NULL result is not available",
+            "format": "double",
+            "nullable": true
+          },
+          "numOfExplainedPeaks": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "numOfExplainablePeaks": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "totalExplainedIntensity": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "medianMassDeviation": {
+            "$ref": "#/components/schemas/Deviation"
+          },
+          "fragmentationTree": {
+            "$ref": "#/components/schemas/FragmentationTree"
+          },
+          "simulatedIsotopePattern": {
+            "$ref": "#/components/schemas/AnnotatedSpectrum"
+          },
+          "predictedFingerprint": {
+            "type": "array",
+            "description": "Probabilistic molecular fingerprint predicted by CSI:FingerID",
+            "nullable": true,
+            "items": {
+              "type": "number",
+              "format": "double",
+              "nullable": true
+            }
+          },
+          "compoundClasses": {
+            "$ref": "#/components/schemas/CompoundClasses"
+          },
+          "canopusPrediction": {
+            "$ref": "#/components/schemas/CanopusPrediction"
+          }
+        },
+        "description": "Molecular formula candidate that holds a unique identifier (molecular formula + adduct).\n It can be extended with optional scoring metrics and the raw results\n such as fragmentation trees and simulated isotope pattern.",
+        "nullable": true
+      },
+      "FragmentNode": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "molecularFormula": {
+            "type": "string",
+            "nullable": true
+          },
+          "ionType": {
+            "type": "string",
+            "nullable": true
+          },
+          "massDeviationDa": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "massDeviationPpm": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "score": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "intensity": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "mz": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          }
+        },
+        "description": ""
+      },
+      "FragmentationTree": {
+        "type": "object",
+        "properties": {
+          "fragments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FragmentNode"
+            }
+          },
+          "losses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LossEdge"
+            }
+          },
+          "treeScore": {
+            "type": "number",
+            "format": "double"
+          },
+          "root": {
+            "$ref": "#/components/schemas/FragmentNode"
+          }
+        },
+        "description": "",
+        "nullable": true
+      },
+      "LossEdge": {
+        "type": "object",
+        "properties": {
+          "sourceFragment": {
+            "$ref": "#/components/schemas/FragmentNode"
+          },
+          "targetFragment": {
+            "$ref": "#/components/schemas/FragmentNode"
+          },
+          "molecularFormula": {
+            "type": "string",
+            "nullable": true
+          },
+          "score": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          }
+        },
+        "description": ""
+      },
+      "MsData": {
+        "type": "object",
+        "properties": {
+          "mergedMs1": {
+            "$ref": "#/components/schemas/AnnotatedSpectrum"
+          },
+          "mergedMs2": {
+            "$ref": "#/components/schemas/AnnotatedSpectrum"
+          },
+          "ms2Spectra": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/AnnotatedSpectrum"
+            }
+          },
+          "ms1Spectra": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/AnnotatedSpectrum"
+            }
+          }
+        },
+        "description": "The MsData wraps all spectral input data belonging to a feature.\n\n Each Feature has:\n - One merged MS/MS spectrum (optional)\n - One merged MS spectrum (optional)\n - many MS/MS spectra\n - many MS spectra\n\n Each non-merged spectrum has an index which can be used to access the spectrum.\n\n In the future we might add some additional information like chromatographic peak or something similar",
+        "nullable": true
+      },
+      "PageCompound": {
+        "type": "object",
+        "properties": {
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Compound"
+            }
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PeakAnnotation": {
+        "type": "object",
+        "nullable": true
+      },
+      "StructureCandidate": {
+        "type": "object",
+        "properties": {
+          "inchiKey": {
+            "type": "string"
+          },
+          "smiles": {
+            "type": "string"
+          },
+          "structureName": {
+            "type": "string",
+            "nullable": true
+          },
+          "xlogP": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "dbLinks": {
+            "type": "array",
+            "description": "List of structure database links belonging to this structure candidate\n OPTIONAL: needs to be added by parameter",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/DBLink"
+            }
+          },
+          "refSpectraLinks": {
+            "type": "array",
+            "description": "List of spectral library links belonging to this structure candidate\n OPTIONAL: needs to be added by parameter",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/DBLink"
+            }
+          }
+        },
+        "description": "",
+        "nullable": true
+      },
+      "StructureCandidateScored": {
+        "type": "object",
+        "properties": {
+          "inchiKey": {
+            "type": "string"
+          },
+          "smiles": {
+            "type": "string"
+          },
+          "structureName": {
+            "type": "string",
+            "nullable": true
+          },
+          "xlogP": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "dbLinks": {
+            "type": "array",
+            "description": "List of structure database links belonging to this structure candidate\n OPTIONAL: needs to be added by parameter",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/DBLink"
+            }
+          },
+          "refSpectraLinks": {
+            "type": "array",
+            "description": "List of spectral library links belonging to this structure candidate\n OPTIONAL: needs to be added by parameter",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/DBLink"
+            }
+          },
+          "csiScore": {
+            "type": "number",
+            "format": "double"
+          },
+          "tanimotoSimilarity": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "confidenceExactMatch": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "confidenceApproxMatch": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "fingerprint": {
+            "$ref": "#/components/schemas/BinaryFingerprint"
+          }
+        },
+        "description": "",
+        "nullable": true
+      },
+      "PageAlignedFeature": {
+        "type": "object",
+        "properties": {
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlignedFeature"
+            }
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "StructureCandidateOptField": {
+        "type": "string",
+        "description": "",
+        "nullable": true,
+        "enum": [
+          "none",
+          "fingerprint",
+          "dbLinks",
+          "refSpectraLinks"
+        ]
+      },
+      "PageStructureCandidateFormula": {
+        "type": "object",
+        "properties": {
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StructureCandidateFormula"
+            }
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "StructureCandidateFormula": {
+        "type": "object",
+        "properties": {
+          "inchiKey": {
+            "type": "string"
+          },
+          "smiles": {
+            "type": "string"
+          },
+          "structureName": {
+            "type": "string",
+            "nullable": true
+          },
+          "xlogP": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "dbLinks": {
+            "type": "array",
+            "description": "List of structure database links belonging to this structure candidate\n OPTIONAL: needs to be added by parameter",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/DBLink"
+            }
+          },
+          "refSpectraLinks": {
+            "type": "array",
+            "description": "List of spectral library links belonging to this structure candidate\n OPTIONAL: needs to be added by parameter",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/DBLink"
+            }
+          },
+          "csiScore": {
+            "type": "number",
+            "format": "double"
+          },
+          "tanimotoSimilarity": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "confidenceExactMatch": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "confidenceApproxMatch": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "fingerprint": {
+            "$ref": "#/components/schemas/BinaryFingerprint"
+          },
+          "molecularFormula": {
+            "type": "string",
+            "description": "molecular formula of this candidate"
+          },
+          "adduct": {
+            "type": "string",
+            "description": "Adduct of this candidate"
+          }
+        },
+        "description": ""
+      },
+      "FormulaCandidateOptField": {
+        "type": "string",
+        "description": "",
+        "nullable": true,
+        "enum": [
+          "none",
+          "statistics",
+          "fragmentationTree",
+          "simulatedIsotopePattern",
+          "predictedFingerprint",
+          "compoundClasses",
+          "canopusPredictions"
+        ]
+      },
+      "PageFormulaCandidate": {
+        "type": "object",
+        "properties": {
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormulaCandidate"
+            }
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PageStructureCandidateScored": {
+        "type": "object",
+        "properties": {
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StructureCandidateScored"
+            }
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Info": {
+        "type": "object",
+        "properties": {
+          "nightSkyApiVersion": {
+            "type": "string",
+            "description": "API version of the SIRIUS Nightsky API"
+          },
+          "siriusVersion": {
+            "type": "string",
+            "description": "Version of the SIRIUS application"
+          },
+          "siriusLibVersion": {
+            "type": "string",
+            "description": "Version of the SIRIUS libraries"
+          },
+          "fingerIdLibVersion": {
+            "type": "string",
+            "description": "Version of the CSI:FingerID libraries"
+          },
+          "chemDbVersion": {
+            "type": "string",
+            "description": "Version of the Chemical Database available via SIRIUS web services"
+          },
+          "fingerIdModelVersion": {
+            "type": "string",
+            "description": "Version of the Machine learning models used for Fingerprint, Compound Class and Structure Prediction\n Not available if web service is not reachable."
+          },
+          "fingerprintId": {
+            "type": "string",
+            "description": "Version of the Molecular Fingerprint used by SIRIUS"
+          }
+        },
+        "description": ""
+      },
+      "ConnectionCheck": {
+        "type": "object",
+        "properties": {
+          "workerInfo": {
+            "$ref": "#/components/schemas/WorkerList"
+          },
+          "licenseInfo": {
+            "$ref": "#/components/schemas/LicenseInfo"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ConnectionError"
+          },
+          "loggedIn": {
+            "type": "boolean"
+          },
+          "connected": {
+            "type": "boolean"
+          },
+          "warningOnly": {
+            "type": "boolean"
+          },
+          "internet": {
+            "type": "boolean"
+          },
+          "workerWarning": {
+            "type": "boolean"
+          }
+        },
+        "description": ""
+      },
+      "ConnectionError": {
+        "type": "object",
+        "properties": {
+          "errorType": {
+            "type": "string",
+            "enum": [
+              "WARNING",
+              "ERROR"
+            ]
+          },
+          "errorKlass": {
+            "type": "string",
+            "enum": [
+              "UNKNOWN",
+              "INTERNET",
+              "LOGIN_SERVER",
+              "LICENSE_SERVER",
+              "TOKEN",
+              "LOGIN",
+              "LICENSE",
+              "TERMS",
+              "APP_SERVER",
+              "WORKER"
+            ]
+          },
+          "siriusErrorCode": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "siriusMessage": {
+            "type": "string"
+          },
+          "error": {
+            "type": "boolean"
+          },
+          "warning": {
+            "type": "boolean"
+          }
+        },
+        "description": ""
+      },
+      "LicenseInfo": {
+        "type": "object",
+        "properties": {
+          "userEmail": {
+            "type": "string",
+            "description": "Email address of the user account this license information belongs to.",
+            "nullable": true
+          },
+          "userId": {
+            "type": "string",
+            "description": "User ID (uid) of the user account this license information belongs to.",
+            "nullable": true
+          },
+          "subscription": {
+            "$ref": "#/components/schemas/Subscription"
+          },
+          "consumables": {
+            "$ref": "#/components/schemas/SubscriptionConsumables"
+          }
+        },
+        "description": ""
+      },
+      "SubscriptionConsumables": {
+        "type": "object",
+        "properties": {
+          "countedCompounds": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "description": "",
+        "nullable": true
+      },
+      "WorkerInfo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "FORMULA_ID",
+              "FINGER_ID",
+              "IOKR",
+              "CANOPUS",
+              "COVTREE"
+            ]
+          },
+          "supportedPredictors": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "CSI_FINGERID_POSITIVE",
+                "CSI_FINGERID_NEGATIVE"
+              ]
+            }
+          },
+          "version": {
+            "type": "string"
+          },
+          "host": {
+            "type": "string"
+          },
+          "prefix": {
+            "type": "string"
+          },
+          "state": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "alive": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "serverTime": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "description": ""
+      },
+      "WorkerList": {
+        "type": "object",
+        "properties": {
+          "pendingJobs": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "workerList": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkerInfo"
+            }
+          }
+        },
+        "description": ""
+      }
+    }
+  }
+}
