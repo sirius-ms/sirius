@@ -36,7 +36,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   ZodiacEpochs.JSON_PROPERTY_BURN_IN_PERIOD,
   ZodiacEpochs.JSON_PROPERTY_NUMBER_OF_MARKOV_CHAINS
 })
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2023-11-11T15:12:24.554845061+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class ZodiacEpochs {
   public static final String JSON_PROPERTY_ITERATIONS = "iterations";
   private Integer iterations;

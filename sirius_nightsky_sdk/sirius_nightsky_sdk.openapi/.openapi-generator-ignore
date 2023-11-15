@@ -22,8 +22,19 @@
 # Then explicitly reverse the ignore rule for a single file:
 #!docs/README.md
 api/**
+.github/**
 .gitignore
 .openapi-generator-ignore
 git_push.sh
+gradle/**
+.travis.yml
+build.sbt
+gradle.properties
+gradlew
+src/main/AndroidManifest.xml
+gradlew.bat
+pom.xml
+settings.gradle
+build.gradle
 src/test/java/de/unijena/bioinf/ms/nightsky/sdk/model/**
 

@@ -44,7 +44,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   MsData.JSON_PROPERTY_MS2_SPECTRA,
   MsData.JSON_PROPERTY_MS1_SPECTRA
 })
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2023-11-11T15:12:24.554845061+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class MsData {
   public static final String JSON_PROPERTY_MERGED_MS1 = "mergedMs1";
   private JsonNullable<AnnotatedSpectrum> mergedMs1 = JsonNullable.<AnnotatedSpectrum>undefined();
@@ -138,7 +138,7 @@ public class MsData {
     }
     try {
       this.ms2Spectra.get().add(ms2SpectraItem);
-    } catch (NoSuchElementException e) {
+    } catch (java.util.NoSuchElementException e) {
       // this can never happen, as we make sure above that the value is present
     }
     return this;
@@ -183,7 +183,7 @@ public class MsData {
     }
     try {
       this.ms1Spectra.get().add(ms1SpectraItem);
-    } catch (NoSuchElementException e) {
+    } catch (java.util.NoSuchElementException e) {
       // this can never happen, as we make sure above that the value is present
     }
     return this;

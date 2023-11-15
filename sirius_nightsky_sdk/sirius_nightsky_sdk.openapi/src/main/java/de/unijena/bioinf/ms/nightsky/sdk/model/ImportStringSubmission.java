@@ -44,7 +44,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   ImportStringSubmission.JSON_PROPERTY_FORMAT,
   ImportStringSubmission.JSON_PROPERTY_DATA
 })
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2023-11-11T15:12:24.554845061+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class ImportStringSubmission {
   public static final String JSON_PROPERTY_ALLOW_MS1_ONLY_DATA = "allowMs1OnlyData";
   private JsonNullable<Boolean> allowMs1OnlyData = JsonNullable.<Boolean>undefined();

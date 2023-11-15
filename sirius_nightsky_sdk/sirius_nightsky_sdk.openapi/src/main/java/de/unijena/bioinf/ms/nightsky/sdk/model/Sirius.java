@@ -54,7 +54,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   Sirius.JSON_PROPERTY_ILP_TIMEOUT,
   Sirius.JSON_PROPERTY_USE_HEURISTIC
 })
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2023-11-11T15:12:24.554845061+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class Sirius {
   public static final String JSON_PROPERTY_ENABLED = "enabled";
   private Boolean enabled;

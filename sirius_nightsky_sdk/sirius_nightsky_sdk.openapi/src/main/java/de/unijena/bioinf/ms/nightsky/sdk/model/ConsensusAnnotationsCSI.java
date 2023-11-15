@@ -49,7 +49,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   ConsensusAnnotationsCSI.JSON_PROPERTY_CONFIDENCE_EXACT_MATCH,
   ConsensusAnnotationsCSI.JSON_PROPERTY_CONFIDENCE_APPROX_MATCH
 })
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2023-11-11T15:12:24.554845061+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class ConsensusAnnotationsCSI {
   public static final String JSON_PROPERTY_MOLECULAR_FORMULA = "molecularFormula";
   private JsonNullable<String> molecularFormula = JsonNullable.<String>undefined();
@@ -152,7 +152,7 @@ public class ConsensusAnnotationsCSI {
     }
     try {
       this.supportingFeatureIds.get().add(supportingFeatureIdsItem);
-    } catch (NoSuchElementException e) {
+    } catch (java.util.NoSuchElementException e) {
       // this can never happen, as we make sure above that the value is present
     }
     return this;

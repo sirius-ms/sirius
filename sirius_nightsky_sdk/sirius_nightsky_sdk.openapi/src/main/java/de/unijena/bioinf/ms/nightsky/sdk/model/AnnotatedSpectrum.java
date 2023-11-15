@@ -44,7 +44,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   AnnotatedSpectrum.JSON_PROPERTY_PEAKS,
   AnnotatedSpectrum.JSON_PROPERTY_EMPTY
 })
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2023-11-11T15:12:24.554845061+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class AnnotatedSpectrum {
   public static final String JSON_PROPERTY_MS_LEVEL = "msLevel";
   private JsonNullable<Integer> msLevel = JsonNullable.<Integer>undefined();

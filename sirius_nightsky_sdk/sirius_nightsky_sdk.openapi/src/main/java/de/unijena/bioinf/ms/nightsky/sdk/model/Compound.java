@@ -51,7 +51,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   Compound.JSON_PROPERTY_CONSENSUS_ANNOTATIONS_DE_NOVO,
   Compound.JSON_PROPERTY_CUSTOM_ANNOTATIONS
 })
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2023-11-11T15:12:24.554845061+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class Compound {
   public static final String JSON_PROPERTY_COMPOUND_ID = "compoundId";
   private String compoundId;

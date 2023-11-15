@@ -41,7 +41,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   Zodiac.JSON_PROPERTY_EDGE_FILTER_THRESHOLDS,
   Zodiac.JSON_PROPERTY_GIBBS_SAMPLER_PARAMETERS
 })
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2023-11-11T15:12:24.554845061+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class Zodiac {
   public static final String JSON_PROPERTY_ENABLED = "enabled";
   private Boolean enabled;

@@ -40,7 +40,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   AccountCredentials.JSON_PROPERTY_PASSWORD,
   AccountCredentials.JSON_PROPERTY_REFRESH_TOKEN
 })
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2023-11-11T15:12:24.554845061+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class AccountCredentials {
   public static final String JSON_PROPERTY_USERNAME = "username";
   private JsonNullable<String> username = JsonNullable.<String>undefined();

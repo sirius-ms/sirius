@@ -3,8 +3,24 @@ buildscript {
         mavenLocal()
         mavenCentral()
     }
+
     dependencies {
-        classpath "org.openapitools:openapi-generator-gradle-plugin:6.6.0"
+        classpath ("org.openapitools:openapi-generator-gradle-plugin:7.0.1"){
+            exclude group: "com.fasterxml.jackson.core"
+            exclude group: "com.fasterxml.jackson.dataformat"
+            exclude group: "com.fasterxml.jackson.datatype"
+            exclude group: "com.fasterxml.jackson"
+        }
+
+        classpath "com.fasterxml.jackson:jackson-bom:2.12.3"
+        classpath "com.fasterxml.jackson.core:jackson-core:2.12.3"
+        classpath "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.12.3"
+        classpath "com.fasterxml.jackson.datatype:jackson-datatype-guava:2.12.3"
+        classpath "com.fasterxml.jackson.datatype:jackson-datatype-joda:2.12.3"
+        classpath "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.12.3"
+        classpath "com.fasterxml.jackson.core:jackson-databind:2.12.3"
+        classpath "com.fasterxml.jackson.core:jackson-annotations:2.12.3"
+
     }
 }
 
@@ -18,16 +34,10 @@ dependencies {
 
 openApiGenerate {
     generatorName.set("java")
-    inputSpec.set("$rootDir/sirius_rest_service/openapi-gen-config.json")
+    inputSpec.set("$rootDir/sirius_rest_service/openapi-spec.json")
     outputDir.set("$projectDir/sirius_nightsky_sdk.openapi")
     apiPackage.set("de.unijena.bioinf.ms.nightsky.sdk.api")
     invokerPackage.set("de.unijena.bioinf.ms.nightsky.sdk.client")
-    modelPackage.set("e.unijena.bioinf.ms.nightsky.sdk.model")
-    configOptions.set([
-            artifactId: "sirius_nightsky_sdk",
-            groupId: "de.unijena.bioinf.ms",
-            library: "native",
-            serializationLibrary: "jackson",
-            webclientBlockingOperations: false
-    ] as Map<? extends String, ? extends String>)
+    modelPackage.set("de.unijena.bioinf.ms.nightsky.sdk.model")
+    configFile.set("$projectDir/openapi-gen-config.json")
 }

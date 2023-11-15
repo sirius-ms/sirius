@@ -33,18 +33,15 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * PageableObject
  */
 @JsonPropertyOrder({
-  PageableObject.JSON_PROPERTY_OFFSET,
   PageableObject.JSON_PROPERTY_SORT,
   PageableObject.JSON_PROPERTY_PAGE_NUMBER,
   PageableObject.JSON_PROPERTY_PAGE_SIZE,
   PageableObject.JSON_PROPERTY_PAGED,
-  PageableObject.JSON_PROPERTY_UNPAGED
+  PageableObject.JSON_PROPERTY_UNPAGED,
+  PageableObject.JSON_PROPERTY_OFFSET
 })
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2023-11-11T15:12:24.554845061+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class PageableObject {
-  public static final String JSON_PROPERTY_OFFSET = "offset";
-  private Long offset;
-
   public static final String JSON_PROPERTY_SORT = "sort";
   private SortObject sort;
 
@@ -60,33 +57,11 @@ public class PageableObject {
   public static final String JSON_PROPERTY_UNPAGED = "unpaged";
   private Boolean unpaged;
 
+  public static final String JSON_PROPERTY_OFFSET = "offset";
+  private Long offset;
+
   public PageableObject() { 
   }
-
-  public PageableObject offset(Long offset) {
-    this.offset = offset;
-    return this;
-  }
-
-   /**
-   * Get offset
-   * @return offset
-  **/
-  @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_OFFSET)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Long getOffset() {
-    return offset;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_OFFSET)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setOffset(Long offset) {
-    this.offset = offset;
-  }
-
 
   public PageableObject sort(SortObject sort) {
     this.sort = sort;
@@ -213,6 +188,31 @@ public class PageableObject {
   }
 
 
+  public PageableObject offset(Long offset) {
+    this.offset = offset;
+    return this;
+  }
+
+   /**
+   * Get offset
+   * @return offset
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_OFFSET)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Long getOffset() {
+    return offset;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_OFFSET)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setOffset(Long offset) {
+    this.offset = offset;
+  }
+
+
   /**
    * Return true if this PageableObject object is equal to o.
    */
@@ -225,29 +225,29 @@ public class PageableObject {
       return false;
     }
     PageableObject pageableObject = (PageableObject) o;
-    return Objects.equals(this.offset, pageableObject.offset) &&
-        Objects.equals(this.sort, pageableObject.sort) &&
+    return Objects.equals(this.sort, pageableObject.sort) &&
         Objects.equals(this.pageNumber, pageableObject.pageNumber) &&
         Objects.equals(this.pageSize, pageableObject.pageSize) &&
         Objects.equals(this.paged, pageableObject.paged) &&
-        Objects.equals(this.unpaged, pageableObject.unpaged);
+        Objects.equals(this.unpaged, pageableObject.unpaged) &&
+        Objects.equals(this.offset, pageableObject.offset);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(offset, sort, pageNumber, pageSize, paged, unpaged);
+    return Objects.hash(sort, pageNumber, pageSize, paged, unpaged, offset);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class PageableObject {\n");
-    sb.append("    offset: ").append(toIndentedString(offset)).append("\n");
     sb.append("    sort: ").append(toIndentedString(sort)).append("\n");
     sb.append("    pageNumber: ").append(toIndentedString(pageNumber)).append("\n");
     sb.append("    pageSize: ").append(toIndentedString(pageSize)).append("\n");
     sb.append("    paged: ").append(toIndentedString(paged)).append("\n");
     sb.append("    unpaged: ").append(toIndentedString(unpaged)).append("\n");
+    sb.append("    offset: ").append(toIndentedString(offset)).append("\n");
     sb.append("}");
     return sb.toString();
   }
@@ -295,11 +295,6 @@ public class PageableObject {
 
     StringJoiner joiner = new StringJoiner("&");
 
-    // add `offset` to the URL query string
-    if (getOffset() != null) {
-      joiner.add(String.format("%soffset%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getOffset()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
     // add `sort` to the URL query string
     if (getSort() != null) {
       joiner.add(getSort().toUrlQueryString(prefix + "sort" + suffix));
@@ -323,6 +318,11 @@ public class PageableObject {
     // add `unpaged` to the URL query string
     if (getUnpaged() != null) {
       joiner.add(String.format("%sunpaged%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getUnpaged()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
+    }
+
+    // add `offset` to the URL query string
+    if (getOffset() != null) {
+      joiner.add(String.format("%soffset%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getOffset()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
     }
 
     return joiner.toString();

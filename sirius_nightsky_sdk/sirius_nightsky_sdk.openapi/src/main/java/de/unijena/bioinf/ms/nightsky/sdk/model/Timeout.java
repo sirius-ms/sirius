@@ -35,7 +35,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   Timeout.JSON_PROPERTY_NUMBER_OF_SECONDS_PER_DECOMPOSITION,
   Timeout.JSON_PROPERTY_NUMBER_OF_SECONDS_PER_INSTANCE
 })
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2023-11-11T15:12:24.554845061+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class Timeout {
   public static final String JSON_PROPERTY_NUMBER_OF_SECONDS_PER_DECOMPOSITION = "numberOfSecondsPerDecomposition";
   private Integer numberOfSecondsPerDecomposition;

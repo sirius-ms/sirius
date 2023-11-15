@@ -40,7 +40,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   Info.JSON_PROPERTY_FINGER_ID_MODEL_VERSION,
   Info.JSON_PROPERTY_FINGERPRINT_ID
 })
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2023-11-11T15:12:24.554845061+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class Info {
   public static final String JSON_PROPERTY_NIGHT_SKY_API_VERSION = "nightSkyApiVersion";
   private String nightSkyApiVersion;

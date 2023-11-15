@@ -36,7 +36,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   ZodiacEdgeFilterThresholds.JSON_PROPERTY_MIN_LOCAL_CANDIDATES,
   ZodiacEdgeFilterThresholds.JSON_PROPERTY_MIN_LOCAL_CONNECTIONS
 })
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2023-11-11T15:12:24.554845061+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class ZodiacEdgeFilterThresholds {
   public static final String JSON_PROPERTY_THRESHOLD_FILTER = "thresholdFilter";
   private Double thresholdFilter;

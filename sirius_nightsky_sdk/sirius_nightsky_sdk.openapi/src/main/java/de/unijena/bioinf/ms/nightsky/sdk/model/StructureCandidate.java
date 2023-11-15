@@ -46,7 +46,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   StructureCandidate.JSON_PROPERTY_DB_LINKS,
   StructureCandidate.JSON_PROPERTY_REF_SPECTRA_LINKS
 })
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2023-11-11T15:12:24.554845061+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class StructureCandidate {
   public static final String JSON_PROPERTY_INCHI_KEY = "inchiKey";
   private String inchiKey;
@@ -196,7 +196,7 @@ public class StructureCandidate {
     }
     try {
       this.dbLinks.get().add(dbLinksItem);
-    } catch (NoSuchElementException e) {
+    } catch (java.util.NoSuchElementException e) {
       // this can never happen, as we make sure above that the value is present
     }
     return this;
@@ -241,7 +241,7 @@ public class StructureCandidate {
     }
     try {
       this.refSpectraLinks.get().add(refSpectraLinksItem);
-    } catch (NoSuchElementException e) {
+    } catch (java.util.NoSuchElementException e) {
       // this can never happen, as we make sure above that the value is present
     }
     return this;

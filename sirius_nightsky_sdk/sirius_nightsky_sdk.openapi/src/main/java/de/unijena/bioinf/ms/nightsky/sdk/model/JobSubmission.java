@@ -58,7 +58,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   JobSubmission.JSON_PROPERTY_CANOPUS_PARAMS,
   JobSubmission.JSON_PROPERTY_CONFIG_MAP
 })
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2023-11-11T15:12:24.554845061+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class JobSubmission {
   public static final String JSON_PROPERTY_COMPOUND_IDS = "compoundIds";
   private JsonNullable<List<String>> compoundIds = JsonNullable.<List<String>>undefined();
@@ -110,7 +110,7 @@ public class JobSubmission {
     }
     try {
       this.compoundIds.get().add(compoundIdsItem);
-    } catch (NoSuchElementException e) {
+    } catch (java.util.NoSuchElementException e) {
       // this can never happen, as we make sure above that the value is present
     }
     return this;
@@ -155,7 +155,7 @@ public class JobSubmission {
     }
     try {
       this.alignedFeatureIds.get().add(alignedFeatureIdsItem);
-    } catch (NoSuchElementException e) {
+    } catch (java.util.NoSuchElementException e) {
       // this can never happen, as we make sure above that the value is present
     }
     return this;

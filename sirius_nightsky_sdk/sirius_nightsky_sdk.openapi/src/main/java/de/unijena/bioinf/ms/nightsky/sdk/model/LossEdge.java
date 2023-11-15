@@ -42,7 +42,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   LossEdge.JSON_PROPERTY_MOLECULAR_FORMULA,
   LossEdge.JSON_PROPERTY_SCORE
 })
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2023-11-11T15:12:24.554845061+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class LossEdge {
   public static final String JSON_PROPERTY_SOURCE_FRAGMENT = "sourceFragment";
   private FragmentNode sourceFragment;

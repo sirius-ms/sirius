@@ -17,6 +17,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
 import de.unijena.bioinf.ms.nightsky.sdk.client.ApiResponse;
 import de.unijena.bioinf.ms.nightsky.sdk.client.Pair;
 
+import de.unijena.bioinf.ms.nightsky.sdk.model.ConnectionCheck;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Info;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -44,7 +45,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2023-11-11T15:12:24.554845061+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class InfoApi {
   private final HttpClient memberVarHttpClient;
   private final ObjectMapper memberVarObjectMapper;
@@ -81,6 +82,71 @@ public class InfoApi {
     return operationId + " call failed with: " + statusCode + " - " + body;
   }
 
+  /**
+   * 
+   * 
+   * @return ConnectionCheck
+   * @throws ApiException if fails to make API call
+   */
+  public ConnectionCheck getConnectionCheck() throws ApiException {
+    ApiResponse<ConnectionCheck> localVarResponse = getConnectionCheckWithHttpInfo();
+    return localVarResponse.getData();
+  }
+
+  /**
+   * 
+   * 
+   * @return ApiResponse&lt;ConnectionCheck&gt;
+   * @throws ApiException if fails to make API call
+   */
+  public ApiResponse<ConnectionCheck> getConnectionCheckWithHttpInfo() throws ApiException {
+    HttpRequest.Builder localVarRequestBuilder = getConnectionCheckRequestBuilder();
+    try {
+      HttpResponse<InputStream> localVarResponse = memberVarHttpClient.send(
+          localVarRequestBuilder.build(),
+          HttpResponse.BodyHandlers.ofInputStream());
+      if (memberVarResponseInterceptor != null) {
+        memberVarResponseInterceptor.accept(localVarResponse);
+      }
+      try {
+        if (localVarResponse.statusCode()/ 100 != 2) {
+          throw getApiException("getConnectionCheck", localVarResponse);
+        }
+        return new ApiResponse<ConnectionCheck>(
+          localVarResponse.statusCode(),
+          localVarResponse.headers().map(),
+          localVarResponse.body() == null ? null : memberVarObjectMapper.readValue(localVarResponse.body(), new TypeReference<ConnectionCheck>() {}) // closes the InputStream
+        );
+      } finally {
+      }
+    } catch (IOException e) {
+      throw new ApiException(e);
+    }
+    catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new ApiException(e);
+    }
+  }
+
+  private HttpRequest.Builder getConnectionCheckRequestBuilder() throws ApiException {
+
+    HttpRequest.Builder localVarRequestBuilder = HttpRequest.newBuilder();
+
+    String localVarPath = "/api/connection-status";
+
+    localVarRequestBuilder.uri(URI.create(memberVarBaseUri + localVarPath));
+
+    localVarRequestBuilder.header("Accept", "application/json");
+
+    localVarRequestBuilder.method("GET", HttpRequest.BodyPublishers.noBody());
+    if (memberVarReadTimeout != null) {
+      localVarRequestBuilder.timeout(memberVarReadTimeout);
+    }
+    if (memberVarInterceptor != null) {
+      memberVarInterceptor.accept(localVarRequestBuilder);
+    }
+    return localVarRequestBuilder;
+  }
   /**
    * 
    * 

@@ -42,7 +42,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   CanopusPrediction.JSON_PROPERTY_CLASSY_FIRE_CLASSES,
   CanopusPrediction.JSON_PROPERTY_NPC_CLASSES
 })
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2023-11-11T15:12:24.554845061+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class CanopusPrediction {
   public static final String JSON_PROPERTY_CLASSY_FIRE_CLASSES = "classyFireClasses";
   private JsonNullable<List<CompoundClass>> classyFireClasses = JsonNullable.<List<CompoundClass>>undefined();
@@ -64,7 +64,7 @@ public class CanopusPrediction {
     }
     try {
       this.classyFireClasses.get().add(classyFireClassesItem);
-    } catch (NoSuchElementException e) {
+    } catch (java.util.NoSuchElementException e) {
       // this can never happen, as we make sure above that the value is present
     }
     return this;
@@ -109,7 +109,7 @@ public class CanopusPrediction {
     }
     try {
       this.npcClasses.get().add(npcClassesItem);
-    } catch (NoSuchElementException e) {
+    } catch (java.util.NoSuchElementException e) {
       // this can never happen, as we make sure above that the value is present
     }
     return this;

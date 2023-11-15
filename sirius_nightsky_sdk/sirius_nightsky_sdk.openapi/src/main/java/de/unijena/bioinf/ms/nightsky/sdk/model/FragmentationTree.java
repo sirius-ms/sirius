@@ -41,7 +41,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   FragmentationTree.JSON_PROPERTY_TREE_SCORE,
   FragmentationTree.JSON_PROPERTY_ROOT
 })
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2023-11-11T15:12:24.554845061+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class FragmentationTree {
   public static final String JSON_PROPERTY_FRAGMENTS = "fragments";
   private List<FragmentNode> fragments;

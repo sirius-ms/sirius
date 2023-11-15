@@ -35,7 +35,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   FingerprintPrediction.JSON_PROPERTY_ENABLED,
   FingerprintPrediction.JSON_PROPERTY_USE_SCORE_THRESHOLD
 })
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2023-11-11T15:12:24.554845061+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class FingerprintPrediction {
   public static final String JSON_PROPERTY_ENABLED = "enabled";
   private Boolean enabled;

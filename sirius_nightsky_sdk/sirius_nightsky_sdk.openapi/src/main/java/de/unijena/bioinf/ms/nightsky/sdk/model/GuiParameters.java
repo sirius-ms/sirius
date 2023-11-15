@@ -43,7 +43,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   GuiParameters.JSON_PROPERTY_STRUCTURE_CANDIDATE_IN_CH_I_KEY,
   GuiParameters.JSON_PROPERTY_BRING_TO_FRONT
 })
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2023-11-11T15:12:24.554845061+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class GuiParameters {
   public static final String JSON_PROPERTY_SELECTED_TAB = "selectedTab";
   private JsonNullable<GuiResultTab> selectedTab = JsonNullable.<GuiResultTab>undefined();

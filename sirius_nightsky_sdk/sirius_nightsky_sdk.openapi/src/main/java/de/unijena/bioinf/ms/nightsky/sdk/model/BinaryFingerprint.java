@@ -37,7 +37,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   BinaryFingerprint.JSON_PROPERTY_BITS_SET,
   BinaryFingerprint.JSON_PROPERTY_LENGTH
 })
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2023-11-11T15:12:24.554845061+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class BinaryFingerprint {
   public static final String JSON_PROPERTY_BITS_SET = "bitsSet";
   private List<Integer> bitsSet;
