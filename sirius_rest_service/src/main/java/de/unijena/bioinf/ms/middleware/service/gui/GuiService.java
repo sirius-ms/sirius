@@ -18,42 +18,21 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.frontend;
+package de.unijena.bioinf.ms.middleware.service.gui;
 
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
-import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
+import de.unijena.bioinf.ms.middleware.model.gui.GuiParameters;
+import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * Represents an instance of the SIRIUS GUI and its context.
- * - GUI MainFrame
- * - Persistence layer
- * - Background Computations
- */
-public class SiriusGui {
-
-    static {
-        GuiUtils.initUI();
+public interface GuiService<P extends Project> {
+    default void createGuiInstance(@NotNull String projectId, @NotNull P project) {
+        createGuiInstance(projectId, project, null);
     }
 
-    private final MainFrame mainFrame;
+    void createGuiInstance(@NotNull String projectId, @NotNull P project, @Nullable GuiParameters guiParameters);
 
-    public MainFrame getMainFrame() {
-        return mainFrame;
-    }
+    void closeGuiInstance(@NotNull String projectId);
 
-    public SiriusGui(@NotNull GuiProjectSpaceManager project) { //todo nighsky: change to nightsky api and project ID.
-        mainFrame = new MainFrame();
-        mainFrame.decoradeMainFrame(project);
-        //todo nighsky: check why JFX webview is only working for first instance...
-    }
-
-    public void shutdown(boolean closeProject){
-        mainFrame.setCloseProjectOnDispose(closeProject);
-        mainFrame.dispose();
-    }
-    public void shutdown(){
-        shutdown(true);
-    }
+    void applyToGuiInstance(@NotNull String projectId, @NotNull GuiParameters guiParameters);
 }

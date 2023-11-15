@@ -22,8 +22,10 @@ package de.unijena.bioinf.ms.frontend.subtools.gui;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.ms.frontend.SiriusCLIApplication;
 import de.unijena.bioinf.ms.frontend.SiriusGui;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.splash.Splash;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
@@ -32,10 +34,7 @@ import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastSubToolJob;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.dialogs.AboutDialog;
-import de.unijena.bioinf.ms.gui.dialogs.NewsDialog;
-import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
-import de.unijena.bioinf.ms.gui.dialogs.UpdateDialog;
+import de.unijena.bioinf.ms.gui.dialogs.*;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
@@ -49,10 +48,14 @@ import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import picocli.CommandLine;
 
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 
 @CommandLine.Command(name = "gui", aliases = {"GUI"}, description = "Starts the graphical user interface of SIRIUS", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
 public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
+    public static final String DONT_ASK_CLOSE_KEY = "de.unijena.bioinf.sirius.mainframe.close.dontAskAgain";
+
     public static final String COMPOUND_BUFFER_KEY = "de.unijena.bioinf.sirius.gui.instanceBuffer";
     private final Splash splash;
 
@@ -82,7 +85,7 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
         }
 
         @Override
-        public void run() {
+        public void run() { //todo nightsky -> move this to spring boot gui starter
             // modify fingerid subtool so that it works with reduced GUI candidate list.
             FingerblastSubToolJob.formulaResultComponentsToClear.add(FBCandidatesTopK.class);
             FingerblastSubToolJob.formulaResultComponentsToClear.add(FBCandidateFingerprintsTopK.class);
@@ -108,6 +111,35 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                         final ProjectSpaceManager<?> projectSpace = SiriusJobs.getGlobalJobManager().submitJob(preproJob).takeResult();
                         updateProgress(0, max, progress++, "Painting GUI...");
                         gui = new SiriusGui((GuiProjectSpaceManager) projectSpace);
+                        final MainFrame mainFrame = gui.getMainFrame();
+                        mainFrame.addWindowListener(new WindowAdapter() {
+                            @Override
+                            public void windowClosing(WindowEvent event) {
+                                if (!Jobs.MANAGER().hasActiveJobs() || new QuestionDialog(mainFrame,
+                                        "<html>Do you really want close SIRIUS?" +
+                                                "<br> <b>There are still some Jobs running.</b> Running Jobs will be canceled when closing SIRIUS.</html>", DONT_ASK_CLOSE_KEY).isSuccess()) {
+                                    try {
+                                        ApplicationCore.DEFAULT_LOGGER.info("Saving properties file before termination.");
+                                        SiriusProperties.SIRIUS_PROPERTIES_FILE().store();
+                                        Jobs.runInBackgroundAndLoad(mainFrame, "Cancelling running jobs...",  () -> mainFrame.getBackgroundRuns().cancelAllRuns());
+
+                                        ApplicationCore.DEFAULT_LOGGER.info("Closing Project-Space"); //todo nighsky: do not close project when closing mainframe
+                                        Jobs.runInBackgroundAndLoad(mainFrame, "Closing Project-Space", true, new TinyBackgroundJJob<Boolean>() {
+                                            @Override
+                                            protected Boolean compute() throws Exception {
+                                                if (mainFrame.ps() != null)
+                                                    mainFrame.ps().close();
+                                                return true;
+                                            }
+                                        });
+                                        Jobs.runInBackgroundAndLoad(mainFrame, "Disconnecting from webservice...", SiriusCLIApplication::shutdownWebservice);
+                                    } finally {
+                                        mainFrame.CONNECTION_MONITOR().close();
+                                        System.exit(0);
+                                    }
+                                }
+                            }
+                        });
                         updateProgress(0, max, progress++, "Checking Webservice connection...");
                         ConnectionMonitor.ConnectionCheck cc = gui.getMainFrame().CONNECTION_MONITOR().checkConnection();
 

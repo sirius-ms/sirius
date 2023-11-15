@@ -35,7 +35,6 @@ import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
-import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.lcms.LCMSCompoundSummary;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
@@ -51,6 +50,7 @@ import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
 import de.unijena.bioinf.projectspace.*;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidateNumber;
+import de.unijena.bioinf.projectspace.fingerid.FBCandidatesTopK;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;
@@ -211,8 +211,8 @@ public class SiriusProjectSpaceImpl implements Project {
     @Override
     public Page<StructureCandidateScored> findStructureCandidatesByFeatureIdAndFormulaId(String formulaId, String alignedFeatureId, Pageable pageable, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
         List<Class<? extends DataAnnotation>> para = (optFields.contains(StructureCandidateScored.OptField.fingerprint)
-                ? List.of(FormulaScoring.class, FBCandidates.class, FBCandidateFingerprints.class)
-                : List.of(FormulaScoring.class, FBCandidates.class));
+                ? List.of(FormulaScoring.class, FBCandidatesTopK.class, FBCandidateFingerprints.class)
+                : List.of(FormulaScoring.class, FBCandidatesTopK.class));
 
         Instance instance = loadInstance(alignedFeatureId);
         FormulaResultId fidObj = parseFID(instance, formulaId);
@@ -225,8 +225,8 @@ public class SiriusProjectSpaceImpl implements Project {
     @Override
     public Page<StructureCandidateFormula> findStructureCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
         List<Class<? extends DataAnnotation>> para = (optFields.contains(StructureCandidateScored.OptField.fingerprint)
-                ? List.of(FormulaScoring.class, FBCandidates.class, FBCandidateFingerprints.class)
-                : List.of(FormulaScoring.class, FBCandidates.class));
+                ? List.of(FormulaScoring.class, FBCandidatesTopK.class, FBCandidateFingerprints.class)
+                : List.of(FormulaScoring.class, FBCandidatesTopK.class));
 
         Instance instance = loadInstance(alignedFeatureId);
         List<StructureCandidateFormula> candidates = instance.loadFormulaResults(FormulaScoring.class).stream()
@@ -245,15 +245,15 @@ public class SiriusProjectSpaceImpl implements Project {
     @Override
     public StructureCandidateFormula findTopStructureCandidateByFeatureId(String alignedFeatureId, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
         List<Class<? extends DataAnnotation>> para = (optFields.contains(StructureCandidateScored.OptField.fingerprint)
-                ? List.of(FormulaScoring.class, FBCandidates.class, FBCandidateFingerprints.class)
-                : List.of(FormulaScoring.class, FBCandidates.class));
+                ? List.of(FormulaScoring.class, FBCandidatesTopK.class, FBCandidateFingerprints.class)
+                : List.of(FormulaScoring.class, FBCandidatesTopK.class));
 
         Instance instance = loadInstance(alignedFeatureId);
 
         return instance.loadTopFormulaResult(List.of(TopCSIScore.class)).flatMap(fr -> {
             fr.getId().setAnnotation(FBCandidateNumber.class, new FBCandidateNumber(1));
             return instance.loadFormulaResult(fr.getId(), (Class<? extends DataAnnotation>[]) para.toArray(Class[]::new))
-                    .flatMap(fr2 -> fr2.getAnnotation(FBCandidates.class).map(FBCandidates::getResults)
+                    .flatMap(fr2 -> fr2.getAnnotation(FBCandidatesTopK.class).map(FBCandidatesTopK::getResults)
                             .filter(l -> !l.isEmpty()).map(r -> r.get(0))
                             .map(sc -> StructureCandidateFormula.of(sc,
                                     fr2.getAnnotation(FBCandidateFingerprints.class)
@@ -395,7 +395,7 @@ public class SiriusProjectSpaceImpl implements Project {
         long topK = pageable.getOffset() + pageable.getPageSize();
         fidObj.setAnnotation(FBCandidateNumber.class, topK <= 0 ? FBCandidateNumber.ALL : new FBCandidateNumber((int) topK));
         FormulaResult fr = instance.loadFormulaResult(fidObj, (Class<? extends DataAnnotation>[]) para.toArray(Class[]::new)).orElseThrow();
-        return fr.getAnnotation(FBCandidates.class).map(FBCandidates::getResults).map(l -> {
+        return fr.getAnnotation(FBCandidatesTopK.class).map(FBCandidatesTopK::getResults).map(l -> {
             List<StructureCandidateFormula> candidates = new ArrayList();
 
             Iterator<Scored<CompoundCandidate>> it =
@@ -544,7 +544,7 @@ public class SiriusProjectSpaceImpl implements Project {
                             cSum.setFormulaAnnotation(asFormulaCandidate(topHit));
 
                             // todo add msnovelist candidatas
-//                        topHit.getAnnotation(FBCandidates.class).map(FBCandidates::getResults)
+//                        topHit.getAnnotation(FBCandidatesTopK.class).map(FBCandidatesTopK::getResults)
 //                                .filter(l -> !l.isEmpty()).map(r -> r.get(0)).map(s ->
 //                                        StructureCandidateFormula.of(s, topHit.getAnnotationOrThrow(FormulaScoring.class),
 //                                                EnumSet.of(StructureCandidateScored.OptField.dbLinks, StructureCandidateScored.OptField.refSpectraLinks), topHit.getId()))
@@ -560,7 +560,7 @@ public class SiriusProjectSpaceImpl implements Project {
     public static FeatureAnnotations extractTopAnnotations(Instance inst) {
         return inst.loadTopFormulaResult(List.of(TopCSIScore.class, SiriusScore.class)).map(FormulaResult::getId).flatMap(frid -> {
             frid.setAnnotation(FBCandidateNumber.class, new FBCandidateNumber(1));
-            return inst.loadFormulaResult(frid, FormulaScoring.class, FTree.class, FBCandidates.class, CanopusResult.class)
+            return inst.loadFormulaResult(frid, FormulaScoring.class, FTree.class, FBCandidatesTopK.class, CanopusResult.class)
                     .map(topHit -> {
                         final FeatureAnnotations cSum = new FeatureAnnotations();
 //
@@ -568,7 +568,7 @@ public class SiriusProjectSpaceImpl implements Project {
                         cSum.setFormulaAnnotation(asFormulaCandidate(topHit));
 
                         // fingerid result
-                        topHit.getAnnotation(FBCandidates.class).map(FBCandidates::getResults)
+                        topHit.getAnnotation(FBCandidatesTopK.class).map(FBCandidatesTopK::getResults)
                                 .filter(l -> !l.isEmpty()).map(r -> r.get(0)).map(s ->
                                         StructureCandidateFormula.of(s, topHit.getAnnotationOrThrow(FormulaScoring.class),
                                                 EnumSet.of(StructureCandidateScored.OptField.dbLinks, StructureCandidateScored.OptField.refSpectraLinks), topHit.getId()))

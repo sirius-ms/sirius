@@ -86,6 +86,16 @@ public class MainFrame extends JFrame implements DropTargetListener {
         return backgroundRuns.getProject();
     }
 
+    private boolean closeProjectOnDispose = true;
+
+    public boolean isCloseProjectOnDispose() {
+        return closeProjectOnDispose;
+    }
+
+    public void setCloseProjectOnDispose(boolean closeProjectOnDispose) {
+        this.closeProjectOnDispose = closeProjectOnDispose;
+    }
+
     private BasicEventList<InstanceBean> compoundBaseList;
 
     //left side panel

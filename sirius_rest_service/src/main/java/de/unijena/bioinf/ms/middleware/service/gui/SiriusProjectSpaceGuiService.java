@@ -18,42 +18,16 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.frontend;
+package de.unijena.bioinf.ms.middleware.service.gui;
 
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
-import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.frontend.SiriusGui;
+import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceImpl;
 import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
-import org.jetbrains.annotations.NotNull;
 
-/**
- * Represents an instance of the SIRIUS GUI and its context.
- * - GUI MainFrame
- * - Persistence layer
- * - Background Computations
- */
-public class SiriusGui {
+public class SiriusProjectSpaceGuiService extends AbstractGuiService<SiriusProjectSpaceImpl> {
 
-    static {
-        GuiUtils.initUI();
-    }
-
-    private final MainFrame mainFrame;
-
-    public MainFrame getMainFrame() {
-        return mainFrame;
-    }
-
-    public SiriusGui(@NotNull GuiProjectSpaceManager project) { //todo nighsky: change to nightsky api and project ID.
-        mainFrame = new MainFrame();
-        mainFrame.decoradeMainFrame(project);
-        //todo nighsky: check why JFX webview is only working for first instance...
-    }
-
-    public void shutdown(boolean closeProject){
-        mainFrame.setCloseProjectOnDispose(closeProject);
-        mainFrame.dispose();
-    }
-    public void shutdown(){
-        shutdown(true);
+    @Override
+    protected SiriusGui makeGuiInstance(SiriusProjectSpaceImpl project) {
+        return new SiriusGui((GuiProjectSpaceManager) project.getProjectSpaceManager());
     }
 }

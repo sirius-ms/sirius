@@ -24,6 +24,8 @@ import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.compute.SiriusProjectSpaceComputeService;
+import de.unijena.bioinf.ms.middleware.service.gui.GuiService;
+import de.unijena.bioinf.ms.middleware.service.gui.SiriusProjectSpaceGuiService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceProviderImpl;
 import de.unijena.bioinf.webapi.WebAPI;
@@ -54,6 +56,11 @@ public class SiriusContext{
     public ProjectsProvider<?> projectsProvider() {
         SiriusProjectSpaceProviderImpl projectsProvider = new SiriusProjectSpaceProviderImpl();
         return projectsProvider;
+    }
+
+    @Bean
+    public GuiService<?> guiService(){
+        return new SiriusProjectSpaceGuiService();
     }
 
     @Bean(destroyMethod = "shutdown")

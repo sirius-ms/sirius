@@ -21,17 +21,29 @@
 package de.unijena.bioinf.ms.middleware.controller;
 
 import de.unijena.bioinf.ms.middleware.model.gui.GuiParameters;
+import de.unijena.bioinf.ms.middleware.service.gui.GuiService;
+import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping(value = "/api/projects/{projectId}/gui")
 @Tag(name = "[Experimental] GUI",
         description = "Open, control and close SIRIUS Graphical User Interface (GUI) on the specified project-space.")
 public class GuiController {
+
+    private final ProjectsProvider projectsProvider;
+
+    private final GuiService guiService;
+
+    @Autowired
+    public GuiController(ProjectsProvider<?> projectsProvider, GuiService guiService) {
+        this.projectsProvider = projectsProvider;
+        this.guiService = guiService;
+    }
 
     /**
      * Open GUI instance on specified project-space and bring the GUI window to foreground.
@@ -40,8 +52,9 @@ public class GuiController {
      * @param projectId of project-space the GUI instance will connect to.
      */
     @PostMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.CREATED)
     public void openGui(@PathVariable String projectId, @RequestParam(required = false, defaultValue = "true") boolean readOnly) {
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "NOT YET IMPLEMENTED");
+        guiService.createGuiInstance(projectId, projectsProvider.getProjectOrThrow(projectId));
     }
 
     /**
@@ -52,7 +65,7 @@ public class GuiController {
      */
     @PatchMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
     public void applyToGui(@PathVariable String projectId, @RequestBody GuiParameters guiParameters) {
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "NOT YET IMPLEMENTED");
+        guiService.applyToGuiInstance(projectId, guiParameters);
     }
 
     /**
@@ -62,11 +75,6 @@ public class GuiController {
      */
     @DeleteMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
     public void closeGui(@PathVariable String projectId) {
-        boolean isOpen = false;
-        if (isOpen) {
-            throw new ResponseStatusException(HttpStatus.OK, "Gui instance on '" + projectId + "' successfully closed.");
-        } else {
-            throw new ResponseStatusException(HttpStatus.NO_CONTENT, "No running Gui instance on '" + projectId + "'. Nothing to do.");
-        }
+        guiService.closeGuiInstance(projectId);
     }
 }

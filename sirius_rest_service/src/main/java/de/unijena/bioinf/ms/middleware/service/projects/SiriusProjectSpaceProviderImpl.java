@@ -44,7 +44,8 @@ import java.util.stream.Collectors;
 public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusProjectSpaceImpl> {
 
 
-    protected final ProjectSpaceManagerFactory<?, ?> projectSpaceManagerFactory = new ProjectSpaceManagerFactory.Default();
+//    protected final ProjectSpaceManagerFactory<?, ?> projectSpaceManagerFactory = new ProjectSpaceManagerFactory.Default();
+    protected final ProjectSpaceManagerFactory<?, ?> projectSpaceManagerFactory = new GuiProjectSpaceManagerFactory(); //todo nightsky: remove after transforming gui to rest
 
     private final HashMap<String, ProjectSpaceManager<?>> projectSpaces = new HashMap<>();
 
