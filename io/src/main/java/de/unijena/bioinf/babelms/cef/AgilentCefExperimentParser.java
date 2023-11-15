@@ -66,10 +66,10 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
     private Iterator<Ms2Experiment> iterator = null;
 
     @Override
-    public <S extends Ms2Experiment> S parse(BufferedReader secondChoice, @Nullable URI source) throws IOException {
+    public Ms2Experiment parse(BufferedReader secondChoice, @Nullable URI source) throws IOException {
         //XML parsing on readers works bad, so we create our own stream from url
         if (iterator != null && iterator.hasNext()) {
-            return (S) iterator.next();
+            return iterator.next();
         } else if (!Objects.equals(currentUrl, source) || xmlEventReader == null || unmarshaller == null) {
             try {
                 if (secondChoice == null && source == null)
@@ -99,7 +99,7 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
 
 
         try {
-            XMLEvent e = null;
+            XMLEvent e;
             // loop though the xml stream
             while ((e = xmlEventReader.peek()) != null) {
                 // check the event is a Document start element
@@ -107,7 +107,7 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
                     // unmarshall the compound
                     Compound compound = unmarshaller.unmarshal(xmlEventReader, Compound.class).getValue();
                     iterator = experimentFromCompound(compound).iterator();
-                    return iterator.hasNext() ? (S) iterator.next() : null;
+                    return iterator.hasNext() ? iterator.next() : null;
                 } else {
                     xmlEventReader.next();
                 }
@@ -120,7 +120,7 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
 
     }
 
-    private <S extends Ms2Experiment> List<S> experimentFromCompound(Compound compound) {
+    private List<Ms2Experiment> experimentFromCompound(Compound compound) {
         Tsid cuuid = TsidCreator.getTsid();
         RetentionTime rt = compound.getSpectrum().stream()
                 .filter(s -> s.getMSDetails().scanType.equals("Scan"))
@@ -133,7 +133,7 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
                 .groupRt(rt)
                 .build();
 
-        List<S> exps = null;
+        List<Ms2Experiment> exps;
         if (compound.getSpectrum().stream().anyMatch(s -> s.getType().equalsIgnoreCase("MFE") || s.getType().equalsIgnoreCase("FBF"))) { //MFE/FBF data
             exps = experimentFromMFECompound(compound);
         } else if (compound.getSpectrum().stream().noneMatch(s -> s.getMSDetails().getScanType().equals("ProductIon"))) { //ms1 only data from raw format
@@ -153,13 +153,13 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
     private static final Pattern UNSUPPORTED_IONTYPE_MATCHER = Pattern.compile("^\\d+M.*");
     private static final Pattern ISOTOPE_PEAK_MATCHER = Pattern.compile("\\+\\d+$");
 
-    private <S extends Ms2Experiment> List<S> experimentFromMFECompound(Compound compound) {
+    private List<Ms2Experiment> experimentFromMFECompound(Compound compound) {
         final Spectrum mfe = compound.getSpectrum().stream()
                 .filter(s ->
                         s.getType().equalsIgnoreCase("MFE") || s.getType().equalsIgnoreCase("FBF")
                 ).findAny().orElseThrow(() -> new IllegalArgumentException("Compound must contain a MFE/FBF spectrum to be parsed as MFE/FBF spectrum!"));
 
-        List<S> siriusCompounds = new ArrayList<>();
+        List<Ms2Experiment> siriusCompounds = new ArrayList<>();
 
         mfe.msPeaks.getP().stream().filter(p -> {
             if (UNSUPPORTED_IONTYPE_MATCHER.matcher(p.getS()).find()) {
@@ -181,7 +181,7 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
         return siriusCompounds;
     }
 
-    private <S extends Ms2Experiment> List<S> experimentFromMS1OnlyCompound(Compound compound) {
+    private List<Ms2Experiment> experimentFromMS1OnlyCompound(Compound compound) {
         MutableMs2Experiment exp = new MutableMs2Experiment();
         Spectrum ms = compound.getSpectrum().stream()
                 .filter(s -> s.getMSDetails().getScanType().equals("Scan"))
@@ -193,7 +193,7 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
         return List.of(experimentFromCompound(compound, exp));
     }
 
-    private <S extends Ms2Experiment> List<S> experimentFromRawCompound(Compound compound) {
+    private List<Ms2Experiment> experimentFromRawCompound(Compound compound) {
         MutableMs2Experiment exp = new MutableMs2Experiment();
 
         Spectrum s = compound.getSpectrum().stream().filter(spec -> spec.getMSDetails().getScanType().equals("ProductIon")).findFirst()
@@ -204,7 +204,7 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
         return List.of(experimentFromCompound(compound, exp));
     }
 
-    private <S extends Ms2Experiment> S experimentFromCompound(Compound compound, MutableMs2Experiment exp) {
+    private Ms2Experiment experimentFromCompound(Compound compound, MutableMs2Experiment exp) {
         MS2MassDeviation dev = PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class);
         exp.setName("rt" + NUMBER_FORMAT.format(compound.location.rt) + "-p" + NUMBER_FORMAT.format(exp.getIonMass()));
         if (currentUrl != null)
@@ -251,7 +251,7 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
 
         exp.setMs1Spectra(ms1Spectra);
         exp.setMs2Spectra(ms2Spectra);
-        return (S) exp;
+        return exp;
     }
 }
 
