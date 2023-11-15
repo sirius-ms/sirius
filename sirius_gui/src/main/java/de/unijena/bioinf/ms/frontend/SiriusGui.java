@@ -20,18 +20,10 @@
 
 package de.unijena.bioinf.ms.frontend;
 
-import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
-import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
-import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
 import org.jetbrains.annotations.NotNull;
-
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 
 /**
  * Represents an instance of the SIRIUS GUI and its context.
@@ -40,7 +32,6 @@ import java.awt.event.WindowEvent;
  * - Background Computations
  */
 public class SiriusGui {
-    public static final String DONT_ASK_CLOSE_KEY = "de.unijena.bioinf.sirius.mainframe.close.dontAskAgain";
 
     static {
         GuiUtils.initUI();
@@ -54,38 +45,15 @@ public class SiriusGui {
 
     public SiriusGui(@NotNull GuiProjectSpaceManager project) { //todo nighsky: change to nightsky api and project ID.
         mainFrame = new MainFrame();
-        mainFrame.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent event) {
-                if (!Jobs.MANAGER().hasActiveJobs() || new QuestionDialog(mainFrame,
-                        "<html>Do you really want close SIRIUS?" +
-                                "<br> <b>There are still some Jobs running.</b> Running Jobs will be canceled when closing SIRIUS.</html>", DONT_ASK_CLOSE_KEY).isSuccess()) {
-                    try {
-                        ApplicationCore.DEFAULT_LOGGER.info("Saving properties file before termination.");
-                        SiriusProperties.SIRIUS_PROPERTIES_FILE().store();
-                        Jobs.runInBackgroundAndLoad(mainFrame, "Cancelling running jobs...",  () -> mainFrame.getBackgroundRuns().cancelAllRuns());
-
-                        ApplicationCore.DEFAULT_LOGGER.info("Closing Project-Space"); //todo nighsky: do not close project when closing mainframe
-                        Jobs.runInBackgroundAndLoad(mainFrame, "Closing Project-Space", true, new TinyBackgroundJJob<Boolean>() {
-                            @Override
-                            protected Boolean compute() throws Exception {
-                                if (mainFrame.ps() != null)
-                                    mainFrame.ps().close();
-                                return true;
-                            }
-                        });
-                        Jobs.runInBackgroundAndLoad(mainFrame, "Disconnecting from webservice...", SiriusCLIApplication::shutdownWebservice);
-                    } finally {
-                        mainFrame.CONNECTION_MONITOR().close();
-                        System.exit(0);
-                    }
-                }
-            }
-        });
         mainFrame.decoradeMainFrame(project);
+        //todo nighsky: check why JFX webview is only working for first instance...
     }
 
-    public void shutdown(){
+    public void shutdown(boolean closeProject){
+        mainFrame.setCloseProjectOnDispose(closeProject);
         mainFrame.dispose();
+    }
+    public void shutdown(){
+        shutdown(true);
     }
 }

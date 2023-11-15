@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.middleware;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.AuthServices;
+import de.unijena.bioinf.jjobs.SwingJobManager;
 import de.unijena.bioinf.ms.annotations.PrintCitations;
 import de.unijena.bioinf.ms.frontend.BackgroundRuns;
 import de.unijena.bioinf.ms.frontend.Run;
@@ -31,15 +32,21 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.Workspace;
 import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastSubToolJob;
 import de.unijena.bioinf.ms.frontend.subtools.gui.GuiAppOptions;
 import de.unijena.bioinf.ms.frontend.subtools.middleware.MiddlewareAppOptions;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceProviderImpl;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.projectspace.FormulaResult;
+import de.unijena.bioinf.projectspace.ProjectSpaceConfiguration;
+import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
+import de.unijena.bioinf.projectspace.fingerid.*;
 import de.unijena.bioinf.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.rest.ProxyManager;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.Banner;
@@ -56,6 +63,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 
 @SpringBootApplication
 @Slf4j
@@ -67,6 +75,21 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
     }
 
     public static void main(String[] args) {
+        //enable gui support
+        {
+            // modify fingerid subtool so that it works with reduced GUI candidate list.
+            FingerblastSubToolJob.formulaResultComponentsToClear.add(FBCandidatesTopK.class);
+            FingerblastSubToolJob.formulaResultComponentsToClear.add(FBCandidateFingerprintsTopK.class);
+
+            final @NotNull Supplier<ProjectSpaceConfiguration> dc = ProjectSpaceManager.DEFAULT_CONFIG;
+            ProjectSpaceManager.DEFAULT_CONFIG = () -> {
+                final ProjectSpaceConfiguration config = dc.get();
+                config.registerComponent(FormulaResult.class, FBCandidatesTopK.class, new FBCandidatesSerializerTopK(FBCandidateNumber.GUI_DEFAULT));
+                config.registerComponent(FormulaResult.class, FBCandidateFingerprintsTopK.class, new FBCandidateFingerprintSerializerTopK(FBCandidateNumber.GUI_DEFAULT));
+                return config;
+            };
+        }
+
         System.setProperty("de.unijena.bioinf.sirius.springSupport", "true");
         //run gui if not parameter ist given, to get rid of a second launcher
         if (args == null || args.length == 0)
@@ -79,7 +102,16 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                         it.equalsIgnoreCase("--help")
         )) {
             System.setProperty(APP_TYPE_PROPERTY_KEY, "SERVICE");
-            SiriusJobs.enforceClassLoaderGlobally(Thread.currentThread().getContextClassLoader());
+//            SiriusJobs.enforceClassLoaderGlobally(Thread.currentThread().getContextClassLoader());
+            measureTime("Init Swing Job Manager");
+            // The spring app classloader seems not to be correctly inherited to sub thread
+            // So we need to ensure that the apache.configuration2 libs gets access otherwise.
+            SiriusJobs.setJobManagerFactory((cpuThreads) -> new SwingJobManager(
+                    cpuThreads,
+                    Math.min(PropertyManager.getNumberOfThreads(), 4),
+                    Thread.currentThread().getContextClassLoader()
+            ));
+
             ApplicationCore.DEFAULT_LOGGER.info("Starting Application Core");
 
             // todo convert to a native spring based approach
