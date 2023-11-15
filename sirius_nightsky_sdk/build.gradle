@@ -1,14 +1,33 @@
-ext {
-    jakarta_annotation_version = "1.3.5"
-    junit_version = "4.13.2"
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.openapitools:openapi-generator-gradle-plugin:6.6.0"
+    }
 }
 
+apply plugin: 'org.openapi.generator'
+apply plugin: 'java-library'
+
+
 dependencies {
-    implementation "com.google.code.findbugs:jsr305:3.0.2"
-    implementation "com.fasterxml.jackson.core:jackson-core:$jackson_version"
-    implementation "com.fasterxml.jackson.core:jackson-annotations:$jackson_version"
-    implementation "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jackson_version"
-    implementation "org.openapitools:jackson-databind-nullable:0.2.1"
-    implementation "jakarta.annotation:jakarta.annotation-api:$jakarta_annotation_version"
+    api project(":sirius_nightsky_sdk:sirius_nightsky_sdk.openapi")
+}
+
+openApiGenerate {
+    generatorName.set("java")
+    inputSpec.set("$rootDir/sirius_rest_service/openapi-gen-config.json")
+    outputDir.set("$projectDir/sirius_nightsky_sdk.openapi")
+    apiPackage.set("de.unijena.bioinf.ms.nightsky.sdk.api")
+    invokerPackage.set("de.unijena.bioinf.ms.nightsky.sdk.client")
+    modelPackage.set("e.unijena.bioinf.ms.nightsky.sdk.model")
+    configOptions.set([
+            artifactId: "sirius_nightsky_sdk",
+            groupId: "de.unijena.bioinf.ms",
+            library: "native",
+            serializationLibrary: "jackson",
+            webclientBlockingOperations: false
+    ] as Map<? extends String, ? extends String>)
 }
