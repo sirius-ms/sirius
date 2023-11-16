@@ -30,11 +30,10 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.*;
 import de.unijena.bioinf.ms.gui.io.LoadController;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
-import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.ExperimentEditPanel;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.nightsky.sdk.model.ConnectionCheck;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.ms.rest.model.worker.WorkerWithCharge;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.sirius.Sirius;
 import org.jdesktop.swingx.JXTitledSeparator;
@@ -54,6 +53,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+
+import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
+import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isWorkerWarning;
 
 
 public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
@@ -263,7 +265,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
                 LoadController.completeExisting(ec, editPanel));
     }
 
-    ConnectionMonitor.ConnectionCheck checkResult = null;
+    ConnectionCheck checkResult = null;
 
     private void startComputing() {
         checkResult = null;
@@ -285,7 +287,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             if (checkResult == null)
                 checkResult = CheckConnectionAction.checkConnectionAndLoad(mf());
 
-            if (checkResult.isConnected()) {
+            if (isConnected(checkResult)) {
                 boolean compCheck = Jobs.runInBackgroundAndLoad(mf(), "Checking FP version...", new TinyBackgroundJJob<Boolean>() {
                     @Override
                     protected Boolean compute() throws Exception {
@@ -408,7 +410,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
 
         command.addAll(configCommand);
         command.addAll(toolCommands);
-        command = command.stream().map(s -> s.replaceAll("\\s+","")).collect(Collectors.toList());
+        command = command.stream().map(s -> s.replaceAll("\\s+", "")).collect(Collectors.toList());
         return command;
     }
 
@@ -433,14 +435,15 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             checkResult = CheckConnectionAction.checkConnectionAndLoad(mf());
 
         if (checkResult != null) {
-            if (checkResult.isConnected()) {
-                if ((csiPredictConfigs.isToolSelected() || csiSearchConfigs.isToolSelected()) && checkResult.hasWorkerWarning()) {
-                    if (checkResult.workerInfo == null ||
-                            (!checkResult.workerInfo.supportsAllPredictorTypes(ConnectionMonitor.neededTypes.stream().filter(WorkerWithCharge::isNegative).collect(Collectors.toSet()))
+            if (isConnected(checkResult)) {
+                if ((csiPredictConfigs.isToolSelected() || csiSearchConfigs.isToolSelected()) && isWorkerWarning(checkResult)) {
+                    if (checkResult.getWorkerInfo() == null ||
+                            (!checkResult.isSupportsNegPredictorTypes()
                                     && compoundsToProcess.stream().anyMatch(it -> it.getIonization().isNegative())) ||
-                            (!checkResult.workerInfo.supportsAllPredictorTypes(ConnectionMonitor.neededTypes.stream().filter(WorkerWithCharge::isPositive).collect(Collectors.toSet()))
+
+                            (!checkResult.isSupportsPosPredictorTypes()
                                     && compoundsToProcess.stream().anyMatch(it -> it.getIonization().isPositive()))
-                    ) new WorkerWarningDialog(mf(), checkResult.workerInfo == null);
+                    ) new WorkerWarningDialog(mf(), checkResult.getWorkerInfo() == null);
                 }
             } else {
                 if (formulaIDConfigPanel.content.getFormulaSearchDBs() != null) {

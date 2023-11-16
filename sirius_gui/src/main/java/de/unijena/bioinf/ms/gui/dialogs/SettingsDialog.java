@@ -36,6 +36,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Properties;
 
+import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
+
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
@@ -139,7 +141,7 @@ public class SettingsDialog extends JDialog implements ActionListener {
                 Jobs.runInBackground(() -> {
                     LoggerFactory.getLogger(this.getClass()).info("Saving settings to properties File");
                     SiriusProperties.SIRIUS_PROPERTIES_FILE().store();
-                    CheckConnectionAction.checkConnectionAndLoad(mf()).isConnected();
+                    isConnected(CheckConnectionAction.checkConnectionAndLoad(mf()));
                 });
                 return restartMessage;
             }).getResult();
