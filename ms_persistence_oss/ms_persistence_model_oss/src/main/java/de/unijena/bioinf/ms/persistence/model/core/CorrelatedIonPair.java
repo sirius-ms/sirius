@@ -21,9 +21,7 @@
 package de.unijena.bioinf.ms.persistence.model.core;
 
 import jakarta.persistence.Id;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,9 +29,12 @@ import org.jetbrains.annotations.NotNull;
  */
 @Getter
 @Setter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
+@ToString
 public class CorrelatedIonPair {
-    enum Type {ADDUCT, INSOURCE, MULTIMERE, ISOMERE}
+    public enum Type {ADDUCT, INSOURCE, MULTIMERE, ISOMERE}
 
     @Id
     private long ionPairId;
