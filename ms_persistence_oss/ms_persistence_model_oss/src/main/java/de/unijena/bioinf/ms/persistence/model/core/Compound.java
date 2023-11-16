@@ -37,6 +37,7 @@ import java.util.Optional;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString
 public class Compound {
     @Id
     private long compoundId;
@@ -48,10 +49,12 @@ public class Compound {
      * Group of edges between pairs of feature alignments that correlate among each other. Connected components
      * from the whole graph of correlated pairs (whole dataset)
      */
+    @ToString.Exclude
     LongList correlatedIonPairIds; //todo denormalize instead?
 
     //foreign fields
     @JsonIgnore
+    @ToString.Exclude
     List<AlignedFeatures> adductFeatures;
 
     public Optional<List<AlignedFeatures>> getAdductFeatures() {
@@ -59,6 +62,7 @@ public class Compound {
     }
 
     @JsonIgnore
+    @ToString.Exclude
     List<CorrelatedIonPair> correlatedIonPairs;
 
     public Optional<List<CorrelatedIonPair>> getCorrelatedIonPairs() {
