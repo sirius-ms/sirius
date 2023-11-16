@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.model.login;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
@@ -94,6 +95,24 @@ public class Subscription {
 
     @Schema(nullable = true)
     private String pp;
+
+    @JsonIgnore
+    public boolean hasInstanceLimit() {
+        Integer l = getInstanceLimit();
+        return  l != null && l > 0;
+    }
+
+    @JsonIgnore
+    public boolean hasExpirationTime(){
+        return getExpirationDate() != null;
+    }
+
+    @JsonIgnore
+    public boolean isExpired() {
+        if (!hasExpirationTime())
+            return false;
+        return getExpirationDate().getTime() < System.currentTimeMillis();
+    }
 
     public static Subscription of(de.unijena.bioinf.ms.rest.model.license.Subscription s){
         return Subscription.builder()

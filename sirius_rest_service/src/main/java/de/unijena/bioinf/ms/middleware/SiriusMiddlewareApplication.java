@@ -164,7 +164,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        } else {
+        } else { //todo remove!!!
             SiriusGUIApplication.main(args);
         }
     }
