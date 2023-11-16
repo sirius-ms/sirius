@@ -59,7 +59,7 @@ public class FingerprintPrediction {
   @JsonProperty(JSON_PROPERTY_ENABLED)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Boolean getEnabled() {
+  public Boolean isEnabled() {
     return enabled;
   }
 
@@ -84,7 +84,7 @@ public class FingerprintPrediction {
   @JsonProperty(JSON_PROPERTY_USE_SCORE_THRESHOLD)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Boolean getUseScoreThreshold() {
+  public Boolean isUseScoreThreshold() {
     return useScoreThreshold;
   }
 
@@ -171,13 +171,13 @@ public class FingerprintPrediction {
     StringJoiner joiner = new StringJoiner("&");
 
     // add `enabled` to the URL query string
-    if (getEnabled() != null) {
-      joiner.add(String.format("%senabled%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getEnabled()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
+    if (isEnabled() != null) {
+      joiner.add(String.format("%senabled%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isEnabled()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
     }
 
     // add `useScoreThreshold` to the URL query string
-    if (getUseScoreThreshold() != null) {
-      joiner.add(String.format("%suseScoreThreshold%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getUseScoreThreshold()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
+    if (isUseScoreThreshold() != null) {
+      joiner.add(String.format("%suseScoreThreshold%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isUseScoreThreshold()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
     }
 
     return joiner.toString();

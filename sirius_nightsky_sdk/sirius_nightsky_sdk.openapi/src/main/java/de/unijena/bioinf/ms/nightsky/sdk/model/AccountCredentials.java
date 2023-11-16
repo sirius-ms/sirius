@@ -25,10 +25,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.Arrays;
-import org.openapitools.jackson.nullable.JsonNullable;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.openapitools.jackson.nullable.JsonNullable;
-import java.util.NoSuchElementException;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
@@ -43,19 +39,19 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class AccountCredentials {
   public static final String JSON_PROPERTY_USERNAME = "username";
-  private JsonNullable<String> username = JsonNullable.<String>undefined();
+  private String username;
 
   public static final String JSON_PROPERTY_PASSWORD = "password";
-  private JsonNullable<String> password = JsonNullable.<String>undefined();
+  private String password;
 
   public static final String JSON_PROPERTY_REFRESH_TOKEN = "refreshToken";
-  private JsonNullable<String> refreshToken = JsonNullable.<String>undefined();
+  private String refreshToken;
 
   public AccountCredentials() { 
   }
 
   public AccountCredentials username(String username) {
-    this.username = JsonNullable.<String>of(username);
+    this.username = username;
     return this;
   }
 
@@ -64,31 +60,23 @@ public class AccountCredentials {
    * @return username
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public String getUsername() {
-        return username.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_USERNAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<String> getUsername_JsonNullable() {
+  public String getUsername() {
     return username;
   }
-  
-  @JsonProperty(JSON_PROPERTY_USERNAME)
-  public void setUsername_JsonNullable(JsonNullable<String> username) {
-    this.username = username;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_USERNAME)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setUsername(String username) {
-    this.username = JsonNullable.<String>of(username);
+    this.username = username;
   }
 
 
   public AccountCredentials password(String password) {
-    this.password = JsonNullable.<String>of(password);
+    this.password = password;
     return this;
   }
 
@@ -97,31 +85,23 @@ public class AccountCredentials {
    * @return password
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public String getPassword() {
-        return password.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_PASSWORD)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<String> getPassword_JsonNullable() {
+  public String getPassword() {
     return password;
   }
-  
-  @JsonProperty(JSON_PROPERTY_PASSWORD)
-  public void setPassword_JsonNullable(JsonNullable<String> password) {
-    this.password = password;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_PASSWORD)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setPassword(String password) {
-    this.password = JsonNullable.<String>of(password);
+    this.password = password;
   }
 
 
   public AccountCredentials refreshToken(String refreshToken) {
-    this.refreshToken = JsonNullable.<String>of(refreshToken);
+    this.refreshToken = refreshToken;
     return this;
   }
 
@@ -130,26 +110,18 @@ public class AccountCredentials {
    * @return refreshToken
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public String getRefreshToken() {
-        return refreshToken.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_REFRESH_TOKEN)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<String> getRefreshToken_JsonNullable() {
+  public String getRefreshToken() {
     return refreshToken;
   }
-  
-  @JsonProperty(JSON_PROPERTY_REFRESH_TOKEN)
-  public void setRefreshToken_JsonNullable(JsonNullable<String> refreshToken) {
-    this.refreshToken = refreshToken;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_REFRESH_TOKEN)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setRefreshToken(String refreshToken) {
-    this.refreshToken = JsonNullable.<String>of(refreshToken);
+    this.refreshToken = refreshToken;
   }
 
 
@@ -165,25 +137,14 @@ public class AccountCredentials {
       return false;
     }
     AccountCredentials accountCredentials = (AccountCredentials) o;
-    return equalsNullable(this.username, accountCredentials.username) &&
-        equalsNullable(this.password, accountCredentials.password) &&
-        equalsNullable(this.refreshToken, accountCredentials.refreshToken);
-  }
-
-  private static <T> boolean equalsNullable(JsonNullable<T> a, JsonNullable<T> b) {
-    return a == b || (a != null && b != null && a.isPresent() && b.isPresent() && Objects.deepEquals(a.get(), b.get()));
+    return Objects.equals(this.username, accountCredentials.username) &&
+        Objects.equals(this.password, accountCredentials.password) &&
+        Objects.equals(this.refreshToken, accountCredentials.refreshToken);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(hashCodeNullable(username), hashCodeNullable(password), hashCodeNullable(refreshToken));
-  }
-
-  private static <T> int hashCodeNullable(JsonNullable<T> a) {
-    if (a == null) {
-      return 1;
-    }
-    return a.isPresent() ? Arrays.deepHashCode(new Object[]{a.get()}) : 31;
+    return Objects.hash(username, password, refreshToken);
   }
 
   @Override

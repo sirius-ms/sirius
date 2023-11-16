@@ -32,10 +32,6 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.FragmentationTree;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.openapitools.jackson.nullable.JsonNullable;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.openapitools.jackson.nullable.JsonNullable;
-import java.util.NoSuchElementException;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
@@ -72,43 +68,43 @@ public class FormulaCandidate {
   private String adduct;
 
   public static final String JSON_PROPERTY_SIRIUS_SCORE = "siriusScore";
-  private JsonNullable<Double> siriusScore = JsonNullable.<Double>undefined();
+  private Double siriusScore;
 
   public static final String JSON_PROPERTY_ISOTOPE_SCORE = "isotopeScore";
-  private JsonNullable<Double> isotopeScore = JsonNullable.<Double>undefined();
+  private Double isotopeScore;
 
   public static final String JSON_PROPERTY_TREE_SCORE = "treeScore";
-  private JsonNullable<Double> treeScore = JsonNullable.<Double>undefined();
+  private Double treeScore;
 
   public static final String JSON_PROPERTY_ZODIAC_SCORE = "zodiacScore";
-  private JsonNullable<Double> zodiacScore = JsonNullable.<Double>undefined();
+  private Double zodiacScore;
 
   public static final String JSON_PROPERTY_NUM_OF_EXPLAINED_PEAKS = "numOfExplainedPeaks";
-  private JsonNullable<Integer> numOfExplainedPeaks = JsonNullable.<Integer>undefined();
+  private Integer numOfExplainedPeaks;
 
   public static final String JSON_PROPERTY_NUM_OF_EXPLAINABLE_PEAKS = "numOfExplainablePeaks";
-  private JsonNullable<Integer> numOfExplainablePeaks = JsonNullable.<Integer>undefined();
+  private Integer numOfExplainablePeaks;
 
   public static final String JSON_PROPERTY_TOTAL_EXPLAINED_INTENSITY = "totalExplainedIntensity";
-  private JsonNullable<Double> totalExplainedIntensity = JsonNullable.<Double>undefined();
+  private Double totalExplainedIntensity;
 
   public static final String JSON_PROPERTY_MEDIAN_MASS_DEVIATION = "medianMassDeviation";
-  private JsonNullable<Deviation> medianMassDeviation = JsonNullable.<Deviation>undefined();
+  private Deviation medianMassDeviation;
 
   public static final String JSON_PROPERTY_FRAGMENTATION_TREE = "fragmentationTree";
-  private JsonNullable<FragmentationTree> fragmentationTree = JsonNullable.<FragmentationTree>undefined();
+  private FragmentationTree fragmentationTree;
 
   public static final String JSON_PROPERTY_SIMULATED_ISOTOPE_PATTERN = "simulatedIsotopePattern";
-  private JsonNullable<AnnotatedSpectrum> simulatedIsotopePattern = JsonNullable.<AnnotatedSpectrum>undefined();
+  private AnnotatedSpectrum simulatedIsotopePattern;
 
   public static final String JSON_PROPERTY_PREDICTED_FINGERPRINT = "predictedFingerprint";
-  private JsonNullable<List<Double>> predictedFingerprint = JsonNullable.<List<Double>>undefined();
+  private List<Double> predictedFingerprint;
 
   public static final String JSON_PROPERTY_COMPOUND_CLASSES = "compoundClasses";
-  private JsonNullable<CompoundClasses> compoundClasses = JsonNullable.<CompoundClasses>undefined();
+  private CompoundClasses compoundClasses;
 
   public static final String JSON_PROPERTY_CANOPUS_PREDICTION = "canopusPrediction";
-  private JsonNullable<CanopusPrediction> canopusPrediction = JsonNullable.<CanopusPrediction>undefined();
+  private CanopusPrediction canopusPrediction;
 
   public FormulaCandidate() { 
   }
@@ -189,7 +185,7 @@ public class FormulaCandidate {
 
 
   public FormulaCandidate siriusScore(Double siriusScore) {
-    this.siriusScore = JsonNullable.<Double>of(siriusScore);
+    this.siriusScore = siriusScore;
     return this;
   }
 
@@ -198,31 +194,23 @@ public class FormulaCandidate {
    * @return siriusScore
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Double getSiriusScore() {
-        return siriusScore.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_SIRIUS_SCORE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Double> getSiriusScore_JsonNullable() {
+  public Double getSiriusScore() {
     return siriusScore;
   }
-  
-  @JsonProperty(JSON_PROPERTY_SIRIUS_SCORE)
-  public void setSiriusScore_JsonNullable(JsonNullable<Double> siriusScore) {
-    this.siriusScore = siriusScore;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_SIRIUS_SCORE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSiriusScore(Double siriusScore) {
-    this.siriusScore = JsonNullable.<Double>of(siriusScore);
+    this.siriusScore = siriusScore;
   }
 
 
   public FormulaCandidate isotopeScore(Double isotopeScore) {
-    this.isotopeScore = JsonNullable.<Double>of(isotopeScore);
+    this.isotopeScore = isotopeScore;
     return this;
   }
 
@@ -231,31 +219,23 @@ public class FormulaCandidate {
    * @return isotopeScore
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Double getIsotopeScore() {
-        return isotopeScore.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_ISOTOPE_SCORE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Double> getIsotopeScore_JsonNullable() {
+  public Double getIsotopeScore() {
     return isotopeScore;
   }
-  
-  @JsonProperty(JSON_PROPERTY_ISOTOPE_SCORE)
-  public void setIsotopeScore_JsonNullable(JsonNullable<Double> isotopeScore) {
-    this.isotopeScore = isotopeScore;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_ISOTOPE_SCORE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setIsotopeScore(Double isotopeScore) {
-    this.isotopeScore = JsonNullable.<Double>of(isotopeScore);
+    this.isotopeScore = isotopeScore;
   }
 
 
   public FormulaCandidate treeScore(Double treeScore) {
-    this.treeScore = JsonNullable.<Double>of(treeScore);
+    this.treeScore = treeScore;
     return this;
   }
 
@@ -264,31 +244,23 @@ public class FormulaCandidate {
    * @return treeScore
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Double getTreeScore() {
-        return treeScore.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_TREE_SCORE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Double> getTreeScore_JsonNullable() {
+  public Double getTreeScore() {
     return treeScore;
   }
-  
-  @JsonProperty(JSON_PROPERTY_TREE_SCORE)
-  public void setTreeScore_JsonNullable(JsonNullable<Double> treeScore) {
-    this.treeScore = treeScore;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_TREE_SCORE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setTreeScore(Double treeScore) {
-    this.treeScore = JsonNullable.<Double>of(treeScore);
+    this.treeScore = treeScore;
   }
 
 
   public FormulaCandidate zodiacScore(Double zodiacScore) {
-    this.zodiacScore = JsonNullable.<Double>of(zodiacScore);
+    this.zodiacScore = zodiacScore;
     return this;
   }
 
@@ -297,31 +269,23 @@ public class FormulaCandidate {
    * @return zodiacScore
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Double getZodiacScore() {
-        return zodiacScore.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_ZODIAC_SCORE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Double> getZodiacScore_JsonNullable() {
+  public Double getZodiacScore() {
     return zodiacScore;
   }
-  
-  @JsonProperty(JSON_PROPERTY_ZODIAC_SCORE)
-  public void setZodiacScore_JsonNullable(JsonNullable<Double> zodiacScore) {
-    this.zodiacScore = zodiacScore;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_ZODIAC_SCORE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setZodiacScore(Double zodiacScore) {
-    this.zodiacScore = JsonNullable.<Double>of(zodiacScore);
+    this.zodiacScore = zodiacScore;
   }
 
 
   public FormulaCandidate numOfExplainedPeaks(Integer numOfExplainedPeaks) {
-    this.numOfExplainedPeaks = JsonNullable.<Integer>of(numOfExplainedPeaks);
+    this.numOfExplainedPeaks = numOfExplainedPeaks;
     return this;
   }
 
@@ -330,31 +294,23 @@ public class FormulaCandidate {
    * @return numOfExplainedPeaks
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Integer getNumOfExplainedPeaks() {
-        return numOfExplainedPeaks.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_NUM_OF_EXPLAINED_PEAKS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Integer> getNumOfExplainedPeaks_JsonNullable() {
+  public Integer getNumOfExplainedPeaks() {
     return numOfExplainedPeaks;
   }
-  
-  @JsonProperty(JSON_PROPERTY_NUM_OF_EXPLAINED_PEAKS)
-  public void setNumOfExplainedPeaks_JsonNullable(JsonNullable<Integer> numOfExplainedPeaks) {
-    this.numOfExplainedPeaks = numOfExplainedPeaks;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_NUM_OF_EXPLAINED_PEAKS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setNumOfExplainedPeaks(Integer numOfExplainedPeaks) {
-    this.numOfExplainedPeaks = JsonNullable.<Integer>of(numOfExplainedPeaks);
+    this.numOfExplainedPeaks = numOfExplainedPeaks;
   }
 
 
   public FormulaCandidate numOfExplainablePeaks(Integer numOfExplainablePeaks) {
-    this.numOfExplainablePeaks = JsonNullable.<Integer>of(numOfExplainablePeaks);
+    this.numOfExplainablePeaks = numOfExplainablePeaks;
     return this;
   }
 
@@ -363,31 +319,23 @@ public class FormulaCandidate {
    * @return numOfExplainablePeaks
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Integer getNumOfExplainablePeaks() {
-        return numOfExplainablePeaks.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_NUM_OF_EXPLAINABLE_PEAKS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Integer> getNumOfExplainablePeaks_JsonNullable() {
+  public Integer getNumOfExplainablePeaks() {
     return numOfExplainablePeaks;
   }
-  
-  @JsonProperty(JSON_PROPERTY_NUM_OF_EXPLAINABLE_PEAKS)
-  public void setNumOfExplainablePeaks_JsonNullable(JsonNullable<Integer> numOfExplainablePeaks) {
-    this.numOfExplainablePeaks = numOfExplainablePeaks;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_NUM_OF_EXPLAINABLE_PEAKS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setNumOfExplainablePeaks(Integer numOfExplainablePeaks) {
-    this.numOfExplainablePeaks = JsonNullable.<Integer>of(numOfExplainablePeaks);
+    this.numOfExplainablePeaks = numOfExplainablePeaks;
   }
 
 
   public FormulaCandidate totalExplainedIntensity(Double totalExplainedIntensity) {
-    this.totalExplainedIntensity = JsonNullable.<Double>of(totalExplainedIntensity);
+    this.totalExplainedIntensity = totalExplainedIntensity;
     return this;
   }
 
@@ -396,31 +344,23 @@ public class FormulaCandidate {
    * @return totalExplainedIntensity
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Double getTotalExplainedIntensity() {
-        return totalExplainedIntensity.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_TOTAL_EXPLAINED_INTENSITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Double> getTotalExplainedIntensity_JsonNullable() {
+  public Double getTotalExplainedIntensity() {
     return totalExplainedIntensity;
   }
-  
-  @JsonProperty(JSON_PROPERTY_TOTAL_EXPLAINED_INTENSITY)
-  public void setTotalExplainedIntensity_JsonNullable(JsonNullable<Double> totalExplainedIntensity) {
-    this.totalExplainedIntensity = totalExplainedIntensity;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_TOTAL_EXPLAINED_INTENSITY)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setTotalExplainedIntensity(Double totalExplainedIntensity) {
-    this.totalExplainedIntensity = JsonNullable.<Double>of(totalExplainedIntensity);
+    this.totalExplainedIntensity = totalExplainedIntensity;
   }
 
 
   public FormulaCandidate medianMassDeviation(Deviation medianMassDeviation) {
-    this.medianMassDeviation = JsonNullable.<Deviation>of(medianMassDeviation);
+    this.medianMassDeviation = medianMassDeviation;
     return this;
   }
 
@@ -429,31 +369,23 @@ public class FormulaCandidate {
    * @return medianMassDeviation
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Deviation getMedianMassDeviation() {
-        return medianMassDeviation.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_MEDIAN_MASS_DEVIATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Deviation> getMedianMassDeviation_JsonNullable() {
+  public Deviation getMedianMassDeviation() {
     return medianMassDeviation;
   }
-  
-  @JsonProperty(JSON_PROPERTY_MEDIAN_MASS_DEVIATION)
-  public void setMedianMassDeviation_JsonNullable(JsonNullable<Deviation> medianMassDeviation) {
-    this.medianMassDeviation = medianMassDeviation;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_MEDIAN_MASS_DEVIATION)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMedianMassDeviation(Deviation medianMassDeviation) {
-    this.medianMassDeviation = JsonNullable.<Deviation>of(medianMassDeviation);
+    this.medianMassDeviation = medianMassDeviation;
   }
 
 
   public FormulaCandidate fragmentationTree(FragmentationTree fragmentationTree) {
-    this.fragmentationTree = JsonNullable.<FragmentationTree>of(fragmentationTree);
+    this.fragmentationTree = fragmentationTree;
     return this;
   }
 
@@ -462,31 +394,23 @@ public class FormulaCandidate {
    * @return fragmentationTree
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public FragmentationTree getFragmentationTree() {
-        return fragmentationTree.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_FRAGMENTATION_TREE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<FragmentationTree> getFragmentationTree_JsonNullable() {
+  public FragmentationTree getFragmentationTree() {
     return fragmentationTree;
   }
-  
-  @JsonProperty(JSON_PROPERTY_FRAGMENTATION_TREE)
-  public void setFragmentationTree_JsonNullable(JsonNullable<FragmentationTree> fragmentationTree) {
-    this.fragmentationTree = fragmentationTree;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_FRAGMENTATION_TREE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setFragmentationTree(FragmentationTree fragmentationTree) {
-    this.fragmentationTree = JsonNullable.<FragmentationTree>of(fragmentationTree);
+    this.fragmentationTree = fragmentationTree;
   }
 
 
   public FormulaCandidate simulatedIsotopePattern(AnnotatedSpectrum simulatedIsotopePattern) {
-    this.simulatedIsotopePattern = JsonNullable.<AnnotatedSpectrum>of(simulatedIsotopePattern);
+    this.simulatedIsotopePattern = simulatedIsotopePattern;
     return this;
   }
 
@@ -495,43 +419,31 @@ public class FormulaCandidate {
    * @return simulatedIsotopePattern
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public AnnotatedSpectrum getSimulatedIsotopePattern() {
-        return simulatedIsotopePattern.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_SIMULATED_ISOTOPE_PATTERN)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<AnnotatedSpectrum> getSimulatedIsotopePattern_JsonNullable() {
+  public AnnotatedSpectrum getSimulatedIsotopePattern() {
     return simulatedIsotopePattern;
   }
-  
-  @JsonProperty(JSON_PROPERTY_SIMULATED_ISOTOPE_PATTERN)
-  public void setSimulatedIsotopePattern_JsonNullable(JsonNullable<AnnotatedSpectrum> simulatedIsotopePattern) {
-    this.simulatedIsotopePattern = simulatedIsotopePattern;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_SIMULATED_ISOTOPE_PATTERN)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSimulatedIsotopePattern(AnnotatedSpectrum simulatedIsotopePattern) {
-    this.simulatedIsotopePattern = JsonNullable.<AnnotatedSpectrum>of(simulatedIsotopePattern);
+    this.simulatedIsotopePattern = simulatedIsotopePattern;
   }
 
 
   public FormulaCandidate predictedFingerprint(List<Double> predictedFingerprint) {
-    this.predictedFingerprint = JsonNullable.<List<Double>>of(predictedFingerprint);
+    this.predictedFingerprint = predictedFingerprint;
     return this;
   }
 
   public FormulaCandidate addPredictedFingerprintItem(Double predictedFingerprintItem) {
-    if (this.predictedFingerprint == null || !this.predictedFingerprint.isPresent()) {
-      this.predictedFingerprint = JsonNullable.<List<Double>>of(new ArrayList<>());
+    if (this.predictedFingerprint == null) {
+      this.predictedFingerprint = new ArrayList<>();
     }
-    try {
-      this.predictedFingerprint.get().add(predictedFingerprintItem);
-    } catch (java.util.NoSuchElementException e) {
-      // this can never happen, as we make sure above that the value is present
-    }
+    this.predictedFingerprint.add(predictedFingerprintItem);
     return this;
   }
 
@@ -540,31 +452,23 @@ public class FormulaCandidate {
    * @return predictedFingerprint
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public List<Double> getPredictedFingerprint() {
-        return predictedFingerprint.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_PREDICTED_FINGERPRINT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<List<Double>> getPredictedFingerprint_JsonNullable() {
+  public List<Double> getPredictedFingerprint() {
     return predictedFingerprint;
   }
-  
-  @JsonProperty(JSON_PROPERTY_PREDICTED_FINGERPRINT)
-  public void setPredictedFingerprint_JsonNullable(JsonNullable<List<Double>> predictedFingerprint) {
-    this.predictedFingerprint = predictedFingerprint;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_PREDICTED_FINGERPRINT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setPredictedFingerprint(List<Double> predictedFingerprint) {
-    this.predictedFingerprint = JsonNullable.<List<Double>>of(predictedFingerprint);
+    this.predictedFingerprint = predictedFingerprint;
   }
 
 
   public FormulaCandidate compoundClasses(CompoundClasses compoundClasses) {
-    this.compoundClasses = JsonNullable.<CompoundClasses>of(compoundClasses);
+    this.compoundClasses = compoundClasses;
     return this;
   }
 
@@ -573,31 +477,23 @@ public class FormulaCandidate {
    * @return compoundClasses
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public CompoundClasses getCompoundClasses() {
-        return compoundClasses.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_COMPOUND_CLASSES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<CompoundClasses> getCompoundClasses_JsonNullable() {
+  public CompoundClasses getCompoundClasses() {
     return compoundClasses;
   }
-  
-  @JsonProperty(JSON_PROPERTY_COMPOUND_CLASSES)
-  public void setCompoundClasses_JsonNullable(JsonNullable<CompoundClasses> compoundClasses) {
-    this.compoundClasses = compoundClasses;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_COMPOUND_CLASSES)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setCompoundClasses(CompoundClasses compoundClasses) {
-    this.compoundClasses = JsonNullable.<CompoundClasses>of(compoundClasses);
+    this.compoundClasses = compoundClasses;
   }
 
 
   public FormulaCandidate canopusPrediction(CanopusPrediction canopusPrediction) {
-    this.canopusPrediction = JsonNullable.<CanopusPrediction>of(canopusPrediction);
+    this.canopusPrediction = canopusPrediction;
     return this;
   }
 
@@ -606,26 +502,18 @@ public class FormulaCandidate {
    * @return canopusPrediction
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public CanopusPrediction getCanopusPrediction() {
-        return canopusPrediction.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_CANOPUS_PREDICTION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<CanopusPrediction> getCanopusPrediction_JsonNullable() {
+  public CanopusPrediction getCanopusPrediction() {
     return canopusPrediction;
   }
-  
-  @JsonProperty(JSON_PROPERTY_CANOPUS_PREDICTION)
-  public void setCanopusPrediction_JsonNullable(JsonNullable<CanopusPrediction> canopusPrediction) {
-    this.canopusPrediction = canopusPrediction;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_CANOPUS_PREDICTION)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setCanopusPrediction(CanopusPrediction canopusPrediction) {
-    this.canopusPrediction = JsonNullable.<CanopusPrediction>of(canopusPrediction);
+    this.canopusPrediction = canopusPrediction;
   }
 
 
@@ -644,35 +532,24 @@ public class FormulaCandidate {
     return Objects.equals(this.formulaId, formulaCandidate.formulaId) &&
         Objects.equals(this.molecularFormula, formulaCandidate.molecularFormula) &&
         Objects.equals(this.adduct, formulaCandidate.adduct) &&
-        equalsNullable(this.siriusScore, formulaCandidate.siriusScore) &&
-        equalsNullable(this.isotopeScore, formulaCandidate.isotopeScore) &&
-        equalsNullable(this.treeScore, formulaCandidate.treeScore) &&
-        equalsNullable(this.zodiacScore, formulaCandidate.zodiacScore) &&
-        equalsNullable(this.numOfExplainedPeaks, formulaCandidate.numOfExplainedPeaks) &&
-        equalsNullable(this.numOfExplainablePeaks, formulaCandidate.numOfExplainablePeaks) &&
-        equalsNullable(this.totalExplainedIntensity, formulaCandidate.totalExplainedIntensity) &&
-        equalsNullable(this.medianMassDeviation, formulaCandidate.medianMassDeviation) &&
-        equalsNullable(this.fragmentationTree, formulaCandidate.fragmentationTree) &&
-        equalsNullable(this.simulatedIsotopePattern, formulaCandidate.simulatedIsotopePattern) &&
-        equalsNullable(this.predictedFingerprint, formulaCandidate.predictedFingerprint) &&
-        equalsNullable(this.compoundClasses, formulaCandidate.compoundClasses) &&
-        equalsNullable(this.canopusPrediction, formulaCandidate.canopusPrediction);
-  }
-
-  private static <T> boolean equalsNullable(JsonNullable<T> a, JsonNullable<T> b) {
-    return a == b || (a != null && b != null && a.isPresent() && b.isPresent() && Objects.deepEquals(a.get(), b.get()));
+        Objects.equals(this.siriusScore, formulaCandidate.siriusScore) &&
+        Objects.equals(this.isotopeScore, formulaCandidate.isotopeScore) &&
+        Objects.equals(this.treeScore, formulaCandidate.treeScore) &&
+        Objects.equals(this.zodiacScore, formulaCandidate.zodiacScore) &&
+        Objects.equals(this.numOfExplainedPeaks, formulaCandidate.numOfExplainedPeaks) &&
+        Objects.equals(this.numOfExplainablePeaks, formulaCandidate.numOfExplainablePeaks) &&
+        Objects.equals(this.totalExplainedIntensity, formulaCandidate.totalExplainedIntensity) &&
+        Objects.equals(this.medianMassDeviation, formulaCandidate.medianMassDeviation) &&
+        Objects.equals(this.fragmentationTree, formulaCandidate.fragmentationTree) &&
+        Objects.equals(this.simulatedIsotopePattern, formulaCandidate.simulatedIsotopePattern) &&
+        Objects.equals(this.predictedFingerprint, formulaCandidate.predictedFingerprint) &&
+        Objects.equals(this.compoundClasses, formulaCandidate.compoundClasses) &&
+        Objects.equals(this.canopusPrediction, formulaCandidate.canopusPrediction);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(formulaId, molecularFormula, adduct, hashCodeNullable(siriusScore), hashCodeNullable(isotopeScore), hashCodeNullable(treeScore), hashCodeNullable(zodiacScore), hashCodeNullable(numOfExplainedPeaks), hashCodeNullable(numOfExplainablePeaks), hashCodeNullable(totalExplainedIntensity), hashCodeNullable(medianMassDeviation), hashCodeNullable(fragmentationTree), hashCodeNullable(simulatedIsotopePattern), hashCodeNullable(predictedFingerprint), hashCodeNullable(compoundClasses), hashCodeNullable(canopusPrediction));
-  }
-
-  private static <T> int hashCodeNullable(JsonNullable<T> a) {
-    if (a == null) {
-      return 1;
-    }
-    return a.isPresent() ? Arrays.deepHashCode(new Object[]{a.get()}) : 31;
+    return Objects.hash(formulaId, molecularFormula, adduct, siriusScore, isotopeScore, treeScore, zodiacScore, numOfExplainedPeaks, numOfExplainablePeaks, totalExplainedIntensity, medianMassDeviation, fragmentationTree, simulatedIsotopePattern, predictedFingerprint, compoundClasses, canopusPrediction);
   }
 
   @Override

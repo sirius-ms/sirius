@@ -28,10 +28,6 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.CompoundClass;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.openapitools.jackson.nullable.JsonNullable;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.openapitools.jackson.nullable.JsonNullable;
-import java.util.NoSuchElementException;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
@@ -45,28 +41,24 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class CanopusPrediction {
   public static final String JSON_PROPERTY_CLASSY_FIRE_CLASSES = "classyFireClasses";
-  private JsonNullable<List<CompoundClass>> classyFireClasses = JsonNullable.<List<CompoundClass>>undefined();
+  private List<CompoundClass> classyFireClasses;
 
   public static final String JSON_PROPERTY_NPC_CLASSES = "npcClasses";
-  private JsonNullable<List<CompoundClass>> npcClasses = JsonNullable.<List<CompoundClass>>undefined();
+  private List<CompoundClass> npcClasses;
 
   public CanopusPrediction() { 
   }
 
   public CanopusPrediction classyFireClasses(List<CompoundClass> classyFireClasses) {
-    this.classyFireClasses = JsonNullable.<List<CompoundClass>>of(classyFireClasses);
+    this.classyFireClasses = classyFireClasses;
     return this;
   }
 
   public CanopusPrediction addClassyFireClassesItem(CompoundClass classyFireClassesItem) {
-    if (this.classyFireClasses == null || !this.classyFireClasses.isPresent()) {
-      this.classyFireClasses = JsonNullable.<List<CompoundClass>>of(new ArrayList<>());
+    if (this.classyFireClasses == null) {
+      this.classyFireClasses = new ArrayList<>();
     }
-    try {
-      this.classyFireClasses.get().add(classyFireClassesItem);
-    } catch (java.util.NoSuchElementException e) {
-      // this can never happen, as we make sure above that the value is present
-    }
+    this.classyFireClasses.add(classyFireClassesItem);
     return this;
   }
 
@@ -75,43 +67,31 @@ public class CanopusPrediction {
    * @return classyFireClasses
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public List<CompoundClass> getClassyFireClasses() {
-        return classyFireClasses.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_CLASSY_FIRE_CLASSES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<List<CompoundClass>> getClassyFireClasses_JsonNullable() {
+  public List<CompoundClass> getClassyFireClasses() {
     return classyFireClasses;
   }
-  
-  @JsonProperty(JSON_PROPERTY_CLASSY_FIRE_CLASSES)
-  public void setClassyFireClasses_JsonNullable(JsonNullable<List<CompoundClass>> classyFireClasses) {
-    this.classyFireClasses = classyFireClasses;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_CLASSY_FIRE_CLASSES)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setClassyFireClasses(List<CompoundClass> classyFireClasses) {
-    this.classyFireClasses = JsonNullable.<List<CompoundClass>>of(classyFireClasses);
+    this.classyFireClasses = classyFireClasses;
   }
 
 
   public CanopusPrediction npcClasses(List<CompoundClass> npcClasses) {
-    this.npcClasses = JsonNullable.<List<CompoundClass>>of(npcClasses);
+    this.npcClasses = npcClasses;
     return this;
   }
 
   public CanopusPrediction addNpcClassesItem(CompoundClass npcClassesItem) {
-    if (this.npcClasses == null || !this.npcClasses.isPresent()) {
-      this.npcClasses = JsonNullable.<List<CompoundClass>>of(new ArrayList<>());
+    if (this.npcClasses == null) {
+      this.npcClasses = new ArrayList<>();
     }
-    try {
-      this.npcClasses.get().add(npcClassesItem);
-    } catch (java.util.NoSuchElementException e) {
-      // this can never happen, as we make sure above that the value is present
-    }
+    this.npcClasses.add(npcClassesItem);
     return this;
   }
 
@@ -120,26 +100,18 @@ public class CanopusPrediction {
    * @return npcClasses
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public List<CompoundClass> getNpcClasses() {
-        return npcClasses.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_NPC_CLASSES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<List<CompoundClass>> getNpcClasses_JsonNullable() {
+  public List<CompoundClass> getNpcClasses() {
     return npcClasses;
   }
-  
-  @JsonProperty(JSON_PROPERTY_NPC_CLASSES)
-  public void setNpcClasses_JsonNullable(JsonNullable<List<CompoundClass>> npcClasses) {
-    this.npcClasses = npcClasses;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_NPC_CLASSES)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setNpcClasses(List<CompoundClass> npcClasses) {
-    this.npcClasses = JsonNullable.<List<CompoundClass>>of(npcClasses);
+    this.npcClasses = npcClasses;
   }
 
 
@@ -155,24 +127,13 @@ public class CanopusPrediction {
       return false;
     }
     CanopusPrediction canopusPrediction = (CanopusPrediction) o;
-    return equalsNullable(this.classyFireClasses, canopusPrediction.classyFireClasses) &&
-        equalsNullable(this.npcClasses, canopusPrediction.npcClasses);
-  }
-
-  private static <T> boolean equalsNullable(JsonNullable<T> a, JsonNullable<T> b) {
-    return a == b || (a != null && b != null && a.isPresent() && b.isPresent() && Objects.deepEquals(a.get(), b.get()));
+    return Objects.equals(this.classyFireClasses, canopusPrediction.classyFireClasses) &&
+        Objects.equals(this.npcClasses, canopusPrediction.npcClasses);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(hashCodeNullable(classyFireClasses), hashCodeNullable(npcClasses));
-  }
-
-  private static <T> int hashCodeNullable(JsonNullable<T> a) {
-    if (a == null) {
-      return 1;
-    }
-    return a.isPresent() ? Arrays.deepHashCode(new Object[]{a.get()}) : 31;
+    return Objects.hash(classyFireClasses, npcClasses);
   }
 
   @Override

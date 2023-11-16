@@ -34,10 +34,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.openapitools.jackson.nullable.JsonNullable;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.openapitools.jackson.nullable.JsonNullable;
-import java.util.NoSuchElementException;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
@@ -61,10 +57,10 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class JobSubmission {
   public static final String JSON_PROPERTY_COMPOUND_IDS = "compoundIds";
-  private JsonNullable<List<String>> compoundIds = JsonNullable.<List<String>>undefined();
+  private List<String> compoundIds;
 
   public static final String JSON_PROPERTY_ALIGNED_FEATURE_IDS = "alignedFeatureIds";
-  private JsonNullable<List<String>> alignedFeatureIds = JsonNullable.<List<String>>undefined();
+  private List<String> alignedFeatureIds;
 
   public static final String JSON_PROPERTY_FALLBACK_ADDUCTS = "fallbackAdducts";
   private List<String> fallbackAdducts;
@@ -100,19 +96,15 @@ public class JobSubmission {
   }
 
   public JobSubmission compoundIds(List<String> compoundIds) {
-    this.compoundIds = JsonNullable.<List<String>>of(compoundIds);
+    this.compoundIds = compoundIds;
     return this;
   }
 
   public JobSubmission addCompoundIdsItem(String compoundIdsItem) {
-    if (this.compoundIds == null || !this.compoundIds.isPresent()) {
-      this.compoundIds = JsonNullable.<List<String>>of(new ArrayList<>());
+    if (this.compoundIds == null) {
+      this.compoundIds = new ArrayList<>();
     }
-    try {
-      this.compoundIds.get().add(compoundIdsItem);
-    } catch (java.util.NoSuchElementException e) {
-      // this can never happen, as we make sure above that the value is present
-    }
+    this.compoundIds.add(compoundIdsItem);
     return this;
   }
 
@@ -121,43 +113,31 @@ public class JobSubmission {
    * @return compoundIds
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public List<String> getCompoundIds() {
-        return compoundIds.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_COMPOUND_IDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<List<String>> getCompoundIds_JsonNullable() {
+  public List<String> getCompoundIds() {
     return compoundIds;
   }
-  
-  @JsonProperty(JSON_PROPERTY_COMPOUND_IDS)
-  public void setCompoundIds_JsonNullable(JsonNullable<List<String>> compoundIds) {
-    this.compoundIds = compoundIds;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_COMPOUND_IDS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setCompoundIds(List<String> compoundIds) {
-    this.compoundIds = JsonNullable.<List<String>>of(compoundIds);
+    this.compoundIds = compoundIds;
   }
 
 
   public JobSubmission alignedFeatureIds(List<String> alignedFeatureIds) {
-    this.alignedFeatureIds = JsonNullable.<List<String>>of(alignedFeatureIds);
+    this.alignedFeatureIds = alignedFeatureIds;
     return this;
   }
 
   public JobSubmission addAlignedFeatureIdsItem(String alignedFeatureIdsItem) {
-    if (this.alignedFeatureIds == null || !this.alignedFeatureIds.isPresent()) {
-      this.alignedFeatureIds = JsonNullable.<List<String>>of(new ArrayList<>());
+    if (this.alignedFeatureIds == null) {
+      this.alignedFeatureIds = new ArrayList<>();
     }
-    try {
-      this.alignedFeatureIds.get().add(alignedFeatureIdsItem);
-    } catch (java.util.NoSuchElementException e) {
-      // this can never happen, as we make sure above that the value is present
-    }
+    this.alignedFeatureIds.add(alignedFeatureIdsItem);
     return this;
   }
 
@@ -166,26 +146,18 @@ public class JobSubmission {
    * @return alignedFeatureIds
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public List<String> getAlignedFeatureIds() {
-        return alignedFeatureIds.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_ALIGNED_FEATURE_IDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<List<String>> getAlignedFeatureIds_JsonNullable() {
+  public List<String> getAlignedFeatureIds() {
     return alignedFeatureIds;
   }
-  
-  @JsonProperty(JSON_PROPERTY_ALIGNED_FEATURE_IDS)
-  public void setAlignedFeatureIds_JsonNullable(JsonNullable<List<String>> alignedFeatureIds) {
-    this.alignedFeatureIds = alignedFeatureIds;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_ALIGNED_FEATURE_IDS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setAlignedFeatureIds(List<String> alignedFeatureIds) {
-    this.alignedFeatureIds = JsonNullable.<List<String>>of(alignedFeatureIds);
+    this.alignedFeatureIds = alignedFeatureIds;
   }
 
 
@@ -301,7 +273,7 @@ public class JobSubmission {
   @JsonProperty(JSON_PROPERTY_RECOMPUTE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Boolean getRecompute() {
+  public Boolean isRecompute() {
     return recompute;
   }
 
@@ -483,8 +455,8 @@ public class JobSubmission {
       return false;
     }
     JobSubmission jobSubmission = (JobSubmission) o;
-    return equalsNullable(this.compoundIds, jobSubmission.compoundIds) &&
-        equalsNullable(this.alignedFeatureIds, jobSubmission.alignedFeatureIds) &&
+    return Objects.equals(this.compoundIds, jobSubmission.compoundIds) &&
+        Objects.equals(this.alignedFeatureIds, jobSubmission.alignedFeatureIds) &&
         Objects.equals(this.fallbackAdducts, jobSubmission.fallbackAdducts) &&
         Objects.equals(this.enforcedAdducts, jobSubmission.enforcedAdducts) &&
         Objects.equals(this.detectableAdducts, jobSubmission.detectableAdducts) &&
@@ -497,20 +469,9 @@ public class JobSubmission {
         Objects.equals(this.configMap, jobSubmission.configMap);
   }
 
-  private static <T> boolean equalsNullable(JsonNullable<T> a, JsonNullable<T> b) {
-    return a == b || (a != null && b != null && a.isPresent() && b.isPresent() && Objects.deepEquals(a.get(), b.get()));
-  }
-
   @Override
   public int hashCode() {
-    return Objects.hash(hashCodeNullable(compoundIds), hashCodeNullable(alignedFeatureIds), fallbackAdducts, enforcedAdducts, detectableAdducts, recompute, formulaIdParams, zodiacParams, fingerprintPredictionParams, structureDbSearchParams, canopusParams, configMap);
-  }
-
-  private static <T> int hashCodeNullable(JsonNullable<T> a) {
-    if (a == null) {
-      return 1;
-    }
-    return a.isPresent() ? Arrays.deepHashCode(new Object[]{a.get()}) : 31;
+    return Objects.hash(compoundIds, alignedFeatureIds, fallbackAdducts, enforcedAdducts, detectableAdducts, recompute, formulaIdParams, zodiacParams, fingerprintPredictionParams, structureDbSearchParams, canopusParams, configMap);
   }
 
   @Override
@@ -622,8 +583,8 @@ public class JobSubmission {
     }
 
     // add `recompute` to the URL query string
-    if (getRecompute() != null) {
-      joiner.add(String.format("%srecompute%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getRecompute()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
+    if (isRecompute() != null) {
+      joiner.add(String.format("%srecompute%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isRecompute()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
     }
 
     // add `formulaIdParams` to the URL query string

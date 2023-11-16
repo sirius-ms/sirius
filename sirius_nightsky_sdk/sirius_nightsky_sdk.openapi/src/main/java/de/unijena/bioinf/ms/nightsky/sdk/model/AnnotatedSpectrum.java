@@ -28,10 +28,6 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.AnnotatedPeak;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.openapitools.jackson.nullable.JsonNullable;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.openapitools.jackson.nullable.JsonNullable;
-import java.util.NoSuchElementException;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
@@ -47,10 +43,10 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class AnnotatedSpectrum {
   public static final String JSON_PROPERTY_MS_LEVEL = "msLevel";
-  private JsonNullable<Integer> msLevel = JsonNullable.<Integer>undefined();
+  private Integer msLevel;
 
   public static final String JSON_PROPERTY_COLLISION_ENERGY = "collisionEnergy";
-  private JsonNullable<String> collisionEnergy = JsonNullable.<String>undefined();
+  private String collisionEnergy;
 
   public static final String JSON_PROPERTY_PEAKS = "peaks";
   private List<AnnotatedPeak> peaks;
@@ -62,7 +58,7 @@ public class AnnotatedSpectrum {
   }
 
   public AnnotatedSpectrum msLevel(Integer msLevel) {
-    this.msLevel = JsonNullable.<Integer>of(msLevel);
+    this.msLevel = msLevel;
     return this;
   }
 
@@ -71,31 +67,23 @@ public class AnnotatedSpectrum {
    * @return msLevel
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Integer getMsLevel() {
-        return msLevel.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_MS_LEVEL)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Integer> getMsLevel_JsonNullable() {
+  public Integer getMsLevel() {
     return msLevel;
   }
-  
-  @JsonProperty(JSON_PROPERTY_MS_LEVEL)
-  public void setMsLevel_JsonNullable(JsonNullable<Integer> msLevel) {
-    this.msLevel = msLevel;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_MS_LEVEL)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMsLevel(Integer msLevel) {
-    this.msLevel = JsonNullable.<Integer>of(msLevel);
+    this.msLevel = msLevel;
   }
 
 
   public AnnotatedSpectrum collisionEnergy(String collisionEnergy) {
-    this.collisionEnergy = JsonNullable.<String>of(collisionEnergy);
+    this.collisionEnergy = collisionEnergy;
     return this;
   }
 
@@ -104,26 +92,18 @@ public class AnnotatedSpectrum {
    * @return collisionEnergy
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public String getCollisionEnergy() {
-        return collisionEnergy.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_COLLISION_ENERGY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<String> getCollisionEnergy_JsonNullable() {
+  public String getCollisionEnergy() {
     return collisionEnergy;
   }
-  
-  @JsonProperty(JSON_PROPERTY_COLLISION_ENERGY)
-  public void setCollisionEnergy_JsonNullable(JsonNullable<String> collisionEnergy) {
-    this.collisionEnergy = collisionEnergy;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_COLLISION_ENERGY)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setCollisionEnergy(String collisionEnergy) {
-    this.collisionEnergy = JsonNullable.<String>of(collisionEnergy);
+    this.collisionEnergy = collisionEnergy;
   }
 
 
@@ -173,7 +153,7 @@ public class AnnotatedSpectrum {
   @JsonProperty(JSON_PROPERTY_EMPTY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Boolean getEmpty() {
+  public Boolean isEmpty() {
     return empty;
   }
 
@@ -197,26 +177,15 @@ public class AnnotatedSpectrum {
       return false;
     }
     AnnotatedSpectrum annotatedSpectrum = (AnnotatedSpectrum) o;
-    return equalsNullable(this.msLevel, annotatedSpectrum.msLevel) &&
-        equalsNullable(this.collisionEnergy, annotatedSpectrum.collisionEnergy) &&
+    return Objects.equals(this.msLevel, annotatedSpectrum.msLevel) &&
+        Objects.equals(this.collisionEnergy, annotatedSpectrum.collisionEnergy) &&
         Objects.equals(this.peaks, annotatedSpectrum.peaks) &&
         Objects.equals(this.empty, annotatedSpectrum.empty);
   }
 
-  private static <T> boolean equalsNullable(JsonNullable<T> a, JsonNullable<T> b) {
-    return a == b || (a != null && b != null && a.isPresent() && b.isPresent() && Objects.deepEquals(a.get(), b.get()));
-  }
-
   @Override
   public int hashCode() {
-    return Objects.hash(hashCodeNullable(msLevel), hashCodeNullable(collisionEnergy), peaks, empty);
-  }
-
-  private static <T> int hashCodeNullable(JsonNullable<T> a) {
-    if (a == null) {
-      return 1;
-    }
-    return a.isPresent() ? Arrays.deepHashCode(new Object[]{a.get()}) : 31;
+    return Objects.hash(msLevel, collisionEnergy, peaks, empty);
   }
 
   @Override
@@ -295,8 +264,8 @@ public class AnnotatedSpectrum {
     }
 
     // add `empty` to the URL query string
-    if (getEmpty() != null) {
-      joiner.add(String.format("%sempty%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getEmpty()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
+    if (isEmpty() != null) {
+      joiner.add(String.format("%sempty%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isEmpty()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
     }
 
     return joiner.toString();

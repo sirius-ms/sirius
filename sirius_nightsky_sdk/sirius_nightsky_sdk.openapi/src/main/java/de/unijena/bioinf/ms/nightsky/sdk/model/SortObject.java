@@ -32,23 +32,48 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * 
  */
 @JsonPropertyOrder({
+  SortObject.JSON_PROPERTY_EMPTY,
   SortObject.JSON_PROPERTY_SORTED,
-  SortObject.JSON_PROPERTY_UNSORTED,
-  SortObject.JSON_PROPERTY_EMPTY
+  SortObject.JSON_PROPERTY_UNSORTED
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class SortObject {
+  public static final String JSON_PROPERTY_EMPTY = "empty";
+  private Boolean empty;
+
   public static final String JSON_PROPERTY_SORTED = "sorted";
   private Boolean sorted;
 
   public static final String JSON_PROPERTY_UNSORTED = "unsorted";
   private Boolean unsorted;
 
-  public static final String JSON_PROPERTY_EMPTY = "empty";
-  private Boolean empty;
-
   public SortObject() { 
   }
+
+  public SortObject empty(Boolean empty) {
+    this.empty = empty;
+    return this;
+  }
+
+   /**
+   * Get empty
+   * @return empty
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_EMPTY)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Boolean isEmpty() {
+    return empty;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_EMPTY)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setEmpty(Boolean empty) {
+    this.empty = empty;
+  }
+
 
   public SortObject sorted(Boolean sorted) {
     this.sorted = sorted;
@@ -63,7 +88,7 @@ public class SortObject {
   @JsonProperty(JSON_PROPERTY_SORTED)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Boolean getSorted() {
+  public Boolean isSorted() {
     return sorted;
   }
 
@@ -88,7 +113,7 @@ public class SortObject {
   @JsonProperty(JSON_PROPERTY_UNSORTED)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Boolean getUnsorted() {
+  public Boolean isUnsorted() {
     return unsorted;
   }
 
@@ -97,31 +122,6 @@ public class SortObject {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setUnsorted(Boolean unsorted) {
     this.unsorted = unsorted;
-  }
-
-
-  public SortObject empty(Boolean empty) {
-    this.empty = empty;
-    return this;
-  }
-
-   /**
-   * Get empty
-   * @return empty
-  **/
-  @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_EMPTY)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Boolean getEmpty() {
-    return empty;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_EMPTY)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setEmpty(Boolean empty) {
-    this.empty = empty;
   }
 
 
@@ -137,23 +137,23 @@ public class SortObject {
       return false;
     }
     SortObject sortObject = (SortObject) o;
-    return Objects.equals(this.sorted, sortObject.sorted) &&
-        Objects.equals(this.unsorted, sortObject.unsorted) &&
-        Objects.equals(this.empty, sortObject.empty);
+    return Objects.equals(this.empty, sortObject.empty) &&
+        Objects.equals(this.sorted, sortObject.sorted) &&
+        Objects.equals(this.unsorted, sortObject.unsorted);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sorted, unsorted, empty);
+    return Objects.hash(empty, sorted, unsorted);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class SortObject {\n");
+    sb.append("    empty: ").append(toIndentedString(empty)).append("\n");
     sb.append("    sorted: ").append(toIndentedString(sorted)).append("\n");
     sb.append("    unsorted: ").append(toIndentedString(unsorted)).append("\n");
-    sb.append("    empty: ").append(toIndentedString(empty)).append("\n");
     sb.append("}");
     return sb.toString();
   }
@@ -201,19 +201,19 @@ public class SortObject {
 
     StringJoiner joiner = new StringJoiner("&");
 
+    // add `empty` to the URL query string
+    if (isEmpty() != null) {
+      joiner.add(String.format("%sempty%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isEmpty()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
+    }
+
     // add `sorted` to the URL query string
-    if (getSorted() != null) {
-      joiner.add(String.format("%ssorted%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getSorted()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
+    if (isSorted() != null) {
+      joiner.add(String.format("%ssorted%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isSorted()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
     }
 
     // add `unsorted` to the URL query string
-    if (getUnsorted() != null) {
-      joiner.add(String.format("%sunsorted%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getUnsorted()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `empty` to the URL query string
-    if (getEmpty() != null) {
-      joiner.add(String.format("%sempty%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getEmpty()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
+    if (isUnsorted() != null) {
+      joiner.add(String.format("%sunsorted%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isUnsorted()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
     }
 
     return joiner.toString();

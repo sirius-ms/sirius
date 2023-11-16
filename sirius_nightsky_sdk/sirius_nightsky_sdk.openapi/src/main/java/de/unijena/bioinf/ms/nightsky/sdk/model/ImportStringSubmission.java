@@ -26,10 +26,6 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import de.unijena.bioinf.ms.nightsky.sdk.model.ImportFormat;
 import java.util.Arrays;
-import org.openapitools.jackson.nullable.JsonNullable;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.openapitools.jackson.nullable.JsonNullable;
-import java.util.NoSuchElementException;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
@@ -47,16 +43,16 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class ImportStringSubmission {
   public static final String JSON_PROPERTY_ALLOW_MS1_ONLY_DATA = "allowMs1OnlyData";
-  private JsonNullable<Boolean> allowMs1OnlyData = JsonNullable.<Boolean>undefined();
+  private Boolean allowMs1OnlyData;
 
   public static final String JSON_PROPERTY_IGNORE_FORMULAS = "ignoreFormulas";
-  private JsonNullable<Boolean> ignoreFormulas = JsonNullable.<Boolean>undefined();
+  private Boolean ignoreFormulas;
 
   public static final String JSON_PROPERTY_ALIGN_L_C_M_S_RUNS = "alignLCMSRuns";
-  private JsonNullable<Boolean> alignLCMSRuns = JsonNullable.<Boolean>undefined();
+  private Boolean alignLCMSRuns;
 
   public static final String JSON_PROPERTY_SOURCE_NAME = "sourceName";
-  private JsonNullable<String> sourceName = JsonNullable.<String>undefined();
+  private String sourceName;
 
   public static final String JSON_PROPERTY_FORMAT = "format";
   private ImportFormat format;
@@ -68,7 +64,7 @@ public class ImportStringSubmission {
   }
 
   public ImportStringSubmission allowMs1OnlyData(Boolean allowMs1OnlyData) {
-    this.allowMs1OnlyData = JsonNullable.<Boolean>of(allowMs1OnlyData);
+    this.allowMs1OnlyData = allowMs1OnlyData;
     return this;
   }
 
@@ -77,31 +73,23 @@ public class ImportStringSubmission {
    * @return allowMs1OnlyData
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Boolean getAllowMs1OnlyData() {
-        return allowMs1OnlyData.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_ALLOW_MS1_ONLY_DATA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Boolean> getAllowMs1OnlyData_JsonNullable() {
+  public Boolean isAllowMs1OnlyData() {
     return allowMs1OnlyData;
   }
-  
-  @JsonProperty(JSON_PROPERTY_ALLOW_MS1_ONLY_DATA)
-  public void setAllowMs1OnlyData_JsonNullable(JsonNullable<Boolean> allowMs1OnlyData) {
-    this.allowMs1OnlyData = allowMs1OnlyData;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_ALLOW_MS1_ONLY_DATA)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setAllowMs1OnlyData(Boolean allowMs1OnlyData) {
-    this.allowMs1OnlyData = JsonNullable.<Boolean>of(allowMs1OnlyData);
+    this.allowMs1OnlyData = allowMs1OnlyData;
   }
 
 
   public ImportStringSubmission ignoreFormulas(Boolean ignoreFormulas) {
-    this.ignoreFormulas = JsonNullable.<Boolean>of(ignoreFormulas);
+    this.ignoreFormulas = ignoreFormulas;
     return this;
   }
 
@@ -110,31 +98,23 @@ public class ImportStringSubmission {
    * @return ignoreFormulas
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Boolean getIgnoreFormulas() {
-        return ignoreFormulas.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_IGNORE_FORMULAS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Boolean> getIgnoreFormulas_JsonNullable() {
+  public Boolean isIgnoreFormulas() {
     return ignoreFormulas;
   }
-  
-  @JsonProperty(JSON_PROPERTY_IGNORE_FORMULAS)
-  public void setIgnoreFormulas_JsonNullable(JsonNullable<Boolean> ignoreFormulas) {
-    this.ignoreFormulas = ignoreFormulas;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_IGNORE_FORMULAS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setIgnoreFormulas(Boolean ignoreFormulas) {
-    this.ignoreFormulas = JsonNullable.<Boolean>of(ignoreFormulas);
+    this.ignoreFormulas = ignoreFormulas;
   }
 
 
   public ImportStringSubmission alignLCMSRuns(Boolean alignLCMSRuns) {
-    this.alignLCMSRuns = JsonNullable.<Boolean>of(alignLCMSRuns);
+    this.alignLCMSRuns = alignLCMSRuns;
     return this;
   }
 
@@ -143,31 +123,23 @@ public class ImportStringSubmission {
    * @return alignLCMSRuns
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Boolean getAlignLCMSRuns() {
-        return alignLCMSRuns.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_ALIGN_L_C_M_S_RUNS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Boolean> getAlignLCMSRuns_JsonNullable() {
+  public Boolean isAlignLCMSRuns() {
     return alignLCMSRuns;
   }
-  
-  @JsonProperty(JSON_PROPERTY_ALIGN_L_C_M_S_RUNS)
-  public void setAlignLCMSRuns_JsonNullable(JsonNullable<Boolean> alignLCMSRuns) {
-    this.alignLCMSRuns = alignLCMSRuns;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_ALIGN_L_C_M_S_RUNS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setAlignLCMSRuns(Boolean alignLCMSRuns) {
-    this.alignLCMSRuns = JsonNullable.<Boolean>of(alignLCMSRuns);
+    this.alignLCMSRuns = alignLCMSRuns;
   }
 
 
   public ImportStringSubmission sourceName(String sourceName) {
-    this.sourceName = JsonNullable.<String>of(sourceName);
+    this.sourceName = sourceName;
     return this;
   }
 
@@ -176,26 +148,18 @@ public class ImportStringSubmission {
    * @return sourceName
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public String getSourceName() {
-        return sourceName.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_SOURCE_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<String> getSourceName_JsonNullable() {
+  public String getSourceName() {
     return sourceName;
   }
-  
-  @JsonProperty(JSON_PROPERTY_SOURCE_NAME)
-  public void setSourceName_JsonNullable(JsonNullable<String> sourceName) {
-    this.sourceName = sourceName;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_SOURCE_NAME)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSourceName(String sourceName) {
-    this.sourceName = JsonNullable.<String>of(sourceName);
+    this.sourceName = sourceName;
   }
 
 
@@ -261,28 +225,17 @@ public class ImportStringSubmission {
       return false;
     }
     ImportStringSubmission importStringSubmission = (ImportStringSubmission) o;
-    return equalsNullable(this.allowMs1OnlyData, importStringSubmission.allowMs1OnlyData) &&
-        equalsNullable(this.ignoreFormulas, importStringSubmission.ignoreFormulas) &&
-        equalsNullable(this.alignLCMSRuns, importStringSubmission.alignLCMSRuns) &&
-        equalsNullable(this.sourceName, importStringSubmission.sourceName) &&
+    return Objects.equals(this.allowMs1OnlyData, importStringSubmission.allowMs1OnlyData) &&
+        Objects.equals(this.ignoreFormulas, importStringSubmission.ignoreFormulas) &&
+        Objects.equals(this.alignLCMSRuns, importStringSubmission.alignLCMSRuns) &&
+        Objects.equals(this.sourceName, importStringSubmission.sourceName) &&
         Objects.equals(this.format, importStringSubmission.format) &&
         Objects.equals(this.data, importStringSubmission.data);
   }
 
-  private static <T> boolean equalsNullable(JsonNullable<T> a, JsonNullable<T> b) {
-    return a == b || (a != null && b != null && a.isPresent() && b.isPresent() && Objects.deepEquals(a.get(), b.get()));
-  }
-
   @Override
   public int hashCode() {
-    return Objects.hash(hashCodeNullable(allowMs1OnlyData), hashCodeNullable(ignoreFormulas), hashCodeNullable(alignLCMSRuns), hashCodeNullable(sourceName), format, data);
-  }
-
-  private static <T> int hashCodeNullable(JsonNullable<T> a) {
-    if (a == null) {
-      return 1;
-    }
-    return a.isPresent() ? Arrays.deepHashCode(new Object[]{a.get()}) : 31;
+    return Objects.hash(allowMs1OnlyData, ignoreFormulas, alignLCMSRuns, sourceName, format, data);
   }
 
   @Override
@@ -343,18 +296,18 @@ public class ImportStringSubmission {
     StringJoiner joiner = new StringJoiner("&");
 
     // add `allowMs1OnlyData` to the URL query string
-    if (getAllowMs1OnlyData() != null) {
-      joiner.add(String.format("%sallowMs1OnlyData%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getAllowMs1OnlyData()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
+    if (isAllowMs1OnlyData() != null) {
+      joiner.add(String.format("%sallowMs1OnlyData%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isAllowMs1OnlyData()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
     }
 
     // add `ignoreFormulas` to the URL query string
-    if (getIgnoreFormulas() != null) {
-      joiner.add(String.format("%signoreFormulas%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getIgnoreFormulas()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
+    if (isIgnoreFormulas() != null) {
+      joiner.add(String.format("%signoreFormulas%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isIgnoreFormulas()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
     }
 
     // add `alignLCMSRuns` to the URL query string
-    if (getAlignLCMSRuns() != null) {
-      joiner.add(String.format("%salignLCMSRuns%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getAlignLCMSRuns()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
+    if (isAlignLCMSRuns() != null) {
+      joiner.add(String.format("%salignLCMSRuns%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isAlignLCMSRuns()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
     }
 
     // add `sourceName` to the URL query string

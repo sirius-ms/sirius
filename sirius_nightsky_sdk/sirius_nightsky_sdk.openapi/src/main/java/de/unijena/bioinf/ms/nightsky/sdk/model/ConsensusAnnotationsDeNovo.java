@@ -29,10 +29,6 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.ConsensusCriterionDeNovo;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.openapitools.jackson.nullable.JsonNullable;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.openapitools.jackson.nullable.JsonNullable;
-import java.util.NoSuchElementException;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
@@ -48,22 +44,22 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class ConsensusAnnotationsDeNovo {
   public static final String JSON_PROPERTY_MOLECULAR_FORMULA = "molecularFormula";
-  private JsonNullable<String> molecularFormula = JsonNullable.<String>undefined();
+  private String molecularFormula;
 
   public static final String JSON_PROPERTY_COMPOUND_CLASSES = "compoundClasses";
-  private JsonNullable<CompoundClasses> compoundClasses = JsonNullable.<CompoundClasses>undefined();
+  private CompoundClasses compoundClasses;
 
   public static final String JSON_PROPERTY_SUPPORTING_FEATURE_IDS = "supportingFeatureIds";
-  private JsonNullable<List<String>> supportingFeatureIds = JsonNullable.<List<String>>undefined();
+  private List<String> supportingFeatureIds;
 
   public static final String JSON_PROPERTY_SELECTION_CRITERION = "selectionCriterion";
-  private JsonNullable<ConsensusCriterionDeNovo> selectionCriterion = JsonNullable.<ConsensusCriterionDeNovo>undefined();
+  private ConsensusCriterionDeNovo selectionCriterion;
 
   public ConsensusAnnotationsDeNovo() { 
   }
 
   public ConsensusAnnotationsDeNovo molecularFormula(String molecularFormula) {
-    this.molecularFormula = JsonNullable.<String>of(molecularFormula);
+    this.molecularFormula = molecularFormula;
     return this;
   }
 
@@ -72,31 +68,23 @@ public class ConsensusAnnotationsDeNovo {
    * @return molecularFormula
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public String getMolecularFormula() {
-        return molecularFormula.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<String> getMolecularFormula_JsonNullable() {
+  public String getMolecularFormula() {
     return molecularFormula;
   }
-  
-  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
-  public void setMolecularFormula_JsonNullable(JsonNullable<String> molecularFormula) {
-    this.molecularFormula = molecularFormula;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMolecularFormula(String molecularFormula) {
-    this.molecularFormula = JsonNullable.<String>of(molecularFormula);
+    this.molecularFormula = molecularFormula;
   }
 
 
   public ConsensusAnnotationsDeNovo compoundClasses(CompoundClasses compoundClasses) {
-    this.compoundClasses = JsonNullable.<CompoundClasses>of(compoundClasses);
+    this.compoundClasses = compoundClasses;
     return this;
   }
 
@@ -105,43 +93,31 @@ public class ConsensusAnnotationsDeNovo {
    * @return compoundClasses
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public CompoundClasses getCompoundClasses() {
-        return compoundClasses.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_COMPOUND_CLASSES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<CompoundClasses> getCompoundClasses_JsonNullable() {
+  public CompoundClasses getCompoundClasses() {
     return compoundClasses;
   }
-  
-  @JsonProperty(JSON_PROPERTY_COMPOUND_CLASSES)
-  public void setCompoundClasses_JsonNullable(JsonNullable<CompoundClasses> compoundClasses) {
-    this.compoundClasses = compoundClasses;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_COMPOUND_CLASSES)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setCompoundClasses(CompoundClasses compoundClasses) {
-    this.compoundClasses = JsonNullable.<CompoundClasses>of(compoundClasses);
+    this.compoundClasses = compoundClasses;
   }
 
 
   public ConsensusAnnotationsDeNovo supportingFeatureIds(List<String> supportingFeatureIds) {
-    this.supportingFeatureIds = JsonNullable.<List<String>>of(supportingFeatureIds);
+    this.supportingFeatureIds = supportingFeatureIds;
     return this;
   }
 
   public ConsensusAnnotationsDeNovo addSupportingFeatureIdsItem(String supportingFeatureIdsItem) {
-    if (this.supportingFeatureIds == null || !this.supportingFeatureIds.isPresent()) {
-      this.supportingFeatureIds = JsonNullable.<List<String>>of(new ArrayList<>());
+    if (this.supportingFeatureIds == null) {
+      this.supportingFeatureIds = new ArrayList<>();
     }
-    try {
-      this.supportingFeatureIds.get().add(supportingFeatureIdsItem);
-    } catch (java.util.NoSuchElementException e) {
-      // this can never happen, as we make sure above that the value is present
-    }
+    this.supportingFeatureIds.add(supportingFeatureIdsItem);
     return this;
   }
 
@@ -150,31 +126,23 @@ public class ConsensusAnnotationsDeNovo {
    * @return supportingFeatureIds
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public List<String> getSupportingFeatureIds() {
-        return supportingFeatureIds.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_SUPPORTING_FEATURE_IDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<List<String>> getSupportingFeatureIds_JsonNullable() {
+  public List<String> getSupportingFeatureIds() {
     return supportingFeatureIds;
   }
-  
-  @JsonProperty(JSON_PROPERTY_SUPPORTING_FEATURE_IDS)
-  public void setSupportingFeatureIds_JsonNullable(JsonNullable<List<String>> supportingFeatureIds) {
-    this.supportingFeatureIds = supportingFeatureIds;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_SUPPORTING_FEATURE_IDS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSupportingFeatureIds(List<String> supportingFeatureIds) {
-    this.supportingFeatureIds = JsonNullable.<List<String>>of(supportingFeatureIds);
+    this.supportingFeatureIds = supportingFeatureIds;
   }
 
 
   public ConsensusAnnotationsDeNovo selectionCriterion(ConsensusCriterionDeNovo selectionCriterion) {
-    this.selectionCriterion = JsonNullable.<ConsensusCriterionDeNovo>of(selectionCriterion);
+    this.selectionCriterion = selectionCriterion;
     return this;
   }
 
@@ -183,26 +151,18 @@ public class ConsensusAnnotationsDeNovo {
    * @return selectionCriterion
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public ConsensusCriterionDeNovo getSelectionCriterion() {
-        return selectionCriterion.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_SELECTION_CRITERION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<ConsensusCriterionDeNovo> getSelectionCriterion_JsonNullable() {
+  public ConsensusCriterionDeNovo getSelectionCriterion() {
     return selectionCriterion;
   }
-  
-  @JsonProperty(JSON_PROPERTY_SELECTION_CRITERION)
-  public void setSelectionCriterion_JsonNullable(JsonNullable<ConsensusCriterionDeNovo> selectionCriterion) {
-    this.selectionCriterion = selectionCriterion;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_SELECTION_CRITERION)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSelectionCriterion(ConsensusCriterionDeNovo selectionCriterion) {
-    this.selectionCriterion = JsonNullable.<ConsensusCriterionDeNovo>of(selectionCriterion);
+    this.selectionCriterion = selectionCriterion;
   }
 
 
@@ -218,26 +178,15 @@ public class ConsensusAnnotationsDeNovo {
       return false;
     }
     ConsensusAnnotationsDeNovo consensusAnnotationsDeNovo = (ConsensusAnnotationsDeNovo) o;
-    return equalsNullable(this.molecularFormula, consensusAnnotationsDeNovo.molecularFormula) &&
-        equalsNullable(this.compoundClasses, consensusAnnotationsDeNovo.compoundClasses) &&
-        equalsNullable(this.supportingFeatureIds, consensusAnnotationsDeNovo.supportingFeatureIds) &&
-        equalsNullable(this.selectionCriterion, consensusAnnotationsDeNovo.selectionCriterion);
-  }
-
-  private static <T> boolean equalsNullable(JsonNullable<T> a, JsonNullable<T> b) {
-    return a == b || (a != null && b != null && a.isPresent() && b.isPresent() && Objects.deepEquals(a.get(), b.get()));
+    return Objects.equals(this.molecularFormula, consensusAnnotationsDeNovo.molecularFormula) &&
+        Objects.equals(this.compoundClasses, consensusAnnotationsDeNovo.compoundClasses) &&
+        Objects.equals(this.supportingFeatureIds, consensusAnnotationsDeNovo.supportingFeatureIds) &&
+        Objects.equals(this.selectionCriterion, consensusAnnotationsDeNovo.selectionCriterion);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(hashCodeNullable(molecularFormula), hashCodeNullable(compoundClasses), hashCodeNullable(supportingFeatureIds), hashCodeNullable(selectionCriterion));
-  }
-
-  private static <T> int hashCodeNullable(JsonNullable<T> a) {
-    if (a == null) {
-      return 1;
-    }
-    return a.isPresent() ? Arrays.deepHashCode(new Object[]{a.get()}) : 31;
+    return Objects.hash(molecularFormula, compoundClasses, supportingFeatureIds, selectionCriterion);
   }
 
   @Override

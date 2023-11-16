@@ -25,10 +25,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.Arrays;
-import org.openapitools.jackson.nullable.JsonNullable;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.openapitools.jackson.nullable.JsonNullable;
-import java.util.NoSuchElementException;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
@@ -46,7 +42,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class JobProgress {
   public static final String JSON_PROPERTY_INDETERMINATE = "indeterminate";
-  private JsonNullable<Boolean> indeterminate = JsonNullable.<Boolean>undefined();
+  private Boolean indeterminate;
 
   /**
    * Current state of the Jobs in the SIRIUS internal Job scheduler           WAITING: Waiting for submission to ExecutorService (e.g. due to dependent jobs)          READY: Ready for submission but not yet enqueued for submission to ExecutorService.          QUEUED: Enqueued for submission to ExecutorService.          SUBMITTED: Submitted and waiting to be executed.          RUNNING: Job is running.          CANCELED: Jobs is finished due to cancellation by suer or dependent jobs.          FAILED: Job is finished but failed.          DONE: Job finished successfully.
@@ -99,22 +95,22 @@ public class JobProgress {
   private StateEnum state;
 
   public static final String JSON_PROPERTY_CURRENT_PROGRESS = "currentProgress";
-  private JsonNullable<Long> currentProgress = JsonNullable.<Long>undefined();
+  private Long currentProgress;
 
   public static final String JSON_PROPERTY_MAX_PROGRESS = "maxProgress";
-  private JsonNullable<Long> maxProgress = JsonNullable.<Long>undefined();
+  private Long maxProgress;
 
   public static final String JSON_PROPERTY_MESSAGE = "message";
-  private JsonNullable<String> message = JsonNullable.<String>undefined();
+  private String message;
 
   public static final String JSON_PROPERTY_ERROR_MESSAGE = "errorMessage";
-  private JsonNullable<String> errorMessage = JsonNullable.<String>undefined();
+  private String errorMessage;
 
   public JobProgress() { 
   }
 
   public JobProgress indeterminate(Boolean indeterminate) {
-    this.indeterminate = JsonNullable.<Boolean>of(indeterminate);
+    this.indeterminate = indeterminate;
     return this;
   }
 
@@ -123,26 +119,18 @@ public class JobProgress {
    * @return indeterminate
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Boolean getIndeterminate() {
-        return indeterminate.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_INDETERMINATE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Boolean> getIndeterminate_JsonNullable() {
+  public Boolean isIndeterminate() {
     return indeterminate;
   }
-  
-  @JsonProperty(JSON_PROPERTY_INDETERMINATE)
-  public void setIndeterminate_JsonNullable(JsonNullable<Boolean> indeterminate) {
-    this.indeterminate = indeterminate;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_INDETERMINATE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setIndeterminate(Boolean indeterminate) {
-    this.indeterminate = JsonNullable.<Boolean>of(indeterminate);
+    this.indeterminate = indeterminate;
   }
 
 
@@ -172,7 +160,7 @@ public class JobProgress {
 
 
   public JobProgress currentProgress(Long currentProgress) {
-    this.currentProgress = JsonNullable.<Long>of(currentProgress);
+    this.currentProgress = currentProgress;
     return this;
   }
 
@@ -181,31 +169,23 @@ public class JobProgress {
    * @return currentProgress
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Long getCurrentProgress() {
-        return currentProgress.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_CURRENT_PROGRESS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Long> getCurrentProgress_JsonNullable() {
+  public Long getCurrentProgress() {
     return currentProgress;
   }
-  
-  @JsonProperty(JSON_PROPERTY_CURRENT_PROGRESS)
-  public void setCurrentProgress_JsonNullable(JsonNullable<Long> currentProgress) {
-    this.currentProgress = currentProgress;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_CURRENT_PROGRESS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setCurrentProgress(Long currentProgress) {
-    this.currentProgress = JsonNullable.<Long>of(currentProgress);
+    this.currentProgress = currentProgress;
   }
 
 
   public JobProgress maxProgress(Long maxProgress) {
-    this.maxProgress = JsonNullable.<Long>of(maxProgress);
+    this.maxProgress = maxProgress;
     return this;
   }
 
@@ -214,31 +194,23 @@ public class JobProgress {
    * @return maxProgress
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Long getMaxProgress() {
-        return maxProgress.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_MAX_PROGRESS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Long> getMaxProgress_JsonNullable() {
+  public Long getMaxProgress() {
     return maxProgress;
   }
-  
-  @JsonProperty(JSON_PROPERTY_MAX_PROGRESS)
-  public void setMaxProgress_JsonNullable(JsonNullable<Long> maxProgress) {
-    this.maxProgress = maxProgress;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_MAX_PROGRESS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMaxProgress(Long maxProgress) {
-    this.maxProgress = JsonNullable.<Long>of(maxProgress);
+    this.maxProgress = maxProgress;
   }
 
 
   public JobProgress message(String message) {
-    this.message = JsonNullable.<String>of(message);
+    this.message = message;
     return this;
   }
 
@@ -247,31 +219,23 @@ public class JobProgress {
    * @return message
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public String getMessage() {
-        return message.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_MESSAGE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<String> getMessage_JsonNullable() {
+  public String getMessage() {
     return message;
   }
-  
-  @JsonProperty(JSON_PROPERTY_MESSAGE)
-  public void setMessage_JsonNullable(JsonNullable<String> message) {
-    this.message = message;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_MESSAGE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMessage(String message) {
-    this.message = JsonNullable.<String>of(message);
+    this.message = message;
   }
 
 
   public JobProgress errorMessage(String errorMessage) {
-    this.errorMessage = JsonNullable.<String>of(errorMessage);
+    this.errorMessage = errorMessage;
     return this;
   }
 
@@ -280,26 +244,18 @@ public class JobProgress {
    * @return errorMessage
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public String getErrorMessage() {
-        return errorMessage.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_ERROR_MESSAGE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<String> getErrorMessage_JsonNullable() {
+  public String getErrorMessage() {
     return errorMessage;
   }
-  
-  @JsonProperty(JSON_PROPERTY_ERROR_MESSAGE)
-  public void setErrorMessage_JsonNullable(JsonNullable<String> errorMessage) {
-    this.errorMessage = errorMessage;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_ERROR_MESSAGE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setErrorMessage(String errorMessage) {
-    this.errorMessage = JsonNullable.<String>of(errorMessage);
+    this.errorMessage = errorMessage;
   }
 
 
@@ -315,28 +271,17 @@ public class JobProgress {
       return false;
     }
     JobProgress jobProgress = (JobProgress) o;
-    return equalsNullable(this.indeterminate, jobProgress.indeterminate) &&
+    return Objects.equals(this.indeterminate, jobProgress.indeterminate) &&
         Objects.equals(this.state, jobProgress.state) &&
-        equalsNullable(this.currentProgress, jobProgress.currentProgress) &&
-        equalsNullable(this.maxProgress, jobProgress.maxProgress) &&
-        equalsNullable(this.message, jobProgress.message) &&
-        equalsNullable(this.errorMessage, jobProgress.errorMessage);
-  }
-
-  private static <T> boolean equalsNullable(JsonNullable<T> a, JsonNullable<T> b) {
-    return a == b || (a != null && b != null && a.isPresent() && b.isPresent() && Objects.deepEquals(a.get(), b.get()));
+        Objects.equals(this.currentProgress, jobProgress.currentProgress) &&
+        Objects.equals(this.maxProgress, jobProgress.maxProgress) &&
+        Objects.equals(this.message, jobProgress.message) &&
+        Objects.equals(this.errorMessage, jobProgress.errorMessage);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(hashCodeNullable(indeterminate), state, hashCodeNullable(currentProgress), hashCodeNullable(maxProgress), hashCodeNullable(message), hashCodeNullable(errorMessage));
-  }
-
-  private static <T> int hashCodeNullable(JsonNullable<T> a) {
-    if (a == null) {
-      return 1;
-    }
-    return a.isPresent() ? Arrays.deepHashCode(new Object[]{a.get()}) : 31;
+    return Objects.hash(indeterminate, state, currentProgress, maxProgress, message, errorMessage);
   }
 
   @Override
@@ -397,8 +342,8 @@ public class JobProgress {
     StringJoiner joiner = new StringJoiner("&");
 
     // add `indeterminate` to the URL query string
-    if (getIndeterminate() != null) {
-      joiner.add(String.format("%sindeterminate%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getIndeterminate()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
+    if (isIndeterminate() != null) {
+      joiner.add(String.format("%sindeterminate%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isIndeterminate()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
     }
 
     // add `state` to the URL query string

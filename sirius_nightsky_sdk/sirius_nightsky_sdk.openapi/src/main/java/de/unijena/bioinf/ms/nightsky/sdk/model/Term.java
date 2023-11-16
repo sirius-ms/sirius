@@ -24,51 +24,81 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import java.net.URI;
 import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
 /**
- * User/developer friendly parameter subset for the CANOPUS tool  CANOPUS is parameter free, so this Object is just a flag that canopus should be executed.
+ * 
  */
 @JsonPropertyOrder({
-  Canopus.JSON_PROPERTY_ENABLED
+  Term.JSON_PROPERTY_NAME,
+  Term.JSON_PROPERTY_LINK
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
-public class Canopus {
-  public static final String JSON_PROPERTY_ENABLED = "enabled";
-  private Boolean enabled;
+public class Term {
+  public static final String JSON_PROPERTY_NAME = "name";
+  private String name;
 
-  public Canopus() { 
+  public static final String JSON_PROPERTY_LINK = "link";
+  private URI link;
+
+  public Term() { 
   }
 
-  public Canopus enabled(Boolean enabled) {
-    this.enabled = enabled;
+  public Term name(String name) {
+    this.name = name;
     return this;
   }
 
    /**
-   * tags whether the tool is enabled
-   * @return enabled
+   * Get name
+   * @return name
   **/
   @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ENABLED)
+  @JsonProperty(JSON_PROPERTY_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Boolean isEnabled() {
-    return enabled;
+  public String getName() {
+    return name;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ENABLED)
+  @JsonProperty(JSON_PROPERTY_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setEnabled(Boolean enabled) {
-    this.enabled = enabled;
+  public void setName(String name) {
+    this.name = name;
+  }
+
+
+  public Term link(URI link) {
+    this.link = link;
+    return this;
+  }
+
+   /**
+   * Get link
+   * @return link
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_LINK)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public URI getLink() {
+    return link;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_LINK)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setLink(URI link) {
+    this.link = link;
   }
 
 
   /**
-   * Return true if this Canopus object is equal to o.
+   * Return true if this Term object is equal to o.
    */
   @Override
   public boolean equals(Object o) {
@@ -78,20 +108,22 @@ public class Canopus {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    Canopus canopus = (Canopus) o;
-    return Objects.equals(this.enabled, canopus.enabled);
+    Term term = (Term) o;
+    return Objects.equals(this.name, term.name) &&
+        Objects.equals(this.link, term.link);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(enabled);
+    return Objects.hash(name, link);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class Canopus {\n");
-    sb.append("    enabled: ").append(toIndentedString(enabled)).append("\n");
+    sb.append("class Term {\n");
+    sb.append("    name: ").append(toIndentedString(name)).append("\n");
+    sb.append("    link: ").append(toIndentedString(link)).append("\n");
     sb.append("}");
     return sb.toString();
   }
@@ -139,9 +171,14 @@ public class Canopus {
 
     StringJoiner joiner = new StringJoiner("&");
 
-    // add `enabled` to the URL query string
-    if (isEnabled() != null) {
-      joiner.add(String.format("%senabled%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isEnabled()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
+    // add `name` to the URL query string
+    if (getName() != null) {
+      joiner.add(String.format("%sname%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getName()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
+    }
+
+    // add `link` to the URL query string
+    if (getLink() != null) {
+      joiner.add(String.format("%slink%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getLink()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
     }
 
     return joiner.toString();

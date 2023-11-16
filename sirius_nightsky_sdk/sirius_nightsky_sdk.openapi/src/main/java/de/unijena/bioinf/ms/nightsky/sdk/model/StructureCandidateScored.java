@@ -29,10 +29,6 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.DBLink;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.openapitools.jackson.nullable.JsonNullable;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.openapitools.jackson.nullable.JsonNullable;
-import java.util.NoSuchElementException;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
@@ -61,31 +57,31 @@ public class StructureCandidateScored {
   private String smiles;
 
   public static final String JSON_PROPERTY_STRUCTURE_NAME = "structureName";
-  private JsonNullable<String> structureName = JsonNullable.<String>undefined();
+  private String structureName;
 
   public static final String JSON_PROPERTY_XLOG_P = "xlogP";
-  private JsonNullable<Double> xlogP = JsonNullable.<Double>undefined();
+  private Double xlogP;
 
   public static final String JSON_PROPERTY_DB_LINKS = "dbLinks";
-  private JsonNullable<List<DBLink>> dbLinks = JsonNullable.<List<DBLink>>undefined();
+  private List<DBLink> dbLinks;
 
   public static final String JSON_PROPERTY_REF_SPECTRA_LINKS = "refSpectraLinks";
-  private JsonNullable<List<DBLink>> refSpectraLinks = JsonNullable.<List<DBLink>>undefined();
+  private List<DBLink> refSpectraLinks;
 
   public static final String JSON_PROPERTY_CSI_SCORE = "csiScore";
   private Double csiScore;
 
   public static final String JSON_PROPERTY_TANIMOTO_SIMILARITY = "tanimotoSimilarity";
-  private JsonNullable<Double> tanimotoSimilarity = JsonNullable.<Double>undefined();
+  private Double tanimotoSimilarity;
 
   public static final String JSON_PROPERTY_CONFIDENCE_EXACT_MATCH = "confidenceExactMatch";
-  private JsonNullable<Double> confidenceExactMatch = JsonNullable.<Double>undefined();
+  private Double confidenceExactMatch;
 
   public static final String JSON_PROPERTY_CONFIDENCE_APPROX_MATCH = "confidenceApproxMatch";
-  private JsonNullable<Double> confidenceApproxMatch = JsonNullable.<Double>undefined();
+  private Double confidenceApproxMatch;
 
   public static final String JSON_PROPERTY_FINGERPRINT = "fingerprint";
-  private JsonNullable<BinaryFingerprint> fingerprint = JsonNullable.<BinaryFingerprint>undefined();
+  private BinaryFingerprint fingerprint;
 
   public StructureCandidateScored() { 
   }
@@ -141,7 +137,7 @@ public class StructureCandidateScored {
 
 
   public StructureCandidateScored structureName(String structureName) {
-    this.structureName = JsonNullable.<String>of(structureName);
+    this.structureName = structureName;
     return this;
   }
 
@@ -150,31 +146,23 @@ public class StructureCandidateScored {
    * @return structureName
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public String getStructureName() {
-        return structureName.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_STRUCTURE_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<String> getStructureName_JsonNullable() {
+  public String getStructureName() {
     return structureName;
   }
-  
-  @JsonProperty(JSON_PROPERTY_STRUCTURE_NAME)
-  public void setStructureName_JsonNullable(JsonNullable<String> structureName) {
-    this.structureName = structureName;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_STRUCTURE_NAME)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setStructureName(String structureName) {
-    this.structureName = JsonNullable.<String>of(structureName);
+    this.structureName = structureName;
   }
 
 
   public StructureCandidateScored xlogP(Double xlogP) {
-    this.xlogP = JsonNullable.<Double>of(xlogP);
+    this.xlogP = xlogP;
     return this;
   }
 
@@ -183,43 +171,31 @@ public class StructureCandidateScored {
    * @return xlogP
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Double getXlogP() {
-        return xlogP.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_XLOG_P)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Double> getXlogP_JsonNullable() {
+  public Double getXlogP() {
     return xlogP;
   }
-  
-  @JsonProperty(JSON_PROPERTY_XLOG_P)
-  public void setXlogP_JsonNullable(JsonNullable<Double> xlogP) {
-    this.xlogP = xlogP;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_XLOG_P)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setXlogP(Double xlogP) {
-    this.xlogP = JsonNullable.<Double>of(xlogP);
+    this.xlogP = xlogP;
   }
 
 
   public StructureCandidateScored dbLinks(List<DBLink> dbLinks) {
-    this.dbLinks = JsonNullable.<List<DBLink>>of(dbLinks);
+    this.dbLinks = dbLinks;
     return this;
   }
 
   public StructureCandidateScored addDbLinksItem(DBLink dbLinksItem) {
-    if (this.dbLinks == null || !this.dbLinks.isPresent()) {
-      this.dbLinks = JsonNullable.<List<DBLink>>of(new ArrayList<>());
+    if (this.dbLinks == null) {
+      this.dbLinks = new ArrayList<>();
     }
-    try {
-      this.dbLinks.get().add(dbLinksItem);
-    } catch (java.util.NoSuchElementException e) {
-      // this can never happen, as we make sure above that the value is present
-    }
+    this.dbLinks.add(dbLinksItem);
     return this;
   }
 
@@ -228,43 +204,31 @@ public class StructureCandidateScored {
    * @return dbLinks
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public List<DBLink> getDbLinks() {
-        return dbLinks.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_DB_LINKS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<List<DBLink>> getDbLinks_JsonNullable() {
+  public List<DBLink> getDbLinks() {
     return dbLinks;
   }
-  
-  @JsonProperty(JSON_PROPERTY_DB_LINKS)
-  public void setDbLinks_JsonNullable(JsonNullable<List<DBLink>> dbLinks) {
-    this.dbLinks = dbLinks;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_DB_LINKS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setDbLinks(List<DBLink> dbLinks) {
-    this.dbLinks = JsonNullable.<List<DBLink>>of(dbLinks);
+    this.dbLinks = dbLinks;
   }
 
 
   public StructureCandidateScored refSpectraLinks(List<DBLink> refSpectraLinks) {
-    this.refSpectraLinks = JsonNullable.<List<DBLink>>of(refSpectraLinks);
+    this.refSpectraLinks = refSpectraLinks;
     return this;
   }
 
   public StructureCandidateScored addRefSpectraLinksItem(DBLink refSpectraLinksItem) {
-    if (this.refSpectraLinks == null || !this.refSpectraLinks.isPresent()) {
-      this.refSpectraLinks = JsonNullable.<List<DBLink>>of(new ArrayList<>());
+    if (this.refSpectraLinks == null) {
+      this.refSpectraLinks = new ArrayList<>();
     }
-    try {
-      this.refSpectraLinks.get().add(refSpectraLinksItem);
-    } catch (java.util.NoSuchElementException e) {
-      // this can never happen, as we make sure above that the value is present
-    }
+    this.refSpectraLinks.add(refSpectraLinksItem);
     return this;
   }
 
@@ -273,26 +237,18 @@ public class StructureCandidateScored {
    * @return refSpectraLinks
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public List<DBLink> getRefSpectraLinks() {
-        return refSpectraLinks.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_REF_SPECTRA_LINKS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<List<DBLink>> getRefSpectraLinks_JsonNullable() {
+  public List<DBLink> getRefSpectraLinks() {
     return refSpectraLinks;
   }
-  
-  @JsonProperty(JSON_PROPERTY_REF_SPECTRA_LINKS)
-  public void setRefSpectraLinks_JsonNullable(JsonNullable<List<DBLink>> refSpectraLinks) {
-    this.refSpectraLinks = refSpectraLinks;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_REF_SPECTRA_LINKS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setRefSpectraLinks(List<DBLink> refSpectraLinks) {
-    this.refSpectraLinks = JsonNullable.<List<DBLink>>of(refSpectraLinks);
+    this.refSpectraLinks = refSpectraLinks;
   }
 
 
@@ -322,7 +278,7 @@ public class StructureCandidateScored {
 
 
   public StructureCandidateScored tanimotoSimilarity(Double tanimotoSimilarity) {
-    this.tanimotoSimilarity = JsonNullable.<Double>of(tanimotoSimilarity);
+    this.tanimotoSimilarity = tanimotoSimilarity;
     return this;
   }
 
@@ -331,31 +287,23 @@ public class StructureCandidateScored {
    * @return tanimotoSimilarity
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Double getTanimotoSimilarity() {
-        return tanimotoSimilarity.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_TANIMOTO_SIMILARITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Double> getTanimotoSimilarity_JsonNullable() {
+  public Double getTanimotoSimilarity() {
     return tanimotoSimilarity;
   }
-  
-  @JsonProperty(JSON_PROPERTY_TANIMOTO_SIMILARITY)
-  public void setTanimotoSimilarity_JsonNullable(JsonNullable<Double> tanimotoSimilarity) {
-    this.tanimotoSimilarity = tanimotoSimilarity;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_TANIMOTO_SIMILARITY)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setTanimotoSimilarity(Double tanimotoSimilarity) {
-    this.tanimotoSimilarity = JsonNullable.<Double>of(tanimotoSimilarity);
+    this.tanimotoSimilarity = tanimotoSimilarity;
   }
 
 
   public StructureCandidateScored confidenceExactMatch(Double confidenceExactMatch) {
-    this.confidenceExactMatch = JsonNullable.<Double>of(confidenceExactMatch);
+    this.confidenceExactMatch = confidenceExactMatch;
     return this;
   }
 
@@ -364,31 +312,23 @@ public class StructureCandidateScored {
    * @return confidenceExactMatch
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Double getConfidenceExactMatch() {
-        return confidenceExactMatch.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_CONFIDENCE_EXACT_MATCH)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Double> getConfidenceExactMatch_JsonNullable() {
+  public Double getConfidenceExactMatch() {
     return confidenceExactMatch;
   }
-  
-  @JsonProperty(JSON_PROPERTY_CONFIDENCE_EXACT_MATCH)
-  public void setConfidenceExactMatch_JsonNullable(JsonNullable<Double> confidenceExactMatch) {
-    this.confidenceExactMatch = confidenceExactMatch;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_CONFIDENCE_EXACT_MATCH)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setConfidenceExactMatch(Double confidenceExactMatch) {
-    this.confidenceExactMatch = JsonNullable.<Double>of(confidenceExactMatch);
+    this.confidenceExactMatch = confidenceExactMatch;
   }
 
 
   public StructureCandidateScored confidenceApproxMatch(Double confidenceApproxMatch) {
-    this.confidenceApproxMatch = JsonNullable.<Double>of(confidenceApproxMatch);
+    this.confidenceApproxMatch = confidenceApproxMatch;
     return this;
   }
 
@@ -397,31 +337,23 @@ public class StructureCandidateScored {
    * @return confidenceApproxMatch
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Double getConfidenceApproxMatch() {
-        return confidenceApproxMatch.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_CONFIDENCE_APPROX_MATCH)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Double> getConfidenceApproxMatch_JsonNullable() {
+  public Double getConfidenceApproxMatch() {
     return confidenceApproxMatch;
   }
-  
-  @JsonProperty(JSON_PROPERTY_CONFIDENCE_APPROX_MATCH)
-  public void setConfidenceApproxMatch_JsonNullable(JsonNullable<Double> confidenceApproxMatch) {
-    this.confidenceApproxMatch = confidenceApproxMatch;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_CONFIDENCE_APPROX_MATCH)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setConfidenceApproxMatch(Double confidenceApproxMatch) {
-    this.confidenceApproxMatch = JsonNullable.<Double>of(confidenceApproxMatch);
+    this.confidenceApproxMatch = confidenceApproxMatch;
   }
 
 
   public StructureCandidateScored fingerprint(BinaryFingerprint fingerprint) {
-    this.fingerprint = JsonNullable.<BinaryFingerprint>of(fingerprint);
+    this.fingerprint = fingerprint;
     return this;
   }
 
@@ -430,26 +362,18 @@ public class StructureCandidateScored {
    * @return fingerprint
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public BinaryFingerprint getFingerprint() {
-        return fingerprint.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_FINGERPRINT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<BinaryFingerprint> getFingerprint_JsonNullable() {
+  public BinaryFingerprint getFingerprint() {
     return fingerprint;
   }
-  
-  @JsonProperty(JSON_PROPERTY_FINGERPRINT)
-  public void setFingerprint_JsonNullable(JsonNullable<BinaryFingerprint> fingerprint) {
-    this.fingerprint = fingerprint;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_FINGERPRINT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setFingerprint(BinaryFingerprint fingerprint) {
-    this.fingerprint = JsonNullable.<BinaryFingerprint>of(fingerprint);
+    this.fingerprint = fingerprint;
   }
 
 
@@ -467,31 +391,20 @@ public class StructureCandidateScored {
     StructureCandidateScored structureCandidateScored = (StructureCandidateScored) o;
     return Objects.equals(this.inchiKey, structureCandidateScored.inchiKey) &&
         Objects.equals(this.smiles, structureCandidateScored.smiles) &&
-        equalsNullable(this.structureName, structureCandidateScored.structureName) &&
-        equalsNullable(this.xlogP, structureCandidateScored.xlogP) &&
-        equalsNullable(this.dbLinks, structureCandidateScored.dbLinks) &&
-        equalsNullable(this.refSpectraLinks, structureCandidateScored.refSpectraLinks) &&
+        Objects.equals(this.structureName, structureCandidateScored.structureName) &&
+        Objects.equals(this.xlogP, structureCandidateScored.xlogP) &&
+        Objects.equals(this.dbLinks, structureCandidateScored.dbLinks) &&
+        Objects.equals(this.refSpectraLinks, structureCandidateScored.refSpectraLinks) &&
         Objects.equals(this.csiScore, structureCandidateScored.csiScore) &&
-        equalsNullable(this.tanimotoSimilarity, structureCandidateScored.tanimotoSimilarity) &&
-        equalsNullable(this.confidenceExactMatch, structureCandidateScored.confidenceExactMatch) &&
-        equalsNullable(this.confidenceApproxMatch, structureCandidateScored.confidenceApproxMatch) &&
-        equalsNullable(this.fingerprint, structureCandidateScored.fingerprint);
-  }
-
-  private static <T> boolean equalsNullable(JsonNullable<T> a, JsonNullable<T> b) {
-    return a == b || (a != null && b != null && a.isPresent() && b.isPresent() && Objects.deepEquals(a.get(), b.get()));
+        Objects.equals(this.tanimotoSimilarity, structureCandidateScored.tanimotoSimilarity) &&
+        Objects.equals(this.confidenceExactMatch, structureCandidateScored.confidenceExactMatch) &&
+        Objects.equals(this.confidenceApproxMatch, structureCandidateScored.confidenceApproxMatch) &&
+        Objects.equals(this.fingerprint, structureCandidateScored.fingerprint);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(inchiKey, smiles, hashCodeNullable(structureName), hashCodeNullable(xlogP), hashCodeNullable(dbLinks), hashCodeNullable(refSpectraLinks), csiScore, hashCodeNullable(tanimotoSimilarity), hashCodeNullable(confidenceExactMatch), hashCodeNullable(confidenceApproxMatch), hashCodeNullable(fingerprint));
-  }
-
-  private static <T> int hashCodeNullable(JsonNullable<T> a) {
-    if (a == null) {
-      return 1;
-    }
-    return a.isPresent() ? Arrays.deepHashCode(new Object[]{a.get()}) : 31;
+    return Objects.hash(inchiKey, smiles, structureName, xlogP, dbLinks, refSpectraLinks, csiScore, tanimotoSimilarity, confidenceExactMatch, confidenceApproxMatch, fingerprint);
   }
 
   @Override

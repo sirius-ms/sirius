@@ -26,10 +26,6 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import de.unijena.bioinf.ms.nightsky.sdk.model.GuiResultTab;
 import java.util.Arrays;
-import org.openapitools.jackson.nullable.JsonNullable;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.openapitools.jackson.nullable.JsonNullable;
-import java.util.NoSuchElementException;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
@@ -46,25 +42,25 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class GuiParameters {
   public static final String JSON_PROPERTY_SELECTED_TAB = "selectedTab";
-  private JsonNullable<GuiResultTab> selectedTab = JsonNullable.<GuiResultTab>undefined();
+  private GuiResultTab selectedTab;
 
   public static final String JSON_PROPERTY_CID = "cid";
-  private JsonNullable<String> cid = JsonNullable.<String>undefined();
+  private String cid;
 
   public static final String JSON_PROPERTY_FID = "fid";
-  private JsonNullable<String> fid = JsonNullable.<String>undefined();
+  private String fid;
 
   public static final String JSON_PROPERTY_STRUCTURE_CANDIDATE_IN_CH_I_KEY = "structureCandidateInChIKey";
-  private JsonNullable<String> structureCandidateInChIKey = JsonNullable.<String>undefined();
+  private String structureCandidateInChIKey;
 
   public static final String JSON_PROPERTY_BRING_TO_FRONT = "bringToFront";
-  private JsonNullable<Boolean> bringToFront = JsonNullable.<Boolean>undefined();
+  private Boolean bringToFront;
 
   public GuiParameters() { 
   }
 
   public GuiParameters selectedTab(GuiResultTab selectedTab) {
-    this.selectedTab = JsonNullable.<GuiResultTab>of(selectedTab);
+    this.selectedTab = selectedTab;
     return this;
   }
 
@@ -73,31 +69,23 @@ public class GuiParameters {
    * @return selectedTab
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public GuiResultTab getSelectedTab() {
-        return selectedTab.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_SELECTED_TAB)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<GuiResultTab> getSelectedTab_JsonNullable() {
+  public GuiResultTab getSelectedTab() {
     return selectedTab;
   }
-  
-  @JsonProperty(JSON_PROPERTY_SELECTED_TAB)
-  public void setSelectedTab_JsonNullable(JsonNullable<GuiResultTab> selectedTab) {
-    this.selectedTab = selectedTab;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_SELECTED_TAB)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSelectedTab(GuiResultTab selectedTab) {
-    this.selectedTab = JsonNullable.<GuiResultTab>of(selectedTab);
+    this.selectedTab = selectedTab;
   }
 
 
   public GuiParameters cid(String cid) {
-    this.cid = JsonNullable.<String>of(cid);
+    this.cid = cid;
     return this;
   }
 
@@ -106,31 +94,23 @@ public class GuiParameters {
    * @return cid
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public String getCid() {
-        return cid.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_CID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<String> getCid_JsonNullable() {
+  public String getCid() {
     return cid;
   }
-  
-  @JsonProperty(JSON_PROPERTY_CID)
-  public void setCid_JsonNullable(JsonNullable<String> cid) {
-    this.cid = cid;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_CID)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setCid(String cid) {
-    this.cid = JsonNullable.<String>of(cid);
+    this.cid = cid;
   }
 
 
   public GuiParameters fid(String fid) {
-    this.fid = JsonNullable.<String>of(fid);
+    this.fid = fid;
     return this;
   }
 
@@ -139,31 +119,23 @@ public class GuiParameters {
    * @return fid
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public String getFid() {
-        return fid.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_FID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<String> getFid_JsonNullable() {
+  public String getFid() {
     return fid;
   }
-  
-  @JsonProperty(JSON_PROPERTY_FID)
-  public void setFid_JsonNullable(JsonNullable<String> fid) {
-    this.fid = fid;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_FID)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setFid(String fid) {
-    this.fid = JsonNullable.<String>of(fid);
+    this.fid = fid;
   }
 
 
   public GuiParameters structureCandidateInChIKey(String structureCandidateInChIKey) {
-    this.structureCandidateInChIKey = JsonNullable.<String>of(structureCandidateInChIKey);
+    this.structureCandidateInChIKey = structureCandidateInChIKey;
     return this;
   }
 
@@ -172,31 +144,23 @@ public class GuiParameters {
    * @return structureCandidateInChIKey
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public String getStructureCandidateInChIKey() {
-        return structureCandidateInChIKey.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_STRUCTURE_CANDIDATE_IN_CH_I_KEY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<String> getStructureCandidateInChIKey_JsonNullable() {
+  public String getStructureCandidateInChIKey() {
     return structureCandidateInChIKey;
   }
-  
-  @JsonProperty(JSON_PROPERTY_STRUCTURE_CANDIDATE_IN_CH_I_KEY)
-  public void setStructureCandidateInChIKey_JsonNullable(JsonNullable<String> structureCandidateInChIKey) {
-    this.structureCandidateInChIKey = structureCandidateInChIKey;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_STRUCTURE_CANDIDATE_IN_CH_I_KEY)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setStructureCandidateInChIKey(String structureCandidateInChIKey) {
-    this.structureCandidateInChIKey = JsonNullable.<String>of(structureCandidateInChIKey);
+    this.structureCandidateInChIKey = structureCandidateInChIKey;
   }
 
 
   public GuiParameters bringToFront(Boolean bringToFront) {
-    this.bringToFront = JsonNullable.<Boolean>of(bringToFront);
+    this.bringToFront = bringToFront;
     return this;
   }
 
@@ -205,26 +169,18 @@ public class GuiParameters {
    * @return bringToFront
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Boolean getBringToFront() {
-        return bringToFront.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_BRING_TO_FRONT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Boolean> getBringToFront_JsonNullable() {
+  public Boolean isBringToFront() {
     return bringToFront;
   }
-  
-  @JsonProperty(JSON_PROPERTY_BRING_TO_FRONT)
-  public void setBringToFront_JsonNullable(JsonNullable<Boolean> bringToFront) {
-    this.bringToFront = bringToFront;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_BRING_TO_FRONT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setBringToFront(Boolean bringToFront) {
-    this.bringToFront = JsonNullable.<Boolean>of(bringToFront);
+    this.bringToFront = bringToFront;
   }
 
 
@@ -240,27 +196,16 @@ public class GuiParameters {
       return false;
     }
     GuiParameters guiParameters = (GuiParameters) o;
-    return equalsNullable(this.selectedTab, guiParameters.selectedTab) &&
-        equalsNullable(this.cid, guiParameters.cid) &&
-        equalsNullable(this.fid, guiParameters.fid) &&
-        equalsNullable(this.structureCandidateInChIKey, guiParameters.structureCandidateInChIKey) &&
-        equalsNullable(this.bringToFront, guiParameters.bringToFront);
-  }
-
-  private static <T> boolean equalsNullable(JsonNullable<T> a, JsonNullable<T> b) {
-    return a == b || (a != null && b != null && a.isPresent() && b.isPresent() && Objects.deepEquals(a.get(), b.get()));
+    return Objects.equals(this.selectedTab, guiParameters.selectedTab) &&
+        Objects.equals(this.cid, guiParameters.cid) &&
+        Objects.equals(this.fid, guiParameters.fid) &&
+        Objects.equals(this.structureCandidateInChIKey, guiParameters.structureCandidateInChIKey) &&
+        Objects.equals(this.bringToFront, guiParameters.bringToFront);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(hashCodeNullable(selectedTab), hashCodeNullable(cid), hashCodeNullable(fid), hashCodeNullable(structureCandidateInChIKey), hashCodeNullable(bringToFront));
-  }
-
-  private static <T> int hashCodeNullable(JsonNullable<T> a) {
-    if (a == null) {
-      return 1;
-    }
-    return a.isPresent() ? Arrays.deepHashCode(new Object[]{a.get()}) : 31;
+    return Objects.hash(selectedTab, cid, fid, structureCandidateInChIKey, bringToFront);
   }
 
   @Override
@@ -340,8 +285,8 @@ public class GuiParameters {
     }
 
     // add `bringToFront` to the URL query string
-    if (getBringToFront() != null) {
-      joiner.add(String.format("%sbringToFront%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getBringToFront()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
+    if (isBringToFront() != null) {
+      joiner.add(String.format("%sbringToFront%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isBringToFront()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
     }
 
     return joiner.toString();

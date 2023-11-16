@@ -28,10 +28,6 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.Subscription;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.openapitools.jackson.nullable.JsonNullable;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.openapitools.jackson.nullable.JsonNullable;
-import java.util.NoSuchElementException;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
@@ -52,19 +48,19 @@ public class AccountInfo {
   private String userID;
 
   public static final String JSON_PROPERTY_USERNAME = "username";
-  private JsonNullable<String> username = JsonNullable.<String>undefined();
+  private String username;
 
   public static final String JSON_PROPERTY_USER_EMAIL = "userEmail";
   private String userEmail;
 
   public static final String JSON_PROPERTY_GRAVATAR_U_R_L = "gravatarURL";
-  private JsonNullable<String> gravatarURL = JsonNullable.<String>undefined();
+  private String gravatarURL;
 
   public static final String JSON_PROPERTY_SUBSCRIPTIONS = "subscriptions";
   private List<Subscription> subscriptions;
 
   public static final String JSON_PROPERTY_ACTIVE_SUBSCRIPTION_ID = "activeSubscriptionId";
-  private JsonNullable<String> activeSubscriptionId = JsonNullable.<String>undefined();
+  private String activeSubscriptionId;
 
   public AccountInfo() { 
   }
@@ -95,7 +91,7 @@ public class AccountInfo {
 
 
   public AccountInfo username(String username) {
-    this.username = JsonNullable.<String>of(username);
+    this.username = username;
     return this;
   }
 
@@ -104,26 +100,18 @@ public class AccountInfo {
    * @return username
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public String getUsername() {
-        return username.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_USERNAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<String> getUsername_JsonNullable() {
+  public String getUsername() {
     return username;
   }
-  
-  @JsonProperty(JSON_PROPERTY_USERNAME)
-  public void setUsername_JsonNullable(JsonNullable<String> username) {
-    this.username = username;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_USERNAME)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setUsername(String username) {
-    this.username = JsonNullable.<String>of(username);
+    this.username = username;
   }
 
 
@@ -153,7 +141,7 @@ public class AccountInfo {
 
 
   public AccountInfo gravatarURL(String gravatarURL) {
-    this.gravatarURL = JsonNullable.<String>of(gravatarURL);
+    this.gravatarURL = gravatarURL;
     return this;
   }
 
@@ -162,26 +150,18 @@ public class AccountInfo {
    * @return gravatarURL
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public String getGravatarURL() {
-        return gravatarURL.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_GRAVATAR_U_R_L)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<String> getGravatarURL_JsonNullable() {
+  public String getGravatarURL() {
     return gravatarURL;
   }
-  
-  @JsonProperty(JSON_PROPERTY_GRAVATAR_U_R_L)
-  public void setGravatarURL_JsonNullable(JsonNullable<String> gravatarURL) {
-    this.gravatarURL = gravatarURL;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_GRAVATAR_U_R_L)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setGravatarURL(String gravatarURL) {
-    this.gravatarURL = JsonNullable.<String>of(gravatarURL);
+    this.gravatarURL = gravatarURL;
   }
 
 
@@ -219,7 +199,7 @@ public class AccountInfo {
 
 
   public AccountInfo activeSubscriptionId(String activeSubscriptionId) {
-    this.activeSubscriptionId = JsonNullable.<String>of(activeSubscriptionId);
+    this.activeSubscriptionId = activeSubscriptionId;
     return this;
   }
 
@@ -228,26 +208,18 @@ public class AccountInfo {
    * @return activeSubscriptionId
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public String getActiveSubscriptionId() {
-        return activeSubscriptionId.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_ACTIVE_SUBSCRIPTION_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<String> getActiveSubscriptionId_JsonNullable() {
+  public String getActiveSubscriptionId() {
     return activeSubscriptionId;
   }
-  
-  @JsonProperty(JSON_PROPERTY_ACTIVE_SUBSCRIPTION_ID)
-  public void setActiveSubscriptionId_JsonNullable(JsonNullable<String> activeSubscriptionId) {
-    this.activeSubscriptionId = activeSubscriptionId;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_ACTIVE_SUBSCRIPTION_ID)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setActiveSubscriptionId(String activeSubscriptionId) {
-    this.activeSubscriptionId = JsonNullable.<String>of(activeSubscriptionId);
+    this.activeSubscriptionId = activeSubscriptionId;
   }
 
 
@@ -264,27 +236,16 @@ public class AccountInfo {
     }
     AccountInfo accountInfo = (AccountInfo) o;
     return Objects.equals(this.userID, accountInfo.userID) &&
-        equalsNullable(this.username, accountInfo.username) &&
+        Objects.equals(this.username, accountInfo.username) &&
         Objects.equals(this.userEmail, accountInfo.userEmail) &&
-        equalsNullable(this.gravatarURL, accountInfo.gravatarURL) &&
+        Objects.equals(this.gravatarURL, accountInfo.gravatarURL) &&
         Objects.equals(this.subscriptions, accountInfo.subscriptions) &&
-        equalsNullable(this.activeSubscriptionId, accountInfo.activeSubscriptionId);
-  }
-
-  private static <T> boolean equalsNullable(JsonNullable<T> a, JsonNullable<T> b) {
-    return a == b || (a != null && b != null && a.isPresent() && b.isPresent() && Objects.deepEquals(a.get(), b.get()));
+        Objects.equals(this.activeSubscriptionId, accountInfo.activeSubscriptionId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(userID, hashCodeNullable(username), userEmail, hashCodeNullable(gravatarURL), subscriptions, hashCodeNullable(activeSubscriptionId));
-  }
-
-  private static <T> int hashCodeNullable(JsonNullable<T> a) {
-    if (a == null) {
-      return 1;
-    }
-    return a.isPresent() ? Arrays.deepHashCode(new Object[]{a.get()}) : 31;
+    return Objects.hash(userID, username, userEmail, gravatarURL, subscriptions, activeSubscriptionId);
   }
 
   @Override

@@ -29,46 +29,46 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
 /**
- * User/developer friendly parameter subset for the CANOPUS tool  CANOPUS is parameter free, so this Object is just a flag that canopus should be executed.
+ * 
  */
 @JsonPropertyOrder({
-  Canopus.JSON_PROPERTY_ENABLED
+  SubscriptionConsumables.JSON_PROPERTY_COUNTED_COMPOUNDS
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
-public class Canopus {
-  public static final String JSON_PROPERTY_ENABLED = "enabled";
-  private Boolean enabled;
+public class SubscriptionConsumables {
+  public static final String JSON_PROPERTY_COUNTED_COMPOUNDS = "countedCompounds";
+  private Integer countedCompounds;
 
-  public Canopus() { 
+  public SubscriptionConsumables() { 
   }
 
-  public Canopus enabled(Boolean enabled) {
-    this.enabled = enabled;
+  public SubscriptionConsumables countedCompounds(Integer countedCompounds) {
+    this.countedCompounds = countedCompounds;
     return this;
   }
 
    /**
-   * tags whether the tool is enabled
-   * @return enabled
+   * Get countedCompounds
+   * @return countedCompounds
   **/
   @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ENABLED)
+  @JsonProperty(JSON_PROPERTY_COUNTED_COMPOUNDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Boolean isEnabled() {
-    return enabled;
+  public Integer getCountedCompounds() {
+    return countedCompounds;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ENABLED)
+  @JsonProperty(JSON_PROPERTY_COUNTED_COMPOUNDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setEnabled(Boolean enabled) {
-    this.enabled = enabled;
+  public void setCountedCompounds(Integer countedCompounds) {
+    this.countedCompounds = countedCompounds;
   }
 
 
   /**
-   * Return true if this Canopus object is equal to o.
+   * Return true if this SubscriptionConsumables object is equal to o.
    */
   @Override
   public boolean equals(Object o) {
@@ -78,20 +78,20 @@ public class Canopus {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    Canopus canopus = (Canopus) o;
-    return Objects.equals(this.enabled, canopus.enabled);
+    SubscriptionConsumables subscriptionConsumables = (SubscriptionConsumables) o;
+    return Objects.equals(this.countedCompounds, subscriptionConsumables.countedCompounds);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(enabled);
+    return Objects.hash(countedCompounds);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class Canopus {\n");
-    sb.append("    enabled: ").append(toIndentedString(enabled)).append("\n");
+    sb.append("class SubscriptionConsumables {\n");
+    sb.append("    countedCompounds: ").append(toIndentedString(countedCompounds)).append("\n");
     sb.append("}");
     return sb.toString();
   }
@@ -139,9 +139,9 @@ public class Canopus {
 
     StringJoiner joiner = new StringJoiner("&");
 
-    // add `enabled` to the URL query string
-    if (isEnabled() != null) {
-      joiner.add(String.format("%senabled%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isEnabled()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
+    // add `countedCompounds` to the URL query string
+    if (getCountedCompounds() != null) {
+      joiner.add(String.format("%scountedCompounds%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getCountedCompounds()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
     }
 
     return joiner.toString();

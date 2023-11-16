@@ -34,16 +34,19 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  */
 @JsonPropertyOrder({
   PageableObject.JSON_PROPERTY_SORT,
+  PageableObject.JSON_PROPERTY_OFFSET,
   PageableObject.JSON_PROPERTY_PAGE_NUMBER,
   PageableObject.JSON_PROPERTY_PAGE_SIZE,
   PageableObject.JSON_PROPERTY_PAGED,
-  PageableObject.JSON_PROPERTY_UNPAGED,
-  PageableObject.JSON_PROPERTY_OFFSET
+  PageableObject.JSON_PROPERTY_UNPAGED
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class PageableObject {
   public static final String JSON_PROPERTY_SORT = "sort";
   private SortObject sort;
+
+  public static final String JSON_PROPERTY_OFFSET = "offset";
+  private Long offset;
 
   public static final String JSON_PROPERTY_PAGE_NUMBER = "pageNumber";
   private Integer pageNumber;
@@ -56,9 +59,6 @@ public class PageableObject {
 
   public static final String JSON_PROPERTY_UNPAGED = "unpaged";
   private Boolean unpaged;
-
-  public static final String JSON_PROPERTY_OFFSET = "offset";
-  private Long offset;
 
   public PageableObject() { 
   }
@@ -85,6 +85,31 @@ public class PageableObject {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSort(SortObject sort) {
     this.sort = sort;
+  }
+
+
+  public PageableObject offset(Long offset) {
+    this.offset = offset;
+    return this;
+  }
+
+   /**
+   * Get offset
+   * @return offset
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_OFFSET)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Long getOffset() {
+    return offset;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_OFFSET)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setOffset(Long offset) {
+    this.offset = offset;
   }
 
 
@@ -151,7 +176,7 @@ public class PageableObject {
   @JsonProperty(JSON_PROPERTY_PAGED)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Boolean getPaged() {
+  public Boolean isPaged() {
     return paged;
   }
 
@@ -176,7 +201,7 @@ public class PageableObject {
   @JsonProperty(JSON_PROPERTY_UNPAGED)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Boolean getUnpaged() {
+  public Boolean isUnpaged() {
     return unpaged;
   }
 
@@ -185,31 +210,6 @@ public class PageableObject {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setUnpaged(Boolean unpaged) {
     this.unpaged = unpaged;
-  }
-
-
-  public PageableObject offset(Long offset) {
-    this.offset = offset;
-    return this;
-  }
-
-   /**
-   * Get offset
-   * @return offset
-  **/
-  @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_OFFSET)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Long getOffset() {
-    return offset;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_OFFSET)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setOffset(Long offset) {
-    this.offset = offset;
   }
 
 
@@ -226,16 +226,16 @@ public class PageableObject {
     }
     PageableObject pageableObject = (PageableObject) o;
     return Objects.equals(this.sort, pageableObject.sort) &&
+        Objects.equals(this.offset, pageableObject.offset) &&
         Objects.equals(this.pageNumber, pageableObject.pageNumber) &&
         Objects.equals(this.pageSize, pageableObject.pageSize) &&
         Objects.equals(this.paged, pageableObject.paged) &&
-        Objects.equals(this.unpaged, pageableObject.unpaged) &&
-        Objects.equals(this.offset, pageableObject.offset);
+        Objects.equals(this.unpaged, pageableObject.unpaged);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sort, pageNumber, pageSize, paged, unpaged, offset);
+    return Objects.hash(sort, offset, pageNumber, pageSize, paged, unpaged);
   }
 
   @Override
@@ -243,11 +243,11 @@ public class PageableObject {
     StringBuilder sb = new StringBuilder();
     sb.append("class PageableObject {\n");
     sb.append("    sort: ").append(toIndentedString(sort)).append("\n");
+    sb.append("    offset: ").append(toIndentedString(offset)).append("\n");
     sb.append("    pageNumber: ").append(toIndentedString(pageNumber)).append("\n");
     sb.append("    pageSize: ").append(toIndentedString(pageSize)).append("\n");
     sb.append("    paged: ").append(toIndentedString(paged)).append("\n");
     sb.append("    unpaged: ").append(toIndentedString(unpaged)).append("\n");
-    sb.append("    offset: ").append(toIndentedString(offset)).append("\n");
     sb.append("}");
     return sb.toString();
   }
@@ -300,6 +300,11 @@ public class PageableObject {
       joiner.add(getSort().toUrlQueryString(prefix + "sort" + suffix));
     }
 
+    // add `offset` to the URL query string
+    if (getOffset() != null) {
+      joiner.add(String.format("%soffset%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getOffset()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
+    }
+
     // add `pageNumber` to the URL query string
     if (getPageNumber() != null) {
       joiner.add(String.format("%spageNumber%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getPageNumber()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
@@ -311,18 +316,13 @@ public class PageableObject {
     }
 
     // add `paged` to the URL query string
-    if (getPaged() != null) {
-      joiner.add(String.format("%spaged%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getPaged()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
+    if (isPaged() != null) {
+      joiner.add(String.format("%spaged%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isPaged()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
     }
 
     // add `unpaged` to the URL query string
-    if (getUnpaged() != null) {
-      joiner.add(String.format("%sunpaged%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getUnpaged()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `offset` to the URL query string
-    if (getOffset() != null) {
-      joiner.add(String.format("%soffset%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getOffset()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
+    if (isUnpaged() != null) {
+      joiner.add(String.format("%sunpaged%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isUnpaged()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
     }
 
     return joiner.toString();

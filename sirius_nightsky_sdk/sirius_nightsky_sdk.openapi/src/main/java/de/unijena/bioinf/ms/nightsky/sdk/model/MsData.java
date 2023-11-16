@@ -28,10 +28,6 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.AnnotatedSpectrum;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.openapitools.jackson.nullable.JsonNullable;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.openapitools.jackson.nullable.JsonNullable;
-import java.util.NoSuchElementException;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
@@ -47,22 +43,22 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class MsData {
   public static final String JSON_PROPERTY_MERGED_MS1 = "mergedMs1";
-  private JsonNullable<AnnotatedSpectrum> mergedMs1 = JsonNullable.<AnnotatedSpectrum>undefined();
+  private AnnotatedSpectrum mergedMs1;
 
   public static final String JSON_PROPERTY_MERGED_MS2 = "mergedMs2";
-  private JsonNullable<AnnotatedSpectrum> mergedMs2 = JsonNullable.<AnnotatedSpectrum>undefined();
+  private AnnotatedSpectrum mergedMs2;
 
   public static final String JSON_PROPERTY_MS2_SPECTRA = "ms2Spectra";
-  private JsonNullable<List<AnnotatedSpectrum>> ms2Spectra = JsonNullable.<List<AnnotatedSpectrum>>undefined();
+  private List<AnnotatedSpectrum> ms2Spectra;
 
   public static final String JSON_PROPERTY_MS1_SPECTRA = "ms1Spectra";
-  private JsonNullable<List<AnnotatedSpectrum>> ms1Spectra = JsonNullable.<List<AnnotatedSpectrum>>undefined();
+  private List<AnnotatedSpectrum> ms1Spectra;
 
   public MsData() { 
   }
 
   public MsData mergedMs1(AnnotatedSpectrum mergedMs1) {
-    this.mergedMs1 = JsonNullable.<AnnotatedSpectrum>of(mergedMs1);
+    this.mergedMs1 = mergedMs1;
     return this;
   }
 
@@ -71,31 +67,23 @@ public class MsData {
    * @return mergedMs1
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public AnnotatedSpectrum getMergedMs1() {
-        return mergedMs1.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_MERGED_MS1)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<AnnotatedSpectrum> getMergedMs1_JsonNullable() {
+  public AnnotatedSpectrum getMergedMs1() {
     return mergedMs1;
   }
-  
-  @JsonProperty(JSON_PROPERTY_MERGED_MS1)
-  public void setMergedMs1_JsonNullable(JsonNullable<AnnotatedSpectrum> mergedMs1) {
-    this.mergedMs1 = mergedMs1;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_MERGED_MS1)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMergedMs1(AnnotatedSpectrum mergedMs1) {
-    this.mergedMs1 = JsonNullable.<AnnotatedSpectrum>of(mergedMs1);
+    this.mergedMs1 = mergedMs1;
   }
 
 
   public MsData mergedMs2(AnnotatedSpectrum mergedMs2) {
-    this.mergedMs2 = JsonNullable.<AnnotatedSpectrum>of(mergedMs2);
+    this.mergedMs2 = mergedMs2;
     return this;
   }
 
@@ -104,43 +92,31 @@ public class MsData {
    * @return mergedMs2
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public AnnotatedSpectrum getMergedMs2() {
-        return mergedMs2.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_MERGED_MS2)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<AnnotatedSpectrum> getMergedMs2_JsonNullable() {
+  public AnnotatedSpectrum getMergedMs2() {
     return mergedMs2;
   }
-  
-  @JsonProperty(JSON_PROPERTY_MERGED_MS2)
-  public void setMergedMs2_JsonNullable(JsonNullable<AnnotatedSpectrum> mergedMs2) {
-    this.mergedMs2 = mergedMs2;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_MERGED_MS2)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMergedMs2(AnnotatedSpectrum mergedMs2) {
-    this.mergedMs2 = JsonNullable.<AnnotatedSpectrum>of(mergedMs2);
+    this.mergedMs2 = mergedMs2;
   }
 
 
   public MsData ms2Spectra(List<AnnotatedSpectrum> ms2Spectra) {
-    this.ms2Spectra = JsonNullable.<List<AnnotatedSpectrum>>of(ms2Spectra);
+    this.ms2Spectra = ms2Spectra;
     return this;
   }
 
   public MsData addMs2SpectraItem(AnnotatedSpectrum ms2SpectraItem) {
-    if (this.ms2Spectra == null || !this.ms2Spectra.isPresent()) {
-      this.ms2Spectra = JsonNullable.<List<AnnotatedSpectrum>>of(new ArrayList<>());
+    if (this.ms2Spectra == null) {
+      this.ms2Spectra = new ArrayList<>();
     }
-    try {
-      this.ms2Spectra.get().add(ms2SpectraItem);
-    } catch (java.util.NoSuchElementException e) {
-      // this can never happen, as we make sure above that the value is present
-    }
+    this.ms2Spectra.add(ms2SpectraItem);
     return this;
   }
 
@@ -149,43 +125,31 @@ public class MsData {
    * @return ms2Spectra
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public List<AnnotatedSpectrum> getMs2Spectra() {
-        return ms2Spectra.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_MS2_SPECTRA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<List<AnnotatedSpectrum>> getMs2Spectra_JsonNullable() {
+  public List<AnnotatedSpectrum> getMs2Spectra() {
     return ms2Spectra;
   }
-  
-  @JsonProperty(JSON_PROPERTY_MS2_SPECTRA)
-  public void setMs2Spectra_JsonNullable(JsonNullable<List<AnnotatedSpectrum>> ms2Spectra) {
-    this.ms2Spectra = ms2Spectra;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_MS2_SPECTRA)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMs2Spectra(List<AnnotatedSpectrum> ms2Spectra) {
-    this.ms2Spectra = JsonNullable.<List<AnnotatedSpectrum>>of(ms2Spectra);
+    this.ms2Spectra = ms2Spectra;
   }
 
 
   public MsData ms1Spectra(List<AnnotatedSpectrum> ms1Spectra) {
-    this.ms1Spectra = JsonNullable.<List<AnnotatedSpectrum>>of(ms1Spectra);
+    this.ms1Spectra = ms1Spectra;
     return this;
   }
 
   public MsData addMs1SpectraItem(AnnotatedSpectrum ms1SpectraItem) {
-    if (this.ms1Spectra == null || !this.ms1Spectra.isPresent()) {
-      this.ms1Spectra = JsonNullable.<List<AnnotatedSpectrum>>of(new ArrayList<>());
+    if (this.ms1Spectra == null) {
+      this.ms1Spectra = new ArrayList<>();
     }
-    try {
-      this.ms1Spectra.get().add(ms1SpectraItem);
-    } catch (java.util.NoSuchElementException e) {
-      // this can never happen, as we make sure above that the value is present
-    }
+    this.ms1Spectra.add(ms1SpectraItem);
     return this;
   }
 
@@ -194,26 +158,18 @@ public class MsData {
    * @return ms1Spectra
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public List<AnnotatedSpectrum> getMs1Spectra() {
-        return ms1Spectra.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_MS1_SPECTRA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<List<AnnotatedSpectrum>> getMs1Spectra_JsonNullable() {
+  public List<AnnotatedSpectrum> getMs1Spectra() {
     return ms1Spectra;
   }
-  
-  @JsonProperty(JSON_PROPERTY_MS1_SPECTRA)
-  public void setMs1Spectra_JsonNullable(JsonNullable<List<AnnotatedSpectrum>> ms1Spectra) {
-    this.ms1Spectra = ms1Spectra;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_MS1_SPECTRA)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMs1Spectra(List<AnnotatedSpectrum> ms1Spectra) {
-    this.ms1Spectra = JsonNullable.<List<AnnotatedSpectrum>>of(ms1Spectra);
+    this.ms1Spectra = ms1Spectra;
   }
 
 
@@ -229,26 +185,15 @@ public class MsData {
       return false;
     }
     MsData msData = (MsData) o;
-    return equalsNullable(this.mergedMs1, msData.mergedMs1) &&
-        equalsNullable(this.mergedMs2, msData.mergedMs2) &&
-        equalsNullable(this.ms2Spectra, msData.ms2Spectra) &&
-        equalsNullable(this.ms1Spectra, msData.ms1Spectra);
-  }
-
-  private static <T> boolean equalsNullable(JsonNullable<T> a, JsonNullable<T> b) {
-    return a == b || (a != null && b != null && a.isPresent() && b.isPresent() && Objects.deepEquals(a.get(), b.get()));
+    return Objects.equals(this.mergedMs1, msData.mergedMs1) &&
+        Objects.equals(this.mergedMs2, msData.mergedMs2) &&
+        Objects.equals(this.ms2Spectra, msData.ms2Spectra) &&
+        Objects.equals(this.ms1Spectra, msData.ms1Spectra);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(hashCodeNullable(mergedMs1), hashCodeNullable(mergedMs2), hashCodeNullable(ms2Spectra), hashCodeNullable(ms1Spectra));
-  }
-
-  private static <T> int hashCodeNullable(JsonNullable<T> a) {
-    if (a == null) {
-      return 1;
-    }
-    return a.isPresent() ? Arrays.deepHashCode(new Object[]{a.get()}) : 31;
+    return Objects.hash(mergedMs1, mergedMs2, ms2Spectra, ms1Spectra);
   }
 
   @Override

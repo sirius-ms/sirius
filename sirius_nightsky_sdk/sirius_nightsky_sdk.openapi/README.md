@@ -252,6 +252,7 @@ Class | Method | HTTP request | Description
  - [StructureDbSearch](docs/StructureDbSearch.md)
  - [Subscription](docs/Subscription.md)
  - [SubscriptionConsumables](docs/SubscriptionConsumables.md)
+ - [Term](docs/Term.md)
  - [Timeout](docs/Timeout.md)
  - [UseHeuristic](docs/UseHeuristic.md)
  - [WorkerInfo](docs/WorkerInfo.md)

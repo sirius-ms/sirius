@@ -28,10 +28,6 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.CompoundClass;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.openapitools.jackson.nullable.JsonNullable;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.openapitools.jackson.nullable.JsonNullable;
-import java.util.NoSuchElementException;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
@@ -48,25 +44,25 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class CompoundClasses {
   public static final String JSON_PROPERTY_NPC_PATHWAY = "npcPathway";
-  private JsonNullable<CompoundClass> npcPathway = JsonNullable.<CompoundClass>undefined();
+  private CompoundClass npcPathway;
 
   public static final String JSON_PROPERTY_NPC_SUPERCLASS = "npcSuperclass";
-  private JsonNullable<CompoundClass> npcSuperclass = JsonNullable.<CompoundClass>undefined();
+  private CompoundClass npcSuperclass;
 
   public static final String JSON_PROPERTY_NPC_CLASS = "npcClass";
-  private JsonNullable<CompoundClass> npcClass = JsonNullable.<CompoundClass>undefined();
+  private CompoundClass npcClass;
 
   public static final String JSON_PROPERTY_CLASSY_FIRE_LINEAGE = "classyFireLineage";
-  private JsonNullable<List<CompoundClass>> classyFireLineage = JsonNullable.<List<CompoundClass>>undefined();
+  private List<CompoundClass> classyFireLineage;
 
   public static final String JSON_PROPERTY_CLASSY_FIRE_ALTERNATIVES = "classyFireAlternatives";
-  private JsonNullable<List<CompoundClass>> classyFireAlternatives = JsonNullable.<List<CompoundClass>>undefined();
+  private List<CompoundClass> classyFireAlternatives;
 
   public CompoundClasses() { 
   }
 
   public CompoundClasses npcPathway(CompoundClass npcPathway) {
-    this.npcPathway = JsonNullable.<CompoundClass>of(npcPathway);
+    this.npcPathway = npcPathway;
     return this;
   }
 
@@ -75,31 +71,23 @@ public class CompoundClasses {
    * @return npcPathway
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public CompoundClass getNpcPathway() {
-        return npcPathway.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_NPC_PATHWAY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<CompoundClass> getNpcPathway_JsonNullable() {
+  public CompoundClass getNpcPathway() {
     return npcPathway;
   }
-  
-  @JsonProperty(JSON_PROPERTY_NPC_PATHWAY)
-  public void setNpcPathway_JsonNullable(JsonNullable<CompoundClass> npcPathway) {
-    this.npcPathway = npcPathway;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_NPC_PATHWAY)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setNpcPathway(CompoundClass npcPathway) {
-    this.npcPathway = JsonNullable.<CompoundClass>of(npcPathway);
+    this.npcPathway = npcPathway;
   }
 
 
   public CompoundClasses npcSuperclass(CompoundClass npcSuperclass) {
-    this.npcSuperclass = JsonNullable.<CompoundClass>of(npcSuperclass);
+    this.npcSuperclass = npcSuperclass;
     return this;
   }
 
@@ -108,31 +96,23 @@ public class CompoundClasses {
    * @return npcSuperclass
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public CompoundClass getNpcSuperclass() {
-        return npcSuperclass.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_NPC_SUPERCLASS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<CompoundClass> getNpcSuperclass_JsonNullable() {
+  public CompoundClass getNpcSuperclass() {
     return npcSuperclass;
   }
-  
-  @JsonProperty(JSON_PROPERTY_NPC_SUPERCLASS)
-  public void setNpcSuperclass_JsonNullable(JsonNullable<CompoundClass> npcSuperclass) {
-    this.npcSuperclass = npcSuperclass;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_NPC_SUPERCLASS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setNpcSuperclass(CompoundClass npcSuperclass) {
-    this.npcSuperclass = JsonNullable.<CompoundClass>of(npcSuperclass);
+    this.npcSuperclass = npcSuperclass;
   }
 
 
   public CompoundClasses npcClass(CompoundClass npcClass) {
-    this.npcClass = JsonNullable.<CompoundClass>of(npcClass);
+    this.npcClass = npcClass;
     return this;
   }
 
@@ -141,43 +121,31 @@ public class CompoundClasses {
    * @return npcClass
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public CompoundClass getNpcClass() {
-        return npcClass.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_NPC_CLASS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<CompoundClass> getNpcClass_JsonNullable() {
+  public CompoundClass getNpcClass() {
     return npcClass;
   }
-  
-  @JsonProperty(JSON_PROPERTY_NPC_CLASS)
-  public void setNpcClass_JsonNullable(JsonNullable<CompoundClass> npcClass) {
-    this.npcClass = npcClass;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_NPC_CLASS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setNpcClass(CompoundClass npcClass) {
-    this.npcClass = JsonNullable.<CompoundClass>of(npcClass);
+    this.npcClass = npcClass;
   }
 
 
   public CompoundClasses classyFireLineage(List<CompoundClass> classyFireLineage) {
-    this.classyFireLineage = JsonNullable.<List<CompoundClass>>of(classyFireLineage);
+    this.classyFireLineage = classyFireLineage;
     return this;
   }
 
   public CompoundClasses addClassyFireLineageItem(CompoundClass classyFireLineageItem) {
-    if (this.classyFireLineage == null || !this.classyFireLineage.isPresent()) {
-      this.classyFireLineage = JsonNullable.<List<CompoundClass>>of(new ArrayList<>());
+    if (this.classyFireLineage == null) {
+      this.classyFireLineage = new ArrayList<>();
     }
-    try {
-      this.classyFireLineage.get().add(classyFireLineageItem);
-    } catch (java.util.NoSuchElementException e) {
-      // this can never happen, as we make sure above that the value is present
-    }
+    this.classyFireLineage.add(classyFireLineageItem);
     return this;
   }
 
@@ -186,43 +154,31 @@ public class CompoundClasses {
    * @return classyFireLineage
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public List<CompoundClass> getClassyFireLineage() {
-        return classyFireLineage.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_CLASSY_FIRE_LINEAGE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<List<CompoundClass>> getClassyFireLineage_JsonNullable() {
+  public List<CompoundClass> getClassyFireLineage() {
     return classyFireLineage;
   }
-  
-  @JsonProperty(JSON_PROPERTY_CLASSY_FIRE_LINEAGE)
-  public void setClassyFireLineage_JsonNullable(JsonNullable<List<CompoundClass>> classyFireLineage) {
-    this.classyFireLineage = classyFireLineage;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_CLASSY_FIRE_LINEAGE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setClassyFireLineage(List<CompoundClass> classyFireLineage) {
-    this.classyFireLineage = JsonNullable.<List<CompoundClass>>of(classyFireLineage);
+    this.classyFireLineage = classyFireLineage;
   }
 
 
   public CompoundClasses classyFireAlternatives(List<CompoundClass> classyFireAlternatives) {
-    this.classyFireAlternatives = JsonNullable.<List<CompoundClass>>of(classyFireAlternatives);
+    this.classyFireAlternatives = classyFireAlternatives;
     return this;
   }
 
   public CompoundClasses addClassyFireAlternativesItem(CompoundClass classyFireAlternativesItem) {
-    if (this.classyFireAlternatives == null || !this.classyFireAlternatives.isPresent()) {
-      this.classyFireAlternatives = JsonNullable.<List<CompoundClass>>of(new ArrayList<>());
+    if (this.classyFireAlternatives == null) {
+      this.classyFireAlternatives = new ArrayList<>();
     }
-    try {
-      this.classyFireAlternatives.get().add(classyFireAlternativesItem);
-    } catch (java.util.NoSuchElementException e) {
-      // this can never happen, as we make sure above that the value is present
-    }
+    this.classyFireAlternatives.add(classyFireAlternativesItem);
     return this;
   }
 
@@ -231,26 +187,18 @@ public class CompoundClasses {
    * @return classyFireAlternatives
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public List<CompoundClass> getClassyFireAlternatives() {
-        return classyFireAlternatives.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_CLASSY_FIRE_ALTERNATIVES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<List<CompoundClass>> getClassyFireAlternatives_JsonNullable() {
+  public List<CompoundClass> getClassyFireAlternatives() {
     return classyFireAlternatives;
   }
-  
-  @JsonProperty(JSON_PROPERTY_CLASSY_FIRE_ALTERNATIVES)
-  public void setClassyFireAlternatives_JsonNullable(JsonNullable<List<CompoundClass>> classyFireAlternatives) {
-    this.classyFireAlternatives = classyFireAlternatives;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_CLASSY_FIRE_ALTERNATIVES)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setClassyFireAlternatives(List<CompoundClass> classyFireAlternatives) {
-    this.classyFireAlternatives = JsonNullable.<List<CompoundClass>>of(classyFireAlternatives);
+    this.classyFireAlternatives = classyFireAlternatives;
   }
 
 
@@ -266,27 +214,16 @@ public class CompoundClasses {
       return false;
     }
     CompoundClasses compoundClasses = (CompoundClasses) o;
-    return equalsNullable(this.npcPathway, compoundClasses.npcPathway) &&
-        equalsNullable(this.npcSuperclass, compoundClasses.npcSuperclass) &&
-        equalsNullable(this.npcClass, compoundClasses.npcClass) &&
-        equalsNullable(this.classyFireLineage, compoundClasses.classyFireLineage) &&
-        equalsNullable(this.classyFireAlternatives, compoundClasses.classyFireAlternatives);
-  }
-
-  private static <T> boolean equalsNullable(JsonNullable<T> a, JsonNullable<T> b) {
-    return a == b || (a != null && b != null && a.isPresent() && b.isPresent() && Objects.deepEquals(a.get(), b.get()));
+    return Objects.equals(this.npcPathway, compoundClasses.npcPathway) &&
+        Objects.equals(this.npcSuperclass, compoundClasses.npcSuperclass) &&
+        Objects.equals(this.npcClass, compoundClasses.npcClass) &&
+        Objects.equals(this.classyFireLineage, compoundClasses.classyFireLineage) &&
+        Objects.equals(this.classyFireAlternatives, compoundClasses.classyFireAlternatives);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(hashCodeNullable(npcPathway), hashCodeNullable(npcSuperclass), hashCodeNullable(npcClass), hashCodeNullable(classyFireLineage), hashCodeNullable(classyFireAlternatives));
-  }
-
-  private static <T> int hashCodeNullable(JsonNullable<T> a) {
-    if (a == null) {
-      return 1;
-    }
-    return a.isPresent() ? Arrays.deepHashCode(new Object[]{a.get()}) : 31;
+    return Objects.hash(npcPathway, npcSuperclass, npcClass, classyFireLineage, classyFireAlternatives);
   }
 
   @Override

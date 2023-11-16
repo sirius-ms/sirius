@@ -27,10 +27,6 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.openapitools.jackson.nullable.JsonNullable;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.openapitools.jackson.nullable.JsonNullable;
-import java.util.NoSuchElementException;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
@@ -46,13 +42,13 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class ImportLocalFilesSubmission {
   public static final String JSON_PROPERTY_ALLOW_MS1_ONLY_DATA = "allowMs1OnlyData";
-  private JsonNullable<Boolean> allowMs1OnlyData = JsonNullable.<Boolean>undefined();
+  private Boolean allowMs1OnlyData;
 
   public static final String JSON_PROPERTY_IGNORE_FORMULAS = "ignoreFormulas";
-  private JsonNullable<Boolean> ignoreFormulas = JsonNullable.<Boolean>undefined();
+  private Boolean ignoreFormulas;
 
   public static final String JSON_PROPERTY_ALIGN_L_C_M_S_RUNS = "alignLCMSRuns";
-  private JsonNullable<Boolean> alignLCMSRuns = JsonNullable.<Boolean>undefined();
+  private Boolean alignLCMSRuns;
 
   public static final String JSON_PROPERTY_INPUT_PATHS = "inputPaths";
   private List<String> inputPaths = new ArrayList<>();
@@ -61,7 +57,7 @@ public class ImportLocalFilesSubmission {
   }
 
   public ImportLocalFilesSubmission allowMs1OnlyData(Boolean allowMs1OnlyData) {
-    this.allowMs1OnlyData = JsonNullable.<Boolean>of(allowMs1OnlyData);
+    this.allowMs1OnlyData = allowMs1OnlyData;
     return this;
   }
 
@@ -70,31 +66,23 @@ public class ImportLocalFilesSubmission {
    * @return allowMs1OnlyData
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Boolean getAllowMs1OnlyData() {
-        return allowMs1OnlyData.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_ALLOW_MS1_ONLY_DATA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Boolean> getAllowMs1OnlyData_JsonNullable() {
+  public Boolean isAllowMs1OnlyData() {
     return allowMs1OnlyData;
   }
-  
-  @JsonProperty(JSON_PROPERTY_ALLOW_MS1_ONLY_DATA)
-  public void setAllowMs1OnlyData_JsonNullable(JsonNullable<Boolean> allowMs1OnlyData) {
-    this.allowMs1OnlyData = allowMs1OnlyData;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_ALLOW_MS1_ONLY_DATA)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setAllowMs1OnlyData(Boolean allowMs1OnlyData) {
-    this.allowMs1OnlyData = JsonNullable.<Boolean>of(allowMs1OnlyData);
+    this.allowMs1OnlyData = allowMs1OnlyData;
   }
 
 
   public ImportLocalFilesSubmission ignoreFormulas(Boolean ignoreFormulas) {
-    this.ignoreFormulas = JsonNullable.<Boolean>of(ignoreFormulas);
+    this.ignoreFormulas = ignoreFormulas;
     return this;
   }
 
@@ -103,31 +91,23 @@ public class ImportLocalFilesSubmission {
    * @return ignoreFormulas
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Boolean getIgnoreFormulas() {
-        return ignoreFormulas.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_IGNORE_FORMULAS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Boolean> getIgnoreFormulas_JsonNullable() {
+  public Boolean isIgnoreFormulas() {
     return ignoreFormulas;
   }
-  
-  @JsonProperty(JSON_PROPERTY_IGNORE_FORMULAS)
-  public void setIgnoreFormulas_JsonNullable(JsonNullable<Boolean> ignoreFormulas) {
-    this.ignoreFormulas = ignoreFormulas;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_IGNORE_FORMULAS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setIgnoreFormulas(Boolean ignoreFormulas) {
-    this.ignoreFormulas = JsonNullable.<Boolean>of(ignoreFormulas);
+    this.ignoreFormulas = ignoreFormulas;
   }
 
 
   public ImportLocalFilesSubmission alignLCMSRuns(Boolean alignLCMSRuns) {
-    this.alignLCMSRuns = JsonNullable.<Boolean>of(alignLCMSRuns);
+    this.alignLCMSRuns = alignLCMSRuns;
     return this;
   }
 
@@ -136,26 +116,18 @@ public class ImportLocalFilesSubmission {
    * @return alignLCMSRuns
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Boolean getAlignLCMSRuns() {
-        return alignLCMSRuns.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_ALIGN_L_C_M_S_RUNS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Boolean> getAlignLCMSRuns_JsonNullable() {
+  public Boolean isAlignLCMSRuns() {
     return alignLCMSRuns;
   }
-  
-  @JsonProperty(JSON_PROPERTY_ALIGN_L_C_M_S_RUNS)
-  public void setAlignLCMSRuns_JsonNullable(JsonNullable<Boolean> alignLCMSRuns) {
-    this.alignLCMSRuns = alignLCMSRuns;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_ALIGN_L_C_M_S_RUNS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setAlignLCMSRuns(Boolean alignLCMSRuns) {
-    this.alignLCMSRuns = JsonNullable.<Boolean>of(alignLCMSRuns);
+    this.alignLCMSRuns = alignLCMSRuns;
   }
 
 
@@ -204,26 +176,15 @@ public class ImportLocalFilesSubmission {
       return false;
     }
     ImportLocalFilesSubmission importLocalFilesSubmission = (ImportLocalFilesSubmission) o;
-    return equalsNullable(this.allowMs1OnlyData, importLocalFilesSubmission.allowMs1OnlyData) &&
-        equalsNullable(this.ignoreFormulas, importLocalFilesSubmission.ignoreFormulas) &&
-        equalsNullable(this.alignLCMSRuns, importLocalFilesSubmission.alignLCMSRuns) &&
+    return Objects.equals(this.allowMs1OnlyData, importLocalFilesSubmission.allowMs1OnlyData) &&
+        Objects.equals(this.ignoreFormulas, importLocalFilesSubmission.ignoreFormulas) &&
+        Objects.equals(this.alignLCMSRuns, importLocalFilesSubmission.alignLCMSRuns) &&
         Objects.equals(this.inputPaths, importLocalFilesSubmission.inputPaths);
-  }
-
-  private static <T> boolean equalsNullable(JsonNullable<T> a, JsonNullable<T> b) {
-    return a == b || (a != null && b != null && a.isPresent() && b.isPresent() && Objects.deepEquals(a.get(), b.get()));
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(hashCodeNullable(allowMs1OnlyData), hashCodeNullable(ignoreFormulas), hashCodeNullable(alignLCMSRuns), inputPaths);
-  }
-
-  private static <T> int hashCodeNullable(JsonNullable<T> a) {
-    if (a == null) {
-      return 1;
-    }
-    return a.isPresent() ? Arrays.deepHashCode(new Object[]{a.get()}) : 31;
+    return Objects.hash(allowMs1OnlyData, ignoreFormulas, alignLCMSRuns, inputPaths);
   }
 
   @Override
@@ -282,18 +243,18 @@ public class ImportLocalFilesSubmission {
     StringJoiner joiner = new StringJoiner("&");
 
     // add `allowMs1OnlyData` to the URL query string
-    if (getAllowMs1OnlyData() != null) {
-      joiner.add(String.format("%sallowMs1OnlyData%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getAllowMs1OnlyData()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
+    if (isAllowMs1OnlyData() != null) {
+      joiner.add(String.format("%sallowMs1OnlyData%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isAllowMs1OnlyData()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
     }
 
     // add `ignoreFormulas` to the URL query string
-    if (getIgnoreFormulas() != null) {
-      joiner.add(String.format("%signoreFormulas%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getIgnoreFormulas()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
+    if (isIgnoreFormulas() != null) {
+      joiner.add(String.format("%signoreFormulas%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isIgnoreFormulas()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
     }
 
     // add `alignLCMSRuns` to the URL query string
-    if (getAlignLCMSRuns() != null) {
-      joiner.add(String.format("%salignLCMSRuns%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getAlignLCMSRuns()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
+    if (isAlignLCMSRuns() != null) {
+      joiner.add(String.format("%salignLCMSRuns%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isAlignLCMSRuns()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
     }
 
     // add `inputPaths` to the URL query string

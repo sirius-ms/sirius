@@ -26,10 +26,6 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FragmentNode;
 import java.util.Arrays;
-import org.openapitools.jackson.nullable.JsonNullable;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.openapitools.jackson.nullable.JsonNullable;
-import java.util.NoSuchElementException;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
@@ -51,10 +47,10 @@ public class LossEdge {
   private FragmentNode targetFragment;
 
   public static final String JSON_PROPERTY_MOLECULAR_FORMULA = "molecularFormula";
-  private JsonNullable<String> molecularFormula = JsonNullable.<String>undefined();
+  private String molecularFormula;
 
   public static final String JSON_PROPERTY_SCORE = "score";
-  private JsonNullable<Double> score = JsonNullable.<Double>undefined();
+  private Double score;
 
   public LossEdge() { 
   }
@@ -110,7 +106,7 @@ public class LossEdge {
 
 
   public LossEdge molecularFormula(String molecularFormula) {
-    this.molecularFormula = JsonNullable.<String>of(molecularFormula);
+    this.molecularFormula = molecularFormula;
     return this;
   }
 
@@ -119,31 +115,23 @@ public class LossEdge {
    * @return molecularFormula
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public String getMolecularFormula() {
-        return molecularFormula.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<String> getMolecularFormula_JsonNullable() {
+  public String getMolecularFormula() {
     return molecularFormula;
   }
-  
-  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
-  public void setMolecularFormula_JsonNullable(JsonNullable<String> molecularFormula) {
-    this.molecularFormula = molecularFormula;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMolecularFormula(String molecularFormula) {
-    this.molecularFormula = JsonNullable.<String>of(molecularFormula);
+    this.molecularFormula = molecularFormula;
   }
 
 
   public LossEdge score(Double score) {
-    this.score = JsonNullable.<Double>of(score);
+    this.score = score;
     return this;
   }
 
@@ -152,26 +140,18 @@ public class LossEdge {
    * @return score
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Double getScore() {
-        return score.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_SCORE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Double> getScore_JsonNullable() {
+  public Double getScore() {
     return score;
   }
-  
-  @JsonProperty(JSON_PROPERTY_SCORE)
-  public void setScore_JsonNullable(JsonNullable<Double> score) {
-    this.score = score;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_SCORE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setScore(Double score) {
-    this.score = JsonNullable.<Double>of(score);
+    this.score = score;
   }
 
 
@@ -189,24 +169,13 @@ public class LossEdge {
     LossEdge lossEdge = (LossEdge) o;
     return Objects.equals(this.sourceFragment, lossEdge.sourceFragment) &&
         Objects.equals(this.targetFragment, lossEdge.targetFragment) &&
-        equalsNullable(this.molecularFormula, lossEdge.molecularFormula) &&
-        equalsNullable(this.score, lossEdge.score);
-  }
-
-  private static <T> boolean equalsNullable(JsonNullable<T> a, JsonNullable<T> b) {
-    return a == b || (a != null && b != null && a.isPresent() && b.isPresent() && Objects.deepEquals(a.get(), b.get()));
+        Objects.equals(this.molecularFormula, lossEdge.molecularFormula) &&
+        Objects.equals(this.score, lossEdge.score);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sourceFragment, targetFragment, hashCodeNullable(molecularFormula), hashCodeNullable(score));
-  }
-
-  private static <T> int hashCodeNullable(JsonNullable<T> a) {
-    if (a == null) {
-      return 1;
-    }
-    return a.isPresent() ? Arrays.deepHashCode(new Object[]{a.get()}) : 31;
+    return Objects.hash(sourceFragment, targetFragment, molecularFormula, score);
   }
 
   @Override

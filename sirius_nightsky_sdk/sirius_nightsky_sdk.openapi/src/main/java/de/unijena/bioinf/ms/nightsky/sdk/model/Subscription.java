@@ -26,10 +26,6 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
-import org.openapitools.jackson.nullable.JsonNullable;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.openapitools.jackson.nullable.JsonNullable;
-import java.util.NoSuchElementException;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
@@ -62,43 +58,43 @@ public class Subscription {
   private String subscriberId;
 
   public static final String JSON_PROPERTY_SUBSCRIBER_NAME = "subscriberName";
-  private JsonNullable<String> subscriberName = JsonNullable.<String>undefined();
+  private String subscriberName;
 
   public static final String JSON_PROPERTY_EXPIRATION_DATE = "expirationDate";
-  private JsonNullable<OffsetDateTime> expirationDate = JsonNullable.<OffsetDateTime>undefined();
+  private OffsetDateTime expirationDate;
 
   public static final String JSON_PROPERTY_START_DATE = "startDate";
-  private JsonNullable<OffsetDateTime> startDate = JsonNullable.<OffsetDateTime>undefined();
+  private OffsetDateTime startDate;
 
   public static final String JSON_PROPERTY_COUNT_QUERIES = "countQueries";
-  private JsonNullable<Boolean> countQueries = JsonNullable.<Boolean>undefined();
+  private Boolean countQueries;
 
   public static final String JSON_PROPERTY_INSTANCE_LIMIT = "instanceLimit";
-  private JsonNullable<Integer> instanceLimit = JsonNullable.<Integer>undefined();
+  private Integer instanceLimit;
 
   public static final String JSON_PROPERTY_INSTANCE_HASH_RECORDING_TIME = "instanceHashRecordingTime";
-  private JsonNullable<Integer> instanceHashRecordingTime = JsonNullable.<Integer>undefined();
+  private Integer instanceHashRecordingTime;
 
   public static final String JSON_PROPERTY_MAX_QUERIES_PER_INSTANCE = "maxQueriesPerInstance";
-  private JsonNullable<Integer> maxQueriesPerInstance = JsonNullable.<Integer>undefined();
+  private Integer maxQueriesPerInstance;
 
   public static final String JSON_PROPERTY_MAX_USER_ACCOUNTS = "maxUserAccounts";
-  private JsonNullable<Integer> maxUserAccounts = JsonNullable.<Integer>undefined();
+  private Integer maxUserAccounts;
 
   public static final String JSON_PROPERTY_SERVICE_URL = "serviceUrl";
   private String serviceUrl;
 
   public static final String JSON_PROPERTY_DESCRIPTION = "description";
-  private JsonNullable<String> description = JsonNullable.<String>undefined();
+  private String description;
 
   public static final String JSON_PROPERTY_NAME = "name";
-  private JsonNullable<String> name = JsonNullable.<String>undefined();
+  private String name;
 
   public static final String JSON_PROPERTY_TOS = "tos";
-  private JsonNullable<String> tos = JsonNullable.<String>undefined();
+  private String tos;
 
   public static final String JSON_PROPERTY_PP = "pp";
-  private JsonNullable<String> pp = JsonNullable.<String>undefined();
+  private String pp;
 
   public Subscription() { 
   }
@@ -154,7 +150,7 @@ public class Subscription {
 
 
   public Subscription subscriberName(String subscriberName) {
-    this.subscriberName = JsonNullable.<String>of(subscriberName);
+    this.subscriberName = subscriberName;
     return this;
   }
 
@@ -163,31 +159,23 @@ public class Subscription {
    * @return subscriberName
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public String getSubscriberName() {
-        return subscriberName.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_SUBSCRIBER_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<String> getSubscriberName_JsonNullable() {
+  public String getSubscriberName() {
     return subscriberName;
   }
-  
-  @JsonProperty(JSON_PROPERTY_SUBSCRIBER_NAME)
-  public void setSubscriberName_JsonNullable(JsonNullable<String> subscriberName) {
-    this.subscriberName = subscriberName;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_SUBSCRIBER_NAME)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSubscriberName(String subscriberName) {
-    this.subscriberName = JsonNullable.<String>of(subscriberName);
+    this.subscriberName = subscriberName;
   }
 
 
   public Subscription expirationDate(OffsetDateTime expirationDate) {
-    this.expirationDate = JsonNullable.<OffsetDateTime>of(expirationDate);
+    this.expirationDate = expirationDate;
     return this;
   }
 
@@ -196,31 +184,23 @@ public class Subscription {
    * @return expirationDate
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public OffsetDateTime getExpirationDate() {
-        return expirationDate.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_EXPIRATION_DATE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<OffsetDateTime> getExpirationDate_JsonNullable() {
+  public OffsetDateTime getExpirationDate() {
     return expirationDate;
   }
-  
-  @JsonProperty(JSON_PROPERTY_EXPIRATION_DATE)
-  public void setExpirationDate_JsonNullable(JsonNullable<OffsetDateTime> expirationDate) {
-    this.expirationDate = expirationDate;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_EXPIRATION_DATE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setExpirationDate(OffsetDateTime expirationDate) {
-    this.expirationDate = JsonNullable.<OffsetDateTime>of(expirationDate);
+    this.expirationDate = expirationDate;
   }
 
 
   public Subscription startDate(OffsetDateTime startDate) {
-    this.startDate = JsonNullable.<OffsetDateTime>of(startDate);
+    this.startDate = startDate;
     return this;
   }
 
@@ -229,31 +209,23 @@ public class Subscription {
    * @return startDate
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public OffsetDateTime getStartDate() {
-        return startDate.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_START_DATE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<OffsetDateTime> getStartDate_JsonNullable() {
+  public OffsetDateTime getStartDate() {
     return startDate;
   }
-  
-  @JsonProperty(JSON_PROPERTY_START_DATE)
-  public void setStartDate_JsonNullable(JsonNullable<OffsetDateTime> startDate) {
-    this.startDate = startDate;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_START_DATE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setStartDate(OffsetDateTime startDate) {
-    this.startDate = JsonNullable.<OffsetDateTime>of(startDate);
+    this.startDate = startDate;
   }
 
 
   public Subscription countQueries(Boolean countQueries) {
-    this.countQueries = JsonNullable.<Boolean>of(countQueries);
+    this.countQueries = countQueries;
     return this;
   }
 
@@ -262,31 +234,23 @@ public class Subscription {
    * @return countQueries
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Boolean getCountQueries() {
-        return countQueries.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_COUNT_QUERIES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Boolean> getCountQueries_JsonNullable() {
+  public Boolean isCountQueries() {
     return countQueries;
   }
-  
-  @JsonProperty(JSON_PROPERTY_COUNT_QUERIES)
-  public void setCountQueries_JsonNullable(JsonNullable<Boolean> countQueries) {
-    this.countQueries = countQueries;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_COUNT_QUERIES)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setCountQueries(Boolean countQueries) {
-    this.countQueries = JsonNullable.<Boolean>of(countQueries);
+    this.countQueries = countQueries;
   }
 
 
   public Subscription instanceLimit(Integer instanceLimit) {
-    this.instanceLimit = JsonNullable.<Integer>of(instanceLimit);
+    this.instanceLimit = instanceLimit;
     return this;
   }
 
@@ -295,31 +259,23 @@ public class Subscription {
    * @return instanceLimit
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Integer getInstanceLimit() {
-        return instanceLimit.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_INSTANCE_LIMIT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Integer> getInstanceLimit_JsonNullable() {
+  public Integer getInstanceLimit() {
     return instanceLimit;
   }
-  
-  @JsonProperty(JSON_PROPERTY_INSTANCE_LIMIT)
-  public void setInstanceLimit_JsonNullable(JsonNullable<Integer> instanceLimit) {
-    this.instanceLimit = instanceLimit;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_INSTANCE_LIMIT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setInstanceLimit(Integer instanceLimit) {
-    this.instanceLimit = JsonNullable.<Integer>of(instanceLimit);
+    this.instanceLimit = instanceLimit;
   }
 
 
   public Subscription instanceHashRecordingTime(Integer instanceHashRecordingTime) {
-    this.instanceHashRecordingTime = JsonNullable.<Integer>of(instanceHashRecordingTime);
+    this.instanceHashRecordingTime = instanceHashRecordingTime;
     return this;
   }
 
@@ -328,31 +284,23 @@ public class Subscription {
    * @return instanceHashRecordingTime
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Integer getInstanceHashRecordingTime() {
-        return instanceHashRecordingTime.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_INSTANCE_HASH_RECORDING_TIME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Integer> getInstanceHashRecordingTime_JsonNullable() {
+  public Integer getInstanceHashRecordingTime() {
     return instanceHashRecordingTime;
   }
-  
-  @JsonProperty(JSON_PROPERTY_INSTANCE_HASH_RECORDING_TIME)
-  public void setInstanceHashRecordingTime_JsonNullable(JsonNullable<Integer> instanceHashRecordingTime) {
-    this.instanceHashRecordingTime = instanceHashRecordingTime;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_INSTANCE_HASH_RECORDING_TIME)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setInstanceHashRecordingTime(Integer instanceHashRecordingTime) {
-    this.instanceHashRecordingTime = JsonNullable.<Integer>of(instanceHashRecordingTime);
+    this.instanceHashRecordingTime = instanceHashRecordingTime;
   }
 
 
   public Subscription maxQueriesPerInstance(Integer maxQueriesPerInstance) {
-    this.maxQueriesPerInstance = JsonNullable.<Integer>of(maxQueriesPerInstance);
+    this.maxQueriesPerInstance = maxQueriesPerInstance;
     return this;
   }
 
@@ -361,31 +309,23 @@ public class Subscription {
    * @return maxQueriesPerInstance
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Integer getMaxQueriesPerInstance() {
-        return maxQueriesPerInstance.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_MAX_QUERIES_PER_INSTANCE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Integer> getMaxQueriesPerInstance_JsonNullable() {
+  public Integer getMaxQueriesPerInstance() {
     return maxQueriesPerInstance;
   }
-  
-  @JsonProperty(JSON_PROPERTY_MAX_QUERIES_PER_INSTANCE)
-  public void setMaxQueriesPerInstance_JsonNullable(JsonNullable<Integer> maxQueriesPerInstance) {
-    this.maxQueriesPerInstance = maxQueriesPerInstance;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_MAX_QUERIES_PER_INSTANCE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMaxQueriesPerInstance(Integer maxQueriesPerInstance) {
-    this.maxQueriesPerInstance = JsonNullable.<Integer>of(maxQueriesPerInstance);
+    this.maxQueriesPerInstance = maxQueriesPerInstance;
   }
 
 
   public Subscription maxUserAccounts(Integer maxUserAccounts) {
-    this.maxUserAccounts = JsonNullable.<Integer>of(maxUserAccounts);
+    this.maxUserAccounts = maxUserAccounts;
     return this;
   }
 
@@ -394,26 +334,18 @@ public class Subscription {
    * @return maxUserAccounts
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Integer getMaxUserAccounts() {
-        return maxUserAccounts.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_MAX_USER_ACCOUNTS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Integer> getMaxUserAccounts_JsonNullable() {
+  public Integer getMaxUserAccounts() {
     return maxUserAccounts;
   }
-  
-  @JsonProperty(JSON_PROPERTY_MAX_USER_ACCOUNTS)
-  public void setMaxUserAccounts_JsonNullable(JsonNullable<Integer> maxUserAccounts) {
-    this.maxUserAccounts = maxUserAccounts;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_MAX_USER_ACCOUNTS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMaxUserAccounts(Integer maxUserAccounts) {
-    this.maxUserAccounts = JsonNullable.<Integer>of(maxUserAccounts);
+    this.maxUserAccounts = maxUserAccounts;
   }
 
 
@@ -443,7 +375,7 @@ public class Subscription {
 
 
   public Subscription description(String description) {
-    this.description = JsonNullable.<String>of(description);
+    this.description = description;
     return this;
   }
 
@@ -452,31 +384,23 @@ public class Subscription {
    * @return description
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public String getDescription() {
-        return description.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_DESCRIPTION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<String> getDescription_JsonNullable() {
+  public String getDescription() {
     return description;
   }
-  
-  @JsonProperty(JSON_PROPERTY_DESCRIPTION)
-  public void setDescription_JsonNullable(JsonNullable<String> description) {
-    this.description = description;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_DESCRIPTION)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setDescription(String description) {
-    this.description = JsonNullable.<String>of(description);
+    this.description = description;
   }
 
 
   public Subscription name(String name) {
-    this.name = JsonNullable.<String>of(name);
+    this.name = name;
     return this;
   }
 
@@ -485,31 +409,23 @@ public class Subscription {
    * @return name
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public String getName() {
-        return name.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<String> getName_JsonNullable() {
+  public String getName() {
     return name;
   }
-  
-  @JsonProperty(JSON_PROPERTY_NAME)
-  public void setName_JsonNullable(JsonNullable<String> name) {
-    this.name = name;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setName(String name) {
-    this.name = JsonNullable.<String>of(name);
+    this.name = name;
   }
 
 
   public Subscription tos(String tos) {
-    this.tos = JsonNullable.<String>of(tos);
+    this.tos = tos;
     return this;
   }
 
@@ -518,31 +434,23 @@ public class Subscription {
    * @return tos
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public String getTos() {
-        return tos.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_TOS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<String> getTos_JsonNullable() {
+  public String getTos() {
     return tos;
   }
-  
-  @JsonProperty(JSON_PROPERTY_TOS)
-  public void setTos_JsonNullable(JsonNullable<String> tos) {
-    this.tos = tos;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_TOS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setTos(String tos) {
-    this.tos = JsonNullable.<String>of(tos);
+    this.tos = tos;
   }
 
 
   public Subscription pp(String pp) {
-    this.pp = JsonNullable.<String>of(pp);
+    this.pp = pp;
     return this;
   }
 
@@ -551,26 +459,18 @@ public class Subscription {
    * @return pp
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public String getPp() {
-        return pp.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_PP)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<String> getPp_JsonNullable() {
+  public String getPp() {
     return pp;
   }
-  
-  @JsonProperty(JSON_PROPERTY_PP)
-  public void setPp_JsonNullable(JsonNullable<String> pp) {
-    this.pp = pp;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_PP)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setPp(String pp) {
-    this.pp = JsonNullable.<String>of(pp);
+    this.pp = pp;
   }
 
 
@@ -588,35 +488,24 @@ public class Subscription {
     Subscription subscription = (Subscription) o;
     return Objects.equals(this.sid, subscription.sid) &&
         Objects.equals(this.subscriberId, subscription.subscriberId) &&
-        equalsNullable(this.subscriberName, subscription.subscriberName) &&
-        equalsNullable(this.expirationDate, subscription.expirationDate) &&
-        equalsNullable(this.startDate, subscription.startDate) &&
-        equalsNullable(this.countQueries, subscription.countQueries) &&
-        equalsNullable(this.instanceLimit, subscription.instanceLimit) &&
-        equalsNullable(this.instanceHashRecordingTime, subscription.instanceHashRecordingTime) &&
-        equalsNullable(this.maxQueriesPerInstance, subscription.maxQueriesPerInstance) &&
-        equalsNullable(this.maxUserAccounts, subscription.maxUserAccounts) &&
+        Objects.equals(this.subscriberName, subscription.subscriberName) &&
+        Objects.equals(this.expirationDate, subscription.expirationDate) &&
+        Objects.equals(this.startDate, subscription.startDate) &&
+        Objects.equals(this.countQueries, subscription.countQueries) &&
+        Objects.equals(this.instanceLimit, subscription.instanceLimit) &&
+        Objects.equals(this.instanceHashRecordingTime, subscription.instanceHashRecordingTime) &&
+        Objects.equals(this.maxQueriesPerInstance, subscription.maxQueriesPerInstance) &&
+        Objects.equals(this.maxUserAccounts, subscription.maxUserAccounts) &&
         Objects.equals(this.serviceUrl, subscription.serviceUrl) &&
-        equalsNullable(this.description, subscription.description) &&
-        equalsNullable(this.name, subscription.name) &&
-        equalsNullable(this.tos, subscription.tos) &&
-        equalsNullable(this.pp, subscription.pp);
-  }
-
-  private static <T> boolean equalsNullable(JsonNullable<T> a, JsonNullable<T> b) {
-    return a == b || (a != null && b != null && a.isPresent() && b.isPresent() && Objects.deepEquals(a.get(), b.get()));
+        Objects.equals(this.description, subscription.description) &&
+        Objects.equals(this.name, subscription.name) &&
+        Objects.equals(this.tos, subscription.tos) &&
+        Objects.equals(this.pp, subscription.pp);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sid, subscriberId, hashCodeNullable(subscriberName), hashCodeNullable(expirationDate), hashCodeNullable(startDate), hashCodeNullable(countQueries), hashCodeNullable(instanceLimit), hashCodeNullable(instanceHashRecordingTime), hashCodeNullable(maxQueriesPerInstance), hashCodeNullable(maxUserAccounts), serviceUrl, hashCodeNullable(description), hashCodeNullable(name), hashCodeNullable(tos), hashCodeNullable(pp));
-  }
-
-  private static <T> int hashCodeNullable(JsonNullable<T> a) {
-    if (a == null) {
-      return 1;
-    }
-    return a.isPresent() ? Arrays.deepHashCode(new Object[]{a.get()}) : 31;
+    return Objects.hash(sid, subscriberId, subscriberName, expirationDate, startDate, countQueries, instanceLimit, instanceHashRecordingTime, maxQueriesPerInstance, maxUserAccounts, serviceUrl, description, name, tos, pp);
   }
 
   @Override
@@ -711,8 +600,8 @@ public class Subscription {
     }
 
     // add `countQueries` to the URL query string
-    if (getCountQueries() != null) {
-      joiner.add(String.format("%scountQueries%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getCountQueries()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
+    if (isCountQueries() != null) {
+      joiner.add(String.format("%scountQueries%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isCountQueries()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
     }
 
     // add `instanceLimit` to the URL query string

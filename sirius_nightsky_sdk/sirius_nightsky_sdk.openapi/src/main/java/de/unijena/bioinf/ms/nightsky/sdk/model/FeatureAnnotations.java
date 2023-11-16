@@ -28,10 +28,6 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.CompoundClasses;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FormulaCandidate;
 import de.unijena.bioinf.ms.nightsky.sdk.model.StructureCandidateScored;
 import java.util.Arrays;
-import org.openapitools.jackson.nullable.JsonNullable;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.openapitools.jackson.nullable.JsonNullable;
-import java.util.NoSuchElementException;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
@@ -46,19 +42,19 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class FeatureAnnotations {
   public static final String JSON_PROPERTY_FORMULA_ANNOTATION = "formulaAnnotation";
-  private JsonNullable<FormulaCandidate> formulaAnnotation = JsonNullable.<FormulaCandidate>undefined();
+  private FormulaCandidate formulaAnnotation;
 
   public static final String JSON_PROPERTY_STRUCTURE_ANNOTATION = "structureAnnotation";
-  private JsonNullable<StructureCandidateScored> structureAnnotation = JsonNullable.<StructureCandidateScored>undefined();
+  private StructureCandidateScored structureAnnotation;
 
   public static final String JSON_PROPERTY_COMPOUND_CLASS_ANNOTATION = "compoundClassAnnotation";
-  private JsonNullable<CompoundClasses> compoundClassAnnotation = JsonNullable.<CompoundClasses>undefined();
+  private CompoundClasses compoundClassAnnotation;
 
   public FeatureAnnotations() { 
   }
 
   public FeatureAnnotations formulaAnnotation(FormulaCandidate formulaAnnotation) {
-    this.formulaAnnotation = JsonNullable.<FormulaCandidate>of(formulaAnnotation);
+    this.formulaAnnotation = formulaAnnotation;
     return this;
   }
 
@@ -67,31 +63,23 @@ public class FeatureAnnotations {
    * @return formulaAnnotation
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public FormulaCandidate getFormulaAnnotation() {
-        return formulaAnnotation.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_FORMULA_ANNOTATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<FormulaCandidate> getFormulaAnnotation_JsonNullable() {
+  public FormulaCandidate getFormulaAnnotation() {
     return formulaAnnotation;
   }
-  
-  @JsonProperty(JSON_PROPERTY_FORMULA_ANNOTATION)
-  public void setFormulaAnnotation_JsonNullable(JsonNullable<FormulaCandidate> formulaAnnotation) {
-    this.formulaAnnotation = formulaAnnotation;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_FORMULA_ANNOTATION)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setFormulaAnnotation(FormulaCandidate formulaAnnotation) {
-    this.formulaAnnotation = JsonNullable.<FormulaCandidate>of(formulaAnnotation);
+    this.formulaAnnotation = formulaAnnotation;
   }
 
 
   public FeatureAnnotations structureAnnotation(StructureCandidateScored structureAnnotation) {
-    this.structureAnnotation = JsonNullable.<StructureCandidateScored>of(structureAnnotation);
+    this.structureAnnotation = structureAnnotation;
     return this;
   }
 
@@ -100,31 +88,23 @@ public class FeatureAnnotations {
    * @return structureAnnotation
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public StructureCandidateScored getStructureAnnotation() {
-        return structureAnnotation.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_STRUCTURE_ANNOTATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<StructureCandidateScored> getStructureAnnotation_JsonNullable() {
+  public StructureCandidateScored getStructureAnnotation() {
     return structureAnnotation;
   }
-  
-  @JsonProperty(JSON_PROPERTY_STRUCTURE_ANNOTATION)
-  public void setStructureAnnotation_JsonNullable(JsonNullable<StructureCandidateScored> structureAnnotation) {
-    this.structureAnnotation = structureAnnotation;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_STRUCTURE_ANNOTATION)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setStructureAnnotation(StructureCandidateScored structureAnnotation) {
-    this.structureAnnotation = JsonNullable.<StructureCandidateScored>of(structureAnnotation);
+    this.structureAnnotation = structureAnnotation;
   }
 
 
   public FeatureAnnotations compoundClassAnnotation(CompoundClasses compoundClassAnnotation) {
-    this.compoundClassAnnotation = JsonNullable.<CompoundClasses>of(compoundClassAnnotation);
+    this.compoundClassAnnotation = compoundClassAnnotation;
     return this;
   }
 
@@ -133,26 +113,18 @@ public class FeatureAnnotations {
    * @return compoundClassAnnotation
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public CompoundClasses getCompoundClassAnnotation() {
-        return compoundClassAnnotation.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_COMPOUND_CLASS_ANNOTATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<CompoundClasses> getCompoundClassAnnotation_JsonNullable() {
+  public CompoundClasses getCompoundClassAnnotation() {
     return compoundClassAnnotation;
   }
-  
-  @JsonProperty(JSON_PROPERTY_COMPOUND_CLASS_ANNOTATION)
-  public void setCompoundClassAnnotation_JsonNullable(JsonNullable<CompoundClasses> compoundClassAnnotation) {
-    this.compoundClassAnnotation = compoundClassAnnotation;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_COMPOUND_CLASS_ANNOTATION)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setCompoundClassAnnotation(CompoundClasses compoundClassAnnotation) {
-    this.compoundClassAnnotation = JsonNullable.<CompoundClasses>of(compoundClassAnnotation);
+    this.compoundClassAnnotation = compoundClassAnnotation;
   }
 
 
@@ -168,25 +140,14 @@ public class FeatureAnnotations {
       return false;
     }
     FeatureAnnotations featureAnnotations = (FeatureAnnotations) o;
-    return equalsNullable(this.formulaAnnotation, featureAnnotations.formulaAnnotation) &&
-        equalsNullable(this.structureAnnotation, featureAnnotations.structureAnnotation) &&
-        equalsNullable(this.compoundClassAnnotation, featureAnnotations.compoundClassAnnotation);
-  }
-
-  private static <T> boolean equalsNullable(JsonNullable<T> a, JsonNullable<T> b) {
-    return a == b || (a != null && b != null && a.isPresent() && b.isPresent() && Objects.deepEquals(a.get(), b.get()));
+    return Objects.equals(this.formulaAnnotation, featureAnnotations.formulaAnnotation) &&
+        Objects.equals(this.structureAnnotation, featureAnnotations.structureAnnotation) &&
+        Objects.equals(this.compoundClassAnnotation, featureAnnotations.compoundClassAnnotation);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(hashCodeNullable(formulaAnnotation), hashCodeNullable(structureAnnotation), hashCodeNullable(compoundClassAnnotation));
-  }
-
-  private static <T> int hashCodeNullable(JsonNullable<T> a) {
-    if (a == null) {
-      return 1;
-    }
-    return a.isPresent() ? Arrays.deepHashCode(new Object[]{a.get()}) : 31;
+    return Objects.hash(formulaAnnotation, structureAnnotation, compoundClassAnnotation);
   }
 
   @Override

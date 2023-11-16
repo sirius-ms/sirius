@@ -25,10 +25,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.Arrays;
-import org.openapitools.jackson.nullable.JsonNullable;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.openapitools.jackson.nullable.JsonNullable;
-import java.util.NoSuchElementException;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
@@ -51,25 +47,25 @@ public class FragmentNode {
   private Integer id;
 
   public static final String JSON_PROPERTY_MOLECULAR_FORMULA = "molecularFormula";
-  private JsonNullable<String> molecularFormula = JsonNullable.<String>undefined();
+  private String molecularFormula;
 
   public static final String JSON_PROPERTY_ION_TYPE = "ionType";
-  private JsonNullable<String> ionType = JsonNullable.<String>undefined();
+  private String ionType;
 
   public static final String JSON_PROPERTY_MASS_DEVIATION_DA = "massDeviationDa";
-  private JsonNullable<Double> massDeviationDa = JsonNullable.<Double>undefined();
+  private Double massDeviationDa;
 
   public static final String JSON_PROPERTY_MASS_DEVIATION_PPM = "massDeviationPpm";
-  private JsonNullable<Double> massDeviationPpm = JsonNullable.<Double>undefined();
+  private Double massDeviationPpm;
 
   public static final String JSON_PROPERTY_SCORE = "score";
-  private JsonNullable<Double> score = JsonNullable.<Double>undefined();
+  private Double score;
 
   public static final String JSON_PROPERTY_INTENSITY = "intensity";
-  private JsonNullable<Double> intensity = JsonNullable.<Double>undefined();
+  private Double intensity;
 
   public static final String JSON_PROPERTY_MZ = "mz";
-  private JsonNullable<Double> mz = JsonNullable.<Double>undefined();
+  private Double mz;
 
   public FragmentNode() { 
   }
@@ -100,7 +96,7 @@ public class FragmentNode {
 
 
   public FragmentNode molecularFormula(String molecularFormula) {
-    this.molecularFormula = JsonNullable.<String>of(molecularFormula);
+    this.molecularFormula = molecularFormula;
     return this;
   }
 
@@ -109,31 +105,23 @@ public class FragmentNode {
    * @return molecularFormula
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public String getMolecularFormula() {
-        return molecularFormula.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<String> getMolecularFormula_JsonNullable() {
+  public String getMolecularFormula() {
     return molecularFormula;
   }
-  
-  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
-  public void setMolecularFormula_JsonNullable(JsonNullable<String> molecularFormula) {
-    this.molecularFormula = molecularFormula;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMolecularFormula(String molecularFormula) {
-    this.molecularFormula = JsonNullable.<String>of(molecularFormula);
+    this.molecularFormula = molecularFormula;
   }
 
 
   public FragmentNode ionType(String ionType) {
-    this.ionType = JsonNullable.<String>of(ionType);
+    this.ionType = ionType;
     return this;
   }
 
@@ -142,31 +130,23 @@ public class FragmentNode {
    * @return ionType
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public String getIonType() {
-        return ionType.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_ION_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<String> getIonType_JsonNullable() {
+  public String getIonType() {
     return ionType;
   }
-  
-  @JsonProperty(JSON_PROPERTY_ION_TYPE)
-  public void setIonType_JsonNullable(JsonNullable<String> ionType) {
-    this.ionType = ionType;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_ION_TYPE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setIonType(String ionType) {
-    this.ionType = JsonNullable.<String>of(ionType);
+    this.ionType = ionType;
   }
 
 
   public FragmentNode massDeviationDa(Double massDeviationDa) {
-    this.massDeviationDa = JsonNullable.<Double>of(massDeviationDa);
+    this.massDeviationDa = massDeviationDa;
     return this;
   }
 
@@ -175,31 +155,23 @@ public class FragmentNode {
    * @return massDeviationDa
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Double getMassDeviationDa() {
-        return massDeviationDa.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_MASS_DEVIATION_DA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Double> getMassDeviationDa_JsonNullable() {
+  public Double getMassDeviationDa() {
     return massDeviationDa;
   }
-  
-  @JsonProperty(JSON_PROPERTY_MASS_DEVIATION_DA)
-  public void setMassDeviationDa_JsonNullable(JsonNullable<Double> massDeviationDa) {
-    this.massDeviationDa = massDeviationDa;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_MASS_DEVIATION_DA)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMassDeviationDa(Double massDeviationDa) {
-    this.massDeviationDa = JsonNullable.<Double>of(massDeviationDa);
+    this.massDeviationDa = massDeviationDa;
   }
 
 
   public FragmentNode massDeviationPpm(Double massDeviationPpm) {
-    this.massDeviationPpm = JsonNullable.<Double>of(massDeviationPpm);
+    this.massDeviationPpm = massDeviationPpm;
     return this;
   }
 
@@ -208,31 +180,23 @@ public class FragmentNode {
    * @return massDeviationPpm
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Double getMassDeviationPpm() {
-        return massDeviationPpm.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_MASS_DEVIATION_PPM)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Double> getMassDeviationPpm_JsonNullable() {
+  public Double getMassDeviationPpm() {
     return massDeviationPpm;
   }
-  
-  @JsonProperty(JSON_PROPERTY_MASS_DEVIATION_PPM)
-  public void setMassDeviationPpm_JsonNullable(JsonNullable<Double> massDeviationPpm) {
-    this.massDeviationPpm = massDeviationPpm;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_MASS_DEVIATION_PPM)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMassDeviationPpm(Double massDeviationPpm) {
-    this.massDeviationPpm = JsonNullable.<Double>of(massDeviationPpm);
+    this.massDeviationPpm = massDeviationPpm;
   }
 
 
   public FragmentNode score(Double score) {
-    this.score = JsonNullable.<Double>of(score);
+    this.score = score;
     return this;
   }
 
@@ -241,31 +205,23 @@ public class FragmentNode {
    * @return score
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Double getScore() {
-        return score.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_SCORE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Double> getScore_JsonNullable() {
+  public Double getScore() {
     return score;
   }
-  
-  @JsonProperty(JSON_PROPERTY_SCORE)
-  public void setScore_JsonNullable(JsonNullable<Double> score) {
-    this.score = score;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_SCORE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setScore(Double score) {
-    this.score = JsonNullable.<Double>of(score);
+    this.score = score;
   }
 
 
   public FragmentNode intensity(Double intensity) {
-    this.intensity = JsonNullable.<Double>of(intensity);
+    this.intensity = intensity;
     return this;
   }
 
@@ -274,31 +230,23 @@ public class FragmentNode {
    * @return intensity
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Double getIntensity() {
-        return intensity.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_INTENSITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Double> getIntensity_JsonNullable() {
+  public Double getIntensity() {
     return intensity;
   }
-  
-  @JsonProperty(JSON_PROPERTY_INTENSITY)
-  public void setIntensity_JsonNullable(JsonNullable<Double> intensity) {
-    this.intensity = intensity;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_INTENSITY)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setIntensity(Double intensity) {
-    this.intensity = JsonNullable.<Double>of(intensity);
+    this.intensity = intensity;
   }
 
 
   public FragmentNode mz(Double mz) {
-    this.mz = JsonNullable.<Double>of(mz);
+    this.mz = mz;
     return this;
   }
 
@@ -307,26 +255,18 @@ public class FragmentNode {
    * @return mz
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Double getMz() {
-        return mz.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_MZ)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Double> getMz_JsonNullable() {
+  public Double getMz() {
     return mz;
   }
-  
-  @JsonProperty(JSON_PROPERTY_MZ)
-  public void setMz_JsonNullable(JsonNullable<Double> mz) {
-    this.mz = mz;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_MZ)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMz(Double mz) {
-    this.mz = JsonNullable.<Double>of(mz);
+    this.mz = mz;
   }
 
 
@@ -343,29 +283,18 @@ public class FragmentNode {
     }
     FragmentNode fragmentNode = (FragmentNode) o;
     return Objects.equals(this.id, fragmentNode.id) &&
-        equalsNullable(this.molecularFormula, fragmentNode.molecularFormula) &&
-        equalsNullable(this.ionType, fragmentNode.ionType) &&
-        equalsNullable(this.massDeviationDa, fragmentNode.massDeviationDa) &&
-        equalsNullable(this.massDeviationPpm, fragmentNode.massDeviationPpm) &&
-        equalsNullable(this.score, fragmentNode.score) &&
-        equalsNullable(this.intensity, fragmentNode.intensity) &&
-        equalsNullable(this.mz, fragmentNode.mz);
-  }
-
-  private static <T> boolean equalsNullable(JsonNullable<T> a, JsonNullable<T> b) {
-    return a == b || (a != null && b != null && a.isPresent() && b.isPresent() && Objects.deepEquals(a.get(), b.get()));
+        Objects.equals(this.molecularFormula, fragmentNode.molecularFormula) &&
+        Objects.equals(this.ionType, fragmentNode.ionType) &&
+        Objects.equals(this.massDeviationDa, fragmentNode.massDeviationDa) &&
+        Objects.equals(this.massDeviationPpm, fragmentNode.massDeviationPpm) &&
+        Objects.equals(this.score, fragmentNode.score) &&
+        Objects.equals(this.intensity, fragmentNode.intensity) &&
+        Objects.equals(this.mz, fragmentNode.mz);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, hashCodeNullable(molecularFormula), hashCodeNullable(ionType), hashCodeNullable(massDeviationDa), hashCodeNullable(massDeviationPpm), hashCodeNullable(score), hashCodeNullable(intensity), hashCodeNullable(mz));
-  }
-
-  private static <T> int hashCodeNullable(JsonNullable<T> a) {
-    if (a == null) {
-      return 1;
-    }
-    return a.isPresent() ? Arrays.deepHashCode(new Object[]{a.get()}) : 31;
+    return Objects.hash(id, molecularFormula, ionType, massDeviationDa, massDeviationPpm, score, intensity, mz);
   }
 
   @Override

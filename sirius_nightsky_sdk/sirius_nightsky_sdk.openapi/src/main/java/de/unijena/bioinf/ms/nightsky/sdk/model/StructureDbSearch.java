@@ -170,7 +170,7 @@ public class StructureDbSearch {
   @JsonProperty(JSON_PROPERTY_ENABLED)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Boolean getEnabled() {
+  public Boolean isEnabled() {
     return enabled;
   }
 
@@ -228,7 +228,7 @@ public class StructureDbSearch {
   @JsonProperty(JSON_PROPERTY_TAG_LIPIDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Boolean getTagLipids() {
+  public Boolean isTagLipids() {
     return tagLipids;
   }
 
@@ -317,8 +317,8 @@ public class StructureDbSearch {
     StringJoiner joiner = new StringJoiner("&");
 
     // add `enabled` to the URL query string
-    if (getEnabled() != null) {
-      joiner.add(String.format("%senabled%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getEnabled()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
+    if (isEnabled() != null) {
+      joiner.add(String.format("%senabled%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isEnabled()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
     }
 
     // add `structureSearchDBs` to the URL query string
@@ -331,8 +331,8 @@ public class StructureDbSearch {
     }
 
     // add `tagLipids` to the URL query string
-    if (getTagLipids() != null) {
-      joiner.add(String.format("%stagLipids%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getTagLipids()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
+    if (isTagLipids() != null) {
+      joiner.add(String.format("%stagLipids%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isTagLipids()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
     }
 
     return joiner.toString();

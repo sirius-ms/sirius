@@ -77,7 +77,7 @@ public class Zodiac {
   @JsonProperty(JSON_PROPERTY_ENABLED)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Boolean getEnabled() {
+  public Boolean isEnabled() {
     return enabled;
   }
 
@@ -152,7 +152,7 @@ public class Zodiac {
   @JsonProperty(JSON_PROPERTY_RUN_IN_TWO_STEPS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Boolean getRunInTwoSteps() {
+  public Boolean isRunInTwoSteps() {
     return runInTwoSteps;
   }
 
@@ -297,8 +297,8 @@ public class Zodiac {
     StringJoiner joiner = new StringJoiner("&");
 
     // add `enabled` to the URL query string
-    if (getEnabled() != null) {
-      joiner.add(String.format("%senabled%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getEnabled()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
+    if (isEnabled() != null) {
+      joiner.add(String.format("%senabled%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isEnabled()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
     }
 
     // add `consideredCandidatesAt300Mz` to the URL query string
@@ -312,8 +312,8 @@ public class Zodiac {
     }
 
     // add `runInTwoSteps` to the URL query string
-    if (getRunInTwoSteps() != null) {
-      joiner.add(String.format("%srunInTwoSteps%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getRunInTwoSteps()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
+    if (isRunInTwoSteps() != null) {
+      joiner.add(String.format("%srunInTwoSteps%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isRunInTwoSteps()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
     }
 
     // add `edgeFilterThresholds` to the URL query string

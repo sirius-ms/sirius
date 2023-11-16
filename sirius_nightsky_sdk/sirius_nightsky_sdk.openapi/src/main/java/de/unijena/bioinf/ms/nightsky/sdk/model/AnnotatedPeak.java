@@ -25,10 +25,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.Arrays;
-import org.openapitools.jackson.nullable.JsonNullable;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.openapitools.jackson.nullable.JsonNullable;
-import java.util.NoSuchElementException;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
@@ -49,7 +45,7 @@ public class AnnotatedPeak {
   private Double intensity;
 
   public static final String JSON_PROPERTY_PEAK_ANNOTATION = "peakAnnotation";
-  private JsonNullable<Object> peakAnnotation = JsonNullable.<Object>undefined();
+  private Object peakAnnotation;
 
   public AnnotatedPeak() { 
   }
@@ -105,7 +101,7 @@ public class AnnotatedPeak {
 
 
   public AnnotatedPeak peakAnnotation(Object peakAnnotation) {
-    this.peakAnnotation = JsonNullable.<Object>of(peakAnnotation);
+    this.peakAnnotation = peakAnnotation;
     return this;
   }
 
@@ -114,26 +110,18 @@ public class AnnotatedPeak {
    * @return peakAnnotation
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Object getPeakAnnotation() {
-        return peakAnnotation.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_PEAK_ANNOTATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Object> getPeakAnnotation_JsonNullable() {
+  public Object getPeakAnnotation() {
     return peakAnnotation;
   }
-  
-  @JsonProperty(JSON_PROPERTY_PEAK_ANNOTATION)
-  public void setPeakAnnotation_JsonNullable(JsonNullable<Object> peakAnnotation) {
-    this.peakAnnotation = peakAnnotation;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_PEAK_ANNOTATION)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setPeakAnnotation(Object peakAnnotation) {
-    this.peakAnnotation = JsonNullable.<Object>of(peakAnnotation);
+    this.peakAnnotation = peakAnnotation;
   }
 
 
@@ -151,23 +139,12 @@ public class AnnotatedPeak {
     AnnotatedPeak annotatedPeak = (AnnotatedPeak) o;
     return Objects.equals(this.mass, annotatedPeak.mass) &&
         Objects.equals(this.intensity, annotatedPeak.intensity) &&
-        equalsNullable(this.peakAnnotation, annotatedPeak.peakAnnotation);
-  }
-
-  private static <T> boolean equalsNullable(JsonNullable<T> a, JsonNullable<T> b) {
-    return a == b || (a != null && b != null && a.isPresent() && b.isPresent() && Objects.deepEquals(a.get(), b.get()));
+        Objects.equals(this.peakAnnotation, annotatedPeak.peakAnnotation);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(mass, intensity, hashCodeNullable(peakAnnotation));
-  }
-
-  private static <T> int hashCodeNullable(JsonNullable<T> a) {
-    if (a == null) {
-      return 1;
-    }
-    return a.isPresent() ? Arrays.deepHashCode(new Object[]{a.get()}) : 31;
+    return Objects.hash(mass, intensity, peakAnnotation);
   }
 
   @Override

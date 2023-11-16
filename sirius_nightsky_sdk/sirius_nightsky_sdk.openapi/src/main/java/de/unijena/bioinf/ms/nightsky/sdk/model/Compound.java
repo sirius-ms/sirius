@@ -30,10 +30,6 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.ConsensusAnnotationsDeNovo;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.openapitools.jackson.nullable.JsonNullable;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.openapitools.jackson.nullable.JsonNullable;
-import java.util.NoSuchElementException;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
@@ -57,28 +53,28 @@ public class Compound {
   private String compoundId;
 
   public static final String JSON_PROPERTY_NAME = "name";
-  private JsonNullable<String> name = JsonNullable.<String>undefined();
+  private String name;
 
   public static final String JSON_PROPERTY_RT_START_SECONDS = "rtStartSeconds";
-  private JsonNullable<Double> rtStartSeconds = JsonNullable.<Double>undefined();
+  private Double rtStartSeconds;
 
   public static final String JSON_PROPERTY_RT_END_SECONDS = "rtEndSeconds";
-  private JsonNullable<Double> rtEndSeconds = JsonNullable.<Double>undefined();
+  private Double rtEndSeconds;
 
   public static final String JSON_PROPERTY_NEUTRAL_MASS = "neutralMass";
-  private JsonNullable<Double> neutralMass = JsonNullable.<Double>undefined();
+  private Double neutralMass;
 
   public static final String JSON_PROPERTY_FEATURES = "features";
   private List<AlignedFeature> features;
 
   public static final String JSON_PROPERTY_CONSENSUS_ANNOTATIONS = "consensusAnnotations";
-  private JsonNullable<ConsensusAnnotationsCSI> consensusAnnotations = JsonNullable.<ConsensusAnnotationsCSI>undefined();
+  private ConsensusAnnotationsCSI consensusAnnotations;
 
   public static final String JSON_PROPERTY_CONSENSUS_ANNOTATIONS_DE_NOVO = "consensusAnnotationsDeNovo";
-  private JsonNullable<ConsensusAnnotationsDeNovo> consensusAnnotationsDeNovo = JsonNullable.<ConsensusAnnotationsDeNovo>undefined();
+  private ConsensusAnnotationsDeNovo consensusAnnotationsDeNovo;
 
   public static final String JSON_PROPERTY_CUSTOM_ANNOTATIONS = "customAnnotations";
-  private JsonNullable<ConsensusAnnotationsCSI> customAnnotations = JsonNullable.<ConsensusAnnotationsCSI>undefined();
+  private ConsensusAnnotationsCSI customAnnotations;
 
   public Compound() { 
   }
@@ -109,7 +105,7 @@ public class Compound {
 
 
   public Compound name(String name) {
-    this.name = JsonNullable.<String>of(name);
+    this.name = name;
     return this;
   }
 
@@ -118,31 +114,23 @@ public class Compound {
    * @return name
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public String getName() {
-        return name.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<String> getName_JsonNullable() {
+  public String getName() {
     return name;
   }
-  
-  @JsonProperty(JSON_PROPERTY_NAME)
-  public void setName_JsonNullable(JsonNullable<String> name) {
-    this.name = name;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setName(String name) {
-    this.name = JsonNullable.<String>of(name);
+    this.name = name;
   }
 
 
   public Compound rtStartSeconds(Double rtStartSeconds) {
-    this.rtStartSeconds = JsonNullable.<Double>of(rtStartSeconds);
+    this.rtStartSeconds = rtStartSeconds;
     return this;
   }
 
@@ -151,31 +139,23 @@ public class Compound {
    * @return rtStartSeconds
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Double getRtStartSeconds() {
-        return rtStartSeconds.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_RT_START_SECONDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Double> getRtStartSeconds_JsonNullable() {
+  public Double getRtStartSeconds() {
     return rtStartSeconds;
   }
-  
-  @JsonProperty(JSON_PROPERTY_RT_START_SECONDS)
-  public void setRtStartSeconds_JsonNullable(JsonNullable<Double> rtStartSeconds) {
-    this.rtStartSeconds = rtStartSeconds;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_RT_START_SECONDS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setRtStartSeconds(Double rtStartSeconds) {
-    this.rtStartSeconds = JsonNullable.<Double>of(rtStartSeconds);
+    this.rtStartSeconds = rtStartSeconds;
   }
 
 
   public Compound rtEndSeconds(Double rtEndSeconds) {
-    this.rtEndSeconds = JsonNullable.<Double>of(rtEndSeconds);
+    this.rtEndSeconds = rtEndSeconds;
     return this;
   }
 
@@ -184,31 +164,23 @@ public class Compound {
    * @return rtEndSeconds
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Double getRtEndSeconds() {
-        return rtEndSeconds.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_RT_END_SECONDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Double> getRtEndSeconds_JsonNullable() {
+  public Double getRtEndSeconds() {
     return rtEndSeconds;
   }
-  
-  @JsonProperty(JSON_PROPERTY_RT_END_SECONDS)
-  public void setRtEndSeconds_JsonNullable(JsonNullable<Double> rtEndSeconds) {
-    this.rtEndSeconds = rtEndSeconds;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_RT_END_SECONDS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setRtEndSeconds(Double rtEndSeconds) {
-    this.rtEndSeconds = JsonNullable.<Double>of(rtEndSeconds);
+    this.rtEndSeconds = rtEndSeconds;
   }
 
 
   public Compound neutralMass(Double neutralMass) {
-    this.neutralMass = JsonNullable.<Double>of(neutralMass);
+    this.neutralMass = neutralMass;
     return this;
   }
 
@@ -217,26 +189,18 @@ public class Compound {
    * @return neutralMass
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Double getNeutralMass() {
-        return neutralMass.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_NEUTRAL_MASS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Double> getNeutralMass_JsonNullable() {
+  public Double getNeutralMass() {
     return neutralMass;
   }
-  
-  @JsonProperty(JSON_PROPERTY_NEUTRAL_MASS)
-  public void setNeutralMass_JsonNullable(JsonNullable<Double> neutralMass) {
-    this.neutralMass = neutralMass;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_NEUTRAL_MASS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setNeutralMass(Double neutralMass) {
-    this.neutralMass = JsonNullable.<Double>of(neutralMass);
+    this.neutralMass = neutralMass;
   }
 
 
@@ -274,7 +238,7 @@ public class Compound {
 
 
   public Compound consensusAnnotations(ConsensusAnnotationsCSI consensusAnnotations) {
-    this.consensusAnnotations = JsonNullable.<ConsensusAnnotationsCSI>of(consensusAnnotations);
+    this.consensusAnnotations = consensusAnnotations;
     return this;
   }
 
@@ -283,31 +247,23 @@ public class Compound {
    * @return consensusAnnotations
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public ConsensusAnnotationsCSI getConsensusAnnotations() {
-        return consensusAnnotations.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_CONSENSUS_ANNOTATIONS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<ConsensusAnnotationsCSI> getConsensusAnnotations_JsonNullable() {
+  public ConsensusAnnotationsCSI getConsensusAnnotations() {
     return consensusAnnotations;
   }
-  
-  @JsonProperty(JSON_PROPERTY_CONSENSUS_ANNOTATIONS)
-  public void setConsensusAnnotations_JsonNullable(JsonNullable<ConsensusAnnotationsCSI> consensusAnnotations) {
-    this.consensusAnnotations = consensusAnnotations;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_CONSENSUS_ANNOTATIONS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setConsensusAnnotations(ConsensusAnnotationsCSI consensusAnnotations) {
-    this.consensusAnnotations = JsonNullable.<ConsensusAnnotationsCSI>of(consensusAnnotations);
+    this.consensusAnnotations = consensusAnnotations;
   }
 
 
   public Compound consensusAnnotationsDeNovo(ConsensusAnnotationsDeNovo consensusAnnotationsDeNovo) {
-    this.consensusAnnotationsDeNovo = JsonNullable.<ConsensusAnnotationsDeNovo>of(consensusAnnotationsDeNovo);
+    this.consensusAnnotationsDeNovo = consensusAnnotationsDeNovo;
     return this;
   }
 
@@ -316,31 +272,23 @@ public class Compound {
    * @return consensusAnnotationsDeNovo
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public ConsensusAnnotationsDeNovo getConsensusAnnotationsDeNovo() {
-        return consensusAnnotationsDeNovo.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_CONSENSUS_ANNOTATIONS_DE_NOVO)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<ConsensusAnnotationsDeNovo> getConsensusAnnotationsDeNovo_JsonNullable() {
+  public ConsensusAnnotationsDeNovo getConsensusAnnotationsDeNovo() {
     return consensusAnnotationsDeNovo;
   }
-  
-  @JsonProperty(JSON_PROPERTY_CONSENSUS_ANNOTATIONS_DE_NOVO)
-  public void setConsensusAnnotationsDeNovo_JsonNullable(JsonNullable<ConsensusAnnotationsDeNovo> consensusAnnotationsDeNovo) {
-    this.consensusAnnotationsDeNovo = consensusAnnotationsDeNovo;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_CONSENSUS_ANNOTATIONS_DE_NOVO)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setConsensusAnnotationsDeNovo(ConsensusAnnotationsDeNovo consensusAnnotationsDeNovo) {
-    this.consensusAnnotationsDeNovo = JsonNullable.<ConsensusAnnotationsDeNovo>of(consensusAnnotationsDeNovo);
+    this.consensusAnnotationsDeNovo = consensusAnnotationsDeNovo;
   }
 
 
   public Compound customAnnotations(ConsensusAnnotationsCSI customAnnotations) {
-    this.customAnnotations = JsonNullable.<ConsensusAnnotationsCSI>of(customAnnotations);
+    this.customAnnotations = customAnnotations;
     return this;
   }
 
@@ -349,26 +297,18 @@ public class Compound {
    * @return customAnnotations
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public ConsensusAnnotationsCSI getCustomAnnotations() {
-        return customAnnotations.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_CUSTOM_ANNOTATIONS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<ConsensusAnnotationsCSI> getCustomAnnotations_JsonNullable() {
+  public ConsensusAnnotationsCSI getCustomAnnotations() {
     return customAnnotations;
   }
-  
-  @JsonProperty(JSON_PROPERTY_CUSTOM_ANNOTATIONS)
-  public void setCustomAnnotations_JsonNullable(JsonNullable<ConsensusAnnotationsCSI> customAnnotations) {
-    this.customAnnotations = customAnnotations;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_CUSTOM_ANNOTATIONS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setCustomAnnotations(ConsensusAnnotationsCSI customAnnotations) {
-    this.customAnnotations = JsonNullable.<ConsensusAnnotationsCSI>of(customAnnotations);
+    this.customAnnotations = customAnnotations;
   }
 
 
@@ -385,30 +325,19 @@ public class Compound {
     }
     Compound compound = (Compound) o;
     return Objects.equals(this.compoundId, compound.compoundId) &&
-        equalsNullable(this.name, compound.name) &&
-        equalsNullable(this.rtStartSeconds, compound.rtStartSeconds) &&
-        equalsNullable(this.rtEndSeconds, compound.rtEndSeconds) &&
-        equalsNullable(this.neutralMass, compound.neutralMass) &&
+        Objects.equals(this.name, compound.name) &&
+        Objects.equals(this.rtStartSeconds, compound.rtStartSeconds) &&
+        Objects.equals(this.rtEndSeconds, compound.rtEndSeconds) &&
+        Objects.equals(this.neutralMass, compound.neutralMass) &&
         Objects.equals(this.features, compound.features) &&
-        equalsNullable(this.consensusAnnotations, compound.consensusAnnotations) &&
-        equalsNullable(this.consensusAnnotationsDeNovo, compound.consensusAnnotationsDeNovo) &&
-        equalsNullable(this.customAnnotations, compound.customAnnotations);
-  }
-
-  private static <T> boolean equalsNullable(JsonNullable<T> a, JsonNullable<T> b) {
-    return a == b || (a != null && b != null && a.isPresent() && b.isPresent() && Objects.deepEquals(a.get(), b.get()));
+        Objects.equals(this.consensusAnnotations, compound.consensusAnnotations) &&
+        Objects.equals(this.consensusAnnotationsDeNovo, compound.consensusAnnotationsDeNovo) &&
+        Objects.equals(this.customAnnotations, compound.customAnnotations);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(compoundId, hashCodeNullable(name), hashCodeNullable(rtStartSeconds), hashCodeNullable(rtEndSeconds), hashCodeNullable(neutralMass), features, hashCodeNullable(consensusAnnotations), hashCodeNullable(consensusAnnotationsDeNovo), hashCodeNullable(customAnnotations));
-  }
-
-  private static <T> int hashCodeNullable(JsonNullable<T> a) {
-    if (a == null) {
-      return 1;
-    }
-    return a.isPresent() ? Arrays.deepHashCode(new Object[]{a.get()}) : 31;
+    return Objects.hash(compoundId, name, rtStartSeconds, rtEndSeconds, neutralMass, features, consensusAnnotations, consensusAnnotationsDeNovo, customAnnotations);
   }
 
   @Override

@@ -17,7 +17,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.openapitools.jackson.nullable.JsonNullableModule;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -202,7 +201,6 @@ public class ApiClient {
     mapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
     mapper.disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE);
     mapper.registerModule(new JavaTimeModule());
-    mapper.registerModule(new JsonNullableModule());
     return mapper;
   }
 

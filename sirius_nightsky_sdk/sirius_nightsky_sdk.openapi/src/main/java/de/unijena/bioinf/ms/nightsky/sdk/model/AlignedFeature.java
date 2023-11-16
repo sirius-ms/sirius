@@ -27,10 +27,6 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FeatureAnnotations;
 import de.unijena.bioinf.ms.nightsky.sdk.model.MsData;
 import java.util.Arrays;
-import org.openapitools.jackson.nullable.JsonNullable;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.openapitools.jackson.nullable.JsonNullable;
-import java.util.NoSuchElementException;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
@@ -68,19 +64,19 @@ public class AlignedFeature {
   private String ionType;
 
   public static final String JSON_PROPERTY_RT_START_SECONDS = "rtStartSeconds";
-  private JsonNullable<Double> rtStartSeconds = JsonNullable.<Double>undefined();
+  private Double rtStartSeconds;
 
   public static final String JSON_PROPERTY_RT_END_SECONDS = "rtEndSeconds";
-  private JsonNullable<Double> rtEndSeconds = JsonNullable.<Double>undefined();
+  private Double rtEndSeconds;
 
   public static final String JSON_PROPERTY_MS_DATA = "msData";
-  private JsonNullable<MsData> msData = JsonNullable.<MsData>undefined();
+  private MsData msData;
 
   public static final String JSON_PROPERTY_TOP_ANNOTATIONS = "topAnnotations";
-  private JsonNullable<FeatureAnnotations> topAnnotations = JsonNullable.<FeatureAnnotations>undefined();
+  private FeatureAnnotations topAnnotations;
 
   public static final String JSON_PROPERTY_TOP_ANNOTATIONS_DE_NOVO = "topAnnotationsDeNovo";
-  private JsonNullable<FeatureAnnotations> topAnnotationsDeNovo = JsonNullable.<FeatureAnnotations>undefined();
+  private FeatureAnnotations topAnnotationsDeNovo;
 
   public static final String JSON_PROPERTY_COMPUTING = "computing";
   private Boolean computing;
@@ -214,7 +210,7 @@ public class AlignedFeature {
 
 
   public AlignedFeature rtStartSeconds(Double rtStartSeconds) {
-    this.rtStartSeconds = JsonNullable.<Double>of(rtStartSeconds);
+    this.rtStartSeconds = rtStartSeconds;
     return this;
   }
 
@@ -223,31 +219,23 @@ public class AlignedFeature {
    * @return rtStartSeconds
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Double getRtStartSeconds() {
-        return rtStartSeconds.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_RT_START_SECONDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Double> getRtStartSeconds_JsonNullable() {
+  public Double getRtStartSeconds() {
     return rtStartSeconds;
   }
-  
-  @JsonProperty(JSON_PROPERTY_RT_START_SECONDS)
-  public void setRtStartSeconds_JsonNullable(JsonNullable<Double> rtStartSeconds) {
-    this.rtStartSeconds = rtStartSeconds;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_RT_START_SECONDS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setRtStartSeconds(Double rtStartSeconds) {
-    this.rtStartSeconds = JsonNullable.<Double>of(rtStartSeconds);
+    this.rtStartSeconds = rtStartSeconds;
   }
 
 
   public AlignedFeature rtEndSeconds(Double rtEndSeconds) {
-    this.rtEndSeconds = JsonNullable.<Double>of(rtEndSeconds);
+    this.rtEndSeconds = rtEndSeconds;
     return this;
   }
 
@@ -256,31 +244,23 @@ public class AlignedFeature {
    * @return rtEndSeconds
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Double getRtEndSeconds() {
-        return rtEndSeconds.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_RT_END_SECONDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Double> getRtEndSeconds_JsonNullable() {
+  public Double getRtEndSeconds() {
     return rtEndSeconds;
   }
-  
-  @JsonProperty(JSON_PROPERTY_RT_END_SECONDS)
-  public void setRtEndSeconds_JsonNullable(JsonNullable<Double> rtEndSeconds) {
-    this.rtEndSeconds = rtEndSeconds;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_RT_END_SECONDS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setRtEndSeconds(Double rtEndSeconds) {
-    this.rtEndSeconds = JsonNullable.<Double>of(rtEndSeconds);
+    this.rtEndSeconds = rtEndSeconds;
   }
 
 
   public AlignedFeature msData(MsData msData) {
-    this.msData = JsonNullable.<MsData>of(msData);
+    this.msData = msData;
     return this;
   }
 
@@ -289,31 +269,23 @@ public class AlignedFeature {
    * @return msData
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public MsData getMsData() {
-        return msData.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_MS_DATA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<MsData> getMsData_JsonNullable() {
+  public MsData getMsData() {
     return msData;
   }
-  
-  @JsonProperty(JSON_PROPERTY_MS_DATA)
-  public void setMsData_JsonNullable(JsonNullable<MsData> msData) {
-    this.msData = msData;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_MS_DATA)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMsData(MsData msData) {
-    this.msData = JsonNullable.<MsData>of(msData);
+    this.msData = msData;
   }
 
 
   public AlignedFeature topAnnotations(FeatureAnnotations topAnnotations) {
-    this.topAnnotations = JsonNullable.<FeatureAnnotations>of(topAnnotations);
+    this.topAnnotations = topAnnotations;
     return this;
   }
 
@@ -322,31 +294,23 @@ public class AlignedFeature {
    * @return topAnnotations
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public FeatureAnnotations getTopAnnotations() {
-        return topAnnotations.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_TOP_ANNOTATIONS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<FeatureAnnotations> getTopAnnotations_JsonNullable() {
+  public FeatureAnnotations getTopAnnotations() {
     return topAnnotations;
   }
-  
-  @JsonProperty(JSON_PROPERTY_TOP_ANNOTATIONS)
-  public void setTopAnnotations_JsonNullable(JsonNullable<FeatureAnnotations> topAnnotations) {
-    this.topAnnotations = topAnnotations;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_TOP_ANNOTATIONS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setTopAnnotations(FeatureAnnotations topAnnotations) {
-    this.topAnnotations = JsonNullable.<FeatureAnnotations>of(topAnnotations);
+    this.topAnnotations = topAnnotations;
   }
 
 
   public AlignedFeature topAnnotationsDeNovo(FeatureAnnotations topAnnotationsDeNovo) {
-    this.topAnnotationsDeNovo = JsonNullable.<FeatureAnnotations>of(topAnnotationsDeNovo);
+    this.topAnnotationsDeNovo = topAnnotationsDeNovo;
     return this;
   }
 
@@ -355,26 +319,18 @@ public class AlignedFeature {
    * @return topAnnotationsDeNovo
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public FeatureAnnotations getTopAnnotationsDeNovo() {
-        return topAnnotationsDeNovo.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_TOP_ANNOTATIONS_DE_NOVO)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<FeatureAnnotations> getTopAnnotationsDeNovo_JsonNullable() {
+  public FeatureAnnotations getTopAnnotationsDeNovo() {
     return topAnnotationsDeNovo;
   }
-  
-  @JsonProperty(JSON_PROPERTY_TOP_ANNOTATIONS_DE_NOVO)
-  public void setTopAnnotationsDeNovo_JsonNullable(JsonNullable<FeatureAnnotations> topAnnotationsDeNovo) {
-    this.topAnnotationsDeNovo = topAnnotationsDeNovo;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_TOP_ANNOTATIONS_DE_NOVO)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setTopAnnotationsDeNovo(FeatureAnnotations topAnnotationsDeNovo) {
-    this.topAnnotationsDeNovo = JsonNullable.<FeatureAnnotations>of(topAnnotationsDeNovo);
+    this.topAnnotationsDeNovo = topAnnotationsDeNovo;
   }
 
 
@@ -391,7 +347,7 @@ public class AlignedFeature {
   @JsonProperty(JSON_PROPERTY_COMPUTING)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Boolean getComputing() {
+  public Boolean isComputing() {
     return computing;
   }
 
@@ -420,28 +376,17 @@ public class AlignedFeature {
         Objects.equals(this.index, alignedFeature.index) &&
         Objects.equals(this.ionMass, alignedFeature.ionMass) &&
         Objects.equals(this.ionType, alignedFeature.ionType) &&
-        equalsNullable(this.rtStartSeconds, alignedFeature.rtStartSeconds) &&
-        equalsNullable(this.rtEndSeconds, alignedFeature.rtEndSeconds) &&
-        equalsNullable(this.msData, alignedFeature.msData) &&
-        equalsNullable(this.topAnnotations, alignedFeature.topAnnotations) &&
-        equalsNullable(this.topAnnotationsDeNovo, alignedFeature.topAnnotationsDeNovo) &&
+        Objects.equals(this.rtStartSeconds, alignedFeature.rtStartSeconds) &&
+        Objects.equals(this.rtEndSeconds, alignedFeature.rtEndSeconds) &&
+        Objects.equals(this.msData, alignedFeature.msData) &&
+        Objects.equals(this.topAnnotations, alignedFeature.topAnnotations) &&
+        Objects.equals(this.topAnnotationsDeNovo, alignedFeature.topAnnotationsDeNovo) &&
         Objects.equals(this.computing, alignedFeature.computing);
-  }
-
-  private static <T> boolean equalsNullable(JsonNullable<T> a, JsonNullable<T> b) {
-    return a == b || (a != null && b != null && a.isPresent() && b.isPresent() && Objects.deepEquals(a.get(), b.get()));
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(alignedFeatureId, name, index, ionMass, ionType, hashCodeNullable(rtStartSeconds), hashCodeNullable(rtEndSeconds), hashCodeNullable(msData), hashCodeNullable(topAnnotations), hashCodeNullable(topAnnotationsDeNovo), computing);
-  }
-
-  private static <T> int hashCodeNullable(JsonNullable<T> a) {
-    if (a == null) {
-      return 1;
-    }
-    return a.isPresent() ? Arrays.deepHashCode(new Object[]{a.get()}) : 31;
+    return Objects.hash(alignedFeatureId, name, index, ionMass, ionType, rtStartSeconds, rtEndSeconds, msData, topAnnotations, topAnnotationsDeNovo, computing);
   }
 
   @Override
@@ -557,8 +502,8 @@ public class AlignedFeature {
     }
 
     // add `computing` to the URL query string
-    if (getComputing() != null) {
-      joiner.add(String.format("%scomputing%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getComputing()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
+    if (isComputing() != null) {
+      joiner.add(String.format("%scomputing%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isComputing()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
     }
 
     return joiner.toString();

@@ -26,10 +26,6 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import de.unijena.bioinf.ms.nightsky.sdk.model.CompoundClassType;
 import java.util.Arrays;
-import org.openapitools.jackson.nullable.JsonNullable;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.openapitools.jackson.nullable.JsonNullable;
-import java.util.NoSuchElementException;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
@@ -47,16 +43,16 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class CompoundClass {
   public static final String JSON_PROPERTY_TYPE = "type";
-  private JsonNullable<CompoundClassType> type = JsonNullable.<CompoundClassType>undefined();
+  private CompoundClassType type;
 
   public static final String JSON_PROPERTY_LEVEL = "level";
-  private JsonNullable<String> level = JsonNullable.<String>undefined();
+  private String level;
 
   public static final String JSON_PROPERTY_NAME = "name";
-  private JsonNullable<String> name = JsonNullable.<String>undefined();
+  private String name;
 
   public static final String JSON_PROPERTY_DESCRIPTION = "description";
-  private JsonNullable<String> description = JsonNullable.<String>undefined();
+  private String description;
 
   public static final String JSON_PROPERTY_ID = "id";
   private Integer id;
@@ -68,7 +64,7 @@ public class CompoundClass {
   }
 
   public CompoundClass type(CompoundClassType type) {
-    this.type = JsonNullable.<CompoundClassType>of(type);
+    this.type = type;
     return this;
   }
 
@@ -77,31 +73,23 @@ public class CompoundClass {
    * @return type
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public CompoundClassType getType() {
-        return type.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<CompoundClassType> getType_JsonNullable() {
+  public CompoundClassType getType() {
     return type;
   }
-  
-  @JsonProperty(JSON_PROPERTY_TYPE)
-  public void setType_JsonNullable(JsonNullable<CompoundClassType> type) {
-    this.type = type;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_TYPE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setType(CompoundClassType type) {
-    this.type = JsonNullable.<CompoundClassType>of(type);
+    this.type = type;
   }
 
 
   public CompoundClass level(String level) {
-    this.level = JsonNullable.<String>of(level);
+    this.level = level;
     return this;
   }
 
@@ -110,31 +98,23 @@ public class CompoundClass {
    * @return level
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public String getLevel() {
-        return level.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_LEVEL)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<String> getLevel_JsonNullable() {
+  public String getLevel() {
     return level;
   }
-  
-  @JsonProperty(JSON_PROPERTY_LEVEL)
-  public void setLevel_JsonNullable(JsonNullable<String> level) {
-    this.level = level;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_LEVEL)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setLevel(String level) {
-    this.level = JsonNullable.<String>of(level);
+    this.level = level;
   }
 
 
   public CompoundClass name(String name) {
-    this.name = JsonNullable.<String>of(name);
+    this.name = name;
     return this;
   }
 
@@ -143,31 +123,23 @@ public class CompoundClass {
    * @return name
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public String getName() {
-        return name.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<String> getName_JsonNullable() {
+  public String getName() {
     return name;
   }
-  
-  @JsonProperty(JSON_PROPERTY_NAME)
-  public void setName_JsonNullable(JsonNullable<String> name) {
-    this.name = name;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setName(String name) {
-    this.name = JsonNullable.<String>of(name);
+    this.name = name;
   }
 
 
   public CompoundClass description(String description) {
-    this.description = JsonNullable.<String>of(description);
+    this.description = description;
     return this;
   }
 
@@ -176,26 +148,18 @@ public class CompoundClass {
    * @return description
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public String getDescription() {
-        return description.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_DESCRIPTION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<String> getDescription_JsonNullable() {
+  public String getDescription() {
     return description;
   }
-  
-  @JsonProperty(JSON_PROPERTY_DESCRIPTION)
-  public void setDescription_JsonNullable(JsonNullable<String> description) {
-    this.description = description;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_DESCRIPTION)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setDescription(String description) {
-    this.description = JsonNullable.<String>of(description);
+    this.description = description;
   }
 
 
@@ -261,28 +225,17 @@ public class CompoundClass {
       return false;
     }
     CompoundClass compoundClass = (CompoundClass) o;
-    return equalsNullable(this.type, compoundClass.type) &&
-        equalsNullable(this.level, compoundClass.level) &&
-        equalsNullable(this.name, compoundClass.name) &&
-        equalsNullable(this.description, compoundClass.description) &&
+    return Objects.equals(this.type, compoundClass.type) &&
+        Objects.equals(this.level, compoundClass.level) &&
+        Objects.equals(this.name, compoundClass.name) &&
+        Objects.equals(this.description, compoundClass.description) &&
         Objects.equals(this.id, compoundClass.id) &&
         Objects.equals(this.probability, compoundClass.probability);
   }
 
-  private static <T> boolean equalsNullable(JsonNullable<T> a, JsonNullable<T> b) {
-    return a == b || (a != null && b != null && a.isPresent() && b.isPresent() && Objects.deepEquals(a.get(), b.get()));
-  }
-
   @Override
   public int hashCode() {
-    return Objects.hash(hashCodeNullable(type), hashCodeNullable(level), hashCodeNullable(name), hashCodeNullable(description), id, probability);
-  }
-
-  private static <T> int hashCodeNullable(JsonNullable<T> a) {
-    if (a == null) {
-      return 1;
-    }
-    return a.isPresent() ? Arrays.deepHashCode(new Object[]{a.get()}) : 31;
+    return Objects.hash(type, level, name, description, id, probability);
   }
 
   @Override

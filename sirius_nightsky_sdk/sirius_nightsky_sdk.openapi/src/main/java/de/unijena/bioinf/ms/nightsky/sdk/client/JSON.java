@@ -2,7 +2,6 @@ package de.unijena.bioinf.ms.nightsky.sdk.client;
 
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.databind.*;
-import org.openapitools.jackson.nullable.JsonNullableModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import de.unijena.bioinf.ms.nightsky.sdk.model.*;
 
@@ -27,8 +26,6 @@ public class JSON {
     mapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
     mapper.setDateFormat(new RFC3339DateFormat());
     mapper.registerModule(new JavaTimeModule());
-    JsonNullableModule jnm = new JsonNullableModule();
-    mapper.registerModule(jnm);
   }
 
   /**

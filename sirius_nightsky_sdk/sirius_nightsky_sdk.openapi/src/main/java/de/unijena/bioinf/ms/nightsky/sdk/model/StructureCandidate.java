@@ -28,10 +28,6 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.DBLink;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.openapitools.jackson.nullable.JsonNullable;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.openapitools.jackson.nullable.JsonNullable;
-import java.util.NoSuchElementException;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
@@ -55,16 +51,16 @@ public class StructureCandidate {
   private String smiles;
 
   public static final String JSON_PROPERTY_STRUCTURE_NAME = "structureName";
-  private JsonNullable<String> structureName = JsonNullable.<String>undefined();
+  private String structureName;
 
   public static final String JSON_PROPERTY_XLOG_P = "xlogP";
-  private JsonNullable<Double> xlogP = JsonNullable.<Double>undefined();
+  private Double xlogP;
 
   public static final String JSON_PROPERTY_DB_LINKS = "dbLinks";
-  private JsonNullable<List<DBLink>> dbLinks = JsonNullable.<List<DBLink>>undefined();
+  private List<DBLink> dbLinks;
 
   public static final String JSON_PROPERTY_REF_SPECTRA_LINKS = "refSpectraLinks";
-  private JsonNullable<List<DBLink>> refSpectraLinks = JsonNullable.<List<DBLink>>undefined();
+  private List<DBLink> refSpectraLinks;
 
   public StructureCandidate() { 
   }
@@ -120,7 +116,7 @@ public class StructureCandidate {
 
 
   public StructureCandidate structureName(String structureName) {
-    this.structureName = JsonNullable.<String>of(structureName);
+    this.structureName = structureName;
     return this;
   }
 
@@ -129,31 +125,23 @@ public class StructureCandidate {
    * @return structureName
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public String getStructureName() {
-        return structureName.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_STRUCTURE_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<String> getStructureName_JsonNullable() {
+  public String getStructureName() {
     return structureName;
   }
-  
-  @JsonProperty(JSON_PROPERTY_STRUCTURE_NAME)
-  public void setStructureName_JsonNullable(JsonNullable<String> structureName) {
-    this.structureName = structureName;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_STRUCTURE_NAME)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setStructureName(String structureName) {
-    this.structureName = JsonNullable.<String>of(structureName);
+    this.structureName = structureName;
   }
 
 
   public StructureCandidate xlogP(Double xlogP) {
-    this.xlogP = JsonNullable.<Double>of(xlogP);
+    this.xlogP = xlogP;
     return this;
   }
 
@@ -162,43 +150,31 @@ public class StructureCandidate {
    * @return xlogP
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Double getXlogP() {
-        return xlogP.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_XLOG_P)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Double> getXlogP_JsonNullable() {
+  public Double getXlogP() {
     return xlogP;
   }
-  
-  @JsonProperty(JSON_PROPERTY_XLOG_P)
-  public void setXlogP_JsonNullable(JsonNullable<Double> xlogP) {
-    this.xlogP = xlogP;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_XLOG_P)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setXlogP(Double xlogP) {
-    this.xlogP = JsonNullable.<Double>of(xlogP);
+    this.xlogP = xlogP;
   }
 
 
   public StructureCandidate dbLinks(List<DBLink> dbLinks) {
-    this.dbLinks = JsonNullable.<List<DBLink>>of(dbLinks);
+    this.dbLinks = dbLinks;
     return this;
   }
 
   public StructureCandidate addDbLinksItem(DBLink dbLinksItem) {
-    if (this.dbLinks == null || !this.dbLinks.isPresent()) {
-      this.dbLinks = JsonNullable.<List<DBLink>>of(new ArrayList<>());
+    if (this.dbLinks == null) {
+      this.dbLinks = new ArrayList<>();
     }
-    try {
-      this.dbLinks.get().add(dbLinksItem);
-    } catch (java.util.NoSuchElementException e) {
-      // this can never happen, as we make sure above that the value is present
-    }
+    this.dbLinks.add(dbLinksItem);
     return this;
   }
 
@@ -207,43 +183,31 @@ public class StructureCandidate {
    * @return dbLinks
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public List<DBLink> getDbLinks() {
-        return dbLinks.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_DB_LINKS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<List<DBLink>> getDbLinks_JsonNullable() {
+  public List<DBLink> getDbLinks() {
     return dbLinks;
   }
-  
-  @JsonProperty(JSON_PROPERTY_DB_LINKS)
-  public void setDbLinks_JsonNullable(JsonNullable<List<DBLink>> dbLinks) {
-    this.dbLinks = dbLinks;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_DB_LINKS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setDbLinks(List<DBLink> dbLinks) {
-    this.dbLinks = JsonNullable.<List<DBLink>>of(dbLinks);
+    this.dbLinks = dbLinks;
   }
 
 
   public StructureCandidate refSpectraLinks(List<DBLink> refSpectraLinks) {
-    this.refSpectraLinks = JsonNullable.<List<DBLink>>of(refSpectraLinks);
+    this.refSpectraLinks = refSpectraLinks;
     return this;
   }
 
   public StructureCandidate addRefSpectraLinksItem(DBLink refSpectraLinksItem) {
-    if (this.refSpectraLinks == null || !this.refSpectraLinks.isPresent()) {
-      this.refSpectraLinks = JsonNullable.<List<DBLink>>of(new ArrayList<>());
+    if (this.refSpectraLinks == null) {
+      this.refSpectraLinks = new ArrayList<>();
     }
-    try {
-      this.refSpectraLinks.get().add(refSpectraLinksItem);
-    } catch (java.util.NoSuchElementException e) {
-      // this can never happen, as we make sure above that the value is present
-    }
+    this.refSpectraLinks.add(refSpectraLinksItem);
     return this;
   }
 
@@ -252,26 +216,18 @@ public class StructureCandidate {
    * @return refSpectraLinks
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public List<DBLink> getRefSpectraLinks() {
-        return refSpectraLinks.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_REF_SPECTRA_LINKS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<List<DBLink>> getRefSpectraLinks_JsonNullable() {
+  public List<DBLink> getRefSpectraLinks() {
     return refSpectraLinks;
   }
-  
-  @JsonProperty(JSON_PROPERTY_REF_SPECTRA_LINKS)
-  public void setRefSpectraLinks_JsonNullable(JsonNullable<List<DBLink>> refSpectraLinks) {
-    this.refSpectraLinks = refSpectraLinks;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_REF_SPECTRA_LINKS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setRefSpectraLinks(List<DBLink> refSpectraLinks) {
-    this.refSpectraLinks = JsonNullable.<List<DBLink>>of(refSpectraLinks);
+    this.refSpectraLinks = refSpectraLinks;
   }
 
 
@@ -289,26 +245,15 @@ public class StructureCandidate {
     StructureCandidate structureCandidate = (StructureCandidate) o;
     return Objects.equals(this.inchiKey, structureCandidate.inchiKey) &&
         Objects.equals(this.smiles, structureCandidate.smiles) &&
-        equalsNullable(this.structureName, structureCandidate.structureName) &&
-        equalsNullable(this.xlogP, structureCandidate.xlogP) &&
-        equalsNullable(this.dbLinks, structureCandidate.dbLinks) &&
-        equalsNullable(this.refSpectraLinks, structureCandidate.refSpectraLinks);
-  }
-
-  private static <T> boolean equalsNullable(JsonNullable<T> a, JsonNullable<T> b) {
-    return a == b || (a != null && b != null && a.isPresent() && b.isPresent() && Objects.deepEquals(a.get(), b.get()));
+        Objects.equals(this.structureName, structureCandidate.structureName) &&
+        Objects.equals(this.xlogP, structureCandidate.xlogP) &&
+        Objects.equals(this.dbLinks, structureCandidate.dbLinks) &&
+        Objects.equals(this.refSpectraLinks, structureCandidate.refSpectraLinks);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(inchiKey, smiles, hashCodeNullable(structureName), hashCodeNullable(xlogP), hashCodeNullable(dbLinks), hashCodeNullable(refSpectraLinks));
-  }
-
-  private static <T> int hashCodeNullable(JsonNullable<T> a) {
-    if (a == null) {
-      return 1;
-    }
-    return a.isPresent() ? Arrays.deepHashCode(new Object[]{a.get()}) : 31;
+    return Objects.hash(inchiKey, smiles, structureName, xlogP, dbLinks, refSpectraLinks);
   }
 
   @Override

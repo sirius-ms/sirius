@@ -30,10 +30,6 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.UseHeuristic;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.openapitools.jackson.nullable.JsonNullable;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.openapitools.jackson.nullable.JsonNullable;
-import java.util.NoSuchElementException;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
@@ -60,7 +56,7 @@ public class Sirius {
   private Boolean enabled;
 
   public static final String JSON_PROPERTY_PROFILE = "profile";
-  private JsonNullable<Instrument> profile = JsonNullable.<Instrument>undefined();
+  private Instrument profile;
 
   public static final String JSON_PROPERTY_NUMBER_OF_CANDIDATES = "numberOfCandidates";
   private Integer numberOfCandidates;
@@ -250,7 +246,7 @@ public class Sirius {
   @JsonProperty(JSON_PROPERTY_ENABLED)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Boolean getEnabled() {
+  public Boolean isEnabled() {
     return enabled;
   }
 
@@ -263,7 +259,7 @@ public class Sirius {
 
 
   public Sirius profile(Instrument profile) {
-    this.profile = JsonNullable.<Instrument>of(profile);
+    this.profile = profile;
     return this;
   }
 
@@ -272,26 +268,18 @@ public class Sirius {
    * @return profile
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Instrument getProfile() {
-        return profile.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_PROFILE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Instrument> getProfile_JsonNullable() {
+  public Instrument getProfile() {
     return profile;
   }
-  
-  @JsonProperty(JSON_PROPERTY_PROFILE)
-  public void setProfile_JsonNullable(JsonNullable<Instrument> profile) {
-    this.profile = profile;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_PROFILE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setProfile(Instrument profile) {
-    this.profile = JsonNullable.<Instrument>of(profile);
+    this.profile = profile;
   }
 
 
@@ -574,7 +562,7 @@ public class Sirius {
     }
     Sirius sirius = (Sirius) o;
     return Objects.equals(this.enabled, sirius.enabled) &&
-        equalsNullable(this.profile, sirius.profile) &&
+        Objects.equals(this.profile, sirius.profile) &&
         Objects.equals(this.numberOfCandidates, sirius.numberOfCandidates) &&
         Objects.equals(this.numberOfCandidatesPerIon, sirius.numberOfCandidatesPerIon) &&
         Objects.equals(this.massAccuracyMS2ppm, sirius.massAccuracyMS2ppm) &&
@@ -587,20 +575,9 @@ public class Sirius {
         Objects.equals(this.useHeuristic, sirius.useHeuristic);
   }
 
-  private static <T> boolean equalsNullable(JsonNullable<T> a, JsonNullable<T> b) {
-    return a == b || (a != null && b != null && a.isPresent() && b.isPresent() && Objects.deepEquals(a.get(), b.get()));
-  }
-
   @Override
   public int hashCode() {
-    return Objects.hash(enabled, hashCodeNullable(profile), numberOfCandidates, numberOfCandidatesPerIon, massAccuracyMS2ppm, isotopeMs2Settings, formulaSearchDBs, enforcedFormulaConstraints, fallbackFormulaConstraints, detectableElements, ilpTimeout, useHeuristic);
-  }
-
-  private static <T> int hashCodeNullable(JsonNullable<T> a) {
-    if (a == null) {
-      return 1;
-    }
-    return a.isPresent() ? Arrays.deepHashCode(new Object[]{a.get()}) : 31;
+    return Objects.hash(enabled, profile, numberOfCandidates, numberOfCandidatesPerIon, massAccuracyMS2ppm, isotopeMs2Settings, formulaSearchDBs, enforcedFormulaConstraints, fallbackFormulaConstraints, detectableElements, ilpTimeout, useHeuristic);
   }
 
   @Override
@@ -667,8 +644,8 @@ public class Sirius {
     StringJoiner joiner = new StringJoiner("&");
 
     // add `enabled` to the URL query string
-    if (getEnabled() != null) {
-      joiner.add(String.format("%senabled%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getEnabled()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
+    if (isEnabled() != null) {
+      joiner.add(String.format("%senabled%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isEnabled()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
     }
 
     // add `profile` to the URL query string

@@ -30,10 +30,6 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.StructureCandidate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.openapitools.jackson.nullable.JsonNullable;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.openapitools.jackson.nullable.JsonNullable;
-import java.util.NoSuchElementException;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
@@ -52,31 +48,31 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class ConsensusAnnotationsCSI {
   public static final String JSON_PROPERTY_MOLECULAR_FORMULA = "molecularFormula";
-  private JsonNullable<String> molecularFormula = JsonNullable.<String>undefined();
+  private String molecularFormula;
 
   public static final String JSON_PROPERTY_COMPOUND_CLASSES = "compoundClasses";
-  private JsonNullable<CompoundClasses> compoundClasses = JsonNullable.<CompoundClasses>undefined();
+  private CompoundClasses compoundClasses;
 
   public static final String JSON_PROPERTY_SUPPORTING_FEATURE_IDS = "supportingFeatureIds";
-  private JsonNullable<List<String>> supportingFeatureIds = JsonNullable.<List<String>>undefined();
+  private List<String> supportingFeatureIds;
 
   public static final String JSON_PROPERTY_SELECTION_CRITERION = "selectionCriterion";
-  private JsonNullable<ConsensusCriterionCSI> selectionCriterion = JsonNullable.<ConsensusCriterionCSI>undefined();
+  private ConsensusCriterionCSI selectionCriterion;
 
   public static final String JSON_PROPERTY_CSI_FINGER_ID_STRUCTURE = "csiFingerIdStructure";
-  private JsonNullable<StructureCandidate> csiFingerIdStructure = JsonNullable.<StructureCandidate>undefined();
+  private StructureCandidate csiFingerIdStructure;
 
   public static final String JSON_PROPERTY_CONFIDENCE_EXACT_MATCH = "confidenceExactMatch";
-  private JsonNullable<Double> confidenceExactMatch = JsonNullable.<Double>undefined();
+  private Double confidenceExactMatch;
 
   public static final String JSON_PROPERTY_CONFIDENCE_APPROX_MATCH = "confidenceApproxMatch";
-  private JsonNullable<Double> confidenceApproxMatch = JsonNullable.<Double>undefined();
+  private Double confidenceApproxMatch;
 
   public ConsensusAnnotationsCSI() { 
   }
 
   public ConsensusAnnotationsCSI molecularFormula(String molecularFormula) {
-    this.molecularFormula = JsonNullable.<String>of(molecularFormula);
+    this.molecularFormula = molecularFormula;
     return this;
   }
 
@@ -85,31 +81,23 @@ public class ConsensusAnnotationsCSI {
    * @return molecularFormula
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public String getMolecularFormula() {
-        return molecularFormula.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<String> getMolecularFormula_JsonNullable() {
+  public String getMolecularFormula() {
     return molecularFormula;
   }
-  
-  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
-  public void setMolecularFormula_JsonNullable(JsonNullable<String> molecularFormula) {
-    this.molecularFormula = molecularFormula;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMolecularFormula(String molecularFormula) {
-    this.molecularFormula = JsonNullable.<String>of(molecularFormula);
+    this.molecularFormula = molecularFormula;
   }
 
 
   public ConsensusAnnotationsCSI compoundClasses(CompoundClasses compoundClasses) {
-    this.compoundClasses = JsonNullable.<CompoundClasses>of(compoundClasses);
+    this.compoundClasses = compoundClasses;
     return this;
   }
 
@@ -118,43 +106,31 @@ public class ConsensusAnnotationsCSI {
    * @return compoundClasses
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public CompoundClasses getCompoundClasses() {
-        return compoundClasses.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_COMPOUND_CLASSES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<CompoundClasses> getCompoundClasses_JsonNullable() {
+  public CompoundClasses getCompoundClasses() {
     return compoundClasses;
   }
-  
-  @JsonProperty(JSON_PROPERTY_COMPOUND_CLASSES)
-  public void setCompoundClasses_JsonNullable(JsonNullable<CompoundClasses> compoundClasses) {
-    this.compoundClasses = compoundClasses;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_COMPOUND_CLASSES)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setCompoundClasses(CompoundClasses compoundClasses) {
-    this.compoundClasses = JsonNullable.<CompoundClasses>of(compoundClasses);
+    this.compoundClasses = compoundClasses;
   }
 
 
   public ConsensusAnnotationsCSI supportingFeatureIds(List<String> supportingFeatureIds) {
-    this.supportingFeatureIds = JsonNullable.<List<String>>of(supportingFeatureIds);
+    this.supportingFeatureIds = supportingFeatureIds;
     return this;
   }
 
   public ConsensusAnnotationsCSI addSupportingFeatureIdsItem(String supportingFeatureIdsItem) {
-    if (this.supportingFeatureIds == null || !this.supportingFeatureIds.isPresent()) {
-      this.supportingFeatureIds = JsonNullable.<List<String>>of(new ArrayList<>());
+    if (this.supportingFeatureIds == null) {
+      this.supportingFeatureIds = new ArrayList<>();
     }
-    try {
-      this.supportingFeatureIds.get().add(supportingFeatureIdsItem);
-    } catch (java.util.NoSuchElementException e) {
-      // this can never happen, as we make sure above that the value is present
-    }
+    this.supportingFeatureIds.add(supportingFeatureIdsItem);
     return this;
   }
 
@@ -163,31 +139,23 @@ public class ConsensusAnnotationsCSI {
    * @return supportingFeatureIds
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public List<String> getSupportingFeatureIds() {
-        return supportingFeatureIds.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_SUPPORTING_FEATURE_IDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<List<String>> getSupportingFeatureIds_JsonNullable() {
+  public List<String> getSupportingFeatureIds() {
     return supportingFeatureIds;
   }
-  
-  @JsonProperty(JSON_PROPERTY_SUPPORTING_FEATURE_IDS)
-  public void setSupportingFeatureIds_JsonNullable(JsonNullable<List<String>> supportingFeatureIds) {
-    this.supportingFeatureIds = supportingFeatureIds;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_SUPPORTING_FEATURE_IDS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSupportingFeatureIds(List<String> supportingFeatureIds) {
-    this.supportingFeatureIds = JsonNullable.<List<String>>of(supportingFeatureIds);
+    this.supportingFeatureIds = supportingFeatureIds;
   }
 
 
   public ConsensusAnnotationsCSI selectionCriterion(ConsensusCriterionCSI selectionCriterion) {
-    this.selectionCriterion = JsonNullable.<ConsensusCriterionCSI>of(selectionCriterion);
+    this.selectionCriterion = selectionCriterion;
     return this;
   }
 
@@ -196,31 +164,23 @@ public class ConsensusAnnotationsCSI {
    * @return selectionCriterion
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public ConsensusCriterionCSI getSelectionCriterion() {
-        return selectionCriterion.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_SELECTION_CRITERION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<ConsensusCriterionCSI> getSelectionCriterion_JsonNullable() {
+  public ConsensusCriterionCSI getSelectionCriterion() {
     return selectionCriterion;
   }
-  
-  @JsonProperty(JSON_PROPERTY_SELECTION_CRITERION)
-  public void setSelectionCriterion_JsonNullable(JsonNullable<ConsensusCriterionCSI> selectionCriterion) {
-    this.selectionCriterion = selectionCriterion;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_SELECTION_CRITERION)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSelectionCriterion(ConsensusCriterionCSI selectionCriterion) {
-    this.selectionCriterion = JsonNullable.<ConsensusCriterionCSI>of(selectionCriterion);
+    this.selectionCriterion = selectionCriterion;
   }
 
 
   public ConsensusAnnotationsCSI csiFingerIdStructure(StructureCandidate csiFingerIdStructure) {
-    this.csiFingerIdStructure = JsonNullable.<StructureCandidate>of(csiFingerIdStructure);
+    this.csiFingerIdStructure = csiFingerIdStructure;
     return this;
   }
 
@@ -229,31 +189,23 @@ public class ConsensusAnnotationsCSI {
    * @return csiFingerIdStructure
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public StructureCandidate getCsiFingerIdStructure() {
-        return csiFingerIdStructure.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_CSI_FINGER_ID_STRUCTURE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<StructureCandidate> getCsiFingerIdStructure_JsonNullable() {
+  public StructureCandidate getCsiFingerIdStructure() {
     return csiFingerIdStructure;
   }
-  
-  @JsonProperty(JSON_PROPERTY_CSI_FINGER_ID_STRUCTURE)
-  public void setCsiFingerIdStructure_JsonNullable(JsonNullable<StructureCandidate> csiFingerIdStructure) {
-    this.csiFingerIdStructure = csiFingerIdStructure;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_CSI_FINGER_ID_STRUCTURE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setCsiFingerIdStructure(StructureCandidate csiFingerIdStructure) {
-    this.csiFingerIdStructure = JsonNullable.<StructureCandidate>of(csiFingerIdStructure);
+    this.csiFingerIdStructure = csiFingerIdStructure;
   }
 
 
   public ConsensusAnnotationsCSI confidenceExactMatch(Double confidenceExactMatch) {
-    this.confidenceExactMatch = JsonNullable.<Double>of(confidenceExactMatch);
+    this.confidenceExactMatch = confidenceExactMatch;
     return this;
   }
 
@@ -262,31 +214,23 @@ public class ConsensusAnnotationsCSI {
    * @return confidenceExactMatch
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Double getConfidenceExactMatch() {
-        return confidenceExactMatch.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_CONFIDENCE_EXACT_MATCH)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Double> getConfidenceExactMatch_JsonNullable() {
+  public Double getConfidenceExactMatch() {
     return confidenceExactMatch;
   }
-  
-  @JsonProperty(JSON_PROPERTY_CONFIDENCE_EXACT_MATCH)
-  public void setConfidenceExactMatch_JsonNullable(JsonNullable<Double> confidenceExactMatch) {
-    this.confidenceExactMatch = confidenceExactMatch;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_CONFIDENCE_EXACT_MATCH)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setConfidenceExactMatch(Double confidenceExactMatch) {
-    this.confidenceExactMatch = JsonNullable.<Double>of(confidenceExactMatch);
+    this.confidenceExactMatch = confidenceExactMatch;
   }
 
 
   public ConsensusAnnotationsCSI confidenceApproxMatch(Double confidenceApproxMatch) {
-    this.confidenceApproxMatch = JsonNullable.<Double>of(confidenceApproxMatch);
+    this.confidenceApproxMatch = confidenceApproxMatch;
     return this;
   }
 
@@ -295,26 +239,18 @@ public class ConsensusAnnotationsCSI {
    * @return confidenceApproxMatch
   **/
   @javax.annotation.Nullable
-  @JsonIgnore
-
-  public Double getConfidenceApproxMatch() {
-        return confidenceApproxMatch.orElse(null);
-  }
-
   @JsonProperty(JSON_PROPERTY_CONFIDENCE_APPROX_MATCH)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JsonNullable<Double> getConfidenceApproxMatch_JsonNullable() {
+  public Double getConfidenceApproxMatch() {
     return confidenceApproxMatch;
   }
-  
-  @JsonProperty(JSON_PROPERTY_CONFIDENCE_APPROX_MATCH)
-  public void setConfidenceApproxMatch_JsonNullable(JsonNullable<Double> confidenceApproxMatch) {
-    this.confidenceApproxMatch = confidenceApproxMatch;
-  }
 
+
+  @JsonProperty(JSON_PROPERTY_CONFIDENCE_APPROX_MATCH)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setConfidenceApproxMatch(Double confidenceApproxMatch) {
-    this.confidenceApproxMatch = JsonNullable.<Double>of(confidenceApproxMatch);
+    this.confidenceApproxMatch = confidenceApproxMatch;
   }
 
 
@@ -330,29 +266,18 @@ public class ConsensusAnnotationsCSI {
       return false;
     }
     ConsensusAnnotationsCSI consensusAnnotationsCSI = (ConsensusAnnotationsCSI) o;
-    return equalsNullable(this.molecularFormula, consensusAnnotationsCSI.molecularFormula) &&
-        equalsNullable(this.compoundClasses, consensusAnnotationsCSI.compoundClasses) &&
-        equalsNullable(this.supportingFeatureIds, consensusAnnotationsCSI.supportingFeatureIds) &&
-        equalsNullable(this.selectionCriterion, consensusAnnotationsCSI.selectionCriterion) &&
-        equalsNullable(this.csiFingerIdStructure, consensusAnnotationsCSI.csiFingerIdStructure) &&
-        equalsNullable(this.confidenceExactMatch, consensusAnnotationsCSI.confidenceExactMatch) &&
-        equalsNullable(this.confidenceApproxMatch, consensusAnnotationsCSI.confidenceApproxMatch);
-  }
-
-  private static <T> boolean equalsNullable(JsonNullable<T> a, JsonNullable<T> b) {
-    return a == b || (a != null && b != null && a.isPresent() && b.isPresent() && Objects.deepEquals(a.get(), b.get()));
+    return Objects.equals(this.molecularFormula, consensusAnnotationsCSI.molecularFormula) &&
+        Objects.equals(this.compoundClasses, consensusAnnotationsCSI.compoundClasses) &&
+        Objects.equals(this.supportingFeatureIds, consensusAnnotationsCSI.supportingFeatureIds) &&
+        Objects.equals(this.selectionCriterion, consensusAnnotationsCSI.selectionCriterion) &&
+        Objects.equals(this.csiFingerIdStructure, consensusAnnotationsCSI.csiFingerIdStructure) &&
+        Objects.equals(this.confidenceExactMatch, consensusAnnotationsCSI.confidenceExactMatch) &&
+        Objects.equals(this.confidenceApproxMatch, consensusAnnotationsCSI.confidenceApproxMatch);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(hashCodeNullable(molecularFormula), hashCodeNullable(compoundClasses), hashCodeNullable(supportingFeatureIds), hashCodeNullable(selectionCriterion), hashCodeNullable(csiFingerIdStructure), hashCodeNullable(confidenceExactMatch), hashCodeNullable(confidenceApproxMatch));
-  }
-
-  private static <T> int hashCodeNullable(JsonNullable<T> a) {
-    if (a == null) {
-      return 1;
-    }
-    return a.isPresent() ? Arrays.deepHashCode(new Object[]{a.get()}) : 31;
+    return Objects.hash(molecularFormula, compoundClasses, supportingFeatureIds, selectionCriterion, csiFingerIdStructure, confidenceExactMatch, confidenceApproxMatch);
   }
 
   @Override
