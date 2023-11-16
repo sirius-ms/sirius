@@ -21,15 +21,16 @@
 package de.unijena.bioinf.ms.persistence.model.core;
 
 import jakarta.persistence.Id;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
+@ToString
 public class SourceFile {
-    enum Format {
+    public enum Format {
         //todo do we need more info here?
         MZML("Open MzML format"), MZXML("Open MzXML format (Deprecated)"), OTHER("Unknown or unspecified format");
 
@@ -59,5 +60,6 @@ public class SourceFile {
     /**
      * File contents stored as gzipped byte stream
      */
+    @ToString.Exclude
     private byte[] data;
 }

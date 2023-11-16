@@ -22,18 +22,21 @@ package de.unijena.bioinf.ms.persistence.model.core;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Id;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 @Getter
 @Setter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
+@ToString
 public class Run {
     //todo are there other types like validation or calibration???
-    enum Type {
+    public enum Type {
         SAMPLE,
         BLANK
     }
@@ -57,7 +60,7 @@ public class Run {
     private ChromatographyType chromatography;
     private IonizationType ionization;
     private FragmentationType fragmentation;
-    private MassAnalyzerType massAnalyzer;
+    private List<MassAnalyzerType> massAnalyzers;
 
 
     /**
@@ -72,6 +75,7 @@ public class Run {
      */
     @Nullable
     @JsonIgnore
+    @ToString.Exclude
     private SourceFile sourceFile;
     //endregion
 
