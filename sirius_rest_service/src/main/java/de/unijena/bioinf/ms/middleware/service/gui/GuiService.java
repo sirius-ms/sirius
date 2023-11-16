@@ -35,4 +35,6 @@ public interface GuiService<P extends Project> {
     void closeGuiInstance(@NotNull String projectId);
 
     void applyToGuiInstance(@NotNull String projectId, @NotNull GuiParameters guiParameters);
+
+    void shutdown();
 }

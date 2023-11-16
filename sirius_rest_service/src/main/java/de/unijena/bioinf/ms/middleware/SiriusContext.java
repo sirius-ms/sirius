@@ -59,7 +59,7 @@ public class SiriusContext{
         return projectsProvider;
     }
 
-    @Bean
+    @Bean(destroyMethod = "shutdown")
     public GuiService<?> guiService(){
         return new SiriusProjectSpaceGuiService();
     }

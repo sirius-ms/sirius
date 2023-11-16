@@ -20,7 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.service.gui;
 
-import de.unijena.bioinf.ms.frontend.SiriusGui;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.middleware.model.gui.GuiParameters;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import org.jetbrains.annotations.NotNull;
@@ -76,6 +76,11 @@ public abstract class AbstractGuiService<P extends Project> implements GuiServic
         } else {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No running SIRIUS GUI instance found for project id: " + projectId);
         }
+    }
+
+    @Override
+    public void shutdown() {
+        siriusGuiInstances.forEach((k,v) -> v.shutdown());
     }
 
     protected abstract SiriusGui makeGuiInstance(P project);
