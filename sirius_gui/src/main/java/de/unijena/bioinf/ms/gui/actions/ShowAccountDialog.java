@@ -24,7 +24,9 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.login.AccountDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.net.ConnectionChecks;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
+import de.unijena.bioinf.ms.nightsky.sdk.model.ConnectionCheck;
 import de.unijena.bioinf.webapi.Tokens;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -47,16 +49,16 @@ public class ShowAccountDialog extends AbstractMainFrameAction {
         putValue(Action.SHORT_DESCRIPTION, "Show user account information and settings.");
 
         MF.CONNECTION_MONITOR().addConnectionStateListener(evt -> {
-            ConnectionMonitor.ConnectionCheck check = ((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck();
+            ConnectionCheck check = ((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck();
             setIcon(check);
         });
 
         Jobs.runInBackground(() -> setIcon(MF.CONNECTION_MONITOR().checkConnection()));
     }
 
-    protected synchronized void setIcon(final @Nullable ConnectionMonitor.ConnectionCheck check) {
+    protected synchronized void setIcon(final @Nullable ConnectionCheck check) {
         if (check != null) {
-            if (check.isLoggedIn()) {
+            if (ConnectionChecks.isLoggedIn(check)) {
                 URI imageURI = ApplicationCore.WEB_API.getAuthService().getToken()
                         .flatMap(Tokens::getUserImage).orElse(null);
 

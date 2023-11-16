@@ -21,9 +21,12 @@
 package de.unijena.bioinf.ms.frontend;
 
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
 import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents an instance of the SIRIUS GUI and its context.
@@ -36,6 +39,11 @@ public class SiriusGui {
     static {
         GuiUtils.initUI();
     }
+    private final NightSkyClient sirius;
+
+    public NightSkyClient getSirius() {
+        return sirius;
+    }
 
     private final MainFrame mainFrame;
 
@@ -44,7 +52,11 @@ public class SiriusGui {
     }
 
     public SiriusGui(@NotNull GuiProjectSpaceManager project) { //todo nighsky: change to nightsky api and project ID.
-        mainFrame = new MainFrame();
+        this(project, null, null);
+    }
+    public SiriusGui(@NotNull GuiProjectSpaceManager project, @Nullable NightSkyClient nightSkyClient, @Nullable ConnectionMonitor connectionMonitor) { //todo nighsky: change to nightsky api and project ID.
+        sirius = nightSkyClient != null ? nightSkyClient : new NightSkyClient();
+        mainFrame = new MainFrame(sirius, connectionMonitor != null ? connectionMonitor : new ConnectionMonitor(sirius));
         mainFrame.decoradeMainFrame(project);
         //todo nighsky: check why JFX webview is only working for first instance...
     }

@@ -33,6 +33,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
+import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
+
 public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoColumnPanel {
 
     protected ToolbarToggleButton activationButton;
@@ -70,8 +72,7 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
         if (needsCSIConnection) {
             Objects.requireNonNull(mainFrame, "MainFrame needs to be given if csi check is true!")
                     .CONNECTION_MONITOR().addConnectionStateListener(evt ->
-                            setButtonEnabled(((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck()
-                                    .isConnected()));
+                            setButtonEnabled(isConnected(((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck())));
         } else {
             setButtonEnabled(true);
         }

@@ -20,7 +20,6 @@
 package de.unijena.bioinf.ms.frontend.subtools.gui;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.SiriusCLIApplication;
 import de.unijena.bioinf.ms.frontend.SiriusGui;
@@ -36,7 +35,7 @@ import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.*;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
-import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
+import de.unijena.bioinf.ms.nightsky.sdk.model.ConnectionCheck;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
@@ -51,6 +50,9 @@ import picocli.CommandLine;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
+
+import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
+import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isWarningOnly;
 
 @CommandLine.Command(name = "gui", aliases = {"GUI"}, description = "Starts the graphical user interface of SIRIUS", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
 public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
@@ -105,7 +107,7 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                         updateProgress(0, max, progress++, "Configuring CDK InChIGeneratorFactory...");
                         InChIGeneratorFactory.getInstance();
                         updateProgress(0, max, progress++, "Initializing available DBs");
-                        SearchableDatabases.getAvailableDatabases();
+//                        SearchableDatabases.getAvailableDatabases(); //todo nightsky: use api instead!
                         updateProgress(0, max, progress++, "Initializing Project-Space...");
                         // run prepro job. this jobs imports all existing data into the projectspace we use for the GUI session
                         final ProjectSpaceManager<?> projectSpace = SiriusJobs.getGlobalJobManager().submitJob(preproJob).takeResult();
@@ -141,9 +143,9 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                             }
                         });
                         updateProgress(0, max, progress++, "Checking Webservice connection...");
-                        ConnectionMonitor.ConnectionCheck cc = gui.getMainFrame().CONNECTION_MONITOR().checkConnection();
+                        ConnectionCheck cc = gui.getMainFrame().CONNECTION_MONITOR().checkConnection();
 
-                        if (cc.isConnected() || cc.hasOnlyWarning()) {
+                        if (isConnected(cc) || isWarningOnly(cc)) {
                             try {
                                 ApplicationCore.DEFAULT_LOGGER.info("Checking for Update... ");
                                 @Nullable VersionsInfo versionInfo = ApplicationCore.WEB_API.getVersionInfo(true);

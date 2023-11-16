@@ -19,16 +19,12 @@
 
 package de.unijena.bioinf.ms.gui.dialogs;
 
-import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionCheckPanel;
-import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
-import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
-import de.unijena.bioinf.rest.ConnectionError;
+import de.unijena.bioinf.ms.nightsky.sdk.model.ConnectionCheck;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,26 +43,26 @@ public final class ConnectionDialog extends JDialog implements ActionListener {
 
     private static ConnectionDialog instance;
 
-    public static synchronized ConnectionDialog of(MainFrame owner, @NotNull Multimap<ConnectionError.Klass, ConnectionError> errors, @Nullable WorkerList workerList, @NotNull LicenseInfo license) {
+    public static synchronized ConnectionDialog of(MainFrame owner, @NotNull ConnectionCheck check) {
         if (instance != null)
             instance.dispose();
-        instance = new ConnectionDialog(owner, errors, workerList, license);
+        instance = new ConnectionDialog(owner, check);
         return instance;
     }
 
-    private ConnectionDialog(MainFrame owner, @NotNull Multimap<ConnectionError.Klass, ConnectionError> errors, @Nullable WorkerList workerList,  @NotNull LicenseInfo license) {
+    private ConnectionDialog(MainFrame owner, @NotNull ConnectionCheck check) {
         super(owner, name, ModalityType.APPLICATION_MODAL);
-        initDialog(errors, workerList, license);
+        initDialog(check);
     }
 
-    private void initDialog(@NotNull Multimap<ConnectionError.Klass, ConnectionError> errors, @Nullable WorkerList workerList,  @NotNull LicenseInfo license) {
+    private void initDialog(@NotNull ConnectionCheck check) {
         setLayout(new BorderLayout());
 
         //header
         JPanel header = new DialogHeader(Icons.NET_64);
         add(header, BorderLayout.NORTH);
 
-        connectionCheck = new ConnectionCheckPanel(this, (MainFrame) getOwner(), errors, workerList, license);
+        connectionCheck = new ConnectionCheckPanel(this, (MainFrame) getOwner(), check);
         add(connectionCheck, BorderLayout.CENTER);
 
 

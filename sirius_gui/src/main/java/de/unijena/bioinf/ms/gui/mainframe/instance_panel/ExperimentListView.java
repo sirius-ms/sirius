@@ -58,6 +58,7 @@ public class ExperimentListView extends JScrollPane {
                     int index = compoundListView.locationToIndex(e.getPoint());
                     compoundListView.setSelectedIndex(index);
                     SiriusActions.COMPUTE.getInstance(mf, mf.getToolbar().getActionMap()).actionPerformed(new ActionEvent(compoundListView, 123, SiriusActions.COMPUTE.name()));
+                    //todo nightsky: fix context menu
                 }
             }
 

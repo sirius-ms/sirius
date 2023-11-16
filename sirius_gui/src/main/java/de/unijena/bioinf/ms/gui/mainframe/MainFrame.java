@@ -41,6 +41,7 @@ import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableExperimentLis
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
+import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.*;
 import de.unijena.bioinf.rest.NetUtils;
@@ -149,11 +150,18 @@ public class MainFrame extends JFrame implements DropTargetListener {
     //internet connection monitor
     private final ConnectionMonitor CONNECTION_MONITOR;
 
+    private NightSkyClient siriusClient;
+
+    public NightSkyClient getSiriusClient() {
+        return siriusClient;
+    }
+
     // methods for creating the mainframe
-    public MainFrame() {
+    public MainFrame(NightSkyClient siriusClient, ConnectionMonitor connectionMonitor) {
         super(ApplicationCore.VERSION_STRING());
         //inti connection monitor
-        CONNECTION_MONITOR = new ConnectionMonitor();
+        this.siriusClient = siriusClient;
+        this.CONNECTION_MONITOR = connectionMonitor;
 
         setIconImage(Icons.SIRIUS_APP_IMAGE);
         configureTaskbar();
