@@ -27,7 +27,7 @@ ext {
     //version for external libraries
     jjobs_version = '0.9.35'
     slf4j_version = '1.7.36'
-    jackson_version = '2.14.2'
+    jackson_version = '2.14.3'
     math3_version = '3.6.1'
     cbc_version = props.getProperty('de.unijena.bioinf.sirius.build.cbc_version')
     glpk_version = props.getProperty('de.unijena.bioinf.sirius.build.glpk_version')
@@ -52,6 +52,8 @@ ext {
     libsvm_version = "3.20"
 
     guava_version = '31.1-jre'
+
+    swagger_version = "2.2.18"
 
 
 }
