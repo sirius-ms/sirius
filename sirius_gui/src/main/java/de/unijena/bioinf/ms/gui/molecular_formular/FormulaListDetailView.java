@@ -18,11 +18,6 @@
  */
 
 package de.unijena.bioinf.ms.gui.molecular_formular;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 31.01.17.
- */
 
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.FilterList;
@@ -110,11 +105,6 @@ public class FormulaListDetailView extends ActionListDetailView<FormulaResultBea
 
             }
         });
-
-        //decorate this guy
-        KeyStroke enterKey = KeyStroke.getKeyStroke("ENTER");
-//        table.getInputMap().put(enterKey, SiriusActions.COMPUTE_CSI_LOCAL.name());
-//        table.getActionMap().put(SiriusActions.COMPUTE_CSI_LOCAL.name(), SiriusActions.COMPUTE_CSI_LOCAL.getInstance());
 
         this.add(
                 new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED),

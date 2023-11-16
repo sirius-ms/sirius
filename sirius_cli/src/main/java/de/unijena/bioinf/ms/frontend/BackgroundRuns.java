@@ -56,6 +56,7 @@ public final class BackgroundRuns {
     private static final AtomicInteger RUN_COUNTER = new AtomicInteger(0);
 
     public static final String ACTIVE_RUNS_PROPERTY = "ACTIVE_RUNS";
+    public static final String UNFINISHED_RUNS_PROPERTY = "UNFINISHED_RUNS";
     private static InstanceBufferFactory<?> BUFFER_FACTORY = new SimpleInstanceBuffer.Factory();
 
     public static InstanceBufferFactory<?> getBufferFactory() {
@@ -66,6 +67,7 @@ public final class BackgroundRuns {
         BUFFER_FACTORY = bufferFactory;
     }
 
+    private static final ConcurrentHashMap<Integer, BackgroundRunJob<?, ?>> FINISHED_RUNS = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<Integer, BackgroundRunJob<?, ?>> ACTIVE_RUNS = new ConcurrentHashMap<>();
     private static final Map<Integer, BackgroundRunJob<?, ?>> ACTIVE_RUNS_IMMUTABLE = Collections.unmodifiableMap(ACTIVE_RUNS);
 
@@ -82,11 +84,25 @@ public final class BackgroundRuns {
         return !ACTIVE_RUNS.isEmpty();
     }
 
+    public static boolean hasActiveRunningComputations() {
+        return hasActiveComputations() && ACTIVE_RUNS.values().stream().anyMatch(j -> !j.isFinished());
+    }
+
     private static void addRun(@NotNull BackgroundRunJob<?, ?> job) {
         synchronized (ACTIVE_RUNS) {
-            int old = ACTIVE_RUNS.size();
+            int oldSize = ACTIVE_RUNS.size();
+            int oldRunning = oldSize - FINISHED_RUNS.size();
+
             ACTIVE_RUNS.put(job.getRunId(), job);
-            PCS.firePropertyChange(new ChangeEvent(old, ACTIVE_RUNS.size(), List.of(job), false));
+
+            int newSize = ACTIVE_RUNS.size();
+            int newRunning = newSize - FINISHED_RUNS.size();
+
+            PCS.firePropertyChange(new ChangeEvent(ACTIVE_RUNS_PROPERTY, oldSize, ACTIVE_RUNS.size(),
+                    oldRunning, newRunning, List.of(job), ChangeEvent.Type.INSERTION));
+
+            PCS.firePropertyChange(new ChangeEvent(UNFINISHED_RUNS_PROPERTY, oldSize, ACTIVE_RUNS.size(),
+                    oldRunning, newRunning, List.of(job), ChangeEvent.Type.INSERTION));
         }
     }
 
@@ -98,16 +114,28 @@ public final class BackgroundRuns {
         if (!j.isFinished())
             throw new IllegalArgumentException("Job with ID '" + jobId + "' is still Running! Only finished jobs can be removed.");
 
-        ACTIVE_RUNS.remove(j.runId);
-
+        removeAndFinishRun(j, true);
         return j;
     }
 
-    private static void removeRun(@NotNull BackgroundRunJob<?, ?> job) {
+    private static void removeAndFinishRun(@NotNull BackgroundRunJob<?, ?> job, boolean remove) {
         synchronized (ACTIVE_RUNS) {
-            int old = ACTIVE_RUNS.size();
-            ACTIVE_RUNS.remove(job.runId);
-            PCS.firePropertyChange(new ChangeEvent(old, ACTIVE_RUNS.size(), List.of(job), true));
+            int oldSize = ACTIVE_RUNS.size();
+            int oldRunning = oldSize - FINISHED_RUNS.size();
+
+            if (remove)
+                ACTIVE_RUNS.remove(job.getRunId());
+            else
+                FINISHED_RUNS.put(job.getRunId(), job);
+
+            int newSize = ACTIVE_RUNS.size();
+            int newRunning = newSize - FINISHED_RUNS.size();
+
+            PCS.firePropertyChange(new ChangeEvent(ACTIVE_RUNS_PROPERTY, oldSize, newSize,
+                    oldRunning, newRunning, List.of(job), ChangeEvent.Type.INSERTION));
+
+            PCS.firePropertyChange(new ChangeEvent(UNFINISHED_RUNS_PROPERTY, oldSize, newSize,
+                    oldRunning, newRunning, List.of(job), ChangeEvent.Type.INSERTION));
         }
     }
 
@@ -118,8 +146,12 @@ public final class BackgroundRuns {
 
     private static final PropertyChangeSupport PCS = new PropertyChangeSupport(ACTIVE_RUNS_IMMUTABLE);
 
-    public static void addPropertyChangeListener(PropertyChangeListener listener) {
-        PCS.addPropertyChangeListener(listener);
+    public static void addActiveRunsListener(PropertyChangeListener listener) {
+        PCS.addPropertyChangeListener(ACTIVE_RUNS_PROPERTY, listener);
+    }
+
+    public static void addUnfinishedRunsListener(PropertyChangeListener listener) {
+        PCS.addPropertyChangeListener(UNFINISHED_RUNS_PROPERTY, listener);
     }
 
     public static void removePropertyChangeListener(PropertyChangeListener listener) {
@@ -299,12 +331,12 @@ public final class BackgroundRuns {
                 System.runFinalization();
                 logInfo("Memory freed!");
             } finally {
-                if (AUTOREMOVE.get())
-                    removeRun(this);
+                removeAndFinishRun(this, AUTOREMOVE.get());
                 super.cleanup();
             }
 
         }
+
 
         public int getRunId() {
             return runId;
@@ -325,35 +357,73 @@ public final class BackgroundRuns {
         }
     }
 
+
     public static class ChangeEvent extends PropertyChangeEvent {
+        public enum Type {INSERTION, DELETION, FINISHED}
 
-
+        private final Type type;
         private final List<BackgroundRunJob<?, ?>> effectedJobs;
-        private final boolean deletion;
+
+        private final int numOfRunsOld, numOfRunsNew, numOfUnfinishedOld, numOfUnfinishedNew;
 
         /**
          * Constructs a new {@code ChangeEvent}.
          *
-         * @param oldSize      the old value of the property
-         * @param newSize      the new value of the property
+         * @param numOfRunsOld the old value of the property
+         * @param numOfRunsNew the new value of the property
          * @param effectedJobs the jobs that are added or removed
          */
-        private ChangeEvent(int oldSize, int newSize, List<BackgroundRunJob<?, ?>> effectedJobs, boolean isDeletion) {
-            super(ACTIVE_RUNS_IMMUTABLE, ACTIVE_RUNS_PROPERTY, oldSize, newSize);
+        private ChangeEvent(String eventName, int numOfRunsOld, int numOfRunsNew, int numOfUnfinishedOld, int numOfUnfinishedNew, List<BackgroundRunJob<?, ?>> effectedJobs, Type type) {
+            super(ACTIVE_RUNS_IMMUTABLE, eventName,
+                    UNFINISHED_RUNS_PROPERTY.equals(eventName) ? numOfUnfinishedOld : numOfRunsOld,
+                    UNFINISHED_RUNS_PROPERTY.equals(eventName) ? numOfUnfinishedNew : numOfRunsNew);
+            this.type = type;
             this.effectedJobs = effectedJobs;
-            this.deletion = isDeletion;
+            this.numOfRunsOld = numOfRunsOld;
+            this.numOfRunsNew = numOfRunsNew;
+            this.numOfUnfinishedOld = numOfUnfinishedOld;
+            this.numOfUnfinishedNew = numOfUnfinishedNew;
         }
+
 
         public List<BackgroundRunJob<?, ?>> getEffectedJobs() {
             return effectedJobs;
         }
 
-        public boolean isInsertion() {
-            return !isDeletion();
+        public int getNumOfRunsOld() {
+            return numOfRunsOld;
         }
 
-        public boolean isDeletion() {
-            return deletion;
+        public int getNumOfRunsNew() {
+            return numOfRunsNew;
+        }
+
+        public int getNumOfUnfinishedOld() {
+            return numOfUnfinishedOld;
+        }
+
+        public int getNumOfUnfinishedNew() {
+            return numOfUnfinishedNew;
+        }
+
+        public boolean hasUnfinishedRuns(){
+            return getNumOfUnfinishedNew() > 0;
+        }
+
+        public boolean isRunInsertion() {
+            return type == Type.INSERTION;
+        }
+
+        public boolean isRunDeletion() {
+            return type == Type.DELETION;
+        }
+
+        public boolean isRunFinished() {
+            return type == Type.FINISHED;
+        }
+
+        public Type getType() {
+            return type;
         }
     }
 }

@@ -42,13 +42,12 @@ public class ExperimentListView extends JScrollPane {
     public ExperimentListView(MainFrame mf, CompoundList sourceList) {
         super(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         this.sourceList = sourceList;
-
         //todo move texfield and filter funktion here
         compoundListView = new JListDropImage<>(new DefaultEventListModel<>(sourceList.compoundList));
         compoundListView.setSelectionModel(sourceList.compountListSelectionModel);
         compoundListView.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         compoundListView.setCellRenderer(new CompoundCellRenderer());
-        this.expPopMenu = new CompoundContextMenu(mf);
+        expPopMenu = new CompoundContextMenu(mf);
 
         compoundListView.addMouseListener(new MouseListener() {
             @Override
@@ -57,8 +56,8 @@ public class ExperimentListView extends JScrollPane {
                     // Double-click detected
                     int index = compoundListView.locationToIndex(e.getPoint());
                     compoundListView.setSelectedIndex(index);
-                    SiriusActions.COMPUTE.getInstance(mf, mf.getToolbar().getActionMap()).actionPerformed(new ActionEvent(compoundListView, 123, SiriusActions.COMPUTE.name()));
-                    //todo nightsky: fix context menu
+                    SiriusActions.COMPUTE.getInstance(mf, true)
+                            .actionPerformed(new ActionEvent(compoundListView, 123, SiriusActions.COMPUTE.name()));
                 }
             }
 
@@ -109,8 +108,8 @@ public class ExperimentListView extends JScrollPane {
         KeyStroke delKey = KeyStroke.getKeyStroke("DELETE");
         compoundListView.getInputMap().put(delKey, SiriusActions.DELETE_EXP.name());
 
-        SiriusActions.DELETE_EXP.getInstance(mf, true, compoundListView.getActionMap());
-        SiriusActions.COMPUTE.getInstance(mf, true, compoundListView.getActionMap());
+        SiriusActions.DELETE_EXP.getInstance(mf, true);
+        SiriusActions.COMPUTE.getInstance(mf, true);
     }
 
     public JPopupMenu getExpPopMenu() {

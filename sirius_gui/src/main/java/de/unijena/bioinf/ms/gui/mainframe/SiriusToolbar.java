@@ -47,38 +47,36 @@ public class SiriusToolbar extends JToolBar {
             help, about;
 
 
-
     SiriusToolbar(MainFrame mf) {
-
         setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, Colors.ICON_BLUE));
         //create/open
-        createB = new ToolbarButton(SiriusActions.NEW_WS.getInstance(mf, true, getActionMap()));
+        createB = new ToolbarButton(SiriusActions.NEW_WS.getInstance(mf, true));
         add(createB);
-        openB = new ToolbarButton(SiriusActions.LOAD_WS.getInstance(mf, true, getActionMap()));
+        openB = new ToolbarButton(SiriusActions.LOAD_WS.getInstance(mf, true));
         add(openB);
         addSeparator(new Dimension(20, 20));
 
         //save
-        saveB = new ToolbarButton(SiriusActions.SAVE_WS.getInstance(mf, true, getActionMap()));
+        saveB = new ToolbarButton(SiriusActions.SAVE_WS.getInstance(mf, true));
         add(saveB);
-        exportB = new ToolbarButton(SiriusActions.EXPORT_WS.getInstance(mf, true, getActionMap()));
+        exportB = new ToolbarButton(SiriusActions.EXPORT_WS.getInstance(mf, true));
         add(exportB);
         addSeparator(new Dimension(20, 20));
 
         //import
-        importCompB = new ToolbarButton(SiriusActions.IMPORT_EXP.getInstance(mf, true, getActionMap()));
+        importCompB = new ToolbarButton(SiriusActions.IMPORT_EXP.getInstance(mf, true));
         add(importCompB);
-        importB = new ToolbarButton(SiriusActions.IMPORT_EXP_BATCH.getInstance(mf, true, getActionMap()));
+        importB = new ToolbarButton(SiriusActions.IMPORT_EXP_BATCH.getInstance(mf, true));
         add(importB);
 
         //summarize
         addSeparator(new Dimension(20, 20));
-        summB = new ToolbarButton(SiriusActions.SUMMARIZE_WS.getInstance(mf, true, getActionMap()));
+        summB = new ToolbarButton(SiriusActions.SUMMARIZE_WS.getInstance(mf, true));
         add(summB);
 
         //fbmn
         addSeparator(new Dimension(20, 20));
-        fbmnB = new ToolbarButton(SiriusActions.EXPORT_FBMN.getInstance(mf, true, getActionMap()));
+        fbmnB = new ToolbarButton(SiriusActions.EXPORT_FBMN.getInstance(mf, true));
         add(fbmnB);
 
         addSeparator(new Dimension(20, 20));
@@ -86,50 +84,48 @@ public class SiriusToolbar extends JToolBar {
         addSeparator(new Dimension(20, 20));
 
         //compute
-        computeAllB = new ToolbarButton(SiriusActions.COMPUTE_ALL.getInstance(mf, true, getActionMap()));
+        computeAllB = new ToolbarButton(SiriusActions.COMPUTE_ALL.getInstance(mf, true));
         add(computeAllB);
         addSeparator(new Dimension(20, 20));
 
-        db = new ToolbarButton(SiriusActions.SHOW_DB.getInstance(mf, true, getActionMap()));
+        db = new ToolbarButton(SiriusActions.SHOW_DB.getInstance(mf, true));
         add(db);
         addSeparator(new Dimension(20, 20));
 
-        jobs = new ToolbarButton(SiriusActions.SHOW_JOBS.getInstance(mf, true, getActionMap()));
+        jobs = new ToolbarButton(SiriusActions.SHOW_JOBS.getInstance(mf, true));
         add(jobs);
 
         addSeparator(new Dimension(20, 20));
         add(Box.createGlue());
         addSeparator(new Dimension(20, 20));
-        logsB = createLogToggleButton((OpenLogAction) SiriusActions.SHOW_LOG.getInstance(mf, true, getActionMap()));
+        logsB = createLogToggleButton((OpenLogAction) SiriusActions.SHOW_LOG.getInstance(mf, true));
         add(logsB);
 
-        settings = new ToolbarButton(SiriusActions.SHOW_SETTINGS.getInstance(mf, true, getActionMap()));
+        settings = new ToolbarButton(SiriusActions.SHOW_SETTINGS.getInstance(mf, true));
         add(settings);
 
-        connect = new ToolbarButton(SiriusActions.CHECK_CONNECTION.getInstance(mf, true, getActionMap()));
+        connect = new ToolbarButton(SiriusActions.CHECK_CONNECTION.getInstance(mf, true));
         add(connect);
 
-        account = new ToolbarButton(SiriusActions.SHOW_ACCOUNT.getInstance(mf, true, getActionMap()));
+        account = new ToolbarButton(SiriusActions.SHOW_ACCOUNT.getInstance(mf, true));
         add(account);
 
-        help = new ToolbarButton(SiriusActions.OPEN_ONLINE_DOCUMENTATION.getInstance(mf, true, getActionMap()));
+        help = new ToolbarButton(SiriusActions.OPEN_ONLINE_DOCUMENTATION.getInstance(mf, true));
         add(help);
 
-      /*  bug = new ToolbarButton(SiriusActions.SHOW_BUGS.getInstance(mf, true, getActionMap()));
+      /*  bug = new ToolbarButton(SiriusActions.SHOW_BUGS.getInstance(mf, true));
         add(bug);*/
 
-        about = new ToolbarButton(SiriusActions.SHOW_ABOUT.getInstance(mf, true, getActionMap()));
+        about = new ToolbarButton(SiriusActions.SHOW_ABOUT.getInstance(mf, true));
         add(about);
 
         backgroundRunListener = evt -> {
-            if (BackgroundRuns.ACTIVE_RUNS_PROPERTY.equals(evt.getPropertyName())) {
-                int size = (int) evt.getNewValue();
-                ((ShowJobsDialogAction) jobs.getAction()).setComputing(size > 0);
-                summB.getAction().setEnabled(size == 0);
-                fbmnB.getAction().setEnabled(size == 0);
-            }
+            final boolean hasRunningJobs = ((BackgroundRuns.ChangeEvent)evt).hasUnfinishedRuns();
+            ((ShowJobsDialogAction) jobs.getAction()).setComputing(hasRunningJobs);
+            summB.getAction().setEnabled(!hasRunningJobs);
+            fbmnB.getAction().setEnabled(!hasRunningJobs);
         };
-        BackgroundRuns.addPropertyChangeListener(backgroundRunListener);
+        BackgroundRuns.addUnfinishedRunsListener(backgroundRunListener);
 
         setRollover(true);
         setFloatable(false);

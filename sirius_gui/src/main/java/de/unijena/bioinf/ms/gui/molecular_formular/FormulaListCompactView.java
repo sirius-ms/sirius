@@ -88,10 +88,5 @@ public class FormulaListCompactView extends ActionListView<FormulaList> {
             public void mouseExited(MouseEvent e) {
             }
         });
-
-        //decorate this guy
-        KeyStroke enterKey = KeyStroke.getKeyStroke("ENTER");
-//        resultListView.getInputMap().put(enterKey, SiriusActions.COMPUTE_CSI_LOCAL.name());
-//        resultListView.getActionMap().put(SiriusActions.COMPUTE_CSI_LOCAL.name(),SiriusActions.COMPUTE_CSI_LOCAL.getInstance());
     }
 }

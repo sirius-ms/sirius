@@ -115,8 +115,16 @@ public enum SiriusActions {
         return a;
     }
 
+    public Action getInstance(@NotNull MainFrame mf, final boolean createIfNull) {
+        return getInstance(mf, createIfNull, mf.getGlobalActions());
+    }
+
+
     public Action getInstance(@NotNull MainFrame mf, final ActionMap map) {
         return getInstance(mf, false, map);
+    }
+    public Action getInstance(@NotNull MainFrame mf) {
+        return getInstance(mf, mf.getGlobalActions());
     }
 
 

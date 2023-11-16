@@ -30,20 +30,20 @@ import javax.swing.*;
 public class CompoundContextMenu extends JPopupMenu {
 
     public CompoundContextMenu(MainFrame mf) {
-        add(new JMenuItem(SiriusActions.COMPUTE.getInstance(mf, true, getActionMap())));
-        add(new JMenuItem(SiriusActions.SUMMARIZE_EXP.getInstance(mf, true, getActionMap())));
-        add(new JMenuItem(SiriusActions.DELETE_EXP.getInstance(mf, true, getActionMap())));
+        add(new JMenuItem(SiriusActions.COMPUTE.getInstance(mf, true)));
+        add(new JMenuItem(SiriusActions.SUMMARIZE_EXP.getInstance(mf, true)));
+        add(new JMenuItem(SiriusActions.DELETE_EXP.getInstance(mf, true)));
         addSeparator();
-        add(new JMenuItem(SiriusActions.EDIT_EXP.getInstance(mf, true, getActionMap())));
-        add(new JMenuItem(SiriusActions.REMOVE_FORMULA_EXP.getInstance(mf, true, getActionMap())));
-        add(new JMenuItem(SiriusActions.CHANGE_ADDCUCT_EXP.getInstance(mf, true, getActionMap())));
+        add(new JMenuItem(SiriusActions.EDIT_EXP.getInstance(mf, true)));
+        add(new JMenuItem(SiriusActions.REMOVE_FORMULA_EXP.getInstance(mf, true)));
+        add(new JMenuItem(SiriusActions.CHANGE_ADDCUCT_EXP.getInstance(mf, true)));
         addSeparator();
-        add(new JMenuItem(SiriusActions.ORDER_BY_INDEX.getInstance(mf, true, getActionMap())));
-        add(new JMenuItem(SiriusActions.ORDER_BY_RT.getInstance(mf, true, getActionMap())));
-        add(new JMenuItem(SiriusActions.ORDER_BY_MASS.getInstance(mf, true, getActionMap())));
-        add(new JMenuItem(SiriusActions.ORDER_BY_NAME.getInstance(mf, true, getActionMap())));
-        add(new JMenuItem(SiriusActions.ORDER_BY_CONFIDENCE.getInstance(mf, true, getActionMap())));
+        add(new JMenuItem(SiriusActions.ORDER_BY_INDEX.getInstance(mf, true)));
+        add(new JMenuItem(SiriusActions.ORDER_BY_RT.getInstance(mf, true)));
+        add(new JMenuItem(SiriusActions.ORDER_BY_MASS.getInstance(mf, true)));
+        add(new JMenuItem(SiriusActions.ORDER_BY_NAME.getInstance(mf, true)));
+        add(new JMenuItem(SiriusActions.ORDER_BY_CONFIDENCE.getInstance(mf, true)));
         addSeparator();
-        add(new JMenuItem(SiriusActions.RESET_FILTER.getInstance(mf, true, getActionMap())));
+        add(new JMenuItem(SiriusActions.RESET_FILTER.getInstance(mf, true)));
     }
 }

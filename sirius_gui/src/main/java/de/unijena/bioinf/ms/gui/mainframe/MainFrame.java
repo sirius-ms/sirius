@@ -156,6 +156,13 @@ public class MainFrame extends JFrame implements DropTargetListener {
         return siriusClient;
     }
 
+    private final ActionMap globalActions = new ActionMap();
+
+    @NotNull
+    public ActionMap getGlobalActions() {
+        return globalActions;
+    }
+
     // methods for creating the mainframe
     public MainFrame(NightSkyClient siriusClient, ConnectionMonitor connectionMonitor) {
         super(ApplicationCore.VERSION_STRING());

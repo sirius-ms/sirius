@@ -95,7 +95,7 @@ public class AccountPanel extends JPanel {
         //south
         create = new JButton();
         login = new JButton();
-        changeSub = new JButton(SiriusActions.SELECT_SUBSCRIPTION.getInstance(mainFrame, true,getActionMap()));
+        changeSub = new JButton(SiriusActions.SELECT_SUBSCRIPTION.getInstance(mainFrame, true));
         Box buttons = Box.createHorizontalBox();
         buttons.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         buttons.add(create);
@@ -118,8 +118,8 @@ public class AccountPanel extends JPanel {
         if (userInfo == null) {
             userIconLabel.setIcon(Icons.USER_128);
             userInfoLabel.setText("Please log in!");
-            create.setAction(SiriusActions.SIGN_UP.getInstance(mainFrame, true, getActionMap()));
-            login.setAction(SiriusActions.SIGN_IN.getInstance(mainFrame, true, getActionMap()));
+            create.setAction(SiriusActions.SIGN_UP.getInstance(mainFrame, true));
+            login.setAction(SiriusActions.SIGN_IN.getInstance(mainFrame, true));
             refresh.setEnabled(false);
             changeSub.setEnabled(false);
         } else {
@@ -140,8 +140,8 @@ public class AccountPanel extends JPanel {
                     + "<br>"
                     + "(" + userInfo.getClaim("sub").asString() + ")"
                     + "</html>");
-            create.setAction(SiriusActions.MANAGE_ACCOUNT.getInstance(mainFrame, true, getActionMap()));
-            login.setAction(SiriusActions.SIGN_OUT.getInstance(mainFrame, true, getActionMap()));
+            create.setAction(SiriusActions.MANAGE_ACCOUNT.getInstance(mainFrame, true));
+            login.setAction(SiriusActions.SIGN_OUT.getInstance(mainFrame, true));
         }
     }
 
