@@ -26,6 +26,7 @@ import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.compute.SiriusProjectSpaceComputeService;
 import de.unijena.bioinf.ms.middleware.service.gui.GuiService;
 import de.unijena.bioinf.ms.middleware.service.gui.SiriusProjectSpaceGuiService;
+import de.unijena.bioinf.ms.middleware.service.info.ConnectionChecker;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceProviderImpl;
 import de.unijena.bioinf.webapi.WebAPI;
@@ -61,6 +62,12 @@ public class SiriusContext{
     @Bean
     public GuiService<?> guiService(){
         return new SiriusProjectSpaceGuiService();
+    }
+
+    @Bean
+    @DependsOn({"webAPI"})
+    ConnectionChecker connectionMonitor(WebAPI<?> webAPI){
+        return new ConnectionChecker(webAPI);
     }
 
     @Bean(destroyMethod = "shutdown")

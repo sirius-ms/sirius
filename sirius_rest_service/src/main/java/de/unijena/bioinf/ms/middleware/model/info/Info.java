@@ -18,7 +18,7 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.middleware.model;
+package de.unijena.bioinf.ms.middleware.model.info;
 
 import lombok.Builder;
 import lombok.Getter;

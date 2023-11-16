@@ -2811,25 +2811,11 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
-            "type": "boolean"
-          },
-          "last": {
-            "type": "boolean"
-          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
+          "first": {
+            "type": "boolean"
           },
           "size": {
             "type": "integer",
@@ -2841,6 +2827,20 @@
               "$ref": "#/components/schemas/ProjectInfo"
             }
           },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
           "empty": {
             "type": "boolean"
           }
@@ -2851,6 +2851,10 @@
         "properties": {
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "offset": {
+            "type": "integer",
+            "format": "int64"
           },
           "pageNumber": {
             "type": "integer",
@@ -2865,23 +2869,19 @@
           },
           "unpaged": {
             "type": "boolean"
-          },
-          "offset": {
-            "type": "integer",
-            "format": "int64"
           }
         }
       },
       "SortObject": {
         "type": "object",
         "properties": {
+          "empty": {
+            "type": "boolean"
+          },
           "sorted": {
             "type": "boolean"
           },
           "unsorted": {
-            "type": "boolean"
-          },
-          "empty": {
             "type": "boolean"
           }
         },
@@ -2898,25 +2898,11 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
-            "type": "boolean"
-          },
-          "last": {
-            "type": "boolean"
-          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
+          "first": {
+            "type": "boolean"
           },
           "size": {
             "type": "integer",
@@ -2927,6 +2913,20 @@
             "items": {
               "$ref": "#/components/schemas/Job"
             }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"
@@ -3557,25 +3557,11 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
-            "type": "boolean"
-          },
-          "last": {
-            "type": "boolean"
-          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
+          "first": {
+            "type": "boolean"
           },
           "size": {
             "type": "integer",
@@ -3586,6 +3572,20 @@
             "items": {
               "$ref": "#/components/schemas/Compound"
             }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"
@@ -3705,25 +3705,11 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
-            "type": "boolean"
-          },
-          "last": {
-            "type": "boolean"
-          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
+          "first": {
+            "type": "boolean"
           },
           "size": {
             "type": "integer",
@@ -3734,6 +3720,20 @@
             "items": {
               "$ref": "#/components/schemas/AlignedFeature"
             }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"
@@ -3762,25 +3762,11 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
-            "type": "boolean"
-          },
-          "last": {
-            "type": "boolean"
-          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
+          "first": {
+            "type": "boolean"
           },
           "size": {
             "type": "integer",
@@ -3791,6 +3777,20 @@
             "items": {
               "$ref": "#/components/schemas/StructureCandidateFormula"
             }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"
@@ -3889,25 +3889,11 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
-            "type": "boolean"
-          },
-          "last": {
-            "type": "boolean"
-          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
+          "first": {
+            "type": "boolean"
           },
           "size": {
             "type": "integer",
@@ -3918,6 +3904,20 @@
             "items": {
               "$ref": "#/components/schemas/FormulaCandidate"
             }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"
@@ -3935,25 +3935,11 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
-            "type": "boolean"
-          },
-          "last": {
-            "type": "boolean"
-          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
+          "first": {
+            "type": "boolean"
           },
           "size": {
             "type": "integer",
@@ -3964,6 +3950,20 @@
             "items": {
               "$ref": "#/components/schemas/StructureCandidateScored"
             }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"
@@ -4005,6 +4005,15 @@
         "description": ""
       },
       "ConnectionCheck": {
+        "required": [
+          "availableWorkers",
+          "errors",
+          "licenseInfo",
+          "supportsAllPredictorTypes",
+          "supportsNegPredictorTypes",
+          "supportsPosPredictorTypes",
+          "unAvailableWorkers"
+        ],
         "type": "object",
         "properties": {
           "workerInfo": {
@@ -4013,28 +4022,46 @@
           "licenseInfo": {
             "$ref": "#/components/schemas/LicenseInfo"
           },
-          "error": {
-            "$ref": "#/components/schemas/ConnectionError"
+          "errors": {
+            "type": "array",
+            "description": "List of errors ordered by significance. first error should be reported and addressed first.\n Following errors might just be follow-up errors",
+            "items": {
+              "$ref": "#/components/schemas/ConnectionError"
+            }
           },
-          "loggedIn": {
+          "supportsPosPredictorTypes": {
             "type": "boolean"
           },
-          "connected": {
+          "supportsNegPredictorTypes": {
             "type": "boolean"
           },
-          "warningOnly": {
-            "type": "boolean"
+          "availableWorkers": {
+            "uniqueItems": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
-          "internet": {
-            "type": "boolean"
+          "unAvailableWorkers": {
+            "uniqueItems": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
-          "workerWarning": {
+          "supportsAllPredictorTypes": {
             "type": "boolean"
           }
         },
         "description": ""
       },
       "ConnectionError": {
+        "required": [
+          "errorKlass",
+          "errorType",
+          "siriusErrorCode",
+          "siriusMessage"
+        ],
         "type": "object",
         "properties": {
           "errorType": {
@@ -4066,6 +4093,15 @@
           "siriusMessage": {
             "type": "string"
           },
+          "serverResponseErrorCode": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "serverResponseErrorMessage": {
+            "type": "string",
+            "nullable": true
+          },
           "error": {
             "type": "boolean"
           },
@@ -4093,6 +4129,13 @@
           },
           "consumables": {
             "$ref": "#/components/schemas/SubscriptionConsumables"
+          },
+          "terms": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/Term"
+            }
           }
         },
         "description": ""
@@ -4108,7 +4151,30 @@
         "description": "",
         "nullable": true
       },
+      "Term": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "link": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "description": "",
+        "nullable": true
+      },
       "WorkerInfo": {
+        "required": [
+          "alive",
+          "id",
+          "serverTime",
+          "state",
+          "supportedPredictors",
+          "type",
+          "version"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -4139,10 +4205,12 @@
             "type": "string"
           },
           "host": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "prefix": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "state": {
             "type": "integer",
@@ -4160,6 +4228,10 @@
         "description": ""
       },
       "WorkerList": {
+        "required": [
+          "pendingJobs",
+          "workerList"
+        ],
         "type": "object",
         "properties": {
           "pendingJobs": {
@@ -4173,7 +4245,8 @@
             }
           }
         },
-        "description": ""
+        "description": "",
+        "nullable": true
       }
     }
   }

@@ -7,6 +7,10 @@ buildscript {
     }
 }
 
+plugins {
+    id "org.springdoc.openapi-gradle-plugin" version "1.8.0"
+}
+
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 apply plugin: 'war'
@@ -33,7 +37,7 @@ ext['okhttp.version'] = '4.8.1'
 
 dependencies {
     api project(':sirius_cli')
-    api project(':sirius_gui')
+    implementation project(':sirius_gui')
     //implementation 'me.friwi:jcefmaven:116.0.19.1'
 
     //////////// configure logging ///////////////////
@@ -79,9 +83,6 @@ dependencies {
 //    implementation 'io.micrometer:micrometer-registry-prometheus'
     //must match minio version
     implementation 'com.squareup.okhttp3:okhttp:4.10.0'
-
-
-    testImplementation group: 'junit', name: 'junit', version: '4.12'
 }
 //todo use logback instead of java util logging! => needs support in jjobs
 configurations.each {Configuration conf ->
@@ -116,6 +117,17 @@ bootJar {
         enabled = true
     }
     launchScript()
+}
+
+openApi {
+    apiDocsUrl.set("http://localhost:8080/v3/api-docs")
+    outputDir.set(file("$projectDir"))
+    outputFileName.set("openapi-spec.json")
+    waitTimeInSeconds.set(20)
+
+    customBootRun {
+        args = ["rest", "-s"]
+    }
 }
 
 artifactory {
