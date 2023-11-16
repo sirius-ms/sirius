@@ -585,6 +585,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 ms1spectra.add((SimpleSpectrum) spec);
             } else if (spectrumType == SPECTRUM_TYPE.MS2) {
                 spec = new MutableMs2Spectrum(currentSpectrum, parentMass, currentEnergy, 2);
+                ((MutableMs2Spectrum) spec).setTotalIonCount(tic);
                 ms2spectra.add((MutableMs2Spectrum) spec);
                 ms2Comments.add(currentComments);
             } else if (!currentSpectrum.isEmpty()) {
