@@ -28,7 +28,7 @@ public class MsParserTest{
 
         assertEquals("molecule name differs", experiment.getName(), "Adenosine");
         assertEquals("molecular formula differs", experiment.getMolecularFormula(), MolecularFormula.parse("C10H13N5O4"));
-        assertEquals("charge differs", (int) experiment.getPrecursorIonType().getCharge(), 1);
+        assertEquals("charge differs", experiment.getPrecursorIonType().getCharge(), 1);
         assertEquals("parent mass differs", experiment.getIonMass(), 268.1000061035156, .00000001);
 
         //test spectra
@@ -36,6 +36,10 @@ public class MsParserTest{
         List<? extends Ms2Spectrum<Peak>> ms2spectra = experiment.getMs2Spectra();
         assertEquals("there are 4 ms2 spectra in the file but parsed where " + ms2spectra.size(), 4, ms2spectra.size());
         assertEquals("there is 1 ms1 spectrum in the file but parsed where " + ms1spectra.size(), 1, ms1spectra.size());
+
+        assertEquals(35, ms2spectra.get(0).getCollisionEnergy().getMinEnergy(), 1e-9);
+        assertEquals(35, ms2spectra.get(0).getCollisionEnergy().getMaxEnergy(), 1e-9);
+        assertEquals(1386770, ms2spectra.get(0).getTotalIonCount(), 1e-9);
 
         //test parameters from file
         assertTrue("IsotopeMs2Settings not set", experiment.hasAnnotation(IsotopeMs2Settings.class));
