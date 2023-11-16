@@ -57,7 +57,7 @@ public class WorkerWarningDialog extends WarningDialog {
     protected void addOpenConnectionDialogButton(JPanel boxedButtonPanel) {
         final JButton details = new JButton("Details");
         details.setToolTipText("Open Webservice information for details.");
-        details.setAction(SiriusActions.CHECK_CONNECTION.getInstance((MainFrame) getOwner(), ((MainFrame)getOwner()).getToolbar().getActionMap()));
+        details.setAction(SiriusActions.CHECK_CONNECTION.getInstance((MainFrame) getOwner(), true));
         details.setIcon(Icons.NET_16);
         boxedButtonPanel.add(details);
     }

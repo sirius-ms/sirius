@@ -232,12 +232,12 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
                         + addHtmlErrorText(err));
                 resultPanel.add(new JButton(ActionUtils.deriveFrom(
                         evt -> Optional.ofNullable(owner).ifPresent(JDialog::dispose),
-                        SiriusActions.SIGN_OUT.getInstance(mf, mf.getToolbar().getActionMap()))));
+                        SiriusActions.SIGN_OUT.getInstance(mf, true))));
                 case LOGIN:
                     addHTMLTextPanel(resultPanel, err + READ_MORE_LICENSING + addHtmlErrorText(err));
                     resultPanel.add(new JButton(ActionUtils.deriveFrom(
                             evt -> Optional.ofNullable(owner).ifPresent(JDialog::dispose),
-                            SiriusActions.SIGN_IN.getInstance(mf, mf.getToolbar().getActionMap()))));
+                            SiriusActions.SIGN_IN.getInstance(mf, true))));
                     break;
                 case LICENSE:
                     addHTMLTextPanel(resultPanel, err + READ_MORE_LICENSING + addHtmlErrorText(err));
@@ -247,7 +247,7 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
                             " for the selected Webservice have not been accepted.</b><br> Click Accept to get Access:");
                     resultPanel.add(new JButton(ActionUtils.deriveFrom(
                             evt -> Optional.ofNullable(owner).ifPresent(JDialog::dispose),
-                            SiriusActions.ACCEPT_TERMS.getInstance(mf, mf.getToolbar().getActionMap()))));
+                            SiriusActions.ACCEPT_TERMS.getInstance(mf, true))));
                     break;
                 case APP_SERVER:
                     addHTMLTextPanel(resultPanel, err + "<br>" +

@@ -34,8 +34,6 @@ public class AccountDialog extends JDialog implements PropertyChangeListener {
     private final AuthService service;
     private final Action signIn;
     private final Action signOut;
-
-    private final ActionMap actionMap = new ActionMap();
     private AccountPanel center;
 
     public AccountDialog(MainFrame mainFrame, AuthService service) {
@@ -52,10 +50,10 @@ public class AccountDialog extends JDialog implements PropertyChangeListener {
         center = new AccountPanel(mainFrame, service);
         add(center, BorderLayout.CENTER);
 
-        signIn = SiriusActions.SIGN_IN.getInstance(mainFrame, true, actionMap);
+        signIn = SiriusActions.SIGN_IN.getInstance(mainFrame, true);
         signIn.addPropertyChangeListener(this);
 
-        signOut = SiriusActions.SIGN_OUT.getInstance(mainFrame, true,  actionMap);
+        signOut = SiriusActions.SIGN_OUT.getInstance(mainFrame, true);
         signOut.addPropertyChangeListener(this);
 
         configureActions();

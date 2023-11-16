@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
+import de.unijena.bioinf.ms.frontend.BackgroundRuns;
 import de.unijena.bioinf.ms.gui.compute.BatchComputeDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
@@ -47,8 +48,8 @@ public class ComputeAllAction extends AbstractMainFrameAction {
                 setEnabled(listChanges.getSourceList().size() > 0));
 
         //Listen if there are active gui jobs
-        Jobs.MANAGER().getJobs().addListEventListener(listChanges -> {
-            if (Jobs.MANAGER().hasActiveJobs()) {
+        BackgroundRuns.addUnfinishedRunsListener(evt -> {
+            if (((BackgroundRuns.ChangeEvent)evt).hasUnfinishedRuns()) {
                 computationStarted();
             } else {
                 computationCanceled();
