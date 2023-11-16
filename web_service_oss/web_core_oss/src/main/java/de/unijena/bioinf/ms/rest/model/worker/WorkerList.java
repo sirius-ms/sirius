@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.rest.model.worker;
 
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
@@ -32,9 +33,13 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
+
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE, setterVisibility = JsonAutoDetect.Visibility.NONE, isGetterVisibility = JsonAutoDetect.Visibility.NONE)
 public class WorkerList {
+    @Schema(nullable = false, requiredMode = REQUIRED)
     private int pendingJobs = Integer.MIN_VALUE;
+    @Schema(nullable = false, requiredMode = REQUIRED)
     private final ArrayList<WorkerInfo> workerList;
 
     public WorkerList(int initialCapacity) {
@@ -82,6 +87,10 @@ public class WorkerList {
 
     public Set<WorkerWithCharge> getSupportedTypes() {
         return workerList.stream().map(WorkerInfo::asWorkerWithCharge).collect(Collectors.toSet());
+    }
+
+    public Set<WorkerWithCharge> getActiveSupportedTypes() {
+        return getActiveSupportedTypes(Instant.ofEpochSecond(600/*10 min*/));
     }
 
     public Set<WorkerWithCharge> getActiveSupportedTypes(Instant slot) {
