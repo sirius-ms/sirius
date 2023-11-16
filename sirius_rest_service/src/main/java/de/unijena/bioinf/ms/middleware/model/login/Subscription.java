@@ -25,6 +25,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import org.jetbrains.annotations.Nullable;
 
 import java.sql.Date;
 
@@ -114,7 +115,9 @@ public class Subscription {
         return getExpirationDate().getTime() < System.currentTimeMillis();
     }
 
-    public static Subscription of(de.unijena.bioinf.ms.rest.model.license.Subscription s){
+    public static Subscription of(@Nullable de.unijena.bioinf.ms.rest.model.license.Subscription s){
+        if (s == null)
+            return null;
         return Subscription.builder()
                 .sid(s.getSid())
                 .subscriberId(s.getSubscriberId())

@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -18,7 +18,7 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.frontend;
+package de.unijena.bioinf.ms.gui;
 
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
@@ -51,12 +51,9 @@ public class SiriusGui {
         return mainFrame;
     }
 
-    public SiriusGui(@NotNull GuiProjectSpaceManager project) { //todo nighsky: change to nightsky api and project ID.
-        this(project, null, null);
-    }
-    public SiriusGui(@NotNull GuiProjectSpaceManager project, @Nullable NightSkyClient nightSkyClient, @Nullable ConnectionMonitor connectionMonitor) { //todo nighsky: change to nightsky api and project ID.
+    public SiriusGui(@NotNull GuiProjectSpaceManager project, @Nullable NightSkyClient nightSkyClient, @NotNull ConnectionMonitor connectionMonitor) { //todo nighsky: change to nightsky api and project ID.
         sirius = nightSkyClient != null ? nightSkyClient : new NightSkyClient();
-        mainFrame = new MainFrame(sirius, connectionMonitor != null ? connectionMonitor : new ConnectionMonitor(sirius));
+        mainFrame = new MainFrame(sirius, connectionMonitor);
         mainFrame.decoradeMainFrame(project);
         //todo nighsky: check why JFX webview is only working for first instance...
     }

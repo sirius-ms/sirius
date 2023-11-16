@@ -124,6 +124,7 @@ public final class ConnectionChecker {
                 Tokens.getUserId(token).ifPresent(ll::setUserId);
             });
 
+            @Nullable
             final de.unijena.bioinf.ms.rest.model.license.Subscription sub = webAPI.getActiveSubscription();
             ll.setSubscription(Subscription.of(sub));
             ll.setTerms(Tokens.getActiveSubscriptionTerms(sub));
