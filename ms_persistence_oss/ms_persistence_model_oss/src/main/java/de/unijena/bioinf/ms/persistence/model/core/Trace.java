@@ -29,16 +29,19 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString(onlyExplicitlyIncluded = true)
 public class Trace {
     /**
      * ID of the Run this trace belongs to
      */
+    @ToString.Include
     long runId;
 
     /**
      * Ids of the scans this trace is build from
      * should be sorted by RT
      */
+    @ToString.Include
     LongList scanIds;
 
     /**

@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ChemistryBase.ms;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.Range;
 
 import java.util.Locale;
@@ -30,7 +31,7 @@ public class IsolationWindow {
     protected final double windowWidth;
 
 
-    public IsolationWindow(double windowOffset, double windowWidth) {
+    public IsolationWindow(@JsonProperty("windowOffset") double windowOffset, @JsonProperty("windowWidth") double windowWidth) {
         this.windowOffset = windowOffset;
         this.windowWidth = windowWidth;
     }
