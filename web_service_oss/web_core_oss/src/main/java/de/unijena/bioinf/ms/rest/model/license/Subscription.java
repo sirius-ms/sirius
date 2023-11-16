@@ -4,6 +4,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.sql.Date;
 
+/**
+ * Outdated model For deserialization from backend rest service model only
+ */
+@Deprecated
 public class Subscription {
 
     private String sid;
