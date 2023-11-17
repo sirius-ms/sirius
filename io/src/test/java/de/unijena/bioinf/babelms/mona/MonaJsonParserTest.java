@@ -20,18 +20,16 @@
 
 package de.unijena.bioinf.babelms.mona;
 
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.File;
 import java.io.IOException;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class MonaJsonParserTest {
 
@@ -53,6 +51,8 @@ class MonaJsonParserTest {
         assertEquals(3, spectrum.getIntensityAt(0), 1e-9);
         assertEquals(139.0585, spectrum.getMzAt(3), 1e-9);
         assertEquals(7.7, spectrum.getIntensityAt(3), 1e-9);
+
+        assertEquals(MsInstrumentation.Instrument.QTOF, experiment.getAnnotation(MsInstrumentation.class).orElseThrow());
     }
 
     @Test
@@ -70,5 +70,17 @@ class MonaJsonParserTest {
         assertEquals(40, spectrum.getCollisionEnergy().getMaxEnergy(), 1e-9);
         assertEquals("[M + H]+", spectrum.getIonization().toString());
         assertEquals("[M + H]+", experiment.getPrecursorIonType().toString());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"mona/missing_fields.json", "mona/invalid_fields.json"})
+    void cannotParse(String file) throws IOException {
+        Ms2Experiment experiment = loadExperiment(file);
+        Ms2Spectrum<Peak> spectrum = experiment.getMs2Spectra().get(0);
+
+        assertEquals(0, experiment.getIonMass());
+        assertNull(spectrum.getCollisionEnergy());
+        assertNull(experiment.getPrecursorIonType());
+        assertTrue(experiment.getAnnotation(MsInstrumentation.class).isEmpty());
     }
 }
