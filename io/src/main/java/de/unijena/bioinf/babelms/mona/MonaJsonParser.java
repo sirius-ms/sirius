@@ -37,6 +37,7 @@ import java.util.Optional;
 public class MonaJsonParser implements JsonExperimentParser {
 
     private final static String SPECTRUM = "spectrum";
+    private final static String COMPOUND = "compound";
     private final static String METADATA = "metaData";
     private final static String MS_LEVEL = "ms level";
     private final static String PRECURSOR_MZ = "precursor m/z";
@@ -52,7 +53,7 @@ public class MonaJsonParser implements JsonExperimentParser {
 
     @Override
     public boolean canParse(JsonNode root) {
-        return root.hasNonNull(SPECTRUM) && root.hasNonNull("compound") && root.hasNonNull(METADATA);
+        return root.hasNonNull(SPECTRUM) && root.hasNonNull(COMPOUND) && root.hasNonNull(METADATA);
     }
 
     @Override
@@ -64,6 +65,7 @@ public class MonaJsonParser implements JsonExperimentParser {
         collectMetaData();
         parseSpectrum();
 
+        getCompoundName().ifPresent(experiment::setName);
         getInstrumentation().ifPresent(instrumentation -> experiment.setAnnotation(MsInstrumentation.class, instrumentation));
 
         return experiment;
@@ -98,6 +100,14 @@ public class MonaJsonParser implements JsonExperimentParser {
         } else {
             throw new RuntimeException("Unsupported ms level " + msLevel + " in MoNA record " + recordId + ". Only 'MS1' and 'MS2' are supported.");
         }
+    }
+
+    private Optional<String> getMetadata(String field) {
+        JsonNode node = metadata.get(field);
+        if (node != null) {
+            return Optional.of(node.get("value").asText());
+        }
+        return Optional.empty();
     }
 
     /**
@@ -142,10 +152,10 @@ public class MonaJsonParser implements JsonExperimentParser {
                 .filter(t -> !MsInstrumentation.Unknown.equals(t));
     }
 
-    private Optional<String> getMetadata(String field) {
-        JsonNode node = metadata.get(field);
-        if (node != null) {
-            return Optional.of(node.get("value").asText());
+    private Optional<String> getCompoundName() {
+        JsonNode names = root.get(COMPOUND).get(0).get("names");
+        if (!names.isEmpty()) {
+            return Optional.of(names.get(0).get("name").asText());
         }
         return Optional.empty();
     }

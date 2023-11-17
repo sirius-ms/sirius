@@ -53,6 +53,7 @@ class MonaJsonParserTest {
         assertEquals(7.7, spectrum.getIntensityAt(3), 1e-9);
 
         assertEquals(MsInstrumentation.Instrument.QTOF, experiment.getAnnotation(MsInstrumentation.class).orElseThrow());
+        assertEquals("m-Aminobenzoic acid", experiment.getName());
     }
 
     @Test
@@ -82,5 +83,6 @@ class MonaJsonParserTest {
         assertNull(spectrum.getCollisionEnergy());
         assertNull(experiment.getPrecursorIonType());
         assertTrue(experiment.getAnnotation(MsInstrumentation.class).isEmpty());
+        assertTrue(experiment.getName().isEmpty());
     }
 }
