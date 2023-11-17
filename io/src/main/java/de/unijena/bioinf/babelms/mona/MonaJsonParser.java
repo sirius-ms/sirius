@@ -28,7 +28,6 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.babelms.json.JsonExperimentParser;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -43,6 +42,7 @@ public class MonaJsonParser implements JsonExperimentParser {
     private final static String PRECURSOR_MZ = "precursor m/z";
     private final static String COLLISION_ENERGY = "collision energy";
     private final static String PRECURSOR_TYPE = "precursor type";
+    private final static String INSTRUMENT_TYPE = "instrument type";
 
 
     private MutableMs2Experiment experiment;
@@ -62,8 +62,9 @@ public class MonaJsonParser implements JsonExperimentParser {
         recordId = root.get("id").asText();
 
         collectMetaData();
-
         parseSpectrum();
+
+        getInstrumentation().ifPresent(instrumentation -> experiment.setAnnotation(MsInstrumentation.class, instrumentation));
 
         return experiment;
     }
@@ -80,17 +81,17 @@ public class MonaJsonParser implements JsonExperimentParser {
 
     private void parseSpectrum() {
         SimpleSpectrum spectrum = getSpectrum(root.get(SPECTRUM).asText());
-        String msLevel = getMetadata(MS_LEVEL);
+        String msLevel = getMetadata(MS_LEVEL).orElse(null);
 
         if ("MS1".equals(msLevel)) {
             experiment.getMs1Spectra().add(spectrum);
         } else if ("MS2".equals(msLevel)) {
             double precursorMz = getPrecursorMz();
-            MutableMs2Spectrum ms2Spectrum = new MutableMs2Spectrum(spectrum, precursorMz, getCollisionEnergy(), 2);
-            ms2Spectrum.setIonization(getIonization());
+            MutableMs2Spectrum ms2Spectrum = new MutableMs2Spectrum(spectrum, precursorMz, getCollisionEnergy().orElse(null), 2);
+            getIonization().ifPresent(ms2Spectrum::setIonization);
             experiment.getMs2Spectra().add(ms2Spectrum);
 
-            Optional.ofNullable(getPrecursorIonType()).ifPresent(experiment::setPrecursorIonType);
+            getPrecursorIonType().ifPresent(experiment::setPrecursorIonType);
             if (precursorMz > 0) {
                 experiment.setIonMass(precursorMz);
             }
@@ -115,47 +116,37 @@ public class MonaJsonParser implements JsonExperimentParser {
     }
 
     private double getPrecursorMz() {
-        String value = getMetadata(PRECURSOR_MZ);
-        if (value != null) {
-            return Utils.parseDoubleWithUnknownDezSep(value);
+        Optional<String> value = getMetadata(PRECURSOR_MZ);
+        if (value.isEmpty()) {
+            log.warn("MoNA record " + recordId + " has no precursor m/z, setting to 0.");
+            return 0;
         }
-        log.warn("MoNA record " + recordId + " is MS2, but has no precursor m/z, setting to 0.");
-        return 0;
+        return Utils.parseDoubleWithUnknownDezSep(value.get());
     }
 
-    @Nullable
-    private CollisionEnergy getCollisionEnergy() {
-        String value = getMetadata(COLLISION_ENERGY);
-        if (value != null) {
-            return CollisionEnergy.fromStringOrNull(value);
-        }
-        return null;
+    private Optional<CollisionEnergy> getCollisionEnergy() {
+        return getMetadata(COLLISION_ENERGY).map(CollisionEnergy::fromStringOrNull);
     }
 
-    @Nullable
-    private PrecursorIonType getPrecursorIonType() {
-        String value = getMetadata(PRECURSOR_TYPE);
-        if (value != null) {
-            return PrecursorIonType.fromString(value);
-        }
-        return null;
+    private Optional<PrecursorIonType> getPrecursorIonType() {
+        return getMetadata(PRECURSOR_TYPE).map(PrecursorIonType::fromString);
     }
 
-    @Nullable
-    private Ionization getIonization() {
-        PrecursorIonType precursorIonType = getPrecursorIonType();
-        if (precursorIonType != null) {
-            return precursorIonType.getIonization();
-        }
-        return null;
+    private Optional<Ionization> getIonization() {
+        return getPrecursorIonType().map(PrecursorIonType::getIonization);
     }
 
-    @Nullable
-    private String getMetadata(String field) {
+    private Optional<MsInstrumentation> getInstrumentation() {
+        return getMetadata(INSTRUMENT_TYPE)
+                .map(MsInstrumentation::getBestFittingInstrument)
+                .filter(t -> !MsInstrumentation.Unknown.equals(t));
+    }
+
+    private Optional<String> getMetadata(String field) {
         JsonNode node = metadata.get(field);
         if (node != null) {
-            return node.get("value").asText();
+            return Optional.of(node.get("value").asText());
         }
-        return null;
+        return Optional.empty();
     }
 }
