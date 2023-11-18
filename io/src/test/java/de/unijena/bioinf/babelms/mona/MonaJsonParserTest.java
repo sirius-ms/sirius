@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.babelms.mona;
 
+import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import org.junit.jupiter.api.Test;
@@ -55,6 +56,9 @@ class MonaJsonParserTest {
         assertEquals(MsInstrumentation.Instrument.QTOF, experiment.getAnnotation(MsInstrumentation.class).orElseThrow());
         assertEquals("m-Aminobenzoic acid", experiment.getName());
         assertEquals("C7H7NO2", experiment.getMolecularFormula().toString());
+
+        assertEquals("InChI=1S/C7H7NO2/c8-6-3-1-2-5(4-6)7(9)10/h1-4H,8H2,(H,9,10)", experiment.getAnnotation(InChI.class).orElseThrow().in3D);
+        assertEquals("XFDUHJPVQKIXHO-UHFFFAOYSA-N", experiment.getAnnotation(InChI.class).orElseThrow().key);
     }
 
     @Test
@@ -86,5 +90,6 @@ class MonaJsonParserTest {
         assertTrue(experiment.getAnnotation(MsInstrumentation.class).isEmpty());
         assertTrue(experiment.getName().isEmpty());
 //        assertNull(experiment.getMolecularFormula());  // todo fails because of sirius-libs#51
+        assertTrue(experiment.getAnnotation(InChI.class).isEmpty());
     }
 }
