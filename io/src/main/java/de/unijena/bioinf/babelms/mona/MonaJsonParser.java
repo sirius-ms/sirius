@@ -22,6 +22,7 @@ package de.unijena.bioinf.babelms.mona;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -50,6 +51,7 @@ public class MonaJsonParser implements JsonExperimentParser {
     private JsonNode root;
     private String recordId;
     private Map<String, JsonNode> metadata;
+    private Map<String, JsonNode> compoundMetadata;
 
     @Override
     public boolean canParse(JsonNode root) {
@@ -62,21 +64,29 @@ public class MonaJsonParser implements JsonExperimentParser {
         experiment = new MutableMs2Experiment();
         recordId = root.get("id").asText();
 
-        collectMetaData();
+        collectMetadata();
         parseSpectrum();
 
         getCompoundName().ifPresent(experiment::setName);
         getInstrumentation().ifPresent(instrumentation -> experiment.setAnnotation(MsInstrumentation.class, instrumentation));
+        getMolecularFormula().ifPresent(experiment::setMolecularFormula);
+
 
         return experiment;
     }
 
-    private void collectMetaData() {
+    private void collectMetadata() {
         metadata = new HashMap<>();
-        for (JsonNode entry : root.get(METADATA)) {
+        compoundMetadata = new HashMap<>();
+        collectMetadataFrom(root, metadata);
+        collectMetadataFrom(getCompound(), compoundMetadata);
+    }
+
+    private void collectMetadataFrom(JsonNode node, Map<String, JsonNode> map) {
+        for (JsonNode entry : node.get(METADATA)) {
             String key = entry.get("name").asText();
-            if (metadata.putIfAbsent(key, entry) != null) {
-                log.warn("Duplicate metadata entry '" + key + "' in record " + recordId + ". Using " + metadata.get(key) + ".");
+            if (map.putIfAbsent(key, entry) != null) {
+                log.warn("Duplicate metadata entry '" + key + "' in record " + recordId + ". Using " + map.get(key) + ".");
             }
         }
     }
@@ -103,7 +113,15 @@ public class MonaJsonParser implements JsonExperimentParser {
     }
 
     private Optional<String> getMetadata(String field) {
-        JsonNode node = metadata.get(field);
+        return getMetadataFrom(field, metadata);
+    }
+
+    private Optional<String> getCompoundMetadata(String field) {
+        return getMetadataFrom(field, compoundMetadata);
+    }
+
+    private Optional<String> getMetadataFrom(String field, Map<String, JsonNode> map) {
+        JsonNode node = map.get(field);
         if (node != null) {
             return Optional.of(node.get("value").asText());
         }
@@ -152,11 +170,19 @@ public class MonaJsonParser implements JsonExperimentParser {
                 .filter(t -> !MsInstrumentation.Unknown.equals(t));
     }
 
+    private JsonNode getCompound() {
+        return root.get(COMPOUND).get(0);
+    }
+
     private Optional<String> getCompoundName() {
-        JsonNode names = root.get(COMPOUND).get(0).get("names");
+        JsonNode names = getCompound().get("names");
         if (!names.isEmpty()) {
             return Optional.of(names.get(0).get("name").asText());
         }
         return Optional.empty();
+    }
+
+    private Optional<MolecularFormula> getMolecularFormula() {
+        return getCompoundMetadata("molecular formula").map(MolecularFormula::parseOrNull);
     }
 }
