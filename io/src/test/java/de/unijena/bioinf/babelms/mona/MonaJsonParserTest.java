@@ -21,6 +21,7 @@
 package de.unijena.bioinf.babelms.mona;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
+import de.unijena.bioinf.ChemistryBase.data.Tagging;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -59,6 +62,9 @@ class MonaJsonParserTest {
 
         assertEquals("InChI=1S/C7H7NO2/c8-6-3-1-2-5(4-6)7(9)10/h1-4H,8H2,(H,9,10)", experiment.getAnnotation(InChI.class).orElseThrow().in3D);
         assertEquals("XFDUHJPVQKIXHO-UHFFFAOYSA-N", experiment.getAnnotation(InChI.class).orElseThrow().key);
+
+        Tagging tags = experiment.getAnnotation(Tagging.class).orElseThrow();
+        assertEquals(Set.of("Agilent_6550_Q-TOF_AIF", "KI-GIAR_zicHILIC_POS", "LC-MS"), tags.stream().collect(Collectors.toSet()));
     }
 
     @Test
@@ -91,5 +97,6 @@ class MonaJsonParserTest {
         assertTrue(experiment.getName().isEmpty());
 //        assertNull(experiment.getMolecularFormula());  // todo fails because of sirius-libs#51
         assertTrue(experiment.getAnnotation(InChI.class).isEmpty());
+        assertTrue(experiment.getAnnotation(Tagging.class).isEmpty());
     }
 }
