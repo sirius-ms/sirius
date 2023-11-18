@@ -49,6 +49,7 @@ public class MonaJsonParser implements JsonExperimentParser {
     private final static String INCHI = "inchi";
     private final static String INCHI_KEY = "inchiKey";
     private final static String SMILES = "smiles";
+    private final static String SPLASH = "splash";
 
 
     private MutableMs2Experiment experiment;
@@ -76,7 +77,7 @@ public class MonaJsonParser implements JsonExperimentParser {
         getMolecularFormula().ifPresent(experiment::setMolecularFormula);
         getInchi().ifPresent(experiment::annotate);
         getSmiles().ifPresent(experiment::annotate);
-
+        getSplash().ifPresent(experiment::annotate);
 
         List<String> tags = getTags();
         if (!tags.isEmpty()) {
@@ -220,5 +221,12 @@ public class MonaJsonParser implements JsonExperimentParser {
 
     private Optional<Smiles> getSmiles() {
         return getCompoundMetadata(SMILES).map(Smiles::new);
+    }
+
+    private Optional<Splash> getSplash() {
+        if (root.hasNonNull(SPLASH)) {
+            return Optional.of(new Splash(root.get(SPLASH).get(SPLASH).asText()));
+        }
+        return Optional.empty();
     }
 }
