@@ -24,6 +24,10 @@
     {
       "name": "instrument type",
       "value": "invalid"
+    },
+    {
+      "name": "retention time",
+      "value": "-1"
     }
   ],
   "tags": []

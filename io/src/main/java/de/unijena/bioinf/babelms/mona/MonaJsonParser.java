@@ -50,6 +50,7 @@ public class MonaJsonParser implements JsonExperimentParser {
     private final static String INCHI_KEY = "inchiKey";
     private final static String SMILES = "smiles";
     private final static String SPLASH = "splash";
+    private final static String RETENTION_TIME = "retention time";
 
 
     private MutableMs2Experiment experiment;
@@ -78,6 +79,7 @@ public class MonaJsonParser implements JsonExperimentParser {
         getInchi().ifPresent(experiment::annotate);
         getSmiles().ifPresent(experiment::annotate);
         getSplash().ifPresent(experiment::annotate);
+        getRetentionTime().ifPresent(experiment::annotate);
 
         List<String> tags = getTags();
         if (!tags.isEmpty()) {
@@ -226,6 +228,16 @@ public class MonaJsonParser implements JsonExperimentParser {
     private Optional<Splash> getSplash() {
         if (root.hasNonNull(SPLASH)) {
             return Optional.of(new Splash(root.get(SPLASH).get(SPLASH).asText()));
+        }
+        return Optional.empty();
+    }
+
+    private Optional<RetentionTime> getRetentionTime() {
+        JsonNode rtNode = metadata.get(RETENTION_TIME);
+        if (rtNode != null) {
+            String value = rtNode.get("value").asText()
+                    + (rtNode.hasNonNull("unit") ? " " + rtNode.get("unit").asText() : "");
+            return RetentionTime.tryParse(value);
         }
         return Optional.empty();
     }

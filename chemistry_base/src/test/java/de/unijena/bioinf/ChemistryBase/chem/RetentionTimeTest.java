@@ -22,6 +22,7 @@ public class RetentionTimeTest {
         return Stream.of(
                 Arguments.of("", new RetentionTime.ParsedParameters(null, null, null)),
                 Arguments.of("invalid", new RetentionTime.ParsedParameters(null, null, null)),
+                Arguments.of("-1", new RetentionTime.ParsedParameters(null, null, null)),
                 Arguments.of("1", new RetentionTime.ParsedParameters(1d, null, null)),
                 Arguments.of("x1x", new RetentionTime.ParsedParameters(1d, null, null)),
                 Arguments.of("5.0", new RetentionTime.ParsedParameters(5d, null, null)),
@@ -31,7 +32,8 @@ public class RetentionTimeTest {
                 Arguments.of("1s", new RetentionTime.ParsedParameters(1d, null, "s")),
                 Arguments.of("1 sec", new RetentionTime.ParsedParameters(1d, null, "s")),
                 Arguments.of("1 min", new RetentionTime.ParsedParameters(1d, null, "min")),
-                Arguments.of("1 ms", new RetentionTime.ParsedParameters(1d, null, null))
+                Arguments.of("1 ms", new RetentionTime.ParsedParameters(1d, null, null)),
+                Arguments.of("1 minutes", new RetentionTime.ParsedParameters(1d, null, "min"))
         );
     }
 
