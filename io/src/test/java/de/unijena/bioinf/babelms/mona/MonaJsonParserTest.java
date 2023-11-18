@@ -21,6 +21,7 @@
 package de.unijena.bioinf.babelms.mona;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.data.Tagging;
 import de.unijena.bioinf.ChemistryBase.ms.*;
@@ -67,6 +68,8 @@ class MonaJsonParserTest {
         assertEquals("O=C(O)C=1C=CC=C(N)C1", experiment.getAnnotation(Smiles.class).orElseThrow().smiles);
         assertEquals("splash10-000i-0900000000-efdee90e857bd8d0327c", experiment.getAnnotation(Splash.class).orElseThrow().getSplash());
 
+        assertEquals(2.087279 * 60, experiment.getAnnotation(RetentionTime.class).orElseThrow().getMiddleTime(), 1e-9);
+
         Tagging tags = experiment.getAnnotation(Tagging.class).orElseThrow();
         assertEquals(Set.of("Agilent_6550_Q-TOF_AIF", "KI-GIAR_zicHILIC_POS", "LC-MS"), tags.stream().collect(Collectors.toSet()));
     }
@@ -103,6 +106,7 @@ class MonaJsonParserTest {
         assertTrue(experiment.getAnnotation(InChI.class).isEmpty());
         assertTrue(experiment.getAnnotation(Smiles.class).isEmpty());
         assertTrue(experiment.getAnnotation(Splash.class).isEmpty());
+        assertTrue(experiment.getAnnotation(RetentionTime.class).isEmpty());
 
         assertTrue(experiment.getAnnotation(Tagging.class).isEmpty());
     }
