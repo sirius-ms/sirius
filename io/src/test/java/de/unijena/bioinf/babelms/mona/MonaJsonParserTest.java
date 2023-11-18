@@ -65,6 +65,7 @@ class MonaJsonParserTest {
         assertEquals("XFDUHJPVQKIXHO-UHFFFAOYSA-N", experiment.getAnnotation(InChI.class).orElseThrow().key);
 
         assertEquals("O=C(O)C=1C=CC=C(N)C1", experiment.getAnnotation(Smiles.class).orElseThrow().smiles);
+        assertEquals("splash10-000i-0900000000-efdee90e857bd8d0327c", experiment.getAnnotation(Splash.class).orElseThrow().getSplash());
 
         Tagging tags = experiment.getAnnotation(Tagging.class).orElseThrow();
         assertEquals(Set.of("Agilent_6550_Q-TOF_AIF", "KI-GIAR_zicHILIC_POS", "LC-MS"), tags.stream().collect(Collectors.toSet()));
@@ -101,6 +102,7 @@ class MonaJsonParserTest {
 //        assertNull(experiment.getMolecularFormula());  // todo fails because of sirius-libs#51
         assertTrue(experiment.getAnnotation(InChI.class).isEmpty());
         assertTrue(experiment.getAnnotation(Smiles.class).isEmpty());
+        assertTrue(experiment.getAnnotation(Splash.class).isEmpty());
 
         assertTrue(experiment.getAnnotation(Tagging.class).isEmpty());
     }
