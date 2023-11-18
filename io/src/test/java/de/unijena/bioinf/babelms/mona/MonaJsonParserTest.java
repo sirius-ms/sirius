@@ -54,6 +54,7 @@ class MonaJsonParserTest {
 
         assertEquals(MsInstrumentation.Instrument.QTOF, experiment.getAnnotation(MsInstrumentation.class).orElseThrow());
         assertEquals("m-Aminobenzoic acid", experiment.getName());
+        assertEquals("C7H7NO2", experiment.getMolecularFormula().toString());
     }
 
     @Test
@@ -84,5 +85,6 @@ class MonaJsonParserTest {
         assertNull(experiment.getPrecursorIonType());
         assertTrue(experiment.getAnnotation(MsInstrumentation.class).isEmpty());
         assertTrue(experiment.getName().isEmpty());
+//        assertNull(experiment.getMolecularFormula());  // todo fails because of sirius-libs#51
     }
 }
