@@ -22,6 +22,7 @@ package de.unijena.bioinf.babelms.mona;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import de.unijena.bioinf.ChemistryBase.chem.*;
+import de.unijena.bioinf.ChemistryBase.data.Tagging;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
@@ -29,6 +30,7 @@ import de.unijena.bioinf.babelms.json.JsonExperimentParser;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -72,6 +74,11 @@ public class MonaJsonParser implements JsonExperimentParser {
         getInstrumentation().ifPresent(instrumentation -> experiment.setAnnotation(MsInstrumentation.class, instrumentation));
         getMolecularFormula().ifPresent(experiment::setMolecularFormula);
         getInchi().ifPresent(experiment::annotate);
+
+        List<String> tags = getTags();
+        if (!tags.isEmpty()) {
+            experiment.annotate(new Tagging(tags.toArray(new String[0])));
+        }
 
         return experiment;
     }
@@ -202,5 +209,9 @@ public class MonaJsonParser implements JsonExperimentParser {
             return Optional.of(InChIs.newInChI(inchiKey.orElse(null), inchi.orElse(null)));
         }
         return Optional.empty();
+    }
+
+    private List<String> getTags() {
+        return root.get("tags").findValuesAsText("text");
     }
 }
