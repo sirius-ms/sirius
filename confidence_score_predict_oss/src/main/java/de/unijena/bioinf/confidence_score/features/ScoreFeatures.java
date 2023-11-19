@@ -46,7 +46,7 @@ public class ScoreFeatures<P> implements FeatureCreator {
 
     public ScoreFeatures(FingerblastScoring<P> scoring, Scored<FingerprintCandidate>[] rankedCandidates,Scored<FingerprintCandidate>[] rankedCandidates_filtered){
         this.rankedCandidates=rankedCandidates;
-        names = new String[]{scoring.toString()};
+        names = new String[]{"scoreFeature"};
         this.scoring=scoring;
         this.rankedCandidates_filtered=rankedCandidates_filtered;
     }
