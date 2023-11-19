@@ -46,7 +46,7 @@ public class ScoreFeaturesNonBio<P> implements FeatureCreator {
 
     public ScoreFeaturesNonBio(FingerblastScoring<P> scoring, Scored<FingerprintCandidate>[] rankedCandidates,Scored<FingerprintCandidate>[] rankedCandidates_filtered){
         this.rankedCandidates=rankedCandidates;
-        names = new String[]{scoring.toString()};
+        names = new String[]{"DiffPubBio"};
         this.scoring=scoring;
         this.rankedCandidates_filtered=rankedCandidates_filtered;
     }
