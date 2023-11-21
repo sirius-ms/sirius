@@ -131,7 +131,7 @@ public final class RetentionTime implements Ms2ExperimentAnnotation, Comparable<
      * @return ParsedParameters map with relevant substrings parsed ("sec" unit will be substituted with "s"). Can contain nulls if parameters could not be extracted
      */
     public static ParsedParameters parseRetentionTimeParameters(String s) {
-        Pattern pattern = Pattern.compile("(?<from>\\d+\\.?\\d*)(\\s*-\\s*(?<to>\\d+\\.?\\d*))?(\\s*(?<unit>s|sec|min)(\\W|$))?");
+        Pattern pattern = Pattern.compile("(^|[^-])(?<from>\\d+\\.?\\d*)(\\s*-\\s*(?<to>\\d+\\.?\\d*))?(\\s*(?<unit>s|sec|min|minutes)(\\W|$))?");
         Matcher matcher = pattern.matcher(s);
 
         Double from = null;
@@ -147,6 +147,9 @@ public final class RetentionTime implements Ms2ExperimentAnnotation, Comparable<
                 unit = matcher.group("unit");
                 if (unit.equals("sec")) {
                     unit = "s";
+                }
+                if (unit.equals("minutes")) {
+                    unit = "min";
                 }
             }
         }

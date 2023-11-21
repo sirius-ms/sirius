@@ -1,0 +1,599 @@
+{
+  "compound": [
+    {
+      "kind": "biological",
+      "tags": [],
+      "inchi": "InChI=1S/C7H7NO2/c8-6-3-1-2-5(4-6)7(9)10/h1-4H,8H2,(H,9,10)",
+      "names": [
+        {
+          "computed": false,
+          "name": "m-Aminobenzoic acid",
+          "score": 0
+        }
+      ],
+      "molFile": "\n  CDK     01282322202D\n\n 10 10  0  0  0  0  0  0  0  0999 V2000\n    0.9737   -1.6804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   -0.3254   -0.9304    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    2.2682   -0.9382    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    0.9696    1.3126    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   -0.3299    0.5618    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    2.2687    0.5626    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   -1.6302    1.3096    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    3.5678    1.3124    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n   -1.6327    2.8096    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n   -2.9280    0.5574    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n  2  1  2  0  0  0  0\n  3  1  1  0  0  0  0\n  5  2  1  0  0  0  0\n  5  4  2  0  0  0  0\n  6  3  2  0  0  0  0\n  6  4  1  0  0  0  0\n  7  5  1  0  0  0  0\n  8  6  1  0  0  0  0\n  9  7  2  0  0  0  0\n 10  7  1  0  0  0  0\nM  END\n",
+      "computed": false,
+      "inchiKey": "XFDUHJPVQKIXHO-UHFFFAOYSA-N",
+      "metaData": [
+        {
+          "name": "total exact mass",
+          "value": "137.047678464",
+          "hidden": false,
+          "category": "computed",
+          "computed": true
+        },
+        {
+          "name": "SMILES",
+          "value": "O=C(O)C=1C=CC=C(N)C1",
+          "hidden": false,
+          "category": "computed",
+          "computed": true
+        },
+        {
+          "name": "SMILES",
+          "value": "c1cc(cc(c1)N)C(=O)O",
+          "hidden": false,
+          "category": "none",
+          "computed": false
+        },
+        {
+          "name": "InChI",
+          "value": "InChI=1S/C7H7NO2/c8-6-3-1-2-5(4-6)7(9)10/h1-4H,8H2,(H,9,10)",
+          "hidden": false,
+          "category": "none",
+          "computed": false
+        },
+        {
+          "name": "InChIKey",
+          "value": "XFDUHJPVQKIXHO-UHFFFAOYSA-N",
+          "hidden": false,
+          "category": "none",
+          "computed": false
+        },
+        {
+          "name": "molecular formula",
+          "value": "C7H7NO2",
+          "hidden": false,
+          "category": "computed",
+          "computed": true
+        },
+        {
+          "name": "[2M+H-H2O]+",
+          "value": "257.087986928",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        },
+        {
+          "name": "[2M+K]+",
+          "value": "313.193656928",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        },
+        {
+          "name": "[M+H]+",
+          "value": "138.055648464",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        },
+        {
+          "name": "[2M+Na]+",
+          "value": "297.085126928",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        },
+        {
+          "name": "[2M+Cl]-",
+          "value": "309.548356928",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        },
+        {
+          "name": "[2M+HAc-H]-",
+          "value": "333.139386928",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        },
+        {
+          "name": "[M-H20-H]-",
+          "value": "118.029288464",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        },
+        {
+          "name": "[M-H]-",
+          "value": "136.040402464",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        },
+        {
+          "name": "[2M-H]-",
+          "value": "273.088080928",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        },
+        {
+          "name": "[M+Na]+",
+          "value": "160.037448464",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        },
+        {
+          "name": "[M+H-H2O]+",
+          "value": "120.04030846399999",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        },
+        {
+          "name": "[2M+NH4]+",
+          "value": "292.133936928",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        },
+        {
+          "name": "[M+Cl]-",
+          "value": "172.500678464",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        },
+        {
+          "name": "[M+NH4]+",
+          "value": "155.086258464",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        },
+        {
+          "name": "[M+K]+",
+          "value": "176.145978464",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        },
+        {
+          "name": "[2M+H]+",
+          "value": "275.103326928",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        },
+        {
+          "name": "[M+HAc-H]-",
+          "value": "196.091708464",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        }
+      ],
+      "classification": [
+        {
+          "name": "kingdom",
+          "value": "Organic compounds",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "superclass",
+          "value": "Benzenoids",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "class",
+          "value": "Benzene and substituted derivatives",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "subclass",
+          "value": "Benzoic acids and derivatives",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "direct parent level 1",
+          "value": "Aminobenzoic acids and derivatives",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "direct parent",
+          "value": "Aminobenzoic acids",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "alternative parent",
+          "value": "Benzoic acids",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "alternative parent",
+          "value": "Benzoyl derivatives",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "alternative parent",
+          "value": "Aniline and substituted anilines",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "alternative parent",
+          "value": "Amino acids",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "alternative parent",
+          "value": "Monocarboxylic acids and derivatives",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "alternative parent",
+          "value": "Carboxylic acids",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "alternative parent",
+          "value": "Primary amines",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "alternative parent",
+          "value": "Organopnictogen compounds",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "alternative parent",
+          "value": "Organooxygen compounds",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "alternative parent",
+          "value": "Organic oxides",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "alternative parent",
+          "value": "Hydrocarbon derivatives",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        }
+      ]
+    }
+  ],
+  "id": "MoNA010759",
+  "metaData": [
+    {
+      "name": "retention time",
+      "value": "2.087279",
+      "hidden": false,
+      "category": "none",
+      "computed": false,
+      "unit": "minutes"
+    },
+    {
+      "name": "ionization mode",
+      "value": "Positive",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "collision energy",
+      "value": "0",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "author",
+      "value": "Ipputa Tada, Hiroshi Tsugawa, Isabel Meister, Pei Zhang, Rie Shu, Riho Katsumi, Craig E. Wheelock, Masanori Arita, Romanas Chaleckis",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "instrument",
+      "value": "Agilent 6550 iFunnel",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "instrument type",
+      "value": "LC-ESI-QTOF",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "license",
+      "value": "CC-BY",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "ms level",
+      "value": "MS1",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "aquisition type",
+      "value": "AIF",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "ionization mode",
+      "value": "ESI",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "column",
+      "value": "Merck SeQuant ZIC HILIC (2.1 x 100 mm, 3.5 µm particle size) with Merck SeQuant ZIC HILIC Guard column (2.1 mm x 2 mm, 3.5 µm particle size)",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "flow gradient",
+      "value": "5/95 at 0-1.5 min, 60/40 at 12-14 min, 75/25 at 14.2-17 min; 5/95 at 18-25 min",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "flow rate",
+      "value": "0.3ml/min",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "solvent a",
+      "value": "water with 0.1% formic acid (pH2.7)",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "solvent b",
+      "value": "acetonitrile with 0.1% formic acid",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "comment",
+      "value": "MS2 deconvoluted using CorrDec from all ion fragmentation data, MetaboLights identifier MTBLS1040",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "comment",
+      "value": "Spectrum acquired as described in Naz et al 2017 PMID 28641411. Preparation and submission to MassBank of North America by Chaleckis R. and Tada I.",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "origin",
+      "value": "KI GIAR zic-HILIC Pos v0.92.msp.txt",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "acquisition type",
+      "value": "DDA QTOF",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "chromatography type",
+      "value": "DI (direct infusion)",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "spectral entropy",
+      "value": "0.5082319753906649",
+      "hidden": false,
+      "category": "computed",
+      "computed": true
+    },
+    {
+      "name": "normalized entropy",
+      "value": "0.36661187525865696",
+      "hidden": false,
+      "category": "computed",
+      "computed": true
+    },
+    {
+      "name": "precursor m/z",
+      "value": "138.054962158203",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "precursor type",
+      "value": "[M+H]+",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "mass accuracy",
+      "value": "4.971250480681786",
+      "hidden": false,
+      "category": "mass spectrometry",
+      "computed": true,
+      "unit": "ppm"
+    },
+    {
+      "name": "mass error",
+      "value": "-6.863057969894726E-4",
+      "hidden": false,
+      "category": "mass spectrometry",
+      "computed": true,
+      "unit": "Da"
+    }
+  ],
+  "annotations": [
+    {
+      "name": "\"r=1 (7 samples); Theoretical m/z 42.034374, Mass diff 0.001 (0 ppm), Formula C2H4N\"",
+      "value": "42.03298",
+      "hidden": false,
+      "category": "annotation",
+      "computed": false
+    },
+    {
+      "name": "\"r=0.98 (5 samples); Theoretical m/z 110.060589, Mass diff 0 (0 ppm), Formula C6H8NO\"",
+      "value": "110.0605",
+      "hidden": false,
+      "category": "annotation",
+      "computed": false
+    },
+    {
+      "name": "\"r=1 (7 samples); Theoretical m/z 138.05496, Mass diff 0 (2.46 ppm), SMILES O=C(O)C1=CC=CC(N)=C1, Annotation [C7H7NO2+H]+, Rule of HR True\"",
+      "value": "138.0553",
+      "hidden": false,
+      "category": "annotation",
+      "computed": false
+    },
+    {
+      "name": "\"r=0.99 (5 samples); Isotopic ion, M+1, linkedMz 138.0553\"",
+      "value": "139.0585",
+      "hidden": false,
+      "category": "annotation",
+      "computed": false
+    }
+  ],
+  "score": {
+    "impacts": [
+      {
+        "value": 2,
+        "reason": "Valid molecular structure(s) provided for biological compound"
+      },
+      {
+        "value": 1,
+        "reason": "Chromatography identified as LC-MS"
+      },
+      {
+        "value": -1,
+        "reason": "Multiple ionization mode/types identified"
+      },
+      {
+        "value": 1,
+        "reason": "MS type/level identified"
+      },
+      {
+        "value": 1,
+        "reason": "Instrument information provided"
+      },
+      {
+        "value": 1,
+        "reason": "Collision energy provided"
+      },
+      {
+        "value": 1,
+        "reason": "Retention time/index provided"
+      },
+      {
+        "value": 1,
+        "reason": "Column information provided"
+      },
+      {
+        "value": 1,
+        "reason": "Precursor information and provided compound validated"
+      },
+      {
+        "value": 1,
+        "reason": "Mass accuracy of 4.971 ppm"
+      }
+    ],
+    "score": 4.545454545454546,
+    "relativeScore": 0,
+    "scaledScore": 0
+  },
+  "spectrum": "42.03298:3 110.0605:3.8 138.0553:100 139.0585:7.7",
+  "lastUpdated": 1658016000000,
+  "dateCreated": 1560297600000,
+  "lastCurated": 1674864000000,
+  "splash": {
+    "block1": "splash10",
+    "block2": "000i",
+    "block3": "0900000000",
+    "block4": "efdee90e857bd8d0327c",
+    "splash": "splash10-000i-0900000000-efdee90e857bd8d0327c"
+  },
+  "submitter": {
+    "emailAddress": "romanas.chaleckis@gmail.com",
+    "firstName": "romanas",
+    "lastName": "chaleckis",
+    "institution": "gunma university"
+  },
+  "tags": [
+    {
+      "text": "Agilent_6550_Q-TOF_AIF",
+      "ruleBased": false
+    },
+    {
+      "text": "KI-GIAR_zicHILIC_POS",
+      "ruleBased": false
+    },
+    {
+      "text": "LC-MS",
+      "ruleBased": true
+    }
+  ]
+}
