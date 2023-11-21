@@ -1,8 +1,10 @@
 package de.unijena.bioinf.fragmenter;
 
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.CLPModel_JNI;
 import gurobi.*;
 
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.HashMap;
 
@@ -64,7 +66,7 @@ public class PCSTFragmentationTreeAnnotator extends CombinatorialSubtreeCalculat
     public CombinatorialSubtree computeSubtree() throws GRBException{
         if(this.isComputed) return this.subtree;
         // During the initialisation the input molecule was fragmented and a CombinatorialFragmentationGraph was
-        // constructed. Also a mapping was created which assigns each edge of this graph a specific position
+        // constructed. Also, a mapping was created which assigns each edge of this graph a specific position
         // in the variable array.
         // 1.: Construct an ILP solver to solve the PCSTP:
         double[] solution = this.createAndSolveILP();
@@ -78,62 +80,59 @@ public class PCSTFragmentationTreeAnnotator extends CombinatorialSubtreeCalculat
     }
 
     private double[] createAndSolveILP() throws GRBException{
-        // Initialisation of the gurobi environment:
-        GRBEnv env = new GRBEnv(true);
-        env.set(GRB.IntParam.Threads, 1);
-        env.start();
+        // Initialisation of the CBC solver:
+        final CLPModel_JNI model = new CLPModel_JNI(this.edgeIndices.size(), CLPModel_JNI.ObjectiveSense.MAXIMIZE);
 
-        // Create the ILP Model:
-        GRBModel model = new GRBModel(env);
-
-        // Add all variables and the objective function to this model:
-        GRBVar[] vars = new GRBVar[this.edgeIndices.size()];
-        GRBLinExpr objFunc = new GRBLinExpr();
-
-        for(CombinatorialEdge edge : this.edgeIndices.keySet()){
-            int idx = this.edgeIndices.get(edge);
-            double objCoeff = edge.target.fragmentScore + edge.score;
-            vars[idx] = model.addVar(0.0, 1.0, objCoeff, GRB.BINARY, "x"+idx);
-            objFunc.addTerm(objCoeff, vars[idx]);
+        // Add all variable boundaries and the objective function to this model:
+        final double[] lb = new double[this.edgeIndices.size()];
+        final double[] ub = new double[this.edgeIndices.size()];
+        final double[] objective = new double[this.edgeIndices.size()];
+        for(final CombinatorialEdge edge : this.edgeIndices.keySet()){
+            final int edgeIdx = this.edgeIndices.get(edge);
+            lb[edgeIdx] = 0d;
+            ub[edgeIdx] = 1d;
+            objective[edgeIdx] = edge.score + edge.target.fragmentScore;
         }
-        model.setObjective(objFunc, GRB.MAXIMIZE);
+        model.setColBounds(lb, ub);
+        model.setObjective(objective);
 
         // Add all constraints to the model:
         // Constraint 1: the number of incoming edges is at most one
-        int i = 0;
-        for(CombinatorialNode v : this.graph.getNodes()){ // every node except the root
-            GRBLinExpr expr = new GRBLinExpr();
-            for(CombinatorialEdge uv : v.incomingEdges){
-                int idx = this.edgeIndices.get(uv);
-                expr.addTerm(1, vars[idx]);
+        for(final CombinatorialNode v : this.graph.getNodes()){
+            final int[] indices = new int[v.incomingEdges.size()];
+            final double[] coeffs = new double[v.incomingEdges.size()];
+            Arrays.fill(coeffs, 1d);
+            for(int i = 0; i < v.incomingEdges.size(); i++){
+                final CombinatorialEdge uv = v.incomingEdges.get(i);
+                indices[i] = this.edgeIndices.get(uv);
             }
-            model.addConstr(expr, GRB.LESS_EQUAL, 1, "c1_"+i);
-            i++;
+            model.addSparseRowCached(coeffs, indices, 0d, 1d);
         }
 
         // Constraint 2: connectivity inequalities
-        i = 0;
-        for(CombinatorialNode v : this.graph.getNodes()){
-            for(CombinatorialEdge vw : v.outgoingEdges){
-                int idx = this.edgeIndices.get(vw);
-                GRBLinExpr expr = new GRBLinExpr();
-                for(CombinatorialEdge uv : v.incomingEdges){
-                    int idx2 = this.edgeIndices.get(uv);
-                    expr.addTerm(1, vars[idx2]);
+        for(final CombinatorialNode v : this.graph.getNodes()){
+            for(final CombinatorialEdge vw : v.outgoingEdges){
+                final int[] indices = new int[v.incomingEdges.size()+1];
+                final double[] coeffs = new double[v.incomingEdges.size()+1];
+                for(int i = 0; i < v.incomingEdges.size(); i++){
+                    final CombinatorialEdge uv = v.incomingEdges.get(i);
+                    indices[i] = this.edgeIndices.get(uv);
+                    coeffs[i] = 1d;
                 }
-                model.addConstr(expr,GRB.GREATER_EQUAL,vars[idx], "c2_"+i);
-                i++;
+                indices[v.incomingEdges.size()] = this.edgeIndices.get(vw);
+                coeffs[v.incomingEdges.size()] = -1d;
+                model.addSparseRowCached(coeffs, indices, 0d, 1d);
             }
         }
 
         // Optimize and get the optimal objective value and solution:
-        model.optimize();
-        this.score = model.get(GRB.DoubleAttr.ObjVal);
-        double[] solution = model.get(GRB.DoubleAttr.X, vars);
+        model.solve();
+        this.score = model.getScore();
+        double[] solution = model.getColSolution();
+        for(int i = 0; i < solution.length; i++) solution[i] = solution[i] > 0.5d ? 1d : 0d;
 
-        // Dispose the gurobi model and environment
+        // Past Build Solution:
         model.dispose();
-        env.dispose();
 
         return solution;
     }
