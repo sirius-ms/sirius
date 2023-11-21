@@ -106,7 +106,6 @@ public class SpectralUtils {
 
             s.getAnnotation(AdditionalFields.class).ifPresent(fields -> {
                 if (fields.containsKey(MassbankFormat.ACCESSION.k())) {
-                    b.libraryName(DataSource.MASSBANK.realName);
                     b.libraryId(fields.get(MassbankFormat.ACCESSION.k()));
                 }
             });
