@@ -40,11 +40,15 @@
 
 package de.unijena.bioinf.rest;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.Optional;
+
+import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
 
 public class ConnectionError implements Comparable<ConnectionError> {
     private static final Comparator<ConnectionError> c = Comparator.comparing(ConnectionError::getErrorKlass)
@@ -58,30 +62,39 @@ public class ConnectionError implements Comparable<ConnectionError> {
     public enum Type {WARNING, ERROR}
 
     /**
-     * ######### error classes ###########3
-     * //1 Internet
-     * // 2. login server
-     * //3.license server
-     * // 4. Token error
-     * // 5. logged in
-     * // 6. license available and active
-     * // 7. service reachable
-     * // 8. Worker availability
+     * ######### error classes ##########
+     * 0. Unknown Error
+     * 1. Internet
+     * 2. login server
+     * 3. license server
+     * 4. Token error
+     * 5. logged in
+     * 6. license available and active
+     * 7. Terms not accepted
+     * 8. Service not reachable
+     * 9. Worker availability
      */
     public enum Klass {UNKNOWN, INTERNET, LOGIN_SERVER, LICENSE_SERVER, TOKEN, LOGIN, LICENSE, TERMS, APP_SERVER, WORKER}
 
     @NotNull
+    @Schema(nullable = false, requiredMode = REQUIRED)
     private final Type errorType;
     @NotNull
+    @Schema(nullable = false, requiredMode = REQUIRED)
     private final Klass errorKlass;
 
+    @Schema(nullable = false, requiredMode = REQUIRED)
     private final int siriusErrorCode;
     @NotNull
+    @Schema(nullable = false, requiredMode = REQUIRED)
     private final String siriusMessage;
 
+    @JsonIgnore
     private final @Nullable Throwable exception;
 
+    @Schema(nullable = true)
     private @Nullable Integer serverResponseErrorCode;
+    @Schema(nullable = true)
     private @Nullable String serverResponseErrorMessage;
 
     public ConnectionError(int siriusErrorCode, @NotNull String siriusMessage, @NotNull Klass errorKlass) {
@@ -128,12 +141,20 @@ public class ConnectionError implements Comparable<ConnectionError> {
     }
 
     @NotNull
+    @JsonIgnore
     public Optional<Throwable> getException() {
         return Optional.ofNullable(exception);
     }
 
+
+    @Nullable
+    public Integer getServerResponseErrorCode() {
+        return serverResponseErrorCode;
+    }
+
     @NotNull
-    public Optional<Integer> getServerResponseErrorCode() {
+    @JsonIgnore
+    public Optional<Integer> serverResponseErrorCode() {
         return Optional.ofNullable(serverResponseErrorCode);
     }
 
@@ -141,8 +162,14 @@ public class ConnectionError implements Comparable<ConnectionError> {
         this.serverResponseErrorCode = serverResponseErrorCode;
     }
 
+    @Nullable
+    public String getServerResponseErrorMessage() {
+        return serverResponseErrorMessage;
+    }
+
     @NotNull
-    public Optional<String> getServerResponseErrorMessage() {
+    @JsonIgnore
+    public Optional<String> serverResponseErrorMessage() {
         return Optional.ofNullable(serverResponseErrorMessage);
     }
 
