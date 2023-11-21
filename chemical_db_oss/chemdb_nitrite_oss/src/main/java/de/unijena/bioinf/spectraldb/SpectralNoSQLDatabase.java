@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.List;
 import java.util.function.Consumer;
 //todo check when data/spectra should be included an when not
@@ -92,9 +93,9 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
             double abs = deviation.absoluteFor(precursorMz);
             Filter filter = new Filter().and().gte("precursorMz", precursorMz - abs).lte("precursorMz", precursorMz + abs);
             if (withData) {
-                return this.storage.find(filter, Ms2ReferenceSpectrum.class, "spectrum");
+                return withLibrary(this.storage.find(filter, Ms2ReferenceSpectrum.class, "spectrum"));
             } else {
-                return this.storage.find(filter, Ms2ReferenceSpectrum.class);
+                return withLibrary(this.storage.find(filter, Ms2ReferenceSpectrum.class));
             }
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
@@ -109,9 +110,9 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
         try {
             Filter filter = new Filter().eq(field, value);
             if (withData) {
-                return this.storage.find(filter, Ms2ReferenceSpectrum.class, "spectrum");
+                return withLibrary(this.storage.find(filter, Ms2ReferenceSpectrum.class, "spectrum"));
             } else {
-                return this.storage.find(filter, Ms2ReferenceSpectrum.class);
+                return withLibrary(this.storage.find(filter, Ms2ReferenceSpectrum.class));
             }
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
@@ -131,7 +132,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
     @Override
     public Ms2ReferenceSpectrum getReferenceSpectrum(String uuid) throws ChemicalDatabaseException {
         try {
-            return this.storage.find(Filter.build().eq("uuid", uuid), Ms2ReferenceSpectrum.class).iterator().next();
+            return fillLibrary(this.storage.find(Filter.build().eq("uuid", uuid), Ms2ReferenceSpectrum.class).iterator().next());
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }
@@ -140,7 +141,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
     @Override
     public Iterable<Ms2ReferenceSpectrum> getSpectralData(Iterable<Ms2ReferenceSpectrum> references) throws ChemicalDatabaseException {
         try {
-            return this.storage.injectOptionalFields(Ms2ReferenceSpectrum.class, references, "spectrum");
+            return withLibrary(this.storage.injectOptionalFields(Ms2ReferenceSpectrum.class, references, "spectrum"));
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }
@@ -149,7 +150,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
     @Override
     public Ms2ReferenceSpectrum getSpectralData(Ms2ReferenceSpectrum reference) throws ChemicalDatabaseException {
         try {
-            return this.storage.injectOptionalFields(reference, "spectrum");
+            return fillLibrary(this.storage.injectOptionalFields(reference, "spectrum"));
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }
@@ -174,5 +175,34 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
     @Override
     public void close() throws IOException {
         this.storage.close();
+    }
+
+    private Ms2ReferenceSpectrum fillLibrary(Ms2ReferenceSpectrum spectrum) {
+        spectrum.setLibraryName(name());
+        return spectrum;
+    }
+
+    /**
+     * Wraps the passed iterable and fills the library name before returning reference spectra
+     */
+    private Iterable<Ms2ReferenceSpectrum> withLibrary(Iterable<Ms2ReferenceSpectrum> iterable) {
+        return new Iterable<>() {
+            @NotNull
+            @Override
+            public Iterator<Ms2ReferenceSpectrum> iterator() {
+                Iterator<Ms2ReferenceSpectrum> delegate = iterable.iterator();
+                return new Iterator<>() {
+                    @Override
+                    public boolean hasNext() {
+                        return delegate.hasNext();
+                    }
+
+                    @Override
+                    public Ms2ReferenceSpectrum next() {
+                        return fillLibrary(delegate.next());
+                    }
+                };
+            }
+        };
     }
 }
