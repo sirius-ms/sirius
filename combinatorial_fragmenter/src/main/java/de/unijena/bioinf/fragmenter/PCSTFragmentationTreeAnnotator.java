@@ -2,7 +2,6 @@ package de.unijena.bioinf.fragmenter;
 
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.CLPModel_JNI;
-import gurobi.*;
 
 import java.util.Arrays;
 import java.util.BitSet;
@@ -63,7 +62,7 @@ public class PCSTFragmentationTreeAnnotator extends CombinatorialSubtreeCalculat
      */
 
     @Override
-    public CombinatorialSubtree computeSubtree() throws GRBException{
+    public CombinatorialSubtree computeSubtree() {
         if(this.isComputed) return this.subtree;
         // During the initialisation the input molecule was fragmented and a CombinatorialFragmentationGraph was
         // constructed. Also, a mapping was created which assigns each edge of this graph a specific position
@@ -79,7 +78,7 @@ public class PCSTFragmentationTreeAnnotator extends CombinatorialSubtreeCalculat
         return this.subtree;
     }
 
-    private double[] createAndSolveILP() throws GRBException{
+    private double[] createAndSolveILP() {
         // Initialisation of the CBC solver:
         final CLPModel_JNI model = new CLPModel_JNI(this.edgeIndices.size(), CLPModel_JNI.ObjectiveSense.MAXIMIZE);
 
