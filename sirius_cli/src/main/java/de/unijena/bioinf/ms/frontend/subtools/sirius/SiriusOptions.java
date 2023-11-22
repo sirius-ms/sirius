@@ -29,6 +29,7 @@ import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoade
 import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
 import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoOptions;
 import de.unijena.bioinf.ms.frontend.subtools.zodiac.ZodiacOptions;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.Instance;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -49,6 +50,8 @@ import java.util.function.Consumer;
 @Command(name = "formula", aliases = {"tree", "sirius" }, description = "<COMPOUND_TOOL> Identify molecular formula for each compound individually using fragmentation trees and isotope patterns.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false)
 public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, InstanceJob.Factory<SiriusSubToolJob>> {
     protected final DefaultParameterConfigLoader defaultConfigOptions;
+
+    public enum BottomUpSearchOptions {CUSTOM, BOTTOM_UP_ONLY, DISABLED}
 
     public SiriusOptions(DefaultParameterConfigLoader defaultConfigOptions) {
         this.defaultConfigOptions = defaultConfigOptions;
@@ -206,6 +209,20 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
 
     @Option(names = "--disable-fast-mode", hidden = true)
     public boolean disableFastMode;
+
+    @Option(names = {"--bottom-up-search"}, description = "Valid values: ${COMPLETION-CANDIDATES}. Use DISABLED to deactivate bottom up search. Use BOTTOM_UP_ONLY to replace de novo computations with bottom up search for every compound. \nDefault: ${DEFAULT-VALUE}, which uses the predefined values from the config tool.", defaultValue = "CUSTOM")
+    public void setBottomUpSearchOptions(BottomUpSearchOptions selection) throws Exception {
+        switch (selection) {
+            case BOTTOM_UP_ONLY -> {
+                defaultConfigOptions.changeOption("BottomUpSearchSettings.enabledFromMass", "0");
+                defaultConfigOptions.changeOption("BottomUpSearchSettings.replaceDeNovoFromMass", "0");
+            }
+            case DISABLED -> {
+                defaultConfigOptions.changeOption("BottomUpSearchSettings.enabledFromMass", String.valueOf(Double.POSITIVE_INFINITY));
+                defaultConfigOptions.changeOption("BottomUpSearchSettings.replaceDeNovoFromMass", String.valueOf(Double.POSITIVE_INFINITY));
+            }
+        }
+    }
 
     @Override
     public InstanceJob.Factory<SiriusSubToolJob> call() throws Exception {
