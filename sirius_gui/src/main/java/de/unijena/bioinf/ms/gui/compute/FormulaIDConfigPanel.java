@@ -33,6 +33,7 @@ import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.gui.utils.RelativeLayout;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.CheckBoxListItem;
@@ -48,6 +49,7 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.ItemEvent;
 import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -92,11 +94,12 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
     protected final JCheckboxListPanel<String> ionizationList;
     protected final JCheckboxListPanel<CustomDataSources.Source> searchDBList;
     protected final JComboBox<Instrument> profileSelector;
-    protected final JSpinner ppmSpinner, candidatesSpinner, candidatesPerIonSpinner, treeTimeout, comoundTimeout, mzHeuristic, mzHeuristicOnly;
+    protected final JSpinner ppmSpinner, candidatesSpinner, candidatesPerIonSpinner, treeTimeout, comoundTimeout, mzHeuristic, mzHeuristicOnly, bottomUpSearchEnabled, bottomUpSearchOnly;
 
     enum Strategy {IGNORE, SCORE} //todo remove if Filter is implemented
 
     protected final JComboBox<Strategy> ms2IsotpeSetting;
+    protected final JComboBox<SiriusOptions.BottomUpSearchOptions> bottomUpSearchSelector;
 //    protected final JComboBox<IsotopeMs2Settings.Strategy> ms2IsotpeSetting;
 
     //    protected final JCheckBox restrictToOrganics;
@@ -156,14 +159,6 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
             ppmSpinner.setValue(recommendedPPM);
         });
 
-        // configure database to search list
-        searchDBList = new JCheckboxListPanel<>(new DBSelectionList(), "Use DB formulas only");
-        GuiUtils.assignParameterToolTip(searchDBList.checkBoxList, "FormulaSearchDB");
-        center.add(searchDBList);
-        parameterBindings.put("FormulaSearchDB", () -> String.join(",", getFormulaSearchDBStrings()));
-        PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSearchDB.class).searchDBs
-                .forEach(s -> searchDBList.checkBoxList.check(CustomDataSources.getSourceFromName(s.name())));
-
 
         //configure ionization panels
         ionizationList = new JCheckboxListPanel<>(new JCheckBoxList<>(), "Possible Ionizations",
@@ -173,6 +168,13 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         parameterBindings.put("AdductSettings.detectable", () -> getDerivedDetectableAdducts().toString());
         parameterBindings.put("AdductSettings.fallback", () -> getDerivedDetectableAdducts().toString());
 
+        // configure database to search list
+        searchDBList = new JCheckboxListPanel<>(new DBSelectionList(), "Use DB formulas only");
+        GuiUtils.assignParameterToolTip(searchDBList.checkBoxList, "FormulaSearchDB");
+        center.add(searchDBList);
+        parameterBindings.put("FormulaSearchDB", () -> String.join(",", getFormulaSearchDBStrings()));
+        PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSearchDB.class).searchDBs
+                .forEach(s -> searchDBList.checkBoxList.check(CustomDataSources.getSourceFromName(s.name())));
 
         // configure Element panel
         makeElementPanel(ecs.size() > 1);
@@ -187,6 +189,56 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
                     elementsToAutoDetect.stream().map(Element::toString).collect(Collectors.joining(",")));
         }); //todo check if this makes sense
 
+        // technical parameters: bottom up search and ilp options
+        final JPanel technicalParameters = new JPanel();
+        RelativeLayout rl = new RelativeLayout(RelativeLayout.Y_AXIS, GuiUtils.MEDIUM_GAP);
+        rl.setAlignment(RelativeLayout.LEADING);
+        rl.setBorderGap(0);
+        technicalParameters.setLayout(rl);
+
+        // bottom up search options
+        final TwoColumnPanel busOptions = new TwoColumnPanel();
+        bottomUpSearchSelector = new JComboBox<>();
+        List<SiriusOptions.BottomUpSearchOptions> settings = java.util.List.copyOf(EnumSet.allOf(SiriusOptions.BottomUpSearchOptions.class));
+        settings.forEach(bottomUpSearchSelector::addItem);
+        busOptions.addNamed("Bottom up search", bottomUpSearchSelector);
+
+        bottomUpSearchEnabled = makeIntParameterSpinner("BottomUpSearchSettings.enabledFromMass", 0, Integer.MAX_VALUE, 5);
+        bottomUpSearchOnly = makeIntParameterSpinner("BottomUpSearchSettings.replaceDeNovoFromMass", 0, Integer.MAX_VALUE, 5);
+        bottomUpSearchEnabled.setValue(0);
+        bottomUpSearchOnly.setValue(400);
+        bottomUpSearchEnabled.setEnabled(false);
+        bottomUpSearchOnly.setEnabled(false);
+
+        bottomUpSearchSelector.addItemListener(e -> {
+            if (e.getStateChange() != ItemEvent.SELECTED) {
+                return;
+            }
+            final SiriusOptions.BottomUpSearchOptions source = (SiriusOptions.BottomUpSearchOptions) e.getItem();
+            switch (source) {
+                case BOTTOM_UP_ONLY -> {
+                    bottomUpSearchEnabled.setEnabled(false);
+                    bottomUpSearchOnly.setEnabled(false);
+                    bottomUpSearchEnabled.setValue(0);
+                    bottomUpSearchOnly.setValue(0);
+                }
+                case DISABLED -> {
+                    bottomUpSearchEnabled.setEnabled(false);
+                    bottomUpSearchOnly.setEnabled(false);
+                    bottomUpSearchEnabled.setValue(Double.POSITIVE_INFINITY);
+                    bottomUpSearchOnly.setValue(Double.POSITIVE_INFINITY);
+                }
+                case CUSTOM -> {
+                    bottomUpSearchEnabled.setEnabled(true);
+                    bottomUpSearchOnly.setEnabled(true);
+                    bottomUpSearchEnabled.setValue(0);
+                    bottomUpSearchOnly.setValue(400);
+                }
+            }
+        });
+        busOptions.addNamed("Use bottom up search above m/z", bottomUpSearchEnabled);
+        busOptions.addNamed("Use bottom up search only above m/z", bottomUpSearchOnly);
+        technicalParameters.add(new TextHeaderBoxPanel("Bottom Up Search", busOptions));
 
         // ilp timeouts
         final TwoColumnPanel ilpOptions = new TwoColumnPanel();
@@ -203,8 +255,18 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         mzHeuristicOnly = makeIntParameterSpinner("UseHeuristic.mzToUseHeuristicOnly", 0, 3000, 5);
         ilpOptions.addNamed("Use heuristic only above m/z", mzHeuristicOnly);
 
+        // Adjust width of busOptions and ilpOptions to be the same
+        Dimension ilpDimension = ilpOptions.getPreferredSize();
+        Dimension busDimension = busOptions.getPreferredSize();
+        double width = Math.max(ilpDimension.getWidth(), busDimension.getWidth());
+        ilpDimension.setSize(width, ilpDimension.getHeight());
+        busDimension.setSize(width, busDimension.getHeight());
+        ilpOptions.setPreferredSize(ilpDimension);
+        busOptions.setPreferredSize(busDimension);
+
         if (ms2)
-            center.add(new TextHeaderBoxPanel("ILP", ilpOptions));
+            technicalParameters.add(new TextHeaderBoxPanel("ILP", ilpOptions));
+        center.add(technicalParameters);
 
         // add ionization's of selected compounds to default
         refreshPossibleIonizations(ecs.stream().map(it -> it.getIonization().getIonization().toString()).collect(Collectors.toSet()), true);
