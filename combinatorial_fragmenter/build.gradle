@@ -15,13 +15,13 @@ dependencies() {
     implementation project(path: ":fragmentation_tree:ft_cbc")
 
     api "org.openscience.cdk:cdk-bundle:$cdk_version"
-    implementation "com.gurobi:gurobi-jar:$gurobi_version"
 
     testImplementation project(":sirius_api")
     testImplementation "org.openscience.cdk:cdk-bundle:$cdk_version"
-    testImplementation "de.unijena.bioinf.cbc-java:cbc-java:${cbc_version}"
-    testImplementation project(path: ":fragmentation_tree:ft_cbc")
-    testImplementation 'net.java.dev.jna:jna:5.4.0'
+
+    testImplementation("de.unijena.bioinf.cbc-java:cbc-java-jni:$cbc_version:${siriusTargetPlatform.jenaClassifier().orElseThrow()}")
+    testImplementation("de.unijena.bioinf.cbc-java:cbc-java-native:$cbc_version:${siriusTargetPlatform.jenaClassifier().orElseThrow()}")
+
     implementation "args4j:args4j:2.32"
 }
 
