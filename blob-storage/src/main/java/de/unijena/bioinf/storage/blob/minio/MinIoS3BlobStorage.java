@@ -39,6 +39,8 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class MinIoS3BlobStorage implements BlobStorage {
 
@@ -72,7 +74,7 @@ public class MinIoS3BlobStorage implements BlobStorage {
     @Override
     public boolean hasBlob(Path relative) throws IOException {
         try {
-            return minioClient.statObject(StatObjectArgs.builder().bucket(bucketName).object(relative.toString()).build()) != null;
+            return minioClient.statObject(StatObjectArgs.builder().bucket(bucketName).object(makePath(relative)).build()) != null;
         } catch (ErrorResponseException e) {
             return exists(e);
         } catch (InvalidResponseException | IOException | InsufficientDataException | InternalException | InvalidKeyException | NoSuchAlgorithmException | ServerException | XmlParserException e) {
@@ -113,7 +115,9 @@ public class MinIoS3BlobStorage implements BlobStorage {
     }
 
     private String makePath(Path relative) {
-        return relative.toString();
+        return StreamSupport.stream(relative.spliterator(), false)
+                .map(Path::toString)
+                .collect(Collectors.joining("/"));
     }
 
     private static class BackgroundPipedOutputStream<R> extends PipedOutputStream {
