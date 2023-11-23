@@ -25,24 +25,18 @@ import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.data.Tagging;
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.babelms.MsExperimentParser;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static de.unijena.bioinf.babelms.ParserTestUtils.loadExperiment;
 import static org.junit.jupiter.api.Assertions.*;
 
 class MonaJsonParserTest {
-
-    private Ms2Experiment loadExperiment(String file) throws IOException {
-        File input = new File(this.getClass().getClassLoader().getResource(file).getFile());
-        return new MsExperimentParser().getParser(input).parseFromFile(input).get(0);
-    }
 
     @Test
     void parseMS1() throws IOException {
