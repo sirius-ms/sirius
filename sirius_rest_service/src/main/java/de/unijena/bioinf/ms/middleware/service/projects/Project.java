@@ -36,6 +36,9 @@ import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtil
 
 public interface Project {
 
+    @NotNull
+    String getProjectId();
+
     Page<Compound> findCompounds(Pageable pageable, @NotNull EnumSet<Compound.OptField> optFields,
                                  @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields);
 

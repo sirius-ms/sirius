@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,9 @@
 package de.unijena.bioinf.ms.middleware.service.gui;
 
 import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.model.gui.GuiParameters;
+import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,9 +39,15 @@ public abstract class AbstractGuiService<P extends Project> implements GuiServic
 
     protected final Map<String, SiriusGui> siriusGuiInstances = new ConcurrentHashMap<>();
 
+    protected final EventService<?> eventService;
+
+    protected AbstractGuiService(EventService<?> eventService) {
+        this.eventService = eventService;
+    }
+
     @Override
     public void createGuiInstance(@NotNull final String projectId, @NotNull P project, @Nullable GuiParameters guiParameters) {
-        SiriusGui gui = null;
+        SiriusGui gui;
         synchronized (siriusGuiInstances) {
             if (siriusGuiInstances.containsKey(projectId))
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "There is already a SIRIUS GUI instance running on project: " + projectId);
@@ -52,10 +60,8 @@ public abstract class AbstractGuiService<P extends Project> implements GuiServic
                 }
             });
         }
-        if (gui != null && guiParameters != null){
-            //todo apply parameters
-        }
-
+        if (gui != null && guiParameters != null)
+            eventService.sendEvent(ServerEvents.newGuiEvent(guiParameters, projectId));
     }
 
     @Override
@@ -71,8 +77,7 @@ public abstract class AbstractGuiService<P extends Project> implements GuiServic
     public void applyToGuiInstance(@NotNull String projectId, @NotNull GuiParameters guiParameters) {
         SiriusGui gui = siriusGuiInstances.get(projectId);
         if (gui != null) {
-            throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "NOT YET IMPLEMENTED");
-            //todo apply parameters
+            eventService.sendEvent(ServerEvents.newGuiEvent(guiParameters, projectId));
         } else {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No running SIRIUS GUI instance found for project id: " + projectId);
         }

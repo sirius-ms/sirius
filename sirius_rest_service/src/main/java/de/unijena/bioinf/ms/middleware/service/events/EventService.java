@@ -18,21 +18,19 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.middleware.model.gui;
+package de.unijena.bioinf.ms.middleware.service.events;
 
-import io.swagger.v3.oas.annotations.media.Schema;
+import de.unijena.bioinf.ms.middleware.model.events.ServerEvent;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * Available result tabs in the SIRIUS GUI. Name correspond to the names in the GUI.
- */
-@Schema(enumAsRef = true, nullable = true)
-public enum GuiResultTab {
-    FORMULAS,
-    SPECTRA,
-    TREES,
-    PREDICTED_FINGERPRINT,
-    STRUCTURES,
-    STRUCTURE_ANNOTATION,
-    COMPOUND_CLASSES,
-    DASHBOARD
+import java.util.EnumSet;
+
+public interface EventService<Sender> {
+    Sender createEventSender(@NotNull EnumSet<ServerEvent.Type> typesToListenOn);
+
+    void addEventSender(@NotNull Sender sender, @NotNull EnumSet<ServerEvent.Type> typesToListenOn);
+
+    void sendEvent(ServerEvent<?> event);
+
+    void shutdown();
 }

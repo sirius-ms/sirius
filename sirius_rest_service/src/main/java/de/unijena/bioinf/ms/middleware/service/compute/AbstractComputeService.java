@@ -26,6 +26,7 @@ import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.compute.JobProgress;
 import de.unijena.bioinf.ms.middleware.model.compute.JobSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.tools.Tool;
+import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +38,12 @@ import java.util.stream.Collectors;
 
 public abstract class AbstractComputeService<P extends Project> implements ComputeService<P> {
 
+
+    protected final EventService<?> eventService;
+
+    public AbstractComputeService(EventService<?> eventService) {
+        this.eventService = eventService;
+    }
 
     protected Job extractJobId(BackgroundRuns.BackgroundRunJob<?, ?> runJob, @NotNull EnumSet<Job.OptField> optFields) {
         Job id = new Job();

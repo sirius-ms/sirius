@@ -56,6 +56,7 @@ public class SiriusGui {
         mainFrame = new MainFrame(sirius, connectionMonitor);
         mainFrame.decoradeMainFrame(project);
         //todo nighsky: check why JFX webview is only working for first instance...
+        //todo nighsky: connect SSE connection to retrieve gui change states ???
     }
 
     public void shutdown(boolean closeProject){
