@@ -22,16 +22,18 @@ package de.unijena.bioinf.ms.middleware.service.gui;
 
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.SiriusGuiFactory;
+import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceImpl;
 import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
 
 public class SiriusProjectSpaceGuiService extends AbstractGuiService<SiriusProjectSpaceImpl> {
     private final SiriusGuiFactory guiFactory;
 
-    public SiriusProjectSpaceGuiService() {
-        this(new SiriusGuiFactory());
+    public SiriusProjectSpaceGuiService(EventService<?> eventService) {
+        this(new SiriusGuiFactory(), eventService);
     }
-    public SiriusProjectSpaceGuiService(SiriusGuiFactory guiFactory) {
+    public SiriusProjectSpaceGuiService(SiriusGuiFactory guiFactory, EventService<?> eventService) {
+        super(eventService);
         this.guiFactory = guiFactory;
     }
 

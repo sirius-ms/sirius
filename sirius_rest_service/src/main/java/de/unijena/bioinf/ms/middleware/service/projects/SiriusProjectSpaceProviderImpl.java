@@ -22,7 +22,11 @@ package de.unijena.bioinf.ms.middleware.service.projects;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.middleware.SiriusMiddlewareApplication;
+import de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent;
+import de.unijena.bioinf.ms.middleware.model.events.ServerEventImpl;
+import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
+import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.projectspace.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
@@ -41,15 +45,26 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent.Type.*;
+import static de.unijena.bioinf.projectspace.ProjectSpaceIO.isExistingProjectspaceDirectory;
+import static de.unijena.bioinf.projectspace.ProjectSpaceIO.isZipProjectSpace;
+
 public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusProjectSpaceImpl> {
 
 
-//    protected final ProjectSpaceManagerFactory<?, ?> projectSpaceManagerFactory = new ProjectSpaceManagerFactory.Default();
+    //    protected final ProjectSpaceManagerFactory<?, ?> projectSpaceManagerFactory = new ProjectSpaceManagerFactory.Default();
     protected final ProjectSpaceManagerFactory<?, ?> projectSpaceManagerFactory = new GuiProjectSpaceManagerFactory(); //todo nightsky: remove after transforming gui to rest
 
     private final HashMap<String, ProjectSpaceManager<?>> projectSpaces = new HashMap<>();
 
     protected final ReadWriteLock projectSpaceLock = new ReentrantReadWriteLock();
+    private final ProjectSpaceIO projectIO = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig());
+
+    private final EventService<?> eventService;
+
+    public SiriusProjectSpaceProviderImpl(EventService<?> eventService) {
+        this.eventService = eventService;
+    }
 
 
     public List<ProjectInfo> listAllProjectSpaces() {
@@ -62,7 +77,7 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
     }
 
     public Optional<SiriusProjectSpaceImpl> getProject(String name) {
-        return getProjectSpace(name).map(SiriusProjectSpaceImpl::new);
+        return getProjectSpace(name).map(ps -> new SiriusProjectSpaceImpl(name, ps));
     }
 
     protected Optional<ProjectSpaceManager<?>> getProjectSpace(String name) {
@@ -109,10 +124,14 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
                 throw new ResponseStatusException(HttpStatus.SEE_OTHER, "project space with name '" + id.projectId + "' already exists.");
             }
             Path p = id.getAsPath();
-            if (!ProjectSpaceIO.isExistingProjectspaceDirectory(p) && !ProjectSpaceIO.isZipProjectSpace(p)) {
+            if (!isExistingProjectspaceDirectory(p) && !isZipProjectSpace(p)) {
                 throw new IllegalArgumentException("'" + id.projectId + "' is no valid SIRIUS project space.");
             }
-            projectSpaces.put(id.projectId, projectSpaceManagerFactory.create(new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(p)));
+
+            SiriusProjectSpace rawProject = projectIO.openExistingProjectSpace(p);
+            registerEventListeners(id.projectId, rawProject);
+            projectSpaces.put(id.projectId, projectSpaceManagerFactory.create(rawProject));
+            eventService.sendEvent(ServerEvents.newProjectEvent(id.projectId, PROJECT_OPENED));
             return id;
         } finally {
             lock.unlock();
@@ -125,7 +144,9 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
 
     public ProjectInfo addProjectSpace(@NotNull String nameSuggestion, @NotNull ProjectSpaceManager<?> projectSpaceToAdd) {
         return ensureUniqueName(nameSuggestion, (name) -> {
+            registerEventListeners(name, projectSpaceToAdd.projectSpace());
             projectSpaces.put(name, projectSpaceToAdd);
+            eventService.sendEvent(ServerEvents.newProjectEvent(name, PROJECT_OPENED));
             return ProjectInfo.of(name, projectSpaceToAdd.projectSpace().getLocation());
         });
     }
@@ -145,26 +166,14 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
             if (projectSpaces.containsKey(name))
                 throw new IllegalArgumentException("project space with name '" + name + "' already exists.");
 
-            ProjectSpaceManager<?> project = projectSpaceManagerFactory.create(
-                    new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createNewProjectSpace(location));
-
-            projectSpaces.put(name, project);
+            SiriusProjectSpace rawProject = projectIO.createNewProjectSpace(location);
+            registerEventListeners(name, rawProject);
+            projectSpaces.put(name, projectSpaceManagerFactory.create(rawProject));
+            eventService.sendEvent(ServerEvents.newProjectEvent(name, PROJECT_OPENED));
             return ProjectInfo.of(name, location);
         } finally {
             projectSpaceLock.writeLock().unlock();
         }
-    }
-
-    public ProjectInfo createTemporaryProjectSpace() throws IOException {
-        return ensureUniqueName("temporary", (name) -> {
-            try {
-                SiriusProjectSpace space = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createTemporaryProjectSpace();
-                projectSpaces.put(name, projectSpaceManagerFactory.create(space));
-                return ProjectInfo.of(name, space.getLocation());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
     }
 
     @Override
@@ -204,6 +213,65 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
             projectSpaceLock.writeLock().unlock();
         }
     }
+
+    /**
+     * registers listeners that will transform project space events into server events to be sent via rest api
+     *
+     * @param project the project to listen on
+     */
+    private void registerEventListeners(@NotNull String id, @NotNull SiriusProjectSpace project) {
+        project.addProjectSpaceListener(projectSpaceEvent -> {
+            switch (projectSpaceEvent) {
+                case OPENED -> eventService.sendEvent(ServerEvents.newProjectEvent(id, PROJECT_OPENED));
+                case CLOSED -> eventService.sendEvent(ServerEvents.newProjectEvent(id, PROJECT_CLOSED));
+                case LOCATION_CHANGED -> eventService.sendEvent(ServerEvents.newProjectEvent(id, PROJECT_MOVED));
+            }
+        });
+
+        project.defineCompoundListener().onCreate().thenDo(e -> eventService.sendEvent(
+                creatEvent(id, FEATURE_CREATED, e.getAffectedID())));
+        project.defineCompoundListener().onUpdate().thenDo(e -> eventService.sendEvent(
+                creatEvent(id, FEATURE_UPDATED, e.getAffectedID())));
+        project.defineCompoundListener().onDelete().thenDo(e -> eventService.sendEvent(
+                creatEvent(id, FEATURE_DELETED, e.getAffectedID())));
+
+        project.defineFormulaResultListener().onCreate().thenDo(e -> eventService.sendEvent(
+                creatEvent(id, RESULT_CREATED, e.getAffectedID())));
+        project.defineFormulaResultListener().onUpdate().thenDo(e -> eventService.sendEvent(
+                creatEvent(id, RESULT_UPDATED, e.getAffectedID())));
+        project.defineFormulaResultListener().onDelete().thenDo(e -> eventService.sendEvent(
+                creatEvent(id, RESULT_DELETED, e.getAffectedID())));
+
+    }
+
+    private ServerEventImpl<ProjectChangeEvent> creatEvent(
+            String projectId,
+            ProjectChangeEvent.Type eventType,
+            FormulaResultId formulaResultId
+    ) {
+        CompoundContainerId compoundContainerId = formulaResultId.getParentId();
+        return ServerEvents.newProjectEvent(
+                ProjectChangeEvent.builder().eventType(eventType).projectId(projectId)
+                        .compoundId(compoundContainerId.getGroupId().orElse(null))
+                        .featuredId(compoundContainerId.getDirectoryName())
+                        .formulaId(formulaResultId.fileName())
+                        .build()
+        );
+    }
+
+    private ServerEventImpl<ProjectChangeEvent> creatEvent(
+            String projectId,
+            ProjectChangeEvent.Type eventType,
+            CompoundContainerId compoundContainerId
+    ) {
+        return ServerEvents.newProjectEvent(
+                ProjectChangeEvent.builder().eventType(eventType).projectId(projectId)
+                        .compoundId(compoundContainerId.getGroupId().orElse(null))
+                        .featuredId(compoundContainerId.getDirectoryName())
+                        .build()
+        );
+    }
+
 
     @Override
     public void destroy() throws Exception {

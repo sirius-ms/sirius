@@ -24,6 +24,8 @@ import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.compute.SiriusProjectSpaceComputeService;
+import de.unijena.bioinf.ms.middleware.service.events.EventService;
+import de.unijena.bioinf.ms.middleware.service.events.SseEventService;
 import de.unijena.bioinf.ms.middleware.service.gui.GuiService;
 import de.unijena.bioinf.ms.middleware.service.gui.SiriusProjectSpaceGuiService;
 import de.unijena.bioinf.ms.middleware.service.info.ConnectionChecker;
@@ -47,21 +49,25 @@ public class SiriusContext{
     }
 
     @Bean
+    public EventService<?> eventService(){
+        return new SseEventService();
+    }
+
+    @Bean
     @DependsOn({"webAPI", "jobManager", "projectsProvider"})
-    public ComputeService<?> computeService() {
-        return new SiriusProjectSpaceComputeService();
+    public ComputeService<?> computeService(EventService<?> eventService) {
+        return new SiriusProjectSpaceComputeService(eventService);
     }
 
     @Bean
     @DependsOn({"jobManager"})
-    public ProjectsProvider<?> projectsProvider() {
-        SiriusProjectSpaceProviderImpl projectsProvider = new SiriusProjectSpaceProviderImpl();
-        return projectsProvider;
+    public ProjectsProvider<?> projectsProvider(EventService<?> eventService) {
+        return new SiriusProjectSpaceProviderImpl(eventService);
     }
 
     @Bean(destroyMethod = "shutdown")
-    public GuiService<?> guiService(){
-        return new SiriusProjectSpaceGuiService();
+    public GuiService<?> guiService(EventService<?> eventService){
+        return new SiriusProjectSpaceGuiService(eventService);
     }
 
     @Bean

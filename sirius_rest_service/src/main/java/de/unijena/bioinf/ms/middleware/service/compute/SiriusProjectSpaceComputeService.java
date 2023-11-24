@@ -28,6 +28,8 @@ import de.unijena.bioinf.ms.middleware.model.compute.ImportLocalFilesSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.ImportStringSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.compute.JobSubmission;
+import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
+import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceImpl;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.Instance;
@@ -50,7 +52,11 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SiriusProjectSpaceComputeService extends AbstractComputeService<SiriusProjectSpaceImpl> {
 
-    private <I extends Instance, P extends ProjectSpaceManager<I>> Job createAndSubmitJob(
+    public SiriusProjectSpaceComputeService(EventService<?> eventService) {
+        super(eventService);
+    }
+
+    private <I extends Instance, P extends ProjectSpaceManager<I>> Job createAndSubmitJob(@NotNull String projectId,
             P psm, JobSubmission jobSubmission, @NotNull EnumSet<Job.OptField> optFields
     ) {
         List<CompoundContainerId> compounds = null;
@@ -80,6 +86,7 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
         try {
             List<String> commandList = makeCommand(jobSubmission);
             BackgroundRuns.BackgroundRunJob<P, I> run = BackgroundRuns.runCommand(commandList, compounds, psm);
+            registerServerEventListener(run, projectId);
             return extractJobId(run, optFields);
         } catch (Exception e) {
             log.error("Cannot create Job Command!", e);
@@ -88,6 +95,7 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
     }
 
     private <I extends Instance, P extends ProjectSpaceManager<I>> Job createAndSubmitJob(
+            @NotNull String projectId,
             P psm,
             List<String> commandList,
             @Nullable Iterable<String> featureAlignId,
@@ -105,6 +113,7 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
             }
 
             BackgroundRuns.BackgroundRunJob<P, I> run = BackgroundRuns.runCommand(commandList, instances, toImport, psm);
+            registerServerEventListener(run, projectId);
             return extractJobId(run, optFields);
         } catch (Exception e) {
             log.error("Cannot create Job Command!", e);
@@ -112,8 +121,15 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
         }
     }
 
+    private void registerServerEventListener(BackgroundRuns.BackgroundRunJob<?, ?> run, String projectId) {
+        run.addPropertyChangeListener(JobStateEvent.JOB_STATE_EVENT, evt ->
+                eventService.sendEvent(ServerEvents.newJobEvent(
+                        extractJobId((BackgroundRuns.BackgroundRunJob) ((JobStateEvent) evt).getSource(),
+                                EnumSet.of(Job.OptField.progress)), projectId)));
+    }
+
     private <I extends Instance, P extends ProjectSpaceManager<I>> Job createAndSubmitImportJob(
-            P psm, ImportLocalFilesSubmission jobSubmission,
+            @NotNull String projectId, P psm, ImportLocalFilesSubmission jobSubmission,
             @NotNull EnumSet<Job.OptField> optFields
     ) {
         InputFilesOptions inputFiles = new InputFilesOptions();
@@ -128,7 +144,7 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
                         || p.getFileName().toString().toLowerCase().endsWith("mzxml"));
         System.out.println("Alignment: " + alignLCMSRuns);
 
-        return createAndSubmitJob(psm, alignLCMSRuns
+        return createAndSubmitJob(projectId, psm, alignLCMSRuns
                         ? List.of("lcms-align")
                         : List.of("project-space", "--keep-open"),
                 null, inputFiles, optFields);
@@ -197,7 +213,7 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
     @Override
     public Job createAndSubmitJob(SiriusProjectSpaceImpl psm, JobSubmission jobSubmission,
                                   @NotNull EnumSet<Job.OptField> optFields) {
-        return createAndSubmitJob(psm.getProjectSpaceManager(), jobSubmission, optFields);
+        return createAndSubmitJob(psm.getProjectId(), psm.getProjectSpaceManager(), jobSubmission, optFields);
     }
 
     @Override
@@ -205,13 +221,13 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
                                   @Nullable Iterable<String> alignedFeatureIds,
                                   @Nullable InputFilesOptions toImport,
                                   @NotNull EnumSet<Job.OptField> optFields) {
-        return createAndSubmitJob(psm.getProjectSpaceManager(), commandList, alignedFeatureIds, toImport, optFields);
+        return createAndSubmitJob(psm.getProjectId(), psm.getProjectSpaceManager(), commandList, alignedFeatureIds, toImport, optFields);
     }
 
     @Override
     public Job createAndSubmitImportJob(SiriusProjectSpaceImpl psm, ImportLocalFilesSubmission jobSubmission,
                                         @NotNull EnumSet<Job.OptField> optFields) {
-        return createAndSubmitImportJob(psm.getProjectSpaceManager(), jobSubmission, optFields);
+        return createAndSubmitImportJob(psm.getProjectId(), psm.getProjectSpaceManager(), jobSubmission, optFields);
     }
 
     @Override
@@ -224,7 +240,7 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
     public Job deleteJob(@Nullable SiriusProjectSpaceImpl psm, String jobId, boolean cancelIfRunning, boolean awaitDeletion, @NotNull EnumSet<Job.OptField> optFields) {
         if (psm != null) {
             return deleteJob(psm.getProjectSpaceManager(), jobId, cancelIfRunning, awaitDeletion, optFields);
-        }else {
+        } else {
             return deleteJob((ProjectSpaceManager<?>) null, jobId, cancelIfRunning, awaitDeletion, optFields);
 
         }

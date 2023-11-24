@@ -53,8 +53,6 @@ public interface ProjectsProvider<P extends de.unijena.bioinf.ms.middleware.serv
 
     ProjectInfo createProjectSpace(@NotNull String nameSuggestion, @NotNull Path location) throws IOException;
 
-    ProjectInfo createTemporaryProjectSpace() throws IOException;
-
     boolean containsProject(@NotNull String name);
 
     void closeProjectSpace(String name) throws IOException;

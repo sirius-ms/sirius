@@ -77,12 +77,21 @@ import java.util.stream.Stream;
 @Slf4j
 public class SiriusProjectSpaceImpl implements Project {
 
-
     @NotNull
     private final ProjectSpaceManager<?> projectSpaceManager;
+    @NotNull
+    private final String projectId;
 
-    public SiriusProjectSpaceImpl(@NotNull ProjectSpaceManager<?> projectSpaceManager) {
+    public SiriusProjectSpaceImpl(@NotNull String projectId, @NotNull ProjectSpaceManager<?> projectSpaceManager) {
         this.projectSpaceManager = projectSpaceManager;
+        this.projectId = projectId;
+    }
+
+
+    @NotNull
+    @Override
+    public String getProjectId() {
+        return projectId;
     }
 
     public @NotNull ProjectSpaceManager<?> getProjectSpaceManager() {
