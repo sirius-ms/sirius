@@ -1,3 +1,23 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2023 Bright Giant GmbH
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS.
+ *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.babelms.gnps;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -21,7 +41,7 @@ public class GnpsSpectrumParser implements JsonExperimentParser {
         ExperimentData data = ExperimentData.builder()
                 .spectrum(GnpsJsonParser.fromTransposedArray(record.getPeaks()))
                 .spectrumLevel("2")  // Seems like all GNPS records are MS2
-                .precursorMz(Double.toString(record.getPrecursor_mz()))
+                .precursorMz(record.getPrecursor_mz())
                 .splash(record.getSplash())
                 .build();
         return new ExperimentDataParser().parse(data);
@@ -32,7 +52,7 @@ public class GnpsSpectrumParser implements JsonExperimentParser {
         private int n_peaks;
         private double[][] peaks;
         private int precursor_charge;
-        private double precursor_mz;
+        private String precursor_mz;
         private String splash;
     }
 }
