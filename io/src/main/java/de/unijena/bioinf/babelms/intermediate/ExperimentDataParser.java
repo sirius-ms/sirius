@@ -122,7 +122,6 @@ public class ExperimentDataParser {
         return Optional.empty();
     }
 
-
     protected Optional<Smiles> getSmiles() {
         return Optional.ofNullable(data.getSmiles()).map(Smiles::new);
     }
