@@ -593,6 +593,15 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuiParameters"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
             "description": "Created"
@@ -2304,7 +2313,7 @@
           },
           "state": {
             "type": "string",
-            "description": "Current state of the Jobs in the SIRIUS internal Job scheduler\n\n         WAITING: Waiting for submission to ExecutorService (e.g. due to dependent jobs)\n         READY: Ready for submission but not yet enqueued for submission to ExecutorService.\n         QUEUED: Enqueued for submission to ExecutorService.\n         SUBMITTED: Submitted and waiting to be executed.\n         RUNNING: Job is running.\n         CANCELED: Jobs is finished due to cancellation by suer or dependent jobs.\n         FAILED: Job is finished but failed.\n         DONE: Job finished successfully.",
+            "description": "Current state of the Jobs in the SIRIUS internal Job scheduler\n\n         WAITING: Waiting for submission to ExecutorService (e.g. due to dependent jobs)\n         READY: Ready for submission but not yet enqueued for submission to ExecutorService.\n         QUEUED: Enqueued for submission to ExecutorService.\n         SUBMITTED: Submitted and waiting to be executed.\n         RUNNING: Job is running.\n         CANCELED: Jobs is finished due to cancellation by user or dependent jobs.\n         FAILED: Job is finished but failed.\n         DONE: Job finished successfully.",
             "enum": [
               "WAITING",
               "READY",
@@ -2731,24 +2740,6 @@
         },
         "description": ""
       },
-      "AccountCredentials": {
-        "type": "object",
-        "properties": {
-          "username": {
-            "type": "string",
-            "nullable": true
-          },
-          "password": {
-            "type": "string",
-            "nullable": true
-          },
-          "refreshToken": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "description": "Simple object to hold account credentials, e.g. to perform login operations.\n If refreshToken is given, it is usually preferred over password based authentication.\n But in the end this is up to the respective web service."
-      },
       "GuiParameters": {
         "type": "object",
         "properties": {
@@ -2789,8 +2780,27 @@
           "PREDICTED_FINGERPRINT",
           "STRUCTURES",
           "STRUCTURE_ANNOTATION",
-          "COMPOUND_CLASSES"
+          "COMPOUND_CLASSES",
+          "DASHBOARD"
         ]
+      },
+      "AccountCredentials": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "nullable": true
+          },
+          "password": {
+            "type": "string",
+            "nullable": true
+          },
+          "refreshToken": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "description": "Simple object to hold account credentials, e.g. to perform login operations.\n If refreshToken is given, it is usually preferred over password based authentication.\n But in the end this is up to the respective web service."
       },
       "SearchQueryType": {
         "type": "string",
@@ -2811,11 +2821,25 @@
             "type": "integer",
             "format": "int64"
           },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "first": {
-            "type": "boolean"
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
           },
           "size": {
             "type": "integer",
@@ -2827,20 +2851,6 @@
               "$ref": "#/components/schemas/ProjectInfo"
             }
           },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "last": {
-            "type": "boolean"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
           "empty": {
             "type": "boolean"
           }
@@ -2851,10 +2861,6 @@
         "properties": {
           "sort": {
             "$ref": "#/components/schemas/SortObject"
-          },
-          "offset": {
-            "type": "integer",
-            "format": "int64"
           },
           "pageNumber": {
             "type": "integer",
@@ -2869,19 +2875,23 @@
           },
           "unpaged": {
             "type": "boolean"
+          },
+          "offset": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
       "SortObject": {
         "type": "object",
         "properties": {
-          "empty": {
-            "type": "boolean"
-          },
           "sorted": {
             "type": "boolean"
           },
           "unsorted": {
+            "type": "boolean"
+          },
+          "empty": {
             "type": "boolean"
           }
         },
@@ -2898,11 +2908,25 @@
             "type": "integer",
             "format": "int64"
           },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "first": {
-            "type": "boolean"
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
           },
           "size": {
             "type": "integer",
@@ -2913,20 +2937,6 @@
             "items": {
               "$ref": "#/components/schemas/Job"
             }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "last": {
-            "type": "boolean"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"
@@ -3557,11 +3567,25 @@
             "type": "integer",
             "format": "int64"
           },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "first": {
-            "type": "boolean"
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
           },
           "size": {
             "type": "integer",
@@ -3572,20 +3596,6 @@
             "items": {
               "$ref": "#/components/schemas/Compound"
             }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "last": {
-            "type": "boolean"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"
@@ -3705,11 +3715,25 @@
             "type": "integer",
             "format": "int64"
           },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "first": {
-            "type": "boolean"
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
           },
           "size": {
             "type": "integer",
@@ -3720,20 +3744,6 @@
             "items": {
               "$ref": "#/components/schemas/AlignedFeature"
             }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "last": {
-            "type": "boolean"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"
@@ -3762,11 +3772,25 @@
             "type": "integer",
             "format": "int64"
           },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "first": {
-            "type": "boolean"
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
           },
           "size": {
             "type": "integer",
@@ -3777,20 +3801,6 @@
             "items": {
               "$ref": "#/components/schemas/StructureCandidateFormula"
             }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "last": {
-            "type": "boolean"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"
@@ -3889,11 +3899,25 @@
             "type": "integer",
             "format": "int64"
           },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "first": {
-            "type": "boolean"
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
           },
           "size": {
             "type": "integer",
@@ -3904,20 +3928,6 @@
             "items": {
               "$ref": "#/components/schemas/FormulaCandidate"
             }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "last": {
-            "type": "boolean"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"
@@ -3935,11 +3945,25 @@
             "type": "integer",
             "format": "int64"
           },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "first": {
-            "type": "boolean"
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
           },
           "size": {
             "type": "integer",
@@ -3950,20 +3974,6 @@
             "items": {
               "$ref": "#/components/schemas/StructureCandidateScored"
             }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "last": {
-            "type": "boolean"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"
