@@ -25,6 +25,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.SpectrumFileSource;
 import de.unijena.bioinf.babelms.Parser;
+import de.unijena.bioinf.babelms.gnps.GnpsJsonParser;
+import de.unijena.bioinf.babelms.gnps.GnpsSpectrumParser;
 import de.unijena.bioinf.babelms.mona.MonaJsonParser;
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,7 +41,10 @@ public class JsonExperimentParserDispatcher implements Parser<Ms2Experiment> {
     private final List<JsonExperimentParser> parsers;
 
     public JsonExperimentParserDispatcher() {
-        this.parsers = List.of(new MonaJsonParser());
+        this.parsers = List.of(
+                new MonaJsonParser(),
+                new GnpsJsonParser(),
+                new GnpsSpectrumParser());
     }
 
     @Override

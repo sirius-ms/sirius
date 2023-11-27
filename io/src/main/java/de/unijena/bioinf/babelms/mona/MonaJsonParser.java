@@ -21,18 +21,17 @@
 package de.unijena.bioinf.babelms.mona;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import de.unijena.bioinf.ChemistryBase.chem.*;
-import de.unijena.bioinf.ChemistryBase.data.Tagging;
-import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.ChemistryBase.utils.Utils;
+import de.unijena.bioinf.babelms.intermediate.ExperimentData;
+import de.unijena.bioinf.babelms.intermediate.ExperimentDataParser;
 import de.unijena.bioinf.babelms.json.JsonExperimentParser;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @Slf4j
 public class MonaJsonParser implements JsonExperimentParser {
@@ -52,12 +51,11 @@ public class MonaJsonParser implements JsonExperimentParser {
     private final static String SPLASH = "splash";
     private final static String RETENTION_TIME = "retention time";
 
-
-    private MutableMs2Experiment experiment;
-    private JsonNode root;
-    private String recordId;
     private Map<String, JsonNode> metadata;
     private Map<String, JsonNode> compoundMetadata;
+
+    private JsonNode root;
+    private String recordId;
 
     @Override
     public boolean canParse(JsonNode root) {
@@ -67,26 +65,30 @@ public class MonaJsonParser implements JsonExperimentParser {
     @Override
     public Ms2Experiment parse(JsonNode root) {
         this.root = root;
-        experiment = new MutableMs2Experiment();
         recordId = root.get("id").asText();
-
         collectMetadata();
-        parseSpectrum();
+        ExperimentData data = extractData();
+        return new ExperimentDataParser().parse(data);
+    }
 
-        getCompoundName().ifPresent(experiment::setName);
-        getInstrumentation().ifPresent(instrumentation -> experiment.setAnnotation(MsInstrumentation.class, instrumentation));
-        getMolecularFormula().ifPresent(experiment::setMolecularFormula);
-        getInchi().ifPresent(experiment::annotate);
-        getSmiles().ifPresent(experiment::annotate);
-        getSplash().ifPresent(experiment::annotate);
-        getRetentionTime().ifPresent(experiment::annotate);
-
-        List<String> tags = getTags();
-        if (!tags.isEmpty()) {
-            experiment.annotate(new Tagging(tags.toArray(new String[0])));
-        }
-
-        return experiment;
+    protected ExperimentData extractData() {
+        return ExperimentData.builder()
+                .id(root.get("id").asText())
+                .spectrum(parseSpectrum(root.get(SPECTRUM).asText()))
+                .spectrumLevel(getMetadata(MS_LEVEL))
+                .splash(getSplash())
+                .precursorMz(getMetadata(PRECURSOR_MZ))
+                .precursorIonType(getMetadata(PRECURSOR_TYPE))
+                .instrumentation(getMetadata(INSTRUMENT_TYPE))
+                .collisionEnergy(getMetadata(COLLISION_ENERGY))
+                .retentionTime(getRetentionTime())
+                .compoundName(getCompoundName())
+                .molecularFormula(getCompoundMetadata(MOLECULAR_FORMULA))
+                .inchi(getCompoundFieldOrMetadata(INCHI))
+                .inchiKey(getCompoundFieldOrMetadata(INCHI_KEY))
+                .smiles(getCompoundMetadata(SMILES))
+                .tags(getTags())
+                .build();
     }
 
     private void collectMetadata() {
@@ -105,47 +107,43 @@ public class MonaJsonParser implements JsonExperimentParser {
         }
     }
 
-    private void parseSpectrum() {
-        SimpleSpectrum spectrum = getSpectrum(root.get(SPECTRUM).asText());
-        String msLevel = getMetadata(MS_LEVEL).orElse(null);
-
-        if ("MS1".equals(msLevel)) {
-            experiment.getMs1Spectra().add(spectrum);
-        } else if ("MS2".equals(msLevel)) {
-            double precursorMz = getPrecursorMz();
-            MutableMs2Spectrum ms2Spectrum = new MutableMs2Spectrum(spectrum, precursorMz, getCollisionEnergy().orElse(null), 2);
-            getIonization().ifPresent(ms2Spectrum::setIonization);
-            experiment.getMs2Spectra().add(ms2Spectrum);
-
-            getPrecursorIonType().ifPresent(experiment::setPrecursorIonType);
-            if (precursorMz > 0) {
-                experiment.setIonMass(precursorMz);
-            }
-        } else {
-            throw new RuntimeException("Unsupported ms level " + msLevel + " in MoNA record " + recordId + ". Only 'MS1' and 'MS2' are supported.");
-        }
-    }
-
-    private Optional<String> getMetadata(String field) {
+    @Nullable
+    private String getMetadata(String field) {
         return getMetadataFrom(field, metadata);
     }
 
-    private Optional<String> getCompoundMetadata(String field) {
+    @Nullable
+    private String getCompoundMetadata(String field) {
         return getMetadataFrom(field, compoundMetadata);
     }
 
-    private Optional<String> getMetadataFrom(String field, Map<String, JsonNode> map) {
+    @Nullable
+    private String getMetadataFrom(String field, Map<String, JsonNode> map) {
         JsonNode node = map.get(field.toLowerCase());
         if (node != null) {
-            return Optional.of(node.get("value").asText());
+            return node.get("value").asText();
         }
-        return Optional.empty();
+        return null;
+    }
+
+    @Nullable
+    private String getCompoundFieldOrMetadata(String field) {
+        JsonNode compound = getCompound();
+        if (compound.hasNonNull(field)) {
+            return compound.get(field).asText();
+        }
+        return getCompoundMetadata(field);
+    }
+
+    private JsonNode getCompound() {
+        return root.get(COMPOUND).get(0);
     }
 
     /**
-     * @param s in form "mz1:intensity1 mz2:intensity2 ..."
+     *
+     * @param s in format "mz1:intensity1 mz2:intensity2 ..."
      */
-    private SimpleSpectrum getSpectrum(String s) {
+    private SimpleSpectrum parseSpectrum(String s) {
         String[] peaks = s.split("\\s+");
         double[] mz = new double[peaks.length];
         double[] intensity = new double[peaks.length];
@@ -157,88 +155,34 @@ public class MonaJsonParser implements JsonExperimentParser {
         return new SimpleSpectrum(mz, intensity);
     }
 
-    private double getPrecursorMz() {
-        Optional<String> value = getMetadata(PRECURSOR_MZ);
-        if (value.isEmpty()) {
-            log.warn("MoNA record " + recordId + " has no precursor m/z, setting to 0.");
-            return 0;
+    @Nullable
+    private String getSplash() {
+        if (root.hasNonNull(SPLASH)) {
+            return root.get(SPLASH).get(SPLASH).asText();
         }
-        return Utils.parseDoubleWithUnknownDezSep(value.get());
+        return null;
     }
 
-    private Optional<CollisionEnergy> getCollisionEnergy() {
-        return getMetadata(COLLISION_ENERGY).map(CollisionEnergy::fromStringOrNull);
+    @Nullable
+    private String getRetentionTime() {
+        JsonNode rtNode = metadata.get(RETENTION_TIME);
+        if (rtNode != null) {
+            return rtNode.get("value").asText()
+                    + (rtNode.hasNonNull("unit") ? " " + rtNode.get("unit").asText() : "");
+        }
+        return null;
     }
 
-    private Optional<PrecursorIonType> getPrecursorIonType() {
-        return getMetadata(PRECURSOR_TYPE).map(PrecursorIonType::fromString);
-    }
-
-    private Optional<Ionization> getIonization() {
-        return getPrecursorIonType().map(PrecursorIonType::getIonization);
-    }
-
-    private Optional<MsInstrumentation> getInstrumentation() {
-        return getMetadata(INSTRUMENT_TYPE)
-                .map(MsInstrumentation::getBestFittingInstrument)
-                .filter(t -> !MsInstrumentation.Unknown.equals(t));
-    }
-
-    private JsonNode getCompound() {
-        return root.get(COMPOUND).get(0);
-    }
-
-    private Optional<String> getCompoundName() {
+    @Nullable
+    private String getCompoundName() {
         JsonNode names = getCompound().get("names");
         if (!names.isEmpty()) {
-            return Optional.of(names.get(0).get("name").asText());
+            return names.get(0).get("name").asText();
         }
-        return Optional.empty();
-    }
-
-    private Optional<MolecularFormula> getMolecularFormula() {
-        return getCompoundMetadata(MOLECULAR_FORMULA).map(MolecularFormula::parseOrNull);
-    }
-
-    private Optional<String> getCompoundFieldOrMetadata(String field) {
-        JsonNode compound = getCompound();
-        if (compound.hasNonNull(field)) {
-            return Optional.of(compound.get(field).asText());
-        }
-        return getCompoundMetadata(field);
-    }
-
-    private Optional<InChI> getInchi() {
-        Optional<String> inchi = getCompoundFieldOrMetadata(INCHI);
-        Optional<String> inchiKey = getCompoundFieldOrMetadata(INCHI_KEY);
-        if (inchi.isPresent() || inchiKey.isPresent()) {
-            return Optional.of(InChIs.newInChI(inchiKey.orElse(null), inchi.orElse(null)));
-        }
-        return Optional.empty();
+        return null;
     }
 
     private List<String> getTags() {
         return root.get("tags").findValuesAsText("text");
-    }
-
-    private Optional<Smiles> getSmiles() {
-        return getCompoundMetadata(SMILES).map(Smiles::new);
-    }
-
-    private Optional<Splash> getSplash() {
-        if (root.hasNonNull(SPLASH)) {
-            return Optional.of(new Splash(root.get(SPLASH).get(SPLASH).asText()));
-        }
-        return Optional.empty();
-    }
-
-    private Optional<RetentionTime> getRetentionTime() {
-        JsonNode rtNode = metadata.get(RETENTION_TIME);
-        if (rtNode != null) {
-            String value = rtNode.get("value").asText()
-                    + (rtNode.hasNonNull("unit") ? " " + rtNode.get("unit").asText() : "");
-            return RetentionTime.tryParse(value);
-        }
-        return Optional.empty();
     }
 }

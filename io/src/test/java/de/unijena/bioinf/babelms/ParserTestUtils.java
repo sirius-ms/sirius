@@ -18,18 +18,18 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.babelms.json;
+package de.unijena.bioinf.babelms;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 
-public interface JsonExperimentParser {
+import java.io.File;
+import java.io.IOException;
+import java.util.Objects;
 
-    /**
-     * @return true if the given json can be parsed with this parser
-     */
-    boolean canParse(JsonNode root);
+public class ParserTestUtils {
 
-    Ms2Experiment parse(JsonNode root) throws JsonProcessingException;
+    public static Ms2Experiment loadExperiment(String file) throws IOException {
+        File input = new File(Objects.requireNonNull(ParserTestUtils.class.getClassLoader().getResource(file)).getFile());
+        return new MsExperimentParser().getParser(input).parseFromFile(input).get(0);
+    }
 }
