@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.babelms.json;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 
@@ -30,5 +31,5 @@ public interface JsonExperimentParser {
      */
     boolean canParse(JsonNode root);
 
-    Ms2Experiment parse(JsonNode root);
+    Ms2Experiment parse(JsonNode root) throws JsonProcessingException;
 }
