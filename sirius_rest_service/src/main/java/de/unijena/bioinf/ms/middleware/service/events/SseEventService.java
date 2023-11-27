@@ -76,25 +76,27 @@ public class SseEventService implements EventService<SseEmitter> {
         @Override
         protected Boolean compute() {
             try {
-                ServerEvent<?> event = null;
-                while (event != ServerEvents.EMPTY_EVENT()) {
+                ServerEvent<?> eventData = null;
+                while (eventData != ServerEvents.EMPTY_EVENT()) {
                     checkForInterruption();
                     try {
-                        event = events.take();
+                        eventData = events.take();
 
-                        if (event == ServerEvents.EMPTY_EVENT())
+                        if (eventData == ServerEvents.EMPTY_EVENT())
                             return true;
 
-                        for (SseEmitter emitter : emitters.getOrDefault(event.getEventType(), List.of())) {
+                        for (SseEmitter emitter : emitters.getOrDefault(eventData.getEventType(), List.of())) {
                             try {
-                                emitter.send(event, MediaType.APPLICATION_JSON);
+                                emitter.send(SseEmitter.event()
+                                        .data(eventData, MediaType.APPLICATION_JSON)
+                                        .name(eventData.getEventType().name()));
                             } catch (IOException e) {
                                 emitter.completeWithError(e);
                                 emitters.values().forEach(v -> v.remove(emitter));
                             }
                         }
                     } catch (InterruptedException e) {
-                        if (event == ServerEvents.EMPTY_EVENT())
+                        if (eventData == ServerEvents.EMPTY_EVENT())
                             return true;
                         checkForInterruption();
                     }
