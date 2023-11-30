@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -20,8 +20,12 @@
 
 package de.unijena.bioinf.ms.middleware.model.info;
 
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import lombok.Builder;
 import lombok.Getter;
+
+import java.util.EnumSet;
+import java.util.Map;
 
 @Getter
 @Builder
@@ -55,4 +59,18 @@ public class Info {
      * Version of the Molecular Fingerprint used by SIRIUS
      */
     private final String fingerprintId;
+
+    /**
+     * Set of solvers that are configured correctly and can be loaded
+     */
+    private final EnumSet<TreeBuilderFactory.DefaultBuilder> availableILPSolvers;
+
+    /**
+     * Set of ILP Solvers that are Supported and their version information
+     */
+    private final Map<TreeBuilderFactory.DefaultBuilder, String> supportedILPSolvers =  Map.of(
+            TreeBuilderFactory.DefaultBuilder.CLP, TreeBuilderFactory.CBC_VERSION,
+            TreeBuilderFactory.DefaultBuilder.CPLEX, TreeBuilderFactory.CPLEX_VERSION,
+            TreeBuilderFactory.DefaultBuilder.GUROBI, TreeBuilderFactory.GUROBI_VERSION
+    );
 }
