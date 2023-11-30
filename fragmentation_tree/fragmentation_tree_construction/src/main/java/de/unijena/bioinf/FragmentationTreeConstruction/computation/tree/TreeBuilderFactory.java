@@ -19,18 +19,17 @@
  */
 
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius
- * 28.09.16.
- */
 
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.*;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.AbstractSolver;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.AbstractTreeBuilder;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.ILPSolverException;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.IlpFactory;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 
 /**
@@ -91,25 +90,27 @@ public final class TreeBuilderFactory {
 
     public static DefaultBuilder[] getBuilderPriorities() {
         final DefaultBuilder[] b = parseBuilderPriority(PropertyManager.getProperty("de.unijena.bioinf.sirius.treebuilder.solvers"));
-        if (b!=null && b.length>0) return b;
+        if (b != null && b.length > 0) return b;
         return DefaultBuilder.values();
     }
 
-    public <T extends AbstractSolver> IlpFactory<T> getTreeBuilderFromClass(String className) {
+    public <T extends AbstractSolver> IlpFactory<T> getTreeBuilderFromClass(String className, boolean warn) {
         try {
-            return getTreeBuilderFromClass((Class<T>) getClass().getClassLoader().loadClass(className));
+            return getTreeBuilderFromClass((Class<T>) getClass().getClassLoader().loadClass(className), warn);
         } catch (Throwable e) {
-            LoggerFactory.getLogger(this.getClass()).warn("Could not find and load " + className + "! " + ILP_VERSIONS_STRING + ": " + e.getMessage());
+            if (warn)
+                LoggerFactory.getLogger(this.getClass()).warn("Could not find and load " + className + "! " + ILP_VERSIONS_STRING + ": " + e.getMessage());
             LoggerFactory.getLogger(this.getClass()).debug("Could not find and load " + className + "! " + ILP_VERSIONS_STRING, e);
             return null;
         }
     }
 
-    public <T extends AbstractSolver> IlpFactory<T> getTreeBuilderFromClass(Class<T> builderClass) {
+    public <T extends AbstractSolver> IlpFactory<T> getTreeBuilderFromClass(Class<T> builderClass, boolean warn) {
         try {
             return (IlpFactory<T>) builderClass.getDeclaredField("Factory").get(null);
         } catch (Throwable e) {
-            LoggerFactory.getLogger(this.getClass()).warn("Could not load " + builderClass.getSimpleName() + "! " + ILP_VERSIONS_STRING + ": " + e.getMessage());
+            if (warn)
+                LoggerFactory.getLogger(this.getClass()).warn("Could not load " + builderClass.getSimpleName() + "! " + ILP_VERSIONS_STRING + ": " + e.getMessage());
             LoggerFactory.getLogger(this.getClass()).debug("Could not load " + builderClass.getSimpleName() + "! " + ILP_VERSIONS_STRING, e);
             return null;
         }
@@ -121,31 +122,36 @@ public final class TreeBuilderFactory {
 
 
     public TreeBuilder getTreeBuilder(DefaultBuilder builder) {
+        return getTreeBuilder(builder, true);
+    }
+
+    public TreeBuilder getTreeBuilder(DefaultBuilder builder, boolean warn) {
         IlpFactory<?> factory = null;
         switch (builder) {
             case GUROBI:
-                factory = getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GrbSolver");
+                factory = getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GrbSolver", warn);
                 break;
             case GLPK:
-                factory = getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver");
+                factory = getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver", warn);
                 break;
             case CPLEX:
-                factory = getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.CPLEXSolver");
+                factory = getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.CPLEXSolver", warn);
                 break;
             case CLP:
-                factory = getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.CLPSolver");
+                factory = getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.CLPSolver", warn);
                 break;
             default:
                 LoggerFactory.getLogger(this.getClass()).warn("TreeBuilder " + builder.toString() + " is Unknown, supported are: " + Arrays.toString(DefaultBuilder.values()), new IllegalArgumentException("Unknown BuilderType!"));
                 return null;
         }
-        if (factory == null){
+        if (factory == null) {
             return null;
-        } else{
+        } else {
             try {
                 factory.checkSolver();
             } catch (ILPSolverException e) {
-                LoggerFactory.getLogger(getClass()).warn("Could not load Solver '" + builder + "': " + e.getMessage());
+                if (warn)
+                    LoggerFactory.getLogger(getClass()).warn("Could not load Solver '" + builder + "': " + e.getMessage());
                 LoggerFactory.getLogger(getClass()).debug("Could not load Solver '" + builder + "'", e);
                 return null;
             }
@@ -161,5 +167,15 @@ public final class TreeBuilderFactory {
         }
         LoggerFactory.getLogger(TreeBuilderFactory.class).error("Your system does not ship with any instantiatable ILP solver. Please install either CLP,  Gurobi or CPLEX to use SIRIUS.");
         return null;
+    }
+
+    public EnumSet<DefaultBuilder> getAvailableBuilders() {
+        EnumSet<DefaultBuilder> builders = EnumSet.noneOf(DefaultBuilder.class);
+        for (DefaultBuilder builder : getBuilderPriorities()) {
+            TreeBuilder b = getTreeBuilder(builder, false);
+            if (b != null)
+                builders.add(builder);
+        }
+        return builders;
     }
 }
