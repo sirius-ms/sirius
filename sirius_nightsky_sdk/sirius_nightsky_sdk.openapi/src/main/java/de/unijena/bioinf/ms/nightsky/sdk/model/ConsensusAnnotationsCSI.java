@@ -13,12 +13,8 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.StringJoiner;
 import java.util.Objects;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -31,7 +27,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * 
@@ -68,10 +64,11 @@ public class ConsensusAnnotationsCSI {
   public static final String JSON_PROPERTY_CONFIDENCE_APPROX_MATCH = "confidenceApproxMatch";
   private Double confidenceApproxMatch;
 
-  public ConsensusAnnotationsCSI() { 
+  public ConsensusAnnotationsCSI() {
   }
 
   public ConsensusAnnotationsCSI molecularFormula(String molecularFormula) {
+    
     this.molecularFormula = molecularFormula;
     return this;
   }
@@ -97,6 +94,7 @@ public class ConsensusAnnotationsCSI {
 
 
   public ConsensusAnnotationsCSI compoundClasses(CompoundClasses compoundClasses) {
+    
     this.compoundClasses = compoundClasses;
     return this;
   }
@@ -122,6 +120,7 @@ public class ConsensusAnnotationsCSI {
 
 
   public ConsensusAnnotationsCSI supportingFeatureIds(List<String> supportingFeatureIds) {
+    
     this.supportingFeatureIds = supportingFeatureIds;
     return this;
   }
@@ -155,6 +154,7 @@ public class ConsensusAnnotationsCSI {
 
 
   public ConsensusAnnotationsCSI selectionCriterion(ConsensusCriterionCSI selectionCriterion) {
+    
     this.selectionCriterion = selectionCriterion;
     return this;
   }
@@ -180,6 +180,7 @@ public class ConsensusAnnotationsCSI {
 
 
   public ConsensusAnnotationsCSI csiFingerIdStructure(StructureCandidate csiFingerIdStructure) {
+    
     this.csiFingerIdStructure = csiFingerIdStructure;
     return this;
   }
@@ -205,6 +206,7 @@ public class ConsensusAnnotationsCSI {
 
 
   public ConsensusAnnotationsCSI confidenceExactMatch(Double confidenceExactMatch) {
+    
     this.confidenceExactMatch = confidenceExactMatch;
     return this;
   }
@@ -230,6 +232,7 @@ public class ConsensusAnnotationsCSI {
 
 
   public ConsensusAnnotationsCSI confidenceApproxMatch(Double confidenceApproxMatch) {
+    
     this.confidenceApproxMatch = confidenceApproxMatch;
     return this;
   }
@@ -253,10 +256,6 @@ public class ConsensusAnnotationsCSI {
     this.confidenceApproxMatch = confidenceApproxMatch;
   }
 
-
-  /**
-   * Return true if this ConsensusAnnotationsCSI object is equal to o.
-   */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -306,78 +305,5 @@ public class ConsensusAnnotationsCSI {
     return o.toString().replace("\n", "\n    ");
   }
 
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @return URL query string
-   */
-  public String toUrlQueryString() {
-    return toUrlQueryString(null);
-  }
-
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @param prefix prefix of the query string
-   * @return URL query string
-   */
-  public String toUrlQueryString(String prefix) {
-    String suffix = "";
-    String containerSuffix = "";
-    String containerPrefix = "";
-    if (prefix == null) {
-      // style=form, explode=true, e.g. /pet?name=cat&type=manx
-      prefix = "";
-    } else {
-      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
-      prefix = prefix + "[";
-      suffix = "]";
-      containerSuffix = "]";
-      containerPrefix = "[";
-    }
-
-    StringJoiner joiner = new StringJoiner("&");
-
-    // add `molecularFormula` to the URL query string
-    if (getMolecularFormula() != null) {
-      joiner.add(String.format("%smolecularFormula%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getMolecularFormula()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `compoundClasses` to the URL query string
-    if (getCompoundClasses() != null) {
-      joiner.add(getCompoundClasses().toUrlQueryString(prefix + "compoundClasses" + suffix));
-    }
-
-    // add `supportingFeatureIds` to the URL query string
-    if (getSupportingFeatureIds() != null) {
-      for (int i = 0; i < getSupportingFeatureIds().size(); i++) {
-        joiner.add(String.format("%ssupportingFeatureIds%s%s=%s", prefix, suffix,
-            "".equals(suffix) ? "" : String.format("%s%d%s", containerPrefix, i, containerSuffix),
-            URLEncoder.encode(String.valueOf(getSupportingFeatureIds().get(i)), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-      }
-    }
-
-    // add `selectionCriterion` to the URL query string
-    if (getSelectionCriterion() != null) {
-      joiner.add(String.format("%sselectionCriterion%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getSelectionCriterion()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `csiFingerIdStructure` to the URL query string
-    if (getCsiFingerIdStructure() != null) {
-      joiner.add(getCsiFingerIdStructure().toUrlQueryString(prefix + "csiFingerIdStructure" + suffix));
-    }
-
-    // add `confidenceExactMatch` to the URL query string
-    if (getConfidenceExactMatch() != null) {
-      joiner.add(String.format("%sconfidenceExactMatch%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getConfidenceExactMatch()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `confidenceApproxMatch` to the URL query string
-    if (getConfidenceApproxMatch() != null) {
-      joiner.add(String.format("%sconfidenceApproxMatch%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getConfidenceApproxMatch()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    return joiner.toString();
-  }
 }
 

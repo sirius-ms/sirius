@@ -13,12 +13,8 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.StringJoiner;
 import java.util.Objects;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -29,7 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * The MsData wraps all spectral input data belonging to a feature.   Each Feature has:  - One merged MS/MS spectrum (optional)  - One merged MS spectrum (optional)  - many MS/MS spectra  - many MS spectra   Each non-merged spectrum has an index which can be used to access the spectrum.   In the future we might add some additional information like chromatographic peak or something similar
@@ -54,10 +50,11 @@ public class MsData {
   public static final String JSON_PROPERTY_MS1_SPECTRA = "ms1Spectra";
   private List<AnnotatedSpectrum> ms1Spectra;
 
-  public MsData() { 
+  public MsData() {
   }
 
   public MsData mergedMs1(AnnotatedSpectrum mergedMs1) {
+    
     this.mergedMs1 = mergedMs1;
     return this;
   }
@@ -83,6 +80,7 @@ public class MsData {
 
 
   public MsData mergedMs2(AnnotatedSpectrum mergedMs2) {
+    
     this.mergedMs2 = mergedMs2;
     return this;
   }
@@ -108,6 +106,7 @@ public class MsData {
 
 
   public MsData ms2Spectra(List<AnnotatedSpectrum> ms2Spectra) {
+    
     this.ms2Spectra = ms2Spectra;
     return this;
   }
@@ -141,6 +140,7 @@ public class MsData {
 
 
   public MsData ms1Spectra(List<AnnotatedSpectrum> ms1Spectra) {
+    
     this.ms1Spectra = ms1Spectra;
     return this;
   }
@@ -172,10 +172,6 @@ public class MsData {
     this.ms1Spectra = ms1Spectra;
   }
 
-
-  /**
-   * Return true if this MsData object is equal to o.
-   */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -219,69 +215,5 @@ public class MsData {
     return o.toString().replace("\n", "\n    ");
   }
 
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @return URL query string
-   */
-  public String toUrlQueryString() {
-    return toUrlQueryString(null);
-  }
-
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @param prefix prefix of the query string
-   * @return URL query string
-   */
-  public String toUrlQueryString(String prefix) {
-    String suffix = "";
-    String containerSuffix = "";
-    String containerPrefix = "";
-    if (prefix == null) {
-      // style=form, explode=true, e.g. /pet?name=cat&type=manx
-      prefix = "";
-    } else {
-      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
-      prefix = prefix + "[";
-      suffix = "]";
-      containerSuffix = "]";
-      containerPrefix = "[";
-    }
-
-    StringJoiner joiner = new StringJoiner("&");
-
-    // add `mergedMs1` to the URL query string
-    if (getMergedMs1() != null) {
-      joiner.add(getMergedMs1().toUrlQueryString(prefix + "mergedMs1" + suffix));
-    }
-
-    // add `mergedMs2` to the URL query string
-    if (getMergedMs2() != null) {
-      joiner.add(getMergedMs2().toUrlQueryString(prefix + "mergedMs2" + suffix));
-    }
-
-    // add `ms2Spectra` to the URL query string
-    if (getMs2Spectra() != null) {
-      for (int i = 0; i < getMs2Spectra().size(); i++) {
-        if (getMs2Spectra().get(i) != null) {
-          joiner.add(getMs2Spectra().get(i).toUrlQueryString(String.format("%sms2Spectra%s%s", prefix, suffix,
-          "".equals(suffix) ? "" : String.format("%s%d%s", containerPrefix, i, containerSuffix))));
-        }
-      }
-    }
-
-    // add `ms1Spectra` to the URL query string
-    if (getMs1Spectra() != null) {
-      for (int i = 0; i < getMs1Spectra().size(); i++) {
-        if (getMs1Spectra().get(i) != null) {
-          joiner.add(getMs1Spectra().get(i).toUrlQueryString(String.format("%sms1Spectra%s%s", prefix, suffix,
-          "".equals(suffix) ? "" : String.format("%s%d%s", containerPrefix, i, containerSuffix))));
-        }
-      }
-    }
-
-    return joiner.toString();
-  }
 }
 

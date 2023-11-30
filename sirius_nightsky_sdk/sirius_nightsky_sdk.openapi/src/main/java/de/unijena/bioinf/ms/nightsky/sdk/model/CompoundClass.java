@@ -13,21 +13,16 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.StringJoiner;
 import java.util.Objects;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import de.unijena.bioinf.ms.nightsky.sdk.model.CompoundClassType;
-import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * Predicted compound class with name, probability and id if available.  (ClassyFire and NPC). This can be seen as the set of classes a feature most likely belongs to
@@ -60,10 +55,11 @@ public class CompoundClass {
   public static final String JSON_PROPERTY_PROBABILITY = "probability";
   private Double probability;
 
-  public CompoundClass() { 
+  public CompoundClass() {
   }
 
   public CompoundClass type(CompoundClassType type) {
+    
     this.type = type;
     return this;
   }
@@ -89,6 +85,7 @@ public class CompoundClass {
 
 
   public CompoundClass level(String level) {
+    
     this.level = level;
     return this;
   }
@@ -114,6 +111,7 @@ public class CompoundClass {
 
 
   public CompoundClass name(String name) {
+    
     this.name = name;
     return this;
   }
@@ -139,6 +137,7 @@ public class CompoundClass {
 
 
   public CompoundClass description(String description) {
+    
     this.description = description;
     return this;
   }
@@ -164,6 +163,7 @@ public class CompoundClass {
 
 
   public CompoundClass id(Integer id) {
+    
     this.id = id;
     return this;
   }
@@ -189,6 +189,7 @@ public class CompoundClass {
 
 
   public CompoundClass probability(Double probability) {
+    
     this.probability = probability;
     return this;
   }
@@ -212,10 +213,6 @@ public class CompoundClass {
     this.probability = probability;
   }
 
-
-  /**
-   * Return true if this CompoundClass object is equal to o.
-   */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -263,69 +260,5 @@ public class CompoundClass {
     return o.toString().replace("\n", "\n    ");
   }
 
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @return URL query string
-   */
-  public String toUrlQueryString() {
-    return toUrlQueryString(null);
-  }
-
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @param prefix prefix of the query string
-   * @return URL query string
-   */
-  public String toUrlQueryString(String prefix) {
-    String suffix = "";
-    String containerSuffix = "";
-    String containerPrefix = "";
-    if (prefix == null) {
-      // style=form, explode=true, e.g. /pet?name=cat&type=manx
-      prefix = "";
-    } else {
-      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
-      prefix = prefix + "[";
-      suffix = "]";
-      containerSuffix = "]";
-      containerPrefix = "[";
-    }
-
-    StringJoiner joiner = new StringJoiner("&");
-
-    // add `type` to the URL query string
-    if (getType() != null) {
-      joiner.add(String.format("%stype%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getType()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `level` to the URL query string
-    if (getLevel() != null) {
-      joiner.add(String.format("%slevel%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getLevel()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `name` to the URL query string
-    if (getName() != null) {
-      joiner.add(String.format("%sname%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getName()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `description` to the URL query string
-    if (getDescription() != null) {
-      joiner.add(String.format("%sdescription%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getDescription()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `id` to the URL query string
-    if (getId() != null) {
-      joiner.add(String.format("%sid%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getId()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `probability` to the URL query string
-    if (getProbability() != null) {
-      joiner.add(String.format("%sprobability%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getProbability()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    return joiner.toString();
-  }
 }
 

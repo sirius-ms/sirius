@@ -13,12 +13,8 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.StringJoiner;
 import java.util.Objects;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -31,7 +27,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * User/developer friendly parameter subset for the Formula/SIRIUS tool
@@ -230,10 +226,11 @@ public class Sirius {
   public static final String JSON_PROPERTY_USE_HEURISTIC = "useHeuristic";
   private UseHeuristic useHeuristic;
 
-  public Sirius() { 
+  public Sirius() {
   }
 
   public Sirius enabled(Boolean enabled) {
+    
     this.enabled = enabled;
     return this;
   }
@@ -259,6 +256,7 @@ public class Sirius {
 
 
   public Sirius profile(Instrument profile) {
+    
     this.profile = profile;
     return this;
   }
@@ -284,6 +282,7 @@ public class Sirius {
 
 
   public Sirius numberOfCandidates(Integer numberOfCandidates) {
+    
     this.numberOfCandidates = numberOfCandidates;
     return this;
   }
@@ -309,6 +308,7 @@ public class Sirius {
 
 
   public Sirius numberOfCandidatesPerIon(Integer numberOfCandidatesPerIon) {
+    
     this.numberOfCandidatesPerIon = numberOfCandidatesPerIon;
     return this;
   }
@@ -334,6 +334,7 @@ public class Sirius {
 
 
   public Sirius massAccuracyMS2ppm(Double massAccuracyMS2ppm) {
+    
     this.massAccuracyMS2ppm = massAccuracyMS2ppm;
     return this;
   }
@@ -359,6 +360,7 @@ public class Sirius {
 
 
   public Sirius isotopeMs2Settings(IsotopeMs2SettingsEnum isotopeMs2Settings) {
+    
     this.isotopeMs2Settings = isotopeMs2Settings;
     return this;
   }
@@ -384,6 +386,7 @@ public class Sirius {
 
 
   public Sirius formulaSearchDBs(List<FormulaSearchDBsEnum> formulaSearchDBs) {
+    
     this.formulaSearchDBs = formulaSearchDBs;
     return this;
   }
@@ -417,6 +420,7 @@ public class Sirius {
 
 
   public Sirius enforcedFormulaConstraints(String enforcedFormulaConstraints) {
+    
     this.enforcedFormulaConstraints = enforcedFormulaConstraints;
     return this;
   }
@@ -442,6 +446,7 @@ public class Sirius {
 
 
   public Sirius fallbackFormulaConstraints(String fallbackFormulaConstraints) {
+    
     this.fallbackFormulaConstraints = fallbackFormulaConstraints;
     return this;
   }
@@ -467,6 +472,7 @@ public class Sirius {
 
 
   public Sirius detectableElements(List<String> detectableElements) {
+    
     this.detectableElements = detectableElements;
     return this;
   }
@@ -500,6 +506,7 @@ public class Sirius {
 
 
   public Sirius ilpTimeout(Timeout ilpTimeout) {
+    
     this.ilpTimeout = ilpTimeout;
     return this;
   }
@@ -525,6 +532,7 @@ public class Sirius {
 
 
   public Sirius useHeuristic(UseHeuristic useHeuristic) {
+    
     this.useHeuristic = useHeuristic;
     return this;
   }
@@ -548,10 +556,6 @@ public class Sirius {
     this.useHeuristic = useHeuristic;
   }
 
-
-  /**
-   * Return true if this Sirius object is equal to o.
-   */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -611,107 +615,5 @@ public class Sirius {
     return o.toString().replace("\n", "\n    ");
   }
 
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @return URL query string
-   */
-  public String toUrlQueryString() {
-    return toUrlQueryString(null);
-  }
-
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @param prefix prefix of the query string
-   * @return URL query string
-   */
-  public String toUrlQueryString(String prefix) {
-    String suffix = "";
-    String containerSuffix = "";
-    String containerPrefix = "";
-    if (prefix == null) {
-      // style=form, explode=true, e.g. /pet?name=cat&type=manx
-      prefix = "";
-    } else {
-      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
-      prefix = prefix + "[";
-      suffix = "]";
-      containerSuffix = "]";
-      containerPrefix = "[";
-    }
-
-    StringJoiner joiner = new StringJoiner("&");
-
-    // add `enabled` to the URL query string
-    if (isEnabled() != null) {
-      joiner.add(String.format("%senabled%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isEnabled()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `profile` to the URL query string
-    if (getProfile() != null) {
-      joiner.add(String.format("%sprofile%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getProfile()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `numberOfCandidates` to the URL query string
-    if (getNumberOfCandidates() != null) {
-      joiner.add(String.format("%snumberOfCandidates%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getNumberOfCandidates()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `numberOfCandidatesPerIon` to the URL query string
-    if (getNumberOfCandidatesPerIon() != null) {
-      joiner.add(String.format("%snumberOfCandidatesPerIon%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getNumberOfCandidatesPerIon()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `massAccuracyMS2ppm` to the URL query string
-    if (getMassAccuracyMS2ppm() != null) {
-      joiner.add(String.format("%smassAccuracyMS2ppm%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getMassAccuracyMS2ppm()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `isotopeMs2Settings` to the URL query string
-    if (getIsotopeMs2Settings() != null) {
-      joiner.add(String.format("%sisotopeMs2Settings%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getIsotopeMs2Settings()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `formulaSearchDBs` to the URL query string
-    if (getFormulaSearchDBs() != null) {
-      for (int i = 0; i < getFormulaSearchDBs().size(); i++) {
-        joiner.add(String.format("%sformulaSearchDBs%s%s=%s", prefix, suffix,
-            "".equals(suffix) ? "" : String.format("%s%d%s", containerPrefix, i, containerSuffix),
-            URLEncoder.encode(String.valueOf(getFormulaSearchDBs().get(i)), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-      }
-    }
-
-    // add `enforcedFormulaConstraints` to the URL query string
-    if (getEnforcedFormulaConstraints() != null) {
-      joiner.add(String.format("%senforcedFormulaConstraints%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getEnforcedFormulaConstraints()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `fallbackFormulaConstraints` to the URL query string
-    if (getFallbackFormulaConstraints() != null) {
-      joiner.add(String.format("%sfallbackFormulaConstraints%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getFallbackFormulaConstraints()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `detectableElements` to the URL query string
-    if (getDetectableElements() != null) {
-      for (int i = 0; i < getDetectableElements().size(); i++) {
-        joiner.add(String.format("%sdetectableElements%s%s=%s", prefix, suffix,
-            "".equals(suffix) ? "" : String.format("%s%d%s", containerPrefix, i, containerSuffix),
-            URLEncoder.encode(String.valueOf(getDetectableElements().get(i)), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-      }
-    }
-
-    // add `ilpTimeout` to the URL query string
-    if (getIlpTimeout() != null) {
-      joiner.add(getIlpTimeout().toUrlQueryString(prefix + "ilpTimeout" + suffix));
-    }
-
-    // add `useHeuristic` to the URL query string
-    if (getUseHeuristic() != null) {
-      joiner.add(getUseHeuristic().toUrlQueryString(prefix + "useHeuristic" + suffix));
-    }
-
-    return joiner.toString();
-  }
 }
 

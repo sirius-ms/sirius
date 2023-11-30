@@ -7,7 +7,7 @@
 	"apiPackage": "de.unijena.bioinf.ms.nightsky.sdk.api",
 	"artifactId": "sirius_nightsky_sdk",
 	"groupId:": "de.unijena.bioinf.ms",
-	"library": "native",
-	"serializationLibrary": "jackson",
-	"webclientBlockingOperations": false
+	"library": "webclient",
+	"webclientBlockingOperations": true,
+	"serializationLibrary": "jackson"
 }

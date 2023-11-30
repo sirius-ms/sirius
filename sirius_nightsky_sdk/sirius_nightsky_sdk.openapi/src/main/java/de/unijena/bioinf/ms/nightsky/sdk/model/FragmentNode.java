@@ -13,20 +13,15 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.StringJoiner;
 import java.util.Objects;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * 
@@ -67,10 +62,11 @@ public class FragmentNode {
   public static final String JSON_PROPERTY_MZ = "mz";
   private Double mz;
 
-  public FragmentNode() { 
+  public FragmentNode() {
   }
 
   public FragmentNode id(Integer id) {
+    
     this.id = id;
     return this;
   }
@@ -96,6 +92,7 @@ public class FragmentNode {
 
 
   public FragmentNode molecularFormula(String molecularFormula) {
+    
     this.molecularFormula = molecularFormula;
     return this;
   }
@@ -121,6 +118,7 @@ public class FragmentNode {
 
 
   public FragmentNode ionType(String ionType) {
+    
     this.ionType = ionType;
     return this;
   }
@@ -146,6 +144,7 @@ public class FragmentNode {
 
 
   public FragmentNode massDeviationDa(Double massDeviationDa) {
+    
     this.massDeviationDa = massDeviationDa;
     return this;
   }
@@ -171,6 +170,7 @@ public class FragmentNode {
 
 
   public FragmentNode massDeviationPpm(Double massDeviationPpm) {
+    
     this.massDeviationPpm = massDeviationPpm;
     return this;
   }
@@ -196,6 +196,7 @@ public class FragmentNode {
 
 
   public FragmentNode score(Double score) {
+    
     this.score = score;
     return this;
   }
@@ -221,6 +222,7 @@ public class FragmentNode {
 
 
   public FragmentNode intensity(Double intensity) {
+    
     this.intensity = intensity;
     return this;
   }
@@ -246,6 +248,7 @@ public class FragmentNode {
 
 
   public FragmentNode mz(Double mz) {
+    
     this.mz = mz;
     return this;
   }
@@ -269,10 +272,6 @@ public class FragmentNode {
     this.mz = mz;
   }
 
-
-  /**
-   * Return true if this FragmentNode object is equal to o.
-   */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -324,79 +323,5 @@ public class FragmentNode {
     return o.toString().replace("\n", "\n    ");
   }
 
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @return URL query string
-   */
-  public String toUrlQueryString() {
-    return toUrlQueryString(null);
-  }
-
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @param prefix prefix of the query string
-   * @return URL query string
-   */
-  public String toUrlQueryString(String prefix) {
-    String suffix = "";
-    String containerSuffix = "";
-    String containerPrefix = "";
-    if (prefix == null) {
-      // style=form, explode=true, e.g. /pet?name=cat&type=manx
-      prefix = "";
-    } else {
-      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
-      prefix = prefix + "[";
-      suffix = "]";
-      containerSuffix = "]";
-      containerPrefix = "[";
-    }
-
-    StringJoiner joiner = new StringJoiner("&");
-
-    // add `id` to the URL query string
-    if (getId() != null) {
-      joiner.add(String.format("%sid%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getId()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `molecularFormula` to the URL query string
-    if (getMolecularFormula() != null) {
-      joiner.add(String.format("%smolecularFormula%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getMolecularFormula()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `ionType` to the URL query string
-    if (getIonType() != null) {
-      joiner.add(String.format("%sionType%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getIonType()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `massDeviationDa` to the URL query string
-    if (getMassDeviationDa() != null) {
-      joiner.add(String.format("%smassDeviationDa%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getMassDeviationDa()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `massDeviationPpm` to the URL query string
-    if (getMassDeviationPpm() != null) {
-      joiner.add(String.format("%smassDeviationPpm%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getMassDeviationPpm()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `score` to the URL query string
-    if (getScore() != null) {
-      joiner.add(String.format("%sscore%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getScore()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `intensity` to the URL query string
-    if (getIntensity() != null) {
-      joiner.add(String.format("%sintensity%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getIntensity()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `mz` to the URL query string
-    if (getMz() != null) {
-      joiner.add(String.format("%smz%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getMz()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    return joiner.toString();
-  }
 }
 

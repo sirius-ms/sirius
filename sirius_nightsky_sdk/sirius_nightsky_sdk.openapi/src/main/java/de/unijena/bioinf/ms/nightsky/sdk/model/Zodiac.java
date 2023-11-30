@@ -13,12 +13,8 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.StringJoiner;
 import java.util.Objects;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -26,9 +22,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import de.unijena.bioinf.ms.nightsky.sdk.model.ZodiacEdgeFilterThresholds;
 import de.unijena.bioinf.ms.nightsky.sdk.model.ZodiacEpochs;
-import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * User/developer friendly parameter subset for the ZODIAC tool (Network base molecular formula re-ranking).
@@ -61,10 +56,11 @@ public class Zodiac {
   public static final String JSON_PROPERTY_GIBBS_SAMPLER_PARAMETERS = "gibbsSamplerParameters";
   private ZodiacEpochs gibbsSamplerParameters;
 
-  public Zodiac() { 
+  public Zodiac() {
   }
 
   public Zodiac enabled(Boolean enabled) {
+    
     this.enabled = enabled;
     return this;
   }
@@ -90,6 +86,7 @@ public class Zodiac {
 
 
   public Zodiac consideredCandidatesAt300Mz(Integer consideredCandidatesAt300Mz) {
+    
     this.consideredCandidatesAt300Mz = consideredCandidatesAt300Mz;
     return this;
   }
@@ -115,6 +112,7 @@ public class Zodiac {
 
 
   public Zodiac consideredCandidatesAt800Mz(Integer consideredCandidatesAt800Mz) {
+    
     this.consideredCandidatesAt800Mz = consideredCandidatesAt800Mz;
     return this;
   }
@@ -140,6 +138,7 @@ public class Zodiac {
 
 
   public Zodiac runInTwoSteps(Boolean runInTwoSteps) {
+    
     this.runInTwoSteps = runInTwoSteps;
     return this;
   }
@@ -165,6 +164,7 @@ public class Zodiac {
 
 
   public Zodiac edgeFilterThresholds(ZodiacEdgeFilterThresholds edgeFilterThresholds) {
+    
     this.edgeFilterThresholds = edgeFilterThresholds;
     return this;
   }
@@ -190,6 +190,7 @@ public class Zodiac {
 
 
   public Zodiac gibbsSamplerParameters(ZodiacEpochs gibbsSamplerParameters) {
+    
     this.gibbsSamplerParameters = gibbsSamplerParameters;
     return this;
   }
@@ -213,10 +214,6 @@ public class Zodiac {
     this.gibbsSamplerParameters = gibbsSamplerParameters;
   }
 
-
-  /**
-   * Return true if this Zodiac object is equal to o.
-   */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -264,69 +261,5 @@ public class Zodiac {
     return o.toString().replace("\n", "\n    ");
   }
 
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @return URL query string
-   */
-  public String toUrlQueryString() {
-    return toUrlQueryString(null);
-  }
-
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @param prefix prefix of the query string
-   * @return URL query string
-   */
-  public String toUrlQueryString(String prefix) {
-    String suffix = "";
-    String containerSuffix = "";
-    String containerPrefix = "";
-    if (prefix == null) {
-      // style=form, explode=true, e.g. /pet?name=cat&type=manx
-      prefix = "";
-    } else {
-      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
-      prefix = prefix + "[";
-      suffix = "]";
-      containerSuffix = "]";
-      containerPrefix = "[";
-    }
-
-    StringJoiner joiner = new StringJoiner("&");
-
-    // add `enabled` to the URL query string
-    if (isEnabled() != null) {
-      joiner.add(String.format("%senabled%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isEnabled()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `consideredCandidatesAt300Mz` to the URL query string
-    if (getConsideredCandidatesAt300Mz() != null) {
-      joiner.add(String.format("%sconsideredCandidatesAt300Mz%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getConsideredCandidatesAt300Mz()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `consideredCandidatesAt800Mz` to the URL query string
-    if (getConsideredCandidatesAt800Mz() != null) {
-      joiner.add(String.format("%sconsideredCandidatesAt800Mz%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getConsideredCandidatesAt800Mz()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `runInTwoSteps` to the URL query string
-    if (isRunInTwoSteps() != null) {
-      joiner.add(String.format("%srunInTwoSteps%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isRunInTwoSteps()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `edgeFilterThresholds` to the URL query string
-    if (getEdgeFilterThresholds() != null) {
-      joiner.add(getEdgeFilterThresholds().toUrlQueryString(prefix + "edgeFilterThresholds" + suffix));
-    }
-
-    // add `gibbsSamplerParameters` to the URL query string
-    if (getGibbsSamplerParameters() != null) {
-      joiner.add(getGibbsSamplerParameters().toUrlQueryString(prefix + "gibbsSamplerParameters" + suffix));
-    }
-
-    return joiner.toString();
-  }
 }
 

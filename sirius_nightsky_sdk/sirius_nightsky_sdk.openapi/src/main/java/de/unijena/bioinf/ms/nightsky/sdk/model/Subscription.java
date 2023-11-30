@@ -13,21 +13,16 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.StringJoiner;
 import java.util.Objects;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import java.time.OffsetDateTime;
-import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * 
@@ -96,10 +91,11 @@ public class Subscription {
   public static final String JSON_PROPERTY_PP = "pp";
   private String pp;
 
-  public Subscription() { 
+  public Subscription() {
   }
 
   public Subscription sid(String sid) {
+    
     this.sid = sid;
     return this;
   }
@@ -125,6 +121,7 @@ public class Subscription {
 
 
   public Subscription subscriberId(String subscriberId) {
+    
     this.subscriberId = subscriberId;
     return this;
   }
@@ -150,6 +147,7 @@ public class Subscription {
 
 
   public Subscription subscriberName(String subscriberName) {
+    
     this.subscriberName = subscriberName;
     return this;
   }
@@ -175,6 +173,7 @@ public class Subscription {
 
 
   public Subscription expirationDate(OffsetDateTime expirationDate) {
+    
     this.expirationDate = expirationDate;
     return this;
   }
@@ -200,6 +199,7 @@ public class Subscription {
 
 
   public Subscription startDate(OffsetDateTime startDate) {
+    
     this.startDate = startDate;
     return this;
   }
@@ -225,6 +225,7 @@ public class Subscription {
 
 
   public Subscription countQueries(Boolean countQueries) {
+    
     this.countQueries = countQueries;
     return this;
   }
@@ -250,6 +251,7 @@ public class Subscription {
 
 
   public Subscription instanceLimit(Integer instanceLimit) {
+    
     this.instanceLimit = instanceLimit;
     return this;
   }
@@ -275,6 +277,7 @@ public class Subscription {
 
 
   public Subscription instanceHashRecordingTime(Integer instanceHashRecordingTime) {
+    
     this.instanceHashRecordingTime = instanceHashRecordingTime;
     return this;
   }
@@ -300,6 +303,7 @@ public class Subscription {
 
 
   public Subscription maxQueriesPerInstance(Integer maxQueriesPerInstance) {
+    
     this.maxQueriesPerInstance = maxQueriesPerInstance;
     return this;
   }
@@ -325,6 +329,7 @@ public class Subscription {
 
 
   public Subscription maxUserAccounts(Integer maxUserAccounts) {
+    
     this.maxUserAccounts = maxUserAccounts;
     return this;
   }
@@ -350,6 +355,7 @@ public class Subscription {
 
 
   public Subscription serviceUrl(String serviceUrl) {
+    
     this.serviceUrl = serviceUrl;
     return this;
   }
@@ -375,6 +381,7 @@ public class Subscription {
 
 
   public Subscription description(String description) {
+    
     this.description = description;
     return this;
   }
@@ -400,6 +407,7 @@ public class Subscription {
 
 
   public Subscription name(String name) {
+    
     this.name = name;
     return this;
   }
@@ -425,6 +433,7 @@ public class Subscription {
 
 
   public Subscription tos(String tos) {
+    
     this.tos = tos;
     return this;
   }
@@ -450,6 +459,7 @@ public class Subscription {
 
 
   public Subscription pp(String pp) {
+    
     this.pp = pp;
     return this;
   }
@@ -473,10 +483,6 @@ public class Subscription {
     this.pp = pp;
   }
 
-
-  /**
-   * Return true if this Subscription object is equal to o.
-   */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -542,114 +548,5 @@ public class Subscription {
     return o.toString().replace("\n", "\n    ");
   }
 
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @return URL query string
-   */
-  public String toUrlQueryString() {
-    return toUrlQueryString(null);
-  }
-
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @param prefix prefix of the query string
-   * @return URL query string
-   */
-  public String toUrlQueryString(String prefix) {
-    String suffix = "";
-    String containerSuffix = "";
-    String containerPrefix = "";
-    if (prefix == null) {
-      // style=form, explode=true, e.g. /pet?name=cat&type=manx
-      prefix = "";
-    } else {
-      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
-      prefix = prefix + "[";
-      suffix = "]";
-      containerSuffix = "]";
-      containerPrefix = "[";
-    }
-
-    StringJoiner joiner = new StringJoiner("&");
-
-    // add `sid` to the URL query string
-    if (getSid() != null) {
-      joiner.add(String.format("%ssid%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getSid()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `subscriberId` to the URL query string
-    if (getSubscriberId() != null) {
-      joiner.add(String.format("%ssubscriberId%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getSubscriberId()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `subscriberName` to the URL query string
-    if (getSubscriberName() != null) {
-      joiner.add(String.format("%ssubscriberName%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getSubscriberName()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `expirationDate` to the URL query string
-    if (getExpirationDate() != null) {
-      joiner.add(String.format("%sexpirationDate%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getExpirationDate()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `startDate` to the URL query string
-    if (getStartDate() != null) {
-      joiner.add(String.format("%sstartDate%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getStartDate()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `countQueries` to the URL query string
-    if (isCountQueries() != null) {
-      joiner.add(String.format("%scountQueries%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isCountQueries()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `instanceLimit` to the URL query string
-    if (getInstanceLimit() != null) {
-      joiner.add(String.format("%sinstanceLimit%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getInstanceLimit()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `instanceHashRecordingTime` to the URL query string
-    if (getInstanceHashRecordingTime() != null) {
-      joiner.add(String.format("%sinstanceHashRecordingTime%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getInstanceHashRecordingTime()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `maxQueriesPerInstance` to the URL query string
-    if (getMaxQueriesPerInstance() != null) {
-      joiner.add(String.format("%smaxQueriesPerInstance%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getMaxQueriesPerInstance()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `maxUserAccounts` to the URL query string
-    if (getMaxUserAccounts() != null) {
-      joiner.add(String.format("%smaxUserAccounts%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getMaxUserAccounts()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `serviceUrl` to the URL query string
-    if (getServiceUrl() != null) {
-      joiner.add(String.format("%sserviceUrl%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getServiceUrl()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `description` to the URL query string
-    if (getDescription() != null) {
-      joiner.add(String.format("%sdescription%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getDescription()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `name` to the URL query string
-    if (getName() != null) {
-      joiner.add(String.format("%sname%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getName()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `tos` to the URL query string
-    if (getTos() != null) {
-      joiner.add(String.format("%stos%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getTos()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `pp` to the URL query string
-    if (getPp() != null) {
-      joiner.add(String.format("%spp%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getPp()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    return joiner.toString();
-  }
 }
 

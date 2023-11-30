@@ -13,12 +13,8 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.StringJoiner;
 import java.util.Objects;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -29,7 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * 
@@ -54,10 +50,11 @@ public class AnnotatedSpectrum {
   public static final String JSON_PROPERTY_EMPTY = "empty";
   private Boolean empty;
 
-  public AnnotatedSpectrum() { 
+  public AnnotatedSpectrum() {
   }
 
   public AnnotatedSpectrum msLevel(Integer msLevel) {
+    
     this.msLevel = msLevel;
     return this;
   }
@@ -83,6 +80,7 @@ public class AnnotatedSpectrum {
 
 
   public AnnotatedSpectrum collisionEnergy(String collisionEnergy) {
+    
     this.collisionEnergy = collisionEnergy;
     return this;
   }
@@ -108,6 +106,7 @@ public class AnnotatedSpectrum {
 
 
   public AnnotatedSpectrum peaks(List<AnnotatedPeak> peaks) {
+    
     this.peaks = peaks;
     return this;
   }
@@ -141,6 +140,7 @@ public class AnnotatedSpectrum {
 
 
   public AnnotatedSpectrum empty(Boolean empty) {
+    
     this.empty = empty;
     return this;
   }
@@ -164,10 +164,6 @@ public class AnnotatedSpectrum {
     this.empty = empty;
   }
 
-
-  /**
-   * Return true if this AnnotatedSpectrum object is equal to o.
-   */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -211,64 +207,5 @@ public class AnnotatedSpectrum {
     return o.toString().replace("\n", "\n    ");
   }
 
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @return URL query string
-   */
-  public String toUrlQueryString() {
-    return toUrlQueryString(null);
-  }
-
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @param prefix prefix of the query string
-   * @return URL query string
-   */
-  public String toUrlQueryString(String prefix) {
-    String suffix = "";
-    String containerSuffix = "";
-    String containerPrefix = "";
-    if (prefix == null) {
-      // style=form, explode=true, e.g. /pet?name=cat&type=manx
-      prefix = "";
-    } else {
-      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
-      prefix = prefix + "[";
-      suffix = "]";
-      containerSuffix = "]";
-      containerPrefix = "[";
-    }
-
-    StringJoiner joiner = new StringJoiner("&");
-
-    // add `msLevel` to the URL query string
-    if (getMsLevel() != null) {
-      joiner.add(String.format("%smsLevel%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getMsLevel()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `collisionEnergy` to the URL query string
-    if (getCollisionEnergy() != null) {
-      joiner.add(String.format("%scollisionEnergy%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getCollisionEnergy()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `peaks` to the URL query string
-    if (getPeaks() != null) {
-      for (int i = 0; i < getPeaks().size(); i++) {
-        if (getPeaks().get(i) != null) {
-          joiner.add(getPeaks().get(i).toUrlQueryString(String.format("%speaks%s%s", prefix, suffix,
-          "".equals(suffix) ? "" : String.format("%s%d%s", containerPrefix, i, containerSuffix))));
-        }
-      }
-    }
-
-    // add `empty` to the URL query string
-    if (isEmpty() != null) {
-      joiner.add(String.format("%sempty%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isEmpty()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    return joiner.toString();
-  }
 }
 

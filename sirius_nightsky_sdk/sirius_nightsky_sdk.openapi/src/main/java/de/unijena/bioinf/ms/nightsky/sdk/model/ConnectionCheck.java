@@ -13,12 +13,8 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.StringJoiner;
 import java.util.Objects;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -34,7 +30,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * 
@@ -43,11 +39,11 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   ConnectionCheck.JSON_PROPERTY_WORKER_INFO,
   ConnectionCheck.JSON_PROPERTY_LICENSE_INFO,
   ConnectionCheck.JSON_PROPERTY_ERRORS,
-  ConnectionCheck.JSON_PROPERTY_SUPPORTS_POS_PREDICTOR_TYPES,
-  ConnectionCheck.JSON_PROPERTY_SUPPORTS_NEG_PREDICTOR_TYPES,
   ConnectionCheck.JSON_PROPERTY_AVAILABLE_WORKERS,
   ConnectionCheck.JSON_PROPERTY_UN_AVAILABLE_WORKERS,
-  ConnectionCheck.JSON_PROPERTY_SUPPORTS_ALL_PREDICTOR_TYPES
+  ConnectionCheck.JSON_PROPERTY_SUPPORTS_ALL_PREDICTOR_TYPES,
+  ConnectionCheck.JSON_PROPERTY_SUPPORTS_POS_PREDICTOR_TYPES,
+  ConnectionCheck.JSON_PROPERTY_SUPPORTS_NEG_PREDICTOR_TYPES
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class ConnectionCheck {
@@ -60,12 +56,6 @@ public class ConnectionCheck {
   public static final String JSON_PROPERTY_ERRORS = "errors";
   private List<ConnectionError> errors = new ArrayList<>();
 
-  public static final String JSON_PROPERTY_SUPPORTS_POS_PREDICTOR_TYPES = "supportsPosPredictorTypes";
-  private Boolean supportsPosPredictorTypes;
-
-  public static final String JSON_PROPERTY_SUPPORTS_NEG_PREDICTOR_TYPES = "supportsNegPredictorTypes";
-  private Boolean supportsNegPredictorTypes;
-
   public static final String JSON_PROPERTY_AVAILABLE_WORKERS = "availableWorkers";
   private Set<String> availableWorkers = new LinkedHashSet<>();
 
@@ -75,10 +65,17 @@ public class ConnectionCheck {
   public static final String JSON_PROPERTY_SUPPORTS_ALL_PREDICTOR_TYPES = "supportsAllPredictorTypes";
   private Boolean supportsAllPredictorTypes;
 
-  public ConnectionCheck() { 
+  public static final String JSON_PROPERTY_SUPPORTS_POS_PREDICTOR_TYPES = "supportsPosPredictorTypes";
+  private Boolean supportsPosPredictorTypes;
+
+  public static final String JSON_PROPERTY_SUPPORTS_NEG_PREDICTOR_TYPES = "supportsNegPredictorTypes";
+  private Boolean supportsNegPredictorTypes;
+
+  public ConnectionCheck() {
   }
 
   public ConnectionCheck workerInfo(WorkerList workerInfo) {
+    
     this.workerInfo = workerInfo;
     return this;
   }
@@ -104,6 +101,7 @@ public class ConnectionCheck {
 
 
   public ConnectionCheck licenseInfo(LicenseInfo licenseInfo) {
+    
     this.licenseInfo = licenseInfo;
     return this;
   }
@@ -129,6 +127,7 @@ public class ConnectionCheck {
 
 
   public ConnectionCheck errors(List<ConnectionError> errors) {
+    
     this.errors = errors;
     return this;
   }
@@ -161,57 +160,8 @@ public class ConnectionCheck {
   }
 
 
-  public ConnectionCheck supportsPosPredictorTypes(Boolean supportsPosPredictorTypes) {
-    this.supportsPosPredictorTypes = supportsPosPredictorTypes;
-    return this;
-  }
-
-   /**
-   * Get supportsPosPredictorTypes
-   * @return supportsPosPredictorTypes
-  **/
-  @javax.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_SUPPORTS_POS_PREDICTOR_TYPES)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-
-  public Boolean isSupportsPosPredictorTypes() {
-    return supportsPosPredictorTypes;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_SUPPORTS_POS_PREDICTOR_TYPES)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setSupportsPosPredictorTypes(Boolean supportsPosPredictorTypes) {
-    this.supportsPosPredictorTypes = supportsPosPredictorTypes;
-  }
-
-
-  public ConnectionCheck supportsNegPredictorTypes(Boolean supportsNegPredictorTypes) {
-    this.supportsNegPredictorTypes = supportsNegPredictorTypes;
-    return this;
-  }
-
-   /**
-   * Get supportsNegPredictorTypes
-   * @return supportsNegPredictorTypes
-  **/
-  @javax.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_SUPPORTS_NEG_PREDICTOR_TYPES)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-
-  public Boolean isSupportsNegPredictorTypes() {
-    return supportsNegPredictorTypes;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_SUPPORTS_NEG_PREDICTOR_TYPES)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setSupportsNegPredictorTypes(Boolean supportsNegPredictorTypes) {
-    this.supportsNegPredictorTypes = supportsNegPredictorTypes;
-  }
-
-
   public ConnectionCheck availableWorkers(Set<String> availableWorkers) {
+    
     this.availableWorkers = availableWorkers;
     return this;
   }
@@ -246,6 +196,7 @@ public class ConnectionCheck {
 
 
   public ConnectionCheck unAvailableWorkers(Set<String> unAvailableWorkers) {
+    
     this.unAvailableWorkers = unAvailableWorkers;
     return this;
   }
@@ -280,6 +231,7 @@ public class ConnectionCheck {
 
 
   public ConnectionCheck supportsAllPredictorTypes(Boolean supportsAllPredictorTypes) {
+    
     this.supportsAllPredictorTypes = supportsAllPredictorTypes;
     return this;
   }
@@ -304,9 +256,57 @@ public class ConnectionCheck {
   }
 
 
-  /**
-   * Return true if this ConnectionCheck object is equal to o.
-   */
+  public ConnectionCheck supportsPosPredictorTypes(Boolean supportsPosPredictorTypes) {
+    
+    this.supportsPosPredictorTypes = supportsPosPredictorTypes;
+    return this;
+  }
+
+   /**
+   * Get supportsPosPredictorTypes
+   * @return supportsPosPredictorTypes
+  **/
+  @javax.annotation.Nonnull
+  @JsonProperty(JSON_PROPERTY_SUPPORTS_POS_PREDICTOR_TYPES)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
+  public Boolean isSupportsPosPredictorTypes() {
+    return supportsPosPredictorTypes;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_SUPPORTS_POS_PREDICTOR_TYPES)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setSupportsPosPredictorTypes(Boolean supportsPosPredictorTypes) {
+    this.supportsPosPredictorTypes = supportsPosPredictorTypes;
+  }
+
+
+  public ConnectionCheck supportsNegPredictorTypes(Boolean supportsNegPredictorTypes) {
+    
+    this.supportsNegPredictorTypes = supportsNegPredictorTypes;
+    return this;
+  }
+
+   /**
+   * Get supportsNegPredictorTypes
+   * @return supportsNegPredictorTypes
+  **/
+  @javax.annotation.Nonnull
+  @JsonProperty(JSON_PROPERTY_SUPPORTS_NEG_PREDICTOR_TYPES)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
+  public Boolean isSupportsNegPredictorTypes() {
+    return supportsNegPredictorTypes;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_SUPPORTS_NEG_PREDICTOR_TYPES)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setSupportsNegPredictorTypes(Boolean supportsNegPredictorTypes) {
+    this.supportsNegPredictorTypes = supportsNegPredictorTypes;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -319,16 +319,16 @@ public class ConnectionCheck {
     return Objects.equals(this.workerInfo, connectionCheck.workerInfo) &&
         Objects.equals(this.licenseInfo, connectionCheck.licenseInfo) &&
         Objects.equals(this.errors, connectionCheck.errors) &&
-        Objects.equals(this.supportsPosPredictorTypes, connectionCheck.supportsPosPredictorTypes) &&
-        Objects.equals(this.supportsNegPredictorTypes, connectionCheck.supportsNegPredictorTypes) &&
         Objects.equals(this.availableWorkers, connectionCheck.availableWorkers) &&
         Objects.equals(this.unAvailableWorkers, connectionCheck.unAvailableWorkers) &&
-        Objects.equals(this.supportsAllPredictorTypes, connectionCheck.supportsAllPredictorTypes);
+        Objects.equals(this.supportsAllPredictorTypes, connectionCheck.supportsAllPredictorTypes) &&
+        Objects.equals(this.supportsPosPredictorTypes, connectionCheck.supportsPosPredictorTypes) &&
+        Objects.equals(this.supportsNegPredictorTypes, connectionCheck.supportsNegPredictorTypes);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(workerInfo, licenseInfo, errors, supportsPosPredictorTypes, supportsNegPredictorTypes, availableWorkers, unAvailableWorkers, supportsAllPredictorTypes);
+    return Objects.hash(workerInfo, licenseInfo, errors, availableWorkers, unAvailableWorkers, supportsAllPredictorTypes, supportsPosPredictorTypes, supportsNegPredictorTypes);
   }
 
   @Override
@@ -338,11 +338,11 @@ public class ConnectionCheck {
     sb.append("    workerInfo: ").append(toIndentedString(workerInfo)).append("\n");
     sb.append("    licenseInfo: ").append(toIndentedString(licenseInfo)).append("\n");
     sb.append("    errors: ").append(toIndentedString(errors)).append("\n");
-    sb.append("    supportsPosPredictorTypes: ").append(toIndentedString(supportsPosPredictorTypes)).append("\n");
-    sb.append("    supportsNegPredictorTypes: ").append(toIndentedString(supportsNegPredictorTypes)).append("\n");
     sb.append("    availableWorkers: ").append(toIndentedString(availableWorkers)).append("\n");
     sb.append("    unAvailableWorkers: ").append(toIndentedString(unAvailableWorkers)).append("\n");
     sb.append("    supportsAllPredictorTypes: ").append(toIndentedString(supportsAllPredictorTypes)).append("\n");
+    sb.append("    supportsPosPredictorTypes: ").append(toIndentedString(supportsPosPredictorTypes)).append("\n");
+    sb.append("    supportsNegPredictorTypes: ").append(toIndentedString(supportsNegPredictorTypes)).append("\n");
     sb.append("}");
     return sb.toString();
   }
@@ -358,96 +358,5 @@ public class ConnectionCheck {
     return o.toString().replace("\n", "\n    ");
   }
 
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @return URL query string
-   */
-  public String toUrlQueryString() {
-    return toUrlQueryString(null);
-  }
-
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @param prefix prefix of the query string
-   * @return URL query string
-   */
-  public String toUrlQueryString(String prefix) {
-    String suffix = "";
-    String containerSuffix = "";
-    String containerPrefix = "";
-    if (prefix == null) {
-      // style=form, explode=true, e.g. /pet?name=cat&type=manx
-      prefix = "";
-    } else {
-      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
-      prefix = prefix + "[";
-      suffix = "]";
-      containerSuffix = "]";
-      containerPrefix = "[";
-    }
-
-    StringJoiner joiner = new StringJoiner("&");
-
-    // add `workerInfo` to the URL query string
-    if (getWorkerInfo() != null) {
-      joiner.add(getWorkerInfo().toUrlQueryString(prefix + "workerInfo" + suffix));
-    }
-
-    // add `licenseInfo` to the URL query string
-    if (getLicenseInfo() != null) {
-      joiner.add(getLicenseInfo().toUrlQueryString(prefix + "licenseInfo" + suffix));
-    }
-
-    // add `errors` to the URL query string
-    if (getErrors() != null) {
-      for (int i = 0; i < getErrors().size(); i++) {
-        if (getErrors().get(i) != null) {
-          joiner.add(getErrors().get(i).toUrlQueryString(String.format("%serrors%s%s", prefix, suffix,
-          "".equals(suffix) ? "" : String.format("%s%d%s", containerPrefix, i, containerSuffix))));
-        }
-      }
-    }
-
-    // add `supportsPosPredictorTypes` to the URL query string
-    if (isSupportsPosPredictorTypes() != null) {
-      joiner.add(String.format("%ssupportsPosPredictorTypes%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isSupportsPosPredictorTypes()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `supportsNegPredictorTypes` to the URL query string
-    if (isSupportsNegPredictorTypes() != null) {
-      joiner.add(String.format("%ssupportsNegPredictorTypes%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isSupportsNegPredictorTypes()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `availableWorkers` to the URL query string
-    if (getAvailableWorkers() != null) {
-      int i = 0;
-      for (String _item : getAvailableWorkers()) {
-        joiner.add(String.format("%savailableWorkers%s%s=%s", prefix, suffix,
-            "".equals(suffix) ? "" : String.format("%s%d%s", containerPrefix, i, containerSuffix),
-            URLEncoder.encode(String.valueOf(_item), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-      }
-      i++;
-    }
-
-    // add `unAvailableWorkers` to the URL query string
-    if (getUnAvailableWorkers() != null) {
-      int i = 0;
-      for (String _item : getUnAvailableWorkers()) {
-        joiner.add(String.format("%sunAvailableWorkers%s%s=%s", prefix, suffix,
-            "".equals(suffix) ? "" : String.format("%s%d%s", containerPrefix, i, containerSuffix),
-            URLEncoder.encode(String.valueOf(_item), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-      }
-      i++;
-    }
-
-    // add `supportsAllPredictorTypes` to the URL query string
-    if (isSupportsAllPredictorTypes() != null) {
-      joiner.add(String.format("%ssupportsAllPredictorTypes%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isSupportsAllPredictorTypes()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    return joiner.toString();
-  }
 }
 

@@ -19,5 +19,7 @@
 
 * `COMPOUND_CLASSES` (value: `"COMPOUND_CLASSES"`)
 
+* `DASHBOARD` (value: `"DASHBOARD"`)
+
 
 

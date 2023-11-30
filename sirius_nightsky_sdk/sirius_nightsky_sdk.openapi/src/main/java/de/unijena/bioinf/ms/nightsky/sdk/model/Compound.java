@@ -13,12 +13,8 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.StringJoiner;
 import java.util.Objects;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -31,7 +27,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * 
@@ -76,10 +72,11 @@ public class Compound {
   public static final String JSON_PROPERTY_CUSTOM_ANNOTATIONS = "customAnnotations";
   private ConsensusAnnotationsCSI customAnnotations;
 
-  public Compound() { 
+  public Compound() {
   }
 
   public Compound compoundId(String compoundId) {
+    
     this.compoundId = compoundId;
     return this;
   }
@@ -105,6 +102,7 @@ public class Compound {
 
 
   public Compound name(String name) {
+    
     this.name = name;
     return this;
   }
@@ -130,6 +128,7 @@ public class Compound {
 
 
   public Compound rtStartSeconds(Double rtStartSeconds) {
+    
     this.rtStartSeconds = rtStartSeconds;
     return this;
   }
@@ -155,6 +154,7 @@ public class Compound {
 
 
   public Compound rtEndSeconds(Double rtEndSeconds) {
+    
     this.rtEndSeconds = rtEndSeconds;
     return this;
   }
@@ -180,6 +180,7 @@ public class Compound {
 
 
   public Compound neutralMass(Double neutralMass) {
+    
     this.neutralMass = neutralMass;
     return this;
   }
@@ -205,6 +206,7 @@ public class Compound {
 
 
   public Compound features(List<AlignedFeature> features) {
+    
     this.features = features;
     return this;
   }
@@ -238,6 +240,7 @@ public class Compound {
 
 
   public Compound consensusAnnotations(ConsensusAnnotationsCSI consensusAnnotations) {
+    
     this.consensusAnnotations = consensusAnnotations;
     return this;
   }
@@ -263,6 +266,7 @@ public class Compound {
 
 
   public Compound consensusAnnotationsDeNovo(ConsensusAnnotationsDeNovo consensusAnnotationsDeNovo) {
+    
     this.consensusAnnotationsDeNovo = consensusAnnotationsDeNovo;
     return this;
   }
@@ -288,6 +292,7 @@ public class Compound {
 
 
   public Compound customAnnotations(ConsensusAnnotationsCSI customAnnotations) {
+    
     this.customAnnotations = customAnnotations;
     return this;
   }
@@ -311,10 +316,6 @@ public class Compound {
     this.customAnnotations = customAnnotations;
   }
 
-
-  /**
-   * Return true if this Compound object is equal to o.
-   */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -368,89 +369,5 @@ public class Compound {
     return o.toString().replace("\n", "\n    ");
   }
 
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @return URL query string
-   */
-  public String toUrlQueryString() {
-    return toUrlQueryString(null);
-  }
-
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @param prefix prefix of the query string
-   * @return URL query string
-   */
-  public String toUrlQueryString(String prefix) {
-    String suffix = "";
-    String containerSuffix = "";
-    String containerPrefix = "";
-    if (prefix == null) {
-      // style=form, explode=true, e.g. /pet?name=cat&type=manx
-      prefix = "";
-    } else {
-      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
-      prefix = prefix + "[";
-      suffix = "]";
-      containerSuffix = "]";
-      containerPrefix = "[";
-    }
-
-    StringJoiner joiner = new StringJoiner("&");
-
-    // add `compoundId` to the URL query string
-    if (getCompoundId() != null) {
-      joiner.add(String.format("%scompoundId%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getCompoundId()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `name` to the URL query string
-    if (getName() != null) {
-      joiner.add(String.format("%sname%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getName()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `rtStartSeconds` to the URL query string
-    if (getRtStartSeconds() != null) {
-      joiner.add(String.format("%srtStartSeconds%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getRtStartSeconds()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `rtEndSeconds` to the URL query string
-    if (getRtEndSeconds() != null) {
-      joiner.add(String.format("%srtEndSeconds%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getRtEndSeconds()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `neutralMass` to the URL query string
-    if (getNeutralMass() != null) {
-      joiner.add(String.format("%sneutralMass%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getNeutralMass()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `features` to the URL query string
-    if (getFeatures() != null) {
-      for (int i = 0; i < getFeatures().size(); i++) {
-        if (getFeatures().get(i) != null) {
-          joiner.add(getFeatures().get(i).toUrlQueryString(String.format("%sfeatures%s%s", prefix, suffix,
-          "".equals(suffix) ? "" : String.format("%s%d%s", containerPrefix, i, containerSuffix))));
-        }
-      }
-    }
-
-    // add `consensusAnnotations` to the URL query string
-    if (getConsensusAnnotations() != null) {
-      joiner.add(getConsensusAnnotations().toUrlQueryString(prefix + "consensusAnnotations" + suffix));
-    }
-
-    // add `consensusAnnotationsDeNovo` to the URL query string
-    if (getConsensusAnnotationsDeNovo() != null) {
-      joiner.add(getConsensusAnnotationsDeNovo().toUrlQueryString(prefix + "consensusAnnotationsDeNovo" + suffix));
-    }
-
-    // add `customAnnotations` to the URL query string
-    if (getCustomAnnotations() != null) {
-      joiner.add(getCustomAnnotations().toUrlQueryString(prefix + "customAnnotations" + suffix));
-    }
-
-    return joiner.toString();
-  }
 }
 

@@ -13,12 +13,8 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.StringJoiner;
 import java.util.Objects;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -35,7 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * Object to submit a job to be executed by SIRIUS
@@ -92,10 +88,11 @@ public class JobSubmission {
   public static final String JSON_PROPERTY_CONFIG_MAP = "configMap";
   private Map<String, String> configMap = new HashMap<>();
 
-  public JobSubmission() { 
+  public JobSubmission() {
   }
 
   public JobSubmission compoundIds(List<String> compoundIds) {
+    
     this.compoundIds = compoundIds;
     return this;
   }
@@ -129,6 +126,7 @@ public class JobSubmission {
 
 
   public JobSubmission alignedFeatureIds(List<String> alignedFeatureIds) {
+    
     this.alignedFeatureIds = alignedFeatureIds;
     return this;
   }
@@ -162,6 +160,7 @@ public class JobSubmission {
 
 
   public JobSubmission fallbackAdducts(List<String> fallbackAdducts) {
+    
     this.fallbackAdducts = fallbackAdducts;
     return this;
   }
@@ -195,6 +194,7 @@ public class JobSubmission {
 
 
   public JobSubmission enforcedAdducts(List<String> enforcedAdducts) {
+    
     this.enforcedAdducts = enforcedAdducts;
     return this;
   }
@@ -228,6 +228,7 @@ public class JobSubmission {
 
 
   public JobSubmission detectableAdducts(List<String> detectableAdducts) {
+    
     this.detectableAdducts = detectableAdducts;
     return this;
   }
@@ -261,6 +262,7 @@ public class JobSubmission {
 
 
   public JobSubmission recompute(Boolean recompute) {
+    
     this.recompute = recompute;
     return this;
   }
@@ -286,6 +288,7 @@ public class JobSubmission {
 
 
   public JobSubmission formulaIdParams(Sirius formulaIdParams) {
+    
     this.formulaIdParams = formulaIdParams;
     return this;
   }
@@ -311,6 +314,7 @@ public class JobSubmission {
 
 
   public JobSubmission zodiacParams(Zodiac zodiacParams) {
+    
     this.zodiacParams = zodiacParams;
     return this;
   }
@@ -336,6 +340,7 @@ public class JobSubmission {
 
 
   public JobSubmission fingerprintPredictionParams(FingerprintPrediction fingerprintPredictionParams) {
+    
     this.fingerprintPredictionParams = fingerprintPredictionParams;
     return this;
   }
@@ -361,6 +366,7 @@ public class JobSubmission {
 
 
   public JobSubmission structureDbSearchParams(StructureDbSearch structureDbSearchParams) {
+    
     this.structureDbSearchParams = structureDbSearchParams;
     return this;
   }
@@ -386,6 +392,7 @@ public class JobSubmission {
 
 
   public JobSubmission canopusParams(Canopus canopusParams) {
+    
     this.canopusParams = canopusParams;
     return this;
   }
@@ -411,6 +418,7 @@ public class JobSubmission {
 
 
   public JobSubmission configMap(Map<String, String> configMap) {
+    
     this.configMap = configMap;
     return this;
   }
@@ -442,10 +450,6 @@ public class JobSubmission {
     this.configMap = configMap;
   }
 
-
-  /**
-   * Return true if this JobSubmission object is equal to o.
-   */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -505,123 +509,5 @@ public class JobSubmission {
     return o.toString().replace("\n", "\n    ");
   }
 
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @return URL query string
-   */
-  public String toUrlQueryString() {
-    return toUrlQueryString(null);
-  }
-
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @param prefix prefix of the query string
-   * @return URL query string
-   */
-  public String toUrlQueryString(String prefix) {
-    String suffix = "";
-    String containerSuffix = "";
-    String containerPrefix = "";
-    if (prefix == null) {
-      // style=form, explode=true, e.g. /pet?name=cat&type=manx
-      prefix = "";
-    } else {
-      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
-      prefix = prefix + "[";
-      suffix = "]";
-      containerSuffix = "]";
-      containerPrefix = "[";
-    }
-
-    StringJoiner joiner = new StringJoiner("&");
-
-    // add `compoundIds` to the URL query string
-    if (getCompoundIds() != null) {
-      for (int i = 0; i < getCompoundIds().size(); i++) {
-        joiner.add(String.format("%scompoundIds%s%s=%s", prefix, suffix,
-            "".equals(suffix) ? "" : String.format("%s%d%s", containerPrefix, i, containerSuffix),
-            URLEncoder.encode(String.valueOf(getCompoundIds().get(i)), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-      }
-    }
-
-    // add `alignedFeatureIds` to the URL query string
-    if (getAlignedFeatureIds() != null) {
-      for (int i = 0; i < getAlignedFeatureIds().size(); i++) {
-        joiner.add(String.format("%salignedFeatureIds%s%s=%s", prefix, suffix,
-            "".equals(suffix) ? "" : String.format("%s%d%s", containerPrefix, i, containerSuffix),
-            URLEncoder.encode(String.valueOf(getAlignedFeatureIds().get(i)), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-      }
-    }
-
-    // add `fallbackAdducts` to the URL query string
-    if (getFallbackAdducts() != null) {
-      for (int i = 0; i < getFallbackAdducts().size(); i++) {
-        joiner.add(String.format("%sfallbackAdducts%s%s=%s", prefix, suffix,
-            "".equals(suffix) ? "" : String.format("%s%d%s", containerPrefix, i, containerSuffix),
-            URLEncoder.encode(String.valueOf(getFallbackAdducts().get(i)), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-      }
-    }
-
-    // add `enforcedAdducts` to the URL query string
-    if (getEnforcedAdducts() != null) {
-      for (int i = 0; i < getEnforcedAdducts().size(); i++) {
-        joiner.add(String.format("%senforcedAdducts%s%s=%s", prefix, suffix,
-            "".equals(suffix) ? "" : String.format("%s%d%s", containerPrefix, i, containerSuffix),
-            URLEncoder.encode(String.valueOf(getEnforcedAdducts().get(i)), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-      }
-    }
-
-    // add `detectableAdducts` to the URL query string
-    if (getDetectableAdducts() != null) {
-      for (int i = 0; i < getDetectableAdducts().size(); i++) {
-        joiner.add(String.format("%sdetectableAdducts%s%s=%s", prefix, suffix,
-            "".equals(suffix) ? "" : String.format("%s%d%s", containerPrefix, i, containerSuffix),
-            URLEncoder.encode(String.valueOf(getDetectableAdducts().get(i)), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-      }
-    }
-
-    // add `recompute` to the URL query string
-    if (isRecompute() != null) {
-      joiner.add(String.format("%srecompute%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isRecompute()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `formulaIdParams` to the URL query string
-    if (getFormulaIdParams() != null) {
-      joiner.add(getFormulaIdParams().toUrlQueryString(prefix + "formulaIdParams" + suffix));
-    }
-
-    // add `zodiacParams` to the URL query string
-    if (getZodiacParams() != null) {
-      joiner.add(getZodiacParams().toUrlQueryString(prefix + "zodiacParams" + suffix));
-    }
-
-    // add `fingerprintPredictionParams` to the URL query string
-    if (getFingerprintPredictionParams() != null) {
-      joiner.add(getFingerprintPredictionParams().toUrlQueryString(prefix + "fingerprintPredictionParams" + suffix));
-    }
-
-    // add `structureDbSearchParams` to the URL query string
-    if (getStructureDbSearchParams() != null) {
-      joiner.add(getStructureDbSearchParams().toUrlQueryString(prefix + "structureDbSearchParams" + suffix));
-    }
-
-    // add `canopusParams` to the URL query string
-    if (getCanopusParams() != null) {
-      joiner.add(getCanopusParams().toUrlQueryString(prefix + "canopusParams" + suffix));
-    }
-
-    // add `configMap` to the URL query string
-    if (getConfigMap() != null) {
-      for (String _key : getConfigMap().keySet()) {
-        joiner.add(String.format("%sconfigMap%s%s=%s", prefix, suffix,
-            "".equals(suffix) ? "" : String.format("%s%d%s", containerPrefix, _key, containerSuffix),
-            getConfigMap().get(_key), URLEncoder.encode(String.valueOf(getConfigMap().get(_key)), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-      }
-    }
-
-    return joiner.toString();
-  }
 }
 

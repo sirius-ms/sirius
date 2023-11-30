@@ -5,23 +5,14 @@ All URIs are relative to *http://localhost:8080*
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
 | [**getAccountInfo**](LoginAndAccountApi.md#getAccountInfo) | **GET** /api/account/ | Get information about the account currently logged in. |
-| [**getAccountInfoWithHttpInfo**](LoginAndAccountApi.md#getAccountInfoWithHttpInfo) | **GET** /api/account/ | Get information about the account currently logged in. |
 | [**getSignUpURL**](LoginAndAccountApi.md#getSignUpURL) | **GET** /api/account/signUpURL | Get SignUp URL (For signUp via web browser) |
-| [**getSignUpURLWithHttpInfo**](LoginAndAccountApi.md#getSignUpURLWithHttpInfo) | **GET** /api/account/signUpURL | Get SignUp URL (For signUp via web browser) |
 | [**getSubscriptions**](LoginAndAccountApi.md#getSubscriptions) | **GET** /api/account/subscriptions | Get available subscriptions of the account currently logged in. |
-| [**getSubscriptionsWithHttpInfo**](LoginAndAccountApi.md#getSubscriptionsWithHttpInfo) | **GET** /api/account/subscriptions | Get available subscriptions of the account currently logged in. |
 | [**isLoggedIn**](LoginAndAccountApi.md#isLoggedIn) | **GET** /api/account/isLoggedIn | Check if a user is logged in. |
-| [**isLoggedInWithHttpInfo**](LoginAndAccountApi.md#isLoggedInWithHttpInfo) | **GET** /api/account/isLoggedIn | Check if a user is logged in. |
 | [**login**](LoginAndAccountApi.md#login) | **POST** /api/account/login | Login into SIRIUS web services and activate default subscription if available. |
-| [**loginWithHttpInfo**](LoginAndAccountApi.md#loginWithHttpInfo) | **POST** /api/account/login | Login into SIRIUS web services and activate default subscription if available. |
 | [**logout**](LoginAndAccountApi.md#logout) | **POST** /api/account/logout | Logout from SIRIUS web services. |
-| [**logoutWithHttpInfo**](LoginAndAccountApi.md#logoutWithHttpInfo) | **POST** /api/account/logout | Logout from SIRIUS web services. |
 | [**openPortal**](LoginAndAccountApi.md#openPortal) | **GET** /api/account/openPortal | Open User portal in browser. |
-| [**openPortalWithHttpInfo**](LoginAndAccountApi.md#openPortalWithHttpInfo) | **GET** /api/account/openPortal | Open User portal in browser. |
 | [**selectSubscription**](LoginAndAccountApi.md#selectSubscription) | **PUT** /api/account/subscriptions/select-active | Select a subscription as active subscription to be used for computations. |
-| [**selectSubscriptionWithHttpInfo**](LoginAndAccountApi.md#selectSubscriptionWithHttpInfo) | **PUT** /api/account/subscriptions/select-active | Select a subscription as active subscription to be used for computations. |
 | [**signUp**](LoginAndAccountApi.md#signUp) | **GET** /api/account/signUp | Open SignUp window in system browser and return signUp link. |
-| [**signUpWithHttpInfo**](LoginAndAccountApi.md#signUpWithHttpInfo) | **GET** /api/account/signUp | Open SignUp window in system browser and return signUp link. |
 
 
 
@@ -75,7 +66,6 @@ public class Example {
 
 [**AccountInfo**](AccountInfo.md)
 
-
 ### Authorization
 
 No authorization required
@@ -85,73 +75,6 @@ No authorization required
 - **Content-Type**: Not defined
 - **Accept**: application/json
 
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Basic information about the account that has been logged in and its subscriptions. |  -  |
-
-## getAccountInfoWithHttpInfo
-
-> ApiResponse<AccountInfo> getAccountInfo getAccountInfoWithHttpInfo(includeSubs)
-
-Get information about the account currently logged in.
-
-Get information about the account currently logged in. Fails if not logged in.
-
-### Example
-
-```java
-// Import classes:
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiResponse;
-import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
-import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
-import de.unijena.bioinf.ms.nightsky.sdk.api.LoginAndAccountApi;
-
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
-
-        LoginAndAccountApi apiInstance = new LoginAndAccountApi(defaultClient);
-        Boolean includeSubs = false; // Boolean | include available and active subscriptions in {@link AccountInfo AccountInfo}.
-        try {
-            ApiResponse<AccountInfo> response = apiInstance.getAccountInfoWithHttpInfo(includeSubs);
-            System.out.println("Status code: " + response.getStatusCode());
-            System.out.println("Response headers: " + response.getHeaders());
-            System.out.println("Response body: " + response.getData());
-        } catch (ApiException e) {
-            System.err.println("Exception when calling LoginAndAccountApi#getAccountInfo");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            System.err.println("Reason: " + e.getResponseBody());
-            e.printStackTrace();
-        }
-    }
-}
-```
-
-### Parameters
-
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **includeSubs** | **Boolean**| include available and active subscriptions in {@link AccountInfo AccountInfo}. | [optional] [default to false] |
-
-### Return type
-
-ApiResponse<[**AccountInfo**](AccountInfo.md)>
-
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
 
 ### HTTP response details
 | Status code | Description | Response headers |
@@ -205,7 +128,6 @@ This endpoint does not need any parameter.
 
 **String**
 
-
 ### Authorization
 
 No authorization required
@@ -215,69 +137,6 @@ No authorization required
 - **Content-Type**: Not defined
 - **Accept**: text/plain;charset=UTF-8
 
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
-
-## getSignUpURLWithHttpInfo
-
-> ApiResponse<String> getSignUpURL getSignUpURLWithHttpInfo()
-
-Get SignUp URL (For signUp via web browser)
-
-Get SignUp URL (For signUp via web browser)
-
-### Example
-
-```java
-// Import classes:
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiResponse;
-import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
-import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
-import de.unijena.bioinf.ms.nightsky.sdk.api.LoginAndAccountApi;
-
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
-
-        LoginAndAccountApi apiInstance = new LoginAndAccountApi(defaultClient);
-        try {
-            ApiResponse<String> response = apiInstance.getSignUpURLWithHttpInfo();
-            System.out.println("Status code: " + response.getStatusCode());
-            System.out.println("Response headers: " + response.getHeaders());
-            System.out.println("Response body: " + response.getData());
-        } catch (ApiException e) {
-            System.err.println("Exception when calling LoginAndAccountApi#getSignUpURL");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            System.err.println("Reason: " + e.getResponseBody());
-            e.printStackTrace();
-        }
-    }
-}
-```
-
-### Parameters
-
-This endpoint does not need any parameter.
-
-### Return type
-
-ApiResponse<**String**>
-
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: text/plain;charset=UTF-8
 
 ### HTTP response details
 | Status code | Description | Response headers |
@@ -287,7 +146,7 @@ No authorization required
 
 ## getSubscriptions
 
-> List<Subscription> getSubscriptions()
+> List&lt;Subscription&gt; getSubscriptions()
 
 Get available subscriptions of the account currently logged in.
 
@@ -331,7 +190,6 @@ This endpoint does not need any parameter.
 
 [**List&lt;Subscription&gt;**](Subscription.md)
 
-
 ### Authorization
 
 No authorization required
@@ -341,69 +199,6 @@ No authorization required
 - **Content-Type**: Not defined
 - **Accept**: application/json
 
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
-
-## getSubscriptionsWithHttpInfo
-
-> ApiResponse<List<Subscription>> getSubscriptions getSubscriptionsWithHttpInfo()
-
-Get available subscriptions of the account currently logged in.
-
-Get available subscriptions of the account currently logged in. Fails if not logged in.
-
-### Example
-
-```java
-// Import classes:
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiResponse;
-import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
-import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
-import de.unijena.bioinf.ms.nightsky.sdk.api.LoginAndAccountApi;
-
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
-
-        LoginAndAccountApi apiInstance = new LoginAndAccountApi(defaultClient);
-        try {
-            ApiResponse<List<Subscription>> response = apiInstance.getSubscriptionsWithHttpInfo();
-            System.out.println("Status code: " + response.getStatusCode());
-            System.out.println("Response headers: " + response.getHeaders());
-            System.out.println("Response body: " + response.getData());
-        } catch (ApiException e) {
-            System.err.println("Exception when calling LoginAndAccountApi#getSubscriptions");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            System.err.println("Reason: " + e.getResponseBody());
-            e.printStackTrace();
-        }
-    }
-}
-```
-
-### Parameters
-
-This endpoint does not need any parameter.
-
-### Return type
-
-ApiResponse<[**List&lt;Subscription&gt;**](Subscription.md)>
-
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
 
 ### HTTP response details
 | Status code | Description | Response headers |
@@ -457,7 +252,6 @@ This endpoint does not need any parameter.
 
 **Boolean**
 
-
 ### Authorization
 
 No authorization required
@@ -467,69 +261,6 @@ No authorization required
 - **Content-Type**: Not defined
 - **Accept**: application/json
 
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | true if the user is logged in |  -  |
-
-## isLoggedInWithHttpInfo
-
-> ApiResponse<Boolean> isLoggedIn isLoggedInWithHttpInfo()
-
-Check if a user is logged in.
-
-Check if a user is logged in.
-
-### Example
-
-```java
-// Import classes:
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiResponse;
-import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
-import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
-import de.unijena.bioinf.ms.nightsky.sdk.api.LoginAndAccountApi;
-
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
-
-        LoginAndAccountApi apiInstance = new LoginAndAccountApi(defaultClient);
-        try {
-            ApiResponse<Boolean> response = apiInstance.isLoggedInWithHttpInfo();
-            System.out.println("Status code: " + response.getStatusCode());
-            System.out.println("Response headers: " + response.getHeaders());
-            System.out.println("Response body: " + response.getData());
-        } catch (ApiException e) {
-            System.err.println("Exception when calling LoginAndAccountApi#isLoggedIn");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            System.err.println("Reason: " + e.getResponseBody());
-            e.printStackTrace();
-        }
-    }
-}
-```
-
-### Parameters
-
-This endpoint does not need any parameter.
-
-### Return type
-
-ApiResponse<**Boolean**>
-
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
 
 ### HTTP response details
 | Status code | Description | Response headers |
@@ -593,7 +324,6 @@ public class Example {
 
 [**AccountInfo**](AccountInfo.md)
 
-
 ### Authorization
 
 No authorization required
@@ -603,79 +333,6 @@ No authorization required
 - **Content-Type**: application/json
 - **Accept**: application/json
 
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Basic information about the account that has been logged in and its subscriptions. |  -  |
-
-## loginWithHttpInfo
-
-> ApiResponse<AccountInfo> login loginWithHttpInfo(acceptTerms, accountCredentials, failWhenLoggedIn, includeSubs)
-
-Login into SIRIUS web services and activate default subscription if available.
-
-Login into SIRIUS web services and activate default subscription if available.
-
-### Example
-
-```java
-// Import classes:
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiResponse;
-import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
-import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
-import de.unijena.bioinf.ms.nightsky.sdk.api.LoginAndAccountApi;
-
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
-
-        LoginAndAccountApi apiInstance = new LoginAndAccountApi(defaultClient);
-        Boolean acceptTerms = true; // Boolean | 
-        AccountCredentials accountCredentials = new AccountCredentials(); // AccountCredentials | used to log in.
-        Boolean failWhenLoggedIn = false; // Boolean | if true request fails if an active login already exists.
-        Boolean includeSubs = false; // Boolean | include available and active subscriptions in {@link AccountInfo AccountInfo}.
-        try {
-            ApiResponse<AccountInfo> response = apiInstance.loginWithHttpInfo(acceptTerms, accountCredentials, failWhenLoggedIn, includeSubs);
-            System.out.println("Status code: " + response.getStatusCode());
-            System.out.println("Response headers: " + response.getHeaders());
-            System.out.println("Response body: " + response.getData());
-        } catch (ApiException e) {
-            System.err.println("Exception when calling LoginAndAccountApi#login");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            System.err.println("Reason: " + e.getResponseBody());
-            e.printStackTrace();
-        }
-    }
-}
-```
-
-### Parameters
-
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **acceptTerms** | **Boolean**|  | |
-| **accountCredentials** | [**AccountCredentials**](AccountCredentials.md)| used to log in. | |
-| **failWhenLoggedIn** | **Boolean**| if true request fails if an active login already exists. | [optional] [default to false] |
-| **includeSubs** | **Boolean**| include available and active subscriptions in {@link AccountInfo AccountInfo}. | [optional] [default to false] |
-
-### Return type
-
-ApiResponse<[**AccountInfo**](AccountInfo.md)>
-
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: application/json
-- **Accept**: application/json
 
 ### HTTP response details
 | Status code | Description | Response headers |
@@ -685,7 +342,7 @@ No authorization required
 
 ## logout
 
-> void logout()
+> logout()
 
 Logout from SIRIUS web services.
 
@@ -726,7 +383,6 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-
 null (empty response body)
 
 ### Authorization
@@ -738,68 +394,6 @@ No authorization required
 - **Content-Type**: Not defined
 - **Accept**: Not defined
 
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
-
-## logoutWithHttpInfo
-
-> ApiResponse<Void> logout logoutWithHttpInfo()
-
-Logout from SIRIUS web services.
-
-Logout from SIRIUS web services.
-
-### Example
-
-```java
-// Import classes:
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiResponse;
-import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
-import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
-import de.unijena.bioinf.ms.nightsky.sdk.api.LoginAndAccountApi;
-
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
-
-        LoginAndAccountApi apiInstance = new LoginAndAccountApi(defaultClient);
-        try {
-            ApiResponse<Void> response = apiInstance.logoutWithHttpInfo();
-            System.out.println("Status code: " + response.getStatusCode());
-            System.out.println("Response headers: " + response.getHeaders());
-        } catch (ApiException e) {
-            System.err.println("Exception when calling LoginAndAccountApi#logout");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            System.err.println("Reason: " + e.getResponseBody());
-            e.printStackTrace();
-        }
-    }
-}
-```
-
-### Parameters
-
-This endpoint does not need any parameter.
-
-### Return type
-
-
-ApiResponse<Void>
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: Not defined
 
 ### HTTP response details
 | Status code | Description | Response headers |
@@ -809,7 +403,7 @@ No authorization required
 
 ## openPortal
 
-> void openPortal()
+> openPortal()
 
 Open User portal in browser.
 
@@ -850,7 +444,6 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-
 null (empty response body)
 
 ### Authorization
@@ -862,68 +455,6 @@ No authorization required
 - **Content-Type**: Not defined
 - **Accept**: Not defined
 
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
-
-## openPortalWithHttpInfo
-
-> ApiResponse<Void> openPortal openPortalWithHttpInfo()
-
-Open User portal in browser.
-
-Open User portal in browser. If user is logged in SIRIUS tries to transfer the login state to the browser.
-
-### Example
-
-```java
-// Import classes:
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiResponse;
-import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
-import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
-import de.unijena.bioinf.ms.nightsky.sdk.api.LoginAndAccountApi;
-
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
-
-        LoginAndAccountApi apiInstance = new LoginAndAccountApi(defaultClient);
-        try {
-            ApiResponse<Void> response = apiInstance.openPortalWithHttpInfo();
-            System.out.println("Status code: " + response.getStatusCode());
-            System.out.println("Response headers: " + response.getHeaders());
-        } catch (ApiException e) {
-            System.err.println("Exception when calling LoginAndAccountApi#openPortal");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            System.err.println("Reason: " + e.getResponseBody());
-            e.printStackTrace();
-        }
-    }
-}
-```
-
-### Parameters
-
-This endpoint does not need any parameter.
-
-### Return type
-
-
-ApiResponse<Void>
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: Not defined
 
 ### HTTP response details
 | Status code | Description | Response headers |
@@ -981,7 +512,6 @@ public class Example {
 
 [**AccountInfo**](AccountInfo.md)
 
-
 ### Authorization
 
 No authorization required
@@ -991,73 +521,6 @@ No authorization required
 - **Content-Type**: Not defined
 - **Accept**: application/json
 
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Account information with updated active subscription |  -  |
-
-## selectSubscriptionWithHttpInfo
-
-> ApiResponse<AccountInfo> selectSubscription selectSubscriptionWithHttpInfo(sid)
-
-Select a subscription as active subscription to be used for computations.
-
-Select a subscription as active subscription to be used for computations.
-
-### Example
-
-```java
-// Import classes:
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiResponse;
-import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
-import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
-import de.unijena.bioinf.ms.nightsky.sdk.api.LoginAndAccountApi;
-
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
-
-        LoginAndAccountApi apiInstance = new LoginAndAccountApi(defaultClient);
-        String sid = "sid_example"; // String | 
-        try {
-            ApiResponse<AccountInfo> response = apiInstance.selectSubscriptionWithHttpInfo(sid);
-            System.out.println("Status code: " + response.getStatusCode());
-            System.out.println("Response headers: " + response.getHeaders());
-            System.out.println("Response body: " + response.getData());
-        } catch (ApiException e) {
-            System.err.println("Exception when calling LoginAndAccountApi#selectSubscription");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            System.err.println("Reason: " + e.getResponseBody());
-            e.printStackTrace();
-        }
-    }
-}
-```
-
-### Parameters
-
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **sid** | **String**|  | |
-
-### Return type
-
-ApiResponse<[**AccountInfo**](AccountInfo.md)>
-
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
 
 ### HTTP response details
 | Status code | Description | Response headers |
@@ -1111,7 +574,6 @@ This endpoint does not need any parameter.
 
 **String**
 
-
 ### Authorization
 
 No authorization required
@@ -1121,69 +583,6 @@ No authorization required
 - **Content-Type**: Not defined
 - **Accept**: text/plain;charset=UTF-8
 
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
-
-## signUpWithHttpInfo
-
-> ApiResponse<String> signUp signUpWithHttpInfo()
-
-Open SignUp window in system browser and return signUp link.
-
-Open SignUp window in system browser and return signUp link.
-
-### Example
-
-```java
-// Import classes:
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiResponse;
-import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
-import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
-import de.unijena.bioinf.ms.nightsky.sdk.api.LoginAndAccountApi;
-
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
-
-        LoginAndAccountApi apiInstance = new LoginAndAccountApi(defaultClient);
-        try {
-            ApiResponse<String> response = apiInstance.signUpWithHttpInfo();
-            System.out.println("Status code: " + response.getStatusCode());
-            System.out.println("Response headers: " + response.getHeaders());
-            System.out.println("Response body: " + response.getData());
-        } catch (ApiException e) {
-            System.err.println("Exception when calling LoginAndAccountApi#signUp");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            System.err.println("Reason: " + e.getResponseBody());
-            e.printStackTrace();
-        }
-    }
-}
-```
-
-### Parameters
-
-This endpoint does not need any parameter.
-
-### Return type
-
-ApiResponse<**String**>
-
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: text/plain;charset=UTF-8
 
 ### HTTP response details
 | Status code | Description | Response headers |

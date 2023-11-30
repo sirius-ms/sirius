@@ -13,21 +13,16 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.StringJoiner;
 import java.util.Objects;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import de.unijena.bioinf.ms.nightsky.sdk.model.ImportFormat;
-import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * Parameter Object to submit a job that imports ms/ms data from the given format into the specified project  Supported formats (ms, mgf, cef, msp, mzML, mzXML)
@@ -60,10 +55,11 @@ public class ImportStringSubmission {
   public static final String JSON_PROPERTY_DATA = "data";
   private String data;
 
-  public ImportStringSubmission() { 
+  public ImportStringSubmission() {
   }
 
   public ImportStringSubmission allowMs1OnlyData(Boolean allowMs1OnlyData) {
+    
     this.allowMs1OnlyData = allowMs1OnlyData;
     return this;
   }
@@ -89,6 +85,7 @@ public class ImportStringSubmission {
 
 
   public ImportStringSubmission ignoreFormulas(Boolean ignoreFormulas) {
+    
     this.ignoreFormulas = ignoreFormulas;
     return this;
   }
@@ -114,6 +111,7 @@ public class ImportStringSubmission {
 
 
   public ImportStringSubmission alignLCMSRuns(Boolean alignLCMSRuns) {
+    
     this.alignLCMSRuns = alignLCMSRuns;
     return this;
   }
@@ -139,6 +137,7 @@ public class ImportStringSubmission {
 
 
   public ImportStringSubmission sourceName(String sourceName) {
+    
     this.sourceName = sourceName;
     return this;
   }
@@ -164,6 +163,7 @@ public class ImportStringSubmission {
 
 
   public ImportStringSubmission format(ImportFormat format) {
+    
     this.format = format;
     return this;
   }
@@ -189,6 +189,7 @@ public class ImportStringSubmission {
 
 
   public ImportStringSubmission data(String data) {
+    
     this.data = data;
     return this;
   }
@@ -212,10 +213,6 @@ public class ImportStringSubmission {
     this.data = data;
   }
 
-
-  /**
-   * Return true if this ImportStringSubmission object is equal to o.
-   */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -263,69 +260,5 @@ public class ImportStringSubmission {
     return o.toString().replace("\n", "\n    ");
   }
 
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @return URL query string
-   */
-  public String toUrlQueryString() {
-    return toUrlQueryString(null);
-  }
-
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @param prefix prefix of the query string
-   * @return URL query string
-   */
-  public String toUrlQueryString(String prefix) {
-    String suffix = "";
-    String containerSuffix = "";
-    String containerPrefix = "";
-    if (prefix == null) {
-      // style=form, explode=true, e.g. /pet?name=cat&type=manx
-      prefix = "";
-    } else {
-      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
-      prefix = prefix + "[";
-      suffix = "]";
-      containerSuffix = "]";
-      containerPrefix = "[";
-    }
-
-    StringJoiner joiner = new StringJoiner("&");
-
-    // add `allowMs1OnlyData` to the URL query string
-    if (isAllowMs1OnlyData() != null) {
-      joiner.add(String.format("%sallowMs1OnlyData%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isAllowMs1OnlyData()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `ignoreFormulas` to the URL query string
-    if (isIgnoreFormulas() != null) {
-      joiner.add(String.format("%signoreFormulas%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isIgnoreFormulas()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `alignLCMSRuns` to the URL query string
-    if (isAlignLCMSRuns() != null) {
-      joiner.add(String.format("%salignLCMSRuns%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isAlignLCMSRuns()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `sourceName` to the URL query string
-    if (getSourceName() != null) {
-      joiner.add(String.format("%ssourceName%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getSourceName()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `format` to the URL query string
-    if (getFormat() != null) {
-      joiner.add(String.format("%sformat%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getFormat()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `data` to the URL query string
-    if (getData() != null) {
-      joiner.add(String.format("%sdata%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getData()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    return joiner.toString();
-  }
 }
 

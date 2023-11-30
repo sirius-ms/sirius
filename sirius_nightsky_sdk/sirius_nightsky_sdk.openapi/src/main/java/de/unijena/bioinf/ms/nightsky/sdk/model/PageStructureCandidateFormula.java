@@ -13,12 +13,8 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.StringJoiner;
 import java.util.Objects;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -31,7 +27,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * PageStructureCandidateFormula
@@ -39,12 +35,12 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder({
   PageStructureCandidateFormula.JSON_PROPERTY_TOTAL_PAGES,
   PageStructureCandidateFormula.JSON_PROPERTY_TOTAL_ELEMENTS,
+  PageStructureCandidateFormula.JSON_PROPERTY_LAST,
   PageStructureCandidateFormula.JSON_PROPERTY_SORT,
   PageStructureCandidateFormula.JSON_PROPERTY_FIRST,
   PageStructureCandidateFormula.JSON_PROPERTY_SIZE,
   PageStructureCandidateFormula.JSON_PROPERTY_CONTENT,
   PageStructureCandidateFormula.JSON_PROPERTY_NUMBER,
-  PageStructureCandidateFormula.JSON_PROPERTY_LAST,
   PageStructureCandidateFormula.JSON_PROPERTY_NUMBER_OF_ELEMENTS,
   PageStructureCandidateFormula.JSON_PROPERTY_PAGEABLE,
   PageStructureCandidateFormula.JSON_PROPERTY_EMPTY
@@ -56,6 +52,9 @@ public class PageStructureCandidateFormula {
 
   public static final String JSON_PROPERTY_TOTAL_ELEMENTS = "totalElements";
   private Long totalElements;
+
+  public static final String JSON_PROPERTY_LAST = "last";
+  private Boolean last;
 
   public static final String JSON_PROPERTY_SORT = "sort";
   private SortObject sort;
@@ -72,9 +71,6 @@ public class PageStructureCandidateFormula {
   public static final String JSON_PROPERTY_NUMBER = "number";
   private Integer number;
 
-  public static final String JSON_PROPERTY_LAST = "last";
-  private Boolean last;
-
   public static final String JSON_PROPERTY_NUMBER_OF_ELEMENTS = "numberOfElements";
   private Integer numberOfElements;
 
@@ -84,10 +80,11 @@ public class PageStructureCandidateFormula {
   public static final String JSON_PROPERTY_EMPTY = "empty";
   private Boolean empty;
 
-  public PageStructureCandidateFormula() { 
+  public PageStructureCandidateFormula() {
   }
 
   public PageStructureCandidateFormula totalPages(Integer totalPages) {
+    
     this.totalPages = totalPages;
     return this;
   }
@@ -113,6 +110,7 @@ public class PageStructureCandidateFormula {
 
 
   public PageStructureCandidateFormula totalElements(Long totalElements) {
+    
     this.totalElements = totalElements;
     return this;
   }
@@ -137,7 +135,34 @@ public class PageStructureCandidateFormula {
   }
 
 
+  public PageStructureCandidateFormula last(Boolean last) {
+    
+    this.last = last;
+    return this;
+  }
+
+   /**
+   * Get last
+   * @return last
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_LAST)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Boolean isLast() {
+    return last;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_LAST)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setLast(Boolean last) {
+    this.last = last;
+  }
+
+
   public PageStructureCandidateFormula sort(SortObject sort) {
+    
     this.sort = sort;
     return this;
   }
@@ -163,6 +188,7 @@ public class PageStructureCandidateFormula {
 
 
   public PageStructureCandidateFormula first(Boolean first) {
+    
     this.first = first;
     return this;
   }
@@ -188,6 +214,7 @@ public class PageStructureCandidateFormula {
 
 
   public PageStructureCandidateFormula size(Integer size) {
+    
     this.size = size;
     return this;
   }
@@ -213,6 +240,7 @@ public class PageStructureCandidateFormula {
 
 
   public PageStructureCandidateFormula content(List<StructureCandidateFormula> content) {
+    
     this.content = content;
     return this;
   }
@@ -246,6 +274,7 @@ public class PageStructureCandidateFormula {
 
 
   public PageStructureCandidateFormula number(Integer number) {
+    
     this.number = number;
     return this;
   }
@@ -270,32 +299,8 @@ public class PageStructureCandidateFormula {
   }
 
 
-  public PageStructureCandidateFormula last(Boolean last) {
-    this.last = last;
-    return this;
-  }
-
-   /**
-   * Get last
-   * @return last
-  **/
-  @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_LAST)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Boolean isLast() {
-    return last;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_LAST)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setLast(Boolean last) {
-    this.last = last;
-  }
-
-
   public PageStructureCandidateFormula numberOfElements(Integer numberOfElements) {
+    
     this.numberOfElements = numberOfElements;
     return this;
   }
@@ -321,6 +326,7 @@ public class PageStructureCandidateFormula {
 
 
   public PageStructureCandidateFormula pageable(PageableObject pageable) {
+    
     this.pageable = pageable;
     return this;
   }
@@ -346,6 +352,7 @@ public class PageStructureCandidateFormula {
 
 
   public PageStructureCandidateFormula empty(Boolean empty) {
+    
     this.empty = empty;
     return this;
   }
@@ -369,10 +376,6 @@ public class PageStructureCandidateFormula {
     this.empty = empty;
   }
 
-
-  /**
-   * Return true if this PageStructureCandidateFormula object is equal to o.
-   */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -384,12 +387,12 @@ public class PageStructureCandidateFormula {
     PageStructureCandidateFormula pageStructureCandidateFormula = (PageStructureCandidateFormula) o;
     return Objects.equals(this.totalPages, pageStructureCandidateFormula.totalPages) &&
         Objects.equals(this.totalElements, pageStructureCandidateFormula.totalElements) &&
+        Objects.equals(this.last, pageStructureCandidateFormula.last) &&
         Objects.equals(this.sort, pageStructureCandidateFormula.sort) &&
         Objects.equals(this.first, pageStructureCandidateFormula.first) &&
         Objects.equals(this.size, pageStructureCandidateFormula.size) &&
         Objects.equals(this.content, pageStructureCandidateFormula.content) &&
         Objects.equals(this.number, pageStructureCandidateFormula.number) &&
-        Objects.equals(this.last, pageStructureCandidateFormula.last) &&
         Objects.equals(this.numberOfElements, pageStructureCandidateFormula.numberOfElements) &&
         Objects.equals(this.pageable, pageStructureCandidateFormula.pageable) &&
         Objects.equals(this.empty, pageStructureCandidateFormula.empty);
@@ -397,7 +400,7 @@ public class PageStructureCandidateFormula {
 
   @Override
   public int hashCode() {
-    return Objects.hash(totalPages, totalElements, sort, first, size, content, number, last, numberOfElements, pageable, empty);
+    return Objects.hash(totalPages, totalElements, last, sort, first, size, content, number, numberOfElements, pageable, empty);
   }
 
   @Override
@@ -406,12 +409,12 @@ public class PageStructureCandidateFormula {
     sb.append("class PageStructureCandidateFormula {\n");
     sb.append("    totalPages: ").append(toIndentedString(totalPages)).append("\n");
     sb.append("    totalElements: ").append(toIndentedString(totalElements)).append("\n");
+    sb.append("    last: ").append(toIndentedString(last)).append("\n");
     sb.append("    sort: ").append(toIndentedString(sort)).append("\n");
     sb.append("    first: ").append(toIndentedString(first)).append("\n");
     sb.append("    size: ").append(toIndentedString(size)).append("\n");
     sb.append("    content: ").append(toIndentedString(content)).append("\n");
     sb.append("    number: ").append(toIndentedString(number)).append("\n");
-    sb.append("    last: ").append(toIndentedString(last)).append("\n");
     sb.append("    numberOfElements: ").append(toIndentedString(numberOfElements)).append("\n");
     sb.append("    pageable: ").append(toIndentedString(pageable)).append("\n");
     sb.append("    empty: ").append(toIndentedString(empty)).append("\n");
@@ -430,99 +433,5 @@ public class PageStructureCandidateFormula {
     return o.toString().replace("\n", "\n    ");
   }
 
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @return URL query string
-   */
-  public String toUrlQueryString() {
-    return toUrlQueryString(null);
-  }
-
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @param prefix prefix of the query string
-   * @return URL query string
-   */
-  public String toUrlQueryString(String prefix) {
-    String suffix = "";
-    String containerSuffix = "";
-    String containerPrefix = "";
-    if (prefix == null) {
-      // style=form, explode=true, e.g. /pet?name=cat&type=manx
-      prefix = "";
-    } else {
-      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
-      prefix = prefix + "[";
-      suffix = "]";
-      containerSuffix = "]";
-      containerPrefix = "[";
-    }
-
-    StringJoiner joiner = new StringJoiner("&");
-
-    // add `totalPages` to the URL query string
-    if (getTotalPages() != null) {
-      joiner.add(String.format("%stotalPages%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getTotalPages()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `totalElements` to the URL query string
-    if (getTotalElements() != null) {
-      joiner.add(String.format("%stotalElements%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getTotalElements()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `sort` to the URL query string
-    if (getSort() != null) {
-      joiner.add(getSort().toUrlQueryString(prefix + "sort" + suffix));
-    }
-
-    // add `first` to the URL query string
-    if (isFirst() != null) {
-      joiner.add(String.format("%sfirst%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isFirst()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `size` to the URL query string
-    if (getSize() != null) {
-      joiner.add(String.format("%ssize%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getSize()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `content` to the URL query string
-    if (getContent() != null) {
-      for (int i = 0; i < getContent().size(); i++) {
-        if (getContent().get(i) != null) {
-          joiner.add(getContent().get(i).toUrlQueryString(String.format("%scontent%s%s", prefix, suffix,
-          "".equals(suffix) ? "" : String.format("%s%d%s", containerPrefix, i, containerSuffix))));
-        }
-      }
-    }
-
-    // add `number` to the URL query string
-    if (getNumber() != null) {
-      joiner.add(String.format("%snumber%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getNumber()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `last` to the URL query string
-    if (isLast() != null) {
-      joiner.add(String.format("%slast%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isLast()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `numberOfElements` to the URL query string
-    if (getNumberOfElements() != null) {
-      joiner.add(String.format("%snumberOfElements%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getNumberOfElements()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `pageable` to the URL query string
-    if (getPageable() != null) {
-      joiner.add(getPageable().toUrlQueryString(prefix + "pageable" + suffix));
-    }
-
-    // add `empty` to the URL query string
-    if (isEmpty() != null) {
-      joiner.add(String.format("%sempty%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isEmpty()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    return joiner.toString();
-  }
 }
 

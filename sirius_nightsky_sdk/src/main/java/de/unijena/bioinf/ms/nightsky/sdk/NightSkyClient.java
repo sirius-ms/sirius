@@ -46,13 +46,26 @@ import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Job;
 import de.unijena.bioinf.ms.nightsky.sdk.model.JobOptField;
 import de.unijena.bioinf.ms.nightsky.sdk.model.JobProgress;
+import de.unijena.bioinf.sse.DataEventType;
+import de.unijena.bioinf.sse.FluxToFlowBroadcast;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.codec.ServerSentEvent;
+import reactor.core.Disposable;
+import reactor.core.publisher.Flux;
 
+import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.concurrent.Flow;
 
 import static de.unijena.bioinf.ms.nightsky.sdk.model.JobOptField.*;
 
-public class NightSkyClient {
+
+public class NightSkyClient implements AutoCloseable {
+    private static final Logger LOG = LoggerFactory.getLogger(NightSkyClient.class);
     protected final ApiClient apiClient;
     protected final String basePath;
 
@@ -69,6 +82,11 @@ public class NightSkyClient {
     protected final ProjectsApi projects;
 
     protected InfoApi infos;
+    //    private SSEHandler sseHandler = null;
+    private EnumSet<DataEventType> sseEventsToListenOn = null;
+    private Disposable sseConnection;
+    private FluxToFlowBroadcast sseBroadcast;
+//    private CompletableFuture<Integer> sseConnection = null;
 
     public NightSkyClient() {
         this(8080, "http://localhost");
@@ -77,7 +95,7 @@ public class NightSkyClient {
     public NightSkyClient(int port, String baseUrl) {
         this.basePath = baseUrl + ":" + port;
         apiClient = new ApiClient();
-        apiClient.updateBaseUri(this.basePath);
+        apiClient.setBasePath(this.basePath);
 
         compounds = new CompoundsApi(apiClient);
         features = new FeaturesApi(apiClient);
@@ -97,6 +115,8 @@ public class NightSkyClient {
 
     public Job awaitJob(String pid, String jobId, int waitTimeInSec, Integer timeoutInSec,
                         boolean includeCommand, boolean includeAffectedIds, InterruptionCheck interruptionCheck) throws ApiException, InterruptedException {
+        //todo use sse if available
+
         long start = System.currentTimeMillis();
         Job jobUpdate = jobs.getJob(pid, jobId, List.of(PROGRESS));
 
@@ -134,6 +154,60 @@ public class NightSkyClient {
         return jobUpdate;
     }
 
+    public void enableEventListening() {
+        enableEventListening(DataEventType.JOB, DataEventType.PROJECT);
+    }
+
+    public void enableEventListening(DataEventType... events) {
+        enableEventListening(EnumSet.copyOf(List.of(events)));
+    }
+
+    public void enableEventListening(EnumSet<DataEventType> events) {
+        if (events == null || events.isEmpty())
+            throw new IllegalArgumentException("At least one event type needs to be specified!");
+
+        sseEventsToListenOn = events;
+
+        Flux<ServerSentEvent<String>> eventStream = new ServerSentEventSseApi(apiClient)
+                .listenToEventsWithResponseSpec(sseEventsToListenOn.stream().map(Enum::name).toList())
+                .bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
+                })
+                .retry()
+                .repeat();
+        sseBroadcast = new FluxToFlowBroadcast(apiClient.getObjectMapper());
+        sseConnection = eventStream
+                .subscribe(
+                        event -> {
+                            LOG.info("Time: {} - data[{}]", LocalTime.now(), event.data());
+                            sseBroadcast.onNext(event);
+                        },
+                        error -> {
+                            LOG.error("Error receiving SSE: {}", error);
+                            sseBroadcast.onError(error);
+                        },
+                        () -> {
+                            LOG.info("Completed!!!");
+                            sseBroadcast.onComplete();
+                        });
+    }
+
+    public void addEventListener(Flow.Subscriber<Object> listener, String pid) {
+        addEventListener(listener, pid, EnumSet.of(DataEventType.PROJECT, DataEventType.JOB));
+    }
+
+    public void addEventListener(Flow.Subscriber<Object> listener, String pid, DataEventType... eventsToListenOn) {
+        addEventListener(listener, pid, EnumSet.copyOf(List.of(eventsToListenOn)));
+    }
+
+    public void addEventListener(Flow.Subscriber<Object> listener, String pid, EnumSet<DataEventType> eventsToListenOn) {
+        sseBroadcast.subscribe(listener, pid, eventsToListenOn);
+    }
+
+    public void removeEventListener(Flow.Subscriber<Object> listener){
+        sseBroadcast.unSubscribe(listener);
+    }
+
+
     public ApiClient getApiClient() {
         return apiClient;
     }
@@ -164,6 +238,15 @@ public class NightSkyClient {
 
     public InfoApi infos() {
         return infos;
+    }
+
+    @Override
+    public synchronized void close() throws Exception {
+        if (sseConnection != null && !sseConnection.isDisposed())
+            sseConnection.dispose();
+//            sseConnection.complete(203);
+//        if (sseHandler != null)
+//            sseHandler.close();
     }
 
     @FunctionalInterface

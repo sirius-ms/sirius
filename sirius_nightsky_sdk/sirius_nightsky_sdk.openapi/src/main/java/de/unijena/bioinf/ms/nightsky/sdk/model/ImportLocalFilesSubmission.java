@@ -13,12 +13,8 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.StringJoiner;
 import java.util.Objects;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -28,7 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * 
@@ -53,10 +49,11 @@ public class ImportLocalFilesSubmission {
   public static final String JSON_PROPERTY_INPUT_PATHS = "inputPaths";
   private List<String> inputPaths = new ArrayList<>();
 
-  public ImportLocalFilesSubmission() { 
+  public ImportLocalFilesSubmission() {
   }
 
   public ImportLocalFilesSubmission allowMs1OnlyData(Boolean allowMs1OnlyData) {
+    
     this.allowMs1OnlyData = allowMs1OnlyData;
     return this;
   }
@@ -82,6 +79,7 @@ public class ImportLocalFilesSubmission {
 
 
   public ImportLocalFilesSubmission ignoreFormulas(Boolean ignoreFormulas) {
+    
     this.ignoreFormulas = ignoreFormulas;
     return this;
   }
@@ -107,6 +105,7 @@ public class ImportLocalFilesSubmission {
 
 
   public ImportLocalFilesSubmission alignLCMSRuns(Boolean alignLCMSRuns) {
+    
     this.alignLCMSRuns = alignLCMSRuns;
     return this;
   }
@@ -132,6 +131,7 @@ public class ImportLocalFilesSubmission {
 
 
   public ImportLocalFilesSubmission inputPaths(List<String> inputPaths) {
+    
     this.inputPaths = inputPaths;
     return this;
   }
@@ -163,10 +163,6 @@ public class ImportLocalFilesSubmission {
     this.inputPaths = inputPaths;
   }
 
-
-  /**
-   * Return true if this ImportLocalFilesSubmission object is equal to o.
-   */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -210,63 +206,5 @@ public class ImportLocalFilesSubmission {
     return o.toString().replace("\n", "\n    ");
   }
 
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @return URL query string
-   */
-  public String toUrlQueryString() {
-    return toUrlQueryString(null);
-  }
-
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @param prefix prefix of the query string
-   * @return URL query string
-   */
-  public String toUrlQueryString(String prefix) {
-    String suffix = "";
-    String containerSuffix = "";
-    String containerPrefix = "";
-    if (prefix == null) {
-      // style=form, explode=true, e.g. /pet?name=cat&type=manx
-      prefix = "";
-    } else {
-      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
-      prefix = prefix + "[";
-      suffix = "]";
-      containerSuffix = "]";
-      containerPrefix = "[";
-    }
-
-    StringJoiner joiner = new StringJoiner("&");
-
-    // add `allowMs1OnlyData` to the URL query string
-    if (isAllowMs1OnlyData() != null) {
-      joiner.add(String.format("%sallowMs1OnlyData%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isAllowMs1OnlyData()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `ignoreFormulas` to the URL query string
-    if (isIgnoreFormulas() != null) {
-      joiner.add(String.format("%signoreFormulas%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isIgnoreFormulas()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `alignLCMSRuns` to the URL query string
-    if (isAlignLCMSRuns() != null) {
-      joiner.add(String.format("%salignLCMSRuns%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isAlignLCMSRuns()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `inputPaths` to the URL query string
-    if (getInputPaths() != null) {
-      for (int i = 0; i < getInputPaths().size(); i++) {
-        joiner.add(String.format("%sinputPaths%s%s=%s", prefix, suffix,
-            "".equals(suffix) ? "" : String.format("%s%d%s", containerPrefix, i, containerSuffix),
-            URLEncoder.encode(String.valueOf(getInputPaths().get(i)), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-      }
-    }
-
-    return joiner.toString();
-  }
 }
 

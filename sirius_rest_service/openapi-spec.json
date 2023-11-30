@@ -13,6 +13,10 @@
   ],
   "tags": [
     {
+      "name": "Server-Sent Event (SSE)",
+      "description": "Server-Sent Event Controller that allows to listen to different types of changes."
+    },
+    {
       "name": "Info",
       "description": "Status und Information"
     },
@@ -857,6 +861,48 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AccountInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sse": {
+      "get": {
+        "tags": [
+          "Server-Sent Event (SSE)"
+        ],
+        "operationId": "listenToEvents",
+        "parameters": [
+          {
+            "name": "eventsToListenOn",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "JOB",
+                  "PROJECT",
+                  "GUI_STATE"
+                ]
+              },
+              "default": [
+                "JOB",
+                "PROJECT"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "$ref": "#/components/schemas/SseEmitter"
                 }
               }
             }
@@ -2094,6 +2140,44 @@
   },
   "components": {
     "schemas": {
+      "ProjectChangeEvent": {
+        "type": "object",
+        "properties": {
+          "eventType": {
+            "type": "string",
+            "enum": [
+              "PROJECT_OPENED",
+              "PROJECT_MOVED",
+              "PROJECT_CLOSED",
+              "FEATURE_CREATED",
+              "FEATURE_UPDATED",
+              "FEATURE_DELETED",
+              "RESULT_CREATED",
+              "RESULT_UPDATED",
+              "RESULT_DELETED"
+            ]
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "compoundId": {
+            "type": "string",
+            "nullable": true
+          },
+          "featuredId": {
+            "type": "string",
+            "nullable": true
+          },
+          "formulaId": {
+            "type": "string",
+            "nullable": true
+          },
+          "structureInChIKey": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
       "ProjectInfo": {
         "type": "object",
         "properties": {
@@ -2802,6 +2886,16 @@
         },
         "description": "Simple object to hold account credentials, e.g. to perform login operations.\n If refreshToken is given, it is usually preferred over password based authentication.\n But in the end this is up to the respective web service."
       },
+      "SseEmitter": {
+        "type": "object",
+        "properties": {
+          "timeout": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "description": ""
+      },
       "SearchQueryType": {
         "type": "string",
         "description": "",
@@ -2821,14 +2915,24 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
-            "type": "boolean"
-          },
           "last": {
             "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectInfo"
+            }
           },
           "number": {
             "type": "integer",
@@ -2841,16 +2945,6 @@
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
           },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ProjectInfo"
-            }
-          },
           "empty": {
             "type": "boolean"
           }
@@ -2861,6 +2955,10 @@
         "properties": {
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "offset": {
+            "type": "integer",
+            "format": "int64"
           },
           "pageNumber": {
             "type": "integer",
@@ -2875,23 +2973,19 @@
           },
           "unpaged": {
             "type": "boolean"
-          },
-          "offset": {
-            "type": "integer",
-            "format": "int64"
           }
         }
       },
       "SortObject": {
         "type": "object",
         "properties": {
+          "empty": {
+            "type": "boolean"
+          },
           "sorted": {
             "type": "boolean"
           },
           "unsorted": {
-            "type": "boolean"
-          },
-          "empty": {
             "type": "boolean"
           }
         },
@@ -2908,14 +3002,24 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
-            "type": "boolean"
-          },
           "last": {
             "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Job"
+            }
           },
           "number": {
             "type": "integer",
@@ -2927,16 +3031,6 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Job"
-            }
           },
           "empty": {
             "type": "boolean"
@@ -3567,14 +3661,24 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
-            "type": "boolean"
-          },
           "last": {
             "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Compound"
+            }
           },
           "number": {
             "type": "integer",
@@ -3586,16 +3690,6 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Compound"
-            }
           },
           "empty": {
             "type": "boolean"
@@ -3715,14 +3809,24 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
-            "type": "boolean"
-          },
           "last": {
             "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlignedFeature"
+            }
           },
           "number": {
             "type": "integer",
@@ -3734,16 +3838,6 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AlignedFeature"
-            }
           },
           "empty": {
             "type": "boolean"
@@ -3772,14 +3866,24 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
-            "type": "boolean"
-          },
           "last": {
             "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StructureCandidateFormula"
+            }
           },
           "number": {
             "type": "integer",
@@ -3791,16 +3895,6 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/StructureCandidateFormula"
-            }
           },
           "empty": {
             "type": "boolean"
@@ -3899,14 +3993,24 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
-            "type": "boolean"
-          },
           "last": {
             "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormulaCandidate"
+            }
           },
           "number": {
             "type": "integer",
@@ -3918,16 +4022,6 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/FormulaCandidate"
-            }
           },
           "empty": {
             "type": "boolean"
@@ -3945,14 +4039,24 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
-            "type": "boolean"
-          },
           "last": {
             "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StructureCandidateScored"
+            }
           },
           "number": {
             "type": "integer",
@@ -3964,16 +4068,6 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/StructureCandidateScored"
-            }
           },
           "empty": {
             "type": "boolean"
@@ -4039,12 +4133,6 @@
               "$ref": "#/components/schemas/ConnectionError"
             }
           },
-          "supportsPosPredictorTypes": {
-            "type": "boolean"
-          },
-          "supportsNegPredictorTypes": {
-            "type": "boolean"
-          },
           "availableWorkers": {
             "uniqueItems": true,
             "type": "array",
@@ -4060,6 +4148,12 @@
             }
           },
           "supportsAllPredictorTypes": {
+            "type": "boolean"
+          },
+          "supportsPosPredictorTypes": {
+            "type": "boolean"
+          },
+          "supportsNegPredictorTypes": {
             "type": "boolean"
           }
         },

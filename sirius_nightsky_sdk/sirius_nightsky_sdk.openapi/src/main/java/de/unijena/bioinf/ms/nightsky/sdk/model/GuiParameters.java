@@ -13,21 +13,16 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.StringJoiner;
 import java.util.Objects;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import de.unijena.bioinf.ms.nightsky.sdk.model.GuiResultTab;
-import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * Parameters to \&quot;remote control\&quot; the SIRIUS GUI.
@@ -56,10 +51,11 @@ public class GuiParameters {
   public static final String JSON_PROPERTY_BRING_TO_FRONT = "bringToFront";
   private Boolean bringToFront;
 
-  public GuiParameters() { 
+  public GuiParameters() {
   }
 
   public GuiParameters selectedTab(GuiResultTab selectedTab) {
+    
     this.selectedTab = selectedTab;
     return this;
   }
@@ -85,6 +81,7 @@ public class GuiParameters {
 
 
   public GuiParameters cid(String cid) {
+    
     this.cid = cid;
     return this;
   }
@@ -110,6 +107,7 @@ public class GuiParameters {
 
 
   public GuiParameters fid(String fid) {
+    
     this.fid = fid;
     return this;
   }
@@ -135,6 +133,7 @@ public class GuiParameters {
 
 
   public GuiParameters structureCandidateInChIKey(String structureCandidateInChIKey) {
+    
     this.structureCandidateInChIKey = structureCandidateInChIKey;
     return this;
   }
@@ -160,6 +159,7 @@ public class GuiParameters {
 
 
   public GuiParameters bringToFront(Boolean bringToFront) {
+    
     this.bringToFront = bringToFront;
     return this;
   }
@@ -183,10 +183,6 @@ public class GuiParameters {
     this.bringToFront = bringToFront;
   }
 
-
-  /**
-   * Return true if this GuiParameters object is equal to o.
-   */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -232,64 +228,5 @@ public class GuiParameters {
     return o.toString().replace("\n", "\n    ");
   }
 
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @return URL query string
-   */
-  public String toUrlQueryString() {
-    return toUrlQueryString(null);
-  }
-
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @param prefix prefix of the query string
-   * @return URL query string
-   */
-  public String toUrlQueryString(String prefix) {
-    String suffix = "";
-    String containerSuffix = "";
-    String containerPrefix = "";
-    if (prefix == null) {
-      // style=form, explode=true, e.g. /pet?name=cat&type=manx
-      prefix = "";
-    } else {
-      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
-      prefix = prefix + "[";
-      suffix = "]";
-      containerSuffix = "]";
-      containerPrefix = "[";
-    }
-
-    StringJoiner joiner = new StringJoiner("&");
-
-    // add `selectedTab` to the URL query string
-    if (getSelectedTab() != null) {
-      joiner.add(String.format("%sselectedTab%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getSelectedTab()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `cid` to the URL query string
-    if (getCid() != null) {
-      joiner.add(String.format("%scid%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getCid()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `fid` to the URL query string
-    if (getFid() != null) {
-      joiner.add(String.format("%sfid%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getFid()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `structureCandidateInChIKey` to the URL query string
-    if (getStructureCandidateInChIKey() != null) {
-      joiner.add(String.format("%sstructureCandidateInChIKey%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getStructureCandidateInChIKey()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `bringToFront` to the URL query string
-    if (isBringToFront() != null) {
-      joiner.add(String.format("%sbringToFront%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isBringToFront()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    return joiner.toString();
-  }
 }
 

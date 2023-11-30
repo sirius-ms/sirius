@@ -13,20 +13,15 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.StringJoiner;
 import java.util.Objects;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * 
@@ -47,10 +42,11 @@ public class ZodiacEdgeFilterThresholds {
   public static final String JSON_PROPERTY_MIN_LOCAL_CONNECTIONS = "minLocalConnections";
   private Integer minLocalConnections;
 
-  public ZodiacEdgeFilterThresholds() { 
+  public ZodiacEdgeFilterThresholds() {
   }
 
   public ZodiacEdgeFilterThresholds thresholdFilter(Double thresholdFilter) {
+    
     this.thresholdFilter = thresholdFilter;
     return this;
   }
@@ -76,6 +72,7 @@ public class ZodiacEdgeFilterThresholds {
 
 
   public ZodiacEdgeFilterThresholds minLocalCandidates(Integer minLocalCandidates) {
+    
     this.minLocalCandidates = minLocalCandidates;
     return this;
   }
@@ -101,6 +98,7 @@ public class ZodiacEdgeFilterThresholds {
 
 
   public ZodiacEdgeFilterThresholds minLocalConnections(Integer minLocalConnections) {
+    
     this.minLocalConnections = minLocalConnections;
     return this;
   }
@@ -124,10 +122,6 @@ public class ZodiacEdgeFilterThresholds {
     this.minLocalConnections = minLocalConnections;
   }
 
-
-  /**
-   * Return true if this ZodiacEdgeFilterThresholds object is equal to o.
-   */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -169,54 +163,5 @@ public class ZodiacEdgeFilterThresholds {
     return o.toString().replace("\n", "\n    ");
   }
 
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @return URL query string
-   */
-  public String toUrlQueryString() {
-    return toUrlQueryString(null);
-  }
-
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @param prefix prefix of the query string
-   * @return URL query string
-   */
-  public String toUrlQueryString(String prefix) {
-    String suffix = "";
-    String containerSuffix = "";
-    String containerPrefix = "";
-    if (prefix == null) {
-      // style=form, explode=true, e.g. /pet?name=cat&type=manx
-      prefix = "";
-    } else {
-      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
-      prefix = prefix + "[";
-      suffix = "]";
-      containerSuffix = "]";
-      containerPrefix = "[";
-    }
-
-    StringJoiner joiner = new StringJoiner("&");
-
-    // add `thresholdFilter` to the URL query string
-    if (getThresholdFilter() != null) {
-      joiner.add(String.format("%sthresholdFilter%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getThresholdFilter()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `minLocalCandidates` to the URL query string
-    if (getMinLocalCandidates() != null) {
-      joiner.add(String.format("%sminLocalCandidates%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getMinLocalCandidates()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `minLocalConnections` to the URL query string
-    if (getMinLocalConnections() != null) {
-      joiner.add(String.format("%sminLocalConnections%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getMinLocalConnections()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    return joiner.toString();
-  }
 }
 

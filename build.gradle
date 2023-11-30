@@ -29,6 +29,7 @@ wrapper {
 
 //Global Properties
 ext {
+    junit_version = '5.10.0'
     jackson_version = "2.14.3"
     spring_boot_version = "2.7.17"
     //version for external libraries
@@ -144,7 +145,17 @@ allprojects {
         implementation "org.slf4j:jcl-over-slf4j:$slf4j_version"
         implementation "org.slf4j:slf4j-api:$slf4j_version"
 
-        testImplementation group: 'junit', name: 'junit', version: '4.12'
+        // Aggregator dependency that also brings JUnit 5 parameterized tests etc.
+        testImplementation("org.junit.jupiter:junit-jupiter:$junit_version")
+        testImplementation("org.junit.jupiter:junit-jupiter-params:$junit_version")
+        // The Vintage engine is needed to be able to run JUnit 4 tests
+        testImplementation("org.junit.vintage:junit-vintage-engine:$junit_version")
+        testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junit_version"
+    }
+
+    test {
+        useJUnitPlatform()
+        maxHeapSize = "16G"
     }
 
     //there are some outdated incompatible trove dependencies in some libs.

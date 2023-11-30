@@ -13,12 +13,8 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.StringJoiner;
 import java.util.Objects;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -33,7 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * Molecular formula candidate that holds a unique identifier (molecular formula + adduct).  It can be extended with optional scoring metrics and the raw results  such as fragmentation trees and simulated isotope pattern.
@@ -106,10 +102,11 @@ public class FormulaCandidate {
   public static final String JSON_PROPERTY_CANOPUS_PREDICTION = "canopusPrediction";
   private CanopusPrediction canopusPrediction;
 
-  public FormulaCandidate() { 
+  public FormulaCandidate() {
   }
 
   public FormulaCandidate formulaId(String formulaId) {
+    
     this.formulaId = formulaId;
     return this;
   }
@@ -135,6 +132,7 @@ public class FormulaCandidate {
 
 
   public FormulaCandidate molecularFormula(String molecularFormula) {
+    
     this.molecularFormula = molecularFormula;
     return this;
   }
@@ -160,6 +158,7 @@ public class FormulaCandidate {
 
 
   public FormulaCandidate adduct(String adduct) {
+    
     this.adduct = adduct;
     return this;
   }
@@ -185,6 +184,7 @@ public class FormulaCandidate {
 
 
   public FormulaCandidate siriusScore(Double siriusScore) {
+    
     this.siriusScore = siriusScore;
     return this;
   }
@@ -210,6 +210,7 @@ public class FormulaCandidate {
 
 
   public FormulaCandidate isotopeScore(Double isotopeScore) {
+    
     this.isotopeScore = isotopeScore;
     return this;
   }
@@ -235,6 +236,7 @@ public class FormulaCandidate {
 
 
   public FormulaCandidate treeScore(Double treeScore) {
+    
     this.treeScore = treeScore;
     return this;
   }
@@ -260,6 +262,7 @@ public class FormulaCandidate {
 
 
   public FormulaCandidate zodiacScore(Double zodiacScore) {
+    
     this.zodiacScore = zodiacScore;
     return this;
   }
@@ -285,6 +288,7 @@ public class FormulaCandidate {
 
 
   public FormulaCandidate numOfExplainedPeaks(Integer numOfExplainedPeaks) {
+    
     this.numOfExplainedPeaks = numOfExplainedPeaks;
     return this;
   }
@@ -310,6 +314,7 @@ public class FormulaCandidate {
 
 
   public FormulaCandidate numOfExplainablePeaks(Integer numOfExplainablePeaks) {
+    
     this.numOfExplainablePeaks = numOfExplainablePeaks;
     return this;
   }
@@ -335,6 +340,7 @@ public class FormulaCandidate {
 
 
   public FormulaCandidate totalExplainedIntensity(Double totalExplainedIntensity) {
+    
     this.totalExplainedIntensity = totalExplainedIntensity;
     return this;
   }
@@ -360,6 +366,7 @@ public class FormulaCandidate {
 
 
   public FormulaCandidate medianMassDeviation(Deviation medianMassDeviation) {
+    
     this.medianMassDeviation = medianMassDeviation;
     return this;
   }
@@ -385,6 +392,7 @@ public class FormulaCandidate {
 
 
   public FormulaCandidate fragmentationTree(FragmentationTree fragmentationTree) {
+    
     this.fragmentationTree = fragmentationTree;
     return this;
   }
@@ -410,6 +418,7 @@ public class FormulaCandidate {
 
 
   public FormulaCandidate simulatedIsotopePattern(AnnotatedSpectrum simulatedIsotopePattern) {
+    
     this.simulatedIsotopePattern = simulatedIsotopePattern;
     return this;
   }
@@ -435,6 +444,7 @@ public class FormulaCandidate {
 
 
   public FormulaCandidate predictedFingerprint(List<Double> predictedFingerprint) {
+    
     this.predictedFingerprint = predictedFingerprint;
     return this;
   }
@@ -468,6 +478,7 @@ public class FormulaCandidate {
 
 
   public FormulaCandidate compoundClasses(CompoundClasses compoundClasses) {
+    
     this.compoundClasses = compoundClasses;
     return this;
   }
@@ -493,6 +504,7 @@ public class FormulaCandidate {
 
 
   public FormulaCandidate canopusPrediction(CanopusPrediction canopusPrediction) {
+    
     this.canopusPrediction = canopusPrediction;
     return this;
   }
@@ -516,10 +528,6 @@ public class FormulaCandidate {
     this.canopusPrediction = canopusPrediction;
   }
 
-
-  /**
-   * Return true if this FormulaCandidate object is equal to o.
-   */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -587,123 +595,5 @@ public class FormulaCandidate {
     return o.toString().replace("\n", "\n    ");
   }
 
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @return URL query string
-   */
-  public String toUrlQueryString() {
-    return toUrlQueryString(null);
-  }
-
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @param prefix prefix of the query string
-   * @return URL query string
-   */
-  public String toUrlQueryString(String prefix) {
-    String suffix = "";
-    String containerSuffix = "";
-    String containerPrefix = "";
-    if (prefix == null) {
-      // style=form, explode=true, e.g. /pet?name=cat&type=manx
-      prefix = "";
-    } else {
-      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
-      prefix = prefix + "[";
-      suffix = "]";
-      containerSuffix = "]";
-      containerPrefix = "[";
-    }
-
-    StringJoiner joiner = new StringJoiner("&");
-
-    // add `formulaId` to the URL query string
-    if (getFormulaId() != null) {
-      joiner.add(String.format("%sformulaId%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getFormulaId()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `molecularFormula` to the URL query string
-    if (getMolecularFormula() != null) {
-      joiner.add(String.format("%smolecularFormula%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getMolecularFormula()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `adduct` to the URL query string
-    if (getAdduct() != null) {
-      joiner.add(String.format("%sadduct%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getAdduct()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `siriusScore` to the URL query string
-    if (getSiriusScore() != null) {
-      joiner.add(String.format("%ssiriusScore%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getSiriusScore()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `isotopeScore` to the URL query string
-    if (getIsotopeScore() != null) {
-      joiner.add(String.format("%sisotopeScore%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getIsotopeScore()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `treeScore` to the URL query string
-    if (getTreeScore() != null) {
-      joiner.add(String.format("%streeScore%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getTreeScore()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `zodiacScore` to the URL query string
-    if (getZodiacScore() != null) {
-      joiner.add(String.format("%szodiacScore%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getZodiacScore()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `numOfExplainedPeaks` to the URL query string
-    if (getNumOfExplainedPeaks() != null) {
-      joiner.add(String.format("%snumOfExplainedPeaks%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getNumOfExplainedPeaks()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `numOfExplainablePeaks` to the URL query string
-    if (getNumOfExplainablePeaks() != null) {
-      joiner.add(String.format("%snumOfExplainablePeaks%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getNumOfExplainablePeaks()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `totalExplainedIntensity` to the URL query string
-    if (getTotalExplainedIntensity() != null) {
-      joiner.add(String.format("%stotalExplainedIntensity%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getTotalExplainedIntensity()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `medianMassDeviation` to the URL query string
-    if (getMedianMassDeviation() != null) {
-      joiner.add(getMedianMassDeviation().toUrlQueryString(prefix + "medianMassDeviation" + suffix));
-    }
-
-    // add `fragmentationTree` to the URL query string
-    if (getFragmentationTree() != null) {
-      joiner.add(getFragmentationTree().toUrlQueryString(prefix + "fragmentationTree" + suffix));
-    }
-
-    // add `simulatedIsotopePattern` to the URL query string
-    if (getSimulatedIsotopePattern() != null) {
-      joiner.add(getSimulatedIsotopePattern().toUrlQueryString(prefix + "simulatedIsotopePattern" + suffix));
-    }
-
-    // add `predictedFingerprint` to the URL query string
-    if (getPredictedFingerprint() != null) {
-      for (int i = 0; i < getPredictedFingerprint().size(); i++) {
-        joiner.add(String.format("%spredictedFingerprint%s%s=%s", prefix, suffix,
-            "".equals(suffix) ? "" : String.format("%s%d%s", containerPrefix, i, containerSuffix),
-            URLEncoder.encode(String.valueOf(getPredictedFingerprint().get(i)), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-      }
-    }
-
-    // add `compoundClasses` to the URL query string
-    if (getCompoundClasses() != null) {
-      joiner.add(getCompoundClasses().toUrlQueryString(prefix + "compoundClasses" + suffix));
-    }
-
-    // add `canopusPrediction` to the URL query string
-    if (getCanopusPrediction() != null) {
-      joiner.add(getCanopusPrediction().toUrlQueryString(prefix + "canopusPrediction" + suffix));
-    }
-
-    return joiner.toString();
-  }
 }
 

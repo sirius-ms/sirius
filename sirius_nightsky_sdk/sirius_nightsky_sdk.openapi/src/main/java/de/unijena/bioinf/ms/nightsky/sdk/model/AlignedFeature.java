@@ -13,12 +13,8 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.StringJoiner;
 import java.util.Objects;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -26,9 +22,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FeatureAnnotations;
 import de.unijena.bioinf.ms.nightsky.sdk.model.MsData;
-import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * The AlignedFeature contains the ID of a featured (aligned over runs) together with some read-only information  that might be displayed in some summary view.
@@ -81,10 +76,11 @@ public class AlignedFeature {
   public static final String JSON_PROPERTY_COMPUTING = "computing";
   private Boolean computing;
 
-  public AlignedFeature() { 
+  public AlignedFeature() {
   }
 
   public AlignedFeature alignedFeatureId(String alignedFeatureId) {
+    
     this.alignedFeatureId = alignedFeatureId;
     return this;
   }
@@ -110,6 +106,7 @@ public class AlignedFeature {
 
 
   public AlignedFeature name(String name) {
+    
     this.name = name;
     return this;
   }
@@ -135,6 +132,7 @@ public class AlignedFeature {
 
 
   public AlignedFeature index(Long index) {
+    
     this.index = index;
     return this;
   }
@@ -160,6 +158,7 @@ public class AlignedFeature {
 
 
   public AlignedFeature ionMass(Double ionMass) {
+    
     this.ionMass = ionMass;
     return this;
   }
@@ -185,6 +184,7 @@ public class AlignedFeature {
 
 
   public AlignedFeature ionType(String ionType) {
+    
     this.ionType = ionType;
     return this;
   }
@@ -210,6 +210,7 @@ public class AlignedFeature {
 
 
   public AlignedFeature rtStartSeconds(Double rtStartSeconds) {
+    
     this.rtStartSeconds = rtStartSeconds;
     return this;
   }
@@ -235,6 +236,7 @@ public class AlignedFeature {
 
 
   public AlignedFeature rtEndSeconds(Double rtEndSeconds) {
+    
     this.rtEndSeconds = rtEndSeconds;
     return this;
   }
@@ -260,6 +262,7 @@ public class AlignedFeature {
 
 
   public AlignedFeature msData(MsData msData) {
+    
     this.msData = msData;
     return this;
   }
@@ -285,6 +288,7 @@ public class AlignedFeature {
 
 
   public AlignedFeature topAnnotations(FeatureAnnotations topAnnotations) {
+    
     this.topAnnotations = topAnnotations;
     return this;
   }
@@ -310,6 +314,7 @@ public class AlignedFeature {
 
 
   public AlignedFeature topAnnotationsDeNovo(FeatureAnnotations topAnnotationsDeNovo) {
+    
     this.topAnnotationsDeNovo = topAnnotationsDeNovo;
     return this;
   }
@@ -335,6 +340,7 @@ public class AlignedFeature {
 
 
   public AlignedFeature computing(Boolean computing) {
+    
     this.computing = computing;
     return this;
   }
@@ -358,10 +364,6 @@ public class AlignedFeature {
     this.computing = computing;
   }
 
-
-  /**
-   * Return true if this AlignedFeature object is equal to o.
-   */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -419,94 +421,5 @@ public class AlignedFeature {
     return o.toString().replace("\n", "\n    ");
   }
 
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @return URL query string
-   */
-  public String toUrlQueryString() {
-    return toUrlQueryString(null);
-  }
-
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @param prefix prefix of the query string
-   * @return URL query string
-   */
-  public String toUrlQueryString(String prefix) {
-    String suffix = "";
-    String containerSuffix = "";
-    String containerPrefix = "";
-    if (prefix == null) {
-      // style=form, explode=true, e.g. /pet?name=cat&type=manx
-      prefix = "";
-    } else {
-      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
-      prefix = prefix + "[";
-      suffix = "]";
-      containerSuffix = "]";
-      containerPrefix = "[";
-    }
-
-    StringJoiner joiner = new StringJoiner("&");
-
-    // add `alignedFeatureId` to the URL query string
-    if (getAlignedFeatureId() != null) {
-      joiner.add(String.format("%salignedFeatureId%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getAlignedFeatureId()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `name` to the URL query string
-    if (getName() != null) {
-      joiner.add(String.format("%sname%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getName()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `index` to the URL query string
-    if (getIndex() != null) {
-      joiner.add(String.format("%sindex%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getIndex()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `ionMass` to the URL query string
-    if (getIonMass() != null) {
-      joiner.add(String.format("%sionMass%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getIonMass()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `ionType` to the URL query string
-    if (getIonType() != null) {
-      joiner.add(String.format("%sionType%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getIonType()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `rtStartSeconds` to the URL query string
-    if (getRtStartSeconds() != null) {
-      joiner.add(String.format("%srtStartSeconds%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getRtStartSeconds()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `rtEndSeconds` to the URL query string
-    if (getRtEndSeconds() != null) {
-      joiner.add(String.format("%srtEndSeconds%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getRtEndSeconds()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `msData` to the URL query string
-    if (getMsData() != null) {
-      joiner.add(getMsData().toUrlQueryString(prefix + "msData" + suffix));
-    }
-
-    // add `topAnnotations` to the URL query string
-    if (getTopAnnotations() != null) {
-      joiner.add(getTopAnnotations().toUrlQueryString(prefix + "topAnnotations" + suffix));
-    }
-
-    // add `topAnnotationsDeNovo` to the URL query string
-    if (getTopAnnotationsDeNovo() != null) {
-      joiner.add(getTopAnnotationsDeNovo().toUrlQueryString(prefix + "topAnnotationsDeNovo" + suffix));
-    }
-
-    // add `computing` to the URL query string
-    if (isComputing() != null) {
-      joiner.add(String.format("%scomputing%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isComputing()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    return joiner.toString();
-  }
 }
 

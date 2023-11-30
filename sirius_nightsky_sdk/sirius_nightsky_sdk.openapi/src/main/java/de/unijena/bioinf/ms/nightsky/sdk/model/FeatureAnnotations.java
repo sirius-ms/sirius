@@ -13,12 +13,8 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.StringJoiner;
 import java.util.Objects;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -27,9 +23,8 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import de.unijena.bioinf.ms.nightsky.sdk.model.CompoundClasses;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FormulaCandidate;
 import de.unijena.bioinf.ms.nightsky.sdk.model.StructureCandidateScored;
-import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * Summary of the results of a feature (aligned over runs). Can be added to a AlignedFeature.  The different annotation fields within this summary object are null if the corresponding  feature does not contain the represented results. If fields are non-null  the corresponding result has been computed but might still be empty.
@@ -50,10 +45,11 @@ public class FeatureAnnotations {
   public static final String JSON_PROPERTY_COMPOUND_CLASS_ANNOTATION = "compoundClassAnnotation";
   private CompoundClasses compoundClassAnnotation;
 
-  public FeatureAnnotations() { 
+  public FeatureAnnotations() {
   }
 
   public FeatureAnnotations formulaAnnotation(FormulaCandidate formulaAnnotation) {
+    
     this.formulaAnnotation = formulaAnnotation;
     return this;
   }
@@ -79,6 +75,7 @@ public class FeatureAnnotations {
 
 
   public FeatureAnnotations structureAnnotation(StructureCandidateScored structureAnnotation) {
+    
     this.structureAnnotation = structureAnnotation;
     return this;
   }
@@ -104,6 +101,7 @@ public class FeatureAnnotations {
 
 
   public FeatureAnnotations compoundClassAnnotation(CompoundClasses compoundClassAnnotation) {
+    
     this.compoundClassAnnotation = compoundClassAnnotation;
     return this;
   }
@@ -127,10 +125,6 @@ public class FeatureAnnotations {
     this.compoundClassAnnotation = compoundClassAnnotation;
   }
 
-
-  /**
-   * Return true if this FeatureAnnotations object is equal to o.
-   */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -172,54 +166,5 @@ public class FeatureAnnotations {
     return o.toString().replace("\n", "\n    ");
   }
 
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @return URL query string
-   */
-  public String toUrlQueryString() {
-    return toUrlQueryString(null);
-  }
-
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @param prefix prefix of the query string
-   * @return URL query string
-   */
-  public String toUrlQueryString(String prefix) {
-    String suffix = "";
-    String containerSuffix = "";
-    String containerPrefix = "";
-    if (prefix == null) {
-      // style=form, explode=true, e.g. /pet?name=cat&type=manx
-      prefix = "";
-    } else {
-      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
-      prefix = prefix + "[";
-      suffix = "]";
-      containerSuffix = "]";
-      containerPrefix = "[";
-    }
-
-    StringJoiner joiner = new StringJoiner("&");
-
-    // add `formulaAnnotation` to the URL query string
-    if (getFormulaAnnotation() != null) {
-      joiner.add(getFormulaAnnotation().toUrlQueryString(prefix + "formulaAnnotation" + suffix));
-    }
-
-    // add `structureAnnotation` to the URL query string
-    if (getStructureAnnotation() != null) {
-      joiner.add(getStructureAnnotation().toUrlQueryString(prefix + "structureAnnotation" + suffix));
-    }
-
-    // add `compoundClassAnnotation` to the URL query string
-    if (getCompoundClassAnnotation() != null) {
-      joiner.add(getCompoundClassAnnotation().toUrlQueryString(prefix + "compoundClassAnnotation" + suffix));
-    }
-
-    return joiner.toString();
-  }
 }
 

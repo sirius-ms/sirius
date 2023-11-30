@@ -13,12 +13,8 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.StringJoiner;
 import java.util.Objects;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -29,7 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * Container class that holds the most likely compound class for different levels of each ontology for a  certain Compound/Feature/FormulaCandidate/PredictedFingerprint.
@@ -58,10 +54,11 @@ public class CompoundClasses {
   public static final String JSON_PROPERTY_CLASSY_FIRE_ALTERNATIVES = "classyFireAlternatives";
   private List<CompoundClass> classyFireAlternatives;
 
-  public CompoundClasses() { 
+  public CompoundClasses() {
   }
 
   public CompoundClasses npcPathway(CompoundClass npcPathway) {
+    
     this.npcPathway = npcPathway;
     return this;
   }
@@ -87,6 +84,7 @@ public class CompoundClasses {
 
 
   public CompoundClasses npcSuperclass(CompoundClass npcSuperclass) {
+    
     this.npcSuperclass = npcSuperclass;
     return this;
   }
@@ -112,6 +110,7 @@ public class CompoundClasses {
 
 
   public CompoundClasses npcClass(CompoundClass npcClass) {
+    
     this.npcClass = npcClass;
     return this;
   }
@@ -137,6 +136,7 @@ public class CompoundClasses {
 
 
   public CompoundClasses classyFireLineage(List<CompoundClass> classyFireLineage) {
+    
     this.classyFireLineage = classyFireLineage;
     return this;
   }
@@ -170,6 +170,7 @@ public class CompoundClasses {
 
 
   public CompoundClasses classyFireAlternatives(List<CompoundClass> classyFireAlternatives) {
+    
     this.classyFireAlternatives = classyFireAlternatives;
     return this;
   }
@@ -201,10 +202,6 @@ public class CompoundClasses {
     this.classyFireAlternatives = classyFireAlternatives;
   }
 
-
-  /**
-   * Return true if this CompoundClasses object is equal to o.
-   */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -250,74 +247,5 @@ public class CompoundClasses {
     return o.toString().replace("\n", "\n    ");
   }
 
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @return URL query string
-   */
-  public String toUrlQueryString() {
-    return toUrlQueryString(null);
-  }
-
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @param prefix prefix of the query string
-   * @return URL query string
-   */
-  public String toUrlQueryString(String prefix) {
-    String suffix = "";
-    String containerSuffix = "";
-    String containerPrefix = "";
-    if (prefix == null) {
-      // style=form, explode=true, e.g. /pet?name=cat&type=manx
-      prefix = "";
-    } else {
-      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
-      prefix = prefix + "[";
-      suffix = "]";
-      containerSuffix = "]";
-      containerPrefix = "[";
-    }
-
-    StringJoiner joiner = new StringJoiner("&");
-
-    // add `npcPathway` to the URL query string
-    if (getNpcPathway() != null) {
-      joiner.add(getNpcPathway().toUrlQueryString(prefix + "npcPathway" + suffix));
-    }
-
-    // add `npcSuperclass` to the URL query string
-    if (getNpcSuperclass() != null) {
-      joiner.add(getNpcSuperclass().toUrlQueryString(prefix + "npcSuperclass" + suffix));
-    }
-
-    // add `npcClass` to the URL query string
-    if (getNpcClass() != null) {
-      joiner.add(getNpcClass().toUrlQueryString(prefix + "npcClass" + suffix));
-    }
-
-    // add `classyFireLineage` to the URL query string
-    if (getClassyFireLineage() != null) {
-      for (int i = 0; i < getClassyFireLineage().size(); i++) {
-        if (getClassyFireLineage().get(i) != null) {
-          joiner.add(getClassyFireLineage().get(i).toUrlQueryString(String.format("%sclassyFireLineage%s%s", prefix, suffix,
-          "".equals(suffix) ? "" : String.format("%s%d%s", containerPrefix, i, containerSuffix))));
-        }
-      }
-    }
-
-    // add `classyFireAlternatives` to the URL query string
-    if (getClassyFireAlternatives() != null) {
-      for (int i = 0; i < getClassyFireAlternatives().size(); i++) {
-        if (getClassyFireAlternatives().get(i) != null) {
-          joiner.add(getClassyFireAlternatives().get(i).toUrlQueryString(String.format("%sclassyFireAlternatives%s%s", prefix, suffix,
-          "".equals(suffix) ? "" : String.format("%s%d%s", containerPrefix, i, containerSuffix))));
-        }
-      }
-    }
-
-    return joiner.toString();
-  }
 }
 

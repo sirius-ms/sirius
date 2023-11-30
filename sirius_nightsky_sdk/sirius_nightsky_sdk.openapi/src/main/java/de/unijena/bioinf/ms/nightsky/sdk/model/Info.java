@@ -13,20 +13,15 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.StringJoiner;
 import java.util.Objects;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * 
@@ -63,10 +58,11 @@ public class Info {
   public static final String JSON_PROPERTY_FINGERPRINT_ID = "fingerprintId";
   private String fingerprintId;
 
-  public Info() { 
+  public Info() {
   }
 
   public Info nightSkyApiVersion(String nightSkyApiVersion) {
+    
     this.nightSkyApiVersion = nightSkyApiVersion;
     return this;
   }
@@ -92,6 +88,7 @@ public class Info {
 
 
   public Info siriusVersion(String siriusVersion) {
+    
     this.siriusVersion = siriusVersion;
     return this;
   }
@@ -117,6 +114,7 @@ public class Info {
 
 
   public Info siriusLibVersion(String siriusLibVersion) {
+    
     this.siriusLibVersion = siriusLibVersion;
     return this;
   }
@@ -142,6 +140,7 @@ public class Info {
 
 
   public Info fingerIdLibVersion(String fingerIdLibVersion) {
+    
     this.fingerIdLibVersion = fingerIdLibVersion;
     return this;
   }
@@ -167,6 +166,7 @@ public class Info {
 
 
   public Info chemDbVersion(String chemDbVersion) {
+    
     this.chemDbVersion = chemDbVersion;
     return this;
   }
@@ -192,6 +192,7 @@ public class Info {
 
 
   public Info fingerIdModelVersion(String fingerIdModelVersion) {
+    
     this.fingerIdModelVersion = fingerIdModelVersion;
     return this;
   }
@@ -217,6 +218,7 @@ public class Info {
 
 
   public Info fingerprintId(String fingerprintId) {
+    
     this.fingerprintId = fingerprintId;
     return this;
   }
@@ -240,10 +242,6 @@ public class Info {
     this.fingerprintId = fingerprintId;
   }
 
-
-  /**
-   * Return true if this Info object is equal to o.
-   */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -293,74 +291,5 @@ public class Info {
     return o.toString().replace("\n", "\n    ");
   }
 
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @return URL query string
-   */
-  public String toUrlQueryString() {
-    return toUrlQueryString(null);
-  }
-
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @param prefix prefix of the query string
-   * @return URL query string
-   */
-  public String toUrlQueryString(String prefix) {
-    String suffix = "";
-    String containerSuffix = "";
-    String containerPrefix = "";
-    if (prefix == null) {
-      // style=form, explode=true, e.g. /pet?name=cat&type=manx
-      prefix = "";
-    } else {
-      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
-      prefix = prefix + "[";
-      suffix = "]";
-      containerSuffix = "]";
-      containerPrefix = "[";
-    }
-
-    StringJoiner joiner = new StringJoiner("&");
-
-    // add `nightSkyApiVersion` to the URL query string
-    if (getNightSkyApiVersion() != null) {
-      joiner.add(String.format("%snightSkyApiVersion%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getNightSkyApiVersion()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `siriusVersion` to the URL query string
-    if (getSiriusVersion() != null) {
-      joiner.add(String.format("%ssiriusVersion%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getSiriusVersion()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `siriusLibVersion` to the URL query string
-    if (getSiriusLibVersion() != null) {
-      joiner.add(String.format("%ssiriusLibVersion%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getSiriusLibVersion()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `fingerIdLibVersion` to the URL query string
-    if (getFingerIdLibVersion() != null) {
-      joiner.add(String.format("%sfingerIdLibVersion%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getFingerIdLibVersion()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `chemDbVersion` to the URL query string
-    if (getChemDbVersion() != null) {
-      joiner.add(String.format("%schemDbVersion%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getChemDbVersion()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `fingerIdModelVersion` to the URL query string
-    if (getFingerIdModelVersion() != null) {
-      joiner.add(String.format("%sfingerIdModelVersion%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getFingerIdModelVersion()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `fingerprintId` to the URL query string
-    if (getFingerprintId() != null) {
-      joiner.add(String.format("%sfingerprintId%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getFingerprintId()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    return joiner.toString();
-  }
 }
 

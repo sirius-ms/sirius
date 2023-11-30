@@ -13,12 +13,8 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.StringJoiner;
 import java.util.Objects;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -29,7 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * Container class that holds the CANOPUS compound class predictions for alle predictable compound classes.  This is the full CANOPUS result.
@@ -46,10 +42,11 @@ public class CanopusPrediction {
   public static final String JSON_PROPERTY_NPC_CLASSES = "npcClasses";
   private List<CompoundClass> npcClasses;
 
-  public CanopusPrediction() { 
+  public CanopusPrediction() {
   }
 
   public CanopusPrediction classyFireClasses(List<CompoundClass> classyFireClasses) {
+    
     this.classyFireClasses = classyFireClasses;
     return this;
   }
@@ -83,6 +80,7 @@ public class CanopusPrediction {
 
 
   public CanopusPrediction npcClasses(List<CompoundClass> npcClasses) {
+    
     this.npcClasses = npcClasses;
     return this;
   }
@@ -114,10 +112,6 @@ public class CanopusPrediction {
     this.npcClasses = npcClasses;
   }
 
-
-  /**
-   * Return true if this CanopusPrediction object is equal to o.
-   */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -157,59 +151,5 @@ public class CanopusPrediction {
     return o.toString().replace("\n", "\n    ");
   }
 
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @return URL query string
-   */
-  public String toUrlQueryString() {
-    return toUrlQueryString(null);
-  }
-
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @param prefix prefix of the query string
-   * @return URL query string
-   */
-  public String toUrlQueryString(String prefix) {
-    String suffix = "";
-    String containerSuffix = "";
-    String containerPrefix = "";
-    if (prefix == null) {
-      // style=form, explode=true, e.g. /pet?name=cat&type=manx
-      prefix = "";
-    } else {
-      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
-      prefix = prefix + "[";
-      suffix = "]";
-      containerSuffix = "]";
-      containerPrefix = "[";
-    }
-
-    StringJoiner joiner = new StringJoiner("&");
-
-    // add `classyFireClasses` to the URL query string
-    if (getClassyFireClasses() != null) {
-      for (int i = 0; i < getClassyFireClasses().size(); i++) {
-        if (getClassyFireClasses().get(i) != null) {
-          joiner.add(getClassyFireClasses().get(i).toUrlQueryString(String.format("%sclassyFireClasses%s%s", prefix, suffix,
-          "".equals(suffix) ? "" : String.format("%s%d%s", containerPrefix, i, containerSuffix))));
-        }
-      }
-    }
-
-    // add `npcClasses` to the URL query string
-    if (getNpcClasses() != null) {
-      for (int i = 0; i < getNpcClasses().size(); i++) {
-        if (getNpcClasses().get(i) != null) {
-          joiner.add(getNpcClasses().get(i).toUrlQueryString(String.format("%snpcClasses%s%s", prefix, suffix,
-          "".equals(suffix) ? "" : String.format("%s%d%s", containerPrefix, i, containerSuffix))));
-        }
-      }
-    }
-
-    return joiner.toString();
-  }
 }
 

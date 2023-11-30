@@ -13,21 +13,16 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.StringJoiner;
 import java.util.Objects;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FragmentNode;
-import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * 
@@ -52,10 +47,11 @@ public class LossEdge {
   public static final String JSON_PROPERTY_SCORE = "score";
   private Double score;
 
-  public LossEdge() { 
+  public LossEdge() {
   }
 
   public LossEdge sourceFragment(FragmentNode sourceFragment) {
+    
     this.sourceFragment = sourceFragment;
     return this;
   }
@@ -81,6 +77,7 @@ public class LossEdge {
 
 
   public LossEdge targetFragment(FragmentNode targetFragment) {
+    
     this.targetFragment = targetFragment;
     return this;
   }
@@ -106,6 +103,7 @@ public class LossEdge {
 
 
   public LossEdge molecularFormula(String molecularFormula) {
+    
     this.molecularFormula = molecularFormula;
     return this;
   }
@@ -131,6 +129,7 @@ public class LossEdge {
 
 
   public LossEdge score(Double score) {
+    
     this.score = score;
     return this;
   }
@@ -154,10 +153,6 @@ public class LossEdge {
     this.score = score;
   }
 
-
-  /**
-   * Return true if this LossEdge object is equal to o.
-   */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -201,59 +196,5 @@ public class LossEdge {
     return o.toString().replace("\n", "\n    ");
   }
 
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @return URL query string
-   */
-  public String toUrlQueryString() {
-    return toUrlQueryString(null);
-  }
-
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @param prefix prefix of the query string
-   * @return URL query string
-   */
-  public String toUrlQueryString(String prefix) {
-    String suffix = "";
-    String containerSuffix = "";
-    String containerPrefix = "";
-    if (prefix == null) {
-      // style=form, explode=true, e.g. /pet?name=cat&type=manx
-      prefix = "";
-    } else {
-      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
-      prefix = prefix + "[";
-      suffix = "]";
-      containerSuffix = "]";
-      containerPrefix = "[";
-    }
-
-    StringJoiner joiner = new StringJoiner("&");
-
-    // add `sourceFragment` to the URL query string
-    if (getSourceFragment() != null) {
-      joiner.add(getSourceFragment().toUrlQueryString(prefix + "sourceFragment" + suffix));
-    }
-
-    // add `targetFragment` to the URL query string
-    if (getTargetFragment() != null) {
-      joiner.add(getTargetFragment().toUrlQueryString(prefix + "targetFragment" + suffix));
-    }
-
-    // add `molecularFormula` to the URL query string
-    if (getMolecularFormula() != null) {
-      joiner.add(String.format("%smolecularFormula%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getMolecularFormula()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `score` to the URL query string
-    if (getScore() != null) {
-      joiner.add(String.format("%sscore%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getScore()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    return joiner.toString();
-  }
 }
 

@@ -13,12 +13,8 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.StringJoiner;
 import java.util.Objects;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -29,7 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * Identifier created by the SIRIUS Nightsky API for a newly created Job.  Object can be enriched with Job status/progress information ({@link JobProgress JobProgress}) and/or Job command information.
@@ -58,10 +54,11 @@ public class Job {
   public static final String JSON_PROPERTY_AFFECTED_ALIGNED_FEATURE_IDS = "affectedAlignedFeatureIds";
   private List<String> affectedAlignedFeatureIds;
 
-  public Job() { 
+  public Job() {
   }
 
   public Job id(String id) {
+    
     this.id = id;
     return this;
   }
@@ -87,6 +84,7 @@ public class Job {
 
 
   public Job command(String command) {
+    
     this.command = command;
     return this;
   }
@@ -112,6 +110,7 @@ public class Job {
 
 
   public Job progress(JobProgress progress) {
+    
     this.progress = progress;
     return this;
   }
@@ -137,6 +136,7 @@ public class Job {
 
 
   public Job affectedCompoundIds(List<String> affectedCompoundIds) {
+    
     this.affectedCompoundIds = affectedCompoundIds;
     return this;
   }
@@ -170,6 +170,7 @@ public class Job {
 
 
   public Job affectedAlignedFeatureIds(List<String> affectedAlignedFeatureIds) {
+    
     this.affectedAlignedFeatureIds = affectedAlignedFeatureIds;
     return this;
   }
@@ -201,10 +202,6 @@ public class Job {
     this.affectedAlignedFeatureIds = affectedAlignedFeatureIds;
   }
 
-
-  /**
-   * Return true if this Job object is equal to o.
-   */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -250,72 +247,5 @@ public class Job {
     return o.toString().replace("\n", "\n    ");
   }
 
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @return URL query string
-   */
-  public String toUrlQueryString() {
-    return toUrlQueryString(null);
-  }
-
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @param prefix prefix of the query string
-   * @return URL query string
-   */
-  public String toUrlQueryString(String prefix) {
-    String suffix = "";
-    String containerSuffix = "";
-    String containerPrefix = "";
-    if (prefix == null) {
-      // style=form, explode=true, e.g. /pet?name=cat&type=manx
-      prefix = "";
-    } else {
-      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
-      prefix = prefix + "[";
-      suffix = "]";
-      containerSuffix = "]";
-      containerPrefix = "[";
-    }
-
-    StringJoiner joiner = new StringJoiner("&");
-
-    // add `id` to the URL query string
-    if (getId() != null) {
-      joiner.add(String.format("%sid%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getId()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `command` to the URL query string
-    if (getCommand() != null) {
-      joiner.add(String.format("%scommand%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getCommand()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `progress` to the URL query string
-    if (getProgress() != null) {
-      joiner.add(getProgress().toUrlQueryString(prefix + "progress" + suffix));
-    }
-
-    // add `affectedCompoundIds` to the URL query string
-    if (getAffectedCompoundIds() != null) {
-      for (int i = 0; i < getAffectedCompoundIds().size(); i++) {
-        joiner.add(String.format("%saffectedCompoundIds%s%s=%s", prefix, suffix,
-            "".equals(suffix) ? "" : String.format("%s%d%s", containerPrefix, i, containerSuffix),
-            URLEncoder.encode(String.valueOf(getAffectedCompoundIds().get(i)), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-      }
-    }
-
-    // add `affectedAlignedFeatureIds` to the URL query string
-    if (getAffectedAlignedFeatureIds() != null) {
-      for (int i = 0; i < getAffectedAlignedFeatureIds().size(); i++) {
-        joiner.add(String.format("%saffectedAlignedFeatureIds%s%s=%s", prefix, suffix,
-            "".equals(suffix) ? "" : String.format("%s%d%s", containerPrefix, i, containerSuffix),
-            URLEncoder.encode(String.valueOf(getAffectedAlignedFeatureIds().get(i)), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-      }
-    }
-
-    return joiner.toString();
-  }
 }
 

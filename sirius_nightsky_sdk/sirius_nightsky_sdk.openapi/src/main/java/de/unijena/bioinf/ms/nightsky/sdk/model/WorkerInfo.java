@@ -13,12 +13,8 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.StringJoiner;
 import java.util.Objects;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -28,7 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * 
@@ -149,10 +145,11 @@ public class WorkerInfo {
   public static final String JSON_PROPERTY_SERVER_TIME = "serverTime";
   private Long serverTime;
 
-  public WorkerInfo() { 
+  public WorkerInfo() {
   }
 
   public WorkerInfo id(Long id) {
+    
     this.id = id;
     return this;
   }
@@ -178,6 +175,7 @@ public class WorkerInfo {
 
 
   public WorkerInfo type(TypeEnum type) {
+    
     this.type = type;
     return this;
   }
@@ -203,6 +201,7 @@ public class WorkerInfo {
 
 
   public WorkerInfo supportedPredictors(List<SupportedPredictorsEnum> supportedPredictors) {
+    
     this.supportedPredictors = supportedPredictors;
     return this;
   }
@@ -236,6 +235,7 @@ public class WorkerInfo {
 
 
   public WorkerInfo version(String version) {
+    
     this.version = version;
     return this;
   }
@@ -261,6 +261,7 @@ public class WorkerInfo {
 
 
   public WorkerInfo host(String host) {
+    
     this.host = host;
     return this;
   }
@@ -286,6 +287,7 @@ public class WorkerInfo {
 
 
   public WorkerInfo prefix(String prefix) {
+    
     this.prefix = prefix;
     return this;
   }
@@ -311,6 +313,7 @@ public class WorkerInfo {
 
 
   public WorkerInfo state(Integer state) {
+    
     this.state = state;
     return this;
   }
@@ -336,6 +339,7 @@ public class WorkerInfo {
 
 
   public WorkerInfo alive(Long alive) {
+    
     this.alive = alive;
     return this;
   }
@@ -361,6 +365,7 @@ public class WorkerInfo {
 
 
   public WorkerInfo serverTime(Long serverTime) {
+    
     this.serverTime = serverTime;
     return this;
   }
@@ -384,10 +389,6 @@ public class WorkerInfo {
     this.serverTime = serverTime;
   }
 
-
-  /**
-   * Return true if this WorkerInfo object is equal to o.
-   */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -441,88 +442,5 @@ public class WorkerInfo {
     return o.toString().replace("\n", "\n    ");
   }
 
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @return URL query string
-   */
-  public String toUrlQueryString() {
-    return toUrlQueryString(null);
-  }
-
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @param prefix prefix of the query string
-   * @return URL query string
-   */
-  public String toUrlQueryString(String prefix) {
-    String suffix = "";
-    String containerSuffix = "";
-    String containerPrefix = "";
-    if (prefix == null) {
-      // style=form, explode=true, e.g. /pet?name=cat&type=manx
-      prefix = "";
-    } else {
-      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
-      prefix = prefix + "[";
-      suffix = "]";
-      containerSuffix = "]";
-      containerPrefix = "[";
-    }
-
-    StringJoiner joiner = new StringJoiner("&");
-
-    // add `id` to the URL query string
-    if (getId() != null) {
-      joiner.add(String.format("%sid%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getId()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `type` to the URL query string
-    if (getType() != null) {
-      joiner.add(String.format("%stype%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getType()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `supportedPredictors` to the URL query string
-    if (getSupportedPredictors() != null) {
-      for (int i = 0; i < getSupportedPredictors().size(); i++) {
-        joiner.add(String.format("%ssupportedPredictors%s%s=%s", prefix, suffix,
-            "".equals(suffix) ? "" : String.format("%s%d%s", containerPrefix, i, containerSuffix),
-            URLEncoder.encode(String.valueOf(getSupportedPredictors().get(i)), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-      }
-    }
-
-    // add `version` to the URL query string
-    if (getVersion() != null) {
-      joiner.add(String.format("%sversion%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getVersion()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `host` to the URL query string
-    if (getHost() != null) {
-      joiner.add(String.format("%shost%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getHost()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `prefix` to the URL query string
-    if (getPrefix() != null) {
-      joiner.add(String.format("%sprefix%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getPrefix()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `state` to the URL query string
-    if (getState() != null) {
-      joiner.add(String.format("%sstate%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getState()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `alive` to the URL query string
-    if (getAlive() != null) {
-      joiner.add(String.format("%salive%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getAlive()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `serverTime` to the URL query string
-    if (getServerTime() != null) {
-      joiner.add(String.format("%sserverTime%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getServerTime()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    return joiner.toString();
-  }
 }
 

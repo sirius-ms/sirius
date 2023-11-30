@@ -13,21 +13,16 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.StringJoiner;
 import java.util.Objects;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import de.unijena.bioinf.ms.nightsky.sdk.model.SortObject;
-import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * PageableObject
@@ -60,10 +55,11 @@ public class PageableObject {
   public static final String JSON_PROPERTY_UNPAGED = "unpaged";
   private Boolean unpaged;
 
-  public PageableObject() { 
+  public PageableObject() {
   }
 
   public PageableObject sort(SortObject sort) {
+    
     this.sort = sort;
     return this;
   }
@@ -89,6 +85,7 @@ public class PageableObject {
 
 
   public PageableObject offset(Long offset) {
+    
     this.offset = offset;
     return this;
   }
@@ -114,6 +111,7 @@ public class PageableObject {
 
 
   public PageableObject pageNumber(Integer pageNumber) {
+    
     this.pageNumber = pageNumber;
     return this;
   }
@@ -139,6 +137,7 @@ public class PageableObject {
 
 
   public PageableObject pageSize(Integer pageSize) {
+    
     this.pageSize = pageSize;
     return this;
   }
@@ -164,6 +163,7 @@ public class PageableObject {
 
 
   public PageableObject paged(Boolean paged) {
+    
     this.paged = paged;
     return this;
   }
@@ -189,6 +189,7 @@ public class PageableObject {
 
 
   public PageableObject unpaged(Boolean unpaged) {
+    
     this.unpaged = unpaged;
     return this;
   }
@@ -212,10 +213,6 @@ public class PageableObject {
     this.unpaged = unpaged;
   }
 
-
-  /**
-   * Return true if this PageableObject object is equal to o.
-   */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -263,69 +260,5 @@ public class PageableObject {
     return o.toString().replace("\n", "\n    ");
   }
 
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @return URL query string
-   */
-  public String toUrlQueryString() {
-    return toUrlQueryString(null);
-  }
-
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @param prefix prefix of the query string
-   * @return URL query string
-   */
-  public String toUrlQueryString(String prefix) {
-    String suffix = "";
-    String containerSuffix = "";
-    String containerPrefix = "";
-    if (prefix == null) {
-      // style=form, explode=true, e.g. /pet?name=cat&type=manx
-      prefix = "";
-    } else {
-      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
-      prefix = prefix + "[";
-      suffix = "]";
-      containerSuffix = "]";
-      containerPrefix = "[";
-    }
-
-    StringJoiner joiner = new StringJoiner("&");
-
-    // add `sort` to the URL query string
-    if (getSort() != null) {
-      joiner.add(getSort().toUrlQueryString(prefix + "sort" + suffix));
-    }
-
-    // add `offset` to the URL query string
-    if (getOffset() != null) {
-      joiner.add(String.format("%soffset%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getOffset()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `pageNumber` to the URL query string
-    if (getPageNumber() != null) {
-      joiner.add(String.format("%spageNumber%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getPageNumber()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `pageSize` to the URL query string
-    if (getPageSize() != null) {
-      joiner.add(String.format("%spageSize%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getPageSize()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `paged` to the URL query string
-    if (isPaged() != null) {
-      joiner.add(String.format("%spaged%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isPaged()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `unpaged` to the URL query string
-    if (isUnpaged() != null) {
-      joiner.add(String.format("%sunpaged%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isUnpaged()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    return joiner.toString();
-  }
 }
 

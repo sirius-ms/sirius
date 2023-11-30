@@ -13,12 +13,8 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.StringJoiner;
 import java.util.Objects;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -30,7 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * 
@@ -83,10 +79,11 @@ public class StructureCandidateScored {
   public static final String JSON_PROPERTY_FINGERPRINT = "fingerprint";
   private BinaryFingerprint fingerprint;
 
-  public StructureCandidateScored() { 
+  public StructureCandidateScored() {
   }
 
   public StructureCandidateScored inchiKey(String inchiKey) {
+    
     this.inchiKey = inchiKey;
     return this;
   }
@@ -112,6 +109,7 @@ public class StructureCandidateScored {
 
 
   public StructureCandidateScored smiles(String smiles) {
+    
     this.smiles = smiles;
     return this;
   }
@@ -137,6 +135,7 @@ public class StructureCandidateScored {
 
 
   public StructureCandidateScored structureName(String structureName) {
+    
     this.structureName = structureName;
     return this;
   }
@@ -162,6 +161,7 @@ public class StructureCandidateScored {
 
 
   public StructureCandidateScored xlogP(Double xlogP) {
+    
     this.xlogP = xlogP;
     return this;
   }
@@ -187,6 +187,7 @@ public class StructureCandidateScored {
 
 
   public StructureCandidateScored dbLinks(List<DBLink> dbLinks) {
+    
     this.dbLinks = dbLinks;
     return this;
   }
@@ -220,6 +221,7 @@ public class StructureCandidateScored {
 
 
   public StructureCandidateScored refSpectraLinks(List<DBLink> refSpectraLinks) {
+    
     this.refSpectraLinks = refSpectraLinks;
     return this;
   }
@@ -253,6 +255,7 @@ public class StructureCandidateScored {
 
 
   public StructureCandidateScored csiScore(Double csiScore) {
+    
     this.csiScore = csiScore;
     return this;
   }
@@ -278,6 +281,7 @@ public class StructureCandidateScored {
 
 
   public StructureCandidateScored tanimotoSimilarity(Double tanimotoSimilarity) {
+    
     this.tanimotoSimilarity = tanimotoSimilarity;
     return this;
   }
@@ -303,6 +307,7 @@ public class StructureCandidateScored {
 
 
   public StructureCandidateScored confidenceExactMatch(Double confidenceExactMatch) {
+    
     this.confidenceExactMatch = confidenceExactMatch;
     return this;
   }
@@ -328,6 +333,7 @@ public class StructureCandidateScored {
 
 
   public StructureCandidateScored confidenceApproxMatch(Double confidenceApproxMatch) {
+    
     this.confidenceApproxMatch = confidenceApproxMatch;
     return this;
   }
@@ -353,6 +359,7 @@ public class StructureCandidateScored {
 
 
   public StructureCandidateScored fingerprint(BinaryFingerprint fingerprint) {
+    
     this.fingerprint = fingerprint;
     return this;
   }
@@ -376,10 +383,6 @@ public class StructureCandidateScored {
     this.fingerprint = fingerprint;
   }
 
-
-  /**
-   * Return true if this StructureCandidateScored object is equal to o.
-   */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -437,104 +440,5 @@ public class StructureCandidateScored {
     return o.toString().replace("\n", "\n    ");
   }
 
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @return URL query string
-   */
-  public String toUrlQueryString() {
-    return toUrlQueryString(null);
-  }
-
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @param prefix prefix of the query string
-   * @return URL query string
-   */
-  public String toUrlQueryString(String prefix) {
-    String suffix = "";
-    String containerSuffix = "";
-    String containerPrefix = "";
-    if (prefix == null) {
-      // style=form, explode=true, e.g. /pet?name=cat&type=manx
-      prefix = "";
-    } else {
-      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
-      prefix = prefix + "[";
-      suffix = "]";
-      containerSuffix = "]";
-      containerPrefix = "[";
-    }
-
-    StringJoiner joiner = new StringJoiner("&");
-
-    // add `inchiKey` to the URL query string
-    if (getInchiKey() != null) {
-      joiner.add(String.format("%sinchiKey%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getInchiKey()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `smiles` to the URL query string
-    if (getSmiles() != null) {
-      joiner.add(String.format("%ssmiles%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getSmiles()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `structureName` to the URL query string
-    if (getStructureName() != null) {
-      joiner.add(String.format("%sstructureName%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getStructureName()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `xlogP` to the URL query string
-    if (getXlogP() != null) {
-      joiner.add(String.format("%sxlogP%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getXlogP()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `dbLinks` to the URL query string
-    if (getDbLinks() != null) {
-      for (int i = 0; i < getDbLinks().size(); i++) {
-        if (getDbLinks().get(i) != null) {
-          joiner.add(getDbLinks().get(i).toUrlQueryString(String.format("%sdbLinks%s%s", prefix, suffix,
-          "".equals(suffix) ? "" : String.format("%s%d%s", containerPrefix, i, containerSuffix))));
-        }
-      }
-    }
-
-    // add `refSpectraLinks` to the URL query string
-    if (getRefSpectraLinks() != null) {
-      for (int i = 0; i < getRefSpectraLinks().size(); i++) {
-        if (getRefSpectraLinks().get(i) != null) {
-          joiner.add(getRefSpectraLinks().get(i).toUrlQueryString(String.format("%srefSpectraLinks%s%s", prefix, suffix,
-          "".equals(suffix) ? "" : String.format("%s%d%s", containerPrefix, i, containerSuffix))));
-        }
-      }
-    }
-
-    // add `csiScore` to the URL query string
-    if (getCsiScore() != null) {
-      joiner.add(String.format("%scsiScore%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getCsiScore()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `tanimotoSimilarity` to the URL query string
-    if (getTanimotoSimilarity() != null) {
-      joiner.add(String.format("%stanimotoSimilarity%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getTanimotoSimilarity()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `confidenceExactMatch` to the URL query string
-    if (getConfidenceExactMatch() != null) {
-      joiner.add(String.format("%sconfidenceExactMatch%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getConfidenceExactMatch()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `confidenceApproxMatch` to the URL query string
-    if (getConfidenceApproxMatch() != null) {
-      joiner.add(String.format("%sconfidenceApproxMatch%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getConfidenceApproxMatch()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `fingerprint` to the URL query string
-    if (getFingerprint() != null) {
-      joiner.add(getFingerprint().toUrlQueryString(prefix + "fingerprint" + suffix));
-    }
-
-    return joiner.toString();
-  }
 }
 

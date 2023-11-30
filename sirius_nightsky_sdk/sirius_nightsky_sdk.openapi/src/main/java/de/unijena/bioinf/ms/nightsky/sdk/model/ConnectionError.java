@@ -13,20 +13,15 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.StringJoiner;
 import java.util.Objects;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * 
@@ -153,10 +148,11 @@ public class ConnectionError {
   public static final String JSON_PROPERTY_WARNING = "warning";
   private Boolean warning;
 
-  public ConnectionError() { 
+  public ConnectionError() {
   }
 
   public ConnectionError errorType(ErrorTypeEnum errorType) {
+    
     this.errorType = errorType;
     return this;
   }
@@ -182,6 +178,7 @@ public class ConnectionError {
 
 
   public ConnectionError errorKlass(ErrorKlassEnum errorKlass) {
+    
     this.errorKlass = errorKlass;
     return this;
   }
@@ -207,6 +204,7 @@ public class ConnectionError {
 
 
   public ConnectionError siriusErrorCode(Integer siriusErrorCode) {
+    
     this.siriusErrorCode = siriusErrorCode;
     return this;
   }
@@ -232,6 +230,7 @@ public class ConnectionError {
 
 
   public ConnectionError siriusMessage(String siriusMessage) {
+    
     this.siriusMessage = siriusMessage;
     return this;
   }
@@ -257,6 +256,7 @@ public class ConnectionError {
 
 
   public ConnectionError serverResponseErrorCode(Integer serverResponseErrorCode) {
+    
     this.serverResponseErrorCode = serverResponseErrorCode;
     return this;
   }
@@ -282,6 +282,7 @@ public class ConnectionError {
 
 
   public ConnectionError serverResponseErrorMessage(String serverResponseErrorMessage) {
+    
     this.serverResponseErrorMessage = serverResponseErrorMessage;
     return this;
   }
@@ -307,6 +308,7 @@ public class ConnectionError {
 
 
   public ConnectionError error(Boolean error) {
+    
     this.error = error;
     return this;
   }
@@ -332,6 +334,7 @@ public class ConnectionError {
 
 
   public ConnectionError warning(Boolean warning) {
+    
     this.warning = warning;
     return this;
   }
@@ -355,10 +358,6 @@ public class ConnectionError {
     this.warning = warning;
   }
 
-
-  /**
-   * Return true if this ConnectionError object is equal to o.
-   */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -410,79 +409,5 @@ public class ConnectionError {
     return o.toString().replace("\n", "\n    ");
   }
 
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @return URL query string
-   */
-  public String toUrlQueryString() {
-    return toUrlQueryString(null);
-  }
-
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @param prefix prefix of the query string
-   * @return URL query string
-   */
-  public String toUrlQueryString(String prefix) {
-    String suffix = "";
-    String containerSuffix = "";
-    String containerPrefix = "";
-    if (prefix == null) {
-      // style=form, explode=true, e.g. /pet?name=cat&type=manx
-      prefix = "";
-    } else {
-      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
-      prefix = prefix + "[";
-      suffix = "]";
-      containerSuffix = "]";
-      containerPrefix = "[";
-    }
-
-    StringJoiner joiner = new StringJoiner("&");
-
-    // add `errorType` to the URL query string
-    if (getErrorType() != null) {
-      joiner.add(String.format("%serrorType%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getErrorType()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `errorKlass` to the URL query string
-    if (getErrorKlass() != null) {
-      joiner.add(String.format("%serrorKlass%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getErrorKlass()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `siriusErrorCode` to the URL query string
-    if (getSiriusErrorCode() != null) {
-      joiner.add(String.format("%ssiriusErrorCode%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getSiriusErrorCode()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `siriusMessage` to the URL query string
-    if (getSiriusMessage() != null) {
-      joiner.add(String.format("%ssiriusMessage%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getSiriusMessage()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `serverResponseErrorCode` to the URL query string
-    if (getServerResponseErrorCode() != null) {
-      joiner.add(String.format("%sserverResponseErrorCode%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getServerResponseErrorCode()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `serverResponseErrorMessage` to the URL query string
-    if (getServerResponseErrorMessage() != null) {
-      joiner.add(String.format("%sserverResponseErrorMessage%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getServerResponseErrorMessage()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `error` to the URL query string
-    if (isError() != null) {
-      joiner.add(String.format("%serror%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isError()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `warning` to the URL query string
-    if (isWarning() != null) {
-      joiner.add(String.format("%swarning%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isWarning()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    return joiner.toString();
-  }
 }
 

@@ -13,20 +13,15 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.StringJoiner;
 import java.util.Objects;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * Progress information of a computation job that has already been submitted to SIRIUS.  if  currentProgress &#x3D;&#x3D; maxProgress job is finished and should change to state done soon.  if a job is DONE all results can be accessed via the Project-Spaces api.
@@ -45,7 +40,7 @@ public class JobProgress {
   private Boolean indeterminate;
 
   /**
-   * Current state of the Jobs in the SIRIUS internal Job scheduler           WAITING: Waiting for submission to ExecutorService (e.g. due to dependent jobs)          READY: Ready for submission but not yet enqueued for submission to ExecutorService.          QUEUED: Enqueued for submission to ExecutorService.          SUBMITTED: Submitted and waiting to be executed.          RUNNING: Job is running.          CANCELED: Jobs is finished due to cancellation by suer or dependent jobs.          FAILED: Job is finished but failed.          DONE: Job finished successfully.
+   * Current state of the Jobs in the SIRIUS internal Job scheduler           WAITING: Waiting for submission to ExecutorService (e.g. due to dependent jobs)          READY: Ready for submission but not yet enqueued for submission to ExecutorService.          QUEUED: Enqueued for submission to ExecutorService.          SUBMITTED: Submitted and waiting to be executed.          RUNNING: Job is running.          CANCELED: Jobs is finished due to cancellation by user or dependent jobs.          FAILED: Job is finished but failed.          DONE: Job finished successfully.
    */
   public enum StateEnum {
     WAITING("WAITING"),
@@ -106,10 +101,11 @@ public class JobProgress {
   public static final String JSON_PROPERTY_ERROR_MESSAGE = "errorMessage";
   private String errorMessage;
 
-  public JobProgress() { 
+  public JobProgress() {
   }
 
   public JobProgress indeterminate(Boolean indeterminate) {
+    
     this.indeterminate = indeterminate;
     return this;
   }
@@ -135,12 +131,13 @@ public class JobProgress {
 
 
   public JobProgress state(StateEnum state) {
+    
     this.state = state;
     return this;
   }
 
    /**
-   * Current state of the Jobs in the SIRIUS internal Job scheduler           WAITING: Waiting for submission to ExecutorService (e.g. due to dependent jobs)          READY: Ready for submission but not yet enqueued for submission to ExecutorService.          QUEUED: Enqueued for submission to ExecutorService.          SUBMITTED: Submitted and waiting to be executed.          RUNNING: Job is running.          CANCELED: Jobs is finished due to cancellation by suer or dependent jobs.          FAILED: Job is finished but failed.          DONE: Job finished successfully.
+   * Current state of the Jobs in the SIRIUS internal Job scheduler           WAITING: Waiting for submission to ExecutorService (e.g. due to dependent jobs)          READY: Ready for submission but not yet enqueued for submission to ExecutorService.          QUEUED: Enqueued for submission to ExecutorService.          SUBMITTED: Submitted and waiting to be executed.          RUNNING: Job is running.          CANCELED: Jobs is finished due to cancellation by user or dependent jobs.          FAILED: Job is finished but failed.          DONE: Job finished successfully.
    * @return state
   **/
   @javax.annotation.Nullable
@@ -160,6 +157,7 @@ public class JobProgress {
 
 
   public JobProgress currentProgress(Long currentProgress) {
+    
     this.currentProgress = currentProgress;
     return this;
   }
@@ -185,6 +183,7 @@ public class JobProgress {
 
 
   public JobProgress maxProgress(Long maxProgress) {
+    
     this.maxProgress = maxProgress;
     return this;
   }
@@ -210,6 +209,7 @@ public class JobProgress {
 
 
   public JobProgress message(String message) {
+    
     this.message = message;
     return this;
   }
@@ -235,6 +235,7 @@ public class JobProgress {
 
 
   public JobProgress errorMessage(String errorMessage) {
+    
     this.errorMessage = errorMessage;
     return this;
   }
@@ -258,10 +259,6 @@ public class JobProgress {
     this.errorMessage = errorMessage;
   }
 
-
-  /**
-   * Return true if this JobProgress object is equal to o.
-   */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -309,69 +306,5 @@ public class JobProgress {
     return o.toString().replace("\n", "\n    ");
   }
 
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @return URL query string
-   */
-  public String toUrlQueryString() {
-    return toUrlQueryString(null);
-  }
-
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @param prefix prefix of the query string
-   * @return URL query string
-   */
-  public String toUrlQueryString(String prefix) {
-    String suffix = "";
-    String containerSuffix = "";
-    String containerPrefix = "";
-    if (prefix == null) {
-      // style=form, explode=true, e.g. /pet?name=cat&type=manx
-      prefix = "";
-    } else {
-      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
-      prefix = prefix + "[";
-      suffix = "]";
-      containerSuffix = "]";
-      containerPrefix = "[";
-    }
-
-    StringJoiner joiner = new StringJoiner("&");
-
-    // add `indeterminate` to the URL query string
-    if (isIndeterminate() != null) {
-      joiner.add(String.format("%sindeterminate%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(isIndeterminate()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `state` to the URL query string
-    if (getState() != null) {
-      joiner.add(String.format("%sstate%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getState()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `currentProgress` to the URL query string
-    if (getCurrentProgress() != null) {
-      joiner.add(String.format("%scurrentProgress%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getCurrentProgress()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `maxProgress` to the URL query string
-    if (getMaxProgress() != null) {
-      joiner.add(String.format("%smaxProgress%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getMaxProgress()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `message` to the URL query string
-    if (getMessage() != null) {
-      joiner.add(String.format("%smessage%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getMessage()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `errorMessage` to the URL query string
-    if (getErrorMessage() != null) {
-      joiner.add(String.format("%serrorMessage%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getErrorMessage()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    return joiner.toString();
-  }
 }
 

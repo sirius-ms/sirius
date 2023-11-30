@@ -13,12 +13,8 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.StringJoiner;
 import java.util.Objects;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -29,7 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * 
@@ -62,10 +58,11 @@ public class AccountInfo {
   public static final String JSON_PROPERTY_ACTIVE_SUBSCRIPTION_ID = "activeSubscriptionId";
   private String activeSubscriptionId;
 
-  public AccountInfo() { 
+  public AccountInfo() {
   }
 
   public AccountInfo userID(String userID) {
+    
     this.userID = userID;
     return this;
   }
@@ -91,6 +88,7 @@ public class AccountInfo {
 
 
   public AccountInfo username(String username) {
+    
     this.username = username;
     return this;
   }
@@ -116,6 +114,7 @@ public class AccountInfo {
 
 
   public AccountInfo userEmail(String userEmail) {
+    
     this.userEmail = userEmail;
     return this;
   }
@@ -141,6 +140,7 @@ public class AccountInfo {
 
 
   public AccountInfo gravatarURL(String gravatarURL) {
+    
     this.gravatarURL = gravatarURL;
     return this;
   }
@@ -166,6 +166,7 @@ public class AccountInfo {
 
 
   public AccountInfo subscriptions(List<Subscription> subscriptions) {
+    
     this.subscriptions = subscriptions;
     return this;
   }
@@ -199,6 +200,7 @@ public class AccountInfo {
 
 
   public AccountInfo activeSubscriptionId(String activeSubscriptionId) {
+    
     this.activeSubscriptionId = activeSubscriptionId;
     return this;
   }
@@ -222,10 +224,6 @@ public class AccountInfo {
     this.activeSubscriptionId = activeSubscriptionId;
   }
 
-
-  /**
-   * Return true if this AccountInfo object is equal to o.
-   */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -273,74 +271,5 @@ public class AccountInfo {
     return o.toString().replace("\n", "\n    ");
   }
 
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @return URL query string
-   */
-  public String toUrlQueryString() {
-    return toUrlQueryString(null);
-  }
-
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @param prefix prefix of the query string
-   * @return URL query string
-   */
-  public String toUrlQueryString(String prefix) {
-    String suffix = "";
-    String containerSuffix = "";
-    String containerPrefix = "";
-    if (prefix == null) {
-      // style=form, explode=true, e.g. /pet?name=cat&type=manx
-      prefix = "";
-    } else {
-      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
-      prefix = prefix + "[";
-      suffix = "]";
-      containerSuffix = "]";
-      containerPrefix = "[";
-    }
-
-    StringJoiner joiner = new StringJoiner("&");
-
-    // add `userID` to the URL query string
-    if (getUserID() != null) {
-      joiner.add(String.format("%suserID%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getUserID()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `username` to the URL query string
-    if (getUsername() != null) {
-      joiner.add(String.format("%susername%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getUsername()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `userEmail` to the URL query string
-    if (getUserEmail() != null) {
-      joiner.add(String.format("%suserEmail%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getUserEmail()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `gravatarURL` to the URL query string
-    if (getGravatarURL() != null) {
-      joiner.add(String.format("%sgravatarURL%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getGravatarURL()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `subscriptions` to the URL query string
-    if (getSubscriptions() != null) {
-      for (int i = 0; i < getSubscriptions().size(); i++) {
-        if (getSubscriptions().get(i) != null) {
-          joiner.add(getSubscriptions().get(i).toUrlQueryString(String.format("%ssubscriptions%s%s", prefix, suffix,
-          "".equals(suffix) ? "" : String.format("%s%d%s", containerPrefix, i, containerSuffix))));
-        }
-      }
-    }
-
-    // add `activeSubscriptionId` to the URL query string
-    if (getActiveSubscriptionId() != null) {
-      joiner.add(String.format("%sactiveSubscriptionId%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getActiveSubscriptionId()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    return joiner.toString();
-  }
 }
 

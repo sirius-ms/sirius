@@ -13,12 +13,8 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.StringJoiner;
 import java.util.Objects;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -30,7 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * 
@@ -55,10 +51,11 @@ public class FragmentationTree {
   public static final String JSON_PROPERTY_ROOT = "root";
   private FragmentNode root;
 
-  public FragmentationTree() { 
+  public FragmentationTree() {
   }
 
   public FragmentationTree fragments(List<FragmentNode> fragments) {
+    
     this.fragments = fragments;
     return this;
   }
@@ -92,6 +89,7 @@ public class FragmentationTree {
 
 
   public FragmentationTree losses(List<LossEdge> losses) {
+    
     this.losses = losses;
     return this;
   }
@@ -125,6 +123,7 @@ public class FragmentationTree {
 
 
   public FragmentationTree treeScore(Double treeScore) {
+    
     this.treeScore = treeScore;
     return this;
   }
@@ -150,6 +149,7 @@ public class FragmentationTree {
 
 
   public FragmentationTree root(FragmentNode root) {
+    
     this.root = root;
     return this;
   }
@@ -173,10 +173,6 @@ public class FragmentationTree {
     this.root = root;
   }
 
-
-  /**
-   * Return true if this FragmentationTree object is equal to o.
-   */
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -220,69 +216,5 @@ public class FragmentationTree {
     return o.toString().replace("\n", "\n    ");
   }
 
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @return URL query string
-   */
-  public String toUrlQueryString() {
-    return toUrlQueryString(null);
-  }
-
-  /**
-   * Convert the instance into URL query string.
-   *
-   * @param prefix prefix of the query string
-   * @return URL query string
-   */
-  public String toUrlQueryString(String prefix) {
-    String suffix = "";
-    String containerSuffix = "";
-    String containerPrefix = "";
-    if (prefix == null) {
-      // style=form, explode=true, e.g. /pet?name=cat&type=manx
-      prefix = "";
-    } else {
-      // deepObject style e.g. /pet?id[name]=cat&id[type]=manx
-      prefix = prefix + "[";
-      suffix = "]";
-      containerSuffix = "]";
-      containerPrefix = "[";
-    }
-
-    StringJoiner joiner = new StringJoiner("&");
-
-    // add `fragments` to the URL query string
-    if (getFragments() != null) {
-      for (int i = 0; i < getFragments().size(); i++) {
-        if (getFragments().get(i) != null) {
-          joiner.add(getFragments().get(i).toUrlQueryString(String.format("%sfragments%s%s", prefix, suffix,
-          "".equals(suffix) ? "" : String.format("%s%d%s", containerPrefix, i, containerSuffix))));
-        }
-      }
-    }
-
-    // add `losses` to the URL query string
-    if (getLosses() != null) {
-      for (int i = 0; i < getLosses().size(); i++) {
-        if (getLosses().get(i) != null) {
-          joiner.add(getLosses().get(i).toUrlQueryString(String.format("%slosses%s%s", prefix, suffix,
-          "".equals(suffix) ? "" : String.format("%s%d%s", containerPrefix, i, containerSuffix))));
-        }
-      }
-    }
-
-    // add `treeScore` to the URL query string
-    if (getTreeScore() != null) {
-      joiner.add(String.format("%streeScore%s=%s", prefix, suffix, URLEncoder.encode(String.valueOf(getTreeScore()), StandardCharsets.UTF_8).replaceAll("\\+", "%20")));
-    }
-
-    // add `root` to the URL query string
-    if (getRoot() != null) {
-      joiner.add(getRoot().toUrlQueryString(prefix + "root" + suffix));
-    }
-
-    return joiner.toString();
-  }
 }
 

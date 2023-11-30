@@ -25,7 +25,9 @@ import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvent;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -45,16 +47,29 @@ public class SseEventService implements EventService<SseEmitter> {
     private final BlockingQueue<ServerEvent<?>> events = new LinkedBlockingQueue<>();
     private EventRunner eventRunner = null;
 
+    private final long emitterTimeout;
+
+    public SseEventService(long emitterTimeout) {
+        this.emitterTimeout = emitterTimeout;
+    }
+
     public SseEmitter createEventSender(@NotNull EnumSet<ServerEvent.Type> typesToListenOn) {
-        final SseEmitter emitter = new SseEmitter();
+        final SseEmitter emitter = new SseEmitter(emitterTimeout);
         addEventSender(emitter, typesToListenOn);
         return emitter;
     }
 
     public void addEventSender(@NotNull SseEmitter emitter, @NotNull EnumSet<ServerEvent.Type> typesToListenOn) {
         //configure shutdown
-        emitter.onCompletion(() -> emitters.values().forEach(v -> v.remove(emitter)));
-        emitter.onTimeout(() -> emitters.values().forEach(v -> v.remove(emitter)));
+        emitter.onCompletion(() -> {
+            emitters.values().forEach(v -> v.remove(emitter));
+            emitter.complete();
+        });
+
+        emitter.onTimeout(() -> {
+            emitters.values().forEach(v -> v.remove(emitter));
+            emitter.complete();
+        });
         //add
         typesToListenOn.forEach(type -> emitters.computeIfAbsent(type, t -> new CopyOnWriteArrayList<>()).add(emitter));
     }
@@ -62,6 +77,7 @@ public class SseEventService implements EventService<SseEmitter> {
     public void sendEvent(ServerEvent<?> event) { //todo maybe we need some wait here to not spam events to fast...
         if (eventRunner == null)
             eventRunner = (EventRunner) SiriusJobs.runInBackground(new EventRunner());
+        System.out.println("Add Event to Queue: " + event);
         events.add(event);
     }
 
@@ -84,17 +100,20 @@ public class SseEventService implements EventService<SseEmitter> {
 
                         if (eventData == ServerEvents.EMPTY_EVENT())
                             return true;
-
+                        System.out.println("Retrieved event from Queue: " + eventData);
                         for (SseEmitter emitter : emitters.getOrDefault(eventData.getEventType(), List.of())) {
+                            System.out.println("Send event to Client: " + emitter.toString());
                             try {
                                 emitter.send(SseEmitter.event()
                                         .data(eventData, MediaType.APPLICATION_JSON)
-                                        .name(eventData.getEventType().name()));
+                                        .name(eventData.getProjectId() + "." + eventData.getEventType().name()));
                             } catch (IOException e) {
-                                emitter.completeWithError(e);
-                                emitters.values().forEach(v -> v.remove(emitter));
+                                logDebug("Error when sending event to client!", e);
+                                emitter.completeWithError(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()));
                             }
                         }
+                        System.out.println();
+                        System.out.println();
                     } catch (InterruptedException e) {
                         if (eventData == ServerEvents.EMPTY_EVENT())
                             return true;

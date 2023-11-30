@@ -5,9 +5,7 @@ All URIs are relative to *http://localhost:8080*
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
 | [**getConnectionCheck**](InfoApi.md#getConnectionCheck) | **GET** /api/connection-status |  |
-| [**getConnectionCheckWithHttpInfo**](InfoApi.md#getConnectionCheckWithHttpInfo) | **GET** /api/connection-status |  |
 | [**getInfo**](InfoApi.md#getInfo) | **GET** /api/info |  |
-| [**getInfoWithHttpInfo**](InfoApi.md#getInfoWithHttpInfo) | **GET** /api/info |  |
 
 
 
@@ -55,7 +53,6 @@ This endpoint does not need any parameter.
 
 [**ConnectionCheck**](ConnectionCheck.md)
 
-
 ### Authorization
 
 No authorization required
@@ -65,67 +62,6 @@ No authorization required
 - **Content-Type**: Not defined
 - **Accept**: application/json
 
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
-
-## getConnectionCheckWithHttpInfo
-
-> ApiResponse<ConnectionCheck> getConnectionCheck getConnectionCheckWithHttpInfo()
-
-
-
-### Example
-
-```java
-// Import classes:
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiResponse;
-import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
-import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
-import de.unijena.bioinf.ms.nightsky.sdk.api.InfoApi;
-
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
-
-        InfoApi apiInstance = new InfoApi(defaultClient);
-        try {
-            ApiResponse<ConnectionCheck> response = apiInstance.getConnectionCheckWithHttpInfo();
-            System.out.println("Status code: " + response.getStatusCode());
-            System.out.println("Response headers: " + response.getHeaders());
-            System.out.println("Response body: " + response.getData());
-        } catch (ApiException e) {
-            System.err.println("Exception when calling InfoApi#getConnectionCheck");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            System.err.println("Reason: " + e.getResponseBody());
-            e.printStackTrace();
-        }
-    }
-}
-```
-
-### Parameters
-
-This endpoint does not need any parameter.
-
-### Return type
-
-ApiResponse<[**ConnectionCheck**](ConnectionCheck.md)>
-
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
 
 ### HTTP response details
 | Status code | Description | Response headers |
@@ -177,7 +113,6 @@ This endpoint does not need any parameter.
 
 [**Info**](Info.md)
 
-
 ### Authorization
 
 No authorization required
@@ -187,67 +122,6 @@ No authorization required
 - **Content-Type**: Not defined
 - **Accept**: application/json
 
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
-
-## getInfoWithHttpInfo
-
-> ApiResponse<Info> getInfo getInfoWithHttpInfo()
-
-
-
-### Example
-
-```java
-// Import classes:
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiResponse;
-import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
-import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
-import de.unijena.bioinf.ms.nightsky.sdk.api.InfoApi;
-
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
-
-        InfoApi apiInstance = new InfoApi(defaultClient);
-        try {
-            ApiResponse<Info> response = apiInstance.getInfoWithHttpInfo();
-            System.out.println("Status code: " + response.getStatusCode());
-            System.out.println("Response headers: " + response.getHeaders());
-            System.out.println("Response body: " + response.getData());
-        } catch (ApiException e) {
-            System.err.println("Exception when calling InfoApi#getInfo");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            System.err.println("Reason: " + e.getResponseBody());
-            e.printStackTrace();
-        }
-    }
-}
-```
-
-### Parameters
-
-This endpoint does not need any parameter.
-
-### Return type
-
-ApiResponse<[**Info**](Info.md)>
-
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
 
 ### HTTP response details
 | Status code | Description | Response headers |

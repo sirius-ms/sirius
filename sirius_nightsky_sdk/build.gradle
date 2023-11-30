@@ -24,12 +24,19 @@ buildscript {
     }
 }
 
+ext{
+    reactor_version = "3.4.3"
+    reactor_netty_version = "1.0.4"
+}
+
 apply plugin: 'org.openapi.generator'
 apply plugin: 'java-library'
 
 
 dependencies {
     api project(":sirius_nightsky_sdk:sirius_nightsky_sdk.openapi")
+    api "org.springframework.boot:spring-boot-starter-webflux:$spring_boot_version"
+    implementation "io.projectreactor.netty:reactor-netty-http:$reactor_netty_version"
 }
 
 openApiGenerate {
