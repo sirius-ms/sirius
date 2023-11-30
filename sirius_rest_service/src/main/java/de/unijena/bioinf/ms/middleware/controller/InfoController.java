@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.controller;
 
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.chemdb.ChemicalDatabase;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -53,14 +54,14 @@ public class InfoController {
     @ResponseStatus(HttpStatus.OK)
     public Info getInfo() {
         String dbDate = Optional.ofNullable(siriusContext.webAPI().getChemDbDate()).orElse("M/A");
-
         return Info.builder()
                 .chemDbVersion(dbDate)
                 .nightSkyApiVersion(siriusContext.getApiVersion())
                 .siriusVersion(ApplicationCore.VERSION())
                 .siriusLibVersion(FingerIDProperties.siriusVersion())
                 .fingerIdLibVersion(FingerIDProperties.fingeridFullVersion())
-                .fingerIdModelVersion("N/A")
+                .availableILPSolvers(TreeBuilderFactory.getInstance().getAvailableBuilders())
+                .fingerIdModelVersion("N/A") //todo add model version in a performant way.
                 .fingerprintId(ChemicalDatabase.FINGERPRINT_ID)
                 .build();
     }
