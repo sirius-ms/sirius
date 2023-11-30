@@ -109,7 +109,11 @@ public abstract class AbstractComputeService<P extends Project> implements Compu
         List<String> configTool = new ArrayList<>();
         configTool.add("config");
         makeCombinedConfigMap(jobSubmission).forEach((k, v) -> {
-            configTool.add("--" + k + "=" + v);
+            if (v == null){
+                configTool.add("--" + k);
+            } else {
+                configTool.add("--" + k + "=" + v);
+            }
         });
 
         return configTool;

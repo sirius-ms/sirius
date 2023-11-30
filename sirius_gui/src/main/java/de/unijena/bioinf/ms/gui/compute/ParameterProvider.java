@@ -20,8 +20,13 @@
 package de.unijena.bioinf.ms.gui.compute;
 
 import java.util.List;
+import java.util.Map;
 
 public interface ParameterProvider {
+    default Map<String, String> asConfigMap() {
+        return getParameterBinding().asConfigMap();
+    }
+
     default List<String> asParameterList() {
         return getParameterBinding().asParameterList();
     }
