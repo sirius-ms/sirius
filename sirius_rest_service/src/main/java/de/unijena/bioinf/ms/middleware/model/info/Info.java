@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.middleware.model.info;
 
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -33,41 +34,50 @@ public class Info {
     /**
      * API version of the SIRIUS Nightsky API
      */
+    @Schema(nullable = true)
     private final String nightSkyApiVersion;;
     /**
      * Version of the SIRIUS application
      */
+    @Schema(nullable = true)
     private final String siriusVersion;
     /**
      * Version of the SIRIUS libraries
      */
+    @Schema(nullable = true)
     private final String siriusLibVersion;
     /**
      * Version of the CSI:FingerID libraries
      */
+    @Schema(nullable = true)
     private final String fingerIdLibVersion;
     /**
      * Version of the Chemical Database available via SIRIUS web services
      */
+    @Schema(nullable = true)
     private final String chemDbVersion;
     /**
      * Version of the Machine learning models used for Fingerprint, Compound Class and Structure Prediction
      * Not available if web service is not reachable.
      */
+    @Schema(nullable = true)
     private final String fingerIdModelVersion;
     /**
      * Version of the Molecular Fingerprint used by SIRIUS
      */
+    @Schema(nullable = true)
     private final String fingerprintId;
 
     /**
      * Set of solvers that are configured correctly and can be loaded
      */
+    @Schema(required = true)
     private final EnumSet<TreeBuilderFactory.DefaultBuilder> availableILPSolvers;
 
     /**
      * Set of ILP Solvers that are Supported and their version information
      */
+    @Schema(required = true)
     private final Map<TreeBuilderFactory.DefaultBuilder, String> supportedILPSolvers =  Map.of(
             TreeBuilderFactory.DefaultBuilder.CLP, TreeBuilderFactory.CBC_VERSION,
             TreeBuilderFactory.DefaultBuilder.CPLEX, TreeBuilderFactory.CPLEX_VERSION,

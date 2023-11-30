@@ -22,7 +22,6 @@
 package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.actions.CheckConnectionAction;
@@ -33,9 +32,9 @@ import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.ExperimentEditPanel;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.nightsky.sdk.model.ConnectionCheck;
+import de.unijena.bioinf.ms.nightsky.sdk.model.Info;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
-import de.unijena.bioinf.sirius.Sirius;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.slf4j.LoggerFactory;
 
@@ -325,6 +324,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
                 updateProgress(0, 100, 0, "Configuring Computation...");
                 checkForInterruption();
                 List<InstanceBean> finalComps = compoundsToProcess;
+
                 if (formulaIDConfigPanel.isToolSelected()) {
                     List<InstanceBean> lowMass = finalComps.stream().filter(i -> i.getIonMass() <= 850).collect(Collectors.toList());
                     int highMass = finalComps.size() - lowMass.size();
@@ -335,20 +335,28 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
                                 DO_NOT_SHOW_AGAIN_KEY_S_MASS).isSuccess()));
                     if (success.get())
                         finalComps = lowMass;
-                }
+                    checkForInterruption();
 
-                checkForInterruption();
-                // CHECK ILP SOLVER
-                TreeBuilder builder = new Sirius().getMs2Analyzer().getTreeBuilder();
-                if (builder == null) {
-                    String noILPSolver = "Could not load a valid TreeBuilder (ILP solvers), tried '" + Arrays.toString(TreeBuilderFactory.getBuilderPriorities()) + "'. Please read the installation instructions.";
-                    LoggerFactory.getLogger(BatchComputeDialog.class).error(noILPSolver);
-                    new ExceptionDialog(BatchComputeDialog.this, noILPSolver);
-                    dispose();
-                    return false;
+                    // CHECK ILP SOLVER
+                    //check for IPL solver only if it is actually needed during analysis
+                    double minMass = finalComps.stream().mapToDouble(InstanceBean::getIonMass).min().orElse(0);
+                    if (((Double)formulaIDConfigPanel.getContent().mzHeuristicOnly.getValue()) > minMass) {
+                        updateProgress(0, 100, 0, "Checking ILP solvers...");
+                        Info info = mf().getSiriusClient().infos().getInfo();
+                        if (info.getAvailableILPSolvers().isEmpty()) {
+                            String noILPSolver = "Could not load a valid TreeBuilder (ILP solvers), tried '" +
+                                    Arrays.toString(TreeBuilderFactory.getBuilderPriorities()) +
+                                    "'. You can switch to heuristic tree computation only to compute results without the need of an ILP Solver.";
+                            LoggerFactory.getLogger(BatchComputeDialog.class).error(noILPSolver);
+                            new ExceptionDialog(BatchComputeDialog.this, noILPSolver);
+                            dispose();
+                            return false;
+                        } else {
+                            LoggerFactory.getLogger(this.getClass()).info("Compute trees using " + info.getAvailableILPSolvers().get(0));
+                        }
+                        updateProgress(0, 100, 1, "ILP solver check DONE!");
+                    }
                 }
-                LoggerFactory.getLogger(this.getClass()).info("Compute trees using " + builder);
-                updateProgress(0, 100, 1, "ILP solver check DONE!");
                 checkForInterruption();
 
                 //CHECK worker availability

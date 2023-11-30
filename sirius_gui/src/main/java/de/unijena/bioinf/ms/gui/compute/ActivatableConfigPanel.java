@@ -114,8 +114,12 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
     }
 
 
-    public boolean isToolSelected() {
+    boolean isToolSelected() {
         return activationButton == null || activationButton.isSelected();
+    }
+
+    public C getContent() {
+        return content;
     }
 
     public List<String> asParameterList() {
