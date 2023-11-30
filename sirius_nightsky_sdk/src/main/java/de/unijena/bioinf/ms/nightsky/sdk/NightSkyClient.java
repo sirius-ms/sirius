@@ -3,27 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
- *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 3 of the License, or (at your option) any later version.
- *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
- *
- *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
- */
-
-/*
- *
- *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
- *
- *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -48,6 +28,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.JobOptField;
 import de.unijena.bioinf.ms.nightsky.sdk.model.JobProgress;
 import de.unijena.bioinf.sse.DataEventType;
 import de.unijena.bioinf.sse.FluxToFlowBroadcast;
+import de.unijena.bioinf.sse.PropertyChangeSubscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
@@ -55,6 +36,7 @@ import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 
+import java.beans.PropertyChangeListener;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -208,6 +190,19 @@ public class NightSkyClient implements AutoCloseable {
     }
 
 
+    public void addEventListener(PropertyChangeListener listener, String pid, DataEventType... eventsToListenOn) {
+        addEventListener(listener, pid, EnumSet.copyOf(List.of(eventsToListenOn)));
+    }
+
+    public void addEventListener(PropertyChangeListener listener, String pid, EnumSet<DataEventType> eventsToListenOn) {
+        sseBroadcast.subscribe(PropertyChangeSubscriber.wrap(listener), pid, eventsToListenOn);
+    }
+
+    public void removeEventListener(PropertyChangeListener listener){
+        sseBroadcast.unSubscribe(PropertyChangeSubscriber.wrap(listener));
+    }
+
+
     public ApiClient getApiClient() {
         return apiClient;
     }
@@ -244,9 +239,8 @@ public class NightSkyClient implements AutoCloseable {
     public synchronized void close() throws Exception {
         if (sseConnection != null && !sseConnection.isDisposed())
             sseConnection.dispose();
-//            sseConnection.complete(203);
-//        if (sseHandler != null)
-//            sseHandler.close();
+        if (sseBroadcast != null)
+            sseBroadcast.close();
     }
 
     @FunctionalInterface

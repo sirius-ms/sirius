@@ -86,7 +86,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
 
     public BatchComputeDialog(MainFrame owner, List<InstanceBean> compoundsToProcess) {
         super(owner, "Compute", true);
-
+        
         this.compoundsToProcess = compoundsToProcess;
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
