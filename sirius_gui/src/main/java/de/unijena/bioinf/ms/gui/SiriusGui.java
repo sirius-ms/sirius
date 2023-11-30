@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.gui;
 
+import de.unijena.bioinf.sse.DataEventType;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
@@ -27,6 +28,10 @@ import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
 import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
+
+import java.util.EnumSet;
+import java.util.concurrent.Flow;
 
 /**
  * Represents an instance of the SIRIUS GUI and its context.
@@ -53,6 +58,7 @@ public class SiriusGui {
 
     public SiriusGui(@NotNull GuiProjectSpaceManager project, @Nullable NightSkyClient nightSkyClient, @NotNull ConnectionMonitor connectionMonitor) { //todo nighsky: change to nightsky api and project ID.
         sirius = nightSkyClient != null ? nightSkyClient : new NightSkyClient();
+        sirius.enableEventListening(EnumSet.allOf(DataEventType.class));
         mainFrame = new MainFrame(sirius, connectionMonitor);
         mainFrame.decoradeMainFrame(project);
         //todo nighsky: check why JFX webview is only working for first instance...
@@ -60,6 +66,12 @@ public class SiriusGui {
     }
 
     public void shutdown(boolean closeProject){
+        System.out.println("SHUTDOWN SIRIUS GUI");
+        try {
+            sirius.close();
+        } catch (Exception e) {
+            LoggerFactory.getLogger(getClass()).error("Error when closing NighSky client!", e);
+        }
         mainFrame.setCloseProjectOnDispose(closeProject);
         mainFrame.dispose();
     }

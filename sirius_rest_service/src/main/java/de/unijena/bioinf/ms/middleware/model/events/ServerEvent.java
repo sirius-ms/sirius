@@ -32,5 +32,4 @@ public interface ServerEvent<Data> {
     @NotNull
     Type getEventType();
     Data getData();
-
 }

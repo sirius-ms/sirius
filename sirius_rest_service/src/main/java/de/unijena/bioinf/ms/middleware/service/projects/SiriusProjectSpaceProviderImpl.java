@@ -229,18 +229,18 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
         });
 
         project.defineCompoundListener().onCreate().thenDo(e -> eventService.sendEvent(
-                creatEvent(id, FEATURE_CREATED, e.getAffectedID())));
+                creatEvent(id, FEATURE_CREATED, e.getAffectedID()))).register();
         project.defineCompoundListener().onUpdate().thenDo(e -> eventService.sendEvent(
-                creatEvent(id, FEATURE_UPDATED, e.getAffectedID())));
+                creatEvent(id, FEATURE_UPDATED, e.getAffectedID()))).register();
         project.defineCompoundListener().onDelete().thenDo(e -> eventService.sendEvent(
-                creatEvent(id, FEATURE_DELETED, e.getAffectedID())));
+                creatEvent(id, FEATURE_DELETED, e.getAffectedID()))).register();
 
         project.defineFormulaResultListener().onCreate().thenDo(e -> eventService.sendEvent(
-                creatEvent(id, RESULT_CREATED, e.getAffectedID())));
+                creatEvent(id, RESULT_CREATED, e.getAffectedID()))).register();
         project.defineFormulaResultListener().onUpdate().thenDo(e -> eventService.sendEvent(
-                creatEvent(id, RESULT_UPDATED, e.getAffectedID())));
+                creatEvent(id, RESULT_UPDATED, e.getAffectedID()))).register();
         project.defineFormulaResultListener().onDelete().thenDo(e -> eventService.sendEvent(
-                creatEvent(id, RESULT_DELETED, e.getAffectedID())));
+                creatEvent(id, RESULT_DELETED, e.getAffectedID()))).register();
 
     }
 

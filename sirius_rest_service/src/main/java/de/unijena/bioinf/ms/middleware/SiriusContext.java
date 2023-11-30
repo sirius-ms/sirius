@@ -49,8 +49,8 @@ public class SiriusContext{
     }
 
     @Bean
-    public EventService<?> eventService(){
-        return new SseEventService();
+    public EventService<?> eventService(@Value("${de.unijena.bioinf.siriusNightsky.sse.timeout:#{120000}}") long emitterTimeout){
+        return new SseEventService(emitterTimeout);
     }
 
     @Bean

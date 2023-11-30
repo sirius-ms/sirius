@@ -68,7 +68,7 @@ public class InfoController {
     @RequestMapping(value = "/api/connection-status", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public ConnectionChecker.ConnectionCheck getConnectionCheck() {
-        return connectionChecker.checkConnection(); //todo nightsky: update ConnectionCheck object to new subscription object
+        return connectionChecker.checkConnection();
     }
 
 }

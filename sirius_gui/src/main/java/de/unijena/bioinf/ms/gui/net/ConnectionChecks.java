@@ -42,7 +42,9 @@ public class ConnectionChecks {
         return licenseInfo.getUserEmail() != null;
     }
 
-    public static boolean isConnected(@NotNull ConnectionCheck check) {
+    public static boolean isConnected(@Nullable ConnectionCheck check) {
+        if (check == null)
+            return false;
         return isConnected(check.getErrors());
     }
 
