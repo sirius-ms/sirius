@@ -4104,6 +4104,26 @@
           "fingerprintId": {
             "type": "string",
             "description": "Version of the Molecular Fingerprint used by SIRIUS"
+          },
+          "availableILPSolvers": {
+            "type": "array",
+            "description": "Set of solvers that are configured correctly and can be loaded",
+            "items": {
+              "type": "string",
+              "enum": [
+                "GUROBI",
+                "CPLEX",
+                "GLPK",
+                "CLP"
+              ]
+            }
+          },
+          "supportedILPSolvers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Set of ILP Solvers that are Supported and their version information"
           }
         },
         "description": ""
