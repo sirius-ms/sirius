@@ -44,7 +44,6 @@ docs/JobProgress.md
 docs/JobSubmission.md
 docs/JobsApi.md
 docs/LicenseInfo.md
-docs/Link.md
 docs/LoginAndAccountApi.md
 docs/LossEdge.md
 docs/MsData.md
@@ -60,10 +59,8 @@ docs/ProjectChangeEvent.md
 docs/ProjectInfo.md
 docs/ProjectsApi.md
 docs/SearchQueryType.md
-docs/ServerSentEventSseApi.md
 docs/Sirius.md
 docs/SortObject.md
-docs/SseEmitter.md
 docs/StructureCandidate.md
 docs/StructureCandidateFormula.md
 docs/StructureCandidateOptField.md
@@ -86,7 +83,6 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/api/InfoApi.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/api/JobsApi.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/api/LoginAndAccountApi.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/api/ProjectsApi.java
-src/main/java/de/unijena/bioinf/ms/nightsky/sdk/api/ServerSentEventSseApi.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/client/ApiClient.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/client/JavaTimeFormatter.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/client/RFC3339DateFormat.java
@@ -137,7 +133,6 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/JobOptField.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/JobProgress.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/JobSubmission.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/LicenseInfo.java
-src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Link.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/LossEdge.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/MsData.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageAlignedFeature.java
@@ -153,7 +148,6 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ProjectInfo.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SearchQueryType.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Sirius.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SortObject.java
-src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SseEmitter.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/StructureCandidate.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/StructureCandidateFormula.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/StructureCandidateOptField.java
@@ -169,4 +163,3 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/WorkerList.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Zodiac.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ZodiacEdgeFilterThresholds.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ZodiacEpochs.java
-src/test/java/de/unijena/bioinf/ms/nightsky/sdk/api/ServerSentEventSseApiTest.java

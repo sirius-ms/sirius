@@ -13,10 +13,6 @@
   ],
   "tags": [
     {
-      "name": "Server-Sent Event (SSE)",
-      "description": "Server-Sent Event Controller that allows to listen to different types of changes."
-    },
-    {
       "name": "Info",
       "description": "Status und Information"
     },
@@ -861,48 +857,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AccountInfo"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/sse": {
-      "get": {
-        "tags": [
-          "Server-Sent Event (SSE)"
-        ],
-        "operationId": "listenToEvents",
-        "parameters": [
-          {
-            "name": "eventsToListenOn",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "enum": [
-                  "JOB",
-                  "PROJECT",
-                  "GUI_STATE"
-                ]
-              },
-              "default": [
-                "JOB",
-                "PROJECT"
-              ]
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/event-stream": {
-                "schema": {
-                  "$ref": "#/components/schemas/SseEmitter"
                 }
               }
             }
@@ -2886,16 +2840,6 @@
         },
         "description": "Simple object to hold account credentials, e.g. to perform login operations.\n If refreshToken is given, it is usually preferred over password based authentication.\n But in the end this is up to the respective web service."
       },
-      "SseEmitter": {
-        "type": "object",
-        "properties": {
-          "timeout": {
-            "type": "integer",
-            "format": "int64"
-          }
-        },
-        "description": ""
-      },
       "SearchQueryType": {
         "type": "string",
         "description": "",
@@ -4075,35 +4019,46 @@
         }
       },
       "Info": {
+        "required": [
+          "availableILPSolvers",
+          "supportedILPSolvers"
+        ],
         "type": "object",
         "properties": {
           "nightSkyApiVersion": {
             "type": "string",
-            "description": "API version of the SIRIUS Nightsky API"
+            "description": "API version of the SIRIUS Nightsky API",
+            "nullable": true
           },
           "siriusVersion": {
             "type": "string",
-            "description": "Version of the SIRIUS application"
+            "description": "Version of the SIRIUS application",
+            "nullable": true
           },
           "siriusLibVersion": {
             "type": "string",
-            "description": "Version of the SIRIUS libraries"
+            "description": "Version of the SIRIUS libraries",
+            "nullable": true
           },
           "fingerIdLibVersion": {
             "type": "string",
-            "description": "Version of the CSI:FingerID libraries"
+            "description": "Version of the CSI:FingerID libraries",
+            "nullable": true
           },
           "chemDbVersion": {
             "type": "string",
-            "description": "Version of the Chemical Database available via SIRIUS web services"
+            "description": "Version of the Chemical Database available via SIRIUS web services",
+            "nullable": true
           },
           "fingerIdModelVersion": {
             "type": "string",
-            "description": "Version of the Machine learning models used for Fingerprint, Compound Class and Structure Prediction\n Not available if web service is not reachable."
+            "description": "Version of the Machine learning models used for Fingerprint, Compound Class and Structure Prediction\n Not available if web service is not reachable.",
+            "nullable": true
           },
           "fingerprintId": {
             "type": "string",
-            "description": "Version of the Molecular Fingerprint used by SIRIUS"
+            "description": "Version of the Molecular Fingerprint used by SIRIUS",
+            "nullable": true
           },
           "availableILPSolvers": {
             "type": "array",

@@ -154,7 +154,6 @@ Class | Method | HTTP request | Description
 *ProjectsApi* | [**getProjectSpace**](docs/ProjectsApi.md#getProjectSpace) | **GET** /api/projects/{projectId} | Get project space info by its projectId.
 *ProjectsApi* | [**getProjectSpaces**](docs/ProjectsApi.md#getProjectSpaces) | **GET** /api/projects | List opened project spaces.
 *ProjectsApi* | [**openProjectSpace**](docs/ProjectsApi.md#openProjectSpace) | **PUT** /api/projects/{projectId} | Open an existing project-space and make it accessible via the given projectId.
-*ServerSentEventSseApi* | [**listenToEvents**](docs/ServerSentEventSseApi.md#listenToEvents) | **GET** /sse | 
 
 
 ## Documentation for Models
@@ -199,7 +198,6 @@ Class | Method | HTTP request | Description
  - [JobProgress](docs/JobProgress.md)
  - [JobSubmission](docs/JobSubmission.md)
  - [LicenseInfo](docs/LicenseInfo.md)
- - [Link](docs/Link.md)
  - [LossEdge](docs/LossEdge.md)
  - [MsData](docs/MsData.md)
  - [PageAlignedFeature](docs/PageAlignedFeature.md)
@@ -215,7 +213,6 @@ Class | Method | HTTP request | Description
  - [SearchQueryType](docs/SearchQueryType.md)
  - [Sirius](docs/Sirius.md)
  - [SortObject](docs/SortObject.md)
- - [SseEmitter](docs/SseEmitter.md)
  - [StructureCandidate](docs/StructureCandidate.md)
  - [StructureCandidateFormula](docs/StructureCandidateFormula.md)
  - [StructureCandidateOptField](docs/StructureCandidateOptField.md)

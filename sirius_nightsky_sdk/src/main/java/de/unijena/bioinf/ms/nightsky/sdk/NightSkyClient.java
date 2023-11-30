@@ -29,6 +29,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.JobProgress;
 import de.unijena.bioinf.sse.DataEventType;
 import de.unijena.bioinf.sse.FluxToFlowBroadcast;
 import de.unijena.bioinf.sse.PropertyChangeSubscriber;
+import de.unijena.bioinf.ms.nightsky.sdk.api.ServerSentEventApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
@@ -150,7 +151,7 @@ public class NightSkyClient implements AutoCloseable {
 
         sseEventsToListenOn = events;
 
-        Flux<ServerSentEvent<String>> eventStream = new ServerSentEventSseApi(apiClient)
+        Flux<ServerSentEvent<String>> eventStream = new ServerSentEventApi(apiClient)
                 .listenToEventsWithResponseSpec(sseEventsToListenOn.stream().map(Enum::name).toList())
                 .bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
                 })

@@ -20,6 +20,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
@@ -33,7 +38,9 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Info.JSON_PROPERTY_FINGER_ID_LIB_VERSION,
   Info.JSON_PROPERTY_CHEM_DB_VERSION,
   Info.JSON_PROPERTY_FINGER_ID_MODEL_VERSION,
-  Info.JSON_PROPERTY_FINGERPRINT_ID
+  Info.JSON_PROPERTY_FINGERPRINT_ID,
+  Info.JSON_PROPERTY_AVAILABLE_I_L_P_SOLVERS,
+  Info.JSON_PROPERTY_SUPPORTED_I_L_P_SOLVERS
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class Info {
@@ -57,6 +64,51 @@ public class Info {
 
   public static final String JSON_PROPERTY_FINGERPRINT_ID = "fingerprintId";
   private String fingerprintId;
+
+  /**
+   * Gets or Sets availableILPSolvers
+   */
+  public enum AvailableILPSolversEnum {
+    GUROBI("GUROBI"),
+    
+    CPLEX("CPLEX"),
+    
+    GLPK("GLPK"),
+    
+    CLP("CLP");
+
+    private String value;
+
+    AvailableILPSolversEnum(String value) {
+      this.value = value;
+    }
+
+    @JsonValue
+    public String getValue() {
+      return value;
+    }
+
+    @Override
+    public String toString() {
+      return String.valueOf(value);
+    }
+
+    @JsonCreator
+    public static AvailableILPSolversEnum fromValue(String value) {
+      for (AvailableILPSolversEnum b : AvailableILPSolversEnum.values()) {
+        if (b.value.equals(value)) {
+          return b;
+        }
+      }
+      throw new IllegalArgumentException("Unexpected value '" + value + "'");
+    }
+  }
+
+  public static final String JSON_PROPERTY_AVAILABLE_I_L_P_SOLVERS = "availableILPSolvers";
+  private List<AvailableILPSolversEnum> availableILPSolvers = new ArrayList<>();
+
+  public static final String JSON_PROPERTY_SUPPORTED_I_L_P_SOLVERS = "supportedILPSolvers";
+  private Map<String, String> supportedILPSolvers = new HashMap<>();
 
   public Info() {
   }
@@ -242,6 +294,71 @@ public class Info {
     this.fingerprintId = fingerprintId;
   }
 
+
+  public Info availableILPSolvers(List<AvailableILPSolversEnum> availableILPSolvers) {
+    
+    this.availableILPSolvers = availableILPSolvers;
+    return this;
+  }
+
+  public Info addAvailableILPSolversItem(AvailableILPSolversEnum availableILPSolversItem) {
+    if (this.availableILPSolvers == null) {
+      this.availableILPSolvers = new ArrayList<>();
+    }
+    this.availableILPSolvers.add(availableILPSolversItem);
+    return this;
+  }
+
+   /**
+   * Set of solvers that are configured correctly and can be loaded
+   * @return availableILPSolvers
+  **/
+  @javax.annotation.Nonnull
+  @JsonProperty(JSON_PROPERTY_AVAILABLE_I_L_P_SOLVERS)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
+  public List<AvailableILPSolversEnum> getAvailableILPSolvers() {
+    return availableILPSolvers;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_AVAILABLE_I_L_P_SOLVERS)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setAvailableILPSolvers(List<AvailableILPSolversEnum> availableILPSolvers) {
+    this.availableILPSolvers = availableILPSolvers;
+  }
+
+
+  public Info supportedILPSolvers(Map<String, String> supportedILPSolvers) {
+    
+    this.supportedILPSolvers = supportedILPSolvers;
+    return this;
+  }
+
+  public Info putSupportedILPSolversItem(String key, String supportedILPSolversItem) {
+    this.supportedILPSolvers.put(key, supportedILPSolversItem);
+    return this;
+  }
+
+   /**
+   * Set of ILP Solvers that are Supported and their version information
+   * @return supportedILPSolvers
+  **/
+  @javax.annotation.Nonnull
+  @JsonProperty(JSON_PROPERTY_SUPPORTED_I_L_P_SOLVERS)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
+  public Map<String, String> getSupportedILPSolvers() {
+    return supportedILPSolvers;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_SUPPORTED_I_L_P_SOLVERS)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setSupportedILPSolvers(Map<String, String> supportedILPSolvers) {
+    this.supportedILPSolvers = supportedILPSolvers;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -257,12 +374,14 @@ public class Info {
         Objects.equals(this.fingerIdLibVersion, info.fingerIdLibVersion) &&
         Objects.equals(this.chemDbVersion, info.chemDbVersion) &&
         Objects.equals(this.fingerIdModelVersion, info.fingerIdModelVersion) &&
-        Objects.equals(this.fingerprintId, info.fingerprintId);
+        Objects.equals(this.fingerprintId, info.fingerprintId) &&
+        Objects.equals(this.availableILPSolvers, info.availableILPSolvers) &&
+        Objects.equals(this.supportedILPSolvers, info.supportedILPSolvers);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(nightSkyApiVersion, siriusVersion, siriusLibVersion, fingerIdLibVersion, chemDbVersion, fingerIdModelVersion, fingerprintId);
+    return Objects.hash(nightSkyApiVersion, siriusVersion, siriusLibVersion, fingerIdLibVersion, chemDbVersion, fingerIdModelVersion, fingerprintId, availableILPSolvers, supportedILPSolvers);
   }
 
   @Override
@@ -276,6 +395,8 @@ public class Info {
     sb.append("    chemDbVersion: ").append(toIndentedString(chemDbVersion)).append("\n");
     sb.append("    fingerIdModelVersion: ").append(toIndentedString(fingerIdModelVersion)).append("\n");
     sb.append("    fingerprintId: ").append(toIndentedString(fingerprintId)).append("\n");
+    sb.append("    availableILPSolvers: ").append(toIndentedString(availableILPSolvers)).append("\n");
+    sb.append("    supportedILPSolvers: ").append(toIndentedString(supportedILPSolvers)).append("\n");
     sb.append("}");
     return sb.toString();
   }

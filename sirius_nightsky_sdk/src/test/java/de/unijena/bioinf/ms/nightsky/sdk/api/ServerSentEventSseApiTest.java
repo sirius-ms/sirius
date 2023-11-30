@@ -33,7 +33,7 @@ import java.util.List;
 @Ignore
 public class ServerSentEventSseApiTest {
 
-    private final ServerSentEventSseApi api = new ServerSentEventSseApi();
+    private final ServerSentEventApi api = new ServerSentEventApi();
 
     
     /**
