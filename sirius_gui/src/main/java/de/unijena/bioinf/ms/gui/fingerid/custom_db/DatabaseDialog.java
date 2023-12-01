@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 public class DatabaseDialog extends JDialog {
-    //todo: we should separate the Dialog from the Database Managing part.
+
     protected JList<String> dbList;
     protected Map<String, CustomDatabase> customDatabases;
 
