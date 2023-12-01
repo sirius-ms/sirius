@@ -7,6 +7,7 @@ import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.JTextAreaDropImage;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -39,7 +40,7 @@ class ImportDatabaseDialog extends JDialog {
     }
 
     public ImportDatabaseDialog(DatabaseDialog databaseDialog, @Nullable CustomDatabase db) {
-        super(databaseDialog, db != null ? "Import into '" + db.name() + "' database" : "Create/Add custom database", false);
+        super(databaseDialog, db != null ? "Import into '" + db.name() + "' database" : "Create/Add custom database", true);
         this.databaseDialog = databaseDialog;
 
         setPreferredSize(new Dimension(640, 480));
@@ -120,6 +121,7 @@ class ImportDatabaseDialog extends JDialog {
             }
         };
 
+        GuiUtils.closeOnEscape(this);
         setDropTarget(dropTarget);
         textArea.setDropTarget(dropTarget);
         pack();

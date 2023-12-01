@@ -35,6 +35,7 @@ import picocli.CommandLine;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -99,8 +100,6 @@ public class DatabaseDialog extends JDialog {
         add(pane, BorderLayout.CENTER);
         add(dbView, BorderLayout.EAST);
 
-        addCustomDb.addActionListener(e -> new ImportDatabaseDialog(this));
-
 
         //klick on Entry ->  open import dialog
 //        new ListAction(dbList, new AbstractAction() {
@@ -116,37 +115,59 @@ public class DatabaseDialog extends JDialog {
 //            }
 //        });
 
-        editDB.addActionListener(e -> new ImportDatabaseDialog(this, dbList.getSelectedValue()));
-
-        deleteDB.addActionListener(e -> {
-            CustomDatabase db = dbList.getSelectedValue();
-            final String name = db.name();
-            final String msg = "Do you really want to remove the custom database '" + name + "'?\n(will not be deleted from disk) ";
-
-            if (JOptionPane.showConfirmDialog(getOwner(), msg, "", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-
-                try {
-                    Jobs.runCommandAndLoad(Arrays.asList(
-                                            CustomDBOptions.class.getAnnotation(CommandLine.Command.class).name(),
-                                            "--remove", name), null, null, owner,
-                                    "Deleting database '" + name + "'...", true)
-                            .awaitResult();
-                } catch (ExecutionException ex) {
-                    LoggerFactory.getLogger(getClass()).error("Error during Custom DB removal.", ex);
-
-                    if (ex.getCause() != null)
-                        new StacktraceDialog(this, ex.getCause().getMessage(), ex.getCause());
-                    else
-                        new StacktraceDialog(this, "Unexpected error when removing custom DB!", ex);
-                } catch (Exception ex2) {
-                    LoggerFactory.getLogger(getClass()).error("Fatal Error during Custom DB removal.", ex2);
-                    new StacktraceDialog(MF, "Fatal Error during Custom DB removal.", ex2);
-                }
-
-                loadDatabaseList();
+        Action editSelectedDb = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                new ImportDatabaseDialog(DatabaseDialog.this, dbList.getSelectedValue());
             }
+        };
 
-        });
+        Action deleteSelectedDb = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                CustomDatabase db = dbList.getSelectedValue();
+                final String name = db.name();
+                final String msg = "Do you really want to remove the custom database '" + name + "'?\n(will not be deleted from disk) ";
+
+                if (JOptionPane.showConfirmDialog(getOwner(), msg, "", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+
+                    try {
+                        Jobs.runCommandAndLoad(Arrays.asList(
+                                                CustomDBOptions.class.getAnnotation(CommandLine.Command.class).name(),
+                                                "--remove", name), null, null, owner,
+                                        "Deleting database '" + name + "'...", true)
+                                .awaitResult();
+                    } catch (ExecutionException ex) {
+                        LoggerFactory.getLogger(getClass()).error("Error during Custom DB removal.", ex);
+
+                        if (ex.getCause() != null)
+                            new StacktraceDialog(DatabaseDialog.this, ex.getCause().getMessage(), ex.getCause());
+                        else
+                            new StacktraceDialog(DatabaseDialog.this, "Unexpected error when removing custom DB!", ex);
+                    } catch (Exception ex2) {
+                        LoggerFactory.getLogger(getClass()).error("Fatal Error during Custom DB removal.", ex2);
+                        new StacktraceDialog(MF, "Fatal Error during Custom DB removal.", ex2);
+                    }
+
+                    loadDatabaseList();
+                }
+            }
+        };
+
+        addCustomDb.addActionListener(e -> new ImportDatabaseDialog(this));
+        editDB.addActionListener(editSelectedDb);
+        deleteDB.addActionListener(deleteSelectedDb);
+
+        String editDbActionName = "editCurrentDb";
+        dbList.getInputMap().put(KeyStroke.getKeyStroke("ENTER"), editDbActionName);
+        dbList.getInputMap().put(KeyStroke.getKeyStroke("SPACE"),editDbActionName);
+        dbList.getActionMap().put(editDbActionName, editSelectedDb);
+
+        String deleteDbActionName = "deleteCurrentDb";
+        dbList.getInputMap().put(KeyStroke.getKeyStroke("DELETE"),deleteDbActionName);
+        dbList.getActionMap().put(deleteDbActionName, deleteSelectedDb);
+
+        GuiUtils.closeOnEscape(this);
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setMinimumSize(new Dimension(375, getMinimumSize().height));
