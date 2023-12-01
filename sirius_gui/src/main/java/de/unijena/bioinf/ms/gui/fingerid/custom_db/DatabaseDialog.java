@@ -165,6 +165,7 @@ public class DatabaseDialog extends JDialog {
         loadDatabaseList();
         CustomDatabase newDb = customDatabases.stream().filter(db -> db.storageLocation().equals(dbName)).findFirst().orElseThrow();
         dbList.setSelectedValue(newDb, true);
+        dbList.requestFocusInWindow();
     }
 
     protected static class DatabaseView extends JPanel {
@@ -177,6 +178,7 @@ public class DatabaseDialog extends JDialog {
             setLayout(new BorderLayout());
             add(content, BorderLayout.CENTER);
             setPreferredSize(new Dimension(200, 240));
+            updateContent(null);
         }
 
         public void updateContent(CustomDatabase c) {
