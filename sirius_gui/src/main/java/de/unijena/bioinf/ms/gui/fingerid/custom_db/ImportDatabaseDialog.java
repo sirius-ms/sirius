@@ -88,7 +88,7 @@ class ImportDatabaseDialog extends JDialog {
 
             public void onTextChanged() {
                 if (configPanel.dbLocationField.getFilePath() == null) return;
-                importButton.setEnabled(!configPanel.dbLocationField.getFilePath().isEmpty() && configPanel.dbLocationField.getFilePath().replaceAll("\\s", "").equals(configPanel.dbLocationField.getFilePath()) && databaseDialog.customDatabases.keySet().stream().noneMatch(k -> k.equalsIgnoreCase(configPanel.dbLocationField.getFilePath())));
+                importButton.setEnabled(!configPanel.dbLocationField.getFilePath().isEmpty() && configPanel.dbLocationField.getFilePath().replaceAll("\\s", "").equals(configPanel.dbLocationField.getFilePath()) && databaseDialog.customDatabases.stream().noneMatch(k -> k.name().equalsIgnoreCase(configPanel.dbLocationField.getFilePath())));
             }
         });
 

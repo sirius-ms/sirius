@@ -30,17 +30,15 @@ import de.unijena.bioinf.ms.gui.dialogs.DialogHeader;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import de.unijena.bioinf.ms.gui.utils.ListAction;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
-import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -49,8 +47,8 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 public class DatabaseDialog extends JDialog {
 
-    protected JList<String> dbList;
-    protected Map<String, CustomDatabase> customDatabases;
+    protected JList<CustomDatabase> dbList;
+    protected List<CustomDatabase> customDatabases;
 
     protected DatabaseView dbView;
     JButton deleteDB, editDB, addCustomDb;
@@ -61,88 +59,69 @@ public class DatabaseDialog extends JDialog {
         setTitle("Custom Databases");
         setLayout(new BorderLayout());
 
-        //============= NORTH (Header) =================
         JPanel header = new DialogHeader(Icons.DB_64);
         add(header, BorderLayout.NORTH);
 
+        dbList = new JList<>();
+        dbList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        dbView = new DatabaseView();
 
-        this.customDatabases = Jobs.runInBackgroundAndLoad(owner, "Loading DBs...", (Callable<List<CustomDatabase>>) SearchableDatabases::getCustomDatabases).getResult()
-                .stream().collect(Collectors.toMap(CustomDatabase::name, k -> k));
-        this.dbList = new DatabaseList(customDatabases.keySet().stream().sorted().collect(Collectors.toList()));
+        addCustomDb = Buttons.getAddButton16("Create custom Database");
+        deleteDB = Buttons.getRemoveButton16("Delete Custom Database");
+        editDB = Buttons.getEditButton16("Edit Custom Database");
+
+        loadDatabaseList();
+
+        dbList.addListSelectionListener(e -> {
+            CustomDatabase db = dbList.getSelectedValue();
+            if (db != null) {
+                dbView.updateContent(db);
+                editDB.setEnabled(!db.needsUpgrade());
+                deleteDB.setEnabled(true);
+            } else {
+                editDB.setEnabled(false);
+                deleteDB.setEnabled(false);
+            }
+        });
+
+        dbList.setSelectedIndex(0);
+
         JScrollPane scroll = new JScrollPane(dbList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         TextHeaderBoxPanel pane = new TextHeaderBoxPanel("Custom Databases", scroll);
         pane.setBorder(BorderFactory.createEmptyBorder(GuiUtils.SMALL_GAP, GuiUtils.SMALL_GAP, 0, 0));
-
-        addCustomDb = Buttons.getAddButton16("Create custom DB");
-        deleteDB = Buttons.getRemoveButton16("Delete Custom Database");
-        editDB = Buttons.getEditButton16("Edit Custom Database");
 
         final Box but = Box.createHorizontalBox();
         but.add(Box.createHorizontalGlue());
         but.add(deleteDB);
         but.add(editDB);
         but.add(addCustomDb);
-        editDB.setEnabled(false);
-        deleteDB.setEnabled(false);
-
-        this.dbView = new DatabaseView();
 
         add(but, BorderLayout.SOUTH);
         add(pane, BorderLayout.CENTER);
         add(dbView, BorderLayout.EAST);
 
-
-        dbList.addListSelectionListener(e -> {
-            final int i = dbList.getSelectedIndex();
-            if (i >= 0) {
-                final String s = dbList.getModel().getElementAt(i);
-                if (customDatabases.containsKey(s)) {
-                    final CustomDatabase c = customDatabases.get(s);
-                    dbView.updateContent(c);
-                    editDB.setEnabled(!c.needsUpgrade());
-                    deleteDB.setEnabled(true);
-                } else {
-                    editDB.setEnabled(false);
-                    deleteDB.setEnabled(false);
-                }
-
-            }
-        });
-
-        dbList.setSelectedIndex(0);
-
         addCustomDb.addActionListener(e -> new ImportDatabaseDialog(this));
 
 
         //klick on Entry ->  open import dialog
-        new ListAction(dbList, new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                final int k = dbList.getSelectedIndex();
-                if (k >= 0 && k < dbList.getModel().getSize()) {
-                    String key = dbList.getModel().getElementAt(k);
-                    CustomDatabase db = customDatabases.get(key);
-                    new ImportDatabaseDialog(DatabaseDialog.this, db);
-                }
+//        new ListAction(dbList, new AbstractAction() {
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+//                final int k = dbList.getSelectedIndex();
+//                if (k >= 0 && k < dbList.getModel().getSize()) {
+//                    String key = dbList.getModel().getElementAt(k);
+//                    CustomDatabase db = customDatabasesMAP.get(key);
+//                    new ImportDatabaseDialog(DatabaseDialog.this, db);
+//                }
+//
+//            }
+//        });
 
-            }
-        });
-
-        //edit button ->  open import dialog
-        editDB.addActionListener(e -> {
-            final int k = dbList.getSelectedIndex();
-            if (k >= 0 && k < dbList.getModel().getSize()) {
-                String key = dbList.getModel().getElementAt(k);
-                CustomDatabase db = customDatabases.get(key);
-                new ImportDatabaseDialog(this, db);
-            }
-        });
+        editDB.addActionListener(e -> new ImportDatabaseDialog(this, dbList.getSelectedValue()));
 
         deleteDB.addActionListener(e -> {
-            final int index = dbList.getSelectedIndex();
-            if (index < 0 || index >= dbList.getModel().getSize())
-                return;
-            final String name = dbList.getModel().getElementAt(index);
+            CustomDatabase db = dbList.getSelectedValue();
+            final String name = db.name();
             final String msg = "Do you really want to remove the custom database (will not be deleted from disk)'" + name + "'?";
             if (new QuestionDialog(getOwner(), msg).isSuccess()) {
 
@@ -164,9 +143,7 @@ public class DatabaseDialog extends JDialog {
                     new StacktraceDialog(MF, "Fatal Error during Custom DB removal.", ex2);
                 }
 
-                final String[] dbs = Jobs.runInBackgroundAndLoad(owner, "Reloading DBs...", (Callable<List<CustomDatabase>>) SearchableDatabases::getCustomDatabases).getResult()
-                        .stream().map(CustomDatabase::name).toArray(String[]::new);
-                dbList.setListData(dbs);
+                loadDatabaseList();
             }
 
         });
@@ -178,11 +155,16 @@ public class DatabaseDialog extends JDialog {
         setVisible(true);
     }
 
+    private void loadDatabaseList() {
+        customDatabases = Jobs.runInBackgroundAndLoad(getOwner(), "Loading DBs...", (Callable<List<CustomDatabase>>) SearchableDatabases::getCustomDatabases).getResult();
+        customDatabases.sort(Comparator.comparing(CustomDatabase::name));
+        dbList.setListData(customDatabases.toArray(new CustomDatabase[0]));
+    }
+
     protected void whenCustomDbIsAdded(final String dbName) {
-        CustomDatabase db = SearchableDatabases.getCustomDatabaseByPathOrThrow(Path.of(dbName));
-        this.customDatabases.put(db.name(), db);
-        dbList.setListData(this.customDatabases.keySet().stream().sorted().toArray(String[]::new));
-        dbList.setSelectedValue(db.name(), true);
+        loadDatabaseList();
+        CustomDatabase newDb = customDatabases.stream().filter(db -> db.storageLocation().equals(dbName)).findFirst().orElseThrow();
+        dbList.setSelectedValue(newDb, true);
     }
 
     protected static class DatabaseView extends JPanel {
@@ -216,13 +198,4 @@ public class DatabaseDialog extends JDialog {
             }
         }
     }
-
-    protected static class DatabaseList extends JList<String> {
-        protected DatabaseList(List<String> databaseList) {
-            super(new Vector<>(databaseList));
-            setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        }
-
-    }
-
 }
