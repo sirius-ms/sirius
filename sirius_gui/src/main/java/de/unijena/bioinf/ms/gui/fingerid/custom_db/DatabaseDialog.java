@@ -36,6 +36,8 @@ import picocli.CommandLine;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -84,8 +86,6 @@ public class DatabaseDialog extends JDialog {
             }
         });
 
-        dbList.setSelectedIndex(0);
-
         JScrollPane scroll = new JScrollPane(dbList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         TextHeaderBoxPanel pane = new TextHeaderBoxPanel("Custom Databases", scroll);
         pane.setBorder(BorderFactory.createEmptyBorder(GuiUtils.SMALL_GAP, GuiUtils.SMALL_GAP, 0, 0));
@@ -95,30 +95,19 @@ public class DatabaseDialog extends JDialog {
         but.add(deleteDB);
         but.add(editDB);
         but.add(addCustomDb);
+        editDB.setEnabled(false);
+        deleteDB.setEnabled(false);
 
         add(but, BorderLayout.SOUTH);
         add(pane, BorderLayout.CENTER);
         add(dbView, BorderLayout.EAST);
 
-
-        //klick on Entry ->  open import dialog
-//        new ListAction(dbList, new AbstractAction() {
-//            @Override
-//            public void actionPerformed(ActionEvent e) {
-//                final int k = dbList.getSelectedIndex();
-//                if (k >= 0 && k < dbList.getModel().getSize()) {
-//                    String key = dbList.getModel().getElementAt(k);
-//                    CustomDatabase db = customDatabasesMAP.get(key);
-//                    new ImportDatabaseDialog(DatabaseDialog.this, db);
-//                }
-//
-//            }
-//        });
-
         Action editSelectedDb = new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                new ImportDatabaseDialog(DatabaseDialog.this, dbList.getSelectedValue());
+                if (dbList.getSelectedIndex() != -1) {
+                    new ImportDatabaseDialog(DatabaseDialog.this, dbList.getSelectedValue());
+                }
             }
         };
 
@@ -126,6 +115,9 @@ public class DatabaseDialog extends JDialog {
             @Override
             public void actionPerformed(ActionEvent e) {
                 CustomDatabase db = dbList.getSelectedValue();
+                if (db == null) {
+                    return;
+                }
                 final String name = db.name();
                 final String msg = "Do you really want to remove the custom database '" + name + "'?\n(will not be deleted from disk) ";
 
@@ -163,9 +155,23 @@ public class DatabaseDialog extends JDialog {
         dbList.getInputMap().put(KeyStroke.getKeyStroke("SPACE"),editDbActionName);
         dbList.getActionMap().put(editDbActionName, editSelectedDb);
 
+        dbList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
+                    int i = dbList.getSelectedIndex();
+                            if (i >= 0 && dbList.getCellBounds(i, i).contains(e.getPoint())) {
+                        editSelectedDb.actionPerformed(null);
+                    }
+                }
+            }
+        });
+
         String deleteDbActionName = "deleteCurrentDb";
         dbList.getInputMap().put(KeyStroke.getKeyStroke("DELETE"),deleteDbActionName);
         dbList.getActionMap().put(deleteDbActionName, deleteSelectedDb);
+
+        dbList.setSelectedIndex(0);
 
         GuiUtils.closeOnEscape(this);
 
