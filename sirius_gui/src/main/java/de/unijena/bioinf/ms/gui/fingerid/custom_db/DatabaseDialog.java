@@ -27,7 +27,6 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.DialogHeader;
-import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
@@ -74,8 +73,8 @@ public class DatabaseDialog extends JDialog {
 
         dbList.addListSelectionListener(e -> {
             CustomDatabase db = dbList.getSelectedValue();
+            dbView.updateContent(db);
             if (db != null) {
-                dbView.updateContent(db);
                 editDB.setEnabled(!db.needsUpgrade());
                 deleteDB.setEnabled(true);
             } else {
@@ -122,8 +121,9 @@ public class DatabaseDialog extends JDialog {
         deleteDB.addActionListener(e -> {
             CustomDatabase db = dbList.getSelectedValue();
             final String name = db.name();
-            final String msg = "Do you really want to remove the custom database (will not be deleted from disk)'" + name + "'?";
-            if (new QuestionDialog(getOwner(), msg).isSuccess()) {
+            final String msg = "Do you really want to remove the custom database '" + name + "'?\n(will not be deleted from disk) ";
+
+            if (JOptionPane.showConfirmDialog(getOwner(), msg, "", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
 
                 try {
                     Jobs.runCommandAndLoad(Arrays.asList(
@@ -171,7 +171,7 @@ public class DatabaseDialog extends JDialog {
         JLabel content;
 
         protected DatabaseView() {
-            this.content = new JLabel("No DB selected!");
+            this.content = new JLabel();
             content.setHorizontalAlignment(JLabel.CENTER);
             content.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
             setLayout(new BorderLayout());
@@ -180,7 +180,10 @@ public class DatabaseDialog extends JDialog {
         }
 
         public void updateContent(CustomDatabase c) {
-            if (c.getStatistics().getCompounds() > 0) {
+            if (c == null) {
+                content.setText("No Database selected.");
+                content.setToolTipText(null);
+            } else if (c.getStatistics().getCompounds() > 0) {
                 content.setText("<html><b>" + c.name() + "</b>"
                         + "<br><b>"
                         + c.getStatistics().getCompounds() + "</b> compounds with <b>" + c.getStatistics().getFormulas()
