@@ -40,18 +40,11 @@ class ImportDatabaseDialog extends JDialog {
     }
 
     public ImportDatabaseDialog(DatabaseDialog databaseDialog, @Nullable CustomDatabase db) {
-        super(databaseDialog, db != null ? "Import into '" + db.name() + "' database" : "Create/Add custom database", true);
+        super(databaseDialog, db != null ? "Import into " + db.name() : "Create custom database", true);
         this.databaseDialog = databaseDialog;
 
         setPreferredSize(new Dimension(640, 480));
         setLayout(new BorderLayout());
-
-        final JLabel explain = new JLabel("<html>You can inherit compounds from PubChem or our biological databases. If you do so, all compounds in these databases are implicitly added to your custom database.");
-        final Box hbox = Box.createHorizontalBox();
-        hbox.add(explain);
-        final Box vbox = Box.createVerticalBox();
-        vbox.add(hbox);
-        vbox.add(Box.createVerticalStrut(4));
 
         final Box box = Box.createVerticalBox();
         box.setAlignmentX(Component.LEFT_ALIGNMENT);
