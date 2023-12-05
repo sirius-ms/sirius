@@ -37,8 +37,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -150,24 +148,24 @@ public class Sirius extends Tool<SiriusOptions> {
     @JsonIgnore
     @Override
     public Map<String, String> asConfigMap() {
-        HashMap<String, String> map = new HashMap<>();
-        map.put("UseHeuristic.mzToUseHeuristic", String.valueOf(useHeuristic.mzToUseHeuristic));
-        map.put("UseHeuristic.mzToUseHeuristicOnly", String.valueOf(useHeuristic.mzToUseHeuristicOnly));
+        return new NullCheckMapBuilder()
+                .putNonNullObj("UseHeuristic.mzToUseHeuristic", useHeuristic, UseHeuristic::getMzToUseHeuristic)
+                .putNonNullObj("UseHeuristic.mzToUseHeuristicOnly", useHeuristic, UseHeuristic::getMzToUseHeuristicOnly)
 
-        map.put("Timeout.secondsPerInstance", String.valueOf(ilpTimeout.getNumberOfSecondsPerInstance()));
-        map.put("Timeout.secondsPerTree", String.valueOf(ilpTimeout.getNumberOfSecondsPerDecomposition()));
+                .putNonNullObj("Timeout.secondsPerInstance", ilpTimeout, Timeout::getNumberOfSecondsPerInstance)
+                .putNonNullObj("Timeout.secondsPerTree", ilpTimeout, Timeout::getNumberOfSecondsPerDecomposition)
 
-        map.put("FormulaSettings.enforced", enforcedFormulaConstraints);
-        map.put("FormulaSettings.detectable", String.join(",", detectableElements));
-        map.put("FormulaSettings.fallback", fallbackFormulaConstraints);
+                .putNonNull("FormulaSettings.enforced", enforcedFormulaConstraints)
+                .putNonNull("FormulaSettings.detectable", detectableElements, d -> String.join(",", d))
+                .putNonNull("FormulaSettings.fallback", fallbackFormulaConstraints)
 
-        map.put("IsotopeMs2Settings", isotopeMs2Settings.name());
+                .putNonNull("IsotopeMs2Settings", isotopeMs2Settings, IsotopeMs2Settings.Strategy::name)
 
-        map.put("FormulaSearchDB", formulaSearchDBs.stream().map(DataSource::name).collect(Collectors.joining(",")));
+                .putNonNull("FormulaSearchDB", formulaSearchDBs, f -> f.stream().map(DataSource::name).collect(Collectors.joining(",")))
 
-        map.put("NumberOfCandidates", String.valueOf(numberOfCandidates));
-        map.put("NumberOfCandidatesPerIon", String.valueOf(numberOfCandidatesPerIon));
-        map.put("AlgorithmProfile", profile.name());
-        return Collections.unmodifiableMap(map);
+                .putNonNull("NumberOfCandidates", numberOfCandidates)
+                .putNonNull("NumberOfCandidatesPerIon", numberOfCandidatesPerIon)
+                .putNonNull("AlgorithmProfile", profile, Sirius.Instrument::name)
+                .toUnmodifiableMap();
     }
 }

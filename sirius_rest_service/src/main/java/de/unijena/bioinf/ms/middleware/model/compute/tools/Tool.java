@@ -21,9 +21,14 @@
 package de.unijena.bioinf.ms.middleware.model.compute.tools;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 public abstract class Tool<C> {
     private final CommandLine.Command command;
@@ -51,5 +56,54 @@ public abstract class Tool<C> {
     }
 
     @JsonIgnore
-    public abstract Map<String,String> asConfigMap();
+    public abstract Map<String, String> asConfigMap();
+
+
+    protected static class NullCheckMapBuilder {
+        private Map<String, String> map;
+
+        protected NullCheckMapBuilder() {
+            this(new HashMap<>());
+        }
+
+        protected NullCheckMapBuilder(Map<String, String> map) {
+            this.map = map;
+        }
+
+        protected NullCheckMapBuilder putNonNull(String key, String value) {
+            return putNonNull(key, value, v -> v);
+        }
+        protected <T> NullCheckMapBuilder putNonNull(String key, T value) {
+            return putNonNull(key, value, String::valueOf);
+        }
+
+        protected <T> NullCheckMapBuilder putNonNullObj(@NotNull String key,
+                                                        @Nullable T value,
+                                                        @NotNull Function<T, ?> valueConverter
+        ) {
+            return putNonNull(key, value, i -> String.valueOf(valueConverter.apply(i)));
+        }
+
+
+        protected <T> NullCheckMapBuilder putNonNull(
+                @NotNull String key,
+                @Nullable T value,
+                @NotNull Function<T, String> valueConverter
+        ) {
+            if (map == null)
+                throw new IllegalStateException("Map has already been build, please create an new Builder");
+            if (value != null)
+                map.put(key, valueConverter.apply(value));
+            return this;
+        }
+
+        Map<String, String> toUnmodifiableMap(){
+            return Collections.unmodifiableMap(toMap());
+        }
+        Map<String, String> toMap(){
+            Map<String, String> map = this.map;
+            this.map = null;
+            return map;
+        }
+    }
 }

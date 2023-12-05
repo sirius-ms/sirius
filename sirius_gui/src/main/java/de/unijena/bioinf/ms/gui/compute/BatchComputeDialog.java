@@ -31,8 +31,7 @@ import de.unijena.bioinf.ms.gui.io.LoadController;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.ExperimentEditPanel;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import de.unijena.bioinf.ms.nightsky.sdk.model.ConnectionCheck;
-import de.unijena.bioinf.ms.nightsky.sdk.model.Info;
+import de.unijena.bioinf.ms.nightsky.sdk.model.*;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jdesktop.swingx.JXTitledSeparator;
@@ -46,10 +45,8 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -64,8 +61,6 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
     public static final String DO_NOT_SHOW_AGAIN_KEY_S_MASS = "de.unijena.bioinf.sirius.computeDialog.sirius.highmass.dontAskAgain";
     public static final String DO_NOT_SHOW_AGAIN_KEY_OUTDATED_PS = "de.unijena.bioinf.sirius.computeDialog.projectspace.outdated.dontAskAgain";
     public static final String DO_NOT_SHOW_AGAIN_KEY_NO_FP_CHECK = "de.unijena.bioinf.sirius.computeDialog.projectspace.outdated.na.dontAskAgain";
-
-
 
 
     // main parts
@@ -85,7 +80,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
 
     public BatchComputeDialog(MainFrame owner, List<InstanceBean> compoundsToProcess) {
         super(owner, "Compute", true);
-        
+
         this.compoundsToProcess = compoundsToProcess;
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -113,7 +108,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             csiSearchConfigs = new ActFingerblastConfigPanel(mf(), formulaIDConfigPanel.content.searchDBList.checkBoxList);
             canopusConfigPanel = new ActCanopusConfigPanel(mf());
 
-            if (compoundsToProcess.size() > 1 && ms2){
+            if (compoundsToProcess.size() > 1 && ms2) {
                 zodiacConfigs.addEnableChangeListener((s, enabled) -> {
                     if (enabled) {
                         if (!PropertyManager.getBoolean(DO_NOT_SHOW_AGAIN_KEY_Z_COMP, false)) {
@@ -210,7 +205,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         setVisible(true);
     }
 
-    private MainFrame mf(){
+    private MainFrame mf() {
         return (MainFrame) getOwner();
     }
 
@@ -340,7 +335,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
                     // CHECK ILP SOLVER
                     //check for IPL solver only if it is actually needed during analysis
                     double minMass = finalComps.stream().mapToDouble(InstanceBean::getIonMass).min().orElse(0);
-                    if (((Double)formulaIDConfigPanel.getContent().mzHeuristicOnly.getValue()) > minMass) {
+                    if (((Double) formulaIDConfigPanel.getContent().mzHeuristicOnly.getValue()) > minMass) {
                         updateProgress(0, 100, 0, "Checking ILP solvers...");
                         Info info = mf().getSiriusClient().infos().getInfo();
                         if (info.getAvailableILPSolvers().isEmpty()) {
@@ -380,6 +375,8 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         dispose();
     }
 
+    //todo add endpoint to create command to NIghtsky API.
+    @Deprecated
     private List<String> makeCommand(final List<String> toolCommands) {
         // create computation parameters
         toolCommands.clear();
@@ -420,6 +417,44 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         command.addAll(toolCommands);
         command = command.stream().map(s -> s.replaceAll("\\s+", "")).collect(Collectors.toList());
         return command;
+    }
+
+
+    private JobSubmission makeJobSubmission() {
+        // create computation parameters
+        JobSubmission sub = new JobSubmission();
+        sub.setConfigMap(new HashMap<>());
+
+        if (formulaIDConfigPanel != null && formulaIDConfigPanel.isToolSelected()) {
+            sub.setFingerprintPredictionParams(new FingerprintPrediction().enabled(true));
+            sub.getConfigMap().putAll(formulaIDConfigPanel.asConfigMap());
+        }
+
+        if (zodiacConfigs != null && zodiacConfigs.isToolSelected()) {
+            sub.setZodiacParams(new Zodiac().enabled(true));
+            sub.getConfigMap().putAll(zodiacConfigs.asConfigMap());
+
+        }
+
+        if (csiPredictConfigs != null && csiPredictConfigs.isToolSelected()) {
+            sub.setFingerprintPredictionParams(new FingerprintPrediction().enabled(true));
+            sub.getConfigMap().putAll(csiPredictConfigs.asConfigMap());
+
+        }
+
+
+        if (csiSearchConfigs != null && csiSearchConfigs.isToolSelected()) {
+            sub.setStructureDbSearchParams(new StructureDbSearch().enabled(true));
+            sub.getConfigMap().putAll(csiSearchConfigs.asConfigMap());
+        }
+
+        if (canopusConfigPanel != null && canopusConfigPanel.isToolSelected()) {
+            sub.setCanopusParams(new Canopus().enabled(true));
+            sub.getConfigMap().putAll(canopusConfigPanel.asConfigMap());
+        }
+
+        sub.setRecompute(recomputeBox.isSelected());
+        return sub;
     }
 
     private boolean warnNoMethodIsSelected() {

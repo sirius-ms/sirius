@@ -61,9 +61,10 @@ public class StructureDbSearch extends Tool<FingerblastOptions> {
     @JsonIgnore
     @Override
     public Map<String, String> asConfigMap() {
-        return Map.of(
-                "InjectElGordoCompounds", String.valueOf(tagLipids),
-                "StructureSearchDB", structureSearchDBs.stream().map(DataSource::name).collect(Collectors.joining(","))
-        );
+        return new NullCheckMapBuilder()
+                .putNonNull("InjectElGordoCompounds", tagLipids)
+                .putNonNull("StructureSearchDB", structureSearchDBs, it -> it.stream().map(DataSource::name)
+                        .collect(Collectors.joining(",")))
+                .toUnmodifiableMap();
     }
 }

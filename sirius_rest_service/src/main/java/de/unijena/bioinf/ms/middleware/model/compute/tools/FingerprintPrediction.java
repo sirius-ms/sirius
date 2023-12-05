@@ -39,19 +39,21 @@ import java.util.Map;
 public class FingerprintPrediction extends Tool<FingerprintOptions> {
 
 
-        /**
-         * If true, an adaptive soft threshold will be applied to only compute Fingerprints for promising formula candidates
-         * Enabling is highly recommended.
-         */
-        Boolean useScoreThreshold = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaResultThreshold.class).useThreshold();
+    /**
+     * If true, an adaptive soft threshold will be applied to only compute Fingerprints for promising formula candidates
+     * Enabling is highly recommended.
+     */
+    Boolean useScoreThreshold = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaResultThreshold.class).useThreshold();
 
-        public FingerprintPrediction() {
-                super(FingerprintOptions.class);
-        }
+    public FingerprintPrediction() {
+        super(FingerprintOptions.class);
+    }
 
-        @JsonIgnore
-        @Override
-        public Map<String, String> asConfigMap() {
-                return Map.of("FormulaResultThreshold", String.valueOf(useScoreThreshold));
-        }
+    @JsonIgnore
+    @Override
+    public Map<String, String> asConfigMap() {
+        return new NullCheckMapBuilder()
+                .putNonNull("FormulaResultThreshold", useScoreThreshold)
+                .toUnmodifiableMap();
+    }
 }
