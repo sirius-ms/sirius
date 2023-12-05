@@ -23,12 +23,13 @@ package de.unijena.bioinf.ms.persistence.model.core;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 @ToString(onlyExplicitlyIncluded = true)
 public class Trace {
     /**

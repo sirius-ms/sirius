@@ -1,0 +1,13 @@
+dependencies{
+    api project(':ms_persistence_oss:ms_persistence_model_oss')
+    api project(':lcms')
+    implementation ('uk.ac.ebi.jmzml:jmzml:1.7.11') {
+        exclude group: 'uk.ac.ebi.pride.architectural', module: 'pride-logging' //pom dependency that does not work
+        exclude group: 'uk.ac.ebi.pride.architectural', module: 'pride-xml-handling' //pom dependency that does not work
+        exclude group: 'commons-codec', module: 'commons-codec' //pom dependency that does not work
+        exclude group: 'net.sourceforge.cpdetector', module: 'cpdetector'
+
+    }
+    implementation project(path: ':document-storage')
+    implementation project(path: ':ms_persistence_oss:ms_persistence_document_storage_oss')
+}
