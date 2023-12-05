@@ -103,6 +103,13 @@ public class FileChooserPanel extends JPanel {
         changeDir.setToolTipText(text);
     }
 
+    @Override
+    public void setEnabled(boolean enabled) {
+        super.setEnabled(enabled);
+        field.setEnabled(enabled);
+        changeDir.setEnabled(enabled);
+    }
+
     public static void main(String[] args) {
         EventQueue.invokeLater(() -> {
             try {
