@@ -115,8 +115,8 @@ public abstract class AbstractComputeService<P extends Project> implements Compu
                 configTool.add("--" + k + "=" + v);
             }
         });
-
-        return configTool;
+        //ensure that there are not whitespaces
+        return configTool.stream().map(s -> s.replaceAll("\\s+", "")).collect(Collectors.toList());
     }
 
     protected Map<String, String> makeCombinedConfigMap(JobSubmission jobSubmission) {

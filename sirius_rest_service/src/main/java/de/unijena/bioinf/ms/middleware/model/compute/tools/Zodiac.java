@@ -69,18 +69,18 @@ public class Zodiac extends Tool<ZodiacOptions> {
     @JsonIgnore
     @Override
     public Map<String, String> asConfigMap() {
-        return Map.of(
-                "ZodiacNumberOfConsideredCandidatesAt300Mz", String.valueOf(consideredCandidatesAt300Mz),
-                "ZodiacNumberOfConsideredCandidatesAt800Mz", String.valueOf(consideredCandidatesAt800Mz),
-                "ZodiacRunInTwoSteps", String.valueOf(runInTwoSteps),
+        return new NullCheckMapBuilder()
+                .putNonNull("ZodiacNumberOfConsideredCandidatesAt300Mz", consideredCandidatesAt300Mz)
+                .putNonNull("ZodiacNumberOfConsideredCandidatesAt800Mz", consideredCandidatesAt800Mz)
+                .putNonNull("ZodiacRunInTwoSteps", runInTwoSteps)
 
-                "ZodiacEpochs.iterations", String.valueOf(gibbsSamplerParameters.iterations),
-                "ZodiacEpochs.burnInPeriod", String.valueOf(gibbsSamplerParameters.burnInPeriod),
-                "ZodiacEpochs.numberOfMarkovChains", String.valueOf(gibbsSamplerParameters.numberOfMarkovChains),
+                .putNonNull("ZodiacEpochs.iterations", gibbsSamplerParameters.iterations)
+                .putNonNull("ZodiacEpochs.burnInPeriod", gibbsSamplerParameters.burnInPeriod)
+                .putNonNull("ZodiacEpochs.numberOfMarkovChains", gibbsSamplerParameters.numberOfMarkovChains)
 
-                "ZodiacEdgeFilterThresholds.thresholdFilter", String.valueOf(edgeFilterThresholds.thresholdFilter),
-                "ZodiacEdgeFilterThresholds.minLocalConnections", String.valueOf(edgeFilterThresholds.minLocalConnections),
-                "ZodiacEdgeFilterThresholds.minLocalCandidates", String.valueOf(edgeFilterThresholds.minLocalCandidates)
-        );
+                .putNonNull("ZodiacEdgeFilterThresholds.thresholdFilter", edgeFilterThresholds.thresholdFilter)
+                .putNonNull("ZodiacEdgeFilterThresholds.minLocalConnections", edgeFilterThresholds.minLocalConnections)
+                .putNonNull("ZodiacEdgeFilterThresholds.minLocalCandidates", edgeFilterThresholds.minLocalCandidates)
+                .toUnmodifiableMap();
     }
 }

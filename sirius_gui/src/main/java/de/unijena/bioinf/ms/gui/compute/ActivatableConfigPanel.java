@@ -30,6 +30,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
 
@@ -124,6 +125,10 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
 
     public List<String> asParameterList() {
         return content.asParameterList();
+    }
+
+    public Map<String, String> asConfigMap() {
+        return content.asConfigMap();
     }
 
     public boolean removeEnableChangeListener(EnableChangeListener<C> listener) {
