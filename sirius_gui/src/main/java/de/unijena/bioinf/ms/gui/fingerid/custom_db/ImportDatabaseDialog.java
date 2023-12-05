@@ -1,7 +1,6 @@
 package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
-import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -127,26 +126,6 @@ class ImportDatabaseDialog extends JDialog {
         if (sources == null)
             sources = new ArrayList<>();
         try {
-            Jobs.runInBackgroundAndLoad(this, "Checking output location...", () -> {
-                Path p = Path.of(configPanel.dbLocationField.getFilePath());
-                if (Files.exists(p)) {
-                    if (Files.isRegularFile(p)) {
-                        try {
-                            return SearchableDatabases.loadCustomDatabaseFromLocation(p.toAbsolutePath().toString(), true);
-                        } catch (IOException ex) {
-                            throw new IOException("Illegal DB location: Found a file but DB location must either not exist, be an empty directory or an existing custom db.", ex);
-                        }
-                    } else if (FileUtils.listAndClose(p, s -> s.findAny().isPresent())) {
-                        try {
-                            return SearchableDatabases.loadCustomDatabaseFromLocation(p.toAbsolutePath().toString(), true);
-                        } catch (IOException ex) {
-                            throw new IOException("Illegal DB location: Found non empty directory that is not a valid custom db. To create a new DB, location must not exist or be an empty directory.", ex);
-                        }
-                    }
-                }
-                return null;
-            }).awaitResult();
-
             if (stringSources != null && !stringSources.isEmpty()) {
                 sources.add(Jobs.runInBackgroundAndLoad(this, "Processing string input Data...", () -> {
                     Path f = FileUtils.newTempFile("custom-db-import", ".csv");
@@ -173,7 +152,7 @@ class ImportDatabaseDialog extends JDialog {
                             false)
                     .awaitResult();
 
-            databaseDialog.whenCustomDbIsAdded(configPanel.dbLocationField.getFilePath());
+            databaseDialog.whenCustomDbIsAdded(configPanel.getDbFilePath());
         } catch (ExecutionException ex) {
             LoggerFactory.getLogger(getClass()).error("Error during Custom DB import.", ex);
 
