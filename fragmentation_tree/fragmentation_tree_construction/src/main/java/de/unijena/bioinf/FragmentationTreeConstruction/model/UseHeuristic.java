@@ -23,7 +23,9 @@ package de.unijena.bioinf.FragmentationTreeConstruction.model;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
+import lombok.Getter;
 
+@Getter
 public class UseHeuristic implements Ms2ExperimentAnnotation {
 
     public final int mzToUseHeuristic;
