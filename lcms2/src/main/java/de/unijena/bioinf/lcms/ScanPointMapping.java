@@ -6,6 +6,8 @@ import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 
+import java.util.Arrays;
+
 /**
  * Bijective mapping between a contiguous ID and its corresponding Scan Number and Retention Time
  */
@@ -44,7 +46,18 @@ public class ScanPointMapping {
         }
         this.retentionTimes = rets.toDoubleArray();
         this.scanids = scanids.toIntArray();
+    }
 
+    public int idForRetentionTime(double rt) {
+        int i = Arrays.binarySearch(retentionTimes, rt);
+        if (i < 0) i = -(i+1);
+        if (i>=retentionTimes.length) return retentionTimes.length-1;
+        if (i > 0) {
+            if (Math.abs(retentionTimes[i]-rt) < Math.abs(retentionTimes[i-1]-rt)) {
+                return i;
+            } else return i-1;
+        }
+        return i;
     }
 
     /**
