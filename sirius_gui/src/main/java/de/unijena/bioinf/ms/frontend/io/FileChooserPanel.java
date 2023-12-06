@@ -74,6 +74,12 @@ public class FileChooserPanel extends JPanel {
         fileChooser.setDialogType(dialogMode);
         fileChooser.setFileSelectionMode(fileChooserMode);
 
+        switch (fileChooserMode) {
+            case JFileChooser.FILES_ONLY -> changeDir.setToolTipText("Choose a file");
+            case JFileChooser.DIRECTORIES_ONLY -> changeDir.setToolTipText("Choose a directory");
+            default -> {}
+        }
+
         field.setText(currentPathTextField);
 
         add(field);

@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -48,7 +49,7 @@ class ImportDatabaseDialog extends JDialog {
         final Box box = Box.createVerticalBox();
         box.setAlignmentX(Component.LEFT_ALIGNMENT);
         final JLabel label = new JLabel(
-                "<html>Please insert the compounds of your custom database as SMILES here (one compound per line). It is also possible to drag and drop files with SMILES and reference spectrum files into this text field.");
+                "<html>Please add or drop files to import. It is also possible to drag and drop files with SMILES and reference spectrum files into this text field.");
         label.setAlignmentX(Component.LEFT_ALIGNMENT);
         box.add(label);
         final JTextArea textArea = new JTextAreaDropImage();
@@ -61,7 +62,7 @@ class ImportDatabaseDialog extends JDialog {
         importButton = new JButton("Create/Open database and import compounds");
         importButton.setAlignmentX(Component.RIGHT_ALIGNMENT);
 
-        configPanel = new DatabaseImportConfigPanel(db);
+        configPanel = new DatabaseImportConfigPanel(db, databaseDialog.customDatabases.stream().map(SearchableDatabase::name).collect(Collectors.toSet()));
         importButton.setEnabled(db != null && !configPanel.dbLocationField.getFilePath().isBlank());
         configPanel.dbLocationField.field.getDocument().addDocumentListener(new DocumentListener() {
             @Override
