@@ -54,7 +54,7 @@ public class GuiController {
     @PostMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     public void openGui(@PathVariable String projectId, @RequestBody(required = false) GuiParameters guiParameters, @RequestParam(required = false, defaultValue = "true") boolean readOnly) {
-        guiService.createGuiInstance(projectId, projectsProvider.getProjectOrThrow(projectId), guiParameters);
+        guiService.createGuiInstance(projectId, guiParameters);
     }
 
     /**

@@ -27,13 +27,11 @@ import de.unijena.bioinf.ms.annotations.PrintCitations;
 import de.unijena.bioinf.ms.frontend.BackgroundRuns;
 import de.unijena.bioinf.ms.frontend.Run;
 import de.unijena.bioinf.ms.frontend.SiriusCLIApplication;
-import de.unijena.bioinf.ms.frontend.SiriusGUIApplication;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.Workspace;
 import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastSubToolJob;
-import de.unijena.bioinf.ms.frontend.subtools.gui.GuiAppOptions;
 import de.unijena.bioinf.ms.frontend.subtools.middleware.MiddlewareAppOptions;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceProviderImpl;
@@ -74,6 +72,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
         return rootOptions;
     }
 
+    //todo nightsky implement GUI only mode
     public static void main(String[] args) {
         //enable gui support
         {
@@ -126,7 +125,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                     throw new IllegalStateException("Application can only run Once!");
                 measureTime("init Run");
                 RUN = new Run(new WorkflowBuilder<>(rootOptions, configOptionLoader, BackgroundRuns.getBufferFactory(),
-                        List.of(new GuiAppOptions(null), new MiddlewareAppOptions<>())));
+                        List.of(new MiddlewareAppOptions<>())));
                 measureTime("Start Parse args");
                 successfulParsed = RUN.parseArgs(args);
                 measureTime("Parse args Done!");
@@ -164,8 +163,6 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        } else { //todo remove!!!
-            SiriusGUIApplication.main(args);
         }
     }
 

@@ -31,7 +31,7 @@ import lombok.ToString;
 @Setter
 @ToString
 public class ServerEventImpl<Data> implements ServerEvent<Data> {
-    @Schema(oneOf = {Job.class, ProjectChangeEvent.class, GuiParameters.class})
+    @Schema(oneOf = {Job.class, ProjectChangeEvent.class, GuiParameters.class, BackgroundComputationsStateEvent.class})
     private Data data;
     @Schema
     private String projectId;

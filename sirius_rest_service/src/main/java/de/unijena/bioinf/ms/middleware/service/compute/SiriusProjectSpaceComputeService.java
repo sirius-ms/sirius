@@ -28,12 +28,11 @@ import de.unijena.bioinf.ms.middleware.model.compute.ImportLocalFilesSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.ImportStringSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.compute.JobSubmission;
+import de.unijena.bioinf.ms.middleware.model.events.BackgroundComputationsStateEvent;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceImpl;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
-import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,25 +46,64 @@ import java.io.BufferedReader;
 import java.io.StringReader;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Slf4j
 public class SiriusProjectSpaceComputeService extends AbstractComputeService<SiriusProjectSpaceImpl> {
 
+    private final ConcurrentHashMap<SiriusProjectSpaceImpl, BackgroundRuns<?, ?>> backgroundRuns = new ConcurrentHashMap<>();
+
     public SiriusProjectSpaceComputeService(EventService<?> eventService) {
         super(eventService);
+
     }
 
-    private <I extends Instance, P extends ProjectSpaceManager<I>> Job createAndSubmitJob(@NotNull String projectId,
-            P psm, JobSubmission jobSubmission, @NotNull EnumSet<Job.OptField> optFields
-    ) {
+    private BackgroundRuns<?, ?> backgroundRuns(SiriusProjectSpaceImpl psm) {
+        return backgroundRuns.computeIfAbsent(psm, p -> {
+            BackgroundRuns br = new BackgroundRuns(p.getProjectSpaceManager());
+            br.addUnfinishedRunsListener(evt -> {
+                if (evt instanceof BackgroundRuns<?,?>.ChangeEvent){
+                    BackgroundRuns.ChangeEvent e = (BackgroundRuns<?, ?>.ChangeEvent) evt;
+                       eventService.sendEvent(ServerEvents.newComputeStateEvent(
+                               BackgroundComputationsStateEvent.builder()
+                                       .numberOfJobs(e.getNumOfRunsNew())
+                                       .numberOfRunningJobs(e.getNumOfUnfinishedNew())
+                                       .numberOfFinishedJobs(e.getNumOfRunsNew() - e.getNumOfUnfinishedNew())
+                                       .affectedJobs(e.getEffectedJobs().stream().map(j -> extractJobId((BackgroundRuns<?, ?>.BackgroundRunJob) j, EnumSet.of(Job.OptField.progress))).toList())
+                                       .build()
+                               ,psm.getProjectId()));
+                }
+            });
+            return br;
+        });
+    }
+
+    private void removeBackgroundRuns(SiriusProjectSpaceImpl psm) {
+        BackgroundRuns<?, ?> br = backgroundRuns.remove(psm);
+        if (br != null)
+            br.cancelAllRuns();
+    }
+
+    private void registerServerEventListener(BackgroundRuns<?, ?>.BackgroundRunJob run, String projectId) {
+        run.addPropertyChangeListener(JobStateEvent.JOB_STATE_EVENT, evt ->
+                eventService.sendEvent(ServerEvents.newJobEvent(
+                        extractJobId((BackgroundRuns<?, ?>.BackgroundRunJob) ((JobStateEvent) evt).getSource(),
+                                EnumSet.of(Job.OptField.progress)), projectId)));
+    }
+
+
+    @Override
+    public Job createAndSubmitJob(@NotNull SiriusProjectSpaceImpl psmI, JobSubmission jobSubmission,
+                                  @NotNull EnumSet<Job.OptField> optFields) {
+        BackgroundRuns<?, ?> br = backgroundRuns(psmI);
         List<CompoundContainerId> compounds = null;
 
         if (jobSubmission.getCompoundIds() == null || jobSubmission.getCompoundIds().isEmpty()) {
             if (jobSubmission.getAlignedFeatureIds() != null && !jobSubmission.getAlignedFeatureIds().isEmpty()) {
                 compounds = new ArrayList<>();
                 for (String cid : jobSubmission.getAlignedFeatureIds()) {
-                    compounds.add(psm.projectSpace().findCompound(cid)
+                    compounds.add(br.getProjectSpaceManager().projectSpace().findCompound(cid)
                             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NO_CONTENT,
                                     "Compound with id '" + cid + "' does not exist!'. No job has been started!")));
                 }
@@ -77,7 +115,7 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
                     ? new HashSet<>(jobSubmission.getAlignedFeatureIds())
                     : Set.of();
 
-            psm.projectSpace()
+            br.getProjectSpaceManager().projectSpace()
                     .filteredIterator(id -> id.getGroupId().map(cids::contains).orElse(false)
                             || fids.contains(id.getDirectoryName()))
                     .forEachRemaining(compounds::add);
@@ -85,8 +123,8 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
 
         try {
             List<String> commandList = makeCommand(jobSubmission);
-            BackgroundRuns.BackgroundRunJob<P, I> run = BackgroundRuns.runCommand(commandList, compounds, psm);
-            registerServerEventListener(run, projectId);
+            BackgroundRuns<?, ?>.BackgroundRunJob run = backgroundRuns(psmI).runCommand(commandList, compounds);
+            registerServerEventListener(run, psmI.getProjectId());
             return extractJobId(run, optFields);
         } catch (Exception e) {
             log.error("Cannot create Job Command!", e);
@@ -94,26 +132,24 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
         }
     }
 
-    private <I extends Instance, P extends ProjectSpaceManager<I>> Job createAndSubmitJob(
-            @NotNull String projectId,
-            P psm,
-            List<String> commandList,
-            @Nullable Iterable<String> featureAlignId,
-            @Nullable InputFilesOptions toImport,
-            @NotNull EnumSet<Job.OptField> optFields
-    ) {
+    @Override
+    public Job createAndSubmitJob(@NotNull SiriusProjectSpaceImpl psmI, List<String> commandList,
+                                  @Nullable Iterable<String> alignedFeatureIds,
+                                  @Nullable InputFilesOptions toImport,
+                                  @NotNull EnumSet<Job.OptField> optFields) {
         try {
 
             //create instance iterator from ids
-            Iterable<I> instances = null;
-            if (featureAlignId != null) {
+            BackgroundRuns<?, ?>.BackgroundRunJob run;
+            if (alignedFeatureIds != null) {
                 final Set<String> ids = new HashSet<>();
-                featureAlignId.forEach(ids::add);
-                instances = () -> psm.filteredIterator(cid -> ids.contains(cid.getDirectoryName()), null);
+                alignedFeatureIds.forEach(ids::add);
+                run = backgroundRuns(psmI).runCommand(commandList, cid -> ids.contains(cid.getDirectoryName()), null, toImport);
+            } else {
+                run = backgroundRuns(psmI).runCommand(commandList, null, toImport);
             }
 
-            BackgroundRuns.BackgroundRunJob<P, I> run = BackgroundRuns.runCommand(commandList, instances, toImport, psm);
-            registerServerEventListener(run, projectId);
+            registerServerEventListener(run, psmI.getProjectId());
             return extractJobId(run, optFields);
         } catch (Exception e) {
             log.error("Cannot create Job Command!", e);
@@ -121,17 +157,9 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
         }
     }
 
-    private void registerServerEventListener(BackgroundRuns.BackgroundRunJob<?, ?> run, String projectId) {
-        run.addPropertyChangeListener(JobStateEvent.JOB_STATE_EVENT, evt ->
-                eventService.sendEvent(ServerEvents.newJobEvent(
-                        extractJobId((BackgroundRuns.BackgroundRunJob) ((JobStateEvent) evt).getSource(),
-                                EnumSet.of(Job.OptField.progress)), projectId)));
-    }
-
-    private <I extends Instance, P extends ProjectSpaceManager<I>> Job createAndSubmitImportJob(
-            @NotNull String projectId, P psm, ImportLocalFilesSubmission jobSubmission,
-            @NotNull EnumSet<Job.OptField> optFields
-    ) {
+    @Override
+    public Job createAndSubmitImportJob(@NotNull SiriusProjectSpaceImpl psmI, ImportLocalFilesSubmission jobSubmission,
+                                        @NotNull EnumSet<Job.OptField> optFields) {
         InputFilesOptions inputFiles = new InputFilesOptions();
         inputFiles.msInput = new InputFilesOptions.MsInput();
         inputFiles.msInput.setAllowMS1Only(jobSubmission.isAllowMs1OnlyData());
@@ -144,27 +172,26 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
                         || p.getFileName().toString().toLowerCase().endsWith("mzxml"));
         System.out.println("Alignment: " + alignLCMSRuns);
 
-        return createAndSubmitJob(projectId, psm, alignLCMSRuns
+        return createAndSubmitJob(psmI, alignLCMSRuns
                         ? List.of("lcms-align")
                         : List.of("project-space", "--keep-open"),
                 null, inputFiles, optFields);
     }
 
-    private <I extends Instance, P extends ProjectSpaceManager<I>> Job createAndSubmitImportJob(
-            P psm, ImportStringSubmission jobSubmission,
-            @NotNull EnumSet<Job.OptField> optFields) {
+    @Override
+    public Job createAndSubmitImportJob(@NotNull SiriusProjectSpaceImpl psmI, ImportStringSubmission jobSubmission,
+                                        @NotNull EnumSet<Job.OptField> optFields) {
         final @Nullable String sourceName = jobSubmission.getSourceName();
         final String ext = jobSubmission.getFormat().getExtension();
-        return extractJobId(BackgroundRuns.runImport(
-                psm, () -> new BufferedReader(new StringReader(jobSubmission.getData())), sourceName, ext), optFields);
+        return extractJobId(backgroundRuns(psmI).runImport(() -> new BufferedReader(new StringReader(jobSubmission.getData())), sourceName, ext), optFields);
     }
 
+    @Override
+    public Job deleteJob(@NotNull SiriusProjectSpaceImpl psm, String jobId, boolean cancelIfRunning, boolean awaitDeletion, @NotNull EnumSet<Job.OptField> optFields) {
 
-    private Job deleteJob(@Nullable ProjectSpaceManager<?> psm, String jobId, boolean cancelIfRunning,
-                          boolean awaitDeletion, @NotNull EnumSet<Job.OptField> optFields) {
-        BackgroundRuns.BackgroundRunJob<?, ?> j = getJob(psm, jobId);
+        BackgroundRuns<?, ?>.BackgroundRunJob j = getJob(psm, jobId);
         if (j.isFinished()) {
-            BackgroundRuns.removeRun(j.getRunId());
+            backgroundRuns(psm).removeRun(j.getRunId());
         } else {
             if (cancelIfRunning)
                 j.cancel();
@@ -177,31 +204,41 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
                 } catch (InterruptedException e) {
                     //ignore
                 }
-                BackgroundRuns.removeRun(j.getRunId());
+                backgroundRuns(psm).removeRun(j.getRunId());
             } else {
                 j.addPropertyChangeListener(JobStateEvent.JOB_STATE_EVENT, evt -> {
                     if (evt instanceof JobStateEvent) {
-                        final BackgroundRuns.BackgroundRunJob jj = (BackgroundRuns.BackgroundRunJob) evt.getSource();
+                        final BackgroundRuns<?, ?>.BackgroundRunJob jj = (BackgroundRuns<?, ?>.BackgroundRunJob) evt.getSource();
                         if (jj.isFinished())
-                            BackgroundRuns.removeRun(jj.getRunId());
+                            backgroundRuns(psm).removeRun(jj.getRunId());
                     }
                 });
                 //may already have been finished during listener registration
                 if (j.isFinished())
-                    BackgroundRuns.removeRun(j.getRunId());
+                    backgroundRuns(psm).removeRun(j.getRunId());
             }
         }
         return extractJobId(j, optFields);
     }
 
-    public BackgroundRuns.BackgroundRunJob<?, ?> getJob(@Nullable ProjectSpaceManager<?> psm, String jobId) {
+    @Override
+    public List<Job> deleteJobs(@NotNull SiriusProjectSpaceImpl psm, boolean cancelIfRunning, boolean awaitDeletion, boolean closeProject, @NotNull EnumSet<Job.OptField> optFields) {
+        List<Job> jobs = getJobs(psm, Pageable.unpaged(), EnumSet.noneOf(Job.OptField.class))
+                .stream().map(j -> deleteJob(psm, j.getId(), cancelIfRunning, awaitDeletion, optFields)).toList();
+        if (closeProject)
+            removeBackgroundRuns(psm);
+
+        return jobs;
+    }
+
+    public BackgroundRuns<?, ?>.BackgroundRunJob getJob(@NotNull SiriusProjectSpaceImpl psm, String jobId) {
         try {
             int intId = Integer.parseInt(jobId);
-            BackgroundRuns.BackgroundRunJob<?, ?> j = BackgroundRuns.getActiveRunIdMap().get(intId);
+            BackgroundRuns<?, ?>.BackgroundRunJob j = backgroundRuns(psm).getActiveRunIdMap().get(intId);
             if (j == null)
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Job with ID '" + jobId + " does not Exist! Hint: It is either already finished and has been auto removed (if enabled) or the ID never existed.");
 
-            if (psm != null && !psm.equals(j.getProject()))
+            if (!psm.getProjectSpaceManager().equals(j.getProject()))
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Job with ID '" + jobId + " is not part of the requested project but does exist! Hint: Request the job with the correct projectId.");
 
             return j;
@@ -211,92 +248,37 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
     }
 
     @Override
-    public Job createAndSubmitJob(SiriusProjectSpaceImpl psm, JobSubmission jobSubmission,
-                                  @NotNull EnumSet<Job.OptField> optFields) {
-        return createAndSubmitJob(psm.getProjectId(), psm.getProjectSpaceManager(), jobSubmission, optFields);
-    }
-
-    @Override
-    public Job createAndSubmitJob(SiriusProjectSpaceImpl psm, List<String> commandList,
-                                  @Nullable Iterable<String> alignedFeatureIds,
-                                  @Nullable InputFilesOptions toImport,
-                                  @NotNull EnumSet<Job.OptField> optFields) {
-        return createAndSubmitJob(psm.getProjectId(), psm.getProjectSpaceManager(), commandList, alignedFeatureIds, toImport, optFields);
-    }
-
-    @Override
-    public Job createAndSubmitImportJob(SiriusProjectSpaceImpl psm, ImportLocalFilesSubmission jobSubmission,
-                                        @NotNull EnumSet<Job.OptField> optFields) {
-        return createAndSubmitImportJob(psm.getProjectId(), psm.getProjectSpaceManager(), jobSubmission, optFields);
-    }
-
-    @Override
-    public Job createAndSubmitImportJob(SiriusProjectSpaceImpl psm, ImportStringSubmission jobSubmission,
-                                        @NotNull EnumSet<Job.OptField> optFields) {
-        return createAndSubmitImportJob(psm.getProjectSpaceManager(), jobSubmission, optFields);
-    }
-
-    @Override
-    public Job deleteJob(@Nullable SiriusProjectSpaceImpl psm, String jobId, boolean cancelIfRunning, boolean awaitDeletion, @NotNull EnumSet<Job.OptField> optFields) {
-        if (psm != null) {
-            return deleteJob(psm.getProjectSpaceManager(), jobId, cancelIfRunning, awaitDeletion, optFields);
-        } else {
-            return deleteJob((ProjectSpaceManager<?>) null, jobId, cancelIfRunning, awaitDeletion, optFields);
-
-        }
-    }
-
-    @Override
-    public List<Job> deleteJobs(@Nullable SiriusProjectSpaceImpl psm, boolean cancelIfRunning, boolean awaitDeletion, @NotNull EnumSet<Job.OptField> optFields) {
-        return getJobs(psm, Pageable.unpaged(), EnumSet.noneOf(Job.OptField.class))
-                .stream().map(j -> deleteJob(j.getId(), cancelIfRunning, awaitDeletion, optFields)).toList();
-    }
-
-    public BackgroundRuns.BackgroundRunJob<?, ?> getJob(@Nullable SiriusProjectSpaceImpl psm, String jobId) {
-        return getJob(psm.getProjectSpaceManager(), jobId);
-    }
-
-    @Override
-    public Job getJob(@Nullable SiriusProjectSpaceImpl psm, String jobId, @NotNull EnumSet<Job.OptField> optFields) {
-        return getJob(psm.getProjectSpaceManager(), jobId, optFields);
-    }
-
-    public Job getJob(@Nullable ProjectSpaceManager<?> psm, String jobId, @NotNull EnumSet<Job.OptField> optFields) {
+    public Job getJob(@NotNull SiriusProjectSpaceImpl psm, String jobId, @NotNull EnumSet<Job.OptField> optFields) {
         return extractJobId(getJob(psm, jobId), optFields);
     }
 
     @Override
-    public Page<Job> getJobs(@Nullable SiriusProjectSpaceImpl psm, @NotNull Pageable pageable, @NotNull EnumSet<Job.OptField> optFields) {
-        return getJobs(psm.getProjectSpaceManager(), pageable, optFields);
-    }
-
-    public Page<Job> getJobs(@Nullable ProjectSpaceManager<?> psm, @NotNull Pageable pageable, @NotNull EnumSet<Job.OptField> optFields) {
+    public Page<Job> getJobs(@NotNull SiriusProjectSpaceImpl psm, @NotNull Pageable pageable, @NotNull EnumSet<Job.OptField> optFields) {
         if (pageable.isUnpaged())
-            return new PageImpl<>(BackgroundRuns.getActiveRunIdMap().values().stream()
-                    .filter(j -> psm == null || psm.equals(j.getProject()))
+            return new PageImpl<>(backgroundRuns(psm).getActiveRunIdMap().values().stream()
                     .map(j -> extractJobId(j, optFields)).toList());
 
-        long size = BackgroundRuns.getActiveRunIdMap().values().stream()
-                .filter(j -> psm == null || psm.equals(j.getProject())).count();
-        return new PageImpl<>(BackgroundRuns.getActiveRunIdMap().values().stream()
-                .filter(j -> psm == null || psm.equals(j.getProject()))
+        long size = backgroundRuns(psm).getActiveRunIdMap().values().size();
+        return new PageImpl<>(backgroundRuns(psm).getActiveRunIdMap().values().stream()
                 .skip(pageable.getOffset()).limit(pageable.getPageSize())
                 .map(j -> extractJobId(j, optFields))
                 .toList(), pageable, size);
     }
 
     @Override
-    public JJob<?> getJJob(String jobId) {
-        return BackgroundRuns.getActiveRunIdMap().get(Integer.parseInt(jobId));
+    public JJob<?> getJJob(@NotNull SiriusProjectSpaceImpl psm, String jobId) {
+        return backgroundRuns(psm).getActiveRunIdMap().get(Integer.parseInt(jobId));
     }
 
+
     @Override
-    public void destroy() {
+    public synchronized void destroy() {
         System.out.println("Destroy Compute Service...");
-        if (BackgroundRuns.hasActiveComputations()) {
-            log.info("Cancelling running Background Jobs...");
-            BackgroundRuns.getActiveRuns().iterator().forEachRemaining(JJob::cancel);
-        }
+        backgroundRuns.forEach((psm, br) -> {
+            if (br.hasActiveComputations())
+                log.info("Cancelling running Background Jobs...");
+            br.cancelAllRuns();
+        });
         System.out.println("Destroy Compute Service DONE");
     }
 }

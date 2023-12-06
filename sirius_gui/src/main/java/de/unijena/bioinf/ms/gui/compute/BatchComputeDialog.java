@@ -361,9 +361,11 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
                 checkForInterruption();
 
                 try {
-                    final List<String> toolList = new ArrayList<>();
-                    final List<String> c = makeCommand(toolList);
-                    mf().getBackgroundRuns().runCommand(c, finalComps, String.join(" > ", toolList));
+                    JobSubmission jobSubmission = makeJobSubmission();
+                    if (finalComps != null && !finalComps.isEmpty())
+                        jobSubmission.setCompoundIds(finalComps.stream()
+                                .map(instance -> instance.getID().getDirectoryName()).toList());
+                    Job job = mf().getSiriusClient().jobs().startJob(mf().getProjectId(), jobSubmission, List.of(JobOptField.COMMAND));
                 } catch (Exception e) {
                     new ExceptionDialog(mf(), e.getMessage());
                 }

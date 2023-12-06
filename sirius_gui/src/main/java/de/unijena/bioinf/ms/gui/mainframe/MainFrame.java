@@ -22,15 +22,13 @@ package de.unijena.bioinf.ms.gui.mainframe;
 import ca.odell.glazedlists.BasicEventList;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
+import de.unijena.bioinf.ms.frontend.BackgroundRuns;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
-import de.unijena.bioinf.ms.frontend.subtools.gui.GuiAppOptions;
 import de.unijena.bioinf.ms.gui.compute.JobDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
-import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
 import de.unijena.bioinf.ms.gui.io.LoadController;
 import de.unijena.bioinf.ms.gui.io.spectrum.csv.CSVFormatReader;
@@ -43,8 +41,9 @@ import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.projectspace.*;
-import de.unijena.bioinf.rest.NetUtils;
+import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
+import de.unijena.bioinf.projectspace.InstanceBean;
+import de.unijena.bioinf.projectspace.InstanceImporter;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -52,13 +51,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.dnd.*;
 import java.io.File;
-import java.io.IOException;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -72,6 +69,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     //Logging Panel
     private final LogDialog log;
+    private String projectId;
 
     public LogDialog getLogConsole() {
         return log;
@@ -193,57 +191,11 @@ public class MainFrame extends JFrame implements DropTargetListener {
     }
 
 
-    public void openNewProjectSpace(Path selFile) {
-        changeProject(() -> new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(selFile));
-    }
 
-    public void createNewProjectSpace(Path selFile) {
-        changeProject(() -> new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createNewProjectSpace(selFile));
-    }
-
-    protected void changeProject(IOFunctions.IOSupplier<SiriusProjectSpace> makeSpace) {
-        final BasicEventList<InstanceBean> psList = compoundBaseList;
-        final AtomicBoolean compatible = new AtomicBoolean(true);
-        backgroundRuns.setProject(Jobs.runInBackgroundAndLoad(this, "Opening new Project...", () -> {
-            GuiProjectSpaceManager old = ps();
-            try {
-                final SiriusProjectSpace ps = makeSpace.get();
-                compatible.set(InstanceImporter.checkDataCompatibility(ps, NetUtils.checkThreadInterrupt(Thread.currentThread())) == null);
-                backgroundRuns.cancelAllRuns();
-                final GuiProjectSpaceManager gps = new GuiProjectSpaceManager(ps, psList, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY, 10));
-                Jobs.runEDTAndWaitLazy(() -> setTitlePath(gps.projectSpace().getLocation().toString()));
-
-                gps.projectSpace().addProjectSpaceListener(event -> {
-                    if (event.equals(ProjectSpaceEvent.LOCATION_CHANGED))
-                        Jobs.runEDTAndWaitLazy(() -> setTitlePath(gps.projectSpace().getLocation().toString()));
-                });
-                return gps;
-            } finally {
-                old.close();
-            }
-        }).getResult());
-
-        if (ps() == null) {
-            try {
-                LoggerFactory.getLogger(getClass()).warn("Error when changing project-space. Falling back to tmp project-space");
-                createNewProjectSpace(ProjectSpaceIO.createTmpProjectSpaceLocation());
-            } catch (IOException e) {
-                new StacktraceDialog(this, "Cannot recreate a valid project-space due to: " + e.getMessage() + "'.  SIRIUS will not work properly without valid project-space. Please restart SIRIUS.", e);
-            }
-        }
-        if (!compatible.get())
-            if (new QuestionDialog(this, "<html><body>" +
-                    "The opened project-space contains results based on an outdated fingerprint version.<br><br>" +
-                    "You can either convert the project to the new fingerprint version and <b>lose all fingerprint related results</b> (e.g. CSI:FingerID an CANOPUS),<br>" +
-                    "or you stay with the old fingerprint version but without being able to execute any fingerprint related computations (e.g. for data visualization).<br><br>" +
-                    "Do you wish to convert and lose all fingerprint related results?" +
-                    "</body></html>").isSuccess())
-                ps().updateFingerprintData(this);
-    }
-
-    public void decoradeMainFrame(@NotNull GuiProjectSpaceManager projectSpaceManager) {
+    public void decoradeMainFrame(String projectId, @NotNull BackgroundRuns<GuiProjectSpaceManager, InstanceBean> br) {
+        this.projectId = projectId;
         //add project-space
-        backgroundRuns = new BackgroundRunsGui(projectSpaceManager);
+        backgroundRuns = new BackgroundRunsGui(br);
 
         compoundBaseList = ps().INSTANCE_LIST;
         Jobs.runEDTAndWaitLazy(() -> setTitlePath(ps().projectSpace().getLocation().toString()));
@@ -332,7 +284,9 @@ public class MainFrame extends JFrame implements DropTargetListener {
                 openNewProject = new QuestionDialog(this, "<html><body>Do you want to open the dropped Project instead of importing it? <br> The currently opened project will be closed!</br></body></html>"/*, DONT_ASK_OPEN_KEY*/).isSuccess();
 
             if (openNewProject) {
-                openNewProjectSpace(inputF.msInput.projects.keySet().iterator().next());
+                //todo nightsky open new project via API
+                throw new IllegalStateException("openNewProject not implemented");
+//                openNewProjectSpace(inputF.msInput.projects.keySet().iterator().next());
             } else {
                 importDragAndDropFiles(inputF);
             }
@@ -357,5 +311,9 @@ public class MainFrame extends JFrame implements DropTargetListener {
         LoadController lc = new LoadController(this);
         lc.addSpectra(csvFiles, msFiles, mgfFiles);
         lc.showDialog();
+    }
+
+    public String getProjectId() {
+        return projectId;
     }
 }

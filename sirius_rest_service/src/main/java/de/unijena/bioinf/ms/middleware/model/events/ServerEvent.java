@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 public interface ServerEvent<Data> {
     enum Type{
-        JOB, PROJECT, GUI_STATE
+        JOB, PROJECT, BACKGROUND_COMPUTATIONS_STATE, GUI_STATE
     }
 
     @NotNull

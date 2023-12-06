@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.gui;
 
+import de.unijena.bioinf.ms.frontend.BackgroundRuns;
 import de.unijena.bioinf.sse.DataEventType;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
@@ -31,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.util.EnumSet;
-import java.util.concurrent.Flow;
 
 /**
  * Represents an instance of the SIRIUS GUI and its context.
@@ -45,6 +45,7 @@ public class SiriusGui {
         GuiUtils.initUI();
     }
     private final NightSkyClient sirius;
+    private final String projectId;
 
     public NightSkyClient getSirius() {
         return sirius;
@@ -56,11 +57,17 @@ public class SiriusGui {
         return mainFrame;
     }
 
-    public SiriusGui(@NotNull GuiProjectSpaceManager project, @Nullable NightSkyClient nightSkyClient, @NotNull ConnectionMonitor connectionMonitor) { //todo nighsky: change to nightsky api and project ID.
+    public SiriusGui(@NotNull String projectId, @Nullable NightSkyClient nightSkyClient, @NotNull ConnectionMonitor connectionMonitor) {
+        this(projectId, null, nightSkyClient, connectionMonitor);
+
+    }
+
+    public SiriusGui(@NotNull String projectId, @NotNull GuiProjectSpaceManager project, @Nullable NightSkyClient nightSkyClient, @NotNull ConnectionMonitor connectionMonitor) { //todo nighsky: change to nightsky api and project ID.
+        this.projectId = projectId;
         sirius = nightSkyClient != null ? nightSkyClient : new NightSkyClient();
         sirius.enableEventListening(EnumSet.allOf(DataEventType.class));
         mainFrame = new MainFrame(sirius, connectionMonitor);
-        mainFrame.decoradeMainFrame(project);
+        mainFrame.decoradeMainFrame(projectId, new BackgroundRuns<>(project));
         //todo nighsky: check why JFX webview is only working for first instance...
         //todo nighsky: connect SSE connection to retrieve gui change states ???
     }
