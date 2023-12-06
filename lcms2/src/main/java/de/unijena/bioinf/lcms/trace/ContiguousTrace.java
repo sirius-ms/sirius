@@ -8,15 +8,15 @@ import java.util.Locale;
 
 public class ContiguousTrace implements Trace, Serializable {
 
-    private final transient ScanPointMapping mapping;
+    protected final transient ScanPointMapping mapping;
 
-    private final int uid;
+    protected final int uid;
 
-    private final int startId, endId, apexId;
-    private final double averageMz, minMz, maxMz;
+    protected int startId, endId, apexId;
+    protected final double averageMz, minMz, maxMz;
 
-    protected final double[] mz;
-    protected final float[] intensity;
+    protected double[] mz;
+    protected float[] intensity;
 
     ContiguousTrace(ScanPointMapping mapping, int uid, int startId, int endId, int apexId, double averageMz, double minMz, double maxMz, double[] mz, float[] intensity) {
         this.mapping = mapping;
@@ -31,8 +31,8 @@ public class ContiguousTrace implements Trace, Serializable {
         this.intensity = intensity;
     }
 
-    ContiguousTrace(int uid, ScanPointMapping mapping, int startId, int endId, double[] mz, float[] intensity) {
-        this.uid = uid;
+    ContiguousTrace(ScanPointMapping mapping, int startId, int endId, double[] mz, float[] intensity) {
+        this.uid = -1;
         this.mapping = mapping;
         this.startId = startId;
         this.endId = endId;
@@ -149,7 +149,7 @@ public class ContiguousTrace implements Trace, Serializable {
 
     ContiguousTrace withMapping(ScanPointMapping mp) {
         if (mapping==mp) return this;
-        return new ContiguousTrace(uid, mp, startId, endId, mz, intensity);
+        return new ContiguousTrace(mp, uid, startId, endId, apexId, averageMz, minMz, maxMz, mz, intensity);
     }
 
     public String toString() {
@@ -157,7 +157,7 @@ public class ContiguousTrace implements Trace, Serializable {
                 startId, endId, apexId, averageMz,apexIntensity());
     }
 
-    ContiguousTrace withUID(SpatialKey key) {
-        return new ContiguousTrace(mapping, (int)key.getId(), startId, endId, apexId, averageMz, minMz, maxMz, mz, intensity);
+    ContiguousTrace withUID(int id) {
+        return new ContiguousTrace(mapping, id, startId, endId, apexId, averageMz, minMz, maxMz, mz, intensity);
     }
 }

@@ -8,6 +8,8 @@ import de.unijena.bioinf.lcms.ScanPointMapping;
 import de.unijena.bioinf.lcms.datatypes.SpectrumDatatype;
 import de.unijena.bioinf.lcms.spectrum.Ms1SpectrumHeader;
 import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
+import de.unijena.bioinf.lcms.spectrum.MsSpectrumHeaderDatatype;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.h2.mvstore.*;
 import org.h2.mvstore.rtree.MVRTreeMap;
 import org.h2.mvstore.rtree.SpatialKey;
@@ -48,6 +50,8 @@ public abstract class LCMSStorage implements Iterable<ContiguousTrace> {
     }
 
     public abstract Optional<ContiguousTrace> getContigousTrace(double fromMz, double toMz, int scanId);
+
+    public abstract List<ContiguousTrace> getContigousTraces(double fromMz, double toMz, int fromScanId, int toScanId);
 
     public abstract void addSpectrum(Ms1SpectrumHeader header, SimpleSpectrum spectrum);
     public abstract SimpleSpectrum getSpectrum(int id);
@@ -99,6 +103,9 @@ public abstract class LCMSStorage implements Iterable<ContiguousTrace> {
     public abstract void setMapping(ScanPointMapping mapping);
 
     public abstract Optional<TraceChain> getChainFor(ContiguousTrace tr);
+
+    public abstract void deleteTrace(int uid);
+
 }
 
 class MVTraceStorage extends LCMSStorage {
@@ -128,17 +135,17 @@ class MVTraceStorage extends LCMSStorage {
         this.storage = builder.fileName(file).cacheSize(cacheSizeInMegabytes).open();
         this.traceMap = storage.openMap("contiguousTraces",
                 new MVMap.Builder<Integer,ContiguousTrace>().valueType(new ContigousTraceDatatype()));
-        this.spatialTraceMap = storage.openMap("contiguousTracesSpatialKey", new MVRTreeMap.Builder<>());
+                this.spatialTraceMap = storage.openMap("contiguousTracesSpatialKey", new MVRTreeMap.Builder<>());
         this.nodeMap = storage.openMap("traceNodes");
         System.out.println(nodeMap.getKeyType());
         this.trace2chain = storage.openMap("trace2chain");
         this.chains = storage.openMap("chains");
         this.spectraMap = storage.openMap("spectra",
                 new MVMap.Builder<Integer,SimpleSpectrum>().valueType(new SpectrumDatatype()));
-        this.ms2headers = storage.openMap("ms2headers");
+        this.ms2headers = storage.openMap("ms2headers", new MVMap.Builder<Integer,Ms2SpectrumHeader>().valueType(new MsSpectrumHeaderDatatype()));
         this.ms2SpectraMap = storage.openMap("ms2spectraMap",
                 new MVMap.Builder<Integer,SimpleSpectrum>().valueType(new SpectrumDatatype()));
-        this.ms1Headers = storage.openMap("ms1headerMap");
+        this.ms1Headers = storage.openMap("ms1headerMap", new MVMap.Builder<Integer,Ms1SpectrumHeader>().valueType(new MsSpectrumHeaderDatatype()));
         this.uids = new AtomicInteger(traceMap.size());
         this.chainIds = new AtomicInteger(this.chains.size());
         this.ms2spectraIds = new AtomicInteger(ms2headers.size());
@@ -167,6 +174,28 @@ class MVTraceStorage extends LCMSStorage {
         return Optional.of(new TraceChain(i, Arrays.stream(trids).mapToObj(x->getContigousTrace(x)).toArray(ContiguousTrace[]::new)));
     }
 
+    @Override
+    public void deleteTrace(int uid) {
+        ContiguousTrace t = this.traceMap.get(uid);
+        if (t!=null) {
+            if (t.endId >= t.startId) {
+                SpatialKey key = new SpatialKey(t.uid, (float)t.averageMz, (float)t.averageMz, t.startId, t.endId);
+                Iterator<SpatialKey> it = spatialTraceMap.findIntersectingKeys(key);
+                while (it.hasNext()) {
+                    SpatialKey next = it.next();
+                    if (next.getId()==uid) {
+                        spatialTraceMap.remove(next);
+                        break;
+                    }
+                }
+            }
+        }
+        this.traceMap.remove(uid);
+        this.trace2chain.remove(uid);
+        this.nodeMap.remove(uid);
+    }
+
+    @Override
     public Optional<ContiguousTrace> getContigousTrace(double fromMz, double toMz, int scanId) {
         SpatialKey key = new SpatialKey(0, (float)fromMz, (float)toMz, scanId, scanId);
         Iterator<SpatialKey> it = spatialTraceMap.findIntersectingKeys(key);
@@ -179,6 +208,22 @@ class MVTraceStorage extends LCMSStorage {
             }
         }
         return Optional.empty();
+    }
+
+    @Override
+    public List<ContiguousTrace> getContigousTraces(double fromMz, double toMz, int fromScanId, int toScanId) {
+        SpatialKey key = new SpatialKey(0, (float)fromMz, (float)toMz, fromScanId, toScanId);
+        Iterator<SpatialKey> it = spatialTraceMap.findIntersectingKeys(key);
+        List<ContiguousTrace> outp = new ArrayList<>();
+        for(SpatialKey k; it.hasNext();) {
+            k = it.next();
+            ContiguousTrace tr = traceMap.get((int)k.getId());
+            double avgmz = tr.averagedMz();
+            if (avgmz <= toMz && avgmz >= fromMz && tr.apex() >= fromScanId && tr.apex() <= toScanId) {
+                outp.add(tr.withMapping(mapping));
+            }
+        }
+        return outp;
     }
 
     @Override
@@ -257,7 +302,7 @@ class MVTraceStorage extends LCMSStorage {
         final ArrayList<ContiguousTrace> traces = new ArrayList<>();
         MVRTreeMap.RTreeCursor iter = spatialTraceMap.findIntersectingKeys(key);
         while (iter.hasNext()) {
-            traces.add(traceMap.get((int)(iter.next().getId())));
+            traces.add(traceMap.get((int)(iter.next().getId())).withMapping(mapping));
         }
         return traces;
     }
@@ -337,6 +382,11 @@ class MVTraceStorage extends LCMSStorage {
     }
 
     public ContiguousTrace addContigousTrace(ContiguousTrace trace) {
+        if (trace.uid >= 0) {
+            // just replace entry in map
+            traceMap.put(trace.uid, trace);
+            return trace;
+        }
         while (true) {
             int currentIndex = uids.get();
             SpatialKey key = new SpatialKey(currentIndex, (float) trace.minMz(), (float) trace.maxMz(), trace.startId(), trace.endId());
@@ -351,13 +401,14 @@ class MVTraceStorage extends LCMSStorage {
                 }
             }
             if (uids.compareAndSet(currentIndex, currentIndex + 1)) {
-                ContiguousTrace value = trace.withUID(key);
+                ContiguousTrace value = trace.withUID((int)key.getId());
                 spatialTraceMap.add(key, (int)key.getId());
                 traceMap.put((int)key.getId(), value);
                 return value;
             }
         }
     }
+
 
     private static class ConfidentTraceIndex implements Comparable<ConfidentTraceIndex>, Serializable {
         private final float confidence;
