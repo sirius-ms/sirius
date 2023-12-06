@@ -42,6 +42,7 @@ package de.unijena.bioinf.sse;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.unijena.bioinf.ms.nightsky.sdk.model.BackgroundComputationsStateEvent;
 import de.unijena.bioinf.ms.nightsky.sdk.model.GuiParameters;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Job;
 import de.unijena.bioinf.ms.nightsky.sdk.model.ProjectChangeEvent;
@@ -77,6 +78,9 @@ public class DataObjectEvents {
                 }
                 case PROJECT -> {
                     return jsonMapper.readValue(data, ProjectChangeEvent.class);
+                }
+                case BACKGROUND_COMPUTATIONS_STATE -> {
+                    return jsonMapper.readValue(data, BackgroundComputationsStateEvent.class);
                 }
                 case GUI_STATE -> {
                     return jsonMapper.readValue(data, GuiParameters.class);

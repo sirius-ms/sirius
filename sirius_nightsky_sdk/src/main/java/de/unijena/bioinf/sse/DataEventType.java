@@ -41,5 +41,5 @@
 package de.unijena.bioinf.sse;
 
 public enum DataEventType {
-        JOB, PROJECT, GUI_STATE
+        JOB, PROJECT, BACKGROUND_COMPUTATIONS_STATE, GUI_STATE
 }

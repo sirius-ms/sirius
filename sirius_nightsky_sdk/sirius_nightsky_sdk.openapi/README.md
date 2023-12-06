@@ -164,6 +164,7 @@ Class | Method | HTTP request | Description
  - [AlignedFeatureOptField](docs/AlignedFeatureOptField.md)
  - [AnnotatedPeak](docs/AnnotatedPeak.md)
  - [AnnotatedSpectrum](docs/AnnotatedSpectrum.md)
+ - [BackgroundComputationsStateEvent](docs/BackgroundComputationsStateEvent.md)
  - [BinaryFingerprint](docs/BinaryFingerprint.md)
  - [Canopus](docs/Canopus.md)
  - [CanopusPrediction](docs/CanopusPrediction.md)

@@ -2132,6 +2132,29 @@
           }
         }
       },
+      "BackgroundComputationsStateEvent": {
+        "type": "object",
+        "properties": {
+          "affectedJobs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Job"
+            }
+          },
+          "numberOfJobs": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfRunningJobs": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfFinishedJobs": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "ProjectInfo": {
         "type": "object",
         "properties": {

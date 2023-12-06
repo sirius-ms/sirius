@@ -5,6 +5,7 @@ docs/AlignedFeature.md
 docs/AlignedFeatureOptField.md
 docs/AnnotatedPeak.md
 docs/AnnotatedSpectrum.md
+docs/BackgroundComputationsStateEvent.md
 docs/BinaryFingerprint.md
 docs/Canopus.md
 docs/CanopusPrediction.md
@@ -99,6 +100,7 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/AlignedFeature.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/AlignedFeatureOptField.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/AnnotatedPeak.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/AnnotatedSpectrum.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/BackgroundComputationsStateEvent.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/BinaryFingerprint.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Canopus.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/CanopusPrediction.java
