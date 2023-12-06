@@ -125,8 +125,8 @@ public class ProjectController {
                     null, inputFiles, EnumSet.allOf(Job.OptField.class));
             if (awaitImport) { //todo maybe separate endpoint for non waiting.
                 try {
-                    computeContext.getJJob(id.getId()).awaitResult();
-                    computeContext.deleteJob(id.getId(), false, true, EnumSet.noneOf(Job.OptField.class));
+                    computeContext.getJJob(project, id.getId()).awaitResult();
+                    computeContext.deleteJob(project, id.getId(), false, true, EnumSet.noneOf(Job.OptField.class));
                 } catch (ExecutionException e) {
                     throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error when waiting for import jobs '" + id.getId() + "'.", e);
                 }
@@ -148,7 +148,7 @@ public class ProjectController {
         Project ps = (Project) projectsProvider.getProject(projectId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NO_CONTENT,
                         "Project space with identifier '" + projectId + "' not found!"));
-        computeContext.deleteJobs(ps, true, true, EnumSet.noneOf(Job.OptField.class));
+        computeContext.deleteJobs(ps, true, true, true, EnumSet.noneOf(Job.OptField.class));
         //todo check if we can make wait for deletion aync
         projectsProvider.closeProjectSpace(projectId);
     }

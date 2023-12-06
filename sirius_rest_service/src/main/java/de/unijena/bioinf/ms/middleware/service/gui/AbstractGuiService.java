@@ -46,12 +46,12 @@ public abstract class AbstractGuiService<P extends Project> implements GuiServic
     }
 
     @Override
-    public void createGuiInstance(@NotNull final String projectId, @NotNull P project, @Nullable GuiParameters guiParameters) {
+    public void createGuiInstance(@NotNull final String projectId, @Nullable GuiParameters guiParameters) {
         SiriusGui gui;
         synchronized (siriusGuiInstances) {
             if (siriusGuiInstances.containsKey(projectId))
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "There is already a SIRIUS GUI instance running on project: " + projectId);
-            gui = makeGuiInstance(project);
+            gui = makeGuiInstance(projectId);
             siriusGuiInstances.put(projectId, gui);
             gui.getMainFrame().addWindowListener(new WindowAdapter() {
                 @Override
@@ -88,5 +88,5 @@ public abstract class AbstractGuiService<P extends Project> implements GuiServic
         siriusGuiInstances.forEach((k,v) -> v.shutdown());
     }
 
-    protected abstract SiriusGui makeGuiInstance(P project);
+    protected abstract SiriusGui makeGuiInstance(String projectId);
 }

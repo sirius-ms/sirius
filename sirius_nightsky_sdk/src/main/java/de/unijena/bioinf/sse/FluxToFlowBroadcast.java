@@ -73,23 +73,23 @@ public class FluxToFlowBroadcast implements Closeable {
                 .map(a -> a[1]).map(DataObjectEvents::isKnownObjectDataType).orElse(false))
             return;
 
-        Object data = DataObjectEvents.fromJsonData(sse.event(), sse.data(), objectMapper);
         final String evt = sse.event().split("[.]")[1];
+        DataObjectEvent<?> event = DataObjectEvents.fromJsonData(evt, sse.data(), objectMapper);
 
         //broadcast with project filter
         subscribers.getOrDefault(sse.event(), List.of()).forEach(e -> {
             if (e instanceof PropertyChangeSubscriber)
-                ((PropertyChangeSubscriber)e).onNext(evt , data);
+                ((PropertyChangeSubscriber)e).onNext(evt , event);
             else
-                e.onNext(data);
+                e.onNext(event);
         });
 
         //broadcast without project filter
         subscribers.getOrDefault(evt, List.of()).forEach(e -> {
             if (e instanceof PropertyChangeSubscriber)
-                ((PropertyChangeSubscriber)e).onNext(evt , data);
+                ((PropertyChangeSubscriber)e).onNext(evt , event);
             else
-                e.onNext(data);
+                e.onNext(event);
         });
     }
 

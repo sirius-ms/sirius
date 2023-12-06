@@ -86,7 +86,9 @@ public class ProjectCreateAction extends AbstractMainFrameAction {
 
         if (selectedFile != null) {
             try {
-                MF.createNewProjectSpace(selectedFile.toPath());
+                //todo nightsky implement via api
+                throw new IllegalStateException("create new ProjectSpace not implemented");
+//                MF.createNewProjectSpace(selectedFile.toPath());
             } catch (Exception e2) {
                 new StacktraceDialog(MF, e2.getMessage(), e2);
             }

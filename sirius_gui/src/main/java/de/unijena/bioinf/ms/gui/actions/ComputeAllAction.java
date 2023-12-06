@@ -19,11 +19,13 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
-import de.unijena.bioinf.ms.frontend.BackgroundRuns;
 import de.unijena.bioinf.ms.gui.compute.BatchComputeDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.nightsky.sdk.model.BackgroundComputationsStateEvent;
+import de.unijena.bioinf.sse.DataEventType;
+import de.unijena.bioinf.sse.DataObjectEvent;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -48,15 +50,21 @@ public class ComputeAllAction extends AbstractMainFrameAction {
                 setEnabled(listChanges.getSourceList().size() > 0));
 
         //Listen if there are active gui jobs
-        BackgroundRuns.addUnfinishedRunsListener(evt -> {
-            if (((BackgroundRuns.ChangeEvent)evt).hasUnfinishedRuns()) {
+        String pid = mainFrame.getProjectId();
+
+        mainFrame.getSiriusClient().addEventListener(evt -> {
+            DataObjectEvent<BackgroundComputationsStateEvent> eventData = ((DataObjectEvent<BackgroundComputationsStateEvent>) evt.getNewValue());
+            if (eventData.getData().getNumberOfRunningJobs() > 0) {
                 computationStarted();
             } else {
                 computationCanceled();
             }
-        });
+        }, pid, DataEventType.BACKGROUND_COMPUTATIONS_STATE);
     }
 
+
+    //todo per job listening
+    //todo background jobs status events ->  created, failed qsdfsdf
 
     @Override
     public void actionPerformed(ActionEvent e) {

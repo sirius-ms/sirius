@@ -63,9 +63,10 @@ public class ProjectOpenAction extends AbstractMainFrameAction {
                 SiriusProperties.
                         setAndStoreInBackground(SiriusProperties.DEFAULT_LOAD_DIALOG_PATH, selFile.getParentFile().getAbsolutePath());
 
-                MF.openNewProjectSpace(selFile.toPath());
-
-                break;
+                //todo nightsky implement via api
+                throw new IllegalStateException("create new ProjectSpace not implemented");
+//                MF.openNewProjectSpace(selFile.toPath());
+//                break;
             } else {
                 new WarningDialog(MF, "'" + selFile.getAbsolutePath() + "' does not contain valid SIRIUS project.");
             }

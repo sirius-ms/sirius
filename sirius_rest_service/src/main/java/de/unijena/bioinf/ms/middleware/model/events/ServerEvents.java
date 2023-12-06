@@ -46,6 +46,10 @@ public class ServerEvents {
         return new ServerEventImpl<>(guiParameters, projectId, ServerEvent.Type.GUI_STATE);
     }
 
+    public static ServerEventImpl<BackgroundComputationsStateEvent> newComputeStateEvent(@NotNull BackgroundComputationsStateEvent evt, @NotNull String projectId) {
+        return new ServerEventImpl<>(evt, projectId, ServerEvent.Type.BACKGROUND_COMPUTATIONS_STATE);
+    }
+
     private static ServerEventImpl<?> EMPTY = null;
     public static synchronized ServerEventImpl<?> EMPTY_EVENT(){
         if (EMPTY == null)

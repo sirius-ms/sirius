@@ -42,9 +42,15 @@ public final class SiriusGuiFactory {
         this.connectionMonitor = connectionMonitor;
     }
 
-    public SiriusGui newGui(@NotNull GuiProjectSpaceManager project){
+    public SiriusGui newGui(@NotNull String projectId){
         init();
-        return new SiriusGui(project, nightSkyClient, connectionMonitor);
+        return new SiriusGui(projectId, nightSkyClient, connectionMonitor);
+    }
+
+    @Deprecated
+    public SiriusGui newGui(@NotNull String projectId, @NotNull GuiProjectSpaceManager project){
+        init();
+        return new SiriusGui(projectId, project, nightSkyClient, connectionMonitor);
     }
 
     private void init(){
@@ -63,6 +69,55 @@ public final class SiriusGuiFactory {
         }
     }
 
+    //todo nightsky create new GUI instance on project
+    /*public void openNewProjectSpace(Path selFile) {
+        changeProject(() -> new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(selFile));
+    }
+
+    public void createNewProjectSpace(Path selFile) {
+        changeProject(() -> new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createNewProjectSpace(selFile));
+    }
+
+    protected void changeProject(IOFunctions.IOSupplier<SiriusProjectSpace> makeSpace) {
+        final BasicEventList<InstanceBean> psList = compoundBaseList;
+        final AtomicBoolean compatible = new AtomicBoolean(true);
+        backgroundRuns.setProject(Jobs.runInBackgroundAndLoad(this, "Opening new Project...", () -> {
+            GuiProjectSpaceManager old = ps();
+            try {
+                final SiriusProjectSpace ps = makeSpace.get();
+                compatible.set(InstanceImporter.checkDataCompatibility(ps, NetUtils.checkThreadInterrupt(Thread.currentThread())) == null);
+                backgroundRuns.cancelAllRuns();
+                final GuiProjectSpaceManager gps = new GuiProjectSpaceManager(ps, psList, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY, 10));
+                Jobs.runEDTAndWaitLazy(() -> setTitlePath(gps.projectSpace().getLocation().toString()));
+
+                gps.projectSpace().addProjectSpaceListener(event -> {
+                    if (event.equals(ProjectSpaceEvent.LOCATION_CHANGED))
+                        Jobs.runEDTAndWaitLazy(() -> setTitlePath(gps.projectSpace().getLocation().toString()));
+                });
+                return gps;
+            } finally {
+                old.close();
+            }
+        }).getResult());
+
+        if (ps() == null) {
+            try {
+                LoggerFactory.getLogger(getClass()).warn("Error when changing project-space. Falling back to tmp project-space");
+                createNewProjectSpace(ProjectSpaceIO.createTmpProjectSpaceLocation());
+            } catch (IOException e) {
+                new StacktraceDialog(this, "Cannot recreate a valid project-space due to: " + e.getMessage() + "'.  SIRIUS will not work properly without valid project-space. Please restart SIRIUS.", e);
+            }
+        }
+        if (!compatible.get())
+            if (new QuestionDialog(this, "<html><body>" +
+                    "The opened project-space contains results based on an outdated fingerprint version.<br><br>" +
+                    "You can either convert the project to the new fingerprint version and <b>lose all fingerprint related results</b> (e.g. CSI:FingerID an CANOPUS),<br>" +
+                    "or you stay with the old fingerprint version but without being able to execute any fingerprint related computations (e.g. for data visualization).<br><br>" +
+                    "Do you wish to convert and lose all fingerprint related results?" +
+                    "</body></html>").isSuccess())
+                ps().updateFingerprintData(this);
+    }
+*/
     public void shutdowm(){
         connectionMonitor.close();
     }

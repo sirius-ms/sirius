@@ -29,6 +29,7 @@ import de.unijena.bioinf.ms.middleware.model.compute.tools.Tool;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import picocli.CommandLine;
 
@@ -36,6 +37,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
+@Slf4j
 public abstract class AbstractComputeService<P extends Project> implements ComputeService<P> {
 
 
@@ -45,7 +47,7 @@ public abstract class AbstractComputeService<P extends Project> implements Compu
         this.eventService = eventService;
     }
 
-    protected Job extractJobId(BackgroundRuns.BackgroundRunJob<?, ?> runJob, @NotNull EnumSet<Job.OptField> optFields) {
+    protected Job extractJobId(BackgroundRuns<?, ?>.BackgroundRunJob runJob, @NotNull EnumSet<Job.OptField> optFields) {
         Job id = new Job();
         id.setId(String.valueOf(runJob.getRunId()));
         if (optFields.contains(Job.OptField.command))
@@ -60,13 +62,13 @@ public abstract class AbstractComputeService<P extends Project> implements Compu
         return id;
     }
 
-    protected List<String> extractEffectedAlignedFeatures(BackgroundRuns.BackgroundRunJob<?, ?> runJob) {
+    protected List<String> extractEffectedAlignedFeatures(BackgroundRuns<?, ?>.BackgroundRunJob runJob) {
         if (runJob.getInstanceIds() == null || runJob.getInstanceIds().isEmpty())
             return List.of();
         return runJob.getInstanceIds().stream().map(CompoundContainerId::getDirectoryName).collect(Collectors.toList());
     }
 
-    protected List<String> extractCompoundIds(BackgroundRuns.BackgroundRunJob<?, ?> runJob) {
+    protected List<String> extractCompoundIds(BackgroundRuns<?, ?>.BackgroundRunJob runJob) {
         if (runJob.getInstanceIds() == null || runJob.getInstanceIds().isEmpty())
             return List.of();
         return runJob.getInstanceIds().stream()
@@ -74,7 +76,7 @@ public abstract class AbstractComputeService<P extends Project> implements Compu
                 .distinct().collect(Collectors.toList());
     }
 
-    protected JobProgress extractProgress(BackgroundRuns.BackgroundRunJob<?, ?> runJob) {
+    protected JobProgress extractProgress(BackgroundRuns<?, ?>.BackgroundRunJob runJob) {
         JobProgress p = new JobProgress();
         p.setState(runJob.getState());
 
@@ -100,8 +102,10 @@ public abstract class AbstractComputeService<P extends Project> implements Compu
 
     protected List<String> makeCommand(JobSubmission jobSubmission) {
         ArrayList<String> commands = new ArrayList<>(makeConfigToolCommand(jobSubmission));
-        commands.addAll(jobSubmission.getEnabledTools().stream().map(Tool::getCommand).map(CommandLine.Command::name)
-                .collect(Collectors.toList()));
+        commands.addAll(jobSubmission.getEnabledTools().stream()
+                .map(Tool::getCommand)
+                .map(CommandLine.Command::name)
+                .toList());
         return commands;
     }
 

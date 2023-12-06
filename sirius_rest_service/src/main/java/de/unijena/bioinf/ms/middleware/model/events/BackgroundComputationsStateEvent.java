@@ -21,26 +21,21 @@
 package de.unijena.bioinf.ms.middleware.model.events;
 
 import de.unijena.bioinf.ms.middleware.model.compute.Job;
-import de.unijena.bioinf.ms.middleware.model.gui.GuiParameters;
-import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
+
+import java.util.List;
 
 @Getter
 @Setter
-@ToString
-public class ServerEventImpl<Data> implements ServerEvent<Data> {
-    @Schema(oneOf = {Job.class, ProjectChangeEvent.class, GuiParameters.class, BackgroundComputationsStateEvent.class})
-    private Data data;
-    @Schema
-    private String projectId;
-    @Schema
-    private Type eventType;
+@Builder
+public class BackgroundComputationsStateEvent {
 
-    ServerEventImpl(Data data, String projectId, Type eventType) {
-        this.data = data;
-        this.projectId = projectId;
-        this.eventType = eventType;
-    }
+    private List<Job> affectedJobs;
+    
+    private int numberOfJobs;
+
+    private int numberOfRunningJobs;
+    private int numberOfFinishedJobs;
 }

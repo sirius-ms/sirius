@@ -149,6 +149,10 @@ public class NightSkyClient implements AutoCloseable {
         if (events == null || events.isEmpty())
             throw new IllegalArgumentException("At least one event type needs to be specified!");
 
+        if (sseConnection != null){
+            System.out.println("Event lsitening already running!");
+            return;
+        }
         sseEventsToListenOn = events;
 
         Flux<ServerSentEvent<String>> eventStream = new ServerSentEventApi(apiClient)

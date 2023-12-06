@@ -24,6 +24,7 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.SiriusGuiFactory;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceImpl;
+import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceProviderImpl;
 import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
 import de.unijena.bioinf.sse.DataEventType;
 
@@ -32,17 +33,21 @@ import java.util.concurrent.Flow;
 public class SiriusProjectSpaceGuiService extends AbstractGuiService<SiriusProjectSpaceImpl> {
     private final SiriusGuiFactory guiFactory;
 
-    public SiriusProjectSpaceGuiService(EventService<?> eventService) {
-        this(new SiriusGuiFactory(), eventService);
+    @Deprecated
+    private final SiriusProjectSpaceProviderImpl provider;
+
+    public SiriusProjectSpaceGuiService(EventService<?> eventService, SiriusProjectSpaceProviderImpl provider) {
+        this(new SiriusGuiFactory(), eventService, provider);
     }
-    public SiriusProjectSpaceGuiService(SiriusGuiFactory guiFactory, EventService<?> eventService) {
+    public SiriusProjectSpaceGuiService(SiriusGuiFactory guiFactory, EventService<?> eventService, SiriusProjectSpaceProviderImpl provider) {
         super(eventService);
         this.guiFactory = guiFactory;
+        this.provider = provider;
     }
 
     @Override
-    protected SiriusGui makeGuiInstance(SiriusProjectSpaceImpl project) {
-        SiriusGui gui = guiFactory.newGui((GuiProjectSpaceManager) project.getProjectSpaceManager());
+    protected SiriusGui makeGuiInstance(String projectId) {
+        SiriusGui gui = guiFactory.newGui(projectId, (GuiProjectSpaceManager) provider.getProjectOrThrow(projectId).getProjectSpaceManager());
         gui.getSirius().addEventListener(new Flow.Subscriber<>() {
             @Override
             public void onSubscribe(Flow.Subscription subscription) {
@@ -64,7 +69,7 @@ public class SiriusProjectSpaceGuiService extends AbstractGuiService<SiriusProje
             public void onComplete() {
                 System.out.println("COMPLETED!");
             }
-        }, project.getProjectId(), DataEventType.PROJECT, DataEventType.JOB, DataEventType.GUI_STATE);
+        }, projectId, DataEventType.PROJECT, DataEventType.JOB, DataEventType.GUI_STATE);
 
         return gui;
     }

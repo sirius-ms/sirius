@@ -28,6 +28,9 @@ import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
+import de.unijena.bioinf.ms.nightsky.sdk.model.BackgroundComputationsStateEvent;
+import de.unijena.bioinf.sse.DataEventType;
+import de.unijena.bioinf.sse.DataObjectEvent;
 
 import javax.swing.*;
 import java.awt.*;
@@ -120,12 +123,13 @@ public class SiriusToolbar extends JToolBar {
         add(about);
 
         backgroundRunListener = evt -> {
-            final boolean hasRunningJobs = ((BackgroundRuns.ChangeEvent)evt).hasUnfinishedRuns();
+            final boolean hasRunningJobs = ((DataObjectEvent<BackgroundComputationsStateEvent>) evt.getNewValue()).getData().getNumberOfRunningJobs() > 0;
             ((ShowJobsDialogAction) jobs.getAction()).setComputing(hasRunningJobs);
             summB.getAction().setEnabled(!hasRunningJobs);
             fbmnB.getAction().setEnabled(!hasRunningJobs);
         };
-        BackgroundRuns.addUnfinishedRunsListener(backgroundRunListener);
+
+        mf.getSiriusClient().addEventListener(backgroundRunListener, mf.getProjectId(), DataEventType.BACKGROUND_COMPUTATIONS_STATE);
 
         setRollover(true);
         setFloatable(false);

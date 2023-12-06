@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.middleware.configuration;
 
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.middleware.SiriusContext;
+import de.unijena.bioinf.ms.middleware.model.events.BackgroundComputationsStateEvent;
 import de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent;
 import io.swagger.v3.core.converter.AnnotatedType;
 import io.swagger.v3.core.converter.ModelConverters;
@@ -67,9 +68,12 @@ public class SwaggerConfig {
 
     @Bean
     public OpenApiCustomiser openApiCustomiser() {
-        ResolvedSchema resolvedSchema = ModelConverters.getInstance()
+        ResolvedSchema projectChangeEvent = ModelConverters.getInstance()
                 .resolveAsResolvedSchema(new AnnotatedType(ProjectChangeEvent.class));
+        ResolvedSchema backgroundComputationsStateEvent = ModelConverters.getInstance()
+                .resolveAsResolvedSchema(new AnnotatedType(BackgroundComputationsStateEvent.class));
         return openApi -> openApi
-                .schema(resolvedSchema.schema.getName(), resolvedSchema.schema);
+                .schema(projectChangeEvent.schema.getName(), projectChangeEvent.schema)
+                .schema(backgroundComputationsStateEvent.schema.getName(), backgroundComputationsStateEvent.schema);
     }
 }

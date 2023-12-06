@@ -37,28 +37,23 @@ import java.util.List;
 /**
  * Provides access to {@link de.unijena.bioinf.ms.frontend.BackgroundRuns} service to execute commandline runs
  * with GUI loader support.
- *
+ * <p>
  * WILL BE REPLACED BY NIGHTSKY CALLS!
  */
 @Deprecated
 public final class BackgroundRunsGui {
 
-    @NotNull
-    private GuiProjectSpaceManager ps;
 
-    public BackgroundRunsGui(@NotNull GuiProjectSpaceManager ps) {
-        this.ps = ps;
-    }
+    @NotNull BackgroundRuns<GuiProjectSpaceManager, InstanceBean> br;
 
-    @Deprecated
-    void setProject(@NotNull GuiProjectSpaceManager project) {
-        ps = project;
+    public BackgroundRunsGui(@NotNull BackgroundRuns<GuiProjectSpaceManager, InstanceBean> br) {
+        this.br = br;
     }
 
     @Deprecated
     @NotNull
     public GuiProjectSpaceManager getProject() {
-        return ps;
+        return br.getProjectSpaceManager();
     }
 
     @Deprecated
@@ -68,8 +63,7 @@ public final class BackgroundRunsGui {
 
     @Deprecated
     public TextAreaJJobContainer<Boolean> runCommand(@Nullable List<String> command, List<InstanceBean> compoundsToProcess, @Nullable InputFilesOptions input, @Nullable String description) throws IOException {
-        BackgroundRuns.BackgroundRunJob<GuiProjectSpaceManager, InstanceBean> job =
-                BackgroundRuns.makeBackgroundRun(command, compoundsToProcess, input, ps);
+        BackgroundRuns<GuiProjectSpaceManager, InstanceBean>.BackgroundRunJob job = br.makeBackgroundRun(command, compoundsToProcess, input);
 
         return Jobs.submit(job, job.getRunId() + ": " + (description == null ? "" : description),
                 "Computation");
@@ -77,28 +71,28 @@ public final class BackgroundRunsGui {
 
     @Deprecated
     public LoadingBackroundTask<Boolean> runCommandAndLoad(@Nullable List<String> command,
-                                                                  List<InstanceBean> compoundsToProcess,
-                                                                  @Nullable InputFilesOptions input,
-                                                                  Window owner, String title, boolean indeterminateProgress
+                                                           List<InstanceBean> compoundsToProcess,
+                                                           @Nullable InputFilesOptions input,
+                                                           Window owner, String title, boolean indeterminateProgress
     ) throws IOException {
-        BackgroundRuns.BackgroundRunJob<GuiProjectSpaceManager, InstanceBean> job =
-                BackgroundRuns.makeBackgroundRun(command, compoundsToProcess, input, ps);
+        BackgroundRuns<GuiProjectSpaceManager, InstanceBean>.BackgroundRunJob job =
+                br.makeBackgroundRun(command, compoundsToProcess, input);
         return Jobs.runInBackgroundAndLoad(owner, title, indeterminateProgress, job);
     }
 
     @Deprecated
     public LoadingBackroundTask<Boolean> runCommandAndLoad(@Nullable List<String> command,
-                                                                  List<InstanceBean> compoundsToProcess,
-                                                                  @Nullable InputFilesOptions input,
-                                                                  Dialog owner, String title, boolean indeterminateProgress
+                                                           List<InstanceBean> compoundsToProcess,
+                                                           @Nullable InputFilesOptions input,
+                                                           Dialog owner, String title, boolean indeterminateProgress
     ) throws IOException {
-        BackgroundRuns.BackgroundRunJob<GuiProjectSpaceManager, InstanceBean> job =
-                BackgroundRuns.makeBackgroundRun(command, compoundsToProcess, input, ps);
+        BackgroundRuns<GuiProjectSpaceManager, InstanceBean>.BackgroundRunJob job =
+                br.makeBackgroundRun(command, compoundsToProcess, input);
         return Jobs.runInBackgroundAndLoad(owner, title, indeterminateProgress, job);
     }
 
     @Deprecated
     public void cancelAllRuns() {
-        BackgroundRuns.cancelAllRuns();
+        br.cancelAllRuns();
     }
 }
