@@ -23,7 +23,6 @@ import java.util.*;
 
 public class ProcessedSample {
 
-    private SpectrumStorage spectrumStorage;
     private LCMSStorage traceStorage;
     private MsDataSourceReference sourceReference;
 
@@ -88,10 +87,6 @@ public class ProcessedSample {
         }
         System.out.println(numberOfHighQualityTraces);
         new TraceConnector().connect(traceStorage);
-    }
-
-    public SpectrumStorage getSpectrumStorage() {
-        return spectrumStorage;
     }
 
     public LCMSStorage getTraceStorage() {
