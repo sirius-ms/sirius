@@ -58,7 +58,7 @@ import java.util.stream.Collectors;
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-@CommandLine.Command(name = "custom-db", aliases = {"DB"}, description = "@|bold %n<STANDALONE> Generate a custom searchable structure database. Import multiple files with compounds as SMILES or InChi into this DB. %n %n|@", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true, sortOptions = false)
+@CommandLine.Command(name = "custom-db", aliases = {"DB"}, description = "@|bold %n<STANDALONE> Generate a custom searchable structure/spectral database. Import multiple files with compounds into this DB. %n %n|@", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true, sortOptions = false)
 public class CustomDBOptions implements StandaloneTool<Workflow> {
 
 
@@ -90,7 +90,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
         String location = null;
 
         @Option(names = {"--buffer-size", "--buffer"}, defaultValue = "1000",
-                description = {"Maximum number of downloaded/computed compounds to keep in memory before writing them to disk (into the db directory)."},
+                description = {"Maximum number of downloaded/computed compounds to keep in memory before writing them to disk (into the db directory). Can be set higher when importing large files on a fast computer."},
                 order = 210)
         public int writeBuffer;
 
@@ -111,7 +111,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 order = 301)
         String location = null;
 
-        @Option(names = {"--delete", "-d"}, required = false, defaultValue = "false",
+        @Option(names = {"--delete", "-d"}, defaultValue = "false",
                 description = "Delete removed custom database from filesystem/server.", order = 310)
         boolean delete;
     }
@@ -123,7 +123,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
         @Option(names = {"--db"}, description = "Show information only about the given custom database.", order = 110)
         String db = null;
 
-        @Option(names = {"--details"}, required = false, description = "Show detailed (technical) information.",
+        @Option(names = {"--details"}, description = "Show detailed (technical) information.",
                 order = 120)
         public boolean details;
     }
@@ -177,7 +177,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 if (!input.msInput.unknownFiles.isEmpty() || !input.msInput.msParserfiles.isEmpty()) {
                     logInfo("Importing new structures to custom database '" + mode.importParas.location + "'...");
                     final AtomicLong lines = new AtomicLong(0);
-                    final List<Path> unknown = input.msInput.unknownFiles.keySet().stream().sorted().collect(Collectors.toList());
+                    final List<Path> unknown = input.msInput.unknownFiles.keySet().stream().sorted().toList();
                     for (Path f : unknown)
                         lines.addAndGet(FileUtils.estimateNumOfLines(f));
                     lines.addAndGet(input.msInput.msParserfiles.size());
