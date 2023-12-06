@@ -3,6 +3,7 @@ package de.unijena.bioinf.lcms.align;
 import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.utils.MassMap;
 import de.unijena.bioinf.lcms.ScanPointMapping;
 import de.unijena.bioinf.lcms.trace.ContiguousTrace;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
@@ -12,10 +13,14 @@ import de.unijena.bioinf.recal.MzRecalibration;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.floats.FloatIterator;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.IntIterators;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.function.Identity;
 import org.apache.commons.math3.analysis.interpolation.LoessInterpolator;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
+import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.FileNotFoundException;
@@ -35,6 +40,9 @@ public class TraceAligner {
 
     private final UnivariateFunction[] recalibrationFunctions;
 
+
+    private final UnivariateFunction[] mzRecalibrationFunctionsAbs, mzRecalibrationFunctionsRel;
+
     private final double[] rtErrors;
 
     private final Range<Double> totalRtSpan;
@@ -46,6 +54,8 @@ public class TraceAligner {
         this.deviation = new Deviation(10);
         this.samples = samples;
         this.recalibrationFunctions = new UnivariateFunction[samples.length];
+        this.mzRecalibrationFunctionsAbs = new UnivariateFunction[samples.length];
+        this.mzRecalibrationFunctionsRel = new UnivariateFunction[samples.length];
         this.merged = new MoiSet(samples[0]);
         this.rtErrors = new double[samples.length];
         List<Range<Double>> rtSpans = Arrays.stream(samples).map(ProcessedSample::getRtSpan).toList();
@@ -57,7 +67,7 @@ public class TraceAligner {
     // 2.) merge two samples
         // for each
 
-    public void align() {
+    public MassOfInterest[] align() {
         // first: sort samples by confidence
         Arrays.sort(samples, Comparator.comparingInt(ProcessedSample::getNumberOfHighQualityTraces).reversed());
         // first sample is the guide, the other samples are attached to
@@ -97,6 +107,14 @@ public class TraceAligner {
 
         MoiSet merged2 = fullAlign();
 
+        // recalibrate masses
+        for (int k=0; k < samples.length; ++k) {
+            samples[k].active();
+            MoiSet mois = extractMoIs(k);
+            samples[k].inactive();
+            recalibrateMasses(merged2.all, mois.all, k, rtErrors[k], 20 );
+        }
+
         {
             final DoubleArrayList allMasses = new DoubleArrayList();
             for (MassOfInterest m : merged2.all) {
@@ -125,74 +143,107 @@ public class TraceAligner {
             }
         }
 
+        // delete all mois that do not align
+        merged2.all.removeIf(x->!(x instanceof MergedMassOfInterest));
 
-
-
-        for (MassOfInterest moi : merged2.all) {
-            if (moi instanceof MergedMassOfInterest mmoi) {
-                if (mmoi.mergedRts.length >= (samples.length/2)) {
-                    try (final PrintStream out = new PrintStream("/home/kaidu/analysis/test/" + (j++) + ".txt")) {
-                        int count=1;
-                        for (int k=0; k < samples.length; ++k) {
-                            samples[k].active();
-                            Deviation dev = new Deviation(5);
-                            double delta = dev.absoluteFor(mmoi.mz);
-                            List<ContiguousTrace> contigousTracesByMass = samples[k].getTraceStorage().getContigousTracesByMass(mmoi.mz - delta, mmoi.mz + delta);
-                            if (contigousTracesByMass.isEmpty()) continue;
-                            contigousTracesByMass.sort(Comparator.comparingDouble(x->Math.abs(x.averagedMz()-mmoi.mz)));
-                            ContiguousTrace tr = contigousTracesByMass.get(0);
-                            Optional<TraceChain> chainFor = samples[k].getTraceStorage().getChainFor(tr);
-                            if (chainFor.isPresent()) {
-                                ++count;
-                                out.print(k);
-                                out.print("\t");
-                                TraceChain C = chainFor.get();
-                                out.print(C.averagedMz());
-
-                                final double[] intensities = new double[retentionTimeBins.length];
-                                for (int d = C.startId()+1; d < C.endId(); d += 2) {
-                                    UnivariateFunction R = recalibrationFunctions[k];
-                                    if (R==null) R = new Identity();
-                                    final double recalibratedRetentionTimeA = R.value(C.retentionTime(d-1));
-                                    final double recalibratedRetentionTimeB = R.value(C.retentionTime(d));
-                                    final double recalibratedRetentionTimeC = R.value(C.retentionTime(d+1));
-                                    int newIndexA = search(retentionTimeBins, recalibratedRetentionTimeA);
-                                    int newIndexB = search(retentionTimeBins, recalibratedRetentionTimeB);
-                                    int newIndexC = search(retentionTimeBins, recalibratedRetentionTimeC);
-                                    final double intensityA = C.intensity(d-1), intensityB = C.intensity(d), intensityC = C.intensity(d+1);
-                                    intensities[newIndexA] = intensityA;
-                                    intensities[newIndexB] = intensityB;
-                                    intensities[newIndexC] = intensityC;
-                                    // interpolate
-                                    if (newIndexB-newIndexA > 1) {
-                                        final double bt = 1d/(newIndexB-newIndexA);
-                                        for (int c=newIndexA+1; c < newIndexB; ++c) {
-                                            intensities[c] = intensityA + (intensityB-intensityA)*bt;
-                                        }
-                                    }
-                                    if (newIndexC-newIndexB > 1) {
-                                        final double bt = 1d/(newIndexC-newIndexB);
-                                        for (int c=newIndexB+1; c < newIndexC; ++c) {
-                                            intensities[c] = intensityB + (intensityC-intensityB)*bt;
-                                        }
-                                    }
-                                }
-
-                                for (double intens : intensities) {
+        if(false) {
+            for (MassOfInterest moi : merged2.all) {
+                if (moi instanceof MergedMassOfInterest mmoi) {
+                    if (mmoi.mergedRts.length >= (samples.length / 2)) {
+                        try (final PrintStream out = new PrintStream("/home/kaidu/analysis/test/" + (j++) + ".txt")) {
+                            int count = 1;
+                            for (int k = 0; k < samples.length; ++k) {
+                                samples[k].active();
+                                Deviation dev = new Deviation(5);
+                                double delta = dev.absoluteFor(mmoi.mz);
+                                List<ContiguousTrace> contigousTracesByMass = samples[k].getTraceStorage().getContigousTracesByMass(mmoi.mz - delta, mmoi.mz + delta);
+                                if (contigousTracesByMass.isEmpty()) continue;
+                                contigousTracesByMass.sort(Comparator.comparingDouble(x -> Math.abs(x.averagedMz() - mmoi.mz)));
+                                ContiguousTrace tr = contigousTracesByMass.get(0);
+                                Optional<TraceChain> chainFor = samples[k].getTraceStorage().getChainFor(tr);
+                                if (chainFor.isPresent()) {
+                                    ++count;
+                                    out.print(k);
                                     out.print("\t");
-                                    out.print(intens);
+                                    TraceChain C = chainFor.get();
+                                    out.print(C.averagedMz());
+
+                                    final double[] intensities = new double[retentionTimeBins.length];
+                                    for (int d = C.startId() + 1; d < C.endId(); d += 2) {
+                                        UnivariateFunction R = recalibrationFunctions[k];
+                                        if (R == null) R = new Identity();
+                                        final double recalibratedRetentionTimeA = R.value(C.retentionTime(d - 1));
+                                        final double recalibratedRetentionTimeB = R.value(C.retentionTime(d));
+                                        final double recalibratedRetentionTimeC = R.value(C.retentionTime(d + 1));
+                                        int newIndexA = search(retentionTimeBins, recalibratedRetentionTimeA);
+                                        int newIndexB = search(retentionTimeBins, recalibratedRetentionTimeB);
+                                        int newIndexC = search(retentionTimeBins, recalibratedRetentionTimeC);
+                                        final double intensityA = C.intensity(d - 1), intensityB = C.intensity(d), intensityC = C.intensity(d + 1);
+                                        intensities[newIndexA] = intensityA;
+                                        intensities[newIndexB] = intensityB;
+                                        intensities[newIndexC] = intensityC;
+                                        // interpolate
+                                        if (newIndexB - newIndexA > 1) {
+                                            final double bt = 1d / (newIndexB - newIndexA);
+                                            for (int c = newIndexA + 1; c < newIndexB; ++c) {
+                                                intensities[c] = intensityA + (intensityB - intensityA) * bt;
+                                            }
+                                        }
+                                        if (newIndexC - newIndexB > 1) {
+                                            final double bt = 1d / (newIndexC - newIndexB);
+                                            for (int c = newIndexB + 1; c < newIndexC; ++c) {
+                                                intensities[c] = intensityB + (intensityC - intensityB) * bt;
+                                            }
+                                        }
+                                    }
+
+                                    for (double intens : intensities) {
+                                        out.print("\t");
+                                        out.print(intens);
+                                    }
+                                    out.println();
                                 }
-                                out.println();
+                                samples[k].inactive();
                             }
-                            samples[k].inactive();
+                            System.out.println((j - 1) + ".txt\tcount: " + count);
+                        } catch (FileNotFoundException e) {
+                            throw new RuntimeException(e);
                         }
-                        System.out.println((j-1) + ".txt\tcount: " + count);
-                    } catch (FileNotFoundException e) {
-                        throw new RuntimeException(e);
                     }
                 }
             }
         }
+
+        this.merged = merged2;
+        return merged.all.toArray(MassOfInterest[]::new);
+    }
+
+    public ScanPointMapping getMergedScanPointMapping() {
+        int maxLen = 0;
+        for (ProcessedSample sample : samples) {
+            maxLen = Math.max(sample.getMapping().length(), maxLen);
+        }
+        final int[] scanids = new int[maxLen];
+        final double[] retentionTimes = new double[maxLen];
+        final double rtStep = (totalRtSpan.upperEndpoint()-totalRtSpan.lowerEndpoint())/maxLen;
+        retentionTimes[0] = totalRtSpan.lowerEndpoint();
+        for (int i=1; i < retentionTimes.length; ++i) {
+            retentionTimes[i] = retentionTimes[i-1]+rtStep;
+            scanids[i] = i;
+        }
+        return new ScanPointMapping(retentionTimes, scanids);
+    }
+
+    public ProcessedSample[] getSamples() {
+        return samples;
+    }
+
+    public UnivariateFunction[] getRecalibrationFunctions() {
+        return recalibrationFunctions;
+    }
+
+    public MoiSet getMerged() {
+        return merged;
     }
 
     private static int search(double[] array, double value) {
@@ -254,7 +305,7 @@ public class TraceAligner {
         System.out.println("mzError = " + mzError/n);
         System.out.println("intError = " + Math.exp(intError/n));
         System.out.println("rtError = " + rtError/n);
-        System.out.println("Number of Alignments: " + alignments.length + " / " + Math.min(L.size(),R.size()));
+        System.out.println("Number of Alignments: " + chosenAlignment.size() + " / " + Math.min(L.size(),R.size()));
         System.out.println("----------------------------------------");
         /*{
             PossibleAlignment[] byMz = chosenAlignment.toArray(PossibleAlignment[]::new);
@@ -269,6 +320,43 @@ public class TraceAligner {
         MassOfInterest[] rec = getFromAlignment(L, R, chosenForRecalibration);
         recalibrateByAlignment(right, sampleIndex, rec, rtspanRight, rtError);
         return chosenAlignment;
+    }
+
+    private void recalibrateMasses(List<MassOfInterest> fromMerged, List<MassOfInterest> mois, int sampleIndex, double rtTolerance, double intTolerance) {
+        // we have to do a second alignment pass :/
+        // maybe we should store the aligned mois in db to avoid that
+        final List<MassOfInterest>mergedSet = fromMerged.stream().filter(x->x instanceof MergedMassOfInterest).toList();
+        List<PossibleAlignment> aligned = alignSets(mergedSet, mois, rtTolerance, intTolerance);
+        aligned.sort(Comparator.comparingDouble(x->mergedSet.get(x.left).getRt()));
+        // absolute
+        {
+            DoubleArrayList xs = new DoubleArrayList(), ys = new DoubleArrayList();
+
+            for (int k=0; k < aligned.size(); ++k) {
+                double l = mois.get(aligned.get(k).right).mz;
+                double r = mergedSet.get(aligned.get(k).left).mz;
+                double rt = mergedSet.get(aligned.get(k).left).rt;
+                if (l <= 200) {
+                    xs.add(rt);
+                    ys.add(r-l);
+                }
+            }
+            mzRecalibrationFunctionsAbs[sampleIndex] = xs.size() >= 50 ? MzRecalibration.getMedianLinearRecalibration(xs.toDoubleArray(), ys.toDoubleArray()) : new Identity();
+        }
+        // relative
+        {
+            DoubleArrayList xs = new DoubleArrayList(), ys = new DoubleArrayList();
+            for (int k=0; k < aligned.size(); ++k) {
+                double l = mois.get(aligned.get(k).right).mz;
+                double r = mergedSet.get(aligned.get(k).left).mz;
+                double rt = mergedSet.get(aligned.get(k).left).rt;
+                if (l > 200) {
+                    xs.add(rt);
+                    ys.add(r/l);
+                }
+            }
+            mzRecalibrationFunctionsRel[sampleIndex] = xs.size() >= 50 ? MzRecalibration.getMedianLinearRecalibration(xs.toDoubleArray(), ys.toDoubleArray()) : new Identity();
+        }
     }
 
     private void recalibrateByAlignment(MoiSet right, int sampleIndex, MassOfInterest[] rec, double rtspanRight, double rtError) {
@@ -376,8 +464,10 @@ public class TraceAligner {
             {
                 double bandwidth = Math.min(0.3, Math.max(0.1, (200d / x.length)));
                 System.out.println("Recalibrate " + x.length + " values in total! (bandwidth = " + bandwidth + ")");
-                UnivariateFunction loessRecalibration = new RecalibrationFunction(Range.closed(x[0], x[x.length-1]),
-                        new LoessInterpolator(bandwidth, 2).interpolate(x, y), linearRecalibration) ;
+                PolynomialSplineFunction loess = new LoessInterpolator(bandwidth, 2).interpolate(x, y);
+                System.out.println("Loess with " + loess.getN() + " knots.");
+                UnivariateFunction loessRecalibration = RecalibrationFunction.fromLoess(
+                        loess, linearRecalibration) ;
                 {
                     double rtError2 = 0d;
                     for (int k = 0; k < rec.length; k += 2) {
@@ -530,7 +620,7 @@ public class TraceAligner {
         return alignments.toArray(MassOfInterest[]::new);
     }
 
-    private List<PossibleAlignment> alignSets(ArrayList<MassOfInterest> left, ArrayList<MassOfInterest> right, double retentionTimeTolerance,
+    private List<PossibleAlignment> alignSetsWrong(ArrayList<MassOfInterest> left, ArrayList<MassOfInterest> right, double retentionTimeTolerance,
                                        double intensityTolerance
 
                                        ) {
@@ -579,6 +669,78 @@ public class TraceAligner {
         }
         return alignments.toArray(MassOfInterest[]::new);
          */
+    }
+
+
+    private List<PossibleAlignment> alignSets(List<MassOfInterest> left, List<MassOfInterest> right, double retentionTimeTolerance,
+                                                   double intensityTolerance
+
+    ) {
+        final double retentionTimeWindow = retentionTimeTolerance * 8;
+        final double rtVar = 2 * retentionTimeTolerance;
+        final double intensityVar = 2 * intensityTolerance * intensityTolerance;
+        final ArrayList<PossibleAlignment> possibleAlignments = new ArrayList<>();
+        final IntArrayList[] rightLookup = new IntArrayList[1 + right.stream().mapToInt(x -> (int) (x.mz)).max().orElse(0)];
+        for (int j = 0; j < right.size(); ++j) {
+            int i = (int) right.get(j).mz;
+            if (rightLookup[i] == null) rightLookup[i] = new IntArrayList();
+            rightLookup[i].add(j);
+        }
+
+        for (int l = 0; l < left.size(); ++l) {
+            final MassOfInterest ml = left.get(l);
+            IntIterator intIterator = potentialMatches(ml.mz, rightLookup);
+            while (intIterator.hasNext()) {
+                final int r = intIterator.nextInt();
+                final MassOfInterest mr = right.get(r);
+                final double delta = ml.getMz() - mr.getMz();
+                final double allowedDelta = deviation.absoluteFor((ml.getMz() + mr.getMz()) / 2);
+                if (Math.abs(delta) < allowedDelta) {
+                    final double retentionTimeDelta = ml.getRt() - mr.getRt();
+                    final double intensityDelta = Math.log((ml.getRelativeIntensity() + 0.1) / (mr.getRelativeIntensity() + 0.1));
+                    if (Math.abs(retentionTimeDelta) < retentionTimeWindow) {
+                        final float loglikelihood = (float) ((-Math.abs(retentionTimeDelta) / rtVar) * RT_WEIGHT +
+                                (-(delta * delta) / (2 * allowedDelta * allowedDelta)) + (-(intensityDelta * intensityDelta) / (intensityVar)));
+                        if (loglikelihood > -(20)) {
+                            possibleAlignments.add(new PossibleAlignment(l, r, loglikelihood, retentionTimeDelta));
+                        }
+                    }
+                }
+            }
+        }
+        possibleAlignments.sort(null);
+        final BitSet alignedL = new BitSet(left.size()), alignedR = new BitSet(right.size());
+        final ArrayList<PossibleAlignment> chosenAlignments = new ArrayList<>();
+        for (PossibleAlignment a : possibleAlignments) {
+            if (!alignedL.get(a.left) && !alignedR.get(a.right)) {
+                chosenAlignments.add(a);
+                alignedL.set(a.left);
+                alignedR.set(a.right);
+            }
+        }
+        chosenAlignments.sort(Comparator.comparingDouble(x -> right.get(x.right).getRt()));
+        return chosenAlignments;
+    }
+
+    private IntIterator potentialMatches(double mz, IntArrayList[] lookupTable) {
+        final double delta = deviation.absoluteFor(mz+1);
+        final int mzLeftKey = (int)(mz - delta), mzRightKey = (int)(mz+delta);
+        if (mzLeftKey >= lookupTable.length) return IntIterators.EMPTY_ITERATOR;
+        IntArrayList L = lookupTable[mzLeftKey];
+        if (mzLeftKey==mzRightKey) {
+            if (L ==null) return IntIterators.EMPTY_ITERATOR;
+            else return L.iterator();
+        } else {
+            IntArrayList R = mzRightKey>=lookupTable.length ? null : lookupTable[mzRightKey];
+            if (L ==null){
+                if (R ==null) return IntIterators.EMPTY_ITERATOR;
+                else return R.iterator();
+            } else if (R ==null) {
+                return L.iterator();
+            } else {
+                return IntIterators.concat(L.iterator(), R.iterator());
+            }
+        }
     }
 
     private double[][] strictMonotonic(double[] x, double[] y, double xstart, double ystart, double xend, double yend){
@@ -648,7 +810,12 @@ public class TraceAligner {
                 for (int apex : node.getApexes()) {
                     final float intensity = trace.intensity(apex);
                     final double retentionTime = trace.retentionTime(apex);
-                    MassOfInterest moi = new MassOfInterest(chain.averagedMz(), retentionTime, intensity, trace.getUid(), apex, index, 0);
+                    MassOfInterest moi = new MassOfInterest(chain.averagedMz(), retentionTime,
+                            retentionTime - chain.retentionTime(chain.startId()),
+                            chain.retentionTime(chain.endId()) - retentionTime,
+                            chain.minMz(),
+                            chain.maxMz(),
+                            intensity, trace.getUid(), apex, index, 0);
                     if (recalibrationFunctions[index]!=null) moi.recalibrate(recalibrationFunctions[index]);
                     if (node.getConfidence()>=CONF_THRESHOLD) {
                         set.good.add(moi);
@@ -737,26 +904,29 @@ public class TraceAligner {
         return merged;
     }
 
-    protected static class MergedMassOfInterest extends MassOfInterest {
-        private double[] mergedRts;
+    public static class MergedMassOfInterest extends MassOfInterest {
+        public double[] mergedRts;
+
+        public MassOfInterest[] mergedForDebug;
 
         public MergedMassOfInterest(MassOfInterest left, MassOfInterest right) {
-            super(left.getMz(), left.getUncalibratedRetentionTime(), left.relativeIntensity, left.getTraceId(), left.getScanId(), -1, left.qualityLevel);
+            super(left.getMz(), left.getUncalibratedRetentionTime(),
+                    Math.max(left.widthLeft, right.widthLeft),
+                    Math.max(left.widthRight, right.widthRight),
+                    Math.min(left.getMinMz(), right.getMinMz()),
+                    Math.max(left.getMaxMz(), right.getMaxMz()),
+                    left.relativeIntensity, left.getTraceId(), left.getScanId(), -1, left.qualityLevel);
             if (left instanceof MergedMassOfInterest) {
                 MergedMassOfInterest m = (MergedMassOfInterest)left;
                 this.mergedRts = Arrays.copyOf(m.mergedRts, m.mergedRts.length+1);
                 this.mergedRts[mergedRts.length-1]= right.getRt();
+
+                this.mergedForDebug = Arrays.copyOf(m.mergedForDebug, m.mergedForDebug.length+1);
+                this.mergedForDebug[this.mergedForDebug.length-1] = right;
             } else {
                 this.mergedRts = new double[]{left.getRt(), right.getRt()};
+                this.mergedForDebug = new MassOfInterest[]{left, right};
             }
-            this.rt = 0;
-            for (double  r : mergedRts) this.rt += r;
-            this.rt /= mergedRts.length;
-        }
-
-        public MergedMassOfInterest(MassOfInterest old, double[] mergedRts) {
-            super(old.getMz(), old.getUncalibratedRetentionTime(), old.getRelativeIntensity(), old.getTraceId(), old.getScanId(), -1, old.getQualityLevel());
-            this.mergedRts = mergedRts;
             this.rt = 0;
             for (double  r : mergedRts) this.rt += r;
             this.rt /= mergedRts.length;
