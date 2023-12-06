@@ -9,6 +9,8 @@ import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 
 public class TracePicker {
@@ -26,6 +28,107 @@ public class TracePicker {
         this.allowedMassDeviation = new Deviation(10);
         this.mapping = scanPointMapping;
     }
+
+    public Optional<ContiguousTrace> detectTraceAlongTimeWindow(int firstScanId, int lastScanId, double fromMz, double toMz, int innerFirstScanId, int innerLastScanId, double innerFromMz, double innerToMz) {
+        if (innerFromMz < fromMz) innerFromMz=fromMz;
+        if (innerToMz < toMz) innerToMz=toMz;
+
+        final DoubleArrayList masses = new DoubleArrayList();
+        final FloatArrayList intensities = new FloatArrayList();
+        final IntArrayList ids = new IntArrayList();
+        // find most intensive match
+        int mostIntensive=-1;
+        float intensity=0f;
+        double mmz=-1;
+        for (int k=innerFirstScanId; k <= innerLastScanId; ++k) {
+            final SimpleSpectrum spectrum = storage.getSpectrum(k);
+            if (spectrum==null) continue;
+            int index = Spectrums.mostIntensivePeakWithin(spectrum, innerFromMz, innerToMz);
+            if (index >= 0 && spectrum.getIntensityAt(index) > intensity) {
+                mostIntensive = k;
+                intensity = (float)spectrum.getIntensityAt(index);
+                mmz = spectrum.getMzAt(index);
+            }
+        }
+        if (mostIntensive<0) return Optional.empty();
+        int id = mostIntensive;
+        masses.add(mmz);
+        intensities.add(intensity);
+        ids.add(id);
+
+        // extend to the left
+        for (int sid = id-1; sid >= firstScanId; --sid) {
+            final SimpleSpectrum spectrum = storage.getSpectrum(sid);
+
+            final double mzA, mzB;
+            if (sid < innerFirstScanId) {
+                mzA = fromMz;
+                mzB = toMz;
+            } else {
+                mzA = innerFromMz;
+                mzB = innerToMz;
+            }
+
+            if (spectrum==null) break;
+            int index = Spectrums.mostIntensivePeakWithin(spectrum, mzA, mzB);
+            if (index < 0) {
+                masses.add(0d);
+                intensities.add(0f);
+            } else {
+                masses.add(spectrum.getMzAt(index));
+                intensities.add((float) spectrum.getIntensityAt(index));
+            }
+            ids.add(sid);
+        }
+
+        // remove all leading and trailing zeros from the trace
+        while (intensities.getFloat(intensities.size()-1)<=0) {
+            intensities.popFloat();
+            ids.popInt();
+            masses.popDouble();
+        }
+
+        // reverse
+        rev(masses);
+        rev(intensities);
+        rev(ids);
+        // extend to the right
+        for (int sid = id+1; sid <= lastScanId; ++sid) {
+            final double mzA, mzB;
+            if (sid > innerLastScanId) {
+                mzA = fromMz;
+                mzB = toMz;
+            } else {
+                mzA = innerFromMz;
+                mzB = innerToMz;
+            }
+
+
+            final SimpleSpectrum spectrum = storage.getSpectrum(sid);
+            if (spectrum==null) break;
+            int index = Spectrums.mostIntensivePeakWithin(spectrum, mzA, mzB);
+            if (index < 0) {
+                masses.add(0d);
+                intensities.add(0f);
+            } else {
+                masses.add(spectrum.getMzAt(index));
+                intensities.add((float) spectrum.getIntensityAt(index));
+            }
+            ids.add(sid);
+        }
+
+        // remove all leading and trailing zeros from the trace
+        while (intensities.getFloat(intensities.size()-1)<=0) {
+            intensities.popFloat();
+            ids.popInt();
+            masses.popDouble();
+        }
+
+        ContiguousTrace trace = new ContiguousTrace(
+                mapping, ids.getInt(0), ids.getInt(ids.size() - 1), masses.toDoubleArray(), intensities.toFloatArray());
+        return Optional.of(trace);
+    }
+
 
     public Optional<ContiguousTrace> detectTrace(int id, double mz) {
         // first check if we have this scan already picked
@@ -73,48 +176,132 @@ public class TracePicker {
     }
 
     private Optional<ContiguousTrace> pickTrace(int id, double mz) {
+        return pickTraceAlongTimeWindow(id, mz, 0, storage.numberOfScans()-1, true, true);
+    }
 
+    private Optional<ContiguousTrace> pickTraceAlongTimeWindow(int id, double mz, int firstScanId, int lastScanId, boolean stopAtZero, boolean cacheTrace) {
         final DoubleArrayList masses = new DoubleArrayList();
         final FloatArrayList intensities = new FloatArrayList();
         final IntArrayList ids = new IntArrayList();
-        {
+        if (stopAtZero) {
             final SimpleSpectrum spectrum = storage.getSpectrum(id);
             int index = Spectrums.search(spectrum, mz, allowedMassDeviation);
             if (index < 0) return Optional.empty();
             masses.add(spectrum.getMzAt(index));
-            intensities.add((float)spectrum.getIntensityAt(index));
+            intensities.add((float) spectrum.getIntensityAt(index));
+            ids.add(id);
+        } else {
+            // find most intensive match
+            int mostIntensive=-1;
+            float intensity=0f;
+            double mmz=-1;
+            for (int k=firstScanId; k < lastScanId; ++k) {
+                final SimpleSpectrum spectrum = storage.getSpectrum(k);
+                if (spectrum==null) continue;
+                int index = Spectrums.mostIntensivePeakWithin(spectrum, mz, allowedMassDeviation.divide(3));
+                if (index >= 0 && spectrum.getIntensityAt(index) > intensity) {
+                    mostIntensive = k;
+                    intensity = (float)spectrum.getIntensityAt(index);
+                    mmz = spectrum.getMzAt(index);
+                }
+            }
+            if (mostIntensive<0) {
+                for (int k=firstScanId; k < lastScanId; ++k) {
+                    final SimpleSpectrum spectrum = storage.getSpectrum(k);
+                    if (spectrum==null) continue;
+                    int index = Spectrums.mostIntensivePeakWithin(spectrum, mz, allowedMassDeviation);
+                    if (index >= 0 && spectrum.getIntensityAt(index) > intensity) {
+                        mostIntensive = k;
+                        intensity = (float)spectrum.getIntensityAt(index);
+                        mmz = spectrum.getMzAt(index);
+                    }
+                }
+            }
+            if (mostIntensive<0) return Optional.empty();
+            id = mostIntensive;
+            masses.add(mmz);
+            intensities.add(intensity);
             ids.add(id);
         }
         // extend to the left
-        for (int sid = id-1; sid >= 0; --sid) {
+        for (int sid = id-1; sid >= firstScanId; --sid) {
             final double massToSearch = masses.getDouble(masses.size() - 1);
             final SimpleSpectrum spectrum = storage.getSpectrum(sid);
+            if (spectrum==null) break;
             int index = Spectrums.mostIntensivePeakWithin(spectrum, massToSearch, allowedMassDeviation.divide(3));
             if (index < 0) index = Spectrums.mostIntensivePeakWithin(spectrum, massToSearch, allowedMassDeviation);
-            if (index < 0) break;
-            masses.add(spectrum.getMzAt(index));
-            intensities.add((float) spectrum.getIntensityAt(index));
+            if (index < 0) {
+                if (stopAtZero) break;
+                else {
+                    masses.add(0d);
+                    intensities.add(0f);
+                }
+            } else {
+                masses.add(spectrum.getMzAt(index));
+                intensities.add((float) spectrum.getIntensityAt(index));
+            }
             ids.add(sid);
         }
+
+        // remove all leading and trailing zeros from the trace
+        if (!stopAtZero) {
+            while (intensities.getFloat(intensities.size()-1)<=0) {
+                intensities.popFloat();
+                ids.popInt();
+                masses.popDouble();
+            }
+        }
+
         // reverse
         rev(masses);
         rev(intensities);
         rev(ids);
         // extend to the right
-        for (int sid = id+1; sid < storage.numberOfScans(); ++sid) {
+        for (int sid = id+1; sid <= lastScanId; ++sid) {
             final double massToSearch = masses.getDouble(masses.size() - 1);
             final SimpleSpectrum spectrum = storage.getSpectrum(sid);
+            if (spectrum==null) break;
             int index = Spectrums.mostIntensivePeakWithin(spectrum, massToSearch, allowedMassDeviation.divide(3));
             if (index < 0) index = Spectrums.mostIntensivePeakWithin(spectrum, massToSearch, allowedMassDeviation);
-            if (index < 0) break;
-            masses.add(spectrum.getMzAt(index));
-            intensities.add((float) spectrum.getIntensityAt(index));
+            if (index < 0) {
+                if (stopAtZero) break;
+                else {
+                    masses.add(0d);
+                    intensities.add(0f);
+                }
+            } else {
+                masses.add(spectrum.getMzAt(index));
+                intensities.add((float) spectrum.getIntensityAt(index));
+            }
             ids.add(sid);
         }
-        if (ids.size() >= MIN_SCANPOINT_THRESHOLD) {
-            ContiguousTrace tr = storage.addContigousTrace(new ContiguousTrace(
-                    0, mapping, ids.getInt(0), ids.getInt(ids.size()-1), masses.toDoubleArray(), intensities.toFloatArray()));
-            return Optional.of(tr);
+
+        // remove all leading and trailing zeros from the trace
+        if (!stopAtZero) {
+            while (intensities.getFloat(intensities.size()-1)<=0) {
+                intensities.popFloat();
+                ids.popInt();
+                masses.popDouble();
+            }
+        }
+        int traceLen;
+        if (stopAtZero) traceLen = ids.size();
+        else {
+            if (intensities.size() < 2) return Optional.empty();
+            traceLen=0;
+            for (int i=1; i < intensities.size(); ++i) {
+                // only consider pairs to avoid most of the noise
+                if (intensities.getFloat(i)>0 && intensities.getFloat(i-1)>0) ++traceLen;
+            }
+            if (intensities.getFloat(0)>0 && intensities.getFloat(1)>0) ++traceLen;
+        }
+
+        if (traceLen >= MIN_SCANPOINT_THRESHOLD) {
+            ContiguousTrace trace = new ContiguousTrace(
+            mapping, ids.getInt(0), ids.getInt(ids.size() - 1), masses.toDoubleArray(), intensities.toFloatArray());
+            if (cacheTrace) {
+                return Optional.of(storage.addContigousTrace(trace));
+            } else return Optional.of(trace);
         } else return Optional.empty();
     }
 
