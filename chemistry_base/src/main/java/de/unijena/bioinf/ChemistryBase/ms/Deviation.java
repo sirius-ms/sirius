@@ -74,6 +74,11 @@ public class Deviation implements Cloneable, Ms2ExperimentAnnotation {
         return diff <= absoluteFor(center);
     }
 
+    public boolean inErrorWindowSymetric(double left, double right) {
+        final double diff = Math.abs(left - right);
+        return diff <= absoluteFor((left+right)/2d);
+    }
+
     public Range<Double> getRange(double mz) {
         final double abs = absoluteFor(mz);
         return Range.closed(mz - abs, mz + abs);
