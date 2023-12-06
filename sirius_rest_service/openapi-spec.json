@@ -226,6 +226,65 @@
         }
       }
     },
+    "/api/{projectId}/jobs/run-command": {
+      "post": {
+        "tags": [
+          "Jobs"
+        ],
+        "summary": "Start computation for given command and input.",
+        "description": "Start computation for given command and input.",
+        "operationId": "startCommand",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to perform the command for.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/JobOptField"
+              },
+              "default": [
+                "progress"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "the command and the input to be executed",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommandSubmission"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Job of the command to be executed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/{projectId}/jobs/import-from-string": {
       "post": {
         "tags": [
@@ -273,7 +332,7 @@
         },
         "responses": {
           "200": {
-            "description": "CompoundIds of the imported run/compounds/feature.",
+            "description": "the import job.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2133,6 +2192,12 @@
         }
       },
       "BackgroundComputationsStateEvent": {
+        "required": [
+          "affectedJobs",
+          "numberOfFinishedJobs",
+          "numberOfJobs",
+          "numberOfRunningJobs"
+        ],
         "type": "object",
         "properties": {
           "affectedJobs": {
@@ -2273,54 +2338,44 @@
         },
         "description": ""
       },
-      "ImportFormat": {
-        "type": "string",
-        "description": "Selection of formats that are supported by the data importers.",
-        "nullable": true,
-        "enum": [
-          "MS",
-          "MGF",
-          "MZML",
-          "MZXML",
-          "CEF",
-          "MSP",
-          "MAT",
-          "MASSBANK"
-        ]
-      },
-      "ImportStringSubmission": {
+      "CommandSubmission": {
         "required": [
-          "data",
-          "format"
+          "command"
         ],
         "type": "object",
         "properties": {
-          "allowMs1OnlyData": {
-            "type": "boolean",
-            "nullable": true
+          "compoundIds": {
+            "type": "array",
+            "description": "Compounds that should be the input for this Job\n Will be converted to the respective alignedFeatureIds for computation.\n \u003cp\u003e\n At least one compoundId or alignedFeatureId needs to be specified.",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "nullable": true
+            }
           },
-          "ignoreFormulas": {
-            "type": "boolean",
-            "nullable": true
+          "alignedFeatureIds": {
+            "type": "array",
+            "description": "Features (aligned over runs) that should be the input for this Job\n \u003cp\u003e\n At least one compoundId or alignedFeatureId needs to be specified.",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "nullable": true
+            }
           },
-          "alignLCMSRuns": {
-            "type": "boolean",
-            "nullable": true
+          "command": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
-          "sourceName": {
-            "type": "string",
-            "description": "Name that specifies the data source. Can e.g. be a file path  or just a name.",
-            "nullable": true
-          },
-          "format": {
-            "$ref": "#/components/schemas/ImportFormat"
-          },
-          "data": {
-            "type": "string",
-            "description": "Data content in specified format"
+          "inputPaths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
-        "description": "Parameter Object to submit a job that imports ms/ms data from the given format into the specified project\n Supported formats (ms, mgf, cef, msp, mzML, mzXML)"
+        "description": ""
       },
       "JobOptField": {
         "type": "string",
@@ -2410,6 +2465,55 @@
           }
         },
         "description": "Progress information of a computation job that has already been submitted to SIRIUS.\n if  currentProgress \u003d\u003d maxProgress job is finished and should change to state done soon.\n if a job is DONE all results can be accessed via the Project-Spaces api."
+      },
+      "ImportFormat": {
+        "type": "string",
+        "description": "Selection of formats that are supported by the data importers.",
+        "nullable": true,
+        "enum": [
+          "MS",
+          "MGF",
+          "MZML",
+          "MZXML",
+          "CEF",
+          "MSP",
+          "MAT",
+          "MASSBANK"
+        ]
+      },
+      "ImportStringSubmission": {
+        "required": [
+          "data",
+          "format"
+        ],
+        "type": "object",
+        "properties": {
+          "allowMs1OnlyData": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "ignoreFormulas": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "alignLCMSRuns": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "sourceName": {
+            "type": "string",
+            "description": "Name that specifies the data source. Can e.g. be a file path  or just a name.",
+            "nullable": true
+          },
+          "format": {
+            "$ref": "#/components/schemas/ImportFormat"
+          },
+          "data": {
+            "type": "string",
+            "description": "Data content in specified format"
+          }
+        },
+        "description": "Parameter Object to submit a job that imports ms/ms data from the given format into the specified project\n Supported formats (ms, mgf, cef, msp, mzML, mzXML)"
       },
       "ImportLocalFilesSubmission": {
         "required": [

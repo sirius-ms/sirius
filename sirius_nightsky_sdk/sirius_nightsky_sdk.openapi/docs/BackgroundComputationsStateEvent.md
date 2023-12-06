@@ -7,10 +7,10 @@
 
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
-|**affectedJobs** | [**List&lt;Job&gt;**](Job.md) |  |  [optional] |
-|**numberOfJobs** | **Integer** |  |  [optional] |
-|**numberOfRunningJobs** | **Integer** |  |  [optional] |
-|**numberOfFinishedJobs** | **Integer** |  |  [optional] |
+|**affectedJobs** | [**List&lt;Job&gt;**](Job.md) |  |  |
+|**numberOfJobs** | **Integer** |  |  |
+|**numberOfRunningJobs** | **Integer** |  |  |
+|**numberOfFinishedJobs** | **Integer** |  |  |
 
 
 

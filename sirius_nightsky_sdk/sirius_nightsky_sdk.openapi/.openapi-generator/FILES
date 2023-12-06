@@ -9,6 +9,7 @@ docs/BackgroundComputationsStateEvent.md
 docs/BinaryFingerprint.md
 docs/Canopus.md
 docs/CanopusPrediction.md
+docs/CommandSubmission.md
 docs/Compound.md
 docs/CompoundClass.md
 docs/CompoundClassType.md
@@ -104,6 +105,7 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/BackgroundComputationsStat
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/BinaryFingerprint.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Canopus.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/CanopusPrediction.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/CommandSubmission.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Compound.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/CompoundClass.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/CompoundClassType.java

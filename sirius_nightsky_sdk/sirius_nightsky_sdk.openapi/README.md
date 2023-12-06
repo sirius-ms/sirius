@@ -136,6 +136,7 @@ Class | Method | HTTP request | Description
 *JobsApi* | [**getJobConfigs**](docs/JobsApi.md#getJobConfigs) | **GET** /api/job-configs | Request all available job configurations
 *JobsApi* | [**getJobs**](docs/JobsApi.md#getJobs) | **GET** /api/projects/{projectId}/jobs | Get job information and its current state and progress (if available).
 *JobsApi* | [**postJobConfig**](docs/JobsApi.md#postJobConfig) | **POST** /api/job-configs/{name} | Add new job configuration with given name.
+*JobsApi* | [**startCommand**](docs/JobsApi.md#startCommand) | **POST** /api/{projectId}/jobs/run-command | Start computation for given command and input.
 *JobsApi* | [**startImportFromPathJob**](docs/JobsApi.md#startImportFromPathJob) | **POST** /api/{projectId}/jobs/import-from-local-path | Import ms/ms data in given format from local filesystem into the specified project
 *JobsApi* | [**startImportFromStringJob**](docs/JobsApi.md#startImportFromStringJob) | **POST** /api/{projectId}/jobs/import-from-string | Import ms/ms data from the given format into the specified project-space  Possible formats (ms, mgf, cef, msp, mzML, mzXML)
 *JobsApi* | [**startJob**](docs/JobsApi.md#startJob) | **POST** /api/projects/{projectId}/jobs | Start computation for given compounds and with given parameters.
@@ -168,6 +169,7 @@ Class | Method | HTTP request | Description
  - [BinaryFingerprint](docs/BinaryFingerprint.md)
  - [Canopus](docs/Canopus.md)
  - [CanopusPrediction](docs/CanopusPrediction.md)
+ - [CommandSubmission](docs/CommandSubmission.md)
  - [Compound](docs/Compound.md)
  - [CompoundClass](docs/CompoundClass.md)
  - [CompoundClassType](docs/CompoundClassType.md)

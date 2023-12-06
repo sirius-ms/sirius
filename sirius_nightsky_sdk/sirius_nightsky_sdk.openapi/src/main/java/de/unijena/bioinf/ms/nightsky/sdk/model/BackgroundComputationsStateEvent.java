@@ -39,7 +39,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class BackgroundComputationsStateEvent {
   public static final String JSON_PROPERTY_AFFECTED_JOBS = "affectedJobs";
-  private List<Job> affectedJobs;
+  private List<Job> affectedJobs = new ArrayList<>();
 
   public static final String JSON_PROPERTY_NUMBER_OF_JOBS = "numberOfJobs";
   private Integer numberOfJobs;
@@ -71,9 +71,9 @@ public class BackgroundComputationsStateEvent {
    * Get affectedJobs
    * @return affectedJobs
   **/
-  @javax.annotation.Nullable
+  @javax.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_AFFECTED_JOBS)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public List<Job> getAffectedJobs() {
     return affectedJobs;
@@ -81,7 +81,7 @@ public class BackgroundComputationsStateEvent {
 
 
   @JsonProperty(JSON_PROPERTY_AFFECTED_JOBS)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setAffectedJobs(List<Job> affectedJobs) {
     this.affectedJobs = affectedJobs;
   }
@@ -97,9 +97,9 @@ public class BackgroundComputationsStateEvent {
    * Get numberOfJobs
    * @return numberOfJobs
   **/
-  @javax.annotation.Nullable
+  @javax.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_NUMBER_OF_JOBS)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public Integer getNumberOfJobs() {
     return numberOfJobs;
@@ -107,7 +107,7 @@ public class BackgroundComputationsStateEvent {
 
 
   @JsonProperty(JSON_PROPERTY_NUMBER_OF_JOBS)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setNumberOfJobs(Integer numberOfJobs) {
     this.numberOfJobs = numberOfJobs;
   }
@@ -123,9 +123,9 @@ public class BackgroundComputationsStateEvent {
    * Get numberOfRunningJobs
    * @return numberOfRunningJobs
   **/
-  @javax.annotation.Nullable
+  @javax.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_NUMBER_OF_RUNNING_JOBS)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public Integer getNumberOfRunningJobs() {
     return numberOfRunningJobs;
@@ -133,7 +133,7 @@ public class BackgroundComputationsStateEvent {
 
 
   @JsonProperty(JSON_PROPERTY_NUMBER_OF_RUNNING_JOBS)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setNumberOfRunningJobs(Integer numberOfRunningJobs) {
     this.numberOfRunningJobs = numberOfRunningJobs;
   }
@@ -149,9 +149,9 @@ public class BackgroundComputationsStateEvent {
    * Get numberOfFinishedJobs
    * @return numberOfFinishedJobs
   **/
-  @javax.annotation.Nullable
+  @javax.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_NUMBER_OF_FINISHED_JOBS)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public Integer getNumberOfFinishedJobs() {
     return numberOfFinishedJobs;
@@ -159,7 +159,7 @@ public class BackgroundComputationsStateEvent {
 
 
   @JsonProperty(JSON_PROPERTY_NUMBER_OF_FINISHED_JOBS)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setNumberOfFinishedJobs(Integer numberOfFinishedJobs) {
     this.numberOfFinishedJobs = numberOfFinishedJobs;
   }
