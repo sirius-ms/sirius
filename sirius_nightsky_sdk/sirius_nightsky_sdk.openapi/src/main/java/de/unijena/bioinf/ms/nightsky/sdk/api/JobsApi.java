@@ -56,7 +56,7 @@ public class JobsApi {
      * Delete job.
      * Delete job. Specify how to behave for running jobs.
      * <p><b>202</b> - Accepted
-     * @param projectId project-space to run jobs on
+     * @param projectId project-space to delete job from
      * @param jobId of the job to be deleted
      * @param cancelIfRunning If true job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
      * @param awaitDeletion If true request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
@@ -101,7 +101,7 @@ public class JobsApi {
      * Delete job.
      * Delete job. Specify how to behave for running jobs.
      * <p><b>202</b> - Accepted
-     * @param projectId project-space to run jobs on
+     * @param projectId project-space to delete job from
      * @param jobId of the job to be deleted
      * @param cancelIfRunning If true job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
      * @param awaitDeletion If true request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
@@ -116,7 +116,7 @@ public class JobsApi {
      * Delete job.
      * Delete job. Specify how to behave for running jobs.
      * <p><b>202</b> - Accepted
-     * @param projectId project-space to run jobs on
+     * @param projectId project-space to delete job from
      * @param jobId of the job to be deleted
      * @param cancelIfRunning If true job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
      * @param awaitDeletion If true request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
@@ -131,7 +131,7 @@ public class JobsApi {
      * Delete job.
      * Delete job. Specify how to behave for running jobs.
      * <p><b>202</b> - Accepted
-     * @param projectId project-space to run jobs on
+     * @param projectId project-space to delete job from
      * @param jobId of the job to be deleted
      * @param cancelIfRunning If true job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
      * @param awaitDeletion If true request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
@@ -209,6 +209,86 @@ public class JobsApi {
      */
     public ResponseSpec deleteJobConfigWithResponseSpec(String name) throws WebClientResponseException {
         return deleteJobConfigRequestCreation(name);
+    }
+    /**
+     * * Delete ALL jobs.
+     * * Delete ALL jobs. Specify how to behave for running jobs.
+     * <p><b>202</b> - Accepted
+     * @param projectId project-space to delete jobs from
+     * @param cancelIfRunning If true job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
+     * @param awaitDeletion If true request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec deleteJobsRequestCreation(String projectId, Boolean cancelIfRunning, Boolean awaitDeletion) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling deleteJobs", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "cancelIfRunning", cancelIfRunning));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "awaitDeletion", awaitDeletion));
+
+        final String[] localVarAccepts = { };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/jobs", HttpMethod.DELETE, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * * Delete ALL jobs.
+     * * Delete ALL jobs. Specify how to behave for running jobs.
+     * <p><b>202</b> - Accepted
+     * @param projectId project-space to delete jobs from
+     * @param cancelIfRunning If true job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
+     * @param awaitDeletion If true request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public void deleteJobs(String projectId, Boolean cancelIfRunning, Boolean awaitDeletion) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        deleteJobsRequestCreation(projectId, cancelIfRunning, awaitDeletion).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * * Delete ALL jobs.
+     * * Delete ALL jobs. Specify how to behave for running jobs.
+     * <p><b>202</b> - Accepted
+     * @param projectId project-space to delete jobs from
+     * @param cancelIfRunning If true job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
+     * @param awaitDeletion If true request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<Void> deleteJobsWithHttpInfo(String projectId, Boolean cancelIfRunning, Boolean awaitDeletion) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return deleteJobsRequestCreation(projectId, cancelIfRunning, awaitDeletion).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * * Delete ALL jobs.
+     * * Delete ALL jobs. Specify how to behave for running jobs.
+     * <p><b>202</b> - Accepted
+     * @param projectId project-space to delete jobs from
+     * @param cancelIfRunning If true job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
+     * @param awaitDeletion If true request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec deleteJobsWithResponseSpec(String projectId, Boolean cancelIfRunning, Boolean awaitDeletion) throws WebClientResponseException {
+        return deleteJobsRequestCreation(projectId, cancelIfRunning, awaitDeletion);
     }
     /**
      * Request default job configuration
