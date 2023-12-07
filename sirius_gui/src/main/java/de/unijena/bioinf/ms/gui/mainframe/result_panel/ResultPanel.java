@@ -19,8 +19,8 @@
 
 package de.unijena.bioinf.ms.gui.mainframe.result_panel;
 
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassList;
-import de.unijena.bioinf.ms.gui.mainframe.BackgroundRunsGui;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.fingerid.fingerprints.FingerprintTable;
 import de.unijena.bioinf.ms.gui.lcms_viewer.LCMSViewerPanel;
@@ -30,7 +30,6 @@ import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaListHeaderPanel;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.webapi.WebAPI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +55,7 @@ public class ResultPanel extends JTabbedPane {
 
     private final FormulaList fl;
 
-    public ResultPanel(final FormulaList siriusResultElements, final CompoundList compoundList, WebAPI webAPI, BackgroundRunsGui backgroundRuns) {
+    public ResultPanel(final FormulaList siriusResultElements, final CompoundList compoundList, SiriusGui gui) {
         super();
         this.setToolTipText("Results");
 
@@ -73,10 +72,10 @@ public class ResultPanel extends JTabbedPane {
         this.lcmsTab = new LCMSViewerPanel(siriusResultElements);
 
         structureAnnoTab = new EpimetheusPanel(new StructureList(siriusResultElements, ActionList.DataSelectionStrategy.ALL));
-        structuresTab = new CandidateListDetailViewPanel(this, compoundList, new StructureList(siriusResultElements), backgroundRuns);
+        structuresTab = new CandidateListDetailViewPanel(this, compoundList, new StructureList(siriusResultElements), gui);
         FingerprintPanel fpTabTmp;
         try {
-            fpTabTmp = new FingerprintPanel(new FingerprintTable(siriusResultElements, webAPI, backgroundRuns));
+            fpTabTmp = new FingerprintPanel(new FingerprintTable(siriusResultElements, gui));
         } catch (IOException e) {
             logger.error(e.getMessage(), e);
             fpTabTmp = null;

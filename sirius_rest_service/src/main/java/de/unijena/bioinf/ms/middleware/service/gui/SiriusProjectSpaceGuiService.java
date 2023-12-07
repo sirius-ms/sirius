@@ -48,7 +48,7 @@ public class SiriusProjectSpaceGuiService extends AbstractGuiService<SiriusProje
     @Override
     protected SiriusGui makeGuiInstance(String projectId) {
         SiriusGui gui = guiFactory.newGui(projectId, (GuiProjectSpaceManager) provider.getProjectOrThrow(projectId).getProjectSpaceManager());
-        gui.getSirius().addEventListener(new Flow.Subscriber<>() {
+        gui.getSiriusClient().addEventListener(new Flow.Subscriber<>() {
             @Override
             public void onSubscribe(Flow.Subscription subscription) {
                 System.out.println("SUBSCRIBED!");

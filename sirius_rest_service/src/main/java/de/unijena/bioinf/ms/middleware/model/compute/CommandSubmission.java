@@ -18,30 +18,29 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.middleware.model.events;
+package de.unijena.bioinf.ms.middleware.model.compute;
 
-import de.unijena.bioinf.ms.middleware.model.compute.Job;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 import java.util.List;
-
 @Getter
 @Setter
-@Builder
-public class BackgroundComputationsStateEvent {
+@SuperBuilder
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class CommandSubmission extends AbstractSubmission {
 
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-    private List<Job> affectedJobs;
+    List<String> command;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-    private Integer numberOfJobs;
+    @Schema
+    List<String> inputPaths;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-    private Integer numberOfRunningJobs;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-    private Integer numberOfFinishedJobs;
+
 }

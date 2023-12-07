@@ -172,44 +172,57 @@ public final class BackgroundRuns<P extends ProjectSpaceManager<I>, I extends In
         PCS.removePropertyChangeListener(listener);
     }
 
-    public BackgroundRunJob  makeBackgroundRun(List<String> command, List<CompoundContainerId> instanceIds) throws IOException {
-        Workflow computation = makeWorkflow(command, new ComputeRootOption<>(psm, instanceIds));
+    public BackgroundRunJob makeBackgroundRun(List<String> command, @Nullable List<CompoundContainerId> instanceIds) throws IOException {
+        return makeBackgroundRun(command, instanceIds, null);
+    }
+
+    public BackgroundRunJob makeBackgroundRun(List<String> command, List<CompoundContainerId> instanceIds,
+                                              @Nullable InputFilesOptions toImport) throws IOException {
+        Workflow computation = makeWorkflow(command, new ComputeRootOption<>(psm, instanceIds, toImport));
         return new BackgroundRunJob(computation, instanceIds, RUN_COUNTER.incrementAndGet(), String.join(" ", command));
     }
 
-    public BackgroundRunJob  runCommand(List<String> command, List<CompoundContainerId> instanceIds) throws IOException {
-        return SiriusJobs.getGlobalJobManager().submitJob(makeBackgroundRun(command, instanceIds));
+    public BackgroundRunJob runCommand(List<String> command, List<CompoundContainerId> instanceIds) throws IOException {
+        return runCommand(command, instanceIds, null);
     }
 
+    public BackgroundRunJob runCommand(List<String> command, List<CompoundContainerId> instanceIds,
+                                       @Nullable InputFilesOptions toImport) throws IOException {
+        return SiriusJobs.getGlobalJobManager().submitJob(makeBackgroundRun(command, instanceIds, toImport));
+    }
 
-    public BackgroundRunJob  makeBackgroundRun(List<String> command, @Nullable Iterable<I> instances) throws IOException {
+    public BackgroundRunJob makeBackgroundRun(List<String> command, @Nullable Iterable<I> instances) throws IOException {
         return makeBackgroundRun(command, instances, null);
     }
 
-    public BackgroundRunJob  makeBackgroundRun(List<String> command, @Nullable Iterable<I> instances, @Nullable InputFilesOptions toImport) throws IOException {
+    public BackgroundRunJob makeBackgroundRun(List<String> command, @Nullable Iterable<I> instances,
+                                              @Nullable InputFilesOptions toImport) throws IOException {
         Workflow computation = makeWorkflow(command, new ComputeRootOption<>(psm, instances, toImport));
         return new BackgroundRunJob(computation, instances, RUN_COUNTER.incrementAndGet(), String.join(" ", command));
     }
 
-    public BackgroundRunJob  runCommand(List<String> command, @Nullable Iterable<I> instances) throws IOException {
+    public BackgroundRunJob runCommand(List<String> command, @Nullable Iterable<I> instances) throws IOException {
         return runCommand(command, instances, null);
     }
 
-    public BackgroundRunJob  runCommand(List<String> command, @Nullable Predicate<CompoundContainerId> cidFilter) throws IOException {
+    public BackgroundRunJob runCommand(List<String> command, @Nullable Predicate<CompoundContainerId> cidFilter) throws IOException {
         return runCommand(command, cidFilter, null);
     }
-    public BackgroundRunJob  runCommand(List<String> command, @Nullable Predicate<CompoundContainerId> cidFilter, @Nullable final Predicate<CompoundContainer> compoundFilter) throws IOException {
+
+    public BackgroundRunJob runCommand(List<String> command, @Nullable Predicate<CompoundContainerId> cidFilter, @Nullable final Predicate<CompoundContainer> compoundFilter) throws IOException {
         return runCommand(command, cidFilter, compoundFilter, null);
 
     }
-    public BackgroundRunJob  runCommand(List<String> command, @Nullable Predicate<CompoundContainerId> cidFilter, @Nullable final Predicate<CompoundContainer> compoundFilter, @Nullable InputFilesOptions toImport) throws IOException {
+
+    public BackgroundRunJob runCommand(List<String> command, @Nullable Predicate<CompoundContainerId> cidFilter, @Nullable final Predicate<CompoundContainer> compoundFilter, @Nullable InputFilesOptions toImport) throws IOException {
         return runCommand(command, () -> psm.filteredIterator(cidFilter, compoundFilter), toImport);
     }
-    public BackgroundRunJob  runCommand(List<String> command, @Nullable Iterable<I> instances, @Nullable InputFilesOptions toImport) throws IOException {
+
+    public BackgroundRunJob runCommand(List<String> command, @Nullable Iterable<I> instances, @Nullable InputFilesOptions toImport) throws IOException {
         return SiriusJobs.getGlobalJobManager().submitJob(makeBackgroundRun(command, instances, toImport));
     }
 
-    public BackgroundRunJob  runImport(
+    public BackgroundRunJob runImport(
             Supplier<BufferedReader> data, @Nullable String source, @NotNull String ext
     ) {
         Workflow computation = new ImportFromMemoryWorkflow(psm, data, source, ext);
@@ -415,7 +428,7 @@ public final class BackgroundRuns<P extends ProjectSpaceManager<I>, I extends In
             return numOfUnfinishedNew;
         }
 
-        public boolean hasUnfinishedRuns(){
+        public boolean hasUnfinishedRuns() {
             return getNumOfUnfinishedNew() > 0;
         }
 

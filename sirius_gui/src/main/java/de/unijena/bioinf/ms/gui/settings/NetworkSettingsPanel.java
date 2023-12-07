@@ -23,7 +23,7 @@ import de.unijena.bioinf.ChemistryBase.utils.ExFunctions;
 import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.PasswordCrypter;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -58,11 +58,11 @@ public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListen
 
     private JTextField webserverURL;
 
-    private final MainFrame mf;
+    private final SiriusGui gui;
 
-    public NetworkSettingsPanel(MainFrame mainFrame, Properties properties) {
+    public NetworkSettingsPanel(SiriusGui gui, Properties properties) {
         super();
-        this.mf = mainFrame;
+        this.gui = gui;
         this.props = properties;
         webserverURL = new JTextField(Optional.ofNullable(ApplicationCore.WEB_API.getActiveSubscription()).map(Subscription::getServiceUrl).orElse("<No subscription active>"));
         addNamed("Web service URL", webserverURL);
@@ -173,7 +173,7 @@ public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListen
         } catch (Exception e) {
             LoggerFactory.getLogger(getClass()).warn("Error when reconnecting after changing setting. Connections might have a unhealthy state. Please restart SIRIUS.", e);
         }finally {
-            mf.CONNECTION_MONITOR().checkConnectionInBackground(); //todo hacki intermediate solution
+            gui.getConnectionMonitor().checkConnectionInBackground(); //todo hacki intermediate solution
         }
     }
 

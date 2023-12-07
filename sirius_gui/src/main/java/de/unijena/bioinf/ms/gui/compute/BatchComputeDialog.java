@@ -24,6 +24,7 @@ package de.unijena.bioinf.ms.gui.compute;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.CheckConnectionAction;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.*;
@@ -78,9 +79,11 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
     // compounds on which the configured Run will be executed
     private final List<InstanceBean> compoundsToProcess;
 
-    public BatchComputeDialog(MainFrame owner, List<InstanceBean> compoundsToProcess) {
-        super(owner, "Compute", true);
+    private final SiriusGui gui;
 
+    public BatchComputeDialog(SiriusGui gui, List<InstanceBean> compoundsToProcess) {
+        super(gui.getMainFrame(), "Compute", true);
+        this.gui = gui;
         this.compoundsToProcess = compoundsToProcess;
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -104,9 +107,9 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             addConfigPanel("SIRIUS - Molecular Formula Identification", formulaIDConfigPanel);
 
             zodiacConfigs = new ActZodiacConfigPanel();
-            csiPredictConfigs = new ActFingerprintConfigPanel(mf(), formulaIDConfigPanel.content.ionizationList.checkBoxList);
-            csiSearchConfigs = new ActFingerblastConfigPanel(mf(), formulaIDConfigPanel.content.searchDBList.checkBoxList);
-            canopusConfigPanel = new ActCanopusConfigPanel(mf());
+            csiPredictConfigs = new ActFingerprintConfigPanel(gui, formulaIDConfigPanel.content.ionizationList.checkBoxList);
+            csiSearchConfigs = new ActFingerblastConfigPanel(gui, formulaIDConfigPanel.content.searchDBList.checkBoxList);
+            canopusConfigPanel = new ActCanopusConfigPanel(gui);
 
             if (compoundsToProcess.size() > 1 && ms2) {
                 zodiacConfigs.addEnableChangeListener((s, enabled) -> {
@@ -168,7 +171,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             showCommand.addActionListener(e -> {
                 final String commandString = String.join(" ", makeCommand(new ArrayList<>()));
                 if (warnNoMethodIsSelected()) return;
-                new InfoDialog(owner, "Command", GuiUtils.formatToolTip(commandString), null) {
+                new InfoDialog(gui.getMainFrame(), "Command", GuiUtils.formatToolTip(commandString), null) {
                     @Override
                     protected void decorateButtonPanel(JPanel boxedButtonPanel) {
                         JButton copyCommand = new JButton("Copy Command");
@@ -206,7 +209,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
     }
 
     private MainFrame mf() {
-        return (MainFrame) getOwner();
+        return gui.getMainFrame();
     }
 
     private JPanel addConfigPanel(String header, JPanel configPanel, JPanel appendHorizontally) {
@@ -279,7 +282,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         if (csiPredictConfigs.isToolSelected() || csiSearchConfigs.isToolSelected() || canopusConfigPanel.isToolSelected() && !PropertyManager.getBoolean(DO_NOT_SHOW_AGAIN_KEY_OUTDATED_PS, false)) {
             //CHECK Server connection
             if (checkResult == null)
-                checkResult = CheckConnectionAction.checkConnectionAndLoad(mf());
+                checkResult = CheckConnectionAction.checkConnectionAndLoad(gui);
 
             if (isConnected(checkResult)) {
                 boolean compCheck = Jobs.runInBackgroundAndLoad(mf(), "Checking FP version...", new TinyBackgroundJJob<Boolean>() {
@@ -477,7 +480,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
 
     private void checkConnection() {
         if (checkResult == null)
-            checkResult = CheckConnectionAction.checkConnectionAndLoad(mf());
+            checkResult = CheckConnectionAction.checkConnectionAndLoad(gui);
 
         if (checkResult != null) {
             if (isConnected(checkResult)) {

@@ -19,9 +19,9 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.io.LoadController;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -30,12 +30,10 @@ import java.awt.event.ActionEvent;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ImportCompoundAction extends AbstractMainFrameAction {
+public class ImportCompoundAction extends AbstractGuiAction {
 
-    protected final MainFrame MF;
-    public ImportCompoundAction( MainFrame mainFrame) {
-        super("Import Compound", mainFrame);
-        this.MF = mainFrame;
+    public ImportCompoundAction(SiriusGui gui) {
+        super("Import Compound", gui);
         putValue(Action.LARGE_ICON_KEY, Icons.DOC_32);
         putValue(Action.SMALL_ICON, Icons.ADD_DOC_16);
         putValue(Action.SHORT_DESCRIPTION, "Import measurements of a single compound and define parameters.");
@@ -43,7 +41,7 @@ public class ImportCompoundAction extends AbstractMainFrameAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        LoadController lc = new LoadController(MF);
+        LoadController lc = new LoadController(mainFrame);
         lc.showDialog();
     }
 }

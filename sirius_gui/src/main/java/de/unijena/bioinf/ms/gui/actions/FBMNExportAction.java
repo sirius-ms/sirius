@@ -21,9 +21,9 @@ package de.unijena.bioinf.ms.gui.actions;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ExecutionDialog;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
 import de.unijena.bioinf.ms.gui.subtools.export.mgf.MgfExporterConfigPanel;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -34,19 +34,19 @@ import java.nio.file.Path;
 import java.util.List;
 
 
-public class FBMNExportAction extends AbstractMainFrameAction {
+public class FBMNExportAction extends AbstractGuiAction {
 
-    public FBMNExportAction(MainFrame mainFrame) {
-        super("FBMN Export", mainFrame);
+    public FBMNExportAction(SiriusGui gui) {
+        super("FBMN Export", gui);
         putValue(Action.LARGE_ICON_KEY, Icons.FBMN_32);
         putValue(Action.SHORT_DESCRIPTION, "Export project for GNPS Feature Based Molecular Networking.");
         initListeners();
     }
 
     protected void initListeners(){
-        setEnabled(SiriusActions.notComputingOrEmpty(MF.getCompoundList().getCompoundList()));
+        setEnabled(SiriusActions.notComputingOrEmpty(mainFrame.getCompoundList().getCompoundList()));
 
-        MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
+        mainFrame.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
             public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {
                 setEnabled(SiriusActions.notComputingOrEmpty(event.getSourceList()));
@@ -59,7 +59,7 @@ public class FBMNExportAction extends AbstractMainFrameAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Path p = MF.ps().projectSpace().getLocation();
-        new ExecutionDialog<>(MF.getBackgroundRuns(), new MgfExporterConfigPanel(p.getParent().toString(), p.getFileName().toString()), List.copyOf(MF.getCompounds()), null, MF, "Export Project for GNPS FBMN", true).start();
+        Path p = mainFrame.ps().projectSpace().getLocation();
+        new ExecutionDialog<>(gui, new MgfExporterConfigPanel(p.getParent().toString(), p.getFileName().toString()), List.copyOf(mainFrame.getCompounds()), null, mainFrame, "Export Project for GNPS FBMN", true).start();
     }
 }

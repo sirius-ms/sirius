@@ -24,9 +24,9 @@ import com.github.scribejava.core.model.OAuth2AccessTokenErrorResponse;
 import de.unijena.bioinf.ChemistryBase.utils.ExFunctions;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.rest.ProxyManager;
 import de.unijena.bioinf.webapi.Tokens;
@@ -48,8 +48,9 @@ public class SubscriptionDialog extends JDialog {
 
     private boolean performedChange = false;
 
-    public SubscriptionDialog(MainFrame owner, boolean modal, List<Subscription> subs) {
-        super(owner, TITLE, modal);
+    public SubscriptionDialog(SiriusGui gui, boolean modal, List<Subscription> subs) {
+        super(gui.getMainFrame(), TITLE, modal);
+        this.
         setLayout(new BorderLayout());
         comboBox = new JComboBox<>(subs.toArray(Subscription[]::new));
         comboBox.setRenderer(new SubscriptionHTMLRenderer(350));
@@ -86,7 +87,7 @@ public class SubscriptionDialog extends JDialog {
                         new ExceptionDialog(SubscriptionDialog.this, (ex instanceof OAuth2AccessTokenErrorResponse)?((OAuth2AccessTokenErrorResponse) ex).getErrorDescription() : ex.getMessage(), "Login failed!");
                         performedChange = false;
                     } finally {
-                       mf().CONNECTION_MONITOR().checkConnectionInBackground();
+                       gui.getConnectionMonitor().checkConnectionInBackground();
                     }
                 });
             }
@@ -122,9 +123,5 @@ public class SubscriptionDialog extends JDialog {
 
     public boolean hasPerformedChange() {
         return performedChange;
-    }
-
-    private MainFrame mf(){
-        return (MainFrame) getOwner();
     }
 }

@@ -21,8 +21,8 @@
 package de.unijena.bioinf.ms.gui.login;
 
 import de.unijena.bioinf.auth.AuthService;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,8 +36,8 @@ public class AccountDialog extends JDialog implements PropertyChangeListener {
     private final Action signOut;
     private AccountPanel center;
 
-    public AccountDialog(MainFrame mainFrame, AuthService service) {
-        super(mainFrame, true);
+    public AccountDialog(SiriusGui gui, AuthService service) {
+        super(gui.getMainFrame(), true);
         this.service = service;
         setTitle("Account");
         setLayout(new BorderLayout());
@@ -47,13 +47,13 @@ public class AccountDialog extends JDialog implements PropertyChangeListener {
 
 
         //============= CENTER =================
-        center = new AccountPanel(mainFrame, service);
+        center = new AccountPanel(gui, service);
         add(center, BorderLayout.CENTER);
 
-        signIn = SiriusActions.SIGN_IN.getInstance(mainFrame, true);
+        signIn = SiriusActions.SIGN_IN.getInstance(gui.getMainFrame(), true);
         signIn.addPropertyChangeListener(this);
 
-        signOut = SiriusActions.SIGN_OUT.getInstance(mainFrame, true);
+        signOut = SiriusActions.SIGN_OUT.getInstance(gui.getMainFrame(), true);
         signOut.addPropertyChangeListener(this);
 
         configureActions();

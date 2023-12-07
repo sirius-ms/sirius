@@ -18,30 +18,37 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.middleware.model.events;
+package de.unijena.bioinf.ms.middleware.model.compute;
 
-import de.unijena.bioinf.ms.middleware.model.compute.Job;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 import java.util.List;
 
 @Getter
 @Setter
-@Builder
-public class BackgroundComputationsStateEvent {
+@SuperBuilder
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
+public abstract class AbstractSubmission {
+    /**
+     * Compounds that should be the input for this Job
+     * Will be converted to the respective alignedFeatureIds for computation.
+     * <p>
+     * At least one compoundId or alignedFeatureId needs to be specified.
+     */
+    @Schema(nullable = true)
+    protected List<String> compoundIds;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-    private List<Job> affectedJobs;
-
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-    private Integer numberOfJobs;
-
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-    private Integer numberOfRunningJobs;
-
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-    private Integer numberOfFinishedJobs;
+    /**
+     * Features (aligned over runs) that should be the input for this Job
+     * <p>
+     * At least one compoundId or alignedFeatureId needs to be specified.
+     */
+    @Schema(nullable = true)
+    protected List<String> alignedFeatureIds;
 }

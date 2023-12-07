@@ -20,12 +20,12 @@
 package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.io.filefilter.ProjectArchivedFilter;
 import de.unijena.bioinf.ms.gui.io.filefilter.ProjectDirectoryFilter;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 
 import javax.swing.*;
@@ -37,10 +37,10 @@ import java.util.Objects;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ProjectCreateAction extends AbstractMainFrameAction {
+public class ProjectCreateAction extends AbstractGuiAction {
 
-    public ProjectCreateAction(MainFrame mainFrame) {
-        super("New", mainFrame);
+    public ProjectCreateAction(SiriusGui gui) {
+        super("New", gui);
         putValue(Action.LARGE_ICON_KEY, Icons.ADD_DOC_32);
         putValue(Action.SHORT_DESCRIPTION, "Create a new empty project at the given location (.sirius or directory)");
         setEnabled(true);
@@ -59,7 +59,7 @@ public class ProjectCreateAction extends AbstractMainFrameAction {
         File selectedFile = null;
 
         while (selectedFile == null) {
-            int returnval = jfc.showDialog(MF, "Create");
+            int returnval = jfc.showDialog(mainFrame, "Create");
             if (returnval == JFileChooser.APPROVE_OPTION) {
                 File selFile = jfc.getSelectedFile();
 
@@ -90,7 +90,7 @@ public class ProjectCreateAction extends AbstractMainFrameAction {
                 throw new IllegalStateException("create new ProjectSpace not implemented");
 //                MF.createNewProjectSpace(selectedFile.toPath());
             } catch (Exception e2) {
-                new StacktraceDialog(MF, e2.getMessage(), e2);
+                new StacktraceDialog(mainFrame, e2.getMessage(), e2);
             }
         }
     }

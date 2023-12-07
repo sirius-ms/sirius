@@ -71,13 +71,13 @@ public class Info {
     /**
      * Set of solvers that are configured correctly and can be loaded
      */
-    @Schema(required = true)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private final EnumSet<TreeBuilderFactory.DefaultBuilder> availableILPSolvers;
 
     /**
      * Set of ILP Solvers that are Supported and their version information
      */
-    @Schema(required = true)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private final Map<TreeBuilderFactory.DefaultBuilder, String> supportedILPSolvers =  Map.of(
             TreeBuilderFactory.DefaultBuilder.CLP, TreeBuilderFactory.CBC_VERSION,
             TreeBuilderFactory.DefaultBuilder.CPLEX, TreeBuilderFactory.CPLEX_VERSION,

@@ -21,9 +21,9 @@ package de.unijena.bioinf.ms.gui.actions;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ExecutionDialog;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
 import de.unijena.bioinf.ms.gui.subtools.summaries.SummaryConfigPanel;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -35,10 +35,10 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
-public class SummarizeAllAction extends AbstractMainFrameAction {
+public class SummarizeAllAction extends AbstractGuiAction {
 
-    public SummarizeAllAction(MainFrame mainFrame) {
-        super("Summaries", mainFrame);
+    public SummarizeAllAction(SiriusGui gui) {
+        super("Summaries", gui);
         putValue(Action.LARGE_ICON_KEY, Icons.EXPORT_32);
         putValue(Action.SMALL_ICON, Icons.EXPORT_16);
         putValue(Action.SHORT_DESCRIPTION, "Write/Export Summary .tsv files.");
@@ -47,9 +47,9 @@ public class SummarizeAllAction extends AbstractMainFrameAction {
     }
 
     protected void initListeners(){
-        setEnabled(SiriusActions.notComputingOrEmpty(MF.getCompoundList().getCompoundList()));
+        setEnabled(SiriusActions.notComputingOrEmpty(mainFrame.getCompoundList().getCompoundList()));
 
-        MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
+        mainFrame.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
             public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {
                 setEnabled(SiriusActions.notComputingOrEmpty(event.getSourceList()));
@@ -62,11 +62,11 @@ public class SummarizeAllAction extends AbstractMainFrameAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        run(List.copyOf(MF.getCompounds()), "Write Summaries for whole Project");
+        run(List.copyOf(mainFrame.getCompounds()), "Write Summaries for whole Project");
     }
 
     protected void run(@NotNull List<InstanceBean> compounds, String title) {
-        ExecutionDialog<SummaryConfigPanel> d = new ExecutionDialog<>(MF.getBackgroundRuns(), new SummaryConfigPanel(Optional.ofNullable(MF.ps().projectSpace().getLocation().getParent()).map(Path::toString).orElse("")), compounds, null, MF, title, true);
+        ExecutionDialog<SummaryConfigPanel> d = new ExecutionDialog<>(gui, new SummaryConfigPanel(Optional.ofNullable(mainFrame.ps().projectSpace().getLocation().getParent()).map(Path::toString).orElse("")), compounds, null, mainFrame, title, true);
         d.setIndeterminateProgress(false);
         d.start();
     }

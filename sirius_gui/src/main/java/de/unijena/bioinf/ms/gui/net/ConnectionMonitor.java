@@ -39,6 +39,7 @@ import java.io.Closeable;
 public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCloseable {
 
     private final NightSkyClient siriusClient;
+    //todo nightsky: use sse for connection events
 
     @Override
     public void close() {

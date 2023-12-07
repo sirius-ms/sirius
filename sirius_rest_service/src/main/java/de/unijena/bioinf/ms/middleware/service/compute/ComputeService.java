@@ -22,10 +22,7 @@ package de.unijena.bioinf.ms.middleware.service.compute;
 
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
-import de.unijena.bioinf.ms.middleware.model.compute.ImportLocalFilesSubmission;
-import de.unijena.bioinf.ms.middleware.model.compute.ImportStringSubmission;
-import de.unijena.bioinf.ms.middleware.model.compute.Job;
-import de.unijena.bioinf.ms.middleware.model.compute.JobSubmission;
+import de.unijena.bioinf.ms.middleware.model.compute.*;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +42,8 @@ public interface ComputeService<P extends Project> extends DisposableBean {
     Job createAndSubmitImportJob(@NotNull P psm, ImportLocalFilesSubmission jobSubmission, @NotNull EnumSet<Job.OptField> optFields);
 
     Job createAndSubmitImportJob(@NotNull P psm, ImportStringSubmission jobSubmission, @NotNull EnumSet<Job.OptField> optFields);
+
+    Job createAndSubmitCommandJob(@NotNull P psm, CommandSubmission commandSubmission, @NotNull EnumSet<Job.OptField> optFields);
 
     Job deleteJob(@NotNull P psm, String jobId, boolean cancelIfRunning, boolean awaitDeletion, @NotNull EnumSet<Job.OptField> optFields);
 

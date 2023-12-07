@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.gui.dialogs;
 
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.CheckConnectionAction;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
@@ -49,12 +50,15 @@ public class SettingsDialog extends JDialog implements ActionListener {
     private GerneralSettingsPanel genSettings;
     private JTabbedPane settingsPane;
 
-    public SettingsDialog(MainFrame owner) {
-        this(owner, -1);
+    private SiriusGui gui;
+
+    public SettingsDialog(SiriusGui gui) {
+        this(gui, -1);
     }
 
-    public SettingsDialog(MainFrame owner, int activeTab) {
-        super(owner, true);
+    public SettingsDialog(SiriusGui gui, int activeTab) {
+        super(gui.getMainFrame(), true);
+        this.gui = gui;
         setTitle("Settings");
         setLayout(new BorderLayout());
         nuProps = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
@@ -75,7 +79,7 @@ public class SettingsDialog extends JDialog implements ActionListener {
         /*ilpSettings = new ILPSettings(nuProps);
         settingsPane.add(ilpSettings.name(),ilpSettings);*/
 
-        proxSettings = new NetworkSettingsPanel(mf(), nuProps);
+        proxSettings = new NetworkSettingsPanel(gui, nuProps);
         settingsPane.add(proxSettings.name(), proxSettings);
 
 //        accountSettings = new AccountSettingsPanel(nuProps, ApplicationCore.WEB_API.getAuthService());
@@ -141,7 +145,7 @@ public class SettingsDialog extends JDialog implements ActionListener {
                 Jobs.runInBackground(() -> {
                     LoggerFactory.getLogger(this.getClass()).info("Saving settings to properties File");
                     SiriusProperties.SIRIUS_PROPERTIES_FILE().store();
-                    isConnected(CheckConnectionAction.checkConnectionAndLoad(mf()));
+                    isConnected(CheckConnectionAction.checkConnectionAndLoad(gui));
                 });
                 return restartMessage;
             }).getResult();

@@ -27,9 +27,9 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ms.middleware.model.compute.tools.*;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -44,26 +44,10 @@ import java.util.stream.Stream;
  */
 @Getter
 @Setter
+@SuperBuilder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class JobSubmission {
-    /**
-     * Compounds that should be the input for this Job
-     * Will be converted to the respective alignedFeatureIds for computation.
-     *
-     * At least one compoundId or alignedFeatureId needs to be specified.
-     */
-    @Schema(nullable = true)
-    List<String> compoundIds;
-
-    /**
-     * Features (aligned over runs) that should be the input for this Job
-     *
-     * At least one compoundId or alignedFeatureId needs to be specified.
-     */
-    @Schema(nullable = true)
-    List<String> alignedFeatureIds;
-
+public class JobSubmission extends AbstractSubmission {
     /**
      * Describes how to deal with Adducts: Fallback adducts are considered if the auto detection did not find any indication for an ion mode.
      * Pos Examples: [M+H]+,[M]+,[M+K]+,[M+Na]+,[M+H-H2O]+,[M+Na2-H]+,[M+2K-H]+,[M+NH4]+,[M+H3O]+,[M+MeOH+H]+,[M+ACN+H]+,[M+2ACN+H]+,[M+IPA+H]+,[M+ACN+Na]+,[M+DMSO+H]+
@@ -124,24 +108,24 @@ public class JobSubmission {
     Map<String, String> configMap;
 
     public static JobSubmission createDefaultInstance(boolean includeConfigMap) {
-        JobSubmission j = new JobSubmission();
         AdductSettings settings = PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class);
-        j.setFallbackAdducts(settings.getFallback().stream().map(PrecursorIonType::toString).collect(Collectors.toList()));
-        j.setEnforcedAdducts(settings.getEnforced().stream().map(PrecursorIonType::toString).collect(Collectors.toList()));
-        j.setDetectableAdducts(settings.getDetectable().stream().map(PrecursorIonType::toString).collect(Collectors.toList()));
-        j.setRecompute(false);
-        j.setFormulaIdParams(new Sirius());
-        j.setZodiacParams(new Zodiac());
-        j.setFingerprintPredictionParams(new FingerprintPrediction());
-        j.setStructureDbSearchParams(new StructureDbSearch());
-        j.setCanopusParams(new Canopus());
+        JobSubmissionBuilder<?, ?> b = JobSubmission.builder()
+                .fallbackAdducts(settings.getFallback().stream().map(PrecursorIonType::toString).collect(Collectors.toList()))
+                .enforcedAdducts(settings.getEnforced().stream().map(PrecursorIonType::toString).collect(Collectors.toList()))
+                .detectableAdducts(settings.getDetectable().stream().map(PrecursorIonType::toString).collect(Collectors.toList()))
+                .recompute(false)
+                .formulaIdParams(new Sirius())
+                .zodiacParams(new Zodiac())
+                .fingerprintPredictionParams(new FingerprintPrediction())
+                .structureDbSearchParams(new StructureDbSearch())
+                .canopusParams(new Canopus());
         if (includeConfigMap) {
             final Map<String, String> configMap = new HashMap<>();
             PropertyManager.DEFAULTS.getConfigKeys().forEachRemaining(k ->
                     configMap.put(k, PropertyManager.DEFAULTS.getConfigValue(k)));
-            j.setConfigMap(configMap);
+            b.configMap(configMap);
         }
-        return j;
+        return b.build();
     }
 
 

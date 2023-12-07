@@ -25,7 +25,7 @@ import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
-import de.unijena.bioinf.ms.gui.mainframe.BackgroundRunsGui;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
@@ -36,7 +36,6 @@ import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
-import de.unijena.bioinf.webapi.WebAPI;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -53,19 +52,20 @@ public class FingerprintTable extends ActionList<FingerIdPropertyBean, FormulaRe
     protected double[] fscores = null;
     protected PredictorType predictorType;
     protected int[] trainingExamples;
-    protected final WebAPI csiApi;
-    private final BackgroundRunsGui backgroundRuns;
 
-    public FingerprintTable(final FormulaList source, WebAPI api, BackgroundRunsGui backgroundRuns) throws IOException {
-        this(source, api, FingerprintVisualization.read(), backgroundRuns);
+    protected SiriusGui gui;
+
+
+
+    public FingerprintTable(final FormulaList source, SiriusGui gui) throws IOException {
+        this(source, FingerprintVisualization.read(), gui);
 
     }
 
-    public FingerprintTable(final FormulaList source, WebAPI<?> api, FingerprintVisualization[] visualizations, BackgroundRunsGui backgroundRuns) {
+    public FingerprintTable(final FormulaList source, FingerprintVisualization[] visualizations, SiriusGui gui) {
         super(FingerIdPropertyBean.class, DataSelectionStrategy.FIRST_SELECTED);
-        this.csiApi = api;
-        this.backgroundRuns = backgroundRuns;
         source.addActiveResultChangedListener(this);
+        this.gui = gui;
         this.visualizations = visualizations;
     }
 
@@ -73,7 +73,8 @@ public class FingerprintTable extends ActionList<FingerIdPropertyBean, FormulaRe
         if (this.predictorType == predictorType && fscores != null) return;
         this.predictorType = predictorType;
 
-        final FingerIdData csiData = backgroundRuns.getProject().loadProjectSpaceProperty(FingerIdDataProperty.class)
+        //TODO nighsky: remove dependency on ps -> provide visualization infos via api
+        final FingerIdData csiData = null; gui.getMainFrame().ps().loadProjectSpaceProperty(FingerIdDataProperty.class)
                 .map(p -> p.getByCharge(predictorType.toCharge())).orElseThrow(() -> new IOException("Could not load FingerID data from Project-Space!"));
 
         final PredictionPerformance[] performances = csiData.getPerformances();
