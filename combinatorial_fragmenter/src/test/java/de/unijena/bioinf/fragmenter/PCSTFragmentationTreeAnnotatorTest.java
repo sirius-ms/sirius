@@ -6,7 +6,6 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
-import gurobi.GRBException;
 import org.junit.Test;
 import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.interfaces.IBond;
@@ -58,7 +57,7 @@ public class PCSTFragmentationTreeAnnotatorTest {
 
             assertEquals(24.0, subtreeCalc.getScore(), 0.0);
             assertEquals(24.0, subtree.getScore(), 0.0);
-        }catch(UnknownElementException | InvalidSmilesException | GRBException e){
+        }catch(UnknownElementException | InvalidSmilesException e){
             e.printStackTrace();
         }
     }
@@ -87,7 +86,7 @@ public class PCSTFragmentationTreeAnnotatorTest {
             for(int i = 0; i < 3; i++){
                 assertEquals(expectedHydrogenRearrangements[i], actualHydrogenRearrangementList.get(i).intValue());
             }
-        }catch(UnknownElementException | InvalidSmilesException | GRBException e){
+        }catch(UnknownElementException | InvalidSmilesException e){
             e.printStackTrace();
         }
     }

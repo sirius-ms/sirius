@@ -32,5 +32,12 @@ dependencies {
     api project(':spectral_alignment')
     api project(':elgordo')
     api project(':tree_motif_search')
+
+//    testImplementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+    testImplementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "2.0.7"
+    testImplementation project(path: ":fragmentation_tree:ft_cbc")
+    testImplementation ("de.unijena.bioinf.cbc-java:cbc-java:${cbc_version}")
+    testImplementation("de.unijena.bioinf.cbc-java:cbc-java-jni:$cbc_version:${siriusTargetPlatform.jenaClassifier().orElseThrow()}")
+    testImplementation("de.unijena.bioinf.cbc-java:cbc-java-native:$cbc_version:${siriusTargetPlatform.jenaClassifier().orElseThrow()}")
     testImplementation project(':io')
 }

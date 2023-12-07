@@ -13,4 +13,5 @@ dependencies {
     // jason marshalling
     api "com.squareup.okhttp3:okhttp:$okhttp_version"
     api "org.jdbi:jdbi3-jackson2:$jdbi_version"
+    implementation "io.swagger.core.v3:swagger-annotations:${swagger_version}"
 }

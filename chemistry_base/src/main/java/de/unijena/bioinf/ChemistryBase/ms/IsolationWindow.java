@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ChemistryBase.ms;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.Range;
 
 import java.io.Serializable;
@@ -31,7 +32,7 @@ public class IsolationWindow implements Serializable {
     protected final double windowWidth;
 
 
-    public IsolationWindow(double windowOffset, double windowWidth) {
+    public IsolationWindow(@JsonProperty("windowOffset") double windowOffset, @JsonProperty("windowWidth") double windowWidth) {
         this.windowOffset = windowOffset;
         this.windowWidth = windowWidth;
     }

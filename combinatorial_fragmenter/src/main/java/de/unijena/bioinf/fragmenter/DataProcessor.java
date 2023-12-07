@@ -6,15 +6,11 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.babelms.MsIO;
 import gnu.trove.map.hash.TObjectIntHashMap;
-import gurobi.GRBException;
-import it.unimi.dsi.fastutil.ints.IntComparator;
 import org.openscience.cdk.exception.InvalidSmilesException;
-import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
@@ -422,7 +418,7 @@ public class DataProcessor {
                     for (int i = 0; i < methods.length; i++) strBuilder.append("," + tanimotoScores[i]);
 
                     this.appendStringToFile(outputFile, strBuilder.toString());
-                }catch(IOException | InvalidSmilesException | UnknownElementException | GRBException e){
+                }catch(IOException | InvalidSmilesException | UnknownElementException e){
                     System.out.println("An error occurred during computing instance"+fileName);
                     e.printStackTrace();
                 }
@@ -498,8 +494,6 @@ public class DataProcessor {
                     // 4. Store the data in a TSV file:
                     this.saveRankingData(new File(this.outputDir, fileName+".tsv"), predictionData, fragmenterRanks, scores);
                 } catch (IOException | UnknownElementException | InvalidSmilesException e) {
-                    e.printStackTrace();
-                } catch (GRBException e) {
                     e.printStackTrace();
                 }
             });

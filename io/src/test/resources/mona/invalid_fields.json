@@ -1,0 +1,34 @@
+{
+  "id": "missing_fields.json",
+  "compound": [
+    {
+      "names": [],
+      "metaData": [
+        {
+          "name": "molecular formula",
+          "value": "$$$"
+        }
+      ]
+    }
+  ],
+  "spectrum": "1:1",
+  "metaData": [
+    {
+      "name": "ms level",
+      "value": "MS2"
+    },
+    {
+      "name": "collision energy",
+      "value": "invalid"
+    },
+    {
+      "name": "instrument type",
+      "value": "invalid"
+    },
+    {
+      "name": "retention time",
+      "value": "-1"
+    }
+  ],
+  "tags": []
+}

@@ -36,6 +36,7 @@ import java.util.stream.Stream;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString
 public class Feature {
 
 
@@ -63,6 +64,7 @@ public class Feature {
      * Foreign Field by apexScanId
      */
     @JsonIgnore
+    @ToString.Exclude
     protected Scan apexScan;
 
     public Optional<Scan> getApexScan() {
@@ -76,6 +78,7 @@ public class Feature {
     /**
      * Extracted isotope pattern of this feature
      */
+    @ToString.Exclude
     protected SimpleSpectrum isotopePattern; //artificial spectrum -> no scan
 
     /**
@@ -83,6 +86,7 @@ public class Feature {
      * Foreign Field by featureId
      */
     @JsonIgnore
+    @ToString.Exclude
     protected List<MSMSScan> msms;
 
     public Optional<List<MSMSScan>> getMsms() {
@@ -99,5 +103,6 @@ public class Feature {
      * Traces of this feature (mono-isotopic + isotope peaks)
      * Optional Field
      */
+    @ToString.Exclude
     protected List<Trace> traces;
 }
