@@ -99,6 +99,15 @@ class ImportDatabaseDialog extends JDialog {
             }
         });
 
+        DropTarget dropTarget = new DropTarget() {
+            @Override
+            public synchronized void drop(DropTargetDropEvent evt) {
+                fileListModel.addAll(DragAndDrop.getFileListFromDrop(evt));
+            }
+        };
+        setDropTarget(dropTarget);
+
+
         fileList.addListSelectionListener(e -> removeFiles.setEnabled(!fileList.isSelectionEmpty()));
 
         Action removeSelectedFiles = new AbstractAction() {
@@ -150,27 +159,11 @@ class ImportDatabaseDialog extends JDialog {
 //            );
 //        });
 
-//        final DropTarget dropTarget = new DropTarget() {
-//            @Override
-//            public synchronized void drop(DropTargetDropEvent evt) {
-//                dispose();
-//                String t = textArea.getText();
-//                runImportJob(
-//                        DragAndDrop.getFileListFromDrop(evt).stream().map(File::toPath).collect(Collectors.toList()),
-//                        t != null && !t.isBlank()
-//                                ? Arrays.asList(t.split("\n"))
-//                                : null
-//                );
-//            }
-//        };
 
         GuiUtils.closeOnEscape(this);
-//        setDropTarget(dropTarget);
-//        textArea.setDropTarget(dropTarget);
         pack();
         setLocationRelativeTo(getOwner());
         setVisible(true);
-
     }
 
     protected void runImportJob(java.util.List<Path> sources) {
