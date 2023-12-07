@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.middleware.model.events;
 
 import de.unijena.bioinf.ms.middleware.model.compute.Job;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -32,10 +33,15 @@ import java.util.List;
 @Builder
 public class BackgroundComputationsStateEvent {
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private List<Job> affectedJobs;
-    
-    private int numberOfJobs;
 
-    private int numberOfRunningJobs;
-    private int numberOfFinishedJobs;
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    private Integer numberOfJobs;
+
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    private Integer numberOfRunningJobs;
+
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    private Integer numberOfFinishedJobs;
 }

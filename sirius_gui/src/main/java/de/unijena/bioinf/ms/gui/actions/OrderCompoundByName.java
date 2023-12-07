@@ -19,20 +19,20 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.projectspace.InstanceBean;
 
 import java.awt.event.ActionEvent;
 import java.util.Comparator;
 
-public class OrderCompoundByName extends AbstractMainFrameAction {
+public class OrderCompoundByName extends AbstractGuiAction {
 
-    public OrderCompoundByName(MainFrame mainFrame) {
-        super("Order by name", mainFrame);
+    public OrderCompoundByName(SiriusGui gui) {
+        super("Order by name", gui);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        MF.getCompoundList().orderBy(Comparator.comparing(InstanceBean::getGUIName));
+        mainFrame.getCompoundList().orderBy(Comparator.comparing(InstanceBean::getGUIName));
     }
 }

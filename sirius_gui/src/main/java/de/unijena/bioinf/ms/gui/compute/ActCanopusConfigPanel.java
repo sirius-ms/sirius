@@ -21,9 +21,9 @@ package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.CitationDialog;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,8 +38,8 @@ public class ActCanopusConfigPanel extends ActivatableConfigPanel<SubToolConfigP
     public static final String BIBTEX_KEY_CF = "djoumbou-feunang16classyfire";
     public static final String BIBTEX_KEY_NPC = "kim21npclassifier";
 
-    public ActCanopusConfigPanel(@NotNull MainFrame mainFrame) {
-        super(mainFrame, "CANOPUS", Icons.WORM_32, true, () -> {
+    public ActCanopusConfigPanel(@NotNull SiriusGui gui) {
+        super(gui, "CANOPUS", Icons.WORM_32, () -> {
             SubToolConfigPanel<CanopusOptions> p = new SubToolConfigPanel<>(CanopusOptions.class) {
             };
             p.add(new JLabel("Parameter-Free! Nothing to set up here. =)"));

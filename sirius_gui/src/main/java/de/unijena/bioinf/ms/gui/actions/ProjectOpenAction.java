@@ -20,11 +20,11 @@
 package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.io.filefilter.ProjectArchivedFilter;
 import de.unijena.bioinf.ms.gui.io.filefilter.ProjectDirectoryFilter;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceIO;
 
@@ -35,11 +35,11 @@ import java.io.File;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ProjectOpenAction extends AbstractMainFrameAction {
+public class ProjectOpenAction extends AbstractGuiAction {
 
 
-    public ProjectOpenAction(MainFrame mainFrame) {
-        super("Open", mainFrame);
+    public ProjectOpenAction(SiriusGui gui) {
+        super("Open", gui);
         putValue(Action.LARGE_ICON_KEY, Icons.FOLDER_OPEN_32);
         putValue(Action.SHORT_DESCRIPTION, "Open previously saved project (directory or .sirius). This closes the current Project.");
     }
@@ -54,7 +54,7 @@ public class ProjectOpenAction extends AbstractMainFrameAction {
         jfc.addChoosableFileFilter(new ProjectDirectoryFilter());
 
         while (true) {
-            int state = jfc.showOpenDialog(MF);
+            int state = jfc.showOpenDialog(mainFrame);
             if (state == JFileChooser.CANCEL_OPTION || state == JFileChooser.ERROR_OPTION)
                 break;
 
@@ -68,7 +68,7 @@ public class ProjectOpenAction extends AbstractMainFrameAction {
 //                MF.openNewProjectSpace(selFile.toPath());
 //                break;
             } else {
-                new WarningDialog(MF, "'" + selFile.getAbsolutePath() + "' does not contain valid SIRIUS project.");
+                new WarningDialog(mainFrame, "'" + selFile.getAbsolutePath() + "' does not contain valid SIRIUS project.");
             }
         }
     }

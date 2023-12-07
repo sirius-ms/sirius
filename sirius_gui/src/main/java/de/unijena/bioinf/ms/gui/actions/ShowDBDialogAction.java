@@ -19,27 +19,26 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.fingerid.custom_db.DatabaseDialog;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ShowDBDialogAction extends AbstractMainFrameAction {
+public class ShowDBDialogAction extends AbstractGuiAction {
 
-    public ShowDBDialogAction(MainFrame mainFrame) {
-        super("Databases", mainFrame);
+    public ShowDBDialogAction(SiriusGui gui) {
+        super("Databases", gui);
         putValue(Action.LARGE_ICON_KEY, Icons.DB_32);
         putValue(Action.SHORT_DESCRIPTION,"Configure Databases");
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        new DatabaseDialog(MF.getBackgroundRuns(), MF);
+        new DatabaseDialog(gui);
     }
 }

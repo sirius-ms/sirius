@@ -22,9 +22,9 @@ package de.unijena.bioinf.ms.gui.mainframe;
 import ca.odell.glazedlists.BasicEventList;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.ms.frontend.BackgroundRuns;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.JobDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
@@ -38,7 +38,6 @@ import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListView;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableExperimentListPanel;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
-import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
@@ -70,19 +69,14 @@ public class MainFrame extends JFrame implements DropTargetListener {
     //Logging Panel
     private final LogDialog log;
     private String projectId;
-
     public LogDialog getLogConsole() {
         return log;
     }
 
-    // Project Space and Commands
-    private BackgroundRunsGui backgroundRuns;
-
-    public BackgroundRunsGui getBackgroundRuns() {
-        return backgroundRuns;
-    }
+    private GuiProjectSpaceManager ps;
+    @Deprecated
     public GuiProjectSpaceManager ps() {
-        return backgroundRuns.getProject();
+        return ps;
     }
 
     private boolean closeProjectOnDispose = true;
@@ -141,13 +135,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
         return toolbar;
     }
 
-    public ConnectionMonitor CONNECTION_MONITOR() {
-        return CONNECTION_MONITOR;
-    }
-
-    //internet connection monitor
-    private final ConnectionMonitor CONNECTION_MONITOR;
-
     private NightSkyClient siriusClient;
 
     public NightSkyClient getSiriusClient() {
@@ -162,12 +149,9 @@ public class MainFrame extends JFrame implements DropTargetListener {
     }
 
     // methods for creating the mainframe
-    public MainFrame(NightSkyClient siriusClient, ConnectionMonitor connectionMonitor) {
+    public MainFrame() {
         super(ApplicationCore.VERSION_STRING());
         //inti connection monitor
-        this.siriusClient = siriusClient;
-        this.CONNECTION_MONITOR = connectionMonitor;
-
         setIconImage(Icons.SIRIUS_APP_IMAGE);
         configureTaskbar();
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -192,10 +176,11 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
 
 
-    public void decoradeMainFrame(String projectId, @NotNull BackgroundRuns<GuiProjectSpaceManager, InstanceBean> br) {
-        this.projectId = projectId;
+    public void decoradeMainFrame(SiriusGui gui, GuiProjectSpaceManager ps) {
+        this.projectId = gui.getProjectId();
+        this.siriusClient = gui.getSiriusClient();
         //add project-space
-        backgroundRuns = new BackgroundRunsGui(br);
+        this.ps = ps;
 
         compoundBaseList = ps().INSTANCE_LIST;
         Jobs.runEDTAndWaitLazy(() -> setTitlePath(ps().projectSpace().getLocation().toString()));
@@ -208,12 +193,12 @@ public class MainFrame extends JFrame implements DropTargetListener {
         //CREATE VIEWS
         jobDialog = new JobDialog(this);
         // results Panel
-        resultsPanel = new ResultPanel(formulaList, compoundList, ApplicationCore.WEB_API, backgroundRuns);
+        resultsPanel = new ResultPanel(formulaList, compoundList, gui);
         JPanel resultPanelContainer = new JPanel(new BorderLayout());
         resultPanelContainer.setBorder(BorderFactory.createEmptyBorder());
         resultPanelContainer.add(resultsPanel,BorderLayout.CENTER);
         if (PropertyManager.getBoolean("de.unijena.bioinf.webservice.infopanel", false))
-            resultPanelContainer.add(new WebServiceInfoPanel(CONNECTION_MONITOR()), BorderLayout.SOUTH);
+            resultPanelContainer.add(new WebServiceInfoPanel(gui.getConnectionMonitor()), BorderLayout.SOUTH);
 
         // toolbar
         toolbar = new SiriusToolbar(this);

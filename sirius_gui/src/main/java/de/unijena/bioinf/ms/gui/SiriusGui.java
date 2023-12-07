@@ -20,13 +20,12 @@
 
 package de.unijena.bioinf.ms.gui;
 
-import de.unijena.bioinf.ms.frontend.BackgroundRuns;
-import de.unijena.bioinf.sse.DataEventType;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
 import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
+import de.unijena.bioinf.sse.DataEventType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -44,13 +43,24 @@ public class SiriusGui {
     static {
         GuiUtils.initUI();
     }
-    private final NightSkyClient sirius;
     private final String projectId;
 
-    public NightSkyClient getSirius() {
-        return sirius;
+    public String getProjectId() {
+        return projectId;
     }
 
+    private final NightSkyClient siriusClient;
+
+
+    public NightSkyClient getSiriusClient() {
+        return siriusClient;
+    }
+
+    private final ConnectionMonitor connectionMonitor;
+
+    public ConnectionMonitor getConnectionMonitor() {
+        return connectionMonitor;
+    }
     private final MainFrame mainFrame;
 
     public MainFrame getMainFrame() {
@@ -64,10 +74,11 @@ public class SiriusGui {
 
     public SiriusGui(@NotNull String projectId, @NotNull GuiProjectSpaceManager project, @Nullable NightSkyClient nightSkyClient, @NotNull ConnectionMonitor connectionMonitor) { //todo nighsky: change to nightsky api and project ID.
         this.projectId = projectId;
-        sirius = nightSkyClient != null ? nightSkyClient : new NightSkyClient();
-        sirius.enableEventListening(EnumSet.allOf(DataEventType.class));
-        mainFrame = new MainFrame(sirius, connectionMonitor);
-        mainFrame.decoradeMainFrame(projectId, new BackgroundRuns<>(project));
+        this.connectionMonitor = connectionMonitor;
+        siriusClient = nightSkyClient != null ? nightSkyClient : new NightSkyClient();
+        siriusClient.enableEventListening(EnumSet.allOf(DataEventType.class));
+        mainFrame = new MainFrame();
+        mainFrame.decoradeMainFrame(this, project);
         //todo nighsky: check why JFX webview is only working for first instance...
         //todo nighsky: connect SSE connection to retrieve gui change states ???
     }
@@ -75,7 +86,7 @@ public class SiriusGui {
     public void shutdown(boolean closeProject){
         System.out.println("SHUTDOWN SIRIUS GUI");
         try {
-            sirius.close();
+            siriusClient.close();
         } catch (Exception e) {
             LoggerFactory.getLogger(getClass()).error("Error when closing NighSky client!", e);
         }

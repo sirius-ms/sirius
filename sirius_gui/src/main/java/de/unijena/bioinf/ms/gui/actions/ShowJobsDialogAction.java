@@ -19,9 +19,9 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -29,10 +29,10 @@ import java.awt.event.ActionEvent;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ShowJobsDialogAction extends AbstractMainFrameAction {
+public class ShowJobsDialogAction extends AbstractGuiAction {
 
-    public ShowJobsDialogAction(MainFrame mainFrame) {
-        super("Jobs", mainFrame);
+    public ShowJobsDialogAction(SiriusGui gui) {
+        super("Jobs", gui);
         putValue(Action.LARGE_ICON_KEY, Icons.FB_LOADER_STOP_32);
         putValue(Action.SHORT_DESCRIPTION, "Show background jobs and their status");
     }
@@ -50,6 +50,6 @@ public class ShowJobsDialogAction extends AbstractMainFrameAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        MF.getJobDialog().setVisible(true);
+        mainFrame.getJobDialog().setVisible(true);
     }
 }

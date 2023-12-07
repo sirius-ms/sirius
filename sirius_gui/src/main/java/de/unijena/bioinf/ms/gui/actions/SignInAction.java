@@ -20,8 +20,8 @@
 package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.login.UserLoginDialog;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -29,17 +29,17 @@ import java.awt.event.ActionEvent;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class SignInAction extends AbstractMainFrameAction {
+public class SignInAction extends AbstractGuiAction {
 
 
-    public SignInAction(MainFrame popupOwner) {
-        super("Log in", popupOwner);
+    public SignInAction(SiriusGui gui) {
+        super("Log in", gui);
         putValue(Action.SHORT_DESCRIPTION, "Login with your SIRIUS Account.");
     }
 
     @Override
     public synchronized void actionPerformed(ActionEvent e) {
-        boolean r = new UserLoginDialog(MF, ApplicationCore.WEB_API.getAuthService()).hasPerformedLogin();
+        boolean r = new UserLoginDialog(gui, ApplicationCore.WEB_API.getAuthService()).hasPerformedLogin();
         firePropertyChange("login", null, r);
     }
 }

@@ -25,10 +25,10 @@ import de.unijena.bioinf.ChemistryBase.utils.ExFunctions;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.LoginException;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
@@ -48,12 +48,12 @@ public class AccountPanel extends JPanel {
     private JButton login, create, changeSub;
     private ToolbarButton refresh;
 
-    private MainFrame mainFrame;
+    private SiriusGui gui;
 
-    public AccountPanel(MainFrame mainFrame, AuthService service) {
+    public AccountPanel(SiriusGui gui, AuthService service) {
         super(new BorderLayout());
         this.service = service;
-        this.mainFrame = mainFrame;
+        this.gui = gui;
         TwoColumnPanel center = new TwoColumnPanel();
 
         userIconLabel = new JLabel();
@@ -76,7 +76,7 @@ public class AccountPanel extends JPanel {
                     } catch (Exception ex) {
                         throw new RuntimeException(ex); //should not happen
                     } finally {
-                        mainFrame.CONNECTION_MONITOR().checkConnectionInBackground();
+                        gui.getConnectionMonitor().checkConnectionInBackground();
                     }
                 }));
         refresh.setPreferredSize(new Dimension(45, 45));
@@ -95,7 +95,7 @@ public class AccountPanel extends JPanel {
         //south
         create = new JButton();
         login = new JButton();
-        changeSub = new JButton(SiriusActions.SELECT_SUBSCRIPTION.getInstance(mainFrame, true));
+        changeSub = new JButton(SiriusActions.SELECT_SUBSCRIPTION.getInstance(gui.getMainFrame(), true));
         Box buttons = Box.createHorizontalBox();
         buttons.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         buttons.add(create);
@@ -118,8 +118,8 @@ public class AccountPanel extends JPanel {
         if (userInfo == null) {
             userIconLabel.setIcon(Icons.USER_128);
             userInfoLabel.setText("Please log in!");
-            create.setAction(SiriusActions.SIGN_UP.getInstance(mainFrame, true));
-            login.setAction(SiriusActions.SIGN_IN.getInstance(mainFrame, true));
+            create.setAction(SiriusActions.SIGN_UP.getInstance(gui.getMainFrame(), true));
+            login.setAction(SiriusActions.SIGN_IN.getInstance(gui.getMainFrame(), true));
             refresh.setEnabled(false);
             changeSub.setEnabled(false);
         } else {
@@ -140,8 +140,8 @@ public class AccountPanel extends JPanel {
                     + "<br>"
                     + "(" + userInfo.getClaim("sub").asString() + ")"
                     + "</html>");
-            create.setAction(SiriusActions.MANAGE_ACCOUNT.getInstance(mainFrame, true));
-            login.setAction(SiriusActions.SIGN_OUT.getInstance(mainFrame, true));
+            create.setAction(SiriusActions.MANAGE_ACCOUNT.getInstance(gui.getMainFrame(), true));
+            login.setAction(SiriusActions.SIGN_OUT.getInstance(gui.getMainFrame(), true));
         }
     }
 

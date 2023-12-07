@@ -20,13 +20,13 @@
 package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.io.filefilter.ProjectArchivedFilter;
 import de.unijena.bioinf.ms.gui.io.filefilter.ProjectDirectoryFilter;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 
 import javax.swing.*;
@@ -38,10 +38,10 @@ import java.util.Objects;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ProjectSaveAction extends AbstractMainFrameAction {
+public class ProjectSaveAction extends AbstractGuiAction {
 
-    public ProjectSaveAction(MainFrame mainFrame) {
-        super("Save As", mainFrame);
+    public ProjectSaveAction(SiriusGui gui) {
+        super("Save As", gui);
         putValue(Action.LARGE_ICON_KEY, Icons.FOLDER_CLOSE_32);
         putValue(Action.SHORT_DESCRIPTION, "Save (copy) the current project to a new location.");
         setEnabled(true);
@@ -59,7 +59,7 @@ public class ProjectSaveAction extends AbstractMainFrameAction {
         jfc.addChoosableFileFilter(new ProjectDirectoryFilter());
 
         while (true) {
-            final int state = jfc.showDialog(MF, "Save As");
+            final int state = jfc.showDialog(mainFrame, "Save As");
             if (state == JFileChooser.CANCEL_OPTION || state == JFileChooser.ERROR_OPTION)
                 break;
             File selFile = jfc.getSelectedFile();
@@ -73,14 +73,14 @@ public class ProjectSaveAction extends AbstractMainFrameAction {
                         setAndStoreInBackground(SiriusProperties.DEFAULT_SAVE_DIR_PATH, selFile.getParentFile().getAbsolutePath());
 
                 try {
-                    MF.ps().saveAs(selFile.toPath(), MF);
-                    Jobs.runEDTAndWait(() -> MF.setTitlePath(MF.ps().projectSpace().getLocation().toString()));
+                    mainFrame.ps().saveAs(selFile.toPath(), mainFrame);
+                    Jobs.runEDTAndWait(() -> mainFrame.setTitlePath(mainFrame.ps().projectSpace().getLocation().toString()));
                 } catch (Exception e2) {
-                    new StacktraceDialog(MF, e2.getMessage(), e2);
+                    new StacktraceDialog(mainFrame, e2.getMessage(), e2);
                 }
                 break;
             } else {
-                new WarningDialog(MF, "'" + selFile.getAbsolutePath() + "' does not contain valid SIRIUS project.");
+                new WarningDialog(mainFrame, "'" + selFile.getAbsolutePath() + "' does not contain valid SIRIUS project.");
             }
         }
     }

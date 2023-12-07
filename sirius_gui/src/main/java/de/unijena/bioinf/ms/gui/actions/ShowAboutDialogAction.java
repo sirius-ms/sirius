@@ -19,9 +19,9 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.AboutDialog;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -29,14 +29,14 @@ import java.awt.event.ActionEvent;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ShowAboutDialogAction extends AbstractMainFrameAction {
-    public ShowAboutDialogAction(MainFrame mainFrame) {
-        super("About", mainFrame);
+public class ShowAboutDialogAction extends AbstractGuiAction {
+    public ShowAboutDialogAction(SiriusGui gui) {
+        super("About", gui);
         putValue(Action.LARGE_ICON_KEY, Icons.INFO_32);
         putValue(Action.SHORT_DESCRIPTION,"Information about this Software and how to cite it");
     }
     @Override
     public void actionPerformed(ActionEvent e) {
-        new AboutDialog(MF,false);
+        new AboutDialog(mainFrame,false);
     }
 }

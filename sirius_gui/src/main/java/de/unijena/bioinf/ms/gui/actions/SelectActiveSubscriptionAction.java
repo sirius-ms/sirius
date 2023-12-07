@@ -20,8 +20,8 @@
 package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.login.SubscriptionDialog;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.webapi.Tokens;
 
 import javax.swing.*;
@@ -31,16 +31,16 @@ import java.util.List;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class SelectActiveSubscriptionAction extends AbstractMainFrameAction {
+public class SelectActiveSubscriptionAction extends AbstractGuiAction {
 
-    public SelectActiveSubscriptionAction(MainFrame mainFrame) {
-        super("Change Subscription", mainFrame);
+    public SelectActiveSubscriptionAction(SiriusGui gui) {
+        super("Change Subscription", gui);
         putValue(Action.SHORT_DESCRIPTION, "Specify subscription that shall be used for computations (active subscription). Might also change the Web Service host.");
     }
 
     @Override
     public synchronized void actionPerformed(ActionEvent e) {
-        boolean r = new SubscriptionDialog(MF, true, ApplicationCore.WEB_API.getAuthService().getToken().map(Tokens::getSubscriptions).orElse(List.of())).hasPerformedChange();
+        boolean r = new SubscriptionDialog(gui, true, ApplicationCore.WEB_API.getAuthService().getToken().map(Tokens::getSubscriptions).orElse(List.of())).hasPerformedChange();
         if (r)
             firePropertyChange("change-sub", null, ApplicationCore.WEB_API.getActiveSubscription());
     }

@@ -20,13 +20,13 @@
 package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.FilePresentDialog;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.io.filefilter.ProjectArchivedFilter;
 import de.unijena.bioinf.ms.gui.io.filefilter.ProjectDirectoryFilter;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 
@@ -37,10 +37,10 @@ import java.io.File;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ProjectSaveCopyAction extends AbstractMainFrameAction {
+public class ProjectSaveCopyAction extends AbstractGuiAction {
 
-    public ProjectSaveCopyAction(MainFrame mainFrame) {
-        super("Save Copy", mainFrame);
+    public ProjectSaveCopyAction(SiriusGui gui) {
+        super("Save Copy", gui);
         putValue(Action.LARGE_ICON_KEY, Icons.FOLDER_FILE_32);
         putValue(Action.SHORT_DESCRIPTION, "Save a copy of the current project. (current location stays active)");
         setEnabled(true);
@@ -61,7 +61,7 @@ public class ProjectSaveCopyAction extends AbstractMainFrameAction {
         File selectedFile = null;
 
         while (selectedFile == null) {
-            int returnval = jfc.showDialog(MF,"Save Copy");
+            int returnval = jfc.showDialog(mainFrame,"Save Copy");
             if (returnval == JFileChooser.APPROVE_OPTION) {
                 File selFile = jfc.getSelectedFile();
 
@@ -79,7 +79,7 @@ public class ProjectSaveCopyAction extends AbstractMainFrameAction {
                 }
 
                 if (selFile.exists()) {
-                    FilePresentDialog fpd = new FilePresentDialog(MF, selFile.getName());
+                    FilePresentDialog fpd = new FilePresentDialog(mainFrame, selFile.getName());
                     ReturnValue rv = fpd.getReturnValue();
                     if (rv == ReturnValue.Success) {
                         selectedFile = selFile;
@@ -94,10 +94,10 @@ public class ProjectSaveCopyAction extends AbstractMainFrameAction {
 
         if (selectedFile != null) {
             try {
-                MF.ps().saveCopy(selectedFile.toPath(), MF);
-                Jobs.runEDTAndWait(() -> MF.setTitlePath(MF.ps().projectSpace().getLocation().toString()));
+                mainFrame.ps().saveCopy(selectedFile.toPath(), mainFrame);
+                Jobs.runEDTAndWait(() -> mainFrame.setTitlePath(mainFrame.ps().projectSpace().getLocation().toString()));
             } catch (Exception e2) {
-                new StacktraceDialog(MF, e2.getMessage(), e2);
+                new StacktraceDialog(mainFrame, e2.getMessage(), e2);
             }
         }
     }

@@ -24,15 +24,13 @@ import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobStateEvent;
 import de.unijena.bioinf.ms.frontend.BackgroundRuns;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
-import de.unijena.bioinf.ms.middleware.model.compute.ImportLocalFilesSubmission;
-import de.unijena.bioinf.ms.middleware.model.compute.ImportStringSubmission;
-import de.unijena.bioinf.ms.middleware.model.compute.Job;
-import de.unijena.bioinf.ms.middleware.model.compute.JobSubmission;
+import de.unijena.bioinf.ms.middleware.model.compute.*;
 import de.unijena.bioinf.ms.middleware.model.events.BackgroundComputationsStateEvent;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceImpl;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
+import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,16 +61,16 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
         return backgroundRuns.computeIfAbsent(psm, p -> {
             BackgroundRuns br = new BackgroundRuns(p.getProjectSpaceManager());
             br.addUnfinishedRunsListener(evt -> {
-                if (evt instanceof BackgroundRuns<?,?>.ChangeEvent){
+                if (evt instanceof BackgroundRuns<?, ?>.ChangeEvent) {
                     BackgroundRuns.ChangeEvent e = (BackgroundRuns<?, ?>.ChangeEvent) evt;
-                       eventService.sendEvent(ServerEvents.newComputeStateEvent(
-                               BackgroundComputationsStateEvent.builder()
-                                       .numberOfJobs(e.getNumOfRunsNew())
-                                       .numberOfRunningJobs(e.getNumOfUnfinishedNew())
-                                       .numberOfFinishedJobs(e.getNumOfRunsNew() - e.getNumOfUnfinishedNew())
-                                       .affectedJobs(e.getEffectedJobs().stream().map(j -> extractJobId((BackgroundRuns<?, ?>.BackgroundRunJob) j, EnumSet.of(Job.OptField.progress))).toList())
-                                       .build()
-                               ,psm.getProjectId()));
+                    eventService.sendEvent(ServerEvents.newComputeStateEvent(
+                            BackgroundComputationsStateEvent.builder()
+                                    .numberOfJobs(e.getNumOfRunsNew())
+                                    .numberOfRunningJobs(e.getNumOfUnfinishedNew())
+                                    .numberOfFinishedJobs(e.getNumOfRunsNew() - e.getNumOfUnfinishedNew())
+                                    .affectedJobs(e.getEffectedJobs().stream().map(j -> extractJobId((BackgroundRuns<?, ?>.BackgroundRunJob) j, EnumSet.of(Job.OptField.progress))).toList())
+                                    .build()
+                            , psm.getProjectId()));
                 }
             });
             return br;
@@ -92,18 +90,16 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
                                 EnumSet.of(Job.OptField.progress)), projectId)));
     }
 
-
-    @Override
-    public Job createAndSubmitJob(@NotNull SiriusProjectSpaceImpl psmI, JobSubmission jobSubmission,
-                                  @NotNull EnumSet<Job.OptField> optFields) {
-        BackgroundRuns<?, ?> br = backgroundRuns(psmI);
+    @Nullable
+    private List<CompoundContainerId> extractCompoundIds(@NotNull AbstractSubmission jobSubmission,
+                                                         @NotNull ProjectSpaceManager<?> psm) {
         List<CompoundContainerId> compounds = null;
 
         if (jobSubmission.getCompoundIds() == null || jobSubmission.getCompoundIds().isEmpty()) {
             if (jobSubmission.getAlignedFeatureIds() != null && !jobSubmission.getAlignedFeatureIds().isEmpty()) {
                 compounds = new ArrayList<>();
                 for (String cid : jobSubmission.getAlignedFeatureIds()) {
-                    compounds.add(br.getProjectSpaceManager().projectSpace().findCompound(cid)
+                    compounds.add(psm.projectSpace().findCompound(cid)
                             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NO_CONTENT,
                                     "Compound with id '" + cid + "' does not exist!'. No job has been started!")));
                 }
@@ -115,11 +111,20 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
                     ? new HashSet<>(jobSubmission.getAlignedFeatureIds())
                     : Set.of();
 
-            br.getProjectSpaceManager().projectSpace()
+            psm.projectSpace()
                     .filteredIterator(id -> id.getGroupId().map(cids::contains).orElse(false)
                             || fids.contains(id.getDirectoryName()))
                     .forEachRemaining(compounds::add);
         }
+
+        return compounds;
+    }
+
+    @Override
+    public Job createAndSubmitJob(@NotNull SiriusProjectSpaceImpl psmI, JobSubmission jobSubmission,
+                                  @NotNull EnumSet<Job.OptField> optFields) {
+        BackgroundRuns<?, ?> br = backgroundRuns(psmI);
+        List<CompoundContainerId> compounds = extractCompoundIds(jobSubmission, br.getProjectSpaceManager());
 
         try {
             List<String> commandList = makeCommand(jobSubmission);
@@ -146,7 +151,7 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
                 alignedFeatureIds.forEach(ids::add);
                 run = backgroundRuns(psmI).runCommand(commandList, cid -> ids.contains(cid.getDirectoryName()), null, toImport);
             } else {
-                run = backgroundRuns(psmI).runCommand(commandList, null, toImport);
+                run = backgroundRuns(psmI).runCommand(commandList, (Iterable) null, toImport);
             }
 
             registerServerEventListener(run, psmI.getProjectId());
@@ -184,6 +189,25 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
         final @Nullable String sourceName = jobSubmission.getSourceName();
         final String ext = jobSubmission.getFormat().getExtension();
         return extractJobId(backgroundRuns(psmI).runImport(() -> new BufferedReader(new StringReader(jobSubmission.getData())), sourceName, ext), optFields);
+    }
+
+    @Override
+    public Job createAndSubmitCommandJob(@NotNull SiriusProjectSpaceImpl psmI, CommandSubmission commandSubmission,
+                                         @NotNull EnumSet<Job.OptField> optFields) {
+        BackgroundRuns<?, ?> br = backgroundRuns(psmI);
+        List<CompoundContainerId> compounds = extractCompoundIds(commandSubmission, br.getProjectSpaceManager());
+        InputFilesOptions inputFiles = null;
+        if (commandSubmission.getInputPaths() != null && !commandSubmission.getInputPaths().isEmpty()){
+            inputFiles = new InputFilesOptions();
+            inputFiles.msInput = new InputFilesOptions.MsInput();
+        }
+
+        try {
+            return extractJobId(br.runCommand(commandSubmission.getCommand(), compounds, inputFiles), optFields);
+        } catch (Exception e) {
+            log.error("Cannot create Job Command!", e);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot create Job Command!", e);
+        }
     }
 
     @Override

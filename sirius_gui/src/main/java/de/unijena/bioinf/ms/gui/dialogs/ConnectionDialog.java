@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.dialogs;
 
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
@@ -38,20 +39,21 @@ public final class ConnectionDialog extends JDialog implements ActionListener {
     private final static String name = "Webservice Connection";
     private JButton network;
     private JButton account;
-    private ConnectionCheckPanel connectionCheck;
-
 
     private static ConnectionDialog instance;
 
-    public static synchronized ConnectionDialog of(MainFrame owner, @NotNull ConnectionCheck check) {
+    private final SiriusGui gui;
+
+    public static synchronized ConnectionDialog of(SiriusGui gui, @NotNull ConnectionCheck check) {
         if (instance != null)
             instance.dispose();
-        instance = new ConnectionDialog(owner, check);
+        instance = new ConnectionDialog(gui, check);
         return instance;
     }
 
-    private ConnectionDialog(MainFrame owner, @NotNull ConnectionCheck check) {
-        super(owner, name, ModalityType.APPLICATION_MODAL);
+    private ConnectionDialog(@NotNull SiriusGui gui, @NotNull ConnectionCheck check) {
+        super(gui.getMainFrame(), name, ModalityType.APPLICATION_MODAL);
+        this.gui = gui;
         initDialog(check);
     }
 
@@ -62,7 +64,7 @@ public final class ConnectionDialog extends JDialog implements ActionListener {
         JPanel header = new DialogHeader(Icons.NET_64);
         add(header, BorderLayout.NORTH);
 
-        connectionCheck = new ConnectionCheckPanel(this, (MainFrame) getOwner(), check);
+        ConnectionCheckPanel connectionCheck = new ConnectionCheckPanel(this, (MainFrame) getOwner(), check);
         add(connectionCheck, BorderLayout.CENTER);
 
 
@@ -105,7 +107,7 @@ public final class ConnectionDialog extends JDialog implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         this.dispose();
         if (e.getSource().equals(network))
-            Jobs.runEDTLater(() -> new SettingsDialog(mf(), 2));
+            Jobs.runEDTLater(() -> new SettingsDialog(gui, 2));
         if (e.getSource().equals(account))
             Jobs.runEDTLater(() -> mf().getToolbar().getAccount().getAction().actionPerformed(e));
     }

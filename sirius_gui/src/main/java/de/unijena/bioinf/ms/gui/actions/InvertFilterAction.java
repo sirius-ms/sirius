@@ -18,7 +18,7 @@ package de.unijena.bioinf.ms.gui.actions;/*
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -26,15 +26,15 @@ import java.awt.event.ActionEvent;
 /**
  * this allows to invert the compound list filter.
  */
-public class InvertFilterAction extends AbstractMainFrameAction {
+public class InvertFilterAction extends AbstractGuiAction {
 
-    public InvertFilterAction(MainFrame mainFrame) {
-        super("Invert filter", mainFrame);
+    public InvertFilterAction(SiriusGui gui) {
+        super("Invert filter", gui);
     }
     @Override
     public void actionPerformed(ActionEvent e) {
-        MF.getCompoundList().toggleInvertFilter();
-        if (MF.getCompoundList().isFilterInverted()) {
+        mainFrame.getCompoundList().toggleInvertFilter();
+        if (mainFrame.getCompoundList().isFilterInverted()) {
             this.putValue(Action.NAME, "Revert filter");
         } else {
             this.putValue(Action.NAME, "Invert filter");

@@ -20,24 +20,29 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 
 import javax.swing.*;
 
-public abstract class AbstractMainFrameAction extends AbstractAction {
-    protected final MainFrame MF;
+public abstract class AbstractGuiAction extends AbstractAction {
+    protected final MainFrame mainFrame;
+    protected final SiriusGui gui;
 
-    public AbstractMainFrameAction(MainFrame mainFrame) {
-        this.MF = mainFrame;
+    public AbstractGuiAction(SiriusGui gui) {
+        this.gui = gui;
+        this.mainFrame = this.gui.getMainFrame();
     }
 
-    public AbstractMainFrameAction(String name, MainFrame mainFrame) {
+    public AbstractGuiAction(String name, SiriusGui gui) {
         super(name);
-        this.MF = mainFrame;
+        this.gui = gui;
+        this.mainFrame = this.gui.getMainFrame();
     }
 
-    public AbstractMainFrameAction(String name, Icon icon, MainFrame mainFrame) {
+    public AbstractGuiAction(String name, Icon icon, SiriusGui gui) {
         super(name, icon);
-        this.MF = mainFrame;
+        this.gui = gui;
+        this.mainFrame = this.gui.getMainFrame();
     }
 }

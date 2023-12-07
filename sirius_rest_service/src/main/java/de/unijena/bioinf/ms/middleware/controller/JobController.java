@@ -24,10 +24,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.frontend.core.Workspace;
-import de.unijena.bioinf.ms.middleware.model.compute.ImportLocalFilesSubmission;
-import de.unijena.bioinf.ms.middleware.model.compute.ImportStringSubmission;
-import de.unijena.bioinf.ms.middleware.model.compute.Job;
-import de.unijena.bioinf.ms.middleware.model.compute.JobSubmission;
+import de.unijena.bioinf.ms.middleware.model.compute.*;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
@@ -163,7 +160,7 @@ public class JobController {
      * @param projectId         project-space to import into.
      * @param jobSubmission     configuration of the job that will be submitted
      * @param optFields         set of optional fields to be included. Use 'none' only to override defaults.
-     * @return CompoundIds of the imported run/compounds/feature.
+     * @return the import job.
      */
     @PostMapping(value = "/{projectId}/jobs/import-from-string", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public Job startImportFromStringJob(@PathVariable String projectId, @Valid @RequestBody ImportStringSubmission jobSubmission,
@@ -174,9 +171,47 @@ public class JobController {
     }
 
     /**
+     * Start computation for given command and input.
+     *
+     * @param projectId         project-space to perform the command for.
+     * @param commandSubmission the command and the input to be executed
+     * @param optFields         set of optional fields to be included. Use 'none' only to override defaults.
+     * @return Job of the command to be executed.
+     */
+    @PostMapping(value = "/{projectId}/jobs/run-command", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    public Job startCommand(@PathVariable String projectId, @Valid @RequestBody CommandSubmission commandSubmission,
+                                        @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
+    ) {
+        Project p = projectsProvider.getProjectOrThrow(projectId);
+        return computeService.createAndSubmitCommandJob(p, commandSubmission, removeNone(optFields));
+    }
+
+
+    /**
+     * * Delete ALL jobs. Specify how to behave for running jobs.
+     *
+     * @param projectId       project-space to delete jobs from
+     * @param cancelIfRunning If true job will be canceled if it is not finished. Otherwise,
+     *                        deletion will fail for running jobs or request will block until job has finished.
+     * @param awaitDeletion   If true request will block until deletion succeeded or failed.
+     *                        If the job is still running the request will wait until the job has finished.
+     */
+
+    @DeleteMapping(value = "/projects/{projectId}/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void deleteJobs(@PathVariable String projectId,
+                           @RequestParam(required = false, defaultValue = "true") boolean cancelIfRunning,
+                           @RequestParam(required = false, defaultValue = "true") boolean awaitDeletion
+    ) {
+        computeService.deleteJobs(projectsProvider.getProjectOrThrow(projectId), cancelIfRunning, awaitDeletion,
+                false, EnumSet.noneOf(Job.OptField.class));
+    }
+
+
+    /**
      * Delete job. Specify how to behave for running jobs.
      *
-     * @param projectId       project-space to run jobs on
+     * @param projectId       project-space to delete job from
      * @param jobId           of the job to be deleted
      * @param cancelIfRunning If true job will be canceled if it is not finished. Otherwise,
      *                        deletion will fail for running jobs or request will block until job has finished.

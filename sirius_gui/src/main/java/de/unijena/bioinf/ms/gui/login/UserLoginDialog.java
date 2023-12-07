@@ -25,12 +25,12 @@ import de.unijena.bioinf.ChemistryBase.utils.ExFunctions;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.DialogHeader;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.ActionJLabel;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
@@ -59,8 +59,8 @@ public class UserLoginDialog extends JDialog {
     Action signInAction;
     Action cancelAction;
 
-    public UserLoginDialog(MainFrame owner, AuthService service) {
-        super(owner, true);
+    public UserLoginDialog(SiriusGui gui, AuthService service) {
+        super(gui.getMainFrame(), true);
         this.service = service;
         setTitle("Login");
         setLayout(new BorderLayout());
@@ -108,7 +108,7 @@ public class UserLoginDialog extends JDialog {
                         } catch (InvocationTargetException | InterruptedException ignored) {
                         }
                     } finally {
-                        owner.CONNECTION_MONITOR().checkConnection();
+                        gui.getConnectionMonitor().checkConnection();
                     }
                 });
             }
@@ -117,7 +117,7 @@ public class UserLoginDialog extends JDialog {
         Box buttons = Box.createHorizontalBox();
         buttons.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        buttons.add(new JButton(SiriusActions.SIGN_UP.getInstance(owner, true)));
+        buttons.add(new JButton(SiriusActions.SIGN_UP.getInstance(gui.getMainFrame(), true)));
         buttons.add(Box.createHorizontalGlue());
         buttons.add(cancel);
         buttons.add(login);
@@ -129,7 +129,7 @@ public class UserLoginDialog extends JDialog {
         center.addNamed("Email", username);
         center.addNamed("Password", password);
         JPanel flow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
-        flow.add(new ActionJLabel("Forgot your Password?", SiriusActions.RESET_PWD.getInstance(owner, true)));
+        flow.add(new ActionJLabel("Forgot your Password?", SiriusActions.RESET_PWD.getInstance(gui.getMainFrame(), true)));
         center.add(null,  flow, 0, true);
 
         if (PropertyManager.getBoolean("de.unijena.bioinf.webservice.login.terms", false))

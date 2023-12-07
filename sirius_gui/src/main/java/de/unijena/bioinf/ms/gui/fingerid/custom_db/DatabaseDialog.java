@@ -24,8 +24,7 @@ import de.unijena.bioinf.chemdb.DataSources;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
-import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
-import de.unijena.bioinf.ms.gui.mainframe.BackgroundRunsGui;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.configs.Icons;
@@ -39,7 +38,6 @@ import de.unijena.bioinf.ms.gui.utils.ListAction;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
-import picocli.CommandLine;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -60,6 +58,7 @@ import java.util.stream.Collectors;
 
 
 public class DatabaseDialog extends JDialog {
+    private final SiriusGui gui;
     //todo: we should separate the Dialog from the Database Managing part.
     protected JList<String> dbList;
     protected Map<String, CustomDatabase> customDatabases;
@@ -67,12 +66,13 @@ public class DatabaseDialog extends JDialog {
     protected DatabaseView dbView;
     private final JDialog owner = this;
     JButton deleteDB, editDB, addCustomDb;
-    private BackgroundRunsGui backgroundRuns;
 
-
-    public DatabaseDialog(BackgroundRunsGui backgroundRuns, final Frame owner) {
+    public DatabaseDialog(SiriusGui gui) {
+        this(gui, gui.getMainFrame());
+    }
+    public DatabaseDialog(SiriusGui gui, @Nullable Frame owner) {
         super(owner, true);
-        this.backgroundRuns = backgroundRuns;
+        this.gui = gui;
         setTitle("Custom Databases");
         setLayout(new BorderLayout());
 
@@ -162,11 +162,13 @@ public class DatabaseDialog extends JDialog {
             if (new QuestionDialog(getOwner(), msg).isSuccess()) {
 
                 try {
-                    backgroundRuns.runCommandAndLoad(Arrays.asList(
-                                            CustomDBOptions.class.getAnnotation(CommandLine.Command.class).name(),
-                                            "--remove", name), null, null, owner,
-                                    "Deleting database '" + name + "'...", true)
-                            .awaitResult();
+                    //TODO TEMP CHANGE
+                    throw new ExecutionException(null);
+//                    backgroundRuns.runCommandAndLoad(Arrays.asList(
+//                                            CustomDBOptions.class.getAnnotation(CommandLine.Command.class).name(),
+//                                            "--remove", name), null, null, owner,
+//                                    "Deleting database '" + name + "'...", true)
+//                            .awaitResult();
                 } catch (ExecutionException ex) {
                     LoggerFactory.getLogger(getClass()).error("Error during Custom DB removal.", ex);
 
@@ -384,11 +386,12 @@ public class DatabaseDialog extends JDialog {
                 input.msInput = new InputFilesOptions.MsInput();
                 input.msInput.setInputPath(sources);
 
-                backgroundRuns.runCommandAndLoad(command, null,
+                //TODO TEMP CHANGE
+                /*backgroundRuns.runCommandAndLoad(command, null,
                                 input, this,
                                 "Importing into '" + configPanel.dbLocationField.getFilePath() + "'...",
                                 false)
-                        .awaitResult();
+                        .awaitResult();*/
 
                 whenCustomDbIsAdded(configPanel.dbLocationField.getFilePath());
             } catch (ExecutionException ex) {

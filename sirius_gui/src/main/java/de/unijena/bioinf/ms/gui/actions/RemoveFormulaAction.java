@@ -31,9 +31,9 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jetbrains.annotations.NotNull;
@@ -46,16 +46,16 @@ import java.util.List;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class RemoveFormulaAction extends AbstractMainFrameAction {
+public class RemoveFormulaAction extends AbstractGuiAction {
 
-    public RemoveFormulaAction(MainFrame mainFrame) {
-        super("Remove Formula", mainFrame);
+    public RemoveFormulaAction(SiriusGui gui) {
+        super("Remove Formula", gui);
         putValue(Action.SMALL_ICON, Icons.REMOVE_DOC_16);
         putValue(Action.SHORT_DESCRIPTION, "Remove the preset molecular formula from the selected data.");
 
-        setEnabled(SiriusActions.notComputingOrEmptyFirstSelected(MF.getCompoundListSelectionModel()));
+        setEnabled(SiriusActions.notComputingOrEmptyFirstSelected(this.mainFrame.getCompoundListSelectionModel()));
 
-        MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
+        this.mainFrame.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
             public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {
             }
@@ -69,12 +69,12 @@ public class RemoveFormulaAction extends AbstractMainFrameAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Jobs.runInBackgroundAndLoad(MF, "Removing Formulas...", new TinyBackgroundJJob<Boolean>() {
+        Jobs.runInBackgroundAndLoad(mainFrame, "Removing Formulas...", new TinyBackgroundJJob<Boolean>() {
             @Override
             protected Boolean compute() throws Exception {
                 int progress = 0;
                 updateProgress(0, 100, progress++, "Loading Compounds...");
-                final List<InstanceBean> toModify = new ArrayList<>(MF.getCompoundList().getCompoundListSelectionModel().getSelected());
+                final List<InstanceBean> toModify = new ArrayList<>(mainFrame.getCompoundList().getCompoundListSelectionModel().getSelected());
                 updateProgress(0, toModify.size(), progress++, "Removing " + (progress - 1) + "/" + toModify.size());
                 for (InstanceBean instance : toModify) {
                     final MolecularFormula mf = instance.getExperiment().getMolecularFormula();

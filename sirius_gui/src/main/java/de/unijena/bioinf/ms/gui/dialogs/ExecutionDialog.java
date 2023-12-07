@@ -22,8 +22,8 @@ package de.unijena.bioinf.ms.gui.dialogs;
 
 import de.unijena.bioinf.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.SubToolConfigPanel;
-import de.unijena.bioinf.ms.gui.mainframe.BackgroundRunsGui;
 import de.unijena.bioinf.ms.gui.logging.TextAreaJJobContainer;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -43,11 +43,11 @@ import java.util.stream.Collectors;
 public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
 
 
-    private final BackgroundRunsGui backgroundRuns;
+    private final SiriusGui gui;
 
-    public ExecutionDialog(BackgroundRunsGui backgroundRuns, @NotNull P configPanel, @Nullable List<InstanceBean> compounds, @Nullable List<Path> nonCompoundInput, MainFrame owner, String title, boolean modal) {
+    public ExecutionDialog(SiriusGui gui, @NotNull P configPanel, @Nullable List<InstanceBean> compounds, @Nullable List<Path> nonCompoundInput, MainFrame owner, String title, boolean modal) {
         super(owner, title, modal);
-        this.backgroundRuns = backgroundRuns;
+        this.gui = gui;
         init(configPanel, compounds, nonCompoundInput);
     }
     private MainFrame mf(){
@@ -118,7 +118,8 @@ public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
             command.add(configPanel.toolCommand());
             command.addAll(configPanel.asParameterList());
 
-            final TextAreaJJobContainer<Boolean> j = backgroundRuns.runCommand(command, compounds, getInputFilesOptions(), configPanel.toolCommand());
+            //TODO TEMP CHANGE
+            final TextAreaJJobContainer<Boolean> j = null; //backgroundRuns.runCommand(command, compounds, getInputFilesOptions(), configPanel.toolCommand());
             LoadingBackroundTask.connectToJob(mf(), "Running '" + configPanel.toolCommand() + "'...", indeterminateProgress, j);
 
         } catch (Exception e) {
@@ -131,7 +132,7 @@ public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
         if (nonCompoundInput == null)
             return null;
         InputFilesOptions inputFiles = new InputFilesOptions();
-        Map<Path, Integer> map = nonCompoundInput.stream().sequential().collect(Collectors.toMap(k -> k, k -> (int) k.toFile().length()));
+        Map<Path, Integer> map = nonCompoundInput.stream().collect(Collectors.toMap(k -> k, k -> (int) k.toFile().length()));
         inputFiles.msInput = new InputFilesOptions.MsInput(null, null, map);
         return inputFiles;
     }

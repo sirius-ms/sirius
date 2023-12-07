@@ -19,10 +19,9 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.BatchComputeDialog;
-import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.nightsky.sdk.model.BackgroundComputationsStateEvent;
 import de.unijena.bioinf.sse.DataEventType;
 import de.unijena.bioinf.sse.DataObjectEvent;
@@ -37,16 +36,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ComputeAllAction extends AbstractMainFrameAction {
+public class ComputeAllAction extends AbstractGuiAction {
     private final static AtomicBoolean isActive = new AtomicBoolean(false);
 
-    public ComputeAllAction(MainFrame mainFrame) {
-        super(mainFrame);
+    public ComputeAllAction(SiriusGui gui) {
+        super(gui);
         computationCanceled();
         setEnabled(false);
 
         //filtered Workspace Listener
-        this.MF.getCompoundList().getCompoundList().addListEventListener(listChanges ->
+        this.mainFrame.getCompoundList().getCompoundList().addListEventListener(listChanges ->
                 setEnabled(listChanges.getSourceList().size() > 0));
 
         //Listen if there are active gui jobs
@@ -69,13 +68,14 @@ public class ComputeAllAction extends AbstractMainFrameAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (isActive.get()) {
-            Jobs.runInBackgroundAndLoad(MF, "Canceling Jobs...", () -> MF.getBackgroundRuns().cancelAllRuns());
+            //TODO TEMP CHANGE
+//            Jobs.runInBackgroundAndLoad(mainFrame, "Canceling Jobs...", () -> mainFrame.getBackgroundRuns().cancelAllRuns());
         } else {
-            if (MF.getCompounds().isEmpty()){
+            if (mainFrame.getCompounds().isEmpty()){
                 LoggerFactory.getLogger(getClass()).warn("Not instances to compute! Closing Compute Dialog...");
                 return;
             }
-            new BatchComputeDialog(MF, List.copyOf(MF.getCompounds()));
+            new BatchComputeDialog(gui, List.copyOf(mainFrame.getCompounds()));
         }
     }
 
@@ -86,7 +86,7 @@ public class ComputeAllAction extends AbstractMainFrameAction {
         putValue(Action.LARGE_ICON_KEY, Icons.RUN_32);
         putValue(Action.SMALL_ICON, Icons.RUN_16);
         putValue(Action.SHORT_DESCRIPTION, "Compute all compounds");
-        setEnabled(!MF.getCompoundList().getCompoundList().isEmpty());
+        setEnabled(!mainFrame.getCompoundList().getCompoundList().isEmpty());
     }
 
     private void computationStarted() {
@@ -96,7 +96,7 @@ public class ComputeAllAction extends AbstractMainFrameAction {
         putValue(Action.LARGE_ICON_KEY, Icons.CANCEL_32);
         putValue(Action.SMALL_ICON, Icons.CANCEL_16);
         putValue(Action.SHORT_DESCRIPTION, "Cancel all running computations");
-        setEnabled(!MF.getCompoundList().getCompoundList().isEmpty());
+        setEnabled(!mainFrame.getCompoundList().getCompoundList().isEmpty());
     }
 
 }

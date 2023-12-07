@@ -20,10 +20,10 @@
 package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.io.filefilter.MsBatchDataFormatFilter;
 import de.unijena.bioinf.ms.gui.io.filefilter.ProjectArchivedFilter;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 
 import javax.swing.*;
@@ -34,10 +34,10 @@ import java.util.Arrays;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ImportAction extends AbstractMainFrameAction {
+public class ImportAction extends AbstractGuiAction {
 
-    public ImportAction(MainFrame mainFrame) {
-        super("Import", mainFrame);
+    public ImportAction(SiriusGui gui) {
+        super("Import", gui);
         putValue(Action.LARGE_ICON_KEY, Icons.DOCS_32);
         putValue(Action.SMALL_ICON, Icons.BATCH_DOC_16);
         putValue(Action.SHORT_DESCRIPTION, "<html>" +
@@ -59,14 +59,14 @@ public class ImportAction extends AbstractMainFrameAction {
         chooser.addChoosableFileFilter(new MsBatchDataFormatFilter());
         chooser.addChoosableFileFilter(new ProjectArchivedFilter());
         chooser.setAcceptAllFileFilterUsed(false);
-        int returnVal = chooser.showDialog(MF,"Import");
+        int returnVal = chooser.showDialog(mainFrame,"Import");
 
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File[] files = chooser.getSelectedFiles();
             if (files.length > 0) {
                 SiriusProperties.
                         setAndStoreInBackground(SiriusProperties.DEFAULT_LOAD_DIALOG_PATH, files[0].getParentFile().getAbsolutePath());
-                MF.ps().importOneExperimentPerLocation(Arrays.asList(files), MF);
+                mainFrame.ps().importOneExperimentPerLocation(Arrays.asList(files), mainFrame);
             }
 
         }

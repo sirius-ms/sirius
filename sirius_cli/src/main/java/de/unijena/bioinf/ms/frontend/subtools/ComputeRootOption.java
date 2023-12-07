@@ -46,7 +46,7 @@ public class ComputeRootOption<P extends ProjectSpaceManager<I>, I extends Insta
     }
 
     public ComputeRootOption(@NotNull P projectSpace, @NotNull InputFilesOptions inputFiles) {
-        this(projectSpace, null, inputFiles);
+        this(projectSpace, (Iterable<I>) null, inputFiles);
     }
 
     public ComputeRootOption(@NotNull P projectSpace, @Nullable Iterable<I> instances) {
@@ -60,6 +60,10 @@ public class ComputeRootOption<P extends ProjectSpaceManager<I>, I extends Insta
     }
 
     public ComputeRootOption(@NotNull P projectSpace, @Nullable List<CompoundContainerId> containerIds) {
+        this(projectSpace, containerIds, null);
+
+    }
+    public ComputeRootOption(@NotNull P projectSpace, @Nullable List<CompoundContainerId> containerIds, @Nullable InputFilesOptions inputFiles) {
         this.projectSpace = projectSpace;
 
         instances = containerIds != null ? new IterableWithSize<>() {
@@ -74,7 +78,7 @@ public class ComputeRootOption<P extends ProjectSpaceManager<I>, I extends Insta
                 return makeInstanceIterator(containerIds.iterator());
             }
         } : null;
-        this.inputFiles = null;
+        this.inputFiles = inputFiles;
     }
 
     /**

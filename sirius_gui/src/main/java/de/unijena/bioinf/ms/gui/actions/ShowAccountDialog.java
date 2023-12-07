@@ -20,10 +20,10 @@
 package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.login.AccountDialog;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionChecks;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.nightsky.sdk.model.ConnectionCheck;
@@ -41,19 +41,19 @@ import java.net.URI;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ShowAccountDialog extends AbstractMainFrameAction {
+public class ShowAccountDialog extends AbstractGuiAction {
 
-    public ShowAccountDialog(MainFrame mainFrame) {
-        super("Account", mainFrame);
+    public ShowAccountDialog(SiriusGui gui) {
+        super("Account", gui);
         putValue(Action.LARGE_ICON_KEY, Icons.USER_32);
         putValue(Action.SHORT_DESCRIPTION, "Show user account information and settings.");
 
-        MF.CONNECTION_MONITOR().addConnectionStateListener(evt -> {
+        this.gui.getConnectionMonitor().addConnectionStateListener(evt -> {
             ConnectionCheck check = ((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck();
             setIcon(check);
         });
 
-        Jobs.runInBackground(() -> setIcon(MF.CONNECTION_MONITOR().checkConnection()));
+        Jobs.runInBackground(() -> setIcon(this.gui.getConnectionMonitor().checkConnection()));
     }
 
     protected synchronized void setIcon(final @Nullable ConnectionCheck check) {
@@ -84,6 +84,6 @@ public class ShowAccountDialog extends AbstractMainFrameAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        new AccountDialog(MF, ApplicationCore.WEB_API.getAuthService());
+        new AccountDialog(gui, ApplicationCore.WEB_API.getAuthService());
     }
 }

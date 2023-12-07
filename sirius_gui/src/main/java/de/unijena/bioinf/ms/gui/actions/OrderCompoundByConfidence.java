@@ -21,21 +21,21 @@ package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.projectspace.InstanceBean;
 
 import java.awt.event.ActionEvent;
 import java.util.Comparator;
 
-public class OrderCompoundByConfidence extends AbstractMainFrameAction {
+public class OrderCompoundByConfidence extends AbstractGuiAction {
 
-    public OrderCompoundByConfidence(MainFrame mainFrame) {
-        super("Order by " + FormulaScore.NA(ConfidenceScore.class).shortName(), mainFrame);
+    public OrderCompoundByConfidence(SiriusGui gui) {
+        super("Order by " + FormulaScore.NA(ConfidenceScore.class).shortName(), gui);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        MF.getCompoundList().orderBy(Comparator
+        mainFrame.getCompoundList().orderBy(Comparator
                 .comparingDouble((InstanceBean o) -> o.getID().getConfidenceScore().orElse(Double.NEGATIVE_INFINITY))
                         .reversed());
     }
