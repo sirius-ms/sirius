@@ -16,7 +16,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
 
@@ -77,17 +76,6 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
             }
         });
 
-        dbLocationField.field.setInputVerifier(new ErrorReportingInputVerifier() {
-            @Override
-            public String getErrorMessage(JComponent input) {
-                String text = ((JTextField)input).getText();
-                if (!Files.isDirectory(Path.of(text))) {
-                    return "Not an existing directory";
-                }
-                return null;
-            }
-        });
-
         final String buf = "buffer";
         bufferSize = makeGenericOptionSpinner(buf,
                 getOptionDefaultByName(buf).map(Integer::parseInt).orElse(1),
@@ -98,12 +86,5 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
 
     public String getDbFilePath() {
         return Path.of(dbLocationField.getFilePath(), dbNameField.getText()).toString();
-    }
-
-    public boolean isValid() {
-        return !dbNameField.getText().isBlank()
-                && dbNameField.getInputVerifier().verify(dbNameField)
-                && !dbLocationField.field.getText().isBlank()
-                && dbLocationField.field.getInputVerifier().verify(dbLocationField.field);
     }
 }
