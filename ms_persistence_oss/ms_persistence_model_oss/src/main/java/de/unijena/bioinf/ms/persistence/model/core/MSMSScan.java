@@ -24,10 +24,7 @@ import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import jakarta.persistence.Id;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 /**
  * A measured MS/MS Spectrum (usually MS2) with metadata.
@@ -35,6 +32,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@ToString(callSuper = true)
 public class MSMSScan extends AbstractScan {
     @Builder
     public MSMSScan(long scanId, Long runId, String scanNumber, Double scanTime, Double ccs, SimpleSpectrum peaks, Long precursorScanId, byte msLevel, IsolationWindow isolationWindow, CollisionEnergy collisionEnergy, Double mzOfInterest) {

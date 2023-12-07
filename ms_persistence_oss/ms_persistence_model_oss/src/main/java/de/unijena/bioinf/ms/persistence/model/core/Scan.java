@@ -30,6 +30,7 @@ import lombok.*;
 @Getter
 @Setter
 @NoArgsConstructor
+@ToString(callSuper = true)
 public class Scan extends AbstractScan{
     @Builder
     public Scan(long scanId, Long runId, String scanNumber, Double scanTime, Double ccs, SimpleSpectrum peaks) {

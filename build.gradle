@@ -1,3 +1,5 @@
+import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
+
 import java.nio.file.Files
 import java.nio.file.Paths
 
@@ -27,7 +29,7 @@ ext {
     //version for external libraries
     jjobs_version = '0.9.35'
     slf4j_version = '1.7.36'
-    jackson_version = '2.14.2'
+    jackson_version = '2.14.3'
     math3_version = '3.6.1'
     cbc_version = props.getProperty('de.unijena.bioinf.sirius.build.cbc_version')
     glpk_version = props.getProperty('de.unijena.bioinf.sirius.build.glpk_version')
@@ -53,7 +55,12 @@ ext {
 
     guava_version = '31.1-jre'
 
+    swagger_version = "2.2.18"
 
+    siriusTargetPlatform = SiriusPlatform.fromDescriptor((
+            project.findProperty('build.sirius.platform') ?:
+                    "${DefaultNativePlatform.getCurrentOperatingSystem().getName()}-${DefaultNativePlatform.getCurrentArchitecture().getName()}"
+    ) as String)
 }
 
 allprojects {

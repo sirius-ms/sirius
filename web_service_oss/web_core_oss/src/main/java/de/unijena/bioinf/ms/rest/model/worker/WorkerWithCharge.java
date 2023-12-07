@@ -21,12 +21,17 @@
 package de.unijena.bioinf.ms.rest.model.worker;
 
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
+import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
+
 public class WorkerWithCharge implements Comparable<WorkerWithCharge>{
+    @Schema(nullable = false, requiredMode = REQUIRED)
     public final WorkerType workerType;
+    @Schema(nullable = false, requiredMode = REQUIRED)
     public final PredictorType charge;
 
     protected WorkerWithCharge(@NotNull WorkerType workerType, @NotNull PredictorType charge) {

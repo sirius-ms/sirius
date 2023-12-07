@@ -23,22 +23,26 @@ package de.unijena.bioinf.ms.persistence.model.core;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
+@ToString(onlyExplicitlyIncluded = true)
 public class Trace {
     /**
      * ID of the Run this trace belongs to
      */
+    @ToString.Include
     long runId;
 
     /**
      * Ids of the scans this trace is build from
      * should be sorted by RT
      */
+    @ToString.Include
     LongList scanIds;
 
     /**

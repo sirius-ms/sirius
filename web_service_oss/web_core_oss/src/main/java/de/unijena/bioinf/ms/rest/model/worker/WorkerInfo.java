@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.jetbrains.annotations.NotNull;
 
 import java.sql.Time;
@@ -33,22 +34,33 @@ import java.util.Date;
 import java.util.EnumSet;
 import java.util.stream.Collectors;
 
+import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
+
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE, setterVisibility = JsonAutoDetect.Visibility.NONE, isGetterVisibility = JsonAutoDetect.Visibility.NONE)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class WorkerInfo {
 
+    @Schema(nullable = false, requiredMode = REQUIRED)
     private long id;
+    @Schema(nullable = false, requiredMode = REQUIRED)
     private WorkerType type;
+    @Schema(nullable = false, requiredMode = REQUIRED)
     private EnumSet<PredictorType> supportedPredictors;
+    @Schema(nullable = false, requiredMode = REQUIRED)
     private String version;
+    @Schema(nullable = true)
     private String host;
+    @Schema(nullable = true)
     private String prefix;
+    @Schema(nullable = false, requiredMode = REQUIRED)
     private int state;
 
     // heartbeat of the worker/last request of the worker
+    @Schema(nullable = false, requiredMode = REQUIRED)
     private long alive;
     // We should be able to compare against server time because client/user systems time can be wrong
+    @Schema(nullable = false, requiredMode = REQUIRED)
     private long serverTime = System.currentTimeMillis();
 
     public WorkerInfo() {

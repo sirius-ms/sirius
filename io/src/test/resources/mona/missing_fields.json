@@ -1,0 +1,17 @@
+{
+  "id": "missing_fields.json",
+  "compound": [
+    {
+      "names": [],
+      "metaData": {}
+    }
+  ],
+  "spectrum": "1:1",
+  "metaData": [
+    {
+      "name": "ms level",
+      "value": "MS2"
+    }
+  ],
+  "tags": []
+}

@@ -93,8 +93,9 @@ public class Ms2ReferenceSpectrum {
     private String smiles;
 
     /**
-     * NOTE: Indexed field (mandatory)
+     * NOTE: filled while querying a SpectralLibrary
      */
+    @JsonIgnore
     private String libraryName;
     /**
      * Identifier of the spectral library, e,g. nist or massbank id

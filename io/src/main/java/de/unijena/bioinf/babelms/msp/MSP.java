@@ -21,12 +21,15 @@
 package de.unijena.bioinf.babelms.msp;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /*
 
@@ -246,6 +249,30 @@ public class MSP {
         if (value != null && !value.isBlank())
             return Optional.of(value);
 
+        return Optional.empty();
+    }
+
+    public static Optional<RetentionTime> parseRetentionTime(Map<String, String> metaInfo) {
+        if (metaInfo.containsKey(RT)) {
+            double rt = Utils.parseDoubleWithUnknownDezSep(metaInfo.get(RT));
+            if (rt > 0) {
+                return Optional.of(new RetentionTime(rt * 60));
+            }
+        } else {
+            String comments = getWithSynonyms(metaInfo, COMMENTS).orElse(null);
+            if (comments != null) {
+                Matcher m = Pattern.compile("\"retention\\s?time=([^\"]+)").matcher(comments);
+                if (m.find()) {
+                    String rtValue = m.group(1);
+                    return RetentionTime.tryParse(rtValue);
+                }
+                m = Pattern.compile("\"rtinseconds=([^\"]+)").matcher(comments);
+                if (m.find()) {
+                    String rtValue = m.group(1);
+                    return Optional.of(new RetentionTime(Double.parseDouble(rtValue)));
+                }
+            }
+        }
         return Optional.empty();
     }
 

@@ -24,7 +24,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.client.utils.HTTPSupplier;
 import de.unijena.bioinf.ms.rest.model.SecurityService;
 import de.unijena.bioinf.rest.HttpErrorResponseException;
@@ -46,7 +45,6 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 public abstract class AbstractClient {
-    public static final boolean DEBUG_CONNECTION = PropertyManager.getBoolean("de.unijena.bioinf.webapi.DEBUG_CONNECTION", false);
     protected static final String CID = SecurityService.generateSecurityToken();
 
     public static final MediaType APPLICATION_JSON = MediaType.parse("application/json;charset=UTF-8");

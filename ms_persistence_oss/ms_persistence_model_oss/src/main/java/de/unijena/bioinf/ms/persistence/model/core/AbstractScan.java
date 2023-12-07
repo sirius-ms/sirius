@@ -21,7 +21,6 @@
 package de.unijena.bioinf.ms.persistence.model.core;
 
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import jakarta.persistence.Id;
 import lombok.*;
 
 /**
@@ -31,6 +30,7 @@ import lombok.*;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString
 public class AbstractScan {
     /**
      * Database ID of the Run this Scan belongs to
@@ -55,5 +55,6 @@ public class AbstractScan {
     /**
      * The actual spectrum that has been measured (masses and intensities)
      */
+    @ToString.Exclude
     protected SimpleSpectrum peaks;
 }

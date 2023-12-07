@@ -1,3 +1,5 @@
+package de.unijena.bioinf.sirius;
+
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
@@ -16,10 +18,6 @@ import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
-import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.Ms2Preprocessor;
-import de.unijena.bioinf.sirius.ProcessedInput;
-import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.annotations.DecompositionList;
 import org.junit.Test;
 
@@ -36,11 +34,11 @@ import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 
-public class TestSirius {
+public class SiriusTest {
 
     protected final Sirius sirius;
 
-    public TestSirius() {
+    public SiriusTest() {
         this.sirius = new Sirius("qtof");
       //  sirius.getMs2Analyzer().setTreeBuilder(new AbstractTreeBuilder<>(CPLEXSolver.Factory));
         sirius.getMs2Analyzer().setTreeBuilder(TreeBuilderFactory.getInstance().getTreeBuilder("clp"));
@@ -104,8 +102,10 @@ public class TestSirius {
         sirius.getMs1Analyzer().computeAndScoreIsotopePattern(processedInput);
         final FragmentationPatternAnalysis analysis = sirius.getMs2Analyzer();
         int samples = 10;
-        java.util.Map<String, double[]> times = Map.of("clp", new double[samples],
-                "cplex", new double[samples]);
+        java.util.Map<String, double[]> times = Map.of(
+                "clp", new double[samples]
+//                , "cplex", new double[samples]
+        );
         // pre run
         for (String solver: times.keySet()){
             analysis.setTreeBuilder(TreeBuilderFactory.getInstance().getTreeBuilder(solver));
@@ -182,16 +182,16 @@ public class TestSirius {
     }
 
 
-    /*@Test
+    @Test
     public void testILPSolvers() throws IOException, ExecutionException, URISyntaxException {
         JobManager jobsManager = SiriusJobs.getGlobalJobManager();
-        String[] solvers = {"clp", "glpk"*//*, "cplex"*//*};
+        String[] solvers = {"clp"/*, "glpk", "cplex"*/};
         Path path = Path.of(getClass().getResource("/dendroids-good").toURI());
-        List<Path> files = FileUtils.listAndClose(path, pathStream -> pathStream.filter(p -> Files.isRegularFile(p)).collect(Collectors.toList()));
+        List<Path> files = FileUtils.listAndClose(path, pathStream -> pathStream.filter(Files::isRegularFile).collect(Collectors.toList()));
         for (Path file : files) {
             LinkedHashMap<String, FasterTreeComputationInstance.FinalResult> results = new LinkedHashMap<>();
             for (String solver : solvers) {
-                System.out.println("Testing: " + file.toAbsolutePath().toString() + " with " + solver);
+                System.out.println("Testing: " + file.toAbsolutePath() + " with " + solver);
                 long t =  System.currentTimeMillis();
                 final Ms2Experiment experiment = getStandardExample("/dendroids-good/" + file.getFileName().toString());
                 final Ms2Preprocessor preprocessor = new Ms2Preprocessor();
@@ -204,7 +204,7 @@ public class TestSirius {
                 FasterTreeComputationInstance instance = new FasterTreeComputationInstance(analysis, processedInput);
                 FasterTreeComputationInstance.FinalResult result = jobsManager.submitJob(instance).awaitResult();
                 results.put(solver,result);
-                System.out.println("Testing: " + file.toAbsolutePath().toString() + " with " + solver + "DONE in " + (System.currentTimeMillis() - t)/1000d + "s");
+                System.out.println("Testing: " + file.toAbsolutePath() + " with " + solver + "DONE in " + (System.currentTimeMillis() - t)/1000d + "s");
             }
             for (Map.Entry<String, FasterTreeComputationInstance.FinalResult> e1 : results.entrySet()) {
 //                assertEquals(MolecularFormula.parseOrThrow("C20H17NO6"), e1.getValue().getResults().get(0).getRoot().getFormula());
@@ -217,7 +217,6 @@ public class TestSirius {
             }
         }
     }
-*/
 
     @Test
     public void testTreeSerialization() throws IOException {
@@ -416,7 +415,7 @@ public class TestSirius {
 
         //sirius.getMs2Analyzer().registerPlugin(new IsotopePatternInMs2Plugin());
 
-        IdentificationResult result = sirius.compute(exp, MolecularFormula.parseOrThrow("C14H23ClN2O4S"));
+        IdentificationResult<?> result = sirius.compute(exp, MolecularFormula.parseOrThrow("C14H23ClN2O4S"));
         final FragmentAnnotation<Ms2IsotopePattern> iso = result.getTree().getFragmentAnnotationOrNull(Ms2IsotopePattern.class);
         assertNotNull(iso);
         int peaksWithIsotopes = 0;

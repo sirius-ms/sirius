@@ -48,6 +48,7 @@ import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
 @AllArgsConstructor
 @Builder
 @JsonAutoDetect(fieldVisibility = ANY, getterVisibility = NONE, setterVisibility = NONE, isGetterVisibility = NONE)
+@ToString
 public class AlignedFeatures {
     @Id
     private long alignedFeatureId;
@@ -61,6 +62,7 @@ public class AlignedFeatures {
 
     protected double mergedIonMass;
     protected RetentionTime mergedRT;
+    @ToString.Exclude
     protected LongList correlationPairIds;
 
     protected CompoundAnnotation topAnnotation;
@@ -77,6 +79,7 @@ public class AlignedFeatures {
     }
 
     @JsonIgnore
+    @ToString.Exclude
     protected List<Feature> features;
 
     public Optional<List<Feature>> getFeatures() {
