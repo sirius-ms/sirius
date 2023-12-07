@@ -3,20 +3,27 @@ package de.unijena.bioinf.lcms.trace.segmentation;
 import de.unijena.bioinf.lcms.Maxima;
 import de.unijena.bioinf.lcms.trace.Trace;
 
+import javax.swing.text.Segment;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class LegacySegmenter implements TraceSegmenter {
-    @Override
-    public Extrema detectExtrema(Trace trace) {
+
+    public List<TraceSegment> detectSegments(Trace trace) {
         double[] signal = getSignal(trace);
         de.unijena.bioinf.lcms.Extrema extrema = new Maxima(signal).toExtrema();
-        final int[] ids = new int[extrema.numberOfExtrema()];
-        final boolean[] maxima = new boolean[extrema.numberOfExtrema()];
+        final List<TraceSegment> output = new ArrayList<>();
         for (int k=0, n = extrema.numberOfExtrema(); k<n; ++k) {
-            ids[k] = extrema.getIndexAt(k) + trace.startId();
-            maxima[k] = !extrema.isMinimum(k);
+            int index = extrema.getIndexAt(k);
+            if (!extrema.isMinimum(k)) {
+                // the previous minimum is the left edge
+                int prev=Math.max(0, index-1);
+                int next = Math.min(index+1, extrema.numberOfExtrema()-1);
+                output.add(new TraceSegment(index+ trace.startId(), prev+trace.startId(), next+trace.startId()));
+            };
         }
-        return new Extrema(ids, maxima);
+        return output;
     }
 
     @Override
