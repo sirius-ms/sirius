@@ -155,7 +155,7 @@ public class SVMUtils {
             for (int j = 0; j < value_lists[i].size(); j++) {
                 sum += Math.pow(value_lists[i].get(j) - means[i], 2);
             }
-            stddevs_mean[i] = Math.sqrt((sum / value_lists.length));
+            stddevs_mean[i] = Math.sqrt((sum / value_lists[i].size()));
         }
 
 

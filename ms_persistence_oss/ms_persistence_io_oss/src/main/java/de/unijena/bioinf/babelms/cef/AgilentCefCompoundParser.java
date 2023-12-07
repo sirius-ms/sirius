@@ -68,7 +68,7 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
 
 
     @Override
-    public <S extends de.unijena.bioinf.ms.persistence.model.core.Compound> S parse(BufferedReader secondChoice, @Nullable URI source) throws IOException {
+    public de.unijena.bioinf.ms.persistence.model.core.Compound parse(BufferedReader secondChoice, @Nullable URI source) throws IOException {
         //XML parsing on readers works bad, so we create our own stream from url
         if (!Objects.equals(currentUrl, source) || xmlEventReader == null || unmarshaller == null) {
             try {
@@ -99,15 +99,14 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
 
 
         try {
-            XMLEvent e = null;
+            XMLEvent e;
             // loop though the xml stream
             while ((e = xmlEventReader.peek()) != null) {
                 // check the event is a Document start element
                 if (e.isStartElement() && ((StartElement) e).getName().equals(qName)) {
                     // unmarshall the compound
                     Compound compound = unmarshaller.unmarshal(xmlEventReader, Compound.class).getValue();
-                    de.unijena.bioinf.ms.persistence.model.core.Compound parsedCompound = parseCompound(compound);
-                    return (S) parsedCompound;
+                    return parseCompound(compound);
                 } else {
                     xmlEventReader.next();
                 }
@@ -217,7 +216,7 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
         return List.of(al);
     }
 
-    private <S extends Feature> S featureFromCompound(Compound compound, Feature feature) {
+    private Feature featureFromCompound(Compound compound, Feature feature) {
         //todo how do we get the real dev? maybe load profile/ from outside
         MS2MassDeviation dev = PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class);
 //        exp.setName("rt=" + compound.location.rt + "-p=" + NUMBER_FORMAT.format(exp.getIonMass()));
@@ -254,7 +253,7 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
         feature.setMsms(ms2Spectra);
         feature.setApexScan(ms1Spectra.iterator().next());
 
-        return (S) feature;
+        return feature;
     }
 
     private MSMSScan makeMs2Scan(Spectrum spec) {

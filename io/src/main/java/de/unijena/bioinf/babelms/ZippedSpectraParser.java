@@ -44,11 +44,11 @@ public class ZippedSpectraParser extends GenericParser<Ms2Experiment> {
     }
 
     @Override
-    public <S extends Ms2Experiment> List<S> parseFromFile(File file) throws IOException {
+    public List<Ms2Experiment> parseFromFile(File file) throws IOException {
         BufferedReader reader = null;
         ZipFile zipFile = new ZipFile(file);
         Enumeration<? extends ZipEntry> entries = zipFile.entries();
-        final ArrayList<S> list = new ArrayList<S>();
+        final ArrayList<Ms2Experiment> list = new ArrayList<>();
         ZipEntry entry = null;
 
         try {
@@ -61,7 +61,7 @@ public class ZippedSpectraParser extends GenericParser<Ms2Experiment> {
                 reader = FileUtils.ensureBuffering(new InputStreamReader(stream));
                 final URI source = file.toPath().resolve(entry.getName()).toUri();
 
-                S elem = genericParser.parse(reader,source);
+                Ms2Experiment elem = genericParser.parse(reader,source);
                 while (elem!=null) {
                     list.add(elem);
                     elem = genericParser.parse(reader,source);
@@ -80,7 +80,7 @@ public class ZippedSpectraParser extends GenericParser<Ms2Experiment> {
     /*
     this implementation throws an error if a single file in the zipped input stream cannot be parsed!
      */
-    public <S extends Ms2Experiment> CloseableIterator<S> parseIterator(InputStream input, URI source) throws IOException {
+    public CloseableIterator<Ms2Experiment> parseIterator(InputStream input, URI source) throws IOException {
         ZipInputStream zipInputStream = new ZipInputStream(input);
         BufferedReader r = FileUtils.ensureBuffering(new InputStreamReader(zipInputStream));
         Path sourcePath = Paths.get(source);
@@ -91,18 +91,16 @@ public class ZippedSpectraParser extends GenericParser<Ms2Experiment> {
         }
 
         ZipEntry firstEntry;
-        S firstEle;
+        Ms2Experiment firstEle;
         GenericParser<Ms2Experiment> firstParser;
         if (entry!=null){
             firstEntry = entry;
             firstParser = msExperimentParser.getParser(new File(firstEntry.getName()));
             firstEle = firstParser.parse(r, sourcePath.resolve(firstEntry.getName()).toUri());
         } else {
-            return new CloseableIterator<S>() {
+            return new CloseableIterator<>() {
                 @Override
-                public void close() throws IOException {
-
-                }
+                public void close() {}
 
                 @Override
                 public boolean hasNext() {
@@ -110,7 +108,7 @@ public class ZippedSpectraParser extends GenericParser<Ms2Experiment> {
                 }
 
                 @Override
-                public S next() {
+                public Ms2Experiment next() {
                     return null;
                 }
             };
@@ -118,16 +116,16 @@ public class ZippedSpectraParser extends GenericParser<Ms2Experiment> {
 
 
 
-        return new CloseableIterator<S>() {
+        return new CloseableIterator<>() {
             @Override
-            public void close() throws IOException {
+            public void close() {
                 tryclose();
             }
 
-            BufferedReader reader=r;
+            BufferedReader reader = r;
             ZipEntry currentEntry = firstEntry;
             GenericParser<Ms2Experiment> parser = firstParser;
-            S elem = firstEle;
+            Ms2Experiment elem = firstEle;
 
 
             @Override
@@ -136,14 +134,14 @@ public class ZippedSpectraParser extends GenericParser<Ms2Experiment> {
             }
 
             @Override
-            public S next() {
-                S mem = elem;
+            public Ms2Experiment next() {
+                Ms2Experiment mem = elem;
                 try {
                     elem = parser.parse(reader, source);
 
-                    if (elem==null){
+                    if (elem == null) {
                         currentEntry = nextFile(zipInputStream);
-                        if (currentEntry==null){
+                        if (currentEntry == null) {
                             //the end
                             tryclose();
                         } else {
@@ -151,7 +149,7 @@ public class ZippedSpectraParser extends GenericParser<Ms2Experiment> {
                             elem = parser.parse(reader, source);
                         }
                     }
-                } catch (IOException e){
+                } catch (IOException e) {
                     tryclose();
                     throw new RuntimeException(e);
                 }
@@ -160,7 +158,7 @@ public class ZippedSpectraParser extends GenericParser<Ms2Experiment> {
 
             private ZipEntry nextFile(ZipInputStream zipInputStream) throws IOException {
                 ZipEntry entry;
-                while ((entry=zipInputStream.getNextEntry())!=null) {
+                while ((entry = zipInputStream.getNextEntry()) != null) {
                     if (!entry.isDirectory()) break;
                 }
                 return entry;
@@ -170,11 +168,9 @@ public class ZippedSpectraParser extends GenericParser<Ms2Experiment> {
                 try {
                     if (reader != null) {
                         reader.close();
-                        reader=null;
+                        reader = null;
                     }
-                } catch (IOException e) {
-
-                }
+                } catch (IOException ignored) {}
             }
 
             @Override
@@ -186,13 +182,13 @@ public class ZippedSpectraParser extends GenericParser<Ms2Experiment> {
     }
 
     @Override
-    public <S extends Ms2Experiment> CloseableIterator<S> parseFromFileIterator(File file) throws IOException {
+    public CloseableIterator<Ms2Experiment> parseFromFileIterator(File file) throws IOException {
         final InputStream input = new FileInputStream(file);
         return parseIterator(input, file.toURI());
     }
 
     @Override
-    public <S extends Ms2Experiment> S parse(BufferedReader reader, URI source) throws IOException {
+    public Ms2Experiment parse(BufferedReader reader, URI source) throws IOException {
         String file = source.getPath();
         if (file.endsWith(".zip")){
             file = file.substring(0, file.length()-4);
@@ -203,46 +199,37 @@ public class ZippedSpectraParser extends GenericParser<Ms2Experiment> {
 
     /**
      * not supported for zipped files
-     * @param input
-     * @param <S>
-     * @return
-     * @throws IOException
      */
     @Override
-    public <S extends Ms2Experiment> S parse(InputStream input) throws IOException {
+    public Ms2Experiment parse(InputStream input) throws IOException {
         throw new UnsupportedOperationException("this method is not supported for zipped files");
     }
 
     /**
      * not supported for zipped files
-     * @param r
-     * @param source
-     * @param <S>
-     * @return
-     * @throws IOException
      */
     @Override
-    public <S extends Ms2Experiment> CloseableIterator<S> parseIterator(BufferedReader r, URI source) throws IOException {
+    public CloseableIterator<Ms2Experiment> parseIterator(BufferedReader r, URI source) {
         throw new UnsupportedOperationException("this method is not supported for zipped files");
     }
 
     @Override
-    public <S extends Ms2Experiment> S parse(BufferedReader reader) throws IOException {
+    public Ms2Experiment parse(BufferedReader reader) throws IOException {
         throw new UnsupportedOperationException("this method is not supported for zipped files");
     }
 
     @Override
-    public <S extends Ms2Experiment> CloseableIterator<S> parseIterator(InputStream input) throws IOException {
+    public CloseableIterator<Ms2Experiment> parseIterator(InputStream input) {
         throw new UnsupportedOperationException("this method is not supported for zipped files");
     }
 
     @Override
-    public <S extends Ms2Experiment> CloseableIterator<S> parseIterator(BufferedReader input) throws IOException {
+    public CloseableIterator<Ms2Experiment> parseIterator(BufferedReader input) {
         throw new UnsupportedOperationException("this method is not supported for zipped files");
     }
 
     @Override
-    public <S extends Ms2Experiment> S parseFile(File file) throws IOException {
+    public Ms2Experiment parseFile(File file) {
         throw new UnsupportedOperationException("this method is not supported for zipped files");
     }
 }

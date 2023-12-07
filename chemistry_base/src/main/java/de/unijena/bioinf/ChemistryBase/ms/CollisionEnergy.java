@@ -111,7 +111,7 @@ public class CollisionEnergy {
     }
 
     private static final String[] PREFIXES = new String[]{"ramp", "ce"};
-    private static final String[] SUFFIXES = new String[]{"ev", "(nce)", "nce", "cid", "hcd", "v", "(nominal)"};
+    private static final String[] SUFFIXES = new String[]{"ev", "(nce)", "nce", "cid", "hcd", "v", "(nominal)", "evft-ms", "evft-msii"};
 
     public static CollisionEnergy fromString(String value) {
         value = value.trim().toLowerCase().replaceAll("\\s+", "");
