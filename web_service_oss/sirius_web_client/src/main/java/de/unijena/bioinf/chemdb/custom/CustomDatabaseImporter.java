@@ -385,7 +385,7 @@ public class CustomDatabaseImporter {
     }
 
     private void mergeAndWriteCompoundsNoSQL(MolecularFormula key, final Collection<FingerprintCandidate> value, NoSQLCustomDatabase<?, ?> database) throws IOException {
-        final List<FingerprintCandidateWrapper> alreadyExisting = database.database.getStorage().findStr(new Filter().eq("formula", key.toString()), FingerprintCandidateWrapper.class, "candidate").toList();
+        final List<FingerprintCandidateWrapper> alreadyExisting = database.database.getStorage().findStr(new Filter().eq("formula", key.toString()), FingerprintCandidateWrapper.class, "fingerprint").toList();
         Map<String, FingerprintCandidateWrapper> alreadyExistingMap = new HashMap<>();
         alreadyExisting.forEach(fcw -> alreadyExistingMap.put(fcw.getCandidate().getInchiKey2D(), fcw));
 
