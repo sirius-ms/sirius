@@ -53,8 +53,6 @@ public class DatabaseDialog extends JDialog {
     protected List<CustomDatabase> customDatabases;
 
     protected DatabaseView dbView;
-    JButton deleteDB, editDB, addCustomDb;
-
 
     public DatabaseDialog(final Frame owner) {
         super(owner, true);
@@ -68,9 +66,9 @@ public class DatabaseDialog extends JDialog {
         dbList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         dbView = new DatabaseView();
 
-        addCustomDb = Buttons.getAddButton16("Create custom Database");
-        deleteDB = Buttons.getRemoveButton16("Delete Custom Database");
-        editDB = Buttons.getEditButton16("Edit Custom Database");
+        JButton addCustomDb = Buttons.getAddButton16("Create custom Database");
+        JButton deleteDB = Buttons.getRemoveButton16("Delete Custom Database");
+        JButton editDB = Buttons.getEditButton16("Edit Custom Database");
 
         loadDatabaseList();
 
