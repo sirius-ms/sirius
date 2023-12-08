@@ -46,13 +46,13 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         dbLocationField = new FileChooserPanel(dbDirectory, JFileChooser.DIRECTORIES_ONLY);
         smalls.addNamed("DB location", dbLocationField);
         parameterBindings.put("import", this::getDbFilePath);
+        validDbDirectory = !dbDirectory.isEmpty();
 
         if (db != null) {
             dbNameField.setText(db.name());
             dbNameField.setEnabled(false);
             dbLocationField.setEnabled(false);
             validDbName = true;
-            validDbDirectory = true;
         } else {
             dbNameField.setPlaceholder("my_database" +  CustomDatabaseFactory.NOSQL_SUFFIX);
         }
