@@ -231,7 +231,7 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
     @Override
     public void updateAllFingerprints(Consumer<FingerprintCandidate> updater) throws ChemicalDatabaseException {
         try {
-            Iterables.partition(this.storage.findAll(FingerprintCandidateWrapper.class, "candidate"), 50).forEach(chunk -> {
+            Iterables.partition(this.storage.findAll(FingerprintCandidateWrapper.class, "fingerprint"), 50).forEach(chunk -> {
                 List<FingerprintCandidateWrapper> updated = chunk.stream().peek(wrapper -> updater.accept(wrapper.getFingerprintCandidate())).toList();
                 try {
                     this.storage.upsertAll(updated);
