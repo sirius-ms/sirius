@@ -26,7 +26,10 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
 
     public final FileChooserPanel dbLocationField;
 
-    JSpinner bufferSize;
+    private boolean validDbName;
+    private boolean validDbDirectory;
+
+    private Runnable validityChangeListener;
 
     public DatabaseImportConfigPanel(@Nullable CustomDatabase db, Set<String> existingNames) {
         super(CustomDBOptions.class);
@@ -35,7 +38,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         add(new TextHeaderBoxPanel("Parameters", smalls));
 
         dbNameField = new PlaceholderTextField("");
-        smalls.addNamed("DB Name", dbNameField);
+        smalls.addNamed("DB name", dbNameField);
 
         String dbDirectory = db != null ? Path.of(db.storageLocation()).getParent().toString()
                 : PropertyManager.getProperty(SiriusProperties.DEFAULT_SAVE_DIR_PATH, null, "");
@@ -48,6 +51,8 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
             dbNameField.setText(db.name());
             dbNameField.setEnabled(false);
             dbLocationField.setEnabled(false);
+            validDbName = true;
+            validDbDirectory = true;
         } else {
             dbNameField.setPlaceholder("my_database" +  CustomDatabaseFactory.NOSQL_SUFFIX);
         }
@@ -68,16 +73,39 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
             @Override
             public String getErrorMessage(JComponent input) {
                 String name = ((JTextField)input).getText();
-                if (existingNames.contains(name)
+                String error = null;
+                if (name == null || name.isBlank()) {
+                    error = "DB name missing";
+                } else if (existingNames.contains(name)
                         || (!name.endsWith(CustomDatabaseFactory.NOSQL_SUFFIX) && existingNames.contains(name + CustomDatabaseFactory.NOSQL_SUFFIX))) {
-                    return "This name is already in use";
+                    error = "This name is already in use";
                 }
-                return null;
+                if (validDbName != (error == null)) {
+                    validDbName = error == null;
+                    fireValidityChange();
+                }
+                return error;
+            }
+        });
+
+        dbLocationField.field.setInputVerifier(new ErrorReportingInputVerifier() {
+            @Override
+            public String getErrorMessage(JComponent input) {
+                String text = ((JTextField)input).getText();
+                String error = null;
+                if (text == null || text.isBlank()) {
+                    error = "DB location not set";
+                }
+                if (validDbDirectory != (error == null)) {
+                    validDbDirectory = error == null;
+                    fireValidityChange();
+                }
+                return error;
             }
         });
 
         final String buf = "buffer";
-        bufferSize = makeGenericOptionSpinner(buf,
+        JSpinner bufferSize = makeGenericOptionSpinner(buf,
                 getOptionDefaultByName(buf).map(Integer::parseInt).orElse(1),
                 1, Integer.MAX_VALUE, 1,
                 (v) -> String.valueOf(v.getNumber().intValue()));
@@ -86,5 +114,19 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
 
     public String getDbFilePath() {
         return Path.of(dbLocationField.getFilePath(), dbNameField.getText()).toString();
+    }
+
+    public boolean validDbLocation() {
+        return validDbName && validDbDirectory;
+    }
+
+    public void onValidityChange(Runnable listener) {
+        validityChangeListener = listener;
+    }
+
+    private void fireValidityChange() {
+        if (validityChangeListener != null) {
+            validityChangeListener.run();
+        }
     }
 }
