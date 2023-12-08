@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 import de.unijena.bioinf.chemdb.DataSources;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
+import de.unijena.bioinf.chemdb.custom.CustomDatabaseFactory;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
@@ -34,10 +35,13 @@ import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileFilter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -69,6 +73,7 @@ public class DatabaseDialog extends JDialog {
         JButton addCustomDb = Buttons.getAddButton16("Create custom Database");
         JButton deleteDB = Buttons.getRemoveButton16("Delete Custom Database");
         JButton editDB = Buttons.getEditButton16("Edit Custom Database");
+        JButton openDB = Buttons.getFileChooserButton16("Add existing Database");
 
         loadDatabaseList();
 
@@ -92,6 +97,7 @@ public class DatabaseDialog extends JDialog {
         but.add(Box.createHorizontalGlue());
         but.add(deleteDB);
         but.add(editDB);
+        but.add(openDB);
         but.add(addCustomDb);
         editDB.setEnabled(false);
         deleteDB.setEnabled(false);
@@ -148,6 +154,27 @@ public class DatabaseDialog extends JDialog {
         editDB.addActionListener(editSelectedDb);
         deleteDB.addActionListener(deleteSelectedDb);
 
+        JFileChooser openDbFileChooser = new JFileChooser();
+        openDbFileChooser.setFileFilter(new CustomDbFileFilter());
+        openDB.addActionListener(e -> {
+            if (openDbFileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+                File file = openDbFileChooser.getSelectedFile();
+                if (customDatabases.stream().anyMatch(db -> db.storageLocation().equals(file.toString()))) {
+                    JOptionPane.showMessageDialog(this, "Database already available in SIRIUS.", "" , JOptionPane.ERROR_MESSAGE);
+                } else if (customDatabases.stream().anyMatch(db -> db.name().equals(file.getName()))) {
+                    JOptionPane.showMessageDialog(this, "A different database with the same name already exists.", "" , JOptionPane.ERROR_MESSAGE);
+                } else {
+                    try {
+                        CustomDatabase newDb = SearchableDatabases.loadCustomDatabaseFromLocation(file.getAbsolutePath(), true);
+                        CustomDBOptions.addDBToPropertiesIfNotExist(newDb);
+                        whenCustomDbIsAdded(newDb.storageLocation());
+                    } catch (IOException ex) {
+                        JOptionPane.showMessageDialog(this, ex.getMessage(), "" , JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+        });
+
         String editDbActionName = "editCurrentDb";
         dbList.getInputMap().put(KeyStroke.getKeyStroke("ENTER"), editDbActionName);
         dbList.getInputMap().put(KeyStroke.getKeyStroke("SPACE"),editDbActionName);
@@ -186,9 +213,9 @@ public class DatabaseDialog extends JDialog {
         dbList.setListData(customDatabases.toArray(new CustomDatabase[0]));
     }
 
-    protected void whenCustomDbIsAdded(final String dbName) {
+    protected void whenCustomDbIsAdded(final String dbLocation) {
         loadDatabaseList();
-        CustomDatabase newDb = customDatabases.stream().filter(db -> db.storageLocation().equals(dbName)).findFirst().orElseThrow();
+        CustomDatabase newDb = customDatabases.stream().filter(db -> db.storageLocation().equals(dbLocation)).findFirst().orElseThrow();
         dbList.setSelectedValue(newDb, true);
         dbList.requestFocusInWindow();
     }
@@ -226,6 +253,19 @@ public class DatabaseDialog extends JDialog {
                 content.setText("Empty custom database.");
                 content.setToolTipText(null);
             }
+        }
+    }
+
+    public static class CustomDbFileFilter extends FileFilter {
+
+        @Override
+        public boolean accept(File f) {
+            return f.isDirectory() || f.getName().endsWith(CustomDatabaseFactory.NOSQL_SUFFIX);
+        }
+
+        @Override
+        public String getDescription() {
+            return "SIRIUS custom database files";
         }
     }
 }
