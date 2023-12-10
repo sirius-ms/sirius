@@ -60,9 +60,4 @@ public class JsonExperimentParserDispatcher implements Parser<Ms2Experiment> {
         log.warn("Could not parse an experiment from json " + source);
         return null;
     }
-
-    @Override
-    public boolean isClosingAfterParsing() {
-        return true;
-    }
 }
