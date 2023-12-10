@@ -41,9 +41,4 @@ public interface Parser<T> {
      * @throws IOException if an IO error happens
      */
     T parse(BufferedReader reader, URI source) throws IOException;
-
-    default boolean isClosingAfterParsing() {
-        return false;
-    }
-
 }
