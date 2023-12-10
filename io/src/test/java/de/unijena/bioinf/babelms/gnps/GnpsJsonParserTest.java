@@ -82,7 +82,7 @@ class GnpsJsonParserTest {
 
         assertEquals(3, experiments.size());
         assertEquals(1.0, experiments.get(0).getIonMass());
-        assertEquals(1.0, experiments.get(0).getIonMass());
-        assertEquals(1.0, experiments.get(0).getIonMass());
+        assertEquals(2.0, experiments.get(1).getIonMass());
+        assertEquals(3.0, experiments.get(2).getIonMass());
     }
 }
