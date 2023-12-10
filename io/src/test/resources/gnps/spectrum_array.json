@@ -1,0 +1,23 @@
+[
+  {
+    "n_peaks": 1,
+    "peaks": [[1,1]],
+    "precursor_charge": 0,
+    "precursor_mz": 1,
+    "splash": ""
+  },
+  {
+    "n_peaks": 1,
+    "peaks": [[1,1]],
+    "precursor_charge": 0,
+    "precursor_mz": 2,
+    "splash": ""
+  },
+  {
+    "n_peaks": 1,
+    "peaks": [[1,1]],
+    "precursor_charge": 0,
+    "precursor_mz": 3,
+    "splash": ""
+  }
+]
