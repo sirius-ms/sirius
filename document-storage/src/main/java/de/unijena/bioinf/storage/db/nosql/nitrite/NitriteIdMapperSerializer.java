@@ -54,7 +54,7 @@ public class NitriteIdMapperSerializer<T> extends JsonSerializer<T> {
 
     protected final boolean force;
 
-    public NitriteIdMapperSerializer(Class<T> clazz, String idField, boolean forceGenerateID, NitriteDatabase database) throws NoSuchFieldException {
+    public NitriteIdMapperSerializer(Class<T> clazz, String idField, boolean forceGenerateID, NitriteDatabase database) {
         super();
         this.database = database;
         this.jsonSerializer = null;
@@ -64,7 +64,7 @@ public class NitriteIdMapperSerializer<T> extends JsonSerializer<T> {
         this.idField.setAccessible(true);
     }
 
-    public NitriteIdMapperSerializer(Class<T> clazz, String idField, boolean forceGenerateID, JsonSerializer<T> jsonSerializer) throws NoSuchFieldException {
+    public NitriteIdMapperSerializer(Class<T> clazz, String idField, boolean forceGenerateID, JsonSerializer<T> jsonSerializer) {
         super();
         this.database = null;
         this.jsonSerializer = jsonSerializer;
@@ -88,13 +88,13 @@ public class NitriteIdMapperSerializer<T> extends JsonSerializer<T> {
             long idValue;
             if (idField.getType().isPrimitive()) {
                 idValue = idField.getLong(value);
-                if (idValue < 0 || force) {
+                if (idValue <= 0 || force) {
                     idValue = NitriteId.newId().getIdValue();
                     idField.setLong(value, idValue);
                 }
             } else {
-                idValue = (Long) idField.get(value);
-                if (idValue < 0 || force) {
+                idValue = idField.get(value) != null? (Long) idField.get(value) : -1L;
+                if (idValue <= 0 || force) {
                     idValue = NitriteId.newId().getIdValue();
                     idField.set(value, idValue);
                 }
