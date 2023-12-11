@@ -74,7 +74,7 @@ public class Metadata {
             String idField,
             Index... indices
     ) throws IOException {
-        return addRepository(clazz, idField, true, indices);
+        return addRepository(clazz, idField, false, indices);
     }
 
     public <T> Metadata addRepository(
