@@ -34,8 +34,10 @@ import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoade
 import de.unijena.bioinf.ms.frontend.subtools.gui.GuiAppOptions;
 import de.unijena.bioinf.ms.frontend.subtools.middleware.MiddlewareAppOptions;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
+import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceProviderImpl;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
+import de.unijena.bioinf.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.rest.ProxyManager;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
@@ -115,6 +117,13 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                     app.addListeners(new ApplicationPidFileWriter(Workspace.WORKSPACE.resolve("sirius.pid").toFile()));
                     app.addListeners(new WebServerPortFileWriter(Workspace.WORKSPACE.resolve("sirius.port").toFile()));
                     ConfigurableApplicationContext appContext = app.run(args);
+
+                    //add default project to project service
+                    //todo make generic that it works with arbitrary provider ore remove if not needed...
+                    final SiriusProjectSpace ps = rootOptions.getProjectSpace().projectSpace();
+                    appContext.getBean("projectsProvider", SiriusProjectSpaceProviderImpl.class)
+                            .addProjectSpace(ps.getLocation().getFileName().toString(), ps);
+
                     measureTime("Workflow DONE!");
                     System.err.println("SIRIUS Service started successfully!");
                 } else {
