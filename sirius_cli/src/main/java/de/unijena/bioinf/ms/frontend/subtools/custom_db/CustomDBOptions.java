@@ -21,8 +21,6 @@ package de.unijena.bioinf.ms.frontend.subtools.custom_db;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
-import de.unijena.bioinf.chemdb.DataSource;
-import de.unijena.bioinf.chemdb.DataSources;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.chemdb.custom.CustomDatabaseFactory;
@@ -78,14 +76,9 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
     public static class Import {
         @Option(names = "--import", required = true,
                 description = {"Location of the custom database to import into.",
-                        "If no input data is given (global --input) the database will just be added to SIRIUS",
-                        "The added db will also be available in the GUI",
-//                        "If just a name is given the db will be stored locally in '<SIRIUS_WORKSPACE>/csi_fingerid_cache/custom'.",
-                        "A location can either be:",
-                        "  1. An absolute local path to a directory",
-                        "  2. An absolute local path to a file (file name must end with '.db' !)",
-                        "  3. An 's3' cloud storage location (experimental), e.g. 's3://my-bucket"
-//                       , "The Location of the SIRIUS workspace can be set globally by (--workspace)."
+                        "An absolute local path to a new database file file to be created (file name must end with .db)",
+                        "If no input data is given (--input), the database will just be added to SIRIUS",
+                        "The added db will also be available in the GUI."
                 }, order = 201)
         String location = null;
 
@@ -93,16 +86,6 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 description = {"Maximum number of downloaded/computed compounds to keep in memory before writing them to disk (into the db directory). Can be set higher when importing large files on a fast computer."},
                 order = 210)
         public int writeBuffer;
-
-        @Option(names = {"--derive-from"}, split = ",",
-                description = {"The resulting custom-db will be the Union of the given parent database and the imported structures."},
-                order = 220)
-        public EnumSet<DataSource> parentDBs = EnumSet.noneOf(DataSource.class);
-
-
-        @Option(names = {"--compression", "-c"}, description = {"Specify compression mode."}, defaultValue = "GZIP",
-                order = 230)
-        public Compressible.Compression compression;
     }
 
     public static class Remove {
@@ -164,10 +147,10 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
 
                 checkForInterruption();
 
-                CustomDatabaseSettings settings = new CustomDatabaseSettings(!mode.importParas.parentDBs.isEmpty(), DataSources.getDBFlag(mode.importParas.parentDBs),
+                CustomDatabaseSettings settings = new CustomDatabaseSettings(false, 0,
                         List.of(ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion().getUsedFingerprints()), VersionsInfo.CUSTOM_DATABASE_SCHEMA, null);
 
-                final CustomDatabase db = CustomDatabaseFactory.createOrOpen(mode.importParas.location, mode.importParas.compression, settings);
+                final CustomDatabase db = CustomDatabaseFactory.createOrOpen(mode.importParas.location, Compressible.Compression.NONE, settings);
                 addDBToPropertiesIfNotExist(db);
                 logInfo("Database added to SIRIUS. Use 'structure --db=\"" + db.storageLocation() + "\"' to search in this database.");
 
@@ -257,13 +240,9 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
         System.out.println("Number of Formulas: " + s.getStatistics().getFormulas());
         System.out.println("Number of Structures: " + s.getStatistics().getCompounds());
         System.out.println("Number of Reference spectra: " + s.getStatistics().getSpectra());
-        System.out.println("Is inherited: " + s.isInheritance());
-        if (s.isInheritance())
-            System.out.println("Inherited DBs: [ '" + String.join("','", s.getInheritedDBs()) + "' ]");
         if (mode.showParas.details) {
             System.out.println("Version: " + db.getDatabaseVersion());
             System.out.println("Schema Version: " + s.getSchemaVersion());
-            System.out.println("Compression: " + db.compression().name());
             System.out.println("FilterFlag: " + db.getFilterFlag());
             System.out.println("Used Fingerprints: [ '" + s.getFingerprintVersion().stream().map(Enum::name).collect(Collectors.joining("','")) + "' ]");
         }

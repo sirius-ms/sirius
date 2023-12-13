@@ -22,12 +22,10 @@ package de.unijena.bioinf.ms.middleware;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.compute.SiriusProjectSpaceComputeService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceProviderImpl;
-import de.unijena.bioinf.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.webapi.WebAPI;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -53,10 +51,8 @@ public class SiriusContext{
 
     @Bean
     @DependsOn({"jobManager"})
-    public ProjectsProvider<?> projectsProvider(CLIRootOptions<?,?> cliRootOptions) {
+    public ProjectsProvider<?> projectsProvider() {
         SiriusProjectSpaceProviderImpl projectsProvider = new SiriusProjectSpaceProviderImpl();
-        final SiriusProjectSpace ps = cliRootOptions.getProjectSpace().projectSpace();
-        projectsProvider.addProjectSpace(ps.getLocation().getFileName().toString(), ps);
         return projectsProvider;
     }
 
@@ -69,10 +65,5 @@ public class SiriusContext{
     @Bean(destroyMethod = "shutDownNowAllInstances")
     public JobManager jobManager() {
         return SiriusJobs.getGlobalJobManager();
-    }
-
-    @Bean
-    public CLIRootOptions<?,?> cliRootOptions() {
-        return SiriusMiddlewareApplication.getRootOptions();
     }
 }
