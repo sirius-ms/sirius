@@ -136,6 +136,7 @@ Class | Method | HTTP request | Description
 *JobsApi* | [**getJobConfig**](docs/JobsApi.md#getJobConfig) | **GET** /api/job-configs/{name} | Request job configuration with given name.
 *JobsApi* | [**getJobConfigs**](docs/JobsApi.md#getJobConfigs) | **GET** /api/job-configs | Request all available job configurations
 *JobsApi* | [**getJobs**](docs/JobsApi.md#getJobs) | **GET** /api/projects/{projectId}/jobs | Get job information and its current state and progress (if available).
+*JobsApi* | [**hasJobs**](docs/JobsApi.md#hasJobs) | **GET** /api/projects/{projectId}/has-jobs | 
 *JobsApi* | [**postJobConfig**](docs/JobsApi.md#postJobConfig) | **POST** /api/job-configs/{name} | Add new job configuration with given name.
 *JobsApi* | [**startCommand**](docs/JobsApi.md#startCommand) | **POST** /api/{projectId}/jobs/run-command | Start computation for given command and input.
 *JobsApi* | [**startImportFromPathJob**](docs/JobsApi.md#startImportFromPathJob) | **POST** /api/{projectId}/jobs/import-from-local-path | Import ms/ms data in given format from local filesystem into the specified project
@@ -153,6 +154,9 @@ Class | Method | HTTP request | Description
 *LoginAndAccountApi* | [**signUp**](docs/LoginAndAccountApi.md#signUp) | **GET** /api/account/signUp | Open SignUp window in system browser and return signUp link.
 *ProjectsApi* | [**closeProjectSpace**](docs/ProjectsApi.md#closeProjectSpace) | **DELETE** /api/projects/{projectId} | Close project-space and remove it from application.
 *ProjectsApi* | [**createProjectSpace**](docs/ProjectsApi.md#createProjectSpace) | **POST** /api/projects/{projectId} | Create and open a new project-space at given location and make it accessible via the given projectId.
+*ProjectsApi* | [**getCanopusClassyFireData**](docs/ProjectsApi.md#getCanopusClassyFireData) | **GET** /api/projects/{projectId}/cf-data | Get CANOPUS prediction vector definition for ClassyFire classes
+*ProjectsApi* | [**getCanopusNpcData**](docs/ProjectsApi.md#getCanopusNpcData) | **GET** /api/projects/{projectId}/npc-data | Get CANOPUS prediction vector definition for NPC classes
+*ProjectsApi* | [**getFingerIdData**](docs/ProjectsApi.md#getFingerIdData) | **GET** /api/projects/{projectId}/fingerid-data | Get CSI:FingerID fingerprint (prediction vector) definition
 *ProjectsApi* | [**getProjectSpace**](docs/ProjectsApi.md#getProjectSpace) | **GET** /api/projects/{projectId} | Get project space info by its projectId.
 *ProjectsApi* | [**getProjectSpaces**](docs/ProjectsApi.md#getProjectSpaces) | **GET** /api/projects | List opened project spaces.
 *ProjectsApi* | [**openProjectSpace**](docs/ProjectsApi.md#openProjectSpace) | **PUT** /api/projects/{projectId} | Open an existing project-space and make it accessible via the given projectId.

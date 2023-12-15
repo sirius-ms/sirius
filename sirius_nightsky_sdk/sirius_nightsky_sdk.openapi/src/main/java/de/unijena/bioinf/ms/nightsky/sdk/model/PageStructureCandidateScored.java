@@ -36,13 +36,13 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   PageStructureCandidateScored.JSON_PROPERTY_TOTAL_PAGES,
   PageStructureCandidateScored.JSON_PROPERTY_TOTAL_ELEMENTS,
   PageStructureCandidateScored.JSON_PROPERTY_LAST,
-  PageStructureCandidateScored.JSON_PROPERTY_SORT,
   PageStructureCandidateScored.JSON_PROPERTY_FIRST,
+  PageStructureCandidateScored.JSON_PROPERTY_SORT,
   PageStructureCandidateScored.JSON_PROPERTY_SIZE,
   PageStructureCandidateScored.JSON_PROPERTY_CONTENT,
   PageStructureCandidateScored.JSON_PROPERTY_NUMBER,
-  PageStructureCandidateScored.JSON_PROPERTY_NUMBER_OF_ELEMENTS,
   PageStructureCandidateScored.JSON_PROPERTY_PAGEABLE,
+  PageStructureCandidateScored.JSON_PROPERTY_NUMBER_OF_ELEMENTS,
   PageStructureCandidateScored.JSON_PROPERTY_EMPTY
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
@@ -56,11 +56,11 @@ public class PageStructureCandidateScored {
   public static final String JSON_PROPERTY_LAST = "last";
   private Boolean last;
 
-  public static final String JSON_PROPERTY_SORT = "sort";
-  private SortObject sort;
-
   public static final String JSON_PROPERTY_FIRST = "first";
   private Boolean first;
+
+  public static final String JSON_PROPERTY_SORT = "sort";
+  private SortObject sort;
 
   public static final String JSON_PROPERTY_SIZE = "size";
   private Integer size;
@@ -71,11 +71,11 @@ public class PageStructureCandidateScored {
   public static final String JSON_PROPERTY_NUMBER = "number";
   private Integer number;
 
-  public static final String JSON_PROPERTY_NUMBER_OF_ELEMENTS = "numberOfElements";
-  private Integer numberOfElements;
-
   public static final String JSON_PROPERTY_PAGEABLE = "pageable";
   private PageableObject pageable;
+
+  public static final String JSON_PROPERTY_NUMBER_OF_ELEMENTS = "numberOfElements";
+  private Integer numberOfElements;
 
   public static final String JSON_PROPERTY_EMPTY = "empty";
   private Boolean empty;
@@ -161,32 +161,6 @@ public class PageStructureCandidateScored {
   }
 
 
-  public PageStructureCandidateScored sort(SortObject sort) {
-    
-    this.sort = sort;
-    return this;
-  }
-
-   /**
-   * Get sort
-   * @return sort
-  **/
-  @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SORT)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public SortObject getSort() {
-    return sort;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_SORT)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSort(SortObject sort) {
-    this.sort = sort;
-  }
-
-
   public PageStructureCandidateScored first(Boolean first) {
     
     this.first = first;
@@ -210,6 +184,32 @@ public class PageStructureCandidateScored {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setFirst(Boolean first) {
     this.first = first;
+  }
+
+
+  public PageStructureCandidateScored sort(SortObject sort) {
+    
+    this.sort = sort;
+    return this;
+  }
+
+   /**
+   * Get sort
+   * @return sort
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_SORT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public SortObject getSort() {
+    return sort;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_SORT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setSort(SortObject sort) {
+    this.sort = sort;
   }
 
 
@@ -299,32 +299,6 @@ public class PageStructureCandidateScored {
   }
 
 
-  public PageStructureCandidateScored numberOfElements(Integer numberOfElements) {
-    
-    this.numberOfElements = numberOfElements;
-    return this;
-  }
-
-   /**
-   * Get numberOfElements
-   * @return numberOfElements
-  **/
-  @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NUMBER_OF_ELEMENTS)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Integer getNumberOfElements() {
-    return numberOfElements;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_NUMBER_OF_ELEMENTS)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setNumberOfElements(Integer numberOfElements) {
-    this.numberOfElements = numberOfElements;
-  }
-
-
   public PageStructureCandidateScored pageable(PageableObject pageable) {
     
     this.pageable = pageable;
@@ -348,6 +322,32 @@ public class PageStructureCandidateScored {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setPageable(PageableObject pageable) {
     this.pageable = pageable;
+  }
+
+
+  public PageStructureCandidateScored numberOfElements(Integer numberOfElements) {
+    
+    this.numberOfElements = numberOfElements;
+    return this;
+  }
+
+   /**
+   * Get numberOfElements
+   * @return numberOfElements
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_NUMBER_OF_ELEMENTS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Integer getNumberOfElements() {
+    return numberOfElements;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_NUMBER_OF_ELEMENTS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setNumberOfElements(Integer numberOfElements) {
+    this.numberOfElements = numberOfElements;
   }
 
 
@@ -388,19 +388,19 @@ public class PageStructureCandidateScored {
     return Objects.equals(this.totalPages, pageStructureCandidateScored.totalPages) &&
         Objects.equals(this.totalElements, pageStructureCandidateScored.totalElements) &&
         Objects.equals(this.last, pageStructureCandidateScored.last) &&
-        Objects.equals(this.sort, pageStructureCandidateScored.sort) &&
         Objects.equals(this.first, pageStructureCandidateScored.first) &&
+        Objects.equals(this.sort, pageStructureCandidateScored.sort) &&
         Objects.equals(this.size, pageStructureCandidateScored.size) &&
         Objects.equals(this.content, pageStructureCandidateScored.content) &&
         Objects.equals(this.number, pageStructureCandidateScored.number) &&
-        Objects.equals(this.numberOfElements, pageStructureCandidateScored.numberOfElements) &&
         Objects.equals(this.pageable, pageStructureCandidateScored.pageable) &&
+        Objects.equals(this.numberOfElements, pageStructureCandidateScored.numberOfElements) &&
         Objects.equals(this.empty, pageStructureCandidateScored.empty);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(totalPages, totalElements, last, sort, first, size, content, number, numberOfElements, pageable, empty);
+    return Objects.hash(totalPages, totalElements, last, first, sort, size, content, number, pageable, numberOfElements, empty);
   }
 
   @Override
@@ -410,13 +410,13 @@ public class PageStructureCandidateScored {
     sb.append("    totalPages: ").append(toIndentedString(totalPages)).append("\n");
     sb.append("    totalElements: ").append(toIndentedString(totalElements)).append("\n");
     sb.append("    last: ").append(toIndentedString(last)).append("\n");
-    sb.append("    sort: ").append(toIndentedString(sort)).append("\n");
     sb.append("    first: ").append(toIndentedString(first)).append("\n");
+    sb.append("    sort: ").append(toIndentedString(sort)).append("\n");
     sb.append("    size: ").append(toIndentedString(size)).append("\n");
     sb.append("    content: ").append(toIndentedString(content)).append("\n");
     sb.append("    number: ").append(toIndentedString(number)).append("\n");
-    sb.append("    numberOfElements: ").append(toIndentedString(numberOfElements)).append("\n");
     sb.append("    pageable: ").append(toIndentedString(pageable)).append("\n");
+    sb.append("    numberOfElements: ").append(toIndentedString(numberOfElements)).append("\n");
     sb.append("    empty: ").append(toIndentedString(empty)).append("\n");
     sb.append("}");
     return sb.toString();

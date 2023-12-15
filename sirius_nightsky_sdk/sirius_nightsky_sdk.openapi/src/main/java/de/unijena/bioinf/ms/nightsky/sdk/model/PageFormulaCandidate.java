@@ -36,13 +36,13 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   PageFormulaCandidate.JSON_PROPERTY_TOTAL_PAGES,
   PageFormulaCandidate.JSON_PROPERTY_TOTAL_ELEMENTS,
   PageFormulaCandidate.JSON_PROPERTY_LAST,
-  PageFormulaCandidate.JSON_PROPERTY_SORT,
   PageFormulaCandidate.JSON_PROPERTY_FIRST,
+  PageFormulaCandidate.JSON_PROPERTY_SORT,
   PageFormulaCandidate.JSON_PROPERTY_SIZE,
   PageFormulaCandidate.JSON_PROPERTY_CONTENT,
   PageFormulaCandidate.JSON_PROPERTY_NUMBER,
-  PageFormulaCandidate.JSON_PROPERTY_NUMBER_OF_ELEMENTS,
   PageFormulaCandidate.JSON_PROPERTY_PAGEABLE,
+  PageFormulaCandidate.JSON_PROPERTY_NUMBER_OF_ELEMENTS,
   PageFormulaCandidate.JSON_PROPERTY_EMPTY
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
@@ -56,11 +56,11 @@ public class PageFormulaCandidate {
   public static final String JSON_PROPERTY_LAST = "last";
   private Boolean last;
 
-  public static final String JSON_PROPERTY_SORT = "sort";
-  private SortObject sort;
-
   public static final String JSON_PROPERTY_FIRST = "first";
   private Boolean first;
+
+  public static final String JSON_PROPERTY_SORT = "sort";
+  private SortObject sort;
 
   public static final String JSON_PROPERTY_SIZE = "size";
   private Integer size;
@@ -71,11 +71,11 @@ public class PageFormulaCandidate {
   public static final String JSON_PROPERTY_NUMBER = "number";
   private Integer number;
 
-  public static final String JSON_PROPERTY_NUMBER_OF_ELEMENTS = "numberOfElements";
-  private Integer numberOfElements;
-
   public static final String JSON_PROPERTY_PAGEABLE = "pageable";
   private PageableObject pageable;
+
+  public static final String JSON_PROPERTY_NUMBER_OF_ELEMENTS = "numberOfElements";
+  private Integer numberOfElements;
 
   public static final String JSON_PROPERTY_EMPTY = "empty";
   private Boolean empty;
@@ -161,32 +161,6 @@ public class PageFormulaCandidate {
   }
 
 
-  public PageFormulaCandidate sort(SortObject sort) {
-    
-    this.sort = sort;
-    return this;
-  }
-
-   /**
-   * Get sort
-   * @return sort
-  **/
-  @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SORT)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public SortObject getSort() {
-    return sort;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_SORT)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSort(SortObject sort) {
-    this.sort = sort;
-  }
-
-
   public PageFormulaCandidate first(Boolean first) {
     
     this.first = first;
@@ -210,6 +184,32 @@ public class PageFormulaCandidate {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setFirst(Boolean first) {
     this.first = first;
+  }
+
+
+  public PageFormulaCandidate sort(SortObject sort) {
+    
+    this.sort = sort;
+    return this;
+  }
+
+   /**
+   * Get sort
+   * @return sort
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_SORT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public SortObject getSort() {
+    return sort;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_SORT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setSort(SortObject sort) {
+    this.sort = sort;
   }
 
 
@@ -299,32 +299,6 @@ public class PageFormulaCandidate {
   }
 
 
-  public PageFormulaCandidate numberOfElements(Integer numberOfElements) {
-    
-    this.numberOfElements = numberOfElements;
-    return this;
-  }
-
-   /**
-   * Get numberOfElements
-   * @return numberOfElements
-  **/
-  @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NUMBER_OF_ELEMENTS)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Integer getNumberOfElements() {
-    return numberOfElements;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_NUMBER_OF_ELEMENTS)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setNumberOfElements(Integer numberOfElements) {
-    this.numberOfElements = numberOfElements;
-  }
-
-
   public PageFormulaCandidate pageable(PageableObject pageable) {
     
     this.pageable = pageable;
@@ -348,6 +322,32 @@ public class PageFormulaCandidate {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setPageable(PageableObject pageable) {
     this.pageable = pageable;
+  }
+
+
+  public PageFormulaCandidate numberOfElements(Integer numberOfElements) {
+    
+    this.numberOfElements = numberOfElements;
+    return this;
+  }
+
+   /**
+   * Get numberOfElements
+   * @return numberOfElements
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_NUMBER_OF_ELEMENTS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Integer getNumberOfElements() {
+    return numberOfElements;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_NUMBER_OF_ELEMENTS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setNumberOfElements(Integer numberOfElements) {
+    this.numberOfElements = numberOfElements;
   }
 
 
@@ -388,19 +388,19 @@ public class PageFormulaCandidate {
     return Objects.equals(this.totalPages, pageFormulaCandidate.totalPages) &&
         Objects.equals(this.totalElements, pageFormulaCandidate.totalElements) &&
         Objects.equals(this.last, pageFormulaCandidate.last) &&
-        Objects.equals(this.sort, pageFormulaCandidate.sort) &&
         Objects.equals(this.first, pageFormulaCandidate.first) &&
+        Objects.equals(this.sort, pageFormulaCandidate.sort) &&
         Objects.equals(this.size, pageFormulaCandidate.size) &&
         Objects.equals(this.content, pageFormulaCandidate.content) &&
         Objects.equals(this.number, pageFormulaCandidate.number) &&
-        Objects.equals(this.numberOfElements, pageFormulaCandidate.numberOfElements) &&
         Objects.equals(this.pageable, pageFormulaCandidate.pageable) &&
+        Objects.equals(this.numberOfElements, pageFormulaCandidate.numberOfElements) &&
         Objects.equals(this.empty, pageFormulaCandidate.empty);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(totalPages, totalElements, last, sort, first, size, content, number, numberOfElements, pageable, empty);
+    return Objects.hash(totalPages, totalElements, last, first, sort, size, content, number, pageable, numberOfElements, empty);
   }
 
   @Override
@@ -410,13 +410,13 @@ public class PageFormulaCandidate {
     sb.append("    totalPages: ").append(toIndentedString(totalPages)).append("\n");
     sb.append("    totalElements: ").append(toIndentedString(totalElements)).append("\n");
     sb.append("    last: ").append(toIndentedString(last)).append("\n");
-    sb.append("    sort: ").append(toIndentedString(sort)).append("\n");
     sb.append("    first: ").append(toIndentedString(first)).append("\n");
+    sb.append("    sort: ").append(toIndentedString(sort)).append("\n");
     sb.append("    size: ").append(toIndentedString(size)).append("\n");
     sb.append("    content: ").append(toIndentedString(content)).append("\n");
     sb.append("    number: ").append(toIndentedString(number)).append("\n");
-    sb.append("    numberOfElements: ").append(toIndentedString(numberOfElements)).append("\n");
     sb.append("    pageable: ").append(toIndentedString(pageable)).append("\n");
+    sb.append("    numberOfElements: ").append(toIndentedString(numberOfElements)).append("\n");
     sb.append("    empty: ").append(toIndentedString(empty)).append("\n");
     sb.append("}");
     return sb.toString();

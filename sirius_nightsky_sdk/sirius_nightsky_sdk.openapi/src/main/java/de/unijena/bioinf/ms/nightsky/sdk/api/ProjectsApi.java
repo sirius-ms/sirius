@@ -212,6 +212,243 @@ public class ProjectsApi {
         return createProjectSpaceRequestCreation(projectId, pathToProject, pathToSourceProject, awaitImport);
     }
     /**
+     * Get CANOPUS prediction vector definition for ClassyFire classes
+     * 
+     * <p><b>200</b> - OK
+     * @param projectId The projectId parameter
+     * @param charge The charge parameter
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getCanopusClassyFireDataRequestCreation(String projectId, byte[] charge) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getCanopusClassyFireData", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'charge' is set
+        if (charge == null) {
+            throw new WebClientResponseException("Missing the required parameter 'charge' when calling getCanopusClassyFireData", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "charge", charge));
+
+        final String[] localVarAccepts = { };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/cf-data", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Get CANOPUS prediction vector definition for ClassyFire classes
+     * 
+     * <p><b>200</b> - OK
+     * @param projectId The projectId parameter
+     * @param charge The charge parameter
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public void getCanopusClassyFireData(String projectId, byte[] charge) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        getCanopusClassyFireDataRequestCreation(projectId, charge).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Get CANOPUS prediction vector definition for ClassyFire classes
+     * 
+     * <p><b>200</b> - OK
+     * @param projectId The projectId parameter
+     * @param charge The charge parameter
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<Void> getCanopusClassyFireDataWithHttpInfo(String projectId, byte[] charge) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return getCanopusClassyFireDataRequestCreation(projectId, charge).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Get CANOPUS prediction vector definition for ClassyFire classes
+     * 
+     * <p><b>200</b> - OK
+     * @param projectId The projectId parameter
+     * @param charge The charge parameter
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getCanopusClassyFireDataWithResponseSpec(String projectId, byte[] charge) throws WebClientResponseException {
+        return getCanopusClassyFireDataRequestCreation(projectId, charge);
+    }
+    /**
+     * Get CANOPUS prediction vector definition for NPC classes
+     * 
+     * <p><b>200</b> - OK
+     * @param projectId The projectId parameter
+     * @param charge The charge parameter
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getCanopusNpcDataRequestCreation(String projectId, byte[] charge) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getCanopusNpcData", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'charge' is set
+        if (charge == null) {
+            throw new WebClientResponseException("Missing the required parameter 'charge' when calling getCanopusNpcData", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "charge", charge));
+
+        final String[] localVarAccepts = { };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/npc-data", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Get CANOPUS prediction vector definition for NPC classes
+     * 
+     * <p><b>200</b> - OK
+     * @param projectId The projectId parameter
+     * @param charge The charge parameter
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public void getCanopusNpcData(String projectId, byte[] charge) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        getCanopusNpcDataRequestCreation(projectId, charge).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Get CANOPUS prediction vector definition for NPC classes
+     * 
+     * <p><b>200</b> - OK
+     * @param projectId The projectId parameter
+     * @param charge The charge parameter
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<Void> getCanopusNpcDataWithHttpInfo(String projectId, byte[] charge) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return getCanopusNpcDataRequestCreation(projectId, charge).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Get CANOPUS prediction vector definition for NPC classes
+     * 
+     * <p><b>200</b> - OK
+     * @param projectId The projectId parameter
+     * @param charge The charge parameter
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getCanopusNpcDataWithResponseSpec(String projectId, byte[] charge) throws WebClientResponseException {
+        return getCanopusNpcDataRequestCreation(projectId, charge);
+    }
+    /**
+     * Get CSI:FingerID fingerprint (prediction vector) definition
+     * 
+     * <p><b>200</b> - OK
+     * @param projectId The projectId parameter
+     * @param charge The charge parameter
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getFingerIdDataRequestCreation(String projectId, byte[] charge) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getFingerIdData", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'charge' is set
+        if (charge == null) {
+            throw new WebClientResponseException("Missing the required parameter 'charge' when calling getFingerIdData", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "charge", charge));
+
+        final String[] localVarAccepts = { };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/fingerid-data", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Get CSI:FingerID fingerprint (prediction vector) definition
+     * 
+     * <p><b>200</b> - OK
+     * @param projectId The projectId parameter
+     * @param charge The charge parameter
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public void getFingerIdData(String projectId, byte[] charge) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        getFingerIdDataRequestCreation(projectId, charge).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Get CSI:FingerID fingerprint (prediction vector) definition
+     * 
+     * <p><b>200</b> - OK
+     * @param projectId The projectId parameter
+     * @param charge The charge parameter
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<Void> getFingerIdDataWithHttpInfo(String projectId, byte[] charge) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return getFingerIdDataRequestCreation(projectId, charge).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Get CSI:FingerID fingerprint (prediction vector) definition
+     * 
+     * <p><b>200</b> - OK
+     * @param projectId The projectId parameter
+     * @param charge The charge parameter
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getFingerIdDataWithResponseSpec(String projectId, byte[] charge) throws WebClientResponseException {
+        return getFingerIdDataRequestCreation(projectId, charge);
+    }
+    /**
      * Get project space info by its projectId.
      * Get project space info by its projectId.
      * <p><b>200</b> - OK

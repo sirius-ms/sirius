@@ -12,6 +12,7 @@ All URIs are relative to *http://localhost:8080*
 | [**getJobConfig**](JobsApi.md#getJobConfig) | **GET** /api/job-configs/{name} | Request job configuration with given name. |
 | [**getJobConfigs**](JobsApi.md#getJobConfigs) | **GET** /api/job-configs | Request all available job configurations |
 | [**getJobs**](JobsApi.md#getJobs) | **GET** /api/projects/{projectId}/jobs | Get job information and its current state and progress (if available). |
+| [**hasJobs**](JobsApi.md#hasJobs) | **GET** /api/projects/{projectId}/has-jobs |  |
 | [**postJobConfig**](JobsApi.md#postJobConfig) | **POST** /api/job-configs/{name} | Add new job configuration with given name. |
 | [**startCommand**](JobsApi.md#startCommand) | **POST** /api/{projectId}/jobs/run-command | Start computation for given command and input. |
 | [**startImportFromPathJob**](JobsApi.md#startImportFromPathJob) | **POST** /api/{projectId}/jobs/import-from-local-path | Import ms/ms data in given format from local filesystem into the specified project |
@@ -553,6 +554,72 @@ public class Example {
 ### Return type
 
 [**PageJob**](PageJob.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
+
+
+## hasJobs
+
+> Boolean hasJobs(projectId, includeFinished)
+
+
+
+### Example
+
+```java
+// Import classes:
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
+import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
+import de.unijena.bioinf.ms.nightsky.sdk.api.JobsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8080");
+
+        JobsApi apiInstance = new JobsApi(defaultClient);
+        String projectId = "projectId_example"; // String | 
+        Boolean includeFinished = false; // Boolean | 
+        try {
+            Boolean result = apiInstance.hasJobs(projectId, includeFinished);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling JobsApi#hasJobs");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**|  | |
+| **includeFinished** | **Boolean**|  | [optional] [default to false] |
+
+### Return type
+
+**Boolean**
 
 ### Authorization
 

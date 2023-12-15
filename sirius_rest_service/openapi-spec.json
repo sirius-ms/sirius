@@ -1043,6 +1043,39 @@
         }
       }
     },
+    "/api/projects/{projectId}/npc-data": {
+      "get": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Get CANOPUS prediction vector definition for NPC classes",
+        "operationId": "getCanopusNpcData",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "charge",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "byte"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/jobs/{jobId}": {
       "get": {
         "tags": [
@@ -1149,6 +1182,78 @@
         "responses": {
           "202": {
             "description": "Accepted"
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/has-jobs": {
+      "get": {
+        "tags": [
+          "Jobs"
+        ],
+        "operationId": "hasJobs",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "includeFinished",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/fingerid-data": {
+      "get": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Get CSI:FingerID fingerprint (prediction vector) definition",
+        "operationId": "getFingerIdData",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "charge",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "byte"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
           }
         }
       }
@@ -1353,6 +1458,39 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/cf-data": {
+      "get": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Get CANOPUS prediction vector definition for ClassyFire classes",
+        "operationId": "getCanopusClassyFireData",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "charge",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "byte"
             }
           }
         ],
@@ -3033,11 +3171,11 @@
           "last": {
             "type": "boolean"
           },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
           "first": {
             "type": "boolean"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
           },
           "size": {
             "type": "integer",
@@ -3053,12 +3191,12 @@
             "type": "integer",
             "format": "int32"
           },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
           "numberOfElements": {
             "type": "integer",
             "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"
@@ -3120,11 +3258,11 @@
           "last": {
             "type": "boolean"
           },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
           "first": {
             "type": "boolean"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
           },
           "size": {
             "type": "integer",
@@ -3140,12 +3278,12 @@
             "type": "integer",
             "format": "int32"
           },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
           "numberOfElements": {
             "type": "integer",
             "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"
@@ -3779,11 +3917,11 @@
           "last": {
             "type": "boolean"
           },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
           "first": {
             "type": "boolean"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
           },
           "size": {
             "type": "integer",
@@ -3799,12 +3937,12 @@
             "type": "integer",
             "format": "int32"
           },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
           "numberOfElements": {
             "type": "integer",
             "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"
@@ -3927,11 +4065,11 @@
           "last": {
             "type": "boolean"
           },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
           "first": {
             "type": "boolean"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
           },
           "size": {
             "type": "integer",
@@ -3947,12 +4085,12 @@
             "type": "integer",
             "format": "int32"
           },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
           "numberOfElements": {
             "type": "integer",
             "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"
@@ -3984,11 +4122,11 @@
           "last": {
             "type": "boolean"
           },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
           "first": {
             "type": "boolean"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
           },
           "size": {
             "type": "integer",
@@ -4004,12 +4142,12 @@
             "type": "integer",
             "format": "int32"
           },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
           "numberOfElements": {
             "type": "integer",
             "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"
@@ -4111,11 +4249,11 @@
           "last": {
             "type": "boolean"
           },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
           "first": {
             "type": "boolean"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
           },
           "size": {
             "type": "integer",
@@ -4131,12 +4269,12 @@
             "type": "integer",
             "format": "int32"
           },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
           "numberOfElements": {
             "type": "integer",
             "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"
@@ -4157,11 +4295,11 @@
           "last": {
             "type": "boolean"
           },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
           "first": {
             "type": "boolean"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
           },
           "size": {
             "type": "integer",
@@ -4177,12 +4315,12 @@
             "type": "integer",
             "format": "int32"
           },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
           "numberOfElements": {
             "type": "integer",
             "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"
@@ -4279,6 +4417,12 @@
               "$ref": "#/components/schemas/ConnectionError"
             }
           },
+          "supportsPosPredictorTypes": {
+            "type": "boolean"
+          },
+          "supportsNegPredictorTypes": {
+            "type": "boolean"
+          },
           "availableWorkers": {
             "uniqueItems": true,
             "type": "array",
@@ -4294,12 +4438,6 @@
             }
           },
           "supportsAllPredictorTypes": {
-            "type": "boolean"
-          },
-          "supportsPosPredictorTypes": {
-            "type": "boolean"
-          },
-          "supportsNegPredictorTypes": {
             "type": "boolean"
           }
         },

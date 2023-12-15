@@ -695,6 +695,86 @@ public class JobsApi {
         return getJobsRequestCreation(projectId, page, size, sort, optFields);
     }
     /**
+     * 
+     * 
+     * <p><b>200</b> - OK
+     * @param projectId The projectId parameter
+     * @param includeFinished The includeFinished parameter
+     * @return Boolean
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec hasJobsRequestCreation(String projectId, Boolean includeFinished) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling hasJobs", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeFinished", includeFinished));
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Boolean> localVarReturnType = new ParameterizedTypeReference<Boolean>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/has-jobs", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * 
+     * 
+     * <p><b>200</b> - OK
+     * @param projectId The projectId parameter
+     * @param includeFinished The includeFinished parameter
+     * @return Boolean
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public Boolean hasJobs(String projectId, Boolean includeFinished) throws WebClientResponseException {
+        ParameterizedTypeReference<Boolean> localVarReturnType = new ParameterizedTypeReference<Boolean>() {};
+        return hasJobsRequestCreation(projectId, includeFinished).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * 
+     * 
+     * <p><b>200</b> - OK
+     * @param projectId The projectId parameter
+     * @param includeFinished The includeFinished parameter
+     * @return ResponseEntity&lt;Boolean&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<Boolean> hasJobsWithHttpInfo(String projectId, Boolean includeFinished) throws WebClientResponseException {
+        ParameterizedTypeReference<Boolean> localVarReturnType = new ParameterizedTypeReference<Boolean>() {};
+        return hasJobsRequestCreation(projectId, includeFinished).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * 
+     * 
+     * <p><b>200</b> - OK
+     * @param projectId The projectId parameter
+     * @param includeFinished The includeFinished parameter
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec hasJobsWithResponseSpec(String projectId, Boolean includeFinished) throws WebClientResponseException {
+        return hasJobsRequestCreation(projectId, includeFinished);
+    }
+    /**
      * Add new job configuration with given name.
      * Add new job configuration with given name.
      * <p><b>200</b> - Probably modified name of the config (to ensure filesystem path compatibility).

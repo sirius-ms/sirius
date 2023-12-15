@@ -39,11 +39,11 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   ConnectionCheck.JSON_PROPERTY_WORKER_INFO,
   ConnectionCheck.JSON_PROPERTY_LICENSE_INFO,
   ConnectionCheck.JSON_PROPERTY_ERRORS,
+  ConnectionCheck.JSON_PROPERTY_SUPPORTS_POS_PREDICTOR_TYPES,
+  ConnectionCheck.JSON_PROPERTY_SUPPORTS_NEG_PREDICTOR_TYPES,
   ConnectionCheck.JSON_PROPERTY_AVAILABLE_WORKERS,
   ConnectionCheck.JSON_PROPERTY_UN_AVAILABLE_WORKERS,
-  ConnectionCheck.JSON_PROPERTY_SUPPORTS_ALL_PREDICTOR_TYPES,
-  ConnectionCheck.JSON_PROPERTY_SUPPORTS_POS_PREDICTOR_TYPES,
-  ConnectionCheck.JSON_PROPERTY_SUPPORTS_NEG_PREDICTOR_TYPES
+  ConnectionCheck.JSON_PROPERTY_SUPPORTS_ALL_PREDICTOR_TYPES
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class ConnectionCheck {
@@ -56,6 +56,12 @@ public class ConnectionCheck {
   public static final String JSON_PROPERTY_ERRORS = "errors";
   private List<ConnectionError> errors = new ArrayList<>();
 
+  public static final String JSON_PROPERTY_SUPPORTS_POS_PREDICTOR_TYPES = "supportsPosPredictorTypes";
+  private Boolean supportsPosPredictorTypes;
+
+  public static final String JSON_PROPERTY_SUPPORTS_NEG_PREDICTOR_TYPES = "supportsNegPredictorTypes";
+  private Boolean supportsNegPredictorTypes;
+
   public static final String JSON_PROPERTY_AVAILABLE_WORKERS = "availableWorkers";
   private Set<String> availableWorkers = new LinkedHashSet<>();
 
@@ -64,12 +70,6 @@ public class ConnectionCheck {
 
   public static final String JSON_PROPERTY_SUPPORTS_ALL_PREDICTOR_TYPES = "supportsAllPredictorTypes";
   private Boolean supportsAllPredictorTypes;
-
-  public static final String JSON_PROPERTY_SUPPORTS_POS_PREDICTOR_TYPES = "supportsPosPredictorTypes";
-  private Boolean supportsPosPredictorTypes;
-
-  public static final String JSON_PROPERTY_SUPPORTS_NEG_PREDICTOR_TYPES = "supportsNegPredictorTypes";
-  private Boolean supportsNegPredictorTypes;
 
   public ConnectionCheck() {
   }
@@ -157,6 +157,58 @@ public class ConnectionCheck {
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setErrors(List<ConnectionError> errors) {
     this.errors = errors;
+  }
+
+
+  public ConnectionCheck supportsPosPredictorTypes(Boolean supportsPosPredictorTypes) {
+    
+    this.supportsPosPredictorTypes = supportsPosPredictorTypes;
+    return this;
+  }
+
+   /**
+   * Get supportsPosPredictorTypes
+   * @return supportsPosPredictorTypes
+  **/
+  @javax.annotation.Nonnull
+  @JsonProperty(JSON_PROPERTY_SUPPORTS_POS_PREDICTOR_TYPES)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
+  public Boolean isSupportsPosPredictorTypes() {
+    return supportsPosPredictorTypes;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_SUPPORTS_POS_PREDICTOR_TYPES)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setSupportsPosPredictorTypes(Boolean supportsPosPredictorTypes) {
+    this.supportsPosPredictorTypes = supportsPosPredictorTypes;
+  }
+
+
+  public ConnectionCheck supportsNegPredictorTypes(Boolean supportsNegPredictorTypes) {
+    
+    this.supportsNegPredictorTypes = supportsNegPredictorTypes;
+    return this;
+  }
+
+   /**
+   * Get supportsNegPredictorTypes
+   * @return supportsNegPredictorTypes
+  **/
+  @javax.annotation.Nonnull
+  @JsonProperty(JSON_PROPERTY_SUPPORTS_NEG_PREDICTOR_TYPES)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
+  public Boolean isSupportsNegPredictorTypes() {
+    return supportsNegPredictorTypes;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_SUPPORTS_NEG_PREDICTOR_TYPES)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setSupportsNegPredictorTypes(Boolean supportsNegPredictorTypes) {
+    this.supportsNegPredictorTypes = supportsNegPredictorTypes;
   }
 
 
@@ -255,58 +307,6 @@ public class ConnectionCheck {
     this.supportsAllPredictorTypes = supportsAllPredictorTypes;
   }
 
-
-  public ConnectionCheck supportsPosPredictorTypes(Boolean supportsPosPredictorTypes) {
-    
-    this.supportsPosPredictorTypes = supportsPosPredictorTypes;
-    return this;
-  }
-
-   /**
-   * Get supportsPosPredictorTypes
-   * @return supportsPosPredictorTypes
-  **/
-  @javax.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_SUPPORTS_POS_PREDICTOR_TYPES)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-
-  public Boolean isSupportsPosPredictorTypes() {
-    return supportsPosPredictorTypes;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_SUPPORTS_POS_PREDICTOR_TYPES)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setSupportsPosPredictorTypes(Boolean supportsPosPredictorTypes) {
-    this.supportsPosPredictorTypes = supportsPosPredictorTypes;
-  }
-
-
-  public ConnectionCheck supportsNegPredictorTypes(Boolean supportsNegPredictorTypes) {
-    
-    this.supportsNegPredictorTypes = supportsNegPredictorTypes;
-    return this;
-  }
-
-   /**
-   * Get supportsNegPredictorTypes
-   * @return supportsNegPredictorTypes
-  **/
-  @javax.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_SUPPORTS_NEG_PREDICTOR_TYPES)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-
-  public Boolean isSupportsNegPredictorTypes() {
-    return supportsNegPredictorTypes;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_SUPPORTS_NEG_PREDICTOR_TYPES)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setSupportsNegPredictorTypes(Boolean supportsNegPredictorTypes) {
-    this.supportsNegPredictorTypes = supportsNegPredictorTypes;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -319,16 +319,16 @@ public class ConnectionCheck {
     return Objects.equals(this.workerInfo, connectionCheck.workerInfo) &&
         Objects.equals(this.licenseInfo, connectionCheck.licenseInfo) &&
         Objects.equals(this.errors, connectionCheck.errors) &&
+        Objects.equals(this.supportsPosPredictorTypes, connectionCheck.supportsPosPredictorTypes) &&
+        Objects.equals(this.supportsNegPredictorTypes, connectionCheck.supportsNegPredictorTypes) &&
         Objects.equals(this.availableWorkers, connectionCheck.availableWorkers) &&
         Objects.equals(this.unAvailableWorkers, connectionCheck.unAvailableWorkers) &&
-        Objects.equals(this.supportsAllPredictorTypes, connectionCheck.supportsAllPredictorTypes) &&
-        Objects.equals(this.supportsPosPredictorTypes, connectionCheck.supportsPosPredictorTypes) &&
-        Objects.equals(this.supportsNegPredictorTypes, connectionCheck.supportsNegPredictorTypes);
+        Objects.equals(this.supportsAllPredictorTypes, connectionCheck.supportsAllPredictorTypes);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(workerInfo, licenseInfo, errors, availableWorkers, unAvailableWorkers, supportsAllPredictorTypes, supportsPosPredictorTypes, supportsNegPredictorTypes);
+    return Objects.hash(workerInfo, licenseInfo, errors, supportsPosPredictorTypes, supportsNegPredictorTypes, availableWorkers, unAvailableWorkers, supportsAllPredictorTypes);
   }
 
   @Override
@@ -338,11 +338,11 @@ public class ConnectionCheck {
     sb.append("    workerInfo: ").append(toIndentedString(workerInfo)).append("\n");
     sb.append("    licenseInfo: ").append(toIndentedString(licenseInfo)).append("\n");
     sb.append("    errors: ").append(toIndentedString(errors)).append("\n");
+    sb.append("    supportsPosPredictorTypes: ").append(toIndentedString(supportsPosPredictorTypes)).append("\n");
+    sb.append("    supportsNegPredictorTypes: ").append(toIndentedString(supportsNegPredictorTypes)).append("\n");
     sb.append("    availableWorkers: ").append(toIndentedString(availableWorkers)).append("\n");
     sb.append("    unAvailableWorkers: ").append(toIndentedString(unAvailableWorkers)).append("\n");
     sb.append("    supportsAllPredictorTypes: ").append(toIndentedString(supportsAllPredictorTypes)).append("\n");
-    sb.append("    supportsPosPredictorTypes: ").append(toIndentedString(supportsPosPredictorTypes)).append("\n");
-    sb.append("    supportsNegPredictorTypes: ").append(toIndentedString(supportsNegPredictorTypes)).append("\n");
     sb.append("}");
     return sb.toString();
   }
