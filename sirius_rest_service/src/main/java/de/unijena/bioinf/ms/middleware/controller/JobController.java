@@ -80,6 +80,14 @@ public class JobController {
         return computeService.getJobs(projectsProvider.getProjectOrThrow(projectId), pageable, removeNone(optFields));
     }
 
+    @GetMapping(value = "/projects/{projectId}/has-jobs", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.OK)
+    public boolean hasJobs(@PathVariable String projectId,
+                             @RequestParam(defaultValue = "false") boolean includeFinished
+    ) {
+        return computeService.hasJobs(projectsProvider.getProjectOrThrow(projectId), includeFinished);
+    }
+
     /**
      * Get job information and its current state and progress (if available).
      *

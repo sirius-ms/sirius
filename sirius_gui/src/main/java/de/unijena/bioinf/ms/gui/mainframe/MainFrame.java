@@ -201,7 +201,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
             resultPanelContainer.add(new WebServiceInfoPanel(gui.getConnectionMonitor()), BorderLayout.SOUTH);
 
         // toolbar
-        toolbar = new SiriusToolbar(this);
+        toolbar = new SiriusToolbar(gui);
 
         final JSplitPane mainPanel = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 
@@ -210,7 +210,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         add(mainPanel, BorderLayout.CENTER);
 
         //build left sidepane
-        FilterableExperimentListPanel experimentListPanel = new FilterableExperimentListPanel(new ExperimentListView(this, compoundList));
+        FilterableExperimentListPanel experimentListPanel = new FilterableExperimentListPanel(new ExperimentListView(gui, compoundList));
         experimentListPanel.setPreferredSize(new Dimension(228, (int) experimentListPanel.getPreferredSize().getHeight()));
         mainPanel.setDividerLocation(232);
 

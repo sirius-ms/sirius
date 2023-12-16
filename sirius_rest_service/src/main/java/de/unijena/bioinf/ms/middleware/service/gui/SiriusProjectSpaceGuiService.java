@@ -27,6 +27,7 @@ import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceImpl;
 import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceProviderImpl;
 import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
 import de.unijena.bioinf.sse.DataEventType;
+import de.unijena.bioinf.sse.DataObjectEvent;
 
 import java.util.concurrent.Flow;
 
@@ -55,7 +56,7 @@ public class SiriusProjectSpaceGuiService extends AbstractGuiService<SiriusProje
             }
 
             @Override
-            public void onNext(Object item) {
+            public void onNext(DataObjectEvent<?> item) {
                 System.out.println("Event delivered: " + item.toString());
             }
 

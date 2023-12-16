@@ -30,6 +30,7 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
+import lombok.extern.jackson.Jacksonized;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -45,6 +46,7 @@ import java.util.stream.Stream;
 @Getter
 @Setter
 @SuperBuilder
+@Jacksonized
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JobSubmission extends AbstractSubmission {

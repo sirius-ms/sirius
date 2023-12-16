@@ -27,7 +27,9 @@ import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j;
 import org.springdoc.api.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -38,6 +40,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.servlet.ServletResponse;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.EnumSet;
@@ -47,6 +50,7 @@ import java.util.concurrent.ExecutionException;
 @RestController
 @RequestMapping(value = "/api/projects")
 @Tag(name = "Projects", description = "Manage SIRIUS projects.")
+@Slf4j
 public class ProjectController {
     //todo add access to fingerprint definitions aka molecular property names
     private final ComputeService computeContext;
@@ -151,5 +155,41 @@ public class ProjectController {
         computeContext.deleteJobs(ps, true, true, true, EnumSet.noneOf(Job.OptField.class));
         //todo check if we can make wait for deletion aync
         projectsProvider.closeProjectSpace(projectId);
+    }
+
+    @Operation(summary = "Get CSI:FingerID fingerprint (prediction vector) definition")
+    @GetMapping(value = {"/{projectId}/fingerid-data"}, produces = "application/CSV")
+    @ResponseStatus(HttpStatus.OK)
+    public void getFingerIdData(@PathVariable String projectId, @RequestParam byte charge, ServletResponse response) {
+        try {
+            projectsProvider.getProjectOrThrow(projectId).writeFingerIdData(response.getWriter(), charge);
+        } catch (IOException e) {
+            log.error("Error when requesting ResponseWriter!", e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when requesting ResponseWriter!");
+        }
+    }
+
+    @Operation(summary = "Get CANOPUS prediction vector definition for ClassyFire classes")
+    @GetMapping(value = {"/{projectId}/cf-data"}, produces = "application/CSV")
+    @ResponseStatus(HttpStatus.OK)
+    public void getCanopusClassyFireData(@PathVariable String projectId, @RequestParam byte charge, ServletResponse response) {
+        try {
+            projectsProvider.getProjectOrThrow(projectId).writeCanopusClassyFireData(response.getWriter(), charge);
+        } catch (IOException e) {
+            log.error("Error when requesting ResponseWriter!", e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when requesting ResponseWriter!");
+        }
+    }
+
+    @Operation(summary = "Get CANOPUS prediction vector definition for NPC classes")
+    @GetMapping(value = {"/{projectId}/npc-data"}, produces = "application/CSV")
+    @ResponseStatus(HttpStatus.OK)
+    public void getCanopusNpcData(@PathVariable String projectId, @RequestParam byte charge, ServletResponse response) {
+        try {
+            projectsProvider.getProjectOrThrow(projectId).writeCanopusNpcData(response.getWriter(), charge);
+        } catch (IOException e) {
+            log.error("Error when requesting ResponseWriter!", e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when requesting ResponseWriter!");
+        }
     }
 }

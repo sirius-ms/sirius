@@ -21,11 +21,13 @@
 package de.unijena.bioinf.ms.gui.dialogs;
 
 import de.unijena.bioinf.jjobs.LoadingBackroundTask;
-import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.SubToolConfigPanel;
-import de.unijena.bioinf.ms.gui.logging.TextAreaJJobContainer;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.nightsky.sdk.jjobs.SseProgressJJob;
+import de.unijena.bioinf.ms.nightsky.sdk.model.CommandSubmission;
+import de.unijena.bioinf.ms.nightsky.sdk.model.Job;
+import de.unijena.bioinf.ms.nightsky.sdk.model.JobOptField;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,10 +36,7 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.awt.*;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 
 public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
@@ -114,26 +113,25 @@ public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
     protected void execute() {
         dispose();
         try {
-            List<String> command = new ArrayList<>();
-            command.add(configPanel.toolCommand());
-            command.addAll(configPanel.asParameterList());
+            final CommandSubmission sub = new CommandSubmission();
+            sub.addCommandItem(configPanel.toolCommand());
+            configPanel.asParameterList().forEach(sub::addCommandItem);
 
-            //TODO TEMP CHANGE
-            final TextAreaJJobContainer<Boolean> j = null; //backgroundRuns.runCommand(command, compounds, getInputFilesOptions(), configPanel.toolCommand());
-            LoadingBackroundTask.connectToJob(mf(), "Running '" + configPanel.toolCommand() + "'...", indeterminateProgress, j);
+            if (compounds != null)
+                sub.alignedFeatureIds(compounds.stream().map(ib -> ib.getID().getDirectoryName()).toList());
+            if (nonCompoundInput != null)
+                sub.inputPaths(nonCompoundInput.stream().map(Path::toString).toList());
+
+            Job j = gui.getSiriusClient().jobs().startCommand(gui.getProjectId(), sub, List.of(JobOptField.PROGRESS));
+
+            LoadingBackroundTask.runInBackground(mf(),
+                    "Running '" + configPanel.toolCommand() + "'...", indeterminateProgress, null,
+                    new SseProgressJJob(gui.getSiriusClient(), gui.getProjectId(), j)
+            );
 
         } catch (Exception e) {
             LoggerFactory.getLogger(getClass()).error("Error when running '" + configPanel.toolCommand() + "'.", e);
             new ExceptionDialog(mf(), e.getMessage());
         }
-    }
-
-    private InputFilesOptions getInputFilesOptions() {
-        if (nonCompoundInput == null)
-            return null;
-        InputFilesOptions inputFiles = new InputFilesOptions();
-        Map<Path, Integer> map = nonCompoundInput.stream().collect(Collectors.toMap(k -> k, k -> (int) k.toFile().length()));
-        inputFiles.msInput = new InputFilesOptions.MsInput(null, null, map);
-        return inputFiles;
     }
 }

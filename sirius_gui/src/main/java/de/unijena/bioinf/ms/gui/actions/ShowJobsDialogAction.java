@@ -22,6 +22,9 @@ package de.unijena.bioinf.ms.gui.actions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.nightsky.sdk.model.BackgroundComputationsStateEvent;
+import de.unijena.bioinf.sse.DataEventType;
+import de.unijena.bioinf.sse.DataObjectEvent;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -35,6 +38,14 @@ public class ShowJobsDialogAction extends AbstractGuiAction {
         super("Jobs", gui);
         putValue(Action.LARGE_ICON_KEY, Icons.FB_LOADER_STOP_32);
         putValue(Action.SHORT_DESCRIPTION, "Show background jobs and their status");
+
+        gui.withSiriusClient((pid, client) ->
+                client.addEventListener(evt -> setComputing(
+                ((DataObjectEvent<BackgroundComputationsStateEvent>) evt.getNewValue())
+                        .getData().getNumberOfRunningJobs() > 0
+        ), pid, DataEventType.BACKGROUND_COMPUTATIONS_STATE));
+
+        gui.withSiriusClient((pid, client) -> client.jobs().hasJobs(pid, false));
     }
 
 

@@ -53,5 +53,7 @@ public interface ComputeService<P extends Project> extends DisposableBean {
 
     Page<Job> getJobs(@NotNull P psm, @NotNull Pageable pageable, @NotNull EnumSet<Job.OptField> optFields);
 
+    boolean hasJobs(@NotNull P psm, boolean includeFinished);
+
     JJob<?> getJJob(@NotNull P psm, String jobId);
 }

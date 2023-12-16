@@ -117,7 +117,7 @@ public class UserLoginDialog extends JDialog {
         Box buttons = Box.createHorizontalBox();
         buttons.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        buttons.add(new JButton(SiriusActions.SIGN_UP.getInstance(gui.getMainFrame(), true)));
+        buttons.add(new JButton(SiriusActions.SIGN_UP.getInstance(gui, true)));
         buttons.add(Box.createHorizontalGlue());
         buttons.add(cancel);
         buttons.add(login);
@@ -129,7 +129,7 @@ public class UserLoginDialog extends JDialog {
         center.addNamed("Email", username);
         center.addNamed("Password", password);
         JPanel flow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
-        flow.add(new ActionJLabel("Forgot your Password?", SiriusActions.RESET_PWD.getInstance(gui.getMainFrame(), true)));
+        flow.add(new ActionJLabel("Forgot your Password?", SiriusActions.RESET_PWD.getInstance(gui, true)));
         center.add(null,  flow, 0, true);
 
         if (PropertyManager.getBoolean("de.unijena.bioinf.webservice.login.terms", false))

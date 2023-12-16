@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.BatchComputeDialog;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.nightsky.sdk.model.BackgroundComputationsStateEvent;
 import de.unijena.bioinf.sse.DataEventType;
@@ -42,34 +43,31 @@ public class ComputeAllAction extends AbstractGuiAction {
     public ComputeAllAction(SiriusGui gui) {
         super(gui);
         computationCanceled();
-        setEnabled(false);
 
         //filtered Workspace Listener
         this.mainFrame.getCompoundList().getCompoundList().addListEventListener(listChanges ->
                 setEnabled(listChanges.getSourceList().size() > 0));
 
-        //Listen if there are active gui jobs
-        String pid = mainFrame.getProjectId();
+        setEnabled(!mainFrame.getCompoundList().getCompoundList().isEmpty());
 
-        mainFrame.getSiriusClient().addEventListener(evt -> {
+        //Listen if there are active gui jobs
+        gui.withSiriusClient((pid, client) -> client.addEventListener(evt -> {
             DataObjectEvent<BackgroundComputationsStateEvent> eventData = ((DataObjectEvent<BackgroundComputationsStateEvent>) evt.getNewValue());
             if (eventData.getData().getNumberOfRunningJobs() > 0) {
                 computationStarted();
             } else {
                 computationCanceled();
             }
-        }, pid, DataEventType.BACKGROUND_COMPUTATIONS_STATE);
+        }, pid, DataEventType.BACKGROUND_COMPUTATIONS_STATE));
+
+        gui.withSiriusClient((pid, client) -> client.jobs().hasJobs(pid, false));
     }
-
-
-    //todo per job listening
-    //todo background jobs status events ->  created, failed qsdfsdf
 
     @Override
     public void actionPerformed(ActionEvent e) {
         if (isActive.get()) {
-            //TODO TEMP CHANGE
-//            Jobs.runInBackgroundAndLoad(mainFrame, "Canceling Jobs...", () -> mainFrame.getBackgroundRuns().cancelAllRuns());
+            Jobs.runInBackgroundAndLoad(mainFrame, "Canceling Jobs...", () -> gui.getSiriusClient().jobs()
+                    .deleteJobs(gui.getProjectId(), true, true));
         } else {
             if (mainFrame.getCompounds().isEmpty()){
                 LoggerFactory.getLogger(getClass()).warn("Not instances to compute! Closing Compute Dialog...");

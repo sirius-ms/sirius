@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.io.Writer;
 import java.util.EnumSet;
 
 import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.toEnumSet;
@@ -117,4 +118,10 @@ public interface Project {
     default StructureCandidateScored findTopStructureCandidateByFeatureId(String alignedFeatureId, StructureCandidateScored.OptField... optFields) {
         return findTopStructureCandidateByFeatureId(alignedFeatureId, toEnumSet(StructureCandidateScored.OptField.class, optFields));
     }
+
+    void writeFingerIdData(@NotNull Writer writer, byte charge);
+
+    void writeCanopusClassyFireData(@NotNull Writer writer, byte charge);
+
+    void writeCanopusNpcData(@NotNull Writer writer, byte charge);
 }

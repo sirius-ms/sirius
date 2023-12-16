@@ -21,13 +21,13 @@ package de.unijena.bioinf.ms.middleware;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.JobManager;
+import de.unijena.bioinf.ms.middleware.service.gui.SiriusProjectSpaceGuiService;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.compute.SiriusProjectSpaceComputeService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.events.SseEventService;
 import de.unijena.bioinf.ms.middleware.service.gui.GuiService;
-import de.unijena.bioinf.ms.middleware.service.gui.SiriusProjectSpaceGuiService;
 import de.unijena.bioinf.ms.middleware.service.info.ConnectionChecker;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceProviderImpl;
