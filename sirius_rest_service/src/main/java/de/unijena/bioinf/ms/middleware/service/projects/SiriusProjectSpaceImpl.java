@@ -74,6 +74,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.io.Writer;
 import java.text.DecimalFormat;
 import java.util.*;
@@ -403,7 +404,27 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     @Override
-    public void writeFingerIdData(@NotNull Writer writer, byte charge) {
+    public String getFingerIdDataCSV(int charge) {
+        StringWriter w = new StringWriter();
+        writeFingerIdData(w, charge);
+        return w.toString();
+    }
+
+    @Override
+    public String getCanopusClassyFireDataCSV(int charge) {
+        StringWriter w = new StringWriter();
+        writeCanopusClassyFireData(w, charge);
+        return w.toString();
+    }
+
+    @Override
+    public String getCanopusNpcDataCSV(int charge) {
+        StringWriter w = new StringWriter();
+        writeCanopusNpcData(w, charge);
+        return w.toString();
+    }
+
+    public void writeFingerIdData(@NotNull Writer writer, int charge) {
         projectSpaceManager.getProjectSpaceProperty(FingerIdDataProperty.class).ifPresent(data -> {
             try {
                 FingerIdData.write(writer, data.getByCharge(charge));
@@ -414,8 +435,7 @@ public class SiriusProjectSpaceImpl implements Project {
         });
     }
 
-    @Override
-    public void writeCanopusClassyFireData(@NotNull Writer writer, byte charge) {
+    public void writeCanopusClassyFireData(@NotNull Writer writer, int charge) {
         projectSpaceManager.getProjectSpaceProperty(CanopusCfDataProperty.class).ifPresent(data -> {
             try {
                 CanopusCfData.write(writer, data.getByCharge(charge));
@@ -426,8 +446,7 @@ public class SiriusProjectSpaceImpl implements Project {
         });
     }
 
-    @Override
-    public void writeCanopusNpcData(@NotNull Writer writer, byte charge) {
+    public void writeCanopusNpcData(@NotNull Writer writer, int charge) {
         projectSpaceManager.getProjectSpaceProperty(CanopusNpcDataProperty.class).ifPresent(data -> {
             try {
                 CanopusNpcData.write(writer, data.getByCharge(charge));
