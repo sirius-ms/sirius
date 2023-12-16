@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.util.EnumSet;
+import java.util.function.BiConsumer;
 
 /**
  * Represents an instance of the SIRIUS GUI and its context.
@@ -93,6 +94,11 @@ public class SiriusGui {
         mainFrame.setCloseProjectOnDispose(closeProject);
         mainFrame.dispose();
     }
+
+    public void withSiriusClient(BiConsumer<String, NightSkyClient> doWithProject){
+        doWithProject.accept(getProjectId(), getSiriusClient());
+    }
+
     public void shutdown(){
         shutdown(true);
     }

@@ -42,13 +42,10 @@ public class SummarizeAllAction extends AbstractGuiAction {
         putValue(Action.LARGE_ICON_KEY, Icons.EXPORT_32);
         putValue(Action.SMALL_ICON, Icons.EXPORT_16);
         putValue(Action.SHORT_DESCRIPTION, "Write/Export Summary .tsv files.");
-
         initListeners();
     }
 
     protected void initListeners(){
-        setEnabled(SiriusActions.notComputingOrEmpty(mainFrame.getCompoundList().getCompoundList()));
-
         mainFrame.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
             public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {
@@ -58,6 +55,8 @@ public class SummarizeAllAction extends AbstractGuiAction {
             @Override
             public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {}
         });
+
+        setEnabled(SiriusActions.notComputingOrEmpty(mainFrame.getCompoundList().getCompoundList()));
     }
 
     @Override

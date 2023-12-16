@@ -45,8 +45,10 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 /**
  * Manage and execute command line (toolchain) runs in the background as if you would have started it via the CLI.
@@ -72,8 +74,7 @@ public final class BackgroundRuns<P extends ProjectSpaceManager<I>, I extends In
 
 
     private final ConcurrentHashMap<Integer, BackgroundRunJob> finishedRuns = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<Integer, BackgroundRunJob> activeRuns = new ConcurrentHashMap<>();
-    private final Map<Integer, BackgroundRunJob> activeRunsImmutable = Collections.unmodifiableMap(activeRuns);
+    private final ConcurrentHashMap<Integer, BackgroundRunJob> runningRuns = new ConcurrentHashMap<>();
 
     private final P psm;
 
@@ -85,80 +86,95 @@ public final class BackgroundRuns<P extends ProjectSpaceManager<I>, I extends In
         return psm;
     }
 
-    public Collection<BackgroundRunJob> getActiveRuns() {
-        return Collections.unmodifiableCollection(activeRuns.values());
+    public Collection<BackgroundRunJob> getRunningRuns() {
+        return Collections.unmodifiableCollection(runningRuns.values());
     }
 
-    public Map<Integer, BackgroundRunJob> getActiveRunIdMap() {
-        return activeRunsImmutable;
+    public Collection<BackgroundRunJob> getFinishedRuns() {
+        return Collections.unmodifiableCollection(finishedRuns.values());
     }
 
+    public List<BackgroundRunJob> getRuns() {
+        return getRunsStr().toList();
+    }
+
+    public Stream<BackgroundRunJob> getRunsStr() {
+        return Stream.concat(runningRuns.values().stream(), finishedRuns.values().stream());
+    }
+
+    @Nullable
+    public BackgroundRunJob getRunById(int runId) {
+        BackgroundRunJob run = runningRuns.get(runId);
+        if (run != null)
+            return run;
+        return finishedRuns.get(runId);
+    }
 
     public boolean hasActiveComputations() {
-        return !activeRuns.isEmpty();
+        return !runningRuns.isEmpty();
     }
 
     public boolean hasActiveRunningComputations() {
-        return hasActiveComputations() && activeRuns.values().stream().anyMatch(j -> !j.isFinished());
+        return hasActiveComputations() && runningRuns.values().stream().anyMatch(j -> !j.isFinished());
     }
 
     private void addRun(@NotNull BackgroundRunJob job) {
-        synchronized (activeRuns) {
-            int oldSize = activeRuns.size();
-            int oldRunning = oldSize - finishedRuns.size();
-
-            activeRuns.put(job.getRunId(), job);
-
-            int newSize = activeRuns.size();
-            int newRunning = newSize - finishedRuns.size();
-
-            PCS.firePropertyChange(new ChangeEvent(ACTIVE_RUNS_PROPERTY, oldSize, activeRuns.size(),
-                    oldRunning, newRunning, List.of(job), ChangeEvent.Type.INSERTION, activeRunsImmutable));
-
-            PCS.firePropertyChange(new ChangeEvent(UNFINISHED_RUNS_PROPERTY, oldSize, activeRuns.size(),
-                    oldRunning, newRunning, List.of(job), ChangeEvent.Type.INSERTION, activeRunsImmutable));
-        }
+        withPropertyChangesEvent(job, j -> {
+            runningRuns.put(job.getRunId(), job);
+            return ChangeEventType.INSERTION;
+        });
     }
 
     public BackgroundRunJob removeRun(int jobId) {
-        final BackgroundRunJob j = activeRuns.get(jobId);
-        if (j == null)
+        final BackgroundRunJob job = runningRuns.get(jobId);
+        if (job == null)
             return null;
 
-        if (!j.isFinished())
+        if (!job.isFinished())
             throw new IllegalArgumentException("Job with ID '" + jobId + "' is still Running! Only finished jobs can be removed.");
 
-        removeAndFinishRun(j, true);
-        return j;
+        withPropertyChangesEvent(job, (j) -> {
+            runningRuns.remove(j.getRunId());
+            return ChangeEventType.DELETION;
+        });
+        return job;
     }
 
-    private void removeAndFinishRun(@NotNull BackgroundRunJob job, boolean remove) {
-        synchronized (activeRuns) {
-            int oldSize = activeRuns.size();
-            int oldRunning = oldSize - finishedRuns.size();
+    private void removeAndFinishRun(@NotNull BackgroundRunJob job, boolean autoremove) {
+        withPropertyChangesEvent(job, (j) -> {
+            runningRuns.remove(j.getRunId());
+            if (!autoremove){
+                finishedRuns.put(j.getRunId(), j);
+                return ChangeEventType.FINISHED;
+            }
 
-            if (remove)
-                activeRuns.remove(job.getRunId());
-            else
-                finishedRuns.put(job.getRunId(), job);
+            return ChangeEventType.FINISHED_AND_DELETED;
+        });
+    }
 
-            int newSize = activeRuns.size();
-            int newRunning = newSize - finishedRuns.size();
+    private void withPropertyChangesEvent(@NotNull BackgroundRunJob job, @NotNull Function<BackgroundRunJob, ChangeEventType> changeToApply) {
+        synchronized (runningRuns) {
+            int oldSize = runningRuns.size() + finishedRuns.size();
+            int oldRunning = runningRuns.size();
+
+            ChangeEventType evtType = changeToApply.apply(job);
+
+            int newSize = runningRuns.size() + finishedRuns.size();
 
             PCS.firePropertyChange(new ChangeEvent(ACTIVE_RUNS_PROPERTY, oldSize, newSize,
-                    oldRunning, newRunning, List.of(job), ChangeEvent.Type.INSERTION, activeRunsImmutable));
+                    oldRunning, runningRuns.size(), List.of(job), evtType, this));
 
             PCS.firePropertyChange(new ChangeEvent(UNFINISHED_RUNS_PROPERTY, oldSize, newSize,
-                    oldRunning, newRunning, List.of(job), ChangeEvent.Type.INSERTION, activeRunsImmutable));
+                    oldRunning, runningRuns.size(), List.of(job), evtType, this));
         }
     }
 
     public void cancelAllRuns() {
         //iterator needed to prevent current modification exception
-        activeRuns.values().iterator().forEachRemaining(JJob::cancel);
+        runningRuns.values().iterator().forEachRemaining(JJob::cancel);
     }
 
-    private final PropertyChangeSupport PCS = new PropertyChangeSupport(activeRunsImmutable);
+    private final PropertyChangeSupport PCS = new PropertyChangeSupport(this);
 
     public void addActiveRunsListener(PropertyChangeListener listener) {
         PCS.addPropertyChangeListener(ACTIVE_RUNS_PROPERTY, listener);
@@ -380,10 +396,10 @@ public final class BackgroundRuns<P extends ProjectSpaceManager<I>, I extends In
     }
 
 
+    public enum ChangeEventType {INSERTION, DELETION, FINISHED_AND_DELETED, FINISHED}
     public class ChangeEvent extends PropertyChangeEvent {
-        public enum Type {INSERTION, DELETION, FINISHED}
 
-        private final Type type;
+        private final ChangeEventType type;
         private final List<BackgroundRunJob> effectedJobs;
 
         private final int numOfRunsOld, numOfRunsNew, numOfUnfinishedOld, numOfUnfinishedNew;
@@ -395,7 +411,7 @@ public final class BackgroundRuns<P extends ProjectSpaceManager<I>, I extends In
          * @param numOfRunsNew the new value of the property
          * @param affectedJobs the jobs that are added or removed
          */
-        private ChangeEvent(String eventName, int numOfRunsOld, int numOfRunsNew, int numOfUnfinishedOld, int numOfUnfinishedNew, List<BackgroundRunJob> affectedJobs, Type type, Object source) {
+        private ChangeEvent(String eventName, int numOfRunsOld, int numOfRunsNew, int numOfUnfinishedOld, int numOfUnfinishedNew, List<BackgroundRunJob> affectedJobs, ChangeEventType type, Object source) {
             super(source, eventName,
                     UNFINISHED_RUNS_PROPERTY.equals(eventName) ? numOfUnfinishedOld : numOfRunsOld,
                     UNFINISHED_RUNS_PROPERTY.equals(eventName) ? numOfUnfinishedNew : numOfRunsNew);
@@ -433,18 +449,18 @@ public final class BackgroundRuns<P extends ProjectSpaceManager<I>, I extends In
         }
 
         public boolean isRunInsertion() {
-            return type == Type.INSERTION;
+            return type == ChangeEventType.INSERTION;
         }
 
         public boolean isRunDeletion() {
-            return type == Type.DELETION;
+            return type == ChangeEventType.DELETION || type == ChangeEventType.FINISHED_AND_DELETED;
         }
 
         public boolean isRunFinished() {
-            return type == Type.FINISHED;
+            return type == ChangeEventType.FINISHED || type == ChangeEventType.FINISHED_AND_DELETED;
         }
 
-        public Type getType() {
+        public ChangeEventType getType() {
             return type;
         }
     }

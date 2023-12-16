@@ -50,7 +50,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SiriusProjectSpaceComputeService extends AbstractComputeService<SiriusProjectSpaceImpl> {
 
-    private final ConcurrentHashMap<SiriusProjectSpaceImpl, BackgroundRuns<?, ?>> backgroundRuns = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, BackgroundRuns<?, ?>> backgroundRuns = new ConcurrentHashMap<>();
 
     public SiriusProjectSpaceComputeService(EventService<?> eventService) {
         super(eventService);
@@ -58,8 +58,8 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
     }
 
     private BackgroundRuns<?, ?> backgroundRuns(SiriusProjectSpaceImpl psm) {
-        return backgroundRuns.computeIfAbsent(psm, p -> {
-            BackgroundRuns br = new BackgroundRuns(p.getProjectSpaceManager());
+        return backgroundRuns.computeIfAbsent(psm.getProjectId(), p -> {
+            BackgroundRuns br = new BackgroundRuns(psm.getProjectSpaceManager());
             br.addUnfinishedRunsListener(evt -> {
                 if (evt instanceof BackgroundRuns<?, ?>.ChangeEvent) {
                     BackgroundRuns.ChangeEvent e = (BackgroundRuns<?, ?>.ChangeEvent) evt;
@@ -78,16 +78,15 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
     }
 
     private void removeBackgroundRuns(SiriusProjectSpaceImpl psm) {
-        BackgroundRuns<?, ?> br = backgroundRuns.remove(psm);
+        BackgroundRuns<?, ?> br = backgroundRuns.remove(psm.getProjectId());
         if (br != null)
             br.cancelAllRuns();
     }
 
     private void registerServerEventListener(BackgroundRuns<?, ?>.BackgroundRunJob run, String projectId) {
-        run.addPropertyChangeListener(JobStateEvent.JOB_STATE_EVENT, evt ->
+        run.addJobProgressListener(evt ->
                 eventService.sendEvent(ServerEvents.newJobEvent(
-                        extractJobId((BackgroundRuns<?, ?>.BackgroundRunJob) ((JobStateEvent) evt).getSource(),
-                                EnumSet.of(Job.OptField.progress)), projectId)));
+                        extractJobId(run, EnumSet.of(Job.OptField.progress)), projectId)));
     }
 
     @Nullable
@@ -188,7 +187,10 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
                                         @NotNull EnumSet<Job.OptField> optFields) {
         final @Nullable String sourceName = jobSubmission.getSourceName();
         final String ext = jobSubmission.getFormat().getExtension();
-        return extractJobId(backgroundRuns(psmI).runImport(() -> new BufferedReader(new StringReader(jobSubmission.getData())), sourceName, ext), optFields);
+
+        BackgroundRuns<?, ?>.BackgroundRunJob run = backgroundRuns(psmI).runImport(() -> new BufferedReader(new StringReader(jobSubmission.getData())), sourceName, ext);
+        registerServerEventListener(run, psmI.getProjectId());
+        return extractJobId(run, optFields);
     }
 
     @Override
@@ -203,7 +205,9 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
         }
 
         try {
-            return extractJobId(br.runCommand(commandSubmission.getCommand(), compounds, inputFiles), optFields);
+            BackgroundRuns<?, ?>.BackgroundRunJob run = br.runCommand(commandSubmission.getCommand(), compounds, inputFiles);
+            registerServerEventListener(run, psmI.getProjectId());
+            return extractJobId(run, optFields);
         } catch (Exception e) {
             log.error("Cannot create Job Command!", e);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot create Job Command!", e);
@@ -258,7 +262,7 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
     public BackgroundRuns<?, ?>.BackgroundRunJob getJob(@NotNull SiriusProjectSpaceImpl psm, String jobId) {
         try {
             int intId = Integer.parseInt(jobId);
-            BackgroundRuns<?, ?>.BackgroundRunJob j = backgroundRuns(psm).getActiveRunIdMap().get(intId);
+            BackgroundRuns<?, ?>.BackgroundRunJob j = backgroundRuns(psm).getRunById(intId);
             if (j == null)
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Job with ID '" + jobId + " does not Exist! Hint: It is either already finished and has been auto removed (if enabled) or the ID never existed.");
 
@@ -279,26 +283,33 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
     @Override
     public Page<Job> getJobs(@NotNull SiriusProjectSpaceImpl psm, @NotNull Pageable pageable, @NotNull EnumSet<Job.OptField> optFields) {
         if (pageable.isUnpaged())
-            return new PageImpl<>(backgroundRuns(psm).getActiveRunIdMap().values().stream()
+            return new PageImpl<>(backgroundRuns(psm).getRunsStr()
                     .map(j -> extractJobId(j, optFields)).toList());
 
-        long size = backgroundRuns(psm).getActiveRunIdMap().values().size();
-        return new PageImpl<>(backgroundRuns(psm).getActiveRunIdMap().values().stream()
+        long size = backgroundRuns(psm).getRunsStr().count();
+        return new PageImpl<>(backgroundRuns(psm).getRunsStr()
                 .skip(pageable.getOffset()).limit(pageable.getPageSize())
                 .map(j -> extractJobId(j, optFields))
                 .toList(), pageable, size);
     }
 
     @Override
+    public boolean hasJobs(@NotNull SiriusProjectSpaceImpl psm, boolean includeFinished) {
+        if (includeFinished)
+            return !backgroundRuns(psm).getRunningRuns().isEmpty();
+        return backgroundRuns(psm).getRunsStr().findAny().isPresent();
+    }
+
+    @Override
     public JJob<?> getJJob(@NotNull SiriusProjectSpaceImpl psm, String jobId) {
-        return backgroundRuns(psm).getActiveRunIdMap().get(Integer.parseInt(jobId));
+        return backgroundRuns(psm).getRunById(Integer.parseInt(jobId));
     }
 
 
     @Override
     public synchronized void destroy() {
         System.out.println("Destroy Compute Service...");
-        backgroundRuns.forEach((psm, br) -> {
+        backgroundRuns.forEach((pid, br) -> {
             if (br.hasActiveComputations())
                 log.info("Cancelling running Background Jobs...");
             br.cancelAllRuns();

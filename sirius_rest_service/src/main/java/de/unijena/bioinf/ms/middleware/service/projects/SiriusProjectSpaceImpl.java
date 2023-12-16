@@ -48,9 +48,15 @@ import de.unijena.bioinf.ms.middleware.model.features.LCMSFeatureQuality;
 import de.unijena.bioinf.ms.middleware.model.features.MsData;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
+import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.projectspace.canopus.CanopusCfDataProperty;
+import de.unijena.bioinf.projectspace.canopus.CanopusNpcDataProperty;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidateNumber;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidatesTopK;
+import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;
@@ -68,6 +74,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.io.Writer;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.function.Function;
@@ -395,6 +402,42 @@ public class SiriusProjectSpaceImpl implements Project {
 
     }
 
+    @Override
+    public void writeFingerIdData(@NotNull Writer writer, byte charge) {
+        projectSpaceManager.getProjectSpaceProperty(FingerIdDataProperty.class).ifPresent(data -> {
+            try {
+                FingerIdData.write(writer, data.getByCharge(charge));
+            } catch (IOException e) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Error when extracting FingerIdData from project '" + projectId + "'. Message: " + e.getMessage());
+            }
+        });
+    }
+
+    @Override
+    public void writeCanopusClassyFireData(@NotNull Writer writer, byte charge) {
+        projectSpaceManager.getProjectSpaceProperty(CanopusCfDataProperty.class).ifPresent(data -> {
+            try {
+                CanopusCfData.write(writer, data.getByCharge(charge));
+            } catch (IOException e) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Error when extracting CanopusClassyFireData from project '" + projectId + "'. Message: " + e.getMessage());
+            }
+        });
+    }
+
+    @Override
+    public void writeCanopusNpcData(@NotNull Writer writer, byte charge) {
+        projectSpaceManager.getProjectSpaceProperty(CanopusNpcDataProperty.class).ifPresent(data -> {
+            try {
+                CanopusNpcData.write(writer, data.getByCharge(charge));
+            } catch (IOException e) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Error when extracting CanopusNpcData from project '" + projectId + "'. Message: " + e.getMessage());
+            }
+        });
+    }
+
     private static Optional<List<StructureCandidateFormula>> loadStructureCandidates(
             Instance instance, FormulaResultId fidObj,
             Pageable pageable,
@@ -552,7 +595,7 @@ public class SiriusProjectSpaceImpl implements Project {
                             //add formula summary
                             cSum.setFormulaAnnotation(asFormulaCandidate(topHit));
 
-                            // todo add msnovelist candidatas
+                            // todo msnovelist: add msnovelist candidatas
 //                        topHit.getAnnotation(FBCandidatesTopK.class).map(FBCandidatesTopK::getResults)
 //                                .filter(l -> !l.isEmpty()).map(r -> r.get(0)).map(s ->
 //                                        StructureCandidateFormula.of(s, topHit.getAnnotationOrThrow(FormulaScoring.class),

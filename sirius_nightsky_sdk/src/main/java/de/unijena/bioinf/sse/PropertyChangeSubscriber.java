@@ -27,7 +27,7 @@ import java.beans.PropertyChangeListener;
 import java.util.Objects;
 import java.util.concurrent.Flow;
 
-public class PropertyChangeSubscriber implements Flow.Subscriber<Object> {
+public class PropertyChangeSubscriber implements Flow.Subscriber<DataObjectEvent<?>> {
 
     private final PropertyChangeListener wrappedListener;
 
@@ -40,11 +40,11 @@ public class PropertyChangeSubscriber implements Flow.Subscriber<Object> {
 
     }
 
-    public void onNext(@Nullable String propertyName, Object item) {
+    public void onNext(@Nullable String propertyName, DataObjectEvent<?> item) {
         wrappedListener.propertyChange(new PropertyChangeEvent(item, propertyName, null, item));
     }
     @Override
-    public void onNext(Object item) {
+    public void onNext(DataObjectEvent<?> item) {
         onNext(null, item);
     }
 

@@ -19,18 +19,14 @@
 
 package de.unijena.bioinf.ms.gui.mainframe;
 
-import de.unijena.bioinf.ms.frontend.BackgroundRuns;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.OpenLogAction;
-import de.unijena.bioinf.ms.gui.actions.ShowJobsDialogAction;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
-import de.unijena.bioinf.ms.nightsky.sdk.model.BackgroundComputationsStateEvent;
-import de.unijena.bioinf.sse.DataEventType;
-import de.unijena.bioinf.sse.DataObjectEvent;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,48 +34,46 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.beans.PropertyChangeListener;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class SiriusToolbar extends JToolBar {
     private final ToolbarToggleButton logsB;
-    private final PropertyChangeListener backgroundRunListener;
     private ToolbarButton importCompB, createB, openB, saveB, exportB, summB, fbmnB, importB, computeAllB, jobs, db, connect, settings, account, /*bug,*/
             help, about;
 
 
-    SiriusToolbar(MainFrame mf) {
+    SiriusToolbar(SiriusGui gui) {
         setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, Colors.ICON_BLUE));
         //create/open
-        createB = new ToolbarButton(SiriusActions.NEW_WS.getInstance(mf, true));
+        createB = new ToolbarButton(SiriusActions.NEW_WS.getInstance(gui, true));
         add(createB);
-        openB = new ToolbarButton(SiriusActions.LOAD_WS.getInstance(mf, true));
+        openB = new ToolbarButton(SiriusActions.LOAD_WS.getInstance(gui, true));
         add(openB);
         addSeparator(new Dimension(20, 20));
 
         //save
-        saveB = new ToolbarButton(SiriusActions.SAVE_WS.getInstance(mf, true));
+        saveB = new ToolbarButton(SiriusActions.SAVE_WS.getInstance(gui, true));
         add(saveB);
-        exportB = new ToolbarButton(SiriusActions.EXPORT_WS.getInstance(mf, true));
+        exportB = new ToolbarButton(SiriusActions.EXPORT_WS.getInstance(gui, true));
         add(exportB);
         addSeparator(new Dimension(20, 20));
 
         //import
-        importCompB = new ToolbarButton(SiriusActions.IMPORT_EXP.getInstance(mf, true));
+        importCompB = new ToolbarButton(SiriusActions.IMPORT_EXP.getInstance(gui, true));
         add(importCompB);
-        importB = new ToolbarButton(SiriusActions.IMPORT_EXP_BATCH.getInstance(mf, true));
+        importB = new ToolbarButton(SiriusActions.IMPORT_EXP_BATCH.getInstance(gui, true));
         add(importB);
 
         //summarize
         addSeparator(new Dimension(20, 20));
-        summB = new ToolbarButton(SiriusActions.SUMMARIZE_WS.getInstance(mf, true));
+        summB = new ToolbarButton(SiriusActions.SUMMARIZE_WS.getInstance(gui, true));
         add(summB);
 
         //fbmn
         addSeparator(new Dimension(20, 20));
-        fbmnB = new ToolbarButton(SiriusActions.EXPORT_FBMN.getInstance(mf, true));
+        fbmnB = new ToolbarButton(SiriusActions.EXPORT_FBMN.getInstance(gui, true));
         add(fbmnB);
 
         addSeparator(new Dimension(20, 20));
@@ -87,49 +81,40 @@ public class SiriusToolbar extends JToolBar {
         addSeparator(new Dimension(20, 20));
 
         //compute
-        computeAllB = new ToolbarButton(SiriusActions.COMPUTE_ALL.getInstance(mf, true));
+        computeAllB = new ToolbarButton(SiriusActions.COMPUTE_ALL.getInstance(gui, true));
         add(computeAllB);
         addSeparator(new Dimension(20, 20));
 
-        db = new ToolbarButton(SiriusActions.SHOW_DB.getInstance(mf, true));
+        db = new ToolbarButton(SiriusActions.SHOW_DB.getInstance(gui, true));
         add(db);
         addSeparator(new Dimension(20, 20));
 
-        jobs = new ToolbarButton(SiriusActions.SHOW_JOBS.getInstance(mf, true));
+        jobs = new ToolbarButton(SiriusActions.SHOW_JOBS.getInstance(gui, true));
         add(jobs);
 
         addSeparator(new Dimension(20, 20));
         add(Box.createGlue());
         addSeparator(new Dimension(20, 20));
-        logsB = createLogToggleButton((OpenLogAction) SiriusActions.SHOW_LOG.getInstance(mf, true));
+        logsB = createLogToggleButton((OpenLogAction) SiriusActions.SHOW_LOG.getInstance(gui, true));
         add(logsB);
 
-        settings = new ToolbarButton(SiriusActions.SHOW_SETTINGS.getInstance(mf, true));
+        settings = new ToolbarButton(SiriusActions.SHOW_SETTINGS.getInstance(gui, true));
         add(settings);
 
-        connect = new ToolbarButton(SiriusActions.CHECK_CONNECTION.getInstance(mf, true));
+        connect = new ToolbarButton(SiriusActions.CHECK_CONNECTION.getInstance(gui, true));
         add(connect);
 
-        account = new ToolbarButton(SiriusActions.SHOW_ACCOUNT.getInstance(mf, true));
+        account = new ToolbarButton(SiriusActions.SHOW_ACCOUNT.getInstance(gui, true));
         add(account);
 
-        help = new ToolbarButton(SiriusActions.OPEN_ONLINE_DOCUMENTATION.getInstance(mf, true));
+        help = new ToolbarButton(SiriusActions.OPEN_ONLINE_DOCUMENTATION.getInstance(gui, true));
         add(help);
 
       /*  bug = new ToolbarButton(SiriusActions.SHOW_BUGS.getInstance(mf, true));
         add(bug);*/
 
-        about = new ToolbarButton(SiriusActions.SHOW_ABOUT.getInstance(mf, true));
+        about = new ToolbarButton(SiriusActions.SHOW_ABOUT.getInstance(gui, true));
         add(about);
-
-        backgroundRunListener = evt -> {
-            final boolean hasRunningJobs = ((DataObjectEvent<BackgroundComputationsStateEvent>) evt.getNewValue()).getData().getNumberOfRunningJobs() > 0;
-            ((ShowJobsDialogAction) jobs.getAction()).setComputing(hasRunningJobs);
-            summB.getAction().setEnabled(!hasRunningJobs);
-            fbmnB.getAction().setEnabled(!hasRunningJobs);
-        };
-
-        mf.getSiriusClient().addEventListener(backgroundRunListener, mf.getProjectId(), DataEventType.BACKGROUND_COMPUTATIONS_STATE);
 
         setRollover(true);
         setFloatable(false);

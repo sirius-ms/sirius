@@ -31,14 +31,12 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 public class AccountDialog extends JDialog implements PropertyChangeListener {
-    private final AuthService service;
     private final Action signIn;
     private final Action signOut;
     private AccountPanel center;
 
     public AccountDialog(SiriusGui gui, AuthService service) {
         super(gui.getMainFrame(), true);
-        this.service = service;
         setTitle("Account");
         setLayout(new BorderLayout());
 
@@ -50,10 +48,10 @@ public class AccountDialog extends JDialog implements PropertyChangeListener {
         center = new AccountPanel(gui, service);
         add(center, BorderLayout.CENTER);
 
-        signIn = SiriusActions.SIGN_IN.getInstance(gui.getMainFrame(), true);
+        signIn = SiriusActions.SIGN_IN.getInstance(gui, true);
         signIn.addPropertyChangeListener(this);
 
-        signOut = SiriusActions.SIGN_OUT.getInstance(gui.getMainFrame(), true);
+        signOut = SiriusActions.SIGN_OUT.getInstance(gui, true);
         signOut.addPropertyChangeListener(this);
 
         configureActions();

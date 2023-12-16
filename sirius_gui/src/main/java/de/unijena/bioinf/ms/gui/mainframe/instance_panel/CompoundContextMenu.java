@@ -19,8 +19,8 @@
 
 package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
 
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 
 import javax.swing.*;
 
@@ -29,21 +29,21 @@ import javax.swing.*;
  */
 public class CompoundContextMenu extends JPopupMenu {
 
-    public CompoundContextMenu(MainFrame mf) {
-        add(new JMenuItem(SiriusActions.COMPUTE.getInstance(mf, true)));
-        add(new JMenuItem(SiriusActions.SUMMARIZE_EXP.getInstance(mf, true)));
-        add(new JMenuItem(SiriusActions.DELETE_EXP.getInstance(mf, true)));
+    public CompoundContextMenu(SiriusGui gui) {
+        add(new JMenuItem(SiriusActions.COMPUTE.getInstance(gui, true)));
+        add(new JMenuItem(SiriusActions.SUMMARIZE_EXP.getInstance(gui, true)));
+        add(new JMenuItem(SiriusActions.DELETE_EXP.getInstance(gui, true)));
         addSeparator();
-        add(new JMenuItem(SiriusActions.EDIT_EXP.getInstance(mf, true)));
-        add(new JMenuItem(SiriusActions.REMOVE_FORMULA_EXP.getInstance(mf, true)));
-        add(new JMenuItem(SiriusActions.CHANGE_ADDCUCT_EXP.getInstance(mf, true)));
+        add(new JMenuItem(SiriusActions.EDIT_EXP.getInstance(gui, true)));
+        add(new JMenuItem(SiriusActions.REMOVE_FORMULA_EXP.getInstance(gui, true)));
+        add(new JMenuItem(SiriusActions.CHANGE_ADDCUCT_EXP.getInstance(gui, true)));
         addSeparator();
-        add(new JMenuItem(SiriusActions.ORDER_BY_INDEX.getInstance(mf, true)));
-        add(new JMenuItem(SiriusActions.ORDER_BY_RT.getInstance(mf, true)));
-        add(new JMenuItem(SiriusActions.ORDER_BY_MASS.getInstance(mf, true)));
-        add(new JMenuItem(SiriusActions.ORDER_BY_NAME.getInstance(mf, true)));
-        add(new JMenuItem(SiriusActions.ORDER_BY_CONFIDENCE.getInstance(mf, true)));
+        add(new JMenuItem(SiriusActions.ORDER_BY_INDEX.getInstance(gui, true)));
+        add(new JMenuItem(SiriusActions.ORDER_BY_RT.getInstance(gui, true)));
+        add(new JMenuItem(SiriusActions.ORDER_BY_MASS.getInstance(gui, true)));
+        add(new JMenuItem(SiriusActions.ORDER_BY_NAME.getInstance(gui, true)));
+        add(new JMenuItem(SiriusActions.ORDER_BY_CONFIDENCE.getInstance(gui, true)));
         addSeparator();
-        add(new JMenuItem(SiriusActions.RESET_FILTER.getInstance(mf, true)));
+        add(new JMenuItem(SiriusActions.RESET_FILTER.getInstance(gui, true)));
     }
 }

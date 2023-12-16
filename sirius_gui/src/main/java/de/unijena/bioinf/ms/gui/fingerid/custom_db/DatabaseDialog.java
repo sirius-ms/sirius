@@ -23,7 +23,8 @@ import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.chemdb.DataSources;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
-import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
+import de.unijena.bioinf.jjobs.LoadingBackroundTask;
+import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
@@ -36,8 +37,13 @@ import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.JTextAreaDropImage;
 import de.unijena.bioinf.ms.gui.utils.ListAction;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
+import de.unijena.bioinf.ms.nightsky.sdk.jjobs.SseProgressJJob;
+import de.unijena.bioinf.ms.nightsky.sdk.model.CommandSubmission;
+import de.unijena.bioinf.ms.nightsky.sdk.model.Job;
+import de.unijena.bioinf.ms.nightsky.sdk.model.JobOptField;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
+import picocli.CommandLine;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -70,6 +76,7 @@ public class DatabaseDialog extends JDialog {
     public DatabaseDialog(SiriusGui gui) {
         this(gui, gui.getMainFrame());
     }
+
     public DatabaseDialog(SiriusGui gui, @Nullable Frame owner) {
         super(owner, true);
         this.gui = gui;
@@ -162,13 +169,16 @@ public class DatabaseDialog extends JDialog {
             if (new QuestionDialog(getOwner(), msg).isSuccess()) {
 
                 try {
-                    //TODO TEMP CHANGE
-                    throw new ExecutionException(null);
-//                    backgroundRuns.runCommandAndLoad(Arrays.asList(
-//                                            CustomDBOptions.class.getAnnotation(CommandLine.Command.class).name(),
-//                                            "--remove", name), null, null, owner,
-//                                    "Deleting database '" + name + "'...", true)
-//                            .awaitResult();
+                    Job job = gui.getSiriusClient().jobs().startCommand(gui.getProjectId(), new CommandSubmission()
+                                    .addCommandItem(CustomDBOptions.class.getAnnotation(CommandLine.Command.class).name())
+                                    .addCommandItem("--remove").addCommandItem(name),
+                            List.of(JobOptField.PROGRESS)
+                    );
+
+                    LoadingBackroundTask.runInBackground(gui.getMainFrame(),
+                                    "Deleting database '" + name + "'...", null,
+                                    new SseProgressJJob(gui.getSiriusClient(), gui.getProjectId(), job))
+                            .awaitResult();
                 } catch (ExecutionException ex) {
                     LoggerFactory.getLogger(getClass()).error("Error during Custom DB removal.", ex);
 
@@ -226,8 +236,8 @@ public class DatabaseDialog extends JDialog {
                         + (c.getStatistics().getSpectra() > 0 ? " and <b>" + c.getStatistics().getSpectra() + "</b> reference spectra." : ".")
                         + "<br>"
                         + ((c.getSettings().isInheritance() ? "<br>This database will also include all compounds from '" + DataSources.getDataSourcesFromBitFlags(c.getFilterFlag()).stream().filter(n -> !SearchableDatabases.NON_SLECTABLE_LIST.contains(n)).collect(Collectors.joining("', '")) + "'." : "")
-                                + (c.needsUpgrade() ? "<br><b>This database schema is outdated. You have to upgrade the database before you can use it.</b>" : "")
-                                + "</html>"));
+                        + (c.needsUpgrade() ? "<br><b>This database schema is outdated. You have to upgrade the database before you can use it.</b>" : "")
+                        + "</html>"));
 
                 content.setToolTipText(c.storageLocation());
             } else {
@@ -378,20 +388,17 @@ public class DatabaseDialog extends JDialog {
                     }).awaitResult());
                 }
 
-                List<String> command = new ArrayList<>();
-                command.add(configPanel.toolCommand());
-                command.addAll(configPanel.asParameterList());
+                final CommandSubmission sub = new CommandSubmission();
+                sub.addCommandItem(configPanel.toolCommand());
+                configPanel.asParameterList().forEach(sub::addCommandItem);
+                sub.inputPaths(sources.stream().map(Path::toString).toList());
 
-                InputFilesOptions input = new InputFilesOptions();
-                input.msInput = new InputFilesOptions.MsInput();
-                input.msInput.setInputPath(sources);
+                final Job j = gui.getSiriusClient().jobs().startCommand(gui.getProjectId(), sub, List.of(JobOptField.PROGRESS));
 
-                //TODO TEMP CHANGE
-                /*backgroundRuns.runCommandAndLoad(command, null,
-                                input, this,
-                                "Importing into '" + configPanel.dbLocationField.getFilePath() + "'...",
-                                false)
-                        .awaitResult();*/
+                LoadingBackroundTask.runInBackground(gui.getMainFrame(),
+                        "Importing into '" + configPanel.dbLocationField.getFilePath() + "'...", null,
+                        new SseProgressJJob(gui.getSiriusClient(), gui.getProjectId(), j)
+                ).awaitResult();
 
                 whenCustomDbIsAdded(configPanel.dbLocationField.getFilePath());
             } catch (ExecutionException ex) {

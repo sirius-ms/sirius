@@ -23,21 +23,19 @@ package de.unijena.bioinf.sse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.MultiValueMapAdapter;
 
 import java.io.Closeable;
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Flow;
 
 public class FluxToFlowBroadcast implements Closeable {
 
-    private final MultiValueMap<String, Flow.Subscriber<Object>> subscribers = new MultiValueMapAdapter<>(new ConcurrentHashMap<>());
+    private final MultiValueMap<String, Flow.Subscriber<DataObjectEvent<?>>> subscribers = new MultiValueMapAdapter<>(new ConcurrentHashMap<>());
 
     private final ObjectMapper objectMapper;
 
@@ -45,49 +43,82 @@ public class FluxToFlowBroadcast implements Closeable {
         this.objectMapper = objectMapper;
     }
 
-    public void unSubscribe(Flow.Subscriber<Object> subscriber) {
+    public void unSubscribe(Flow.Subscriber<DataObjectEvent<?>> subscriber) {
         subscribers.values().forEach(v -> v.remove(subscriber));
     }
-    public void subscribe(Flow.Subscriber<Object> subscriber, @Nullable String projectId, @NotNull EnumSet<DataEventType> eventsToListenOn) {
+
+    public void subscribe(Flow.Subscriber<DataObjectEvent<?>> subscriber, @NotNull EnumSet<DataEventType> eventsToListenOn) {
+        subscribe(subscriber, null, eventsToListenOn);
+    }
+
+    public void subscribe(Flow.Subscriber<DataObjectEvent<?>> subscriber, @Nullable String projectId, @NotNull EnumSet<DataEventType> eventsToListenOn) {
+        subscribe(subscriber, null, projectId, eventsToListenOn);
+    }
+
+    public void subscribeToJob(Flow.Subscriber<DataObjectEvent<?>> subscriber, @NotNull String jobId, @NotNull String projectId) {
+        subscribe(subscriber, jobId, projectId, EnumSet.of(DataEventType.JOB));
+    }
+
+    private void subscribe(Flow.Subscriber<DataObjectEvent<?>> subscriber, @Nullable String jobId, @Nullable String projectId, @NotNull EnumSet<DataEventType> eventsToListenOn) {
         if (eventsToListenOn.isEmpty())
             throw new IllegalArgumentException("events to listen on must not be empty");
 
         if (projectId != null)
             // filter by specific project
-            eventsToListenOn.forEach(e -> subscribers.add(projectId + "." + e.name(), subscriber));
+            eventsToListenOn.forEach(e -> {
+                StringBuilder b = new StringBuilder().append(projectId).append(".").append(e.name());
+                // filter by specific job
+                if (jobId != null && !jobId.isBlank()  && e == DataEventType.JOB)
+                    b.append(".").append(jobId);
+                subscribers.add(b.toString(), subscriber);
+            });
         else
             // listen to events from all projects
             eventsToListenOn.forEach(e -> subscribers.add(e.name(), subscriber));
 
         subscriber.onSubscribe(new Flow.Subscription() {
             @Override
-            public void request(long n) {}
+            public void request(long n) {
+            }
 
             @Override
-            public void cancel() {}
+            public void cancel() {
+            }
         });
     }
 
     public void onNext(@NotNull ServerSentEvent<String> sse) {
-        if (!Optional.ofNullable(sse.event()).map(s -> s.split("[.]")).filter(a -> a.length > 1)
-                .map(a -> a[1]).map(DataObjectEvents::isKnownObjectDataType).orElse(false))
+        final String[] evtSplit = Optional.ofNullable(sse.event()).map(s -> s.split("[.]")).filter(a -> a.length > 1).orElse(null);
+        if (evtSplit == null || !DataObjectEvents.isKnownObjectDataType(evtSplit[1])){
+            LoggerFactory.getLogger(getClass()).warn("Skipping unknown sse event! " + Arrays.toString(evtSplit));
             return;
+        }
 
-        final String evt = sse.event().split("[.]")[1];
-        DataObjectEvent<?> event = DataObjectEvents.fromJsonData(evt, sse.data(), objectMapper);
+        final String evtType = evtSplit[1];
+        DataObjectEvent<?> event = DataObjectEvents.fromJsonData(evtType, sse.data(), objectMapper);
 
-        //broadcast with project filter
+        //broadcast with project.type.job filter or project.type filter
         subscribers.getOrDefault(sse.event(), List.of()).forEach(e -> {
             if (e instanceof PropertyChangeSubscriber)
-                ((PropertyChangeSubscriber)e).onNext(evt , event);
+                ((PropertyChangeSubscriber) e).onNext(evtType, event);
             else
                 e.onNext(event);
         });
 
-        //broadcast without project filter
-        subscribers.getOrDefault(evt, List.of()).forEach(e -> {
+        if (evtSplit.length > 2 || event.dataType == DataEventType.JOB){
+            //broadcast with project filter only if event is a job event
+            subscribers.getOrDefault(evtSplit[0] + "." + evtSplit[1], List.of()).forEach(e -> {
+                if (e instanceof PropertyChangeSubscriber)
+                    ((PropertyChangeSubscriber) e).onNext(evtType, event);
+                else
+                    e.onNext(event);
+            });
+        }
+
+        //broadcast without additional filter, just by type
+        subscribers.getOrDefault(evtType, List.of()).forEach(e -> {
             if (e instanceof PropertyChangeSubscriber)
-                ((PropertyChangeSubscriber)e).onNext(evt , event);
+                ((PropertyChangeSubscriber) e).onNext(evtType, event);
             else
                 e.onNext(event);
         });

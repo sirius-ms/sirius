@@ -366,7 +366,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
                 try {
                     JobSubmission jobSubmission = makeJobSubmission();
                     if (finalComps != null && !finalComps.isEmpty())
-                        jobSubmission.setCompoundIds(finalComps.stream()
+                        jobSubmission.setAlignedFeatureIds(finalComps.stream()
                                 .map(instance -> instance.getID().getDirectoryName()).toList());
                     Job job = mf().getSiriusClient().jobs().startJob(mf().getProjectId(), jobSubmission, List.of(JobOptField.COMMAND));
                 } catch (Exception e) {
@@ -491,7 +491,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
 
                             (!checkResult.isSupportsPosPredictorTypes()
                                     && compoundsToProcess.stream().anyMatch(it -> it.getIonization().isPositive()))
-                    ) new WorkerWarningDialog(mf(), checkResult.getWorkerInfo() == null);
+                    ) new WorkerWarningDialog(gui, checkResult.getWorkerInfo() == null);
                 }
             } else {
                 if (formulaIDConfigPanel.content.getFormulaSearchDBs() != null) {

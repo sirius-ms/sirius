@@ -19,9 +19,9 @@
 
 package de.unijena.bioinf.ms.gui.net;
 
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.ActionUtils;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.BooleanJlabel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.webView.WebviewHTMLTextJPanel;
@@ -75,15 +75,15 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
     final BooleanJlabel auth = new BooleanJlabel();
     final BooleanJlabel authLicense = new BooleanJlabel();
     private final JDialog owner;
-    private final MainFrame mf;
+    private final SiriusGui gui;
 
     JLabel authLabel = new JLabel("Authenticated ?  ");
     JPanel resultPanel = null;
 
-    public ConnectionCheckPanel(@NotNull JDialog owner, @NotNull MainFrame mf, @NotNull ConnectionCheck check) {
+    public ConnectionCheckPanel(@NotNull JDialog owner, @NotNull SiriusGui gui, @NotNull ConnectionCheck check) {
         super(GridBagConstraints.WEST, GridBagConstraints.EAST);
         this.owner = owner;
-        this.mf = mf;
+        this.gui = gui;
 
         Optional<Subscription> sub = Optional.ofNullable(check.getLicenseInfo().getSubscription());
 
@@ -232,12 +232,12 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
                         + addHtmlErrorText(err));
                 resultPanel.add(new JButton(ActionUtils.deriveFrom(
                         evt -> Optional.ofNullable(owner).ifPresent(JDialog::dispose),
-                        SiriusActions.SIGN_OUT.getInstance(mf, true))));
+                        SiriusActions.SIGN_OUT.getInstance(gui, true))));
                 case LOGIN:
                     addHTMLTextPanel(resultPanel, err + READ_MORE_LICENSING + addHtmlErrorText(err));
                     resultPanel.add(new JButton(ActionUtils.deriveFrom(
                             evt -> Optional.ofNullable(owner).ifPresent(JDialog::dispose),
-                            SiriusActions.SIGN_IN.getInstance(mf, true))));
+                            SiriusActions.SIGN_IN.getInstance(gui, true))));
                     break;
                 case LICENSE:
                     addHTMLTextPanel(resultPanel, err + READ_MORE_LICENSING + addHtmlErrorText(err));
@@ -247,7 +247,7 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
                             " for the selected Webservice have not been accepted.</b><br> Click Accept to get Access:");
                     resultPanel.add(new JButton(ActionUtils.deriveFrom(
                             evt -> Optional.ofNullable(owner).ifPresent(JDialog::dispose),
-                            SiriusActions.ACCEPT_TERMS.getInstance(mf, true))));
+                            SiriusActions.ACCEPT_TERMS.getInstance(gui, true))));
                     break;
                 case APP_SERVER:
                     addHTMLTextPanel(resultPanel, err + "<br>" +

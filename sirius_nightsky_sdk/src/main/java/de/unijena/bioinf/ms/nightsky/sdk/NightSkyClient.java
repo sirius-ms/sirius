@@ -27,6 +27,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.Job;
 import de.unijena.bioinf.ms.nightsky.sdk.model.JobOptField;
 import de.unijena.bioinf.ms.nightsky.sdk.model.JobProgress;
 import de.unijena.bioinf.sse.DataEventType;
+import de.unijena.bioinf.sse.DataObjectEvent;
 import de.unijena.bioinf.sse.FluxToFlowBroadcast;
 import de.unijena.bioinf.sse.PropertyChangeSubscriber;
 import de.unijena.bioinf.ms.nightsky.sdk.api.ServerSentEventApi;
@@ -149,7 +150,7 @@ public class NightSkyClient implements AutoCloseable {
         if (events == null || events.isEmpty())
             throw new IllegalArgumentException("At least one event type needs to be specified!");
 
-        if (sseConnection != null){
+        if (sseConnection != null) {
             System.out.println("Event lsitening already running!");
             return;
         }
@@ -178,19 +179,23 @@ public class NightSkyClient implements AutoCloseable {
                         });
     }
 
-    public void addEventListener(Flow.Subscriber<Object> listener, String pid) {
+    public void addJobEventListener(Flow.Subscriber<DataObjectEvent<?>> listener, String jobId, String pid) {
+        sseBroadcast.subscribeToJob(listener, jobId, pid);
+    }
+
+    public void addEventListener(Flow.Subscriber<DataObjectEvent<?>> listener, String pid) {
         addEventListener(listener, pid, EnumSet.of(DataEventType.PROJECT, DataEventType.JOB));
     }
 
-    public void addEventListener(Flow.Subscriber<Object> listener, String pid, DataEventType... eventsToListenOn) {
+    public void addEventListener(Flow.Subscriber<DataObjectEvent<?>> listener, String pid, DataEventType... eventsToListenOn) {
         addEventListener(listener, pid, EnumSet.copyOf(List.of(eventsToListenOn)));
     }
 
-    public void addEventListener(Flow.Subscriber<Object> listener, String pid, EnumSet<DataEventType> eventsToListenOn) {
+    public void addEventListener(Flow.Subscriber<DataObjectEvent<?>> listener, String pid, EnumSet<DataEventType> eventsToListenOn) {
         sseBroadcast.subscribe(listener, pid, eventsToListenOn);
     }
 
-    public void removeEventListener(Flow.Subscriber<Object> listener){
+    public void removeEventListener(Flow.Subscriber<DataObjectEvent<?>> listener) {
         sseBroadcast.unSubscribe(listener);
     }
 
@@ -203,7 +208,7 @@ public class NightSkyClient implements AutoCloseable {
         sseBroadcast.subscribe(PropertyChangeSubscriber.wrap(listener), pid, eventsToListenOn);
     }
 
-    public void removeEventListener(PropertyChangeListener listener){
+    public void removeEventListener(PropertyChangeListener listener) {
         sseBroadcast.unSubscribe(PropertyChangeSubscriber.wrap(listener));
     }
 

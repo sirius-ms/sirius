@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.middleware.service.events;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvent;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import org.jetbrains.annotations.NotNull;
@@ -104,9 +105,16 @@ public class SseEventService implements EventService<SseEmitter> {
                         for (SseEmitter emitter : emitters.getOrDefault(eventData.getEventType(), List.of())) {
                             System.out.println("Send event to Client: " + emitter.toString());
                             try {
+                                StringBuilder name = new StringBuilder()
+                                        .append(eventData.getProjectId()).append(".")
+                                        .append(eventData.getEventType().name());
+
+                                if (eventData.getEventType() == ServerEvent.Type.JOB)
+                                    name.append(".").append(((Job) eventData.getData()).getId());
+
                                 emitter.send(SseEmitter.event()
                                         .data(eventData, MediaType.APPLICATION_JSON)
-                                        .name(eventData.getProjectId() + "." + eventData.getEventType().name()));
+                                        .name(name.toString()));
                             } catch (IOException e) {
                                 logDebug("Error when sending event to client!", e);
                                 emitter.completeWithError(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()));
