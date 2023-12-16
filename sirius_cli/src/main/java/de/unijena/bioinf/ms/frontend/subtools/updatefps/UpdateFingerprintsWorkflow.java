@@ -41,7 +41,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-@CommandLine.Command(name = "update-fingerprints", description = "@|bold %n<STANDALONE> Update Fingerprint definitions of the given project to the current version. This will invalidate (delete) all results relying on predicted fingerprints. %n %n|@", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true, sortOptions = false)
 public class UpdateFingerprintsWorkflow extends BasicMasterJJob<Boolean> implements Workflow {
 
     private final ProjectSpaceManager<?> projectSpace;
