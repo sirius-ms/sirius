@@ -1064,14 +1064,21 @@
             "in": "query",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "byte"
+              "type": "integer",
+              "format": "int32"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           }
         }
       }
@@ -1246,14 +1253,21 @@
             "in": "query",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "byte"
+              "type": "integer",
+              "format": "int32"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           }
         }
       }
@@ -1489,14 +1503,21 @@
             "in": "query",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "byte"
+              "type": "integer",
+              "format": "int32"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           }
         }
       }

@@ -217,9 +217,10 @@ public class ProjectsApi {
      * <p><b>200</b> - OK
      * @param projectId The projectId parameter
      * @param charge The charge parameter
+     * @return String
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getCanopusClassyFireDataRequestCreation(String projectId, byte[] charge) throws WebClientResponseException {
+    private ResponseSpec getCanopusClassyFireDataRequestCreation(String projectId, Integer charge) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -241,14 +242,16 @@ public class ProjectsApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "charge", charge));
 
-        final String[] localVarAccepts = { };
+        final String[] localVarAccepts = { 
+            "application/csv"
+        };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
         final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        ParameterizedTypeReference<String> localVarReturnType = new ParameterizedTypeReference<String>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/cf-data", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -258,11 +261,12 @@ public class ProjectsApi {
      * <p><b>200</b> - OK
      * @param projectId The projectId parameter
      * @param charge The charge parameter
+     * @return String
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void getCanopusClassyFireData(String projectId, byte[] charge) throws WebClientResponseException {
-        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        getCanopusClassyFireDataRequestCreation(projectId, charge).bodyToMono(localVarReturnType).block();
+    public String getCanopusClassyFireData(String projectId, Integer charge) throws WebClientResponseException {
+        ParameterizedTypeReference<String> localVarReturnType = new ParameterizedTypeReference<String>() {};
+        return getCanopusClassyFireDataRequestCreation(projectId, charge).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -271,10 +275,11 @@ public class ProjectsApi {
      * <p><b>200</b> - OK
      * @param projectId The projectId parameter
      * @param charge The charge parameter
+     * @return ResponseEntity&lt;String&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> getCanopusClassyFireDataWithHttpInfo(String projectId, byte[] charge) throws WebClientResponseException {
-        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+    public ResponseEntity<String> getCanopusClassyFireDataWithHttpInfo(String projectId, Integer charge) throws WebClientResponseException {
+        ParameterizedTypeReference<String> localVarReturnType = new ParameterizedTypeReference<String>() {};
         return getCanopusClassyFireDataRequestCreation(projectId, charge).toEntity(localVarReturnType).block();
     }
 
@@ -287,7 +292,7 @@ public class ProjectsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getCanopusClassyFireDataWithResponseSpec(String projectId, byte[] charge) throws WebClientResponseException {
+    public ResponseSpec getCanopusClassyFireDataWithResponseSpec(String projectId, Integer charge) throws WebClientResponseException {
         return getCanopusClassyFireDataRequestCreation(projectId, charge);
     }
     /**
@@ -296,9 +301,10 @@ public class ProjectsApi {
      * <p><b>200</b> - OK
      * @param projectId The projectId parameter
      * @param charge The charge parameter
+     * @return String
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getCanopusNpcDataRequestCreation(String projectId, byte[] charge) throws WebClientResponseException {
+    private ResponseSpec getCanopusNpcDataRequestCreation(String projectId, Integer charge) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -320,14 +326,16 @@ public class ProjectsApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "charge", charge));
 
-        final String[] localVarAccepts = { };
+        final String[] localVarAccepts = { 
+            "application/csv"
+        };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
         final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        ParameterizedTypeReference<String> localVarReturnType = new ParameterizedTypeReference<String>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/npc-data", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -337,11 +345,12 @@ public class ProjectsApi {
      * <p><b>200</b> - OK
      * @param projectId The projectId parameter
      * @param charge The charge parameter
+     * @return String
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void getCanopusNpcData(String projectId, byte[] charge) throws WebClientResponseException {
-        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        getCanopusNpcDataRequestCreation(projectId, charge).bodyToMono(localVarReturnType).block();
+    public String getCanopusNpcData(String projectId, Integer charge) throws WebClientResponseException {
+        ParameterizedTypeReference<String> localVarReturnType = new ParameterizedTypeReference<String>() {};
+        return getCanopusNpcDataRequestCreation(projectId, charge).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -350,10 +359,11 @@ public class ProjectsApi {
      * <p><b>200</b> - OK
      * @param projectId The projectId parameter
      * @param charge The charge parameter
+     * @return ResponseEntity&lt;String&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> getCanopusNpcDataWithHttpInfo(String projectId, byte[] charge) throws WebClientResponseException {
-        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+    public ResponseEntity<String> getCanopusNpcDataWithHttpInfo(String projectId, Integer charge) throws WebClientResponseException {
+        ParameterizedTypeReference<String> localVarReturnType = new ParameterizedTypeReference<String>() {};
         return getCanopusNpcDataRequestCreation(projectId, charge).toEntity(localVarReturnType).block();
     }
 
@@ -366,7 +376,7 @@ public class ProjectsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getCanopusNpcDataWithResponseSpec(String projectId, byte[] charge) throws WebClientResponseException {
+    public ResponseSpec getCanopusNpcDataWithResponseSpec(String projectId, Integer charge) throws WebClientResponseException {
         return getCanopusNpcDataRequestCreation(projectId, charge);
     }
     /**
@@ -375,9 +385,10 @@ public class ProjectsApi {
      * <p><b>200</b> - OK
      * @param projectId The projectId parameter
      * @param charge The charge parameter
+     * @return String
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getFingerIdDataRequestCreation(String projectId, byte[] charge) throws WebClientResponseException {
+    private ResponseSpec getFingerIdDataRequestCreation(String projectId, Integer charge) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -399,14 +410,16 @@ public class ProjectsApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "charge", charge));
 
-        final String[] localVarAccepts = { };
+        final String[] localVarAccepts = { 
+            "application/csv"
+        };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
         final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        ParameterizedTypeReference<String> localVarReturnType = new ParameterizedTypeReference<String>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/fingerid-data", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -416,11 +429,12 @@ public class ProjectsApi {
      * <p><b>200</b> - OK
      * @param projectId The projectId parameter
      * @param charge The charge parameter
+     * @return String
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void getFingerIdData(String projectId, byte[] charge) throws WebClientResponseException {
-        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        getFingerIdDataRequestCreation(projectId, charge).bodyToMono(localVarReturnType).block();
+    public String getFingerIdData(String projectId, Integer charge) throws WebClientResponseException {
+        ParameterizedTypeReference<String> localVarReturnType = new ParameterizedTypeReference<String>() {};
+        return getFingerIdDataRequestCreation(projectId, charge).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -429,10 +443,11 @@ public class ProjectsApi {
      * <p><b>200</b> - OK
      * @param projectId The projectId parameter
      * @param charge The charge parameter
+     * @return ResponseEntity&lt;String&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> getFingerIdDataWithHttpInfo(String projectId, byte[] charge) throws WebClientResponseException {
-        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+    public ResponseEntity<String> getFingerIdDataWithHttpInfo(String projectId, Integer charge) throws WebClientResponseException {
+        ParameterizedTypeReference<String> localVarReturnType = new ParameterizedTypeReference<String>() {};
         return getFingerIdDataRequestCreation(projectId, charge).toEntity(localVarReturnType).block();
     }
 
@@ -445,7 +460,7 @@ public class ProjectsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getFingerIdDataWithResponseSpec(String projectId, byte[] charge) throws WebClientResponseException {
+    public ResponseSpec getFingerIdDataWithResponseSpec(String projectId, Integer charge) throws WebClientResponseException {
         return getFingerIdDataRequestCreation(projectId, charge);
     }
     /**

@@ -154,7 +154,7 @@ No authorization required
 
 ## getCanopusClassyFireData
 
-> getCanopusClassyFireData(projectId, charge)
+> String getCanopusClassyFireData(projectId, charge)
 
 Get CANOPUS prediction vector definition for ClassyFire classes
 
@@ -175,9 +175,10 @@ public class Example {
 
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | 
-        byte[] charge = null; // byte[] | 
+        Integer charge = 56; // Integer | 
         try {
-            apiInstance.getCanopusClassyFireData(projectId, charge);
+            String result = apiInstance.getCanopusClassyFireData(projectId, charge);
+            System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#getCanopusClassyFireData");
             System.err.println("Status code: " + e.getCode());
@@ -195,11 +196,11 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**|  | |
-| **charge** | **byte[]**|  | |
+| **charge** | **Integer**|  | |
 
 ### Return type
 
-null (empty response body)
+**String**
 
 ### Authorization
 
@@ -208,7 +209,7 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/csv
 
 
 ### HTTP response details
@@ -219,7 +220,7 @@ No authorization required
 
 ## getCanopusNpcData
 
-> getCanopusNpcData(projectId, charge)
+> String getCanopusNpcData(projectId, charge)
 
 Get CANOPUS prediction vector definition for NPC classes
 
@@ -240,9 +241,10 @@ public class Example {
 
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | 
-        byte[] charge = null; // byte[] | 
+        Integer charge = 56; // Integer | 
         try {
-            apiInstance.getCanopusNpcData(projectId, charge);
+            String result = apiInstance.getCanopusNpcData(projectId, charge);
+            System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#getCanopusNpcData");
             System.err.println("Status code: " + e.getCode());
@@ -260,11 +262,11 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**|  | |
-| **charge** | **byte[]**|  | |
+| **charge** | **Integer**|  | |
 
 ### Return type
 
-null (empty response body)
+**String**
 
 ### Authorization
 
@@ -273,7 +275,7 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/csv
 
 
 ### HTTP response details
@@ -284,7 +286,7 @@ No authorization required
 
 ## getFingerIdData
 
-> getFingerIdData(projectId, charge)
+> String getFingerIdData(projectId, charge)
 
 Get CSI:FingerID fingerprint (prediction vector) definition
 
@@ -305,9 +307,10 @@ public class Example {
 
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | 
-        byte[] charge = null; // byte[] | 
+        Integer charge = 56; // Integer | 
         try {
-            apiInstance.getFingerIdData(projectId, charge);
+            String result = apiInstance.getFingerIdData(projectId, charge);
+            System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#getFingerIdData");
             System.err.println("Status code: " + e.getCode());
@@ -325,11 +328,11 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**|  | |
-| **charge** | **byte[]**|  | |
+| **charge** | **Integer**|  | |
 
 ### Return type
 
-null (empty response body)
+**String**
 
 ### Authorization
 
@@ -338,7 +341,7 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/csv
 
 
 ### HTTP response details

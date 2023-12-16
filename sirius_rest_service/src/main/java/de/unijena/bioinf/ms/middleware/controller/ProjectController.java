@@ -40,7 +40,6 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import javax.servlet.ServletResponse;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.EnumSet;
@@ -160,36 +159,21 @@ public class ProjectController {
     @Operation(summary = "Get CSI:FingerID fingerprint (prediction vector) definition")
     @GetMapping(value = {"/{projectId}/fingerid-data"}, produces = "application/CSV")
     @ResponseStatus(HttpStatus.OK)
-    public void getFingerIdData(@PathVariable String projectId, @RequestParam byte charge, ServletResponse response) {
-        try {
-            projectsProvider.getProjectOrThrow(projectId).writeFingerIdData(response.getWriter(), charge);
-        } catch (IOException e) {
-            log.error("Error when requesting ResponseWriter!", e);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when requesting ResponseWriter!");
-        }
+    public String getFingerIdData(@PathVariable String projectId, @RequestParam int charge) {
+        return projectsProvider.getProjectOrThrow(projectId).getFingerIdDataCSV(charge);
     }
 
     @Operation(summary = "Get CANOPUS prediction vector definition for ClassyFire classes")
     @GetMapping(value = {"/{projectId}/cf-data"}, produces = "application/CSV")
     @ResponseStatus(HttpStatus.OK)
-    public void getCanopusClassyFireData(@PathVariable String projectId, @RequestParam byte charge, ServletResponse response) {
-        try {
-            projectsProvider.getProjectOrThrow(projectId).writeCanopusClassyFireData(response.getWriter(), charge);
-        } catch (IOException e) {
-            log.error("Error when requesting ResponseWriter!", e);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when requesting ResponseWriter!");
-        }
+    public String getCanopusClassyFireData(@PathVariable String projectId, @RequestParam int charge) {
+        return projectsProvider.getProjectOrThrow(projectId).getCanopusClassyFireDataCSV(charge);
     }
 
     @Operation(summary = "Get CANOPUS prediction vector definition for NPC classes")
     @GetMapping(value = {"/{projectId}/npc-data"}, produces = "application/CSV")
     @ResponseStatus(HttpStatus.OK)
-    public void getCanopusNpcData(@PathVariable String projectId, @RequestParam byte charge, ServletResponse response) {
-        try {
-            projectsProvider.getProjectOrThrow(projectId).writeCanopusNpcData(response.getWriter(), charge);
-        } catch (IOException e) {
-            log.error("Error when requesting ResponseWriter!", e);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when requesting ResponseWriter!");
-        }
+    public String getCanopusNpcData(@PathVariable String projectId, @RequestParam int charge) {
+        return projectsProvider.getProjectOrThrow(projectId).getCanopusNpcDataCSV(charge);
     }
 }
