@@ -20,10 +20,13 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.updatefps;
 
+import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
+import picocli.CommandLine;
 
+@CommandLine.Command(name = "update-fingerprints", description = "@|bold %n<STANDALONE> Update project to newest fingerprint definition and invalidate (delete) all results relying on predicted fingerprints. %n %n|@", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true, sortOptions = false)
 public class UpdateFingerprintOptions implements StandaloneTool<UpdateFingerprintsWorkflow> {
 
     @Override
