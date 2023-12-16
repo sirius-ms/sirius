@@ -22,26 +22,15 @@ package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 
 import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
-import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
-import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import de.unijena.bioinf.ms.gui.utils.JListDropImage;
-import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.dnd.DropTarget;
-import java.awt.dnd.DropTargetDropEvent;
-import java.awt.event.ActionEvent;
-import java.io.File;
-import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -50,10 +39,7 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 class ImportDatabaseDialog extends JDialog {
     private final DatabaseDialog databaseDialog;
-    protected JButton importButton;
     protected DatabaseImportConfigPanel configPanel;
-
-    private final DefaultListModel<File> fileListModel;
 
     public ImportDatabaseDialog(DatabaseDialog databaseDialog) {
         this(databaseDialog, null);
@@ -64,90 +50,13 @@ class ImportDatabaseDialog extends JDialog {
         this.databaseDialog = databaseDialog;
 
         setPreferredSize(new Dimension(640, 480));
-        setLayout(new BorderLayout());
 
         configPanel = new DatabaseImportConfigPanel(db, databaseDialog.customDatabases.stream().map(SearchableDatabase::name).collect(Collectors.toSet()));
-        configPanel.onValidityChange(this::refreshImportButton);
-        add(configPanel, BorderLayout.NORTH);
+        add(configPanel);
 
-        final Box box = Box.createVerticalBox();
-        final JLabel label = new JLabel(
-                "<html>Add or drop files with structures or reference spectra to import.");
-        label.setAlignmentX(Component.LEFT_ALIGNMENT);
-        box.add(label);
-
-        fileListModel = new DefaultListModel<>();
-        JList<File> fileList = new JListDropImage<>(fileListModel);
-
-        final JScrollPane pane = new JScrollPane(fileList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        pane.setAlignmentX(Component.LEFT_ALIGNMENT);
-        box.add(pane);
-
-        ToolbarButton addFiles = Buttons.getAddButton16("Add files");
-        ToolbarButton removeFiles = Buttons.getRemoveButton16("Remove files");
-        removeFiles.setEnabled(false);
-
-        Box fileListButtons = Box.createHorizontalBox();
-        fileListButtons.setAlignmentX(Component.LEFT_ALIGNMENT);
-        fileListButtons.add(Box.createHorizontalGlue());
-        fileListButtons.add(removeFiles);
-        fileListButtons.add(addFiles);
-
-        box.add(fileListButtons);
-
-        box.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Import compounds"));
-        add(box, BorderLayout.CENTER);
-
-        importButton = new JButton("Create/Open database and import compounds");
-        importButton.setEnabled(false);
-        add(importButton, BorderLayout.SOUTH);
-
-        JFileChooser importFileChooser = new JFileChooser();
-        importFileChooser.setMultiSelectionEnabled(true);
-
-        addFiles.addActionListener(e -> {
-            if (importFileChooser.showOpenDialog(ImportDatabaseDialog.this) == JFileChooser.APPROVE_OPTION) {
-                File[] files = importFileChooser.getSelectedFiles();
-
-                for (File f : files) {
-                    fileListModel.addElement(f);
-                }
-                refreshImportButton();
-            }
-        });
-
-        DropTarget dropTarget = new DropTarget() {
-            @Override
-            public synchronized void drop(DropTargetDropEvent evt) {
-                fileListModel.addAll(DragAndDrop.getFileListFromDrop(evt));
-                refreshImportButton();
-            }
-        };
-        setDropTarget(dropTarget);
-
-        fileList.addListSelectionListener(e -> removeFiles.setEnabled(!fileList.isSelectionEmpty()));
-
-        Action removeSelectedFiles = new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int[] selectedIndices = fileList.getSelectedIndices();
-                for (int i = selectedIndices.length-1; i >=0; i--) {
-                    fileListModel.removeElementAt(selectedIndices[i]);
-                }
-                refreshImportButton();
-            }
-        };
-
-        removeFiles.addActionListener(removeSelectedFiles);
-
-        String removeFilesActionName = "removeSelectedFiles";
-        fileList.getInputMap().put(KeyStroke.getKeyStroke("DELETE"),removeFilesActionName);
-        fileList.getActionMap().put(removeFilesActionName, removeSelectedFiles);
-
-        importButton.addActionListener(e -> {
+        configPanel.importButton.addActionListener(e -> {
             dispose();
-            List<Path> sources = Arrays.stream(fileListModel.toArray()).map(f -> ((File) f).toPath()).distinct().toList();
-            runImportJob(sources);
+            runImportJob();
         });
 
         GuiUtils.closeOnEscape(this);
@@ -156,18 +65,14 @@ class ImportDatabaseDialog extends JDialog {
         setVisible(true);
     }
 
-    protected void runImportJob(List<Path> sources) {
+    protected void runImportJob() {
         try {
             List<String> command = new ArrayList<>();
             command.add(configPanel.toolCommand());
             command.addAll(configPanel.asParameterList());
 
-            InputFilesOptions input = new InputFilesOptions();
-            input.msInput = new InputFilesOptions.MsInput();
-            input.msInput.setInputPath(sources);
-
             Jobs.runCommandAndLoad(command, null,
-                            input, this,
+                            null, this,
                             "Importing into '" + configPanel.getDbFilePath() + "'...",
                             false)
                     .awaitResult();
@@ -184,9 +89,5 @@ class ImportDatabaseDialog extends JDialog {
             LoggerFactory.getLogger(getClass()).error("Fatal Error during Custom DB import.", e);
             new StacktraceDialog(MF, "Fatal Error during Custom DB import.", e);
         }
-    }
-
-    private void refreshImportButton() {
-        importButton.setEnabled(!fileListModel.isEmpty() && configPanel.validDbLocation());
     }
 }

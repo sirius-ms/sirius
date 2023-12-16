@@ -6,36 +6,48 @@ import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.io.FileChooserPanel;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.gui.compute.SubToolConfigPanel;
-import de.unijena.bioinf.ms.gui.utils.ErrorReportingInputVerifier;
-import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
-import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
-import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
+import de.unijena.bioinf.ms.gui.configs.Buttons;
+import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
+import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import java.awt.*;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.io.File;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 
 public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOptions> {
 
-    public final PlaceholderTextField dbNameField;
-
-    public final FileChooserPanel dbLocationField;
+    private PlaceholderTextField dbNameField;
+    private FileChooserPanel dbLocationField;
+    private DefaultListModel<File> fileListModel;
+    public JButton importButton;
 
     private boolean validDbName;
     private boolean validDbDirectory;
 
-    private Runnable validityChangeListener;
-
     public DatabaseImportConfigPanel(@Nullable CustomDatabase db, Set<String> existingNames) {
         super(CustomDBOptions.class);
+        setLayout(new BorderLayout());
 
+        add(createParametersPanel(db, existingNames), BorderLayout.NORTH);
+        add(createCompoundsBox(), BorderLayout.CENTER);
+        add(createImportButton(), BorderLayout.SOUTH);
+    }
+
+    private JPanel createParametersPanel(@Nullable CustomDatabase db, Set<String> existingNames) {
         final TwoColumnPanel smalls = new TwoColumnPanel();
-        add(new TextHeaderBoxPanel("Parameters", smalls));
 
         dbNameField = new PlaceholderTextField("");
         smalls.addNamed("DB name", dbNameField);
@@ -82,7 +94,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
                 }
                 if (validDbName != (error == null)) {
                     validDbName = error == null;
-                    fireValidityChange();
+                    refreshImportButton();
                 }
                 return error;
             }
@@ -98,7 +110,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
                 }
                 if (validDbDirectory != (error == null)) {
                     validDbDirectory = error == null;
-                    fireValidityChange();
+                    refreshImportButton();
                 }
                 return error;
             }
@@ -110,23 +122,101 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
                 1, Integer.MAX_VALUE, 1,
                 (v) -> String.valueOf(v.getNumber().intValue()));
         smalls.addNamed("Buffer Size", bufferSize);
+
+        return smalls;
+    }
+
+    private Box createCompoundsBox() {
+        final Box box = Box.createVerticalBox();
+
+        fileListModel = new DefaultListModel<>();
+        JList<File> fileList = new JListDropImage<>(fileListModel);
+
+        final JScrollPane pane = new JScrollPane(fileList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        box.add(pane);
+
+        ToolbarButton addFiles = Buttons.getAddButton16("Add files");
+        ToolbarButton removeFiles = Buttons.getRemoveButton16("Remove files");
+        removeFiles.setEnabled(false);
+
+        Box fileListButtons = Box.createHorizontalBox();
+        fileListButtons.add(Box.createHorizontalGlue());
+        fileListButtons.add(removeFiles);
+        fileListButtons.add(addFiles);
+
+        box.add(fileListButtons);
+
+        Border border = BorderFactory.createCompoundBorder(
+                BorderFactory.createEmptyBorder(10, 0, 0, 0),
+                BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Drop or add compound files")
+        );
+        box.setBorder(border);
+
+
+        JFileChooser importFileChooser = new JFileChooser();
+        importFileChooser.setMultiSelectionEnabled(true);
+
+        addFiles.addActionListener(e -> {
+            if (importFileChooser.showOpenDialog(DatabaseImportConfigPanel.this) == JFileChooser.APPROVE_OPTION) {
+                File[] files = importFileChooser.getSelectedFiles();
+
+                for (File f : files) {
+                    fileListModel.addElement(f);
+                }
+                refreshImportButton();
+            }
+        });
+
+        DropTarget dropTarget = new DropTarget() {
+            @Override
+            public synchronized void drop(DropTargetDropEvent evt) {
+                fileListModel.addAll(DragAndDrop.getFileListFromDrop(evt));
+                refreshImportButton();
+            }
+        };
+        setDropTarget(dropTarget);
+
+        fileList.addListSelectionListener(e -> removeFiles.setEnabled(!fileList.isSelectionEmpty()));
+
+        Action removeSelectedFiles = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int[] selectedIndices = fileList.getSelectedIndices();
+                for (int i = selectedIndices.length-1; i >=0; i--) {
+                    fileListModel.removeElementAt(selectedIndices[i]);
+                }
+                refreshImportButton();
+            }
+        };
+
+        removeFiles.addActionListener(removeSelectedFiles);
+
+        String removeFilesActionName = "removeSelectedFiles";
+        fileList.getInputMap().put(KeyStroke.getKeyStroke("DELETE"),removeFilesActionName);
+        fileList.getActionMap().put(removeFilesActionName, removeSelectedFiles);
+        parameterBindings.put("input", this::getFiles);
+
+        return box;
+    }
+
+    private JButton createImportButton() {
+        importButton = new JButton("Create/Open database and import compounds");
+        importButton.setEnabled(false);
+        return importButton;
+    }
+
+    private void refreshImportButton() {
+        importButton.setEnabled(validDbDirectory && validDbName && !fileListModel.isEmpty());
     }
 
     public String getDbFilePath() {
         return Path.of(dbLocationField.getFilePath(), dbNameField.getText()).toString();
     }
 
-    public boolean validDbLocation() {
-        return validDbName && validDbDirectory;
-    }
-
-    public void onValidityChange(Runnable listener) {
-        validityChangeListener = listener;
-    }
-
-    private void fireValidityChange() {
-        if (validityChangeListener != null) {
-            validityChangeListener.run();
-        }
+    /**
+     * @return comma-separated list of absolute paths to files to import
+     */
+    public String getFiles() {
+        return Arrays.stream(fileListModel.toArray()).map(f -> ((File) f).getAbsolutePath()).distinct().collect(Collectors.joining(","));
     }
 }

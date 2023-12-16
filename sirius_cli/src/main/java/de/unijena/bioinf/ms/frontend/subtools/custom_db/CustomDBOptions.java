@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.frontend.subtools.custom_db;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.chemdb.custom.CustomDatabaseFactory;
@@ -86,6 +87,12 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 description = {"Maximum number of downloaded/computed compounds to keep in memory before writing them to disk (into the db directory). Can be set higher when importing large files on a fast computer."},
                 order = 210)
         public int writeBuffer;
+
+        @Option(names = {"--input", "-i"}, split = ",", description = {
+                "Files to import into the new database.",
+                "TODO describe formats" // TODO add, tooltip
+        }, order = 220)
+        public List<Path> files;
     }
 
     public static class Remove {
@@ -152,33 +159,34 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
 
                 final CustomDatabase db = CustomDatabaseFactory.createOrOpen(mode.importParas.location, Compressible.Compression.NONE, settings);
                 addDBToPropertiesIfNotExist(db);
-                logInfo("Database added to SIRIUS. Use 'structure --db=\"" + db.storageLocation() + "\"' to search in this database.");
+                logInfo("Database added to SIRIUS. Use 'structure --db=\"" + db.storageLocation() + "\"' to search in this database."); // TODO check this
 
-                if (input == null || input.msInput == null)
+                if (mode.importParas.files == null || mode.importParas.files.isEmpty())
                     return true;
 
-                if (!input.msInput.unknownFiles.isEmpty() || !input.msInput.msParserfiles.isEmpty()) {
-                    logInfo("Importing new structures to custom database '" + mode.importParas.location + "'...");
-                    final AtomicLong lines = new AtomicLong(0);
-                    final List<Path> unknown = input.msInput.unknownFiles.keySet().stream().sorted().toList();
-                    for (Path f : unknown)
-                        lines.addAndGet(FileUtils.estimateNumOfLines(f));
-                    lines.addAndGet(input.msInput.msParserfiles.size());
+                Map<Boolean, List<Path>> groups = mode.importParas.files.stream().collect(Collectors.partitioningBy(p -> MsExperimentParser.isSupportedFileName(p.getFileName().toString())));
+                List<Path> spectrumFiles = groups.get(true);
+                List<Path> structureFiles = groups.get(false);
 
-                    final AtomicInteger count = new AtomicInteger(0);
+                logInfo("Importing new structures to custom database '" + mode.importParas.location + "'...");
+                final AtomicLong lines = new AtomicLong(0);
+                for (Path f : structureFiles)
+                    lines.addAndGet(FileUtils.estimateNumOfLines(f));
+                lines.addAndGet(spectrumFiles.size());
 
-                    checkForInterruption();
+                final AtomicInteger count = new AtomicInteger(0);
 
-                    dbjob = db.importToDatabaseJob(
-                            input.msInput.msParserfiles.keySet().stream().map(Path::toFile).toList(),
-                            unknown.stream().map(Path::toFile).toList(),
-                            inChI -> updateProgress(0, Math.max(lines.intValue(), count.incrementAndGet() + 1), count.get(), "Importing '" + inChI.key2D() + "'"),
-                            ApplicationCore.WEB_API, mode.importParas.writeBuffer
-                    );
-                    checkForInterruption();
-                    submitJob(dbjob).awaitResult();
-                    logInfo("...New structures imported to custom database '" + mode.importParas.location + "'.");
-                }
+                checkForInterruption();
+
+                dbjob = db.importToDatabaseJob(
+                        spectrumFiles.stream().map(Path::toFile).toList(),
+                        structureFiles.stream().map(Path::toFile).toList(),
+                        inChI -> updateProgress(0, Math.max(lines.intValue(), count.incrementAndGet() + 1), count.get(), "Importing '" + inChI.key2D() + "'"),
+                        ApplicationCore.WEB_API, mode.importParas.writeBuffer
+                );
+                checkForInterruption();
+                submitJob(dbjob).awaitResult();
+                logInfo("...New structures imported to custom database '" + mode.importParas.location + "'.");
 
                 return true;
             } else if (mode.removeParas != null) {
