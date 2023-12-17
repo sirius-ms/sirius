@@ -89,8 +89,9 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
         public int writeBuffer;
 
         @Option(names = {"--input", "-i"}, split = ",", description = {
-                "Files to import into the new database.",
-                "TODO describe formats" // TODO add, tooltip
+                "Files to import into the database.",
+                "Supported formats: .ms, .mgf, .msp, .mat, .txt (MassBank), .mb, .json (GNPS, MoNA).",
+                "Structures without spectra can be passed as a tab-separated (.tsv) file with fields [SMILES, id (optional), name (optional)].",
         }, order = 220)
         public List<Path> files;
     }
@@ -159,7 +160,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
 
                 final CustomDatabase db = CustomDatabaseFactory.createOrOpen(mode.importParas.location, Compressible.Compression.NONE, settings);
                 addDBToPropertiesIfNotExist(db);
-                logInfo("Database added to SIRIUS. Use 'structure --db=\"" + db.storageLocation() + "\"' to search in this database."); // TODO check this
+                logInfo("Database added to SIRIUS. Use 'structure --db=\"" + db.storageLocation() + "\"' to search in this database.");
 
                 if (mode.importParas.files == null || mode.importParas.files.isEmpty())
                     return true;

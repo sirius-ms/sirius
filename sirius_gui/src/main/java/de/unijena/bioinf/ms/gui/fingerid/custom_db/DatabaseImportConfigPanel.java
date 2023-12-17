@@ -129,8 +129,11 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
     private Box createCompoundsBox() {
         final Box box = Box.createVerticalBox();
 
+        String inputParameter = "input";
         fileListModel = new DefaultListModel<>();
         JList<File> fileList = new JListDropImage<>(fileListModel);
+        getOptionDescriptionByName(inputParameter).ifPresent(description -> box.setToolTipText(GuiUtils.formatToolTip(300, description)));
+        parameterBindings.put(inputParameter, this::getFiles);
 
         final JScrollPane pane = new JScrollPane(fileList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         box.add(pane);
@@ -194,7 +197,6 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         String removeFilesActionName = "removeSelectedFiles";
         fileList.getInputMap().put(KeyStroke.getKeyStroke("DELETE"),removeFilesActionName);
         fileList.getActionMap().put(removeFilesActionName, removeSelectedFiles);
-        parameterBindings.put("input", this::getFiles);
 
         return box;
     }
