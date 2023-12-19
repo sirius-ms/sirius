@@ -848,6 +848,17 @@ public class FileUtils {
         }
     }
 
+    /**
+     * Same as {@link Files#walk(Path, FileVisitOption...)}, but in try-with-resources, and IOException is wrapped into a RuntimeException
+     */
+    public static Stream<Path> sneakyWalk(Path p, FileVisitOption... options) {
+        try (Stream<Path> s = Files.walk(p, options)) {
+            return s;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static <R> R linesAndClose(Path p, Function<Stream<String>, R> tryWith) throws IOException {
         try (Stream<String> s = Files.lines(p)) {
             return tryWith.apply(s);
