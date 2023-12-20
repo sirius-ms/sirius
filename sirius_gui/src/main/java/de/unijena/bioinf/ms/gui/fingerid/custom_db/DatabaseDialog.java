@@ -160,9 +160,9 @@ public class DatabaseDialog extends JDialog {
             if (openDbFileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
                 File file = openDbFileChooser.getSelectedFile();
                 if (customDatabases.stream().anyMatch(db -> db.storageLocation().equals(file.toString()))) {
-                    JOptionPane.showMessageDialog(this, "Database already available in SIRIUS.", "" , JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Database is already available in SIRIUS.", "" , JOptionPane.INFORMATION_MESSAGE);
                 } else if (customDatabases.stream().anyMatch(db -> db.name().equals(file.getName()))) {
-                    JOptionPane.showMessageDialog(this, "A different database with the same name already exists.", "" , JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "A different database with name " + file.getName() + " already exists.", "" , JOptionPane.ERROR_MESSAGE);
                 } else {
                     try {
                         CustomDatabase newDb = SearchableDatabases.loadCustomDatabaseFromLocation(file.getAbsolutePath(), true);

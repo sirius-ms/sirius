@@ -45,6 +45,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -75,7 +76,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
     }
 
     public static class Import {
-        @Option(names = "--import", required = true,
+        @Option(names = "--location", required = true,
                 description = {"Location of the custom database to import into.",
                         "An absolute local path to a new database file file to be created (file name must end with .db)",
                         "If no input data is given (--input), the database will just be added to SIRIUS",
@@ -89,11 +90,12 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
         public int writeBuffer;
 
         @Option(names = {"--input", "-i"}, split = ",", description = {
-                "Files to import into the database.",
+                "Files or directories to import into the database.",
                 "Supported formats: .ms, .mgf, .msp, .mat, .txt (MassBank), .mb, .json (GNPS, MoNA).",
                 "Structures without spectra can be passed as a tab-separated (.tsv) file with fields [SMILES, id (optional), name (optional)].",
+                "Directories will be recursively expanded."
         }, order = 220)
-        public List<Path> files;
+        public List<Path> input;
     }
 
     public static class Remove {
@@ -155,6 +157,8 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
 
                 checkForInterruption();
 
+                checkConflictingName(mode.importParas.location);
+
                 CustomDatabaseSettings settings = new CustomDatabaseSettings(false, 0,
                         List.of(ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion().getUsedFingerprints()), VersionsInfo.CUSTOM_DATABASE_SCHEMA, null);
 
@@ -162,10 +166,15 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 addDBToPropertiesIfNotExist(db);
                 logInfo("Database added to SIRIUS. Use 'structure --db=\"" + db.storageLocation() + "\"' to search in this database.");
 
-                if (mode.importParas.files == null || mode.importParas.files.isEmpty())
+                if (mode.importParas.input == null || mode.importParas.input.isEmpty())
                     return true;
 
-                Map<Boolean, List<Path>> groups = mode.importParas.files.stream().collect(Collectors.partitioningBy(p -> MsExperimentParser.isSupportedFileName(p.getFileName().toString())));
+                Map<Boolean, List<Path>> groups = mode.importParas.input.stream()
+                        .flatMap(FileUtils::sneakyWalk)
+                        .filter(Files::isRegularFile)
+                        .distinct()
+                        .collect(Collectors.partitioningBy(p -> MsExperimentParser.isSupportedFileName(p.getFileName().toString())));
+
                 List<Path> spectrumFiles = groups.get(true);
                 List<Path> structureFiles = groups.get(false);
 
@@ -279,5 +288,14 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 .collect(Collectors.joining(",")));
     }
 
+    private static void checkConflictingName(String location) {
+        String dbName = Path.of(location).getFileName().toString();
+        SearchableDatabases.getCustomDatabases().stream()
+                .filter(db -> db.name().equals(dbName) && !db.storageLocation().equals(location))
+                .findAny()
+                .ifPresent(db -> {
+                    throw new RuntimeException("Database with name " + dbName + " already exists in " + db.storageLocation());
+                } );
+    }
 
 }
