@@ -57,7 +57,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
 
         dbLocationField = new FileChooserPanel(dbDirectory, JFileChooser.DIRECTORIES_ONLY);
         smalls.addNamed("DB location", dbLocationField);
-        parameterBindings.put("import", this::getDbFilePath);
+        parameterBindings.put("location", this::getDbFilePath);
         validDbDirectory = !dbDirectory.isEmpty();
 
         if (db != null) {
