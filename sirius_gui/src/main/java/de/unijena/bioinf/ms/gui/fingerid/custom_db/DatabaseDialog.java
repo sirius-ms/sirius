@@ -42,7 +42,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -123,14 +123,24 @@ public class DatabaseDialog extends JDialog {
                     return;
                 }
                 final String name = db.name();
-                final String msg = "Do you really want to remove the custom database '" + name + "'?\n(will not be deleted from disk) ";
 
-                if (JOptionPane.showConfirmDialog(getOwner(), msg, "", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                Box deleteDialogBox = Box.createVerticalBox();
+                deleteDialogBox.add(new JLabel("Do you really want to remove '" + name + "'?"));
+                JCheckBox deleteFromDisk = new JCheckBox("Delete from disk");
+                deleteDialogBox.add(Box.createRigidArea(new Dimension(0,10)));
+                deleteDialogBox.add(deleteFromDisk);
+
+                if (JOptionPane.showConfirmDialog(getOwner(), deleteDialogBox, "", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
 
                     try {
-                        Jobs.runCommandAndLoad(Arrays.asList(
-                                                CustomDBOptions.class.getAnnotation(CommandLine.Command.class).name(),
-                                                "--remove", name), null, null, owner,
+                        List<String> deleteCommand = new ArrayList<>();
+                        deleteCommand.add(CustomDBOptions.class.getAnnotation(CommandLine.Command.class).name());
+                        deleteCommand.add("--remove");
+                        deleteCommand.add(name);
+                        if (deleteFromDisk.isSelected()) {
+                            deleteCommand.add("--delete");
+                        }
+                        Jobs.runCommandAndLoad(deleteCommand, null, null, owner,
                                         "Deleting database '" + name + "'...", true)
                                 .awaitResult();
                     } catch (ExecutionException ex) {
