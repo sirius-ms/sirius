@@ -26,6 +26,7 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -35,8 +36,9 @@ import lombok.Setter;
 @AllArgsConstructor
 @Getter
 @Setter
-public class FingerprintCandidateWrapper {
+public class  FingerprintCandidateWrapper {
 
+    @Id
     long id;
     String formula;
     double mass;
