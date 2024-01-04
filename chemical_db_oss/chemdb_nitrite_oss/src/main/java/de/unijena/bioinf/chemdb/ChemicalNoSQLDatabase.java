@@ -24,14 +24,14 @@ import com.google.common.collect.Iterables;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.chemdb.nitrite.serializers.FingerprintDbDeserializer;
-import de.unijena.bioinf.chemdb.nitrite.serializers.FingerprintDbSerializer;
+import de.unijena.bioinf.chemdb.nitrite.serializers.FingerprintCandidateWrapperDeserializer;
+import de.unijena.bioinf.chemdb.nitrite.serializers.FingerprintCandidateWrapperSerializer;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
 import de.unijena.bioinf.spectraldb.SpectralNoSQLDatabase;
 import de.unijena.bioinf.storage.db.nosql.*;
+import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
@@ -57,10 +57,9 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
     protected static Metadata initMetadata(FingerprintVersion version) throws IOException {
         Metadata metadata = SpectralNoSQLDatabase.initMetadata();
         return metadata
-                .addRepository(ChemicalNoSQLDatabase.Tag.class, "id", new Index("key",IndexType.UNIQUE))
+                .addRepository(ChemicalNoSQLDatabase.Tag.class, new Index("key",IndexType.UNIQUE))
                 .addRepository(
                         FingerprintCandidateWrapper.class,
-                        "id",
                         new Index("formula", IndexType.NON_UNIQUE),
                         new Index("mass", IndexType.NON_UNIQUE)
                 ).addCollection(
@@ -68,13 +67,9 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
                 ).setOptionalFields(
                         FingerprintCandidateWrapper.class, "fingerprint"
                 ).addSerialization(
-                        CompoundCandidate.class,
-                        new CompoundCandidate.Serializer(), // This line doesn't have any effect, the serializer is taken from @JsonSerializer annotation
-                        new JSONReader.CompoundCandidateDeserializer()
-                ).addSerialization(
-                        Fingerprint.class,
-                        new FingerprintDbSerializer(),
-                        new FingerprintDbDeserializer(version)
+                        FingerprintCandidateWrapper.class,
+                        new FingerprintCandidateWrapperSerializer(),
+                        new FingerprintCandidateWrapperDeserializer(version)
                 );
     }
 
@@ -247,6 +242,8 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Tag {
+
+        @Id
         private long id;
         private String key;
         private String value;
