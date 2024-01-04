@@ -47,15 +47,12 @@ public class JoinedIterable<T, P> implements Iterable<T> {
 
     public JoinedIterable(
             Class<T> targetClass,
-            Iterable<P> parents,
+            Cursor<P> parents,
             Function<Object, Iterable<Document>> children,
             String localField,
             String targetField,
             NitriteMapper mapper
     ) throws IOException {
-        if (!(parents instanceof Cursor)) {
-            throw new IOException("parents must be a cursor!");
-        }
         try {
             Field cField = parents.getClass().getDeclaredField("cursor");
             cField.setAccessible(true);
