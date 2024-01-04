@@ -31,6 +31,7 @@ import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
 import de.unijena.bioinf.chemdb.DBLink;
+import jakarta.persistence.Id;
 import lombok.*;
 
 @Getter
@@ -40,8 +41,8 @@ import lombok.*;
 @Builder
 public class Ms2ReferenceSpectrum {
 
-    @Builder.Default
-    private long id = -1L;
+    @Id
+    private long id;
 
     private String uuid;
 
