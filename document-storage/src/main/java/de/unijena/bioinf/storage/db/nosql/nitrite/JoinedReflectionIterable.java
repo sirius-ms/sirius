@@ -62,10 +62,10 @@ public class JoinedReflectionIterable<P, C> implements Iterable<P> {
             String targetField,
             NitriteMapper mapper
     ) throws IOException {
-        if (parents instanceof Cursor) {
-            if (((Cursor<P>) parents).size() > 0) {
-                P first = ((Cursor<P>) parents).firstOrDefault();
-                objectIterable = new JoinedIterable<>((Class<P>) first.getClass(), parents, children, localField, targetField, mapper);
+        if (parents instanceof Cursor<P> pCursor) {
+            if (pCursor.size() > 0) {
+                P first = pCursor.firstOrDefault();
+                objectIterable = new JoinedIterable<>((Class<P>) first.getClass(), pCursor, children, localField, targetField, mapper);
             }
         } else {
             if (parents.iterator().hasNext()) {
@@ -157,7 +157,7 @@ public class JoinedReflectionIterable<P, C> implements Iterable<P> {
                     Collection<C> collection = (Collection<C>) targetField.get(target);
                     if (collection == null) {
                         if (targetField.getType() == List.class) {
-                            collection = new ArrayList<>(targetChildren);
+                            collection = new ArrayList<>();
                         } else if (targetField.getType() == BlockingDeque.class) {
                             collection = new LinkedBlockingDeque<>();
                         } else if (targetField.getType() == BlockingQueue.class) {
