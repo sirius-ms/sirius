@@ -23,6 +23,7 @@ package de.unijena.bioinf.storage.db.nosql.nitrite;
 import org.dizitart.no2.Document;
 import org.dizitart.no2.KeyValuePair;
 import org.dizitart.no2.exceptions.InvalidOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 import java.util.Set;
@@ -44,7 +45,7 @@ public class ProjectingDocumentIterable implements Iterable<Document> {
     }
 
     @Override
-    public Iterator<Document> iterator() {
+    public @NotNull Iterator<Document> iterator() {
         return new ProjectingDocumentIterator();
     }
 
@@ -94,7 +95,7 @@ public class ProjectingDocumentIterable implements Iterable<Document> {
     }
 
     public static Document project(Document original, Set<String> omittedFields) {
-        if (omittedFields.size() == 0) return original;
+        if (omittedFields.isEmpty()) return original;
         Document result = new Document(original);
 
         for (KeyValuePair keyValuePair : original) {
