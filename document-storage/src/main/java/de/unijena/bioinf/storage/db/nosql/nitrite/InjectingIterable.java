@@ -20,12 +20,11 @@
 
 package de.unijena.bioinf.storage.db.nosql.nitrite;
 
-import de.unijena.bioinf.storage.db.nosql.utils.ExtFieldUtils;
 import org.apache.commons.lang3.ClassUtils;
 import org.dizitart.no2.Document;
 import org.dizitart.no2.NitriteCollection;
-import org.dizitart.no2.NitriteId;
 import org.dizitart.no2.exceptions.InvalidOperationException;
+import org.dizitart.no2.filters.Filters;
 import org.dizitart.no2.mapper.NitriteMapper;
 import org.dizitart.no2.objects.ObjectRepository;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +34,7 @@ import java.lang.reflect.Field;
 import java.util.Iterator;
 import java.util.Set;
 
+import static org.dizitart.no2.exceptions.ErrorMessage.ID_FILTER_VALUE_CAN_NOT_BE_NULL;
 import static org.dizitart.no2.exceptions.ErrorMessage.REMOVE_ON_DOCUMENT_ITERATOR_NOT_SUPPORTED;
 
 public class InjectingIterable<T> implements Iterable<T> {
@@ -45,21 +45,15 @@ public class InjectingIterable<T> implements Iterable<T> {
 
     private final NitriteCollection collection;
 
-    private final String idField;
+    private final Field primaryKeyField;
 
     private final NitriteMapper mapper;
 
-    public InjectingIterable(Iterable<T> parent, Set<String> injectedFields, ObjectRepository<T> repository, String idField, NitriteMapper mapper) throws IOException {
-        try {
-            Field cField = repository.getClass().getDeclaredField("collection");
-            cField.setAccessible(true);
-            this.collection = (NitriteCollection) cField.get(repository);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new IOException(e);
-        }
+    public InjectingIterable(Iterable<T> parent, Set<String> injectedFields, ObjectRepository<T> repository, Field primaryKeyField, NitriteMapper mapper) {
+        this.collection = repository.getDocumentCollection();
         this.parent = parent;
         this.injectedFields = injectedFields;
-        this.idField = idField;
+        this.primaryKeyField = primaryKeyField;
         this.mapper = mapper;
     }
 
@@ -94,9 +88,12 @@ public class InjectingIterable<T> implements Iterable<T> {
             while (iterator.hasNext()) {
                 T object = iterator.next();
                 if (object != null) {
-                    T injected = inject(object, injectedFields, collection, idField, mapper);
-                    nextElement = injected;
-                    return;
+                    try {
+                        nextElement = inject(object, injectedFields, collection, primaryKeyField, mapper);
+                        return;
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                 } else {
                     nextElement = null;
                 }
@@ -132,21 +129,13 @@ public class InjectingIterable<T> implements Iterable<T> {
         }
     }
 
-    public static <T> T inject(T original, Set<String> injectedFields, NitriteCollection collection, String idField, NitriteMapper mapper) {
-        if (injectedFields.size() == 0) return original;
+    public static <T> T inject(T original, Set<String> injectedFields, NitriteCollection collection, Field primaryKeyField, NitriteMapper mapper) throws IOException {
+        if (injectedFields.isEmpty()) return original;
 
-        long id;
-        try {
-            Field idf = ExtFieldUtils.getAllField(original.getClass(), idField);
-            idf.setAccessible(true);
-            id = idf.getLong(original);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-        Document fromDB = collection.getById(NitriteId.createId(id));
+        Object pkValue = NitriteDatabase.getFieldValue(original, primaryKeyField).orElseThrow(() -> new IOException(ID_FILTER_VALUE_CAN_NOT_BE_NULL.getMessage()));
+        Document fromDB = collection.find(Filters.eq(primaryKeyField.getName(), pkValue)).firstOrDefault();
         if (fromDB == null) {
-            throw new RuntimeException("No such document: " + id);
+            throw new IOException("Document not found: " + pkValue);
         }
 
         inject(original, fromDB, original.getClass(), injectedFields, mapper);
