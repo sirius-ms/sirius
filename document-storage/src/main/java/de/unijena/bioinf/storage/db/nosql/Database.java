@@ -59,9 +59,7 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
 
     int upsertAll(String collectionName, Iterable<DocType> documents) throws IOException;
 
-    <T> T getById(long id, Class<T> clazz, String... withOptionalFields) throws IOException;
-
-    DocType getById(String collectionName, long id, String... withOptionalFields) throws IOException;
+    <T> Optional<T> getByPrimaryKey(Object primaryKey, Class<T> clazz, String... withOptionalFields) throws IOException;
 
     <T> Iterable<T> find(Filter filter, Class<T> clazz, String... withOptionalFields) throws IOException;
 
