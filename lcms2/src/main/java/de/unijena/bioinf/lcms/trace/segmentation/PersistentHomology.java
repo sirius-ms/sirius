@@ -27,6 +27,7 @@
 package de.unijena.bioinf.lcms.trace.segmentation;
 
 import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
+import de.unijena.bioinf.lcms.statistics.SampleStats;
 import de.unijena.bioinf.lcms.trace.Trace;
 import de.unijena.bioinf.lcms.trace.filter.Filter;
 import de.unijena.bioinf.lcms.trace.filter.NoFilter;
@@ -57,18 +58,15 @@ import java.util.stream.IntStream;
  * @see <a href="https://www.math.uri.edu/~thoma/comp_top__2018/stag2016.pdf">Fugacci et al., 2016</a>
  * @see <a href="https://www.sthu.org/research/publications/files/Hub20.pdf">Huber, 2020</a>
  */
-public class PersistentHomology implements TraceSegmenter {
+public class PersistentHomology implements TraceSegmentationStrategy {
 
-    private double intensityThreshold, trim;
     private Filter filter;
 
-    public PersistentHomology(double intensityThreshold, double trim) {
-        this(new NoFilter(), intensityThreshold, trim);
+    public PersistentHomology() {
+        this(new NoFilter());
     }
 
-    public PersistentHomology(Filter filter, double intensityThreshold, double trim) {
-        this.intensityThreshold = intensityThreshold;
-        this.trim = trim;
+    public PersistentHomology(Filter filter) {
         this.filter = filter;
     }
 
@@ -134,19 +132,19 @@ public class PersistentHomology implements TraceSegmenter {
         private float[] filter() {
             if (filter instanceof NoFilter) return null;
             final double[] ints = new double[size()];
-            for (int k=0; k < size(); ++k) ints[k] = trace.intensity(k-offset);
+            for (int k=0; k < size(); ++k) ints[k] = trace.intensity(k+offset);
             return MatrixUtils.double2float(filter.apply(ints));
         }
 
         public float get(int index) {
             if (intensities!=null) return intensities[index];
-            return trace.intensity(index-offset);
+            return trace.intensity(index+offset);
         }
         public double getAverageRt(Segment segment) {
             double sum = 0d;
             double norm = 0d;
             for (int i = segment.left; i <= segment.right; i++) {
-                final int j = i-offset;
+                final int j = i+offset;
                 sum += trace.intensity(j) * trace.retentionTime(j);
                 norm += trace.intensity(j);
             }
@@ -156,10 +154,10 @@ public class PersistentHomology implements TraceSegmenter {
             double intSum = 0d;
             double var = 0d;
             for (int i = segment.left; i <= segment.right; i++) {
-                intSum += trace.intensity(i-offset);
+                intSum += trace.intensity(i+offset);
             }
             for (int i = segment.left; i <= segment.right; i++) {
-                final int j = i-offset;
+                final int j = i+offset;
                 var += (trace.intensity(j) / intSum) * Math.pow((trace.retentionTime(j) - mean), 2);
             }
             return Math.sqrt(var);
@@ -169,13 +167,13 @@ public class PersistentHomology implements TraceSegmenter {
             double mean = getAverageRt(peak);
             double std = getStdRT(peak,mean);
             for (int i = 0; i < size(); i++) {
-                if (trace.retentionTime(i-offset) < mean - x * std)
+                if (trace.retentionTime(i+offset) < mean - x * std)
                     continue;
                 peak.setLeft(Math.max(peak.getLeft(), i));
                 break;
             }
             for (int i = size() - 1; i >= 0 ; i--) {
-                if (trace.retentionTime(i-offset) > mean + x * std)
+                if (trace.retentionTime(i+offset) > mean + x * std)
                     continue;
                 peak.setRight(Math.min(peak.getRight(), i));
                 break;
@@ -285,14 +283,14 @@ public class PersistentHomology implements TraceSegmenter {
     }
 
     @Override
-    public List<TraceSegment> detectSegments(Trace trace) {
+    public List<TraceSegment> detectSegments(SampleStats stats, Trace trace) {
         final int offset=trace.startId();
-        return computePersistentHomology(trace, filter, intensityThreshold, trim).stream().map(seg->
+        return computePersistentHomology(trace, filter, stats.noiseLevel(trace.apex()), 3d).stream().map(seg->
                 new TraceSegment(seg.idx+offset, seg.left+offset, seg.right+offset)).toList();
     }
 
     @Override
-    public int[] detectMaxima(Trace trace) {
-        return TraceSegmenter.super.detectMaxima(trace);
+    public int[] detectMaxima(SampleStats stats, Trace trace) {
+        return TraceSegmentationStrategy.super.detectMaxima(stats, trace);
     }
 }

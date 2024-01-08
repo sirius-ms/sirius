@@ -2,81 +2,63 @@ package de.unijena.bioinf.lcms.trace;
 
 import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.lcms.ScanPointMapping;
+import de.unijena.bioinf.lcms.align2.RecalibrationFunction;
+import de.unijena.bioinf.lcms.merge2.ScanPointInterpolator;
 import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
+import de.unijena.bioinf.lcms.statistics.NormalizationStrategy;
+import de.unijena.bioinf.lcms.statistics.TraceStats;
 import de.unijena.bioinf.lcms.trace.segmentation.ApexDetection;
 import de.unijena.bioinf.lcms.trace.segmentation.LegacySegmenter;
+import de.unijena.bioinf.lcms.traceextractor.RectbasedCachingStrategy;
+import de.unijena.bioinf.lcms.traceextractor.TracePicker;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import lombok.Getter;
+import lombok.Setter;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Optional;
+import java.util.*;
 
-@Getter
 public class ProcessedSample {
 
-    private final LCMSStorage traceStorage;
+    @Getter @Setter
+    private int uid;
 
-    private final ScanPointMapping mapping;
+    @Getter
+    private LCMSStorage traceStorage;
+    @Getter
+    private MsDataSourceReference sourceReference;
+    @Getter
+    private MsInstrumentation instrumentation;
+    @Getter
+    private ScanPointMapping mapping;
 
-    private int numberOfHighQualityTraces;
+    @Getter @Setter
+    private TraceStats traceStats;
 
-    public ProcessedSample(ScanPointMapping scanPointMapping, LCMSStorage storage)  {
+    @Getter @Setter
+    private NormalizationStrategy.Normalizer normalizer;
+
+    @Getter @Setter
+    RecalibrationFunction rtRecalibration, mzRecalibration;
+
+    @Getter @Setter
+    ScanPointInterpolator scanPointInterpolator;
+
+    @Getter
+    private int polarity;
+
+    public ProcessedSample(MsDataSourceReference reference, MsInstrumentation instrumentation, ScanPointMapping scanPointMapping, LCMSStorage storage, int polarity, int uid)  {
         this.mapping = scanPointMapping;
+        this.sourceReference = reference;
+        this.instrumentation = instrumentation;
         this.traceStorage = storage;
-    }
-
-    public void detectTraces() {
-        TracePicker picker = new TracePicker(traceStorage, mapping);
-        ApexDetection apexDetection = new LegacySegmenter();
-        AssociatedPeakDetector aso = new AssociatedPeakDetector(traceStorage, new HashSet<>(Arrays.asList(
-                PrecursorIonType.fromString("[M+H]+"),PrecursorIonType.fromString("[M+Na]+"),
-                PrecursorIonType.fromString("[M-H2O+H]+"),PrecursorIonType.fromString("[M+K]+"),
-                PrecursorIonType.fromString("[M+NH3+H]+")
-        )));
-        // first pick all Traces corresponding to MS/MS
-        FloatArrayList medianIntensities = new FloatArrayList();
-        for (Ms2SpectrumHeader h : traceStorage.ms2SpectraHeader()) {
-            Optional<ContiguousTrace> contiguousTrace = picker.detectMostIntensivePeak(h.getParentId(), h.getPrecursorMz());
-            if (contiguousTrace.isPresent()) {
-                ContiguousTrace t = contiguousTrace.get();
-                aso.detectAllAssociatedTraces(picker, apexDetection, t);
-                SimpleSpectrum spec = traceStorage.getSpectrum(t.apex());
-                medianIntensities.add((float)Spectrums.getMedianIntensity(spec));
-            }
-        }
-        final float intensityThreshold;
-        if (medianIntensities.size()>=20) {
-            intensityThreshold = 4*(float)medianIntensities.doubleStream().average().orElse(0d);
-        } else {
-            // pick 20 random spectra
-            int stepSize = Math.max(1, mapping.length()/30);
-            for (int j=1; j <= 20; ++j) {
-                SimpleSpectrum spec = traceStorage.getSpectrum(j*stepSize);
-                medianIntensities.add((float)Spectrums.getMedianIntensity(spec));
-            }
-            intensityThreshold = 4*(float)medianIntensities.doubleStream().average().orElse(0d);
-        }
-        System.out.println("intensityThreshold = " + intensityThreshold);
-        // lets do the extreme case: pick all traces above 1e5
-        for (int sid=0; sid < mapping.length(); ++sid) {
-            SimpleSpectrum t = traceStorage.getSpectrum(sid);
-            for (int i = 0; i < t.size(); ++i) {
-                if (t.getIntensityAt(i) > intensityThreshold) {
-                    Optional<ContiguousTrace> contiguousTrace = picker.detectTrace(sid, t.getMzAt(i));
-                    contiguousTrace.ifPresent(trace -> aso.detectAllAssociatedTraces(picker, apexDetection, trace));
-                }
-            }
-        }
-        this.numberOfHighQualityTraces = 0;
-        for (int i=0; i < traceStorage.numberOfTraces(); ++i) {
-            if (traceStorage.getTraceNode(i).confidenceScore >= 2) ++numberOfHighQualityTraces;
-        }
-        System.out.println(numberOfHighQualityTraces);
-        new TraceConnector().connect(traceStorage);
+        this.polarity = polarity;
+        this.rtRecalibration = RecalibrationFunction.identity();
+        this.mzRecalibration = RecalibrationFunction.identity();
     }
 
     public void inactive() {
@@ -85,6 +67,10 @@ public class ProcessedSample {
 
     public void active() {
         traceStorage.setLowMemoryInactiveMode(false);
+    }
+
+    public MsDataSourceReference getReference() {
+        return sourceReference;
     }
 
     public Range<Double> getRtSpan() {

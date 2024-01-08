@@ -20,12 +20,20 @@
 
 package de.unijena.bioinf.sirius.elementdetection.prediction;
 
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormulaMap;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 
-import java.util.Arrays;
-import java.util.Comparator;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.util.*;
+import java.util.zip.GZIPInputStream;
+
 public class FeatureVector {
 
     public double[] getFeatureVector(int npeaks) {
