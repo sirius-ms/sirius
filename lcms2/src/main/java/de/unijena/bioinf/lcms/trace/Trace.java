@@ -70,4 +70,11 @@ public interface Trace {
         return endId() - startId() + 1;
     }
 
+    public default Rect rectWithIds() {
+        return new Rect((float)minMz(), (float)maxMz(), startId(), endId(), averagedMz());
+    }
+    public default Rect rectWithRts() {
+        return new Rect((float)minMz(), (float)maxMz(), retentionTime(startId()), retentionTime(endId()), averagedMz());
+    }
+
 }
