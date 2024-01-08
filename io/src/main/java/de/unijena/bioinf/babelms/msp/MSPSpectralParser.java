@@ -33,9 +33,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static de.unijena.bioinf.babelms.msp.MSP.*;
 
@@ -95,6 +95,10 @@ public class MSPSpectralParser extends SpectralParser {
 
         if (!comments.isEmpty())
             metaInfo.put(COMMENTS[0], String.join(COMMENT_SEPARATOR, comments));
+
+        for (String c : comments) {
+            parseMetadataComment(c).forEach(metaInfo::putIfAbsent);
+        }
 
         //multi MS/MS .mat format extension -> MS-Dial export
         if (prevMetaInfo != null && metaInfo.size() == 1 && metaInfo.containsKey(SPEC_TYPE[1])) {
@@ -176,5 +180,19 @@ public class MSPSpectralParser extends SpectralParser {
             if (reader != null)
                 reader.close();
         }
+    }
+
+    /**
+     * Extracts keys and values from a comment in form "k1=v1" "k2=v2", common in MoNA records.
+     * For comments not in this form returns empty map.
+     */
+    private Map<String, String> parseMetadataComment(String comment) {
+        Map<String, String> result = new HashMap<>();
+        Pattern p = Pattern.compile("\"(?<key>[^\"=]*)=(?<value>[^\"]*)\"");
+        Matcher m = p.matcher(comment);
+        while (m.find()) {
+            result.put(m.group("key"), m.group("value"));
+        }
+        return result;
     }
 }
