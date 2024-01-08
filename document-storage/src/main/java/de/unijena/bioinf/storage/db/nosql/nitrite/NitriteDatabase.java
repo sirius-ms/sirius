@@ -29,7 +29,7 @@ import de.unijena.bioinf.storage.db.nosql.Filter;
 import de.unijena.bioinf.storage.db.nosql.Index;
 import de.unijena.bioinf.storage.db.nosql.IndexType;
 import de.unijena.bioinf.storage.db.nosql.*;
-import de.unijena.bioinf.storage.db.nosql.utils.PrimaryKeySupplierFactory;
+import de.unijena.bioinf.storage.db.nosql.utils.PKSuppliers;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -45,6 +45,8 @@ import org.dizitart.no2.util.ObjectUtils;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -178,9 +180,15 @@ public class NitriteDatabase implements Database<Document> {
             }
         } else {
             if (fieldType.equals(String.class)) {
-                this.primaryKeySuppliers.put(clazz, PrimaryKeySupplierFactory.getStringSupplier());
+                this.primaryKeySuppliers.put(clazz, PKSuppliers.getStringKey());
             } else if (fieldType.equals(Long.class) || fieldType.equals(long.class)) {
-                this.primaryKeySuppliers.put(clazz, PrimaryKeySupplierFactory.getLongSupplier());
+                this.primaryKeySuppliers.put(clazz, PKSuppliers.getLongKey());
+            } else if (fieldType.equals(Double.class) || fieldType.equals(double.class)) {
+                this.primaryKeySuppliers.put(clazz, PKSuppliers.getDoubleKey());
+            } else if (fieldType.equals(BigInteger.class)) {
+                this.primaryKeySuppliers.put(clazz, PKSuppliers.getBigIntKey());
+            } else if (fieldType.equals(BigDecimal.class)) {
+                this.primaryKeySuppliers.put(clazz, PKSuppliers.getBigDecimalKey());
             } else  {
                 throw new IOException("Missing primary key supplier! " +
                         clazz + "." + pkField.getName() + " has type " + pkField.getType() +
