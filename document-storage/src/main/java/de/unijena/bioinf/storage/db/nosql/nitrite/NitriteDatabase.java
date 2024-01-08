@@ -385,7 +385,7 @@ public class NitriteDatabase implements Database<Document> {
             ObjectRepository<T> repo = this.getRepository(object);
             Class<T> clazz = (Class<T>) object.getClass();
             Field pkField = primaryKeyFields.get(clazz);
-            if (getFieldValue(object, pkField).isEmpty()) {
+            if (getPrimaryKeyValue(object, pkField).isEmpty()) {
                 Object pk = this.primaryKeySuppliers.get(clazz).get();
                 pkField.set(object, pk);
             }
@@ -403,7 +403,7 @@ public class NitriteDatabase implements Database<Document> {
             Field pkField = primaryKeyFields.get(triple.getRight());
             Supplier<?> primaryKeySupplier = this.primaryKeySuppliers.get(triple.getRight());
             for (T object : triple.getLeft()) {
-                if (getFieldValue(object, pkField).isEmpty()) {
+                if (getPrimaryKeyValue(object, pkField).isEmpty()) {
                     pkField.set(object, primaryKeySupplier.get());
                 }
             }
@@ -1004,7 +1004,7 @@ public class NitriteDatabase implements Database<Document> {
         return getFilter(new ArrayDeque<>(filter.filterChain));
     }
 
-    public static Optional<Object> getFieldValue(Object object, Field field) throws IOException {
+    public static Optional<Object> getPrimaryKeyValue(Object object, Field field) throws IOException {
         field.setAccessible(true);
         try {
             Object value = field.get(object);
@@ -1032,7 +1032,7 @@ public class NitriteDatabase implements Database<Document> {
     }
 
     private static Pair<Object, ObjectFilter> createUniqueFilter(Object object, Field field) throws IOException {
-        Object value = getFieldValue(object, field).orElseThrow(() -> new IOException(ID_FILTER_VALUE_CAN_NOT_BE_NULL.getMessage()));
+        Object value = getPrimaryKeyValue(object, field).orElseThrow(() -> new IOException(ID_FILTER_VALUE_CAN_NOT_BE_NULL.getMessage()));
         return Pair.of(value, eq(field.getName(), value));
     }
 
