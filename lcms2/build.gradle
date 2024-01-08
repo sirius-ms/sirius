@@ -15,6 +15,8 @@ dependencies {
     api project(':spectral_alignment')
     api project(':mass_decomposition:mass_decomposer')
     api project(':lcms')
+    api project(':isotope_pattern:isotope_pattern_analysis')
+    api project(":ms_persistence_oss:ms_persistence_model_oss")
     //internal
     api group: 'de.unijena.bioinf.ms', name: 'Recalibration', version: '1.0'
     // external

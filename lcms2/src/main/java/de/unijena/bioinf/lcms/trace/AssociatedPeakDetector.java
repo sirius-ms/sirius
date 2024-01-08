@@ -4,6 +4,7 @@ import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.lcms.ionidentity.AdductMassDifference;
 import de.unijena.bioinf.lcms.trace.segmentation.ApexDetection;
+import de.unijena.bioinf.lcms.traceextractor.TracePicker;
 
 import java.util.Optional;
 import java.util.Set;
@@ -43,7 +44,7 @@ public class AssociatedPeakDetector {
 
     private void initNode(ApexDetection apexDetection, ContiguousTrace trace, TraceNode node) {
         if (node.adductSearched>=TraceNode.APEXES) return;
-        node.apexes = apexDetection.detectMaxima(trace);
+        node.apexes = apexDetection.detectMaxima(traceStorage.getStatistics(), trace);
         node.adductSearched=(byte)Math.max(node.adductSearched,TraceNode.APEXES);
     }
 

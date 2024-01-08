@@ -1,25 +1,43 @@
 package de.unijena.bioinf.lcms.trace.segmentation;
 
 import de.unijena.bioinf.lcms.Maxima;
+import de.unijena.bioinf.lcms.statistics.SampleStats;
 import de.unijena.bioinf.lcms.trace.Trace;
 
-import javax.swing.text.Segment;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class LegacySegmenter implements TraceSegmenter {
+public class LegacySegmenter implements TraceSegmentationStrategy {
 
-    public List<TraceSegment> detectSegments(Trace trace) {
-        double[] signal = getSignal(trace);
-        de.unijena.bioinf.lcms.Extrema extrema = new Maxima(signal).toExtrema();
+    public List<TraceSegment> detectSegments(SampleStats stats, Trace trace) {
+        double[] signal = getSignal(stats, trace);
+        Maxima maxima = new Maxima(signal);
+        float N = stats.noiseLevel(trace.apex());
+        maxima.split(N, 0.05);
+        de.unijena.bioinf.lcms.Extrema extrema = maxima.toExtrema();
+        if (!extrema.isMinimum(extrema.numberOfExtrema()-1)) {
+            // find minimum
+            int k=extrema.lastExtremum();
+            double min = trace.intensity(k+ trace.startId());
+            int mindex = k;
+            for (k=extrema.lastExtremum()+1; k < trace.length(); ++k) {
+                float i = trace.intensity(k + trace.startId());
+                if (i < min) {
+                    mindex = k;
+                    min = trace.intensity(k+ trace.startId());
+                }
+                if (i < N) break;
+            }
+            if (mindex > extrema.lastExtremum()) extrema.addExtremum(mindex, min);
+        }
         final List<TraceSegment> output = new ArrayList<>();
         for (int k=0, n = extrema.numberOfExtrema(); k<n; ++k) {
             int index = extrema.getIndexAt(k);
             if (!extrema.isMinimum(k)) {
                 // the previous minimum is the left edge
-                int prev=Math.max(0, index-1);
-                int next = Math.min(index+1, extrema.numberOfExtrema()-1);
+                int prev=extrema.getIndexAt(Math.max(0, k-1));
+                int next = extrema.getIndexAt(Math.min(k+1, extrema.numberOfExtrema()-1));
                 output.add(new TraceSegment(index+ trace.startId(), prev+trace.startId(), next+trace.startId()));
             };
         }
@@ -27,11 +45,14 @@ public class LegacySegmenter implements TraceSegmenter {
     }
 
     @Override
-    public int[] detectMaxima(Trace trace) {
-        return Arrays.stream(new Maxima(getSignal(trace)).getMaximaLocations()).map(x->x+trace.startId()).toArray();
+    public int[] detectMaxima(SampleStats stats, Trace trace) {
+        Maxima maxima = new Maxima(getSignal(stats, trace));
+        float N = stats.noiseLevel(trace.apex());
+        maxima.split(N, 0.05);
+        return Arrays.stream(maxima.getMaximaLocations()).map(x->x+trace.startId()).toArray();
     }
 
-    private double[] getSignal(Trace trace) {
+    private double[] getSignal(SampleStats stats, Trace trace) {
         final double[] signal = new double[trace.length()];
         for (int j=0, k=trace.startId(), n = trace.endId(); k <= n; ++k) {
             signal[j++] = trace.intensity(k);
