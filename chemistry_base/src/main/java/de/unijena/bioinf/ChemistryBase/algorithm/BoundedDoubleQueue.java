@@ -31,6 +31,14 @@ import java.util.Iterator;
  */
 public final class BoundedDoubleQueue implements Iterable<Double> {
 
+    public static void main(String[] args) {
+        final BoundedDoubleQueue queue = new BoundedDoubleQueue(10);
+        for (int i=20; i >= 0; --i) {
+            queue.add(i);
+        }
+        System.out.println(Arrays.toString(queue.toArray()));
+    }
+
     private final double[] values;
     private int length;
 
@@ -45,52 +53,71 @@ public final class BoundedDoubleQueue implements Iterable<Double> {
     }
 
     public double min() {
-        return values[0];
+        if (length < values.length) {
+            return Arrays.stream(values).limit(length).min().orElse(Double.NEGATIVE_INFINITY);
+        } else return values[0];
     }
 
     public double max() {
-        return values[length-1];
+        if (length < values.length) {
+            return Arrays.stream(values).limit(length).max().orElse(Double.POSITIVE_INFINITY);
+        } else return values[values.length-1];
     }
 
     public boolean add(double value) {
-        if (value < values[0]) return false;
-        final int index = (length <= 5) ? linearSearch(value) : binarySearch(value);
         if (length < values.length) {
-            if (index < length) System.arraycopy(values, index, values, index+1, length-index);
-            values[index] = value;
-            ++length;
+            values[length++] = value;
+            if (length==values.length) Arrays.sort(values);
             return true;
         } else {
-            if (index > 0) {
-                if (index > 1) System.arraycopy(values, 1, values, 0, index-1);
-                values[index-1] = value;
-                return true;
-            } else return false;
+            if (value < values[0]) return false;
+            final int index = ((length <= 5) ? linearSearch(value) : binarySearch(value));
+            System.arraycopy(values, 1, values, 0, index-1);
+            values[index-1] = value;
+            return true;
         }
+
     }
 
     private int binarySearch(double value) {
-        final int index = Arrays.binarySearch(values, 0, length, value);
+        final int index = Arrays.binarySearch(values, 0, values.length, value);
         if (index >= 0) return index;
         else return (-index-1);
     }
 
     private int linearSearch(double value) {
-        for (int i=0; i < length; ++i) {
+        for (int i=0; i < values.length; ++i) {
             if (values[i] > value) {
                 return i;
             }
         }
-        return length;
+        return values.length;
+    }
+
+    public double median() {
+        if (length < values.length) {
+            double[] copy = Arrays.copyOf(values, length);
+            Arrays.sort(copy);
+            return copy[copy.length/2];
+        } else return values[values.length/2];
+    }
+
+    public double average() {
+        return Arrays.stream(values).average().orElse(0d);
     }
 
     @NotNull
     @Override
     public Iterator<Double> iterator() {
-        return Arrays.stream(values).iterator();
+        return Arrays.stream(values).limit(length).iterator();
     }
 
     public double[] toArray() {
-        return values.clone();
+        if (length>=values.length) return values.clone();
+        else {
+            double[] copy = Arrays.copyOf(values, length);
+            Arrays.sort(copy);
+            return copy;
+        }
     }
 }
