@@ -132,7 +132,7 @@ public class InjectingIterable<T> implements Iterable<T> {
     public static <T> T inject(T original, Set<String> injectedFields, NitriteCollection collection, Field primaryKeyField, NitriteMapper mapper) throws IOException {
         if (injectedFields.isEmpty()) return original;
 
-        Object pkValue = NitriteDatabase.getFieldValue(original, primaryKeyField).orElseThrow(() -> new IOException(ID_FILTER_VALUE_CAN_NOT_BE_NULL.getMessage()));
+        Object pkValue = NitriteDatabase.getPrimaryKeyValue(original, primaryKeyField).orElseThrow(() -> new IOException(ID_FILTER_VALUE_CAN_NOT_BE_NULL.getMessage()));
         Document fromDB = collection.find(Filters.eq(primaryKeyField.getName(), pkValue)).firstOrDefault();
         if (fromDB == null) {
             throw new IOException("Document not found: " + pkValue);
