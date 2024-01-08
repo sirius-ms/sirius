@@ -49,7 +49,7 @@ public class MZmlSampleParser {
     protected ProcessedSample parse(@NotNull DataSource source, @NotNull MzMLUnmarshaller um, @NotNull LCMSStorageFactory storageFactory) throws IOException {
         try {
             final LCMSStorage storage = storageFactory.createNewStorage();
-
+            int samplePolarity = 0;
             final String mzMlId = um.getMzMLId();
             InstrumentConfigurationList instrumentList = um.unmarshalFromXpath("/instrumentConfigurationList", InstrumentConfigurationList.class);
             Map<String, String> runAtts = um.getSingleElementAttributes("/run");
@@ -186,7 +186,11 @@ public class MZmlSampleParser {
                     intArray = new double[0];
                 }
                 final SimpleSpectrum spec = Spectrums.getBaselined(Spectrums.wrap(mzArray, intArray), 0);
-
+                if (samplePolarity==0)  {
+                    samplePolarity = polarity.charge;
+                } else if (polarity.charge!=0 && (polarity.charge>0) != (samplePolarity>0) ) {
+                    throw new RuntimeException("Preprocessing does not support LCMS runs with different polarities.");
+                }
                 if (precursor==null) { // ms1
                     final Ms1SpectrumHeader header = new Ms1SpectrumHeader(scanids.size(), polarity.charge, centroided);
                     retentionTimes.add(retentionTimeMillis/1000d);
@@ -201,6 +205,7 @@ public class MZmlSampleParser {
                             prec.getIsolationWindow(),
                             idmap.getOrDefault(prec.getIndex(), -1), // TODO: potential error
                             prec.getMass(),
+                            prec.getMass(), // todo: fix
                             retentionTimeMillis/1000d
                     );
                     storage.addMs2Spectrum(header, spec);
@@ -215,7 +220,7 @@ public class MZmlSampleParser {
             final ScanPointMapping mapping = new ScanPointMapping(retentionTimes.toDoubleArray(), scanids.toIntArray(), idmap);
             storage.setMapping(mapping);
             return new ProcessedSample(
-                    reference, instrumentation, mapping, storage
+                    reference, instrumentation, mapping, storage, samplePolarity, -1
             );
         } catch (Exception e) {
             throw new IOException(e);
