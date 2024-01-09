@@ -47,10 +47,13 @@ import org.dizitart.no2.objects.filters.ObjectFilters;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -167,6 +170,69 @@ public class NitriteDatabaseTest {
         public String name;
 
         public List<NitriteChildTestEntry> children;
+
+    }
+
+    @Builder @NoArgsConstructor @AllArgsConstructor private static class IntKeyEntry { @Id int pk; }
+
+    @Builder @NoArgsConstructor @AllArgsConstructor private static class LongKeyEntry { @Id Long pk; }
+
+    @Builder @NoArgsConstructor @AllArgsConstructor private static class DoubleKeyEntry { @Id double pk; }
+
+    @Builder @NoArgsConstructor @AllArgsConstructor private static class BigIntKeyEntry { @Id BigInteger pk; }
+
+    @Builder @NoArgsConstructor @AllArgsConstructor private static class BigDecimalKeyEntry { @Id BigDecimal pk; }
+
+    @Builder @NoArgsConstructor @AllArgsConstructor private static class StringKeyEntry { @Id String pk; }
+
+    @Test
+    public void testPrimaryKeys() throws IOException {
+
+        assertThrows(IOException.class, () -> {
+            Path file = Files.createTempFile("nitrite-test", "");
+            file.toFile().deleteOnExit();
+            new NitriteDatabase(file, Metadata.build()
+                    .addRepository(IntKeyEntry.class)
+                    .addPrimaryKeySupplier(IntKeyEntry.class, new Supplier<Long>() {
+                        @Override
+                        public Long get() {
+                            return 1L;
+                        }
+                    }));
+        });
+
+        assertThrows(RuntimeException.class, () -> {
+            Path file = Files.createTempFile("nitrite-test", "");
+            file.toFile().deleteOnExit();
+            NitriteDatabase db = new NitriteDatabase(file, Metadata.build()
+                    .addRepository(IntKeyEntry.class)
+                    .addPrimaryKeySupplier(IntKeyEntry.class, () -> 1L));
+            db.insert(IntKeyEntry.builder().build());
+        });
+
+        Path file = Files.createTempFile("nitrite-test", "");
+        file.toFile().deleteOnExit();
+        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build()
+                .addRepository(IntKeyEntry.class)
+                .addRepository(LongKeyEntry.class)
+                .addRepository(DoubleKeyEntry.class)
+                .addRepository(BigIntKeyEntry.class)
+                .addRepository(BigDecimalKeyEntry.class)
+                .addRepository(StringKeyEntry.class)
+        )) {
+            assertThrows(IOException.class, () -> {
+                db.insert(IntKeyEntry.builder().build());
+            });
+            assertThrows(IOException.class, () -> {
+                db.insertAll(List.of(IntKeyEntry.builder().build()));
+            });
+            assertEquals(1, db.insert(IntKeyEntry.builder().pk(1).build()));
+            assertEquals(1, db.insert(LongKeyEntry.builder().build()));
+            assertEquals(1, db.insert(DoubleKeyEntry.builder().build()));
+            assertEquals(1, db.insert(BigIntKeyEntry.builder().build()));
+            assertEquals(1, db.insert(BigDecimalKeyEntry.builder().build()));
+            assertEquals(1, db.insert(StringKeyEntry.builder().build()));
+        }
 
     }
 
