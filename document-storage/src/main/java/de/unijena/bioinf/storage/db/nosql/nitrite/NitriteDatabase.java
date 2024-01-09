@@ -45,6 +45,7 @@ import org.dizitart.no2.util.ObjectUtils;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.file.Path;
@@ -53,8 +54,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
 
-import static org.dizitart.no2.exceptions.ErrorMessage.ID_FIELD_IS_NOT_ACCESSIBLE;
-import static org.dizitart.no2.exceptions.ErrorMessage.ID_FILTER_VALUE_CAN_NOT_BE_NULL;
+import static org.dizitart.no2.exceptions.ErrorMessage.*;
 import static org.dizitart.no2.objects.filters.ObjectFilters.eq;
 
 public class NitriteDatabase implements Database<Document> {
@@ -167,13 +167,20 @@ public class NitriteDatabase implements Database<Document> {
         Class<?> fieldType = pkField.getType();
         if (pkSupplier != null) {
             try {
-                Class<?> rt = pkSupplier.getClass().getMethod("get").getReturnType();
-                if (fieldType.equals(rt) || ClassUtils.getAllSuperclasses(rt).contains(fieldType)) {
+                Class<?> supplierClass = pkSupplier.getClass();
+                Method getMethod = supplierClass.getMethod("get");
+                if (supplierClass.isSynthetic() && !getMethod.isSynthetic()) {
+                    // If the supplier is a lambda, we are unable to check if the return type is correct :(
                     this.primaryKeySuppliers.put(clazz, pkSupplier);
                 } else {
-                    throw new IOException("Invalid primary key supplier! " +
-                            clazz + "." + pkField.getName() + " has type " + pkField.getType() +
-                            " but the primary key supplier returns " + rt);
+                    Class<?> returnType = getMethod.getReturnType();
+                    if (fieldType.equals(returnType) || ClassUtils.getAllSuperclasses(returnType).contains(fieldType)) {
+                        this.primaryKeySuppliers.put(clazz, pkSupplier);
+                    } else {
+                        throw new IOException("Invalid primary key supplier! " +
+                                clazz + "." + pkField.getName() + " has type " + pkField.getType() +
+                                " but the primary key supplier returns " + returnType);
+                    }
                 }
             } catch (NoSuchMethodException e) {
                 throw new IOException(e);
@@ -189,10 +196,6 @@ public class NitriteDatabase implements Database<Document> {
                 this.primaryKeySuppliers.put(clazz, PKSuppliers.getBigIntKey());
             } else if (fieldType.equals(BigDecimal.class)) {
                 this.primaryKeySuppliers.put(clazz, PKSuppliers.getBigDecimalKey());
-            } else  {
-                throw new IOException("Missing primary key supplier! " +
-                        clazz + "." + pkField.getName() + " has type " + pkField.getType() +
-                        ". This type has no default primary key supplier, please provide one using 'Metadata.addPrimaryKeySupplier()'");
             }
 
         }
@@ -394,6 +397,9 @@ public class NitriteDatabase implements Database<Document> {
             Class<T> clazz = (Class<T>) object.getClass();
             Field pkField = primaryKeyFields.get(clazz);
             if (getPrimaryKeyValue(object, pkField).isEmpty()) {
+                if (!this.primaryKeySuppliers.containsKey(clazz)) {
+                    throw new IOException(ID_CAN_NOT_BE_NULL.getMessage());
+                }
                 Object pk = this.primaryKeySuppliers.get(clazz).get();
                 pkField.set(object, pk);
             }
@@ -412,6 +418,9 @@ public class NitriteDatabase implements Database<Document> {
             Supplier<?> primaryKeySupplier = this.primaryKeySuppliers.get(triple.getRight());
             for (T object : triple.getLeft()) {
                 if (getPrimaryKeyValue(object, pkField).isEmpty()) {
+                    if (primaryKeySupplier == null) {
+                        throw new IOException(ID_CAN_NOT_BE_NULL.getMessage());
+                    }
                     pkField.set(object, primaryKeySupplier.get());
                 }
             }
