@@ -51,6 +51,11 @@ public abstract class ErrorReportingInputVerifier extends InputVerifier {
 
     @Override
     public boolean shouldYieldFocus(JComponent source, JComponent target) {
+        modifyIfError(source);
+        return true;
+    }
+
+    public void modifyIfError(JComponent source){
         if (originalBackground == null) {
             initComponent(source);
         }
@@ -62,7 +67,7 @@ public abstract class ErrorReportingInputVerifier extends InputVerifier {
             source.setBackground(originalBackground);
             source.setToolTipText(originalTooltip);
         }
-
-        return true;
     }
+
+
 }
