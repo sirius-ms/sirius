@@ -30,6 +30,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 public class LCMSProcessing {
@@ -142,21 +144,28 @@ public class LCMSProcessing {
         int J=0;
         final HashMap<Integer, ProcessedSample> idx2sample = new HashMap<>();
         for (ProcessedSample s : backbone.getSamples()) idx2sample.put(s.getUid(),s);
-        try (PrintStream out = new PrintStream("/home/kaidu/analysis/lcms/view/data.js")) {
-            out.print("document.lcdata = [");
-            for (MergedTrace trace : merged.getTraceStorage().getMergeStorage()) {
-                //if (trace.getSampleIds().size()<6 || trace.toTrace(merged).apexIntensity() < 0.01) continue;
-                ProcessedSample[] samplesInTrace = new ProcessedSample[trace.getSampleIds().size()];
-                for (int i = 0; i < trace.getTraceIds().size(); ++i) {
-                    samplesInTrace[i] = idx2sample.get(trace.getSampleIds().getInt(i));
+
+        try {
+            Path p = Path.of(System.getProperty("lcms.logdir"), "analysis/lcms/view/data.js");
+            Files.createDirectories(p.getParent());
+            try (PrintStream out = new PrintStream(p.toAbsolutePath().toString())) {
+                out.print("document.lcdata = [");
+                for (MergedTrace trace : merged.getTraceStorage().getMergeStorage()) {
+                    //if (trace.getSampleIds().size()<6 || trace.toTrace(merged).apexIntensity() < 0.01) continue;
+                    ProcessedSample[] samplesInTrace = new ProcessedSample[trace.getSampleIds().size()];
+                    for (int i = 0; i < trace.getTraceIds().size(); ++i) {
+                        samplesInTrace[i] = idx2sample.get(trace.getSampleIds().getInt(i));
+                    }
+                    String line = ((MergedFeatureExtractor) mergedFeatureExtractionStrategy).extractFeaturesToString(merged, samplesInTrace, trace);
+                    if (line !=null) {
+                        out.println(line + ",");
+                    }
                 }
-                String line = ((MergedFeatureExtractor) mergedFeatureExtractionStrategy).extractFeaturesToString(merged, samplesInTrace, trace);
-                if (line !=null) {
-                    out.println(line + ",");
-                }
+                out.println("\n];");
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException(e);
             }
-            out.println("\n];");
-        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
