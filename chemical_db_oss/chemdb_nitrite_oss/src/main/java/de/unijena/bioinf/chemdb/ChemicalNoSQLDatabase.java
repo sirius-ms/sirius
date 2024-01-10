@@ -244,12 +244,11 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
     public static class Tag {
 
         @Id
-        private long id;
         private String key;
         private String value;
 
         public static Tag of(String key, String value) {
-            return new Tag(-1L, key, value);
+            return new Tag(key, value);
         }
 
         public static Tag of(Map.Entry<String, String> source) {

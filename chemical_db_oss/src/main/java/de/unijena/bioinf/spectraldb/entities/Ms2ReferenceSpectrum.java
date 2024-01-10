@@ -42,8 +42,6 @@ import lombok.*;
 public class Ms2ReferenceSpectrum {
 
     @Id
-    private long id;
-
     private String uuid;
 
     /**
