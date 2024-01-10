@@ -69,6 +69,7 @@ ext {
 //    cplex_version = '20.1.0'
     gurobi_version = '9.1.1'
     cbc_version = '2.10.8.1'
+    jakarta_version = '3.1.0'
 
     logger.lifecycle('reading build properties file...')
     props = new Properties()
@@ -141,6 +142,10 @@ allprojects {
         implementation "org.slf4j:log4j-over-slf4j:$slf4j_version"
         implementation "org.slf4j:jcl-over-slf4j:$slf4j_version"
         implementation "org.slf4j:slf4j-api:$slf4j_version"
+
+        //NOTE: cannot be provided as transitive dependency
+        implementation "jakarta.persistence:jakarta.persistence-api:$jakarta_version"
+
 
         testImplementation group: 'junit', name: 'junit', version: '4.12'
     }
