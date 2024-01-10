@@ -114,7 +114,7 @@ public class SearchableDatabases {
         try {
             return loadCustomDatabaseFromLocation(dbDir.toAbsolutePath().toString(), true);
         } catch (IOException e) {
-            throw new RuntimeException("Could not load DB from path: " + dbDir.toString(), e);
+            throw new RuntimeException("Could not load DB from path: " + dbDir, e);
         }
     }
 
@@ -173,6 +173,13 @@ public class SearchableDatabases {
             for (String bucketLocation : customDBs.split("\\s*,\\s*")) {
                 if (!bucketLocation.contains("/"))
                     bucketLocation = custom.resolve(bucketLocation).toAbsolutePath().toString();
+
+                if (!Files.exists(Path.of(bucketLocation))) {
+                    LoggerFactory.getLogger(CustomDatabase.class).warn(
+                            "Database location '{}' does not exist. Database will not be available in SIRIUS.",
+                            bucketLocation);
+                    continue;
+                }
 
                 try {
                     final CustomDatabase db = CustomDatabaseFactory.open(bucketLocation);//new CustomDatabase(dbDir.getName(), dbDir);
