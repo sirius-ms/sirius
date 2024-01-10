@@ -13,6 +13,7 @@ import picocli.CommandLine;
 
 import java.io.*;
 import java.util.*;
+import java.util.logging.LogManager;
 
 /**
  * Aktuelle Vorgehensweise:
@@ -50,6 +51,14 @@ import java.util.*;
 public class TestMain {
 
     public static void main(String[] args) {
+        try (InputStream is = TestMain.class.getClassLoader().
+                getResourceAsStream("logging.properties")) {
+            LogManager.getLogManager().readConfiguration(is);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+
         LCMSOptions ops = new LCMSOptions();
         CommandLine cmd = new CommandLine(ops);
         cmd.parseArgs(args);
