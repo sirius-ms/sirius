@@ -37,7 +37,6 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
         return sourceMetadata; //todo fill me with result Objects
                 /*.addRepository(
                         FTree.class,
-                        "id",
                         new Index("formula", IndexType.NON_UNIQUE),
                         new Index("mass", IndexType.NON_UNIQUE),
                         new Index("candidate.inchikey", IndexType.UNIQUE),

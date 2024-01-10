@@ -49,7 +49,6 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
         return Metadata.build()
                 .addRepository(
                         Ms2ReferenceSpectrum.class,
-                        "id",
                         new Index("uuid", IndexType.UNIQUE),
                         new Index("splash", IndexType.NON_UNIQUE),
                         new Index("exactMass", IndexType.NON_UNIQUE),

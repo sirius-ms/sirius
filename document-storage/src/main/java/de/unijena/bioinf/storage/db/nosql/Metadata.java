@@ -22,17 +22,14 @@ package de.unijena.bioinf.storage.db.nosql;
 
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
-import de.unijena.bioinf.storage.db.nosql.utils.ExtFieldUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
-import org.apache.commons.lang3.tuple.Pair;
-import org.dizitart.no2.NitriteId;
-import org.dizitart.no2.objects.Id;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.*;
+import java.util.function.Supplier;
 
 public class Metadata {
 
@@ -44,11 +41,18 @@ public class Metadata {
 
     final public Map<Class<?>, String[]> optionalRepoFields = new HashMap<>();
 
-    final public Map<Class<?>, Pair<String, Boolean>> idFields = new HashMap<>();
+    final public Map<Class<?>, Field> pkFields = new HashMap<>();
+
+    final public Map<Class<?>, Supplier<?>> pkSuppliers = new HashMap<>();
 
     final public Map<String, Index[]> collectionIndices = new HashMap<>();
 
     final public Map<String, String[]> optionalCollectionFields = new HashMap<>();
+
+    private static final List<Class<?>> ALLOWED_PRIMARY_KEYS = List.of(
+            Byte.class, Short.class, Integer.class, Long.class, Float.class, Double.class,
+            Boolean.class, Character.class, Date.class, java.sql.Date.class, BigDecimal.class, BigInteger.class, String.class
+    );
 
     private Metadata() {
     }
@@ -61,34 +65,19 @@ public class Metadata {
             Class<T> clazz,
             Index... indices
     ) throws IOException {
-        String id = findIdField(clazz);
-        if (id != null)
-            addRepository(clazz, id, indices);
-        else
-            this.repoIndices.put(clazz, indices);
-        return this;
-    }
-
-    public <T> Metadata addRepository(
-            Class<T> clazz,
-            String idField,
-            Index... indices
-    ) throws IOException {
-        return addRepository(clazz, idField, false, indices);
-    }
-
-    public <T> Metadata addRepository(
-            Class<T> clazz,
-            String idField,
-            boolean forceGenerateID,
-            Index... indices
-    ) throws IOException {
-        validateIdField(clazz, idField);
-        this.idFields.put(clazz, Pair.of(idField, forceGenerateID));
+        Field pkField = findAndValidatePrimaryKeyField(clazz);
+        this.pkFields.put(clazz, pkField);
         this.repoIndices.put(clazz, indices);
         return this;
     }
 
+    public <T> Metadata addPrimaryKeySupplier(
+            Class<T> clazz,
+            Supplier<?> supplier
+    ) {
+        this.pkSuppliers.put(clazz, supplier);
+        return this;
+    }
 
     public <T> Metadata addSerialization(
             Class<T> clazz,
@@ -140,19 +129,19 @@ public class Metadata {
         return this;
     }
 
-    private static String findIdField(Class<?> clazz) {
-        return Arrays.stream(FieldUtils.getAllFields(clazz))
-                .filter(f -> f.getAnnotationsByType(Id.class).length
-                        + f.getAnnotationsByType(jakarta.persistence.Id.class).length > 0)
-                .findFirst().map(Field::getName).orElse(null);
-    }
-
-    private static void validateIdField(Class<?> clazz, String idField) throws IOException {
-        clazz.getModule().addOpens(clazz.getPackageName(), Metadata.class.getModule());
-        Field field = ExtFieldUtils.getAllField(clazz, idField);
-        field.setAccessible(true);
-        if (!(Long.class.equals(field.getType()) || long.class.equals(field.getType()) || NitriteId.class.equals(field.getType()))) {
-            throw new IOException(idField + " in " + clazz + " must be long or Long!");
+    private static Field findAndValidatePrimaryKeyField(Class<?> clazz) throws IOException {
+        List<Field> pkFields = Arrays.stream(FieldUtils.getAllFields(clazz)).filter(f -> f.getAnnotationsByType(jakarta.persistence.Id.class).length > 0).toList();
+        if (pkFields.isEmpty()) {
+            throw new IOException(clazz + " has no primary key. The primary key must be anootated with jakarta.persistence.Id!");
+        } else if (pkFields.size() > 1) {
+            throw new IOException(clazz + " has multiple primary keys. Only one primary key is allowed!");
+        }
+        Field pkField = pkFields.get(0);
+        Class<?> pkType = pkField.getType();
+        if (pkType.isPrimitive() || ALLOWED_PRIMARY_KEYS.contains(pkType)) {
+            return pkField;
+        } else {
+            throw new IOException(clazz + " has an invalid primary key type. Allowed are: any Java primitive type; any primitive wrapper type; String; java.util.Date; java.sql.Date; java.math.BigDecimal; java.math.BigInteger.");
         }
     }
 
