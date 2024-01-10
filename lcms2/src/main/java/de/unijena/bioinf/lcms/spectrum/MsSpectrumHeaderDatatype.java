@@ -65,7 +65,7 @@ public class MsSpectrumHeaderDatatype extends CustomDataType  {
             double mz = buff.getDouble();
             double rt = buff.getDouble();
             return new Ms2SpectrumHeader(
-                    uid, polarity, centroided, ce, window, pid, mz, rt
+                    uid, polarity, centroided, ce, window, pid, mz,mz, rt
             );
         } else { // MS1 Header
             return new Ms1SpectrumHeader(uid, polarity, centroided);
