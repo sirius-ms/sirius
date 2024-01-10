@@ -17,9 +17,7 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetDropEvent;
-import java.awt.event.ActionEvent;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
+import java.awt.event.*;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -81,7 +79,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
             }
         });
 
-        dbNameField.setInputVerifier(new ErrorReportingInputVerifier() {
+        dbNameField.setInputVerifier(new ErrorReportingDocumentListener(dbNameField) {
             @Override
             public String getErrorMessage(JComponent input) {
                 String name = ((JTextField)input).getText();
@@ -100,13 +98,15 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
             }
         });
 
-        dbLocationField.field.setInputVerifier(new ErrorReportingInputVerifier() {
+        dbLocationField.field.setInputVerifier(new ErrorReportingDocumentListener(dbLocationField.field) {
             @Override
             public String getErrorMessage(JComponent input) {
-                String text = ((JTextField)input).getText();
+                String text = ((JTextField) input).getText();
                 String error = null;
                 if (text == null || text.isBlank()) {
                     error = "DB location not set";
+                } else if (!new File(text).isDirectory()){
+                    error = "DB location is not a valid directory";
                 }
                 if (validDbDirectory != (error == null)) {
                     validDbDirectory = error == null;
