@@ -24,7 +24,10 @@ import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 public class TraceAligner {
@@ -136,9 +139,16 @@ public class TraceAligner {
                 }
             }
             mergedMasses.add(m/c);
-            try (final PrintStream out = new PrintStream("/home/kaidu/analysis/test/_mois_.txt")) {
-                for (double v : mergedMasses) out.println(v);
-            } catch (FileNotFoundException e) {
+
+            try {
+                Path p = Path.of(System.getProperty("lcms.logdir"), "analysis/test/_mois_.txt");
+                Files.createDirectories(p.getParent());
+                try (final PrintStream out = new PrintStream(p.toAbsolutePath().toString())) {
+                    for (double v : mergedMasses) out.println(v);
+                } catch (FileNotFoundException e) {
+                    throw new RuntimeException(e);
+                }
+            } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -150,7 +160,7 @@ public class TraceAligner {
             for (MassOfInterest moi : merged2.all) {
                 if (moi instanceof MergedMassOfInterest mmoi) {
                     if (mmoi.mergedRts.length >= (samples.length / 2)) {
-                        try (final PrintStream out = new PrintStream("/home/kaidu/analysis/test/" + (j++) + ".txt")) {
+                        try (final PrintStream out = new PrintStream(System.getProperty("lcms.logdir") + "/analysis/test/" + (j++) + ".txt")) {
                             int count = 1;
                             for (int k = 0; k < samples.length; ++k) {
                                 samples[k].active();
@@ -371,7 +381,7 @@ public class TraceAligner {
             }
             {
                 System.out.println("Recalibrate " + x.length + " values in total!");
-                try (final PrintStream p = new PrintStream("/home/kaidu/testx_" + sampleIndex + ".out")) {
+                try (final PrintStream p = new PrintStream(System.getProperty("lcms.logdir") + "/testx_" + sampleIndex + ".out")) {
                     p.println("x\ty");
                     for (int k=0; k < x.length; ++k) {
                         p.println(x[k] + "\t" + y[k]);
@@ -434,7 +444,7 @@ public class TraceAligner {
 
                 }
                 {
-                    try (final PrintStream p = new PrintStream("/home/kaidu/test.out")) {
+                    try (final PrintStream p = new PrintStream(System.getProperty("lcms.logdir") + "/test.out")) {
                         p.println("x\ty");
                         for (int k=0; k < x.length; ++k) {
                             p.println(x[k] + "\t" + y[k]);
@@ -451,7 +461,7 @@ public class TraceAligner {
                 x = vals[0];
                 y = vals[1];
                 {
-                    try (final PrintStream p = new PrintStream("/home/kaidu/test_" + sampleIndex + ".out")) {
+                    try (final PrintStream p = new PrintStream(System.getProperty("lcms.logdir") + "/test_" + sampleIndex + ".out")) {
                         p.println("x\ty");
                         for (int k=0; k < x.length; ++k) {
                             p.println(x[k] + "\t" + y[k]);
