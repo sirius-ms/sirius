@@ -26,6 +26,8 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.chemdb.InChISMILESUtils;
+import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -35,9 +37,10 @@ import lombok.Setter;
 @AllArgsConstructor
 @Getter
 @Setter
-public class FingerprintCandidateWrapper {
+public class  FingerprintCandidateWrapper {
 
-    long id;
+    @Id
+    String inchiKey;
     String formula;
     double mass;
     CompoundCandidate candidate;
@@ -47,7 +50,7 @@ public class FingerprintCandidateWrapper {
         return new FingerprintCandidate(candidate, fingerprint);
     }
     public static FingerprintCandidateWrapper of(MolecularFormula formula, FingerprintCandidate candidate) {
-        return new FingerprintCandidateWrapper(-1, formula.toString(), formula.getMass(), candidate.toCompoundCandidate(), candidate.getFingerprint());
+        return new FingerprintCandidateWrapper(candidate.getInchiKey2D(), formula.toString(), formula.getMass(), candidate.toCompoundCandidate(), candidate.getFingerprint());
     }
 
     public static FingerprintCandidateWrapper of(FingerprintCandidate candidate) throws UnknownElementException {
