@@ -27,6 +27,7 @@ ext {
     siriusVersion = props.getProperty('de.unijena.bioinf.sirius.version')
     fingeridVersion = props.getProperty('de.unijena.bioinf.fingerid.version')
     //version for external libraries
+    picocli_version = '4.6.3'
     jakarta_version = '3.1.0'
     jjobs_version = '0.9.35'
     slf4j_version = '1.7.36'
