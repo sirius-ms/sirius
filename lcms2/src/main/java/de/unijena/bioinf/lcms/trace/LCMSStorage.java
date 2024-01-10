@@ -5,15 +5,18 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.lcms.LCMSStorageFactory;
 import de.unijena.bioinf.lcms.ScanPointMapping;
+import de.unijena.bioinf.lcms.align2.AlignmentStorage;
+import de.unijena.bioinf.lcms.align2.MvBasedAlignmentStorage;
 import de.unijena.bioinf.lcms.datatypes.SpectrumDatatype;
+import de.unijena.bioinf.lcms.merge2.MergeMvStorage;
+import de.unijena.bioinf.lcms.merge2.MergeStorage;
 import de.unijena.bioinf.lcms.spectrum.Ms1SpectrumHeader;
 import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
 import de.unijena.bioinf.lcms.spectrum.MsSpectrumHeaderDatatype;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
+import de.unijena.bioinf.lcms.statistics.SampleStats;
 import org.h2.mvstore.*;
 import org.h2.mvstore.rtree.MVRTreeMap;
 import org.h2.mvstore.rtree.SpatialKey;
-import org.h2.mvstore.type.DataType;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +30,7 @@ public abstract class LCMSStorage implements Iterable<ContiguousTrace> {
 
     private static Deviation DEFAULT_DEVIATION = new Deviation(10);
 
-    public static LCMSStorageFactory temporaryStorage() throws IOException {
+    public static LCMSStorageFactory temporaryStorage() {
         return () -> {
             final File tempFile = File.createTempFile("sirius", ".mvstore");
             tempFile.deleteOnExit();
@@ -38,6 +41,8 @@ public abstract class LCMSStorage implements Iterable<ContiguousTrace> {
     public static LCMSStorageFactory persistentStorage(File filename) throws IOException {
         return () -> new MVTraceStorage(filename.getAbsolutePath());
     }
+
+    public abstract TraceRectangleMap getRectangleMap(String prefix);
 
     public abstract TraceNode getTraceNode(ContiguousTrace trace);
     public abstract TraceNode getTraceNode(int id);
@@ -60,8 +65,9 @@ public abstract class LCMSStorage implements Iterable<ContiguousTrace> {
 
     public abstract Iterable<Ms2SpectrumHeader> ms2SpectraHeader();
     public abstract Ms2SpectrumHeader ms2SpectrumHeader(int id);
-    public abstract SimpleSpectrum getMs2Spectrum(int id);
 
+    public abstract Ms1SpectrumHeader ms1SpectrumHeader(int id);
+    public abstract SimpleSpectrum getMs2Spectrum(int id);
 
     public abstract ContiguousTrace getContigousTrace(int uid);
 
@@ -106,17 +112,32 @@ public abstract class LCMSStorage implements Iterable<ContiguousTrace> {
 
     public abstract void deleteTrace(int uid);
 
+    public abstract void setStatistics(SampleStats stats);
+    public abstract SampleStats getStatistics();
+
+    public abstract Ms2SpectrumHeader[] getMs2ForTrace(int traceId);
+
+    public abstract ContiguousTrace getTraceForMs2(int ms2headerId);
+    public abstract void setTraceForMs2(int ms2headerid, int traceId);
+
+    public abstract AlignmentStorage getAlignmentStorage();
+
+    public abstract MergeStorage getMergeStorage();
 }
 
 class MVTraceStorage extends LCMSStorage {
 
     private MVStore storage;
+    private MVMap<Integer, SampleStats> statisticsObj;
     private MVMap<Integer, ContiguousTrace> traceMap;
     private MVRTreeMap<Integer> spatialTraceMap;
     private MVMap<Integer, TraceNode> nodeMap;
 
     private MVMap<Integer, SimpleSpectrum> spectraMap, ms2SpectraMap;
     private MVMap<Integer, Ms2SpectrumHeader> ms2headers;
+
+    private MVMap<Integer, Integer> ms2headers2Traces;
+    private MVMap<Integer, int[]> trace2ms2;
     private MVMap<Integer, Ms1SpectrumHeader> ms1Headers;
 
     private MVMap<Integer, int[]> chains;
@@ -126,6 +147,8 @@ class MVTraceStorage extends LCMSStorage {
     private ScanPointMapping mapping;
 
     private AtomicInteger uids, chainIds, ms2spectraIds;
+
+    private MvBasedAlignmentStorage alignmentStorage;
 
     private int cacheSizeInMegabytes;
 
@@ -137,8 +160,9 @@ class MVTraceStorage extends LCMSStorage {
                 new MVMap.Builder<Integer,ContiguousTrace>().valueType(new ContigousTraceDatatype()));
                 this.spatialTraceMap = storage.openMap("contiguousTracesSpatialKey", new MVRTreeMap.Builder<>());
         this.nodeMap = storage.openMap("traceNodes");
-        System.out.println(nodeMap.getKeyType());
         this.trace2chain = storage.openMap("trace2chain");
+        this.ms2headers2Traces = storage.openMap("ms2headers2Traces");
+        this.trace2ms2 = storage.openMap("trace2ms");
         this.chains = storage.openMap("chains");
         this.spectraMap = storage.openMap("spectra",
                 new MVMap.Builder<Integer,SimpleSpectrum>().valueType(new SpectrumDatatype()));
@@ -149,6 +173,42 @@ class MVTraceStorage extends LCMSStorage {
         this.uids = new AtomicInteger(traceMap.size());
         this.chainIds = new AtomicInteger(this.chains.size());
         this.ms2spectraIds = new AtomicInteger(ms2headers.size());
+        this.statisticsObj = storage.openMap("statistics", new MVMap.Builder<Integer,SampleStats>().valueType(new SampleStats.DataType()));
+        this.alignmentStorage = new MvBasedAlignmentStorage(storage);
+    }
+
+    @Override
+    public AlignmentStorage getAlignmentStorage() {
+        return alignmentStorage;
+    }
+
+    private MergeMvStorage mergeMvStorage;
+
+    @Override
+    public MergeStorage getMergeStorage() {
+        if (mergeMvStorage == null) mergeMvStorage = new MergeMvStorage(this.storage);
+        return mergeMvStorage;
+    }
+
+    public ContiguousTrace getTraceForMs2(int ms2headerId) {
+        return traceMap.get(ms2headers2Traces.get(ms2headerId));
+    }
+    public void setTraceForMs2(int ms2headerid, int traceId) {
+        ms2headers2Traces.put(ms2headerid, traceId);
+        int[] ints = trace2ms2.get(traceId);
+        if (ints==null) trace2ms2.put(traceId, new int[]{ms2headerid});
+        else {
+            ints = Arrays.copyOf(ints, ints.length+1);
+            ints[ints.length-1]=traceId;
+            trace2ms2.put(traceId, ints);
+        }
+    }
+
+    @Override
+    public Ms2SpectrumHeader[] getMs2ForTrace(int traceId) {
+        int[] xs = trace2ms2.get(traceId);
+        if (xs==null) return new Ms2SpectrumHeader[0];
+        else return Arrays.stream(xs).mapToObj(x->ms2headers.get(x)).toArray(Ms2SpectrumHeader[]::new);
     }
 
     private static int getDefaultCacheSize() {
@@ -193,6 +253,16 @@ class MVTraceStorage extends LCMSStorage {
         this.traceMap.remove(uid);
         this.trace2chain.remove(uid);
         this.nodeMap.remove(uid);
+    }
+
+    @Override
+    public void setStatistics(SampleStats stats) {
+        statisticsObj.put(0, stats);
+    }
+
+    @Override
+    public SampleStats getStatistics() {
+        return statisticsObj.get(0);
     }
 
     @Override
@@ -254,6 +324,11 @@ class MVTraceStorage extends LCMSStorage {
     @Override
     public Ms2SpectrumHeader ms2SpectrumHeader(int id) {
         return this.ms2headers.get(id);
+    }
+
+    @Override
+    public Ms1SpectrumHeader ms1SpectrumHeader(int id) {
+        return this.ms1Headers.get(id);
     }
 
     @Override
@@ -365,6 +440,22 @@ class MVTraceStorage extends LCMSStorage {
                 return new TraceChain(value, Arrays.stream(traces).mapToObj(x->getContigousTrace(x)).toArray(ContiguousTrace[]::new));
             }
         };
+    }
+
+    private HashMap<String, TraceRectangleMap> rectangleMaps = new HashMap<>();
+    @Override
+    public TraceRectangleMap getRectangleMap(String prefix) {
+        TraceRectangleMap rects = rectangleMaps.get(prefix);
+        if (rects!=null) return rects;
+        else {
+            synchronized (this) {
+                rects = rectangleMaps.get(prefix);
+                if (rects!=null) return rects;
+                rects = new TraceRectangleMapByRVMap(storage, prefix);
+                rectangleMaps.put(prefix, rects);
+                return rects;
+            }
+        }
     }
 
     @Override

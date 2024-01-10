@@ -1,6 +1,7 @@
 package de.unijena.bioinf.lcms.trace;
 
 import de.unijena.bioinf.lcms.ScanPointMapping;
+import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import org.h2.mvstore.rtree.SpatialKey;
 
 import java.io.Serializable;
@@ -9,16 +10,15 @@ import java.util.Locale;
 public class ContiguousTrace implements Trace, Serializable {
 
     protected final transient ScanPointMapping mapping;
-
     protected final int uid;
 
     protected int startId, endId, apexId;
     protected final double averageMz, minMz, maxMz;
-
     protected double[] mz;
     protected float[] intensity;
+    protected TraceSegment[] segments;
 
-    ContiguousTrace(ScanPointMapping mapping, int uid, int startId, int endId, int apexId, double averageMz, double minMz, double maxMz, double[] mz, float[] intensity) {
+    ContiguousTrace(ScanPointMapping mapping, int uid, int startId, int endId, int apexId, double averageMz, double minMz, double maxMz, double[] mz, float[] intensity, TraceSegment[] segments) {
         this.mapping = mapping;
         this.uid = uid;
         this.startId = startId;
@@ -28,10 +28,11 @@ public class ContiguousTrace implements Trace, Serializable {
         this.minMz = minMz;
         this.maxMz = maxMz;
         this.mz = mz;
+        this.segments = segments;
         this.intensity = intensity;
     }
 
-    ContiguousTrace(ScanPointMapping mapping, int startId, int endId, double[] mz, float[] intensity) {
+    public ContiguousTrace(ScanPointMapping mapping, int startId, int endId, double[] mz, float[] intensity) {
         this.uid = -1;
         this.mapping = mapping;
         this.startId = startId;
@@ -149,7 +150,7 @@ public class ContiguousTrace implements Trace, Serializable {
 
     ContiguousTrace withMapping(ScanPointMapping mp) {
         if (mapping==mp) return this;
-        return new ContiguousTrace(mp, uid, startId, endId, apexId, averageMz, minMz, maxMz, mz, intensity);
+        return new ContiguousTrace(mp, uid, startId, endId, apexId, averageMz, minMz, maxMz, mz, intensity, segments);
     }
 
     public String toString() {
@@ -157,7 +158,26 @@ public class ContiguousTrace implements Trace, Serializable {
                 startId, endId, apexId, averageMz,apexIntensity());
     }
 
-    ContiguousTrace withUID(int id) {
-        return new ContiguousTrace(mapping, id, startId, endId, apexId, averageMz, minMz, maxMz, mz, intensity);
+    public ContiguousTrace withUID(int id) {
+        return new ContiguousTrace(mapping, id, startId, endId, apexId, averageMz, minMz, maxMz, mz, intensity, segments);
+    }
+
+    @Override
+    public Rect rectWithIds() {
+        return new Rect((float)minMz(), (float)maxMz(), startId(), endId(), averagedMz(), uid);
+    }
+
+
+    @Override
+    public Rect rectWithRts() {
+        return new Rect((float)minMz(), (float)maxMz(), (float)retentionTime(startId), (float)retentionTime(endId()), averagedMz(), uid);
+    }
+
+    public TraceSegment[] getSegments() {
+        return segments;
+    }
+
+    public void setSegments(TraceSegment[] segments) {
+        this.segments = segments;
     }
 }
