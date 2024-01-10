@@ -1,5 +1,16 @@
-allprojects {
-    version =  parent.siriusVersion
+apply plugin: "application"
+
+
+version =  parent.siriusVersion
+
+
+application {
+    mainClass = "de.unijena.bioinf.lcms.TestMain"
+    applicationDefaultJvmArgs = ['-Xms1G',
+                                 '-XX:MaxRAMPercentage=85',
+                                 '-XX:+UseG1GC',
+                                 '-XX:+UseStringDeduplication',
+                                 '-XX:+ExitOnOutOfMemoryError']
 }
 
 dependencies {
@@ -35,4 +46,8 @@ dependencies {
     implementation group: 'commons-codec', name: 'commons-codec', version:  '1.15'
     implementation group: 'com.github.jiangxincode', name: 'cpdetector', version:  '1.0.10'
     api 'org.glassfish.jaxb:jaxb-runtime:2.3.3'
+
+    //just for testmain
+    implementation "info.picocli:picocli:$picocli_version"
+    implementation"org.slf4j:slf4j-jdk14:$slf4j_version"
 }

@@ -16,6 +16,7 @@ import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.function.Identity;
+import picocli.CommandLine;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -59,16 +60,28 @@ import java.util.*;
 public class TestMain {
 
     public static void main(String[] args) {
+        LCMSOptions ops = new LCMSOptions();
+        CommandLine  cmd = new CommandLine(ops);
+        cmd.parseArgs(args);
+
+        if (cmd.isUsageHelpRequested()){
+            cmd.usage(System.err);
+            return;
+        }
+
         final ProcessedSample[] samples;
         {
             MzMLParser parser = new MzMLParser();
             JobManager globalJobManager = SiriusJobs.getGlobalJobManager();
-            File[] files = new File("/home/kaidu/data/raw/polluted_citrus/").listFiles();
+//            File[] files = new File("/home/kaidu/data/raw/polluted_citrus/").listFiles();
+            List<File> files = ops.getInputFiles();
+            System.setProperty("lcms.logdir", ops.getLogDir().toAbsolutePath().toString());
+
             List<BasicJJob<ProcessedSample>> jobs = new ArrayList<>();
             int atmost = 10;
             for (File f : files) {
                 if (--atmost < 0) break;
-                if (f.getName().endsWith(".mzML")) {
+                if (f.getName().toLowerCase().endsWith(".mzml")) {
                     jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<ProcessedSample>() {
                         @Override
                         protected ProcessedSample compute() throws Exception {
@@ -107,7 +120,7 @@ public class TestMain {
         TraceAligner traceAligner = new TraceAligner(new IntensityNormalization.QuantileNormalizer(), samples);
         MassOfInterest[] align = traceAligner.align();
         if (false){
-            try (final PrintStream moi = new PrintStream("/home/kaidu/analysis/lcms/scripts/mois.csv")) {
+            try (final PrintStream moi = new PrintStream(ops.getMois().toAbsolutePath().toString())) {
                 moi.println("mz\trt\tcount");
                 for (MassOfInterest m : align) {
                     int n;
@@ -121,7 +134,7 @@ public class TestMain {
             }
 
             double m=221.091899;
-            try (final PrintStream moi = new PrintStream("/home/kaidu/analysis/lcms/scripts/tr.csv")) {
+            try (final PrintStream moi = new PrintStream(ops.getTr().toAbsolutePath().toString())) {
                 moi.println("mz\tintensity\trt\tdelta\tsample\ttrace");
                 for (int k=0; k < samples.length; ++k) {
                     ProcessedSample s  = samples[k];
