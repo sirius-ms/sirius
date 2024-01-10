@@ -9,9 +9,11 @@ import de.unijena.bioinf.lcms.align2.AlignmentBackbone;
 import de.unijena.bioinf.lcms.merge2.MergedTrace;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import picocli.CommandLine;
 
 import java.io.*;
 import java.util.*;
+import java.util.logging.LogManager;
 
 /**
  * Aktuelle Vorgehensweise:
@@ -49,18 +51,38 @@ import java.util.*;
 public class TestMain {
 
     public static void main(String[] args) {
+        try (InputStream is = TestMain.class.getClassLoader().
+                getResourceAsStream("logging.properties")) {
+            LogManager.getLogManager().readConfiguration(is);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+
+        LCMSOptions ops = new LCMSOptions();
+        CommandLine cmd = new CommandLine(ops);
+        cmd.parseArgs(args);
+
+        if (cmd.isUsageHelpRequested()){
+            cmd.usage(System.err);
+            return;
+        }
+
         final de.unijena.bioinf.lcms.trace.ProcessedSample[] samples;
         LCMSProcessing processing = new LCMSProcessing();
         {
             JobManager globalJobManager = SiriusJobs.getGlobalJobManager();
-            //File[] files = new File("/home/kaidu/analysis/lcms/diverse_collection/small").listFiles();
-            File[] files = new File("/home/kaidu/analysis/lcms/diverse_collection/MSV000080627/").listFiles();
+//            File[] files = new File("/home/kaidu/analysis/lcms/diverse_collection/small").listFiles();
+//            File[] files = new File("/home/kaidu/analysis/lcms/diverse_collection/MSV000080627/").listFiles();
             //File[] files = new File("/home/kaidu/data/raw/polluted_citrus/").listFiles();
+            List<File> files = ops.getInputFiles();
+            System.setProperty("lcms.logdir", ops.getLogDir().toAbsolutePath().toString());
+
             List<BasicJJob<de.unijena.bioinf.lcms.trace.ProcessedSample>> jobs = new ArrayList<>();
             int atmost = Integer.MAX_VALUE;
             for (File f : files) {
                 if (--atmost < 0) break;
-                if (f.getName().endsWith(".mzML")) {
+                if (f.getName().toLowerCase().endsWith(".mzml")) {
                     jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<de.unijena.bioinf.lcms.trace.ProcessedSample>() {
                         @Override
                         protected de.unijena.bioinf.lcms.trace.ProcessedSample compute() throws Exception {
