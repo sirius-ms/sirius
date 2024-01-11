@@ -38,6 +38,8 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import javax.swing.plaf.nimbus.AbstractRegionPainter;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
@@ -301,5 +303,20 @@ public class GuiUtils {
         }
 
         new WebViewBrowserDialog(owner, title == null ? "SIRIUS WebView" : title, url);
+    }
+
+    /**
+     * Adds a key binding to close the given dialog on pressing escape
+     */
+    public static void closeOnEscape(JDialog dialog) {
+        JRootPane rootPane = dialog.getRootPane();
+        String escapePressed = "escapePressed";
+        rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("ESCAPE"), escapePressed);
+        rootPane.getActionMap().put(escapePressed, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dialog.dispatchEvent(new WindowEvent(dialog, WindowEvent.WINDOW_CLOSING));
+            }
+        });
     }
 }
