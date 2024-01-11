@@ -195,7 +195,7 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
                             }
                             List<SpectralSearchResultBean.MatchBean> matches = searchResults.stream().map(r -> {
                                 scoreStats.addValue(r.getSimilarity().similarity);
-                                peaksStats.addValue(r.getSimilarity().shardPeaks);
+                                peaksStats.addValue(r.getSimilarity().sharedPeaks);
                                 return new SpectralSearchResultBean.MatchBean(r, ec);
                             }).toList();
                             try {
@@ -259,7 +259,7 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
                 case 2 -> baseObject.getReference().getName();
                 case 3 -> baseObject.getReference().getSmiles();
                 case 4 -> baseObject.getMatch().getSimilarity().similarity;
-                case 5 -> baseObject.getMatch().getSimilarity().shardPeaks;
+                case 5 -> baseObject.getMatch().getSimilarity().sharedPeaks;
                 case 6 -> baseObject.getReference().getPrecursorIonType() != null ? baseObject.getReference().getPrecursorIonType().toString() : "";
                 case 7 -> baseObject.getReference().getCollisionEnergy() != null ? baseObject.getReference().getCollisionEnergy().toString() : "";
                 case 8 -> baseObject.getReference().getInstrumentation() != null ? baseObject.getReference().getInstrumentation().toString() : "";
@@ -409,7 +409,7 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
                             baseList.add(element.getReference().getInstrumentation().toString());
                     }),
                     new MinMaxMatcherEditor<>(scoreSlider, (baseList, element) -> baseList.add(element.getMatch().getSimilarity().similarity)),
-                    new MinMaxMatcherEditor<>(peaksSlider, (baseList, element) -> baseList.add((double) element.getMatch().getSimilarity().shardPeaks))
+                    new MinMaxMatcherEditor<>(peaksSlider, (baseList, element) -> baseList.add((double) element.getMatch().getSimilarity().sharedPeaks))
             );
         }
 
