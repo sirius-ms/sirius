@@ -21,8 +21,7 @@ package de.unijena.bioinf.ms.frontend.subtools.custom_db;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
-import de.unijena.bioinf.chemdb.DataSource;
-import de.unijena.bioinf.chemdb.DataSources;
+import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.chemdb.custom.CustomDatabaseFactory;
@@ -46,6 +45,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -58,7 +58,7 @@ import java.util.stream.Collectors;
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-@CommandLine.Command(name = "custom-db", aliases = {"DB"}, description = "@|bold %n<STANDALONE> Generate a custom searchable structure database. Import multiple files with compounds as SMILES or InChi into this DB. %n %n|@", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true, sortOptions = false)
+@CommandLine.Command(name = "custom-db", aliases = {"DB"}, description = "@|bold %n<STANDALONE> Generate a custom searchable structure/spectral database. Import multiple files with compounds into this DB. %n %n|@", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true, sortOptions = false)
 public class CustomDBOptions implements StandaloneTool<Workflow> {
 
 
@@ -76,33 +76,26 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
     }
 
     public static class Import {
-        @Option(names = "--import", required = true,
+        @Option(names = "--location", required = true,
                 description = {"Location of the custom database to import into.",
-                        "If no input data is given (global --input) the database will just be added to SIRIUS",
-                        "The added db will also be available in the GUI",
-//                        "If just a name is given the db will be stored locally in '<SIRIUS_WORKSPACE>/csi_fingerid_cache/custom'.",
-                        "A location can either be:",
-                        "  1. An absolute local path to a directory",
-                        "  2. An absolute local path to a file (file name must end with '.db' !)",
-                        "  3. An 's3' cloud storage location (experimental), e.g. 's3://my-bucket"
-//                       , "The Location of the SIRIUS workspace can be set globally by (--workspace)."
+                        "An absolute local path to a new database file file to be created (file name must end with .db)",
+                        "If no input data is given (--input), the database will just be added to SIRIUS",
+                        "The added db will also be available in the GUI."
                 }, order = 201)
         String location = null;
 
         @Option(names = {"--buffer-size", "--buffer"}, defaultValue = "1000",
-                description = {"Maximum number of downloaded/computed compounds to keep in memory before writing them to disk (into the db directory)."},
+                description = {"Maximum number of downloaded/computed compounds to keep in memory before writing them to disk (into the db directory). Can be set higher when importing large files on a fast computer."},
                 order = 210)
         public int writeBuffer;
 
-        @Option(names = {"--derive-from"}, split = ",",
-                description = {"The resulting custom-db will be the Union of the given parent database and the imported structures."},
-                order = 220)
-        public EnumSet<DataSource> parentDBs = EnumSet.noneOf(DataSource.class);
-
-
-        @Option(names = {"--compression", "-c"}, description = {"Specify compression mode."}, defaultValue = "GZIP",
-                order = 230)
-        public Compressible.Compression compression;
+        @Option(names = {"--input", "-i"}, split = ",", description = {
+                "Files or directories to import into the database.",
+                "Supported formats: .ms, .mgf, .msp, .mat, .txt (MassBank), .mb, .json (GNPS, MoNA).",
+                "Structures without spectra can be passed as a tab-separated (.tsv) file with fields [SMILES, id (optional), name (optional)].",
+                "Directories will be recursively expanded."
+        }, order = 220)
+        public List<Path> input;
     }
 
     public static class Remove {
@@ -111,7 +104,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 order = 301)
         String location = null;
 
-        @Option(names = {"--delete", "-d"}, required = false, defaultValue = "false",
+        @Option(names = {"--delete", "-d"}, defaultValue = "false",
                 description = "Delete removed custom database from filesystem/server.", order = 310)
         boolean delete;
     }
@@ -123,7 +116,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
         @Option(names = {"--db"}, description = "Show information only about the given custom database.", order = 110)
         String db = null;
 
-        @Option(names = {"--details"}, required = false, description = "Show detailed (technical) information.",
+        @Option(names = {"--details"}, description = "Show detailed (technical) information.",
                 order = 120)
         public boolean details;
     }
@@ -164,38 +157,46 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
 
                 checkForInterruption();
 
-                CustomDatabaseSettings settings = new CustomDatabaseSettings(!mode.importParas.parentDBs.isEmpty(), DataSources.getDBFlag(mode.importParas.parentDBs),
+                checkConflictingName(mode.importParas.location);
+
+                CustomDatabaseSettings settings = new CustomDatabaseSettings(false, 0,
                         List.of(ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion().getUsedFingerprints()), VersionsInfo.CUSTOM_DATABASE_SCHEMA, null);
 
-                final CustomDatabase db = CustomDatabaseFactory.createOrOpen(mode.importParas.location, mode.importParas.compression, settings);
+                final CustomDatabase db = CustomDatabaseFactory.createOrOpen(mode.importParas.location, Compressible.Compression.NONE, settings);
                 addDBToPropertiesIfNotExist(db);
                 logInfo("Database added to SIRIUS. Use 'structure --db=\"" + db.storageLocation() + "\"' to search in this database.");
 
-                if (input == null || input.msInput == null)
+                if (mode.importParas.input == null || mode.importParas.input.isEmpty())
                     return true;
 
-                if (!input.msInput.unknownFiles.isEmpty() || !input.msInput.msParserfiles.isEmpty()) {
-                    logInfo("Importing new structures to custom database '" + mode.importParas.location + "'...");
-                    final AtomicLong lines = new AtomicLong(0);
-                    final List<Path> unknown = input.msInput.unknownFiles.keySet().stream().sorted().collect(Collectors.toList());
-                    for (Path f : unknown)
-                        lines.addAndGet(FileUtils.estimateNumOfLines(f));
-                    lines.addAndGet(input.msInput.msParserfiles.size());
+                Map<Boolean, List<Path>> groups = mode.importParas.input.stream()
+                        .flatMap(FileUtils::sneakyWalk)
+                        .filter(Files::isRegularFile)
+                        .distinct()
+                        .collect(Collectors.partitioningBy(p -> MsExperimentParser.isSupportedFileName(p.getFileName().toString())));
 
-                    final AtomicInteger count = new AtomicInteger(0);
+                List<Path> spectrumFiles = groups.get(true);
+                List<Path> structureFiles = groups.get(false);
 
-                    checkForInterruption();
+                logInfo("Importing new structures to custom database '" + mode.importParas.location + "'...");
+                final AtomicLong lines = new AtomicLong(0);
+                for (Path f : structureFiles)
+                    lines.addAndGet(FileUtils.estimateNumOfLines(f));
+                lines.addAndGet(spectrumFiles.size());
 
-                    dbjob = db.importToDatabaseJob(
-                            input.msInput.msParserfiles.keySet().stream().map(Path::toFile).toList(),
-                            unknown.stream().map(Path::toFile).toList(),
-                            inChI -> updateProgress(0, Math.max(lines.intValue(), count.incrementAndGet() + 1), count.get(), "Importing '" + inChI.key2D() + "'"),
-                            ApplicationCore.WEB_API, mode.importParas.writeBuffer
-                    );
-                    checkForInterruption();
-                    submitJob(dbjob).awaitResult();
-                    logInfo("...New structures imported to custom database '" + mode.importParas.location + "'.");
-                }
+                final AtomicInteger count = new AtomicInteger(0);
+
+                checkForInterruption();
+
+                dbjob = db.importToDatabaseJob(
+                        spectrumFiles.stream().map(Path::toFile).toList(),
+                        structureFiles.stream().map(Path::toFile).toList(),
+                        inChI -> updateProgress(0, Math.max(lines.intValue(), count.incrementAndGet() + 1), count.get(), "Importing '" + inChI.key2D() + "'"),
+                        ApplicationCore.WEB_API, mode.importParas.writeBuffer
+                );
+                checkForInterruption();
+                submitJob(dbjob).awaitResult();
+                logInfo("...New structures imported to custom database '" + mode.importParas.location + "'.");
 
                 return true;
             } else if (mode.removeParas != null) {
@@ -257,13 +258,9 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
         System.out.println("Number of Formulas: " + s.getStatistics().getFormulas());
         System.out.println("Number of Structures: " + s.getStatistics().getCompounds());
         System.out.println("Number of Reference spectra: " + s.getStatistics().getSpectra());
-        System.out.println("Is inherited: " + s.isInheritance());
-        if (s.isInheritance())
-            System.out.println("Inherited DBs: [ '" + String.join("','", s.getInheritedDBs()) + "' ]");
         if (mode.showParas.details) {
             System.out.println("Version: " + db.getDatabaseVersion());
             System.out.println("Schema Version: " + s.getSchemaVersion());
-            System.out.println("Compression: " + db.compression().name());
             System.out.println("FilterFlag: " + db.getFilterFlag());
             System.out.println("Used Fingerprints: [ '" + s.getFingerprintVersion().stream().map(Enum::name).collect(Collectors.joining("','")) + "' ]");
         }
@@ -291,5 +288,14 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 .collect(Collectors.joining(",")));
     }
 
+    private static void checkConflictingName(String location) {
+        String dbName = Path.of(location).getFileName().toString();
+        SearchableDatabases.getCustomDatabases().stream()
+                .filter(db -> db.name().equals(dbName) && !db.storageLocation().equals(location))
+                .findAny()
+                .ifPresent(db -> {
+                    throw new RuntimeException("Database with name " + dbName + " already exists in " + db.storageLocation());
+                } );
+    }
 
 }
