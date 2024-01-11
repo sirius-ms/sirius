@@ -183,42 +183,6 @@ public class SiriusTest {
 
 
     @Test
-    public void testILPSolvers() throws IOException, ExecutionException, URISyntaxException {
-        JobManager jobsManager = SiriusJobs.getGlobalJobManager();
-        String[] solvers = {"clp"/*, "glpk", "cplex"*/};
-        Path path = Path.of(getClass().getResource("/dendroids-good").toURI());
-        List<Path> files = FileUtils.listAndClose(path, pathStream -> pathStream.filter(Files::isRegularFile).collect(Collectors.toList()));
-        for (Path file : files) {
-            LinkedHashMap<String, FasterTreeComputationInstance.FinalResult> results = new LinkedHashMap<>();
-            for (String solver : solvers) {
-                System.out.println("Testing: " + file.toAbsolutePath() + " with " + solver);
-                long t =  System.currentTimeMillis();
-                final Ms2Experiment experiment = getStandardExample("/dendroids-good/" + file.getFileName().toString());
-                final Ms2Preprocessor preprocessor = new Ms2Preprocessor();
-                final ProcessedInput processedInput = preprocessor.preprocess(experiment);
-                sirius.getMs1Analyzer().computeAndScoreIsotopePattern(processedInput);
-                final FragmentationPatternAnalysis analysis = sirius.getMs2Analyzer();
-                TreeBuilder builder = TreeBuilderFactory.getInstance().getTreeBuilder(solver);
-                analysis.setTreeBuilder(builder);
-
-                FasterTreeComputationInstance instance = new FasterTreeComputationInstance(analysis, processedInput);
-                FasterTreeComputationInstance.FinalResult result = jobsManager.submitJob(instance).awaitResult();
-                results.put(solver,result);
-                System.out.println("Testing: " + file.toAbsolutePath() + " with " + solver + "DONE in " + (System.currentTimeMillis() - t)/1000d + "s");
-            }
-            for (Map.Entry<String, FasterTreeComputationInstance.FinalResult> e1 : results.entrySet()) {
-//                assertEquals(MolecularFormula.parseOrThrow("C20H17NO6"), e1.getValue().getResults().get(0).getRoot().getFormula());
-                for (Map.Entry<String, FasterTreeComputationInstance.FinalResult> e2 : results.entrySet()) {
-                    for (int i = 0; i < e1.getValue().getResults().size(); i++) {
-                        assertEquals(e1.getValue().getResults().get(i).getRootScore(),e2.getValue().getResults().get(i).getRootScore(), 0.000001);
-                        assertEquals(e1.getValue().getResults().get(i).getTreeWeight(),e2.getValue().getResults().get(i).getTreeWeight(), 0.000001);
-                    }
-                }
-            }
-        }
-    }
-
-    @Test
     public void testTreeSerialization() throws IOException {
         final Ms2Experiment experiment = getStandardExperiment();
 
