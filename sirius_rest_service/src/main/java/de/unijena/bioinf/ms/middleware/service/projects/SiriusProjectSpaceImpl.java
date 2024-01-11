@@ -555,6 +555,8 @@ public class SiriusProjectSpaceImpl implements Project {
                     ifPresent(tscore -> frs.setTreeScore(tscore.score()));
             scorings.getAnnotation(ZodiacScore.class).
                     ifPresent(zscore -> frs.setZodiacScore(zscore.score()));
+            scorings.getAnnotation(TopCSIScore.class).
+                    ifPresent(csiScore -> frs.setTopCSIScore(csiScore.score()));
         }
 
         return frs;

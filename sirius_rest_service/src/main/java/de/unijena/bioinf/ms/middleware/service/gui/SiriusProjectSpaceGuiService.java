@@ -24,8 +24,6 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.SiriusGuiFactory;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceImpl;
-import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceProviderImpl;
-import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
 import de.unijena.bioinf.sse.DataEventType;
 import de.unijena.bioinf.sse.DataObjectEvent;
 
@@ -34,21 +32,17 @@ import java.util.concurrent.Flow;
 public class SiriusProjectSpaceGuiService extends AbstractGuiService<SiriusProjectSpaceImpl> {
     private final SiriusGuiFactory guiFactory;
 
-    @Deprecated
-    private final SiriusProjectSpaceProviderImpl provider;
-
-    public SiriusProjectSpaceGuiService(EventService<?> eventService, SiriusProjectSpaceProviderImpl provider) {
-        this(new SiriusGuiFactory(), eventService, provider);
+    public SiriusProjectSpaceGuiService(EventService<?> eventService) {
+        this(new SiriusGuiFactory(), eventService);
     }
-    public SiriusProjectSpaceGuiService(SiriusGuiFactory guiFactory, EventService<?> eventService, SiriusProjectSpaceProviderImpl provider) {
+    public SiriusProjectSpaceGuiService(SiriusGuiFactory guiFactory, EventService<?> eventService) {
         super(eventService);
         this.guiFactory = guiFactory;
-        this.provider = provider;
     }
 
     @Override
     protected SiriusGui makeGuiInstance(String projectId) {
-        SiriusGui gui = guiFactory.newGui(projectId, (GuiProjectSpaceManager) provider.getProjectOrThrow(projectId).getProjectSpaceManager());
+        SiriusGui gui = guiFactory.newGui(projectId);
         gui.getSiriusClient().addEventListener(new Flow.Subscriber<>() {
             @Override
             public void onSubscribe(Flow.Subscription subscription) {

@@ -66,8 +66,8 @@ public class SiriusContext{
     }
 
     @Bean(destroyMethod = "shutdown")
-    public GuiService<?> guiService(EventService<?> eventService, ProjectsProvider<?> projectsProvider){
-        return new SiriusProjectSpaceGuiService(eventService, (SiriusProjectSpaceProviderImpl) projectsProvider);
+    public GuiService<?> guiService(EventService<?> eventService){
+        return new SiriusProjectSpaceGuiService(eventService);
     }
 
     @Bean

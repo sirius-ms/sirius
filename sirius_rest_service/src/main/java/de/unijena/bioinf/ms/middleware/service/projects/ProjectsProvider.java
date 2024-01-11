@@ -22,12 +22,14 @@ package de.unijena.bioinf.ms.middleware.service.projects;
 
 import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,14 +42,15 @@ public interface ProjectsProvider<P extends de.unijena.bioinf.ms.middleware.serv
     }
 
     Optional<P> getProject(String projectId);
-    Optional<ProjectInfo> getProjectId(String projectId);
 
-    default ProjectInfo getProjectIdOrThrow(String projectId) throws ResponseStatusException{
-        return getProjectId(projectId).orElseThrow(() ->
+    Optional<ProjectInfo> getProjectInfo(@NotNull String projectId, @NotNull EnumSet<ProjectInfo.OptField> optFields);
+
+    default ProjectInfo getProjectInfoOrThrow(String projectId, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws ResponseStatusException {
+        return getProjectInfo(projectId, optFields).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no project space with name '" + projectId + "'"));
     }
 
-    ProjectInfo openProjectSpace(@NotNull ProjectInfo id) throws IOException;
+    ProjectInfo openProjectSpace(@NotNull String projectId, @NotNull String pathToProject, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException;
 
     ProjectInfo createProjectSpace(Path location) throws IOException;
 
@@ -56,6 +59,12 @@ public interface ProjectsProvider<P extends de.unijena.bioinf.ms.middleware.serv
     boolean containsProject(@NotNull String name);
 
     void closeProjectSpace(String name) throws IOException;
+
+    default ProjectInfo copyProjectSpace(@NotNull String projectId, @NotNull String pathToProject, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException {
+        return copyProjectSpace(projectId, null, pathToProject, optFields);
+    }
+
+    ProjectInfo copyProjectSpace(@NotNull String projectId, @Nullable String copyId, @NotNull String pathToProject, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException;
 
     void closeAll();
 
