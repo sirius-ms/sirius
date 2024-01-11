@@ -78,18 +78,20 @@ public class CompoundClasses {
         if (npcClassification != null) {
             double[] perLevelProp = new double[NPCFingerprintVersion.NPCLevel.values().length];
             NPCFingerprintVersion.NPCProperty[] perLevelProps = new NPCFingerprintVersion.NPCProperty[NPCFingerprintVersion.NPCLevel.values().length];
+            int[] indices = new int[NPCFingerprintVersion.NPCLevel.values().length];
             for (FPIter fpIter : npcClassification) {
                 NPCFingerprintVersion.NPCProperty prop = ((NPCFingerprintVersion.NPCProperty) fpIter.getMolecularProperty());
 
                 if (fpIter.getProbability() >= perLevelProp[prop.level.level]) {
                     perLevelProp[prop.level.level] = fpIter.getProbability();
                     perLevelProps[prop.level.level] = prop;
+                    indices[prop.level.level] = fpIter.getIndex();
                 }
             }
 
-            sum.setNpcPathway(CompoundClass.of(perLevelProps[0], perLevelProp[0]));
-            sum.setNpcSuperclass(CompoundClass.of(perLevelProps[1], perLevelProp[1]));
-            sum.setNpcClass(CompoundClass.of(perLevelProps[2], perLevelProp[2]));
+            sum.setNpcPathway(CompoundClass.of(perLevelProps[0], perLevelProp[0], indices[0]));
+            sum.setNpcSuperclass(CompoundClass.of(perLevelProps[1], perLevelProp[1], indices[1]));
+            sum.setNpcClass(CompoundClass.of(perLevelProps[2], perLevelProp[2], indices[2]));
         }
 
         if (cfClassification != null) {
@@ -103,13 +105,15 @@ public class CompoundClasses {
             lineage.forEach(alternatives::remove);
 
             sum.setClassyFireLineage(lineage.stream().map(cp -> CompoundClass.of(cp,
-                    cfClassification.getProbability(CLF.getIndexOfMolecularProperty(cp)))
+                    cfClassification.getProbability(CLF.getIndexOfMolecularProperty(cp)),
+                    CLF.getIndexOfMolecularProperty(cp))
             ).toList());
 
             sum.setClassyFireAlternatives(alternatives.stream()
                     .sorted(Comparator.comparingInt(x -> -x.getPriority()))
                     .map(cp -> CompoundClass.of(cp,
-                            cfClassification.getProbability(CLF.getIndexOfMolecularProperty(cp)))
+                            cfClassification.getProbability(CLF.getIndexOfMolecularProperty(cp)),
+                            CLF.getIndexOfMolecularProperty(cp))
                     ).toList());
         }
         return sum;

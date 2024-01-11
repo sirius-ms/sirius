@@ -83,6 +83,13 @@ public class FormulaCandidate {
     protected Deviation medianMassDeviation;
 
     /**
+     * CSI:FingerID Score of the highest scoring structure candidate (top hit) of this formula candidate.
+     * If NULL result is not available
+     */
+    @Schema(nullable = true)
+    protected Double topCSIScore;
+
+    /**
      * The fragmentation tree that belongs to this molecular formula candidate (produces the treeScore).
      */
     @Schema(nullable = true)

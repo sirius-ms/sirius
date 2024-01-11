@@ -51,7 +51,6 @@ import java.util.concurrent.ExecutionException;
 @Tag(name = "Projects", description = "Manage SIRIUS projects.")
 @Slf4j
 public class ProjectController {
-    //todo add access to fingerprint definitions aka molecular property names
     private final ComputeService computeContext;
     private final ProjectsProvider projectsProvider;
 
@@ -83,9 +82,8 @@ public class ProjectController {
      * @param projectId unique name/identifier tof the project-space to be accessed.
      */
     @GetMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ProjectInfo getProjectSpace(@PathVariable String projectId) {
-        //todo add infos like size and number of compounds?
-        return projectsProvider.getProjectIdOrThrow(projectId);
+    public ProjectInfo getProjectSpace(@PathVariable String projectId, @RequestParam(defaultValue = "") EnumSet<ProjectInfo.OptField> optFields) {
+        return projectsProvider.getProjectInfoOrThrow(projectId, optFields);
     }
 
     /**
@@ -94,8 +92,8 @@ public class ProjectController {
      * @param projectId unique name/identifier that shall be used to access the opened project-space.
      */
     @PutMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ProjectInfo openProjectSpace(@PathVariable String projectId, @RequestParam String pathToProject) throws IOException {
-        return projectsProvider.openProjectSpace(new ProjectInfo(projectId, pathToProject));
+    public ProjectInfo openProjectSpace(@PathVariable String projectId, @RequestParam String pathToProject, @RequestParam(defaultValue = "") EnumSet<ProjectInfo.OptField> optFields) throws IOException {
+        return projectsProvider.openProjectSpace(projectId, pathToProject, optFields);
     }
 
     /**
@@ -154,6 +152,20 @@ public class ProjectController {
         computeContext.deleteJobs(ps, true, true, true, EnumSet.noneOf(Job.OptField.class));
         //todo check if we can make wait for deletion aync
         projectsProvider.closeProjectSpace(projectId);
+    }
+
+    /**
+     * Move an existing (opened) project-space to another location.
+     *
+     * @param projectId unique name/identifier of the project-space that shall be copied.
+     * @param pathToCopiedProject target location where the source project will be copied to.
+     * @param copyProjectId optional id/mame of the newly created project (copy). If given the project will be opened.
+     * @return ProjectInfo of the newly created project if opened (copyProjectId != null) or the project info of
+     * the source project otherwise
+     */
+    @PutMapping(value = "/{projectId}/copy", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ProjectInfo copyProjectSpace(@PathVariable String projectId, @RequestParam String pathToCopiedProject, @RequestParam(required = false) String copyProjectId, @RequestParam(defaultValue = "") EnumSet<ProjectInfo.OptField> optFields) throws IOException {
+        return projectsProvider.copyProjectSpace(projectId, copyProjectId, pathToCopiedProject, optFields);
     }
 
     @Operation(summary = "Get CSI:FingerID fingerprint (prediction vector) definition")
