@@ -33,7 +33,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   CompoundClass.JSON_PROPERTY_NAME,
   CompoundClass.JSON_PROPERTY_DESCRIPTION,
   CompoundClass.JSON_PROPERTY_ID,
-  CompoundClass.JSON_PROPERTY_PROBABILITY
+  CompoundClass.JSON_PROPERTY_PROBABILITY,
+  CompoundClass.JSON_PROPERTY_INDEX
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class CompoundClass {
@@ -54,6 +55,9 @@ public class CompoundClass {
 
   public static final String JSON_PROPERTY_PROBABILITY = "probability";
   private Double probability;
+
+  public static final String JSON_PROPERTY_INDEX = "index";
+  private Integer index;
 
   public CompoundClass() {
   }
@@ -213,6 +217,32 @@ public class CompoundClass {
     this.probability = probability;
   }
 
+
+  public CompoundClass index(Integer index) {
+    
+    this.index = index;
+    return this;
+  }
+
+   /**
+   * Absolute index of this property in the predicted vector/embedding
+   * @return index
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_INDEX)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Integer getIndex() {
+    return index;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_INDEX)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setIndex(Integer index) {
+    this.index = index;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -227,12 +257,13 @@ public class CompoundClass {
         Objects.equals(this.name, compoundClass.name) &&
         Objects.equals(this.description, compoundClass.description) &&
         Objects.equals(this.id, compoundClass.id) &&
-        Objects.equals(this.probability, compoundClass.probability);
+        Objects.equals(this.probability, compoundClass.probability) &&
+        Objects.equals(this.index, compoundClass.index);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(type, level, name, description, id, probability);
+    return Objects.hash(type, level, name, description, id, probability, index);
   }
 
   @Override
@@ -245,6 +276,7 @@ public class CompoundClass {
     sb.append("    description: ").append(toIndentedString(description)).append("\n");
     sb.append("    id: ").append(toIndentedString(id)).append("\n");
     sb.append("    probability: ").append(toIndentedString(probability)).append("\n");
+    sb.append("    index: ").append(toIndentedString(index)).append("\n");
     sb.append("}");
     return sb.toString();
   }

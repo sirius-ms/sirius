@@ -19,6 +19,7 @@ Molecular formula candidate that holds a unique identifier (molecular formula + 
 |**numOfExplainablePeaks** | **Integer** |  |  [optional] |
 |**totalExplainedIntensity** | **Double** |  |  [optional] |
 |**medianMassDeviation** | [**Deviation**](Deviation.md) |  |  [optional] |
+|**topCSIScore** | **Double** | CSI:FingerID Score of the highest scoring structure candidate (top hit) of this formula candidate.  If NULL result is not available |  [optional] |
 |**fragmentationTree** | [**FragmentationTree**](FragmentationTree.md) |  |  [optional] |
 |**simulatedIsotopePattern** | [**AnnotatedSpectrum**](AnnotatedSpectrum.md) |  |  [optional] |
 |**predictedFingerprint** | **List&lt;Double&gt;** | Probabilistic molecular fingerprint predicted by CSI:FingerID |  [optional] |

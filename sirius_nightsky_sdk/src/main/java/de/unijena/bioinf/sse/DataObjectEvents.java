@@ -31,6 +31,8 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.ProjectChangeEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Optional;
+
 public class DataObjectEvents {
 
     public static boolean isKnownObjectDataType(@Nullable String eventName) {
@@ -42,6 +44,18 @@ public class DataObjectEvents {
             return false;
         }
         return true;
+    }
+
+    public static <Data> Optional<Data> toDataObjectEventData(Object probableDataObjectEvent, Class<Data> dataType) {
+        return toDataObjectEvent(probableDataObjectEvent, dataType).map(DataObjectEvent::getData);
+    }
+    public static <Data> Optional<DataObjectEvent<Data>> toDataObjectEvent(Object probableDataObjectEvent, Class<Data> dataType) {
+        if (probableDataObjectEvent instanceof DataObjectEvent<?>) {
+            if( dataType.isAssignableFrom(((DataObjectEvent<?>) probableDataObjectEvent).getData().getClass())){
+                return Optional.of(((DataObjectEvent<Data>) probableDataObjectEvent));
+            }
+        }
+        return Optional.empty();
     }
 
     public static DataObjectEvent<?> fromJsonData(String eventName, String data, ObjectMapper jsonMapper) {

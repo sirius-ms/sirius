@@ -46,6 +46,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   FormulaCandidate.JSON_PROPERTY_NUM_OF_EXPLAINABLE_PEAKS,
   FormulaCandidate.JSON_PROPERTY_TOTAL_EXPLAINED_INTENSITY,
   FormulaCandidate.JSON_PROPERTY_MEDIAN_MASS_DEVIATION,
+  FormulaCandidate.JSON_PROPERTY_TOP_C_S_I_SCORE,
   FormulaCandidate.JSON_PROPERTY_FRAGMENTATION_TREE,
   FormulaCandidate.JSON_PROPERTY_SIMULATED_ISOTOPE_PATTERN,
   FormulaCandidate.JSON_PROPERTY_PREDICTED_FINGERPRINT,
@@ -86,6 +87,9 @@ public class FormulaCandidate {
 
   public static final String JSON_PROPERTY_MEDIAN_MASS_DEVIATION = "medianMassDeviation";
   private Deviation medianMassDeviation;
+
+  public static final String JSON_PROPERTY_TOP_C_S_I_SCORE = "topCSIScore";
+  private Double topCSIScore;
 
   public static final String JSON_PROPERTY_FRAGMENTATION_TREE = "fragmentationTree";
   private FragmentationTree fragmentationTree;
@@ -391,6 +395,32 @@ public class FormulaCandidate {
   }
 
 
+  public FormulaCandidate topCSIScore(Double topCSIScore) {
+    
+    this.topCSIScore = topCSIScore;
+    return this;
+  }
+
+   /**
+   * CSI:FingerID Score of the highest scoring structure candidate (top hit) of this formula candidate.  If NULL result is not available
+   * @return topCSIScore
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_TOP_C_S_I_SCORE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Double getTopCSIScore() {
+    return topCSIScore;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_TOP_C_S_I_SCORE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setTopCSIScore(Double topCSIScore) {
+    this.topCSIScore = topCSIScore;
+  }
+
+
   public FormulaCandidate fragmentationTree(FragmentationTree fragmentationTree) {
     
     this.fragmentationTree = fragmentationTree;
@@ -548,6 +578,7 @@ public class FormulaCandidate {
         Objects.equals(this.numOfExplainablePeaks, formulaCandidate.numOfExplainablePeaks) &&
         Objects.equals(this.totalExplainedIntensity, formulaCandidate.totalExplainedIntensity) &&
         Objects.equals(this.medianMassDeviation, formulaCandidate.medianMassDeviation) &&
+        Objects.equals(this.topCSIScore, formulaCandidate.topCSIScore) &&
         Objects.equals(this.fragmentationTree, formulaCandidate.fragmentationTree) &&
         Objects.equals(this.simulatedIsotopePattern, formulaCandidate.simulatedIsotopePattern) &&
         Objects.equals(this.predictedFingerprint, formulaCandidate.predictedFingerprint) &&
@@ -557,7 +588,7 @@ public class FormulaCandidate {
 
   @Override
   public int hashCode() {
-    return Objects.hash(formulaId, molecularFormula, adduct, siriusScore, isotopeScore, treeScore, zodiacScore, numOfExplainedPeaks, numOfExplainablePeaks, totalExplainedIntensity, medianMassDeviation, fragmentationTree, simulatedIsotopePattern, predictedFingerprint, compoundClasses, canopusPrediction);
+    return Objects.hash(formulaId, molecularFormula, adduct, siriusScore, isotopeScore, treeScore, zodiacScore, numOfExplainedPeaks, numOfExplainablePeaks, totalExplainedIntensity, medianMassDeviation, topCSIScore, fragmentationTree, simulatedIsotopePattern, predictedFingerprint, compoundClasses, canopusPrediction);
   }
 
   @Override
@@ -575,6 +606,7 @@ public class FormulaCandidate {
     sb.append("    numOfExplainablePeaks: ").append(toIndentedString(numOfExplainablePeaks)).append("\n");
     sb.append("    totalExplainedIntensity: ").append(toIndentedString(totalExplainedIntensity)).append("\n");
     sb.append("    medianMassDeviation: ").append(toIndentedString(medianMassDeviation)).append("\n");
+    sb.append("    topCSIScore: ").append(toIndentedString(topCSIScore)).append("\n");
     sb.append("    fragmentationTree: ").append(toIndentedString(fragmentationTree)).append("\n");
     sb.append("    simulatedIsotopePattern: ").append(toIndentedString(simulatedIsotopePattern)).append("\n");
     sb.append("    predictedFingerprint: ").append(toIndentedString(predictedFingerprint)).append("\n");

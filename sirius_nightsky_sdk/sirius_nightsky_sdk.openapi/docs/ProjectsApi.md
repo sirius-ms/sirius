@@ -5,6 +5,7 @@ All URIs are relative to *http://localhost:8080*
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
 | [**closeProjectSpace**](ProjectsApi.md#closeProjectSpace) | **DELETE** /api/projects/{projectId} | Close project-space and remove it from application. |
+| [**copyProjectSpace**](ProjectsApi.md#copyProjectSpace) | **PUT** /api/projects/{projectId}/copy | Move an existing (opened) project-space to another location. |
 | [**createProjectSpace**](ProjectsApi.md#createProjectSpace) | **POST** /api/projects/{projectId} | Create and open a new project-space at given location and make it accessible via the given projectId. |
 | [**getCanopusClassyFireData**](ProjectsApi.md#getCanopusClassyFireData) | **GET** /api/projects/{projectId}/cf-data | Get CANOPUS prediction vector definition for ClassyFire classes |
 | [**getCanopusNpcData**](ProjectsApi.md#getCanopusNpcData) | **GET** /api/projects/{projectId}/npc-data | Get CANOPUS prediction vector definition for NPC classes |
@@ -78,6 +79,78 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | OK |  -  |
+
+
+## copyProjectSpace
+
+> ProjectInfo copyProjectSpace(projectId, pathToCopiedProject, copyProjectId, optFields)
+
+Move an existing (opened) project-space to another location.
+
+Move an existing (opened) project-space to another location.
+
+### Example
+
+```java
+// Import classes:
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
+import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
+import de.unijena.bioinf.ms.nightsky.sdk.api.ProjectsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8080");
+
+        ProjectsApi apiInstance = new ProjectsApi(defaultClient);
+        String projectId = "projectId_example"; // String | unique name/identifier of the project-space that shall be copied.
+        String pathToCopiedProject = "pathToCopiedProject_example"; // String | target location where the source project will be copied to.
+        String copyProjectId = "copyProjectId_example"; // String | optional id/mame of the newly created project (copy). If given the project will be opened.
+        List<ProjectInfoOptField> optFields = Arrays.asList(); // List<ProjectInfoOptField> | 
+        try {
+            ProjectInfo result = apiInstance.copyProjectSpace(projectId, pathToCopiedProject, copyProjectId, optFields);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling ProjectsApi#copyProjectSpace");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| unique name/identifier of the project-space that shall be copied. | |
+| **pathToCopiedProject** | **String**| target location where the source project will be copied to. | |
+| **copyProjectId** | **String**| optional id/mame of the newly created project (copy). If given the project will be opened. | [optional] |
+| **optFields** | [**List&lt;ProjectInfoOptField&gt;**](ProjectInfoOptField.md)|  | [optional] |
+
+### Return type
+
+[**ProjectInfo**](ProjectInfo.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | ProjectInfo of the newly created project if opened (copyProjectId !&#x3D; null) or the project info of  the source project otherwise |  -  |
 
 
 ## createProjectSpace
@@ -352,7 +425,7 @@ No authorization required
 
 ## getProjectSpace
 
-> ProjectInfo getProjectSpace(projectId)
+> ProjectInfo getProjectSpace(projectId, optFields)
 
 Get project space info by its projectId.
 
@@ -375,8 +448,9 @@ public class Example {
 
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | unique name/identifier tof the project-space to be accessed.
+        List<ProjectInfoOptField> optFields = Arrays.asList(); // List<ProjectInfoOptField> | 
         try {
-            ProjectInfo result = apiInstance.getProjectSpace(projectId);
+            ProjectInfo result = apiInstance.getProjectSpace(projectId, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#getProjectSpace");
@@ -395,6 +469,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| unique name/identifier tof the project-space to be accessed. | |
+| **optFields** | [**List&lt;ProjectInfoOptField&gt;**](ProjectInfoOptField.md)|  | [optional] |
 
 ### Return type
 
@@ -492,7 +567,7 @@ No authorization required
 
 ## openProjectSpace
 
-> ProjectInfo openProjectSpace(projectId, pathToProject)
+> ProjectInfo openProjectSpace(projectId, pathToProject, optFields)
 
 Open an existing project-space and make it accessible via the given projectId.
 
@@ -516,8 +591,9 @@ public class Example {
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | unique name/identifier that shall be used to access the opened project-space.
         String pathToProject = "pathToProject_example"; // String | 
+        List<ProjectInfoOptField> optFields = Arrays.asList(); // List<ProjectInfoOptField> | 
         try {
-            ProjectInfo result = apiInstance.openProjectSpace(projectId, pathToProject);
+            ProjectInfo result = apiInstance.openProjectSpace(projectId, pathToProject, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#openProjectSpace");
@@ -537,6 +613,7 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| unique name/identifier that shall be used to access the opened project-space. | |
 | **pathToProject** | **String**|  | |
+| **optFields** | [**List&lt;ProjectInfoOptField&gt;**](ProjectInfoOptField.md)|  | [optional] |
 
 ### Return type
 
