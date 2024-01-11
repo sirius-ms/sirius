@@ -3,11 +3,16 @@ package de.unijena.bioinf.babelms.gnps;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.babelms.MsExperimentParser;
+import de.unijena.bioinf.babelms.ParserTestUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.List;
+import java.util.Objects;
 
 import static de.unijena.bioinf.babelms.ParserTestUtils.loadExperiment;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -68,5 +73,16 @@ class GnpsJsonParserTest {
         assertTestSpectrum(spectrum);
         assertEquals(940.25, experiment.getIonMass(), 1e-9);
         assertEquals("splash10-00dl-0000011189-7d4b9e412ca92d989b2d", experiment.getAnnotation(Splash.class).orElseThrow().getSplash());
+    }
+
+    @Test
+    public void testRootArray() throws IOException {
+        File input = new File(Objects.requireNonNull(ParserTestUtils.class.getClassLoader().getResource("gnps/spectrum_array.json")).getFile());
+        List<Ms2Experiment> experiments = new MsExperimentParser().getParser(input).parseFromFile(input);
+
+        assertEquals(3, experiments.size());
+        assertEquals(1.0, experiments.get(0).getIonMass());
+        assertEquals(2.0, experiments.get(1).getIonMass());
+        assertEquals(3.0, experiments.get(2).getIonMass());
     }
 }

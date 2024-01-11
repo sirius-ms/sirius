@@ -81,30 +81,25 @@ public class GenericParser<T> implements Parser<T> {
             }
 
             BufferedReader reader = r;
-            T elem = parse(reader, source);
+            T nextElement = parse(reader, source);
 
             @Override
             public boolean hasNext() {
-                if (elem == null) tryclose(); //for reader without any element
+                if (nextElement == null) tryclose(); //for reader without any element
                 return reader != null;
             }
 
             @Override
             public T next() {
-                T mem = elem;
+                T current = nextElement;
                 try {
-                    if (parser.isClosingAfterParsing()) {
-                        reader = null;
-                        elem = null;
-                        return mem;
-                    }
-                    elem = parse(reader, source);
+                    nextElement = parse(reader, source);
                 } catch (IOException e) {
                     tryclose();
                     throw new RuntimeException(e);
                 }
-                if (elem == null) tryclose();
-                return mem;
+                if (nextElement == null) tryclose();
+                return current;
             }
 
             private void tryclose() {
@@ -135,25 +130,13 @@ public class GenericParser<T> implements Parser<T> {
 
 
     public List<T> parseFromFile(File file) throws IOException {
-        BufferedReader reader = null;
         final URI source = file.toURI();
-        try {
-            reader = FileUtils.ensureBuffering(new FileReader(file));
-            final ArrayList<T> list = new ArrayList<>();
-            T elem = parse(reader,source);
-            if (parser.isClosingAfterParsing()) {
-                list.add(elem);
-            } else {
-                while (elem != null) {
-                    list.add(elem);
-                    elem = parse(reader, source);
-                }
-            }
+        try (BufferedReader reader = FileUtils.ensureBuffering(new FileReader(file))) {
+            List<T> list = new ArrayList<>();
+            parseIterator(reader, source).forEachRemaining(list::add);
             return list;
         } catch (IOException e) {
             throw new IOException("Error while parsing " + file.getName(), e);
-        } finally {
-            if (reader != null) reader.close();
         }
     }
 
