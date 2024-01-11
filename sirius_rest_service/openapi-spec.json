@@ -59,6 +59,18 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/ProjectInfoOptField"
+              },
+              "default": []
+            }
           }
         ],
         "responses": {
@@ -97,6 +109,18 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/ProjectInfoOptField"
+              },
+              "default": []
             }
           }
         ],
@@ -190,6 +214,69 @@
         "responses": {
           "200": {
             "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/copy": {
+      "put": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Move an existing (opened) project-space to another location.",
+        "description": "Move an existing (opened) project-space to another location.",
+        "operationId": "copyProjectSpace",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "unique name/identifier of the project-space that shall be copied.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pathToCopiedProject",
+            "in": "query",
+            "description": "target location where the source project will be copied to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "copyProjectId",
+            "in": "query",
+            "description": "optional id/mame of the newly created project (copy). If given the project will be opened.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/ProjectInfoOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ProjectInfo of the newly created project if opened (copyProjectId !\u003d null) or the project info of\n the source project otherwise",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectInfo"
+                }
+              }
+            }
           }
         }
       }
@@ -2423,6 +2510,16 @@
           }
         }
       },
+      "ProjectInfoOptField": {
+        "type": "string",
+        "description": "",
+        "nullable": true,
+        "enum": [
+          "none",
+          "compatibilityInfo",
+          "sizeInformation"
+        ]
+      },
       "ProjectInfo": {
         "type": "object",
         "properties": {
@@ -2430,8 +2527,37 @@
             "type": "string",
             "description": "a user selected unique name of the project for easy access."
           },
-          "path": {
-            "type": "string"
+          "location": {
+            "type": "string",
+            "description": "storage location of the project."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of this project.",
+            "nullable": true
+          },
+          "compatible": {
+            "type": "boolean",
+            "description": "Indicates whether computed results (e.g. fingerprints, compounds classes) are compatible with the backend.\n If true project is up-to-date and there are no restrictions regarding usage.\n If false project is incompatible and therefore \"read only\" until the incompatible results have been removed. See updateProject endpoint for further information\n If NULL the information has not been requested.",
+            "nullable": true
+          },
+          "numOfFeatures": {
+            "type": "integer",
+            "description": "Number of features (aligned over runs) in this project. If NULL, information has not been requested (See OptField \u0027sizeInformation\u0027).",
+            "format": "int32",
+            "nullable": true
+          },
+          "numOfCompounds": {
+            "type": "integer",
+            "description": "Number of compounds (group of ion identities) in this project. If NULL, Information has not been requested (See OptField \u0027sizeInformation\u0027) or might be unavailable for this project type.",
+            "format": "int32",
+            "nullable": true
+          },
+          "numOfBytes": {
+            "type": "integer",
+            "description": "Size in Bytes this project consumes on disk If NULL, Information has not been requested (See OptField \u0027sizeInformation\u0027).",
+            "format": "int64",
+            "nullable": true
           }
         },
         "description": ""
@@ -3544,6 +3670,11 @@
             "type": "number",
             "description": "prediction probability",
             "format": "double"
+          },
+          "index": {
+            "type": "integer",
+            "description": "Absolute index of this property in the predicted vector/embedding",
+            "format": "int32"
           }
         },
         "description": "Predicted compound class with name, probability and id if available.\n (ClassyFire and NPC). This can be seen as the set of classes a feature most likely belongs to",
@@ -3780,6 +3911,12 @@
           },
           "medianMassDeviation": {
             "$ref": "#/components/schemas/Deviation"
+          },
+          "topCSIScore": {
+            "type": "number",
+            "description": "CSI:FingerID Score of the highest scoring structure candidate (top hit) of this formula candidate.\n If NULL result is not available",
+            "format": "double",
+            "nullable": true
           },
           "fragmentationTree": {
             "$ref": "#/components/schemas/FragmentationTree"
