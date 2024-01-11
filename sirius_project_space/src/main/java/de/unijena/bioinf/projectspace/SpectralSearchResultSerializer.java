@@ -97,7 +97,7 @@ public class SpectralSearchResultSerializer implements ComponentSerializer<Compo
             row[2] = hit.getDbName();
             row[3] = hit.getReferenceUUID();
             row[4] = Double.toString(hit.getSimilarity().similarity);
-            row[5] = Integer.toString(hit.getSimilarity().shardPeaks);
+            row[5] = Integer.toString(hit.getSimilarity().sharedPeaks);
             return row;
         })::iterator);
     }

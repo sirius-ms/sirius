@@ -20,7 +20,7 @@ public class RecallSpectralAlignmentTest {
         RecallSpectralAlignment recallSpectralAlignment = new RecallSpectralAlignment(new Deviation(5,0.01));
         SpectralSimilarity spectralSimilarity = recallSpectralAlignment.score(measuredSpectrum, predictedSpectrum);
         assertEquals(0d, spectralSimilarity.similarity, 0);
-        assertEquals(0, spectralSimilarity.shardPeaks);
+        assertEquals(0, spectralSimilarity.sharedPeaks);
         assertTrue(recallSpectralAlignment.getMatchedMsrdPeaks(measuredSpectrum, predictedSpectrum).isEmpty());
     }
 

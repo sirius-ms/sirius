@@ -36,7 +36,6 @@ import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.lcms.LCMSProccessingInstance;
-import de.unijena.bioinf.lcms.LoessFunction;
 import de.unijena.bioinf.lcms.Ms2CosineSegmenter;
 import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.lcms.quality.AlignmentQuality;
@@ -56,7 +55,6 @@ import gnu.trove.map.hash.TLongFloatHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import gnu.trove.set.hash.TLongHashSet;
 import org.apache.commons.math3.analysis.function.Identity;
-import org.apache.commons.math3.analysis.interpolation.LoessInterpolator;
 import org.apache.commons.math3.distribution.LaplaceDistribution;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
@@ -737,7 +735,7 @@ public class Aligner {
 
                     if (ll.get(i)!=null &&  rr.get(j)!=null) {
                         SpectralSimilarity spectralSimilarity = utils.cosineProduct(ll.get(i), rr.get(j));
-                        if ((spectralSimilarity.similarity < 0.5 || spectralSimilarity.shardPeaks < 3)) {
+                        if ((spectralSimilarity.similarity < 0.5 || spectralSimilarity.sharedPeaks < 3)) {
                             // prefer to not align features with low cosine
                             if (l.getRepresentativeIon().getMsMsQuality().betterThan(Quality.DECENT) || r.getRepresentativeIon().getMsMsQuality().betterThan(Quality.DECENT)) {
                                 //System.out.println(l + " with " + r + " are rejected due to COSINE of " + spectralSimilarity);
@@ -748,8 +746,8 @@ public class Aligner {
                                     scores.add(i,j,value);
                             }
                         } else {
-                            float value = peakShapeScore *  (float)((spectralSimilarity.similarity + spectralSimilarity.shardPeaks/10d) * Math.exp(-gamma*((l.rt-r.rt)*(l.rt-r.rt))));
-                            //System.err.println(spectralSimilarity.similarity + " cosine, " + spectralSimilarity.shardPeaks + " peaks for " + (l.rt/60000d) + " vs " + (r.rt/60000d) + ", and " + l.mass + " vs " + r.mass + ", rt score = " +  Math.exp(-gamma*((l.rt-r.rt)*(l.rt-r.rt))) + ", final score = " + value);
+                            float value = peakShapeScore *  (float)((spectralSimilarity.similarity + spectralSimilarity.sharedPeaks /10d) * Math.exp(-gamma*((l.rt-r.rt)*(l.rt-r.rt))));
+                            //System.err.println(spectralSimilarity.similarity + " cosine, " + spectralSimilarity.sharedPeaks + " peaks for " + (l.rt/60000d) + " vs " + (r.rt/60000d) + ", and " + l.mass + " vs " + r.mass + ", rt score = " +  Math.exp(-gamma*((l.rt-r.rt)*(l.rt-r.rt))) + ", final score = " + value);
 
                             if (value >= SCORE_THRESHOLD) {
                                 scores.add(i,j,value);
@@ -868,7 +866,7 @@ public class Aligner {
                                         if (new Deviation(15).inErrorWindow(f.getMass(), g.getMass())) {
                                             final SpectralSimilarity cosineScore = utils.cosineProduct(f.getMsMs(), g.getMsMs());
                                             final double rtDiff = Math.abs(f.getRetentionTime() - g.getRetentionTime());
-                                            if (rtDiff <= rtCutoff && cosineScore.similarity >= 0.5 && cosineScore.shardPeaks >= 3) {
+                                            if (rtDiff <= rtCutoff && cosineScore.similarity >= 0.5 && cosineScore.sharedPeaks >= 3) {
                                                 f.incrementAlignments();
                                                 g.incrementAlignments();
                                             }

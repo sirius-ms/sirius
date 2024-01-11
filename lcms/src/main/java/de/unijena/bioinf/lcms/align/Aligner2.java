@@ -171,31 +171,7 @@ public class Aligner2 {
         if (!dev.inErrorWindow(f.getMass(),ion.getMass()) || !f.chargeStateIsNotDifferent(ion.getChargeState()) || Math.abs(f.rt - rightRt) > maxRetentionError())
             return 0f;
 
-        final double retentionTimeScore = getRtScore(f.rt-rightRt);
-        final double finalScore = retentionTimeScore;
-/*
-        double finalScore;
-        if (f.getRepresentativeIon()!=null && f.getRepresentativeIon().getMsMs()!=null && ion.getMsMs()!=null) {
-            SpectralSimilarity cosineScore = new CosineQueryUtils(new IntensityWeightedSpectralAlignment(dev)).cosineProduct(f.getRepresentativeIon().getMsMs(), ion.getMsMs());
-
-            if (cosineScore.shardPeaks>=4 && cosineScore.similarity>=0.7) {
-                double xscore = peakShapeScore*peakHeightScore*retentionTimeScore*(cosineScore.similarity + cosineScore.shardPeaks/6d);
-                if (cosineScore.similarity >= 0.75) finalScore = xscore + 1d;
-                else finalScore = xscore;
-            } else if (f.getRepresentativeIon().getMsMsQuality().notBetterThan(Quality.BAD) || ion.getMsMsQuality().notBetterThan(Quality.BAD)) {
-                finalScore = peakShapeScore*peakHeightScore*retentionTimeScore*0.5d;
-            } else {
-                //System.out.println("REJECT ALIGNMENT OF " + f + " WITH " + ion + " WITH COSINE " + cosineScore);
-                finalScore = peakShapeScore*retentionTimeScore*retentionTimeScore*0.5d;
-            }
-        } else {
-            finalScore = peakShapeScore*retentionTimeScore;
-        }
-        if (finalScore < 1e-10) return 0f;
-        //finalScore += intensityScore;
-
- */
-        return (float)finalScore;
+        return (float) getRtScore(f.rt-rightRt);
     }
 
     private double getRtScore(double diff) {
