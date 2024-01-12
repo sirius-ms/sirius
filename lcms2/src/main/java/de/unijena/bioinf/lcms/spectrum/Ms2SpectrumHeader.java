@@ -52,6 +52,12 @@ public class Ms2SpectrumHeader extends Ms1SpectrumHeader implements Serializable
         return new Ms2SpectrumHeader(uid, polarity, centroided, energy, isolationWindow, parentId, precursorMz, targetedMz, retentionTime);
     }
 
-
-
+    @Override
+    public String toString() {
+        return "Ms2SpectrumHeader{" +
+                "parentId=" + parentId +
+                ", retentionTime=" + retentionTime +
+                ", precursorMz=" + precursorMz +
+                '}';
+    }
 }

@@ -1,4 +1,4 @@
-package de.unijena.bioinf.lcms.merge2;
+package de.unijena.bioinf.lcms.merge;
 
 import de.unijena.bioinf.lcms.trace.ContiguousTrace;
 import de.unijena.bioinf.lcms.trace.TraceRectangleMap;

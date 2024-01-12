@@ -1,4 +1,4 @@
-package de.unijena.bioinf.lcms.merge2;
+package de.unijena.bioinf.lcms.merge;
 
 /**
  * Merging takes a ProcessedSample from an Alignment as well as the alignment backbone as input

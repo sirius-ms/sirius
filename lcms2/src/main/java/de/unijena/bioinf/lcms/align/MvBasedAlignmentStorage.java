@@ -1,8 +1,7 @@
-package de.unijena.bioinf.lcms.align2;
+package de.unijena.bioinf.lcms.align;
 
 import de.unijena.bioinf.lcms.trace.Rect;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
-import lombok.val;
 import org.h2.mvstore.Cursor;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;

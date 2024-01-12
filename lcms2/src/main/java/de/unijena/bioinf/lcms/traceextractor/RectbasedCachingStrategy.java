@@ -2,7 +2,6 @@ package de.unijena.bioinf.lcms.traceextractor;
 
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.lcms.trace.*;
-import org.h2.mvstore.MVStore;
 
 import java.util.Optional;
 
@@ -15,13 +14,13 @@ public class RectbasedCachingStrategy implements TraceCachingStrategy {
     private final static double MINDEV = 1e-8;
     @Override
     public Cache getCacheFor(ProcessedSample sample) {
-        TraceRectangleMap map = sample.getTraceStorage().getRectangleMap("traceRectangles");
-        Deviation allowedMassDeviation = sample.getTraceStorage().getStatistics().getMs1MassDeviationWithinTraces();
-        LCMSStorage storage = sample.getTraceStorage();
+        TraceRectangleMap map = sample.getStorage().getRectangleMap("traceRectangles");
+        Deviation allowedMassDeviation = sample.getStorage().getStatistics().getMs1MassDeviationWithinTraces();
+        LCMSStorage storage = sample.getStorage();
         return new Cache() {
             @Override
             public ContiguousTrace addTraceToCache(ContiguousTrace trace) {
-                ContiguousTrace contiguousTrace = storage.addContigousTrace(trace);
+                ContiguousTrace contiguousTrace = storage.getTraceStorage().addContigousTrace(trace);
                 map.addRect(contiguousTrace.rectWithRts());
                 return contiguousTrace;
             }
@@ -32,7 +31,7 @@ public class RectbasedCachingStrategy implements TraceCachingStrategy {
                 double rt = sample.getMapping().getRetentionTimeAt(spectrumId);
                 for (Rect rect : map.overlappingRectangle(new Rect(mz-delta,mz+delta, rt, rt, mz))) {
                     if (rect.containsRt(rt) && allowedMassDeviation.inErrorWindow(mz, rect.avgMz)) {
-                        ContiguousTrace trace = storage.getContigousTrace(rect.id);
+                        ContiguousTrace trace = storage.getTraceStorage().getContigousTrace(rect.id);
                         if (trace!=null && trace.inRange(spectrumId) && Math.abs(trace.mz(spectrumId)-mz) <= MINDEV) {
                             return Optional.of(trace);
                         }

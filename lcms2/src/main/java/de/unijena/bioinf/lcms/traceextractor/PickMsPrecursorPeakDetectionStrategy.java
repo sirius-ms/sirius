@@ -10,14 +10,14 @@ public class PickMsPrecursorPeakDetectionStrategy implements TraceDetectionStrat
 
     @Override
     public void findPeaksForExtraction(ProcessedSample sample, Extract callback) {
-        final Deviation allowedMassDeviation = sample.getTraceStorage().getStatistics().getMs1MassDeviationWithinTraces();
-        for (Ms2SpectrumHeader header : sample.getTraceStorage().ms2SpectraHeader()) {
+        final Deviation allowedMassDeviation = sample.getStorage().getStatistics().getMs1MassDeviationWithinTraces();
+        for (Ms2SpectrumHeader header : sample.getStorage().getSpectrumStorage().ms2SpectraHeader()) {
             int spectrumId = header.getParentId();
             if (spectrumId < 0 ) {
                 spectrumId = sample.getMapping().idForRetentionTime(header.getRetentionTime());
             }
             if (spectrumId >= 0) {
-                SimpleSpectrum ms1Spec = sample.getTraceStorage().getSpectrum(spectrumId);
+                SimpleSpectrum ms1Spec = sample.getStorage().getSpectrumStorage().getSpectrum(spectrumId);
                 int i = Spectrums.mostIntensivePeakWithin(ms1Spec, header.getPrecursorMz(), allowedMassDeviation);
                 if (i>=0) callback.extract(sample, spectrumId, i, ms1Spec);
             }

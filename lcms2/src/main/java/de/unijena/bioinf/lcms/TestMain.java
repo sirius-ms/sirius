@@ -1,27 +1,14 @@
 package de.unijena.bioinf.lcms;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.io.lcms.MzMLParser;
 import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
-import de.unijena.bioinf.lcms.align.IntensityNormalization;
-import de.unijena.bioinf.lcms.align.MassOfInterest;
-import de.unijena.bioinf.lcms.align.TraceAligner;
-import de.unijena.bioinf.lcms.io.MZmlSampleParser;
-import de.unijena.bioinf.lcms.merge.TraceMerger;
-import de.unijena.bioinf.lcms.trace.*;
+import de.unijena.bioinf.lcms.align.AlignmentBackbone;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
-import org.apache.commons.math3.analysis.UnivariateFunction;
-import org.apache.commons.math3.analysis.function.Identity;
 import picocli.CommandLine;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.*;
 import java.util.logging.LogManager;
 
@@ -70,7 +57,7 @@ public class TestMain {
         }
 
         LCMSOptions ops = new LCMSOptions();
-        CommandLine  cmd = new CommandLine(ops);
+        CommandLine cmd = new CommandLine(ops);
         cmd.parseArgs(args);
 
         if (cmd.isUsageHelpRequested()){
@@ -78,123 +65,51 @@ public class TestMain {
             return;
         }
 
-        final ProcessedSample[] samples;
+        final de.unijena.bioinf.lcms.trace.ProcessedSample[] samples;
+        LCMSProcessing processing = new LCMSProcessing();
         {
-            MzMLParser parser = new MzMLParser();
+            if (ops.cores>=1) {
+                SiriusJobs.setGlobalJobManager(ops.cores);
+            }
             JobManager globalJobManager = SiriusJobs.getGlobalJobManager();
-//            File[] files = new File("/home/kaidu/data/raw/polluted_citrus/").listFiles();
+            System.out.println(globalJobManager.getCPUThreads());
+//            File[] files = new File("/home/kaidu/analysis/lcms/diverse_collection/small").listFiles();
+//            File[] files = new File("/home/kaidu/analysis/lcms/diverse_collection/MSV000080627/").listFiles();
+            //File[] files = new File("/home/kaidu/data/raw/polluted_citrus/").listFiles();
             List<File> files = ops.getInputFiles();
             System.setProperty("lcms.logdir", ops.getLogDir().toAbsolutePath().toString());
 
-            List<BasicJJob<ProcessedSample>> jobs = new ArrayList<>();
-            int atmost = 10;
+            List<BasicJJob<de.unijena.bioinf.lcms.trace.ProcessedSample>> jobs = new ArrayList<>();
+            int atmost = Integer.MAX_VALUE;
             for (File f : files) {
                 if (--atmost < 0) break;
                 if (f.getName().toLowerCase().endsWith(".mzml")) {
-                    jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<ProcessedSample>() {
+                    jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<de.unijena.bioinf.lcms.trace.ProcessedSample>() {
                         @Override
-                        protected ProcessedSample compute() throws Exception {
-                            final ProcessedSample sample = new MZmlSampleParser().parse(f, LCMSStorage.temporaryStorage());
-                            sample.detectTraces();
-                            goodAlignmentPoints(sample);
-                            if (false){
-                                List<Deviation> devs = new ArrayList<>();
-                                Iterator<TraceChain> chains = sample.getTraceStorage().chains();
-                                while (chains.hasNext()) {
-                                    TraceChain A = chains.next();
-                                    Iterator<TraceChain> chains2 = sample.getTraceStorage().chains();
-                                    List<Deviation> devs2 = new ArrayList<>();
-                                    while (chains2.hasNext()) {
-                                        TraceChain B = chains2.next();
-                                        if (A.getUid()==B.getUid()) continue;
-                                        if (Math.abs(B.averagedMz()-A.averagedMz())>0.1) continue;
-                                        devs2.add(Deviation.fromMeasurementAndReference(A.maxMz(),B.maxMz()));
-                                        devs2.add(Deviation.fromMeasurementAndReference(A.minMz(),B.minMz()));
-                                    }
-                                    devs2.stream().min(Comparator.comparingDouble((Deviation x)->Math.abs(x.getAbsolute()))).ifPresent(devs::add);
-                                }
-                                devs.stream().mapToDouble(x->Math.abs(x.getPpm())).sorted().limit(devs.size()/10).average().ifPresent(System.out::println);
-                                devs.stream().mapToDouble(x->Math.abs(x.getAbsolute())).sorted().limit(devs.size()/10).average().ifPresent(System.out::println);
-                            }
+                        protected de.unijena.bioinf.lcms.trace.ProcessedSample compute() throws Exception {
+                            ProcessedSample sample = processing.processSample(f);
                             sample.inactive();
-                            System.out.println(sample.getReference()  + " done.");
                             return sample;
                         }
                     }));
                 }
             }
-            samples = jobs.stream().map(JJob::takeResult).toArray(ProcessedSample[]::new);
-        }
-
-        TraceAligner traceAligner = new TraceAligner(new IntensityNormalization.QuantileNormalizer(), samples);
-        MassOfInterest[] align = traceAligner.align();
-        if (false){
-            try (final PrintStream moi = new PrintStream(ops.getMois().toAbsolutePath().toString())) {
-                moi.println("mz\trt\tcount");
-                for (MassOfInterest m : align) {
-                    int n;
-                    if (m instanceof TraceAligner.MergedMassOfInterest) {
-                        n = ((TraceAligner.MergedMassOfInterest) m).mergedRts.length;
-                    } else n = 1;
-                    moi.println(m.getMz() + "\t" + m.getRt() + "\t" + n);
-                }
-            } catch (FileNotFoundException e) {
-                throw new RuntimeException(e);
+            //samples = jobs.stream().map(JJob::takeResult).toArray(de.unijena.bioinf.lcms.trace.ProcessedSample[]::new);
+            int count = 0;
+            for (BasicJJob<ProcessedSample> job : jobs) {
+                System.out.println(job.takeResult().getUid() + " (" + ++count + " / " + jobs.size() + ")");
             }
-
-            double m=221.091899;
-            try (final PrintStream moi = new PrintStream(ops.getTr().toAbsolutePath().toString())) {
-                moi.println("mz\tintensity\trt\tdelta\tsample\ttrace");
-                for (int k=0; k < samples.length; ++k) {
-                    ProcessedSample s  = samples[k];
-                    UnivariateFunction f = traceAligner.getRecalibrationFunctions()[k];
-                    if (f==null) f= new Identity();
-                    //List<ContiguousTrace> contigousTracesByMass = s.getTraceStorage().getContigousTracesByMass(m - 0.1, m + 0.1);
-                    Iterator<TraceChain> chains = s.getTraceStorage().chains();
-                    int j=0;
-                    while (chains.hasNext()) {
-                        TraceChain t = chains.next();
-                        if (Math.abs(t.averagedMz()-221.091899) > 0.1)
-                            continue;
-                        for (int i=t.startId(); i <= t.endId(); ++i) {
-                            final float intensity = t.intensity(i);
-                            if (intensity>0) {
-                                moi.println(t.mz(i) + "\t" + t.intensity(i) + "\t" + f.value(t.retentionTime(i)) + "\t" + Math.abs(t.mz(i) - t.averagedMz()) + "\t" +
-                                        k + "\t" + j + "\n");
-                            }
-                        }
-                        ++j;
-                    }
-                }
-            } catch (FileNotFoundException e) {
-                throw new RuntimeException(e);
-            }
-
         }
-
         try {
-            LCMSStorage mergedStorage = LCMSStorage.temporaryStorage().createNewStorage();
-            final ScanPointMapping map = traceAligner.getMergedScanPointMapping();
-            TraceMerger merger = new TraceMerger(new TracePicker(mergedStorage, map), map, align);
-            merger.merge(samples, Arrays.stream(traceAligner.getRecalibrationFunctions()).map(x->x==null ? new Identity() : x).toArray(UnivariateFunction[]::new), null);
-            System.out.println("Done.");
+            AlignmentBackbone bac = processing.align();
+            ProcessedSample merged = processing.merge(bac);
+            DoubleArrayList avgAl = new DoubleArrayList();
+            System.out.println("AVERAGE = " + avgAl.doubleStream().sum()/avgAl.size());
+            System.out.println("Good Traces = " + avgAl.doubleStream().filter(x->x>=5).sum());
+            processing.exportFeaturesToFiles(merged, bac);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
     }
-
-    private static void goodAlignmentPoints(ProcessedSample sample) {
-        Iterator<TraceChain> chains = sample.getTraceStorage().chains();
-        while (chains.hasNext()) {
-            TraceChain chain = chains.next();
-            for (int traceId : chain.getTraceIds()) {
-                TraceNode node = sample.getTraceStorage().getTraceNode(traceId);
-                if (node.getConfidence() >= 2) {
-
-                }
-            }
-        }
-    }
-
 }

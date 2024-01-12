@@ -3,12 +3,11 @@ package de.unijena.bioinf.lcms.traceextractor;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.lcms.align2.MoI;
+import de.unijena.bioinf.lcms.align.MoI;
 import de.unijena.bioinf.lcms.ionidentity.AdductMassDifference;
 import de.unijena.bioinf.lcms.isotopes.IsotopePattern;
 import de.unijena.bioinf.lcms.trace.ContiguousTrace;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
-import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.Set;
@@ -35,8 +34,8 @@ public class IsotopesAndAdductsAreConfidentStrategy implements MassOfInterestCon
 
     }
     @Override
-    public float estimateConfidence(ProcessedSample sample, ContiguousTrace trace, MoI moi) {
-        final SimpleSpectrum spectrum = sample.getTraceStorage().getSpectrum(moi.getScanId());
+    public float estimateConfidence(ProcessedSample sample, ContiguousTrace trace, MoI moi, ConnectRelatedMoIs connector) {
+        final SimpleSpectrum spectrum = sample.getStorage().getSpectrumStorage().getSpectrum(moi.getScanId());
         return estimateConfidenceFromIsotope(sample, moi.getMz(), spectrum) + estimateConfidenceForAdducts(sample, moi, spectrum);
     }
 
@@ -56,7 +55,7 @@ public class IsotopesAndAdductsAreConfidentStrategy implements MassOfInterestCon
     }
 
     public float estimateConfidenceFromIsotope(ProcessedSample sample, double mz, SimpleSpectrum spectrum) {
-        final int peakIdx = Spectrums.mostIntensivePeakWithin(spectrum, mz, sample.getTraceStorage().getStatistics().getMs1MassDeviationWithinTraces());
+        final int peakIdx = Spectrums.mostIntensivePeakWithin(spectrum, mz, sample.getStorage().getStatistics().getMs1MassDeviationWithinTraces());
         if (peakIdx < 0) {
             return -100f;
         }

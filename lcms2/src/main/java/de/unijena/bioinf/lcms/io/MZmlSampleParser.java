@@ -196,7 +196,7 @@ public class MZmlSampleParser {
                     retentionTimes.add(retentionTimeMillis/1000d);
                     idmap.put(spectrum.getIndex().intValue(), scanids.size());
                     scanids.add(spectrum.getIndex().intValue());
-                    storage.addSpectrum(header, spec);
+                    storage.getSpectrumStorage().addSpectrum(header, spec);
                 } else { // ms2
                     de.unijena.bioinf.model.lcms.Precursor prec = makePrecursor(precursor, idToIndex);
                     final Ms2SpectrumHeader header = new Ms2SpectrumHeader(
@@ -208,7 +208,7 @@ public class MZmlSampleParser {
                             prec.getMass(), // todo: fix
                             retentionTimeMillis/1000d
                     );
-                    storage.addMs2Spectrum(header, spec);
+                    storage.getSpectrumStorage().addMs2Spectrum(header, spec);
                 }
             }
 
