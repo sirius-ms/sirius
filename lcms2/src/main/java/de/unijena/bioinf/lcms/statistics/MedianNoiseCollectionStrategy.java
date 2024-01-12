@@ -9,6 +9,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.lcms.spectrum.Ms1SpectrumHeader;
 import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
+import org.slf4j.LoggerFactory;
 
 import java.nio.FloatBuffer;
 import java.util.ArrayDeque;
@@ -31,6 +32,11 @@ public class MedianNoiseCollectionStrategy implements StatisticsCollectionStrate
         @Override
         public void processMs1(Ms1SpectrumHeader header, SimpleSpectrum ms1Spectrum) {
             double[] xs = Spectrums.copyIntensities(ms1Spectrum);
+            if (xs.length==0) {
+                LoggerFactory.getLogger(MedianNoiseCollectionStrategy.class).warn("Empty MS1 spectrum found.");
+                noise.add((float)noise.doubleStream().average().orElse(0d));
+                return;
+            }
             int perc = (int)(0.9*xs.length);
             double noiseLevel = Quickselect.quickselectInplace(xs, 0, xs.length, perc);
             noise.add((float)noiseLevel);
@@ -39,6 +45,11 @@ public class MedianNoiseCollectionStrategy implements StatisticsCollectionStrate
         @Override
         public void processMs2(Ms2SpectrumHeader header, SimpleSpectrum ms2Spectrum) {
             double[] xs = Spectrums.copyIntensities(ms2Spectrum);
+            if (xs.length==0) {
+                LoggerFactory.getLogger(MedianNoiseCollectionStrategy.class).warn("Empty MS2 spectrum found.");
+                noise.add((float)noise.doubleStream().average().orElse(0d));
+                return;
+            }
             int perc = Math.min(xs.length-1, Math.max(60, (int)(0.8*xs.length)));
             double noiseLevel = Quickselect.quickselectInplace(xs, 0, xs.length, perc);
             ms2Noise.add((float)noiseLevel);

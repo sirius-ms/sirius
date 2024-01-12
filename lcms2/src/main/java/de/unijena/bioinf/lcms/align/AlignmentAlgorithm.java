@@ -1,4 +1,4 @@
-package de.unijena.bioinf.lcms.align2;
+package de.unijena.bioinf.lcms.align;
 
 public interface AlignmentAlgorithm {
     public interface CallbackForAlign {

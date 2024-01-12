@@ -1,12 +1,9 @@
 package de.unijena.bioinf.lcms;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
-import de.unijena.bioinf.lcms.align2.AlignmentBackbone;
-import de.unijena.bioinf.lcms.merge2.MergedTrace;
+import de.unijena.bioinf.lcms.align.AlignmentBackbone;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import picocli.CommandLine;
@@ -71,7 +68,11 @@ public class TestMain {
         final de.unijena.bioinf.lcms.trace.ProcessedSample[] samples;
         LCMSProcessing processing = new LCMSProcessing();
         {
+            if (ops.cores>=1) {
+                SiriusJobs.setGlobalJobManager(ops.cores);
+            }
             JobManager globalJobManager = SiriusJobs.getGlobalJobManager();
+            System.out.println(globalJobManager.getCPUThreads());
 //            File[] files = new File("/home/kaidu/analysis/lcms/diverse_collection/small").listFiles();
 //            File[] files = new File("/home/kaidu/analysis/lcms/diverse_collection/MSV000080627/").listFiles();
             //File[] files = new File("/home/kaidu/data/raw/polluted_citrus/").listFiles();
@@ -94,21 +95,17 @@ public class TestMain {
                 }
             }
             //samples = jobs.stream().map(JJob::takeResult).toArray(de.unijena.bioinf.lcms.trace.ProcessedSample[]::new);
+            int count = 0;
             for (BasicJJob<ProcessedSample> job : jobs) {
-                System.out.println(job.takeResult().getUid());
+                System.out.println(job.takeResult().getUid() + " (" + ++count + " / " + jobs.size() + ")");
             }
         }
         try {
             AlignmentBackbone bac = processing.align();
             ProcessedSample merged = processing.merge(bac);
             DoubleArrayList avgAl = new DoubleArrayList();
-            for (MergedTrace r : merged.getTraceStorage().getMergeStorage()) {
-                System.out.println(r);
-                avgAl.add(r.getSampleIds().size());
-            }
             System.out.println("AVERAGE = " + avgAl.doubleStream().sum()/avgAl.size());
             System.out.println("Good Traces = " + avgAl.doubleStream().filter(x->x>=5).sum());
-            System.out.println("-----------------------------");
             processing.exportFeaturesToFiles(merged, bac);
         } catch (IOException e) {
             throw new RuntimeException(e);
