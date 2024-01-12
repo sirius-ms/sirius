@@ -1,7 +1,7 @@
-package de.unijena.bioinf.lcms.merge2;
+package de.unijena.bioinf.lcms.merge;
 
 import de.unijena.bioinf.lcms.ScanPointMapping;
-import de.unijena.bioinf.lcms.align2.RecalibrationFunction;
+import de.unijena.bioinf.lcms.align.RecalibrationFunction;
 
 import java.util.Arrays;
 

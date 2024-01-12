@@ -1,11 +1,11 @@
-package de.unijena.bioinf.lcms.merge2;
+package de.unijena.bioinf.lcms.merge;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
-import de.unijena.bioinf.lcms.align2.*;
+import de.unijena.bioinf.lcms.align.*;
 import de.unijena.bioinf.lcms.statistics.SampleStats;
 import de.unijena.bioinf.lcms.trace.ContiguousTrace;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
@@ -29,9 +29,9 @@ public class MergeTracesWithoutGapFilling {
 
     public void merge(ProcessedSample merged, AlignmentBackbone alignment) {
         JobManager globalJobManager = SiriusJobs.getGlobalJobManager();
-        AlignmentStorage alignmentStorage = merged.getTraceStorage().getAlignmentStorage();
+        AlignmentStorage alignmentStorage = merged.getStorage().getAlignmentStorage();
         prepareRects(merged, alignment);
-        MergeStorage mergeStorage = merged.getTraceStorage().getMergeStorage();
+        MergeStorage mergeStorage = merged.getStorage().getMergeStorage();
         for (Rect r : mergeStorage.getRectangleMap()) {
             final MergedTrace mergedTrace = new MergedTrace(r.id);
             mergeStorage.addMerged(mergedTrace);
@@ -45,7 +45,7 @@ public class MergeTracesWithoutGapFilling {
             final ProcessedSample sample = alignment.getSamples()[k];
             final ScanPointInterpolator mapper = sample.getScanPointInterpolator();
             sample.active();
-            final SampleStats sampleStats = sample.getTraceStorage().getStatistics();
+            final SampleStats sampleStats = sample.getStorage().getStatistics();
             {
                 for (int i=0; i < mergedNoiseLevelPerScan.length; ++i) {
                     mergedNoiseLevelPerScan[i] += (float)sample.getNormalizer().normalize(mapper.interpolate(sampleStats.getNoiseLevelPerScan(), i));
@@ -76,14 +76,14 @@ public class MergeTracesWithoutGapFilling {
                 mergeStorage.addMerged(t);
             }
         }
-        merged.getTraceStorage().setStatistics(SampleStats.builder().noiseLevelPerScan(mergedNoiseLevelPerScan).ms2NoiseLevel(0f).ms1MassDeviationWithinTraces(new Deviation(10)).minimumMs1MassDeviationBetweenTraces(new Deviation(10)).build());
+        merged.getStorage().setStatistics(SampleStats.builder().noiseLevelPerScan(mergedNoiseLevelPerScan).ms2NoiseLevel(0f).ms1MassDeviationWithinTraces(new Deviation(10)).minimumMs1MassDeviationBetweenTraces(new Deviation(10)).build());
 
     }
 
     private void mergeRect(Rect r, ProcessedSample merged, ProcessedSample sample) {
         // get all mois in this rectangle
-        MoI[] mois = merged.getTraceStorage().getAlignmentStorage().getMoIWithin(r.minMz, r.maxMz).stream().filter(x -> r.contains(x.getMz(), x.getRetentionTime())).toArray(MoI[]::new);
-        MergedTrace mergedTrace = merged.getTraceStorage().getMergeStorage().getMerged(r.id);
+        MoI[] mois = merged.getStorage().getAlignmentStorage().getMoIWithin(r.minMz, r.maxMz).stream().filter(x -> r.contains(x.getMz(), x.getRetentionTime())).toArray(MoI[]::new);
+        MergedTrace mergedTrace = merged.getStorage().getMergeStorage().getMerged(r.id);
         IntOpenHashSet traceIds = new IntOpenHashSet();
         for (MoI a : mois) {
             if (a instanceof AlignedMoI) {
@@ -92,7 +92,7 @@ public class MergeTracesWithoutGapFilling {
         }
         if (traceIds.isEmpty()) return; // nothing to merge for this sample
         // merge traces
-        ContiguousTrace[] traces = traceIds.intStream().mapToObj(x -> sample.getTraceStorage().getContigousTrace(x)).toArray(ContiguousTrace[]::new);
+        ContiguousTrace[] traces = traceIds.intStream().mapToObj(x -> sample.getStorage().getTraceStorage().getContigousTrace(x)).toArray(ContiguousTrace[]::new);
         int startId = Arrays.stream(traces).mapToInt(ContiguousTrace::startId).min().orElse(0);
         int endId = Arrays.stream(traces).mapToInt(ContiguousTrace::endId).max().orElse(0);
         final double[] mz = new double[endId-startId+1];
@@ -112,7 +112,7 @@ public class MergeTracesWithoutGapFilling {
         ContiguousTrace T = new ContiguousTrace(
                 sample.getMapping(), startId, endId, mz, intensities
         );
-        T = merged.getTraceStorage().getMergeStorage().addTrace(T);
+        T = merged.getStorage().getMergeStorage().addTrace(T);
         mergedTrace.getTraceIds().add(T.getUid());
         mergedTrace.getSampleIds().add(sample.getUid());
         // mergin trace
@@ -135,9 +135,9 @@ public class MergeTracesWithoutGapFilling {
             mzRecalibration.put(alignment.getSamples()[k].getUid(), alignment.getSamples()[k].getMzRecalibration());
             rtRecalibration.put(alignment.getSamples()[k].getUid(), alignment.getSamples()[k].getRtRecalibration());
         }
-        MergeStorage mergeStorage = merged.getTraceStorage().getMergeStorage();
+        MergeStorage mergeStorage = merged.getStorage().getMergeStorage();
         TraceRectangleMap rectangleMap = mergeStorage.getRectangleMap();
-        for (MoI m : merged.getTraceStorage().getAlignmentStorage()) {
+        for (MoI m : merged.getStorage().getAlignmentStorage()) {
             final AlignedMoI moi = (AlignedMoI)m;
             Rect r = new Rect(moi.getRect());
             r.minMz = (float)moi.getMz();

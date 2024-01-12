@@ -17,11 +17,11 @@ public class MostIntensivePeakInIsolatioNWindowAssignmentStrategy implements Ms2
     @Override
     public int getTraceFor(ProcessedSample sample, Ms2SpectrumHeader ms2) {
         int parentId = ms2.getParentId();
-        final SimpleSpectrum spectrum = sample.getTraceStorage().getSpectrum(parentId);
+        final SimpleSpectrum spectrum = sample.getStorage().getSpectrumStorage().getSpectrum(parentId);
         if (spectrum==null) return -1;
         final IsolationWindow window = ms2.getIsolationWindow().orElse(defaultWindow);
         final double pmz = ms2.getPrecursorMz();
-        List<ContiguousTrace> contigousTraces = sample.getTraceStorage().getContigousTraces(pmz - window.getWindowWidth() / 2d, pmz + window.getWindowWidth() / 2d, parentId, parentId);
+        List<ContiguousTrace> contigousTraces = sample.getStorage().getTraceStorage().getContigousTraces(pmz - window.getWindowWidth() / 2d, pmz + window.getWindowWidth() / 2d, parentId, parentId);
         // for simplicity we assume gaussian shape of the isolation window with sigma = window radius
         final double sigma = window.getWindowWidth()/2d;
         Optional<ContiguousTrace> tr = contigousTraces.stream().max(Comparator.comparingDouble(x -> x.apexIntensity() * Math.exp(-Math.pow(x.averagedMz() - pmz, 2) / (2 * sigma * sigma))));

@@ -1,7 +1,6 @@
 package de.unijena.bioinf.lcms.statistics;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.BoundedDoubleQueue;
-import de.unijena.bioinf.lcms.align2.MoI;
 import de.unijena.bioinf.lcms.trace.ContiguousTrace;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 
@@ -11,7 +10,7 @@ public class AverageOfTop100TracesNormalization implements NormalizationStrategy
     @Override
     public Normalizer computeNormalization(ProcessedSample sample) {
         BoundedDoubleQueue queue = new BoundedDoubleQueue(100);
-        for (ContiguousTrace m : sample.getTraceStorage()) {
+        for (ContiguousTrace m : sample.getStorage().getTraceStorage()) {
             queue.add(m.apexIntensity());
         }
         double avg = 0d;

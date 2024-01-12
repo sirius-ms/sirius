@@ -1,4 +1,4 @@
-package de.unijena.bioinf.lcms.align2;
+package de.unijena.bioinf.lcms.align;
 
 import de.unijena.bioinf.lcms.trace.Rect;
 import lombok.Getter;
@@ -13,8 +13,8 @@ public class AlignedMoI extends MoI {
         super(rect, -1, retentionTime, intensity, -1);
         this.aligned = aligned;
     }
-    AlignedMoI(Rect rect, double retentionTime, int scanId, int sampleIdx, long uid, float intensity, float confidence, MoI[] aligned) {
-        super(rect, retentionTime, scanId, sampleIdx, uid, intensity, confidence);
+    AlignedMoI(Rect rect, double retentionTime, int scanId, int sampleIdx, long uid, float intensity, float confidence, byte state, MoI[] aligned) {
+        super(rect, retentionTime, scanId, sampleIdx, uid, intensity, confidence, state);
         this.aligned = aligned;
     }
 
@@ -27,6 +27,7 @@ public class AlignedMoI extends MoI {
         double sum=0d;
         double avgMz = 0d, avgRt  = 0d;
         float maxConfidence = 0f;
+        byte state = 0;
         double minMz=Double.POSITIVE_INFINITY, maxMz=Double.NEGATIVE_INFINITY, minRt=Double.POSITIVE_INFINITY, maxRt=Double.NEGATIVE_INFINITY;
         for (MoI m : aligned) {
             final RecalibrationFunction f = recalibration.getRecalibrationFor(m);
@@ -38,11 +39,12 @@ public class AlignedMoI extends MoI {
             maxMz = Math.max(m.getMz(), maxMz);
             minRt = Math.min(minRt, f.value(m.getRect().minRt));
             maxRt = Math.max(maxRt, f.value(m.getRect().maxRt));
+            state |= m.state;
         }
         avgMz /= sum;
         avgRt /= sum;
         final Rect unified = new Rect(minMz,maxMz,minRt,maxRt, avgMz);
-        return new AlignedMoI(unified, avgRt, -1, -1, -1, (float)sum, maxConfidence, flatten(aligned));
+        return new AlignedMoI(unified, avgRt, -1, -1, -1, (float)sum, maxConfidence, state, flatten(aligned));
     }
 
     public static MoI[] flatten(MoI... mois) {
