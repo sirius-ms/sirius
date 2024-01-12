@@ -70,7 +70,7 @@ public final class BoundedDoubleQueue implements Iterable<Double> {
             if (length==values.length) Arrays.sort(values);
             return true;
         } else {
-            if (value < values[0]) return false;
+            if (value <= values[0]) return false;
             final int index = ((length <= 5) ? linearSearch(value) : binarySearch(value));
             System.arraycopy(values, 1, values, 0, index-1);
             values[index-1] = value;

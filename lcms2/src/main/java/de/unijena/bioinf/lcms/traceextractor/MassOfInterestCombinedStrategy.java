@@ -1,10 +1,8 @@
 package de.unijena.bioinf.lcms.traceextractor;
 
-import de.unijena.bioinf.lcms.align2.MoI;
+import de.unijena.bioinf.lcms.align.MoI;
 import de.unijena.bioinf.lcms.trace.ContiguousTrace;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
-
-import java.util.List;
 
 public class MassOfInterestCombinedStrategy implements MassOfInterestConfidenceEstimatorStrategy{
 
@@ -15,10 +13,10 @@ public class MassOfInterestCombinedStrategy implements MassOfInterestConfidenceE
     }
 
     @Override
-    public float estimateConfidence(ProcessedSample sample, ContiguousTrace trace, MoI moi) {
+    public float estimateConfidence(ProcessedSample sample, ContiguousTrace trace, MoI moi, ConnectRelatedMoIs connector) {
         float x=0f;
         for (MassOfInterestConfidenceEstimatorStrategy strategy : strategies) {
-            x += strategy.estimateConfidence(sample,trace,moi);
+            x += strategy.estimateConfidence(sample,trace,moi, connector);
         }
         return x;
     }
