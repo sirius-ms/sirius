@@ -1,16 +1,13 @@
 package de.unijena.bioinf.lcms.features;
 
-import de.unijena.bioinf.lcms.merge2.MergedTrace;
+import de.unijena.bioinf.lcms.merge.MergedTrace;
 import de.unijena.bioinf.lcms.statistics.SampleStats;
 import de.unijena.bioinf.lcms.trace.ContiguousTrace;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.lcms.trace.Trace;
-import de.unijena.bioinf.lcms.trace.segmentation.LegacySegmenter;
 import de.unijena.bioinf.lcms.trace.segmentation.PersistentHomology;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import de.unijena.bioinf.ms.persistence.model.core.AlignedFeatures;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -20,15 +17,15 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
     public Iterator<AlignedFeatures> extractFeatures(ProcessedSample mergedSample, ProcessedSample[] samplesInTrace, MergedTrace alignedFeature) {
         // segments for merged trace
         Trace mergedTrace = alignedFeature.toTrace(mergedSample);
-        final SampleStats stats = mergedSample.getTraceStorage().getStatistics();
-        TraceSegment[] traceSegments = new PersistentHomology().detectSegments(mergedSample.getTraceStorage().getStatistics(), mergedTrace).stream().filter(x->mergedTrace.intensity(x.apex) > stats.noiseLevel(x.apex)  ).toArray(TraceSegment[]::new);
+        final SampleStats stats = mergedSample.getStorage().getStatistics();
+        TraceSegment[] traceSegments = new PersistentHomology().detectSegments(mergedSample.getStorage().getStatistics(), mergedTrace).stream().filter(x->mergedTrace.intensity(x.apex) > stats.noiseLevel(x.apex)  ).toArray(TraceSegment[]::new);
         if (traceSegments.length==0) return Collections.emptyIterator();
         // segments for each individual trace
         TraceSegment[][] individualSegments = new TraceSegment[alignedFeature.getSampleIds().size()][];
         for (int k=0; k < individualSegments.length; ++k) {
             ProcessedSample sample = samplesInTrace[k];
             assert sample.getUid() == alignedFeature.getSampleIds().getInt(k);
-            individualSegments[k] = assignSegmentsToIndividualTrace(mergedSample, sample, traceSegments, mergedTrace, mergedSample.getTraceStorage().getMergeStorage().getTrace(alignedFeature.getTraceIds().getInt(k)) );
+            individualSegments[k] = assignSegmentsToIndividualTrace(mergedSample, sample, traceSegments, mergedTrace, mergedSample.getStorage().getMergeStorage().getTrace(alignedFeature.getTraceIds().getInt(k)) );
         }
         {
 
@@ -39,15 +36,15 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
     public String extractFeaturesToString(ProcessedSample mergedSample, ProcessedSample[] samplesInTrace, MergedTrace alignedFeature) {
         // segments for merged trace
         Trace mergedTrace = alignedFeature.toTrace(mergedSample);
-        SampleStats stats = mergedSample.getTraceStorage().getStatistics();
-        TraceSegment[] traceSegments = new PersistentHomology().detectSegments(mergedSample.getTraceStorage().getStatistics(), mergedTrace).stream().filter(x->mergedTrace.intensity(x.apex) > stats.noiseLevel(x.apex)  ).toArray(TraceSegment[]::new);
+        SampleStats stats = mergedSample.getStorage().getStatistics();
+        TraceSegment[] traceSegments = new PersistentHomology().detectSegments(mergedSample.getStorage().getStatistics(), mergedTrace).stream().filter(x->mergedTrace.intensity(x.apex) > stats.noiseLevel(x.apex)  ).toArray(TraceSegment[]::new);
         if (traceSegments.length==0) return null;
         // segments for each individual trace
         TraceSegment[][] individualSegments = new TraceSegment[alignedFeature.getSampleIds().size()][];
         for (int k=0; k < individualSegments.length; ++k) {
             ProcessedSample sample = samplesInTrace[k];
             assert sample.getUid() == alignedFeature.getSampleIds().getInt(k);
-            individualSegments[k] = assignSegmentsToIndividualTrace(mergedSample, sample, traceSegments, mergedTrace, mergedSample.getTraceStorage().getMergeStorage().getTrace(alignedFeature.getTraceIds().getInt(k)) );
+            individualSegments[k] = assignSegmentsToIndividualTrace(mergedSample, sample, traceSegments, mergedTrace, mergedSample.getStorage().getMergeStorage().getTrace(alignedFeature.getTraceIds().getInt(k)) );
         }
         {
             StringBuffer buf = new StringBuffer();
@@ -68,7 +65,7 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
                 buf.append("\"" + samplesInTrace[s].getUid() + "\": [");
                 xs.clear();
                 final ProcessedSample S = samplesInTrace[s];
-                final Trace t = mergedSample.getTraceStorage().getMergeStorage().getTrace(alignedFeature.getTraceIds().getInt(s));
+                final Trace t = mergedSample.getStorage().getMergeStorage().getTrace(alignedFeature.getTraceIds().getInt(s));
                 for (int k=mergedTrace.startId(); k <= mergedTrace.endId(); ++k) {
                     xs.add(String.valueOf(S.getScanPointInterpolator().interpolateIntensity(t, k)));
                 }

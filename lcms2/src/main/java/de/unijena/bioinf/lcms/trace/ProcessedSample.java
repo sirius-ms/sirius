@@ -1,26 +1,15 @@
 package de.unijena.bioinf.lcms.trace;
 
 import com.google.common.collect.Range;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.lcms.ScanPointMapping;
-import de.unijena.bioinf.lcms.align2.RecalibrationFunction;
-import de.unijena.bioinf.lcms.merge2.ScanPointInterpolator;
-import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
+import de.unijena.bioinf.lcms.align.RecalibrationFunction;
+import de.unijena.bioinf.lcms.merge.ScanPointInterpolator;
 import de.unijena.bioinf.lcms.statistics.NormalizationStrategy;
 import de.unijena.bioinf.lcms.statistics.TraceStats;
-import de.unijena.bioinf.lcms.trace.segmentation.ApexDetection;
-import de.unijena.bioinf.lcms.trace.segmentation.LegacySegmenter;
-import de.unijena.bioinf.lcms.traceextractor.RectbasedCachingStrategy;
-import de.unijena.bioinf.lcms.traceextractor.TracePicker;
-import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.*;
 
 public class ProcessedSample {
 
@@ -28,7 +17,7 @@ public class ProcessedSample {
     private int uid;
 
     @Getter
-    private LCMSStorage traceStorage;
+    private LCMSStorage storage;
     @Getter
     private MsDataSourceReference sourceReference;
     @Getter
@@ -55,18 +44,18 @@ public class ProcessedSample {
         this.mapping = scanPointMapping;
         this.sourceReference = reference;
         this.instrumentation = instrumentation;
-        this.traceStorage = storage;
+        this.storage = storage;
         this.polarity = polarity;
         this.rtRecalibration = RecalibrationFunction.identity();
         this.mzRecalibration = RecalibrationFunction.identity();
     }
 
     public void inactive() {
-        traceStorage.setLowMemoryInactiveMode(true);
+        storage.setLowMemoryInactiveMode(true);
     }
 
     public void active() {
-        traceStorage.setLowMemoryInactiveMode(false);
+        storage.setLowMemoryInactiveMode(false);
     }
 
     public MsDataSourceReference getReference() {

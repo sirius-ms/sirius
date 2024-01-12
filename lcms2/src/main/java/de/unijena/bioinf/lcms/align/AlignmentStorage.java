@@ -1,4 +1,4 @@
-package de.unijena.bioinf.lcms.align2;
+package de.unijena.bioinf.lcms.align;
 
 import java.util.List;
 import java.util.function.Predicate;
