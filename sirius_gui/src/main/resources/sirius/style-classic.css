@@ -12,4 +12,5 @@ html {
 
 body {
     font-size: 0.85em; /* That is your text's default font size. Here i chose 12px */
+    background-color: #d6d9df;
 }
