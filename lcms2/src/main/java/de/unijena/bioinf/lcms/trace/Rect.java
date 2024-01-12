@@ -1,11 +1,10 @@
 package de.unijena.bioinf.lcms.trace;
 
-import de.unijena.bioinf.lcms.align2.RecalibrationFunction;
+import de.unijena.bioinf.lcms.align.RecalibrationFunction;
 import org.h2.mvstore.rtree.SpatialKey;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
-import java.util.Optional;
 
 public class Rect implements Comparable<Rect>, Serializable {
     public float minMz, maxMz, minRt, maxRt;

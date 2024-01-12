@@ -1,4 +1,4 @@
-package de.unijena.bioinf.lcms.align2;
+package de.unijena.bioinf.lcms.align;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Sorting;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
@@ -41,7 +41,7 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
         final double[] bins = makeBins(stats.minMz, stats.maxMz);
         first.active();
         // copy all MoIs into storage
-        for (MoI moi : first.getTraceStorage().getAlignmentStorage()) {
+        for (MoI moi : first.getStorage().getAlignmentStorage()) {
             if (moi.getConfidence()>= MassOfInterestConfidenceEstimatorStrategy.CONFIDENT) {
                 storage.addMoI(moi);
             }
@@ -58,7 +58,7 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
                     protected Object compute() throws Exception {
                         final MoI[] leftSet = storage.getMoIWithin(from, to).toArray(MoI[]::new);
                         if (leftSet.length==0) return false;
-                        final MoI[] rightSet = S.getTraceStorage().getAlignmentStorage().getMoIWithin(from, to).stream().
+                        final MoI[] rightSet = S.getStorage().getAlignmentStorage().getMoIWithin(from, to).stream().
                                 filter(x->x.getConfidence()>=MassOfInterestConfidenceEstimatorStrategy.CONFIDENT).toArray(MoI[]::new);
                         if (rightSet.length==0) return false;
                         algorithm.align(stats, scorer, AlignWithRecalibration.noRecalibration(), leftSet,rightSet,
@@ -115,7 +115,7 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
         for (int k=0; k < currentIdx-deleteLast; ++k) {
             map.add(samples.get(k).getUid());
         }
-        sample.getTraceStorage().getAlignmentStorage().removeMoIsIf(moi->{
+        sample.getStorage().getAlignmentStorage().removeMoIsIf(moi->{
             if (moi instanceof AlignedMoI) {
                 if (((AlignedMoI) moi).getAligned().length>1) return false;
                 MoI key = ((AlignedMoI) moi).getAligned()[0];
@@ -196,7 +196,7 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
 
     @Override
     public AlignmentBackbone align(ProcessedSample merge, AlignmentBackbone backbone, List<ProcessedSample> samples, AlignmentAlgorithm algorithm, AlignmentScorer scorer) {
-        AlignmentStorage storage = merge.getTraceStorage().getAlignmentStorage();
+        AlignmentStorage storage = merge.getStorage().getAlignmentStorage();
         List<BasicJJob<Object>> todo = new ArrayList<>();
         // sort samples by number of confident annotations
         final AlignmentStatistics stats = backbone.getStatistics();
@@ -208,7 +208,7 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
             ProcessedSample first = samples.get(0);
             first.active();
             // transfer all mois to merge sample and recalibrate them
-            for (MoI moi : first.getTraceStorage().getAlignmentStorage()) {
+            for (MoI moi : first.getStorage().getAlignmentStorage()) {
                 storage.addMoI(AlignedMoI.merge(backbone, moi));
             }
             first.inactive();
@@ -224,7 +224,7 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
                     protected Object compute() throws Exception {
                         final MoI[] leftSet = storage.getMoIWithin(from, to).toArray(MoI[]::new);
                         if (leftSet.length==0) return false;
-                        final MoI[] rightSet = S.getTraceStorage().getAlignmentStorage().getMoIWithin(from, to).stream().
+                        final MoI[] rightSet = S.getStorage().getAlignmentStorage().getMoIWithin(from, to).stream().
                                 toArray(MoI[]::new);
                         if (rightSet.length==0) return false;
                         algorithm.align(stats, scorer, backbone, leftSet,rightSet,

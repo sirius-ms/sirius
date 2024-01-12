@@ -53,16 +53,16 @@ public class AdductAndIsotopeBasedDetectionStrategy implements TraceDetectionStr
     @Override
     public void findPeaksForExtraction(ProcessedSample sample, Extract callback) {
         TreeMap<Long, AdductMassDifference> diffMap = AdductMassDifference.getAllDifferences(knownIonTypes);
-        SampleStats statistics = sample.getTraceStorage().getStatistics();
+        SampleStats statistics = sample.getStorage().getStatistics();
         final Deviation allowedMassDeviation = statistics.getMs1MassDeviationWithinTraces();
-        if (sample.getTraceStorage().numberOfTraces()==0) {
+        if (sample.getStorage().getTraceStorage().numberOfTraces()==0) {
             LoggerFactory.getLogger(PickMsPrecursorPeakDetectionStrategy.class).warn(
                     "PickMsPrecursorPeakDetectionStrategy has to be called as last detection strategy after traces are already picked by other strategies");
         }
 
-        for (ContiguousTrace trace : sample.getTraceStorage()) {
+        for (ContiguousTrace trace : sample.getStorage().getTraceStorage()) {
             for (int maximum : apexDetection.detectMaxima(statistics, trace)) {
-                SimpleSpectrum spec = sample.getTraceStorage().getSpectrum(maximum);
+                SimpleSpectrum spec = sample.getStorage().getSpectrumStorage().getSpectrum(maximum);
                 // isotopes
                 detectIsotopes(sample, callback, spec, maximum, trace.averagedMz());
                 // adducts
@@ -74,7 +74,7 @@ public class AdductAndIsotopeBasedDetectionStrategy implements TraceDetectionStr
 
     private void detectAdducts(ProcessedSample sample, Extract callback, SimpleSpectrum spec, int spectrumId, double mz, TreeMap<Long, AdductMassDifference> diffMap) {
         for (AdductMassDifference diff : diffMap.values()) {
-            int peakId = Spectrums.mostIntensivePeakWithin(spec, mz + diff.getDeltaMass(), sample.getTraceStorage().getStatistics().getMs1MassDeviationWithinTraces());
+            int peakId = Spectrums.mostIntensivePeakWithin(spec, mz + diff.getDeltaMass(), sample.getStorage().getStatistics().getMs1MassDeviationWithinTraces());
             if (peakId >= 0) {
                 callback.extract(sample,spectrumId,peakId,spec);
                 detectIsotopes(sample, callback, spec, spectrumId, mz+diff.getDeltaMass());
