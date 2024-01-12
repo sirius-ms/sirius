@@ -1,12 +1,9 @@
-package de.unijena.bioinf.lcms.merge2;
+package de.unijena.bioinf.lcms.merge;
 
 import de.unijena.bioinf.lcms.ScanPointMapping;
 import de.unijena.bioinf.lcms.datatypes.CustomDataType;
-import de.unijena.bioinf.lcms.trace.ContiguousTrace;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.lcms.trace.Trace;
-import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
-import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import lombok.Getter;
 import org.h2.mvstore.WriteBuffer;

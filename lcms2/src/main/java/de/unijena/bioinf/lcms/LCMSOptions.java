@@ -24,6 +24,9 @@ public class LCMSOptions {
         return tr;
     }
 
+    @CommandLine.Option(names = "--cores", defaultValue = "-1")
+    public int cores;
+
     @CommandLine.Option(names = "--mois")
     private Path mois;
 
