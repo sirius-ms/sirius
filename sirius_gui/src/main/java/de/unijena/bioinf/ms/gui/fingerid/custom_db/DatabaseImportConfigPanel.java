@@ -6,8 +6,10 @@ import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.io.FileChooserPanel;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.gui.compute.SubToolConfigPanel;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
+import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +26,8 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
+
 
 public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOptions> {
 
@@ -35,13 +39,29 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
     private boolean validDbName;
     private boolean validDbDirectory;
 
+    private boolean loggedIn = false;
+
+    private final JLabel loginErrorLabel = new JLabel();
+
     public DatabaseImportConfigPanel(@Nullable CustomDatabase db, Set<String> existingNames) {
         super(CustomDBOptions.class);
         setLayout(new BorderLayout());
 
+        MF.CONNECTION_MONITOR().addConnectionStateListener(evt -> {
+            ConnectionMonitor.ConnectionCheck check = ((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck();
+            setLoggedIn(check);
+        });
+        Jobs.runInBackground(() -> setLoggedIn(MF.CONNECTION_MONITOR().checkConnection()));
+
         add(createParametersPanel(db, existingNames), BorderLayout.NORTH);
         add(createCompoundsBox(), BorderLayout.CENTER);
         add(createImportButton(), BorderLayout.SOUTH);
+    }
+
+    private synchronized void setLoggedIn(ConnectionMonitor.ConnectionCheck check) {
+        loggedIn = check.isConnected() && check.isLoggedIn();
+        loginErrorLabel.setVisible(!loggedIn);
+        refreshImportButton();
     }
 
     private JPanel createParametersPanel(@Nullable CustomDatabase db, Set<String> existingNames) {
@@ -201,14 +221,22 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         return box;
     }
 
-    private JButton createImportButton() {
+    private JPanel createImportButton() {
+        JPanel panel = new JPanel(new BorderLayout());
+
+        loginErrorLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        loginErrorLabel.setText("<html><p style=\"background-color:#ffafaf; color:black\"><b>LOGIN ERROR:</b> Please login with a verified user account to import compounds!</p></html>");
+
         importButton = new JButton("Create/Open database and import compounds");
         importButton.setEnabled(false);
-        return importButton;
+
+        panel.add(loginErrorLabel, BorderLayout.CENTER);
+        panel.add(importButton, BorderLayout.SOUTH);
+        return panel;
     }
 
     private void refreshImportButton() {
-        importButton.setEnabled(validDbDirectory && validDbName && !fileListModel.isEmpty());
+        importButton.setEnabled(validDbDirectory && validDbName && !fileListModel.isEmpty() && loggedIn);
     }
 
     public String getDbFilePath() {
