@@ -24,6 +24,7 @@ import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
+import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -67,6 +68,17 @@ class ImportDatabaseDialog extends JDialog {
 
     protected void runImportJob() {
         try {
+            try {
+                Jobs.runEDTAndWait(() -> {
+                    ConnectionMonitor.ConnectionCheck check = MF.CONNECTION_MONITOR().checkConnection();
+                    if (!check.isConnected() || !check.isLoggedIn()) {
+                        throw new RuntimeException("Not connected or logged in!");
+                    }
+                });
+            } catch (RuntimeException e) {
+                throw new ExecutionException(e);
+            }
+
             List<String> command = new ArrayList<>();
             command.add(configPanel.toolCommand());
             command.addAll(configPanel.asParameterList());
