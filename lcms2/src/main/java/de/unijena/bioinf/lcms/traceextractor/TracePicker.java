@@ -1,16 +1,12 @@
 package de.unijena.bioinf.lcms.traceextractor;
 
-import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.SimplePeak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.lcms.ScanPointMapping;
-import de.unijena.bioinf.lcms.statistics.SampleStats;
 import de.unijena.bioinf.lcms.trace.ContiguousTrace;
 import de.unijena.bioinf.lcms.trace.LCMSStorage;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
-import de.unijena.bioinf.lcms.trace.Rect;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegmentationStrategy;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
@@ -37,7 +33,7 @@ public class TracePicker {
     protected ScanPointMapping mapping;
 
     public TracePicker(ProcessedSample sample, TraceCachingStrategy cachingStrategy, TraceSegmentationStrategy segmentationStrategy) {
-        this.storage = sample.getTraceStorage();
+        this.storage = sample.getStorage();
         setAllowedMassDeviation(new Deviation(10));
         this.mapping = sample.getMapping();
         this.cache = cachingStrategy.getCacheFor(sample);
@@ -51,9 +47,9 @@ public class TracePicker {
 
     private int extendLeft(IntArrayList spectrumIds, DoubleArrayList mzs, FloatArrayList intensities, int lastPeakId) {
         int spectrumId = spectrumIds.getInt(spectrumIds.size()-1);
-        SimpleSpectrum spectrum = storage.getSpectrum(spectrumId);
+        SimpleSpectrum spectrum = storage.getSpectrumStorage().getSpectrum(spectrumId);
         for (int k=spectrumId-1; k >= 0; --k) {
-            SimpleSpectrum other = storage.getSpectrum(k);
+            SimpleSpectrum other = storage.getSpectrumStorage().getSpectrum(k);
             int j = getConnected(spectrum, other, lastPeakId);
             if (j>=0) {
                 spectrum=other;
@@ -67,9 +63,9 @@ public class TracePicker {
     }
     private int extendLeftUntil(IntArrayList spectrumIds, DoubleArrayList mzs, FloatArrayList intensities, double seedMz, int lastPeakId, int minimumScanId) {
         int spectrumId = spectrumIds.getInt(spectrumIds.size()-1); ;
-        SimpleSpectrum spectrum = storage.getSpectrum(spectrumId);
+        SimpleSpectrum spectrum = storage.getSpectrumStorage().getSpectrum(spectrumId);
         for (int k=spectrumId-1; k >= minimumScanId; --k) {
-            SimpleSpectrum other = storage.getSpectrum(k);
+            SimpleSpectrum other = storage.getSpectrumStorage().getSpectrum(k);
             int j = (lastPeakId<0) ? findSeed(other, seedMz) : getConnected(spectrum, other, lastPeakId);
             if (j>=0) {
                 lastPeakId=j;
@@ -94,9 +90,9 @@ public class TracePicker {
     }
     private int extendRight(IntArrayList ids, DoubleArrayList mzs, FloatArrayList intensities, int lastPeakId) {
         int spectrumId = ids.getInt(ids.size()-1);
-        SimpleSpectrum spectrum = storage.getSpectrum(spectrumId);
+        SimpleSpectrum spectrum = storage.getSpectrumStorage().getSpectrum(spectrumId);
         for (int k=spectrumId+1; k < mapping.length(); ++k) {
-            SimpleSpectrum other = storage.getSpectrum(k);
+            SimpleSpectrum other = storage.getSpectrumStorage().getSpectrum(k);
             int j = getConnected(spectrum, other, lastPeakId);
             if (j>=0) {
                 spectrum=other;
@@ -110,9 +106,9 @@ public class TracePicker {
     }
     private int extendRightUntil(IntArrayList ids, DoubleArrayList mzs, FloatArrayList intensities, double seedMz, int lastPeakId, int maximumScanId) {
         int spectrumId = ids.getInt(ids.size()-1);
-        SimpleSpectrum spectrum = storage.getSpectrum(spectrumId);
+        SimpleSpectrum spectrum = storage.getSpectrumStorage().getSpectrum(spectrumId);
         for (int k=spectrumId+1; k <= maximumScanId; ++k) {
-            SimpleSpectrum other = storage.getSpectrum(k);
+            SimpleSpectrum other = storage.getSpectrumStorage().getSpectrum(k);
             int j = (lastPeakId<0) ? findSeed(other, seedMz) : getConnected(spectrum, other, lastPeakId);
             if (j>=0) {
                 lastPeakId=j;
@@ -166,7 +162,7 @@ public class TracePicker {
 
     public Optional<ContiguousTrace> detectMostIntensivePeakWithin(int id, double startMz, double endMz) {
         // first pick spectrum
-        final SimpleSpectrum spectrum = storage.getSpectrum(id);
+        final SimpleSpectrum spectrum = storage.getSpectrumStorage().getSpectrum(id);
         final int index = Spectrums.mostIntensivePeakWithin(spectrum, startMz, endMz);
         if (index < 0) return Optional.empty();
         // now search for the peak
@@ -180,7 +176,7 @@ public class TracePicker {
 
 
     private Optional<ContiguousTrace> pickTrace(int spectrumId, double mz) {
-        SimpleSpectrum spectrum = storage.getSpectrum(spectrumId);
+        SimpleSpectrum spectrum = storage.getSpectrumStorage().getSpectrum(spectrumId);
         final DoubleArrayList masses = new DoubleArrayList();
         final FloatArrayList intensities = new FloatArrayList();
         final IntArrayList spectrumIds = new IntArrayList();
