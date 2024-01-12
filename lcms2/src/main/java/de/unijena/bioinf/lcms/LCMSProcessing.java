@@ -1,12 +1,12 @@
 package de.unijena.bioinf.lcms;
 
-import de.unijena.bioinf.lcms.align2.*;
+import de.unijena.bioinf.lcms.align.*;
 import de.unijena.bioinf.lcms.features.MergedFeatureExtractionStrategy;
 import de.unijena.bioinf.lcms.features.MergedFeatureExtractor;
 import de.unijena.bioinf.lcms.io.MZmlSampleParser;
-import de.unijena.bioinf.lcms.merge2.MergeTracesWithoutGapFilling;
-import de.unijena.bioinf.lcms.merge2.MergedTrace;
-import de.unijena.bioinf.lcms.merge2.ScanPointInterpolator;
+import de.unijena.bioinf.lcms.merge.MergeTracesWithoutGapFilling;
+import de.unijena.bioinf.lcms.merge.MergedTrace;
+import de.unijena.bioinf.lcms.merge.ScanPointInterpolator;
 import de.unijena.bioinf.lcms.msms.MostIntensivePeakInIsolatioNWindowAssignmentStrategy;
 import de.unijena.bioinf.lcms.msms.Ms2TraceStrategy;
 import de.unijena.bioinf.lcms.projectspace.ImportStrategy;
@@ -16,7 +16,6 @@ import de.unijena.bioinf.lcms.trace.ContiguousTrace;
 import de.unijena.bioinf.lcms.trace.LCMSStorage;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.lcms.trace.Rect;
-import de.unijena.bioinf.lcms.trace.segmentation.LegacySegmenter;
 import de.unijena.bioinf.lcms.trace.segmentation.PersistentHomology;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegmentationStrategy;
@@ -130,7 +129,7 @@ public class LCMSProcessing {
     public void extractFeaturesAndExportToProjectSpace(ProcessedSample merged, AlignmentBackbone backbone, Object storage) {
         final HashMap<Integer, ProcessedSample> idx2sample = new HashMap<>();
         for (ProcessedSample s : backbone.getSamples()) idx2sample.put(s.getUid(),s);
-        for (MergedTrace trace : merged.getTraceStorage().getMergeStorage()) {
+        for (MergedTrace trace : merged.getStorage().getMergeStorage()) {
             trace.finishMerging();
             ProcessedSample[] samplesInTrace = new ProcessedSample[trace.getSampleIds().size()];
             trace.getTraceIds().forEach(x->samplesInTrace[x]=idx2sample.get(x));
@@ -146,11 +145,11 @@ public class LCMSProcessing {
         for (ProcessedSample s : backbone.getSamples()) idx2sample.put(s.getUid(),s);
 
         try {
-            Path p = Path.of(System.getProperty("lcms.logdir"), "analysis/lcms/view/data.js");
+            Path p = Path.of(System.getProperty("lcms.logdir"), "data.js");
             Files.createDirectories(p.getParent());
             try (PrintStream out = new PrintStream(p.toAbsolutePath().toString())) {
                 out.print("document.lcdata = [");
-                for (MergedTrace trace : merged.getTraceStorage().getMergeStorage()) {
+                for (MergedTrace trace : merged.getStorage().getMergeStorage()) {
                     //if (trace.getSampleIds().size()<6 || trace.toTrace(merged).apexIntensity() < 0.01) continue;
                     ProcessedSample[] samplesInTrace = new ProcessedSample[trace.getSampleIds().size()];
                     for (int i = 0; i < trace.getTraceIds().size(); ++i) {
@@ -174,9 +173,9 @@ public class LCMSProcessing {
         // collect statistics
         final StatisticsCollectionStrategy.Calculation calc = statisticsCollector.collectStatistics();;
         for (int idx=0, n=sample.getMapping().length(); idx < n; ++idx) {
-            calc.processMs1(sample.getTraceStorage().ms1SpectrumHeader(idx), sample.getTraceStorage().getSpectrum(idx));
+            calc.processMs1(sample.getStorage().getSpectrumStorage().ms1SpectrumHeader(idx), sample.getStorage().getSpectrumStorage().getSpectrum(idx));
         }
-        sample.getTraceStorage().setStatistics(calc.done());
+        sample.getStorage().setStatistics(calc.done());
     }
 
     private void collectStatisticsBeforeAlignment(ProcessedSample sample) {
@@ -185,27 +184,27 @@ public class LCMSProcessing {
 
     private void extractTraces(ProcessedSample sample) {
         final TracePicker tracePicker = new TracePicker(sample, traceCachingStrategy, segmentationStrategy);
-        tracePicker.setAllowedMassDeviation(sample.getTraceStorage().getStatistics().getMs1MassDeviationWithinTraces());
+        tracePicker.setAllowedMassDeviation(sample.getStorage().getStatistics().getMs1MassDeviationWithinTraces());
         traceDetectionStrategy.findPeaksForExtraction(sample, (sample1, spectrumIdx, peakIdx, spectrum) -> {
             Optional<ContiguousTrace> peak = tracePicker.detectMostIntensivePeak(spectrumIdx, spectrum.getMzAt(peakIdx));
         });
     }
 
     private void assignMs2Trace(ProcessedSample sample) {
-        for (Ms2SpectrumHeader ms2SpectrumHeader : sample.getTraceStorage().ms2SpectraHeader()) {
+        for (Ms2SpectrumHeader ms2SpectrumHeader : sample.getStorage().getSpectrumStorage().ms2SpectraHeader()) {
             int traceId = ms2TraceStrategy.getTraceFor(sample, ms2SpectrumHeader);
             if (traceId >= 0) {
-                sample.getTraceStorage().setTraceForMs2(ms2SpectrumHeader.getUid(), traceId);
+                sample.getStorage().getTraceStorage().setTraceForMs2(ms2SpectrumHeader.getUid(), traceId);
             } else {
-                LoggerFactory.getLogger(LCMSProcessing.class).warn("No suitable trace found for MSMS " + ms2SpectrumHeader);
+                LoggerFactory.getLogger(LCMSProcessing.class).debug("No suitable trace found for MSMS " + ms2SpectrumHeader);
             }
         }
     }
 
     private void extractMoIsForAlignment(ProcessedSample sample) {
-        final AlignmentStorage alignmentStorage = sample.getTraceStorage().getAlignmentStorage();
+        final AlignmentStorage alignmentStorage = sample.getStorage().getAlignmentStorage();
         NormalizationStrategy.Normalizer normalizer = sample.getNormalizer();
-        for (ContiguousTrace trace : sample.getTraceStorage()) {
+        for (ContiguousTrace trace : sample.getStorage().getTraceStorage()) {
             // calculate rect
             double minMz=trace.averagedMz(), maxMz = trace.averagedMz();
             for (TraceSegment segment : trace.getSegments()) {
@@ -218,7 +217,7 @@ public class LCMSProcessing {
                 rect.maxMz = (float)maxMz;
                 MoI moi = new MoI(rect, segment.apex, sample.getMapping().getRetentionTimeAt(segment.apex),
                         (float)normalizer.normalize(trace.intensity(segment.apex)), sample.getUid());
-                moi.setConfidence(confidenceEstimatorStrategy.estimateConfidence(sample,trace,moi));
+                moi.setConfidence(confidenceEstimatorStrategy.estimateConfidence(sample,trace,moi, null));
                 if (moi.getConfidence() >= 0) {
                     alignmentStorage.addMoI(moi);
                 }

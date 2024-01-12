@@ -2,7 +2,7 @@ package de.unijena.bioinf.lcms.statistics;
 
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.lcms.ScanPointMapping;
-import de.unijena.bioinf.lcms.align2.MoI;
+import de.unijena.bioinf.lcms.align.MoI;
 import de.unijena.bioinf.lcms.trace.ContiguousTrace;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
@@ -23,7 +23,7 @@ public class TraceStats {
         double minMz = Double.POSITIVE_INFINITY, maxMz = Double.NEGATIVE_INFINITY, peakWidth=0d, absDev=0, relDev=0;
         int count=0, smallc=0, largec=0; int best=0;
         final ScanPointMapping M = sample.getMapping();
-        for (ContiguousTrace trace : sample.getTraceStorage()) {
+        for (ContiguousTrace trace : sample.getStorage().getTraceStorage()) {
             minMz = Math.min(trace.averagedMz(), minMz);
             maxMz = Math.max(trace.averagedMz(), maxMz);
             double a = 0; int c=0;
@@ -48,7 +48,7 @@ public class TraceStats {
             }
         }
         int good=0;
-        for (MoI moi : sample.getTraceStorage().getAlignmentStorage()) {
+        for (MoI moi : sample.getStorage().getAlignmentStorage()) {
             if (moi.getConfidence() >= MassOfInterestConfidenceEstimatorStrategy.CONFIDENT) {
                 ++good;
             }
