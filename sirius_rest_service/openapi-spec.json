@@ -3924,6 +3924,9 @@
           "simulatedIsotopePattern": {
             "$ref": "#/components/schemas/AnnotatedSpectrum"
           },
+          "lipidAnnotation": {
+            "$ref": "#/components/schemas/LipidAnnotation"
+          },
           "predictedFingerprint": {
             "type": "array",
             "description": "Probabilistic molecular fingerprint predicted by CSI:FingerID",
@@ -4008,6 +4011,28 @@
           },
           "root": {
             "$ref": "#/components/schemas/FragmentNode"
+          }
+        },
+        "description": "",
+        "nullable": true
+      },
+      "LipidAnnotation": {
+        "type": "object",
+        "properties": {
+          "lipidSpecies": {
+            "type": "string",
+            "description": "Predicted lipid species in LIPID MAPS notation.\n NULL if not classified as lipid.",
+            "nullable": true
+          },
+          "lipidClassName": {
+            "type": "string",
+            "description": "Human-readable name of the predicted lipid class.",
+            "nullable": true
+          },
+          "hypotheticalStructure": {
+            "type": "string",
+            "description": "Hypothetical molecular structure of the predicted lipid species as SMILES.\n NULL if hypothetical structure not available.",
+            "nullable": true
           }
         },
         "description": "",
@@ -4388,6 +4413,7 @@
           "statistics",
           "fragmentationTree",
           "simulatedIsotopePattern",
+          "lipidAnnotation",
           "predictedFingerprint",
           "compoundClasses",
           "canopusPredictions"
