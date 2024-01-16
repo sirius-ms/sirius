@@ -80,7 +80,7 @@ public class IonTreeUtils {
         }
         tree = new FTree(tree);
         tree.setAnnotation(PrecursorIonType.class, ionType);
-        return treeToNeutralTree(tree);
+        return treeToNeutralTree(tree, preserveOriginalTreeScore);
     }
 
     /**
