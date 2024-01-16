@@ -71,7 +71,7 @@ public class CompoundList {
         //text filter
         listOfFilters.add(new TextComponentMatcherEditor<>(searchField.textField, (baseList, element) -> {
             baseList.add(element.getGUIName());
-            baseList.add(element.getIonization().toString());
+            baseList.add(element.getIonType().toString());
             baseList.add(String.valueOf(element.getIonMass()));
         }, false));
         //additional filter based on specific parameters

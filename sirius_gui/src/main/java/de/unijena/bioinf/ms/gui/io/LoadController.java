@@ -67,7 +67,7 @@ public class LoadController implements LoadDialogListener {
             spectra = new BasicEventList<>(expToModify.getMs1Spectra().size() + expToModify.getMs2Spectra().size());
             loadDialog = new DefaultLoadDialog(owner, spectra);
 
-            loadDialog.ionizationChanged(expToModify.getPrecursorIonType() != null ? expToModify.getPrecursorIonType() : PrecursorIonType.unknown(1));
+            loadDialog.ionTypeChanged(expToModify.getPrecursorIonType() != null ? expToModify.getPrecursorIonType() : PrecursorIonType.unknown(1));
 
             loadDialog.editPanel.setMolecularFomula(expToModify);
 
@@ -81,7 +81,7 @@ public class LoadController implements LoadDialogListener {
             expToModify = new MutableMs2Experiment();
             spectra = GlazedListsSwing.swingThreadProxyList(new BasicEventList<>());
             loadDialog = new DefaultLoadDialog(owner, spectra);
-            loadDialog.ionizationChanged(PrecursorIonType.unknown(1));
+            loadDialog.ionTypeChanged(PrecursorIonType.unknown(1));
             loadDialog.experimentNameChanged("");
             loadDialog.editPanel.formulaTF.setText("");
         }
@@ -263,8 +263,8 @@ public class LoadController implements LoadDialogListener {
 
     private void addIonToPeriodicTableAndFireChange(PrecursorIonType ionization) {
         if (SiriusProperties.addIonToPeriodicTable(ionization))
-            loadDialog.editPanel.ionizationCB.refresh();
-        loadDialog.ionizationChanged(ionization);
+            loadDialog.editPanel.ionTypeCB.refresh();
+        loadDialog.ionTypeChanged(ionization);
     }
 
     @Override
@@ -275,7 +275,7 @@ public class LoadController implements LoadDialogListener {
         } finally {
             spectra.getReadWriteLock().writeLock().unlock();
             if (spectra.isEmpty()) {
-                loadDialog.ionizationChanged(PrecursorIonType.unknown(1));
+                loadDialog.ionTypeChanged(PrecursorIonType.unknown(1));
                 loadDialog.experimentNameChanged("");
                 loadDialog.editPanel.formulaTF.setText("");
             }
@@ -304,7 +304,7 @@ public class LoadController implements LoadDialogListener {
             }
             //make changes persistent
             if (instance == null) {
-                expToModify.setPrecursorIonType(loadDialog.getIonization());
+                expToModify.setPrecursorIonType(loadDialog.getIonType());
                 expToModify.setIonMass(loadDialog.getParentMass());
 
                 expToModify.setName(loadDialog.getExperimentName());
@@ -330,7 +330,7 @@ public class LoadController implements LoadDialogListener {
         final double ionMass = editPanel.getSelectedIonMass();
         if (ionMass > 0)
             expSetter.setIonMass(ionMass);
-        expSetter.setIonization(editPanel.getSelectedIonization());
+        expSetter.setIonType(editPanel.getSelectedAdduct());
         expSetter.setName(editPanel.getExperiementName());
         expSetter.apply(); //applies changes to experiment an writes it to projectspace
     }
