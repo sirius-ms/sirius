@@ -53,6 +53,7 @@ import java.awt.event.ItemEvent;
 import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Panel to configure SIRIUS Computations
@@ -91,7 +92,8 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         }
     }
 
-    protected final JCheckboxListPanel<String> ionizationList;
+    protected final JCheckboxListPanel<String> adductList;
+    protected final JToggleButton enforceAdducts;
     protected final JCheckboxListPanel<CustomDataSources.Source> searchDBList;
     protected final JComboBox<Instrument> profileSelector;
     protected final JSpinner ppmSpinner, candidatesSpinner, candidatesPerIonSpinner, treeTimeout, comoundTimeout, mzHeuristic, mzHeuristicOnly, bottomUpSearchEnabled, bottomUpSearchOnly;
@@ -147,6 +149,10 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         candidatesPerIonSpinner = makeIntParameterSpinner("NumberOfCandidatesPerIon", 0, 10000, 1);
         smallParameters.addNamed("Min candidates per Ion stored", candidatesPerIonSpinner);
 
+        //todo advancedParameters: this should be ane
+        smallParameters.addNamed("Fix formula for detected lipid", makeParameterCheckBox("EnforceElGordoFormula")); //El Gordo detects lipids and by default fixes the formula
+
+
 //        restrictToOrganics = new JCheckBox(); //todo implement parameter?? or as constraint?
 //        GuiUtils.assignParameterToolTip(restrictToOrganics, "RestrictToOrganics");
 //        parameterBindings.put("RestrictToOrganics", () -> String.valueOf(restrictToOrganics.isSelected()));
@@ -160,13 +166,24 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         });
 
 
-        //configure ionization panels
-        ionizationList = new JCheckboxListPanel<>(new JCheckBoxList<>(), "Possible Ionizations",
-                GuiUtils.formatToolTip("Set possible ionisation for data with unknown ionization. SIRIUS will try to auto-detect adducts that can be derived from this ionizations"));
-        ionizationList.checkBoxList.setPrototypeCellValue(new CheckBoxListItem<>("[M + Na]+ ", false));
-        center.add(ionizationList);
-        parameterBindings.put("AdductSettings.detectable", () -> getDerivedDetectableAdducts().toString());
-        parameterBindings.put("AdductSettings.fallback", () -> getDerivedDetectableAdducts().toString());
+        //configure adduct panel
+        adductList = new JCheckboxListPanel<>(new JCheckBoxList<>(), isBatchDialog() ? "Fallback Adducts" : "Possible Adducts",
+                GuiUtils.formatToolTip("Set expected adduct for data with unknown adduct."));
+        adductList.checkBoxList.setPrototypeCellValue(new CheckBoxListItem<>("[M + Na]+ ", false));
+        center.add(adductList);
+        parameterBindings.put("AdductSettings.fallback", () -> getSelectedAdducts().toString());
+
+        enforceAdducts =  new JToggleButton("enforce", false);
+        enforceAdducts.setToolTipText(GuiUtils.formatToolTip("Enforce the selected adducts instead of using them only as fallback only."));
+        if (isBatchDialog()) {
+            adductList.buttons.add(enforceAdducts);
+            parameterBindings.put("AdductSettings.enforced", () -> enforceAdducts.isSelected() ? getSelectedAdducts().toString() : PossibleAdducts.empty().toString());
+        } else {
+            //alway enforce adducts for single feature.
+            parameterBindings.put("AdductSettings.enforced", () -> getSelectedAdducts().toString());
+        }
+
+
 
         // configure database to search list
         searchDBList = new JCheckboxListPanel<>(new DBSelectionList(), "Use DB formulas only");
@@ -177,7 +194,7 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
                 .forEach(s -> searchDBList.checkBoxList.check(CustomDataSources.getSourceFromName(s.name())));
 
         // configure Element panel
-        makeElementPanel(ecs.size() > 1);
+        makeElementPanel(isBatchDialog());
         add(elementPanel);
         parameterBindings.put("FormulaSettings.enforced", () -> {
             return elementPanel.getElementConstraints().toString(); //todo check if this makes scence
@@ -269,44 +286,55 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         center.add(technicalParameters);
 
         // add ionization's of selected compounds to default
-        refreshPossibleIonizations(ecs.stream().map(it -> it.getIonization().getIonization().toString()).collect(Collectors.toSet()), true);
+        refreshPossibleAdducts(ecs.stream().map(it -> it.getIonType().toString()).collect(Collectors.toSet()), true);
     }
 
-    public void refreshPossibleIonizations(Set<String> ionTypes, boolean enabled) {
-        Set<String> ionizations = new HashSet<>();
-        Set<String> ionizationsEnabled = new HashSet<>();
+    protected boolean isBatchDialog() {
+        return ecs.size() > 1; //should never be 0
+    }
 
-        if (!ionTypes.isEmpty()) {
+
+    public void refreshPossibleAdducts(Set<String> precursorIonTypes, boolean enabled) {
+        Set<String> adducts = new HashSet<>();
+        Set<String> adductsEnabled = new HashSet<>();
+
+        if (!precursorIonTypes.isEmpty()) {
             AdductSettings settings = PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class);
-            if (ionTypes.contains(PrecursorIonType.unknownPositive().getIonization().getName())) {
-                ionizations.addAll(PeriodicTable.getInstance().getPositiveIonizationsAsString());
-                ionizationsEnabled.addAll(settings.getDetectable().stream().filter(PrecursorIonType::isPositive)
-                        .map(PrecursorIonType::getIonization).distinct().map(Ionization::getName)
+            if (precursorIonTypes.contains(PrecursorIonType.unknownPositive().toString())) {
+                adducts.addAll(PeriodicTable.getInstance().getPositiveAdductsAsString());
+                adductsEnabled.addAll(
+                        Stream.concat(settings.getFallback().stream().filter(PrecursorIonType::isPositive),
+                                settings.getEnforced().stream().filter(PrecursorIonType::isPositive))
+                        .map(PrecursorIonType::toString)
                         .collect(Collectors.toSet()));
             }
 
-            if (ionTypes.contains(PrecursorIonType.unknownNegative().getIonization().getName())) {
-                ionizations.addAll(PeriodicTable.getInstance().getNegativeIonizationsAsString());
-                ionizationsEnabled.addAll(settings.getDetectable().stream().filter(PrecursorIonType::isNegative)
-                        .map(PrecursorIonType::getIonization).distinct().map(Ionization::getName)
+            if (precursorIonTypes.contains(PrecursorIonType.unknownNegative().toString())) {
+                adducts.addAll(PeriodicTable.getInstance().getNegativeAdductsAsString());
+                adductsEnabled.addAll(
+                        Stream.concat(settings.getFallback().stream().filter(PrecursorIonType::isNegative),
+                                        settings.getEnforced().stream().filter(PrecursorIonType::isNegative))
+                        .map(PrecursorIonType::toString)
                         .collect(Collectors.toSet()));
             }
-            ionizations.addAll(ionizationsEnabled);
+            adducts.addAll(adductsEnabled);
         }
 
-        if (ionizations.isEmpty()) {
-            ionizationList.checkBoxList.replaceElements(ionTypes.stream().sorted().collect(Collectors.toList()));
-            ionizationList.checkBoxList.checkAll();
-            ionizationList.setEnabled(false);
+        if (adducts.isEmpty()) {
+            adductList.checkBoxList.replaceElements(precursorIonTypes.stream().sorted().collect(Collectors.toList()));
+            adductList.checkBoxList.checkAll();
+            adductList.setEnabled(false);
         } else {
-            ionizationList.checkBoxList.replaceElements(ionizations.stream().sorted().toList());
-            ionizationList.checkBoxList.uncheckAll();
-            ionizationsEnabled.forEach(ionizationList.checkBoxList::check);
-            ionizationList.setEnabled(enabled);
+            adductList.checkBoxList.replaceElements(adducts.stream().sorted().toList());
+            adductList.checkBoxList.uncheckAll();
+            if (!isBatchDialog() && !ecs.get(0).getMs2Spectra().isEmpty()) {
+                detectPossibleAdducts(ecs.get(0));
+            } else {
+                adductsEnabled.forEach(adductList.checkBoxList::check);
+            }
+            adductList.setEnabled(enabled);
         }
 
-        if (ecs.size() == 1 && isEnabled() && !ecs.get(0).getMs2Spectra().isEmpty())
-            detectPossibleAdducts(ecs.get(0));
     }
 
     protected void makeElementPanel(boolean multi) {
@@ -367,6 +395,7 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
     }
 
     protected void detectPossibleAdducts(InstanceBean ec) {
+        //todo is this the same detection as happening in batch mode?
         String notWorkingMessage = "Adduct detection requires MS1 spectrum.";
         if (!ec.getMs1Spectra().isEmpty() || ec.getMergedMs1Spectrum() != null) {
             Jobs.runInBackgroundAndLoad(owner, "Detecting adducts...", () -> {
@@ -375,9 +404,8 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
 
                 pi.getAnnotation(PossibleAdducts.class).
                         ifPresentOrElse(pa -> {
-                                    //todo do we want to add adducts?
-                                    ionizationList.checkBoxList.uncheckAll();
-                                    pa.getIonModes().stream().map(IonMode::toString).forEach(ionizationList.checkBoxList::check);
+                                    adductList.checkBoxList.uncheckAll();
+                                    pa.getAdducts().stream().map(PrecursorIonType::toString).forEach(adductList.checkBoxList::check);
                                 },
                                 () -> new ExceptionDialog(owner, "Failed to detect Adducts from MS1")
                         );
@@ -411,10 +439,8 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         return getFormulaSearchDBs().stream().map(CustomDataSources.Source::id).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
-    public PossibleAdducts getDerivedDetectableAdducts() {
-        Set<PrecursorIonType> det = new HashSet<>(PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class).getDetectable());
-        Set<Ionization> keep = ionizationList.checkBoxList.getCheckedItems().stream().map(PrecursorIonType::parsePrecursorIonType).flatMap(Optional::stream).map(PrecursorIonType::getIonization).collect(Collectors.toSet());
-        det.removeIf(s -> !keep.contains(s.getIonization()));
-        return new PossibleAdducts(det);
+    public PossibleAdducts getSelectedAdducts() {
+        return adductList.checkBoxList.getCheckedItems().stream().map(PrecursorIonType::parsePrecursorIonType)
+                .flatMap(Optional::stream).collect(Collectors.collectingAndThen(Collectors.toSet(), PossibleAdducts::new));
     }
 }

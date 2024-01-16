@@ -30,7 +30,7 @@ import javax.swing.*;
 //todo property change support so that other views can listen to changes input data before applying them
 public class ExperimentEditPanel extends JPanel {
     public final PrecursorSelector precursorSelection;
-    public final PrecursorIonTypeSelector ionizationCB;
+    public final PrecursorIonTypeSelector ionTypeCB;
     public final JTextField nameTF;
     public final JTextField formulaTF;
 
@@ -50,8 +50,8 @@ public class ExperimentEditPanel extends JPanel {
             precursorSelection = null;
         }
 
-        ionizationCB = new PrecursorIonTypeSelector();
-        add(new TextHeaderBoxPanel(PrecursorIonTypeSelector.name, ionizationCB));
+        ionTypeCB = new PrecursorIonTypeSelector();
+        add(new TextHeaderBoxPanel(PrecursorIonTypeSelector.name, ionTypeCB));
 
         formulaTF = new JTextField(12);
         add(new TextHeaderBoxPanel("Molecular Formula", formulaTF));
@@ -71,13 +71,13 @@ public class ExperimentEditPanel extends JPanel {
         return nameTF.getText();
     }
 
-    public PrecursorIonType getSelectedIonization() {
-       return ionizationCB.getSelectedAdductOrDefault();
+    public PrecursorIonType getSelectedAdduct() {
+       return ionTypeCB.getSelectedAdductOrDefault();
     }
 
     public void setData(InstanceBean ec) {
         nameTF.setText(ec.getName());
-        ionizationCB.setSelectedItem(ec.getIonization().toString());
+        ionTypeCB.setSelectedItem(ec.getIonType().toString());
         setMolecularFomula(ec.getExperiment());
         if (precursorSelection != null){
             precursorSelection.setData(ec.getMs1Spectra(), ec.getMs2Spectra(), ec.getIonMass());

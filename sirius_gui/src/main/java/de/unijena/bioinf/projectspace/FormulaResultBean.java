@@ -198,6 +198,10 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         return getID().getMolecularFormula();
     }
 
+    public MolecularFormula getPrecursorMolecularFormula() {
+        return getID().getPrecursorFormula();
+    }
+
     private final static Pattern pat = Pattern.compile("^\\s*\\[\\s*M\\s*|\\s*\\]\\s*\\d*\\s*[\\+\\-]\\s*$");
 
     public String getFormulaAndIonText() {

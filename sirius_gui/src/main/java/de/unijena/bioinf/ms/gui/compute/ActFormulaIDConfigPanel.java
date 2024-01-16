@@ -34,7 +34,7 @@ public class ActFormulaIDConfigPanel extends ActivatableConfigPanel<FormulaIDCon
     @Override
     protected void setComponentsEnabled(boolean enabled) {
         content.elementPanel.enableElementSelection(enabled);
-        content.ionizationList.setEnabled(enabled);
+        content.adductList.setEnabled(enabled);
         super.setComponentsEnabled(enabled);
         if (enabled)
             content.searchDBList.checkBoxList.refresh();

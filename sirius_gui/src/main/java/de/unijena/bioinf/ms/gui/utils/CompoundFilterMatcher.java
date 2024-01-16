@@ -22,7 +22,6 @@ import ca.odell.glazedlists.matchers.Matcher;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
@@ -44,7 +43,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 public class CompoundFilterMatcher implements Matcher<InstanceBean> {
     final CompoundFilterModel filterModel;
@@ -83,7 +81,7 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
                 return false;
         }
 
-        if (filterModel.isAdductFilterActive() && !filterModel.getAdducts().contains(item.getIonization()))
+        if (filterModel.isAdductFilterActive() && !filterModel.getAdducts().contains(item.getIonType()))
             return false;
 
         return anyIOIntenseFilterMatches(item, filterModel);
