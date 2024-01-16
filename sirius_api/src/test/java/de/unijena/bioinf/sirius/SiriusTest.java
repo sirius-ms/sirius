@@ -19,6 +19,7 @@ import de.unijena.bioinf.babelms.ms.JenaMsParser;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.sirius.annotations.DecompositionList;
+import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -218,15 +219,11 @@ public class SiriusTest {
     public void testInSourceFragmentation() {
         final MutableMs2Experiment experiment = getStandardExperiment();
         experiment.setPrecursorIonType(PrecursorIonType.getPrecursorIonType("[M-H2O+H]+"));
-        final Ms2Preprocessor preprocessor = new Ms2Preprocessor();
-        final ProcessedInput processedInput = preprocessor.preprocess(experiment);
-        sirius.getMs1Analyzer().computeAndScoreIsotopePattern(processedInput);
-        final FragmentationPatternAnalysis analysis = sirius.getMs2Analyzer();
-        FasterTreeComputationInstance instance = new FasterTreeComputationInstance(analysis, processedInput);
+        Sirius.SiriusIdentificationJob sijob = sirius.makeIdentificationJob(experiment);
         JobManager jobs = SiriusJobs.getGlobalJobManager();
-        jobs.submitJob(instance);
-        FasterTreeComputationInstance.FinalResult finalResult = instance.takeResult();
-        final FTree top = finalResult.getResults().get(0);
+        jobs.submitJob(sijob);
+        List<IdentificationResult<SiriusScore>> results = sijob.takeResult();
+        final FTree top = results.get(0).getTree();
 
         assertEquals(PrecursorIonType.getPrecursorIonType("[M-H2O+H]+"), top.getAnnotationOrThrow(PrecursorIonType.class));
         assertEquals(MolecularFormula.parseOrThrow("C20H19NO7"), top.getRoot().getFormula());
@@ -253,23 +250,19 @@ public class SiriusTest {
         final FragmentationPatternAnalysis analysis = sirius.getMs2Analyzer();
         final FTree orig, top;
         {
-            final ProcessedInput processedInput = preprocessor.preprocess(experiment);
-            sirius.getMs1Analyzer().computeAndScoreIsotopePattern(processedInput);
-            FasterTreeComputationInstance instance = new FasterTreeComputationInstance(analysis, processedInput);
+            Sirius.SiriusIdentificationJob sijob = sirius.makeIdentificationJob(experiment);
             JobManager jobs = SiriusJobs.getGlobalJobManager();
-            jobs.submitJob(instance);
-            FasterTreeComputationInstance.FinalResult finalResult = instance.takeResult();
-            orig = finalResult.getResults().get(0);
+            jobs.submitJob(sijob);
+            List<IdentificationResult<SiriusScore>> results = sijob.takeResult();
+            orig = results.get(0).getTree();
         }
         experiment.setPrecursorIonType(PrecursorIonType.getPrecursorIonType("[M+NH3+H]+"));
         {
-            final ProcessedInput processedInput = preprocessor.preprocess(experiment);
-            sirius.getMs1Analyzer().computeAndScoreIsotopePattern(processedInput);
-            FasterTreeComputationInstance instance = new FasterTreeComputationInstance(analysis, processedInput);
+            Sirius.SiriusIdentificationJob sijob = sirius.makeIdentificationJob(experiment);
             JobManager jobs = SiriusJobs.getGlobalJobManager();
-            jobs.submitJob(instance);
-            FasterTreeComputationInstance.FinalResult finalResult = instance.takeResult();
-            top = finalResult.getResults().get(0);
+            jobs.submitJob(sijob);
+            List<IdentificationResult<SiriusScore>> results = sijob.takeResult();
+            top = results.get(0).getTree();
         }
 
         assertEquals(PrecursorIonType.getPrecursorIonType("[M+NH3+H]+"), top.getAnnotationOrThrow(PrecursorIonType.class));
@@ -307,15 +300,11 @@ public class SiriusTest {
         final FTree top;
         {
             experiment.setAnnotation(NumberOfCandidates.class, new NumberOfCandidates(100));
-            final Ms2Preprocessor preprocessor = new Ms2Preprocessor();
-            final ProcessedInput processedInput = preprocessor.preprocess(experiment);
-            sirius.getMs1Analyzer().computeAndScoreIsotopePattern(processedInput);
-            final FragmentationPatternAnalysis analysis = sirius.getMs2Analyzer();
-            FasterTreeComputationInstance instance = new FasterTreeComputationInstance(analysis, processedInput);
+            Sirius.SiriusIdentificationJob sijob = sirius.makeIdentificationJob(experiment);
             JobManager jobs = SiriusJobs.getGlobalJobManager();
-            jobs.submitJob(instance);
-            FasterTreeComputationInstance.FinalResult finalResult = instance.takeResult();
-            top = finalResult.getResults().get(0);
+            jobs.submitJob(sijob);
+            List<IdentificationResult<SiriusScore>> results = sijob.takeResult();
+            top = results.get(0).getTree();
         }
 
         final MutableMs2Experiment experiment2 = getStandardExperiment().mutate();
