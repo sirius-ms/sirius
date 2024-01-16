@@ -6,6 +6,7 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.IsotopeMs2Settings;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FasterTreeComputationInstance;
@@ -366,7 +367,7 @@ public class SiriusTest {
         exp.setIonMass(351.1137);
         exp.setMs2Spectra(new ArrayList<>(Arrays.asList(msms1,msms2,msms3,msms4,fakePattern)));
 
-        //sirius.getMs2Analyzer().registerPlugin(new IsotopePatternInMs2Plugin());
+        exp.setAnnotation(IsotopeMs2Settings.class, new IsotopeMs2Settings(IsotopeMs2Settings.Strategy.SCORE));
 
         IdentificationResult<?> result = sirius.compute(exp, MolecularFormula.parseOrThrow("C14H23ClN2O4S"));
         final FragmentAnnotation<Ms2IsotopePattern> iso = result.getTree().getFragmentAnnotationOrNull(Ms2IsotopePattern.class);
