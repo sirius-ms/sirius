@@ -4024,6 +4024,11 @@
             "description": "Predicted lipid species in LIPID MAPS notation.\n NULL if not classified as lipid.",
             "nullable": true
           },
+          "lipidMapsId": {
+            "type": "string",
+            "description": "LIPID MAPS id of the predicted lipid class.",
+            "nullable": true
+          },
           "lipidClassName": {
             "type": "string",
             "description": "Human-readable name of the predicted lipid class.",

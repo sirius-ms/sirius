@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  */
 @JsonPropertyOrder({
   LipidAnnotation.JSON_PROPERTY_LIPID_SPECIES,
+  LipidAnnotation.JSON_PROPERTY_LIPID_MAPS_ID,
   LipidAnnotation.JSON_PROPERTY_LIPID_CLASS_NAME,
   LipidAnnotation.JSON_PROPERTY_HYPOTHETICAL_STRUCTURE,
   LipidAnnotation.JSON_PROPERTY_CHAINS_UNKNOWN
@@ -36,6 +37,9 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 public class LipidAnnotation {
   public static final String JSON_PROPERTY_LIPID_SPECIES = "lipidSpecies";
   private String lipidSpecies;
+
+  public static final String JSON_PROPERTY_LIPID_MAPS_ID = "lipidMapsId";
+  private String lipidMapsId;
 
   public static final String JSON_PROPERTY_LIPID_CLASS_NAME = "lipidClassName";
   private String lipidClassName;
@@ -72,6 +76,32 @@ public class LipidAnnotation {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setLipidSpecies(String lipidSpecies) {
     this.lipidSpecies = lipidSpecies;
+  }
+
+
+  public LipidAnnotation lipidMapsId(String lipidMapsId) {
+    
+    this.lipidMapsId = lipidMapsId;
+    return this;
+  }
+
+   /**
+   * LIPID MAPS id of the predicted lipid class.
+   * @return lipidMapsId
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_LIPID_MAPS_ID)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getLipidMapsId() {
+    return lipidMapsId;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_LIPID_MAPS_ID)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setLipidMapsId(String lipidMapsId) {
+    this.lipidMapsId = lipidMapsId;
   }
 
 
@@ -162,6 +192,7 @@ public class LipidAnnotation {
     }
     LipidAnnotation lipidAnnotation = (LipidAnnotation) o;
     return Objects.equals(this.lipidSpecies, lipidAnnotation.lipidSpecies) &&
+        Objects.equals(this.lipidMapsId, lipidAnnotation.lipidMapsId) &&
         Objects.equals(this.lipidClassName, lipidAnnotation.lipidClassName) &&
         Objects.equals(this.hypotheticalStructure, lipidAnnotation.hypotheticalStructure) &&
         Objects.equals(this.chainsUnknown, lipidAnnotation.chainsUnknown);
@@ -169,7 +200,7 @@ public class LipidAnnotation {
 
   @Override
   public int hashCode() {
-    return Objects.hash(lipidSpecies, lipidClassName, hypotheticalStructure, chainsUnknown);
+    return Objects.hash(lipidSpecies, lipidMapsId, lipidClassName, hypotheticalStructure, chainsUnknown);
   }
 
   @Override
@@ -177,6 +208,7 @@ public class LipidAnnotation {
     StringBuilder sb = new StringBuilder();
     sb.append("class LipidAnnotation {\n");
     sb.append("    lipidSpecies: ").append(toIndentedString(lipidSpecies)).append("\n");
+    sb.append("    lipidMapsId: ").append(toIndentedString(lipidMapsId)).append("\n");
     sb.append("    lipidClassName: ").append(toIndentedString(lipidClassName)).append("\n");
     sb.append("    hypotheticalStructure: ").append(toIndentedString(hypotheticalStructure)).append("\n");
     sb.append("    chainsUnknown: ").append(toIndentedString(chainsUnknown)).append("\n");

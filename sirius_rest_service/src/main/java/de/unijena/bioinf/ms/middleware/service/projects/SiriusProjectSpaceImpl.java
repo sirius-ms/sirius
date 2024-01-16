@@ -525,6 +525,7 @@ public class SiriusProjectSpaceImpl implements Project {
     private static LipidAnnotation asLipidAnnotation(FTree fTree) {
         return fTree.getAnnotation(LipidSpecies.class).map(ls -> LipidAnnotation.builder()
                 .lipidSpecies(ls.toString())
+                .lipidMapsId(ls.getLipidClass().getLipidMapsId())
                 .lipidClassName(ls.getLipidClass().longName())
                 .chainsUnknown(ls.chainsUnknown())
                 .hypotheticalStructure(ls.generateHypotheticalStructure().orElse(null))

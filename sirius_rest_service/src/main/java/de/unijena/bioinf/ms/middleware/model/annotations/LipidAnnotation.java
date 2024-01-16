@@ -36,6 +36,12 @@ public class LipidAnnotation {
     private final String lipidSpecies;
 
     /**
+     * LIPID MAPS id of the predicted lipid class.
+     */
+    @Schema(nullable = true)
+    private final String lipidMapsId;
+
+    /**
      * Human-readable name of the predicted lipid class.
      */
     @Schema(nullable = true)
