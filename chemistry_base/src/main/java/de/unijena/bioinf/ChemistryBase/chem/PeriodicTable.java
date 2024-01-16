@@ -1066,11 +1066,32 @@ public final class PeriodicTable implements Iterable<Element>, Cloneable {
         return adducts;
     }
 
+    /**
+     * @return the set of different positive adducts
+     */
+    public Set<String> getPositiveAdductsAsString() {
+        Set<String> adducts = new HashSet<>(knownIonTypes.values().size());
+        for (PrecursorIonType ionType : knownIonTypes.values()) {
+            if (ionType.getCharge() > 0)
+                adducts.add(ionType.toString());
+        }
+        return adducts;
+    }
+
     public Set<PrecursorIonType> getPositiveAdducts() {
         Set<PrecursorIonType> adducts = new HashSet<>(knownIonTypes.values().size());
         for (PrecursorIonType ionType : knownIonTypes.values()) {
             if (ionType.getCharge() > 0)
                 adducts.add(ionType);
+        }
+        return adducts;
+    }
+
+    public Set<String> getNegativeAdductsAsString() {
+        Set<String> adducts = new HashSet<>(knownIonTypes.values().size());
+        for (PrecursorIonType ionType : knownIonTypes.values()) {
+            if (ionType.getCharge() < 0)
+                adducts.add(ionType.toString());
         }
         return adducts;
     }

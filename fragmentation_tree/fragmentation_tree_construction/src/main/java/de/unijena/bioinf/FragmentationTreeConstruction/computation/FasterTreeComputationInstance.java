@@ -37,6 +37,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeS
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.treebuilder.ExtendedCriticalPathHeuristicTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.UseHeuristic;
+import de.unijena.bioinf.elgordo.LipidSpecies;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
@@ -290,7 +291,10 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             jobs.forEach(this::submitSubJob);
             LoggerFactory.getLogger(FasterTreeComputationInstance.class).debug("Recalibration is disabled!");
             checkForInterruption();
-            return jobs.stream().map(JJob::takeResult).sorted(Collections.reverseOrder()).toArray(ExactResult[]::new);
+            return extractTopResults(jobs.stream()
+                    .map(JJob::takeResult).sorted(Collections.reverseOrder())
+                    .collect(Collectors.toList()), numberOfResultsToKeep, numberOfResultsToKeepPerIonization)
+                    .toArray(ExactResult[]::new);
         }
         final List<RecalibrationJob> recalibrationJobs = new ArrayList<>();
         for (ExactResult r : topResults) {
@@ -380,7 +384,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
     }
 
     private List<ExactResult> extractTopResults(List<ExactResult> results, int numberOfResultsToKeep, int numberOfResultsToKeepPerIonization) {
-        final List<ExactResult> returnList;
+        List<ExactResult> returnList;
         if (numberOfResultsToKeepPerIonization<=0 || results.size()<=numberOfResultsToKeep){
             returnList = results.subList(0, Math.min(results.size(), numberOfResultsToKeep));
         } else {
@@ -405,7 +409,16 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             returnList = new ArrayList<>(exractedResults);
             returnList.sort(Collections.reverseOrder());
         }
-
+        //make sure that annotated lipid MFs from ElGordo are always part of the list
+        if (results.stream().anyMatch(r -> r.tree.hasAnnotation(LipidSpecies.class))) { //annotation should be on each tree. But for future fail-safety, we check all
+            //in principle, this should only be a single tree possible
+            List<ExactResult> lipids = results.stream().filter(r->r.tree.getAnnotation(LipidSpecies.class).map(ls -> ls.getHypotheticalMolecularFormula().map(mf->pinput.getAnnotation(PossibleAdducts.class, PossibleAdducts::empty).getAdducts(r.decomposition.getIon()).stream().anyMatch(it -> it.measuredNeutralMoleculeToNeutralMolecule(r.decomposition.getCandidate()).equals(mf))).orElse(false)).orElse(false)).collect(Collectors.toList());
+            Set<ExactResult> resultsSet = new HashSet<>();
+            resultsSet.addAll(returnList);
+            resultsSet.addAll(lipids);
+            returnList = new ArrayList<>(resultsSet);
+            returnList.sort(Collections.reverseOrder());
+        }
         return returnList;
     }
 

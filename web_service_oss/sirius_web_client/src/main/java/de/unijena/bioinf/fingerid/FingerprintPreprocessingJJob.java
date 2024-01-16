@@ -21,18 +21,10 @@
 package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
-import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
-import de.unijena.bioinf.elgordo.LipidSpecies;
 import de.unijena.bioinf.fingerid.annotations.FormulaResultThreshold;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.Ms1Preprocessor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -102,68 +94,6 @@ public class FingerprintPreprocessingJJob<S extends FormulaScore> extends BasicJ
         final List<IdentificationResult<S>> idResult = new ArrayList<>(this.idResult);
         idResult.sort(Comparator.reverseOrder());
 
-
-        // EXPAND LIST for different Adducts
-        // expand adduct trees before filtering scores.
-        // This is important because zodiac can create different scores for adducts that correspond to the same tree
-
-        // skip if there is a single candidate with lipid annotation (El gordo)
-        if (idResult.size() != 1 || !idResult.get(0).getTree().hasAnnotation(LipidSpecies.class)) {
-            logDebug("Expanding Identification Results for different Adducts.");
-            final PossibleAdducts adducts;
-            if (experiment.getPrecursorIonType().isIonizationUnknown()) {
-                if (!experiment.hasAnnotation(DetectedAdducts.class))
-                    new Ms1Preprocessor().preprocess(experiment);
-                adducts = experiment.getPossibleAdductsOrFallback();
-            } else {
-                adducts = new PossibleAdducts(experiment.getPrecursorIonType());
-            }
-
-            final Map<IdentificationResult<S>, IdentificationResult<S>> ionTypes = new HashMap<>();
-            final Set<MolecularFormula> neutralFormulas = new HashSet<>();
-            for (IdentificationResult<S> ir : idResult)
-                neutralFormulas.add(ir.getMolecularFormula());
-            final Set<MolecularFormula> ws = experiment.getAnnotation(Whiteset.class).map(Whiteset::getNeutralFormulas).orElse(null);
-            for (IdentificationResult<S> ir : idResult) {
-                if (ir.getPrecursorIonType().hasNeitherAdductNorInsource()) {
-                    for (PrecursorIonType ionType : adducts) {
-                        if (!ionType.equals(ir.getTree().getAnnotationOrThrow(PrecursorIonType.class)) && new IonTreeUtils().isResolvable(ir.getTree(), ionType)) {
-                            try {
-                                IdentificationResult<S> newIr = IdentificationResult.withPrecursorIonType(ir, ionType, false);
-                                if (ws == null || ws.contains(newIr.getMolecularFormula())) {
-                                    newIr.getTree().setAnnotation(IonTreeUtils.ExpandedAdduct.class, IonTreeUtils.ExpandedAdduct.EXPANDED);
-                                    if (newIr.getTree().numberOfVertices() >= 3 && (neutralFormulas.add(newIr.getMolecularFormula())))
-                                        ionTypes.put(newIr, ir);
-                                }
-                            } catch (IllegalArgumentException e) {
-                                logError("Error with instance " + getExperiment().getName() + " and formula " + ir.getMolecularFormula() + " and ion type " + ionType);
-                                throw e;
-                            }
-                        }
-                    }
-                }
-            }
-
-            idResult.addAll(ionTypes.keySet());
-
-            // WORKAROUND: we have to remove the original results if they do not match the ion type
-            if (!experiment.getPrecursorIonType().isIonizationUnknown()) {
-                if (experiment.getPrecursorIonType().isIntrinsicalCharged()) {
-                    // for this special case we do not want to duplicate all the trees
-                    // but we also have to ensure not to delete all trees just because they look
-                    // identical to the original one
-                    //idResult.replaceAll(x->IdentificationResult.withPrecursorIonType(x, experiment.getPrecursorIonType()));
-                } else {
-                    idResult.removeIf(f -> !f.getPrecursorIonType().equals(experiment.getPrecursorIonType()));
-                    ionTypes.keySet().removeIf(f -> !f.getPrecursorIonType().equals(experiment.getPrecursorIonType())); //todo needed?
-                }
-            }
-
-            idResult.sort(Collections.reverseOrder()); //descending
-            addedIdentificationResults = ionTypes;
-        } else {
-            logDebug("Skip Expanding Identification Results for different Adducts due to existing El Gordo Result.");
-        }
 
         checkForInterruption();
         final ArrayList<IdentificationResult<S>> filteredResults = new ArrayList<>();
