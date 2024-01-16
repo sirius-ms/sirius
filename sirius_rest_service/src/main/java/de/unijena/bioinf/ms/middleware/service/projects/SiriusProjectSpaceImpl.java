@@ -526,6 +526,7 @@ public class SiriusProjectSpaceImpl implements Project {
         return fTree.getAnnotation(LipidSpecies.class).map(ls -> LipidAnnotation.builder()
                 .lipidSpecies(ls.toString())
                 .lipidClassName(ls.getLipidClass().longName())
+                .chainsUnknown(ls.chainsUnknown())
                 .hypotheticalStructure(ls.generateHypotheticalStructure().orElse(null))
                 .build()
         ).orElse(LipidAnnotation.builder().build());

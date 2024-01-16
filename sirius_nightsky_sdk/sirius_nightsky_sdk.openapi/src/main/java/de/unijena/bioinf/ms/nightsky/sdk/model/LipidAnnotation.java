@@ -29,7 +29,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 @JsonPropertyOrder({
   LipidAnnotation.JSON_PROPERTY_LIPID_SPECIES,
   LipidAnnotation.JSON_PROPERTY_LIPID_CLASS_NAME,
-  LipidAnnotation.JSON_PROPERTY_HYPOTHETICAL_STRUCTURE
+  LipidAnnotation.JSON_PROPERTY_HYPOTHETICAL_STRUCTURE,
+  LipidAnnotation.JSON_PROPERTY_CHAINS_UNKNOWN
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class LipidAnnotation {
@@ -41,6 +42,9 @@ public class LipidAnnotation {
 
   public static final String JSON_PROPERTY_HYPOTHETICAL_STRUCTURE = "hypotheticalStructure";
   private String hypotheticalStructure;
+
+  public static final String JSON_PROPERTY_CHAINS_UNKNOWN = "chainsUnknown";
+  private Boolean chainsUnknown;
 
   public LipidAnnotation() {
   }
@@ -122,6 +126,32 @@ public class LipidAnnotation {
     this.hypotheticalStructure = hypotheticalStructure;
   }
 
+
+  public LipidAnnotation chainsUnknown(Boolean chainsUnknown) {
+    
+    this.chainsUnknown = chainsUnknown;
+    return this;
+  }
+
+   /**
+   * True of the formula composition of the chains could not be determined from the MS/MS.
+   * @return chainsUnknown
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_CHAINS_UNKNOWN)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Boolean isChainsUnknown() {
+    return chainsUnknown;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_CHAINS_UNKNOWN)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setChainsUnknown(Boolean chainsUnknown) {
+    this.chainsUnknown = chainsUnknown;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -133,12 +163,13 @@ public class LipidAnnotation {
     LipidAnnotation lipidAnnotation = (LipidAnnotation) o;
     return Objects.equals(this.lipidSpecies, lipidAnnotation.lipidSpecies) &&
         Objects.equals(this.lipidClassName, lipidAnnotation.lipidClassName) &&
-        Objects.equals(this.hypotheticalStructure, lipidAnnotation.hypotheticalStructure);
+        Objects.equals(this.hypotheticalStructure, lipidAnnotation.hypotheticalStructure) &&
+        Objects.equals(this.chainsUnknown, lipidAnnotation.chainsUnknown);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(lipidSpecies, lipidClassName, hypotheticalStructure);
+    return Objects.hash(lipidSpecies, lipidClassName, hypotheticalStructure, chainsUnknown);
   }
 
   @Override
@@ -148,6 +179,7 @@ public class LipidAnnotation {
     sb.append("    lipidSpecies: ").append(toIndentedString(lipidSpecies)).append("\n");
     sb.append("    lipidClassName: ").append(toIndentedString(lipidClassName)).append("\n");
     sb.append("    hypotheticalStructure: ").append(toIndentedString(hypotheticalStructure)).append("\n");
+    sb.append("    chainsUnknown: ").append(toIndentedString(chainsUnknown)).append("\n");
     sb.append("}");
     return sb.toString();
   }

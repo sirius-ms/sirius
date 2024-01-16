@@ -47,4 +47,10 @@ public class LipidAnnotation {
      */
     @Schema(nullable = true)
     private final String hypotheticalStructure;
+
+    /**
+     * True of the formula composition of the chains could not be determined from the MS/MS.
+     */
+    @Schema(nullable = true)
+    private boolean chainsUnknown;
 }

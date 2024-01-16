@@ -4033,6 +4033,11 @@
             "type": "string",
             "description": "Hypothetical molecular structure of the predicted lipid species as SMILES.\n NULL if hypothetical structure not available.",
             "nullable": true
+          },
+          "chainsUnknown": {
+            "type": "boolean",
+            "description": "True of the formula composition of the chains could not be determined from the MS/MS.",
+            "nullable": true
           }
         },
         "description": "",
