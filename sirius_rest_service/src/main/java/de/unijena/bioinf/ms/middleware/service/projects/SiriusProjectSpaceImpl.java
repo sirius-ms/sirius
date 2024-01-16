@@ -33,6 +33,7 @@ import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
+import de.unijena.bioinf.elgordo.LipidSpecies;
 import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
@@ -214,7 +215,9 @@ public class SiriusProjectSpaceImpl implements Project {
 
         return new PageImpl<>(
                 paged.peek(fr -> instance.loadFormulaResult(fr.getId(), annotations).ifPresent(fr::setAnnotationsFrom))
-                        .map(res -> makeFormulaCandidate(instance, res, optFields)).toList(), pageable, size);
+                        .map(res -> makeFormulaCandidate(instance, res, optFields))
+                        .map(FormulaCandidate.FormulaCandidateBuilder::build)
+                        .toList(), pageable, size);
     }
 
     @Override
@@ -222,7 +225,9 @@ public class SiriusProjectSpaceImpl implements Project {
         Class<? extends DataAnnotation>[] annotations = resolveFormulaCandidateAnnotations(optFields);
         Instance instance = loadInstance(alignedFeatureId);
         return instance.loadFormulaResult(parseFID(instance, formulaId), annotations)
-                .map(res -> makeFormulaCandidate(instance, res, optFields)).orElse(null);
+                .map(res -> makeFormulaCandidate(instance, res, optFields))
+                .map(FormulaCandidate.FormulaCandidateBuilder::build)
+                .orElse(null);
     }
 
     @Override
@@ -496,23 +501,34 @@ public class SiriusProjectSpaceImpl implements Project {
         });
     }
 
-    public static FormulaCandidate makeFormulaCandidate(Instance inst, FormulaResult res, EnumSet<FormulaCandidate.OptField> optFields) {
-        FormulaCandidate candidate = optFields.contains(FormulaCandidate.OptField.statistics)
+    public static FormulaCandidate.FormulaCandidateBuilder makeFormulaCandidate(Instance inst, FormulaResult res, EnumSet<FormulaCandidate.OptField> optFields) {
+        FormulaCandidate.FormulaCandidateBuilder candidate = optFields.contains(FormulaCandidate.OptField.statistics)
                 ? asFormulaCandidate(res)
                 : asFormulaCandidate(res.getId(), res.getAnnotationOrThrow(FormulaScoring.class));
 
         if (optFields.contains(FormulaCandidate.OptField.fragmentationTree))
-            res.getAnnotation(FTree.class).map(FragmentationTree::fromFtree).ifPresent(candidate::setFragmentationTree);
+            res.getAnnotation(FTree.class).map(FragmentationTree::fromFtree).ifPresent(candidate::fragmentationTree);
         if (optFields.contains(FormulaCandidate.OptField.simulatedIsotopePattern))
-            asSimulatedIsotopePattern(inst, res).ifPresent(candidate::setSimulatedIsotopePattern);
+            asSimulatedIsotopePattern(inst, res).ifPresent(candidate::simulatedIsotopePattern);
+        if (optFields.contains(FormulaCandidate.OptField.lipidAnnotation))
+            res.getAnnotation(FTree.class).map(SiriusProjectSpaceImpl::asLipidAnnotation).ifPresent(candidate::lipidAnnotation);
         if (optFields.contains(FormulaCandidate.OptField.predictedFingerprint))
             res.getAnnotation(FingerprintResult.class).map(fpResult -> fpResult.fingerprint.toProbabilityArray())
-                    .ifPresent(candidate::setPredictedFingerprint);
+                    .ifPresent(candidate::predictedFingerprint);
         if (optFields.contains(FormulaCandidate.OptField.canopusPredictions))
-            res.getAnnotation(CanopusResult.class).map(CanopusPrediction::of).ifPresent(candidate::setCanopusPrediction);
+            res.getAnnotation(CanopusResult.class).map(CanopusPrediction::of).ifPresent(candidate::canopusPrediction);
         if (optFields.contains(FormulaCandidate.OptField.compoundClasses))
-            res.getAnnotation(CanopusResult.class).map(CompoundClasses::of).ifPresent(candidate::setCompoundClasses);
+            res.getAnnotation(CanopusResult.class).map(CompoundClasses::of).ifPresent(candidate::compoundClasses);
         return candidate;
+    }
+
+    private static LipidAnnotation asLipidAnnotation(FTree fTree) {
+        return fTree.getAnnotation(LipidSpecies.class).map(ls -> LipidAnnotation.builder()
+                .lipidSpecies(ls.toString())
+                .lipidClassName(ls.getLipidClass().longName())
+                .hypotheticalStructure(ls.generateHypotheticalStructure().orElse(null))
+                .build()
+        ).orElse(LipidAnnotation.builder().build());
     }
 
     public static AlignedFeature asAlignedFeature(CompoundContainerId cid) {
@@ -535,45 +551,44 @@ public class SiriusProjectSpaceImpl implements Project {
         return id;
     }
 
-    public static FormulaCandidate asFormulaCandidate(@NotNull FormulaResultId formulaId) {
+    public static FormulaCandidate.FormulaCandidateBuilder asFormulaCandidate(@NotNull FormulaResultId formulaId) {
         return FormulaCandidate.builder()
                 .formulaId(formulaId.fileName())
                 .molecularFormula(formulaId.getMolecularFormula().toString())
-                .adduct(formulaId.getIonType().toString())
-                .build();
+                .adduct(formulaId.getIonType().toString());
     }
 
-    public static FormulaCandidate asFormulaCandidate(@NotNull FormulaResultId formulaId, @Nullable FormulaScoring scorings) {
-        final FormulaCandidate frs = asFormulaCandidate(formulaId);
+    public static FormulaCandidate.FormulaCandidateBuilder asFormulaCandidate(@NotNull FormulaResultId formulaId, @Nullable FormulaScoring scorings) {
+        final FormulaCandidate.FormulaCandidateBuilder frs = asFormulaCandidate(formulaId);
 
         if (scorings != null) {
             scorings.getAnnotation(SiriusScore.class).
-                    ifPresent(sscore -> frs.setSiriusScore(sscore.score()));
+                    ifPresent(sscore -> frs.siriusScore(sscore.score()));
             scorings.getAnnotation(IsotopeScore.class).
-                    ifPresent(iscore -> frs.setIsotopeScore(iscore.score()));
+                    ifPresent(iscore -> frs.isotopeScore(iscore.score()));
             scorings.getAnnotation(TreeScore.class).
-                    ifPresent(tscore -> frs.setTreeScore(tscore.score()));
+                    ifPresent(tscore -> frs.treeScore(tscore.score()));
             scorings.getAnnotation(ZodiacScore.class).
-                    ifPresent(zscore -> frs.setZodiacScore(zscore.score()));
+                    ifPresent(zscore -> frs.zodiacScore(zscore.score()));
             scorings.getAnnotation(TopCSIScore.class).
-                    ifPresent(csiScore -> frs.setTopCSIScore(csiScore.score()));
+                    ifPresent(csiScore -> frs.topCSIScore(csiScore.score()));
         }
 
         return frs;
     }
 
-    public static FormulaCandidate asFormulaCandidate(@NotNull FormulaResult formulaResult) {
+    public static FormulaCandidate.FormulaCandidateBuilder asFormulaCandidate(@NotNull FormulaResult formulaResult) {
         @NotNull FormulaScoring scorings = formulaResult.getAnnotationOrThrow(FormulaScoring.class);
 
-        final FormulaCandidate frs = asFormulaCandidate(formulaResult.getId(), scorings);
+        final FormulaCandidate.FormulaCandidateBuilder frs = asFormulaCandidate(formulaResult.getId(), scorings);
 
         formulaResult.getAnnotation(FTree.class).
                 ifPresent(fTree -> {
                     final FTreeMetricsHelper metrHelp = new FTreeMetricsHelper(fTree);
-                    frs.setNumOfExplainedPeaks(metrHelp.getNumOfExplainedPeaks());
-                    frs.setNumOfExplainablePeaks(metrHelp.getNumberOfExplainablePeaks());
-                    frs.setTotalExplainedIntensity(metrHelp.getExplainedIntensityRatio());
-                    frs.setMedianMassDeviation(metrHelp.getMedianMassDeviation());
+                    frs.numOfExplainedPeaks(metrHelp.getNumOfExplainedPeaks());
+                    frs.numOfExplainablePeaks(metrHelp.getNumberOfExplainablePeaks());
+                    frs.totalExplainedIntensity(metrHelp.getExplainedIntensityRatio());
+                    frs.medianMassDeviation(metrHelp.getMedianMassDeviation());
                 });
 
         return frs;
@@ -585,7 +600,8 @@ public class SiriusProjectSpaceImpl implements Project {
         if (Stream.of(
                         FormulaCandidate.OptField.statistics,
                         FormulaCandidate.OptField.fragmentationTree,
-                        FormulaCandidate.OptField.simulatedIsotopePattern)
+                        FormulaCandidate.OptField.simulatedIsotopePattern,
+                        FormulaCandidate.OptField.lipidAnnotation)
                 .anyMatch(optFields::contains))
             classes.add(FTree.class);
 
@@ -614,7 +630,7 @@ public class SiriusProjectSpaceImpl implements Project {
                             final FeatureAnnotations cSum = new FeatureAnnotations();
 //
                             //add formula summary
-                            cSum.setFormulaAnnotation(asFormulaCandidate(topHit));
+                            cSum.setFormulaAnnotation(asFormulaCandidate(topHit).build());
 
                             // todo msnovelist: add msnovelist candidatas
 //                        topHit.getAnnotation(FBCandidatesTopK.class).map(FBCandidatesTopK::getResults)
@@ -638,7 +654,7 @@ public class SiriusProjectSpaceImpl implements Project {
                         final FeatureAnnotations cSum = new FeatureAnnotations();
 //
                         //add formula summary
-                        cSum.setFormulaAnnotation(asFormulaCandidate(topHit));
+                        cSum.setFormulaAnnotation(asFormulaCandidate(topHit).build());
 
                         // fingerid result
                         topHit.getAnnotation(FBCandidatesTopK.class).map(FBCandidatesTopK::getResults)

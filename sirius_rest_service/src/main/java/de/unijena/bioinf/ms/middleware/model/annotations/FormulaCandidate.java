@@ -32,13 +32,12 @@ import lombok.*;
  * such as fragmentation trees and simulated isotope pattern.
  */
 @Getter
-@Setter
 @AllArgsConstructor
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FormulaCandidate {
     @Schema(enumAsRef = true, name = "FormulaCandidateOptField", nullable = true)
-    public enum OptField {none, statistics, fragmentationTree, simulatedIsotopePattern, predictedFingerprint, compoundClasses, canopusPredictions};
+    public enum OptField {none, statistics, fragmentationTree, simulatedIsotopePattern, lipidAnnotation, predictedFingerprint, compoundClasses, canopusPredictions}
 
     /**
      * Unique identifier of this formula candidate
@@ -101,6 +100,13 @@ public class FormulaCandidate {
     protected AnnotatedSpectrum simulatedIsotopePattern;
 
     /**
+     * ElGordo lipid annotation of this candidate.
+     * NULL if annotation was not requested. lipidAnnotation.lipidSpecies == NULL if candidate has not been classified as a lipid
+     */
+    @Schema(nullable = true)
+    protected LipidAnnotation lipidAnnotation;
+
+    /**
      * Probabilistic molecular fingerprint predicted by CSI:FingerID
      */
     @Schema(nullable = true)
@@ -117,6 +123,4 @@ public class FormulaCandidate {
      */
     @Schema(nullable = true)
     protected CanopusPrediction canopusPrediction;
-
-    //todo add LipidClass prediction
 }
