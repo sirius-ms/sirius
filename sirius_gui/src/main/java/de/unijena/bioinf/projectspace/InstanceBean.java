@@ -170,7 +170,7 @@ public class InstanceBean extends Instance implements SiriusPCS {
         return getMutableExperiment().getMergedMs1Spectrum();
     }
 
-    public PrecursorIonType getIonization() {
+    public PrecursorIonType getIonType() {
         return getID().getIonType().orElseGet(() -> getMutableExperiment().getPrecursorIonType());
     }
 
@@ -227,8 +227,8 @@ public class InstanceBean extends Instance implements SiriusPCS {
             return this;
         }
 
-        public Setter setIonization(final PrecursorIonType ionization) {
-            mods.add((exp) -> exp.setPrecursorIonType(ionization));
+        public Setter setIonType(final PrecursorIonType ionType) {
+            mods.add((exp) -> exp.setPrecursorIonType(ionType));
             return this;
         }
 
