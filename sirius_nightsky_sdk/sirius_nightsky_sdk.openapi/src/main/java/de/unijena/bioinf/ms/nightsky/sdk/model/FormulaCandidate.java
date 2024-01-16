@@ -25,6 +25,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.CanopusPrediction;
 import de.unijena.bioinf.ms.nightsky.sdk.model.CompoundClasses;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Deviation;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FragmentationTree;
+import de.unijena.bioinf.ms.nightsky.sdk.model.LipidAnnotation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -49,6 +50,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   FormulaCandidate.JSON_PROPERTY_TOP_C_S_I_SCORE,
   FormulaCandidate.JSON_PROPERTY_FRAGMENTATION_TREE,
   FormulaCandidate.JSON_PROPERTY_SIMULATED_ISOTOPE_PATTERN,
+  FormulaCandidate.JSON_PROPERTY_LIPID_ANNOTATION,
   FormulaCandidate.JSON_PROPERTY_PREDICTED_FINGERPRINT,
   FormulaCandidate.JSON_PROPERTY_COMPOUND_CLASSES,
   FormulaCandidate.JSON_PROPERTY_CANOPUS_PREDICTION
@@ -96,6 +98,9 @@ public class FormulaCandidate {
 
   public static final String JSON_PROPERTY_SIMULATED_ISOTOPE_PATTERN = "simulatedIsotopePattern";
   private AnnotatedSpectrum simulatedIsotopePattern;
+
+  public static final String JSON_PROPERTY_LIPID_ANNOTATION = "lipidAnnotation";
+  private LipidAnnotation lipidAnnotation;
 
   public static final String JSON_PROPERTY_PREDICTED_FINGERPRINT = "predictedFingerprint";
   private List<Double> predictedFingerprint;
@@ -473,6 +478,32 @@ public class FormulaCandidate {
   }
 
 
+  public FormulaCandidate lipidAnnotation(LipidAnnotation lipidAnnotation) {
+    
+    this.lipidAnnotation = lipidAnnotation;
+    return this;
+  }
+
+   /**
+   * Get lipidAnnotation
+   * @return lipidAnnotation
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_LIPID_ANNOTATION)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public LipidAnnotation getLipidAnnotation() {
+    return lipidAnnotation;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_LIPID_ANNOTATION)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setLipidAnnotation(LipidAnnotation lipidAnnotation) {
+    this.lipidAnnotation = lipidAnnotation;
+  }
+
+
   public FormulaCandidate predictedFingerprint(List<Double> predictedFingerprint) {
     
     this.predictedFingerprint = predictedFingerprint;
@@ -581,6 +612,7 @@ public class FormulaCandidate {
         Objects.equals(this.topCSIScore, formulaCandidate.topCSIScore) &&
         Objects.equals(this.fragmentationTree, formulaCandidate.fragmentationTree) &&
         Objects.equals(this.simulatedIsotopePattern, formulaCandidate.simulatedIsotopePattern) &&
+        Objects.equals(this.lipidAnnotation, formulaCandidate.lipidAnnotation) &&
         Objects.equals(this.predictedFingerprint, formulaCandidate.predictedFingerprint) &&
         Objects.equals(this.compoundClasses, formulaCandidate.compoundClasses) &&
         Objects.equals(this.canopusPrediction, formulaCandidate.canopusPrediction);
@@ -588,7 +620,7 @@ public class FormulaCandidate {
 
   @Override
   public int hashCode() {
-    return Objects.hash(formulaId, molecularFormula, adduct, siriusScore, isotopeScore, treeScore, zodiacScore, numOfExplainedPeaks, numOfExplainablePeaks, totalExplainedIntensity, medianMassDeviation, topCSIScore, fragmentationTree, simulatedIsotopePattern, predictedFingerprint, compoundClasses, canopusPrediction);
+    return Objects.hash(formulaId, molecularFormula, adduct, siriusScore, isotopeScore, treeScore, zodiacScore, numOfExplainedPeaks, numOfExplainablePeaks, totalExplainedIntensity, medianMassDeviation, topCSIScore, fragmentationTree, simulatedIsotopePattern, lipidAnnotation, predictedFingerprint, compoundClasses, canopusPrediction);
   }
 
   @Override
@@ -609,6 +641,7 @@ public class FormulaCandidate {
     sb.append("    topCSIScore: ").append(toIndentedString(topCSIScore)).append("\n");
     sb.append("    fragmentationTree: ").append(toIndentedString(fragmentationTree)).append("\n");
     sb.append("    simulatedIsotopePattern: ").append(toIndentedString(simulatedIsotopePattern)).append("\n");
+    sb.append("    lipidAnnotation: ").append(toIndentedString(lipidAnnotation)).append("\n");
     sb.append("    predictedFingerprint: ").append(toIndentedString(predictedFingerprint)).append("\n");
     sb.append("    compoundClasses: ").append(toIndentedString(compoundClasses)).append("\n");
     sb.append("    canopusPrediction: ").append(toIndentedString(canopusPrediction)).append("\n");

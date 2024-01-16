@@ -207,6 +207,7 @@ Class | Method | HTTP request | Description
  - [JobProgress](docs/JobProgress.md)
  - [JobSubmission](docs/JobSubmission.md)
  - [LicenseInfo](docs/LicenseInfo.md)
+ - [LipidAnnotation](docs/LipidAnnotation.md)
  - [LossEdge](docs/LossEdge.md)
  - [MsData](docs/MsData.md)
  - [PageAlignedFeature](docs/PageAlignedFeature.md)

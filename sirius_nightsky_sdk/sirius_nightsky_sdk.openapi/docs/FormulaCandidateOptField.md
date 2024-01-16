@@ -13,6 +13,8 @@
 
 * `SIMULATEDISOTOPEPATTERN` (value: `"simulatedIsotopePattern"`)
 
+* `LIPIDANNOTATION` (value: `"lipidAnnotation"`)
+
 * `PREDICTEDFINGERPRINT` (value: `"predictedFingerprint"`)
 
 * `COMPOUNDCLASSES` (value: `"compoundClasses"`)

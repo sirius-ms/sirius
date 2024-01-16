@@ -1,0 +1,16 @@
+
+
+# LipidAnnotation
+
+
+
+## Properties
+
+| Name | Type | Description | Notes |
+|------------ | ------------- | ------------- | -------------|
+|**lipidSpecies** | **String** | Predicted lipid species in LIPID MAPS notation.  NULL if not classified as lipid. |  [optional] |
+|**lipidClassName** | **String** | Human-readable name of the predicted lipid class. |  [optional] |
+|**hypotheticalStructure** | **String** | Hypothetical molecular structure of the predicted lipid species as SMILES.  NULL if hypothetical structure not available. |  [optional] |
+
+
+

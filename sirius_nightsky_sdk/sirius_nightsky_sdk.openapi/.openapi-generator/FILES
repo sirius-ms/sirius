@@ -46,6 +46,7 @@ docs/JobProgress.md
 docs/JobSubmission.md
 docs/JobsApi.md
 docs/LicenseInfo.md
+docs/LipidAnnotation.md
 docs/LoginAndAccountApi.md
 docs/LossEdge.md
 docs/MsData.md
@@ -138,6 +139,7 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/JobOptField.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/JobProgress.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/JobSubmission.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/LicenseInfo.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/LipidAnnotation.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/LossEdge.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/MsData.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageAlignedFeature.java

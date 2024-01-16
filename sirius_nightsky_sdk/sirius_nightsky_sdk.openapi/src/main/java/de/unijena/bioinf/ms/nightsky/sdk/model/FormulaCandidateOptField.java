@@ -34,6 +34,8 @@ public enum FormulaCandidateOptField {
   
   SIMULATEDISOTOPEPATTERN("simulatedIsotopePattern"),
   
+  LIPIDANNOTATION("lipidAnnotation"),
+  
   PREDICTEDFINGERPRINT("predictedFingerprint"),
   
   COMPOUNDCLASSES("compoundClasses"),

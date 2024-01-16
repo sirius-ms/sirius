@@ -22,6 +22,7 @@ Molecular formula candidate that holds a unique identifier (molecular formula + 
 |**topCSIScore** | **Double** | CSI:FingerID Score of the highest scoring structure candidate (top hit) of this formula candidate.  If NULL result is not available |  [optional] |
 |**fragmentationTree** | [**FragmentationTree**](FragmentationTree.md) |  |  [optional] |
 |**simulatedIsotopePattern** | [**AnnotatedSpectrum**](AnnotatedSpectrum.md) |  |  [optional] |
+|**lipidAnnotation** | [**LipidAnnotation**](LipidAnnotation.md) |  |  [optional] |
 |**predictedFingerprint** | **List&lt;Double&gt;** | Probabilistic molecular fingerprint predicted by CSI:FingerID |  [optional] |
 |**compoundClasses** | [**CompoundClasses**](CompoundClasses.md) |  |  [optional] |
 |**canopusPrediction** | [**CanopusPrediction**](CanopusPrediction.md) |  |  [optional] |
