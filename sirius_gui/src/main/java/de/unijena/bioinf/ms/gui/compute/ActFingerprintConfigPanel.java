@@ -31,7 +31,6 @@ public class ActFingerprintConfigPanel extends ActivatableConfigPanel<Fingerprin
     @Override
     protected void setComponentsEnabled(final boolean enabled) {
         super.setComponentsEnabled(enabled);
-        content.adductOptions.setEnabled(enabled);
     }
 
     @Override

@@ -144,7 +144,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
                 propertyFm.stringWidth(confProp)
         ).max(Integer::compareTo).get() + 15;
 
-        String ionValue = ec.getIonization().toString();
+        String ionValue = ec.getIonType().toString();
         double focD = ec.getIonMass();
         String focMass = focD > 0 ? numberFormat.format(focD) + " Da" : "unknown";
         String rtValue = ec.getID().getRt().map(RetentionTime::getRetentionTimeInSeconds).map(s -> s / 60)

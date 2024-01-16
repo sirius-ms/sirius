@@ -21,7 +21,6 @@
 
 package de.unijena.bioinf.ms.gui.compute;
 
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
@@ -109,7 +108,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             addConfigPanel("SIRIUS - Molecular Formula Identification", formulaIDConfigPanel);
 
             zodiacConfigs = new ActZodiacConfigPanel();
-            csiPredictConfigs = new ActFingerprintConfigPanel(formulaIDConfigPanel.content.ionizationList.checkBoxList);
+            csiPredictConfigs = new ActFingerprintConfigPanel(formulaIDConfigPanel.content.adductList.checkBoxList);
             csiSearchConfigs = new ActFingerblastConfigPanel(formulaIDConfigPanel.content.searchDBList.checkBoxList);
             canopusConfigPanel = new ActCanopusConfigPanel();
 
@@ -385,7 +384,6 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
 
         if (csiPredictConfigs != null && csiPredictConfigs.isToolSelected()) {
             toolCommands.add(csiPredictConfigs.content.toolCommand());
-            configCommand.removeIf(i -> i.startsWith("--AdductSettings.fallback"));
             configCommand.addAll(csiPredictConfigs.asParameterList());
         }
 
@@ -434,9 +432,9 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
                 if ((csiPredictConfigs.isToolSelected() || csiSearchConfigs.isToolSelected()) && checkResult.hasWorkerWarning()) {
                     if (checkResult.workerInfo == null ||
                             (!checkResult.workerInfo.supportsAllPredictorTypes(ConnectionMonitor.neededTypes.stream().filter(WorkerWithCharge::isNegative).collect(Collectors.toSet()))
-                                    && compoundsToProcess.stream().anyMatch(it -> it.getIonization().isNegative())) ||
+                                    && compoundsToProcess.stream().anyMatch(it -> it.getIonType().isNegative())) ||
                             (!checkResult.workerInfo.supportsAllPredictorTypes(ConnectionMonitor.neededTypes.stream().filter(WorkerWithCharge::isPositive).collect(Collectors.toSet()))
-                                    && compoundsToProcess.stream().anyMatch(it -> it.getIonization().isPositive()))
+                                    && compoundsToProcess.stream().anyMatch(it -> it.getIonType().isPositive()))
                     ) new WorkerWarningDialog(MF, checkResult.workerInfo == null);
                 }
             } else {
@@ -483,24 +481,13 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             }
         });
 
-        editPanel.ionizationCB.addActionListener(e ->
-                formulaIDConfigPanel.content.refreshPossibleIonizations(
-                        Collections.singleton(editPanel.getSelectedIonization().getIonization().getName()),
+        editPanel.ionTypeCB.addActionListener(e ->
+                formulaIDConfigPanel.content.refreshPossibleAdducts(
+                        Collections.singleton(editPanel.getSelectedAdduct().toString()),
                         formulaIDConfigPanel.isToolSelected())
         );
 
-        formulaIDConfigPanel.addEnableChangeListener((c, e) -> c.refreshPossibleIonizations(Collections.singleton(editPanel.getSelectedIonization().getIonization().getName()), e));
-
-        csiPredictConfigs.content.adductOptions.checkBoxList.addPropertyChangeListener("refresh", evt -> {
-            PrecursorIonType ionType = editPanel.getSelectedIonization();
-            if (ionType.hasNeitherAdductNorInsource() && !ionType.isIntrinsicalCharged()) {
-                csiPredictConfigs.content.adductOptions.setEnabled(csiPredictConfigs.isToolSelected());
-            } else {
-                csiPredictConfigs.content.adductOptions.checkBoxList.replaceElements(List.of(ionType.toString()));
-                csiPredictConfigs.content.adductOptions.checkBoxList.checkAll();
-                csiPredictConfigs.content.adductOptions.setEnabled(false);
-            }
-        });
+        formulaIDConfigPanel.addEnableChangeListener((c, e) -> c.refreshPossibleAdducts(Collections.singleton(editPanel.getSelectedAdduct().toString()), e));
 
         editPanel.setData(ec);
         /////// todo ugly hack end
