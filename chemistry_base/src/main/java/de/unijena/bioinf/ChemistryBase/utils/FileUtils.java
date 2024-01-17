@@ -48,6 +48,13 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 public class FileUtils {
 
+    public static long getFolderSizeOrThrow(Path startPath) {
+        try {
+            return getFolderSize(startPath);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
     public static long getFolderSize(Path startPath) throws IOException {
         final AtomicLong size = new AtomicLong(0);
 

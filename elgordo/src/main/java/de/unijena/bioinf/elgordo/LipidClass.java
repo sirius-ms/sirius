@@ -146,6 +146,10 @@ public enum LipidClass {
         return sphingolipid;
     }
 
+    public String getLipidMapsId() {
+        return lipidMapsId;
+    }
+
     public URI lipidMapsClassLink() {
         if (lipidMapsId != null) {
             return URI.create("https://lipidmaps.org/databases/lmsd/" + lipidMapsId);
