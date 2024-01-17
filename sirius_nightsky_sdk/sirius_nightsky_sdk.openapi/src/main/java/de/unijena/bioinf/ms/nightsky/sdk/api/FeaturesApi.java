@@ -11,6 +11,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.FormulaCandidate;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FormulaCandidateOptField;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FragmentationTree;
 import de.unijena.bioinf.ms.nightsky.sdk.model.LipidAnnotation;
+import de.unijena.bioinf.ms.nightsky.sdk.model.MsData;
 import de.unijena.bioinf.ms.nightsky.sdk.model.PageAlignedFeature;
 import de.unijena.bioinf.ms.nightsky.sdk.model.PageFormulaCandidate;
 import de.unijena.bioinf.ms.nightsky.sdk.model.PageStructureCandidateFormula;
@@ -1003,6 +1004,89 @@ public class FeaturesApi {
      */
     public ResponseSpec getLipidAnnotationWithResponseSpec(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
         return getLipidAnnotationRequestCreation(projectId, alignedFeatureId, formulaId);
+    }
+    /**
+     * Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; .
+     * Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; .
+     * <p><b>200</b> - Mass Spec data of this feature (aligned over runs).
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the Mass Spec data belong sto.
+     * @return MsData
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getMsDataRequestCreation(String projectId, String alignedFeatureId) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getMsData", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'alignedFeatureId' is set
+        if (alignedFeatureId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getMsData", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("alignedFeatureId", alignedFeatureId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<MsData> localVarReturnType = new ParameterizedTypeReference<MsData>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/ms-data", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; .
+     * Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; .
+     * <p><b>200</b> - Mass Spec data of this feature (aligned over runs).
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the Mass Spec data belong sto.
+     * @return MsData
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public MsData getMsData(String projectId, String alignedFeatureId) throws WebClientResponseException {
+        ParameterizedTypeReference<MsData> localVarReturnType = new ParameterizedTypeReference<MsData>() {};
+        return getMsDataRequestCreation(projectId, alignedFeatureId).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; .
+     * Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; .
+     * <p><b>200</b> - Mass Spec data of this feature (aligned over runs).
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the Mass Spec data belong sto.
+     * @return ResponseEntity&lt;MsData&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<MsData> getMsDataWithHttpInfo(String projectId, String alignedFeatureId) throws WebClientResponseException {
+        ParameterizedTypeReference<MsData> localVarReturnType = new ParameterizedTypeReference<MsData>() {};
+        return getMsDataRequestCreation(projectId, alignedFeatureId).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; .
+     * Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; .
+     * <p><b>200</b> - Mass Spec data of this feature (aligned over runs).
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the Mass Spec data belong sto.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getMsDataWithResponseSpec(String projectId, String alignedFeatureId) throws WebClientResponseException {
+        return getMsDataRequestCreation(projectId, alignedFeatureId);
     }
     /**
      * Returns simulated isotope pattern (SIRIUS) for the given formula result identifier.

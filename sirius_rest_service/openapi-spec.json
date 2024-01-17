@@ -1902,6 +1902,48 @@
         }
       }
     },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/ms-data": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "Mass Spec data (input data) for the given \u0027alignedFeatureId\u0027 .",
+        "description": "Mass Spec data (input data) for the given \u0027alignedFeatureId\u0027 .",
+        "operationId": "getMsData",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) the Mass Spec data belong sto.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mass Spec data of this feature (aligned over runs).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MsData"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas": {
       "get": {
         "tags": [
