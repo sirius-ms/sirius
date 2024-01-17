@@ -209,7 +209,6 @@ public class AlignedFeatureController {
      * @param formulaId      identifier of the requested formula result
      * @return Fragmentation Tree
      */
-    @Hidden
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/tree", produces = MediaType.APPLICATION_JSON_VALUE)
     public FragmentationTree getFragTree(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         FragmentationTree res = projectsProvider.getProjectOrThrow(projectId)
@@ -229,7 +228,6 @@ public class AlignedFeatureController {
      * @param formulaId      identifier of the requested formula result
      * @return Simulated isotope pattern
      */
-    @Hidden
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/isotope-pattern", produces = MediaType.APPLICATION_JSON_VALUE)
     public AnnotatedSpectrum getSimulatedIsotopePattern(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         AnnotatedSpectrum res = projectsProvider.getProjectOrThrow(projectId)
@@ -237,6 +235,25 @@ public class AlignedFeatureController {
                 .getSimulatedIsotopePattern();
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Isotope Pattern for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");
+        return res;
+    }
+
+    /**
+     * Returns Lipid annotation (ElGordo) for the given formula result identifier.
+     * ElGordo lipid annotation runs as part of the SIRIUS formula identification step.
+     *
+     * @param projectId      project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param formulaId      identifier of the requested formula result
+     * @return LipidAnnotation
+     */
+    @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/lipid-annotation", produces = MediaType.APPLICATION_JSON_VALUE)
+    public LipidAnnotation getLipidAnnotation(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
+        LipidAnnotation res = projectsProvider.getProjectOrThrow(projectId)
+                .findFormulaCandidateByFeatureIdAndId(alignedFeatureId, formulaId, FormulaCandidate.OptField.lipidAnnotation)
+                .getLipidAnnotation();
+        if (res == null)
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Lipid annotation for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");
         return res;
     }
 
@@ -249,7 +266,6 @@ public class AlignedFeatureController {
      * @param formulaId      identifier of the requested formula result
      * @return probabilistic fingerprint predicted by CSI:FingerID
      */
-    @Hidden
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/fingerprint", produces = MediaType.APPLICATION_JSON_VALUE)
     public double[] getFingerprintPrediction(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         double[] res = projectsProvider.getProjectOrThrow(projectId)
@@ -268,7 +284,6 @@ public class AlignedFeatureController {
      * @param formulaId      identifier of the requested formula result
      * @return Predicted compound classes
      */
-    @Hidden
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/canopus-prediction", produces = MediaType.APPLICATION_JSON_VALUE)
     public CanopusPrediction getCanopusPrediction(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         CanopusPrediction res = projectsProvider.getProjectOrThrow(projectId)
@@ -288,7 +303,6 @@ public class AlignedFeatureController {
      * @param formulaId      identifier of the requested formula result
      * @return Best matching Predicted compound classes
      */
-    @Hidden
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/best-compound-classes", produces = MediaType.APPLICATION_JSON_VALUE)
     public CompoundClasses getBestMatchingCompoundClasses(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         CompoundClasses res = projectsProvider.getProjectOrThrow(projectId)
