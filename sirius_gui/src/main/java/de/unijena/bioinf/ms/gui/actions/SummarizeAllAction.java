@@ -65,7 +65,11 @@ public class SummarizeAllAction extends AbstractGuiAction {
     }
 
     protected void run(@NotNull List<InstanceBean> compounds, String title) {
-        ExecutionDialog<SummaryConfigPanel> d = new ExecutionDialog<>(gui, new SummaryConfigPanel(Optional.ofNullable(mainFrame.ps().projectSpace().getLocation().getParent()).map(Path::toString).orElse("")), compounds, null, mainFrame, title, true);
+        String path = Optional.ofNullable(gui.getProjectManager().getProjectLocation())
+                .map(Path::of).map(Path::getParent).map(Path::normalize).map(Path::toString).orElse("");
+
+
+        ExecutionDialog<SummaryConfigPanel> d = new ExecutionDialog<>(gui, new SummaryConfigPanel(path), compounds, null, mainFrame, title, true);
         d.setIndeterminateProgress(false);
         d.start();
     }

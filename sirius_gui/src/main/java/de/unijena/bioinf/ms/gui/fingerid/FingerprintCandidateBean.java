@@ -62,7 +62,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * WARNING: This class is wor in progress
  */
 
-//todo can we create a dummy PCS for Immuatable Beans
+//todo can we create a dummy PCS for immutable Beans
 public class FingerprintCandidateBean implements SiriusPCS, Comparable<FingerprintCandidateBean> {
     private final MutableHiddenChangeSupport pcs = new MutableHiddenChangeSupport(this, true);
 
@@ -77,7 +77,6 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
     private static final double THRESHOLD_FP = 0.4;
 
     //data
-    protected final PrecursorIonType adduct;
     protected final ProbabilityFingerprint fp;
     protected final FingerprintCandidate candidate;
     protected final double score;
@@ -107,22 +106,21 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
     protected final FormulaResultBean parent;
 
 
-    public FingerprintCandidateBean(int rank, ProbabilityFingerprint fp, Scored<CompoundCandidate> scoredCandidate, Fingerprint candidatefp, PrecursorIonType adduct, FormulaResultBean parent) {
-        this(rank, fp, new FingerprintCandidate(scoredCandidate.getCandidate(), candidatefp), scoredCandidate.getScore(), adduct, parent);
+    public FingerprintCandidateBean(int rank, ProbabilityFingerprint fp, Scored<CompoundCandidate> scoredCandidate, Fingerprint candidatefp,  FormulaResultBean parent) {
+        this(rank, fp, new FingerprintCandidate(scoredCandidate.getCandidate(), candidatefp), scoredCandidate.getScore(), parent);
     }
 
-    public FingerprintCandidateBean(int rank, ProbabilityFingerprint fp, Scored<FingerprintCandidate> scoredCandidate, PrecursorIonType adduct, FormulaResultBean parent) {
-        this(rank, fp, scoredCandidate.getCandidate(), scoredCandidate.getScore(), adduct, parent);
+    public FingerprintCandidateBean(int rank, ProbabilityFingerprint fp, Scored<FingerprintCandidate> scoredCandidate,  FormulaResultBean parent) {
+        this(rank, fp, scoredCandidate.getCandidate(), scoredCandidate.getScore(),  parent);
     }
 
-    private FingerprintCandidateBean(int rank, ProbabilityFingerprint fp, FingerprintCandidate candidate, double candidateScore, PrecursorIonType adduct, FormulaResultBean parent) {
+    private FingerprintCandidateBean(int rank, ProbabilityFingerprint fp, FingerprintCandidate candidate, double candidateScore,  FormulaResultBean parent) {
         this.rank = rank;
         this.fp = fp;
         this.score = candidateScore;
         this.candidate = candidate;
         this.parent = parent;
         this.molecularFormulaString = candidate.getInchi().extractFormulaOrThrow().toString();
-        this.adduct = adduct;
         this.relevantFps = null;
 
 

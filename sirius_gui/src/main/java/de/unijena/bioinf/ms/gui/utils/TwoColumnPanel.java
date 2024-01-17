@@ -18,17 +18,12 @@
  */
 
 package de.unijena.bioinf.ms.gui.utils;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 07.10.16.
- */
 
 import javax.swing.*;
 import java.awt.*;
 
 /**
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ * @author Markus Fleischauer
  */
 public class TwoColumnPanel extends JPanel {
     public  final GridBagConstraints both, left, right;

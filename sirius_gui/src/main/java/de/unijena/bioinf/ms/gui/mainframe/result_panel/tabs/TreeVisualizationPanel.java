@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 import com.google.common.util.concurrent.AtomicDouble;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
+import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
@@ -52,12 +53,14 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-
+//todo post-nightsky: switch to nightsky api data structures
 
 public class TreeVisualizationPanel extends JPanel
         implements ActionListener, ChangeListener, ComponentListener,
@@ -76,8 +79,7 @@ public class TreeVisualizationPanel extends JPanel
                 + "</html>";
     }
 
-    //    FormulaResultBean sre;
-    FTree ftree;
+    String ftreeJson;
     public TreeViewerBrowser browser;
     TreeViewerBridge jsBridge;
     TreeViewerConnector jsConnector;
@@ -200,20 +202,19 @@ public class TreeVisualizationPanel extends JPanel
                         if (old != null && !old.isFinished()) {
                             old.cancel(false);
                             old.getResult(); //await cancellation so that nothing strange can happen.
-                        }else if (sre != null && sre.getFragTree().orElse(null) == ftree) {
+                        }else if (sre != null && Objects.equals(sre.getFTreeJson().orElse(null), ftreeJson)) {
                             return false;
                         }
                         browser.clear();
                         checkForInterruption();
                         if (sre != null) {
                             // At som stage we can think about directly load the json representation vom the project space
-                            TreeVisualizationPanel.this.ftree = sre.getFragTree().orElse(null);
+                            TreeVisualizationPanel.this.ftreeJson = sre.getFTreeJson().orElse(null);
                             checkForInterruption();
-                            if (ftree != null) {
-                                String jsonTree = new FTJsonWriter().treeToJsonString(TreeVisualizationPanel.this.ftree, sre.getID().getParentId().getIonMass().orElse(null));
+                            if (ftreeJson != null) {
                                 checkForInterruption();
-                                if (!jsonTree.isBlank()) {
-                                    browser.loadTree(jsonTree);
+                                if (!ftreeJson.isBlank()) {
+                                    browser.loadTree(ftreeJson);
                                     checkForInterruption();
                                     Jobs.runEDTAndWait(() -> setToolbarEnabled(true));
                                     checkForInterruption();
@@ -244,7 +245,7 @@ public class TreeVisualizationPanel extends JPanel
                                 Jobs.runEDTAndWait(() -> setToolbarEnabled(false));
                             }
                         }
-                        ftree = null;
+                        ftreeJson = null;
                         browser.clear(); //todo maybe not needed
                         Jobs.runEDTAndWait(() -> setToolbarEnabled(false));
                         return false;
@@ -483,7 +484,8 @@ public class TreeVisualizationPanel extends JPanel
             Jobs.runInBackgroundAndLoad(popupOwner, "Exporting Tree...", () -> {
                 try {
                     if (fff == FileFormat.dot) {
-                        new FTDotWriter().writeTreeToFile(fSelectedFile, ftree);
+                        new FTDotWriter().writeTreeToFile(fSelectedFile,
+                                new FTJsonReader().treeFromJsonString(ftreeJson, null));
                     } else if (fff == FileFormat.svg) {
                         final StringBuilder svg = new StringBuilder();
                         Jobs.runJFXAndWait(() -> svg.append(jsBridge.getSVG()));
@@ -493,7 +495,7 @@ public class TreeVisualizationPanel extends JPanel
                         Jobs.runJFXAndWait(() -> svg.append(jsBridge.getSVG()));
                         WebViewIO.writePDF(fSelectedFile, svg.toString());
                     } else if (fff == FileFormat.json) {
-                        new FTJsonWriter().writeTreeToFile(fSelectedFile, ftree);
+                        Files.writeString(fSelectedFile.toPath(), ftreeJson);
                     }
                 } catch (Exception e2) {
                     new StacktraceDialog(popupOwner, e2.getMessage(), e2);
@@ -509,7 +511,7 @@ public class TreeVisualizationPanel extends JPanel
         int width = ((JFXPanel) this.browser).getWidth();
         browser.executeJS("window.outerHeight = " + height);
         browser.executeJS("window.outerWidth = " + width);
-        if (ftree != null) {
+        if (ftreeJson != null) {
             browser.executeJS("update()");
             //this enusre the correct order without blocking
             Jobs.runJFXLater(() -> {

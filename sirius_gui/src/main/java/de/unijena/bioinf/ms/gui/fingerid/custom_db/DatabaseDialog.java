@@ -169,16 +169,16 @@ public class DatabaseDialog extends JDialog {
             if (new QuestionDialog(getOwner(), msg).isSuccess()) {
 
                 try {
-                    Job job = gui.getSiriusClient().jobs().startCommand(gui.getProjectId(), new CommandSubmission()
-                                    .addCommandItem(CustomDBOptions.class.getAnnotation(CommandLine.Command.class).name())
-                                    .addCommandItem("--remove").addCommandItem(name),
-                            List.of(JobOptField.PROGRESS)
-                    );
-
-                    LoadingBackroundTask.runInBackground(gui.getMainFrame(),
-                                    "Deleting database '" + name + "'...", null,
-                                    new SseProgressJJob(gui.getSiriusClient(), gui.getProjectId(), job))
-                            .awaitResult();
+                    gui.applySiriusClient((c, pid) -> {
+                        Job job = c.jobs().startCommand(pid, new CommandSubmission()
+                                        .addCommandItem(CustomDBOptions.class.getAnnotation(CommandLine.Command.class).name())
+                                        .addCommandItem("--remove").addCommandItem(name),
+                                List.of(JobOptField.PROGRESS)
+                        );
+                        return LoadingBackroundTask.runInBackground(gui.getMainFrame(),
+                                "Deleting database '" + name + "'...", null,
+                                new SseProgressJJob(gui.getSiriusClient(), pid, job));
+                    }).awaitResult();
                 } catch (ExecutionException ex) {
                     LoggerFactory.getLogger(getClass()).error("Error during Custom DB removal.", ex);
 
@@ -393,12 +393,13 @@ public class DatabaseDialog extends JDialog {
                 configPanel.asParameterList().forEach(sub::addCommandItem);
                 sub.inputPaths(sources.stream().map(Path::toString).toList());
 
-                final Job j = gui.getSiriusClient().jobs().startCommand(gui.getProjectId(), sub, List.of(JobOptField.PROGRESS));
-
-                LoadingBackroundTask.runInBackground(gui.getMainFrame(),
-                        "Importing into '" + configPanel.dbLocationField.getFilePath() + "'...", null,
-                        new SseProgressJJob(gui.getSiriusClient(), gui.getProjectId(), j)
-                ).awaitResult();
+                gui.applySiriusClient((c, pid) -> {
+                    final Job j = c.jobs().startCommand(pid, sub, List.of(JobOptField.PROGRESS));
+                    return LoadingBackroundTask.runInBackground(gui.getMainFrame(),
+                            "Importing into '" + configPanel.dbLocationField.getFilePath() + "'...", null,
+                            new SseProgressJJob(gui.getSiriusClient(), pid, j)
+                    );
+                }).awaitResult();
 
                 whenCustomDbIsAdded(configPanel.dbLocationField.getFilePath());
             } catch (ExecutionException ex) {

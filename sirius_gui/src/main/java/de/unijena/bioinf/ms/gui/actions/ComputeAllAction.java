@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 
 /**
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ * @author Markus Fleischauer
  */
 public class ComputeAllAction extends AbstractGuiAction {
     private final static AtomicBoolean isActive = new AtomicBoolean(false);
@@ -51,7 +51,7 @@ public class ComputeAllAction extends AbstractGuiAction {
         setEnabled(!mainFrame.getCompoundList().getCompoundList().isEmpty());
 
         //Listen if there are active gui jobs
-        gui.withSiriusClient((pid, client) -> client.addEventListener(evt -> {
+        gui.acceptSiriusClient((client, pid) -> client.addEventListener(evt -> {
             DataObjectEvent<BackgroundComputationsStateEvent> eventData = ((DataObjectEvent<BackgroundComputationsStateEvent>) evt.getNewValue());
             if (eventData.getData().getNumberOfRunningJobs() > 0) {
                 computationStarted();
@@ -60,14 +60,14 @@ public class ComputeAllAction extends AbstractGuiAction {
             }
         }, pid, DataEventType.BACKGROUND_COMPUTATIONS_STATE));
 
-        gui.withSiriusClient((pid, client) -> client.jobs().hasJobs(pid, false));
+        gui.acceptSiriusClient((client, pid) -> client.jobs().hasJobs(pid, false));
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         if (isActive.get()) {
-            Jobs.runInBackgroundAndLoad(mainFrame, "Canceling Jobs...", () -> gui.getSiriusClient().jobs()
-                    .deleteJobs(gui.getProjectId(), true, true));
+            Jobs.runInBackgroundAndLoad(mainFrame, "Canceling Jobs...", () ->
+                    gui.acceptSiriusClient((c, pid) -> c.jobs().deleteJobs(pid, true, true)));
         } else {
             if (mainFrame.getCompounds().isEmpty()){
                 LoggerFactory.getLogger(getClass()).warn("Not instances to compute! Closing Compute Dialog...");

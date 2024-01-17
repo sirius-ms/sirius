@@ -19,12 +19,13 @@
 
 package de.unijena.bioinf.ms.gui.mainframe;
 
-import ca.odell.glazedlists.BasicEventList;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.actions.ImportAction;
+import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.JobDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
@@ -38,9 +39,7 @@ import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListView;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableExperimentListPanel;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
-import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.projectspace.InstanceImporter;
 import org.jetbrains.annotations.NotNull;
@@ -68,16 +67,16 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     //Logging Panel
     private final LogDialog log;
-    private String projectId;
+    private final SiriusGui gui;
+
+    public SiriusGui getGui() {
+        return gui;
+    }
+
     public LogDialog getLogConsole() {
         return log;
     }
-
-    private GuiProjectSpaceManager ps;
-    @Deprecated
-    public GuiProjectSpaceManager ps() {
-        return ps;
-    }
+//    private GuiProjectSpaceManager ps;
 
     private boolean closeProjectOnDispose = true;
 
@@ -88,8 +87,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
     public void setCloseProjectOnDispose(boolean closeProjectOnDispose) {
         this.closeProjectOnDispose = closeProjectOnDispose;
     }
-
-    private BasicEventList<InstanceBean> compoundBaseList;
 
     //left side panel
     private CompoundList compoundList;
@@ -135,11 +132,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
         return toolbar;
     }
 
-    private NightSkyClient siriusClient;
-
-    public NightSkyClient getSiriusClient() {
-        return siriusClient;
-    }
 
     private final ActionMap globalActions = new ActionMap();
 
@@ -149,7 +141,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
     }
 
     // methods for creating the mainframe
-    public MainFrame() {
+    public MainFrame(SiriusGui gui) {
         super(ApplicationCore.VERSION_STRING());
         //inti connection monitor
         setIconImage(Icons.SIRIUS_APP_IMAGE);
@@ -159,6 +151,9 @@ public class MainFrame extends JFrame implements DropTargetListener {
         new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this);
 
         log = new LogDialog(null,false, Level.INFO); //todo property
+
+        this.gui = gui;
+        decoradeMainFrame();
     }
 
     //if we want to add taskbar stuff we can configure this here
@@ -176,17 +171,13 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
 
 
-    public void decoradeMainFrame(SiriusGui gui, GuiProjectSpaceManager ps) {
-        this.projectId = gui.getProjectId();
-        this.siriusClient = gui.getSiriusClient();
-        //add project-space
-        this.ps = ps;
+    private void decoradeMainFrame() {
 
-        compoundBaseList = ps().INSTANCE_LIST;
-        Jobs.runEDTAndWaitLazy(() -> setTitlePath(ps().projectSpace().getLocation().toString()));
+
+        Jobs.runEDTAndWaitLazy(() -> setTitlePath(gui.getProjectManager().getProjectLocation()));
 
         // create models for views
-        compoundList = new CompoundList(this, ps());
+        compoundList = new CompoundList(gui);
         formulaList = new FormulaList(compoundList);
 
 
@@ -254,33 +245,38 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     }
 
-    public static final String DONT_ASK_OPEN_KEY = "de.unijena.bioinf.sirius.dragdrop.open.dontAskAgain";
+    public static final String DONT_ASK_NEW_WINDOW_KEY = "de.unijena.bioinf.sirius.dragdrop.newWindow.dontAskAgain";
 
     @Override
     public void drop(DropTargetDropEvent dtde) {
-        boolean openNewProject = false;
+        boolean openInNewWindow = false;
 
         final InputFilesOptions inputF = new InputFilesOptions();
         inputF.msInput = Jobs.runInBackgroundAndLoad(this, "Analyzing Dropped Files...", false,
                 InstanceImporter.makeExpandFilesJJob(DragAndDrop.getFileListFromDrop(this, dtde))).getResult();
 
         if (!inputF.msInput.isEmpty()) {
-            if (inputF.msInput.isSingleProject())
-                openNewProject = new QuestionDialog(this, "<html><body>Do you want to open the dropped Project instead of importing it? <br> The currently opened project will be closed!</br></body></html>"/*, DONT_ASK_OPEN_KEY*/).isSuccess();
+            if (inputF.msInput.isSingleProject()) {
+                openInNewWindow = new QuestionDialog(this, "<html><body>Open the dropped Project in an additional Window? Otherwise the current one will be replace. </body></html>", DONT_ASK_NEW_WINDOW_KEY).isSuccess();
 
-            if (openNewProject) {
-                //todo nightsky open new project via API
-                throw new IllegalStateException("openNewProject not implemented");
+                if (openInNewWindow) {
+                    // todo nightsky open new project via API
+                    // todo nightsky prevent importing projects jsut ask whether it should opened in the new window or not!
+                    throw new IllegalStateException("openNewProject in new window not yet implemented");
 //                openNewProjectSpace(inputF.msInput.projects.keySet().iterator().next());
-            } else {
-                importDragAndDropFiles(inputF);
+                } else {
+                    throw new IllegalStateException("openNewProject in same window not yet implemented");
+                }
+            }else {
+                importDragAndDropFiles(inputF); //does not support importing projects
             }
         }
     }
 
 
     private void importDragAndDropFiles(InputFilesOptions files) {
-        ps().importOneExperimentPerLocation(files, this); //import all batch mode importable file types (e.g. .sirius, project-dir, .ms, .mgf, .mzml, .mzxml)
+        //import all batch mode importable file types (e.g. .ms, .mgf, .mzml, .mzxml)
+        ((ImportAction)SiriusActions.IMPORT_EXP_BATCH.getInstance(gui)).importOneExperimentPerLocation(files, this);
 
         // check if unknown files contain csv files with spectra
         final CSVFormatReader csvChecker = new CSVFormatReader();
@@ -296,9 +292,5 @@ public class MainFrame extends JFrame implements DropTargetListener {
         LoadController lc = new LoadController(this);
         lc.addSpectra(csvFiles, msFiles, mgfFiles);
         lc.showDialog();
-    }
-
-    public String getProjectId() {
-        return projectId;
     }
 }

@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.projectspace.InstanceBean;
 
 import java.awt.event.ActionEvent;
 import java.util.Comparator;
@@ -32,6 +33,6 @@ public class OrderCompoundByIndex extends AbstractGuiAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        mainFrame.getCompoundList().orderBy(Comparator.comparing(b -> b.getID().getCompoundIndex()));
+        mainFrame.getCompoundList().orderBy(Comparator.comparing(InstanceBean::getIndex));
     }
 }

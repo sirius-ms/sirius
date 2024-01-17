@@ -36,7 +36,7 @@ public class OrderCompoundByConfidence extends AbstractGuiAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         mainFrame.getCompoundList().orderBy(Comparator
-                .comparingDouble((InstanceBean o) -> o.getID().getConfidenceScore().orElse(Double.NEGATIVE_INFINITY))
+                .comparingDouble((InstanceBean o) -> o.getConfidenceScoreDefault().orElse(Double.NEGATIVE_INFINITY))
                         .reversed());
     }
 }

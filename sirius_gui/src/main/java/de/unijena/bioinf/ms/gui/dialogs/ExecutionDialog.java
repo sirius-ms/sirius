@@ -49,7 +49,8 @@ public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
         this.gui = gui;
         init(configPanel, compounds, nonCompoundInput);
     }
-    private MainFrame mf(){
+
+    private MainFrame mf() {
         return (MainFrame) getOwner();
     }
 
@@ -78,8 +79,6 @@ public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
         execute.addActionListener(e -> execute());
 
         cancel.addActionListener(e -> cancel());
-
-//        setMinimumSize(new Dimension(350, getMinimumSize().height));
     }
 
     public void start() {
@@ -118,17 +117,17 @@ public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
             configPanel.asParameterList().forEach(sub::addCommandItem);
 
             if (compounds != null)
-                sub.alignedFeatureIds(compounds.stream().map(ib -> ib.getID().getDirectoryName()).toList());
+                sub.alignedFeatureIds(compounds.stream().map(InstanceBean::getFeatureId).toList());
             if (nonCompoundInput != null)
                 sub.inputPaths(nonCompoundInput.stream().map(Path::toString).toList());
 
-            Job j = gui.getSiriusClient().jobs().startCommand(gui.getProjectId(), sub, List.of(JobOptField.PROGRESS));
-
-            LoadingBackroundTask.runInBackground(mf(),
-                    "Running '" + configPanel.toolCommand() + "'...", indeterminateProgress, null,
-                    new SseProgressJJob(gui.getSiriusClient(), gui.getProjectId(), j)
-            );
-
+            gui.applySiriusClient((c, pid) -> {
+                Job j = c.jobs().startCommand(pid, sub, List.of(JobOptField.PROGRESS));
+                return LoadingBackroundTask.runInBackground(mf(),
+                        "Running '" + configPanel.toolCommand() + "'...", indeterminateProgress, null,
+                        new SseProgressJJob(gui.getSiriusClient(), pid, j)
+                );
+            }).awaitResult();
         } catch (Exception e) {
             LoggerFactory.getLogger(getClass()).error("Error when running '" + configPanel.toolCommand() + "'.", e);
             new ExceptionDialog(mf(), e.getMessage());

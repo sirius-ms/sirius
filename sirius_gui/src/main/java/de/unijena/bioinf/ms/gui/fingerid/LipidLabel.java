@@ -20,12 +20,14 @@
 
 package de.unijena.bioinf.ms.gui.fingerid;
 
-import de.unijena.bioinf.elgordo.LipidSpecies;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.nightsky.sdk.model.FormulaCandidate;
+import de.unijena.bioinf.ms.nightsky.sdk.model.LipidAnnotation;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -34,13 +36,23 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 public class LipidLabel extends JLabel implements ActiveElementChangedListener<FingerprintCandidateBean, Set<FormulaResultBean>> {
 
 
-    private volatile LipidSpecies lipidSpecies;
+
+    public static URI makeLipidMapsFuzzySearchLink(String abbrev) {
+        String encAbb = URLEncoder.encode(abbrev, StandardCharsets.UTF_8);
+        return URI.create(String.format(Locale.US, "https://www.lipidmaps.org/data/structure/LMSDFuzzySearch.php?Name=%s&s=%s&SortResultsBy=Name", encAbb, encAbb));
+    }
+
+    private volatile LipidAnnotation lipidSpecies;
+
     public LipidLabel(StructureList source) {
         setBorder(BorderFactory.createEmptyBorder(3, GuiUtils.SMALL_GAP, 3, GuiUtils.SMALL_GAP));
         setForeground(Color.WHITE);
@@ -56,29 +68,10 @@ public class LipidLabel extends JLabel implements ActiveElementChangedListener<F
             public void mouseClicked(MouseEvent e) {
                 if (lipidSpecies != null) {
                     Jobs.runInBackground(() -> {
-                        //nice but too much info?
-                        /*try {
-                            List<String> lmIds = ProxyManager.applyClient(client -> {
-                                URI uri = URI.create(String.format(Locale.US, "https://www.lipidmaps.org/rest/compound/abbrev/%s/lm_id", URLEncoder.encode(lipidSpecies.toString(), StandardCharsets.UTF_8)));
-                                System.out.println(uri);
-                                HttpGet get = new HttpGet(uri);
-                                return client.execute(get, r -> {
-                                    ObjectNode array = new ObjectMapper().readValue(r.getEntity().getContent(), ObjectNode.class);
-                                    List<String> ids = new ArrayList<>();
-                                    array.forEach(node -> {
-                                        if (node.has("lm_id"))
-                                            ids.add(node.get("lm_id").asText(null));
-                                    });
-                                    return ids.stream().filter(Objects::nonNull).collect(Collectors.toList());
-                                });
-                            });
-                            if (lmIds != null && !lmIds.isEmpty())
-                                lmIds.forEach(lmId -> open(URI.create(String.format(Locale.US, DataSource.LIPID.URI, URLEncoder.encode(lmId, StandardCharsets.UTF_8)))));
-                        } catch (Exception ex) {
-                            LoggerFactory.getLogger(getClass()).error("Could not fetch lipid maps URL.", ex);
-                        }*/
-                        open(lipidSpecies.getLipidClass().lipidMapsClassLink());
-                        open(lipidSpecies.lipidMapsFuzzySearchLink());
+                        if (lipidSpecies.getLipidMapsId() != null)
+                            open(URI.create("https://lipidmaps.org/databases/lmsd/" + lipidSpecies.getLipidMapsId()));
+                        if (lipidSpecies.getLipidClassName() != null) //could also extract abbreviation instead
+                            open(makeLipidMapsFuzzySearchLink(lipidSpecies.getLipidClassName()));
                     });
                 }
             }
@@ -103,27 +96,33 @@ public class LipidLabel extends JLabel implements ActiveElementChangedListener<F
         setVisible(false);
         this.lipidSpecies = null;
         if (experiment != null && !experiment.isEmpty()) {
-            FormulaResultBean current = experiment.iterator().next();
-            current.getFragTree().flatMap(t -> t.getAnnotation(LipidSpecies.class)).ifPresent(lipidSpecies -> {
-                this.lipidSpecies = lipidSpecies;
+            String topHit = experiment.iterator().next().getParentInstance()
+                    .getFormulaAnnotation()
+                    .map(FormulaCandidate::getFormulaId).orElse(null);
+
+            this.lipidSpecies = experiment.stream().filter(fr -> fr.getFormulaId().equals(topHit))
+                    .findFirst().flatMap(FormulaResultBean::getLipidAnnotation).orElse(null);
+
+            if (this.lipidSpecies != null && lipidSpecies.getLipidSpecies() != null){
                 setText("<html>" +
-                        "<b>" + lipidSpecies + "</b>" +
+                        "<b>" + lipidSpecies.getLipidSpecies() + "</b>" +
                         " - " +
                         elgordoExplanation(lipidSpecies) +
                         " </html>");
                 setVisible(true);
-            });
+            }
+
             repaint();
         }
     }
 
-    private String elgordoExplanation(LipidSpecies species) {
+    private String elgordoExplanation(@NotNull LipidAnnotation species) {
         StringBuilder buf = new StringBuilder();
         buf.append("<b>El Gordo</b> classified this compound as <b>");
-        buf.append(species.getLipidClass().longName());
+        buf.append(species.getLipidClassName());
         buf.append("</b>.");
         buf.append("<br>Note that neither the exact chain locations nor the stereochemistry and the double bond locations can be determined from the MS/MS.");
-        if (species.chainsUnknown()) {
+        if (species.isChainsUnknown()) {
             buf.append("The formula composition of the chains could not be determined from the MS/MS, too.");
         }
         return buf.toString();

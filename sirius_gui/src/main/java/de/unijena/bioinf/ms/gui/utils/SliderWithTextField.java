@@ -28,9 +28,6 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
-/**
- * Created by Marcus Ludwig on 13.01.17.
- */
 public class SliderWithTextField extends JPanel {
 
     final private JSlider slider;

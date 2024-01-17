@@ -50,21 +50,6 @@ public class PrecursorSelector extends JPanel {
     private final BasicEventList<Peak> peaks = new BasicEventList<>();
     private double maxInt;
 
-
-    public PrecursorSelector(final InstanceBean ec) {
-        this(ec.getExperiment());
-    }
-
-    public PrecursorSelector(final Ms2Experiment exp) {
-        this(exp.getMs1Spectra(), exp.getMs2Spectra(), exp.getIonMass());
-    }
-
-    public PrecursorSelector(Iterable<? extends Spectrum<? extends Peak>> spectra, double ionMass) {
-        this();
-        //add data
-        setData(spectra, ionMass);
-    }
-
     public PrecursorSelector(java.util.List<SimpleSpectrum> ms1, java.util.List<Ms2Spectrum<Peak>> ms2, double ionMass) {
         this();
         //add data

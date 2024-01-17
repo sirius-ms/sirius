@@ -25,9 +25,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
-/**
- * Created by fleisch on 18.05.17.
- */
+
 public class SearchTextField extends TwoColumnPanel {
     public final PlaceholderTextField textField;
 

@@ -32,12 +32,17 @@ import javax.swing.*;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Function;
 
-public class CompoundClassList extends ActionList<ClassyfirePropertyBean, FormulaResultBean> implements ActiveElementChangedListener<FormulaResultBean, InstanceBean> {
+public class CompoundClassList extends ActionList<CompoundClassBean, FormulaResultBean> implements ActiveElementChangedListener<FormulaResultBean, InstanceBean> {
 
-    public CompoundClassList(final FormulaList source) {
-        super(ClassyfirePropertyBean.class, DataSelectionStrategy.FIRST_SELECTED);
+
+    private final Function<FormulaResultBean, List<CompoundClassBean>> contentExtractor;
+
+    public CompoundClassList(final FormulaList source, Function<FormulaResultBean, List<CompoundClassBean>> contentExtractor) {
+        super(CompoundClassBean.class, DataSelectionStrategy.FIRST_SELECTED);
         source.addActiveResultChangedListener(this);
+        this.contentExtractor = contentExtractor;
     }
 
 
@@ -59,7 +64,7 @@ public class CompoundClassList extends ActionList<ClassyfirePropertyBean, Formul
                     Jobs.runEDTAndWait(elementList::clear);
                     checkForInterruption();
                     if (sre != null) {
-                        final List<ClassyfirePropertyBean> tmp = sre.getCanopusResult().map(ClassyfirePropertyBean::fromCanopusResult).orElse(List.of());
+                        final List<CompoundClassBean> tmp = contentExtractor.apply(sre);
                         checkForInterruption();
                         if (!tmp.isEmpty())
                             Jobs.runEDTAndWait(() -> elementList.addAll(tmp));

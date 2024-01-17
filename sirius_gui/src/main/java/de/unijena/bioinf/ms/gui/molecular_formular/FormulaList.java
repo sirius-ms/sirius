@@ -21,8 +21,6 @@ package de.unijena.bioinf.ms.gui.molecular_formular;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.GibbsSampling.ZodiacScore;
-import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -32,9 +30,6 @@ import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
-import de.unijena.bioinf.sirius.scores.IsotopeScore;
-import de.unijena.bioinf.sirius.scores.SiriusScore;
-import de.unijena.bioinf.sirius.scores.TreeScore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -107,9 +102,9 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                         old.getResult(); //await cancellation so that nothing strange can happen.
                     }
                     checkForInterruption();
-                    if (ec != null && ec.getResults() != null && !ec.getResults().isEmpty()) {
+                    if (ec != null && ec.getFormulaCandidates() != null && !ec.getFormulaCandidates().isEmpty()) {
                         checkForInterruption();
-                        if (!ec.getResults().equals(elementList)) {
+                        if (!ec.getFormulaCandidates().equals(elementList)) {
                             checkForInterruption();
                             Jobs.runEDTAndWait(FormulaList.this::intiResultList);
                         }
@@ -165,7 +160,8 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
         elementListSelectionModel.clearSelection();
 //        elementList.clear();
 
-        final List<FormulaResultBean> r = readDataByFunction(InstanceBean::getResults);
+        final List<FormulaResultBean> r = readDataByFunction(InstanceBean::getFormulaCandidates);
+
         if (r != null && !r.isEmpty()) {
             double[] zscores = new double[r.size()];
             double[] sscores = new double[r.size()];
@@ -174,15 +170,14 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
             double[] csiScores = new double[r.size()];
             int i = 0;
 
-            for (FormulaResultBean element : r) {
-                element.registerProjectSpaceListeners();
-                zscores[i] = element.getScoreValueIfNa(ZodiacScore.class, 0d);
-                sscores[i] = element.getScoreValue(SiriusScore.class);
-                iScores[i] = element.getScoreValue(IsotopeScore.class);
-                tScores[i] = element.getScoreValue(TreeScore.class);
-                csiScores[i++] = element.getScoreValue(TopCSIScore.class);
+
+            for (FormulaResultBean fc : r) {
+                zscores[i] = fc.getZodiacScore().orElse(0d); //why do we want 0 here?
+                sscores[i] = fc.getSiriusScore().orElse(Double.NEGATIVE_INFINITY);
+                iScores[i] = fc.getIsotopeScore().orElse(Double.NEGATIVE_INFINITY);
+                tScores[i] = fc.getTreeScore().orElse(Double.NEGATIVE_INFINITY);
+                csiScores[i++] = fc.getTopCSIScore().orElse(Double.NEGATIVE_INFINITY);
             }
-//            elementList.addAll(r);
             refillElements(r);
 
             this.zodiacScoreStats.update(zscores);
@@ -194,7 +189,7 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
             this.explainedIntensity.setMinScoreValue(0).setMaxScoreValue(1)
                     .setScoreSum(this.explainedIntensity.getMax());
 
-            this.explainedPeaks.setMinScoreValue(0).setMaxScoreValue(r.get(0).getNumberOfExplainablePeaks())
+            this.explainedPeaks.setMinScoreValue(0).setMaxScoreValue(r.get(0).getNumOfExplainablePeaks().orElseThrow())
                     .setScoreSum(this.explainedPeaks.getMax());
         }
 
@@ -211,19 +206,10 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
     }
 
     protected Function<FormulaResultBean, Boolean> getBestFunc() {
-        return sre -> Double.isFinite(csiScoreStats.getMax()) && !Double.isNaN(csiScoreStats.getMax())
-                ? sre.getScoreValue(TopCSIScore.class) >= csiScoreStats.getMax()
-                : sre.getScore(ZodiacScore.class)
-                .map(it -> it.score() >= zodiacScoreStats.getMax())
-                .orElse(sre.getScoreValue(SiriusScore.class) >= siriusScoreStats.getMax());
-    }
-
-    protected Function<FormulaResultBean, RenderScore> getRenderScoreFunc() {
-        return sre -> sre.getScore(ZodiacScore.class)
-                .map(it -> RenderScore.of(it.score() * 100d, it.shortName()))
-                .orElse(RenderScore.of(
-                        Math.exp(sre.getScoreValue(SiriusScore.class) - siriusScoreStats.getMax()) / siriusScoreStats.getExpScoreSum() * 100d
-                        , sre.getScore(SiriusScore.class).map(SiriusScore::shortName).orElse("Formula Score")));
+        //top annotation corresponds to the best hit selected by sirius. so just check ID
+        return sre -> sre.getParentInstance().getFormulaAnnotation()
+                .map(it -> it.getFormulaId().equals(sre.getFormulaId()))
+                .orElse(false);
     }
 
     public static class RenderScore{

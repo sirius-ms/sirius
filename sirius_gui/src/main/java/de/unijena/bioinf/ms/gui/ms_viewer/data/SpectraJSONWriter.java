@@ -60,18 +60,6 @@ public class SpectraJSONWriter{
 		}
 	}
 
-	// DEBUG: for testing, MSViewerDataModel class should probably be removed
-	@Deprecated
-	public String spectrumJSONString(MSViewerDataModel dmodel){
-		ObjectNode spectrum = spectrum2json(dmodel);
-		final ObjectMapper objectMapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
-		try {
-			return objectMapper.writeValueAsString(spectrum);
-		} catch (JsonProcessingException e) {
-			throw new RuntimeException("Error generating JSON", e);
-		}
-	}
-
 	// MS1 vs. simulated MS1 isotope pattern (mirror)
 	public String ms1MirrorJSON(@NotNull SiriusIsotopePattern siriusIsotopePattern, Deviation ms1MassDiffDev) {
 		SimpleSpectrum spectrum = new SimpleSpectrum(siriusIsotopePattern.spectrum);

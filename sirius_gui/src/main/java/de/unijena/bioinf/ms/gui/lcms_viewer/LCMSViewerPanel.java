@@ -32,7 +32,7 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
         this.add(lcmsWebview, BorderLayout.CENTER);
 
         summaryPanel = new LCMSCompoundSummaryPanel();
-        this.add(new ToggableSidePanel("quality report", summaryPanel, BorderLayout.WEST), BorderLayout.EAST);
+        this.add(new ToggableSidePanel("quality report", summaryPanel), BorderLayout.EAST);
 
 
 

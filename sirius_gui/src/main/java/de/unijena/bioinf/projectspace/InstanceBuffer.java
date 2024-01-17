@@ -27,14 +27,14 @@ import java.util.concurrent.locks.ReentrantLock;
 public class InstanceBuffer {
     private final Lock lock = new ReentrantLock();
     private final int maxSize;
-    private final LinkedHashSet<InstanceBean> buffer;
+    private final LinkedHashSet<Instance> buffer;
 
     public InstanceBuffer(int maxSize) {
         this.maxSize = maxSize;
         buffer = new LinkedHashSet<>(maxSize + 1);
     }
 
-    public void add(InstanceBean instanceBean) {
+    public void add(Instance instanceBean) {
         lock.lock();
         try {
             buffer.remove(instanceBean);
@@ -46,15 +46,14 @@ public class InstanceBuffer {
         }
     }
 
-    public boolean remove(InstanceBean toRemove) {
+    public boolean remove(Instance toRemove) {
         lock.lock();
         try {
             if (buffer.remove(toRemove)) {
-                if (!toRemove.isComputing()) {
+                if (!toRemove.getID().hasFlag(CompoundContainerId.Flag.COMPUTING)) {
                     toRemove.clearFormulaResultsCache();
                     toRemove.clearCompoundCache();
                 }
-                //todo enable if we can cache preview for compound list
                 return true;
             }
             return false;
@@ -63,7 +62,7 @@ public class InstanceBuffer {
         }
     }
 
-    public void removeAllLazy(Collection<InstanceBean> insts) {
+    public void removeAllLazy(Collection<Instance> insts) {
         lock.lock();
         try {
             buffer.removeAll(insts);

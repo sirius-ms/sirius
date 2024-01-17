@@ -35,7 +35,7 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 
 /**
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ * @author Markus Fleischauer
  */
 public class ProjectSaveCopyAction extends AbstractGuiAction {
 
@@ -46,7 +46,7 @@ public class ProjectSaveCopyAction extends AbstractGuiAction {
         setEnabled(true);
 
         //add Workspace Listener for button activity
-//        MF.ps().COMPOUNT_LIST.addListEventListener(listChanges -> setEnabled(!listChanges.getSourceList().isEmpty()));
+        gui.getProjectManager().INSTANCE_LIST.addListEventListener(listChanges -> setEnabled(!listChanges.getSourceList().isEmpty()));
     }
 
     @Override
@@ -94,8 +94,10 @@ public class ProjectSaveCopyAction extends AbstractGuiAction {
 
         if (selectedFile != null) {
             try {
-                mainFrame.ps().saveCopy(selectedFile.toPath(), mainFrame);
-                Jobs.runEDTAndWait(() -> mainFrame.setTitlePath(mainFrame.ps().projectSpace().getLocation().toString()));
+                //todo nightsky -> add copy project action of nighsky client is updated
+                throw new UnsupportedOperationException("NOT YET IMPLEMENTED");
+//                mainFrame.ps().saveCopy(selectedFile.toPath(), mainFrame);
+//                Jobs.runEDTAndWait(() -> mainFrame.setTitlePath(mainFrame.ps().projectSpace().getLocation().toString()));
             } catch (Exception e2) {
                 new StacktraceDialog(mainFrame, e2.getMessage(), e2);
             }

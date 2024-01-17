@@ -38,7 +38,7 @@ public abstract class AbstractSubmission {
     /**
      * Compounds that should be the input for this Job
      * Will be converted to the respective alignedFeatureIds for computation.
-     * <p>
+     *
      * At least one compoundId or alignedFeatureId needs to be specified.
      */
     @Schema(nullable = true)
@@ -46,7 +46,7 @@ public abstract class AbstractSubmission {
 
     /**
      * Features (aligned over runs) that should be the input for this Job
-     * <p>
+     *
      * At least one compoundId or alignedFeatureId needs to be specified.
      */
     @Schema(nullable = true)

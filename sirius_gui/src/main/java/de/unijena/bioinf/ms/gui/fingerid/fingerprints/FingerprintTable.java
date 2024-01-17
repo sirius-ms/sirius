@@ -73,10 +73,7 @@ public class FingerprintTable extends ActionList<FingerIdPropertyBean, FormulaRe
         if (this.predictorType == predictorType && fscores != null) return;
         this.predictorType = predictorType;
 
-        //TODO nighsky: remove dependency on ps -> provide visualization infos via api
-        final FingerIdData csiData = gui.getMainFrame().ps().loadProjectSpaceProperty(FingerIdDataProperty.class)
-                .map(p -> p.getByCharge(predictorType.toCharge())).orElseThrow(() -> new IOException("Could not load FingerID data from Project-Space!"));
-
+        final FingerIdData csiData = gui.getProjectManager().getFingerIdData(predictorType.toCharge());
         final PredictionPerformance[] performances = csiData.getPerformances();
         this.fscores = new double[csiData.getFingerprintVersion().getMaskedFingerprintVersion().size()];
         this.trainingExamples = new int[fscores.length];

@@ -19,8 +19,6 @@
 
 package de.unijena.bioinf.ms.gui.canopus.compound_classes;
 
-import de.unijena.bioinf.ChemistryBase.fp.*;
-import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -30,10 +28,12 @@ import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
+import de.unijena.bioinf.ms.nightsky.sdk.model.CompoundClass;
+import de.unijena.bioinf.ms.nightsky.sdk.model.CompoundClasses;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
-import gnu.trove.map.hash.TObjectDoubleHashMap;
 import org.jdesktop.swingx.WrapLayout;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -44,24 +44,19 @@ import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Iterator;
 import java.util.List;
-import java.util.*;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Stream;
 
-public class CompoundClassDetailView extends JPanel implements ActiveElementChangedListener<FormulaResultBean, InstanceBean>  {
-
-    protected static String[] typeNames = new String[]{
-            "Kingdom", "Superclass", "Class", "Subclass"
-    };
-
+public class CompoundClassDetailView extends JPanel implements ActiveElementChangedListener<FormulaResultBean, InstanceBean> {
     private final JScrollPane containerSP;
-    protected ClassyfireProperty mainClass;
-    protected ClassyfireProperty[] lineage;
-    protected NPCFingerprintVersion.NPCProperty[] npcClasses = new NPCFingerprintVersion.NPCProperty[0];
-    protected final TObjectDoubleHashMap<NPCFingerprintVersion.NPCProperty> npcProbabilities = new TObjectDoubleHashMap<>();
-    protected List<ClassyfireProperty> secondaryClasses;
-    protected ProbabilityFingerprint canopusFp, npcFp;
+
+    protected CompoundClasses compoundClasses = null;
+    protected CompoundClass mainClass = null;
 
     protected JPanel mainClassPanel, descriptionPanel, alternativeClassPanels, npcPanel;
 
@@ -69,7 +64,7 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
 
     public CompoundClassDetailView(FormulaList siriusResultElements) {
         super();
-        setLayout(new BoxLayout(this,BoxLayout.Y_AXIS));
+        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setAlignmentX(0f);
         mainClassPanel = new JPanel();
         mainClassPanel.setAlignmentX(0f);
@@ -99,42 +94,40 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
 
     public void updateContainer() {
         container.removeAll();
-        if (mainClass!=null) {
-            // add lineage
+        if (compoundClasses != null) {
+
+            // cf lineage panel
             mainClassPanel.removeAll();
-            for (int k=0; k < lineage.length; ++k) {
-                int level = lineage.length - k;
-                String tpname = (level <= typeNames.length) ? typeNames[level - 1] : ("Level " + level);
-                mainClassPanel.add(new ClassifClass(lineage[k], tpname, k == 0, prob(lineage[k]) ));
-                if (k < lineage.length - 1) {
-                    final JLabel comp = new JLabel("\u27be");
-                    comp.setFont(Fonts.FONT_BOLD.deriveFont(18f));
-                    mainClassPanel.add(comp);
+            if (compoundClasses.getClassyFireLineage() != null && !compoundClasses.getClassyFireLineage().isEmpty()) {
+                Iterator<CompoundClass> it = compoundClasses.getClassyFireLineage().iterator();
+                while (it.hasNext()) {
+                    CompoundClass cfClass =  it.next();
+                    mainClassPanel.add(new ClassifClass(cfClass, cfClass == mainClass));
+                    if (it.hasNext()) {
+                        final JLabel comp = new JLabel("\u27be");
+                        comp.setFont(Fonts.FONT_BOLD.deriveFont(18f));
+                        mainClassPanel.add(comp);
+                    }
                 }
             }
 
-
-            {
-                alternativeClassPanels.removeAll();
-                // alternative classes
-                for (int k = 0; k < secondaryClasses.size(); ++k) {
-                    alternativeClassPanels.add(new ClassifClass(secondaryClasses.get(k), "alternative", false, prob(secondaryClasses.get(k))));
-                }
-            }
+            // cf alt panel
+            alternativeClassPanels.removeAll();
+            if (compoundClasses.getClassyFireAlternatives() != null && !compoundClasses.getClassyFireAlternatives().isEmpty())
+                compoundClasses.getClassyFireAlternatives().
+                        forEach(cfClass -> alternativeClassPanels.add(new ClassifClass(cfClass, false)));
 
             // npc panel
             npcPanel.removeAll();
-            if (npcClasses.length>0) {
-                for (NPCFingerprintVersion.NPCProperty p : npcClasses) {
-                    npcPanel.add(new NPClass(p,npcProbabilities.get(p)));
-                }
-            }
+            Stream.of(compoundClasses.getNpcPathway(), compoundClasses.getNpcSuperclass(), compoundClasses.getNpcClass())
+                    .filter(Objects::nonNull).forEach(npcClass -> npcPanel.add(new NPClass(npcClass)));
+
 
             {
                 int width = Math.max(Math.max(mainClassPanel.getPreferredSize().width, alternativeClassPanels.getPreferredSize().width), npcPanel.getPreferredSize().width);
                 descriptionPanel.removeAll();
                 final JLabel comp = new JLabel();
-                comp.setBorder(BorderFactory.createEmptyBorder(2,2,2,2));
+                comp.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
                 descriptionPanel.add(comp);
                 comp.setText(GuiUtils.formatToolTip(width - 2, description()));
@@ -145,74 +138,31 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
             container.add(new TextHeaderBoxPanel("Description", descriptionPanel));
             container.add(new TextHeaderBoxPanel("Alternative Classes", alternativeClassPanels));
             //if (npcClasses.length>0)
-                container.add(new TextHeaderBoxPanel("Natural Product Classes", npcPanel));
+            container.add(new TextHeaderBoxPanel("Natural Product Classes", npcPanel));
 
 
             revalidate();
             repaint();
             if (getParent() instanceof JSplitPane)
-                ((JSplitPane)getParent()).setDividerLocation(getPreferredSize().height);
+                ((JSplitPane) getParent()).setDividerLocation(getPreferredSize().height);
         }
-    }
-
-    private double prob(ClassyfireProperty p) {
-        return canopusFp==null ? 0d : canopusFp.getProbability(getVersion(canopusFp, ClassyFireFingerprintVersion.class).getIndexOfMolecularProperty(p));
-    }
-    private double prob(NPCFingerprintVersion.NPCProperty p) {
-        return npcFp==null ? 0d : npcFp.getProbability(p.npcIndex);
-    }
-
-    private <T extends FingerprintVersion> T getVersion(ProbabilityFingerprint fp, Class<T> vklass) {
-        FingerprintVersion v = fp.getFingerprintVersion();
-        if (v instanceof MaskedFingerprintVersion) v= ((MaskedFingerprintVersion) v).getMaskedFingerprintVersion();
-        return (T)v;
     }
 
     private String description() {
-        if (mainClass==null) return "This compound is not classified yet.";
+        if (mainClass == null) return "This compound is not classified yet.";
         String m = mainClass.getDescription();
-        return "This compound belongs to the class " + mainClass.getName() + ", which describes " + Character.toLowerCase(m.charAt(0)) + m.substring(1,m.length());
+        return "This compound belongs to the class " + mainClass.getName() + ", which describes " + Character.toLowerCase(m.charAt(0)) + m.substring(1, m.length());
     }
 
-    public void setPrediction(CanopusResult canopusResult) {
-        final ProbabilityFingerprint classyfireFingerprint = canopusResult.getCanopusFingerprint();
-        this.canopusFp = classyfireFingerprint;
-        FingerprintVersion version = classyfireFingerprint.getFingerprintVersion();
-        if (version instanceof MaskedFingerprintVersion) version = ((MaskedFingerprintVersion) version).getMaskedFingerprintVersion();
-        if (!(version instanceof ClassyFireFingerprintVersion)) {
-            LoggerFactory.getLogger(CompoundClassDetailView.class).error("Classyfire fingerprint has wrong version: " + version);
-            clear();
-            return;
-        }
-        ClassyFireFingerprintVersion classif = (ClassyFireFingerprintVersion)version;
-        ClassyfireProperty main = classif.getPrimaryClass(classyfireFingerprint);
-        Set<ClassyfireProperty> alternatives = new HashSet<>(Arrays.asList(classif.getPredictedLeafs(classyfireFingerprint, 0.5)));
-        alternatives.remove(main);
-        this.lineage = main.getLineageNodeToRoot(false); // ignore chemical entities
-        this.mainClass = main;
-        this.secondaryClasses = new ArrayList<>(alternatives);
-        secondaryClasses.sort(Comparator.comparingInt(x->-x.getPriority()));
-
-        // NPC classes
-        final Optional<ProbabilityFingerprint> npcResult = canopusResult.getNpcFingerprint();
-        final List<NPCFingerprintVersion.NPCProperty> predicted = new ArrayList<>();
-        npcProbabilities.clear();
-        if (npcResult.isPresent()) {
-            this.npcFp=npcResult.get();
-            for (FPIter x : npcResult.get().presentFingerprints()) {
-                predicted.add((NPCFingerprintVersion.NPCProperty) x.getMolecularProperty());
-                npcProbabilities.put((NPCFingerprintVersion.NPCProperty)x.getMolecularProperty(), x.getProbability());
-            }
-        } else this.npcFp = null;
-        this.npcClasses = predicted.toArray(NPCFingerprintVersion.NPCProperty[]::new);
-        Arrays.sort(npcClasses, (u,v)->v.npcIndex-u.npcIndex);
+    public void setPrediction(@NotNull CompoundClasses compoundClasses) {
+        this.compoundClasses = compoundClasses;
+        this.mainClass = compoundClasses.getClassyFireLineage().get(compoundClasses.getClassyFireLineage().size() - 1);
         updateContainer();
     }
 
     public void clear() {
-        this.lineage = null;
-        this.mainClass = null;
-        this.secondaryClasses = null;
+        compoundClasses = null;
+        mainClass = null;
         updateContainer();
     }
 
@@ -235,10 +185,10 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
                     Jobs.runEDTAndWait(() -> clear());
                     checkForInterruption();
                     if (sre != null) {
-                        final Optional<CanopusResult> cs = sre.getCanopusResult();
+                        Optional<CompoundClasses> res = sre.getCompoundClasses();
                         checkForInterruption();
-                        if (cs.isPresent())
-                            Jobs.runEDTAndWait(() -> setPrediction(cs.get()));
+                        if (res.isPresent())
+                            Jobs.runEDTAndWait(() -> setPrediction(res.get()));
                     }
                     return true;
                 }
@@ -250,65 +200,63 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
 
     protected static class ClassifClass extends JPanel implements MouseListener {
 
-        protected final ClassyfireProperty klass;
-        protected final String type;
+        protected final CompoundClass cfClass;
 
         protected TextLayout typeName, className;
         protected Rectangle classBox, typeBox;
 
         protected Font typeFont, classFont;
 
-        protected static final int PADDING = 4, SAFETY_DISTANCE = 4, GAP_TOP=4;
+        protected static final int PADDING = 4, SAFETY_DISTANCE = 4, GAP_TOP = 4;
         protected boolean main;
 
-        public ClassifClass(ClassyfireProperty klass, String type, boolean main, double probability) {
+        public ClassifClass(CompoundClass cfClass, boolean main) {
             super();
-            setToolTipText("<html><p>Probability: <b>" + (int)(Math.round(probability*100)) + " %</b></p><p>" + klass.getDescription() + "</p>");
+            setToolTipText("<html><p>Probability: <b>" + (int) (Math.round(cfClass.getProbability() * 100)) + " %</b></p><p>" + cfClass.getDescription() + "</p>");
             this.main = main;
-            this.klass = klass;
-            this.type = type;
+            this.cfClass = cfClass;
             typeFont = Fonts.FONT_BOLD.deriveFont(10f);
-            typeName = new TextLayout(type, typeFont, new FontRenderContext(null, false, false));
+            typeName = new TextLayout(cfClass.getLevel(), typeFont, new FontRenderContext(null, false, false));
             classFont = Fonts.FONT_BOLD.deriveFont(13f);
-            className = new TextLayout(klass.getName(), classFont, new FontRenderContext(null, false, false));
+            className = new TextLayout(cfClass.getName(), classFont, new FontRenderContext(null, false, false));
             setOpaque(false);
-            classBox = className.getPixelBounds(null,0,0);
-            typeBox = typeName.getPixelBounds(null,0,0);
-            setPreferredSize(new Dimension(Math.max(classBox.width,typeBox.width)+2*PADDING+SAFETY_DISTANCE, classBox.height+typeBox.height + 2*PADDING + SAFETY_DISTANCE+GAP_TOP));
-            setMinimumSize(new Dimension(Math.max(classBox.width,typeBox.width)+2*PADDING+SAFETY_DISTANCE, classBox.height+typeBox.height + 2*PADDING + SAFETY_DISTANCE+GAP_TOP));
+            classBox = className.getPixelBounds(null, 0, 0);
+            typeBox = typeName.getPixelBounds(null, 0, 0);
+            setPreferredSize(new Dimension(Math.max(classBox.width, typeBox.width) + 2 * PADDING + SAFETY_DISTANCE, classBox.height + typeBox.height + 2 * PADDING + SAFETY_DISTANCE + GAP_TOP));
+            setMinimumSize(new Dimension(Math.max(classBox.width, typeBox.width) + 2 * PADDING + SAFETY_DISTANCE, classBox.height + typeBox.height + 2 * PADDING + SAFETY_DISTANCE + GAP_TOP));
             addMouseListener(this);
 
         }
 
         @Override
         public void paintComponent(Graphics g_) {
-            final Graphics2D g = (Graphics2D)g_;
-            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+            final Graphics2D g = (Graphics2D) g_;
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
             final Color color = main ? Colors.CLASSIFIER_MAIN : Colors.CLASSIFIER_OTHER;
             g.setColor(color);
-            final int boxwidth = Math.max(classBox.width,typeBox.width)+2*PADDING;
-            final int boxheight = classBox.height+2*PADDING+GAP_TOP;
+            final int boxwidth = Math.max(classBox.width, typeBox.width) + 2 * PADDING;
+            final int boxheight = classBox.height + 2 * PADDING + GAP_TOP;
             g.fillRoundRect(0, typeBox.height, boxwidth, boxheight, 4, 4);
             g.setColor(Colors.FOREGROUND);
             g.drawRoundRect(0, typeBox.height, boxwidth, boxheight, 4, 4);
             g.setColor(color);
-            final int gap = (boxwidth-typeBox.width)/2;
-            g.drawRect(gap, typeBox.height,typeBox.width,Math.min(typeBox.height,classBox.height));
+            final int gap = (boxwidth - typeBox.width) / 2;
+            g.drawRect(gap, typeBox.height, typeBox.width, Math.min(typeBox.height, classBox.height));
             g.setFont(classFont);
             g.setColor(Colors.FOREGROUND);
-            g.drawString(klass.getName(), PADDING, classBox.height+typeBox.height+PADDING+GAP_TOP);
+            g.drawString(cfClass.getName(), PADDING, classBox.height + typeBox.height + PADDING + GAP_TOP);
 
             g.setFont(typeFont);
             g.setColor(Colors.FOREGROUND);
-            g.drawString(type, gap, typeBox.height+GAP_TOP);
+            g.drawString(cfClass.getLevel(), gap, typeBox.height + GAP_TOP);
 
         }
 
         @Override
         public void mouseClicked(MouseEvent e) {
             try {
-                Desktop.getDesktop().browse(URI.create(String.format("http://classyfire.wishartlab.com/tax_nodes/C%07d",klass.getChemOntId())));
+                Desktop.getDesktop().browse(URI.create(String.format("http://classyfire.wishartlab.com/tax_nodes/C%07d", cfClass.getId())));
             } catch (IOException ex) {
                 LoggerFactory.getLogger(CompoundClassDetailView.class).error("Failed to open webbrowser");
             }
@@ -337,56 +285,52 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
 
 
     protected static class NPClass extends JPanel {
-
-        protected final NPCFingerprintVersion.NPCProperty property;
-
+        protected final CompoundClass npcClass;
         protected TextLayout typeName, className;
         protected Rectangle classBox, typeBox;
 
         protected Font typeFont, classFont;
 
-        protected static final int PADDING = 4, SAFETY_DISTANCE = 4, GAP_TOP=4;
-        protected boolean main;
+        protected static final int PADDING = 4, SAFETY_DISTANCE = 4, GAP_TOP = 4;
 
-        public NPClass(NPCFingerprintVersion.NPCProperty klass, double probability) {
+        public NPClass(CompoundClass npcClass) {
             super();
-            setToolTipText("<html><p>Probability: <b>" + (int)(Math.round(probability*100)) + " %</b></p></html>");
-            this.main = main;
-            this.property = klass;
+            setToolTipText("<html><p>Probability: <b>" + (int) (Math.round(npcClass.getProbability() * 100)) + " %</b></p></html>");
+            this.npcClass = npcClass;
             typeFont = Fonts.FONT_BOLD.deriveFont(10f);
-            typeName = new TextLayout(klass.level.name, typeFont, new FontRenderContext(null, false, false));
+            typeName = new TextLayout(npcClass.getLevel(), typeFont, new FontRenderContext(null, false, false));
             classFont = Fonts.FONT_BOLD.deriveFont(13f);
-            className = new TextLayout(property.name, classFont, new FontRenderContext(null, false, false));
+            className = new TextLayout(npcClass.getName(), classFont, new FontRenderContext(null, false, false));
             setOpaque(false);
-            classBox = className.getPixelBounds(null,0,0);
-            typeBox = typeName.getPixelBounds(null,0,0);
-            setPreferredSize(new Dimension(Math.max(classBox.width,typeBox.width)+2*PADDING+SAFETY_DISTANCE, classBox.height+typeBox.height + 2*PADDING + SAFETY_DISTANCE+GAP_TOP));
-            setMinimumSize(new Dimension(Math.max(classBox.width,typeBox.width)+2*PADDING+SAFETY_DISTANCE, classBox.height+typeBox.height + 2*PADDING + SAFETY_DISTANCE+GAP_TOP));
+            classBox = className.getPixelBounds(null, 0, 0);
+            typeBox = typeName.getPixelBounds(null, 0, 0);
+            setPreferredSize(new Dimension(Math.max(classBox.width, typeBox.width) + 2 * PADDING + SAFETY_DISTANCE, classBox.height + typeBox.height + 2 * PADDING + SAFETY_DISTANCE + GAP_TOP));
+            setMinimumSize(new Dimension(Math.max(classBox.width, typeBox.width) + 2 * PADDING + SAFETY_DISTANCE, classBox.height + typeBox.height + 2 * PADDING + SAFETY_DISTANCE + GAP_TOP));
 
         }
 
         @Override
         public void paintComponent(Graphics g_) {
-            final Graphics2D g = (Graphics2D)g_;
-            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+            final Graphics2D g = (Graphics2D) g_;
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-            final Color color = main ? Colors.CLASSIFIER_MAIN : Colors.CLASSIFIER_OTHER;
+            final Color color = Colors.CLASSIFIER_OTHER;
             g.setColor(color);
-            final int boxwidth = Math.max(classBox.width,typeBox.width)+2*PADDING;
-            final int boxheight = classBox.height+2*PADDING+GAP_TOP;
+            final int boxwidth = Math.max(classBox.width, typeBox.width) + 2 * PADDING;
+            final int boxheight = classBox.height + 2 * PADDING + GAP_TOP;
             g.fillRoundRect(0, typeBox.height, boxwidth, boxheight, 4, 4);
             g.setColor(Colors.FOREGROUND);
             g.drawRoundRect(0, typeBox.height, boxwidth, boxheight, 4, 4);
             g.setColor(color);
-            final int gap = (boxwidth-typeBox.width)/2;
-            g.drawRect(gap, typeBox.height,typeBox.width,Math.min(typeBox.height,classBox.height));
+            final int gap = (boxwidth - typeBox.width) / 2;
+            g.drawRect(gap, typeBox.height, typeBox.width, Math.min(typeBox.height, classBox.height));
             g.setFont(classFont);
             g.setColor(Colors.FOREGROUND);
-            g.drawString(property.name, PADDING, classBox.height+typeBox.height+PADDING+GAP_TOP);
+            g.drawString(npcClass.getName(), PADDING, classBox.height + typeBox.height + PADDING + GAP_TOP);
 
             g.setFont(typeFont);
             g.setColor(Colors.FOREGROUND);
-            g.drawString(property.level.name, gap, typeBox.height+GAP_TOP);
+            g.drawString(npcClass.getLevel(), gap, typeBox.height + GAP_TOP);
 
         }
     }
