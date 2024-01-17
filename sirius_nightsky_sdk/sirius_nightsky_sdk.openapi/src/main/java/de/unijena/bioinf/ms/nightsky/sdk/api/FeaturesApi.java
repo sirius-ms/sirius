@@ -1181,6 +1181,100 @@ public class FeaturesApi {
         return getSimulatedIsotopePatternRequestCreation(projectId, alignedFeatureId, formulaId);
     }
     /**
+     * 
+     * 
+     * <p><b>200</b> - OK
+     * @param projectId The projectId parameter
+     * @param alignedFeatureId The alignedFeatureId parameter
+     * @param formulaId The formulaId parameter
+     * @return String
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     * @deprecated
+     */
+    @Deprecated
+    private ResponseSpec getSiriusFragTreeRequestCreation(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getSiriusFragTree", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'alignedFeatureId' is set
+        if (alignedFeatureId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getSiriusFragTree", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'formulaId' is set
+        if (formulaId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'formulaId' when calling getSiriusFragTree", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("alignedFeatureId", alignedFeatureId);
+        pathParams.put("formulaId", formulaId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<String> localVarReturnType = new ParameterizedTypeReference<String>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/sirius-tree", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * 
+     * 
+     * <p><b>200</b> - OK
+     * @param projectId The projectId parameter
+     * @param alignedFeatureId The alignedFeatureId parameter
+     * @param formulaId The formulaId parameter
+     * @return String
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public String getSiriusFragTree(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+        ParameterizedTypeReference<String> localVarReturnType = new ParameterizedTypeReference<String>() {};
+        return getSiriusFragTreeRequestCreation(projectId, alignedFeatureId, formulaId).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * 
+     * 
+     * <p><b>200</b> - OK
+     * @param projectId The projectId parameter
+     * @param alignedFeatureId The alignedFeatureId parameter
+     * @param formulaId The formulaId parameter
+     * @return ResponseEntity&lt;String&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<String> getSiriusFragTreeWithHttpInfo(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+        ParameterizedTypeReference<String> localVarReturnType = new ParameterizedTypeReference<String>() {};
+        return getSiriusFragTreeRequestCreation(projectId, alignedFeatureId, formulaId).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * 
+     * 
+     * <p><b>200</b> - OK
+     * @param projectId The projectId parameter
+     * @param alignedFeatureId The alignedFeatureId parameter
+     * @param formulaId The formulaId parameter
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getSiriusFragTreeWithResponseSpec(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+        return getSiriusFragTreeRequestCreation(projectId, alignedFeatureId, formulaId);
+    }
+    /**
      * List of StructureCandidates for the given &#39;alignedFeatureId&#39; with minimal information.
      * List of StructureCandidates for the given &#39;alignedFeatureId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint, structure database links.
      * <p><b>200</b> - StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.

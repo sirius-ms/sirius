@@ -123,4 +123,7 @@ public interface Project {
     String getCanopusClassyFireDataCSV(int charge);
 
     String getCanopusNpcDataCSV(int charge);
+
+    @Deprecated
+    String findSiriusFtreeJsonById(String formulaId, String alignedFeatureId);
 }
