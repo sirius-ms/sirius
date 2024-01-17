@@ -63,7 +63,7 @@ public class EpimetheusPanel extends JPanel implements PanelDescription {
             DefaultEventSelectionModel<FingerprintCandidateBean> selections = (DefaultEventSelectionModel<FingerprintCandidateBean>) e.getSource();
             FingerprintCandidateBean sre = selections.getSelected().stream().findFirst().orElse(null);
             FormulaResultBean form = sre != null ? sre.getFormulaResult() : null;
-            InstanceBean inst = form != null ? form.getInstance() : null;
+            InstanceBean inst = form != null ? form.getParentInstance() : null;
 //            overviewTVP.resultsChanged(inst, form, null, null);
             overviewSVP.resultsChanged(inst, form, sre != null ? sre.getFingerprintCandidate() : null);
         });
@@ -72,7 +72,7 @@ public class EpimetheusPanel extends JPanel implements PanelDescription {
                 DefaultEventSelectionModel<FingerprintCandidateBean> selections = (DefaultEventSelectionModel<FingerprintCandidateBean>) candidateTable.getFilteredSelectionModel();
                 FingerprintCandidateBean sre = selections.getSelected().stream().findFirst().orElse(null);
                 FormulaResultBean form = sre != null ? sre.getFormulaResult() : null;
-                InstanceBean inst = form != null ? form.getInstance() : null;
+                InstanceBean inst = form != null ? form.getParentInstance() : null;
 //            overviewTVP.resultsChanged(inst, form, null, null);
                 overviewSVP.resultsChanged(inst, form, sre != null ? sre.getFingerprintCandidate() : null);
             });

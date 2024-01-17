@@ -39,13 +39,13 @@ public class ShowJobsDialogAction extends AbstractGuiAction {
         putValue(Action.LARGE_ICON_KEY, Icons.FB_LOADER_STOP_32);
         putValue(Action.SHORT_DESCRIPTION, "Show background jobs and their status");
 
-        gui.withSiriusClient((pid, client) ->
+        gui.acceptSiriusClient((client, pid) ->
                 client.addEventListener(evt -> setComputing(
                 ((DataObjectEvent<BackgroundComputationsStateEvent>) evt.getNewValue())
                         .getData().getNumberOfRunningJobs() > 0
         ), pid, DataEventType.BACKGROUND_COMPUTATIONS_STATE));
 
-        gui.withSiriusClient((pid, client) -> client.jobs().hasJobs(pid, false));
+        gui.acceptSiriusClient((client, pid) -> client.jobs().hasJobs(pid, false));
     }
 
 

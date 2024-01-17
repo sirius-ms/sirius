@@ -21,17 +21,18 @@ package de.unijena.bioinf.ms.gui.canopus.compound_classes;
 
 import ca.odell.glazedlists.gui.TableFormat;
 import de.unijena.bioinf.ChemistryBase.fp.ClassyfireProperty;
+import de.unijena.bioinf.ms.nightsky.sdk.model.CompoundClass;
 
-public class CompoundClassTableFormat implements TableFormat<ClassyfirePropertyBean> {
+import java.util.Optional;
+
+public class CompoundClassTableFormat implements TableFormat<CompoundClassBean> {
     protected static String[] columns = new String[]{
             "Index",
             "Name",
             "Posterior Probability",
             "Description",
             "ID",
-            "Parent",
-//            "Positive training examples",
-//            "Predictor quality (F1)"
+            "Parent"
     };
 
     @Override
@@ -45,17 +46,16 @@ public class CompoundClassTableFormat implements TableFormat<ClassyfirePropertyB
     }
 
     @Override
-    public Object getColumnValue(ClassyfirePropertyBean prop, int column) {
+    public Object getColumnValue(CompoundClassBean compoundClass, int column) {
+        CompoundClass cc = compoundClass.getSourceClass();
         int col = 0;
-        if (column == col++) return prop.getAbsoluteIndex();
-        if (column == col++) return prop.getMolecularProperty().getName();
-        if (column == col++) return prop.getProbability();
-        if (column == col++) return prop.getMolecularProperty().getDescription();
-        if (column == col++) return prop.getMolecularProperty().getChemontIdentifier();
-        final ClassyfireProperty parent = prop.getMolecularProperty().getParent();
+        if (column == col++) return "N/A"; //todo nightsky add after index is part of sdk
+        if (column == col++) return cc.getName();
+        if (column == col++) return cc.getProbability();
+        if (column == col++) return cc.getDescription();
+        if (column == col++) return Optional.ofNullable(compoundClass.getChemontIdentifier()).orElse("N/A");
+        final ClassyfireProperty parent = compoundClass.getParent();
         if (column == col++) return parent!=null ? parent.getName() : "";
-//        if (column == col++) return prop.getNumberOfTrainingExamples();
-//        if (column == col) return prop.getFScore();
         return null;
     }
 }

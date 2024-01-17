@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.gui.mainframe.result_panel;
 
 import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassBean;
 import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassList;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.fingerid.fingerprints.FingerprintTable;
@@ -29,12 +30,15 @@ import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.*;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaListHeaderPanel;
 import de.unijena.bioinf.ms.gui.table.ActionList;
+import de.unijena.bioinf.ms.nightsky.sdk.model.CanopusPrediction;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.util.List;
+import java.util.Objects;
 
 public class ResultPanel extends JTabbedPane {
 
@@ -82,7 +86,12 @@ public class ResultPanel extends JTabbedPane {
         }
 
         fpTab = fpTabTmp;
-        canopusTab = new CompoundClassPanel(new CompoundClassList(siriusResultElements), siriusResultElements);
+        canopusTab = new CompoundClassPanel(
+                new CompoundClassList(siriusResultElements, sre ->
+                        sre.getCanopusPrediction()
+                                .stream().map(CanopusPrediction::getClassyFireClasses).filter(Objects::nonNull)
+                                .flatMap(List::stream).map(CompoundClassBean::new).toList()), siriusResultElements
+        );
 
 
         addTab("LC-MS", null, lcmsTab, lcmsTab.getDescription());

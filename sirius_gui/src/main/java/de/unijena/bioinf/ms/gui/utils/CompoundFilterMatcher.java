@@ -3,7 +3,7 @@ package de.unijena.bioinf.ms.gui.utils;/*
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2021 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -22,29 +22,25 @@ import ca.odell.glazedlists.matchers.Matcher;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
-import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
-import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
-import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.chemdb.ChemDBs;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
-import de.unijena.bioinf.elgordo.LipidSpecies;
+import de.unijena.bioinf.chemdb.SearchableDatabases;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
-import de.unijena.bioinf.lcms.LCMSCompoundSummary;
-import de.unijena.bioinf.lcms.quality.LCMSQualityCheck;
-import de.unijena.bioinf.projectspace.CompoundContainer;
-import de.unijena.bioinf.projectspace.FormulaResult;
+import de.unijena.bioinf.ms.nightsky.sdk.model.DBLink;
+import de.unijena.bioinf.ms.nightsky.sdk.model.PageStructureCandidateFormula;
+import de.unijena.bioinf.ms.nightsky.sdk.model.StructureCandidateFormula;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
-import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 
 public class CompoundFilterMatcher implements Matcher<InstanceBean> {
     final CompoundFilterModel filterModel;
@@ -56,9 +52,9 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
     @Override
     public boolean matches(InstanceBean item) {
         double mz = item.getIonMass();
-        double rt = item.getID().getRt().map(RetentionTime::getRetentionTimeInSeconds).orElse(Double.NaN);
+        double rt = item.getRT().map(RetentionTime::getRetentionTimeInSeconds).orElse(Double.NaN);
         //todo hotfix, since the confidence score is a FormulaScore which sets all NaN to -Infinity (after computation, and thus also in project space)
-        double confidence = item.getID().getConfidenceScore().filter(conf -> !Double.isInfinite(conf)).orElse(Double.NaN);
+        double confidence = item.getConfidenceScoreDefault().filter(conf -> !Double.isInfinite(conf)).orElse(Double.NaN);
 
         {
             if (mz < filterModel.getCurrentMinMz())
@@ -80,7 +76,7 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
             if (filterModel.isMaxConfidenceFilterActive() && confidence > filterModel.getCurrentMaxConfidence())
                 return false;
         } else if (filterModel.isMinConfidenceFilterActive()) { // filter NaN if min filter is set
-                return false;
+            return false;
         }
 
         if (filterModel.isAdductFilterActive() && !filterModel.getAdducts().contains(item.getIonization()))
@@ -106,7 +102,7 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
     }
 
     private boolean filterByPeakShape(InstanceBean item, CompoundFilterModel filterModel) {
-        final CompoundContainer compoundContainer = item.loadCompoundContainer(LCMSPeakInformation.class);
+        /*final CompoundContainer compoundContainer = item.loadCompoundContainer(LCMSPeakInformation.class);
         final Optional<LCMSPeakInformation> annotation = compoundContainer.getAnnotation(LCMSPeakInformation.class);
         if (annotation.isEmpty()) return false;
         final LCMSPeakInformation lcmsPeakInformation = annotation.get();
@@ -121,67 +117,55 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
             }
         }
         return false;
+
+        */
+        LoggerFactory.getLogger(getClass()).warn("Filter by PeakShape not implented via NIghtSky -> Fileter is always True");
+        //todo nightsky -> implent into api
+        return false;
     }
 
     private boolean matchesLipidFilter(InstanceBean item, CompoundFilterModel filterModel) {
-        boolean hasAnyLipidHit = item.getResults().stream()
-                .map(FormulaResultBean::getFragTree).flatMap(Optional::stream)
-                .map(ft -> ft.getAnnotation(LipidSpecies.class)).flatMap(Optional::stream)
-                .findAny().isPresent();
-        return (filterModel.getLipidFilter() == CompoundFilterModel.LipidFilter.ANY_LIPID_CLASS_DETECTED && hasAnyLipidHit) || (filterModel.getLipidFilter() == CompoundFilterModel.LipidFilter.NO_LIPID_CLASS_DETECTED && !hasAnyLipidHit);
+        boolean hasAnyLipidHit = item.getFormulaCandidates().stream().anyMatch(FormulaResultBean::isLipid);
+        return (filterModel.getLipidFilter() == CompoundFilterModel.LipidFilter.ANY_LIPID_CLASS_DETECTED && hasAnyLipidHit)
+                || (filterModel.getLipidFilter() == CompoundFilterModel.LipidFilter.NO_LIPID_CLASS_DETECTED && !hasAnyLipidHit);
     }
 
     private boolean matchesDBFilter(InstanceBean item, CompoundFilterModel filterModel) {
         final int k;
-        final long requestFilter;
+        List<String> filterDbs;
         if (filterModel.isDbFilterEnabled()) {
             k = filterModel.getDbFilter().getNumOfCandidates();
-            requestFilter = filterModel.getDbFilter().getDbFilterBits();
+            filterDbs = filterModel.getDbFilter().getDbs().stream().map(CustomDataSources.Source::name).toList();
         } else {
             k = 1;
-            requestFilter = 0;
+            filterDbs = null;
         }
 
-        final List<Scored<CompoundCandidate>> candidates;
-        switch (k) {
-            case 0 -> {
-                return false;
-            }
-            case 1 -> candidates = item.loadTopFormulaResult(List.of(TopCSIScore.class), FBCandidates.class)
-                    .flatMap(i -> i.getAnnotation(FBCandidates.class).map(FBCandidates::getResults))
-                    .map(s -> s.stream().limit(k).toList()).orElse(null);
-            default -> candidates = item.loadTopKFormulaResults(k, List.of(TopCSIScore.class), FBCandidates.class)
-                    .stream().filter(i -> i.getCandidate().hasAnnotation(FBCandidates.class))
-                    .flatMap(i -> i.getCandidate().getAnnotation(FBCandidates.class)
-                            .map(FBCandidates::getResults).stream().flatMap(Collection::stream)).limit(k).toList();
-        }
-
-        if (candidates == null || candidates.isEmpty())
+        if (k == 0)
             return false;
 
-        if (requestFilter == 0)
+        final PageStructureCandidateFormula candidates = item.getStructureCandidates(k);
+
+        if (candidates == null || candidates.getContent() == null || candidates.getContent().isEmpty())
+            return false;
+
+        if (filterDbs == null)
             return true;
 
-        return candidates.stream().map(SScored::getCandidate).anyMatch(c -> ChemDBs.inFilter(c.getBitset(), requestFilter));
+        return candidates.getContent().stream()
+                .map(StructureCandidateFormula::getDbLinks)
+                .filter(Objects::nonNull).flatMap(List::stream)
+                .map(DBLink::getName).distinct()
+                .filter(Objects::nonNull)
+                .anyMatch(filterDbs::contains);
     }
 
     private boolean matchesElementFilter(InstanceBean item, CompoundFilterModel filterModel) {
         CompoundFilterModel.ElementFilter filter = filterModel.getElementFilter();
         @NotNull FormulaConstraints constraints = filter.constraints;
-        boolean r1 = item.loadTopFormulaResult(List.of(TopCSIScore.class)).map(FormulaResult::getId)
-                .map(id ->
-                        (filter.matchFormula && constraints.isSatisfied(id.getMolecularFormula(), id.getIonType().getIonization()))
-                                ||
-                                (filter.matchPrecursorFormula && constraints.isSatisfied(id.getPrecursorFormula(), id.getIonType().getIonization()))
-                ).orElse(false);
-
-        boolean r2 = item.loadTopFormulaResult(List.of(ZodiacScore.class, SiriusScore.class)).map(FormulaResult::getId)
-                .map(id ->
-                        (filter.matchFormula && constraints.isSatisfied(id.getMolecularFormula(), id.getIonType().getIonization()))
-                                ||
-                                (filter.matchPrecursorFormula && constraints.isSatisfied(id.getPrecursorFormula(), id.getIonType().getIonization()))
-                ).orElse(false);
-
-        return r1 || r2;
+        return item.getFormulaAnnotationAsBean().map(fc ->
+                (filter.matchFormula && constraints.isSatisfied(fc.getMolecularFormulaObj(), fc.getAdductObj().getIonization()))
+                        || (filter.matchPrecursorFormula && constraints.isSatisfied(fc.getPrecursorFormulaObj(), fc.getAdductObj().getIonization()))
+        ).orElse(false);
     }
 }

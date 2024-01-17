@@ -21,35 +21,32 @@ package de.unijena.bioinf.ms.gui.actions;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.CloseDialogNoSaveReturnValue;
 import de.unijena.bioinf.ms.gui.dialogs.CloseDialogReturnValue;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ * @author Markus Fleischauer
  */
 public class DeleteExperimentAction extends AbstractGuiAction {
     public static final String NEVER_ASK_AGAIN_KEY = PropertyManager.PROPERTY_BASE + ".sirius.dialog.delete_experiment_action.ask_again";
-    private final List<InstanceBean> toRemove;
-
-    public DeleteExperimentAction(List<InstanceBean> toRemove, SiriusGui mainFrame) {
-        super(mainFrame);
-        this.toRemove = toRemove;
-    }
 
     public DeleteExperimentAction(SiriusGui gui) {
         super("Delete", gui);
-        toRemove = null;
         putValue(Action.SMALL_ICON, Icons.REMOVE_DOC_16);
         putValue(Action.SHORT_DESCRIPTION, "Delete the selected data");
 
@@ -70,19 +67,44 @@ public class DeleteExperimentAction extends AbstractGuiAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        deleteCompounds();
-    }
-
-    public void deleteCompounds() {
         if (!PropertyManager.getBoolean(NEVER_ASK_AGAIN_KEY, false)) {
             CloseDialogNoSaveReturnValue diag = new CloseDialogNoSaveReturnValue(mainFrame, "When removing the selected compound(s) you will loose all computed identification results?", NEVER_ASK_AGAIN_KEY);
             CloseDialogReturnValue val = diag.getReturnValue();
             if (val == CloseDialogReturnValue.abort) return;
         }
+        deleteCompounds(new ArrayList<>(mainFrame.getCompoundList().getCompoundListSelectionModel().getSelected()));
+    }
 
-        //use provided list or remove selected.
-        List<InstanceBean> toRemove = this.toRemove != null ? new ArrayList<>(this.toRemove) : new ArrayList<>(mainFrame.getCompoundList().getCompoundListSelectionModel().getSelected());
+    public void deleteCompounds(List<InstanceBean> toRemove) {
+        if (toRemove == null || toRemove.isEmpty())
+            return;
+
+        //clear selection to prevent EventList from going crazy.
         mainFrame.getCompoundList().getCompoundListSelectionModel().clearSelection();
-        mainFrame.ps().deleteCompounds(toRemove, mainFrame);
+
+        Jobs.runInBackgroundAndLoad(mainFrame, "Deleting Compounds...", false, new TinyBackgroundJJob<Boolean>() {
+            @Override
+            protected Boolean compute() {
+                synchronized (this) {
+                    final AtomicInteger pro = new AtomicInteger(0);
+                    updateProgress(0, toRemove.size(), pro.get(), "Deleting...");
+
+                    gui.acceptSiriusClient((client, pid) ->
+                            toRemove.forEach(feature -> {
+                                try {
+                                    if (!feature.isComputing())
+                                        client.features().deleteAlignedFeature(pid, feature.getFeatureId());
+                                    else
+                                        LoggerFactory.getLogger(getClass()).warn("Cannot delete compound '" + feature.getFeatureId() + "' because it is currently computing. Skipping!");
+                                } catch (Exception e) {
+                                    LoggerFactory.getLogger(getClass()).error("Could not delete Compound: " + feature.getFeatureId(), e);
+                                } finally {
+                                    updateProgress(0, toRemove.size(), pro.incrementAndGet(), "Deleting...");
+                                }
+                            }));
+                    return true;
+                }
+            }
+        });
     }
 }

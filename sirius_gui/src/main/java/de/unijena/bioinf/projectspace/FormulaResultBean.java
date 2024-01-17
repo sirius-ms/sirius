@@ -19,233 +19,325 @@
 
 package de.unijena.bioinf.projectspace;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.canopus.CanopusResult;
-import de.unijena.bioinf.fingerid.FingerprintResult;
-import de.unijena.bioinf.fingerid.blast.FBCandidates;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
-import de.unijena.bioinf.projectspace.fingerid.FBCandidateFingerprintsTopK;
-import de.unijena.bioinf.projectspace.fingerid.FBCandidatesTopK;
-import de.unijena.bioinf.sirius.FTreeMetricsHelper;
+import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
+import de.unijena.bioinf.ms.nightsky.sdk.model.*;
+import de.unijena.bioinf.sse.DataObjectEvents;
+import it.unimi.dsi.fastutil.Pair;
+import org.apache.commons.lang3.function.TriFunction;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
+import javax.swing.text.html.Option;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalDouble;
+import java.util.OptionalInt;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * this is the view for SiriusResultElement.class
  */
-public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBean>, DataAnnotation {
+public class FormulaResultBean implements SiriusPCS, DataAnnotation {
     private final MutableHiddenChangeSupport pcs = new MutableHiddenChangeSupport(this, true);
+    private final PropertyChangeListener listener;
+
+    private final InstanceBean parentInstance;
+
+    private final String formulaId;
+
+    private FormulaCandidate sourceCandidate;
+
+    private Optional<ProbabilityFingerprint> fp;
+    private Optional<LipidAnnotation> lipidAnnotation;
+    private Optional<AnnotatedSpectrum> simulatedIsotopePattern;
+    private Optional<FragmentationTree> fragmentationTree;
+
+    private Pair<CompoundClasses, CanopusPrediction> canopusResults;
+    private Optional<String> ftreeJson;
+
 
     @Override
     public HiddenChangeSupport pcs() {
         return pcs;
     }
 
-    //the results data structure
-    private final FormulaResultId fid;
-    private final InstanceBean parent;
-
-    //additional UI fields
-    private final int rank;
-
-    private List<ContainerListener.Defined> listeners = null;
-
-    public FormulaResultBean(FormulaResultId fid, InstanceBean parent, int rank) {
-        this.fid = fid;
-        this.parent = parent;
-        this.rank = rank;
+    public FormulaResultBean(@NotNull FormulaCandidate sourceCandidate, @NotNull InstanceBean parentInstance) {
+        this(sourceCandidate.getFormulaId(), sourceCandidate, parentInstance);
     }
 
-    private List<ContainerListener.Defined> configureListeners() {
-        List<ContainerListener.Defined> listeners = new ArrayList<>(5);
-        //this is used to detect a new tree as well as a new zodiac score
-        listeners.add(parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(FormulaScoring.class).
-                thenDo((event -> {
-                    if (!event.getAffectedID().equals(fid))
-                        return;
-                    FormulaScoring fScores = (FormulaScoring) event.getAffectedComponent(FormulaScoring.class).orElse(null);
-                    pcs.firePropertyChange("formulaResult.formulaScore", null, fScores);
-                })));
-
-        listeners.add(parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(FTree.class).
-                thenDo((event -> {
-                    if (!event.getAffectedID().equals(fid))
-                        return;
-                    FTree ftree = (FTree) event.getAffectedComponent(FTree.class).orElse(null);
-                    pcs.firePropertyChange("formulaResult.ftree", null, ftree);
-                })));
-
-        listeners.add(parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(FBCandidates.class).
-                thenDo((event -> {
-                    if (!event.getAffectedID().equals(fid))
-                        return;
-                    FingerprintResult fpRes = (FingerprintResult) event.getAffectedComponent(FingerprintResult.class).orElse(null);
-                    pcs.firePropertyChange("formulaResult.fingerprint", null, fpRes);
-                })));
-
-        listeners.add(parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(FBCandidates.class).
-                thenDo((event -> {
-                    if (!event.getAffectedID().equals(fid))
-                        return;
-                    FBCandidates fbRes = (FBCandidates) event.getAffectedComponent(FBCandidates.class).orElse(null);
-                    pcs.firePropertyChange("formulaResult.fingerid", null, fbRes);
-                })));
-
-        listeners.add(parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(CanopusResult.class).
-                thenDo((event -> {
-                    if (!event.getAffectedID().equals(fid))
-                        return;
-                    CanopusResult cRes = (CanopusResult) event.getAffectedComponent(CanopusResult.class).orElse(null);
-                    pcs.firePropertyChange("formulaResult.canopus", null, cRes);
-                })));
-        return listeners;
+    public FormulaResultBean(@NotNull String formulaId, @NotNull InstanceBean parentInstance) {
+        this(formulaId, null, parentInstance);
     }
 
-    public List<ContainerListener.Defined> registerProjectSpaceListeners() {
-        if (listeners == null)
-            listeners = configureListeners();
-        return listeners.stream().filter(ContainerListener.Defined::notRegistered).
-                map(ContainerListener.Defined::register).collect(Collectors.toList());
+    public FormulaResultBean(@NotNull String formulaId, @Nullable FormulaCandidate sourceCandidate, @NotNull InstanceBean parentInstance) {
+        this.formulaId = formulaId;
+        this.sourceCandidate = sourceCandidate;
+        this.parentInstance = parentInstance;
+
+        if (sourceCandidate != null)
+            assert sourceCandidate.getFormulaId().equals(formulaId);
+        this.listener = new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                DataObjectEvents.toDataObjectEventData(evt.getNewValue(), ProjectChangeEvent.class)
+                        .ifPresent(pce -> {
+                            if (sourceCandidate.getFormulaId().equals(pce.getFormulaId())) {
+                                if (pce.getEventType() == ProjectChangeEvent.EventTypeEnum.RESULT_UPDATED) {
+                                    FormulaResultBean.this.sourceCandidate = null;
+                                    FormulaResultBean.this.canopusResults = null;
+                                    FormulaResultBean.this.fp = null;
+                                    FormulaResultBean.this.lipidAnnotation = null;
+                                    FormulaResultBean.this.simulatedIsotopePattern = null;
+                                    FormulaResultBean.this.fragmentationTree = null;
+                                    FormulaResultBean.this.ftreeJson = null;
+
+                                    pcs.firePropertyChange("formulaResult.update", null, pce);
+                                }
+                            } else {
+                                LoggerFactory.getLogger(getClass()).warn("Event delegated with wrong formula id! Id is {} instead of {}!", pce.getFormulaId(), getFormulaId());
+                            }
+                        });
+            }
+        };
     }
 
-    public List<ContainerListener.Defined> unregisterProjectSpaceListeners() {
-        if (listeners == null)
-            return List.of();
-        return listeners.stream().filter(ContainerListener.Defined::isRegistered).
-                map(ContainerListener.Defined::unregister).collect(Collectors.toList());
+    public NightSkyClient getClient() {
+        return getParentInstance().getClient();
     }
 
-
-    public FormulaResultId getID() {
-        return fid;
+    public InstanceBean getParentInstance() {
+        return parentInstance;
     }
 
-    public InstanceBean getInstance() {
-        return parent;
+    @NotNull
+    private FormulaCandidate getFormulaCandidate(FormulaCandidateOptField... optFields) {
+        return getFormulaCandidate(List.of(optFields));
     }
 
-    @SafeVarargs
-    public final Optional<FormulaResult> getResult(Class<? extends DataAnnotation>... components) {
-        parent.addToCache();
-        return parent.loadFormulaResult(getID(), components);
+    public static List<FormulaCandidateOptField>  ensureDefaultOptFields(@Nullable List<FormulaCandidateOptField> optFields){
+        //we always load top annotations because it contains mandatory information for the SIRIUS GUI
+        return (optFields != null && !optFields.isEmpty() && !optFields.equals(List.of(FormulaCandidateOptField.NONE))
+                ? Stream.concat(optFields.stream(), Stream.of(FormulaCandidateOptField.STATISTICS)).distinct().toList()
+                : List.of(FormulaCandidateOptField.STATISTICS));
     }
 
-    public <T extends FormulaScore> double getScoreValueIfNa(Class<T> scoreType, double fallback) {
-        return getScore(scoreType).orElse(FormulaScore.NA(scoreType)).scoreIfNa(fallback);
+    @NotNull
+    private FormulaCandidate getFormulaCandidate(@Nullable List<FormulaCandidateOptField> optFields) {
+        final List<FormulaCandidateOptField> of = ensureDefaultOptFields(optFields);
+
+        // we update every time here since we do not know which optional fields are already loaded.
+        if (sourceCandidate == null || !of.equals(List.of(FormulaCandidateOptField.STATISTICS)))
+            sourceCandidate = withIds((pid, featId, formId) ->
+                    getClient().features().getFormulaCandidate(pid, featId, formId, of));
+
+        return sourceCandidate;
     }
 
-    public <T extends FormulaScore> double getScoreValue(Class<T> scoreType) {
-        return getScore(scoreType).orElse(FormulaScore.NA(scoreType)).score();
-    }
-
-    public <T extends FormulaScore> Optional<T> getScore(final Class<T> scoreType) {
-        return getResult(FormulaScoring.class).flatMap(r -> r.getAnnotation(FormulaScoring.class).flatMap(it -> it.getAnnotation(scoreType)));
-    }
-
-    public Optional<FTree> getFragTree() {
-        return getResult(FTree.class).flatMap(r -> r.getAnnotation(FTree.class));
+    private Optional<FormulaCandidate> sourceCandidate(){
+        return Optional.ofNullable(sourceCandidate);
     }
 
 
-    public Optional<FingerprintResult> getFingerprintResult(){
-        return getResult(FingerprintResult.class).flatMap(r -> r.getAnnotation(FingerprintResult.class));
-    }
-    public Optional<FBCandidatesTopK> getFingerIDCandidates(){
-        return getResult(FBCandidatesTopK.class).flatMap(r -> r.getAnnotation(FBCandidatesTopK.class));
+    @NotNull
+    public String getFormulaId() {
+        return formulaId;
     }
 
-    public Optional<FBCandidateFingerprintsTopK> getFingerIDCandidatesFPs(){
-        return getResult(FBCandidateFingerprintsTopK.class).flatMap(r -> r.getAnnotation(FBCandidateFingerprintsTopK.class));
+    public void registerProjectSpaceListeners() {
+        parentInstance.addPropertyChangeListener("instance.updateFormulaResult." + getFormulaId(), listener);
+    }
+
+    public void unregisterProjectSpaceListeners() {
+        parentInstance.removePropertyChangeListener("instance.updateFormulaResult." + getFormulaId(), listener);
+    }
+
+    private <R> R withIds(TriFunction<String, String, String, R> doWithClient) {
+        return doWithClient.apply(parentInstance.getProjectManager().getProjectId(), parentInstance.getFeatureId(), getFormulaId());
     }
 
 
-    public Optional<CanopusResult> getCanopusResult(){
-        return getResult(CanopusResult.class).flatMap(r -> r.getAnnotation(CanopusResult.class));
-    }
-
+    //todo nighsky needed?
     public Optional<SpectralSearchResultBean> getSpectralSearchResults() {
-        return parent.getSpectralSearchResults();
+        return getParentInstance().getSpectralSearchResults();
     }
-
-    //ranking stuff
-    public int getRank() {
-        return rank;
-    }
-
-//    public boolean isBestHit() {
-//        return getRank() == 1;
-//    } //todo us also fingerid score for marking best hit
 
     //id based info
-    public PrecursorIonType getPrecursorIonType() {
-        return getID().getIonType();
+    @NotNull
+    public String getAdduct() {
+        return getFormulaCandidate().getAdduct();
     }
 
+    @NotNull
+    public PrecursorIonType getAdductObj() {
+        return PrecursorIonType.fromString(getFormulaCandidate().getAdduct());
+    }
+
+    @NotNull
     public int getCharge() {
-        return getPrecursorIonType().getCharge();
+        return getAdductObj().getCharge();
     }
 
-    public MolecularFormula getMolecularFormula() {
-        return getID().getMolecularFormula();
+    @NotNull
+    public String getPrecursorFormula() {
+        return getPrecursorFormulaObj().toString();
     }
+
+    @NotNull
+    public MolecularFormula getPrecursorFormulaObj() {
+        @NotNull PrecursorIonType ionType = getAdductObj();
+        return getMolecularFormulaObj().add(ionType.getAdduct()).subtract(ionType.getInSourceFragmentation());
+    }
+
+    @NotNull
+    public String getMolecularFormula() {
+        return getFormulaCandidate().getMolecularFormula();
+    }
+
+    @NotNull
+    public MolecularFormula getMolecularFormulaObj() {
+        return MolecularFormula.parseOrThrow(getMolecularFormula());
+    }
+
+    public boolean isLipid() {
+        return getLipidAnnotation().map(l -> l.getLipidSpecies() != null).orElse(false);
+    }
+
 
     private final static Pattern pat = Pattern.compile("^\\s*\\[\\s*M\\s*|\\s*\\]\\s*\\d*\\s*[\\+\\-]\\s*$");
 
     public String getFormulaAndIonText() {
-        final PrecursorIonType ionType = getPrecursorIonType();
-        final MolecularFormula mf = getMolecularFormula();
-        String niceName = ionType.toString();
+        final String ionType = getAdduct();
+        final String mf = getMolecularFormula();
+        String niceName = ionType;
         niceName = pat.matcher(niceName).replaceAll("");
-        if (ionType.isIonizationUnknown()) {
+        if (PrecursorIonType.fromString(ionType).isIonizationUnknown()) {
             return mf.toString();
         } else {
             return mf.toString() + " " + niceName;
         }
     }
 
-    private Optional<FTreeMetricsHelper> getMetrics() {
-        return getResult(FTree.class).flatMap(r -> r.getAnnotation(FTree.class).map(FTreeMetricsHelper::new));
+
+    public OptionalDouble getSiriusScore() {
+        return getFormulaCandidate().getSiriusScore() != null
+                ? OptionalDouble.of(getFormulaCandidate().getSiriusScore()) : OptionalDouble.empty();
     }
 
-    public double getExplainedPeaksRatio() {
-        return getMetrics().map(FTreeMetricsHelper::getExplainedPeaksRatio).orElse(Double.NaN);
+    public OptionalDouble getIsotopeScore() {
+        return getFormulaCandidate().getIsotopeScore() != null
+                ? OptionalDouble.of(getFormulaCandidate().getIsotopeScore()) : OptionalDouble.empty();
     }
 
-    public double getNumOfExplainedPeaks() {
-        return getMetrics().map(FTreeMetricsHelper::getNumOfExplainedPeaks).map(Integer::doubleValue).orElse(Double.NaN);
+    public OptionalDouble getTreeScore() {
+        return getFormulaCandidate().getTreeScore() != null
+                ? OptionalDouble.of(getFormulaCandidate().getTreeScore()) : OptionalDouble.empty();
     }
 
-    public double getExplainedIntensityRatio() {
-        return getMetrics().map(FTreeMetricsHelper::getExplainedIntensityRatio).orElse(Double.NaN);
+    public OptionalDouble getZodiacScore() {
+        return getFormulaCandidate().getZodiacScore() != null
+                ? OptionalDouble.of(getFormulaCandidate().getZodiacScore()) : OptionalDouble.empty();
     }
 
-    public double getNumberOfExplainablePeaks() {
-        return getMetrics().map(FTreeMetricsHelper::getNumberOfExplainablePeaks).map(Integer::doubleValue).orElse(Double.NaN);
+    public OptionalInt getNumOfExplainedPeaks() {
+        return getFormulaCandidate().getNumOfExplainedPeaks() != null
+                ? OptionalInt.of(getFormulaCandidate().getNumOfExplainedPeaks()) : OptionalInt.empty();
     }
 
-    public double getMedianMassDevPPM() {
-        return getMetrics().map(FTreeMetricsHelper::getMedianMassDeviation).map(Deviation::getPpm).orElse(Double.NaN);
+    public OptionalInt getNumOfExplainablePeaks() {
+        return getFormulaCandidate().getNumOfExplainablePeaks() != null
+                ? OptionalInt.of(getFormulaCandidate().getNumOfExplainablePeaks()) : OptionalInt.empty();
     }
 
-    public double getMedianAbsoluteMassDevPPM() {
-        return getMetrics().map(FTreeMetricsHelper::getMedianAbsoluteMassDeviation).map(Deviation::getPpm).orElse(Double.NaN);
+    public OptionalDouble getTotalExplainedIntensity() {
+        return getFormulaCandidate().getTotalExplainedIntensity() != null
+                ? OptionalDouble.of(getFormulaCandidate().getTotalExplainedIntensity()) : OptionalDouble.empty();
     }
 
-    public double getMedianMassDev() {
-        return getMetrics().map(FTreeMetricsHelper::getMedianMassDeviation).map(Deviation::getAbsolute).orElse(Double.NaN);
+    public Optional<Deviation> getMedianMassDeviation() {
+        return Optional.ofNullable(getFormulaCandidate().getMedianMassDeviation());
     }
 
-    @Override
-    public int compareTo(FormulaResultBean o) {
-        return Integer.compare(getRank(), o.getRank());
+    public OptionalDouble getTopCSIScore() {
+        @NotNull FormulaCandidate c = getFormulaCandidate();
+        return getFormulaCandidate().getTopCSIScore() != null
+                ? OptionalDouble.of(getFormulaCandidate().getTopCSIScore()) : OptionalDouble.empty();
+    }
+
+    public Optional<FragmentationTree> getFragmentationTree() {
+        if (this.fragmentationTree == null)
+            this.fragmentationTree =  Optional.ofNullable(
+                    sourceCandidate().map(FormulaCandidate::getFragmentationTree)
+                            .orElse(withIds((pid, fid, foid) -> getClient().features().getFragTree(pid, fid, foid))));
+
+        return this.fragmentationTree;
+    }
+
+    public Optional<String> getFTreeJson() {
+        if (this.ftreeJson == null)
+            this.ftreeJson =  Optional.ofNullable(withIds((pid, fid, foid) ->
+                    getClient().features().getSiriusFragTree(pid, fid, foid)));
+
+        return this.ftreeJson;
+    }
+
+    public Optional<AnnotatedSpectrum> getSimulatedIsotopePattern() {
+        if (this.simulatedIsotopePattern == null)
+            this.simulatedIsotopePattern = Optional.ofNullable(
+                    sourceCandidate().map(FormulaCandidate::getSimulatedIsotopePattern)
+                            .orElse(withIds((pid, fid, foid) -> getClient().features().getSimulatedIsotopePattern(pid, fid, foid))));
+
+
+        return this.simulatedIsotopePattern;
+    }
+
+    public Optional<LipidAnnotation> getLipidAnnotation() {
+        if (this.lipidAnnotation == null){
+            this.lipidAnnotation = Optional.ofNullable(
+                    sourceCandidate().map(FormulaCandidate::getLipidAnnotation)
+                    .orElse(withIds((pid, fid, foid) -> getClient().features().getLipidAnnotation(pid, fid, foid))));
+        }
+        return this.lipidAnnotation;
+    }
+
+    public Optional<ProbabilityFingerprint> getPredictedFingerprint() {
+        if (this.fp == null) {
+            List<Double> fpTmp = sourceCandidate().map(FormulaCandidate::getPredictedFingerprint)
+                    .orElse(withIds((pid, fid, foid) -> getClient().features().getFingerprintPrediction(pid, fid, foid)));
+
+            this.fp = Optional.ofNullable(fpTmp)
+                    .map(fpRaw -> new ProbabilityFingerprint(
+                            parentInstance.getProjectManager().getFingerIdData(getCharge()).getFingerprintVersion(),
+                            fpRaw.stream().mapToDouble(Double::doubleValue).toArray()));
+        }
+        return this.fp;
+    }
+
+    @NotNull
+    private Pair<CompoundClasses, CanopusPrediction> getCanopusResults() {
+        if (canopusResults == null) {
+            @NotNull FormulaCandidate f = sourceCandidate().filter(fc -> fc.getCanopusPrediction() != null && fc.getCompoundClasses() != null)
+                    .orElse(getFormulaCandidate(FormulaCandidateOptField.CANOPUSPREDICTIONS, FormulaCandidateOptField.COMPOUNDCLASSES));
+            canopusResults = Pair.of(f.getCompoundClasses(), f.getCanopusPrediction());
+        }
+        return canopusResults;
+    }
+
+    public Optional<CompoundClasses> getCompoundClasses() {
+        return Optional.ofNullable(getCanopusResults().first());
+    }
+
+    public Optional<CanopusPrediction> getCanopusPrediction() {
+        return Optional.ofNullable(getCanopusResults().second());
     }
 }

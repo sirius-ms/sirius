@@ -29,7 +29,6 @@ import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.projectspace.SpectralSearchResultBean;
-import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -142,7 +141,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             super.paintComponent(graphics);
             if (agreement == null || agreement.indizes.length == 0) return;
             final Graphics2D g = (Graphics2D) graphics;
-            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
             final int numberOfCols = Math.min(agreement.indizes.length, (getWidth() - 2) / CELL_SIZE);
             final int numberOfRows = ((agreement.indizes.length + numberOfCols - 1) / numberOfCols);
@@ -204,9 +203,9 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
 
         public DatabasePanel() {
             setOpaque(false);
-            setLayout(new FlowLayout(FlowLayout.LEFT,2,2));
+            setLayout(new FlowLayout(FlowLayout.LEFT, 2, 2));
             setPreferredSize(new Dimension(Integer.MAX_VALUE,
-                    ((int) (new TextLayout("W", DB_PANEL_FONT, new FontRenderContext(null, false, false)).getBounds().getHeight()) +  2 * DB_LABEL_PADDING + 10) * 3));
+                    ((int) (new TextLayout("W", DB_PANEL_FONT, new FontRenderContext(null, false, false)).getBounds().getHeight()) + 2 * DB_LABEL_PADDING + 10) * 3));
         }
 
         public void setCompound(FingerprintCandidateBean candidate) {
@@ -248,7 +247,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
         public void paint(Graphics graphics) {
             super.paint(graphics);
             final Graphics2D g = (Graphics2D) graphics;
-            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             final FontMetrics m = getFontMetrics(getFont());
             final int tw = m.stringWidth(label.name());
             final int th = m.getHeight();
@@ -391,10 +390,8 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             if (value.fp == null)
                 return;
 
-            //todo is this down in background? i am not competley sure which methods run im background and which in EDT here.
-            //TODO nighsky: remove dependency on ps -> provide visualization infos via api
-            gui.getMainFrame().ps().getProjectSpaceProperty(FingerIdDataProperty.class).map(p -> p.getByIonType(value.adduct)).ifPresent(f ->
-                    ag.setAgreement(value.getSubstructures(value.getPlatts(), f.getPerformances())));
+            // runs in awt event queue but seems to be fast enough
+            ag.setAgreement(value.getSubstructures(value.getPlatts(), gui.getProjectManager().getFingerIdData(value.getFormulaResult().getCharge()).getPerformances()));
         }
     }
 }

@@ -20,11 +20,11 @@
 
 package de.unijena.bioinf.projectspace;
 
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchSubtoolJob;
+import de.unijena.bioinf.ms.nightsky.sdk.model.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.spectraldb.SpectralLibrary;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
@@ -53,7 +53,7 @@ public class SpectralSearchResultBean {
                 resultMap.get(reference.getCandidateInChiKey()).add(r);
             } catch (ChemicalDatabaseException e) {
                 LoggerFactory.getLogger(this.getClass()).error("Error reading spectrum " + r.getReferenceUUID(), e);
-            }  catch (Exception e) {
+            } catch (Exception e) {
                 LoggerFactory.getLogger(this.getClass()).error("No such database: '" + r.getDbName() + "'");
                 break;
             }
@@ -106,8 +106,13 @@ public class SpectralSearchResultBean {
                 SpectralLibrary db = SearchableDatabases.getCustomDatabase(match.getDbName()).orElseThrow().toSpectralLibraryOrThrow();
                 this.reference = db.getReferenceSpectrum(match.getReferenceUUID());
                 if (instance != null) {
-                    MutableMs2Spectrum query = instance.getMs2Spectra().get(match.getQuerySpectrumIndex());
-                    this.queryName = SpectraSearchSubtoolJob.getQueryName(query, match.getQuerySpectrumIndex());
+                    AnnotatedSpectrum query = instance.getMsData().getMs2Spectra().get(match.getQuerySpectrumIndex());
+                    this.queryName = SpectraSearchSubtoolJob.getQueryName(
+                            query.getMsLevel(),
+                            -1, //todo nightsky: do we want to add additional meta info to nightsky spectrum
+                            query.getCollisionEnergy(),
+                            instance.getIonization().getIonization().toString(),
+                            match.getQuerySpectrumIndex());
                 }
             } catch (Exception e) {
                 LoggerFactory.getLogger(getClass()).error("Error retrieving spectral matching data.", e);
@@ -136,5 +141,4 @@ public class SpectralSearchResultBean {
             return Integer.compare(match.getRank(), o.getMatch().getRank());
         }
     }
-
 }

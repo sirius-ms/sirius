@@ -37,11 +37,13 @@ import de.unijena.bioinf.spectraldb.SpectralLibrary;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -54,17 +56,26 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
     }
 
     public static String getQueryName(MutableMs2Spectrum query, int queryIndex) {
-        String q = String.format(
-                "MS%d; #%d",
+        return getQueryName(
                 query.getMsLevel(),
-                (query.getScanNumber() > -1) ? query.getScanNumber() : queryIndex + 1
+                query.getScanNumber(),
+                query.getCollisionEnergy() != null ? Math.round(query.getCollisionEnergy().getMinEnergy()) + "eV" : null,
+                query.getIonization() != null ? query.getIonization().toString() : null,
+                queryIndex
         );
-        if (query.getCollisionEnergy() != null) {
-            q += String.format("; CE %deV", Math.round(query.getCollisionEnergy().getMinEnergy()));
-        }
-        if (query.getIonization() != null) {
-            q += String.format("; %s", query.getIonization().toString());
-        }
+    }
+
+    public static String getQueryName(int mslevel, int scanNumber, @Nullable String collisionEnergy,
+                                      @Nullable String ionization, int queryIndex) {
+
+        String q = String.format("MS%d; #%d", mslevel, (scanNumber > -1) ? scanNumber : queryIndex + 1);
+
+        if (collisionEnergy != null)
+            q += String.format("; CE %s", collisionEnergy);
+
+        if (ionization != null)
+            q += String.format("; %s", ionization);
+
         return q;
     }
 

@@ -36,7 +36,7 @@ import java.util.Objects;
 
 
 /**
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ * @author Markus Fleischauer
  */
 public class ProjectSaveAction extends AbstractGuiAction {
 
@@ -47,11 +47,15 @@ public class ProjectSaveAction extends AbstractGuiAction {
         setEnabled(true);
 
         //add action list Listener for button activity
-//        MF.ps().COMPOUNT_LIST.addListEventListener(listChanges -> setEnabled(!listChanges.getSourceList().isEmpty()));
+        gui.getProjectManager().INSTANCE_LIST.addListEventListener(listChanges -> setEnabled(!listChanges.getSourceList().isEmpty()));
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        saveAs();
+    }
+
+    public void saveAs(){
         JFileChooser jfc = new JFileChooser();
         jfc.setCurrentDirectory(PropertyManager.getFile(SiriusProperties.DEFAULT_SAVE_DIR_PATH));
         jfc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
@@ -73,8 +77,10 @@ public class ProjectSaveAction extends AbstractGuiAction {
                         setAndStoreInBackground(SiriusProperties.DEFAULT_SAVE_DIR_PATH, selFile.getParentFile().getAbsolutePath());
 
                 try {
-                    mainFrame.ps().saveAs(selFile.toPath(), mainFrame);
-                    Jobs.runEDTAndWait(() -> mainFrame.setTitlePath(mainFrame.ps().projectSpace().getLocation().toString()));
+                    //todo nightsky -> add copy project action of nighsky client is updated
+                    throw new UnsupportedOperationException("NOT YET IMPLEMENTED");
+//                    mainFrame.ps().saveAs(selFile.toPath(), mainFrame);
+//                    Jobs.runEDTAndWait(() -> mainFrame.setTitlePath(mainFrame.ps().projectSpace().getLocation().toString()));
                 } catch (Exception e2) {
                     new StacktraceDialog(mainFrame, e2.getMessage(), e2);
                 }

@@ -42,10 +42,9 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
     private Font valueFont, compoundFont, propertyFont, statusFont;
 
     private Color selectedBackground, evenBackground, unevenBackground, selectedForeground;
-    private Color activatedForeground, deactivatedForeground, disableBackground;
+    private Color activatedForeground;
 
     private DecimalFormat numberFormat;
-    private ImageIcon loadingGif;
 
     public CompoundCellRenderer() {
         this.setPreferredSize(new Dimension(210, 86));
@@ -62,10 +61,8 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
         selectedBackground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].background");
         selectedForeground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].textForeground");
         evenBackground = Colors.LIST_EVEN_BACKGROUND;
-        disableBackground = UIManager.getColor("ComboBox.background");
         unevenBackground = Colors.LIST_UNEVEN_BACKGROUND;
         activatedForeground = UIManager.getColor("List.foreground");
-        deactivatedForeground = Color.GRAY;
     }
 
     @Override
@@ -123,9 +120,6 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
 
         if (trigger) g2.setPaint(p);
 
-//		int ms1No = ec.getMs1Spectra().size();
-//		int ms2No = ec.getMs2Spectra().size();
-
         String ionizationProp = "Ionization";
         String focMassProp = "Precursor";
         String rtProp = "RT";
@@ -147,7 +141,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
         String ionValue = ec.getIonization().toString();
         double focD = ec.getIonMass();
         String focMass = focD > 0 ? numberFormat.format(focD) + " Da" : "unknown";
-        String rtValue = ec.getID().getRt().map(RetentionTime::getRetentionTimeInSeconds).map(s -> s / 60)
+        String rtValue = ec.getRT().map(RetentionTime::getRetentionTimeInSeconds).map(s -> s / 60)
                 .map(numberFormat::format).map(i -> i + " min").orElse("N/A");
 
         g2.setFont(valueFont);
@@ -155,7 +149,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
         g2.drawString(focMass, xPos, 48);
         g2.drawString(rtValue, xPos, 64);
 
-        ec.getID().getConfidenceScore().ifPresent(confScore -> {
+        ec.getConfidenceScoreDefault().ifPresent(confScore -> {
             g2.setFont(propertyFont);
             String conf = confScore < 0 || Double.isNaN(confScore) ? ConfidenceScore.NA() : BigDecimal.valueOf(confScore).setScale(3, RoundingMode.HALF_UP).toString();
             g2.drawString(conf, xPos, 80);

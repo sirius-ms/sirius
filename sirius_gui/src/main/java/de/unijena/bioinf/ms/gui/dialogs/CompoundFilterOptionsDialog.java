@@ -23,6 +23,9 @@ import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
+import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.actions.DeleteExperimentAction;
+import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.DBSelectionList;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
@@ -67,9 +70,11 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
 
     final JCheckboxListPanel<CustomDataSources.Source> searchDBList;
 
+    final SiriusGui gui;
 
-    public CompoundFilterOptionsDialog(MainFrame owner, SearchTextField searchField, CompoundFilterModel filterModel, CompoundList compoundList) {
-        super(owner, "Filter configuration", true);
+    public CompoundFilterOptionsDialog(SiriusGui gui, SearchTextField searchField, CompoundFilterModel filterModel, CompoundList compoundList) {
+        super(gui.getMainFrame(), "Filter configuration", true);
+        this.gui = gui;
         this.searchField = searchField;
         this.filterModel = filterModel;
         this.compoundList = compoundList;
@@ -246,9 +251,6 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         setVisible(true);
     }
 
-    private MainFrame mf(){
-        return (MainFrame) getOwner();
-    }
     private void configureActions() {
         InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         KeyStroke enterKey = KeyStroke.getKeyStroke("ENTER");
@@ -344,16 +346,16 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         dispose();
 
         // clear selection to prevent unnecessary updates during deletions
-        mf().getCompoundList().getCompoundListSelectionModel().clearSelection();
+        gui.getMainFrame().getCompoundList().getCompoundListSelectionModel().clearSelection();
 
         // collect instances to delete
-        List<InstanceBean> toDelete = Jobs.runInBackgroundAndLoad(mf(), "Collecting Instances...", () -> invertFilter.isSelected()
+        List<InstanceBean> toDelete = Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Collecting Instances...", () -> invertFilter.isSelected()
                 ? compoundList.getCompoundList().stream().filter(matcher::matches).collect(Collectors.toList())
                 : compoundList.getCompoundList().stream().filter(i -> !matcher.matches(i)).collect(Collectors.toList())
         ).getResult();
 
         //delete instances
-        mf().ps().deleteCompounds(toDelete, mf());
+        ((DeleteExperimentAction)SiriusActions.DELETE_EXP.getInstance(gui)).deleteCompounds(toDelete);
     }
 
     /**

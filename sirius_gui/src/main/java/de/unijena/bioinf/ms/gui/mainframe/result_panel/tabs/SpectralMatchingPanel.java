@@ -48,6 +48,8 @@ import de.unijena.bioinf.ms.gui.table.*;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
 import de.unijena.bioinf.ms.gui.utils.NameFilterRangeSlider;
 import de.unijena.bioinf.ms.gui.utils.WrapLayout;
+import de.unijena.bioinf.ms.nightsky.sdk.model.AnnotatedPeak;
+import de.unijena.bioinf.ms.nightsky.sdk.model.AnnotatedSpectrum;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.projectspace.SpectralSearchResult;
 import de.unijena.bioinf.projectspace.SpectralSearchResultBean;
@@ -320,9 +322,18 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
                             Pair<Pair<SimpleSpectrum, String>, Pair<SimpleSpectrum, String>> data = getSource().readDataByFunction(ec -> {
                                 if (ec == null)
                                     return null;
-                                MutableMs2Spectrum queryMS2 = ec.getMs2Spectra().get(matchBean.getMatch().getQuerySpectrumIndex());
-                                SimpleSpectrum query = new SimpleSpectrum(queryMS2);
-                                String queryName = SpectraSearchSubtoolJob.getQueryName(queryMS2, matchBean.getMatch().getQuerySpectrumIndex());
+                                AnnotatedSpectrum queryMS2 = ec.getMsData().getMs2Spectra().get(matchBean.getMatch().getQuerySpectrumIndex());
+
+                                SimpleSpectrum query = new SimpleSpectrum(
+                                        queryMS2.getPeaks().stream().map(AnnotatedPeak::getMass).mapToDouble(Double::doubleValue).toArray(),
+                                        queryMS2.getPeaks().stream().map(AnnotatedPeak::getIntensity).mapToDouble(Double::doubleValue).toArray()
+                                );
+
+                                //todo nighsky -> might be replaced with scans api
+                                String queryName = SpectraSearchSubtoolJob.getQueryName(
+                                        queryMS2.getMsLevel(), -1, queryMS2.getCollisionEnergy(),
+                                        null, matchBean.getMatch().getQuerySpectrumIndex()
+                                );
 
                                 if (matchBean.getReference().getSpectrum() == null) {
                                     try {

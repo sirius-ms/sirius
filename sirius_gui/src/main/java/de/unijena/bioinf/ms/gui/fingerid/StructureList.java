@@ -150,7 +150,6 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
                                                                         fpRes.fingerprint,
                                                                         fbc.getResults().get(j),
                                                                         fbfps.getFingerprints().get(j),
-                                                                        formRes.getPrecursorIonType(),
                                                                         formRes
                                                                 );
                                                                 emChache.add(c);

@@ -32,6 +32,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
 
 public class FBMNExportAction extends AbstractGuiAction {
@@ -43,7 +44,7 @@ public class FBMNExportAction extends AbstractGuiAction {
         initListeners();
     }
 
-    protected void initListeners(){
+    protected void initListeners() {
         setEnabled(SiriusActions.notComputingOrEmpty(mainFrame.getCompoundList().getCompoundList()));
 
         mainFrame.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
@@ -53,13 +54,28 @@ public class FBMNExportAction extends AbstractGuiAction {
             }
 
             @Override
-            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {}
+            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {
+            }
         });
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Path p = mainFrame.ps().projectSpace().getLocation();
-        new ExecutionDialog<>(gui, new MgfExporterConfigPanel(p.getParent().toString(), p.getFileName().toString()), List.copyOf(mainFrame.getCompounds()), null, mainFrame, "Export Project for GNPS FBMN", true).start();
+        String ps = gui.applySiriusClient((client, pid) -> client.projects().getProjectSpace(pid)).getPath();
+
+        String p = null;
+        String n = null;
+        if (ps != null && !ps.isBlank()) {
+          Path path = Path.of(ps);
+          p = path.getParent().toString();
+          n = path.getFileName().toString();
+        }
+
+
+
+        new ExecutionDialog<>(gui,
+                new MgfExporterConfigPanel(p,n),
+                List.copyOf(mainFrame.getCompounds()), null, mainFrame,
+                "Export Project for GNPS FBMN", true).start();
     }
 }
