@@ -2073,6 +2073,57 @@
         }
       }
     },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/tree": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "Returns fragmentation tree (SIRIUS) for the given formula result identifier\n This tree is used to rank formula candidates (treeScore).",
+        "description": "Returns fragmentation tree (SIRIUS) for the given formula result identifier\n This tree is used to rank formula candidates (treeScore).",
+        "operationId": "getFragTree",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) the formula result belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "formulaId",
+            "in": "path",
+            "description": "identifier of the requested formula result",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fragmentation Tree",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FragmentationTree"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures": {
       "get": {
         "tags": [
@@ -2182,6 +2233,265 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PageStructureCandidateScored"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/lipid-annotation": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "Returns Lipid annotation (ElGordo) for the given formula result identifier.",
+        "description": "Returns Lipid annotation (ElGordo) for the given formula result identifier.\n ElGordo lipid annotation runs as part of the SIRIUS formula identification step.",
+        "operationId": "getLipidAnnotation",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) the formula result belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "formulaId",
+            "in": "path",
+            "description": "identifier of the requested formula result",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "LipidAnnotation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LipidAnnotation"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/isotope-pattern": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "Returns simulated isotope pattern (SIRIUS) for the given formula result identifier.",
+        "description": "Returns simulated isotope pattern (SIRIUS) for the given formula result identifier.\n This simulated isotope pattern is used to rank formula candidates (treeScore).",
+        "operationId": "getSimulatedIsotopePattern",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) the formula result belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "formulaId",
+            "in": "path",
+            "description": "identifier of the requested formula result",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Simulated isotope pattern",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnotatedSpectrum"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/fingerprint": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier\n This fingerprint is used to perform structure database search and predict compound classes.",
+        "description": "Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier\n This fingerprint is used to perform structure database search and predict compound classes.",
+        "operationId": "getFingerprintPrediction",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) the formula result belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "formulaId",
+            "in": "path",
+            "description": "identifier of the requested formula result",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "probabilistic fingerprint predicted by CSI:FingerID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "format": "double"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/canopus-prediction": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "All predicted compound classes (CANOPUS) from ClassyFire and NPC and their probabilities,",
+        "description": "All predicted compound classes (CANOPUS) from ClassyFire and NPC and their probabilities,",
+        "operationId": "getCanopusPrediction",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) the formula result belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "formulaId",
+            "in": "path",
+            "description": "identifier of the requested formula result",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Predicted compound classes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CanopusPrediction"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/best-compound-classes": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "Best matching compound classes,\n Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,",
+        "description": "Best matching compound classes,\n Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,",
+        "operationId": "getBestMatchingCompoundClasses",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) the formula result belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "formulaId",
+            "in": "path",
+            "description": "identifier of the requested formula result",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Best matching Predicted compound classes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompoundClasses"
                 }
               }
             }
@@ -2675,7 +2985,7 @@
         "properties": {
           "compoundIds": {
             "type": "array",
-            "description": "Compounds that should be the input for this Job\n Will be converted to the respective alignedFeatureIds for computation.\n \u003cp\u003e\n At least one compoundId or alignedFeatureId needs to be specified.",
+            "description": "Compounds that should be the input for this Job\n Will be converted to the respective alignedFeatureIds for computation.\n\n At least one compoundId or alignedFeatureId needs to be specified.",
             "nullable": true,
             "items": {
               "type": "string",
@@ -2684,7 +2994,7 @@
           },
           "alignedFeatureIds": {
             "type": "array",
-            "description": "Features (aligned over runs) that should be the input for this Job\n \u003cp\u003e\n At least one compoundId or alignedFeatureId needs to be specified.",
+            "description": "Features (aligned over runs) that should be the input for this Job\n\n At least one compoundId or alignedFeatureId needs to be specified.",
             "nullable": true,
             "items": {
               "type": "string",
@@ -3315,14 +3625,14 @@
             "type": "integer",
             "format": "int64"
           },
-          "last": {
-            "type": "boolean"
-          },
           "first": {
             "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
           },
           "size": {
             "type": "integer",
@@ -3338,12 +3648,12 @@
             "type": "integer",
             "format": "int32"
           },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
           "numberOfElements": {
             "type": "integer",
             "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"
@@ -3402,14 +3712,14 @@
             "type": "integer",
             "format": "int64"
           },
-          "last": {
-            "type": "boolean"
-          },
           "first": {
             "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
           },
           "size": {
             "type": "integer",
@@ -3425,12 +3735,12 @@
             "type": "integer",
             "format": "int32"
           },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
           "numberOfElements": {
             "type": "integer",
             "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"
@@ -4107,14 +4417,14 @@
             "type": "integer",
             "format": "int64"
           },
-          "last": {
-            "type": "boolean"
-          },
           "first": {
             "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
           },
           "size": {
             "type": "integer",
@@ -4130,12 +4440,12 @@
             "type": "integer",
             "format": "int32"
           },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
           "numberOfElements": {
             "type": "integer",
             "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"
@@ -4255,14 +4565,14 @@
             "type": "integer",
             "format": "int64"
           },
-          "last": {
-            "type": "boolean"
-          },
           "first": {
             "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
           },
           "size": {
             "type": "integer",
@@ -4278,12 +4588,12 @@
             "type": "integer",
             "format": "int32"
           },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
           "numberOfElements": {
             "type": "integer",
             "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"
@@ -4312,14 +4622,14 @@
             "type": "integer",
             "format": "int64"
           },
-          "last": {
-            "type": "boolean"
-          },
           "first": {
             "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
           },
           "size": {
             "type": "integer",
@@ -4335,12 +4645,12 @@
             "type": "integer",
             "format": "int32"
           },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
           "numberOfElements": {
             "type": "integer",
             "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"
@@ -4440,14 +4750,14 @@
             "type": "integer",
             "format": "int64"
           },
-          "last": {
-            "type": "boolean"
-          },
           "first": {
             "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
           },
           "size": {
             "type": "integer",
@@ -4463,12 +4773,12 @@
             "type": "integer",
             "format": "int32"
           },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
           "numberOfElements": {
             "type": "integer",
             "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"
@@ -4486,14 +4796,14 @@
             "type": "integer",
             "format": "int64"
           },
-          "last": {
-            "type": "boolean"
-          },
           "first": {
             "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
           },
           "size": {
             "type": "integer",
@@ -4509,12 +4819,12 @@
             "type": "integer",
             "format": "int32"
           },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
           "numberOfElements": {
             "type": "integer",
             "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"

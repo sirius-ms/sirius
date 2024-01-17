@@ -67,7 +67,7 @@ public class CommandSubmission {
   }
 
    /**
-   * Compounds that should be the input for this Job  Will be converted to the respective alignedFeatureIds for computation.  &lt;p&gt;  At least one compoundId or alignedFeatureId needs to be specified.
+   * Compounds that should be the input for this Job  Will be converted to the respective alignedFeatureIds for computation.   At least one compoundId or alignedFeatureId needs to be specified.
    * @return compoundIds
   **/
   @javax.annotation.Nullable
@@ -101,7 +101,7 @@ public class CommandSubmission {
   }
 
    /**
-   * Features (aligned over runs) that should be the input for this Job  &lt;p&gt;  At least one compoundId or alignedFeatureId needs to be specified.
+   * Features (aligned over runs) that should be the input for this Job   At least one compoundId or alignedFeatureId needs to be specified.
    * @return alignedFeatureIds
   **/
   @javax.annotation.Nullable
