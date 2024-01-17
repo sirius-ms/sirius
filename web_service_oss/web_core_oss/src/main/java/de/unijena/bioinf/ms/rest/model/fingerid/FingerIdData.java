@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -61,6 +62,14 @@ public class FingerIdData implements FingerprintData<CdkFingerprintVersion> {
 
     public PredictionPerformance[] getPerformances() {
         return performances;
+    }
+
+    public static FingerIdData readAndClose(Reader reader) {
+        try (BufferedReader r = new BufferedReader(reader)) {
+            return read(r);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static FingerIdData read(BufferedReader reader) throws IOException {
