@@ -25,7 +25,6 @@ import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.features.MsData;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
-import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springdoc.api.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +36,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.EnumSet;
-import java.util.List;
 
 import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.removeNone;
 
@@ -210,14 +208,14 @@ public class AlignedFeatureController {
     }
 
 
-    //todo reanable if needed for SIRIUS GUI
-//    @Hidden
-//    @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/sirius-tree", produces = MediaType.APPLICATION_JSON_VALUE)
-//    public String getFTree(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
-//        Instance instance = loadInstance(projectId, alignedFeatureId);
-//        final FTJsonWriter ftWriter = new FTJsonWriter();
-//        return instance.loadFormulaResult(parseFID(instance, formulaId), FTree.class).flatMap(fr -> fr.getAnnotation(FTree.class)).map(ftWriter::treeToJsonString).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "FragmentationTree for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!"));
-//    }
+    @Deprecated(forRemoval = true)
+    @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/sirius-tree", produces = MediaType.APPLICATION_JSON_VALUE)
+    public String getSiriusFragTree(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
+        String json = projectsProvider.getProjectOrThrow(projectId).findSiriusFtreeJsonById(alignedFeatureId, formulaId);
+        if (json == null)
+           throw  new ResponseStatusException(HttpStatus.NOT_FOUND, "FragmentationTree for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");
+        return json;
+    }
 
     /**
      * Returns fragmentation tree (SIRIUS) for the given formula result identifier

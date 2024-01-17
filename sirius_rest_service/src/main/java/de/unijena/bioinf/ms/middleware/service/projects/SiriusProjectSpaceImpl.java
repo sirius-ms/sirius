@@ -31,6 +31,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
+import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.elgordo.LipidSpecies;
@@ -427,6 +428,15 @@ public class SiriusProjectSpaceImpl implements Project {
         StringWriter w = new StringWriter();
         writeCanopusNpcData(w, charge);
         return w.toString();
+    }
+
+    @Override
+    public String findSiriusFtreeJsonById(String formulaId, String alignedFeatureId) {
+        final FTJsonWriter ftWriter = new FTJsonWriter();
+        Instance instance = loadInstance(alignedFeatureId);
+        return instance.loadFormulaResult(parseFID(instance, formulaId), FTree.class)
+                .flatMap(fr -> fr.getAnnotation(FTree.class))
+                .map(ftWriter::treeToJsonString).orElse(null);
     }
 
     public void writeFingerIdData(@NotNull Writer writer, int charge) {
