@@ -20,12 +20,16 @@
 
 package de.unijena.bioinf.ms.rest.model.canopus;
 
-import de.unijena.bioinf.ChemistryBase.fp.*;
+import de.unijena.bioinf.ChemistryBase.fp.ClassyFireFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.ClassyfireProperty;
+import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.StandardFingerprintData;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.io.Writer;
 import java.util.Arrays;
 
@@ -38,6 +42,14 @@ public class CanopusCfData extends StandardFingerprintData<ClassyFireFingerprint
 
     public ClassyFireFingerprintVersion getClassyFireFingerprintVersion() {
         return getBaseFingerprintVersion();
+    }
+
+    public static CanopusCfData readAndClose(Reader reader) {
+        try (BufferedReader r = new BufferedReader(reader)) {
+            return read(r);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static CanopusCfData read(BufferedReader reader) throws IOException {
