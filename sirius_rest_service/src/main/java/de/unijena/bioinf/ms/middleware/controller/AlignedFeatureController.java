@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.middleware.controller;
 import de.unijena.bioinf.ms.middleware.model.SearchQueryType;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
+import de.unijena.bioinf.ms.middleware.model.features.MsData;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -36,6 +37,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.EnumSet;
+import java.util.List;
 
 import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.removeNone;
 
@@ -122,6 +124,23 @@ public class AlignedFeatureController {
     ) {
         return projectsProvider.getProjectOrThrow(projectId)
                 .findStructureCandidatesByFeatureId(alignedFeatureId, pageable, removeNone(optFields));
+    }
+
+    /**
+     * Mass Spec data (input data) for the given 'alignedFeatureId' .
+     *
+     * @param projectId      project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the Mass Spec data belong sto.
+
+     * @return Mass Spec data of this feature (aligned over runs).
+     */
+    @GetMapping(value = "/{alignedFeatureId}/ms-data", produces = MediaType.APPLICATION_JSON_VALUE)
+    public MsData getMsData(@PathVariable String projectId, @PathVariable String alignedFeatureId) {
+        MsData msData = projectsProvider.getProjectOrThrow(projectId)
+                .findAlignedFeaturesById(alignedFeatureId, AlignedFeature.OptField.msData).getMsData();
+        if (msData == null)
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "MsData for '" + idString(projectId, alignedFeatureId) + "' not found!");
+        return msData;
     }
 
     /**
@@ -314,8 +333,11 @@ public class AlignedFeatureController {
     }
 
 
-    protected static String idString(String pid, String cid, String fid) {
-        return "'" + pid + "/" + cid + "/" + fid + "'";
+    protected static String idString(String pid, String fid) {
+        return "'" + pid + "/" + fid +"'";
+    }
+    protected static String idString(String pid, String fid, String foId) {
+        return "'" + pid + "/" + fid + "/" + foId + "'";
     }
 }
 
