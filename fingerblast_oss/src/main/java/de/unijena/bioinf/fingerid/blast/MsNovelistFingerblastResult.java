@@ -28,25 +28,19 @@ import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Result of a fingerblast job
- * We might add additional information in future like:
- * - used database
- * - used scoring method
- */
-public class FingerblastResult extends AbstractFingerblastResult {
+public class MsNovelistFingerblastResult extends AbstractFingerblastResult {
 
-    public FingerblastResult(List<Scored<FingerprintCandidate>> results) {
+    public MsNovelistFingerblastResult(List<Scored<FingerprintCandidate>> results) {
         super(results);
     }
 
-    public FBCandidateFingerprints getCandidateFingerprints(){
-        return new FBCandidateFingerprints(
+    public MsNovelistFBCandidateFingerprints getCandidateFingerprints(){
+        return new MsNovelistFBCandidateFingerprints(
                 results.stream().map(SScored::getCandidate).map(FingerprintCandidate::getFingerprint)
                         .collect(Collectors.toList()));
     }
 
-    public FBCandidates getCandidates(){
-        return new FBCandidates(results.stream().map(s -> new Scored<>(new CompoundCandidate(s.getCandidate()),s.getScore())).collect(Collectors.toList()));
+    public MsNovelistFBCandidates getCandidates() {
+        return new MsNovelistFBCandidates(results.stream().map(s -> new Scored<>(new CompoundCandidate(s.getCandidate()), s.getScore())).collect(Collectors.toList()));
     }
 }

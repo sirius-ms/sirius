@@ -18,23 +18,11 @@
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.fingerid.blast;
+package de.unijena.bioinf.projectspace.fingerid;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
-import de.unijena.bioinf.chemdb.CompoundCandidate;
-
-import java.util.List;
-
-/**
- * Result of a fingerblast job
- * We might add additional information in future like:
- * - used database
- * - used scoring method
- */
-public class FBCandidates extends AbstractFBCandidates {
-
-    public FBCandidates(List<Scored<CompoundCandidate>> results) {
-        super(results);
-    }
-
+import de.unijena.bioinf.projectspace.FormulaResultId;
+import de.unijena.bioinf.projectspace.Location;
+public interface MsNovelistFingerIdLocations {
+    Location<FormulaResultId>
+            MSNOVELIST_FINGERBLAST = new Location<>("msnovelist", "tsv", FormulaResultId::fileName);
 }

@@ -20,33 +20,14 @@
 
 package de.unijena.bioinf.fingerid.blast;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
-import de.unijena.bioinf.chemdb.FingerprintCandidate;
-
 import java.util.List;
-import java.util.stream.Collectors;
 
-/**
- * Result of a fingerblast job
- * We might add additional information in future like:
- * - used database
- * - used scoring method
- */
-public class FingerblastResult extends AbstractFingerblastResult {
+public class MsNovelistFBCandidates extends AbstractFBCandidates {
 
-    public FingerblastResult(List<Scored<FingerprintCandidate>> results) {
+    public MsNovelistFBCandidates(List<Scored<CompoundCandidate>> results) {
         super(results);
     }
 
-    public FBCandidateFingerprints getCandidateFingerprints(){
-        return new FBCandidateFingerprints(
-                results.stream().map(SScored::getCandidate).map(FingerprintCandidate::getFingerprint)
-                        .collect(Collectors.toList()));
-    }
-
-    public FBCandidates getCandidates(){
-        return new FBCandidates(results.stream().map(s -> new Scored<>(new CompoundCandidate(s.getCandidate()),s.getScore())).collect(Collectors.toList()));
-    }
 }

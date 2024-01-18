@@ -20,13 +20,12 @@
 
 package de.unijena.bioinf.fingerid.blast;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
-import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.ms.annotations.ResultAnnotation;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Result of a fingerblast job
@@ -34,19 +33,21 @@ import java.util.stream.Collectors;
  * - used database
  * - used scoring method
  */
-public class FingerblastResult extends AbstractFingerblastResult {
+public abstract class AbstractFBCandidates implements ResultAnnotation {
 
-    public FingerblastResult(List<Scored<FingerprintCandidate>> results) {
-        super(results);
+    protected final List<Scored<CompoundCandidate>> results;
+
+    protected AbstractFBCandidates(List<Scored<CompoundCandidate>> results) {
+        this.results = results;
     }
 
-    public FBCandidateFingerprints getCandidateFingerprints(){
-        return new FBCandidateFingerprints(
-                results.stream().map(SScored::getCandidate).map(FingerprintCandidate::getFingerprint)
-                        .collect(Collectors.toList()));
+    public List<Scored<CompoundCandidate>> getResults() {
+        return Collections.unmodifiableList(results);
     }
 
-    public FBCandidates getCandidates(){
-        return new FBCandidates(results.stream().map(s -> new Scored<>(new CompoundCandidate(s.getCandidate()),s.getScore())).collect(Collectors.toList()));
+    public TopCSIScore getTopHitScore() {
+        if (results == null || results.isEmpty())
+            return null;
+        return new TopCSIScore(results.get(0).getScore());
     }
 }
