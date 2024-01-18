@@ -53,9 +53,6 @@ public class MsNovelistFingerblastJJob extends BasicMasterJJob<List<Scored<Finge
     private final FingerIdResult idResult;
     private final List<MsNovelistCandidate> candidates;
 
-    private final MaskedFingerprintVersion fpMask = MaskedFingerprintVersion.fromString(new BufferedReader(new InputStreamReader(
-            Objects.requireNonNull(MsNovelistFingerblastJJob.class.getResourceAsStream("/fingerprints.mask")))).readLine());
-
     public MsNovelistFingerblastJJob(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI) throws IOException {
         this(predictor, webAPI, null);
     }
@@ -108,6 +105,8 @@ public class MsNovelistFingerblastJJob extends BasicMasterJJob<List<Scored<Finge
         // turn MSNovelist candidate list to scoring-compatible FingerprintCandidates
         Collection<FingerprintCandidate> combinedCandidates = new ArrayList<>(Collections.emptyList());
         FixedFingerprinter fixedFingerprinter = new FixedFingerprinter(webAPI.getCDKChemDBFingerprintVersion());
+        FingerIdData fingerIdData = idResult.getPrecursorIonType().getCharge() > 0 ? webAPI.getFingerIdData(PredictorType.CSI_FINGERID_POSITIVE) : webAPI.getFingerIdData(PredictorType.CSI_FINGERID_NEGATIVE);
+        MaskedFingerprintVersion fpMask = fingerIdData.getFingerprintVersion();
 
         combinedCandidates.addAll(candidates.stream()
                 .map(candidate -> {
