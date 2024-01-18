@@ -24,9 +24,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import de.unijena.bioinf.ms.annotations.ResultAnnotation;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -36,22 +34,10 @@ import java.util.stream.Collectors;
  * - used database
  * - used scoring method
  */
-public class FingerblastResult implements ResultAnnotation {
-
-    protected final List<Scored<FingerprintCandidate>> results;
+public class FingerblastResult extends AbstractFingerblastResult {
 
     public FingerblastResult(List<Scored<FingerprintCandidate>> results) {
-        this.results = results;
-    }
-
-    public List<Scored<FingerprintCandidate>> getResults() {
-        return Collections.unmodifiableList(results);
-    }
-
-    public TopCSIScore getTopHitScore() {
-        if (results == null || results.isEmpty())
-            return null;
-        return new TopCSIScore(results.get(0).getScore());
+        super(results);
     }
 
     public FBCandidateFingerprints getCandidateFingerprints(){
