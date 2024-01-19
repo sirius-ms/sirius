@@ -7,6 +7,7 @@ import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.fragmenter.*;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.ms.gui.configs.Colors;
+import de.unijena.bioinf.projectspace.FormulaResult;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import org.openscience.cdk.depict.DepictionGenerator;
 import org.openscience.cdk.renderer.color.UniColor;
@@ -18,17 +19,17 @@ import java.util.Optional;
 
 public class InsilicoFragmenter {
 
-    public Job fragmentJob(FormulaResultBean sre, CompoundCandidate candidate, boolean experimentalMode) {
+    public Job fragmentJob(FormulaResult sre, CompoundCandidate candidate, boolean experimentalMode) {
         return new Job(sre, candidate, experimentalMode);
     }
 
     public class Job extends BasicMasterJJob<Result> {
 
-        final FormulaResultBean sre;
+        final FormulaResult sre;
         final CompoundCandidate candidate;
         final boolean experimental;
 
-        public Job(FormulaResultBean sre, CompoundCandidate candidate, boolean experimental) {
+        public Job(FormulaResult sre, CompoundCandidate candidate, boolean experimental) {
             super(JobType.TINY_BACKGROUND);
             this.sre = sre;
             this.candidate = candidate;
@@ -38,7 +39,7 @@ public class InsilicoFragmenter {
 
         @Override
         protected Result compute() throws Exception {
-            final Optional<FTree> tree = sre.getFragTree();
+            final Optional<FTree> tree = sre.getAnnotation(FTree.class);
 
             if (tree.isEmpty()) return null;
             if (candidate == null) return null;

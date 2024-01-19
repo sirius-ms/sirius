@@ -61,7 +61,7 @@ public class FBMNExportAction extends AbstractGuiAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        String ps = gui.applySiriusClient((client, pid) -> client.projects().getProjectSpace(pid)).getPath();
+        String ps = gui.getProjectManager().getProjectLocation();
 
         String p = null;
         String n = null;

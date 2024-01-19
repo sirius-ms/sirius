@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.gui.fingerid.fingerprints;
 
 import de.unijena.bioinf.ChemistryBase.fp.FPIter;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.jjobs.JJob;
@@ -104,22 +105,21 @@ public class FingerprintTable extends ActionList<FingerIdPropertyBean, FormulaRe
                     checkForInterruption();
 
                     if (sre != null) {
-                        final FingerprintResult fpr = sre.getFingerprintResult().orElse(null);
+                        ProbabilityFingerprint fingerprint = sre.getPredictedFingerprint().orElse(null);
                         checkForInterruption();
-                        if (fpr != null) {
+                        if (fingerprint != null) {
                             try {
                                 setFScores(sre.getCharge() > 0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_NEGATIVE);
                                 List<FingerIdPropertyBean> tmp = new ArrayList<>();
-                                for (final FPIter iter : fpr.fingerprint) {
+                                for (final FPIter iter : fingerprint) {
                                     checkForInterruption();
-                                    tmp.add(new FingerIdPropertyBean(fpr.fingerprint, visualizations[iter.getIndex()], iter.getIndex(), fscores[iter.getIndex()], trainingExamples[iter.getIndex()]));
+                                    tmp.add(new FingerIdPropertyBean(fingerprint, visualizations[iter.getIndex()], iter.getIndex(), fscores[iter.getIndex()], trainingExamples[iter.getIndex()]));
                                 }
                                 checkForInterruption();
                                 Jobs.runEDTAndWait(() -> elementList.addAll(tmp));
                             } catch (IOException e) {
                                 checkForInterruption();
-                                //todo hack missing owner
-                                new ExceptionDialog((Frame) null, GuiUtils.formatToolTip("Could not get Fingerprint information for Fingerprint View! This project might be Corrupted!"));
+                                new ExceptionDialog(gui.getMainFrame(), GuiUtils.formatToolTip("Could not get Fingerprint information for Fingerprint View! This project might be Corrupted!"));
                                 LoggerFactory.getLogger(getClass()).warn("Could not get Fingerprint information!", e);
                             }
                         }

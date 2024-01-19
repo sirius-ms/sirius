@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.middleware.model.features;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -35,16 +36,18 @@ import java.util.List;
  * - One merged MS spectrum (optional)
  * - many MS/MS spectra
  * - many MS spectra
+ * - isotope pattern extracted from merged Ms1
  *
  * Each non-merged spectrum has an index which can be used to access the spectrum.
  *
  * In the future we might add some additional information like chromatographic peak or something similar
  */
 @Getter
-@Setter
+@Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class MsData {
-
+    @Schema(nullable = true)
+    protected AnnotatedSpectrum isotopePattern;
     @Schema(nullable = true)
     protected AnnotatedSpectrum mergedMs1;
     @Schema(nullable = true)
@@ -53,11 +56,4 @@ public class MsData {
     protected List<AnnotatedSpectrum> ms2Spectra;
     @Schema(nullable = true)
     protected List<AnnotatedSpectrum> ms1Spectra;
-
-    public MsData(AnnotatedSpectrum mergedMs1, AnnotatedSpectrum mergedMs2, List<AnnotatedSpectrum> ms1Spectra, List<AnnotatedSpectrum> ms2Spectra) {
-        this.mergedMs1 = mergedMs1;
-        this.mergedMs2 = mergedMs2;
-        this.ms2Spectra = ms2Spectra;
-        this.ms1Spectra = ms1Spectra;
-    }
 }

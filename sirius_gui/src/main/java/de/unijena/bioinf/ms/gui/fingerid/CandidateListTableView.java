@@ -39,7 +39,7 @@ public class CandidateListTableView extends CandidateListView {
         super(list);
 
         getSource().addActiveResultChangedListener((experiment, sre, resultElements, selections) -> {
-            if (experiment == null || experiment.stream().noneMatch(e -> e.getFingerprintResult().isPresent()))
+            if (experiment == null || experiment.stream().noneMatch(e -> e.getPredictedFingerprint().isPresent()))
                 showCenterCard(ActionList.ViewState.NOT_COMPUTED);
             else if (resultElements.isEmpty())
                 showCenterCard(ActionList.ViewState.EMPTY);

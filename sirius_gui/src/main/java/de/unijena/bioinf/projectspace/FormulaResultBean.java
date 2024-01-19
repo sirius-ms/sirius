@@ -229,49 +229,40 @@ public class FormulaResultBean implements SiriusPCS, DataAnnotation {
     }
 
 
-    public OptionalDouble getSiriusScore() {
-        return getFormulaCandidate().getSiriusScore() != null
-                ? OptionalDouble.of(getFormulaCandidate().getSiriusScore()) : OptionalDouble.empty();
+    public Optional<Double> getSiriusScore() {
+        return Optional.ofNullable(getFormulaCandidate().getSiriusScore());
     }
 
-    public OptionalDouble getIsotopeScore() {
-        return getFormulaCandidate().getIsotopeScore() != null
-                ? OptionalDouble.of(getFormulaCandidate().getIsotopeScore()) : OptionalDouble.empty();
+    public Optional<Double> getIsotopeScore() {
+        return Optional.ofNullable(getFormulaCandidate().getIsotopeScore());
     }
 
-    public OptionalDouble getTreeScore() {
-        return getFormulaCandidate().getTreeScore() != null
-                ? OptionalDouble.of(getFormulaCandidate().getTreeScore()) : OptionalDouble.empty();
+    public Optional<Double> getTreeScore() {
+        return Optional.ofNullable(getFormulaCandidate().getTreeScore());
     }
 
-    public OptionalDouble getZodiacScore() {
-        return getFormulaCandidate().getZodiacScore() != null
-                ? OptionalDouble.of(getFormulaCandidate().getZodiacScore()) : OptionalDouble.empty();
+    public Optional<Double> getZodiacScore() {
+        return Optional.ofNullable(getFormulaCandidate().getZodiacScore());
     }
 
-    public OptionalInt getNumOfExplainedPeaks() {
-        return getFormulaCandidate().getNumOfExplainedPeaks() != null
-                ? OptionalInt.of(getFormulaCandidate().getNumOfExplainedPeaks()) : OptionalInt.empty();
+    public Optional<Integer> getNumOfExplainedPeaks() {
+        return Optional.ofNullable(getFormulaCandidate().getNumOfExplainedPeaks());
     }
 
-    public OptionalInt getNumOfExplainablePeaks() {
-        return getFormulaCandidate().getNumOfExplainablePeaks() != null
-                ? OptionalInt.of(getFormulaCandidate().getNumOfExplainablePeaks()) : OptionalInt.empty();
+    public Optional<Integer> getNumOfExplainablePeaks() {
+        return Optional.ofNullable(getFormulaCandidate().getNumOfExplainablePeaks());
     }
 
-    public OptionalDouble getTotalExplainedIntensity() {
-        return getFormulaCandidate().getTotalExplainedIntensity() != null
-                ? OptionalDouble.of(getFormulaCandidate().getTotalExplainedIntensity()) : OptionalDouble.empty();
+    public Optional<Double> getTotalExplainedIntensity() {
+        return Optional.ofNullable(getFormulaCandidate().getTotalExplainedIntensity());
     }
 
     public Optional<Deviation> getMedianMassDeviation() {
         return Optional.ofNullable(getFormulaCandidate().getMedianMassDeviation());
     }
 
-    public OptionalDouble getTopCSIScore() {
-        @NotNull FormulaCandidate c = getFormulaCandidate();
-        return getFormulaCandidate().getTopCSIScore() != null
-                ? OptionalDouble.of(getFormulaCandidate().getTopCSIScore()) : OptionalDouble.empty();
+    public Optional<Double> getTopCSIScore() {
+        return Optional.ofNullable(getFormulaCandidate().getTopCSIScore());
     }
 
     public Optional<FragmentationTree> getFragmentationTree() {

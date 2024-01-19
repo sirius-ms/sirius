@@ -27,6 +27,7 @@ import java.io.File;
 public class ProjectArchivedFilter extends FileFilter {
     @Override
     public boolean accept(File f) {
+        //todo nightsky replace with new project-space
         if (f.isDirectory())
             return true;
         return ProjectSpaceIO.isZipProjectSpace(f.toPath());

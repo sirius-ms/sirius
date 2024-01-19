@@ -211,18 +211,4 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                 .map(it -> it.getFormulaId().equals(sre.getFormulaId()))
                 .orElse(false);
     }
-
-    public static class RenderScore{
-        public final double score;
-        public final String name;
-
-        public RenderScore(double score, String name) {
-            this.score = score;
-            this.name = name;
-        }
-
-        public static RenderScore of(double score, String name){
-            return new RenderScore(score, name);
-        }
-    }
 }

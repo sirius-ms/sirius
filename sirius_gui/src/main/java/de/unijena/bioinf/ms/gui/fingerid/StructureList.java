@@ -42,9 +42,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
-/**
- * Created by fleisch on 15.05.17.
- */
 public class StructureList extends ActionList<FingerprintCandidateBean, Set<FormulaResultBean>> implements ActiveElementChangedListener<FormulaResultBean, InstanceBean> {
     public final DoubleListStats csiScoreStats;
     public final DoubleListStats logPStats;

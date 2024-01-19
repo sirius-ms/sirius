@@ -31,7 +31,8 @@ import gnu.trove.list.array.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SiriusIsotopePattern extends SiriusSingleSpectrumModel{
+public class SiriusIsotopePattern {
+    protected final Spectrum<? extends Peak> spectrum;
 
     protected SimpleSpectrum isotopePattern;
     protected MolecularFormula patternFormula;
@@ -55,17 +56,7 @@ public class SiriusIsotopePattern extends SiriusSingleSpectrumModel{
     }
 
     protected SiriusIsotopePattern(Spectrum<? extends Peak> spectrum) {
-        super(spectrum);
-    }
-
-    @Override
-    public double minMz() {
-        return Math.min(simulatedPattern.getMzAt(0), isotopePattern.getMzAt(0));
-    }
-
-    @Override
-    public double maxMz() {
-        return Math.max(simulatedPattern.getMzAt(simulatedPattern.size()-1), isotopePattern.getMzAt(isotopePattern.size()-1));
+        this.spectrum = spectrum;
     }
 
     private void simulate(Ms2Experiment exp, FTree tree) {
@@ -82,7 +73,6 @@ public class SiriusIsotopePattern extends SiriusSingleSpectrumModel{
         return tree.getRoot().getFormula().subtract(ionType.getInSourceFragmentation()).add(ionType.getAdduct());
     }
 
-    @Override
     public String getMolecularFormula(int index) {
         for (int j=0; j < indizes.length; ++j) {
             if (indizes[j]==index) {
@@ -90,13 +80,6 @@ public class SiriusIsotopePattern extends SiriusSingleSpectrumModel{
             }
         }
         return null;
-    }
-
-    @Override
-    public boolean isIsotope(int index) {
-        for (int i : indizes)
-            if (i==index) return true;
-        return false;
     }
 
 	public SimpleSpectrum getIsotopePattern(){
@@ -116,7 +99,7 @@ public class SiriusIsotopePattern extends SiriusSingleSpectrumModel{
         // find isotope peaks in spectrum
         if (isotopePattern != null) {
             for (Peak p : isotopePattern) {
-                final int i = findIndexOfPeak(p.getMass(), 0.1);
+                final int i =  Spectrums.mostIntensivePeakWithin(spectrum, p.getMass(), new Deviation(1, 0.1));
                 if (i >= 0) indizes.add(i);
             }
         }
