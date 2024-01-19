@@ -19,13 +19,13 @@
 
 package de.unijena.bioinf.ms.gui.ms_viewer;
 
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.gui.webView.WebViewPanel;
+import javafx.concurrent.Worker;
+import netscape.javascript.JSObject;
+
 import java.util.HashMap;
 import java.util.Properties;
-
-import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
-import javafx.concurrent.Worker;
-import de.unijena.bioinf.ms.gui.webView.WebViewPanel;
-import netscape.javascript.JSObject;
 
 public class WebViewSpectraViewer extends WebViewPanel {
 

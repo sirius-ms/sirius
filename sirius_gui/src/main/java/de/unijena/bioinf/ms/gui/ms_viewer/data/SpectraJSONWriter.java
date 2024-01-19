@@ -249,43 +249,6 @@ public class SpectraJSONWriter{
 		return jSpectrum;
 	}
 
-	@Deprecated
-	protected ObjectNode spectrum2json(MSViewerDataModel dmodel) {
-		final ObjectMapper objectMapper = new ObjectMapper();
-		final ObjectNode jSpectrum = objectMapper.createObjectNode();
-
-		jSpectrum.put("name", "");
-
-		final ObjectNode spectrumMetadata = objectMapper.createObjectNode();
-		jSpectrum.set("spectrumMetadata", spectrumMetadata);
-
-		final ArrayNode peaks = objectMapper.createArrayNode();
-		for (int i = 0; i < dmodel.getSize(); i++) {
-			final ObjectNode peak = objectMapper.createObjectNode();
-			peak.put("mz", dmodel.getMass(i));
-			peak.put("intensity", dmodel.getRelativeIntensity(i));
-
-			final ObjectNode peakMetadata = objectMapper.createObjectNode();
-			peakMetadata.put("absoluteIntensity", dmodel.getAbsoluteIntensity(i));
-			peakMetadata.put("formula", dmodel.getMolecularFormula(i));
-			peakMetadata.put("ionization", dmodel.getIonization(i));
-			peak.set("peakMetadata", peakMetadata);
-
-			final ArrayNode peakPairs = objectMapper.createArrayNode();
-			peak.set("peakPairs", peakPairs);
-
-			final ObjectNode peakMatches = objectMapper.createObjectNode();
-			peak.set("peakMatches", peakMatches);
-
-			peaks.add(peak);
-		}
-
-		jSpectrum.set("peaks", peaks);
-
-		return jSpectrum;
-	}
-
-
 	protected ObjectNode ms2Annotated(Ms2Experiment experiment, Spectrum<? extends Peak> spectrum, Fragment[] fragments) {
 		final ObjectMapper mapper = new ObjectMapper();
 		final ObjectNode jSpectrum = mapper.createObjectNode();

@@ -41,12 +41,15 @@ package de.unijena.bioinf.ms.middleware.model.spectra;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,14 +63,29 @@ import java.util.Iterator;
 public class AnnotatedSpectrum implements OrderedSpectrum<Peak> {
     /**
      * MS level of the measured spectrum.
-     * Artificial spectra with no msLevel (e.g. Simulated Isotope patterns) use 0
+     * Artificial spectra with no msLevel (e.g. Simulated Isotope patterns) use null or zero
      */
     @Schema(nullable = true)
-    @Nullable
-    private Integer msLevel = 0;
+    private Integer msLevel = null;
+
+    /**
+     * Collision energy used for MS/MS spectra
+     * Null for spectra where collision energy is not applicable
+     */
     @Schema(nullable = true)
-    @Nullable
     private String collisionEnergy = null;
+
+    /**
+     * Scan number of the spectrum.
+     * Might be null for artificial spectra with no scan number (e.g. Simulated Isotope patterns or merged spectra)
+     */
+    @Schema(nullable = true)
+    private Integer scanNumber = -1;
+
+    /**
+     * The peaks of this spectrum which might contain additional annotations such as molecular formulas.
+     */
+    @Schema(required = true)
     private AnnotatedPeak[] peaks;
 
     public AnnotatedSpectrum(@NotNull Spectrum<Peak> spec) {
@@ -189,5 +207,13 @@ public class AnnotatedSpectrum implements OrderedSpectrum<Peak> {
 
     public void setCollisionEnergy(@Nullable CollisionEnergy collisionEnergy) {
             setCollisionEnergyStr(collisionEnergy == null ? null : collisionEnergy.toString());
+    }
+
+    public Integer getScanNumber() {
+        return scanNumber;
+    }
+
+    public void setScanNumber(Integer scanNumber) {
+        this.scanNumber = scanNumber;
     }
 }

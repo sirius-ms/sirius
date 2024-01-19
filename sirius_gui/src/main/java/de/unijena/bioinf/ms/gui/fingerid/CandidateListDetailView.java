@@ -96,7 +96,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         super(sourceList);
 
         getSource().addActiveResultChangedListener((experiment, sre, resultElements, selections) -> {
-            if (experiment == null || experiment.stream().noneMatch(e -> e.getFingerprintResult().isPresent()))
+            if (experiment == null || experiment.stream().noneMatch(e -> e.getPredictedFingerprint().isPresent()))
                 showCenterCard(ActionList.ViewState.NOT_COMPUTED);
             else if (resultElements.isEmpty())
                 showCenterCard(ActionList.ViewState.EMPTY);
@@ -182,17 +182,17 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         final FingerprintCandidateBean c = candidateList.getModel().getElementAt(selectedCompoundId);
         Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
         if (e.getSource() == CopyInchiKey) {
-            clipboard.setContents(new StringSelection(c.candidate.getInchi().key2D()), null);
+            clipboard.setContents(new StringSelection(c.getInChiKey()), null);
         } else if (e.getSource() == CopyInchi) {
             clipboard.setContents(new StringSelection(c.candidate.getInchi().in2D), null);
         } else if (e.getSource() == OpenInBrowser1) {
             try {
-                Desktop.getDesktop().browse(new URI("https://www.ncbi.nlm.nih.gov/pccompound?term=%22" + c.candidate.getInchi().key2D() + "%22[InChIKey]"));
+                Desktop.getDesktop().browse(new URI("https://www.ncbi.nlm.nih.gov/pccompound?term=%22" + c.getInChiKey() + "%22[InChIKey]"));
             } catch (IOException | URISyntaxException e1) {
                 LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(), e1);
             }
         } else if (e.getSource() == OpenInBrowser2) {
-            for (Map.Entry<String, String> entry : c.candidate.getLinkedDatabases().entries()) {
+            for (Map.Entry<String, String> entry : c.getLinkedDatabases().entries()) {
                 DataSources.getSourceFromName(entry.getKey()).ifPresent(s -> {
                     if (entry.getValue() == null || s.URI == null)
                         return;

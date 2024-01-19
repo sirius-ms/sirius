@@ -39,5 +39,10 @@
 
 package de.unijena.bioinf.ms.middleware.model.spectra;
 
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+
 public class PeakAnnotation {
+
+    String molecularFormula;
+    Double exactMass;
 }

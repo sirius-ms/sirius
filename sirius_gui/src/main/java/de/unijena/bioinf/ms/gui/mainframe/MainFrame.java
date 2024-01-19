@@ -30,9 +30,8 @@ import de.unijena.bioinf.ms.gui.compute.JobDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
+import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
-import de.unijena.bioinf.ms.gui.io.LoadController;
-import de.unijena.bioinf.ms.gui.io.spectrum.csv.CSVFormatReader;
 import de.unijena.bioinf.ms.gui.logging.LogDialog;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListView;
@@ -48,12 +47,9 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.dnd.*;
-import java.io.File;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -150,7 +146,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         setLayout(new BorderLayout());
         new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this);
 
-        log = new LogDialog(null,false, Level.INFO); //todo property
+        log = new LogDialog(null, false, Level.INFO); //todo property
 
         this.gui = gui;
         decoradeMainFrame();
@@ -158,7 +154,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     //if we want to add taskbar stuff we can configure this here
     private void configureTaskbar() {
-        if (Taskbar.isTaskbarSupported()){
+        if (Taskbar.isTaskbarSupported()) {
             LoggerFactory.getLogger(getClass()).debug("Adding Taskbar support");
             if (Taskbar.getTaskbar().isSupported(Taskbar.Feature.ICON_IMAGE))
                 Taskbar.getTaskbar().setIconImage(Icons.SIRIUS_APP_IMAGE);
@@ -168,7 +164,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
     public void setTitlePath(String path) {
         setTitle(ApplicationCore.VERSION_STRING() + " on Project: '" + path + "'");
     }
-
 
 
     private void decoradeMainFrame() {
@@ -187,7 +182,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         resultsPanel = new ResultPanel(formulaList, compoundList, gui);
         JPanel resultPanelContainer = new JPanel(new BorderLayout());
         resultPanelContainer.setBorder(BorderFactory.createEmptyBorder());
-        resultPanelContainer.add(resultsPanel,BorderLayout.CENTER);
+        resultPanelContainer.add(resultsPanel, BorderLayout.CENTER);
         if (PropertyManager.getBoolean("de.unijena.bioinf.webservice.infopanel", false))
             resultPanelContainer.add(new WebServiceInfoPanel(gui.getConnectionMonitor()), BorderLayout.SOUTH);
 
@@ -267,7 +262,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
                 } else {
                     throw new IllegalStateException("openNewProject in same window not yet implemented");
                 }
-            }else {
+            } else {
                 importDragAndDropFiles(inputF); //does not support importing projects
             }
         }
@@ -276,21 +271,12 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     private void importDragAndDropFiles(InputFilesOptions files) {
         //import all batch mode importable file types (e.g. .ms, .mgf, .mzml, .mzxml)
-        ((ImportAction)SiriusActions.IMPORT_EXP_BATCH.getInstance(gui)).importOneExperimentPerLocation(files, this);
+        ((ImportAction) SiriusActions.IMPORT_EXP_BATCH.getInstance(gui)).importOneExperimentPerLocation(files, this);
 
-        // check if unknown files contain csv files with spectra
-        final CSVFormatReader csvChecker = new CSVFormatReader();
-        List<File> csvFiles = files.msInput != null ? files.msInput.unknownFiles.keySet().stream().map(Path::toFile)
-                .filter(f -> csvChecker.isCompatible(f) || f.getName().toLowerCase().endsWith(".txt"))
-                .collect(Collectors.toList()) : Collections.emptyList();
-
-        if (!csvFiles.isEmpty())
-            openImporterWindow(csvFiles, Collections.emptyList(), Collections.emptyList());
-    }
-
-    private void openImporterWindow(List<File> csvFiles, List<File> msFiles, List<File> mgfFiles) {
-        LoadController lc = new LoadController(this);
-        lc.addSpectra(csvFiles, msFiles, mgfFiles);
-        lc.showDialog();
+        if (files.msInput != null && !files.msInput.unknownFiles.isEmpty()) {
+            new WarningDialog(this, "The following files are not supported and will not be Imported: "
+                    + files.msInput.unknownFiles.keySet().stream().map(Path::toString)
+                    .collect(Collectors.joining(", ")));
+        }
     }
 }

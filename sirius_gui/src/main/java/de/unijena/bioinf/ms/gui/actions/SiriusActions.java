@@ -54,9 +54,7 @@ public enum SiriusActions {
 //    COMPUTE_CSI(ComputeCSIAction.class),
 //    COMPUTE_CSI_LOCAL(ComputeCSILocalAction.class),
 
-    IMPORT_EXP(ImportCompoundAction.class),
     IMPORT_EXP_BATCH(ImportAction.class),
-    EDIT_EXP(EditExperimentAction.class),
     DELETE_EXP(DeleteExperimentAction.class),
     CHANGE_ADDCUCT_EXP(ChangeAdductAction.class),
     SUMMARIZE_EXP(SummarizeSelectedAction.class),
