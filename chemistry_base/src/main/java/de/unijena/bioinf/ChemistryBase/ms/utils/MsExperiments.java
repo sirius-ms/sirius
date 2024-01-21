@@ -20,7 +20,10 @@
 
 package de.unijena.bioinf.ChemistryBase.ms.utils;
 
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -146,5 +149,10 @@ public class MsExperiments {
             massBuffer.addPeak(peak);
         }
         return findPossiblePrecursorPeaks(Collections.singletonList(new SimpleSpectrum(massBuffer)), Collections.EMPTY_LIST, ionMass);
+    }
+
+    public static MolecularFormula extractPrecursorFormula(Ms2Experiment exp, FTree tree) {
+        PrecursorIonType ionType = tree.getAnnotation(PrecursorIonType.class).orElse(PrecursorIonType.unknown(exp.getPrecursorIonType().getCharge()));
+        return tree.getRoot().getFormula().subtract(ionType.getInSourceFragmentation()).add(ionType.getAdduct());
     }
 }
