@@ -237,19 +237,19 @@ public class AlignedFeatureController {
     }
 
     /**
-     * Returns simulated isotope pattern (SIRIUS) for the given formula result identifier.
-     * This simulated isotope pattern is used to rank formula candidates (treeScore).
+     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)
+     * for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).
      *
      * @param projectId      project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId      identifier of the requested formula result
-     * @return Simulated isotope pattern
+     * @return Isotope pattern information
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/isotope-pattern", produces = MediaType.APPLICATION_JSON_VALUE)
-    public AnnotatedSpectrum getSimulatedIsotopePattern(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
-        AnnotatedSpectrum res = projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidateByFeatureIdAndId(alignedFeatureId, formulaId, FormulaCandidate.OptField.simulatedIsotopePattern)
-                .getSimulatedIsotopePattern();
+    public IsotopePatternAnnotation getSimulatedIsotopePattern(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
+        IsotopePatternAnnotation res = projectsProvider.getProjectOrThrow(projectId)
+                .findFormulaCandidateByFeatureIdAndId(alignedFeatureId, formulaId, FormulaCandidate.OptField.isotopePattern)
+                .getIsotopePatternAnnotation();
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Isotope Pattern for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");
         return res;
