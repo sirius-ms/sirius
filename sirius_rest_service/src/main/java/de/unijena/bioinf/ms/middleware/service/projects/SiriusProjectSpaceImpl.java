@@ -519,8 +519,8 @@ public class SiriusProjectSpaceImpl implements Project {
 
         if (optFields.contains(FormulaCandidate.OptField.fragmentationTree))
             res.getAnnotation(FTree.class).map(FragmentationTree::fromFtree).ifPresent(candidate::fragmentationTree);
-        if (optFields.contains(FormulaCandidate.OptField.simulatedIsotopePattern))
-            asSimulatedIsotopePattern(inst, res).ifPresent(candidate::simulatedIsotopePattern);
+        if (optFields.contains(FormulaCandidate.OptField.isotopePattern))
+            candidate.isotopePatternAnnotation(asIsotopePatternAnnotation(inst, res));
         if (optFields.contains(FormulaCandidate.OptField.lipidAnnotation))
             res.getAnnotation(FTree.class).map(SiriusProjectSpaceImpl::asLipidAnnotation).ifPresent(candidate::lipidAnnotation);
         if (optFields.contains(FormulaCandidate.OptField.predictedFingerprint))
@@ -613,7 +613,7 @@ public class SiriusProjectSpaceImpl implements Project {
         if (Stream.of(
                         FormulaCandidate.OptField.statistics,
                         FormulaCandidate.OptField.fragmentationTree,
-                        FormulaCandidate.OptField.simulatedIsotopePattern,
+                        FormulaCandidate.OptField.isotopePattern,
                         FormulaCandidate.OptField.lipidAnnotation)
                 .anyMatch(optFields::contains))
             classes.add(FTree.class);
@@ -628,12 +628,11 @@ public class SiriusProjectSpaceImpl implements Project {
         return classes.toArray(Class[]::new);
     }
 
-    public static Optional<AnnotatedSpectrum> asSimulatedIsotopePattern(Instance instance, FormulaResult fResult) {
-        Sirius sirius = ApplicationCore.SIRIUS_PROVIDER.sirius(instance.loadCompoundContainer(ProjectSpaceConfig.class).getAnnotationOrThrow(ProjectSpaceConfig.class).config.getConfigValue("AlgorithmProfile"));
-        return Optional.of(fResult)
-                .map(FormulaResult::getId)
-                .map(id -> sirius.simulateIsotopePattern(id.getMolecularFormula(), id.getIonType().getIonization()))
-                .map(AnnotatedSpectrum::new);
+    public static IsotopePatternAnnotation asIsotopePatternAnnotation(Instance instance, FormulaResult fResult) {
+        Ms2Experiment exp = instance.loadCompoundContainer(Ms2Experiment.class).getAnnotation(Ms2Experiment.class)
+                .orElse(null);
+        FTree ftree = fResult.getAnnotation(FTree.class).orElse(null);
+        return  IsotopePatternAnnotation.create(ftree, exp);
     }
 
     public static FeatureAnnotations extractTopAnnotationsDeNovo(Instance inst) {
@@ -693,9 +692,6 @@ public class SiriusProjectSpaceImpl implements Project {
                                     t.setMsLevel(1);
                                     return t;
                                 }).orElse(null))
-                        .isotopePattern(opt(exp.getMergedMs1Spectrum(), s ->
-                                new AnnotatedSpectrum(Spectrums.extractIsotopePattern((Spectrum<Peak>) s, exp)))
-                                .orElse(null))
                         .ms1Spectra(
                                 exp.getMs1Spectra().stream().map(x -> {
                                     AnnotatedSpectrum t = new AnnotatedSpectrum(x);

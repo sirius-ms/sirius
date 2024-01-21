@@ -36,7 +36,6 @@ import java.util.List;
  * - One merged MS spectrum (optional)
  * - many MS/MS spectra
  * - many MS spectra
- * - isotope pattern extracted from merged Ms1
  *
  * Each non-merged spectrum has an index which can be used to access the spectrum.
  *
@@ -46,8 +45,6 @@ import java.util.List;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class MsData {
-    @Schema(nullable = true)
-    protected AnnotatedSpectrum isotopePattern;
     @Schema(nullable = true)
     protected AnnotatedSpectrum mergedMs1;
     @Schema(nullable = true)
