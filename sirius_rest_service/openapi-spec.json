@@ -3717,11 +3717,11 @@
           "first": {
             "type": "boolean"
           },
-          "last": {
-            "type": "boolean"
-          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
           },
           "number": {
             "type": "integer",
@@ -3804,11 +3804,11 @@
           "first": {
             "type": "boolean"
           },
-          "last": {
-            "type": "boolean"
-          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
           },
           "number": {
             "type": "integer",
@@ -4539,11 +4539,11 @@
           "first": {
             "type": "boolean"
           },
-          "last": {
-            "type": "boolean"
-          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
           },
           "number": {
             "type": "integer",
@@ -4573,6 +4573,17 @@
       },
       "PeakAnnotation": {
         "type": "object",
+        "properties": {
+          "molecularFormula": {
+            "type": "string",
+            "nullable": true
+          },
+          "exactMass": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          }
+        },
         "description": "",
         "nullable": true
       },
@@ -4688,11 +4699,11 @@
           "first": {
             "type": "boolean"
           },
-          "last": {
-            "type": "boolean"
-          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
           },
           "number": {
             "type": "integer",
@@ -4745,11 +4756,11 @@
           "first": {
             "type": "boolean"
           },
-          "last": {
-            "type": "boolean"
-          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
           },
           "number": {
             "type": "integer",
@@ -4873,11 +4884,11 @@
           "first": {
             "type": "boolean"
           },
-          "last": {
-            "type": "boolean"
-          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
           },
           "number": {
             "type": "integer",
@@ -4919,11 +4930,11 @@
           "first": {
             "type": "boolean"
           },
-          "last": {
-            "type": "boolean"
-          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
           },
           "number": {
             "type": "integer",

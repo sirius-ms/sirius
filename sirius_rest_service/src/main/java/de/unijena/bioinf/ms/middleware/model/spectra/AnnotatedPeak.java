@@ -55,7 +55,7 @@ import lombok.Setter;
         isGetterVisibility = JsonAutoDetect.Visibility.NONE, setterVisibility = JsonAutoDetect.Visibility.NONE, creatorVisibility = JsonAutoDetect.Visibility.NONE)
 public class AnnotatedPeak extends SimplePeak {
     @Schema(nullable = true)
-    private PeakAnnotation peakAnnotation;
+    protected PeakAnnotation peakAnnotation;
 
     public AnnotatedPeak(Peak x, PeakAnnotation annotation) {
         super(x);

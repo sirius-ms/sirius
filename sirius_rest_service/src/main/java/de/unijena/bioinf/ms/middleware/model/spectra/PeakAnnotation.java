@@ -39,10 +39,15 @@
 
 package de.unijena.bioinf.ms.middleware.model.spectra;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
+import lombok.Getter;
 
+@Getter
+@Builder
 public class PeakAnnotation {
-
-    String molecularFormula;
-    Double exactMass;
+    @Schema(nullable = true)
+    private String molecularFormula;
+    @Schema(nullable = true)
+    private Double exactMass;
 }
