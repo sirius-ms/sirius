@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 
 import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
+import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
@@ -68,15 +69,12 @@ class ImportDatabaseDialog extends JDialog {
 
     protected void runImportJob() {
         try {
-            try {
-                Jobs.runEDTAndWait(() -> {
-                    ConnectionMonitor.ConnectionCheck check = MF.CONNECTION_MONITOR().checkConnection();
-                    if (!check.isConnected() || !check.isLoggedIn()) {
-                        throw new RuntimeException("Not connected or logged in!");
-                    }
-                });
-            } catch (RuntimeException e) {
-                throw new ExecutionException(e);
+            TinyBackgroundJJob<Boolean> job = Jobs.runInBackground(() -> {
+                ConnectionMonitor.ConnectionCheck check = MF.CONNECTION_MONITOR().checkConnection();
+                return check.isConnected() && check.isLoggedIn();
+            });
+            if (!job.getResult()) {
+                throw new ExecutionException(new Exception("Not connected or logged in!"));
             }
 
             List<String> command = new ArrayList<>();
