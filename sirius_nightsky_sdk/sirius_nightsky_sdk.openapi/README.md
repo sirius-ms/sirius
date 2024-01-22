@@ -227,6 +227,7 @@ Class | Method | HTTP request | Description
  - [PageStructureCandidateFormula](docs/PageStructureCandidateFormula.md)
  - [PageStructureCandidateScored](docs/PageStructureCandidateScored.md)
  - [PageableObject](docs/PageableObject.md)
+ - [PeakAnnotation](docs/PeakAnnotation.md)
  - [ProjectChangeEvent](docs/ProjectChangeEvent.md)
  - [ProjectInfo](docs/ProjectInfo.md)
  - [ProjectInfoOptField](docs/ProjectInfoOptField.md)

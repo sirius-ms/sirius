@@ -59,6 +59,7 @@ docs/PageProjectInfo.md
 docs/PageStructureCandidateFormula.md
 docs/PageStructureCandidateScored.md
 docs/PageableObject.md
+docs/PeakAnnotation.md
 docs/ProjectChangeEvent.md
 docs/ProjectInfo.md
 docs/ProjectInfoOptField.md
@@ -152,6 +153,7 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageProjectInfo.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageStructureCandidateFormula.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageStructureCandidateScored.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageableObject.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PeakAnnotation.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ProjectChangeEvent.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ProjectInfo.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ProjectInfoOptField.java

@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import de.unijena.bioinf.ms.nightsky.sdk.model.PeakAnnotation;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
@@ -40,7 +41,7 @@ public class AnnotatedPeak {
   private Double intensity;
 
   public static final String JSON_PROPERTY_PEAK_ANNOTATION = "peakAnnotation";
-  private Object peakAnnotation;
+  private PeakAnnotation peakAnnotation;
 
   public AnnotatedPeak() {
   }
@@ -97,7 +98,7 @@ public class AnnotatedPeak {
   }
 
 
-  public AnnotatedPeak peakAnnotation(Object peakAnnotation) {
+  public AnnotatedPeak peakAnnotation(PeakAnnotation peakAnnotation) {
     
     this.peakAnnotation = peakAnnotation;
     return this;
@@ -111,14 +112,14 @@ public class AnnotatedPeak {
   @JsonProperty(JSON_PROPERTY_PEAK_ANNOTATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Object getPeakAnnotation() {
+  public PeakAnnotation getPeakAnnotation() {
     return peakAnnotation;
   }
 
 
   @JsonProperty(JSON_PROPERTY_PEAK_ANNOTATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setPeakAnnotation(Object peakAnnotation) {
+  public void setPeakAnnotation(PeakAnnotation peakAnnotation) {
     this.peakAnnotation = peakAnnotation;
   }
 

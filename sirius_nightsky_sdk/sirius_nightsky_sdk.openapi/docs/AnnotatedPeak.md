@@ -10,7 +10,7 @@
 |------------ | ------------- | ------------- | -------------|
 |**mass** | **Double** |  |  [optional] |
 |**intensity** | **Double** |  |  [optional] |
-|**peakAnnotation** | **Object** |  |  [optional] |
+|**peakAnnotation** | [**PeakAnnotation**](PeakAnnotation.md) |  |  [optional] |
 
 
 
