@@ -33,6 +33,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 @JsonPropertyOrder({
   AnnotatedSpectrum.JSON_PROPERTY_MS_LEVEL,
   AnnotatedSpectrum.JSON_PROPERTY_COLLISION_ENERGY,
+  AnnotatedSpectrum.JSON_PROPERTY_SCAN_NUMBER,
   AnnotatedSpectrum.JSON_PROPERTY_PEAKS,
   AnnotatedSpectrum.JSON_PROPERTY_EMPTY
 })
@@ -44,8 +45,11 @@ public class AnnotatedSpectrum {
   public static final String JSON_PROPERTY_COLLISION_ENERGY = "collisionEnergy";
   private String collisionEnergy;
 
+  public static final String JSON_PROPERTY_SCAN_NUMBER = "scanNumber";
+  private Integer scanNumber;
+
   public static final String JSON_PROPERTY_PEAKS = "peaks";
-  private List<AnnotatedPeak> peaks;
+  private List<AnnotatedPeak> peaks = new ArrayList<>();
 
   public static final String JSON_PROPERTY_EMPTY = "empty";
   private Boolean empty;
@@ -60,7 +64,7 @@ public class AnnotatedSpectrum {
   }
 
    /**
-   * MS level of the measured spectrum.  Artificial spectra with no msLevel (e.g. Simulated Isotope patterns) use 0
+   * MS level of the measured spectrum.  Artificial spectra with no msLevel (e.g. Simulated Isotope patterns) use null or zero
    * @return msLevel
   **/
   @javax.annotation.Nullable
@@ -86,7 +90,7 @@ public class AnnotatedSpectrum {
   }
 
    /**
-   * Get collisionEnergy
+   * Collision energy used for MS/MS spectra  Null for spectra where collision energy is not applicable
    * @return collisionEnergy
   **/
   @javax.annotation.Nullable
@@ -105,6 +109,32 @@ public class AnnotatedSpectrum {
   }
 
 
+  public AnnotatedSpectrum scanNumber(Integer scanNumber) {
+    
+    this.scanNumber = scanNumber;
+    return this;
+  }
+
+   /**
+   * Scan number of the spectrum.  Might be null for artificial spectra with no scan number (e.g. Simulated Isotope patterns or merged spectra)
+   * @return scanNumber
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_SCAN_NUMBER)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Integer getScanNumber() {
+    return scanNumber;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_SCAN_NUMBER)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setScanNumber(Integer scanNumber) {
+    this.scanNumber = scanNumber;
+  }
+
+
   public AnnotatedSpectrum peaks(List<AnnotatedPeak> peaks) {
     
     this.peaks = peaks;
@@ -120,12 +150,12 @@ public class AnnotatedSpectrum {
   }
 
    /**
-   * Get peaks
+   * The peaks of this spectrum which might contain additional annotations such as molecular formulas.
    * @return peaks
   **/
-  @javax.annotation.Nullable
+  @javax.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_PEAKS)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public List<AnnotatedPeak> getPeaks() {
     return peaks;
@@ -133,7 +163,7 @@ public class AnnotatedSpectrum {
 
 
   @JsonProperty(JSON_PROPERTY_PEAKS)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setPeaks(List<AnnotatedPeak> peaks) {
     this.peaks = peaks;
   }
@@ -175,13 +205,14 @@ public class AnnotatedSpectrum {
     AnnotatedSpectrum annotatedSpectrum = (AnnotatedSpectrum) o;
     return Objects.equals(this.msLevel, annotatedSpectrum.msLevel) &&
         Objects.equals(this.collisionEnergy, annotatedSpectrum.collisionEnergy) &&
+        Objects.equals(this.scanNumber, annotatedSpectrum.scanNumber) &&
         Objects.equals(this.peaks, annotatedSpectrum.peaks) &&
         Objects.equals(this.empty, annotatedSpectrum.empty);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(msLevel, collisionEnergy, peaks, empty);
+    return Objects.hash(msLevel, collisionEnergy, scanNumber, peaks, empty);
   }
 
   @Override
@@ -190,6 +221,7 @@ public class AnnotatedSpectrum {
     sb.append("class AnnotatedSpectrum {\n");
     sb.append("    msLevel: ").append(toIndentedString(msLevel)).append("\n");
     sb.append("    collisionEnergy: ").append(toIndentedString(collisionEnergy)).append("\n");
+    sb.append("    scanNumber: ").append(toIndentedString(scanNumber)).append("\n");
     sb.append("    peaks: ").append(toIndentedString(peaks)).append("\n");
     sb.append("    empty: ").append(toIndentedString(empty)).append("\n");
     sb.append("}");

@@ -15,7 +15,7 @@ All URIs are relative to *http://localhost:8080*
 | [**getFragTree**](FeaturesApi.md#getFragTree) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/tree | Returns fragmentation tree (SIRIUS) for the given formula result identifier  This tree is used to rank formula candidates (treeScore). |
 | [**getLipidAnnotation**](FeaturesApi.md#getLipidAnnotation) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/lipid-annotation | Returns Lipid annotation (ElGordo) for the given formula result identifier. |
 | [**getMsData**](FeaturesApi.md#getMsData) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/ms-data | Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; . |
-| [**getSimulatedIsotopePattern**](FeaturesApi.md#getSimulatedIsotopePattern) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/isotope-pattern | Returns simulated isotope pattern (SIRIUS) for the given formula result identifier. |
+| [**getSimulatedIsotopePattern**](FeaturesApi.md#getSimulatedIsotopePattern) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/isotope-pattern | Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. |
 | [**getSiriusFragTree**](FeaturesApi.md#getSiriusFragTree) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/sirius-tree |  |
 | [**getStructureCandidates**](FeaturesApi.md#getStructureCandidates) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/structures | List of StructureCandidates for the given &#39;alignedFeatureId&#39; with minimal information. |
 | [**getStructureCandidatesByFormula**](FeaturesApi.md#getStructureCandidatesByFormula) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures | List of StructureCandidates the given &#39;formulaId&#39; with minimal information. |
@@ -809,11 +809,11 @@ No authorization required
 
 ## getSimulatedIsotopePattern
 
-> AnnotatedSpectrum getSimulatedIsotopePattern(projectId, alignedFeatureId, formulaId)
+> IsotopePatternAnnotation getSimulatedIsotopePattern(projectId, alignedFeatureId, formulaId)
 
-Returns simulated isotope pattern (SIRIUS) for the given formula result identifier.
+Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier.
 
-Returns simulated isotope pattern (SIRIUS) for the given formula result identifier.  This simulated isotope pattern is used to rank formula candidates (treeScore).
+Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).
 
 ### Example
 
@@ -835,7 +835,7 @@ public class Example {
         String alignedFeatureId = "alignedFeatureId_example"; // String | feature (aligned over runs) the formula result belongs to.
         String formulaId = "formulaId_example"; // String | identifier of the requested formula result
         try {
-            AnnotatedSpectrum result = apiInstance.getSimulatedIsotopePattern(projectId, alignedFeatureId, formulaId);
+            IsotopePatternAnnotation result = apiInstance.getSimulatedIsotopePattern(projectId, alignedFeatureId, formulaId);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getSimulatedIsotopePattern");
@@ -859,7 +859,7 @@ public class Example {
 
 ### Return type
 
-[**AnnotatedSpectrum**](AnnotatedSpectrum.md)
+[**IsotopePatternAnnotation**](IsotopePatternAnnotation.md)
 
 ### Authorization
 
@@ -874,7 +874,7 @@ No authorization required
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | Simulated isotope pattern |  -  |
+| **200** | Isotope pattern information |  -  |
 
 
 ## getSiriusFragTree

@@ -29,19 +29,16 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  */
 @JsonPropertyOrder({
   PageableObject.JSON_PROPERTY_SORT,
-  PageableObject.JSON_PROPERTY_OFFSET,
   PageableObject.JSON_PROPERTY_PAGE_NUMBER,
   PageableObject.JSON_PROPERTY_PAGE_SIZE,
   PageableObject.JSON_PROPERTY_PAGED,
-  PageableObject.JSON_PROPERTY_UNPAGED
+  PageableObject.JSON_PROPERTY_UNPAGED,
+  PageableObject.JSON_PROPERTY_OFFSET
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class PageableObject {
   public static final String JSON_PROPERTY_SORT = "sort";
   private SortObject sort;
-
-  public static final String JSON_PROPERTY_OFFSET = "offset";
-  private Long offset;
 
   public static final String JSON_PROPERTY_PAGE_NUMBER = "pageNumber";
   private Integer pageNumber;
@@ -54,6 +51,9 @@ public class PageableObject {
 
   public static final String JSON_PROPERTY_UNPAGED = "unpaged";
   private Boolean unpaged;
+
+  public static final String JSON_PROPERTY_OFFSET = "offset";
+  private Long offset;
 
   public PageableObject() {
   }
@@ -81,32 +81,6 @@ public class PageableObject {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSort(SortObject sort) {
     this.sort = sort;
-  }
-
-
-  public PageableObject offset(Long offset) {
-    
-    this.offset = offset;
-    return this;
-  }
-
-   /**
-   * Get offset
-   * @return offset
-  **/
-  @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_OFFSET)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Long getOffset() {
-    return offset;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_OFFSET)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setOffset(Long offset) {
-    this.offset = offset;
   }
 
 
@@ -213,6 +187,32 @@ public class PageableObject {
     this.unpaged = unpaged;
   }
 
+
+  public PageableObject offset(Long offset) {
+    
+    this.offset = offset;
+    return this;
+  }
+
+   /**
+   * Get offset
+   * @return offset
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_OFFSET)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Long getOffset() {
+    return offset;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_OFFSET)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setOffset(Long offset) {
+    this.offset = offset;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -223,16 +223,16 @@ public class PageableObject {
     }
     PageableObject pageableObject = (PageableObject) o;
     return Objects.equals(this.sort, pageableObject.sort) &&
-        Objects.equals(this.offset, pageableObject.offset) &&
         Objects.equals(this.pageNumber, pageableObject.pageNumber) &&
         Objects.equals(this.pageSize, pageableObject.pageSize) &&
         Objects.equals(this.paged, pageableObject.paged) &&
-        Objects.equals(this.unpaged, pageableObject.unpaged);
+        Objects.equals(this.unpaged, pageableObject.unpaged) &&
+        Objects.equals(this.offset, pageableObject.offset);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sort, offset, pageNumber, pageSize, paged, unpaged);
+    return Objects.hash(sort, pageNumber, pageSize, paged, unpaged, offset);
   }
 
   @Override
@@ -240,11 +240,11 @@ public class PageableObject {
     StringBuilder sb = new StringBuilder();
     sb.append("class PageableObject {\n");
     sb.append("    sort: ").append(toIndentedString(sort)).append("\n");
-    sb.append("    offset: ").append(toIndentedString(offset)).append("\n");
     sb.append("    pageNumber: ").append(toIndentedString(pageNumber)).append("\n");
     sb.append("    pageSize: ").append(toIndentedString(pageSize)).append("\n");
     sb.append("    paged: ").append(toIndentedString(paged)).append("\n");
     sb.append("    unpaged: ").append(toIndentedString(unpaged)).append("\n");
+    sb.append("    offset: ").append(toIndentedString(offset)).append("\n");
     sb.append("}");
     return sb.toString();
   }

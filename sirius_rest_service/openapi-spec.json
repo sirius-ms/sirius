@@ -2385,8 +2385,8 @@
         "tags": [
           "Features"
         ],
-        "summary": "Returns simulated isotope pattern (SIRIUS) for the given formula result identifier.",
-        "description": "Returns simulated isotope pattern (SIRIUS) for the given formula result identifier.\n This simulated isotope pattern is used to rank formula candidates (treeScore).",
+        "summary": "Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)\n for the given formula result identifier.",
+        "description": "Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)\n for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).",
         "operationId": "getSimulatedIsotopePattern",
         "parameters": [
           {
@@ -2419,11 +2419,11 @@
         ],
         "responses": {
           "200": {
-            "description": "Simulated isotope pattern",
+            "description": "Isotope pattern information",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AnnotatedSpectrum"
+                  "$ref": "#/components/schemas/IsotopePatternAnnotation"
                 }
               }
             }
@@ -3717,21 +3717,11 @@
           "first": {
             "type": "boolean"
           },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
           "last": {
             "type": "boolean"
           },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ProjectInfo"
-            }
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
           },
           "number": {
             "type": "integer",
@@ -3744,6 +3734,16 @@
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
           },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectInfo"
+            }
+          },
           "empty": {
             "type": "boolean"
           }
@@ -3754,10 +3754,6 @@
         "properties": {
           "sort": {
             "$ref": "#/components/schemas/SortObject"
-          },
-          "offset": {
-            "type": "integer",
-            "format": "int64"
           },
           "pageNumber": {
             "type": "integer",
@@ -3772,19 +3768,23 @@
           },
           "unpaged": {
             "type": "boolean"
+          },
+          "offset": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
       "SortObject": {
         "type": "object",
         "properties": {
-          "empty": {
-            "type": "boolean"
-          },
           "sorted": {
             "type": "boolean"
           },
           "unsorted": {
+            "type": "boolean"
+          },
+          "empty": {
             "type": "boolean"
           }
         },
@@ -3804,21 +3804,11 @@
           "first": {
             "type": "boolean"
           },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
           "last": {
             "type": "boolean"
           },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Job"
-            }
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
           },
           "number": {
             "type": "integer",
@@ -3830,6 +3820,16 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Job"
+            }
           },
           "empty": {
             "type": "boolean"
@@ -3922,20 +3922,31 @@
         "description": ""
       },
       "AnnotatedSpectrum": {
+        "required": [
+          "peaks"
+        ],
         "type": "object",
         "properties": {
           "msLevel": {
             "type": "integer",
-            "description": "MS level of the measured spectrum.\n Artificial spectra with no msLevel (e.g. Simulated Isotope patterns) use 0",
+            "description": "MS level of the measured spectrum.\n Artificial spectra with no msLevel (e.g. Simulated Isotope patterns) use null or zero",
             "format": "int32",
             "nullable": true
           },
           "collisionEnergy": {
             "type": "string",
+            "description": "Collision energy used for MS/MS spectra\n Null for spectra where collision energy is not applicable",
+            "nullable": true
+          },
+          "scanNumber": {
+            "type": "integer",
+            "description": "Scan number of the spectrum.\n Might be null for artificial spectra with no scan number (e.g. Simulated Isotope patterns or merged spectra)",
+            "format": "int32",
             "nullable": true
           },
           "peaks": {
             "type": "array",
+            "description": "The peaks of this spectrum which might contain additional annotations such as molecular formulas.",
             "items": {
               "$ref": "#/components/schemas/AnnotatedPeak"
             }
@@ -3944,8 +3955,7 @@
             "type": "boolean"
           }
         },
-        "description": "",
-        "nullable": true
+        "description": ""
       },
       "BinaryFingerprint": {
         "type": "object",
@@ -4320,8 +4330,8 @@
           "fragmentationTree": {
             "$ref": "#/components/schemas/FragmentationTree"
           },
-          "simulatedIsotopePattern": {
-            "$ref": "#/components/schemas/AnnotatedSpectrum"
+          "isotopePatternAnnotation": {
+            "$ref": "#/components/schemas/IsotopePatternAnnotation"
           },
           "lipidAnnotation": {
             "$ref": "#/components/schemas/LipidAnnotation"
@@ -4407,9 +4417,29 @@
           "treeScore": {
             "type": "number",
             "format": "double"
+          }
+        },
+        "description": "Simple and easy serializable fragmentation tree model with annotated fragments/nodes abd losses/edges\n Root fragment has index 0;",
+        "nullable": true
+      },
+      "IsotopePatternAnnotation": {
+        "type": "object",
+        "properties": {
+          "isotopePattern": {
+            "$ref": "#/components/schemas/AnnotatedSpectrum"
           },
-          "root": {
-            "$ref": "#/components/schemas/FragmentNode"
+          "simulatedPattern": {
+            "$ref": "#/components/schemas/AnnotatedSpectrum"
+          },
+          "ms1": {
+            "$ref": "#/components/schemas/AnnotatedSpectrum"
+          },
+          "peaksInMs1": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
           }
         },
         "description": "",
@@ -4450,20 +4480,20 @@
       "LossEdge": {
         "type": "object",
         "properties": {
-          "sourceFragment": {
-            "$ref": "#/components/schemas/FragmentNode"
+          "sourceFragmentIdx": {
+            "type": "integer",
+            "format": "int32"
           },
-          "targetFragment": {
-            "$ref": "#/components/schemas/FragmentNode"
+          "targetFragmentIdx": {
+            "type": "integer",
+            "format": "int32"
           },
           "molecularFormula": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "score": {
             "type": "number",
-            "format": "double",
-            "nullable": true
+            "format": "double"
           }
         },
         "description": ""
@@ -4509,21 +4539,11 @@
           "first": {
             "type": "boolean"
           },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
           "last": {
             "type": "boolean"
           },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Compound"
-            }
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
           },
           "number": {
             "type": "integer",
@@ -4536,6 +4556,16 @@
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
           },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Compound"
+            }
+          },
           "empty": {
             "type": "boolean"
           }
@@ -4543,6 +4573,7 @@
       },
       "PeakAnnotation": {
         "type": "object",
+        "description": "",
         "nullable": true
       },
       "StructureCandidate": {
@@ -4657,21 +4688,11 @@
           "first": {
             "type": "boolean"
           },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
           "last": {
             "type": "boolean"
           },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AlignedFeature"
-            }
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
           },
           "number": {
             "type": "integer",
@@ -4683,6 +4704,16 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlignedFeature"
+            }
           },
           "empty": {
             "type": "boolean"
@@ -4714,21 +4745,11 @@
           "first": {
             "type": "boolean"
           },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
           "last": {
             "type": "boolean"
           },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/StructureCandidateFormula"
-            }
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
           },
           "number": {
             "type": "integer",
@@ -4740,6 +4761,16 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StructureCandidateFormula"
+            }
           },
           "empty": {
             "type": "boolean"
@@ -4821,7 +4852,7 @@
           "none",
           "statistics",
           "fragmentationTree",
-          "simulatedIsotopePattern",
+          "isotopePattern",
           "lipidAnnotation",
           "predictedFingerprint",
           "compoundClasses",
@@ -4842,21 +4873,11 @@
           "first": {
             "type": "boolean"
           },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
           "last": {
             "type": "boolean"
           },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/FormulaCandidate"
-            }
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
           },
           "number": {
             "type": "integer",
@@ -4868,6 +4889,16 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormulaCandidate"
+            }
           },
           "empty": {
             "type": "boolean"
@@ -4888,21 +4919,11 @@
           "first": {
             "type": "boolean"
           },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
           "last": {
             "type": "boolean"
           },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/StructureCandidateScored"
-            }
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
           },
           "number": {
             "type": "integer",
@@ -4914,6 +4935,16 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StructureCandidateScored"
+            }
           },
           "empty": {
             "type": "boolean"

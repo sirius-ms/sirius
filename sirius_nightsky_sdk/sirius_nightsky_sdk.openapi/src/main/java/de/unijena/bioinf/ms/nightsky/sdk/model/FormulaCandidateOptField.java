@@ -32,7 +32,7 @@ public enum FormulaCandidateOptField {
   
   FRAGMENTATIONTREE("fragmentationTree"),
   
-  SIMULATEDISOTOPEPATTERN("simulatedIsotopePattern"),
+  ISOTOPEPATTERN("isotopePattern"),
   
   LIPIDANNOTATION("lipidAnnotation"),
   

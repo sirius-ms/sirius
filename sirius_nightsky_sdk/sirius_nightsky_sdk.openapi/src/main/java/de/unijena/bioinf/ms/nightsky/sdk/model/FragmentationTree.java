@@ -29,13 +29,12 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * 
+ * Simple and easy serializable fragmentation tree model with annotated fragments/nodes abd losses/edges  Root fragment has index 0;
  */
 @JsonPropertyOrder({
   FragmentationTree.JSON_PROPERTY_FRAGMENTS,
   FragmentationTree.JSON_PROPERTY_LOSSES,
-  FragmentationTree.JSON_PROPERTY_TREE_SCORE,
-  FragmentationTree.JSON_PROPERTY_ROOT
+  FragmentationTree.JSON_PROPERTY_TREE_SCORE
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class FragmentationTree {
@@ -47,9 +46,6 @@ public class FragmentationTree {
 
   public static final String JSON_PROPERTY_TREE_SCORE = "treeScore";
   private Double treeScore;
-
-  public static final String JSON_PROPERTY_ROOT = "root";
-  private FragmentNode root;
 
   public FragmentationTree() {
   }
@@ -147,32 +143,6 @@ public class FragmentationTree {
     this.treeScore = treeScore;
   }
 
-
-  public FragmentationTree root(FragmentNode root) {
-    
-    this.root = root;
-    return this;
-  }
-
-   /**
-   * Get root
-   * @return root
-  **/
-  @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ROOT)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public FragmentNode getRoot() {
-    return root;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_ROOT)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setRoot(FragmentNode root) {
-    this.root = root;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -184,13 +154,12 @@ public class FragmentationTree {
     FragmentationTree fragmentationTree = (FragmentationTree) o;
     return Objects.equals(this.fragments, fragmentationTree.fragments) &&
         Objects.equals(this.losses, fragmentationTree.losses) &&
-        Objects.equals(this.treeScore, fragmentationTree.treeScore) &&
-        Objects.equals(this.root, fragmentationTree.root);
+        Objects.equals(this.treeScore, fragmentationTree.treeScore);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(fragments, losses, treeScore, root);
+    return Objects.hash(fragments, losses, treeScore);
   }
 
   @Override
@@ -200,7 +169,6 @@ public class FragmentationTree {
     sb.append("    fragments: ").append(toIndentedString(fragments)).append("\n");
     sb.append("    losses: ").append(toIndentedString(losses)).append("\n");
     sb.append("    treeScore: ").append(toIndentedString(treeScore)).append("\n");
-    sb.append("    root: ").append(toIndentedString(root)).append("\n");
     sb.append("}");
     return sb.toString();
   }

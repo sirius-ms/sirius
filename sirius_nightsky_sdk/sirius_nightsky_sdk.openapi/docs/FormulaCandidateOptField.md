@@ -11,7 +11,7 @@
 
 * `FRAGMENTATIONTREE` (value: `"fragmentationTree"`)
 
-* `SIMULATEDISOTOPEPATTERN` (value: `"simulatedIsotopePattern"`)
+* `ISOTOPEPATTERN` (value: `"isotopePattern"`)
 
 * `LIPIDANNOTATION` (value: `"lipidAnnotation"`)
 

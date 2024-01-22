@@ -40,6 +40,7 @@ docs/ImportStringSubmission.md
 docs/Info.md
 docs/InfoApi.md
 docs/Instrument.md
+docs/IsotopePatternAnnotation.md
 docs/Job.md
 docs/JobOptField.md
 docs/JobProgress.md
@@ -134,6 +135,7 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ImportLocalFilesSubmission
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ImportStringSubmission.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Info.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Instrument.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/IsotopePatternAnnotation.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Job.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/JobOptField.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/JobProgress.java

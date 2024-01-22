@@ -4,12 +4,12 @@ import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
 
 import de.unijena.bioinf.ms.nightsky.sdk.model.AlignedFeature;
 import de.unijena.bioinf.ms.nightsky.sdk.model.AlignedFeatureOptField;
-import de.unijena.bioinf.ms.nightsky.sdk.model.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.nightsky.sdk.model.CanopusPrediction;
 import de.unijena.bioinf.ms.nightsky.sdk.model.CompoundClasses;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FormulaCandidate;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FormulaCandidateOptField;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FragmentationTree;
+import de.unijena.bioinf.ms.nightsky.sdk.model.IsotopePatternAnnotation;
 import de.unijena.bioinf.ms.nightsky.sdk.model.LipidAnnotation;
 import de.unijena.bioinf.ms.nightsky.sdk.model.MsData;
 import de.unijena.bioinf.ms.nightsky.sdk.model.PageAlignedFeature;
@@ -1089,13 +1089,13 @@ public class FeaturesApi {
         return getMsDataRequestCreation(projectId, alignedFeatureId);
     }
     /**
-     * Returns simulated isotope pattern (SIRIUS) for the given formula result identifier.
-     * Returns simulated isotope pattern (SIRIUS) for the given formula result identifier.  This simulated isotope pattern is used to rank formula candidates (treeScore).
-     * <p><b>200</b> - Simulated isotope pattern
+     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier.
+     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).
+     * <p><b>200</b> - Isotope pattern information
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
-     * @return AnnotatedSpectrum
+     * @return IsotopePatternAnnotation
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     private ResponseSpec getSimulatedIsotopePatternRequestCreation(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
@@ -1133,44 +1133,44 @@ public class FeaturesApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<AnnotatedSpectrum> localVarReturnType = new ParameterizedTypeReference<AnnotatedSpectrum>() {};
+        ParameterizedTypeReference<IsotopePatternAnnotation> localVarReturnType = new ParameterizedTypeReference<IsotopePatternAnnotation>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/isotope-pattern", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
-     * Returns simulated isotope pattern (SIRIUS) for the given formula result identifier.
-     * Returns simulated isotope pattern (SIRIUS) for the given formula result identifier.  This simulated isotope pattern is used to rank formula candidates (treeScore).
-     * <p><b>200</b> - Simulated isotope pattern
+     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier.
+     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).
+     * <p><b>200</b> - Isotope pattern information
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
-     * @return AnnotatedSpectrum
+     * @return IsotopePatternAnnotation
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public AnnotatedSpectrum getSimulatedIsotopePattern(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
-        ParameterizedTypeReference<AnnotatedSpectrum> localVarReturnType = new ParameterizedTypeReference<AnnotatedSpectrum>() {};
+    public IsotopePatternAnnotation getSimulatedIsotopePattern(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+        ParameterizedTypeReference<IsotopePatternAnnotation> localVarReturnType = new ParameterizedTypeReference<IsotopePatternAnnotation>() {};
         return getSimulatedIsotopePatternRequestCreation(projectId, alignedFeatureId, formulaId).bodyToMono(localVarReturnType).block();
     }
 
     /**
-     * Returns simulated isotope pattern (SIRIUS) for the given formula result identifier.
-     * Returns simulated isotope pattern (SIRIUS) for the given formula result identifier.  This simulated isotope pattern is used to rank formula candidates (treeScore).
-     * <p><b>200</b> - Simulated isotope pattern
+     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier.
+     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).
+     * <p><b>200</b> - Isotope pattern information
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
-     * @return ResponseEntity&lt;AnnotatedSpectrum&gt;
+     * @return ResponseEntity&lt;IsotopePatternAnnotation&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<AnnotatedSpectrum> getSimulatedIsotopePatternWithHttpInfo(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
-        ParameterizedTypeReference<AnnotatedSpectrum> localVarReturnType = new ParameterizedTypeReference<AnnotatedSpectrum>() {};
+    public ResponseEntity<IsotopePatternAnnotation> getSimulatedIsotopePatternWithHttpInfo(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+        ParameterizedTypeReference<IsotopePatternAnnotation> localVarReturnType = new ParameterizedTypeReference<IsotopePatternAnnotation>() {};
         return getSimulatedIsotopePatternRequestCreation(projectId, alignedFeatureId, formulaId).toEntity(localVarReturnType).block();
     }
 
     /**
-     * Returns simulated isotope pattern (SIRIUS) for the given formula result identifier.
-     * Returns simulated isotope pattern (SIRIUS) for the given formula result identifier.  This simulated isotope pattern is used to rank formula candidates (treeScore).
-     * <p><b>200</b> - Simulated isotope pattern
+     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier.
+     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).
+     * <p><b>200</b> - Isotope pattern information
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result

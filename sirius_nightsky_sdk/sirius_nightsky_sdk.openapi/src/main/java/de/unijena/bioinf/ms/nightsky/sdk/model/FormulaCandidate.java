@@ -20,11 +20,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import de.unijena.bioinf.ms.nightsky.sdk.model.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.nightsky.sdk.model.CanopusPrediction;
 import de.unijena.bioinf.ms.nightsky.sdk.model.CompoundClasses;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Deviation;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FragmentationTree;
+import de.unijena.bioinf.ms.nightsky.sdk.model.IsotopePatternAnnotation;
 import de.unijena.bioinf.ms.nightsky.sdk.model.LipidAnnotation;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,7 +49,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   FormulaCandidate.JSON_PROPERTY_MEDIAN_MASS_DEVIATION,
   FormulaCandidate.JSON_PROPERTY_TOP_C_S_I_SCORE,
   FormulaCandidate.JSON_PROPERTY_FRAGMENTATION_TREE,
-  FormulaCandidate.JSON_PROPERTY_SIMULATED_ISOTOPE_PATTERN,
+  FormulaCandidate.JSON_PROPERTY_ISOTOPE_PATTERN_ANNOTATION,
   FormulaCandidate.JSON_PROPERTY_LIPID_ANNOTATION,
   FormulaCandidate.JSON_PROPERTY_PREDICTED_FINGERPRINT,
   FormulaCandidate.JSON_PROPERTY_COMPOUND_CLASSES,
@@ -96,8 +96,8 @@ public class FormulaCandidate {
   public static final String JSON_PROPERTY_FRAGMENTATION_TREE = "fragmentationTree";
   private FragmentationTree fragmentationTree;
 
-  public static final String JSON_PROPERTY_SIMULATED_ISOTOPE_PATTERN = "simulatedIsotopePattern";
-  private AnnotatedSpectrum simulatedIsotopePattern;
+  public static final String JSON_PROPERTY_ISOTOPE_PATTERN_ANNOTATION = "isotopePatternAnnotation";
+  private IsotopePatternAnnotation isotopePatternAnnotation;
 
   public static final String JSON_PROPERTY_LIPID_ANNOTATION = "lipidAnnotation";
   private LipidAnnotation lipidAnnotation;
@@ -452,29 +452,29 @@ public class FormulaCandidate {
   }
 
 
-  public FormulaCandidate simulatedIsotopePattern(AnnotatedSpectrum simulatedIsotopePattern) {
+  public FormulaCandidate isotopePatternAnnotation(IsotopePatternAnnotation isotopePatternAnnotation) {
     
-    this.simulatedIsotopePattern = simulatedIsotopePattern;
+    this.isotopePatternAnnotation = isotopePatternAnnotation;
     return this;
   }
 
    /**
-   * Get simulatedIsotopePattern
-   * @return simulatedIsotopePattern
+   * Get isotopePatternAnnotation
+   * @return isotopePatternAnnotation
   **/
   @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SIMULATED_ISOTOPE_PATTERN)
+  @JsonProperty(JSON_PROPERTY_ISOTOPE_PATTERN_ANNOTATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public AnnotatedSpectrum getSimulatedIsotopePattern() {
-    return simulatedIsotopePattern;
+  public IsotopePatternAnnotation getIsotopePatternAnnotation() {
+    return isotopePatternAnnotation;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SIMULATED_ISOTOPE_PATTERN)
+  @JsonProperty(JSON_PROPERTY_ISOTOPE_PATTERN_ANNOTATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSimulatedIsotopePattern(AnnotatedSpectrum simulatedIsotopePattern) {
-    this.simulatedIsotopePattern = simulatedIsotopePattern;
+  public void setIsotopePatternAnnotation(IsotopePatternAnnotation isotopePatternAnnotation) {
+    this.isotopePatternAnnotation = isotopePatternAnnotation;
   }
 
 
@@ -611,7 +611,7 @@ public class FormulaCandidate {
         Objects.equals(this.medianMassDeviation, formulaCandidate.medianMassDeviation) &&
         Objects.equals(this.topCSIScore, formulaCandidate.topCSIScore) &&
         Objects.equals(this.fragmentationTree, formulaCandidate.fragmentationTree) &&
-        Objects.equals(this.simulatedIsotopePattern, formulaCandidate.simulatedIsotopePattern) &&
+        Objects.equals(this.isotopePatternAnnotation, formulaCandidate.isotopePatternAnnotation) &&
         Objects.equals(this.lipidAnnotation, formulaCandidate.lipidAnnotation) &&
         Objects.equals(this.predictedFingerprint, formulaCandidate.predictedFingerprint) &&
         Objects.equals(this.compoundClasses, formulaCandidate.compoundClasses) &&
@@ -620,7 +620,7 @@ public class FormulaCandidate {
 
   @Override
   public int hashCode() {
-    return Objects.hash(formulaId, molecularFormula, adduct, siriusScore, isotopeScore, treeScore, zodiacScore, numOfExplainedPeaks, numOfExplainablePeaks, totalExplainedIntensity, medianMassDeviation, topCSIScore, fragmentationTree, simulatedIsotopePattern, lipidAnnotation, predictedFingerprint, compoundClasses, canopusPrediction);
+    return Objects.hash(formulaId, molecularFormula, adduct, siriusScore, isotopeScore, treeScore, zodiacScore, numOfExplainedPeaks, numOfExplainablePeaks, totalExplainedIntensity, medianMassDeviation, topCSIScore, fragmentationTree, isotopePatternAnnotation, lipidAnnotation, predictedFingerprint, compoundClasses, canopusPrediction);
   }
 
   @Override
@@ -640,7 +640,7 @@ public class FormulaCandidate {
     sb.append("    medianMassDeviation: ").append(toIndentedString(medianMassDeviation)).append("\n");
     sb.append("    topCSIScore: ").append(toIndentedString(topCSIScore)).append("\n");
     sb.append("    fragmentationTree: ").append(toIndentedString(fragmentationTree)).append("\n");
-    sb.append("    simulatedIsotopePattern: ").append(toIndentedString(simulatedIsotopePattern)).append("\n");
+    sb.append("    isotopePatternAnnotation: ").append(toIndentedString(isotopePatternAnnotation)).append("\n");
     sb.append("    lipidAnnotation: ").append(toIndentedString(lipidAnnotation)).append("\n");
     sb.append("    predictedFingerprint: ").append(toIndentedString(predictedFingerprint)).append("\n");
     sb.append("    compoundClasses: ").append(toIndentedString(compoundClasses)).append("\n");

@@ -8,8 +8,8 @@
 
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
-|**sourceFragment** | [**FragmentNode**](FragmentNode.md) |  |  [optional] |
-|**targetFragment** | [**FragmentNode**](FragmentNode.md) |  |  [optional] |
+|**sourceFragmentIdx** | **Integer** |  |  [optional] |
+|**targetFragmentIdx** | **Integer** |  |  [optional] |
 |**molecularFormula** | **String** |  |  [optional] |
 |**score** | **Double** |  |  [optional] |
 

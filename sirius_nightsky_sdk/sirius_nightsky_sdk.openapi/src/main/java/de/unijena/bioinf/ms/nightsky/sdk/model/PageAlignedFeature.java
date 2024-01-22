@@ -36,13 +36,13 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   PageAlignedFeature.JSON_PROPERTY_TOTAL_PAGES,
   PageAlignedFeature.JSON_PROPERTY_TOTAL_ELEMENTS,
   PageAlignedFeature.JSON_PROPERTY_FIRST,
-  PageAlignedFeature.JSON_PROPERTY_SORT,
   PageAlignedFeature.JSON_PROPERTY_LAST,
-  PageAlignedFeature.JSON_PROPERTY_SIZE,
-  PageAlignedFeature.JSON_PROPERTY_CONTENT,
+  PageAlignedFeature.JSON_PROPERTY_SORT,
   PageAlignedFeature.JSON_PROPERTY_NUMBER,
   PageAlignedFeature.JSON_PROPERTY_NUMBER_OF_ELEMENTS,
   PageAlignedFeature.JSON_PROPERTY_PAGEABLE,
+  PageAlignedFeature.JSON_PROPERTY_SIZE,
+  PageAlignedFeature.JSON_PROPERTY_CONTENT,
   PageAlignedFeature.JSON_PROPERTY_EMPTY
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
@@ -56,17 +56,11 @@ public class PageAlignedFeature {
   public static final String JSON_PROPERTY_FIRST = "first";
   private Boolean first;
 
-  public static final String JSON_PROPERTY_SORT = "sort";
-  private SortObject sort;
-
   public static final String JSON_PROPERTY_LAST = "last";
   private Boolean last;
 
-  public static final String JSON_PROPERTY_SIZE = "size";
-  private Integer size;
-
-  public static final String JSON_PROPERTY_CONTENT = "content";
-  private List<AlignedFeature> content;
+  public static final String JSON_PROPERTY_SORT = "sort";
+  private SortObject sort;
 
   public static final String JSON_PROPERTY_NUMBER = "number";
   private Integer number;
@@ -76,6 +70,12 @@ public class PageAlignedFeature {
 
   public static final String JSON_PROPERTY_PAGEABLE = "pageable";
   private PageableObject pageable;
+
+  public static final String JSON_PROPERTY_SIZE = "size";
+  private Integer size;
+
+  public static final String JSON_PROPERTY_CONTENT = "content";
+  private List<AlignedFeature> content;
 
   public static final String JSON_PROPERTY_EMPTY = "empty";
   private Boolean empty;
@@ -161,32 +161,6 @@ public class PageAlignedFeature {
   }
 
 
-  public PageAlignedFeature sort(SortObject sort) {
-    
-    this.sort = sort;
-    return this;
-  }
-
-   /**
-   * Get sort
-   * @return sort
-  **/
-  @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SORT)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public SortObject getSort() {
-    return sort;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_SORT)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSort(SortObject sort) {
-    this.sort = sort;
-  }
-
-
   public PageAlignedFeature last(Boolean last) {
     
     this.last = last;
@@ -213,63 +187,29 @@ public class PageAlignedFeature {
   }
 
 
-  public PageAlignedFeature size(Integer size) {
+  public PageAlignedFeature sort(SortObject sort) {
     
-    this.size = size;
+    this.sort = sort;
     return this;
   }
 
    /**
-   * Get size
-   * @return size
+   * Get sort
+   * @return sort
   **/
   @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SIZE)
+  @JsonProperty(JSON_PROPERTY_SORT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Integer getSize() {
-    return size;
+  public SortObject getSort() {
+    return sort;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SIZE)
+  @JsonProperty(JSON_PROPERTY_SORT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSize(Integer size) {
-    this.size = size;
-  }
-
-
-  public PageAlignedFeature content(List<AlignedFeature> content) {
-    
-    this.content = content;
-    return this;
-  }
-
-  public PageAlignedFeature addContentItem(AlignedFeature contentItem) {
-    if (this.content == null) {
-      this.content = new ArrayList<>();
-    }
-    this.content.add(contentItem);
-    return this;
-  }
-
-   /**
-   * Get content
-   * @return content
-  **/
-  @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_CONTENT)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public List<AlignedFeature> getContent() {
-    return content;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_CONTENT)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setContent(List<AlignedFeature> content) {
-    this.content = content;
+  public void setSort(SortObject sort) {
+    this.sort = sort;
   }
 
 
@@ -351,6 +291,66 @@ public class PageAlignedFeature {
   }
 
 
+  public PageAlignedFeature size(Integer size) {
+    
+    this.size = size;
+    return this;
+  }
+
+   /**
+   * Get size
+   * @return size
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_SIZE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Integer getSize() {
+    return size;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_SIZE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setSize(Integer size) {
+    this.size = size;
+  }
+
+
+  public PageAlignedFeature content(List<AlignedFeature> content) {
+    
+    this.content = content;
+    return this;
+  }
+
+  public PageAlignedFeature addContentItem(AlignedFeature contentItem) {
+    if (this.content == null) {
+      this.content = new ArrayList<>();
+    }
+    this.content.add(contentItem);
+    return this;
+  }
+
+   /**
+   * Get content
+   * @return content
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_CONTENT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public List<AlignedFeature> getContent() {
+    return content;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_CONTENT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setContent(List<AlignedFeature> content) {
+    this.content = content;
+  }
+
+
   public PageAlignedFeature empty(Boolean empty) {
     
     this.empty = empty;
@@ -388,19 +388,19 @@ public class PageAlignedFeature {
     return Objects.equals(this.totalPages, pageAlignedFeature.totalPages) &&
         Objects.equals(this.totalElements, pageAlignedFeature.totalElements) &&
         Objects.equals(this.first, pageAlignedFeature.first) &&
-        Objects.equals(this.sort, pageAlignedFeature.sort) &&
         Objects.equals(this.last, pageAlignedFeature.last) &&
-        Objects.equals(this.size, pageAlignedFeature.size) &&
-        Objects.equals(this.content, pageAlignedFeature.content) &&
+        Objects.equals(this.sort, pageAlignedFeature.sort) &&
         Objects.equals(this.number, pageAlignedFeature.number) &&
         Objects.equals(this.numberOfElements, pageAlignedFeature.numberOfElements) &&
         Objects.equals(this.pageable, pageAlignedFeature.pageable) &&
+        Objects.equals(this.size, pageAlignedFeature.size) &&
+        Objects.equals(this.content, pageAlignedFeature.content) &&
         Objects.equals(this.empty, pageAlignedFeature.empty);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(totalPages, totalElements, first, sort, last, size, content, number, numberOfElements, pageable, empty);
+    return Objects.hash(totalPages, totalElements, first, last, sort, number, numberOfElements, pageable, size, content, empty);
   }
 
   @Override
@@ -410,13 +410,13 @@ public class PageAlignedFeature {
     sb.append("    totalPages: ").append(toIndentedString(totalPages)).append("\n");
     sb.append("    totalElements: ").append(toIndentedString(totalElements)).append("\n");
     sb.append("    first: ").append(toIndentedString(first)).append("\n");
-    sb.append("    sort: ").append(toIndentedString(sort)).append("\n");
     sb.append("    last: ").append(toIndentedString(last)).append("\n");
-    sb.append("    size: ").append(toIndentedString(size)).append("\n");
-    sb.append("    content: ").append(toIndentedString(content)).append("\n");
+    sb.append("    sort: ").append(toIndentedString(sort)).append("\n");
     sb.append("    number: ").append(toIndentedString(number)).append("\n");
     sb.append("    numberOfElements: ").append(toIndentedString(numberOfElements)).append("\n");
     sb.append("    pageable: ").append(toIndentedString(pageable)).append("\n");
+    sb.append("    size: ").append(toIndentedString(size)).append("\n");
+    sb.append("    content: ").append(toIndentedString(content)).append("\n");
     sb.append("    empty: ").append(toIndentedString(empty)).append("\n");
     sb.append("}");
     return sb.toString();
