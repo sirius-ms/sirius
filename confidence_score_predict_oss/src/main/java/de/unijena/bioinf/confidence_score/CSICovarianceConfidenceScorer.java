@@ -22,23 +22,26 @@ package de.unijena.bioinf.confidence_score;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.svm.SVMPredict;
 import de.unijena.bioinf.confidence_score.svm.SVMUtils;
 import de.unijena.bioinf.confidence_score.svm.TrainedSVM;
 import de.unijena.bioinf.fingerid.blast.*;
 import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
+import de.unijena.bioinf.fragmenter.CombinatorialFragment;
+import de.unijena.bioinf.fragmenter.CombinatorialSubtree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Predicate;
 
 /**
@@ -118,30 +121,40 @@ public class CSICovarianceConfidenceScorer<S extends FingerblastScoring<?>> impl
         final String distanceType;
         final String dbType;
 
+        ProbabilityFingerprint canopusFptPred = null;
+        ProbabilityFingerprint canopusFptTop = null;
+        CombinatorialSubtree[] epiTrees=null;
+        FTree[] fTrees = null;
+        HashMap<Fragment, ArrayList<CombinatorialFragment>>[] originalMappings =null;
+
+        //TODO:out
+
+        return 1.0;
+/*
         if (rankedSearchDBCandidatesCov == null || rankedSearchDBCandidatesCSI == null) { //calculate score for pubChem lists
-            comb = new CombinedFeatureCreatorALL(rankedPubchemCandidatesCSI, rankedPubchemCandidatesCov, csiPerformances, covarianceScoring);
+            comb = new CombinedFeatureCreatorALL(rankedPubchemCandidatesCSI, rankedPubchemCandidatesCov, csiPerformances, covarianceScoring,canopusFptPred,canopusFptTop,epiTrees,originalMappings,fTrees,true);
             distanceType = null;
             dbType = DB_ALL_ID;
         } else if (rankedSearchDBCandidatesCov.length > 10) { //calculate score for filtered lists
-            comb = new CombinedFeatureCreatorBIODISTANCE(rankedPubchemCandidatesCSI, rankedPubchemCandidatesCov, rankedSearchDBCandidatesCSI, rankedSearchDBCandidatesCov, csiPerformances, covarianceScoring);
+            comb = new CombinedFeatureCreatorBIODISTANCE(rankedPubchemCandidatesCSI, rankedPubchemCandidatesCov, rankedSearchDBCandidatesCSI, rankedSearchDBCandidatesCov, csiPerformances, covarianceScoring,canopusFptPred,canopusFptTop,epiTrees,originalMappings,fTrees);
             distanceType = DISTANCE_ID;
             dbType = DB_BIO_ID;
         } else if (rankedSearchDBCandidatesCov.length > 1 && rankedSearchDBCandidatesCov.length < 6){
-            comb = new CombinedFeatureCreatorBIODISTANCE2TO5(rankedPubchemCandidatesCSI, rankedPubchemCandidatesCov, rankedSearchDBCandidatesCSI, rankedSearchDBCandidatesCov, csiPerformances, covarianceScoring);
+            comb = new CombinedFeatureCreatorBIODISTANCE2TO5(rankedPubchemCandidatesCSI, rankedPubchemCandidatesCov, rankedSearchDBCandidatesCSI, rankedSearchDBCandidatesCov, csiPerformances, covarianceScoring,canopusFptPred,canopusFptTop,epiTrees,originalMappings,fTrees);
             distanceType = DISTANCE_2_5_ID;
             dbType = DB_BIO_ID;
         } else if (rankedSearchDBCandidatesCov.length > 5 && rankedSearchDBCandidatesCov.length < 11) {
-            comb = new CombinedFeatureCreatorBIODISTANCE6TO10(rankedPubchemCandidatesCSI, rankedPubchemCandidatesCov, rankedSearchDBCandidatesCSI, rankedSearchDBCandidatesCov, csiPerformances, covarianceScoring);
+            comb = new CombinedFeatureCreatorBIODISTANCE6TO10(rankedPubchemCandidatesCSI, rankedPubchemCandidatesCov, rankedSearchDBCandidatesCSI, rankedSearchDBCandidatesCov, csiPerformances, covarianceScoring,canopusFptPred,canopusFptTop,epiTrees,originalMappings,fTrees);
             distanceType = DISTANCE_6_10_ID;
             dbType = DB_BIO_ID;
         }
         else {
-            comb = new CombinedFeatureCreatorBIONODISTANCE(rankedPubchemCandidatesCSI, rankedPubchemCandidatesCov, rankedSearchDBCandidatesCSI, rankedSearchDBCandidatesCov, csiPerformances, covarianceScoring);
+            comb = new CombinedFeatureCreatorBIONODISTANCE(rankedPubchemCandidatesCSI, rankedPubchemCandidatesCov, rankedSearchDBCandidatesCSI, rankedSearchDBCandidatesCov, csiPerformances, covarianceScoring,canopusFptPred,canopusFptTop,epiTrees,originalMappings);
             distanceType = NO_DISTANCE_ID;
             dbType = DB_BIO_ID;
         }
         final double[] features = comb.computeFeatures(parametersWithQuery);
-        return calculateConfidence(features, dbType, distanceType, ce);
+        return calculateConfidence(features, dbType, distanceType, ce);*/
     }
 
 
