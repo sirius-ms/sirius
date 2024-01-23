@@ -22,19 +22,31 @@ package de.unijena.bioinf.confidence_score;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.features.*;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
 import de.unijena.bioinf.fingerid.blast.ScoringMethodFactory;
+import de.unijena.bioinf.fragmenter.CombinatorialFragment;
+import de.unijena.bioinf.fragmenter.CombinatorialSubtree;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Created by martin on 22.08.18.
  */
 public class CombinedFeatureCreatorALL extends CombinedFeatureCreator {
 
+    public CombinedFeatureCreatorALL(){
+
+    }
+
     //Scorer for pubchem list (unfiltered)
-    public CombinedFeatureCreatorALL(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, PredictionPerformance[] performance, FingerblastScoring<?> covscore) {
+    public CombinedFeatureCreatorALL(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, PredictionPerformance[] performance, FingerblastScoring<?> covscore, ProbabilityFingerprint canopusFptPred, ProbabilityFingerprint canopusFptTop, CombinatorialSubtree[] epiTrees, HashMap<Fragment, ArrayList<CombinatorialFragment>>[] map, FTree[] fTrees) {
         super(
                 //new PlattFeatures(),
                 //  new LogPvalueDistanceFeatures(scored_array,scored_array,1),
@@ -66,8 +78,16 @@ public class CombinedFeatureCreatorALL extends CombinedFeatureCreator {
                 //new MassFeatures(),
                 new CandlistSizeFeatures(scored_array_covscore),
 
-                new TanimotoDistanceFeatures(scored_array, scored_array, 1),
-                new TanimotoToPredFeatures(scored_array, scored_array)
+                new TanimotoDistanceFeatures(scored_array_covscore, scored_array_covscore, 1),
+                new TanimotoToPredFeatures(scored_array_covscore, scored_array_covscore),
+                new CanopusDiffFeatures(canopusFptPred, canopusFptTop),
+                new EpiPeakSetFeatures(epiTrees,map,fTrees),
+                new EpiPeakSetIntFeatures(epiTrees,map,fTrees),
+                new EpiExplIntFeatures(epiTrees[0]),
+                new EpiFragmenterScoreFeatures(epiTrees[0]),
+                new EpiRatioExplPeaksFeatures(epiTrees[0]),
+                new EpiUnexplainedPeaksFeatures(epiTrees[0],map[0])
+
         );
     }
 }
