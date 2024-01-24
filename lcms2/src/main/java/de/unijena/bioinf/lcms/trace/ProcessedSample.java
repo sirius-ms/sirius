@@ -2,38 +2,30 @@ package de.unijena.bioinf.lcms.trace;
 
 import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
-import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.io.lcms.MzMLParser;
-import de.unijena.bioinf.lcms.MemoryFileStorage;
 import de.unijena.bioinf.lcms.ScanPointMapping;
-import de.unijena.bioinf.lcms.SpectrumStorage;
 import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
 import de.unijena.bioinf.lcms.trace.segmentation.ApexDetection;
 import de.unijena.bioinf.lcms.trace.segmentation.LegacySegmenter;
-import de.unijena.bioinf.model.lcms.LCMSRun;
-import de.unijena.bioinf.model.lcms.Scan;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
+import lombok.Getter;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Optional;
 
+@Getter
 public class ProcessedSample {
 
-    private LCMSStorage traceStorage;
-    private MsDataSourceReference sourceReference;
+    private final LCMSStorage traceStorage;
 
-    private MsInstrumentation instrumentation;
-    private ScanPointMapping mapping;
+    private final ScanPointMapping mapping;
+
     private int numberOfHighQualityTraces;
 
-    public ProcessedSample(MsDataSourceReference reference, MsInstrumentation instrumentation, ScanPointMapping scanPointMapping, LCMSStorage storage)  {
+    public ProcessedSample(ScanPointMapping scanPointMapping, LCMSStorage storage)  {
         this.mapping = scanPointMapping;
-        this.sourceReference = reference;
-        this.instrumentation = instrumentation;
         this.traceStorage = storage;
     }
 
@@ -70,8 +62,6 @@ public class ProcessedSample {
         }
         System.out.println("intensityThreshold = " + intensityThreshold);
         // lets do the extreme case: pick all traces above 1e5
-        final long time = System.currentTimeMillis();
-        int good=0;
         for (int sid=0; sid < mapping.length(); ++sid) {
             SimpleSpectrum t = traceStorage.getSpectrum(sid);
             for (int i = 0; i < t.size(); ++i) {
@@ -89,28 +79,12 @@ public class ProcessedSample {
         new TraceConnector().connect(traceStorage);
     }
 
-    public LCMSStorage getTraceStorage() {
-        return traceStorage;
-    }
-
-    public ScanPointMapping getMapping() {
-        return mapping;
-    }
-
-    public int getNumberOfHighQualityTraces() {
-        return numberOfHighQualityTraces;
-    }
-
     public void inactive() {
         traceStorage.setLowMemoryInactiveMode(true);
     }
 
     public void active() {
         traceStorage.setLowMemoryInactiveMode(false);
-    }
-
-    public MsDataSourceReference getReference() {
-        return sourceReference;
     }
 
     public Range<Double> getRtSpan() {

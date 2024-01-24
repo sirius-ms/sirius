@@ -2,18 +2,16 @@ package de.unijena.bioinf.lcms;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.io.lcms.MzMLParser;
+import de.unijena.bioinf.lcms.io.MzMLParser;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.lcms.align.IntensityNormalization;
 import de.unijena.bioinf.lcms.align.MassOfInterest;
 import de.unijena.bioinf.lcms.align.TraceAligner;
-import de.unijena.bioinf.lcms.io.MZmlSampleParser;
 import de.unijena.bioinf.lcms.merge.TraceMerger;
-import de.unijena.bioinf.lcms.trace.*;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
-import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import de.unijena.bioinf.lcms.trace.*;
+import de.unijena.bioinf.ms.persistence.model.core.Run;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.function.Identity;
 
@@ -61,9 +59,7 @@ public class TestMain {
     public static void main(String[] args) {
         final ProcessedSample[] samples;
         {
-            MzMLParser parser = new MzMLParser();
-            JobManager globalJobManager = SiriusJobs.getGlobalJobManager();
-            File[] files = new File("/home/kaidu/data/raw/polluted_citrus/").listFiles();
+            File[] files = new File("/home/mel/lcms-data/polluted_citrus/").listFiles();
             List<BasicJJob<ProcessedSample>> jobs = new ArrayList<>();
             int atmost = 10;
             for (File f : files) {
@@ -72,7 +68,7 @@ public class TestMain {
                     jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<ProcessedSample>() {
                         @Override
                         protected ProcessedSample compute() throws Exception {
-                            final ProcessedSample sample = new MZmlSampleParser().parse(f, LCMSStorage.temporaryStorage());
+                            final ProcessedSample sample = new MzMLParser().parse(f, LCMSStorage.temporaryStorage(), run -> {},  ms -> {},  msms -> {}, Run.builder());
                             sample.detectTraces();
                             goodAlignmentPoints(sample);
                             if (false){
@@ -95,7 +91,7 @@ public class TestMain {
                                 devs.stream().mapToDouble(x->Math.abs(x.getAbsolute())).sorted().limit(devs.size()/10).average().ifPresent(System.out::println);
                             }
                             sample.inactive();
-                            System.out.println(sample.getReference()  + " done.");
+                            System.out.println(f  + " done.");
                             return sample;
                         }
                     }));
