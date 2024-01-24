@@ -56,13 +56,6 @@ public class CSICovarianceConfidenceScorer<S extends FingerblastScoring<?>> impl
     public static final String DB_ALL_ID = "All";
     public static final String DB_BIO_ID = "Bio";
 
-    public static final String CE_LOW = "feLow";
-    public static final String CE_MED = "feMed";
-    public static final String CE_HIGH = "feHigh";
-    public static final String CE_vHIGH = "fevHigh";
-    public static final String CE_RAMP = "feRAMP";
-
-
     private final Map<String, TrainedSVM> trainedSVMs;
     private final FingerblastScoringMethod<S> covarianceScoringMethod;
     private final ScoringMethodFactory.CSIFingerIdScoringMethod csiFingerIdScoringMethod;
@@ -77,25 +70,25 @@ public class CSICovarianceConfidenceScorer<S extends FingerblastScoring<?>> impl
 
     }
 
-    public double computeConfidence(final Ms2Experiment exp, List<Scored<FingerprintCandidate>> allDbCandidatesCov, List<Scored<FingerprintCandidate>> allDbCandidatesCSI, long dbFilterFlag, @NotNull ParameterStore parametersWithQuery) {
-        return computeConfidence(exp, allDbCandidatesCov, allDbCandidatesCSI, parametersWithQuery, it -> (it.getBitset() & dbFilterFlag) != 0);
+    public double computeConfidence(final Ms2Experiment exp, List<Scored<FingerprintCandidate>> allDbCandidatesCov, List<Scored<FingerprintCandidate>> allDbCandidatesCSI, long dbFilterFlag, @NotNull ParameterStore parametersWithQuery, boolean structureSearchDBIsPubChem) {
+        return computeConfidence(exp, allDbCandidatesCov, allDbCandidatesCSI, parametersWithQuery, it -> (it.getBitset() & dbFilterFlag) != 0,structureSearchDBIsPubChem);
     }
 
 
     @Override
-    public double computeConfidence(@NotNull Ms2Experiment exp, @NotNull List<Scored<FingerprintCandidate>> allDbCandidatesCov, @NotNull List<Scored<FingerprintCandidate>> allDbCandidatesCSI, @NotNull ParameterStore parametersWithQuery, @Nullable Predicate<FingerprintCandidate> filter) {
-        return computeConfidence(exp, allDbCandidatesCov, allDbCandidatesCSI, parametersWithQuery, filter);
+    public double computeConfidence(@NotNull Ms2Experiment exp, @NotNull List<Scored<FingerprintCandidate>> allDbCandidatesCov, @NotNull List<Scored<FingerprintCandidate>> allDbCandidatesCSI, @NotNull ParameterStore parametersWithQuery, @Nullable Predicate<FingerprintCandidate> filter, @NotNull boolean structureSearchDBIsPubChem) {
+        return computeConfidence(exp, allDbCandidatesCov, allDbCandidatesCSI, parametersWithQuery, filter, structureSearchDBIsPubChem);
 
     }
 
     @Override
-    public double computeConfidence(@NotNull Ms2Experiment exp, @NotNull List<Scored<FingerprintCandidate>> allDbCandidatesCov, @NotNull List<Scored<FingerprintCandidate>> allDbCandidatesCSI, @NotNull List<Scored<FingerprintCandidate>> searchDBCandidatesCov, @NotNull List<Scored<FingerprintCandidate>> searchDBCandidatesCSI, @NotNull ParameterStore parametersWithQuery) {
+    public double computeConfidence(@NotNull Ms2Experiment exp, @NotNull List<Scored<FingerprintCandidate>> allDbCandidatesCov, @NotNull List<Scored<FingerprintCandidate>> allDbCandidatesCSI, @NotNull List<Scored<FingerprintCandidate>> searchDBCandidatesCov, @NotNull List<Scored<FingerprintCandidate>> searchDBCandidatesCSI, @NotNull ParameterStore parametersWithQuery,@NotNull boolean structureSearchDBIsPubChem) {
         return computeConfidence(exp,
                 allDbCandidatesCov.toArray(new Scored[]{}),
                 allDbCandidatesCSI.toArray(new Scored[]{}),
                 searchDBCandidatesCov.toArray(new Scored[]{}),
                 searchDBCandidatesCSI.toArray(new Scored[]{}),
-                parametersWithQuery, covarianceScoringMethod.getScoring(), csiFingerIdScoringMethod.getPerformances());
+                parametersWithQuery, covarianceScoringMethod.getScoring(), csiFingerIdScoringMethod.getPerformances(),structureSearchDBIsPubChem);
     }
 
     public double computeConfidence(final Ms2Experiment exp,
@@ -103,7 +96,7 @@ public class CSICovarianceConfidenceScorer<S extends FingerblastScoring<?>> impl
                                     Scored<FingerprintCandidate>[] rankedPubchemCandidatesCSI,
                                     @Nullable Scored<FingerprintCandidate>[] rankedSearchDBCandidatesCov,
                                     @Nullable Scored<FingerprintCandidate>[] rankedSearchDBCandidatesCSI,
-                                    ParameterStore parametersWithQuery, S covarianceScoring, PredictionPerformance[] csiPerformances) {
+                                    ParameterStore parametersWithQuery, S covarianceScoring, PredictionPerformance[] csiPerformances, boolean structureSearchDBIsPubChem) {
 
         if (rankedPubchemCandidatesCov.length != rankedPubchemCandidatesCSI.length)
             throw new IllegalArgumentException("Covariance scored candidate list has different length from fingerid scored candidates list!");
@@ -116,7 +109,6 @@ public class CSICovarianceConfidenceScorer<S extends FingerblastScoring<?>> impl
             return Double.NaN;
         }
 
-        final String ce = makeCeString(exp.getMs2Spectra());
         final CombinedFeatureCreator comb;
         final String distanceType;
         final String dbType;
@@ -127,39 +119,44 @@ public class CSICovarianceConfidenceScorer<S extends FingerblastScoring<?>> impl
         FTree[] fTrees = null;
         HashMap<Fragment, ArrayList<CombinatorialFragment>>[] originalMappings =null;
 
-        //TODO:out
+        if (structureSearchDBIsPubChem) {
 
-        return 1.0;
-/*
-        if (rankedSearchDBCandidatesCov == null || rankedSearchDBCandidatesCSI == null) { //calculate score for pubChem lists
-            comb = new CombinedFeatureCreatorALL(rankedPubchemCandidatesCSI, rankedPubchemCandidatesCov, csiPerformances, covarianceScoring,canopusFptPred,canopusFptTop,epiTrees,originalMappings,fTrees,true);
-            distanceType = null;
-            dbType = DB_ALL_ID;
-        } else if (rankedSearchDBCandidatesCov.length > 10) { //calculate score for filtered lists
-            comb = new CombinedFeatureCreatorBIODISTANCE(rankedPubchemCandidatesCSI, rankedPubchemCandidatesCov, rankedSearchDBCandidatesCSI, rankedSearchDBCandidatesCov, csiPerformances, covarianceScoring,canopusFptPred,canopusFptTop,epiTrees,originalMappings,fTrees);
-            distanceType = DISTANCE_ID;
-            dbType = DB_BIO_ID;
-        } else if (rankedSearchDBCandidatesCov.length > 1 && rankedSearchDBCandidatesCov.length < 6){
-            comb = new CombinedFeatureCreatorBIODISTANCE2TO5(rankedPubchemCandidatesCSI, rankedPubchemCandidatesCov, rankedSearchDBCandidatesCSI, rankedSearchDBCandidatesCov, csiPerformances, covarianceScoring,canopusFptPred,canopusFptTop,epiTrees,originalMappings,fTrees);
-            distanceType = DISTANCE_2_5_ID;
-            dbType = DB_BIO_ID;
-        } else if (rankedSearchDBCandidatesCov.length > 5 && rankedSearchDBCandidatesCov.length < 11) {
-            comb = new CombinedFeatureCreatorBIODISTANCE6TO10(rankedPubchemCandidatesCSI, rankedPubchemCandidatesCov, rankedSearchDBCandidatesCSI, rankedSearchDBCandidatesCov, csiPerformances, covarianceScoring,canopusFptPred,canopusFptTop,epiTrees,originalMappings,fTrees);
-            distanceType = DISTANCE_6_10_ID;
-            dbType = DB_BIO_ID;
-        }
-        else {
-            comb = new CombinedFeatureCreatorBIONODISTANCE(rankedPubchemCandidatesCSI, rankedPubchemCandidatesCov, rankedSearchDBCandidatesCSI, rankedSearchDBCandidatesCov, csiPerformances, covarianceScoring,canopusFptPred,canopusFptTop,epiTrees,originalMappings);
-            distanceType = NO_DISTANCE_ID;
-            dbType = DB_BIO_ID;
+            if (rankedSearchDBCandidatesCov.length>10) { //calculate score for pubChem lists
+                comb = new CombinedFeatureCreatorALL(rankedPubchemCandidatesCSI, rankedPubchemCandidatesCov, csiPerformances, covarianceScoring, canopusFptPred, canopusFptTop, epiTrees, originalMappings, fTrees);
+                distanceType = null;
+                dbType = DB_ALL_ID;
+            } else{
+                comb = new CombinedFeatureCreatorALL6TO10(rankedPubchemCandidatesCSI, rankedPubchemCandidatesCov, csiPerformances, covarianceScoring, canopusFptPred, canopusFptTop, epiTrees, originalMappings, fTrees);
+                distanceType = DISTANCE_6_10_ID;
+                dbType = DB_ALL_ID;
+            }
+        }else {
+
+            if (rankedSearchDBCandidatesCov.length > 10) { //calculate score for filtered lists
+                comb = new CombinedFeatureCreatorBIODISTANCE(rankedPubchemCandidatesCSI, rankedPubchemCandidatesCov, rankedSearchDBCandidatesCSI, rankedSearchDBCandidatesCov, csiPerformances, covarianceScoring, canopusFptPred, canopusFptTop, epiTrees, originalMappings, fTrees);
+                distanceType = DISTANCE_ID;
+                dbType = DB_BIO_ID;
+            } else if (rankedSearchDBCandidatesCov.length > 1 && rankedSearchDBCandidatesCov.length < 6) {
+                comb = new CombinedFeatureCreatorBIODISTANCE2TO5(rankedPubchemCandidatesCSI, rankedPubchemCandidatesCov, rankedSearchDBCandidatesCSI, rankedSearchDBCandidatesCov, csiPerformances, covarianceScoring, canopusFptPred, canopusFptTop, epiTrees, originalMappings, fTrees);
+                distanceType = DISTANCE_2_5_ID;
+                dbType = DB_BIO_ID;
+            } else if (rankedSearchDBCandidatesCov.length > 5 && rankedSearchDBCandidatesCov.length < 11) {
+                comb = new CombinedFeatureCreatorBIODISTANCE6TO10(rankedPubchemCandidatesCSI, rankedPubchemCandidatesCov, rankedSearchDBCandidatesCSI, rankedSearchDBCandidatesCov, csiPerformances, covarianceScoring, canopusFptPred, canopusFptTop, epiTrees, originalMappings, fTrees);
+                distanceType = DISTANCE_6_10_ID;
+                dbType = DB_BIO_ID;
+            } else {
+                comb = new CombinedFeatureCreatorBIONODISTANCE(rankedPubchemCandidatesCSI, rankedPubchemCandidatesCov, rankedSearchDBCandidatesCSI, rankedSearchDBCandidatesCov, csiPerformances, covarianceScoring, canopusFptPred, canopusFptTop, epiTrees, originalMappings);
+                distanceType = NO_DISTANCE_ID;
+                dbType = DB_BIO_ID;
+            }
         }
         final double[] features = comb.computeFeatures(parametersWithQuery);
-        return calculateConfidence(features, dbType, distanceType, ce);*/
+        return calculateConfidence(features, dbType, distanceType);
     }
 
 
-    private double calculateConfidence(double[] feature, @NotNull String dbType, @Nullable String distanceType, @NotNull String collisionEnergy) {
-        final String id = distanceType != null ? collisionEnergy + "_" + dbType + distanceType + ".svm" : collisionEnergy + "_" + dbType + ".svm";
+    private double calculateConfidence(double[] feature, @NotNull String dbType, @Nullable String distanceType) {
+        final String id = distanceType != null ? dbType + distanceType + ".svm" : dbType + ".svm";
         final TrainedSVM svm = trainedSVMs.get(id);
         if (svm == null)
             throw new IllegalArgumentException("Could not found confidence svm with ID: \"" + id + "\"");
@@ -169,24 +166,4 @@ public class CSICovarianceConfidenceScorer<S extends FingerblastScoring<?>> impl
         return new SVMPredict().predict_confidence(featureMatrix, svm)[0];
     }
 
-    public static String makeCeString(@NotNull final List<Ms2Spectrum<Peak>> spectra) {
-        //find collision energy in spectrum
-        double ceMin = Double.MAX_VALUE;
-        double ceMax = Double.MIN_VALUE;
-        for (Ms2Spectrum<?> spec : spectra) {
-            CollisionEnergy ce = spec.getCollisionEnergy();
-            if (ce.equals(CollisionEnergy.none())) return CE_RAMP;
-            ceMax = Math.max(ceMax, ce.getMaxEnergy());
-            ceMin = Math.min(ceMin, ce.getMinEnergy());
-            if (ceMin != ceMax) return CE_RAMP;
-        }
-
-        if (ceMin <= 20) //10
-            return CE_LOW;
-        else if (ceMin <= 40) //20
-            return CE_MED;
-        else if (ceMin <=60)
-            return CE_HIGH; //40
-        else return CE_vHIGH;
-    }
 }

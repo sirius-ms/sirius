@@ -70,7 +70,6 @@ public class EpiExplIntFeatures implements FeatureCreator {
             sumEpiTree+=Math.sqrt(n.getFragment().getPeakIntensity()*100);
         }
 
-        System.out.println("TREEINTENSITY "+ sumEpiTree+" "+sumFtree);
 
         if(sumFtree==0){scores[0]=0;}
         else if(Double.isNaN(sumFtree) || Double.isNaN(sumEpiTree)) scores[0]=0;
