@@ -34,7 +34,6 @@ public abstract class TraceStorage implements Iterable<ContiguousTrace>  {
     public abstract void setTraceForMs2(int ms2headerid, int traceId);
     public abstract int[] getMs2ForTrace(int traceId);
 
-
     public static class MvTraceStorage extends TraceStorage {
         private MVMap<Integer, ContiguousTrace> traceMap;
         private MVMap<Integer, int[]> trace2ms2;

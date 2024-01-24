@@ -1,9 +1,14 @@
 package de.unijena.bioinf.lcms;
 
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.lcms.align.*;
 import de.unijena.bioinf.lcms.features.MergedFeatureExtractionStrategy;
 import de.unijena.bioinf.lcms.features.MergedFeatureExtractor;
 import de.unijena.bioinf.lcms.io.MZmlSampleParser;
+import de.unijena.bioinf.lcms.isotopes.IsotopeDetectionByCorrelation;
+import de.unijena.bioinf.lcms.isotopes.IsotopeDetectionStrategy;
+import de.unijena.bioinf.lcms.isotopes.IsotopePattern;
 import de.unijena.bioinf.lcms.merge.MergeTracesWithoutGapFilling;
 import de.unijena.bioinf.lcms.merge.MergedTrace;
 import de.unijena.bioinf.lcms.merge.ScanPointInterpolator;
@@ -64,7 +69,9 @@ public class LCMSProcessing {
     @Getter @Setter private TraceSegmentationStrategy segmentationStrategy = new PersistentHomology();
 
     @Getter @Setter private MassOfInterestConfidenceEstimatorStrategy confidenceEstimatorStrategy = new MassOfInterestCombinedStrategy(
-        new IsotopesAndAdductsAreConfidentStrategy(), new PrecursorsWithMsMsAreConfidentStrategy()
+            new IsotopesAndAdductsAreConfidentStrategy(),
+            new PrecursorsWithMsMsAreConfidentStrategy(),
+            new TracesWithTooManyApexesAreStrange()
     );
 
     @Getter @Setter private NormalizationStrategy normalizationStrategy = new AverageOfTop100TracesNormalization();
@@ -217,11 +224,27 @@ public class LCMSProcessing {
                 rect.maxMz = (float)maxMz;
                 MoI moi = new MoI(rect, segment.apex, sample.getMapping().getRetentionTimeAt(segment.apex),
                         (float)normalizer.normalize(trace.intensity(segment.apex)), sample.getUid());
+
+                detectIsotopesForMoI(sample, trace, segment, moi);
+
                 moi.setConfidence(confidenceEstimatorStrategy.estimateConfidence(sample,trace,moi, null));
                 if (moi.getConfidence() >= 0) {
                     alignmentStorage.addMoI(moi);
                 }
             }
+        }
+    }
+
+    private void detectIsotopesForMoI(ProcessedSample sample, ContiguousTrace trace, TraceSegment segment, MoI moi) {
+        SimpleSpectrum spectrum = sample.getStorage().getSpectrumStorage().getSpectrum(moi.getScanId());
+        final int peakIdx = Spectrums.mostIntensivePeakWithin(spectrum, trace.mz(moi.getScanId()), sample.getStorage().getStatistics().getMs1MassDeviationWithinTraces());
+
+        IsotopeDetectionStrategy.Result result = new IsotopeDetectionByCorrelation().detectIsotopesFor(sample, moi, trace, segment);
+
+        if (result.isMonoisotopic()) {
+            moi.setIsotopes(result.getIsotopePeaks().get());
+        } else {
+            moi.setIsotopePeakFlag(true);
         }
     }
 

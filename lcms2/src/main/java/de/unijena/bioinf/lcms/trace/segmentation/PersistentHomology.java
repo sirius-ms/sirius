@@ -286,7 +286,8 @@ public class PersistentHomology implements TraceSegmentationStrategy {
     public List<TraceSegment> detectSegments(SampleStats stats, Trace trace) {
         final int offset=trace.startId();
         return computePersistentHomology(trace, filter, stats.noiseLevel(trace.apex()), 3d).stream().map(seg->
-                new TraceSegment(seg.idx+offset, seg.left+offset, seg.right+offset)).toList();
+                // TODO: @Martin warum ist trace.idx nicht identisch mit dem Apex?
+                TraceSegment.createSegmentFor(trace, seg.left+offset, seg.right+offset)).toList();
     }
 
     @Override
