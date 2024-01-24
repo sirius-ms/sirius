@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
+import org.apache.xpath.operations.Bool;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,15 +38,16 @@ public interface ConfidenceScorer {
                                      @NotNull List<Scored<FingerprintCandidate>> allDbCandidatesScoreA,
                                      @NotNull List<Scored<FingerprintCandidate>> allDbCandidatesScoreB,
                                      @NotNull ParameterStore parametersWithQuery,
-                                     @Nullable Predicate<FingerprintCandidate> filter) {
+                                     @Nullable Predicate<FingerprintCandidate> filter,
+                                     @NotNull boolean structureSearchDBIsPubChem) {
         if (filter == null)
-            return computeConfidence(exp, allDbCandidatesScoreA, allDbCandidatesScoreB, allDbCandidatesScoreA, allDbCandidatesScoreB, parametersWithQuery);
+            return computeConfidence(exp, allDbCandidatesScoreA, allDbCandidatesScoreB, allDbCandidatesScoreA, allDbCandidatesScoreB, parametersWithQuery,structureSearchDBIsPubChem);
 
         return computeConfidence(exp,
                 allDbCandidatesScoreA, allDbCandidatesScoreB,
                 allDbCandidatesScoreA.stream().filter(c -> filter.test(c.getCandidate())).collect(Collectors.toList()),
                 allDbCandidatesScoreB.stream().filter(c -> filter.test(c.getCandidate())).collect(Collectors.toList()),
-                parametersWithQuery);
+                parametersWithQuery,structureSearchDBIsPubChem);
     }
 
     double computeConfidence(@NotNull final Ms2Experiment exp,
@@ -53,5 +55,6 @@ public interface ConfidenceScorer {
                              @NotNull List<Scored<FingerprintCandidate>> allDbCandidatesScoreB,
                              @NotNull List<Scored<FingerprintCandidate>> searchDBCandidatesScoreA,
                              @NotNull List<Scored<FingerprintCandidate>> searchDBCandidatesScoreB,
-                             @NotNull ParameterStore parametersWithQuery);
+                             @NotNull ParameterStore parametersWithQuery,
+                             @NotNull boolean structureSearchDBIsPubChem);
 }

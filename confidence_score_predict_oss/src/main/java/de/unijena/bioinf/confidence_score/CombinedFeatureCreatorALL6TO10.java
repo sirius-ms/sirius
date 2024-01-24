@@ -45,7 +45,7 @@ public class CombinedFeatureCreatorALL6TO10 extends CombinedFeatureCreator {
     }
 
     //Scorer for pubchem list (unfiltered)
-    public CombinedFeatureCreatorALL6TO10(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, PredictionPerformance[] performance, FingerblastScoring<?> covscore, ProbabilityFingerprint canopusFptPred, ProbabilityFingerprint canopusFptTop, CombinatorialSubtree[] epiTrees, HashMap<Fragment, ArrayList<CombinatorialFragment>>[] map, FTree[] fTrees,boolean force) {
+    public CombinedFeatureCreatorALL6TO10(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, PredictionPerformance[] performance, FingerblastScoring<?> covscore, ProbabilityFingerprint canopusFptPred, ProbabilityFingerprint canopusFptTop, CombinatorialSubtree[] epiTrees, HashMap<Fragment, ArrayList<CombinatorialFragment>>[] map, FTree[] fTrees) {
         super(
                 //new PlattFeatures(),
                 //  new LogPvalueDistanceFeatures(scored_array,scored_array,1),
@@ -85,8 +85,7 @@ public class CombinedFeatureCreatorALL6TO10 extends CombinedFeatureCreator {
                 new EpiExplIntFeatures(epiTrees[0]),
                 new EpiFragmenterScoreFeatures(epiTrees[0]),
                 new EpiRatioExplPeaksFeatures(epiTrees[0]),
-                new EpiUnexplainedPeaksFeatures(epiTrees[0],map[0]),
-                new TopHItInBioFeatures(scored_array_covscore[0].getCandidate(),force)
+                new EpiUnexplainedPeaksFeatures(epiTrees[0],map[0])
         );
 
         for (FeatureCreator creator : featureCreators){
