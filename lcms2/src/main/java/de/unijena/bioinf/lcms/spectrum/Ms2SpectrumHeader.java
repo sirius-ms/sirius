@@ -2,6 +2,7 @@ package de.unijena.bioinf.lcms.spectrum;
 
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
+import lombok.Getter;
 
 import javax.annotation.Nullable;
 import java.io.Serializable;
@@ -11,13 +12,15 @@ public class Ms2SpectrumHeader extends Ms1SpectrumHeader implements Serializable
     @Nullable protected final CollisionEnergy energy;
 
     @Nullable protected final IsolationWindow isolationWindow;
+    @Getter
     protected final int parentId;
     protected final double retentionTime;
 
+    @Getter
     protected final double precursorMz;
 
-    public Ms2SpectrumHeader(int polarity, boolean centroided, CollisionEnergy energy, IsolationWindow window, int parentId, double precursorMz, double retentionTime) {
-        super(-1, polarity, centroided);
+    public Ms2SpectrumHeader(long scanId, int polarity, boolean centroided, @Nullable CollisionEnergy energy, @Nullable IsolationWindow window, int parentId, double precursorMz, double retentionTime) {
+        super(scanId,-1, polarity, centroided);
         this.precursorMz = precursorMz;
         this.energy = energy;
         this.parentId = parentId;
@@ -35,20 +38,8 @@ public class Ms2SpectrumHeader extends Ms1SpectrumHeader implements Serializable
         return Optional.ofNullable(isolationWindow);
     }
 
-    public int getUid() {
-        return uid;
-    }
-
-    public int getParentId() {
-        return parentId;
-    }
-
-    public double getPrecursorMz() {
-        return precursorMz;
-    }
-
-    public Ms2SpectrumHeader(int uid, int polarity, boolean centroided, CollisionEnergy energy, IsolationWindow window, int parentId, double precursorMz, double retentionTime) {
-        super(uid, polarity, centroided);
+    public Ms2SpectrumHeader(long scanId, int uid, int polarity, boolean centroided, @Nullable CollisionEnergy energy, @Nullable IsolationWindow window, int parentId, double precursorMz, double retentionTime) {
+        super(scanId, uid, polarity, centroided);
         this.energy = energy;
         this.parentId = parentId;
         this.isolationWindow = window;
@@ -57,7 +48,7 @@ public class Ms2SpectrumHeader extends Ms1SpectrumHeader implements Serializable
     }
 
     public Ms2SpectrumHeader withUid(int uid) {
-        return new Ms2SpectrumHeader(uid, polarity, centroided, energy, isolationWindow, parentId, precursorMz, retentionTime);
+        return new Ms2SpectrumHeader(scanId, uid, polarity, centroided, energy, isolationWindow, parentId, precursorMz, retentionTime);
     }
 
 
