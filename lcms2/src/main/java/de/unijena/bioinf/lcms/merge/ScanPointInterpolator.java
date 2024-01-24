@@ -103,6 +103,12 @@ public class ScanPointInterpolator {
         int targetRight = (int)Math.ceil(tg);
         double mzLeft = (targetLeft < t.startId() || targetLeft > t.endId()) ? t.averagedMz() : t.mz(targetLeft);
         double mzRight = (targetRight < t.startId() || targetRight > t.endId()) ? t.averagedMz() : t.mz(targetRight);
+        if (!Double.isFinite(mzLeft)) {
+            if (!Double.isFinite(mzRight)) return 0f;
+            else return mzRight;
+        } else if (!Double.isFinite(mzRight)) {
+            return mzLeft;
+        }
         if (targetLeft==targetRight) return mzLeft;
         double alpha = tg-targetLeft;
         return ( mzLeft*(1-alpha) + (alpha)*mzRight );

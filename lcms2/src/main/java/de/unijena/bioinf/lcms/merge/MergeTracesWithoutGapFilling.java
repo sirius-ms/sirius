@@ -2,17 +2,17 @@ package de.unijena.bioinf.lcms.merge;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.lcms.align.*;
+import de.unijena.bioinf.lcms.isotopes.IsotopePattern;
 import de.unijena.bioinf.lcms.statistics.SampleStats;
-import de.unijena.bioinf.lcms.trace.ContiguousTrace;
-import de.unijena.bioinf.lcms.trace.ProcessedSample;
-import de.unijena.bioinf.lcms.trace.Rect;
-import de.unijena.bioinf.lcms.trace.TraceRectangleMap;
+import de.unijena.bioinf.lcms.trace.*;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -84,12 +84,8 @@ public class MergeTracesWithoutGapFilling {
         // get all mois in this rectangle
         MoI[] mois = merged.getStorage().getAlignmentStorage().getMoIWithin(r.minMz, r.maxMz).stream().filter(x -> r.contains(x.getMz(), x.getRetentionTime())).toArray(MoI[]::new);
         MergedTrace mergedTrace = merged.getStorage().getMergeStorage().getMerged(r.id);
-        IntOpenHashSet traceIds = new IntOpenHashSet();
-        for (MoI a : mois) {
-            if (a instanceof AlignedMoI) {
-                ((AlignedMoI) a).forSampleIdx(sample.getUid()).ifPresent(x->traceIds.add(x.getTraceId()));
-            }
-        }
+        MoI[] moisForSample = Arrays.stream(mois).flatMap(a->((AlignedMoI) a).forSampleIdx(sample.getUid()).stream()).toArray(MoI[]::new);
+        IntOpenHashSet traceIds = new IntOpenHashSet(Arrays.stream(moisForSample).mapToInt(MoI::getTraceId).toArray());
         if (traceIds.isEmpty()) return; // nothing to merge for this sample
         // merge traces
         ContiguousTrace[] traces = traceIds.intStream().mapToObj(x -> sample.getStorage().getTraceStorage().getContigousTrace(x)).toArray(ContiguousTrace[]::new);
@@ -98,9 +94,6 @@ public class MergeTracesWithoutGapFilling {
         final double[] mz = new double[endId-startId+1];
         final float[] intensities = new float[endId-startId+1];
         for (ContiguousTrace trace : traces) {
-            if (Math.abs( trace.averagedMz()- 637.2791) < 1e-2) {
-                System.out.println("Gotcha!");
-            }
             for (int k=trace.startId(), n=trace.endId(); k <=n; ++k) {
                 mz[k-startId] += trace.mz(k)*trace.intensity(k);
                 intensities[k-startId] += trace.intensity(k);
@@ -123,8 +116,97 @@ public class MergeTracesWithoutGapFilling {
 
         for (int k=newStartId; k <= newEndId; ++k) {
             final double normInt = sample.getNormalizer().normalize(mapper.interpolateIntensity(T, k));
-            mergedTrace.getMz()[k - mergedTrace.getStartId()] += mapper.interpolateMz(T, k) * normInt;
-            mergedTrace.getInts()[k - mergedTrace.getStartId()] += normInt;
+            if (normInt > 0) {
+                mergedTrace.getMz()[k - mergedTrace.getStartId()] += mapper.interpolateMz(T, k) * normInt;
+                mergedTrace.getInts()[k - mergedTrace.getStartId()] += normInt;
+            }
+        }
+
+        // now also add isotopic traces
+        createIsotopeMergedTraces(merged, sample, mergedTrace, T, moisForSample);
+
+        // update
+        merged.getStorage().getMergeStorage().addMerged(mergedTrace);
+
+    }
+
+    private void createIsotopeMergedTraces(ProcessedSample merged, ProcessedSample sample, MergedTrace mergedTrace, ContiguousTrace t, MoI[] mois) {
+        int isotopePeak = 1;
+        while (true) {
+            // if at least one MoI has an isotope peak with this nominal mass...
+            final int isotopePeakCurrent = isotopePeak;
+            List<ContiguousTrace> isotopeTraces = new ArrayList<>();
+            // then extract isotope traces
+            for (MoI m : mois) {
+                if (m.getIsotopes()==null) continue;
+                int K = m.getIsotopes().getForNominalMass(t.averagedMz(), isotopePeak);
+                if (K<0) continue;
+                isotopeTraces.add(sample.getStorage().getTraceStorage().getContigousTrace(m.getIsotopes().traceIds[K]));
+                /*
+                TraceStorage traceStorage = sample.getStorage().getTraceStorage();
+                double minMz = IsotopePattern.getMinimumMzFor(m.getMz(), isotopePeak, 1)-5e-4;
+                double maxMz = IsotopePattern.getMaximumMzFor(m.getMz(), isotopePeak, 1)+5e-4;
+                final List<ContiguousTrace> traces = traceStorage.getContigousTraces(minMz,maxMz, m.getScanId(), m.getScanId());
+                if (traces.size() > 1) {
+                    // TODO: remove wrong assignments
+                    LoggerFactory.getLogger(MergeTracesWithoutGapFilling.class).warn("Multiple possible isotope traces.");
+                }
+                if (!traces.isEmpty()) {
+                    isotopeTraces.add(traces.get(0));
+                }
+                 */
+            }
+            if (!isotopeTraces.isEmpty()){
+                int startId = t.startId();
+                int endId = t.endId();
+                final double[] mz = new double[endId-startId+1];
+                final float[] intensities = new float[endId-startId+1];
+                for (ContiguousTrace trace : isotopeTraces) {
+                    for (int k=Math.max(trace.startId(), startId), n=Math.min(trace.endId(), endId); k <=n; ++k) {
+                        mz[k-startId] += trace.mz(k)*trace.intensity(k);
+                        intensities[k-startId] += trace.intensity(k);
+                    }
+                }
+                for (int k=0; k < mz.length; ++k) {
+                    mz[k] /= intensities[k];
+                }
+                ContiguousTrace T = new ContiguousTrace(
+                        sample.getMapping(), startId, endId, mz, intensities
+                );
+                T = merged.getStorage().getMergeStorage().addTrace(T);
+
+                // get corresponding merged trace
+                MergedTrace isotopeMergedTrace;
+                if (mergedTrace.getIsotopeUids().size() >= isotopePeak) {
+                    int uid=mergedTrace.getIsotopeUids().getInt(isotopePeak-1);
+                    isotopeMergedTrace = merged.getStorage().getMergeStorage().getMerged(uid);
+                } else {
+                    isotopeMergedTrace = new MergedTrace(merged.getStorage().getMergeStorage().getFreeIsotopeMergeUid());
+                    mergedTrace.getIsotopeUids().add(isotopeMergedTrace.getUid());
+                }
+
+                isotopeMergedTrace.getTraceIds().add(T.getUid());
+                isotopeMergedTrace.getSampleIds().add(sample.getUid());
+
+                // mergin trace
+                ScanPointInterpolator mapper = sample.getScanPointInterpolator();
+                final int newStartId = mapper.lowerIndex(T.startId());
+                final int newEndId = mapper.largerIndex(T.endId());
+                isotopeMergedTrace.extend(newStartId, newEndId);
+
+                for (int k=newStartId; k <= newEndId; ++k) {
+                    final double normInt = sample.getNormalizer().normalize(mapper.interpolateIntensity(T, k));
+                    if (normInt > 0) {
+                        isotopeMergedTrace.getMz()[k - isotopeMergedTrace.getStartId()] += (mapper.interpolateMz(T, k) * normInt);
+                        isotopeMergedTrace.getInts()[k - isotopeMergedTrace.getStartId()] += normInt;
+                    }
+                }
+
+                // update
+                merged.getStorage().getMergeStorage().addMerged(isotopeMergedTrace);
+            } else break;
+
+            ++isotopePeak;
         }
     }
 

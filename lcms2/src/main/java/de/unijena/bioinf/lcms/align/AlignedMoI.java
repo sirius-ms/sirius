@@ -13,8 +13,8 @@ public class AlignedMoI extends MoI {
         super(rect, -1, retentionTime, intensity, -1);
         this.aligned = aligned;
     }
-    AlignedMoI(Rect rect, double retentionTime, int scanId, int sampleIdx, long uid, float intensity, float confidence, byte state, MoI[] aligned) {
-        super(rect, retentionTime, scanId, sampleIdx, uid, intensity, confidence, state);
+    AlignedMoI(Rect rect, double retentionTime, int scanId, int sampleIdx, long uid, float intensity, float confidence, MoI[] aligned, byte state) {
+        super(rect, retentionTime, scanId, sampleIdx, uid, intensity, confidence, aligned.length==1 ? aligned[0].getIsotopes() : null, state);
         this.aligned = aligned;
     }
 
@@ -44,7 +44,7 @@ public class AlignedMoI extends MoI {
         avgMz /= sum;
         avgRt /= sum;
         final Rect unified = new Rect(minMz,maxMz,minRt,maxRt, avgMz);
-        return new AlignedMoI(unified, avgRt, -1, -1, -1, (float)sum, maxConfidence, state, flatten(aligned));
+        return new AlignedMoI(unified, avgRt, -1, -1, -1, (float)sum, maxConfidence, flatten(aligned), state);
     }
 
     public static MoI[] flatten(MoI... mois) {

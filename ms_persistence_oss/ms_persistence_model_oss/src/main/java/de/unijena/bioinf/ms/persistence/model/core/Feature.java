@@ -102,6 +102,8 @@ public class Feature {
     /**
      * Traces of this feature (mono-isotopic + isotope peaks)
      * Optional Field
+     *
+     * TODO: should be a collection of (traceId, startIndex, endIndex)
      */
     @ToString.Exclude
     protected List<Trace> traces;
