@@ -36,7 +36,12 @@ public class IsotopesAndAdductsAreConfidentStrategy implements MassOfInterestCon
     @Override
     public float estimateConfidence(ProcessedSample sample, ContiguousTrace trace, MoI moi, ConnectRelatedMoIs connector) {
         final SimpleSpectrum spectrum = sample.getStorage().getSpectrumStorage().getSpectrum(moi.getScanId());
-        return estimateConfidenceFromIsotope(sample, moi.getMz(), spectrum) + estimateConfidenceForAdducts(sample, moi, spectrum);
+        float confidence = 0f;
+        if (moi.isMultiCharged()) confidence = -1000f; // reject multiple charged ions for alignment
+        if (moi.isIsotopePeak()) confidence -= 1000f; // reject isotope peaks
+        if(moi.getIsotopes()!=null) confidence += (moi.getIsotopes().isotopeIntensities.length-1)*34; // add score for each detected isotope peak
+        confidence += estimateConfidenceForAdducts(sample, moi, spectrum); // add score for each detected adduct
+        return confidence;
     }
 
     public float estimateConfidenceForAdducts(ProcessedSample sample, MoI moi, SimpleSpectrum spectrum) {
@@ -64,7 +69,7 @@ public class IsotopesAndAdductsAreConfidentStrategy implements MassOfInterestCon
         else {
             IsotopePattern iso = pattern.get();
             if (iso.chargeState > 1) return 0f;
-            else return iso.size()*34;
+            else return 4+(iso.size()-1)*34;
         }
     }
 }
