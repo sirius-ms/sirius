@@ -27,6 +27,7 @@ import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.chemdb.annotations.StructureSearchDB;
 import de.unijena.bioinf.confidence_score.ConfidenceScorer;
 import de.unijena.bioinf.fingerid.blast.*;
 import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
@@ -121,6 +122,8 @@ public class ConfidenceJJob extends BasicDependentMasterJJob<ConfidenceResult> {
         FTree topHitTree = null;
         MolecularFormula topHitFormula = null;
         BayesnetScoring topHitScoring = null;
+        boolean structureSearchDBIsPubChem = ((experiment.getAnnotationOrNull(StructureSearchDB.class).getDBFlag() & 2L) !=0)? true : false;
+
 
         for (FingerblastSearchJJob searchDBJob : inputInstances) {
             FingerblastResult r = searchDBJob.result();
@@ -182,7 +185,7 @@ public class ConfidenceJJob extends BasicDependentMasterJJob<ConfidenceResult> {
         final double score = confidenceScorer.computeConfidence(experiment,
                 allMergedCandidatesCov, allMergedCandidatesCSI,
                 requestedMergedCandidatesCov, requestedMergedCandidatesCSI,
-                ParameterStore.of(topHitFP, topHitScoring, topHitTree, topHitFormula));
+                ParameterStore.of(topHitFP, topHitScoring, topHitTree, topHitFormula),structureSearchDBIsPubChem);
 
         checkForInterruption();
         return new ConfidenceResult(score, requestedMergedCandidatesCov.size() > 0 ? requestedMergedCandidatesCov.get(0) : null);
