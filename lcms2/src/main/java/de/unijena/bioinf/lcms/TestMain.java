@@ -4,6 +4,8 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.lcms.align.AlignmentBackbone;
+import de.unijena.bioinf.lcms.align.MoI;
+import de.unijena.bioinf.lcms.merge.MergedTrace;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import picocli.CommandLine;
@@ -88,7 +90,13 @@ public class TestMain {
                         @Override
                         protected de.unijena.bioinf.lcms.trace.ProcessedSample compute() throws Exception {
                             ProcessedSample sample = processing.processSample(f);
+                            int hasIsotopes=0, hasNoIsotopes=0;
+                            for (MoI m : sample.getStorage().getAlignmentStorage()) {
+                                if (m.hasIsotopes()) ++hasIsotopes;
+                                else ++hasNoIsotopes;
+                            }
                             sample.inactive();
+                            System.out.println(sample.getUid() + " with " + hasIsotopes + " / " + (hasIsotopes+hasNoIsotopes) + " isotope features");
                             return sample;
                         }
                     }));
@@ -103,6 +111,15 @@ public class TestMain {
         try {
             AlignmentBackbone bac = processing.align();
             ProcessedSample merged = processing.merge(bac);
+            {
+                int hasIsotopes=0, hasNoIsotopes=0;
+                for (MergedTrace t : merged.getStorage().getMergeStorage()) {
+                    if (t.getIsotopeUids().size()>0) {
+                        ++hasIsotopes;
+                    } else ++hasNoIsotopes;
+                }
+                System.out.println("merged sample with " + hasIsotopes + " / " + (hasIsotopes+hasNoIsotopes) + " isotope features");
+            }
             DoubleArrayList avgAl = new DoubleArrayList();
             System.out.println("AVERAGE = " + avgAl.doubleStream().sum()/avgAl.size());
             System.out.println("Good Traces = " + avgAl.doubleStream().filter(x->x>=5).sum());

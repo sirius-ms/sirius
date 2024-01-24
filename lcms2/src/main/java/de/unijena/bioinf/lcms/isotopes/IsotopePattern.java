@@ -1,6 +1,7 @@
 package de.unijena.bioinf.lcms.isotopes;
 
 import com.google.common.collect.Range;
+import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
 import de.unijena.bioinf.ChemistryBase.ms.utils.BasicSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -23,9 +24,89 @@ public class IsotopePattern extends SimpleSpectrum {
             Range.closed(4.9937908 - MZ_ISO_ERRT, 5.01572941 + MZ_ISO_ERRT)
     };
 
+    protected static double maxStd = 0.0027340053758699856;
+    protected static double avg = 1.00069363462413;
+
     public final static int MINIMUM_ION_SIZE = 100;
 
+    /**
+     * returns the minimal m/z for an isotope peak
+     * @param ionMass ion mass of the monoisotopic peak
+     * @param isotopePeak 0 for monoisotopic, 1 for first isotope and so on
+     * @param chargeState
+     * @return
+     */
+    public static double getMinimumMzFor(double ionMass, int isotopePeak, int chargeState) {
+        if (isotopePeak > ISO_RANGES.length) {
+            return (avg*isotopePeak - maxStd) / chargeState;
+        } else {
+            return ionMass + (ISO_RANGES[isotopePeak-1].lowerEndpoint() / chargeState);
+        }
+    }
+
+    /**
+     * returns the maximal m/z for an isotope peak
+     * @param ionMass ion mass of the monoisotopic peak
+     * @param isotopePeak 0 for monoisotopic, 1 for first isotope and so on
+     * @param chargeState
+     * @return
+     */
+    public static double getMaximumMzFor(double ionMass, int isotopePeak, int chargeState) {
+        if (isotopePeak > ISO_RANGES.length) {
+            return (avg*isotopePeak + maxStd) / chargeState;
+        } else {
+            return ionMass + (ISO_RANGES[isotopePeak-1].upperEndpoint() / chargeState);
+        }
+    }
+
+    public static boolean isMonoisotopic(SimpleSpectrum spectrum, int peakIdx) {
+        return getPatternsForNonMonoisotopicPeak(spectrum,peakIdx).isEmpty();
+    }
+
+    public static List<IsotopePattern> getPatternsForNonMonoisotopicPeak(SimpleSpectrum spectrum, int peakIdx) {
+        List<IsotopePattern> patterns = new ArrayList<>();
+        final DoubleArrayList mzs = new DoubleArrayList(), intensities = new DoubleArrayList();
+        final double mz = spectrum.getMzAt(peakIdx);
+        final double intens = spectrum.getIntensityAt(peakIdx);
+        for (int chargeState=1; chargeState <= 3; ++chargeState) {
+            if (chargeState > 1 && mz / chargeState < MINIMUM_ION_SIZE)
+                continue; // we do not believe in too low-mass peaks with multiple charges
+            mzs.clear(); mzs.add(mz);
+            intensities.clear(); intensities.add(intens);
+            forEachIsotopePeak:
+            for (int k = 0; k < ISO_RANGES.length; ++k) {
+                // do not use ISO_RANGES directly, but just maximum range, as we do not know the start point here
+                final double maxMz = mz - ((avg-maxStd) * (k+1)) / chargeState;
+                final double minMz = mz - ((avg+maxStd) * (k+1)) / chargeState;
+                double mergedIntensity = 0d;
+                double mergedMass = 0d;
+                final int a = Spectrums.indexOfFirstPeakWithin(spectrum, minMz, maxMz);
+                if (a < 0) break forEachIsotopePeak;
+                for (int i = a; i < spectrum.size(); ++i) {
+                    if (spectrum.getMzAt(i) > maxMz)
+                        break;
+                    mergedIntensity += spectrum.getIntensityAt(i);
+                    mergedMass += spectrum.getIntensityAt(i) * spectrum.getMzAt(i);
+                }
+                mergedMass /= mergedIntensity;
+                mzs.add(mergedMass);
+                intensities.add(mergedIntensity);
+            }
+            if (mzs.size()>1)
+                patterns.add(new IsotopePattern(mzs.toDoubleArray(), intensities.toDoubleArray(), chargeState));
+        }
+        // for each found pattern check if there is a peak which is at least 50% as intensive as the current peak
+        patterns.removeIf(x->x.getMaxIntensity() < intens*2);
+        return patterns;
+    }
+
     public static Optional<IsotopePattern> extractPattern(SimpleSpectrum spectrum, int peakIdx) {
+        List<IsotopePattern> isotopePatterns = extractPatterns(spectrum, peakIdx);
+        if (isotopePatterns.isEmpty()) return Optional.empty();
+        else return Optional.of(isotopePatterns.get(0));
+    }
+
+    public static List<IsotopePattern> extractPatterns(SimpleSpectrum spectrum, int peakIdx) {
         List<IsotopePattern> patterns = new ArrayList<>();
         final DoubleArrayList mzs = new DoubleArrayList(), intensities = new DoubleArrayList();
         final double mz = spectrum.getMzAt(peakIdx);
@@ -46,8 +127,8 @@ public class IsotopePattern extends SimpleSpectrum {
                 for (int i = a; i < spectrum.size(); ++i) {
                     if (spectrum.getMzAt(i) > maxMz)
                         break;
-                    mergedIntensity += spectrum.getIntensityAt(a);
-                    mergedMass += spectrum.getIntensityAt(a) * spectrum.getMzAt(a);
+                    mergedIntensity += spectrum.getIntensityAt(i);
+                    mergedMass += spectrum.getIntensityAt(i) * spectrum.getMzAt(i);
                 }
                 mergedMass /= mergedIntensity;
                 mzs.add(mergedMass);
@@ -56,11 +137,11 @@ public class IsotopePattern extends SimpleSpectrum {
             if (mzs.size()>1)
                 patterns.add(new IsotopePattern(mzs.toDoubleArray(), intensities.toDoubleArray(), chargeState));
         }
-        return patterns.stream().filter(x->x.size()>1).max(Comparator.comparingInt(BasicSpectrum::size));
+        return patterns.stream().filter(x->x.size()>1).sorted(Comparator.comparingInt(BasicSpectrum::size)).toList();
     }
 
     public final int chargeState;
-    protected IsotopePattern(double[] masses, double[] intensities, int chargeState) {
+    public IsotopePattern(double[] masses, double[] intensities, int chargeState) {
         super(masses, normalized(intensities));
         this.chargeState = chargeState;
     }
@@ -70,5 +151,17 @@ public class IsotopePattern extends SimpleSpectrum {
         for (double x : xs) sum += x;
         for (int k=0; k < xs.length; ++k) xs[k]/=sum;
         return xs;
+    }
+
+    public float[] floatIntensityArray() {
+        return MatrixUtils.double2float(intensities);
+    }
+
+    public float[] floatMzArray() {
+        final float[] mz = new float[masses.length];
+        for (int i=0; i < masses.length; ++i) {
+            mz[i] = (float)masses[i];
+        }
+        return mz;
     }
 }
