@@ -47,15 +47,15 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         super(CustomDBOptions.class);
         setLayout(new BorderLayout());
 
+        add(createParametersPanel(db, existingNames), BorderLayout.NORTH);
+        add(createCompoundsBox(), BorderLayout.CENTER);
+        add(createImportButton(), BorderLayout.SOUTH);
+
         MF.CONNECTION_MONITOR().addConnectionStateListener(evt -> {
             ConnectionMonitor.ConnectionCheck check = ((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck();
             setLoggedIn(check);
         });
         Jobs.runInBackground(() -> setLoggedIn(MF.CONNECTION_MONITOR().checkConnection()));
-
-        add(createParametersPanel(db, existingNames), BorderLayout.NORTH);
-        add(createCompoundsBox(), BorderLayout.CENTER);
-        add(createImportButton(), BorderLayout.SOUTH);
     }
 
     private synchronized void setLoggedIn(ConnectionMonitor.ConnectionCheck check) {
