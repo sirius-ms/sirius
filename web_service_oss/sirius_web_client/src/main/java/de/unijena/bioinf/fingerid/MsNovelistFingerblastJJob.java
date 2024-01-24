@@ -31,6 +31,7 @@ import de.unijena.bioinf.fingerid.blast.MsNovelistFingerblastResult;
 import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 import de.unijena.bioinf.fingerid.fingerprints.FixedFingerprinter;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
+import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobInput;
@@ -40,6 +41,15 @@ import de.unijena.bioinf.ms.webapi.WebJJob;
 import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.openscience.cdk.DefaultChemObjectBuilder;
+import org.openscience.cdk.aromaticity.Aromaticity;
+import org.openscience.cdk.aromaticity.ElectronDonation;
+import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.graph.CycleFinder;
+import org.openscience.cdk.graph.Cycles;
+import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.tools.CDKHydrogenAdder;
+import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 import java.io.IOException;
 import java.util.*;
@@ -53,15 +63,15 @@ public class MsNovelistFingerblastJJob extends BasicMasterJJob<List<Scored<Finge
     private final FingerIdResult idResult;
     private final List<MsNovelistCandidate> candidates;
 
-    public MsNovelistFingerblastJJob(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI) throws IOException {
+    public MsNovelistFingerblastJJob(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI) {
         this(predictor, webAPI, null);
     }
 
-    public MsNovelistFingerblastJJob(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI, @Nullable FingerIdResult idResult) throws IOException {
+    public MsNovelistFingerblastJJob(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI, @Nullable FingerIdResult idResult) {
         this(predictor, webAPI, idResult, null);
     }
 
-    public MsNovelistFingerblastJJob(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI, @Nullable FingerIdResult idResult, @Nullable List<MsNovelistCandidate> candidates) throws IOException {
+    public MsNovelistFingerblastJJob(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI, @Nullable FingerIdResult idResult, @Nullable List<MsNovelistCandidate> candidates) {
         super(JobType.SCHEDULER);
         this.predictor = predictor;
         this.idResult = idResult;
@@ -82,8 +92,56 @@ public class MsNovelistFingerblastJJob extends BasicMasterJJob<List<Scored<Finge
         checkInput();
 
         if (candidates.isEmpty())
-            return Collections.emptyList();
+            return null;
 
+        // turn MSNovelist candidate list into scoring-compatible FingerprintCandidates
+        final Collection<FingerprintCandidate> combinedCandidates = new ArrayList<>(Collections.emptyList());
+        final Collection<BasicJJob<FingerprintCandidate>> candidateJobs = new ArrayList<>(Collections.emptyList());
+
+        // needed for fingerprinting and FingerprintCandidate generation
+        final FixedFingerprinter fixedFingerprinter = new FixedFingerprinter(webAPI.getCDKChemDBFingerprintVersion());
+        final FingerIdData fingerIdData = idResult.getPrecursorIonType().getCharge() > 0
+                ? webAPI.getFingerIdData(PredictorType.CSI_FINGERID_POSITIVE)
+                : webAPI.getFingerIdData(PredictorType.CSI_FINGERID_NEGATIVE);
+        final MaskedFingerprintVersion fpMask = fingerIdData.getFingerprintVersion();
+        final InChI inchiDummy = new InChI("", "");
+
+        // needed to perceive aromaticity
+        final CDKHydrogenAdder hydrogenAdder = CDKHydrogenAdder.getInstance(DefaultChemObjectBuilder.getInstance());
+        final CycleFinder cycles = Cycles.or(Cycles.all(), Cycles.all(6));
+        final Aromaticity aromaticity = new Aromaticity(ElectronDonation.daylight(), cycles);
+
+        // create jobs for transformation and fingerprinting
+        candidateJobs.addAll(candidates.stream()
+            .map(candidate -> new BasicJJob<FingerprintCandidate>(JobType.CPU) {
+                @Override
+                protected FingerprintCandidate compute(){
+                    IAtomContainer molecule = perceiveAromaticityOnSMILES(
+                            candidate.getSmiles(), hydrogenAdder, aromaticity);
+                    if (Objects.isNull(molecule)) return null;
+                    FingerprintCandidate fingerprintCandidate = new FingerprintCandidate(inchiDummy,
+                            Objects.requireNonNull(fpMask.mask(fixedFingerprinter.computeFingerprint(molecule))));
+                    fingerprintCandidate.setSmiles(candidate.getSmiles());
+                    return fingerprintCandidate;
+                }
+            })
+            .toList());
+
+        checkForInterruption();
+        candidateJobs.forEach(this::submitSubJob);
+        checkForInterruption();
+
+        // collect job results
+        combinedCandidates.addAll(candidateJobs.stream().map(JJob::getResult).toList());
+        checkForInterruption();
+
+        // remove candidates where SMILES was incompatible --> returned null
+        combinedCandidates.removeAll(Collections.singleton(null));
+        if (combinedCandidates.isEmpty()) return null;
+
+        checkForInterruption();
+
+        // try and get bayessian network (covTree) for molecular formula
         BayesnetScoring bayesnetScoring = webAPI.getBayesnetScoring(
                 predictor.predictorType,
                 webAPI.getFingerIdData(predictor.predictorType),
@@ -91,7 +149,7 @@ public class MsNovelistFingerblastJJob extends BasicMasterJJob<List<Scored<Finge
 
         checkForInterruption();
 
-        // bayesnetScoring is null --> make a prepare job which computes the bayessian network (covTree) for the
+        // bayesnetScoring is null --> make a job which computes the bayessian network (covTree) for the
         // given molecular formula
         if (bayesnetScoring == null) {
             WebJJob<CovtreeJobInput, ?, BayesnetScoring, ?> covTreeJob =
@@ -102,29 +160,9 @@ public class MsNovelistFingerblastJJob extends BasicMasterJJob<List<Scored<Finge
 
         checkForInterruption();
 
-        // turn MSNovelist candidate list to scoring-compatible FingerprintCandidates
-        Collection<FingerprintCandidate> combinedCandidates = new ArrayList<>(Collections.emptyList());
-        FixedFingerprinter fixedFingerprinter = new FixedFingerprinter(webAPI.getCDKChemDBFingerprintVersion());
-        FingerIdData fingerIdData = idResult.getPrecursorIonType().getCharge() > 0 ? webAPI.getFingerIdData(PredictorType.CSI_FINGERID_POSITIVE) : webAPI.getFingerIdData(PredictorType.CSI_FINGERID_NEGATIVE);
-        MaskedFingerprintVersion fpMask = fingerIdData.getFingerprintVersion();
-
-        combinedCandidates.addAll(candidates.stream()
-                .map(candidate -> {
-                    FingerprintCandidate fingerprintCandidate = new FingerprintCandidate(
-                            new InChI("", ""),
-                            Objects.requireNonNull(fpMask.mask(fixedFingerprinter.computeFingerprintFromSMILES(
-                                    candidate.getSmiles()))));
-                    fingerprintCandidate.setSmiles(candidate.getSmiles());
-                    return fingerprintCandidate;
-                })
-                .toList());
-
-        checkForInterruption();
-
         // to get a prepared FingerblastScorer, an object of BayesnetScoring that is specific to the molecular formula
         // has to be initialized
         ProbabilityFingerprint fp = idResult.getPredictedFingerprint();
-
         List<JJob<List<Scored<FingerprintCandidate>>>> scoreJobs = Fingerblast.makeScoringJobs(
                 predictor.getPreparedFingerblastScorer(ParameterStore.of(fp, bayesnetScoring)), combinedCandidates, fp);
 
@@ -141,5 +179,18 @@ public class MsNovelistFingerblastJJob extends BasicMasterJJob<List<Scored<Finge
         // annotate result of BayesNet scoring
         idResult.addAnnotation(MsNovelistFingerblastResult.class, new MsNovelistFingerblastResult(scoredCandidates));
         return scoredCandidates;
+    }
+
+    public IAtomContainer perceiveAromaticityOnSMILES(@NotNull String smiles, @NotNull CDKHydrogenAdder hydrogenAdder, @NotNull Aromaticity aromaticity){
+        IAtomContainer molecule = FixedFingerprinter.parseStructureFromStandardizedSMILES(smiles);
+        try{
+            aromaticity.apply(molecule);
+            AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(molecule);
+            hydrogenAdder.addImplicitHydrogens(molecule);
+        } catch (CDKException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return molecule;
     }
 }
