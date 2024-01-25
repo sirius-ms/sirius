@@ -88,6 +88,7 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
             }
             backboneMois = backboneMoisList.toLongArray();
         }
+        System.out.println(backboneMois.length + " MoIs are used for backbone and recalibration.");
         final ScanPointMapping backboneMapping = createBackboneMapping(stats);
         // compute recalibration functions from backbone mois
         final RecalibrationFunction[] rtRecalibrations = new RecalibrationFunction[samples.size()];
@@ -242,25 +243,36 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
             if (k > 10 && (k % 5 == 0)) cleanupOldMoIs(merge, samples, k, 5);
             S.inactive();
         }
-        // all mois that are aligned with at least 10% of the samples are part of the backbone
         final long[] backboneMois;
+        int ISO=0;
         {
             final LongArrayList backboneMoisList = new LongArrayList();
             final LongArrayList deleteList = new LongArrayList();
-            final int minSamples = Math.max(2, (int) Math.ceil(samples.size() * 0.1));
+            // for recalibrations we still need samples that are somewhat aligned
+            final int minSamplesForAlignment = Math.max(2, (int) Math.ceil(samples.size() * 0.05));
             for (MoI m : storage) {
                 if (m instanceof AlignedMoI) {
-                    if (((AlignedMoI) m).getAligned().length >= minSamples) {
+                    if (((AlignedMoI) m).getAligned().length >= 2) {
                         storage.addMoI(((AlignedMoI) m).finishMerging());
                         backboneMoisList.add(m.getUid());
+                        /// DEBUG
+                        boolean hasIso=false;
+                        for (MoI n : ((AlignedMoI) m).getAligned()) {
+                            if (n.hasIsotopes()) {
+                                hasIso =true;
+                            }
+                        }
+                        if (hasIso) ++ISO;
+                        /////////
                     }
-                } else {
+                } else if (m.getConfidence() < MassOfInterestConfidenceEstimatorStrategy.KEEP_FOR_ALIGNMENT){
                     deleteList.add(m.getUid());
                 }
             }
             backboneMois = backboneMoisList.toLongArray();
             deleteList.forEach(storage::removeMoI);
         }
+        System.out.println("Number of isotopes in alignment: " + ISO);
         final ScanPointMapping backboneMapping = merge.getMapping();
         // compute recalibration functions from backbone mois
         final RecalibrationFunction[] rtRecalibrations = new RecalibrationFunction[samples.size()];

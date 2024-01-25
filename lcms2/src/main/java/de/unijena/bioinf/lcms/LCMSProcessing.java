@@ -71,7 +71,8 @@ public class LCMSProcessing {
     @Getter @Setter private MassOfInterestConfidenceEstimatorStrategy confidenceEstimatorStrategy = new MassOfInterestCombinedStrategy(
             new IsotopesAndAdductsAreConfidentStrategy(),
             new PrecursorsWithMsMsAreConfidentStrategy(),
-            new TracesWithTooManyApexesAreStrange()
+            new TracesWithTooManyApexesAreStrange(),
+            new IntensivePeaksAreConfident()
     );
 
     @Getter @Setter private NormalizationStrategy normalizationStrategy = new AverageOfTop100TracesNormalization();
