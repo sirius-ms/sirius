@@ -51,11 +51,13 @@ public class MsNovelistFBCandidatesSerializer implements ComponentSerializer<For
 
         reader.table(MSNOVELIST_FINGERBLAST.relFilePath(id), true, 0, numC.value, (row) -> {
             if (row.length == 0) return;
-            final double score = Double.parseDouble(row[2]);
-            final String smiles = row[3];
+            final String smiles = row[2];
+            final double score = Double.parseDouble(row[3]);
 
             final CompoundCandidate candidate = new CompoundCandidate(new InChI("",""));
             candidate.setSmiles(smiles);
+            candidate.setTanimoto(Double.valueOf(row[4]));
+            candidate.setRnnScore(Double.valueOf(row[5]));
 
             results.add(new Scored<>(candidate, score));
         });
@@ -66,7 +68,7 @@ public class MsNovelistFBCandidatesSerializer implements ComponentSerializer<For
     public void write(ProjectWriter writer, FormulaResultId id, FormulaResult container, Optional<MsNovelistFBCandidates> optFingeridResult) throws IOException {
         final MsNovelistFBCandidates fingerblastResult = optFingeridResult.orElseThrow(() -> new IllegalArgumentException("Could not find FingerIdResult to write for ID: " + id));
         final String[] header = new String[]{
-                "molecularFormula", "rank", "score", "smiles"
+                "molecularFormula", "rank", "smiles", "score", "tanimotoSimilarity", "rnnScore"
         };
         final String[] row = new String[header.length];
         final AtomicInteger ranking = new AtomicInteger(0);
@@ -74,8 +76,10 @@ public class MsNovelistFBCandidatesSerializer implements ComponentSerializer<For
             CompoundCandidate c = hit.getCandidate();
             row[0] = id.getMolecularFormula().toString();
             row[1] = String.valueOf(ranking.incrementAndGet());
-            row[2] = String.valueOf(hit.getScore());
-            row[3] = c.getSmiles();
+            row[2] = c.getSmiles();
+            row[3] = String.valueOf(hit.getScore());
+            row[4] = String.valueOf(c.getTanimoto());
+            row[5] = String.valueOf(c.getRnnScore());
             return row;
         })::iterator);
     }
