@@ -51,7 +51,7 @@ public class IsotopeDetectionByCorrelation implements IsotopeDetectionStrategy{
                 int isotopePeakIdx = Spectrums.mostIntensivePeakWithin(spectrum, mz, smallDev);
                 if (isotopePeakIdx<0) isotopePeakIdx = Spectrums.mostIntensivePeakWithin(spectrum, mz, largeDev);
                 if (isotopePeakIdx<0) continue;
-                Optional<ContiguousTrace> isotope = sample.getStorage().getTraceStorage().getContigousTrace(spectrum.getMzAt(isotopePeakIdx) - 1e-4, spectrum.getMzAt(isotopePeakIdx) + 1e-4, moi.getScanId());
+                Optional<ContiguousTrace> isotope = sample.getStorage().getTraceStorage().getContigousTrace(mz-largeDev.absoluteFor(mz), mz+largeDev.absoluteFor(mz), moi.getScanId());
                 double score = isotope.isPresent() ? correlationScore(sample, moi, trace, traceSegment, spectrum, isotope.get()) : 0d;
                 if (score >= 0.5) {
                     scoresum+=score;
