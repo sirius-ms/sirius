@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
@@ -34,6 +35,7 @@ import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.jjobs.Partition;
 import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.rest.model.msnovelist.MsNovelistCandidate;
@@ -51,7 +53,6 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.tools.CDKHydrogenAdder;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -60,8 +61,8 @@ public class MsNovelistFingerblastJJob extends BasicMasterJJob<List<Scored<Finge
     private final WebAPI<?> webAPI;
     private final CSIPredictor predictor;
     // input data
-    private final FingerIdResult idResult;
-    private final List<MsNovelistCandidate> candidates;
+    private FingerIdResult idResult;
+    private List<MsNovelistCandidate> candidates;
 
     public MsNovelistFingerblastJJob(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI) {
         this(predictor, webAPI, null);
@@ -76,6 +77,22 @@ public class MsNovelistFingerblastJJob extends BasicMasterJJob<List<Scored<Finge
         this.predictor = predictor;
         this.idResult = idResult;
         this.webAPI = webAPI;
+        this.candidates = candidates;
+    }
+
+    public void setInput(FingerIdResult idResult, List<MsNovelistCandidate> candidates) {
+        notSubmittedOrThrow();
+        this.idResult = idResult;
+        this.candidates = candidates;
+    }
+
+    public void setFingerIdResult(FingerIdResult idResult) {
+        notSubmittedOrThrow();
+        this.idResult = idResult;
+    }
+
+    public void setMsNovelistCandidates(List<MsNovelistCandidate> candidates) {
+        notSubmittedOrThrow();
         this.candidates = candidates;
     }
 
@@ -95,8 +112,8 @@ public class MsNovelistFingerblastJJob extends BasicMasterJJob<List<Scored<Finge
             return null;
 
         // turn MSNovelist candidate list into scoring-compatible FingerprintCandidates
+        final Collection<BasicJJob<Void>> candidateJobs = new ArrayList<>(Collections.emptyList());
         final Collection<FingerprintCandidate> combinedCandidates = new ArrayList<>(Collections.emptyList());
-        final Collection<BasicJJob<FingerprintCandidate>> candidateJobs = new ArrayList<>(Collections.emptyList());
 
         // needed for fingerprinting and FingerprintCandidate generation
         final FixedFingerprinter fixedFingerprinter = new FixedFingerprinter(webAPI.getCDKChemDBFingerprintVersion());
@@ -111,32 +128,38 @@ public class MsNovelistFingerblastJJob extends BasicMasterJJob<List<Scored<Finge
         final CycleFinder cycles = Cycles.or(Cycles.all(), Cycles.all(6));
         final Aromaticity aromaticity = new Aromaticity(ElectronDonation.daylight(), cycles);
 
+        checkForInterruption();
+
         // create jobs for transformation and fingerprinting
-        candidateJobs.addAll(candidates.stream()
-            .map(candidate -> new BasicJJob<FingerprintCandidate>(JobType.CPU) {
-                @Override
-                protected FingerprintCandidate compute(){
-                    IAtomContainer molecule = perceiveAromaticityOnSMILES(
-                            candidate.getSmiles(), hydrogenAdder, aromaticity);
-                    if (Objects.isNull(molecule)) return null;
-                    FingerprintCandidate fingerprintCandidate = new FingerprintCandidate(inchiDummy,
-                            Objects.requireNonNull(fpMask.mask(fixedFingerprinter.computeFingerprint(molecule))));
-                    fingerprintCandidate.setSmiles(candidate.getSmiles());
-                    return fingerprintCandidate;
-                }
-            })
-            .toList());
+        candidateJobs.addAll(Partition.ofSize(candidates, SiriusJobs.getCPUThreads())
+                .stream().map(l -> new BasicJJob<Void>(JobType.CPU) {
+                    @Override
+                    protected Void compute() {
+                        l.forEach(candidate -> {
+                            IAtomContainer molecule = perceiveAromaticityOnSMILES(
+                                    candidate.getSmiles(), hydrogenAdder, aromaticity);
+                            if (Objects.isNull(molecule)) return;
+
+                            FingerprintCandidate fingerprintCandidate = new FingerprintCandidate(inchiDummy,
+                                    Objects.requireNonNull(fpMask.mask(fixedFingerprinter.computeFingerprint(molecule))));
+
+                            fingerprintCandidate.setSmiles(candidate.getSmiles());
+                            fingerprintCandidate.setRnnScore(candidate.getRnnScore());
+                            combinedCandidates.add(fingerprintCandidate);
+                        });
+                        return null;
+                    }
+                }).toList());
 
         checkForInterruption();
         candidateJobs.forEach(this::submitSubJob);
         checkForInterruption();
 
         // collect job results
-        combinedCandidates.addAll(candidateJobs.stream().map(JJob::getResult).toList());
+        candidateJobs.forEach(JJob::getResult);
         checkForInterruption();
 
-        // remove candidates where SMILES was incompatible --> returned null
-        combinedCandidates.removeAll(Collections.singleton(null));
+        // check if no candidate was valid
         if (combinedCandidates.isEmpty()) return null;
 
         checkForInterruption();
