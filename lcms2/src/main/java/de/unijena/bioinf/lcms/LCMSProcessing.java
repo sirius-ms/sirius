@@ -230,6 +230,7 @@ public class LCMSProcessing {
 
                 moi.setConfidence(confidenceEstimatorStrategy.estimateConfidence(sample,trace,moi, null));
                 if (moi.getConfidence() >= 0) {
+                    //System.out.println(moi + " intensity = " + moi.getIntensity() + ", isotopes = " + (moi.getIsotopes()==null ? 0 : moi.getIsotopes().isotopeIntensities.length) + ", confidence = "+ moi.getConfidence());
                     alignmentStorage.addMoI(moi);
                 }
             }
@@ -237,11 +238,7 @@ public class LCMSProcessing {
     }
 
     private void detectIsotopesForMoI(ProcessedSample sample, ContiguousTrace trace, TraceSegment segment, MoI moi) {
-        SimpleSpectrum spectrum = sample.getStorage().getSpectrumStorage().getSpectrum(moi.getScanId());
-        final int peakIdx = Spectrums.mostIntensivePeakWithin(spectrum, trace.mz(moi.getScanId()), sample.getStorage().getStatistics().getMs1MassDeviationWithinTraces());
-
         IsotopeDetectionStrategy.Result result = new IsotopeDetectionByCorrelation().detectIsotopesFor(sample, moi, trace, segment);
-
         if (result.isMonoisotopic()) {
             moi.setIsotopes(result.getIsotopePeaks().get());
         } else {

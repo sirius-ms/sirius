@@ -7,10 +7,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class IsotopePattern extends SimpleSpectrum {
 
@@ -71,13 +68,15 @@ public class IsotopePattern extends SimpleSpectrum {
         for (int chargeState=1; chargeState <= 3; ++chargeState) {
             if (chargeState > 1 && mz / chargeState < MINIMUM_ION_SIZE)
                 continue; // we do not believe in too low-mass peaks with multiple charges
-            mzs.clear(); mzs.add(mz);
-            intensities.clear(); intensities.add(intens);
+            mzs.clear();
+            mzs.add(mz);
+            intensities.clear();
+            intensities.add(intens);
             forEachIsotopePeak:
             for (int k = 0; k < ISO_RANGES.length; ++k) {
                 // do not use ISO_RANGES directly, but just maximum range, as we do not know the start point here
-                final double maxMz = mz - ((avg-maxStd) * (k+1)) / chargeState;
-                final double minMz = mz - ((avg+maxStd) * (k+1)) / chargeState;
+                final double maxMz = mz - ((avg - maxStd) * (k + 1)) / chargeState;
+                final double minMz = mz - ((avg + maxStd) * (k + 1)) / chargeState;
                 double mergedIntensity = 0d;
                 double mergedMass = 0d;
                 final int a = Spectrums.indexOfFirstPeakWithin(spectrum, minMz, maxMz);
@@ -92,12 +91,48 @@ public class IsotopePattern extends SimpleSpectrum {
                 mzs.add(mergedMass);
                 intensities.add(mergedIntensity);
             }
-            if (mzs.size()>1)
-                patterns.add(new IsotopePattern(mzs.toDoubleArray(), intensities.toDoubleArray(), chargeState));
+            if (mzs.size() > 1) {
+                revert(mzs);
+                revert(intensities);
+                if (intensities.doubleStream().sum() > intens * 2) {
+                    // expand pattern the other side
+                    expandPattern(spectrum, mzs, intensities, chargeState);
+                    patterns.add(new IsotopePattern(mzs.toDoubleArray(), intensities.toDoubleArray(), chargeState));
+                }
+            }
         }
-        // for each found pattern check if there is a peak which is at least 50% as intensive as the current peak
-        patterns.removeIf(x->x.getMaxIntensity() < intens*2);
         return patterns;
+    }
+
+    private static void expandPattern(SimpleSpectrum spectrum, DoubleArrayList mzs, DoubleArrayList intensities, int chargeState) {
+        final double mz = mzs.getDouble(0);
+        forEachIsotopePeak:
+        for (int k = mzs.size()-1; k < ISO_RANGES.length; ++k) {
+            // try to detect +k isotope peak
+            final double maxMz = mz + ISO_RANGES[k].upperEndpoint() / chargeState;
+            double mergedIntensity = 0d;
+            double mergedMass = 0d;
+            final int a = Spectrums.indexOfFirstPeakWithin(spectrum, mz + ISO_RANGES[k].lowerEndpoint() / chargeState, maxMz);
+            if (a < 0) break forEachIsotopePeak;
+            for (int i = a; i < spectrum.size(); ++i) {
+                if (spectrum.getMzAt(i) > maxMz)
+                    break;
+                mergedIntensity += spectrum.getIntensityAt(i);
+                mergedMass += spectrum.getIntensityAt(i) * spectrum.getMzAt(i);
+            }
+            mergedMass /= mergedIntensity;
+            mzs.add(mergedMass);
+            intensities.add(mergedIntensity);
+        }
+    }
+
+    private static void revert(DoubleArrayList xs) {
+        for (int k=0, n= xs.size()>>1; k < n; ++k) {
+            int mir = xs.size()-(k+1);
+            final double mem = xs.getDouble(k);
+            xs.set(k, xs.getDouble(mir));
+            xs.set(mir, mem);
+        }
     }
 
     public static Optional<IsotopePattern> extractPattern(SimpleSpectrum spectrum, int peakIdx) {
