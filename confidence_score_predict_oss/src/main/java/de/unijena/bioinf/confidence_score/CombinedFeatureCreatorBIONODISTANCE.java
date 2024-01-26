@@ -61,45 +61,33 @@ public class CombinedFeatureCreatorBIONODISTANCE extends CombinedFeatureCreator 
 
                 new PvalueScoreDiffScorerFeatures(scored_array_covscore,scored_array_covscore,scored_array[0],covscore),
 */
-                new ScoreFeaturesNonBio<>(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array,scored_array_filtered),
+                //OLDSTUFF
+
+              //  new ScoreFeaturesNonBio<>(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array,scored_array_filtered),
                 new ScoreFeaturesNonBio<>(covscore,scored_array_covscore,scored_array_covscore_filtered),
 
 
 
                 new FptLengthFeature(),
-               // new FptLengthDiffFeatures(scored_array_filtered),
                 new FptLengthFeatureHit(scored_array_covscore_filtered),
                 new SiriusScoreFeatures(),
                 new ExplIntFeatures(),
                 new PredictionQualityFeatures(),
-                //new MassFeatures(),
                 new CandlistSizeFeatures(scored_array_covscore),
 
 
                 //these are bio features and can have a filtered list as input
-                //new CandlistSizeFeatures(scored_array_covscore_filtered),
-
-             //   new AllConfidenceScoreSameHitFeatures(all_confidence,same),
-              //  new AllConfidenceScoreDiffHitFeatures(all_confidence,same),
-                //   new LogDistanceFeatures(scored_array,scored_array_filtered,1),
-                //   new LogDistanceFeatures(scored_array_covscore,scored_array_covscore_filtered,1),
-                //    new DistanceFeatures(scored_array,scored_array_filtered,1),
-                //  new DistanceFeatures(scored_array_covscore,scored_array_covscore_filtered,1),
 
 
-
-                new ScoreFeatures<>(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array,scored_array_filtered),
-                new ScoreFeatures<>(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array_covscore,scored_array_covscore_filtered),
+             //   new ScoreFeatures<>(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array,scored_array_filtered),
+             //   new ScoreFeatures<>(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array_covscore,scored_array_covscore_filtered),
                 new ScoreFeatures<>(covscore,scored_array,scored_array_filtered),
                 new ScoreFeatures<>(covscore,scored_array_covscore,scored_array_covscore_filtered),
 
-               // new LogPvalueFeatures(scored_array,scored_array_filtered),
-               // new LogPvalueFeatures(scored_array_covscore,scored_array_covscore_filtered),
-                new LogPvalueKDEFeatures(scored_array,scored_array_filtered),
+             //   new LogPvalueKDEFeatures(scored_array,scored_array_filtered),
                 new LogPvalueKDEFeatures(scored_array_covscore,scored_array_covscore_filtered),
-                new PvalueScoreDiffScorerFeatures<>(scored_array_covscore,scored_array_covscore_filtered,scored_array[0],covscore),
-                //   new TanimotoDistanceFeatures(scored_array,scored_array_filtered,1),
-                new TanimotoToPredFeatures(scored_array,scored_array_filtered),
+              //  new PvalueScoreDiffScorerFeatures<>(scored_array_covscore,scored_array_covscore_filtered,scored_array[0],covscore),
+                new TanimotoToPredFeatures(scored_array_covscore,scored_array_covscore_filtered),
 
                 new CanopusDiffFeatures(canopusFptPred,canopusFptTop),
                 new EpiExplIntFeatures(epiTrees[0]),
