@@ -261,25 +261,25 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
 
                 int i = 0;
                 cols[i++] = row.id;
-                cols[i++] = row.molecularFormulas[row.best].toString();
-                cols[i++] = row.ionTypes[row.best].toString();
-                cols[i++] = row.precursorFormulas[row.best].toString();
+                cols[i++] = row.molecularFormulas[0].toString();
+                cols[i++] = row.ionTypes[0].toString();
+                cols[i++] = row.precursorFormulas[0].toString();
 
-                cols[i++] = row.bestNPCProps[row.best][0].getName();
-                cols[i++] = Double.toString(row.bestNPCProbs[row.best][0]);
+                cols[i++] = row.bestNPCProps[0][0].getName();
+                cols[i++] = Double.toString(row.bestNPCProbs[0][0]);
 
-                cols[i++] = row.bestNPCProps[row.best][1].getName();
-                cols[i++] = Double.toString(row.bestNPCProbs[row.best][1]);
+                cols[i++] = row.bestNPCProps[0][1].getName();
+                cols[i++] = Double.toString(row.bestNPCProbs[0][1]);
 
-                cols[i++] = row.bestNPCProps[row.best][2].getName();
-                cols[i++] = Double.toString(row.bestNPCProbs[row.best][2]);
+                cols[i++] = row.bestNPCProps[0][2].getName();
+                cols[i++] = Double.toString(row.bestNPCProbs[0][2]);
 
                 cols[i++] = primaryClass.getName();
-                cols[i++] = Double.toString(row.cfClassifications[row.best].getProbability(row.CLF.getIndexOfMolecularProperty(primaryClass)));
+                cols[i++] = Double.toString(row.cfClassifications[0].getProbability(row.CLF.getIndexOfMolecularProperty(primaryClass)));
 
                 if (lineage.length > 5) {
                     cols[i++] = lineage[5].getName();
-                    cols[i++] = Double.toString(row.cfClassifications[row.best].getProbability(row.CLF.getIndexOfMolecularProperty(lineage[5])));
+                    cols[i++] = Double.toString(row.cfClassifications[0].getProbability(row.CLF.getIndexOfMolecularProperty(lineage[5])));
                 } else {
                     cols[i++] = "";
                     cols[i++] = "";
@@ -287,7 +287,7 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
 
                 if (lineage.length > 4) {
                     cols[i++] = lineage[4].getName();
-                    cols[i++] = Double.toString(row.cfClassifications[row.best].getProbability(row.CLF.getIndexOfMolecularProperty(lineage[4])));
+                    cols[i++] = Double.toString(row.cfClassifications[0].getProbability(row.CLF.getIndexOfMolecularProperty(lineage[4])));
                 } else {
                     cols[i++] = "";
                     cols[i++] = "";
@@ -295,7 +295,7 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
 
                 if (lineage.length > 3) {
                     cols[i++] = lineage[3].getName();
-                    cols[i++] = Double.toString(row.cfClassifications[row.best].getProbability(row.CLF.getIndexOfMolecularProperty(lineage[3])));
+                    cols[i++] = Double.toString(row.cfClassifications[0].getProbability(row.CLF.getIndexOfMolecularProperty(lineage[3])));
                 } else {
                     cols[i++] = "";
                     cols[i++] = "";
@@ -303,13 +303,13 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
 
                 if (lineage.length > 2) {
                     cols[i++] = lineage[2].getName();
-                    cols[i++] = Double.toString(row.cfClassifications[row.best].getProbability(row.CLF.getIndexOfMolecularProperty(lineage[2])));
+                    cols[i++] = Double.toString(row.cfClassifications[0].getProbability(row.CLF.getIndexOfMolecularProperty(lineage[2])));
                 } else {
                     cols[i++] = "";
                     cols[i++] = "";
                 }
 
-                cols[i++] = Joiner.on("; ").join(row.cfClassifications[row.best].asDeterministic().asArray().presentFingerprints().asMolecularPropertyIterator());
+                cols[i++] = Joiner.on("; ").join(row.cfClassifications[0].asDeterministic().asArray().presentFingerprints().asMolecularPropertyIterator());
 //                cols[i++] = Joiner.on("; ").join(row.npcClassifications[row.best].asDeterministic().asArray().presentFingerprints().asMolecularPropertyIterator());
 
                 cols[i++] = row.featureId;
