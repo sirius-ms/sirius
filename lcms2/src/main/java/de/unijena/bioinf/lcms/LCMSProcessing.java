@@ -1,14 +1,11 @@
 package de.unijena.bioinf.lcms;
 
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.lcms.align.*;
 import de.unijena.bioinf.lcms.features.MergedFeatureExtractionStrategy;
 import de.unijena.bioinf.lcms.features.MergedFeatureExtractor;
-import de.unijena.bioinf.lcms.io.MZmlSampleParser;
+import de.unijena.bioinf.lcms.io.LCMSImporter;
 import de.unijena.bioinf.lcms.isotopes.IsotopeDetectionByCorrelation;
 import de.unijena.bioinf.lcms.isotopes.IsotopeDetectionStrategy;
-import de.unijena.bioinf.lcms.isotopes.IsotopePattern;
 import de.unijena.bioinf.lcms.merge.MergeTracesWithoutGapFilling;
 import de.unijena.bioinf.lcms.merge.MergedTrace;
 import de.unijena.bioinf.lcms.merge.ScanPointInterpolator;
@@ -26,6 +23,10 @@ import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegmentationStrategy;
 import de.unijena.bioinf.lcms.traceextractor.*;
 import de.unijena.bioinf.ms.persistence.model.core.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.ChromatographyType;
+import de.unijena.bioinf.ms.persistence.model.core.Run;
+import de.unijena.bioinf.ms.persistence.storage.MsProjectDocumentDatabase;
+import de.unijena.bioinf.storage.db.nosql.Database;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.LoggerFactory;
@@ -92,11 +93,28 @@ public class LCMSProcessing {
     /**
      * parses an MZML file and stores the processed sample. Note: we should add possibility to parse from input
      * stream later
-     * TODO: implement other than MZML
      */
-    public ProcessedSample processSample(File file) throws IOException {
+    public ProcessedSample processSample(
+            File file,
+            MsProjectDocumentDatabase<? extends Database<?>> store
+    ) throws IOException {
+        return processSample(file, store, false, Run.Type.SAMPLE, ChromatographyType.LC);
+    }
+
+    /**
+     * parses an MZML file and stores the processed sample. Note: we should add possibility to parse from input
+     * stream later
+     */
+    public ProcessedSample processSample(
+            File file,
+            MsProjectDocumentDatabase<? extends Database<?>> store,
+            boolean saveRawScans,
+            Run.Type runType,
+            ChromatographyType chromatographyType
+    ) throws IOException {
         // parse file and extract spectra
-        ProcessedSample sample = new MZmlSampleParser().parse(file, storageFactory);
+        ProcessedSample sample = LCMSImporter.importToProject(
+                file, storageFactory, store, saveRawScans, runType, chromatographyType);
         sample.setUid(this.samples.size());
         this.samples.add(sample);
         sample.active();
@@ -113,8 +131,6 @@ public class LCMSProcessing {
         LCMSStorage mergedStorage = storageFactory.createNewStorage();
         AlignmentBackbone alignmentBackbone = alignmentStrategy.makeAlignmentBackbone(mergedStorage.getAlignmentStorage(), samples, alignmentAlgorithm, alignmentScorerBackbone);
         ProcessedSample merged = new ProcessedSample(
-                null,
-                null,
                 alignmentBackbone.getScanPointMapping(),
                 mergedStorage,
                 samples.get(0).getPolarity(),
