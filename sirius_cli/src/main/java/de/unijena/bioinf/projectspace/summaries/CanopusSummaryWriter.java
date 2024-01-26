@@ -85,7 +85,6 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
             FingerprintVersion v = npcClassifications[0].getFingerprintVersion();
             if (v instanceof MaskedFingerprintVersion) v = ((MaskedFingerprintVersion) v).getMaskedFingerprintVersion();
             NPCF = (NPCFingerprintVersion) v;
-            //todo do we have to perform index mapping?
             for (int i = 0; i < npcClassifications.length; ++i) {
                 ProbabilityFingerprint fp = npcClassifications[i];
                 for (FPIter fpIter : fp) {
@@ -151,22 +150,23 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
     public void addWriteCompoundSummary(ProjectWriter writer, @NotNull CompoundContainer exp, List<? extends SScored<FormulaResult, ? extends FormulaScore>> results) throws IOException {
         if (!results.isEmpty()) {
             if (rowsBySiriusScore != null)
-                addToRows(rowsBySiriusScore, FormulaScoring.reRankBy(results, List.of(ZodiacScore.class, SiriusScore.class, TreeScore.class, IsotopeScore.class), true), false);
+                addToRows(rowsBySiriusScore, results.stream().map(SScored::getCandidate).sorted(FormulaSummaryWriter.FROMULA_COMPARATOR).toList(), false);
             if (rowsByCSIScore != null) {
                 if (results.stream().anyMatch(it -> it.getCandidate().hasAnnotation(FBCandidates.class)))
                     numStructureResults.incrementAndGet();
-                addToRows(rowsByCSIScore, FormulaScoring.reRankBy(results, List.of(TopCSIScore.class, ZodiacScore.class, SiriusScore.class, TreeScore.class, IsotopeScore.class), true), false);
+                addToRows(rowsByCSIScore, FormulaScoring.reRankBy(results, List.of(TopCSIScore.class, ZodiacScore.class, SiriusScore.class, TreeScore.class, IsotopeScore.class), true)
+                        .stream().map(SScored::getCandidate).toList(), false);
             }
             if (rowsBySiriusScoreAll != null)
-                addToRows(rowsBySiriusScoreAll, FormulaScoring.reRankBy(results, List.of(ZodiacScore.class, SiriusScore.class, TreeScore.class, IsotopeScore.class), true), true);
+                addToRows(rowsBySiriusScoreAll, results.stream().map(SScored::getCandidate).sorted(FormulaSummaryWriter.FROMULA_COMPARATOR).toList(), true);
         }
     }
 
-    private void addToRows(List<CanopusSummaryRow> rows, List<? extends SScored<FormulaResult, ? extends FormulaScore>> results, boolean all) {
+    private void addToRows(List<CanopusSummaryRow> rows, List<FormulaResult> results, boolean all) {
         // sometimes we have multiple results with same score (adducts!). In this case, we list all of them in
         // a separate summary file
         int i = 0;
-        SScored<FormulaResult, ? extends FormulaScore> hit;
+        FormulaResult hit;
         ArrayList<ProbabilityFingerprint> cfFingerprints = new ArrayList<>();
         ArrayList<ProbabilityFingerprint> npcFingerprints = new ArrayList<>();
         ArrayList<MolecularFormula> formulas = new ArrayList<>(), preForms = new ArrayList<>();
@@ -174,8 +174,8 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
         FormulaResultId id;
         do {
             hit = results.get(i);
-            id = hit.getCandidate().getId();
-            final Optional<CanopusResult> cr = hit.getCandidate().getAnnotation(CanopusResult.class);
+            id = hit.getId();
+            final Optional<CanopusResult> cr = hit.getAnnotation(CanopusResult.class);
             final var cid = id;
             cr.ifPresent(canopusResult -> {
                 cfFingerprints.add(canopusResult.getCanopusFingerprint());
@@ -185,7 +185,7 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
                 preForms.add(cid.getPrecursorFormula());
             });
             ++i;
-        } while (i < results.size() && (results.get(i).getCandidate().getId().getPrecursorFormula().equals(results.get(0).getCandidate().getId().getPrecursorFormula()) || all));
+        } while (i < results.size() && (results.get(i).getId().getPrecursorFormula().equals(results.get(0).getId().getPrecursorFormula()) || all));
         if (cfFingerprints.size() > 0) {
             lock.writeLock().lock();
             try {
