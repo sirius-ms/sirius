@@ -26,6 +26,7 @@ package de.unijena.bioinf.ms.gui.utils;
 
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;
+import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
@@ -39,6 +40,7 @@ import javax.swing.*;
 import javax.swing.plaf.nimbus.AbstractRegionPainter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.net.URI;
@@ -318,5 +320,26 @@ public class GuiUtils {
                 dialog.dispatchEvent(new WindowEvent(dialog, WindowEvent.WINDOW_CLOSING));
             }
         });
+    }
+
+    public static int getComponentIndex(JComponent parent, JComponent child) {
+        for (int i = 0; i < parent.getComponentCount(); ++i) {
+            if (parent.getComponent(i).equals(child)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public static <T extends DescriptiveOptions> JComboBox<T> makeParameterComboBoxFromDescriptiveValues(T[] options) {
+        JComboBox<T> box = new JComboBox<>(options);
+        box.addItemListener(e -> {
+            if (e.getStateChange() != ItemEvent.SELECTED) {
+                return;
+            }
+            final DescriptiveOptions source = (DescriptiveOptions) e.getItem();
+            box.setToolTipText(source.getDescription());
+        });
+        return box;
     }
 }
