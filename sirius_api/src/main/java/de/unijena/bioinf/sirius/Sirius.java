@@ -724,14 +724,12 @@ public class Sirius {
         }
 
         private static boolean isValidNeutralFormula(PrecursorIonType pa, FormulaConstraints constraints, MolecularFormula mf) {
-            boolean isValid = true;
             for (FormulaFilter filter : constraints.getFilters()) {
                 if (!filter.isValid(mf, pa)){
-                    isValid = false;
-                    break;
+                    return false;
                 }
             }
-            return isValid;
+            return true;
         }
 
         private FTree treeWithInSourceIfNotEmpty(FTree tree, Ionization ionization, MolecularFormula inSource) {
