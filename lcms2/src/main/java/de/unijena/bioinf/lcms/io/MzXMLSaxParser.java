@@ -22,6 +22,7 @@ package de.unijena.bioinf.lcms.io;
 
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.lcms.ScanPointMapping;
@@ -41,6 +42,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -89,8 +91,10 @@ class MzXMLSaxParser extends DefaultHandler {
 
     private final Int2LongMap ms1Ids = new Int2LongArrayMap();
 
+    private int samplePolarity = 0;
+
     public MzXMLSaxParser(
-            String sourcePath,
+            File file,
             LCMSStorage storage,
             LCMSParser.IOThrowingConsumer<Run> runConsumer,
             LCMSParser.IOThrowingConsumer<Scan> scanConsumer,
@@ -99,8 +103,8 @@ class MzXMLSaxParser extends DefaultHandler {
             MzXMLParser parent
     ) throws IOException {
         this.storage = storage;
-        this.runBuilder = runBuilder.sourcePath(sourcePath);
-        this.sourcePath = sourcePath;
+        this.runBuilder = runBuilder.sourceReference(new MsDataSourceReference(file.toURI(), file.getName(), null, null));
+        this.sourcePath = file.getName();
         this.runConsumer = runConsumer;
         this.scanConsumer = scanConsumer;
         this.msmsScanConsumer = msmsScanConsumer;
@@ -149,7 +153,7 @@ class MzXMLSaxParser extends DefaultHandler {
     public ProcessedSample getProcessedSample() {
         final ScanPointMapping mapping = new ScanPointMapping(retentionTimes.toDoubleArray(), scanids.toIntArray(), idmap);
         storage.setMapping(mapping);
-        return new ProcessedSample(mapping, storage);
+        return new ProcessedSample(mapping, storage, samplePolarity, -1);
     }
 
 
@@ -290,6 +294,11 @@ class MzXMLSaxParser extends DefaultHandler {
                 case "-" -> Polarity.NEGATIVE;
                 default -> Polarity.UNKNOWN;
             };
+            if (samplePolarity == 0)  {
+                samplePolarity = polarity.charge;
+            } else if (polarity.charge != 0 && (polarity.charge > 0) != (samplePolarity > 0) ) {
+                throw new RuntimeException("Preprocessing does not support LCMS runs with different polarities.");
+            }
         }
 
         @Override
@@ -369,11 +378,11 @@ class MzXMLSaxParser extends DefaultHandler {
                                 scanConsumer.consume(scan);
                                 ms1Ids.put(scanNumber, scan.getScanId());
 
-                                final Ms1SpectrumHeader header = new Ms1SpectrumHeader(scan.getScanId(), scanids.size(), polarity.charge, centroided);
+                                final Ms1SpectrumHeader header = new Ms1SpectrumHeader(scanids.size(), polarity.charge, centroided);
                                 retentionTimes.add(retentionTime);
                                 idmap.put(scanNumber, scanids.size());
                                 scanids.add(scanNumber);
-                                storage.addSpectrum(header, peaks);
+                                storage.getSpectrumStorage().addSpectrum(header, peaks);
                             } else {
                                 MSMSScan scan = MSMSScan.builder()
                                         .runId(run.getRunId())
@@ -389,15 +398,15 @@ class MzXMLSaxParser extends DefaultHandler {
                                 msmsScanConsumer.consume(scan);
 
                                 final Ms2SpectrumHeader header = new Ms2SpectrumHeader(
-                                        scan.getScanId(),
                                         polarity.charge, centroided,
                                         collisionEnergy,
                                         new IsolationWindow(0d, isolationWindowWidth),
                                         idmap.getOrDefault(precursorScanNumber, -1), // TODO: potential error
                                         precursorMz,
+                                        precursorMz,
                                         retentionTime
                                 );
-                                storage.addMs2Spectrum(header, peaks);
+                                storage.getSpectrumStorage().addMs2Spectrum(header, peaks);
                             }
                         }
                     }

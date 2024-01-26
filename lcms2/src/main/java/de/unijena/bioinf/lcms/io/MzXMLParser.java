@@ -45,7 +45,7 @@ public class MzXMLParser implements LCMSParser {
     ) throws IOException {
         try {
             MzXMLSaxParser saxParser = new MzXMLSaxParser(
-                    file.getName(),
+                    file,
                     storageFactory.createNewStorage(),
                     runConsumer, scanConsumer, msmsScanConsumer,
                     runBuilder,
