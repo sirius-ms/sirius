@@ -23,7 +23,7 @@ package de.unijena.bioinf.fingerid;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.annotations.StructureSearchDB;
-import de.unijena.bioinf.elgordo.InjectElGordoCompounds;
+import de.unijena.bioinf.elgordo.TagStructuresByElGordo;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.ms.annotations.AnnotationJJob;
@@ -126,8 +126,8 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
                         searchDB.searchDBs,
                         fingeridInput.getPrecursorIonType(),
                         true,
-                        experiment.getAnnotation(InjectElGordoCompounds.class)
-                                .orElse(InjectElGordoCompounds.TRUE).value ? DataSource.LIPID.flag : 0)
+                        experiment.getAnnotation(TagStructuresByElGordo.class)
+                                .orElse(TagStructuresByElGordo.TRUE).value ? DataSource.LIPID.flag : 0)
         ).collect(Collectors.toList());
 
         submitSubJobsInBatches(formulaJobs, PropertyManager.getNumberOfThreads());
