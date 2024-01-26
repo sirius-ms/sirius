@@ -22,6 +22,7 @@ package de.unijena.bioinf.lcms.io;
 
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.lcms.LCMSStorageFactory;
@@ -41,8 +42,10 @@ import lombok.extern.slf4j.Slf4j;
 import uk.ac.ebi.jmzml.model.mzml.*;
 import uk.ac.ebi.jmzml.xml.io.MzMLUnmarshaller;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -54,8 +57,8 @@ public class MzMLParser implements LCMSParser {
             File file,
             LCMSStorageFactory storageFactory,
             LCMSParser.IOThrowingConsumer<Run> runConsumer,
-            LCMSParser.IOThrowingConsumer<Scan> scanConsumer,
-            LCMSParser.IOThrowingConsumer<MSMSScan> msmsScanConsumer,
+            @Nullable LCMSParser.IOThrowingConsumer<Scan> scanConsumer,
+            @Nullable LCMSParser.IOThrowingConsumer<MSMSScan> msmsScanConsumer,
             Run.RunBuilder runBuilder
     ) throws IOException {
         return parse(file, storageFactory, new MzMLUnmarshaller(file), runConsumer, scanConsumer, msmsScanConsumer, runBuilder);
@@ -66,14 +69,29 @@ public class MzMLParser implements LCMSParser {
             LCMSStorageFactory storageFactory,
             MzMLUnmarshaller um,
             LCMSParser.IOThrowingConsumer<Run> runConsumer,
-            LCMSParser.IOThrowingConsumer<Scan> scanConsumer,
-            LCMSParser.IOThrowingConsumer<MSMSScan> msmsScanConsumer,
+            @Nullable LCMSParser.IOThrowingConsumer<Scan> scanConsumer,
+            @Nullable LCMSParser.IOThrowingConsumer<MSMSScan> msmsScanConsumer,
             Run.RunBuilder runBuilder
     ) throws IOException {
         try {
             final LCMSStorage storage = storageFactory.createNewStorage();
+            int samplePolarity = 0;
 
-            runBuilder = runBuilder.name(um.getMzMLId()).sourcePath(file.getAbsolutePath());
+            String mzMlId = um.getMzMLId();
+            final MsDataSourceReference reference;
+            {
+                Map<String, String> runAtts = um.getSingleElementAttributes("/run");
+                final String runId = runAtts.get("id");
+                // get source location oO
+                URI s = file.toURI();
+                URI parent = s.getPath().endsWith("/") ? s.resolve("..") : s.resolve(".");
+                String fileName = parent.relativize(s).toString();
+                reference = new MsDataSourceReference(parent, fileName, runId, mzMlId);
+            }
+
+            runBuilder = runBuilder
+                    .name(mzMlId != null && !mzMlId.isBlank() ? mzMlId : file.getName())
+                    .sourceReference(reference);
 
             final DoubleArrayList retentionTimes = new DoubleArrayList();
             final IntArrayList scanids = new IntArrayList();
@@ -267,6 +285,11 @@ public class MzMLParser implements LCMSParser {
                 }
 
                 final SimpleSpectrum peaks = Spectrums.getBaselined(Spectrums.wrap(mzArray, intArray), 0);
+                if (samplePolarity == 0)  {
+                    samplePolarity = polarity.charge;
+                } else if (polarity.charge != 0 && (polarity.charge > 0) != (samplePolarity > 0) ) {
+                    throw new RuntimeException("Preprocessing does not support LCMS runs with different polarities.");
+                }
 
                 if (peaks.isEmpty()) {
                     log.info("No valid spectrum data found Spectrum with id: " + spectrum.getId() + " Skipping!");
@@ -274,22 +297,24 @@ public class MzMLParser implements LCMSParser {
                 }
 
                 if (msLevel == 1) {
-                    Scan scan = Scan.builder()
-                            .runId(run.getRunId())
-                            .scanNumber(sid)
-                            .scanTime(rt)
-                            .peaks(peaks)
-                            .ccs(ccs)
-                            .build();
+                    if (scanConsumer != null) {
+                        Scan scan = Scan.builder()
+                                .runId(run.getRunId())
+                                .scanNumber(sid)
+                                .scanTime(rt)
+                                .peaks(peaks)
+                                .ccs(ccs)
+                                .build();
 
-                    scanConsumer.consume(scan);
-                    ms1Ids.put(spectrum.getId(), scan.getScanId());
+                        scanConsumer.consume(scan);
+                        ms1Ids.put(spectrum.getId(), scan.getScanId());
+                    }
 
-                    final Ms1SpectrumHeader header = new Ms1SpectrumHeader(scan.getScanId(), scanids.size(), polarity.charge, true);
+                    final Ms1SpectrumHeader header = new Ms1SpectrumHeader(scanids.size(), polarity.charge, true);
                     retentionTimes.add(rt);
                     idmap.put(spectrum.getIndex().intValue(), scanids.size());
                     scanids.add(spectrum.getIndex().intValue());
-                    storage.addSpectrum(header, peaks);
+                    storage.getSpectrumStorage().addSpectrum(header, peaks);
 
                 } else {
                     if (spectrum.getPrecursorList() == null || spectrum.getPrecursorList().getPrecursor() == null || spectrum.getPrecursorList().getPrecursor().isEmpty()) {
@@ -304,43 +329,40 @@ public class MzMLParser implements LCMSParser {
                     double collisionEnergy = precursor.getActivation().getCvParam().stream().filter(cv -> cv.getAccession().equals("MS:1000045"))
                                 .findFirst().map(cv -> Double.parseDouble(cv.getValue())).orElse(Double.NaN);
 
-
-                    MSMSScan.MSMSScanBuilder scanBuilder = MSMSScan.builder()
-                            .runId(run.getRunId())
-                            .scanNumber(sid)
-                            .scanTime(rt)
-                            .peaks(peaks)
-                            .msLevel(msLevel)
-                            .ccs(ccs)
-                            .collisionEnergy(Double.isFinite(collisionEnergy) ? new CollisionEnergy(collisionEnergy) : CollisionEnergy.none());
-
                     Precursor prec = makePrecursor(precursor, ms1Ids, idToIndex);
 
-                    scanBuilder = scanBuilder
-                            .mzOfInterest(prec.getMass())
-                            .isolationWindow(prec.getIsolationWindow())
-                            .precursorScanId(prec.getScanId());
-
-                    MSMSScan scan = scanBuilder.build();
-                    msmsScanConsumer.consume(scan);
+                    if (msmsScanConsumer != null) {
+                        MSMSScan.MSMSScanBuilder scanBuilder = MSMSScan.builder()
+                                .runId(run.getRunId())
+                                .scanNumber(sid)
+                                .scanTime(rt)
+                                .peaks(peaks)
+                                .msLevel(msLevel)
+                                .ccs(ccs)
+                                .collisionEnergy(Double.isFinite(collisionEnergy) ? new CollisionEnergy(collisionEnergy) : CollisionEnergy.none())
+                                .mzOfInterest(prec.getMass())
+                                .isolationWindow(prec.getIsolationWindow())
+                                .precursorScanId(prec.getScanId());
+                        msmsScanConsumer.consume(scanBuilder.build());
+                    }
 
                     final Ms2SpectrumHeader header = new Ms2SpectrumHeader(
-                            scan.getScanId(),
                             polarity.charge, centroided,
                             Double.isFinite(collisionEnergy) ? new CollisionEnergy(collisionEnergy) : CollisionEnergy.none(),
                             prec.getIsolationWindow(),
                             idmap.getOrDefault(prec.getIndex(), -1), // TODO: potential error
                             prec.getMass(),
+                            prec.getMass(), // todo: fix
                             rt
                     );
-                    storage.addMs2Spectrum(header, peaks);
+                    storage.getSpectrumStorage().addMs2Spectrum(header, peaks);
                 }
 
             }
 
             final ScanPointMapping mapping = new ScanPointMapping(retentionTimes.toDoubleArray(), scanids.toIntArray(), idmap);
             storage.setMapping(mapping);
-            return new ProcessedSample(mapping, storage);
+            return new ProcessedSample(mapping, storage, samplePolarity, -1);
 
         } catch (Exception e) {
             throw new IOException(e);
@@ -399,35 +421,35 @@ public class MzMLParser implements LCMSParser {
         );
     }
 
-    public static void main(String[] args) throws IOException {
-        File f = new File("/home/mel/lcms-data/polluted_citrus/G87532_1x_RD6_01_26277.mzML");
-        List<Scan> scans = new ArrayList<>();
-        List<MSMSScan> ms2scans = new ArrayList<>();
-//        AtomicInteger scans = new AtomicInteger(0);
-//        AtomicInteger ms2scans = new AtomicInteger(0);
-        ProcessedSample sample = new MzMLParser().parse(
-                f,
-                LCMSStorage.temporaryStorage(),
-                System.out::println,
-                ms -> {
-                    ms.setScanId(new Random().nextLong());
-                    scans.add(ms);
-                },
-                msms -> {
-                    msms.setScanId(new Random().nextLong());
-                    ms2scans.add(msms);
-                },
-//                ms -> scans.addAndGet(1),
-//                msms -> ms2scans.addAndGet(1),
-                Run.builder().runType(Run.Type.SAMPLE).chromatography(ChromatographyType.LC)
-        );
-        System.out.println(sample.getRtSpan());
-        System.out.println(scans.size());
-        System.out.println(ms2scans.size());
-        System.out.println(sample.getTraceStorage().numberOfScans());
-
-//        System.out.println(scans);
-//        System.out.println(ms2scans);
-    }
+//    public static void main(String[] args) throws IOException {
+//        File f = new File("/home/mel/lcms-data/polluted_citrus/G87532_1x_RD6_01_26277.mzML");
+//        List<Scan> scans = new ArrayList<>();
+//        List<MSMSScan> ms2scans = new ArrayList<>();
+////        AtomicInteger scans = new AtomicInteger(0);
+////        AtomicInteger ms2scans = new AtomicInteger(0);
+//        ProcessedSample sample = new MzMLParser().parse(
+//                f,
+//                LCMSStorage.temporaryStorage(),
+//                System.out::println,
+//                ms -> {
+//                    ms.setScanId(new Random().nextLong());
+//                    scans.add(ms);
+//                },
+//                msms -> {
+//                    msms.setScanId(new Random().nextLong());
+//                    ms2scans.add(msms);
+//                },
+////                ms -> scans.addAndGet(1),
+////                msms -> ms2scans.addAndGet(1),
+//                Run.builder().runType(Run.Type.SAMPLE).chromatography(ChromatographyType.LC)
+//        );
+//        System.out.println(sample.getRtSpan());
+//        System.out.println(scans.size());
+//        System.out.println(ms2scans.size());
+//        System.out.println(sample.getTraceStorage().numberOfScans());
+//
+////        System.out.println(scans);
+////        System.out.println(ms2scans);
+//    }
 
 }

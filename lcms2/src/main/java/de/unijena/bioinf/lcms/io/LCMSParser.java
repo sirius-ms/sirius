@@ -59,44 +59,6 @@ public interface LCMSParser {
             Run.RunBuilder runBuilder
     ) throws IOException;
 
-    /**
-     * Parse an LC/GC-MS file. The consumers need to handle to actual object storing and are required
-     * to assign the object IDs. Also reads the whole file content into a {@link SourceFile} object.
-     *
-     * @param file               Input file.
-     * @param format             Input file format.
-     * @param runBuilder         Builder for {@link Run}, should be initialized with default values
-     *                           for {@code Run.runType} and {@code Run.chromatography}.
-     */
-    default ProcessedSample parse(
-            File file,
-            LCMSStorageFactory storageFactory,
-            SourceFile.Format format,
-            LCMSParser.IOThrowingConsumer<SourceFile> sourceFileConsumer,
-            LCMSParser.IOThrowingConsumer<Run> runConsumer,
-            LCMSParser.IOThrowingConsumer<Scan> scanConsumer,
-            LCMSParser.IOThrowingConsumer<MSMSScan> msmsScanConsumer,
-            Run.RunBuilder runBuilder
-    ) throws IOException {
-        SourceFile sourceFile = SourceFile.builder()
-                .fileName(file.getName())
-                .format(format)
-                .data(Files.readAllBytes(file.toPath()))
-                .build();
-        sourceFileConsumer.consume(sourceFile);
-        return parse(
-                file,
-                storageFactory,
-                run -> {
-                    run.setRunId(sourceFile.getRunId());
-                    runConsumer.consume(run);
-                },
-                scanConsumer,
-                msmsScanConsumer,
-                runBuilder
-        );
-    }
-
     default Optional<IonizationType> matchIonizationType(String value) {
         return matchEnumType(value, IonizationType.class, IonizationType::fullName);
     }
