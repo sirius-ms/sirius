@@ -19,23 +19,21 @@
 
 package de.unijena.bioinf.ms.gui.compute;
 
-import de.unijena.bioinf.chemdb.DataSource;
-import de.unijena.bioinf.chemdb.SearchableDatabases;
-import de.unijena.bioinf.chemdb.annotations.StructureSearchDB;
+import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
+import de.unijena.bioinf.confidence_score.ConfidenceScoreApproximateDistance;
+import de.unijena.bioinf.confidence_score.ExpansiveSearchConfidenceMode;
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
+import java.awt.event.ItemEvent;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -43,58 +41,66 @@ import java.util.stream.Collectors;
 
 //here we can show fingerid options. If it becomes to much, we can change this to a setting like tabbed pane
 public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOptions> {
-    protected final JCheckboxListPanel<CustomDataSources.Source> searchDBList;
-
+    protected StructureSearchStrategy structureSearchStrategy;
 
     public FingerblastConfigPanel(@Nullable final JCheckBoxList<CustomDataSources.Source> syncSource) {
         super(FingerblastOptions.class);
 
-        // configure database to search list
-        DBSelectionList innerList = new DBSelectionList();
-        searchDBList = new JCheckboxListPanel<>(innerList, "Search DBs");
-        GuiUtils.assignParameterToolTip(searchDBList, "StructureSearchDB");
-        parameterBindings.put("StructureSearchDB", () -> searchDBList.checkBoxList.getCheckedItems().isEmpty() ? null : String.join(",", getStructureSearchDBStrings()));
-        JButton allBut = new JButton("non in silico");
-        allBut.setToolTipText(GuiUtils.formatToolTip("Select all but combinatorial databases."));
-        allBut.addActionListener(c -> {
-            innerList.uncheckAll();
-            innerList.checkAll(allButInsilico());
-        });
-        searchDBList.buttons.add(allBut);
-        add(searchDBList);
 
+        JComboBox<StructureSearchStrategy.Strategy> strategyBox =  GuiUtils.makeParameterComboBoxFromDescriptiveValues(StructureSearchStrategy.Strategy.values());
+        structureSearchStrategy = new StructureSearchStrategy((StructureSearchStrategy.Strategy) strategyBox.getSelectedItem(), parameterBindings, syncSource);
+        strategyBox.addItemListener(e -> {
+            if (e.getStateChange() != ItemEvent.SELECTED) {
+                return;
+            }
+            //todo NewWorkflow: implement to use this parameter 'StructureSearchStrategy'
+            final DescriptiveOptions source = (DescriptiveOptions) e.getItem();
+            int panelIndex = GuiUtils.getComponentIndex(this, structureSearchStrategy);
+            this.remove(panelIndex);
+            structureSearchStrategy = new StructureSearchStrategy((StructureSearchStrategy.Strategy) strategyBox.getSelectedItem(), parameterBindings, syncSource);
+            this.add(structureSearchStrategy, panelIndex);
+
+            if ((StructureSearchStrategy.Strategy) strategyBox.getSelectedItem() == StructureSearchStrategy.Strategy.NO_FALLBACK) {
+
+                parameterBindings.put("ExpansiveSearchConfidenceMode", () -> "OFF");
+            }
+
+            revalidate();
+        });
+
+
+        //confidence score approximate mode settings
+        JComboBox<ExpansiveSearchConfidenceMode.Mode> confidenceModeBox =  GuiUtils.makeParameterComboBoxFromDescriptiveValues(ExpansiveSearchConfidenceMode.Mode.getActiveModes());
+        confidenceModeBox.addItemListener(e -> {
+            if (e.getStateChange() != ItemEvent.SELECTED) {
+                return;
+            }
+            switch ((ExpansiveSearchConfidenceMode.Mode) confidenceModeBox.getSelectedItem()) {
+                case EXACT -> {
+                    parameterBindings.put("ExpansiveSearchConfidenceMode", () -> "EXACT");
+                }
+                case APPROXIMATE -> {
+                    parameterBindings.put("ExpansiveSearchConfidenceMode", () -> "APPROXIMATE"); //todo NewWorkflow: check, if this makes sense.
+
+                }
+                default -> {
+                    LoggerFactory.getLogger(FingerblastConfigPanel.class).error("Unknown ExpansiveSearchConfidenceMode setting. Using approximate mode.");
+                    parameterBindings.put("ExpansiveSearchConfidenceMode", () -> "APPROXIMATE");
+                }
+            }
+        });
+
+        //layout the panel
         final TwoColumnPanel additionalOptions = new TwoColumnPanel();
-        additionalOptions.addNamed("Tag Lipids", makeParameterCheckBox("InjectElGordoCompounds"));
+        additionalOptions.addNamed("Database search strategy", strategyBox);
+        additionalOptions.addNamed("Confidence mode", confidenceModeBox);
+        //todo NewWorkflow: make confidenceModeBox only available in PUBCHEM_AS_FALLBACK mode
 
         add(new TextHeaderBoxPanel("General", additionalOptions));
-
-        PropertyManager.DEFAULTS.createInstanceWithDefaults(StructureSearchDB.class).searchDBs
-                .forEach(s -> searchDBList.checkBoxList.check(CustomDataSources.getSourceFromName(s.name())));
-
-        if (syncSource != null)
-            syncSource.addListSelectionListener(e -> {
-                searchDBList.checkBoxList.uncheckAll();
-                if (syncSource.getCheckedItems().isEmpty())
-                    searchDBList.checkBoxList.check(CustomDataSources.getSourceFromName(DataSource.BIO.realName()));
-                else
-                    searchDBList.checkBoxList.checkAll(syncSource.getCheckedItems());
-            });
+        add(structureSearchStrategy);
     }
 
-    public List<CustomDataSources.Source> getStructureSearchDBs() {
-        return searchDBList.checkBoxList.getCheckedItems();
-    }
-
-    public List<String> getStructureSearchDBStrings() {
-        return getStructureSearchDBs().stream().map(CustomDataSources.Source::id).filter(Objects::nonNull).collect(Collectors.toList());
-    }
-
-    List<CustomDataSources.Source> allButInsilico = null;
-    private List<CustomDataSources.Source> allButInsilico(){
-       if (allButInsilico == null){
-           allButInsilico = SearchableDatabases.getNonInSilicoSelectableSources();
-       }
-       return allButInsilico;
-
+    public JCheckboxListPanel<CustomDataSources.Source> getSearchDBList() {
+        return structureSearchStrategy.getSearchDBList();
     }
 }
