@@ -21,11 +21,12 @@
 package de.unijena.bioinf.ms.persistence.model.core;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
 import jakarta.persistence.Id;
 import lombok.*;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @Getter
@@ -64,20 +65,10 @@ public class Run {
 
 
     /**
-     * Path of the source file. If source file is embedded this contains the filename of the source file
+     * A reference to a certain LC/MS run in a mzml file.
      */
     @NotNull
-    private String sourcePath;
-
-    //region Foreign Fields
-    /**
-     * Embedded source file. Might be NULL if source file is references instead.
-     */
-    @Nullable
-    @JsonIgnore
-    @ToString.Exclude
-    private SourceFile sourceFile;
-    //endregion
+    private MsDataSourceReference sourceReference;
 
 
 }
