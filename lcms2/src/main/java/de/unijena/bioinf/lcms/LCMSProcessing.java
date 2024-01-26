@@ -156,7 +156,7 @@ public class LCMSProcessing {
             Path p = Path.of(System.getProperty("lcms.logdir"), "data.js");
             Files.createDirectories(p.getParent());
             try (PrintStream out = new PrintStream(p.toAbsolutePath().toString())) {
-                out.print("document.lcdata = [");
+                out.print("document.traces = {");
                 for (MergedTrace trace : merged.getStorage().getMergeStorage()) {
                     //if (trace.getSampleIds().size()<6 || trace.toTrace(merged).apexIntensity() < 0.01) continue;
                     ProcessedSample[] samplesInTrace = new ProcessedSample[trace.getSampleIds().size()];
@@ -165,10 +165,10 @@ public class LCMSProcessing {
                     }
                     String line = ((MergedFeatureExtractor) mergedFeatureExtractionStrategy).extractFeaturesToString(merged, samplesInTrace, trace);
                     if (line !=null) {
-                        out.println(line + ",");
+                        out.println("\"" + trace.getUid() + "\": " +  line + ",");
                     }
                 }
-                out.println("\n];");
+                out.println("\n};");
             } catch (FileNotFoundException e) {
                 throw new RuntimeException(e);
             }
