@@ -10,6 +10,7 @@ import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import de.unijena.bioinf.ms.persistence.model.core.AlignedFeatures;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
 
@@ -38,7 +39,7 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
         Trace mergedTrace = alignedFeature.toTrace(mergedSample);
         SampleStats stats = mergedSample.getStorage().getStatistics();
         TraceSegment[] traceSegments = new PersistentHomology().detectSegments(mergedSample.getStorage().getStatistics(), mergedTrace).stream().filter(x->mergedTrace.intensity(x.apex) > stats.noiseLevel(x.apex)  ).toArray(TraceSegment[]::new);
-        if (traceSegments.length==0) return null;
+        if (traceSegments.length==0 && alignedFeature.getUid()>=0) return null;
         // segments for each individual trace
         TraceSegment[][] individualSegments = new TraceSegment[alignedFeature.getSampleIds().size()][];
         for (int k=0; k < individualSegments.length; ++k) {
@@ -74,6 +75,7 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
                 if (s+1 < samplesInTrace.length) buf.append(", ");
             }
             buf.append("}, ");
+            buf.append("\"isotopes\": [" + alignedFeature.getIsotopeUids().intStream().mapToObj(Integer::toString).collect(Collectors.joining(", ")) + "],");
             buf.append("\"normalization\": {");
             for (int s=0; s < samplesInTrace.length; ++s) {
                 ProcessedSample S = samplesInTrace[s];
