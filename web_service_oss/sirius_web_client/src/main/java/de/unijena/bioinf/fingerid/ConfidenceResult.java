@@ -24,26 +24,33 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.ms.annotations.ResultAnnotation;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by martin on 08.08.18.
  */
 public class ConfidenceResult implements ResultAnnotation {
-    public static final ConfidenceResult NaN = new ConfidenceResult(Double.NEGATIVE_INFINITY, null);
+    public static final ConfidenceResult NaN = new ConfidenceResult(Double.NEGATIVE_INFINITY,Double.NEGATIVE_INFINITY, null,0);
 
     // bio confidence
     // pubchem confidence
     public final ConfidenceScore score;
+    public final ConfidenceScoreApproximate scoreApproximate;
+
+    public final int mcesIndex;
+
     public Scored<FingerprintCandidate> topHit;
 
 
-    public ConfidenceResult(ConfidenceScore score) {
-        this.score = score;
+    public ConfidenceResult(ConfidenceScore score, ConfidenceScoreApproximate scoreApproximate,@Nullable int mcesIndex) {
+        this.score = score; this.scoreApproximate=scoreApproximate; this.mcesIndex=mcesIndex;
     }
 
-    public ConfidenceResult(double confidence, Scored<FingerprintCandidate> topHit){
+    public ConfidenceResult(double confidence, double confidenceApproximate, Scored<FingerprintCandidate> topHit, @Nullable int mcesIndex){
         //this is just to supress the warning
         this.score = Double.isNaN(confidence) ? FormulaScore.NA(ConfidenceScore.class) : new ConfidenceScore(confidence);
+        this.scoreApproximate = Double.isNaN(confidenceApproximate) ? FormulaScore.NA(ConfidenceScoreApproximate.class) : new ConfidenceScoreApproximate(confidenceApproximate);
         this.topHit = topHit;
+        this.mcesIndex= mcesIndex;
     }
 }

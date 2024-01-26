@@ -57,6 +57,8 @@ public class ConfidenceJJob extends BasicDependentMasterJJob<ConfidenceResult> {
     protected final Set<FingerblastSearchJJob> inputInstances = new LinkedHashSet<>();
     protected final ScoringMethodFactory.CSIFingerIdScoringMethod csiScoring;
 
+    protected int mcesIndex;
+
 
 //    List<Scored<FingerprintCandidate>> allMergedRestDbCandidates;
 //    List<FingerblastResult> fbResults = new ArrayList<>();
@@ -99,6 +101,12 @@ public class ConfidenceJJob extends BasicDependentMasterJJob<ConfidenceResult> {
                     LoggerFactory.getLogger(getClass()).warn("Fingerblast Job '" + searchDBJob.identifier() + "' skipped because of result was null.");
             }
         }
+
+        if (required instanceof MCESJJob){
+            final MCESJJob mcesjJob = (MCESJJob) required;
+            mcesIndex=mcesjJob.getResult().mcesIndex;
+
+        }
     }
 
 
@@ -106,7 +114,7 @@ public class ConfidenceJJob extends BasicDependentMasterJJob<ConfidenceResult> {
     protected ConfidenceResult compute() throws Exception {
         checkForInterruption();
         if (inputInstances.isEmpty())
-            return new ConfidenceResult(Double.NaN, null);
+            return new ConfidenceResult(Double.NaN, Double.NaN, null,0);
 
         Map<FingerblastSearchJJob, List<JJob<List<Scored<FingerprintCandidate>>>>> csiScoreJobs = new HashMap<>();
 
@@ -187,8 +195,10 @@ public class ConfidenceJJob extends BasicDependentMasterJJob<ConfidenceResult> {
                 requestedMergedCandidatesCov, requestedMergedCandidatesCSI,
                 ParameterStore.of(topHitFP, topHitScoring, topHitTree, topHitFormula),structureSearchDBIsPubChem);
 
+        final double scoreApproximate=0;
+
         checkForInterruption();
-        return new ConfidenceResult(score, requestedMergedCandidatesCov.size() > 0 ? requestedMergedCandidatesCov.get(0) : null);
+        return new ConfidenceResult(score,scoreApproximate, requestedMergedCandidatesCov.size() > 0 ? requestedMergedCandidatesCov.get(0) : null,mcesIndex);
     }
 
 }
