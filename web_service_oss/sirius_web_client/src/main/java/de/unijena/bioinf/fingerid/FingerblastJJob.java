@@ -138,6 +138,8 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
                 ? new ConfidenceJJob(predictor, experiment)
                 : null;
 
+        final MCESJJob mcesJJob = new MCESJJob(2);
+
         final BayesnetScoring[] scorings = NetUtils.tryAndWait(() -> {
             BayesnetScoring[] s = new BayesnetScoring[idResult.size()];
             webAPI.executeBatch((api, client) -> {
@@ -174,10 +176,14 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
             }
 
             blastJob.addRequiredJob(formulaJobs.get(i));
+            mcesJJob.addRequiredJob(blastJob);
             if (confidenceJJob != null)
                 confidenceJJob.addRequiredJob(blastJob);
+                confidenceJJob.addRequiredJob(mcesJJob);
             annotationJJobs.put(submitSubJob(blastJob), fingeridInput);
         }
+
+        submitSubJob(mcesJJob);
 
         // confidence job: calculate confidence of scored candidate list that are MERGED among ALL
         // IdentificationResults results with none empty candidate lists.

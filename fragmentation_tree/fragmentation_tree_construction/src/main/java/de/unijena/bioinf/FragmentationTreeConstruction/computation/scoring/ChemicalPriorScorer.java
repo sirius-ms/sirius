@@ -84,12 +84,22 @@ public class ChemicalPriorScorer implements DecompositionScorer<Object> {
     }
 
     public double score(MolecularFormula formula) {
-        return formula.getMass() >= minimalMass ? Math.max(-10d, prior.score(formula)) - normalizationConstant : 0d;
+        try {
+            return formula.getMass() >= minimalMass ? Math.max(-10d, prior.score(formula)) - normalizationConstant : 0d;
+        }catch (Exception e){
+            System.out.println("ERROR in "+formula.toString());
+            return 0;
+        }
     }
 
     @Override
     public double score(MolecularFormula formula, Ionization ion, ProcessedPeak peak, ProcessedInput input, Object precomputed) {
-        return formula.getMass() >= minimalMass ? Math.max(-10d, prior.score(formula)) - normalizationConstant : 0d;
+        try {
+            return formula.getMass() >= minimalMass ? Math.max(-10d, prior.score(formula)) - normalizationConstant : 0d;
+        }catch (Exception e){
+            System.out.println("ERROR IN "+input.getOriginalInput().getName()+" "+ formula.toString());
+            return 0;
+        }
     }
 
     @Override

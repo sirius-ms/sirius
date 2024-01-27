@@ -49,16 +49,14 @@ import org.jetbrains.annotations.Nullable;
 public class TanimotoDistanceFeatures implements FeatureCreator {
     private int[] distances;
     private int feature_size;
-    Scored<FingerprintCandidate>[] rankedCandidates;
     Scored<FingerprintCandidate>[] rankedCandidates_filtered;
     int min_quartil=1;
     int max_quartil=99;
 
-    public TanimotoDistanceFeatures(Scored<FingerprintCandidate>[] rankedCandidates,Scored<FingerprintCandidate>[] rankedCandidates_filtered,int... distances){
+    public TanimotoDistanceFeatures(Scored<FingerprintCandidate>[] rankedCandidates_filtered,int... distances){
 
         this.distances=distances;
         feature_size=distances.length;
-        this.rankedCandidates=rankedCandidates;
         this.rankedCandidates_filtered=rankedCandidates_filtered;
 
     }

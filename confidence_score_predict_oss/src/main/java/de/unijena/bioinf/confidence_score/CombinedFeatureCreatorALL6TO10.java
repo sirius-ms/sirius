@@ -27,7 +27,6 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.features.*;
-import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
 import de.unijena.bioinf.fingerid.blast.ScoringMethodFactory;
 import de.unijena.bioinf.fragmenter.CombinatorialFragment;
@@ -39,23 +38,23 @@ import java.util.HashMap;
 /**
  * Created by martin on 22.08.18.
  */
-public class CombinedFeatureCreatorALL extends CombinedFeatureCreator {
+public class CombinedFeatureCreatorALL6TO10 extends CombinedFeatureCreator {
 
-    public CombinedFeatureCreatorALL(){
+    public CombinedFeatureCreatorALL6TO10(){
 
     }
 
     //Scorer for pubchem list (unfiltered)
-    public CombinedFeatureCreatorALL(Scored<FingerprintCandidate>[] scored_array, FingerblastScoring<?> covscore, ProbabilityFingerprint canopusFptPred, ProbabilityFingerprint canopusFptTop, CombinatorialSubtree[] epiTrees, HashMap<Fragment, ArrayList<CombinatorialFragment>>[] map, FTree[] fTrees) {
+    public CombinedFeatureCreatorALL6TO10(Scored<FingerprintCandidate>[] scored_array, FingerblastScoring<?> covscore, ProbabilityFingerprint canopusFptPred, ProbabilityFingerprint canopusFptTop, CombinatorialSubtree[] epiTrees, HashMap<Fragment, ArrayList<CombinatorialFragment>>[] map, FTree[] fTrees) {
         super(
                 //new PlattFeatures(),
                 //  new LogPvalueDistanceFeatures(scored_array,scored_array,1),
                 // new LogPvalueDistanceFeatures(scored_array_covscore,scored_array_covscore,1),
 
                 //these are pubchem features and cannot have a filtered list as input
-             //   new ScoreFeatures<>(covscore, scored_array, scored_array),
                 new ScoreFeatures<>(covscore, scored_array),
-               // new ScoreFeatures<>(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(), scored_array, scored_array),
+              //  new ScoreFeatures<>(covscore, scored_array_covscore, scored_array_covscore),
+                //new ScoreFeatures<>(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(), scored_array, scored_array),
                 //new ScoreFeatures<>(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(), scored_array_covscore, scored_array_covscore),
 
                 //new LogDistanceFeatures(scored_array, scored_array, 1),
@@ -87,7 +86,12 @@ public class CombinedFeatureCreatorALL extends CombinedFeatureCreator {
                 new EpiFragmenterScoreFeatures(epiTrees[0]),
                 new EpiRatioExplPeaksFeatures(epiTrees[0]),
                 new EpiUnexplainedPeaksFeatures(epiTrees[0],map[0])
-
         );
+
+        for (FeatureCreator creator : featureCreators){
+            if (creator instanceof LogDistanceFeatures) creator.setMaxQuartil(50);
+            if (creator instanceof  DistanceFeatures) creator.setMaxQuartil(50);
+
+        }
     }
 }
