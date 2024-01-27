@@ -45,40 +45,40 @@ public class CombinedFeatureCreatorALL6TO10 extends CombinedFeatureCreator {
     }
 
     //Scorer for pubchem list (unfiltered)
-    public CombinedFeatureCreatorALL6TO10(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, PredictionPerformance[] performance, FingerblastScoring<?> covscore, ProbabilityFingerprint canopusFptPred, ProbabilityFingerprint canopusFptTop, CombinatorialSubtree[] epiTrees, HashMap<Fragment, ArrayList<CombinatorialFragment>>[] map, FTree[] fTrees) {
+    public CombinedFeatureCreatorALL6TO10(Scored<FingerprintCandidate>[] scored_array, FingerblastScoring<?> covscore, ProbabilityFingerprint canopusFptPred, ProbabilityFingerprint canopusFptTop, CombinatorialSubtree[] epiTrees, HashMap<Fragment, ArrayList<CombinatorialFragment>>[] map, FTree[] fTrees) {
         super(
                 //new PlattFeatures(),
                 //  new LogPvalueDistanceFeatures(scored_array,scored_array,1),
                 // new LogPvalueDistanceFeatures(scored_array_covscore,scored_array_covscore,1),
 
                 //these are pubchem features and cannot have a filtered list as input
-                new ScoreFeatures<>(covscore, scored_array, scored_array),
-                new ScoreFeatures<>(covscore, scored_array_covscore, scored_array_covscore),
-                new ScoreFeatures<>(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(), scored_array, scored_array),
-                new ScoreFeatures<>(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(), scored_array_covscore, scored_array_covscore),
+                new ScoreFeatures<>(covscore, scored_array),
+              //  new ScoreFeatures<>(covscore, scored_array_covscore, scored_array_covscore),
+                //new ScoreFeatures<>(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(), scored_array, scored_array),
+                //new ScoreFeatures<>(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(), scored_array_covscore, scored_array_covscore),
 
-                new LogDistanceFeatures(scored_array, scored_array, 1),
-                new LogDistanceFeatures(scored_array_covscore, scored_array_covscore, 1),
-                new DistanceFeatures(scored_array, scored_array, 1),
-                new DistanceFeatures(scored_array_covscore, scored_array_covscore, 1),
+                //new LogDistanceFeatures(scored_array, scored_array, 1),
+                new LogDistanceFeatures( scored_array, 1),
+                //new DistanceFeatures(scored_array, scored_array, 1),
+                new DistanceFeatures(scored_array,  1),
 
                 //new LogPvalueFeatures(scored_array,scored_array),
                 // new LogPvalueFeatures(scored_array_covscore,scored_array_covscore),
 
+                //new LogPvalueKDEFeatures(scored_array, scored_array),
                 new LogPvalueKDEFeatures(scored_array, scored_array),
-                new LogPvalueKDEFeatures(scored_array_covscore, scored_array_covscore),
 
-                new PvalueScoreDiffScorerFeatures<>(scored_array_covscore, scored_array_covscore, scored_array[0], covscore),
+                //new PvalueScoreDiffScorerFeatures<>(scored_array_covscore, scored_array_covscore, scored_array[0], covscore),
                 new FptLengthFeature(),
                 new FptLengthFeatureHit(scored_array),
                 new SiriusScoreFeatures(),
                 new ExplIntFeatures(),
                 new PredictionQualityFeatures(),
                 //new MassFeatures(),
-                new CandlistSizeFeatures(scored_array_covscore),
+                new CandlistSizeFeatures(scored_array),
 
-                new TanimotoDistanceFeatures(scored_array_covscore, scored_array_covscore, 1),
-                new TanimotoToPredFeatures(scored_array_covscore, scored_array_covscore),
+                new TanimotoDistanceFeatures(scored_array,  1),
+                new TanimotoToPredFeatures(scored_array),
                 new CanopusDiffFeatures(canopusFptPred, canopusFptTop),
                 new EpiPeakSetFeatures(epiTrees,map,fTrees),
                 new EpiPeakSetIntFeatures(epiTrees,map,fTrees),

@@ -39,7 +39,6 @@ public class LogDistanceFeatures implements FeatureCreator {
     private int[] distances;
     private int feature_size;
     private PredictionPerformance[] statistics;
-    Scored<FingerprintCandidate>[] rankedCandidates;
     Scored<FingerprintCandidate>[] rankedCandidates_filtered;
     public int weight_direction=1;
     int min_quartil=1;
@@ -47,11 +46,10 @@ public class LogDistanceFeatures implements FeatureCreator {
 
 
 
-    public LogDistanceFeatures(Scored<FingerprintCandidate>[] rankedCandidates,Scored<FingerprintCandidate>[] rankedCandidates_filtered,int... distances){
+    public LogDistanceFeatures( Scored<FingerprintCandidate>[] rankedCandidates_filtered,int... distances){
 
         this.distances=distances;
         feature_size=distances.length;
-        this.rankedCandidates=rankedCandidates;
         this.rankedCandidates_filtered=rankedCandidates_filtered;
 
     }
@@ -73,7 +71,6 @@ public class LogDistanceFeatures implements FeatureCreator {
 
     @Override
     public double[] computeFeatures(@Nullable ParameterStore ignored) {
-        assert  rankedCandidates[0].getScore()>=rankedCandidates[rankedCandidates.length-1].getScore();
 
         double[] scores =  new double[feature_size];
 

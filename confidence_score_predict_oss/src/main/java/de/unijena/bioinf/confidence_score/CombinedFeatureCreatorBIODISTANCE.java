@@ -42,7 +42,7 @@ public class CombinedFeatureCreatorBIODISTANCE extends CombinedFeatureCreator {
 
     //all confidence means the pubchem confidence score for this input. Has to be always computet
     // same is the tophit in pubchem the same as in the reduced db.
-    public CombinedFeatureCreatorBIODISTANCE(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, Scored<FingerprintCandidate>[] scored_array_filtered, Scored<FingerprintCandidate>[] scored_array_covscore_filtered, PredictionPerformance[] performance, FingerblastScoring<?> covscore, ProbabilityFingerprint canopusFptPred, ProbabilityFingerprint canopusFptTop, CombinatorialSubtree[] epiTrees, HashMap<Fragment, ArrayList<CombinatorialFragment>>[] map,FTree[] fTrees) {
+    public CombinedFeatureCreatorBIODISTANCE(Scored<FingerprintCandidate>[] scored_array_all, Scored<FingerprintCandidate>[] scored_array_filtered,FingerblastScoring<?> covscore, ProbabilityFingerprint canopusFptPred, ProbabilityFingerprint canopusFptTop, CombinatorialSubtree[] epiTrees, HashMap<Fragment, ArrayList<CombinatorialFragment>>[] map,FTree[] fTrees) {
         super(
                 /*
 
@@ -71,39 +71,39 @@ public class CombinedFeatureCreatorBIODISTANCE extends CombinedFeatureCreator {
 
 
               //  new ScoreFeaturesNonBio<>(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array,scored_array_filtered),
-                new ScoreFeaturesNonBio<>(covscore,scored_array_covscore,scored_array_covscore_filtered),
+                new ScoreFeaturesNonBio<>(covscore,scored_array_all,scored_array_filtered),
 
                 new FptLengthFeature(),
                 new SiriusScoreFeatures(),
                 new ExplIntFeatures(),
                 new PredictionQualityFeatures(),
-                new CandlistSizeFeatures(scored_array_covscore),
+                new CandlistSizeFeatures(scored_array_all),
 
                 //these are bio features and can have a filtered list as input
-                new FptLengthFeatureHit(scored_array_covscore_filtered),
+                new FptLengthFeatureHit(scored_array_filtered),
 
-                new CandlistSizeFeatures(scored_array_covscore_filtered),
+                new CandlistSizeFeatures(scored_array_filtered),
 
 
              //   new LogDistanceFeatures(scored_array,scored_array_filtered,1),
-                new LogDistanceFeatures(scored_array_covscore,scored_array_covscore_filtered,1),
+                new LogDistanceFeatures(scored_array_filtered,1),
               //  new DistanceFeatures(scored_array,scored_array_filtered,1),
-                new DistanceFeatures(scored_array_covscore,scored_array_covscore_filtered,1),
+                new DistanceFeatures(scored_array_filtered,1),
 
 
              //   new ScoreFeatures<>(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array,scored_array_filtered),
              //   new ScoreFeatures<>(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array_covscore,scored_array_covscore_filtered),
                 //new ScoreFeatures<>(covscore, scored_array, scored_array_filtered),
-                new ScoreFeatures<>(covscore, scored_array_covscore, scored_array_covscore_filtered),
+                new ScoreFeatures<>(covscore,  scored_array_filtered),
 
 
               //  new LogPvalueKDEFeatures(scored_array, scored_array_filtered),
-                new LogPvalueKDEFeatures(scored_array_covscore, scored_array_covscore_filtered),
-                new SqrtPvalueKDEFeatures(scored_array_covscore,scored_array_covscore_filtered),
-                new Sqrt3PvalueKDEFeatures(scored_array_covscore,scored_array_covscore_filtered),
+                new LogPvalueKDEFeatures(scored_array_all, scored_array_filtered),
+                new SqrtPvalueKDEFeatures(scored_array_all,scored_array_filtered),
+                new Sqrt3PvalueKDEFeatures(scored_array_all,scored_array_filtered),
               //  new PvalueScoreDiffScorerFeatures<>(scored_array_covscore, scored_array_covscore_filtered, scored_array[0], covscore),
-                new TanimotoDistanceFeatures(scored_array_covscore, scored_array_covscore_filtered, 1),
-                new TanimotoToPredFeatures(scored_array_covscore, scored_array_covscore_filtered),
+                new TanimotoDistanceFeatures(scored_array_filtered, 1),
+                new TanimotoToPredFeatures( scored_array_filtered),
                 new CanopusDiffFeatures(canopusFptPred, canopusFptTop),
 
                 new EpiPeakSetFeatures(epiTrees,map,fTrees),
