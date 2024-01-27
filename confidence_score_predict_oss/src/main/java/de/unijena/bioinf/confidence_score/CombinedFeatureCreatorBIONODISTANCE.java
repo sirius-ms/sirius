@@ -22,17 +22,25 @@ package de.unijena.bioinf.confidence_score;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.features.*;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
 import de.unijena.bioinf.fingerid.blast.ScoringMethodFactory;
+import de.unijena.bioinf.fragmenter.CombinatorialFragment;
+import de.unijena.bioinf.fragmenter.CombinatorialSubtree;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Created by martin on 06.08.18.
  */
 public class CombinedFeatureCreatorBIONODISTANCE extends CombinedFeatureCreator {
 
-    public CombinedFeatureCreatorBIONODISTANCE(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, Scored<FingerprintCandidate>[] scored_array_filtered, Scored<FingerprintCandidate>[] scored_array_covscore_filtered, PredictionPerformance[] performance, FingerblastScoring<?> covscore) {
+    public CombinedFeatureCreatorBIONODISTANCE(Scored<FingerprintCandidate>[] scored_array_all, Scored<FingerprintCandidate>[] scored_array_filtered, FingerblastScoring<?> covscore, ProbabilityFingerprint canopusFptPred, ProbabilityFingerprint canopusFptTop, CombinatorialSubtree[] epiTrees, HashMap<Fragment, ArrayList<CombinatorialFragment>>[] map) {
         super(
                 //new PlattFeatures(),
                /* new LogPvalueDistanceFeatures(scored_array,scored_array,1),
@@ -53,45 +61,39 @@ public class CombinedFeatureCreatorBIONODISTANCE extends CombinedFeatureCreator 
 
                 new PvalueScoreDiffScorerFeatures(scored_array_covscore,scored_array_covscore,scored_array[0],covscore),
 */
-                new ScoreFeaturesNonBio<>(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array,scored_array_filtered),
-                new ScoreFeaturesNonBio<>(covscore,scored_array_covscore,scored_array_covscore_filtered),
+                //OLDSTUFF
+
+              //  new ScoreFeaturesNonBio<>(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array,scored_array_filtered),
+                new ScoreFeaturesNonBio<>(covscore,scored_array_all,scored_array_filtered),
 
 
 
                 new FptLengthFeature(),
-               // new FptLengthDiffFeatures(scored_array_filtered),
-                new FptLengthFeatureHit(scored_array_covscore_filtered),
+                new FptLengthFeatureHit(scored_array_filtered),
                 new SiriusScoreFeatures(),
                 new ExplIntFeatures(),
                 new PredictionQualityFeatures(),
-                //new MassFeatures(),
-                new CandlistSizeFeatures(scored_array_covscore),
+                new CandlistSizeFeatures(scored_array_all),
 
 
                 //these are bio features and can have a filtered list as input
-                //new CandlistSizeFeatures(scored_array_covscore_filtered),
-
-             //   new AllConfidenceScoreSameHitFeatures(all_confidence,same),
-              //  new AllConfidenceScoreDiffHitFeatures(all_confidence,same),
-                //   new LogDistanceFeatures(scored_array,scored_array_filtered,1),
-                //   new LogDistanceFeatures(scored_array_covscore,scored_array_covscore_filtered,1),
-                //    new DistanceFeatures(scored_array,scored_array_filtered,1),
-                //  new DistanceFeatures(scored_array_covscore,scored_array_covscore_filtered,1),
 
 
+             //   new ScoreFeatures<>(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array,scored_array_filtered),
+             //   new ScoreFeatures<>(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array_covscore,scored_array_covscore_filtered),
+              //  new ScoreFeatures<>(covscore,scored_array_filtered),
+                new ScoreFeatures<>(covscore,scored_array_filtered),
 
-                new ScoreFeatures<>(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array,scored_array_filtered),
-                new ScoreFeatures<>(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array_covscore,scored_array_covscore_filtered),
-                new ScoreFeatures<>(covscore,scored_array,scored_array_filtered),
-                new ScoreFeatures<>(covscore,scored_array_covscore,scored_array_covscore_filtered),
+             //   new LogPvalueKDEFeatures(scored_array,scored_array_filtered),
+                new LogPvalueKDEFeatures(scored_array_all,scored_array_filtered),
+              //  new PvalueScoreDiffScorerFeatures<>(scored_array_covscore,scored_array_covscore_filtered,scored_array[0],covscore),
+                new TanimotoToPredFeatures(scored_array_filtered),
 
-               // new LogPvalueFeatures(scored_array,scored_array_filtered),
-               // new LogPvalueFeatures(scored_array_covscore,scored_array_covscore_filtered),
-                new LogPvalueKDEFeatures(scored_array,scored_array_filtered),
-                new LogPvalueKDEFeatures(scored_array_covscore,scored_array_covscore_filtered),
-                new PvalueScoreDiffScorerFeatures<>(scored_array_covscore,scored_array_covscore_filtered,scored_array[0],covscore),
-                //   new TanimotoDistanceFeatures(scored_array,scored_array_filtered,1),
-                new TanimotoToPredFeatures(scored_array,scored_array_filtered)
+                new CanopusDiffFeatures(canopusFptPred,canopusFptTop),
+                new EpiExplIntFeatures(epiTrees[0]),
+                new EpiFragmenterScoreFeatures(epiTrees[0]),
+                new EpiRatioExplPeaksFeatures(epiTrees[0]),
+                new EpiUnexplainedPeaksFeatures(epiTrees[0],map[0])
 
         );
     }
