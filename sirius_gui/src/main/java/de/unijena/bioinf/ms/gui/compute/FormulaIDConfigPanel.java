@@ -63,7 +63,8 @@ import java.util.stream.Stream;
  * @author Marcus Ludwig, Markus Fleischauer
  * @since 12.01.17
  */
-public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
+public class
+FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
     protected Logger logger = LoggerFactory.getLogger(FormulaIDConfigPanel.class);
 
     public enum Instrument {
