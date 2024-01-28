@@ -92,9 +92,11 @@ public class InsilicoFragmentationPeakAnnotator {
 
             final EMFragmenterScoring2 scoring = new EMFragmenterScoring2(molecule, tree);
             final CriticalPathSubtreeCalculator subtreeCalculator = new CriticalPathSubtreeCalculator(tree, molecule, scoring, true);
-
             subtreeCalculator.setMaxNumberOfNodes(nodeLimit);
             final HashSet<MolecularFormula> fset = new HashSet<>();
+
+            checkForInterruption();
+
             for (Fragment ft : tree.getFragmentsWithoutRoot()) {
                 fset.add(ft.getFormula());
                 fset.add(ft.getFormula().add(MolecularFormula.getHydrogen()));
@@ -104,13 +106,11 @@ public class InsilicoFragmentationPeakAnnotator {
                 if (ft.getFormula().numberOfHydrogens() > 1)
                     fset.add(ft.getFormula().subtract(MolecularFormula.getHydrogen().multiply(2)));
             }
+
+            checkForInterruption();
+
             try {
                 subtreeCalculator.initialize((node, nnodes, nedges) -> {
-                    try {
-                        checkForInterruption();
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
                     if (fset.contains(node.getFragment().getFormula())) return true;
                     return (node.getTotalScore() > -5f);
                 });
@@ -121,6 +121,9 @@ public class InsilicoFragmentationPeakAnnotator {
             }
             checkForInterruption();
             subtreeCalculator.computeSubtree();
+            checkForInterruption();
+            subtreeCalculator.computeMapping();
+            checkForInterruption();
 
             return InsilicoFragmentationResult.of(subtreeCalculator);
         }

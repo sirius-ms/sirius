@@ -1,9 +1,13 @@
 package de.unijena.bioinf.confidence_score;
 
 import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
+import de.unijena.bioinf.ms.properties.DefaultProperty;
 
-public class ExpansiveSearchConfidenceMode {
+
+public class ExpansiveSearchConfidenceMode implements Ms2ExperimentAnnotation {
+
 
 
     public enum Mode implements DescriptiveOptions {
@@ -26,18 +30,19 @@ public class ExpansiveSearchConfidenceMode {
             return new Mode[]{EXACT, APPROXIMATE};
         }
     }
+    /**
+     * Factor that PubChem confidence scores gets multiplied with as bias against it.
+     */
+     @DefaultProperty
+    public final double confPubChemFactor;
 
 
+    @DefaultProperty
     public final Mode confidenceScoreSimilarityMode;
 
 
-    //todo NewWorkflow: describe
-    public ExpansiveSearchConfidenceMode(Mode confidenceScoreSimilarityMode) {
-        this.confidenceScoreSimilarityMode = confidenceScoreSimilarityMode;
-    }
-
-    @DefaultInstanceProvider
-    public static ExpansiveSearchConfidenceMode newInstance(Mode mode) {
-        return new ExpansiveSearchConfidenceMode(mode);
+    private ExpansiveSearchConfidenceMode() {
+        this.confPubChemFactor = -1;
+        this.confidenceScoreSimilarityMode=null;
     }
 }

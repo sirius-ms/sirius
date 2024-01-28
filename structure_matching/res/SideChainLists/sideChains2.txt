@@ -1,0 +1,32 @@
+>carboxyl group
+[C](=[O])[O][H]
+
+>carboxamide group
+[C](=[O])[N]([H])[H]
+
+>aldehyde group
+[C](=[O])[H]
+
+>acetyl group
+[C](=[O])[C]([H])([H])[H]
+
+>phosphate group
+[O][P](=[O])([O-])[O-]
+
+>methoxy group
+[O][C]([H])([H])[H]
+
+>methyl group
+[C]([H])([H])[H]
+
+>amino group
+[N]([H])[H]
+
+>sulfhydryl group
+[S][H]
+
+>hydroxyl group
+[O][H]
+
+>hydrogen atom
+[H]
