@@ -62,7 +62,7 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
 
             if ((StructureSearchStrategy.Strategy) strategyBox.getSelectedItem() == StructureSearchStrategy.Strategy.NO_FALLBACK) {
 
-                parameterBindings.put("ExpansiveSearchConfidenceMode", () -> "OFF");
+                parameterBindings.put("ExpansiveSearchConfidenceMode.confidenceScoreSimilarityMode", () -> "OFF");
             }
 
             revalidate();
@@ -77,15 +77,15 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
             }
             switch ((ExpansiveSearchConfidenceMode.Mode) confidenceModeBox.getSelectedItem()) {
                 case EXACT -> {
-                    parameterBindings.put("ExpansiveSearchConfidenceMode", () -> "EXACT");
+                    parameterBindings.put("ExpansiveSearchConfidenceMode.confidenceScoreSimilarityMode", () -> "EXACT");
                 }
                 case APPROXIMATE -> {
-                    parameterBindings.put("ExpansiveSearchConfidenceMode", () -> "APPROXIMATE"); //todo NewWorkflow: check, if this makes sense.
+                    parameterBindings.put("ExpansiveSearchConfidenceMode,confidenceScoreSimilarityMode", () -> "APPROXIMATE"); //todo NewWorkflow: check, if this makes sense.
 
                 }
                 default -> {
                     LoggerFactory.getLogger(FingerblastConfigPanel.class).error("Unknown ExpansiveSearchConfidenceMode setting. Using approximate mode.");
-                    parameterBindings.put("ExpansiveSearchConfidenceMode", () -> "APPROXIMATE");
+                    parameterBindings.put("ExpansiveSearchConfidenceMode.confidenceScoreSimilarityMode", () -> "APPROXIMATE");
                 }
             }
         });

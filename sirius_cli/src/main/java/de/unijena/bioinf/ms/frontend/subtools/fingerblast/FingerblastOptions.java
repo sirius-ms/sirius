@@ -74,6 +74,12 @@ public class FingerblastOptions implements ToolChainOptions<FingerblastSubToolJo
         defaultConfigOptions.changeOption("StructurePredictors", predictors);
     }
 
+    @Option(names = {"-e", "--exp"}, descriptionKey = "ExpansiveSearchConfidenceMode.confidenceScoreSimilarityMode",
+            description = {"Confidence mode that is used for expansive search. OFF -> no expansive search. EXACT -> Exact mode confidence score is used for expansive search. APPROXIMATE ->  Approximate mode confidence score is used for expansive search"})
+    public void setExpansiveSearchConfMode(String expansiveSearchConfMode) throws Exception {
+        defaultConfigOptions.changeOption("ExpansiveSearchConfidenceMode.confidenceScoreSimilarityMode", expansiveSearchConfMode);
+    }
+
     @Override
     public InstanceJob.Factory<FingerblastSubToolJob> call() throws Exception {
         return new InstanceJob.Factory<>(
@@ -109,6 +115,6 @@ public class FingerblastOptions implements ToolChainOptions<FingerblastSubToolJo
 
     @Override
     public List<Class<? extends ToolChainOptions<?, ?>>> getFollowupSubCommands() {
-        return List.of(CanopusOptions.class);
+        return List.of();
     }
 }

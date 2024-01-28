@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.Tanimoto;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.*;
 import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
@@ -77,7 +78,7 @@ public class FingerblastSubToolJob extends InstanceJob {
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
         List<? extends SScored<FormulaResult, ? extends FormulaScore>> formulaResults =
-                inst.loadFormulaResults(FormulaScoring.class, FTree.class, FingerprintResult.class, FBCandidates.class);
+                inst.loadFormulaResults(FormulaScoring.class, FTree.class, FingerprintResult.class, FBCandidates.class, CanopusResult.class);
 
         checkForInterruption();
 
@@ -117,9 +118,15 @@ public class FingerblastSubToolJob extends InstanceJob {
                     return idr;
                 }));
 
+
+        final Map<FormulaResult, CanopusResult> formulaCanopusResultsMap = formulaResults.stream().map(SScored::getCandidate)
+                .filter(res -> res.hasAnnotation(CanopusResult.class))
+                .collect(Collectors.toMap(res -> res, res -> res.getAnnotationOrThrow(CanopusResult.class)));
+
+
         updateProgress(20);
         {
-            final FingerblastJJob job = new FingerblastJJob(csi, ApplicationCore.WEB_API, inst.getExperiment(), new ArrayList<>(formulaResultsMap.values()));
+            final FingerblastJJob job = new FingerblastJJob(csi, ApplicationCore.WEB_API, inst.getExperiment(), new ArrayList<>(formulaResultsMap.values()), new ArrayList<>(formulaCanopusResultsMap.values()));
 
             checkForInterruption();
             // do computation and await results -> objects are already in formulaResultsMap
@@ -174,7 +181,6 @@ public class FingerblastSubToolJob extends InstanceJob {
             formRes.setAnnotation(FBCandidateFingerprints.class, structRes.getAnnotation(FingerblastResult.class).map(FingerblastResult::getCandidateFingerprints).orElse(null));
             formRes.getAnnotationOrThrow(FormulaScoring.class)
                     .setAnnotation(TopCSIScore.class, structRes.getAnnotation(FingerblastResult.class).map(FingerblastResult::getTopHitScore).orElse(null));
-
             formRes.getAnnotationOrThrow(FormulaScoring.class)
                     .setAnnotation(ConfidenceScore.class, structRes.getAnnotation(ConfidenceResult.class).map(x -> x.score).orElse(null));
 
