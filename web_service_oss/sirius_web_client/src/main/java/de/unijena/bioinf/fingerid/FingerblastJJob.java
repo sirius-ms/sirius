@@ -37,7 +37,6 @@ import de.unijena.bioinf.elgordo.TagStructuresByElGordo;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
-import de.unijena.bioinf.fingerid.blast.StructureSearchResult;
 import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.ms.annotations.AnnotationJJob;
@@ -52,10 +51,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 // FingerID Scheduler job does not manage dependencies between different  tools.
 // this is done by the respective subtooljobs in the frontend
@@ -408,10 +404,10 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
 
                 if(confidenceResultAll.score.score()*expansiveSearchConfidenceMode.confPubChemFactor>confidenceResultRequested.score.score()){
                     //All wins over requested
-                    structureSearchResult= new StructureSearchResult(confidenceResultAll.score.score(),confidenceResultAll.scoreApproximate.score(),mcesIndexAll,true);
+                    structureSearchResult= new StructureSearchResult(confidenceResultAll.score.score(),confidenceResultAll.scoreApproximate.score(),mcesIndexAll,expansiveSearchConfidenceMode.confidenceScoreSimilarityMode);
 
                 }else{
-                    structureSearchResult= new StructureSearchResult(confidenceResultRequested.score.score(),confidenceResultRequested.scoreApproximate.score(),mcesIndexRequested,true);
+                    structureSearchResult= new StructureSearchResult(confidenceResultRequested.score.score(),confidenceResultRequested.scoreApproximate.score(),mcesIndexRequested,expansiveSearchConfidenceMode.confidenceScoreSimilarityMode);
 
                 }
 
@@ -420,9 +416,9 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
 
                 if(confidenceResultAll.scoreApproximate.score()*expansiveSearchConfidenceMode.confPubChemFactor>confidenceResultRequested.scoreApproximate.score()){
                     //All wins over requested
-                    structureSearchResult= new StructureSearchResult(confidenceResultAll.score.score(),confidenceResultAll.scoreApproximate.score(),mcesIndexAll,true);
+                    structureSearchResult= new StructureSearchResult(confidenceResultAll.score.score(),confidenceResultAll.scoreApproximate.score(),mcesIndexAll,expansiveSearchConfidenceMode.confidenceScoreSimilarityMode);
                 }else {
-                    structureSearchResult= new StructureSearchResult(confidenceResultRequested.score.score(),confidenceResultRequested.scoreApproximate.score(),mcesIndexRequested,true);
+                    structureSearchResult= new StructureSearchResult(confidenceResultRequested.score.score(),confidenceResultRequested.scoreApproximate.score(),mcesIndexRequested,expansiveSearchConfidenceMode.confidenceScoreSimilarityMode);
 
                 }
             }
@@ -430,7 +426,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
 
         }else {
             ConfidenceResult confidenceResultRequested  = confidenceJJobRequested.awaitResult();
-            structureSearchResult= new StructureSearchResult(confidenceResultRequested.score.score(),confidenceResultRequested.scoreApproximate.score(),mcesIndexRequested,true);
+            structureSearchResult= new StructureSearchResult(confidenceResultRequested.score.score(),confidenceResultRequested.scoreApproximate.score(),mcesIndexRequested,expansiveSearchConfidenceMode.confidenceScoreSimilarityMode);
 
         }
 
