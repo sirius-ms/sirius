@@ -32,7 +32,7 @@ public class EpiPeakSetIntFeatures implements FeatureCreator {
     FTree[] fTrees;
 
 
-    public EpiPeakSetIntFeatures(CombinatorialSubtree[] epiTrees, HashMap<Fragment, ArrayList<CombinatorialFragment>>[] originalMappings, FTree[] ftrees){
+    public EpiPeakSetIntFeatures(CombinatorialSubtree[] epiTrees, Map<Fragment, ArrayList<CombinatorialFragment>>[] originalMappings, FTree[] ftrees){
 
         this.epiTrees=epiTrees;
         this.originalMappings=originalMappings;

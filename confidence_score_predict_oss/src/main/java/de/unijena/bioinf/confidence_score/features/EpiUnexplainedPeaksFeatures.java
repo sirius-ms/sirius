@@ -16,13 +16,14 @@ import de.unijena.bioinf.fragmenter.CombinatorialSubtree;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 public class EpiUnexplainedPeaksFeatures implements FeatureCreator {
 
     CombinatorialSubtree epiTree;
-    HashMap<Fragment, ArrayList<CombinatorialFragment>> originalMappings;
+    Map<Fragment, ArrayList<CombinatorialFragment>> originalMappings;
 
-    public EpiUnexplainedPeaksFeatures(CombinatorialSubtree epiTree, HashMap<Fragment, ArrayList<CombinatorialFragment>> originalMappings){
+    public EpiUnexplainedPeaksFeatures(CombinatorialSubtree epiTree, Map<Fragment, ArrayList<CombinatorialFragment>> originalMappings){
         this.epiTree=epiTree;
         this.originalMappings=originalMappings;
 

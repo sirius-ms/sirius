@@ -34,6 +34,7 @@ import de.unijena.bioinf.fragmenter.CombinatorialSubtree;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by martin on 06.08.18.
@@ -41,7 +42,7 @@ import java.util.HashMap;
 public class CombinedFeatureCreatorBIODISTANCE6TO10 extends CombinedFeatureCreator {
     //all confidence means the pubchem confidence score for this input. Has to be always computet
     // same is the tophit in pubchem the same as in the reduced db.
-    public CombinedFeatureCreatorBIODISTANCE6TO10(Scored<FingerprintCandidate>[] scored_array_all, Scored<FingerprintCandidate>[] scored_array_filtered, FingerblastScoring<?> covscore, ProbabilityFingerprint canopusFptPred, ProbabilityFingerprint canopusFptTop, CombinatorialSubtree[] epiTrees, HashMap<Fragment, ArrayList<CombinatorialFragment>>[] map, FTree[] fTrees) {
+    public CombinedFeatureCreatorBIODISTANCE6TO10(Scored<FingerprintCandidate>[] scored_array_all, Scored<FingerprintCandidate>[] scored_array_filtered, FingerblastScoring<?> covscore, ProbabilityFingerprint canopusFptPred, ProbabilityFingerprint canopusFptTop, CombinatorialSubtree[] epiTrees, Map<Fragment, ArrayList<CombinatorialFragment>>[] map, FTree[] fTrees) {
         super(
                 //new PlattFeatures(),
                 //  new LogPvalueDistanceFeatures(scored_array,scored_array,1),

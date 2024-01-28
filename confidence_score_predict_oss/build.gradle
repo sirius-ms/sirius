@@ -19,6 +19,10 @@
  */
 version =  fingeridVersion
 dependencies {
+
+	implementation project(path: ':canopus_predict_oss')
+    annotationProcessor project(':default_properties:processor')
+
 	//internal
 	api project(':fingerblast_oss')
 	api project(':fingerprinter_oss')
@@ -31,4 +35,5 @@ dependencies {
 	implementation group: 'ca.umontreal.iro.simul', name: 'ssj', version: '3.1.0'
     implementation project(path: ':combinatorial_fragmenter')
 	implementation project(path: ':combinatorial_fragmenter')
+
 }	
