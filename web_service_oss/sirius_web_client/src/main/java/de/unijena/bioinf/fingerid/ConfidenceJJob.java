@@ -26,17 +26,28 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
+import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.annotations.StructureSearchDB;
 import de.unijena.bioinf.confidence_score.ConfidenceScorer;
 import de.unijena.bioinf.fingerid.blast.*;
 import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
+import de.unijena.bioinf.fragmenter.CombinatorialFragment;
+import de.unijena.bioinf.fragmenter.CombinatorialSubtree;
 import de.unijena.bioinf.jjobs.BasicDependentMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
+import de.unijena.bioinf.ms.webapi.WebJJob;
+import it.unimi.dsi.fastutil.Hash;
 import org.jetbrains.annotations.NotNull;
+import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.silent.SilentChemObjectBuilder;
+import org.openscience.cdk.smiles.SmilesParser;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 
@@ -49,6 +60,9 @@ public class ConfidenceJJob extends BasicDependentMasterJJob<ConfidenceResult> {
     protected final ConfidenceScorer confidenceScorer;
     protected final Ms2Experiment experiment;
 
+    private final static SmilesParser smiParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+
+
     // inputs that can be either set by a setter or from dependent jobs
 //    private List<Scored<FingerprintCandidate>> allScoredCandidates = null;
 //    private List<Scored<FingerprintCandidate>> requestedScoredCandidates = null;
@@ -57,7 +71,35 @@ public class ConfidenceJJob extends BasicDependentMasterJJob<ConfidenceResult> {
     protected final Set<FingerblastSearchJJob> inputInstances = new LinkedHashSet<>();
     protected final ScoringMethodFactory.CSIFingerIdScoringMethod csiScoring;
 
-    protected int mcesIndex;
+    protected CanopusResult canopusResultRequested;
+
+    protected Supplier<CanopusResult> canopusResultTopHit;
+
+    protected ParameterStore parameterStoreRequested;
+
+    protected final int mcesIndex;
+
+    protected StructureSearchDB searchDB;
+
+    final ArrayList<Scored<FingerprintCandidate>> allMergedCandidates;
+    final ArrayList<Scored<FingerprintCandidate>> requestedMergedCandidates;
+
+    final ArrayList<Scored<FingerprintCandidate>> requestedMergedCandidatesMCESCondensed;
+
+
+    protected CombinatorialSubtree[] epiTreesExact;
+    protected CombinatorialSubtree[] epiTreesApprox;
+
+    protected FTree[] fTreesExact;
+    protected FTree[] fTreesApprox;
+
+    protected Map<Fragment, ArrayList<CombinatorialFragment>>[] originalMappingsExact;
+
+    protected Map<Fragment, ArrayList<CombinatorialFragment>>[] originalMappingsApprox;
+
+
+    protected Supplier<Map<FTree, SubstructureAnnotationResult>> epiExact;
+    protected Supplier<Map<FTree, SubstructureAnnotationResult>> epiApprox;
 
 
 //    List<Scored<FingerprintCandidate>> allMergedRestDbCandidates;
@@ -81,90 +123,134 @@ public class ConfidenceJJob extends BasicDependentMasterJJob<ConfidenceResult> {
     //OUTPUT
     // ConfidenceResult -> Annotate to
 
-    public ConfidenceJJob(@NotNull CSIPredictor predictor, Ms2Experiment experiment) {
+    public ConfidenceJJob(@NotNull CSIPredictor predictor, Ms2Experiment experiment, ArrayList<Scored<FingerprintCandidate>> allMergedCandidates, ArrayList<Scored<FingerprintCandidate>> requestedMergedCandidates,ArrayList<Scored<FingerprintCandidate>> requestedMergedCandidatesMCESCondensed,StructureSearchDB searchDB, ParameterStore parameterStore,CanopusResult canopusResult, int mcesIndex) {
         super(JobType.CPU);
         this.confidenceScorer = predictor.getConfidenceScorer();
         this.csiScoring = new ScoringMethodFactory.CSIFingerIdScoringMethod(predictor.performances);
         this.experiment = experiment;
+        this.parameterStoreRequested=parameterStore;
+        this.searchDB=searchDB;
+        this.canopusResultRequested=canopusResult;
+        this.allMergedCandidates=allMergedCandidates;
+        this.requestedMergedCandidates=requestedMergedCandidates;
+        this.requestedMergedCandidatesMCESCondensed=requestedMergedCandidatesMCESCondensed;
+        this.mcesIndex=mcesIndex;
 
     }
+
+
 
 
     @Override
     public synchronized void handleFinishedRequiredJob(JJob required) {
-        if (required instanceof FingerblastSearchJJob) {
-            final FingerblastSearchJJob searchDBJob = (FingerblastSearchJJob) required;
-            if (searchDBJob.result() != null && searchDBJob.result().getTopHitScore() != null) {
-                inputInstances.add(searchDBJob);
-            } else {
-                if (searchDBJob.result() == null)
-                    LoggerFactory.getLogger(getClass()).warn("Fingerblast Job '" + searchDBJob.identifier() + "' skipped because of result was null.");
-            }
-        }
 
-        if (required instanceof MCESJJob){
-            final MCESJJob mcesjJob = (MCESJJob) required;
-            mcesIndex=mcesjJob.getResult().mcesIndex;
 
-        }
     }
 
+
+    public void setEpiExact(Supplier<Map<FTree, SubstructureAnnotationResult>> epiExact) {
+        this.epiExact = epiExact;
+    }
+
+    public void setEpiApprox(Supplier<Map<FTree, SubstructureAnnotationResult>> epiApprox) {
+        this.epiApprox = epiApprox;
+    }
+
+    public void setCanopusResultTopHit(Supplier<CanopusResult> canopusResultTopHit) {
+        this.canopusResultTopHit = canopusResultTopHit;
+    }
 
     @Override
     protected ConfidenceResult compute() throws Exception {
         checkForInterruption();
-        if (inputInstances.isEmpty())
+        if (this.requestedMergedCandidates.isEmpty())
             return new ConfidenceResult(Double.NaN, Double.NaN, null,0);
 
-        Map<FingerblastSearchJJob, List<JJob<List<Scored<FingerprintCandidate>>>>> csiScoreJobs = new HashMap<>();
+
+            parseEpiResults();
 
 
-        final List<Scored<FingerprintCandidate>> allMergedCandidates = new ArrayList<>();
-        final List<Scored<FingerprintCandidate>> requestedMergedCandidates = new ArrayList<>();
-
-
-        Double topHitScore = null;
-        ProbabilityFingerprint topHitFP = null;
-        FTree topHitTree = null;
-        MolecularFormula topHitFormula = null;
-        BayesnetScoring topHitScoring = null;
-        boolean structureSearchDBIsPubChem = ((experiment.getAnnotationOrNull(StructureSearchDB.class).getDBFlag() & 2L) !=0)? true : false;
-
-
-        for (FingerblastSearchJJob searchDBJob : inputInstances) {
-            FingerblastResult r = searchDBJob.result();
-            final List<Scored<FingerprintCandidate>> allRestDbScoredCandidates = searchDBJob.getCandidates().getAllDbCandidatesInChIs().map(set ->
-                            searchDBJob.getAllScoredCandidates().stream().filter(sc -> set.contains(sc.getCandidate().getInchiKey2D())).collect(Collectors.toList())).
-                    orElseThrow(() -> new IllegalArgumentException("Additional candidates Flag 'ALL' from DataSource is not Available but mandatory to compute Confidence scores!"));
-
-
-            allMergedCandidates.addAll(allRestDbScoredCandidates);
-            requestedMergedCandidates.addAll(r.getResults());
-
-            if (topHitScore == null || topHitScore < r.getTopHitScore().score()) {
-                topHitScore = r.getTopHitScore().score();
-                topHitFP = searchDBJob.fp;
-                topHitTree = searchDBJob.ftree;
-                topHitFormula = searchDBJob.formula;
-                topHitScoring = searchDBJob.bayesnetScoring;
-            }
-
-        }
-            allMergedCandidates.sort(Comparator.reverseOrder());
-            requestedMergedCandidates.sort(Comparator.reverseOrder());
+            boolean structureSearchDBIsPubChem = ((searchDB.getDBFlag() & 2L) !=0)? true : false;
 
 
             checkForInterruption();
 
+
+            //compute exact confidence
             final double score = confidenceScorer.computeConfidence(experiment,
                     allMergedCandidates,
-                    requestedMergedCandidates,
-                    ParameterStore.of(topHitFP, topHitScoring, topHitTree, topHitFormula), structureSearchDBIsPubChem);
+                    requestedMergedCandidates,parameterStoreRequested
+                    , structureSearchDBIsPubChem,fTreesExact,epiTreesExact,originalMappingsExact,canopusResultRequested,canopusResultTopHit.get());
 
-            final double scoreApproximate = 0;
+
+            //compute approximate confidence
+
+
+            final double scoreApproximate = confidenceScorer.computeConfidence(experiment,
+                    allMergedCandidates,
+                    requestedMergedCandidatesMCESCondensed,parameterStoreRequested
+                    , structureSearchDBIsPubChem,fTreesApprox,epiTreesApprox,originalMappingsApprox,canopusResultRequested,canopusResultTopHit.get());
+
 
             checkForInterruption();
             return new ConfidenceResult(score, scoreApproximate, requestedMergedCandidates.size() > 0 ? requestedMergedCandidates.get(0) : null, mcesIndex);
         }
+
+
+    private void parseEpiResults(){
+
+        Map<FTree, SubstructureAnnotationResult> epiApproxMap = epiApprox.get();
+        Map<FTree, SubstructureAnnotationResult> epiExactMap = epiExact.get();
+
+        fTreesExact = requestedMergedCandidates.size()>=5 ? new FTree[5] : requestedMergedCandidates.size()>=2 ? new FTree[2] : requestedMergedCandidates.size()>=1 ? new FTree[1] : null;
+        fTreesApprox = requestedMergedCandidatesMCESCondensed.size()>=5 ? new FTree[5] : requestedMergedCandidatesMCESCondensed.size()>=2 ? new FTree[2] : requestedMergedCandidatesMCESCondensed.size()>=1 ? new FTree[1] : null;
+
+        epiTreesExact = requestedMergedCandidates.size()>=5 ? new CombinatorialSubtree[5] : requestedMergedCandidates.size()>=2 ? new CombinatorialSubtree[2] : requestedMergedCandidates.size()>=1 ? new CombinatorialSubtree[1] : null;
+        epiTreesApprox = requestedMergedCandidatesMCESCondensed.size()>=5 ? new CombinatorialSubtree[5] : requestedMergedCandidatesMCESCondensed.size()>=2 ? new CombinatorialSubtree[2] : requestedMergedCandidatesMCESCondensed.size()>=1 ? new CombinatorialSubtree[1] : null;
+
+        originalMappingsExact = requestedMergedCandidates.size()>=5 ? new Map[5] : requestedMergedCandidates.size()>=2 ? new Map[2] : requestedMergedCandidates.size()>=1 ? new Map[1] : null;
+        originalMappingsApprox = requestedMergedCandidatesMCESCondensed.size()>=5 ? new Map[5] : requestedMergedCandidatesMCESCondensed.size()>=2 ? new Map[2] : requestedMergedCandidatesMCESCondensed.size()>=1 ? new Map[1] : null;
+
+
+
+
+
+        for (FTree tree : epiExactMap.keySet()){
+            for(String key : epiExactMap.get(tree).getInchiToFragmentationResult().keySet()){
+                CombinatorialSubtree subtree = epiExactMap.get(tree).getInchiToFragmentationResult().get(key).getSubtree();
+                Map<Fragment, ArrayList<CombinatorialFragment>> mapping = epiExactMap.get(tree).getInchiToFragmentationResult().get(key).getFragmentMapping();
+                for(int i=0;i<requestedMergedCandidates.size();i++){
+                    if(requestedMergedCandidates.get(i).getCandidate().getInchiKey2D().equals(key) && i<fTreesExact.length){
+                        fTreesExact[i]=tree;
+                        epiTreesExact[i]=subtree;
+                        originalMappingsExact[i]=mapping;
+                    break;
+                    }
+                }
+
+            }
+        }
+
+        for (FTree tree : epiApproxMap.keySet()){
+            for(String key : epiApproxMap.get(tree).getInchiToFragmentationResult().keySet()){
+                CombinatorialSubtree subtree = epiApproxMap.get(tree).getInchiToFragmentationResult().get(key).getSubtree();
+                Map<Fragment, ArrayList<CombinatorialFragment>> mapping = epiApproxMap.get(tree).getInchiToFragmentationResult().get(key).getFragmentMapping();
+                for(int i=0;i<requestedMergedCandidatesMCESCondensed.size();i++){
+                    if(requestedMergedCandidatesMCESCondensed.get(i).getCandidate().getInchiKey2D().equals(key) && i<fTreesApprox.length){
+                        fTreesApprox[i]=tree;
+                        epiTreesApprox[i]=subtree;
+                        originalMappingsApprox[i]=mapping;
+                        break;
+                    }
+                }
+
+            }
+        }
+
+
+
+
+    }
+
 
 }
