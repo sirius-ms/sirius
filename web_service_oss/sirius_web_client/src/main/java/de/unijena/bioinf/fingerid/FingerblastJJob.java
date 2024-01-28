@@ -276,7 +276,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
         //Start and finish MCES job for requested DBs here, since Epi and conf are dependent on the mces-condensed list
         final MCESJJob mcesJJobRequested = new MCESJJob(confScoreApproxDist.value,requestedMergedCandidates);
         submitSubJob(mcesJJobRequested);
-        int mcesIndexRequested = mcesJJobRequested.awaitResult().mcesIndex;
+        int mcesIndexRequested = mcesJJobRequested.awaitResult();
 
 
         //MCES-condensed list for requested
@@ -335,6 +335,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
          * If Expansive search is not OFF, we have to do it all again for PubChem aka ALL. We still need to compute approximate AND exact confidences here.
          *
          */
+        ConfidenceResult finalConfidenceResult = null;
 
         if(!expansiveSearchConfidenceMode.confidenceScoreSimilarityMode.equals(ExpansiveSearchConfidenceMode.Mode.OFF)) {
 
@@ -344,12 +345,12 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
             //Start and finish MCES job for All DBs here, since Epi and conf are dependent on the mces-condensed list
             final MCESJJob mcesJJobAll = new MCESJJob(confScoreApproxDist.value,allMergedCandidates);
             submitSubJob(mcesJJobAll);
-            int mcesIndexAll = mcesJJobAll.awaitResult().mcesIndex;
+            int mcesIndexAll = mcesJJobAll.awaitResult();
 
             //MCES-condensed list for all
             ArrayList<Scored<FingerprintCandidate>> allMergedCandidatesMCESCondensed = new ArrayList<>();
             allMergedCandidatesMCESCondensed.add(allMergedCandidates.get(0));
-            Map removedCandidatesAll = allMergedCandidates.subList(1, mcesIndexAll + 1).stream().collect(Collectors.toMap(c -> c.getCandidate().getInchiKey2D(), Scored<FingerprintCandidate>::getScore));
+            Map<String, Double> removedCandidatesAll = allMergedCandidates.subList(1, mcesIndexAll + 1).stream().collect(Collectors.toMap(c -> c.getCandidate().getInchiKey2D(), Scored<FingerprintCandidate>::getScore));
             allMergedCandidatesMCESCondensed.addAll(allMergedCandidates.subList(mcesIndexAll + 1, allMergedCandidates.size()));
 
 
@@ -399,36 +400,34 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
              * expansive search decision happens here
              */
 
-
             if (expansiveSearchConfidenceMode.confidenceScoreSimilarityMode.equals(ExpansiveSearchConfidenceMode.Mode.EXACT)){
-
                 if(confidenceResultAll.score.score()*expansiveSearchConfidenceMode.confPubChemFactor>confidenceResultRequested.score.score()){
                     //All wins over requested
-                    structureSearchResult= new StructureSearchResult(confidenceResultAll.score.score(),confidenceResultAll.scoreApproximate.score(),mcesIndexAll,expansiveSearchConfidenceMode.confidenceScoreSimilarityMode);
-
+                    structureSearchResult= StructureSearchResult.of(confidenceResultAll ,expansiveSearchConfidenceMode.confidenceScoreSimilarityMode);
+                    finalConfidenceResult = confidenceResultAll;
                 }else{
-                    structureSearchResult= new StructureSearchResult(confidenceResultRequested.score.score(),confidenceResultRequested.scoreApproximate.score(),mcesIndexRequested,expansiveSearchConfidenceMode.confidenceScoreSimilarityMode);
-
+                    structureSearchResult= StructureSearchResult.of(confidenceResultRequested, expansiveSearchConfidenceMode.confidenceScoreSimilarityMode);
+                    finalConfidenceResult = confidenceResultRequested;
                 }
-
-
             }else if (expansiveSearchConfidenceMode.confidenceScoreSimilarityMode.equals(ExpansiveSearchConfidenceMode.Mode.APPROXIMATE)){
-
                 if(confidenceResultAll.scoreApproximate.score()*expansiveSearchConfidenceMode.confPubChemFactor>confidenceResultRequested.scoreApproximate.score()){
                     //All wins over requested
-                    structureSearchResult= new StructureSearchResult(confidenceResultAll.score.score(),confidenceResultAll.scoreApproximate.score(),mcesIndexAll,expansiveSearchConfidenceMode.confidenceScoreSimilarityMode);
+                    structureSearchResult= StructureSearchResult.of(confidenceResultAll, expansiveSearchConfidenceMode.confidenceScoreSimilarityMode);
+                    finalConfidenceResult = confidenceResultAll;
                 }else {
-                    structureSearchResult= new StructureSearchResult(confidenceResultRequested.score.score(),confidenceResultRequested.scoreApproximate.score(),mcesIndexRequested,expansiveSearchConfidenceMode.confidenceScoreSimilarityMode);
-
+                    structureSearchResult= StructureSearchResult.of(confidenceResultRequested, expansiveSearchConfidenceMode.confidenceScoreSimilarityMode);
+                    finalConfidenceResult = confidenceResultRequested;
                 }
             }
 
 
         }else {
             ConfidenceResult confidenceResultRequested  = confidenceJJobRequested.awaitResult();
-            structureSearchResult= new StructureSearchResult(confidenceResultRequested.score.score(),confidenceResultRequested.scoreApproximate.score(),mcesIndexRequested,expansiveSearchConfidenceMode.confidenceScoreSimilarityMode);
-
+            structureSearchResult= StructureSearchResult.of(confidenceResultRequested,expansiveSearchConfidenceMode.confidenceScoreSimilarityMode);
+            finalConfidenceResult = confidenceResultRequested;
         }
+
+
 
 
 
@@ -447,27 +446,23 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
         annotationJJobs.forEach(AnnotationJJob::takeAndAnnotateResult);
         checkForInterruption();
 
-    /*    if (confidenceJJob != null) {
-            try {
-                ConfidenceResult confidenceRes = confidenceJJob.awaitResult();
-                if (confidenceRes.topHit != null) {
-                    FingerIdResult topHit = annotationJJobs.values().stream().distinct()
-                            .filter(fpr -> !fpr.getFingerprintCandidates().isEmpty()).max(Comparator.comparing(fpr -> fpr.getFingerprintCandidates().get(0))).orElse(null);
-                    if (topHit != null) {
-                        if (topHit.getFingerprintCandidates().get(0).getCandidate().getInchiKey2D().equals(confidenceRes.topHit.getCandidate().getInchiKey2D()))
-                            topHit.setAnnotation(ConfidenceResult.class, confidenceRes);
-                        else
-                            logWarn("TopHit does not Match Confidence Result TopHit!'" + confidenceRes.topHit.getCandidate().getInchiKey2D() + "' vs '" + topHit.getFingerprintCandidates().get(0).getCandidate().getInchiKey2D() + "'.  Confidence might be lost!");
-                    } else {
-                        logWarn("No TopHit found for. But confidence was calculated for: '" + confidenceRes.topHit.getCandidate().getInchiKey2D() + "'.  Looks like a Bug. Confidence might be lost!");
-                    }
+        if (finalConfidenceResult != null) {
+            if (finalConfidenceResult.topHit != null) {
+                FingerIdResult topHit = annotationJJobs.values().stream().distinct()
+                        .filter(fpr -> !fpr.getFingerprintCandidates().isEmpty()).max(Comparator.comparing(fpr -> fpr.getFingerprintCandidates().get(0))).orElse(null);
+                if (topHit != null) {
+                    if (topHit.getFingerprintCandidates().get(0).getCandidate().getInchiKey2D().equals(finalConfidenceResult.topHit.getCandidate().getInchiKey2D())) {
+                        topHit.setAnnotation(ConfidenceResult.class, finalConfidenceResult);
+                        topHit.setAnnotation(StructureSearchResult.class, structureSearchResult);
+                    } else
+                        logWarn("TopHit does not Match Confidence Result TopHit!'" + finalConfidenceResult.topHit.getCandidate().getInchiKey2D() + "' vs '" + topHit.getFingerprintCandidates().get(0).getCandidate().getInchiKey2D() + "'.  Confidence might be lost!");
                 } else {
-                    logWarn("No Confidence computed.");
+                    logWarn("No TopHit found for. But confidence was calculated for: '" + finalConfidenceResult.topHit.getCandidate().getInchiKey2D() + "'.  Looks like a Bug. Confidence might be lost!");
                 }
-            } catch (ExecutionException e) {
-                logWarn("Could not compute confidence, due to and Error!", e);
+            } else {
+                logWarn("No Confidence computed.");
             }
-        }*/
+        }
 
 
         logDebug("CSI:FingerID structure DB Search DONE!");

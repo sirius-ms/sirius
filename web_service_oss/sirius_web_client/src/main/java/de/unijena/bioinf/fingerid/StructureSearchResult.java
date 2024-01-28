@@ -2,21 +2,25 @@ package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.confidence_score.ExpansiveSearchConfidenceMode;
 import de.unijena.bioinf.ms.annotations.ResultAnnotation;
+import lombok.Builder;
+import lombok.Getter;
 
+@Getter
+@Builder
 public class StructureSearchResult implements ResultAnnotation {
 
-    public double confidenceScoreExact;
+    private final double score;
+    private final double scoreApproximate;
+    private final int mcesIndex;
+    private final ExpansiveSearchConfidenceMode.Mode expansiveSearchConfidenceMode;
 
-    public double confidenceScoreApproximate;
 
-    ExpansiveSearchConfidenceMode.Mode expansiveSearchConfidenceMode;
-
-    int mcesIndex;
-
-    public StructureSearchResult(double confidenceScoreExact, double confidenceScoreApproximate, int mcesIndex, ExpansiveSearchConfidenceMode.Mode expansiveSearchConfidenceMode) {
-        this.confidenceScoreExact = confidenceScoreExact;
-        this.confidenceScoreApproximate = confidenceScoreApproximate;
-        this.expansiveSearchConfidenceMode=expansiveSearchConfidenceMode;
-        this.mcesIndex=mcesIndex;
+    public static StructureSearchResult of(ConfidenceResult confidenceResult, ExpansiveSearchConfidenceMode.Mode expansiveSearchConfidenceMode) {
+        return StructureSearchResult.builder()
+                .score(confidenceResult.score.score())
+                .scoreApproximate(confidenceResult.scoreApproximate.score())
+                .mcesIndex(confidenceResult.mcesIndex)
+                .expansiveSearchConfidenceMode(expansiveSearchConfidenceMode)
+                .build();
     }
 }
