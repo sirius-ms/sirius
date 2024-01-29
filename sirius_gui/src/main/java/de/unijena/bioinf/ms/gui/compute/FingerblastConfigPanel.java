@@ -80,7 +80,7 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
                     parameterBindings.put("ExpansiveSearchConfidenceMode.confidenceScoreSimilarityMode", () -> "EXACT");
                 }
                 case APPROXIMATE -> {
-                    parameterBindings.put("ExpansiveSearchConfidenceMode,confidenceScoreSimilarityMode", () -> "APPROXIMATE"); //todo NewWorkflow: check, if this makes sense.
+                    parameterBindings.put("ExpansiveSearchConfidenceMode.confidenceScoreSimilarityMode", () -> "APPROXIMATE"); //todo NewWorkflow: check, if this makes sense.
 
                 }
                 default -> {
