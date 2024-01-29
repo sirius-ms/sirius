@@ -85,6 +85,6 @@ public class FingerprintOptions implements ToolChainOptions<FingerprintSubToolJo
 
     @Override
     public List<Class<? extends ToolChainOptions<?, ?>>> getDependentSubCommands() {
-        return List.of(FingerblastOptions.class, CanopusOptions.class);
+        return List.of(CanopusOptions.class);
     }
 }
