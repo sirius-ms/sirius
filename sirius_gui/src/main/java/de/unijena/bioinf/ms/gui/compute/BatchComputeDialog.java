@@ -414,15 +414,15 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             configCommand.addAll(csiPredictConfigs.asParameterList());
         }
 
+        //canopus must now run before structure database search
+        if (canopusConfigPanel != null && canopusConfigPanel.isToolSelected()) {
+            toolCommands.add(canopusConfigPanel.content.toolCommand());
+            configCommand.addAll(canopusConfigPanel.asParameterList());
+        }
 
         if (csiSearchConfigs != null && csiSearchConfigs.isToolSelected()) {
             toolCommands.add(csiSearchConfigs.content.toolCommand());
             configCommand.addAll(csiSearchConfigs.asParameterList());
-        }
-
-        if (canopusConfigPanel != null && canopusConfigPanel.isToolSelected()) {
-            toolCommands.add(canopusConfigPanel.content.toolCommand());
-            configCommand.addAll(canopusConfigPanel.asParameterList());
         }
 
         List<String> command = new ArrayList<>();
