@@ -129,7 +129,7 @@ public class CSICovarianceConfidenceScorer<S extends FingerblastScoring<?>> impl
 
             if (rankedSearchDBCandidates.length>10) { //calculate score for pubChem lists
                 comb = new CombinedFeatureCreatorALL( rankedPubchemCandidates, covarianceScoring, canopusFptPred, canopusFptTop, epiTrees, originalMappings, fTrees);
-                distanceType = null;
+                distanceType = DISTANCE_ID;
                 dbType = DB_ALL_ID;
             } else{
                 comb = new CombinedFeatureCreatorALL6TO10(rankedPubchemCandidates, covarianceScoring, canopusFptPred, canopusFptTop, epiTrees, originalMappings, fTrees);
@@ -162,17 +162,17 @@ public class CSICovarianceConfidenceScorer<S extends FingerblastScoring<?>> impl
 
 
     private double calculateConfidence(double[] feature, @NotNull String dbType, @Nullable String distanceType) {
-        Random r = new Random(); //TODO: BETTER DONT FORGET TO TAKE THIS OUT
-        return r.nextDouble(1);
+       /* Random r = new Random(); //TODO: BETTER DONT FORGET TO TAKE THIS OUT
+        return r.nextDouble(1);*/
 
-       /* final String id = distanceType != null ? dbType + distanceType + ".svm" : dbType + ".svm";
+        final String id = distanceType != null ? dbType + distanceType + ".svm" : dbType + ".svm";
         final TrainedSVM svm = trainedSVMs.get(id);
         if (svm == null)
             throw new IllegalArgumentException("Could not find confidence svm with ID: \"" + id + "\"");
         final double[][] featureMatrix = new double[1][feature.length];
         featureMatrix[0] = feature;
         SVMUtils.standardize_features(featureMatrix, svm.scales);
-        return new SVMPredict().predict_confidence(featureMatrix, svm)[0];*/
+        return new SVMPredict().predict_confidence(featureMatrix, svm)[0];
     }
 
 }
