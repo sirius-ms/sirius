@@ -226,6 +226,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
 
         loginErrorLabel.setHorizontalAlignment(SwingConstants.CENTER);
         loginErrorLabel.setText("<html><p style=\"background-color:#ffafaf; color:black\"><b>LOGIN ERROR:</b> Please login with a verified user account to import compounds!</p></html>");
+        loginErrorLabel.setVisible(false);
 
         importButton = new JButton("Create/Open database and import compounds");
         importButton.setEnabled(false);
