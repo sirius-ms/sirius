@@ -32,12 +32,10 @@ import org.junit.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -86,7 +84,7 @@ public class AgilentCefCompoundParserTest {
             final int iterations = 1;
             for (int i = 0; i < iterations; i++) {
                 for (String location : locations) {
-                    try (BufferedReader reader = Files.newBufferedReader(Path.of(location))) {
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(location)))) {
                         GenericParser<Compound> parser = new GenericParser<>(new AgilentCefCompoundParser());
                         parser.parseIterator(reader, null).forEachRemaining(compounds::add);
                     }
