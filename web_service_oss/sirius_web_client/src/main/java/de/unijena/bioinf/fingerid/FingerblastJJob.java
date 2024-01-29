@@ -46,6 +46,7 @@ import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobInput;
 import de.unijena.bioinf.ms.webapi.WebJJob;
 import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.webapi.WebAPI;
+import it.unimi.dsi.fastutil.Hash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -182,6 +183,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
 
 
         ArrayList<FingerblastSearchJJob> searchJJobs = new ArrayList<>();
+        HashMap<FingerblastSearchJJob, FingerIdResult> jobFidResult =  new HashMap<>();
 
         for (int i = 0; i < idResult.size(); i++) {
             final FingerIdResult fingeridInput = idResult.get(i);
@@ -190,12 +192,14 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
             if (scorings[i] != null) {
                 blastJob = FingerblastSearchJJob.of(predictor, scorings[i], fingeridInput);
                 searchJJobs.add(blastJob);
+                jobFidResult.put(blastJob,fingeridInput);
 
             } else {
                 // bayesnetScoring is null --> make a prepare job which computes the bayessian network (covTree) for the
                 // given molecular formula
                 blastJob = FingerblastSearchJJob.of(predictor, fingeridInput);
                 searchJJobs.add(blastJob);
+                jobFidResult.put(blastJob,fingeridInput);
                 WebJJob<CovtreeJobInput, ?, BayesnetScoring, ?> covTreeJob =
                         webAPI.submitCovtreeJob(fingeridInput.getMolecularFormula(), predictor.predictorType);
                 blastJob.addRequiredJob(covTreeJob);
@@ -216,6 +220,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
         MolecularFormula topHitFormulaRequested = null, topHitFormulaAll = null;
         BayesnetScoring topHitScoringRequested = null, topHitScoringAll= null;
         CanopusResult topFormulaCanopusResultRequested = null, topFormulaCanopusResultAll=null;
+        FingerIdResult topHitFidResultRequested =null, topHitFidResultAll=null;
 
 
 
@@ -232,6 +237,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
         for (int i=0;i<searchJJobs.size();i++) {
             FingerblastSearchJJob searchDBJob =searchJJobs.get(i);
             FingerblastResult r = searchDBJob.awaitResult();
+
             final List<Scored<FingerprintCandidate>> allRestDbScoredCandidates = searchDBJob.getCandidates().getAllDbCandidatesInChIs().map(set ->
                             searchDBJob.getAllScoredCandidates().stream().filter(sc -> set.contains(sc.getCandidate().getInchiKey2D())).collect(Collectors.toList())).
                     orElseThrow(() -> new IllegalArgumentException("Additional candidates Flag 'ALL' from DataSource is not Available but mandatory to compute Confidence scores!"));
@@ -249,18 +255,20 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
                 topHitScoreRequested = r.getTopHitScore().score();
                 topHitFPRequested = searchDBJob.fp;
                 topHitTreeRequested = searchDBJob.ftree;
+                topHitFidResultRequested = idResult.get(i);
                 topHitFormulaRequested = searchDBJob.formula;
                 topHitScoringRequested = searchDBJob.bayesnetScoring;
                 topFormulaCanopusResultRequested = canopusResult.get(i);
             }}
 
-            if(allMergedCandidates!=null) {
+            if(allRestDbScoredCandidates!=null) {
 
-                if (topHitScoreAll == null || topHitScoreAll < allMergedCandidates.get(0).getScore()) {
-                    topHitScoreAll = allMergedCandidates.get(0).getScore();
+                if (topHitScoreAll == null || topHitScoreAll < allRestDbScoredCandidates.get(0).getScore()) {
+                    topHitScoreAll = allRestDbScoredCandidates.get(0).getScore();
                     topHitFPAll = searchDBJob.fp;
                     topHitTreeAll = searchDBJob.ftree;
                     topHitFormulaAll = searchDBJob.formula;
+                    topHitFidResultAll = idResult.get(i);
                     topHitScoringAll = searchDBJob.bayesnetScoring;
                     topFormulaCanopusResultAll = canopusResult.get(i);
                 }
@@ -273,9 +281,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
         allMergedCandidates.sort(Comparator.reverseOrder());
         requestedMergedCandidates.sort(Comparator.reverseOrder());
 
-
-        assert requestedMergedCandidates.get(0).getScore() == topHitScoreRequested;
-
+        //TODO: Catch if requested is empty
 
         //Start and finish MCES job for requested DBs here, since Epi and conf are dependent on the mces-condensed list
         final MCESJJob mcesJJobRequested = new MCESJJob(confScoreApproxDist.value,requestedMergedCandidates);
@@ -410,7 +416,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
                     structureSearchResult= StructureSearchResult.of(confidenceResultAll ,expansiveSearchConfidenceMode.confidenceScoreSimilarityMode);
                     finalConfidenceResult = confidenceResultAll;
                 }else{
-                    structureSearchResult= StructureSearchResult.of(confidenceResultRequested, expansiveSearchConfidenceMode.confidenceScoreSimilarityMode);
+                    structureSearchResult= StructureSearchResult.of(confidenceResultRequested, ExpansiveSearchConfidenceMode.Mode.OFF);
                     finalConfidenceResult = confidenceResultRequested;
                 }
             }else if (expansiveSearchConfidenceMode.confidenceScoreSimilarityMode.equals(ExpansiveSearchConfidenceMode.Mode.APPROXIMATE)){
@@ -419,7 +425,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
                     structureSearchResult= StructureSearchResult.of(confidenceResultAll, expansiveSearchConfidenceMode.confidenceScoreSimilarityMode);
                     finalConfidenceResult = confidenceResultAll;
                 }else {
-                    structureSearchResult= StructureSearchResult.of(confidenceResultRequested, expansiveSearchConfidenceMode.confidenceScoreSimilarityMode);
+                    structureSearchResult= StructureSearchResult.of(confidenceResultRequested, ExpansiveSearchConfidenceMode.Mode.OFF);
                     finalConfidenceResult = confidenceResultRequested;
                 }
             }
@@ -447,13 +453,25 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
         // this loop is just to ensure that we wait until all jobs are finished.
         // the logic if a job can fail or not is done via job dependencies (see above)
         checkForInterruption();
-        annotationJJobs.forEach(AnnotationJJob::takeAndAnnotateResult);
+
+
+        boolean isExpanded = !structureSearchResult.getExpansiveSearchConfidenceMode().equals(ExpansiveSearchConfidenceMode.Mode.OFF);
+
+        for(FingerblastSearchJJob  job : searchJJobs ){
+
+            FingerblastResult r = isExpanded ? new FingerblastResult(job.getCandidates().getAllDbCandidatesInChIs().map(set ->
+                            job.getAllScoredCandidates().stream().filter(sc -> set.contains(sc.getCandidate().getInchiKey2D())).collect(Collectors.toList())).
+                    orElseThrow(() -> new IllegalArgumentException("Additional candidates Flag 'ALL' from DataSource is not Available but mandatory to compute Confidence scores!"))) : job.getResult();
+
+            jobFidResult.get(job).setAnnotation(FingerblastResult.class,r);
+
+        }
+
         checkForInterruption();
 
         if (finalConfidenceResult != null) {
             if (finalConfidenceResult.topHit != null) {
-                FingerIdResult topHit = annotationJJobs.values().stream().distinct()
-                        .filter(fpr -> !fpr.getFingerprintCandidates().isEmpty()).max(Comparator.comparing(fpr -> fpr.getFingerprintCandidates().get(0))).orElse(null);
+                FingerIdResult topHit = isExpanded ? topHitFidResultAll : topHitFidResultRequested;
                 if (topHit != null) {
                     if (topHit.getFingerprintCandidates().get(0).getCandidate().getInchiKey2D().equals(finalConfidenceResult.topHit.getCandidate().getInchiKey2D())) {
                         topHit.setAnnotation(ConfidenceResult.class, finalConfidenceResult);
