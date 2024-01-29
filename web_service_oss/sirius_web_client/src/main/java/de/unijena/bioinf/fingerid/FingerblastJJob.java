@@ -243,6 +243,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
             fTreeCandidatesMapRequested.put(searchDBJob.ftree,new FBCandidates(r.getResults().stream().map(fc -> new Scored<CompoundCandidate>(fc.getCandidate().toCompoundCandidate(),fc.getScore())).collect(Collectors.toList())));
             fTreeCandidatesMapAll.put(searchDBJob.ftree,new FBCandidates(allRestDbScoredCandidates.stream().map(fc -> new Scored<CompoundCandidate>(fc.getCandidate().toCompoundCandidate(),fc.getScore())).collect(Collectors.toList())));
 
+            if(r.getTopHitScore()!=null){
 
             if (topHitScoreRequested == null || topHitScoreRequested < r.getTopHitScore().score()) {
                 topHitScoreRequested = r.getTopHitScore().score();
@@ -251,15 +252,18 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
                 topHitFormulaRequested = searchDBJob.formula;
                 topHitScoringRequested = searchDBJob.bayesnetScoring;
                 topFormulaCanopusResultRequested = canopusResult.get(i);
-            }
+            }}
 
-            if (topHitScoreAll == null || topHitScoreAll < allMergedCandidates.get(0).getScore()) {
-                topHitScoreAll = allMergedCandidates.get(0).getScore();
-                topHitFPAll = searchDBJob.fp;
-                topHitTreeAll = searchDBJob.ftree;
-                topHitFormulaAll = searchDBJob.formula;
-                topHitScoringAll = searchDBJob.bayesnetScoring;
-                topFormulaCanopusResultAll = canopusResult.get(i);
+            if(allMergedCandidates!=null) {
+
+                if (topHitScoreAll == null || topHitScoreAll < allMergedCandidates.get(0).getScore()) {
+                    topHitScoreAll = allMergedCandidates.get(0).getScore();
+                    topHitFPAll = searchDBJob.fp;
+                    topHitTreeAll = searchDBJob.ftree;
+                    topHitFormulaAll = searchDBJob.formula;
+                    topHitScoringAll = searchDBJob.bayesnetScoring;
+                    topFormulaCanopusResultAll = canopusResult.get(i);
+                }
             }
 
 
