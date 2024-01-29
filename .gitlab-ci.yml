@@ -8,13 +8,23 @@ image: azul/zulu-openjdk:17-latest
 # runtime for each build is more reliable since the runtime is completely
 # isolated from any previous builds.
 stages:
-  - clean
-  - prepare
+  - test
   - build-publish
   - downstream
 
 default:
   tags: [$RUNNER_TAGS]
+
+test:
+  stage: test
+  script:
+    - apt-get update
+    - apt-get install -y liblapack3
+    - ./gradlew test
+  artifacts:
+    when: always
+    reports:
+      junit: "**/build/test-results/test/**/TEST-*.xml"
 
 buildLinux64:
   variables:
@@ -25,15 +35,12 @@ buildLinux64:
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
-  only:
-    refs:
-      - master
-      - stable
-    # there is no exclude if only specific type was changed, so we have to use some heuristic to exclude README only changes
-    # from pipeline
-    changes:
-      - "**/*.{java,gradle,properties,yml,tex,png,ico,json,xml,html,csv,tsv,py}"
-      - "**/src/main/java/**/*"
+  rules:
+    - if: $ARTIFACTORY_USERNAME && ($CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH == "stable")
+      changes:
+        # exclude README only changes from pipeline
+        - "**/*.{java,gradle,properties,yml,tex,png,ico,json,xml,html,csv,tsv,py}"
+        - "**/src/main/java/**/*"
 
 trigger_sirius_frontend:
   stage: downstream
@@ -41,8 +48,6 @@ trigger_sirius_frontend:
     project: "$SIRIUS_FRONTEND_PROJECT"
     strategy: depend
     branch: $CI_COMMIT_REF_NAME
-  only:
-    refs:
-      - master
-      - stable
+  rules:
+    - if: $ARTIFACTORY_USERNAME && ($CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH == "stable")
   allow_failure: true
