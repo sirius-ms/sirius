@@ -269,7 +269,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
                 topFormulaCanopusResultRequested = canopusResult.get(i);
             }}
 
-            if(allRestDbScoredCandidates!=null) {
+            if(allRestDbScoredCandidates!=null && !allRestDbScoredCandidates.isEmpty()) {
 
                 if (topHitScoreAll == null || topHitScoreAll < allRestDbScoredCandidates.get(0).getScore()) {
                     topHitScoreAll = allRestDbScoredCandidates.get(0).getScore();
