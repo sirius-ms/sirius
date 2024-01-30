@@ -198,8 +198,8 @@ public class FingerblastSubToolJob extends InstanceJob {
         inst.loadTopFormulaResult(List.of(TopCSIScore.class, SiriusScore.class))
                 .flatMap(r -> r.getAnnotation(StructureSearchResult.class))
                 .ifPresentOrElse(sr -> {
-                    inst.getID().setConfidenceScore(sr.getScore());
-                    inst.getID().setConfidenceScoreApproximate(sr.getScoreApproximate());
+                    inst.getID().setConfidenceScore(sr.getConfidenceScore());
+                    inst.getID().setConfidenceScoreApproximate(sr.getConfidenceScore());
                     inst.getID().setUseApproximate(sr.getExpansiveSearchConfidenceMode() != ExpansiveSearchConfidenceMode.Mode.EXACT);
                 }, () -> {
                     inst.getID().setConfidenceScore(null);
