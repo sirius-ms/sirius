@@ -29,11 +29,12 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.AdditionalFields;
-import de.unijena.bioinf.ChemistryBase.ms.AnnotatedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeStatistics;
+import de.unijena.bioinf.ChemistryBase.ms.utils.AnnotatedSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SpectrumWithAdditionalFields;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.DataSource;
@@ -377,6 +378,8 @@ public class MztabMExporter implements Summarizer {
         return specs.stream().map((it) -> {
             if (it instanceof AnnotatedSpectrum)
                 return (AdditionalFields) ((AnnotatedSpectrum) it).getAnnotationOrNull(AdditionalFields.class);
+            else if (it instanceof SpectrumWithAdditionalFields<?>)
+                return ((SpectrumWithAdditionalFields<?>) it).additionalFields();
 
             return null;
         }).filter(Objects::nonNull).map((it) -> {
