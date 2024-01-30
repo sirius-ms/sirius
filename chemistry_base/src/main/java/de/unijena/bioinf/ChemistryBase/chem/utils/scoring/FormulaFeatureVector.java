@@ -26,6 +26,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
 import de.unijena.bioinf.ChemistryBase.math.ParetoDistribution;
 import de.unijena.bioinf.ChemistryBase.math.PartialParetoDistribution;
+import org.slf4j.LoggerFactory;
 
 import static java.lang.Math.*;
 
@@ -308,7 +309,8 @@ public class FormulaFeatureVector {
         final double x = (1+f.rdbe()) / (1+Math.min(f.numberOfCarbons()/5, f.numberOfHydrogens()/4));
 
         if (Double.isInfinite(x) || Double.isNaN(x)){
-            System.out.println("ERROR FORMULA "+f.toString()+" "+f.numberOfCarbons()/5 + " "+f.numberOfHydrogens()/4);
+            LoggerFactory.getLogger(getClass())
+                    .error("ERROR FORMULA "+f.toString()+" "+f.numberOfCarbons()/5 + " "+f.numberOfHydrogens()/4);
         }
 
             return lognorm(x, 0.18915660952151742, -3.1531816951867047, 5.5423074512759598);

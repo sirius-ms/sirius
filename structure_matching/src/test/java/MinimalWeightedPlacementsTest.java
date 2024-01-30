@@ -1,15 +1,16 @@
 import matching.algorithm.MinimalWeightedPlacements;
-import matching.datastructures.*;
+import matching.datastructures.AtomContainerE;
+import matching.datastructures.AtomE;
+import matching.datastructures.SideChain;
+import matching.datastructures.SideChainList;
 import matching.io.SideChainListReader;
 import org.junit.Test;
 import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.exception.CDKException;
-import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
-import matching.utils.HungarianAlgorithm;
 
 import java.io.File;
 import java.io.IOException;

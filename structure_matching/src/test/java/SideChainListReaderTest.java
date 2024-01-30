@@ -1,14 +1,10 @@
 import matching.datastructures.AtomContainerE;
-import matching.datastructures.AtomE;
 import matching.datastructures.SideChainList;
 import matching.io.SideChainListReader;
 import org.junit.Test;
-import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.isomorphism.Mappings;
 import org.openscience.cdk.isomorphism.VentoFoggia;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
-import org.openscience.cdk.smiles.SmiFlavor;
-import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
 
 import java.io.File;
