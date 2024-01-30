@@ -22,6 +22,7 @@ package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -51,7 +52,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 // FingerID Scheduler job does not manage dependencies between different  tools.
@@ -185,6 +188,11 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
         ArrayList<FingerblastSearchJJob> searchJJobs = new ArrayList<>();
         HashMap<FingerblastSearchJJob, FingerIdResult> jobFidResult =  new HashMap<>();
 
+        /*
+        Loop over all fingerprints and start SearchJjobs for each one. Jobs gets saved in searchJJobs, jobFidResult maps a searchjob back to the FingerIDresult
+
+         */
+
         for (int i = 0; i < idResult.size(); i++) {
             final FingerIdResult fingeridInput = idResult.get(i);
 
@@ -225,7 +233,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
 
 
 
-        /**
+        /*
          * Wait for all search jobs to finish and generate the merged ranked lists. MCES, Epi and conf score jobs all need this combined list
          *
          */
@@ -261,7 +269,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
                 topFormulaCanopusResultRequested = canopusResult.get(i);
             }}
 
-            if(allRestDbScoredCandidates!=null) {
+            if(allRestDbScoredCandidates!=null && !allRestDbScoredCandidates.isEmpty()) {
 
                 if (topHitScoreAll == null || topHitScoreAll < allRestDbScoredCandidates.get(0).getScore()) {
                     topHitScoreAll = allRestDbScoredCandidates.get(0).getScore();
@@ -277,70 +285,15 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
 
         }
 
-
         allMergedCandidates.sort(Comparator.reverseOrder());
         requestedMergedCandidates.sort(Comparator.reverseOrder());
 
-        //TODO: Catch if requested is empty
+        //We always submit this job, regardless of expansive search
+        ParameterStore parameterStoreRequested =(topHitFPRequested==null || topHitScoringRequested==null || topHitTreeRequested==null ||topHitFormulaRequested==null) ? null: ParameterStore.of(topHitFPRequested,topHitScoringRequested,topHitTreeRequested,topHitFormulaRequested);
 
-        //Start and finish MCES job for requested DBs here, since Epi and conf are dependent on the mces-condensed list
-        final MCESJJob mcesJJobRequested = new MCESJJob(confScoreApproxDist.value,requestedMergedCandidates);
-        submitSubJob(mcesJJobRequested);
-        int mcesIndexRequested = mcesJJobRequested.awaitResult();
+        ConfidenceJJob confidenceJJobRequested = executeConfidenceStack(requestedMergedCandidates,allMergedCandidates,fTreeCandidatesMapRequested,confScoreApproxDist.value,searchDB,parameterStoreRequested,topFormulaCanopusResultRequested);
 
-
-        //MCES-condensed list for requested
-        ArrayList<Scored<FingerprintCandidate>> requestedMergedCandidatesMCESCondensed = new ArrayList<>();
-        requestedMergedCandidatesMCESCondensed.add(requestedMergedCandidates.get(0));
-        Map removedCandidatesrequested = requestedMergedCandidates.subList(1,mcesIndexRequested+1).stream().collect(Collectors.toMap(c -> c.getCandidate().getInchiKey2D(),Scored<FingerprintCandidate>::getScore));
-        requestedMergedCandidatesMCESCondensed.addAll(requestedMergedCandidates.subList(mcesIndexRequested+1,requestedMergedCandidates.size()));
-
-
-        /**
-         *
-         * Submit epi jobs for requested databases
-         */
-
-        //epi Job for <exact, requested>
-        final SubstructureAnnotationJJob epiJJobExactRequested =  new SubstructureAnnotationJJob(requestedMergedCandidates.size()>=5 ? 5 : requestedMergedCandidates.size()>=2 ? 2 : requestedMergedCandidates.size()>=1 ? 1 : 0);
-        epiJJobExactRequested.setInput(fTreeCandidatesMapRequested);
-        submitSubJob(epiJJobExactRequested);
-
-        //epi job for <approximate, requested>. Remove candidate from ftreeCandidatesMap that are within MCES distance of approximate mode
-        final SubstructureAnnotationJJob epiJJobApproximateRequested =  new SubstructureAnnotationJJob(requestedMergedCandidates.size()>=5 ? 5 : requestedMergedCandidates.size()>=2 ? 2 : requestedMergedCandidates.size()>=1 ? 1 : 0);
-        HashMap<FTree, FBCandidates> fTreeCandidatesMapMCESCondensedRequested = new HashMap<>();
-        for (FTree t :  fTreeCandidatesMapRequested.keySet()){
-            List<Scored<CompoundCandidate>> filteredCandidates = fTreeCandidatesMapRequested.get(t).getResults().stream().filter(a -> !removedCandidatesrequested.containsKey(a.getCandidate().getInchiKey2D())).collect(Collectors.toList());
-            fTreeCandidatesMapMCESCondensedRequested.put(t,new FBCandidates(filteredCandidates));
-        }
-        epiJJobApproximateRequested.setInput(fTreeCandidatesMapMCESCondensedRequested);
-        submitSubJob(epiJJobApproximateRequested);
-
-        //canopus job for requested
-
-        final int specHash = Spectrums.mergeSpectra(experiment.getMs2Spectra()).hashCode();
-        WebJJob<CanopusJobInput, ?, CanopusResult, ?> canopusJob = webAPI.submitCanopusJob(requestedMergedCandidates.get(0).getCandidate().getInchi().extractFormula(),experiment.getPrecursorIonType().getCharge(),requestedMergedCandidates.get(0).getCandidate().getFingerprint().asProbabilistic(),specHash);
-
-        //confidence job for requested
-
-        final ConfidenceJJob confidenceJJobRequested = (predictor.getConfidenceScorer() != null) && enableConfidence
-                ? new ConfidenceJJob(predictor, experiment,allMergedCandidates,requestedMergedCandidates, requestedMergedCandidatesMCESCondensed,searchDB, ParameterStore.of(topHitFPRequested, topHitScoringRequested, topHitTreeRequested, topHitFormulaRequested),topFormulaCanopusResultRequested,mcesIndexRequested)
-                : null;
-
-
-        confidenceJJobRequested.setEpiExact(() -> epiJJobExactRequested.getResult());
-        confidenceJJobRequested.setEpiApprox(() -> epiJJobApproximateRequested.getResult());
-        confidenceJJobRequested.setCanopusResultTopHit(() -> canopusJob.getResult());
-
-        confidenceJJobRequested.addRequiredJob(epiJJobExactRequested);
-        confidenceJJobRequested.addRequiredJob(epiJJobApproximateRequested);
-        confidenceJJobRequested.addRequiredJob(canopusJob);
-
-
-        submitSubJob(confidenceJJobRequested);
-
-
-        /**
+        /*
          *
          * If Expansive search is not OFF, we have to do it all again for PubChem aka ALL. We still need to compute approximate AND exact confidences here.
          *
@@ -352,59 +305,15 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
             StructureSearchDB searchDBFake=StructureSearchDB.fromString("PubChem");
 
 
-            //Start and finish MCES job for All DBs here, since Epi and conf are dependent on the mces-condensed list
-            final MCESJJob mcesJJobAll = new MCESJJob(confScoreApproxDist.value,allMergedCandidates);
-            submitSubJob(mcesJJobAll);
-            int mcesIndexAll = mcesJJobAll.awaitResult();
+            ParameterStore parameterStoreAll =(topHitFPAll==null || topHitScoringAll==null || topHitTreeAll==null ||topHitFormulaAll==null) ? null: ParameterStore.of(topHitFPAll,topHitScoringAll,topHitTreeAll,topHitFormulaAll);
 
-            //MCES-condensed list for all
-            ArrayList<Scored<FingerprintCandidate>> allMergedCandidatesMCESCondensed = new ArrayList<>();
-            allMergedCandidatesMCESCondensed.add(allMergedCandidates.get(0));
-            Map<String, Double> removedCandidatesAll = allMergedCandidates.subList(1, mcesIndexAll + 1).stream().collect(Collectors.toMap(c -> c.getCandidate().getInchiKey2D(), Scored<FingerprintCandidate>::getScore));
-            allMergedCandidatesMCESCondensed.addAll(allMergedCandidates.subList(mcesIndexAll + 1, allMergedCandidates.size()));
+            ConfidenceJJob confidenceJJobAll = executeConfidenceStack(allMergedCandidates,allMergedCandidates,fTreeCandidatesMapAll,confScoreApproxDist.value,searchDBFake,parameterStoreAll,topFormulaCanopusResultAll);
 
 
 
 
-            //epi Job for <exact, all>
-            final SubstructureAnnotationJJob epiJJobExactAll =  new SubstructureAnnotationJJob(allMergedCandidates.size()>=5 ? 5 : allMergedCandidates.size()>=2 ? 2 : allMergedCandidates.size()>=1 ? 1 : 0);
-            epiJJobExactAll.setInput(fTreeCandidatesMapAll);
-            submitSubJob(epiJJobExactAll);
-
-            //epi job for <approximate, all>. Remove candidate from ftreeCandidatesMap that are within MCES distance of approximate mode
-            final SubstructureAnnotationJJob epiJJobApproximateAll =  new SubstructureAnnotationJJob(allMergedCandidatesMCESCondensed.size()>=5 ? 5 : allMergedCandidatesMCESCondensed.size()>=2 ? 2 : allMergedCandidatesMCESCondensed.size()>=1 ? 1 : 0); //TODO pass correct top
-            HashMap<FTree, FBCandidates> fTreeCandidatesMapMCESCondensedAll = new HashMap<>();
-            for (FTree t :  fTreeCandidatesMapAll.keySet()){
-                List<Scored<CompoundCandidate>> filteredCandidates = fTreeCandidatesMapAll.get(t).getResults().stream().filter(a -> !removedCandidatesAll.containsKey(a.getCandidate().getInchiKey2D())).collect(Collectors.toList());
-                fTreeCandidatesMapMCESCondensedAll.put(t,new FBCandidates(filteredCandidates));
-            }
-            epiJJobApproximateAll.setInput(fTreeCandidatesMapMCESCondensedAll);
-            submitSubJob(epiJJobApproximateAll);
-
-            //canopus job for all
-
-            WebJJob<CanopusJobInput, ?, CanopusResult, ?> canopusJobAll = webAPI.submitCanopusJob(allMergedCandidates.get(0).getCandidate().getInchi().extractFormula(),experiment.getPrecursorIonType().getCharge(),allMergedCandidates.get(0).getCandidate().getFingerprint().asProbabilistic(),specHash);
-
-            //confidence job for all
-
-            final ConfidenceJJob confidenceJJobAll= (predictor.getConfidenceScorer() != null) && enableConfidence
-                    ? new ConfidenceJJob(predictor, experiment,allMergedCandidates,allMergedCandidates, allMergedCandidatesMCESCondensed,searchDBFake, ParameterStore.of(topHitFPAll, topHitScoringAll, topHitTreeAll, topHitFormulaAll),topFormulaCanopusResultAll,mcesIndexAll)
-                    : null;
-
-
-            confidenceJJobAll.setEpiExact(() -> epiJJobExactAll.getResult());
-            confidenceJJobAll.setEpiApprox(() -> epiJJobApproximateAll.getResult());
-            confidenceJJobAll.setCanopusResultTopHit(() -> canopusJobAll.getResult());
-
-            confidenceJJobAll.addRequiredJob(epiJJobExactAll);
-            confidenceJJobAll.addRequiredJob(epiJJobApproximateAll);
-            confidenceJJobAll.addRequiredJob(canopusJobAll);
-
-
-            submitSubJob(confidenceJJobAll);
-
-            ConfidenceResult confidenceResultRequested  = confidenceJJobRequested.awaitResult();
-            ConfidenceResult confidenceResultAll = confidenceJJobAll.awaitResult();
+            ConfidenceResult confidenceResultRequested  = confidenceJJobRequested!=null ? confidenceJJobRequested.awaitResult(): ConfidenceResult.NaN;
+            ConfidenceResult confidenceResultAll =confidenceJJobAll!=null ? confidenceJJobAll.awaitResult() : ConfidenceResult.NaN;
 
             /**
              * expansive search decision happens here
@@ -432,13 +341,10 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
 
 
         }else {
-            ConfidenceResult confidenceResultRequested  = confidenceJJobRequested.awaitResult();
+            ConfidenceResult confidenceResultRequested  = confidenceJJobRequested!= null ? confidenceJJobRequested.awaitResult() : ConfidenceResult.NaN;
             structureSearchResult= StructureSearchResult.of(confidenceResultRequested,expansiveSearchConfidenceMode.confidenceScoreSimilarityMode);
             finalConfidenceResult = confidenceResultRequested;
         }
-
-
-
 
 
 
@@ -455,6 +361,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
         checkForInterruption();
 
 
+        //if expansive search expanded the results to "All", we need to annotate the ALL fingerblast result. If not, then regular requested
         boolean isExpanded = !structureSearchResult.getExpansiveSearchConfidenceMode().equals(ExpansiveSearchConfidenceMode.Mode.OFF);
 
         for(FingerblastSearchJJob  job : searchJJobs ){
@@ -490,6 +397,76 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
         logDebug("CSI:FingerID structure DB Search DONE!");
         //in linked maps values() collection is not a set -> so we have to make that distinct
         return annotationJJobs.values().stream().distinct().collect(Collectors.toList());
+    }
+
+
+    private ConfidenceJJob executeConfidenceStack(ArrayList<Scored<FingerprintCandidate>> requestedMergedCandidates,ArrayList<Scored<FingerprintCandidate>> allMergedCandidates,HashMap<FTree, FBCandidates> fTreeCandidatesMap, int confScoreApproxDist, StructureSearchDB searchDB,ParameterStore parameterStore, CanopusResult topFormulaCanopusResult){
+
+        if (requestedMergedCandidates.isEmpty() || parameterStore == null) return null;
+
+
+        try {
+            //Start and finish MCES job for requested DBs here, since Epi and conf are dependent on the mces-condensed list
+            final MCESJJob mcesJJobRequested = new MCESJJob(confScoreApproxDist, requestedMergedCandidates);
+            submitSubJob(mcesJJobRequested);
+            int mcesIndexRequested = mcesJJobRequested.awaitResult();
+
+
+            //MCES-condensed list for requested
+            ArrayList<Scored<FingerprintCandidate>> requestedMergedCandidatesMCESCondensed = new ArrayList<>();
+            requestedMergedCandidatesMCESCondensed.add(requestedMergedCandidates.get(0));
+            Map removedCandidatesrequested = requestedMergedCandidates.subList(1, mcesIndexRequested + 1).stream().collect(Collectors.toMap(c -> c.getCandidate().getInchiKey2D(), Scored<FingerprintCandidate>::getScore));
+            requestedMergedCandidatesMCESCondensed.addAll(requestedMergedCandidates.subList(mcesIndexRequested + 1, requestedMergedCandidates.size()));
+
+
+            /**
+             *
+             * Submit epi jobs for requested databases
+             */
+
+            //epi Job for <exact, requested>
+            final SubstructureAnnotationJJob epiJJobExactRequested = new SubstructureAnnotationJJob(requestedMergedCandidates.size() >= 5 ? 5 : requestedMergedCandidates.size() >= 2 ? 2 : requestedMergedCandidates.size() >= 1 ? 1 : 0);
+            epiJJobExactRequested.setInput(fTreeCandidatesMap);
+            submitSubJob(epiJJobExactRequested);
+
+            //epi job for <approximate, requested>. Remove candidate from ftreeCandidatesMap that are within MCES distance of approximate mode
+            final SubstructureAnnotationJJob epiJJobApproximateRequested = new SubstructureAnnotationJJob(requestedMergedCandidates.size() >= 5 ? 5 : requestedMergedCandidates.size() >= 2 ? 2 : requestedMergedCandidates.size() >= 1 ? 1 : 0);
+            HashMap<FTree, FBCandidates> fTreeCandidatesMapMCESCondensedRequested = new HashMap<>();
+            for (FTree t : fTreeCandidatesMap.keySet()) {
+                List<Scored<CompoundCandidate>> filteredCandidates = fTreeCandidatesMap.get(t).getResults().stream().filter(a -> !removedCandidatesrequested.containsKey(a.getCandidate().getInchiKey2D())).collect(Collectors.toList());
+                fTreeCandidatesMapMCESCondensedRequested.put(t, new FBCandidates(filteredCandidates));
+            }
+            epiJJobApproximateRequested.setInput(fTreeCandidatesMapMCESCondensedRequested);
+            submitSubJob(epiJJobApproximateRequested);
+
+            //canopus job for requested
+
+            final int specHash = Spectrums.mergeSpectra(experiment.getMs2Spectra()).hashCode();
+            WebJJob<CanopusJobInput, ?, CanopusResult, ?> canopusJob = webAPI.submitCanopusJob(requestedMergedCandidates.get(0).getCandidate().getInchi().extractFormula(), experiment.getPrecursorIonType().getCharge(), requestedMergedCandidates.get(0).getCandidate().getFingerprint().asProbabilistic(), specHash);
+
+            //confidence job for requested
+
+            final ConfidenceJJob confidenceJJobRequested = (predictor.getConfidenceScorer() != null) && enableConfidence
+                    ? new ConfidenceJJob(predictor, experiment, allMergedCandidates, requestedMergedCandidates, requestedMergedCandidatesMCESCondensed, searchDB, parameterStore, topFormulaCanopusResult, mcesIndexRequested)
+                    : null;
+
+
+            confidenceJJobRequested.setEpiExact(() -> epiJJobExactRequested.getResult());
+            confidenceJJobRequested.setEpiApprox(() -> epiJJobApproximateRequested.getResult());
+            confidenceJJobRequested.setCanopusResultTopHit(() -> canopusJob.getResult());
+
+            confidenceJJobRequested.addRequiredJob(epiJJobExactRequested);
+            confidenceJJobRequested.addRequiredJob(epiJJobApproximateRequested);
+            confidenceJJobRequested.addRequiredJob(canopusJob);
+
+
+            return submitSubJob(confidenceJJobRequested);
+        }catch (ExecutionException | UnknownElementException | IOException e){
+            e.printStackTrace();
+            logError("Couldn't compute confidence Job");
+            return null;
+        }
+
     }
 
     @Override
