@@ -24,7 +24,7 @@ import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 
 public class ActFingerprintAndCanopusConfigPanel extends ActivatableConfigPanel<FingerprintAndCanopusConfigPanel> {
     public ActFingerprintAndCanopusConfigPanel() {
-        super("Predict Properties", GuiUtils.formatToolTip(FingerprintAndCanopusConfigPanel.description), Icons.FINGER_32, true, () -> new FingerprintAndCanopusConfigPanel());
+        super("Predict", GuiUtils.formatToolTip(FingerprintAndCanopusConfigPanel.description), Icons.FINGER_32, true, () -> new FingerprintAndCanopusConfigPanel());
     }
 
     @Override
@@ -34,6 +34,6 @@ public class ActFingerprintAndCanopusConfigPanel extends ActivatableConfigPanel<
 
     @Override
     protected void setButtonEnabled(boolean enabled) {
-        setButtonEnabled(enabled, enabled ? "Enable fingerprint prediction" : "Can't connect to CSI:FingerID server!");
+        setButtonEnabled(enabled, enabled ? "Enable prediction" : "Can't connect to prediction server!");
     }
 }
