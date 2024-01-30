@@ -27,6 +27,7 @@ import de.unijena.bioinf.ChemistryBase.exceptions.MultimereException;
 import de.unijena.bioinf.ChemistryBase.exceptions.MultipleChargeException;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SpectrumWithAdditionalFields;
 import de.unijena.bioinf.babelms.Parser;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +38,7 @@ import java.util.Optional;
 
 public class MSPExperimentParser extends MSPSpectralParser implements Parser<Ms2Experiment> {
     private final boolean clearSpectrum;
-    private AnnotatedSpectrum<Peak> spectrum = null;
+    private SpectrumWithAdditionalFields<Peak> spectrum = null;
 
     public MSPExperimentParser() {
         this(false); //todo which is the correct default here
@@ -64,7 +65,7 @@ public class MSPExperimentParser extends MSPSpectralParser implements Parser<Ms2
                     else
                         return exp;
 
-                final boolean additionalSpec = spectrum.getAnnotation(AdditionalFields.class).map(f -> f.containsKey("MAT_ADDITIONAL_SPEC")).orElse(false);
+                final boolean additionalSpec = spectrum.additionalFields().containsKey("MAT_ADDITIONAL_SPEC");
                 if (fields != null && !additionalSpec) {
                     if (errorOccurred) {
                         errorOccurred = false;
@@ -77,7 +78,7 @@ public class MSPExperimentParser extends MSPSpectralParser implements Parser<Ms2
 
                 if (fields == null)
                     exp = new MutableMs2Experiment();
-                fields = spectrum.getAnnotation(AdditionalFields.class).orElse(null);
+                fields = spectrum.additionalFields();
 
                 if (spectrum instanceof Ms2Spectrum) {
                     exp.getMs2Spectra().add((MutableMs2Spectrum) spectrum);
@@ -86,7 +87,6 @@ public class MSPExperimentParser extends MSPSpectralParser implements Parser<Ms2
                 }
 
                 //set metadata
-                if (fields != null) {
                     if (!additionalSpec) {
                         final AdditionalFields finFields = fields;
                         // mandatory
@@ -118,12 +118,9 @@ public class MSPExperimentParser extends MSPSpectralParser implements Parser<Ms2
                         MSP.getWithSynonyms(fields, MSP.INSTRUMENT_TYPE).map(MsInstrumentation::getBestFittingInstrument).ifPresent(exp::annotate);
                         MSP.parseRetentionTime(fields).ifPresent(exp::annotate);
                     }
-                } else {
-                    LoggerFactory.getLogger(getClass()).warn("Cannot find additional meta data fields. Experiment might be incomplete!");
-                }
 
                 if (clearSpectrum)
-                    spectrum.removeAnnotation(AdditionalFields.class);
+                    spectrum.setAdditionalFields(new AdditionalFields());
 
                 spectrum = null; //critically, might produce infinity loop otherwise
             } catch (RuntimeException e) {
