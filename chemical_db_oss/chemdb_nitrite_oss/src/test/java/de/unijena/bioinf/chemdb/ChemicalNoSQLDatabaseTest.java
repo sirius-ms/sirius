@@ -26,10 +26,10 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.chemdb.nitrite.ChemicalNitriteDatabase;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
-import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintWrapper;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.storage.blob.file.FileBlobStorage;
 import de.unijena.bioinf.storage.db.nosql.Filter;
+import de.unijena.bioinf.storage.db.nosql.nitrite.NitriteDatabase;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -202,4 +202,58 @@ public class ChemicalNoSQLDatabaseTest {
         assertEquals(2, candidates.size());
     }
 
+    @Test
+    public void testStore() throws IOException {
+        long start = System.nanoTime();
+//        Path tempDB = Path.of("nitrite_" + System.nanoTime() + ".db");
+        Path tempDB = Path.of("nitrite_long_pk.db");
+        chemDb = new ChemicalNitriteDatabase(tempDB);
+        long elapsed = System.nanoTime() - start;
+        System.out.println("Init time " + (elapsed / 1000000) + " ms");
+
+        Map<MolecularFormula, List<FingerprintCandidate>> compounds = loadJson();
+        System.out.println("Number of formulas: " + compounds.size());
+        start = System.nanoTime();
+        ChemicalNoSQLDBs.importCandidatesAndSpectra(chemDb, compounds, null, "2099-12-24", null, 5, 100000);
+        elapsed = System.nanoTime() - start;
+        System.out.println("Store time " + (elapsed / 1000000) + " ms");
+
+        start = System.nanoTime();
+
+        long c = chemDb.countAllFingerprints();
+        elapsed = System.nanoTime() - start;
+        System.out.println("Count time " + (elapsed / 1000000) + " ms");
+        System.out.println("Number of fingerprints: " + c);
+    }
+
+    @Test
+    public void testGetPk() throws IOException {
+        Path tempDB = Path.of("nitrite_long_pk.db");
+        chemDb = new ChemicalNitriteDatabase(tempDB);
+        NitriteDatabase storage = chemDb.getStorage();
+        long pk = storage.findAll(FingerprintCandidateWrapper.class).iterator().next().getPk();
+        assertTrue(pk > 0);
+    }
+
+    protected Map<MolecularFormula, List<FingerprintCandidate>> loadJson() throws IOException {
+        Map<MolecularFormula, List<FingerprintCandidate>> candidates = new HashMap<>();
+
+        long start = System.nanoTime();
+        FileBlobStorage fileBlobStorage = new FileBlobStorage(Path.of("compounds-test"));
+        ChemicalBlobDatabase<FileBlobStorage> db = new ChemicalBlobDatabase<>(fileBlobStorage, null);
+
+        fileBlobStorage.listBlobs().forEachRemaining(blob -> {
+            String formula = blob.getKey().split("[.]")[0];
+            try {
+                MolecularFormula mf = MolecularFormula.parseOrThrow(formula);
+                List<FingerprintCandidate> compounds = db.lookupStructuresAndFingerprintsByFormula(mf);
+                candidates.put(mf, compounds);
+            } catch (ChemicalDatabaseException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        long elapsed = System.nanoTime() - start;
+        System.out.println("Loading Json " + (elapsed / 1000000) + " ms");
+        return candidates;
+    }
 }

@@ -49,6 +49,7 @@ public class FingerprintCandidateWrapperDeserializer extends StdDeserializer<Fin
     public FingerprintCandidateWrapper deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
         String inchi = null, formula = null;
         double mass = 0;
+        long pk = 0;
         CompoundCandidate candidate = null;
         Fingerprint fingerprint = null;
         for (JsonToken jsonToken = p.nextToken(); jsonToken != null && !jsonToken.isStructEnd(); jsonToken = p.nextToken()) {
@@ -58,6 +59,9 @@ public class FingerprintCandidateWrapperDeserializer extends StdDeserializer<Fin
             final String fieldName = p.currentName();
 
             switch (fieldName) {
+                case "pk":
+                    pk = p.nextLongValue(0);
+                    break;
                 case "inchi":
                     inchi = p.nextTextValue();
                     break;
@@ -79,6 +83,6 @@ public class FingerprintCandidateWrapperDeserializer extends StdDeserializer<Fin
                     break;
             }
         }
-        return new FingerprintCandidateWrapper(inchi, formula, mass, candidate, fingerprint);
+        return new FingerprintCandidateWrapper(pk, inchi, formula, mass, candidate, fingerprint);
     }
 }
