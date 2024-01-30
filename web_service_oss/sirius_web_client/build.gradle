@@ -21,7 +21,6 @@
 version =  parent.fingeridVersion
 
 dependencies {
-    implementation project(path: ':structure_matching')
     annotationProcessor project(':default_properties:processor')
     api project(":web_service_oss:rest_client_oss")
     api project(':chemical_db_oss:chemdb_rest_oss')
@@ -32,10 +31,12 @@ dependencies {
     api project(':combinatorial_fragmenter')
     api project(':chemical_db_oss:chemdb_blob_oss')
     api project(':canopus_predict_oss')
-    api project (':sirius_api')
-    api project (':model_store_oss')
+    api project(':sirius_api')
+    api project(':model_store_oss')
     api project(':document-storage')
     api project(':spectral_alignment')
+    implementation project(':structure_matching')
+
 
     for (module in ["interfaces", "data", "io", "interfaces", "smiles", "silent"])
         api "org.openscience.cdk:cdk-$module:$cdk_version"
