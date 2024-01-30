@@ -25,7 +25,6 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
-import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
@@ -38,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 public class LogDistanceFeatures implements FeatureCreator {
     private int[] distances;
     private int feature_size;
-    private PredictionPerformance[] statistics;
     Scored<FingerprintCandidate>[] rankedCandidates_filtered;
     public int weight_direction=1;
     int min_quartil=1;

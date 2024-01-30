@@ -20,10 +20,7 @@
 
 package de.unijena.bioinf.fingerid;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
@@ -31,24 +28,19 @@ import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.annotations.StructureSearchDB;
 import de.unijena.bioinf.confidence_score.ConfidenceScorer;
-import de.unijena.bioinf.fingerid.blast.*;
+import de.unijena.bioinf.fingerid.blast.ScoringMethodFactory;
 import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 import de.unijena.bioinf.fragmenter.CombinatorialFragment;
 import de.unijena.bioinf.fragmenter.CombinatorialSubtree;
 import de.unijena.bioinf.jjobs.BasicDependentMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
-import de.unijena.bioinf.ms.webapi.WebJJob;
-import it.unimi.dsi.fastutil.Hash;
 import org.jetbrains.annotations.NotNull;
-import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
-import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Map;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 
 /**
@@ -64,11 +56,6 @@ public class ConfidenceJJob extends BasicDependentMasterJJob<ConfidenceResult> {
 
 
     // inputs that can be either set by a setter or from dependent jobs
-//    private List<Scored<FingerprintCandidate>> allScoredCandidates = null;
-//    private List<Scored<FingerprintCandidate>> requestedScoredCandidates = null;
-//    private ProbabilityFingerprint predictedFpt = null;
-//    private RestWithCustomDatabase.CandidateResult candidates = null;
-    protected final Set<FingerblastSearchJJob> inputInstances = new LinkedHashSet<>();
     protected final ScoringMethodFactory.CSIFingerIdScoringMethod csiScoring;
 
     protected CanopusResult canopusResultRequested;
@@ -101,16 +88,6 @@ public class ConfidenceJJob extends BasicDependentMasterJJob<ConfidenceResult> {
     protected Supplier<Map<FTree, SubstructureAnnotationResult>> epiExact;
     protected Supplier<Map<FTree, SubstructureAnnotationResult>> epiApprox;
 
-
-//    List<Scored<FingerprintCandidate>> allMergedRestDbCandidates;
-//    List<FingerblastResult> fbResults = new ArrayList<>();
-//    List<RestWithCustomDatabase.CandidateResult> fbRawResults = new ArrayList<>();
-
-//    FingerblastJJob topHitJob = null;
-
-//    private FingerblastJJob searchDBJob = null;
-//    private FingerblastJJob additionalPubchemDBJob = null;
-
     //INPUT
     // puchem resultlist
     // filterflag oder filtered list
@@ -118,7 +95,6 @@ public class ConfidenceJJob extends BasicDependentMasterJJob<ConfidenceResult> {
     // Scorings: CovarianceScoring, CSIFingerIDScoring (reuse)
     // IdentificationResult
     // Experiment -> CollisionEnergies
-
 
     //OUTPUT
     // ConfidenceResult -> Annotate to
@@ -246,11 +222,5 @@ public class ConfidenceJJob extends BasicDependentMasterJJob<ConfidenceResult> {
 
             }
         }
-
-
-
-
     }
-
-
 }

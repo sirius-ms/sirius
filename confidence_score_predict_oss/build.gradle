@@ -19,8 +19,6 @@
  */
 version =  fingeridVersion
 dependencies {
-
-	implementation project(path: ':canopus_predict_oss')
     annotationProcessor project(':default_properties:processor')
 
 	//internal
@@ -33,7 +31,6 @@ dependencies {
 	implementation group: "de.bwaldvogel", name: "liblinear", version: "$liblinear_version"
 	implementation group: "tw.edu.ntu.csie", name: "libsvm", version: "$libsvm_version"
 	implementation group: 'ca.umontreal.iro.simul', name: 'ssj', version: '3.1.0'
-    implementation project(path: ':combinatorial_fragmenter')
-	implementation project(path: ':combinatorial_fragmenter')
-
+	implementation project(':canopus_predict_oss')
+    implementation project(':combinatorial_fragmenter')
 }	

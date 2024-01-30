@@ -15,7 +15,6 @@ import de.unijena.bioinf.fragmenter.CombinatorialFragment;
 import de.unijena.bioinf.fragmenter.CombinatorialSubtree;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 
 public class EpiUnexplainedPeaksFeatures implements FeatureCreator {
