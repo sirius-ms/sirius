@@ -848,6 +848,18 @@ public class FileUtils {
         }
     }
 
+    /**
+     * Same as {@link Files#walk(Path, FileVisitOption...)}, but IOException is wrapped into a RuntimeException
+     * for usage in {@link Stream#flatMap(Function)}
+     */
+    public static Stream<Path> sneakyWalk(Path p, FileVisitOption... options) {
+        try {
+            return Files.walk(p, options);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static <R> R linesAndClose(Path p, Function<Stream<String>, R> tryWith) throws IOException {
         try (Stream<String> s = Files.lines(p)) {
             return tryWith.apply(s);

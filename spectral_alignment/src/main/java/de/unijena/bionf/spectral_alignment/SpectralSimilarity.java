@@ -24,21 +24,21 @@ import java.util.Objects;
 
 public class SpectralSimilarity {
     public final double similarity;
-    public final int shardPeaks;
+    public final int sharedPeaks;
 
     public SpectralSimilarity() {
         this.similarity = 0;
-        this.shardPeaks = 0;
+        this.sharedPeaks = 0;
     }
 
-    public SpectralSimilarity(double similarity, int shardPeaks) {
+    public SpectralSimilarity(double similarity, int sharedPeaks) {
         this.similarity = similarity;
-        this.shardPeaks = shardPeaks;
+        this.sharedPeaks = sharedPeaks;
     }
 
     @Override
     public String toString() {
-        return "cosine = " + similarity + ", " + shardPeaks + " shared peaks.";
+        return "cosine = " + similarity + ", " + sharedPeaks + " shared peaks.";
     }
 
     @Override
@@ -46,11 +46,11 @@ public class SpectralSimilarity {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         SpectralSimilarity that = (SpectralSimilarity) o;
-        return Double.compare(similarity, that.similarity) == 0 && shardPeaks == that.shardPeaks;
+        return Double.compare(similarity, that.similarity) == 0 && sharedPeaks == that.sharedPeaks;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(similarity, shardPeaks);
+        return Objects.hash(similarity, sharedPeaks);
     }
 }

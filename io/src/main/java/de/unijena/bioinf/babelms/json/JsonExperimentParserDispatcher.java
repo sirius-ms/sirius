@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.babelms.json;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
@@ -33,12 +34,16 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayDeque;
 import java.util.List;
+import java.util.Queue;
 
 @Slf4j
 public class JsonExperimentParserDispatcher implements Parser<Ms2Experiment> {
 
     private final List<JsonExperimentParser> parsers;
+    private BufferedReader consumedReader;
+    private Queue<JsonNode> nextRoots;
 
     public JsonExperimentParserDispatcher() {
         this.parsers = List.of(
@@ -49,7 +54,31 @@ public class JsonExperimentParserDispatcher implements Parser<Ms2Experiment> {
 
     @Override
     public Ms2Experiment parse(BufferedReader reader, URI source) throws IOException {
+        if (reader == consumedReader) {
+            if (nextRoots == null || nextRoots.isEmpty()) {
+                return null;
+            } else {
+                return parseNextRoot(source);
+            }
+        }
+
         JsonNode root = new ObjectMapper().readTree(reader);
+        consumedReader = reader;
+
+        if (root.isArray()) {
+            nextRoots = new ArrayDeque<>();
+            root.forEach(nextRoots::add);
+            return parseNextRoot(source);
+        }
+        return parseRoot(root, source);
+    }
+
+    private Ms2Experiment parseNextRoot(URI source) throws JsonProcessingException {
+        JsonNode root = nextRoots.remove();
+        return parseRoot(root, source);
+    }
+
+    public Ms2Experiment parseRoot(JsonNode root, URI source) throws JsonProcessingException {
         for (JsonExperimentParser parser : parsers) {
             if (parser.canParse(root)) {
                 Ms2Experiment experiment = parser.parse(root);
@@ -59,10 +88,5 @@ public class JsonExperimentParserDispatcher implements Parser<Ms2Experiment> {
         }
         log.warn("Could not parse an experiment from json " + source);
         return null;
-    }
-
-    @Override
-    public boolean isClosingAfterParsing() {
-        return true;
     }
 }
