@@ -22,11 +22,8 @@ package de.unijena.bioinf.storage.db.nosql.nitrite;
 
 import org.dizitart.no2.Document;
 import org.dizitart.no2.mapper.NitriteMapper;
-import org.dizitart.no2.objects.Cursor;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -38,14 +35,8 @@ public class ProjectingIterable<T> implements Iterable<T> {
 
     private final NitriteMapper mapper;
 
-    public ProjectingIterable(Class<T> targetClass, Cursor<T> cursor, Set<String> omittedFields, NitriteMapper mapper) throws IOException {
-        try {
-            Field cField = cursor.getClass().getDeclaredField("cursor");
-            cField.setAccessible(true);
-            this.documentIterable = new ProjectingDocumentIterable((org.dizitart.no2.Cursor) cField.get(cursor), omittedFields);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new IOException(e);
-        }
+    public ProjectingIterable(Class<T> targetClass, Iterable<Document> parent, Set<String> omittedFields, NitriteMapper mapper) {
+        this.documentIterable = new ProjectingDocumentIterable(parent, omittedFields);
         this.targetClass = targetClass;
         this.mapper = mapper;
     }

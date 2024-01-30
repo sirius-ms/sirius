@@ -80,7 +80,10 @@ public class CustomDatabaseImporter {
     protected CdkFingerprintVersion fingerprintVersion;
     protected final WebAPI<?> api;
 
-    protected final Map<String, String> inchiCache = new HashMap<>();
+    /**
+     * Smile to inchi key
+     */
+    protected final Map<String, String> inchiKeyCache = new HashMap<>();
 
     protected CustomDatabaseImporter(@NotNull CustomDatabase database, CdkFingerprintVersion version, WebAPI<?> api, int bufferSize) {
         this.api = api;
@@ -216,14 +219,14 @@ public class CustomDatabaseImporter {
 
     private void flushMoleculeBuffer() throws IOException {
         // start downloading
-        if (moleculeBuffer.size() > 0) {
+        if (!moleculeBuffer.isEmpty()) {
             final ConcurrentHashMap<String, Comp> dict = new ConcurrentHashMap<>(moleculeBuffer.size());
             try {
                 for (Molecule c : moleculeBuffer) {
                     checkCancellation();
-                    final String inchi2d;
                     try {
-                        inchi2d = InChISMILESUtils.getInchi(c.container, false).in2D;
+                        InChI inchi = InChISMILESUtils.getInchi(c.container, false);
+                        String inchi2d = inchi.in2D;
                         if (dict.containsKey(inchi2d)) {
                             Comp comp = dict.get(inchi2d);
                             if (comp.molecule.id == null && c.id != null)
@@ -235,7 +238,7 @@ public class CustomDatabaseImporter {
                             comp.molecule = c;
                             dict.put(inchi2d, comp);
                         }
-                        inchiCache.put(c.smiles.smiles, inchi2d);
+                        inchiKeyCache.put(c.smiles.smiles, inchi.key);
                     } catch (CDKException | IllegalArgumentException e) {
                         CustomDatabase.logger.error(e.getMessage(), e);
                     }
@@ -385,7 +388,7 @@ public class CustomDatabaseImporter {
     }
 
     private void mergeAndWriteCompoundsNoSQL(MolecularFormula key, final Collection<FingerprintCandidate> value, NoSQLCustomDatabase<?, ?> database) throws IOException {
-        final List<FingerprintCandidateWrapper> alreadyExisting = database.database.getStorage().findStr(new Filter().eq("formula", key.toString()), FingerprintCandidateWrapper.class, "candidate").toList();
+        final List<FingerprintCandidateWrapper> alreadyExisting = database.database.getStorage().findStr(new Filter().eq("formula", key.toString()), FingerprintCandidateWrapper.class, "fingerprint").toList();
         Map<String, FingerprintCandidateWrapper> alreadyExistingMap = new HashMap<>();
         alreadyExisting.forEach(fcw -> alreadyExistingMap.put(fcw.getCandidate().getInchiKey2D(), fcw));
 
@@ -471,7 +474,7 @@ public class CustomDatabaseImporter {
             this.logPEstimator = new LogPEstimator();
         }
 
-        protected FingerprintCandidate computeCompound(Molecule molecule, FingerprintCandidate fc) throws CDKException, IOException {
+        protected FingerprintCandidate computeCompound(Molecule molecule, FingerprintCandidate fc) throws CDKException {
             if (fc == null)
                 return computeCompound(molecule);
 

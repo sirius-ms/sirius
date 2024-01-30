@@ -198,10 +198,8 @@ public abstract class CustomDatabase implements SearchableDatabase {
             importStructuresToDatabase(structureFiles, importer);
 
             // update spectrum INCHIs to match structure INCHIs
-            for (Map.Entry<String, String> entry : importer.inchiCache.entrySet()) {
-                writeableSpectralLibrary.updateSpectraMatchingSmiles(spectrum -> {
-                    spectrum.setCandidateInChiKey(entry.getValue());
-                }, entry.getKey());
+            for (Map.Entry<String, String> entry : importer.inchiKeyCache.entrySet()) {
+                writeableSpectralLibrary.updateSpectraMatchingSmiles(spectrum -> spectrum.setCandidateInChiKey(entry.getValue()), entry.getKey());
             }
 
             // set list of matching spectra for each structure

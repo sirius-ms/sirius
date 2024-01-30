@@ -20,15 +20,18 @@
 
 package de.unijena.bioinf.ms.rest.model.msnovelist;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import org.jdbi.v3.json.Json;
 
 @Getter
 @Setter
 @AllArgsConstructor
+@NoArgsConstructor
+@Json
 public class MsNovelistCandidate {
     String smiles;
-
     double rnnScore;
 }

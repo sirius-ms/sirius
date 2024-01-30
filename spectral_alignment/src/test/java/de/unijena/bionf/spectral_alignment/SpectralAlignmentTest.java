@@ -72,7 +72,7 @@ public class SpectralAlignmentTest {
         SpectralSimilarity spectralSimilarity = modifiedCosine.score(left, right, precursorMzLeft, precursorMzRight);
 
         assertEquals(3.5, spectralSimilarity.similarity, 1e-9);
-        assertEquals(4, spectralSimilarity.shardPeaks);
+        assertEquals(4, spectralSimilarity.sharedPeaks);
 
         Map<Integer, Integer> expectedAssignment = new HashMap<>();
         expectedAssignment.put(0, 0);  // ASSIGN 1.0 WITH 1.0
@@ -95,7 +95,7 @@ public class SpectralAlignmentTest {
         SpectralSimilarity spectralSimilarity = gaussianAlignment.score(left, right);
 
         assertEquals(49735.919716217, spectralSimilarity.similarity, 1e-9);
-        assertEquals(3, spectralSimilarity.shardPeaks);
+        assertEquals(3, spectralSimilarity.sharedPeaks);
     }
 
     @Test
@@ -104,7 +104,7 @@ public class SpectralAlignmentTest {
         SpectralSimilarity spectralSimilarity = intensityAlignment.score(left, right);
 
         assertEquals(2.5, spectralSimilarity.similarity, 1e-9);
-        assertEquals(3, spectralSimilarity.shardPeaks);
+        assertEquals(3, spectralSimilarity.sharedPeaks);
     }
 
     @Test
@@ -112,7 +112,7 @@ public class SpectralAlignmentTest {
         for (AbstractSpectralAlignment scorer : scorers) {
             SpectralSimilarity similarity = scorer.score(SimpleSpectrum.empty(), SimpleSpectrum.empty(), 0, 0);
             assertEquals(0, similarity.similarity, 1e-9);
-            assertEquals(0, similarity.shardPeaks);
+            assertEquals(0, similarity.sharedPeaks);
         }
     }
 
@@ -136,7 +136,7 @@ public class SpectralAlignmentTest {
         for (AbstractSpectralAlignment scorer : scorers) {
             SpectralSimilarity similarity = normalized(scorer, spectrum, spectrum, precursorMz, precursorMz);
             assertEquals(1, similarity.similarity, 1e-9);
-            assertEquals(spectrum.size(), similarity.shardPeaks);
+            assertEquals(spectrum.size(), similarity.sharedPeaks);
         }
     }
 

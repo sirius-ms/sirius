@@ -156,7 +156,11 @@ public class ElGordoPlugin extends SiriusPlugin  {
             Whiteset whiteset = input.getAnnotation(Whiteset.class, Whiteset::empty);
             if (!whiteset.isEmpty()) {
                 if (whiteset.getNeutralFormulas().contains(ano.getFormula()) || whiteset.getMeasuredFormulas().contains(ano.getIonType().neutralMoleculeToMeasuredNeutralMolecule(ano.getFormula()))) {
-                 whiteset = Whiteset.ofNeutralizedFormulas(Arrays.asList(ano.getFormula()));
+                    if (input.getAnnotation(EnforceElGordoFormula.class, () -> EnforceElGordoFormula.newInstance(true)).value) {
+                        whiteset = Whiteset.ofNeutralizedFormulas(Arrays.asList(ano.getFormula()));
+                    } else {
+                        whiteset = whiteset.addNeutral(Collections.singleton(ano.getFormula()));
+                    }
                 } else {
                     LoggerFactory.getLogger(ElGordoPlugin.class).warn(input.getExperimentInformation().getName() + " is estimated to be " + species.toString() + " but the corresponding molecular formula " + ano.getFormula() + " is not part of the candidate set. Compound name = " + input.getExperimentInformation().getName());
                     return;
@@ -165,8 +169,10 @@ public class ElGordoPlugin extends SiriusPlugin  {
                 whiteset = Whiteset.ofNeutralizedFormulas(Arrays.asList(ano.getFormula()));
             }
             input.setAnnotation(Whiteset.class, whiteset);
-            input.getExperimentInformation().setPrecursorIonType(ano.getIonType());
-            input.getOrCreatePeakAnnotation(DecompositionList.class).set(input.getParentPeak(), DecompositionList.fromFormulas(Arrays.asList(ano.getIonType().neutralMoleculeToMeasuredNeutralMolecule(ano.getFormula())), ano.getIonType().getIonization()));
+            if (input.getAnnotation(EnforceElGordoFormula.class, () -> EnforceElGordoFormula.newInstance(true)).value) {
+                input.getExperimentInformation().setPrecursorIonType(ano.getIonType());
+                input.getOrCreatePeakAnnotation(DecompositionList.class).set(input.getParentPeak(), DecompositionList.fromFormulas(Arrays.asList(ano.getIonType().neutralMoleculeToMeasuredNeutralMolecule(ano.getFormula())), ano.getIonType().getIonization()));
+            }
 
             // pre-annotate spectrum
             if (annotated.get().getDetectionLevel().arePeaksCorrectlyAnnotated()){
@@ -174,7 +180,6 @@ public class ElGordoPlugin extends SiriusPlugin  {
                 PeakAnnotation<PredefinedPeak> pa = input.getOrCreatePeakAnnotation(PredefinedPeak.class);
                 input.setAnnotation(LipidSpecies.class, species);
                 input.setAnnotation(ForbidRecalibration.class, ForbidRecalibration.FORBIDDEN);
-                input.getExperimentInformation().setPrecursorIonType(ano.getIonType());
                 final TIntObjectHashMap<PredefinedPeak> elgordoScoreMap = new TIntObjectHashMap<>();
                 for (int k = 0, n = ano.numberOfAnnotatedPeaks(); k < n; ++k) {
                     final LipidAnnotation annotation = ano.getAnnotationAt(k);

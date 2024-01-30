@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
  * Can be attached to MsExperiment
  */
 public final class DetectedAdducts extends ConcurrentHashMap<String, PossibleAdducts> implements Ms2ExperimentAnnotation {
-    public enum Keys {LCMS_ALIGN, MS1_PREPROCESSOR}
+    public enum Keys {LCMS_ALIGN, MS1_PREPROCESSOR, SPECTRAL_LIBRARY_SEARCH} //todo implement PossibleAdducts by library search
 
     public DetectedAdducts() {
         super();

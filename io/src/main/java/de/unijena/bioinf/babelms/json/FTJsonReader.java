@@ -57,6 +57,8 @@ public class FTJsonReader implements Parser<FTree> {
 
     protected final HashMap<String, MolecularFormula> formulaCache;
 
+    private Reader consumedReader = null;
+
     public FTJsonReader() {
         this.formulaCache = new HashMap<>();
     }
@@ -82,17 +84,16 @@ public class FTJsonReader implements Parser<FTree> {
         return treeFromJson(new StringReader(reader), source);
     }
 
-    @Override
-    public boolean isClosingAfterParsing() {
-        return true;
-    }
-
     public FTree treeFromJson(Reader reader, URI source) throws IOException {
+        if (reader == consumedReader) {
+            return null;
+        }
         final JsonNode docRoot = new ObjectMapper().readTree(reader);
+        consumedReader = reader;
         return treeFromJson(docRoot, source);
     }
 
-    public FTree treeFromJson(@NotNull final JsonNode docRoot, @Nullable URI source) throws IOException {
+    public FTree treeFromJson(@NotNull final JsonNode docRoot, @Nullable URI source) {
         final DescriptorRegistry registry = DescriptorRegistry.getInstance();
         double score = 0d;
         double scoreBoost = 0d;
@@ -138,9 +139,7 @@ public class FTJsonReader implements Parser<FTree> {
                     incomingLossMap.put(bInfo, loss);
                     byId = true;
                 }
-            } catch (UnsupportedOperationException e) {
-
-            }
+            } catch (UnsupportedOperationException ignored) {}
 
             if (!byId) {
                 //this is for backwards compatibility, from now on we use ids to map
@@ -155,7 +154,7 @@ public class FTJsonReader implements Parser<FTree> {
         }
 
 
-        final ArrayDeque<Fragment> stack = new ArrayDeque<Fragment>();
+        final ArrayDeque<Fragment> stack = new ArrayDeque<>();
         stack.push(tree.getRoot());
         while (!stack.isEmpty()) {
             final Fragment u = stack.pollFirst();
@@ -260,9 +259,7 @@ public class FTJsonReader implements Parser<FTree> {
                 if (fragmentInfo == null) throw new RuntimeException("Cannot determine root fragment");
                 return fragmentInfo;
             }
-        } catch (UnsupportedOperationException e) {
-
-        }
+        } catch (UnsupportedOperationException ignored) {}
 
         //this is for backwards compatibility, from now on we use ids to map
         final MolecularFormula f = formula(rootElement.asText());

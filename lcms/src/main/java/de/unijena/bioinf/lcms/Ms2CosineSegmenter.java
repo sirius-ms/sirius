@@ -270,11 +270,11 @@ public class Ms2CosineSegmenter {
                     CosineQuery queryLeft = queriesLeft[en];
                     CosineQuery queryRight = prepareForCosine(sample, otherSegMerged.get());
                     SpectralSimilarity cosine = queryLeft.cosine(queryRight);
-                    double mx2 = Math.min(cosine.shardPeaks,6)*cosine.similarity;
+                    double mx2 = Math.min(cosine.sharedPeaks,6)*cosine.similarity;
                     if (mx2 > mx) {
                         maxCosine = cosine.similarity;
                         mx = mx2;
-                        maxNumberOfSharedPeaks = cosine.shardPeaks;
+                        maxNumberOfSharedPeaks = cosine.sharedPeaks;
                         bestLeft = queryLeft;
                         bestRight = queryRight;
                     }
@@ -287,7 +287,7 @@ public class Ms2CosineSegmenter {
                     long gap = entry.getKey().getRetentionTimeAt(right.getFwhmStartIndex()) - entry.getKey().getRetentionTimeAt(left.getFwhmEndIndex());
                     if (gap > medianWidth) {
                         // do not merge
-                        //System.out.println("Do not merge " + queryLeft.originalSpectrum.getPrecursor().getMass() + " " + mutableChromatographicPeak.getIntensityAt(left.getApexIndex()) + " with " + mutableChromatographicPeak.getIntensityAt(right.getApexIndex()) + " with cosine "+ cosine.similarity + " (" + cosine.shardPeaks + " peaks), due to gap above " + medianWidth);
+                        //System.out.println("Do not merge " + queryLeft.originalSpectrum.getPrecursor().getMass() + " " + mutableChromatographicPeak.getIntensityAt(left.getApexIndex()) + " with " + mutableChromatographicPeak.getIntensityAt(right.getApexIndex()) + " with cosine "+ cosine.similarity + " (" + cosine.sharedPeaks + " peaks), due to gap above " + medianWidth);
                         final FragmentedIon ms2Ion = instance.createMs2Ion(sample, merged, entry.getKey(), left);
                         ms2Ion.getAdditionalInfos().add(new SimilarMsMsButLargeGap((left.getPeak().getRetentionTimeAt(left.getEndIndex()) + right.getPeak().getRetentionTimeAt(left.getEndIndex())) / 2,
                                 (float) maxCosine,
@@ -381,7 +381,7 @@ public class Ms2CosineSegmenter {
                 if (merged.energyAt(k).equals(q.originalSpectrum.getCollisionEnergy())) {
                     final SpectralSimilarity cosine = queryLeft[k].cosine(q);
                     final Scan scan = q.originalSpectrum.getScans().get(0);
-                    rejected.add(new RejectedMsMsDueToLowCosine(scan.getRetentionTime(), scan.getIndex(), (float)cosine.similarity, (short)cosine.shardPeaks));
+                    rejected.add(new RejectedMsMsDueToLowCosine(scan.getRetentionTime(), scan.getIndex(), (float)cosine.similarity, (short)cosine.sharedPeaks));
                 }
             }
         }
@@ -432,7 +432,7 @@ public class Ms2CosineSegmenter {
 
         public SpectralSimilarity cosine(CosineQuery other) {
             SpectralSimilarity score = new IntensityWeightedSpectralAlignment(new Deviation(20)).score(spectrum, other.spectrum);
-            return new SpectralSimilarity(score.similarity / Math.sqrt(selfNorm*other.selfNorm), score.shardPeaks);
+            return new SpectralSimilarity(score.similarity / Math.sqrt(selfNorm*other.selfNorm), score.sharedPeaks);
         }
     }
 

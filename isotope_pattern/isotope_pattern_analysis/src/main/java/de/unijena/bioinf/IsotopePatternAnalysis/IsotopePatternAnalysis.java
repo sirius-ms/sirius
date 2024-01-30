@@ -29,6 +29,7 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.IsotopicDistribution;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Ms1IsotopePattern;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -201,12 +202,18 @@ public class IsotopePatternAnalysis implements Parameterized {
             final MS1MassDeviation massDev = input.getAnnotationOrDefault(MS1MassDeviation.class);
             final PossibleAdducts ionModes = input.getAnnotationOrDefault(PossibleAdducts.class);
             final FormulaConstraints constraints = input.getAnnotationOrDefault(FormulaConstraints.class);
+            //map formulas to their ionMode
+            final Deviation dev = input.getAnnotation(MS2MassDeviation.class).map(x->x.allowedMassDeviation).orElse(new Deviation(100)); //larger ppm should not hurt for adduct mapping
+            final double precurorMz = input.getExperimentInformation().getIonMass();
+            final List<Decomposition> decompositions = whiteset.resolve(precurorMz, dev, ionModes.getIonModes().stream().map(PrecursorIonType::getPrecursorIonType).toList());
             for (IonMode ionMode : ionModes.getIonModes()) {
                 List<MolecularFormula> formulas = new ArrayList<>();
                 if (whiteset.isStillAllowDeNovo())
                     formulas.addAll(decomposer.getDecomposer(constraints.getChemicalAlphabet()).decomposeToFormulas(pattern.getPeaks()[0].getMass(), ionMode, massDev.allowedMassDeviation, constraints));
-                if (!whiteset.isEmpty()) {
-                    formulas.addAll(whiteset.getMeasuredFormulas());
+                //select formulas for the current ionMode
+                final Whiteset resolvedWhiteset = Whiteset.ofMeasuredFormulas(decompositions.stream().filter(decomposition -> decomposition.getIon().equals(ionMode)).map(d -> d.getCandidate()).toList());
+                if (!resolvedWhiteset.isEmpty()) {
+                    formulas.addAll(resolvedWhiteset.getMeasuredFormulas());
                 }
                 PrecursorIonType precursorIonType = input.getExperimentInformation().getPrecursorIonType();
                 if (!precursorIonType.hasNeitherAdductNorInsource()) {

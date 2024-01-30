@@ -155,7 +155,7 @@ public class SpectralAlignmentJJob extends BasicMasterJJob<SpectralSearchResult>
         int queryIndex = ((IndexedQuerySpectrumWrapper) input.get(0).getLeft().getSpectrum()).getQueryIndex();
 
         return IntStream.range(0, similarities.size())
-                .filter(i -> similarities.get(i).shardPeaks > 0)
+                .filter(i -> similarities.get(i).sharedPeaks > 0)
                 .mapToObj(i -> {
                     Ms2ReferenceSpectrum reference = ((Ms2ReferenceSpectrumWrapper) input.get(i).getRight().getSpectrum()).getMs2ReferenceSpectrum();
                     return SpectralSearchResult.SearchResult.builder()

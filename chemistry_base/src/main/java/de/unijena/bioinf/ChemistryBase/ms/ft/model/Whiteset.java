@@ -74,6 +74,8 @@ public class Whiteset implements Ms2ExperimentAnnotation {
     // these are formulas as they are derived from the MS. They contain the adduct (but not the ionization)
     protected final Set<MolecularFormula> measuredFormulas;
 
+    //indicates to perform de novo molecular formula generation in addition to the whitelist formulas.
+    //this is to combined bottom-up search with de novo
     protected final boolean stillAllowDeNovo;
 
 

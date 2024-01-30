@@ -18,16 +18,30 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
+package de.unijena.bioinf.storage.db.nosql.utils;
 
-dependencies {
-    // external
-    implementation 'org.dizitart:nitrite:3.4.4'
-    implementation 'it.unimi.dsi:fastutil:8.5.12'
-    implementation "jakarta.persistence:jakarta.persistence-api:$jakarta_version"
-    implementation "io.hypersistence:hypersistence-tsid:2.1.1"
+import io.hypersistence.tsid.TSID;
+import lombok.Getter;
 
-    testImplementation 'org.burningwave:core:12.62.7'
-    testCompileOnly 'org.projectlombok:lombok:1.18.26'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.26'
-    testImplementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:"$jackson_version"
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.function.Supplier;
+
+public class PKSuppliers {
+
+    @Getter
+    private static final Supplier<Long> longKey = () -> TSID.fast().toLong();
+
+    @Getter
+    private static final Supplier<Double> doubleKey = () -> (double) TSID.fast().toLong();
+
+    @Getter
+    private static final Supplier<BigInteger> bigIntKey = () -> BigInteger.valueOf(TSID.fast().toLong());
+
+    @Getter
+    private static final Supplier<BigDecimal> bigDecimalKey = () -> BigDecimal.valueOf(TSID.fast().toLong());
+
+    @Getter
+    private static final Supplier<String> stringKey = () -> TSID.fast().toString();
+
 }

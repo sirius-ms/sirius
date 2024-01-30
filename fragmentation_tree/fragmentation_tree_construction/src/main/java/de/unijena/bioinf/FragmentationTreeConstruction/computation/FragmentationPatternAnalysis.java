@@ -208,18 +208,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         } else if (whiteset != null && !whiteset.isEmpty() && !whiteset.isStillAllowDeNovo()) {
             // we add whiteset later
             pmds = new ArrayList<>();
-        } else if (!experiment.getPrecursorIonType().isIonizationUnknown()) {
-            // use given ionization
-            final PrecursorIonType ionType = experiment.getPrecursorIonType();
-            final List<MolecularFormula> forms = decomposer.decomposeToFormulas(ionType.measuredNeutralMassToNeutralMass(parentMass), ionType.getIonization(), parentDeviation.absoluteFor(parentMass), constraints);
-            pmds = new ArrayList<>();
-            for (MolecularFormula f : forms)  {
-                final MolecularFormula neutralMeasuredFormula = ionType.neutralMoleculeToMeasuredNeutralMolecule(f);
-                if (neutralMeasuredFormula.isAllPositiveOrZero()) {
-                    decomps.add(new Decomposition(neutralMeasuredFormula, ionType.getIonization() , 0d));
-                    pmds.add(neutralMeasuredFormula);
-                }
-            }
         } else {
             pmds = new ArrayList<>();
             for (Ionization ion : ionModes) {
