@@ -24,7 +24,6 @@ package de.unijena.bioinf.ChemistryBase.ms.utils;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 
-import java.io.Serializable;
 
 public abstract class BasicSpectrum<P extends Peak> extends AbstractSpectrum<P> {
 	
@@ -44,7 +43,6 @@ public abstract class BasicSpectrum<P extends Peak> extends AbstractSpectrum<P> 
 	}
 	
 	public <T extends Peak, S extends Spectrum<T>> BasicSpectrum(S s) {
-		super(s);
 		this.masses = Spectrums.copyMasses(s);
 		this.intensities = Spectrums.copyIntensities(s);
 	}

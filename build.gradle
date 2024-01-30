@@ -23,7 +23,6 @@ ext {
     file("${projectDir}/fingerid_base_oss/src/main/resources/csi_fingerid.build.properties").withReader("UTF8", {
         props.load(it)
     })
-
     siriusVersion = props.getProperty('de.unijena.bioinf.sirius.version')
     fingeridVersion = props.getProperty('de.unijena.bioinf.fingerid.version')
     //version for external libraries

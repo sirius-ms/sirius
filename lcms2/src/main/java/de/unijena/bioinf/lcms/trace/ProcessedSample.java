@@ -18,10 +18,7 @@ public class ProcessedSample {
 
     @Getter
     private LCMSStorage storage;
-    @Getter
-    private MsDataSourceReference sourceReference;
-    @Getter
-    private MsInstrumentation instrumentation;
+
     @Getter
     private ScanPointMapping mapping;
 
@@ -40,12 +37,11 @@ public class ProcessedSample {
     @Getter
     private int polarity;
 
-    public ProcessedSample(MsDataSourceReference reference, MsInstrumentation instrumentation, ScanPointMapping scanPointMapping, LCMSStorage storage, int polarity, int uid)  {
+    public ProcessedSample(ScanPointMapping scanPointMapping, LCMSStorage storage, int polarity, int uid)  {
         this.mapping = scanPointMapping;
-        this.sourceReference = reference;
-        this.instrumentation = instrumentation;
         this.storage = storage;
         this.polarity = polarity;
+        this.uid = uid;
         this.rtRecalibration = RecalibrationFunction.identity();
         this.mzRecalibration = RecalibrationFunction.identity();
     }
@@ -56,10 +52,6 @@ public class ProcessedSample {
 
     public void active() {
         storage.setLowMemoryInactiveMode(false);
-    }
-
-    public MsDataSourceReference getReference() {
-        return sourceReference;
     }
 
     public Range<Double> getRtSpan() {

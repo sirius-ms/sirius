@@ -47,9 +47,6 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
                         new Index("name", IndexType.UNIQUE),
                         new Index("runType", IndexType.NON_UNIQUE))
 
-                .addRepository(SourceFile.class,
-                        new Index("fileName", IndexType.UNIQUE))
-
                 .addRepository(Scan.class,
                         new Index("runId", IndexType.NON_UNIQUE),
                         new Index("scanTime", IndexType.NON_UNIQUE))
@@ -139,14 +136,6 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
     default void fetchApexScans(@NotNull final Feature feature) {
         try {
             getStorage().fetchAllChildren(feature, "apexScanId", "scanId", "apexScan", Scan.class);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    default void fetchSourceFile(final @NotNull Run run) {
-        try {
-            getStorage().fetchChild(run, "runId", "sourceFile", SourceFile.class);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

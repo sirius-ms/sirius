@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SpectrumWithAdditionalFields;
 import de.unijena.bioinf.babelms.Parser;
 import org.slf4j.LoggerFactory;
 
@@ -48,12 +49,12 @@ public class MassbankExperimentParser extends MassbankSpectralParser implements 
 
     @Override
     public Ms2Experiment parse(BufferedReader reader, URI source) throws IOException {
-        AnnotatedSpectrum<Peak> spectrum = parseSpectrum(reader);
+        SpectrumWithAdditionalFields<Peak> spectrum = parseSpectrum(reader);
 
         if (spectrum == null)
             return null;
 
-        final AdditionalFields fields = spectrum.getAnnotation(AdditionalFields.class).orElse(null);
+        final AdditionalFields fields = spectrum.additionalFields();
         final MutableMs2Experiment exp = new MutableMs2Experiment();
         if (spectrum instanceof Ms2Spectrum) {
             exp.getMs2Spectra().add((MutableMs2Spectrum) spectrum);
@@ -61,29 +62,25 @@ public class MassbankExperimentParser extends MassbankSpectralParser implements 
             exp.getMs1Spectra().add((SimpleSpectrum) spectrum);
         }
 
-        //set metadata
-        if (fields != null) {
-            // mandatory
-            exp.setSource(new SpectrumFileSource(source));
-            parseName(fields).ifPresent(exp::setName);
-            fields.getField(CH_FORMULA.k()).map(MolecularFormula::parseOrThrow).ifPresent(exp::setMolecularFormula);
-            parsePrecursorIonType(fields).ifPresent(exp::setPrecursorIonType);
-            parsePrecursorMZ(fields).ifPresent(exp::setIonMass);
-            //optional
-            fields.getField(CH_IUPAC.k()).ifPresent(inchi -> fields.getField(CH_IUPAC_KEY.k()).ifPresentOrElse(key -> exp.annotate(InChIs.newInChI(key, inchi)), () -> exp.annotate(InChIs.newInChI(inchi))));
-            fields.getField(CH_SMILES.k()).map(Smiles::new).ifPresent(exp::annotate);
-            fields.getField(PK_SPLASH.k()).map(Splash::new).ifPresent(exp::annotate);
-            parseRetentionTime(fields).ifPresent(exp::annotate);
-            fields.getField(AC_INSTRUMENT.k()).map(MsInstrumentation::getBestFittingInstrument).ifPresent(i -> exp.setAnnotation(MsInstrumentation.class,i));
-            if (!exp.hasAnnotation(MsInstrumentation.class) || MsInstrumentation.Unknown.equals(exp.getAnnotation(MsInstrumentation.class).orElse(null)))
-                fields.getField(AC_INSTRUMENT_TYPE.k()).map(MsInstrumentation::getBestFittingInstrument)
-                        .ifPresent(i -> exp.setAnnotation(MsInstrumentation.class,i));
-        } else {
-            LoggerFactory.getLogger(getClass()).warn("Cannot find additional meta data fields. Experiment might be incomplete!");
-        }
+        // set metadata
+        // mandatory
+        exp.setSource(new SpectrumFileSource(source));
+        parseName(fields).ifPresent(exp::setName);
+        fields.getField(CH_FORMULA.k()).map(MolecularFormula::parseOrThrow).ifPresent(exp::setMolecularFormula);
+        parsePrecursorIonType(fields).ifPresent(exp::setPrecursorIonType);
+        parsePrecursorMZ(fields).ifPresent(exp::setIonMass);
+        // optional
+        fields.getField(CH_IUPAC.k()).ifPresent(inchi -> fields.getField(CH_IUPAC_KEY.k()).ifPresentOrElse(key -> exp.annotate(InChIs.newInChI(key, inchi)), () -> exp.annotate(InChIs.newInChI(inchi))));
+        fields.getField(CH_SMILES.k()).map(Smiles::new).ifPresent(exp::annotate);
+        fields.getField(PK_SPLASH.k()).map(Splash::new).ifPresent(exp::annotate);
+        parseRetentionTime(fields).ifPresent(exp::annotate);
+        fields.getField(AC_INSTRUMENT.k()).map(MsInstrumentation::getBestFittingInstrument).ifPresent(i -> exp.setAnnotation(MsInstrumentation.class,i));
+        if (!exp.hasAnnotation(MsInstrumentation.class) || MsInstrumentation.Unknown.equals(exp.getAnnotation(MsInstrumentation.class).orElse(null)))
+            fields.getField(AC_INSTRUMENT_TYPE.k()).map(MsInstrumentation::getBestFittingInstrument)
+                    .ifPresent(i -> exp.setAnnotation(MsInstrumentation.class,i));
 
         if (clearSpectrum)
-            spectrum.removeAnnotation(AdditionalFields.class);
+            spectrum.setAdditionalFields(new AdditionalFields());
 
         return exp;
     }

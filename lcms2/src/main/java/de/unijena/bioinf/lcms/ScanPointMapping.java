@@ -1,10 +1,7 @@
 package de.unijena.bioinf.lcms;
 
-import de.unijena.bioinf.model.lcms.LCMSRun;
-import de.unijena.bioinf.model.lcms.Scan;
-import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 import java.util.Arrays;
 
@@ -13,12 +10,12 @@ import java.util.Arrays;
  */
 public class ScanPointMapping {
 
-    protected Int2IntOpenHashMap scan2id;
+    protected Int2IntMap scan2id;
 
     protected double[] retentionTimes;
     protected int[] scanids;
 
-    public ScanPointMapping(double[] retentionTimes, int[] scanids, Int2IntOpenHashMap map) {
+    public ScanPointMapping(double[] retentionTimes, int[] scanids, Int2IntMap map) {
         this.retentionTimes = retentionTimes;
         this.scanids = scanids;
         this.scan2id = map;
@@ -29,23 +26,6 @@ public class ScanPointMapping {
         for (int k=0; k < scanids.length; ++k) {
             scan2id.put(scanids[k], k);
         }
-    }
-
-    public ScanPointMapping(LCMSRun run) {
-        scan2id = new Int2IntOpenHashMap(run.getScans().size());
-        scan2id.defaultReturnValue(-1);
-        IntArrayList scanids = new IntArrayList(run.getScans().size());
-        DoubleArrayList rets = new DoubleArrayList(run.getScans().size());
-        int k=0;
-        for (Scan s : run.getScans()) {
-            if (!s.isMsMs()) {
-                scan2id.put(s.getIndex(), k++);
-                rets.add(s.getRetentionTime());
-                scanids.add(s.getIndex());
-            }
-        }
-        this.retentionTimes = rets.toDoubleArray();
-        this.scanids = scanids.toIntArray();
     }
 
     public int idForRetentionTime(double rt) {

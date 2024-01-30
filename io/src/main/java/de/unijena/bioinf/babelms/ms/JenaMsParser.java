@@ -27,9 +27,7 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.ForbidRecalibration;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
-import de.unijena.bioinf.ChemistryBase.ms.utils.PeakComment;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.*;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
@@ -113,7 +111,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             this.source = new MsFileSource(source);
             this.reader = reader;
             lineNumber = 0;
-            this.currentSpectrum = new SimpleMutableSpectrum();
+            this.currentSpectrum = AnnotatedWrapperSpectrum.of(new SimpleMutableSpectrum());
             this.baseConfig = baseConfig;
         }
 
@@ -144,10 +142,10 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private CollisionEnergy currentEnergy;
         private double tic = 0, parentMass = 0, retentionTime = 0, retentionTimeStart = Double.NaN, retentionTimeEnd = Double.NaN;
         private double retentionTimeMin, retentionTimeMax;
-        private SimpleMutableSpectrum currentSpectrum;
+        private AnnotatedWrapperSpectrum<SimpleMutableSpectrum, Peak> currentSpectrum;
         private ArrayList<MutableMs2Spectrum> ms2spectra = new ArrayList<>();
         private ArrayList<SimpleSpectrum> ms1spectra = new ArrayList<>();
-        private SimpleSpectrum mergedMs1;
+        private SimpleSpectrumWithAdditionalFields mergedMs1;
         private String inchi, inchikey, smiles, splash, spectrumQualityString, featureId;
         private MutableMs2Experiment experiment;
         private MsInstrumentation instrumentation = MsInstrumentation.Unknown;
@@ -563,7 +561,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private void parsePeak(String line, List<String> comments) throws IOException {
             final Matcher m = PEAK_PATTERN.matcher(line);
             if (m.find()) {
-                currentSpectrum.addPeak(new SimplePeak(Utils.parseDoubleWithUnknownDezSep(m.group(1)), Utils.parseDoubleWithUnknownDezSep(m.group(2))));
+                currentSpectrum.getSourceSpectrum().addPeak(new SimplePeak(Utils.parseDoubleWithUnknownDezSep(m.group(1)), Utils.parseDoubleWithUnknownDezSep(m.group(2))));
                 if (m.group(3)!=null && !m.group(3).isEmpty()) {
                     hasPeakComment = true;
                     comments.add(m.group(3).strip());
@@ -575,25 +573,25 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
         private void newSpectrum() {
             //always parse empty MS1/MS2. else this might create issues with MS1/MS2 mapping
-            final AnnotatedSpectrum<Peak> spec;
+            final SpectrumWithAdditionalFields<Peak> spec;
             if (spectrumType == SPECTRUM_TYPE.MS1) {
-                spec = new SimpleSpectrum(currentSpectrum);
+                spec = new SimpleSpectrumWithAdditionalFields(currentSpectrum);
                 ms1Comments.add(currentComments);
                 ms1spectra.add((SimpleSpectrum) spec);
             } else if (spectrumType == SPECTRUM_TYPE.MS2) {
-                spec = new MutableMs2Spectrum(currentSpectrum, parentMass, currentEnergy, 2);
+                spec = new MutableMs2SpectrumWithAdditionalFields(currentSpectrum, parentMass, currentEnergy, 2);
                 ((MutableMs2Spectrum) spec).setTotalIonCount(tic);
                 ms2spectra.add((MutableMs2Spectrum) spec);
                 ms2Comments.add(currentComments);
             } else if (!currentSpectrum.isEmpty()) {
                 if (spectrumType == SPECTRUM_TYPE.MERGED_MS1) {
-                    mergedMs1 = new SimpleSpectrum(currentSpectrum);
+                    mergedMs1 = new SimpleSpectrumWithAdditionalFields(currentSpectrum);
                     spec = mergedMs1;
                     mergedComments=currentComments;
                 } else {
                     warn("Unknown spectrum type. Description must contain one of the following keywords '>[ms1|mergedms1|ms2|collision|energy]'. " +
                             "Spectrum will be processed as MS2 spectrum.");
-                    spec = new MutableMs2Spectrum(currentSpectrum, parentMass, currentEnergy, 2);
+                    spec = new MutableMs2SpectrumWithAdditionalFields(currentSpectrum, parentMass, currentEnergy, 2);
                     ms2spectra.add((MutableMs2Spectrum) spec);
                     ms2Comments.add(currentComments);
                 }
@@ -601,14 +599,14 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
             //transfer spectra to copied version of spectrum
             currentSpectrum.getAnnotation(AdditionalFields.class).ifPresent(
-                    fields -> spec.setAnnotation(AdditionalFields.class, fields)
+                    fields -> spec.additionalFields().putAll(fields)
             );
 
             //creat new spectrum
             spectrumType = SPECTRUM_TYPE.UNKNOWN;
             this.tic = 0;
             this.currentEnergy = null;
-            this.currentSpectrum = new SimpleMutableSpectrum();
+            this.currentSpectrum = AnnotatedWrapperSpectrum.of(new SimpleMutableSpectrum());
             currentComments = new ArrayList<>();
         }
 

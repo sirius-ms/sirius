@@ -6,6 +6,7 @@ import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.lcms.trace.Trace;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import lombok.Getter;
+import lombok.Setter;
 import org.h2.mvstore.WriteBuffer;
 
 import java.nio.ByteBuffer;
@@ -26,22 +27,27 @@ public class MergedTrace {
     @Getter
     private int endId;
 
+    @Getter
+    private IntArrayList isotopeUids;
+
     public MergedTrace(int uid) {
         this.uid = uid;
         this.mz = new double[0];
         this.ints = new double[0];
         this.sampleIds = new IntArrayList();
         this.traceIds = new IntArrayList();
+        this.isotopeUids = new IntArrayList();
         this.startId = -1;
         this.endId = -1;
     }
 
-    protected MergedTrace(int uid, double[] mz, double[] ints, int[] sampleIds, int[] traceIds, int startId, int endId) {
+    protected MergedTrace(int uid, double[] mz, double[] ints, int[] sampleIds, int[] traceIds, int[] isotopeUids, int startId, int endId) {
         this.uid = uid;
         this.mz = mz;
         this.ints = ints;
         this.sampleIds = new IntArrayList(sampleIds);
         this.traceIds = new IntArrayList(traceIds);
+        this.isotopeUids = new IntArrayList(isotopeUids);
         this.startId = startId;
         this.endId = endId;
     }
@@ -172,7 +178,7 @@ public class MergedTrace {
         @Override
         public int getMemory(Object obj) {
             MergedTrace t = (MergedTrace)obj;
-            return 8*4 + 12 + t.mz.length*16 + t.sampleIds.size()*8;
+            return 8*4 + 12 + t.mz.length*16 + t.sampleIds.size()*8 + t.isotopeUids.size()*8;
         }
 
         @Override
@@ -185,6 +191,7 @@ public class MergedTrace {
             writeDouble(buff, t.ints);
             writeInt(buff, t.sampleIds.toIntArray());
             writeInt(buff, t.traceIds.toIntArray());
+            writeInt(buff, t.isotopeUids.toIntArray());
         }
 
         @Override
@@ -196,7 +203,8 @@ public class MergedTrace {
             double[] ints = readDouble(buff);
             int[] sampleIds = readInt(buff);
             int[] traceIds = readInt(buff);
-            return new MergedTrace(uid, mz, ints, sampleIds, traceIds, startId, endId);
+            int[] isotopeUids = readInt(buff);
+            return new MergedTrace(uid, mz, ints, sampleIds, traceIds, isotopeUids, startId, endId);
         }
     }
 }
