@@ -77,4 +77,8 @@ public interface Trace {
         return new Rect((float)minMz(), (float)maxMz(), retentionTime(startId()), retentionTime(endId()), averagedMz());
     }
 
+    public default float intensityOrZero(int id) {
+        return inRange(id) ? intensity(id) : 0f;
+    }
+
 }
