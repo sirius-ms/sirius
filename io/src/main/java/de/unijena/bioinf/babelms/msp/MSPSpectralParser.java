@@ -21,10 +21,11 @@
 package de.unijena.bioinf.babelms.msp;
 
 import de.unijena.bioinf.ChemistryBase.ms.AdditionalFields;
-import de.unijena.bioinf.ChemistryBase.ms.AnnotatedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.MutableMs2SpectrumWithAdditionalFields;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrumWithAdditionalFields;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SpectrumWithAdditionalFields;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.babelms.SpectralParser;
@@ -47,17 +48,17 @@ public class MSPSpectralParser extends SpectralParser {
     private final static String START = NUM_PEAKS + ":";
 
     @Override
-    public CloseableIterator<? extends AnnotatedSpectrum<Peak>> parseSpectra(BufferedReader reader) throws IOException {
+    public CloseableIterator<? extends SpectrumWithAdditionalFields<Peak>> parseSpectra(BufferedReader reader) throws IOException {
         return new MSPSpectraIterator(reader);
     }
 
 
     @Nullable
-    AnnotatedSpectrum<Peak> parseSpectrum(BufferedReader reader) throws IOException {
+    SpectrumWithAdditionalFields<Peak> parseSpectrum(BufferedReader reader) throws IOException {
         return parseSpectrum(reader, null);
     }
 
-    AnnotatedSpectrum<Peak> parseSpectrum(BufferedReader reader, @Nullable AdditionalFields prevMetaInfo) throws IOException {
+    SpectrumWithAdditionalFields<Peak> parseSpectrum(BufferedReader reader, @Nullable AdditionalFields prevMetaInfo) throws IOException {
 
         AdditionalFields metaInfo = new AdditionalFields(false);
         String line;
@@ -106,7 +107,7 @@ public class MSPSpectralParser extends SpectralParser {
             metaInfo.put("MAT_ADDITIONAL_SPEC", "TRUE");
         }
 
-        AnnotatedSpectrum<Peak> spectrum;
+        SpectrumWithAdditionalFields<Peak> spectrum;
         {
             double[] masses = new double[peaks];
             double[] intensities = new double[peaks];
@@ -123,7 +124,7 @@ public class MSPSpectralParser extends SpectralParser {
                 }
             }
 
-            spectrum = new SimpleSpectrum(masses, intensities);
+            spectrum = new SimpleSpectrumWithAdditionalFields(masses, intensities);
 
             if (spectrum.isEmpty())
                 LoggerFactory.getLogger(getClass()).error("0 Peaks found in current Block, Returning empty spectrum with meta data");
@@ -132,7 +133,7 @@ public class MSPSpectralParser extends SpectralParser {
         String msLevel = MSP.getWithSynonyms(metaInfo, SPEC_TYPE).orElse(null);
         if ((msLevel == null && (getWithSynonyms(metaInfo, PRECURSOR_MZ).isPresent() || (metaInfo.getField(SYN_PRECURSOR_MZ).filter(s -> !s.isBlank()).isPresent())) ||
                 (msLevel != null && !("MS".equalsIgnoreCase(msLevel) || "MS1".equalsIgnoreCase(msLevel))))) { // we have MSn
-            spectrum = new MutableMs2Spectrum(
+            spectrum = new MutableMs2SpectrumWithAdditionalFields(
                     spectrum,
                     MSP.parsePrecursorMZ(metaInfo).orElseThrow(() -> new IOException("Could neither parse '" + Arrays.toString(PRECURSOR_MZ) + "' nor '" + EXACT_MASS + "'!")),
                     MSP.parseCollisionEnergy(metaInfo).orElse(null),
@@ -144,14 +145,14 @@ public class MSPSpectralParser extends SpectralParser {
                     .getIonization());
         }
 
-        spectrum.setAnnotation(AdditionalFields.class, metaInfo);
+        spectrum.setAdditionalFields(metaInfo);
 
         return spectrum;
 
     }
 
-    private class MSPSpectraIterator implements CloseableIterator<AnnotatedSpectrum<Peak>> {
-        private AnnotatedSpectrum<Peak> next;
+    private class MSPSpectraIterator implements CloseableIterator<SpectrumWithAdditionalFields<Peak>> {
+        private SpectrumWithAdditionalFields<Peak> next;
         private final BufferedReader reader;
 
         public MSPSpectraIterator(BufferedReader reader) throws IOException {
@@ -165,8 +166,8 @@ public class MSPSpectralParser extends SpectralParser {
         }
 
         @Override
-        public AnnotatedSpectrum<Peak> next() {
-            AnnotatedSpectrum<Peak> current = next;
+        public SpectrumWithAdditionalFields<Peak> next() {
+            SpectrumWithAdditionalFields<Peak> current = next;
             try {
                 next = parseSpectrum(reader);
             } catch (IOException e) {

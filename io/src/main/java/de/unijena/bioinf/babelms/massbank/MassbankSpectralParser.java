@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -20,8 +20,13 @@
 
 package de.unijena.bioinf.babelms.massbank;
 
-import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.AdditionalFields;
+import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.utils.MutableMs2SpectrumWithAdditionalFields;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrumWithAdditionalFields;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SpectrumWithAdditionalFields;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.babelms.SpectralParser;
 import org.jetbrains.annotations.Nullable;
@@ -41,13 +46,13 @@ public class MassbankSpectralParser extends SpectralParser {
     public static final String MULTILINE_INDENT = "  ";
 
     @Override
-    public CloseableIterator<? extends AnnotatedSpectrum<Peak>> parseSpectra(BufferedReader reader) throws IOException {
+    public CloseableIterator<? extends SpectrumWithAdditionalFields<Peak>> parseSpectra(BufferedReader reader) throws IOException {
         return new Iterator(reader);
     }
 
 
     @Nullable
-    AnnotatedSpectrum<Peak> parseSpectrum(BufferedReader reader) throws IOException {
+    SpectrumWithAdditionalFields<Peak> parseSpectrum(BufferedReader reader) throws IOException {
         List<String> peakAnnotationsCSV = new ArrayList<>();
         AdditionalFields metaInfo = new AdditionalFields(false);
         String line;
@@ -63,7 +68,7 @@ public class MassbankSpectralParser extends SpectralParser {
 
             if (line.startsWith(PK_PEAK.k())) {
                 int peaks = metaInfo.getField(PK_NUM_PEAK.k()).map(Integer::parseInt).orElse(-1);
-                AnnotatedSpectrum<Peak> spectrum;
+                SpectrumWithAdditionalFields<Peak> spectrum;
                 {
                     double[] masses = new double[peaks];
                     double[] intensities = new double[peaks];
@@ -82,7 +87,7 @@ public class MassbankSpectralParser extends SpectralParser {
                         }
                     }
 
-                    spectrum = new SimpleSpectrum(masses, intensities);
+                    spectrum = new SimpleSpectrumWithAdditionalFields(masses, intensities);
 
                     if (spectrum.isEmpty())
                         LoggerFactory.getLogger(getClass()).error("0 Peaks found in current Block, Returning empty spectrum with meta data");
@@ -91,7 +96,7 @@ public class MassbankSpectralParser extends SpectralParser {
                 String msLevel = metaInfo.get(AC_MASS_SPECTROMETRY_MS_TYPE.k());
                 if ((msLevel == null && (metaInfo.containsKey(MS_FOCUSED_ION_PRECURSOR_MZ.k()))) ||
                         (msLevel != null && (!"MS".equalsIgnoreCase(msLevel)) && !"MS1".equalsIgnoreCase(msLevel))) { // we have MSn
-                    spectrum = new MutableMs2Spectrum(
+                    spectrum = new MutableMs2SpectrumWithAdditionalFields(
                             spectrum,
                             parsePrecursorMZ(metaInfo).orElseThrow(() -> new IOException("Could not parse '" + MS_FOCUSED_ION_PRECURSOR_MZ.k() + "':'" + metaInfo.get(MS_FOCUSED_ION_PRECURSOR_MZ.k()) + "' OR '" + CH_EXACT_MASS.k() + "':'" + metaInfo.get(CH_EXACT_MASS.k()) + "'.")),
                             metaInfo.getField(AC_MASS_SPECTROMETRY_COLLISION_ENERGY.k()).map(CollisionEnergy::fromStringOrNull).orElse(null),
@@ -103,7 +108,7 @@ public class MassbankSpectralParser extends SpectralParser {
                             .getIonization());
                 }
 
-                spectrum.setAnnotation(AdditionalFields.class, metaInfo);
+                spectrum.setAdditionalFields(metaInfo);
                 return spectrum;
             }
 
@@ -117,8 +122,8 @@ public class MassbankSpectralParser extends SpectralParser {
     }
 
 
-    private class Iterator implements CloseableIterator<AnnotatedSpectrum<Peak>> {
-        private AnnotatedSpectrum<Peak> next;
+    private class Iterator implements CloseableIterator<SpectrumWithAdditionalFields<Peak>> {
+        private SpectrumWithAdditionalFields<Peak> next;
         private final BufferedReader reader;
 
         public Iterator(BufferedReader reader) throws IOException {
@@ -132,8 +137,8 @@ public class MassbankSpectralParser extends SpectralParser {
         }
 
         @Override
-        public AnnotatedSpectrum<Peak> next() {
-            AnnotatedSpectrum<Peak> current = next;
+        public SpectrumWithAdditionalFields<Peak> next() {
+            SpectrumWithAdditionalFields<Peak> current = next;
             try {
                 next = parseSpectrum(reader);
             } catch (IOException e) {
