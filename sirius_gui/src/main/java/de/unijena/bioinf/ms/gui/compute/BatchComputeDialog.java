@@ -75,9 +75,8 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
     // tool configurations
     private final ActFormulaIDConfigPanel formulaIDConfigPanel; //Sirius configs
     private final ActZodiacConfigPanel zodiacConfigs; //Zodiac configs
-    private final ActFingerprintConfigPanel csiPredictConfigs; //CSI:FingerID predict configs
+    private final ActFingerprintAndCanopusConfigPanel fingerprintAndCanopusConfigPanel; //Combines CSI:FingerID predict and CANOPUS configs
     private final ActFingerblastConfigPanel csiSearchConfigs; //CSI:FingerID search configs
-    private final ActCanopusConfigPanel canopusConfigPanel; //Canopus configs
     private final ActMSNovelistConfigPanel msNovelistConfigPanel; //MsNovelist configs
 
     // compounds on which the configured Run will be executed
@@ -112,9 +111,8 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             addConfigPanel("SIRIUS - Molecular Formula Identification", formulaIDConfigPanel);
 
             zodiacConfigs = new ActZodiacConfigPanel(isAdvancedView);
-            csiPredictConfigs = new ActFingerprintConfigPanel(formulaIDConfigPanel.content.adductList.checkBoxList);
+            fingerprintAndCanopusConfigPanel = new ActFingerprintAndCanopusConfigPanel();
             csiSearchConfigs = new ActFingerblastConfigPanel(formulaIDConfigPanel.content.getSearchDBList().checkBoxList);
-            canopusConfigPanel = new ActCanopusConfigPanel();
             msNovelistConfigPanel = new ActMSNovelistConfigPanel();
 
             if (compoundsToProcess.size() > 1 && ms2){
@@ -146,9 +144,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             }
 
             if (ms2) {
-                JPanel fpPrediction = addConfigPanel("CSI:FingerID - Fingerprint Prediction + CANOPUS - Compound Class Prediction ...", csiPredictConfigs);
-                //todo NewWorkflow: we don't need the CANOPUS panel anymore. We do all in one step.
-                addConfigPanel("CANOPUS - Compound Class Prediction", canopusConfigPanel, fpPrediction);
+                JPanel fpPrediction = addConfigPanel("Predict properties: CSI:FingerID - Fingerprint Prediction & CANOPUS - Compound Class Prediction", fingerprintAndCanopusConfigPanel);
                 JPanel dbSearch =  addConfigPanel("CSI:FingerID - Structure Database Search", csiSearchConfigs);
                 addConfigPanel("MSNovelist - De Novo Structure Generation", msNovelistConfigPanel, dbSearch); //todo NewWorkflow: is this advanced mode only?
 
@@ -303,7 +299,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         }
 
 
-        if (csiPredictConfigs.isToolSelected() || csiSearchConfigs.isToolSelected() || canopusConfigPanel.isToolSelected() && !PropertyManager.getBoolean(DO_NOT_SHOW_AGAIN_KEY_OUTDATED_PS, false)) {
+        if (fingerprintAndCanopusConfigPanel.isToolSelected() || csiSearchConfigs.isToolSelected() || msNovelistConfigPanel.isToolSelected() && !PropertyManager.getBoolean(DO_NOT_SHOW_AGAIN_KEY_OUTDATED_PS, false)) {
             //CHECK Server connection
             if (checkResult == null)
                 checkResult = CheckConnectionAction.checkConnectionAndLoad();
@@ -409,15 +405,10 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             configCommand.addAll(zodiacConfigs.asParameterList());
         }
 
-        if (csiPredictConfigs != null && csiPredictConfigs.isToolSelected()) {
-            toolCommands.add(csiPredictConfigs.content.toolCommand());
-            configCommand.addAll(csiPredictConfigs.asParameterList());
-        }
-
-        //canopus must now run before structure database search
-        if (canopusConfigPanel != null && canopusConfigPanel.isToolSelected()) {
-            toolCommands.add(canopusConfigPanel.content.toolCommand());
-            configCommand.addAll(canopusConfigPanel.asParameterList());
+        //canopus prediction included. Must now run before structure database search
+        if (fingerprintAndCanopusConfigPanel != null && fingerprintAndCanopusConfigPanel.isToolSelected()) {
+            toolCommands.addAll(fingerprintAndCanopusConfigPanel.content.toolCommands());
+            configCommand.addAll(fingerprintAndCanopusConfigPanel.asParameterList());
         }
 
         if (csiSearchConfigs != null && csiSearchConfigs.isToolSelected()) {
@@ -435,7 +426,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
     }
 
     private boolean warnNoMethodIsSelected() {
-        if (!isAnySelected(formulaIDConfigPanel, zodiacConfigs, csiPredictConfigs, csiSearchConfigs, canopusConfigPanel)) {
+        if (!isAnySelected(formulaIDConfigPanel, zodiacConfigs, fingerprintAndCanopusConfigPanel, csiSearchConfigs, msNovelistConfigPanel)) {
             new WarningDialog(this, "Please select at least one method.");
             return true;
         } else {
@@ -456,7 +447,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
 
         if (checkResult != null) {
             if (checkResult.isConnected()) {
-                if ((csiPredictConfigs.isToolSelected() || csiSearchConfigs.isToolSelected()) && checkResult.hasWorkerWarning()) {
+                if ((fingerprintAndCanopusConfigPanel.isToolSelected() || csiSearchConfigs.isToolSelected() || msNovelistConfigPanel.isToolSelected()) && checkResult.hasWorkerWarning()) {
                     if (checkResult.workerInfo == null ||
                             (!checkResult.workerInfo.supportsAllPredictorTypes(ConnectionMonitor.neededTypes.stream().filter(WorkerWithCharge::isNegative).collect(Collectors.toSet()))
                                     && compoundsToProcess.stream().anyMatch(it -> it.getIonType().isNegative())) ||
