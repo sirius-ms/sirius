@@ -28,6 +28,7 @@ dependencies {
     api project(':chemical_db_oss:chemdb_utils_oss')
     api project(':fingerprinter_oss')
     api project(':fingerblast_oss')
+    api project(':combinatorial_fragmenter')
     api project(':chemical_db_oss:chemdb_blob_oss')
     api project(':canopus_predict_oss')
     api project (':sirius_api')

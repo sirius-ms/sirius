@@ -2,7 +2,7 @@
  *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2023 Bright Giant GmbH
+ *  Copyright (C) 2024 Bright Giant GmbH
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -17,32 +17,22 @@
  *  You should have received a copy of the GNU General Public License along with SIRIUS.
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
+package de.unijena.bioinf.babelms.msp;
 
-package de.unijena.bioinf.storage.db.nosql.nitrite;
+import de.unijena.bioinf.ChemistryBase.chem.Smiles;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import org.junit.jupiter.api.Test;
 
-import org.dizitart.no2.NitriteId;
-import org.dizitart.no2.objects.Id;
-import org.dizitart.no2.objects.InheritIndices;
+import java.io.IOException;
 
-@InheritIndices
-public abstract class NitritePOJO implements NitriteMappable, NitriteWriteString {
+import static de.unijena.bioinf.babelms.ParserTestUtils.loadExperiment;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-    @Id
-    protected NitriteId id;
-
-    public NitritePOJO() {}
-
-    public NitriteId getId() {
-        return id;
-    }
-
-    public void setId(NitriteId id) {
-        this.id = id;
-    }
-
-    @Override
-    public String toString() {
-        return this.writeString();
+class MSPExperimentParserTest {
+    @Test
+    void parseMspComments() throws IOException {
+        Ms2Experiment experiment = loadExperiment("mona/MoNA010759.msp");
+        assertEquals("c1cc(cc(c1)N)C(=O)O", experiment.getAnnotation(Smiles.class).orElseThrow().smiles);
     }
 
 }

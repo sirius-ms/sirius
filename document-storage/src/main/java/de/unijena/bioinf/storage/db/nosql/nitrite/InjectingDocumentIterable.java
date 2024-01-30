@@ -97,7 +97,7 @@ public class InjectingDocumentIterable implements Iterable<Document> {
     }
 
     public static Document inject(Document original, Set<String> injectedFields, NitriteCollection collection) {
-        if (injectedFields.size() == 0) return original;
+        if (injectedFields.isEmpty()) return original;
 
         Document result = new Document(original);
         if (original.getId() == null) {
