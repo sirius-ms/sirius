@@ -34,4 +34,9 @@ public class StructureSearchResultSerializer implements ComponentSerializer<Form
     public void delete(ProjectWriter writer, FormulaResultId id) throws IOException {
         writer.deleteIfExists(SEARCH.relFilePath(id));
     }
+
+    @Override
+    public void deleteAll(ProjectWriter writer) throws IOException {
+        writer.deleteIfExists(SEARCH.relDir());
+    }
 }
