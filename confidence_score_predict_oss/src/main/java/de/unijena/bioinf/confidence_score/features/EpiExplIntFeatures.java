@@ -11,12 +11,8 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
 import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
-import de.unijena.bioinf.fragmenter.CombinatorialFragment;
 import de.unijena.bioinf.fragmenter.CombinatorialNode;
 import de.unijena.bioinf.fragmenter.CombinatorialSubtree;
-
-import java.util.ArrayList;
-import java.util.HashMap;
 
 public class EpiExplIntFeatures implements FeatureCreator {
 

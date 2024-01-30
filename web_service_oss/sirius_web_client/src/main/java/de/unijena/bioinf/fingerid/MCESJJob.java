@@ -9,11 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 public class MCESJJob extends BasicDependentMasterJJob<Integer> {
 
@@ -60,6 +57,4 @@ public class MCESJJob extends BasicDependentMasterJJob<Integer> {
     public void handleFinishedRequiredJob(JJob required) {
 
     }
-
-
 }
