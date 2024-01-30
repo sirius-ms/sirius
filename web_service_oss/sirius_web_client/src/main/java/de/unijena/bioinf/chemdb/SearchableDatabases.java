@@ -74,7 +74,14 @@ public class SearchableDatabases {
 
     public static Path getDatabaseDirectory() {
         final String val = PropertyManager.getProperty("de.unijena.bioinf.sirius.fingerID.cache");
-        return Paths.get(val);
+        Path p;
+        if (val == null || val.isBlank()){
+            p =  Path.of(System.getProperty("java.io.tmpdir")).resolve("csi_cache_dir");
+            LoggerFactory.getLogger(SearchableDatabases.class).warn("No structure db cache found. Using fallback: " + p);
+        }else {
+            p = Paths.get(val);
+        }
+        return p;
     }
 
     public static CustomDatabase getCustomDatabaseByNameOrThrow(@NotNull String name) {
