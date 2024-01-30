@@ -47,30 +47,25 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
         super(FingerblastOptions.class);
 
 
+        //select search strategy
         JComboBox<StructureSearchStrategy.Strategy> strategyBox =  GuiUtils.makeParameterComboBoxFromDescriptiveValues(StructureSearchStrategy.Strategy.values());
         structureSearchStrategy = new StructureSearchStrategy((StructureSearchStrategy.Strategy) strategyBox.getSelectedItem(), parameterBindings, syncSource);
-        strategyBox.addItemListener(e -> {
-            if (e.getStateChange() != ItemEvent.SELECTED) {
-                return;
-            }
-            //todo NewWorkflow: implement to use this parameter 'StructureSearchStrategy'
-            final DescriptiveOptions source = (DescriptiveOptions) e.getItem();
-            int panelIndex = GuiUtils.getComponentIndex(this, structureSearchStrategy);
-            this.remove(panelIndex);
-            structureSearchStrategy = new StructureSearchStrategy((StructureSearchStrategy.Strategy) strategyBox.getSelectedItem(), parameterBindings, syncSource);
-            this.add(structureSearchStrategy, panelIndex);
-
-            if ((StructureSearchStrategy.Strategy) strategyBox.getSelectedItem() == StructureSearchStrategy.Strategy.NO_FALLBACK) {
-
-                parameterBindings.put("ExpansiveSearchConfidenceMode.confidenceScoreSimilarityMode", () -> "OFF");
-            }
-
-            revalidate();
-        });
-
 
         //confidence score approximate mode settings
         JComboBox<ExpansiveSearchConfidenceMode.Mode> confidenceModeBox =  GuiUtils.makeParameterComboBoxFromDescriptiveValues(ExpansiveSearchConfidenceMode.Mode.getActiveModes());
+        confidenceModeBox.setVisible(isStrategy(StructureSearchStrategy.Strategy.PUBCHEM_AS_FALLBACK, strategyBox));
+
+        //layout the panel
+        final TwoColumnPanel additionalOptions = new TwoColumnPanel();
+        additionalOptions.addNamed("Database search strategy", strategyBox);
+        JLabel confLabel = new JLabel("Confidence mode");
+        additionalOptions.add(confLabel, confidenceModeBox);
+
+        add(new TextHeaderBoxPanel("General", additionalOptions));
+        add(structureSearchStrategy);
+
+
+        //add listeners
         confidenceModeBox.addItemListener(e -> {
             if (e.getStateChange() != ItemEvent.SELECTED) {
                 return;
@@ -90,17 +85,37 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
             }
         });
 
-        //layout the panel
-        final TwoColumnPanel additionalOptions = new TwoColumnPanel();
-        additionalOptions.addNamed("Database search strategy", strategyBox);
-        additionalOptions.addNamed("Confidence mode", confidenceModeBox);
-        //todo NewWorkflow: make confidenceModeBox only available in PUBCHEM_AS_FALLBACK mode
+        //set confidence more based on strategy
+        strategyBox.addItemListener(e -> {
+            if (e.getStateChange() != ItemEvent.SELECTED) {
+                return;
+            }
+            //todo NewWorkflow: implement to use this parameter 'StructureSearchStrategy'
+            final DescriptiveOptions source = (DescriptiveOptions) e.getItem();
+            int panelIndex = GuiUtils.getComponentIndex(this, structureSearchStrategy);
+            this.remove(panelIndex);
+            structureSearchStrategy = new StructureSearchStrategy((StructureSearchStrategy.Strategy) strategyBox.getSelectedItem(), parameterBindings, syncSource);
+            this.add(structureSearchStrategy, panelIndex);
 
-        add(new TextHeaderBoxPanel("General", additionalOptions));
-        add(structureSearchStrategy);
+            if (isStrategy(StructureSearchStrategy.Strategy.NO_FALLBACK, strategyBox)) {
+
+                parameterBindings.put("ExpansiveSearchConfidenceMode.confidenceScoreSimilarityMode", () -> "OFF");
+                confLabel.setVisible(false);
+                confidenceModeBox.setVisible(false);
+            } else {
+                confLabel.setVisible(true);
+                confidenceModeBox.setVisible(true);
+            }
+
+            revalidate();
+        });
     }
 
     public JCheckboxListPanel<CustomDataSources.Source> getSearchDBList() {
         return structureSearchStrategy.getSearchDBList();
+    }
+
+    private boolean isStrategy(StructureSearchStrategy.Strategy strategy, JComboBox<StructureSearchStrategy.Strategy> strategyBox) {
+        return (StructureSearchStrategy.Strategy) strategyBox.getSelectedItem() == strategy;
     }
 }
