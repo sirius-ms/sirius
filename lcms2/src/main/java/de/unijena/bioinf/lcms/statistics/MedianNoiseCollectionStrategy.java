@@ -82,7 +82,7 @@ public class MedianNoiseCollectionStrategy implements StatisticsCollectionStrate
             }
 
 
-            return SampleStats.builder().noiseLevelPerScan(ms1Noises).ms2NoiseLevel(ms2NoiseAvg).ms1MassDeviationWithinTraces(new Deviation(10)).minimumMs1MassDeviationBetweenTraces(new Deviation(5)).build();
+            return SampleStats.builder().noiseLevelPerScan(ms1Noises).ms2NoiseLevel(ms2NoiseAvg).ms1MassDeviationWithinTraces(new Deviation(6,3e-4)).minimumMs1MassDeviationBetweenTraces(new Deviation(6,3e-4)).build();
         }
     }
 
