@@ -102,10 +102,6 @@ FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
     enum Strategy {IGNORE, SCORE} //todo remove if Filter is implemented
 
     protected JComboBox<Strategy> ms2IsotpeSetting;
-//    protected final JComboBox<IsotopeMs2Settings.Strategy> ms2IsotpeSetting;
-
-    //    protected final JCheckBox restrictToOrganics;
-//    protected JButton elementAutoDetect;
 
     protected FormulaSearchStrategy formulaSearchStrategy;
 
@@ -178,11 +174,6 @@ FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
             });
         }
 
-
-
-
-
-
         //configure adduct panel
         adductList = new JCheckboxListPanel<>(new JCheckBoxList<>(), isBatchDialog() ? "Fallback Adducts" : "Possible Adducts",
                 GuiUtils.formatToolTip("Set expected adduct for data with unknown adduct."));
@@ -200,20 +191,12 @@ FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
             parameterBindings.put("AdductSettings.enforced", () -> getSelectedAdducts().toString());
         }
 
-
-
-
         // technical parameters: bottom up search and ilp options
         final JPanel technicalParameters = new JPanel();
         RelativeLayout rl = new RelativeLayout(RelativeLayout.Y_AXIS, GuiUtils.MEDIUM_GAP);
         rl.setAlignment(RelativeLayout.LEADING);
         rl.setBorderGap(0);
         technicalParameters.setLayout(rl);
-
-
-
-
-
 
 
         //select formula search strategy
