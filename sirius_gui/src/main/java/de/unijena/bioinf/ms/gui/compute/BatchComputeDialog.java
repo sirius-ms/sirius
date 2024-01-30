@@ -329,12 +329,6 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
 
             }
         }
-        // todo hotfix to prevent gui from going crazy
-        {
-            int index = MF.getCompoundListSelectionModel().getMinSelectionIndex();
-            MF.getCompoundListSelectionModel().setSelectionInterval(index, index);
-        }
-
 
         Jobs.runInBackgroundAndLoad(getOwner(), "Submitting Identification Jobs", new TinyBackgroundJJob<>() {
             @Override
