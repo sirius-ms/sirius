@@ -430,7 +430,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
             submitSubJob(epiJJobExactRequested);
 
             //epi job for <approximate, requested>. Remove candidate from ftreeCandidatesMap that are within MCES distance of approximate mode
-            final SubstructureAnnotationJJob epiJJobApproximateRequested = new SubstructureAnnotationJJob(requestedMergedCandidates.size() >= 5 ? 5 : requestedMergedCandidates.size() >= 2 ? 2 : requestedMergedCandidates.size() >= 1 ? 1 : 0);
+            final SubstructureAnnotationJJob epiJJobApproximateRequested = new SubstructureAnnotationJJob(requestedMergedCandidatesMCESCondensed.size() >= 5 ? 5 : requestedMergedCandidatesMCESCondensed.size() >= 2 ? 2 : requestedMergedCandidatesMCESCondensed.size() >= 1 ? 1 : 0);
             HashMap<FTree, FBCandidates> fTreeCandidatesMapMCESCondensedRequested = new HashMap<>();
             for (FTree t : fTreeCandidatesMap.keySet()) {
                 List<Scored<CompoundCandidate>> filteredCandidates = fTreeCandidatesMap.get(t).getResults().stream().filter(a -> !removedCandidatesrequested.containsKey(a.getCandidate().getInchiKey2D())).collect(Collectors.toList());
