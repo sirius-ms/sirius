@@ -26,7 +26,9 @@ import de.unijena.bioinf.ms.middleware.model.annotations.StructureCandidateScore
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeatureQuality;
+import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -117,6 +119,18 @@ public interface Project {
     default StructureCandidateScored findTopStructureCandidateByFeatureId(String alignedFeatureId, StructureCandidateScored.OptField... optFields) {
         return findTopStructureCandidateByFeatureId(alignedFeatureId, toEnumSet(StructureCandidateScored.OptField.class, optFields));
     }
+
+    StructureCandidateScored findStructureCandidateById(@NotNull String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId, @NotNull EnumSet<StructureCandidateScored.OptField> optFields);
+
+    default StructureCandidateScored findStructureCandidateById(@NotNull String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId, StructureCandidateScored.OptField... optFields) {
+        return findStructureCandidateById(inchiKey, formulaId, alignedFeatureId, toEnumSet(StructureCandidateScored.OptField.class, optFields));
+    }
+
+    default AnnotatedSpectrum findAnnotatedSpectrumByFormulaId(@NotNull String formulaId, @NotNull String alignedFeatureId){
+        return findAnnotatedSpectrumByStructureId(null, formulaId, alignedFeatureId);
+    }
+
+    AnnotatedSpectrum findAnnotatedSpectrumByStructureId(@Nullable String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId);
 
     String getFingerIdDataCSV(int charge);
 

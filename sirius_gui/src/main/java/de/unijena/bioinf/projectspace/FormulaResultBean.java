@@ -19,8 +19,6 @@
 
 package de.unijena.bioinf.projectspace;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
@@ -35,13 +33,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.text.html.Option;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalDouble;
-import java.util.OptionalInt;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -60,7 +55,7 @@ public class FormulaResultBean implements SiriusPCS, DataAnnotation {
 
     private Optional<ProbabilityFingerprint> fp;
     private Optional<LipidAnnotation> lipidAnnotation;
-    private Optional<AnnotatedSpectrum> simulatedIsotopePattern;
+    private Optional<IsotopePatternAnnotation> isotopePatterAnnotation;
     private Optional<FragmentationTree> fragmentationTree;
 
     private Pair<CompoundClasses, CanopusPrediction> canopusResults;
@@ -98,7 +93,7 @@ public class FormulaResultBean implements SiriusPCS, DataAnnotation {
                                     FormulaResultBean.this.canopusResults = null;
                                     FormulaResultBean.this.fp = null;
                                     FormulaResultBean.this.lipidAnnotation = null;
-                                    FormulaResultBean.this.simulatedIsotopePattern = null;
+                                    FormulaResultBean.this.isotopePatterAnnotation = null;
                                     FormulaResultBean.this.fragmentationTree = null;
                                     FormulaResultBean.this.ftreeJson = null;
 
@@ -282,14 +277,14 @@ public class FormulaResultBean implements SiriusPCS, DataAnnotation {
         return this.ftreeJson;
     }
 
-    public Optional<AnnotatedSpectrum> getSimulatedIsotopePattern() {
-        if (this.simulatedIsotopePattern == null)
-            this.simulatedIsotopePattern = Optional.ofNullable(
-                    sourceCandidate().map(FormulaCandidate::getSimulatedIsotopePattern)
+    public Optional<IsotopePatternAnnotation> getIsotopePatterAnnotation() {
+        if (this.isotopePatterAnnotation == null)
+            this.isotopePatterAnnotation = Optional.ofNullable(
+                    sourceCandidate().map(FormulaCandidate::getIsotopePatternAnnotation)
                             .orElse(withIds((pid, fid, foid) -> getClient().features().getSimulatedIsotopePattern(pid, fid, foid))));
 
 
-        return this.simulatedIsotopePattern;
+        return this.isotopePatterAnnotation;
     }
 
     public Optional<LipidAnnotation> getLipidAnnotation() {

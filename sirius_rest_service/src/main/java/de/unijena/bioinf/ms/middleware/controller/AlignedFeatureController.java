@@ -57,8 +57,8 @@ public class AlignedFeatureController {
     /**
      * Get all available features (aligned over runs) in the given project-space.
      *
-     * @param projectId project-space to read from.
-     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
+     * @param projectId   project-space to read from.
+     * @param optFields   set of optional fields to be included. Use 'none' only to override defaults.
      * @param searchQuery optional search query in specified format
      * @param querySyntax query syntax used fpr searchQuery
      * @return AlignedFeatures with additional annotations and MS/MS data (if specified).
@@ -77,9 +77,9 @@ public class AlignedFeatureController {
     /**
      * Get feature (aligned over runs) with the given identifier from the specified project-space.
      *
-     * @param projectId      project-space to read from.
+     * @param projectId        project-space to read from.
      * @param alignedFeatureId identifier of feature (aligned over runs) to access.
-     * @param optFields      set of optional fields to be included. Use 'none' only to override defaults.
+     * @param optFields        set of optional fields to be included. Use 'none' only to override defaults.
      * @return AlignedFeature with additional annotations and MS/MS data (if specified).
      */
     @GetMapping(value = "/{alignedFeatureId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -93,7 +93,7 @@ public class AlignedFeatureController {
     /**
      * Delete feature (aligned over runs) with the given identifier from the specified project-space.
      *
-     * @param projectId      project-space to delete from.
+     * @param projectId        project-space to delete from.
      * @param alignedFeatureId identifier of feature (aligned over runs) to delete.
      */
     @DeleteMapping(value = "/{alignedFeatureId}")
@@ -105,11 +105,11 @@ public class AlignedFeatureController {
      * List of StructureCandidates for the given 'alignedFeatureId' with minimal information.
      * StructureCandidates can be enriched with molecular fingerprint, structure database links.
      *
-     * @param projectId      project-space to read from.
+     * @param projectId        project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
-     * @param optFields      set of optional fields to be included. Use 'none' only to override defaults.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
+     * @param optFields        set of optional fields to be included. Use 'none' only to override defaults.
+     * @param searchQuery      optional search query in specified format
+     * @param querySyntax      query syntax used fpr searchQuery
      * @return StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.
      */
     @GetMapping(value = "/{alignedFeatureId}/structures", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -127,9 +127,8 @@ public class AlignedFeatureController {
     /**
      * Mass Spec data (input data) for the given 'alignedFeatureId' .
      *
-     * @param projectId      project-space to read from.
+     * @param projectId        project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the Mass Spec data belong sto.
-
      * @return Mass Spec data of this feature (aligned over runs).
      */
     @GetMapping(value = "/{alignedFeatureId}/ms-data", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -145,11 +144,11 @@ public class AlignedFeatureController {
      * List of all FormulaResultContainers available for this feature with minimal information.
      * Can be enriched with an optional results overview.
      *
-     * @param projectId      project-space to read from.
+     * @param projectId        project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
-     * @param optFields      set of optional fields to be included. Use 'none' only to override defaults.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
+     * @param optFields        set of optional fields to be included. Use 'none' only to override defaults.
+     * @param searchQuery      optional search query in specified format
+     * @param querySyntax      query syntax used fpr searchQuery
      * @return All FormulaCandidate of this feature with.
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -167,10 +166,10 @@ public class AlignedFeatureController {
      * FormulaResultContainers for the given 'formulaId' with minimal information.
      * Can be enriched with an optional results overview and formula candidate information.
      *
-     * @param projectId      project-space to read from.
+     * @param projectId        project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
-     * @param formulaId      identifier of the requested formula result
-     * @param optFields      set of optional fields to be included. Use 'none' only to override defaults.
+     * @param formulaId        identifier of the requested formula result
+     * @param optFields        set of optional fields to be included. Use 'none' only to override defaults.
      * @return FormulaCandidate of this feature (aligned over runs) with.
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -187,12 +186,12 @@ public class AlignedFeatureController {
      * List of StructureCandidates the given 'formulaId' with minimal information.
      * StructureCandidates can be enriched with molecular fingerprint, structure database links.
      *
-     * @param projectId      project-space to read from.
+     * @param projectId        project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
-     * @param formulaId      identifier of the requested formula result
-     * @param optFields      set of optional fields to be included. Use 'none' only to override defaults.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
+     * @param formulaId        identifier of the requested formula result
+     * @param optFields        set of optional fields to be included. Use 'none' only to override defaults.
+     * @param searchQuery      optional search query in specified format
+     * @param querySyntax      query syntax used fpr searchQuery
      * @return StructureCandidate of this formula candidate with specified optional fields.
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/structures", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -207,13 +206,39 @@ public class AlignedFeatureController {
                 .findStructureCandidatesByFeatureIdAndFormulaId(formulaId, alignedFeatureId, pageable, removeNone(optFields));
     }
 
+    /**
+     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier
+     * These annotations are only available if a fragmentation tree is available.
+     *
+     * @param projectId        project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param formulaId        identifier of the requested formula result
+     * @param inchiKey         2d InChIKey of the structure candidate to be used to annotate the spectrum annotation
+     * @return Fragmentation spectrum annotated with fragments and sub-structures.
+     */
+    @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-spectrum", produces = MediaType.APPLICATION_JSON_VALUE)
+    public AnnotatedSpectrum getStructureAnnotatedSpectrum(@PathVariable String projectId,
+                                                           @PathVariable String alignedFeatureId,
+                                                           @PathVariable String formulaId,
+                                                           @PathVariable String inchiKey
+    ) {
+        AnnotatedSpectrum res = projectsProvider.getProjectOrThrow(projectId)
+                .findAnnotatedSpectrumByStructureId(inchiKey, alignedFeatureId, formulaId);
+        if (res == null)
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Annotated MS/MS AbstractSpectrum for '"
+                    + idString(projectId, alignedFeatureId, formulaId)
+                    + "' not available! Maybe because FragmentationTree is missing?");
+
+        return res;
+    }
+
 
     @Deprecated(forRemoval = true)
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/sirius-tree", produces = MediaType.APPLICATION_JSON_VALUE)
     public String getSiriusFragTree(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         String json = projectsProvider.getProjectOrThrow(projectId).findSiriusFtreeJsonById(alignedFeatureId, formulaId);
         if (json == null)
-           throw  new ResponseStatusException(HttpStatus.NOT_FOUND, "FragmentationTree for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "FragmentationTree for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");
         return json;
     }
 
@@ -221,9 +246,9 @@ public class AlignedFeatureController {
      * Returns fragmentation tree (SIRIUS) for the given formula result identifier
      * This tree is used to rank formula candidates (treeScore).
      *
-     * @param projectId      project-space to read from.
+     * @param projectId        project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
-     * @param formulaId      identifier of the requested formula result
+     * @param formulaId        identifier of the requested formula result
      * @return Fragmentation Tree
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/tree", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -237,16 +262,39 @@ public class AlignedFeatureController {
     }
 
     /**
+     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier
+     * These annotations are only available if a fragmentation tree is available.
+     *
+     * @param projectId        project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param formulaId        identifier of the requested formula result
+     * @return Fragmentation spectrum annotated with fragment formulas and losses.
+     */
+    @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/annotated-spectrum", produces = MediaType.APPLICATION_JSON_VALUE)
+    public AnnotatedSpectrum getFormulaAnnotatedSpectrum(@PathVariable String projectId,
+                                                         @PathVariable String alignedFeatureId,
+                                                         @PathVariable String formulaId) {
+        AnnotatedSpectrum res = projectsProvider.getProjectOrThrow(projectId)
+                .findAnnotatedSpectrumByFormulaId(alignedFeatureId, formulaId);
+        if (res == null)
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Annotated MS/MS AbstractSpectrum for '"
+                    + idString(projectId, alignedFeatureId, formulaId)
+                    + "' not available! Maybe because FragmentationTree is missing?");
+
+        return res;
+    }
+
+    /**
      * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)
      * for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).
      *
-     * @param projectId      project-space to read from.
+     * @param projectId        project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
-     * @param formulaId      identifier of the requested formula result
+     * @param formulaId        identifier of the requested formula result
      * @return Isotope pattern information
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/isotope-pattern", produces = MediaType.APPLICATION_JSON_VALUE)
-    public IsotopePatternAnnotation getSimulatedIsotopePattern(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
+    public IsotopePatternAnnotation getIsotopePatternAnnotation(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         IsotopePatternAnnotation res = projectsProvider.getProjectOrThrow(projectId)
                 .findFormulaCandidateByFeatureIdAndId(alignedFeatureId, formulaId, FormulaCandidate.OptField.isotopePattern)
                 .getIsotopePatternAnnotation();
@@ -259,9 +307,9 @@ public class AlignedFeatureController {
      * Returns Lipid annotation (ElGordo) for the given formula result identifier.
      * ElGordo lipid annotation runs as part of the SIRIUS formula identification step.
      *
-     * @param projectId      project-space to read from.
+     * @param projectId        project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
-     * @param formulaId      identifier of the requested formula result
+     * @param formulaId        identifier of the requested formula result
      * @return LipidAnnotation
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/lipid-annotation", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -278,9 +326,9 @@ public class AlignedFeatureController {
      * Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier
      * This fingerprint is used to perform structure database search and predict compound classes.
      *
-     * @param projectId      project-space to read from.
+     * @param projectId        project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
-     * @param formulaId      identifier of the requested formula result
+     * @param formulaId        identifier of the requested formula result
      * @return probabilistic fingerprint predicted by CSI:FingerID
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/fingerprint", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -296,9 +344,9 @@ public class AlignedFeatureController {
     /**
      * All predicted compound classes (CANOPUS) from ClassyFire and NPC and their probabilities,
      *
-     * @param projectId      project-space to read from.
+     * @param projectId        project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
-     * @param formulaId      identifier of the requested formula result
+     * @param formulaId        identifier of the requested formula result
      * @return Predicted compound classes
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/canopus-prediction", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -315,9 +363,9 @@ public class AlignedFeatureController {
      * Best matching compound classes,
      * Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
      *
-     * @param projectId      project-space to read from.
+     * @param projectId        project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
-     * @param formulaId      identifier of the requested formula result
+     * @param formulaId        identifier of the requested formula result
      * @return Best matching Predicted compound classes
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/best-compound-classes", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -332,8 +380,9 @@ public class AlignedFeatureController {
 
 
     protected static String idString(String pid, String fid) {
-        return "'" + pid + "/" + fid +"'";
+        return "'" + pid + "/" + fid + "'";
     }
+
     protected static String idString(String pid, String fid, String foId) {
         return "'" + pid + "/" + fid + "/" + foId + "'";
     }

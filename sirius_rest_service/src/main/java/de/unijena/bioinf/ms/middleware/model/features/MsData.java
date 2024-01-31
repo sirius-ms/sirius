@@ -20,25 +20,27 @@
 package de.unijena.bioinf.ms.middleware.model.features;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
+import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * The MsData wraps all spectral input data belonging to a feature.
- *
+ * <p>
  * Each Feature has:
  * - One merged MS/MS spectrum (optional)
  * - One merged MS spectrum (optional)
  * - many MS/MS spectra
  * - many MS spectra
- *
+ * <p>
  * Each non-merged spectrum has an index which can be used to access the spectrum.
- *
+ * <p>
  * In the future we might add some additional information like chromatographic peak or something similar
  */
 @Getter
@@ -46,11 +48,43 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class MsData {
     @Schema(nullable = true)
-    protected AnnotatedSpectrum mergedMs1;
+    protected BasicSpectrum mergedMs1;
     @Schema(nullable = true)
-    protected AnnotatedSpectrum mergedMs2;
-    @Schema(nullable = true)
-    protected List<AnnotatedSpectrum> ms2Spectra;
-    @Schema(nullable = true)
-    protected List<AnnotatedSpectrum> ms1Spectra;
+    protected BasicSpectrum mergedMs2;
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    protected List<BasicSpectrum> ms1Spectra;
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    protected List<BasicSpectrum> ms2Spectra;
+
+    public static MsData create(Ms2Experiment exp) {
+        MsDataBuilder b = MsData.builder()
+                .ms1Spectra(
+                        exp.getMs1Spectra().stream().map(x -> {
+                            BasicSpectrum t = new BasicSpectrum(x);
+                            t.setMsLevel(1);
+                            //todo scannumber not available for MS1 Spectra? Maybe as annotation?
+                            return t;
+                        }).collect(Collectors.toList()))
+                .ms2Spectra(
+                        //todo ms/ms annotations for spectrum viewer
+                        exp.getMs2Spectra().stream().map(x -> {
+                            BasicSpectrum t = new BasicSpectrum(x);
+                            t.setCollisionEnergy(new CollisionEnergy(x.getCollisionEnergy()));
+                            t.setMsLevel(2);
+                            t.setScanNumber(((MutableMs2Spectrum) x).getScanNumber());
+                            return t;
+                        }).collect(Collectors.toList()))
+                .mergedMs2(Spectrums.createMergedMsMs(exp));
+
+        Spectrum<Peak> mergedMs1 = exp.getMergedMs1Spectrum();
+        if (mergedMs1 == null && !exp.getMs1Spectra().isEmpty())
+            mergedMs1 = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.mergeSpectra(exp.getMs1Spectra());
+
+        if (mergedMs1 != null) {
+            BasicSpectrum t = new BasicSpectrum(mergedMs1);
+            t.setMsLevel(1);
+            b.mergedMs1(t);
+        }
+        return b.build();
+    }
 }

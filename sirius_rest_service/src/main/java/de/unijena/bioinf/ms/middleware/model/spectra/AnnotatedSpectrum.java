@@ -41,52 +41,31 @@ package de.unijena.bioinf.ms.middleware.model.spectra;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import de.unijena.bioinf.ChemistryBase.chem.Ionization;
-import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.List;
 
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE, setterVisibility = JsonAutoDetect.Visibility.NONE, creatorVisibility = JsonAutoDetect.Visibility.NONE)
-public class AnnotatedSpectrum implements OrderedSpectrum<Peak> {
-    /**
-     * MS level of the measured spectrum.
-     * Artificial spectra with no msLevel (e.g. Simulated Isotope patterns) use null or zero
-     */
+public class AnnotatedSpectrum extends AbstractSpectrum<AnnotatedPeak> {
     @Schema(nullable = true)
-    private Integer msLevel = null;
+    @Getter
+    @Setter
+    private SpectrumAnnotation spectrumAnnotation;
 
-    /**
-     * Collision energy used for MS/MS spectra
-     * Null for spectra where collision energy is not applicable
-     */
-    @Schema(nullable = true)
-    private String collisionEnergy = null;
-
-    /**
-     * Scan number of the spectrum.
-     * Might be null for artificial spectra with no scan number (e.g. Simulated Isotope patterns or merged spectra)
-     */
-    @Schema(nullable = true)
-    private Integer scanNumber = -1;
-
-    /**
-     * The peaks of this spectrum which might contain additional annotations such as molecular formulas.
-     */
-    @Schema(required = true)
-    private AnnotatedPeak[] peaks;
+    public AnnotatedSpectrum(@NotNull List<AnnotatedPeak> peaks) {
+        this.peaks = peaks;
+    }
 
     public AnnotatedSpectrum(@NotNull Spectrum<Peak> spec) {
         this(Spectrums.copyMasses(spec), Spectrums.copyIntensities(spec));
@@ -105,115 +84,18 @@ public class AnnotatedSpectrum implements OrderedSpectrum<Peak> {
         if (masses.length != intensities.length)
             throw new IllegalArgumentException("Masses and Intensities do not have same length but must have.");
 
-        peaks = new AnnotatedPeak[masses.length];
+        peaks = new ArrayList<>(masses.length);
         if (peakAnnotations != null) {
             for (int i = 0; i < masses.length; i++)
-                peaks[i] = new AnnotatedPeak(masses[i], intensities[i], peakAnnotations[i]);
+                peaks.add(new AnnotatedPeak(masses[i], intensities[i], peakAnnotations[i]));
         } else {
             for (int i = 0; i < masses.length; i++)
-                peaks[i] = new AnnotatedPeak(masses[i], intensities[i], null);
+                peaks.add(new AnnotatedPeak(masses[i], intensities[i], null));
         }
     }
 
-    public double[] getMasses() {
-        return Arrays.stream(peaks).mapToDouble(AnnotatedPeak::getMass).toArray();
-    }
-
-    public double[] getIntensities() {
-        return Arrays.stream(peaks).mapToDouble(AnnotatedPeak::getIntensity).toArray();
-    }
-
-    @Override
-    public double getMzAt(int index) {
-        return peaks[index].getMass();
-    }
-
-    @Override
-    public double getIntensityAt(int index) {
-        return peaks[index].getMass();
-    }
 
     public PeakAnnotation getPeakAnnotationAt(int index) {
-        return peaks[index].getPeakAnnotation();
-    }
-
-    @Override
-    public Peak getPeakAt(int index) {
-        return peaks[index];
-    }
-
-    @Override
-    public int size() {
-        return peaks.length;
-    }
-
-    @NotNull
-    @Override
-    public Iterator<Peak> iterator() {
-        return new Iterator<>() {
-            int index = 0;
-
-            @Override
-            public boolean hasNext() {
-                return index < peaks.length;
-            }
-
-            @Override
-            public Peak next() {
-                return getPeakAt(index++);
-            }
-        };
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return peaks.length == 0;
-    }
-
-    public boolean hasMsLevel() {
-        return msLevel != null && msLevel > 0;
-    }
-
-    @Override
-    public int getMsLevel() {
-        if (msLevel == null)
-            return 0;
-        return msLevel;
-    }
-
-    public void setMsLevel(@Nullable Integer msLevel) {
-        this.msLevel = msLevel;
-    }
-
-    public double getMaxIntensity() {
-        return Arrays.stream(peaks).mapToDouble(AnnotatedPeak::getIntensity).max().orElse(Double.NaN);
-    }
-
-    @Nullable
-    public String getCollisionEnergyStr() {
-        return collisionEnergy;
-    }
-
-    public void setCollisionEnergyStr(@Nullable String collisionEnergy) {
-        this.collisionEnergy = collisionEnergy;
-    }
-
-    @Override
-    public CollisionEnergy getCollisionEnergy() {
-        if (getCollisionEnergyStr() == null || getCollisionEnergyStr().isBlank())
-            return null;
-        return CollisionEnergy.fromString(getCollisionEnergyStr());
-    }
-
-    public void setCollisionEnergy(@Nullable CollisionEnergy collisionEnergy) {
-            setCollisionEnergyStr(collisionEnergy == null ? null : collisionEnergy.toString());
-    }
-
-    public Integer getScanNumber() {
-        return scanNumber;
-    }
-
-    public void setScanNumber(Integer scanNumber) {
-        this.scanNumber = scanNumber;
+        return peaks.get(index).getPeakAnnotation();
     }
 }

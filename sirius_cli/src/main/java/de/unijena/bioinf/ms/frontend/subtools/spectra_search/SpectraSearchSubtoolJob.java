@@ -43,7 +43,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -124,7 +123,7 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
                     Ms2ReferenceSpectrum reference = db.getReferenceSpectrum(r.getReferenceUUID());
                     builder.append(String.format("\n%10.3e | %5d | %9s | %9.3f | %2d | %5s | %10s | %s | %s | %s  | %s | %s | %s",
                             similarity.similarity,
-                            similarity.shardPeaks,
+                            similarity.sharedPeaks,
                             reference.getPrecursorIonType(),
                             reference.getPrecursorMz(),
                             reference.getMsLevel(),
