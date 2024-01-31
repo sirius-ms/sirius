@@ -117,7 +117,7 @@ public class CSIPredictor extends AbstractStructurePredictor {
 
             final ScoringMethodFactory.CSIFingerIdScoringMethod csiScoring = new ScoringMethodFactory.CSIFingerIdScoringMethod(performances);
 
-            return new CSICovarianceConfidenceScorer<>(confidenceSVMs, cvs, csiScoring);
+            return new CSICovarianceConfidenceScorer<>(confidenceSVMs, cvs);
         } catch (IOException e) {
             throw e;
         } catch (Exception e) {

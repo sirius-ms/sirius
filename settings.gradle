@@ -84,3 +84,5 @@ include ':web_service_oss'
     include ':web_service_oss:scribejava-httpclient-apache5'
 include ':affinity_selection_ms'
 
+include ':structure_matching'
+

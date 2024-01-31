@@ -8,10 +8,7 @@ import de.unijena.bioinf.fragmenter.InsilicoFragmentationPeakAnnotator;
 import de.unijena.bioinf.fragmenter.InsilicoFragmentationResult;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SubstructureAnnotationJJob extends BasicMasterJJob<Map<FTree, SubstructureAnnotationResult>> {
 
@@ -45,7 +42,7 @@ public class SubstructureAnnotationJJob extends BasicMasterJJob<Map<FTree, Subst
         final Map<InsilicoFragmentationPeakAnnotator.Job, Scored<CompoundCandidate>> jobToCandidate = new HashMap<>();
 
         InsilicoFragmentationPeakAnnotator fragmenter = new InsilicoFragmentationPeakAnnotator();
-        candidatesMap.keySet().stream().sorted().limit(topKOnly)
+        candidatesMap.keySet().stream().sorted(Comparator.reverseOrder()).limit(topKOnly)
                 .forEach(c -> {
                     InsilicoFragmentationPeakAnnotator.Job j = submitSubJob(fragmenter.makeJJob(candidatesMap.get(c), c.getCandidate().getSmiles()));
                     jobMap.computeIfAbsent(j.getTree(), f -> new ArrayList<>()).add(j);
@@ -60,5 +57,9 @@ public class SubstructureAnnotationJJob extends BasicMasterJJob<Map<FTree, Subst
         }
 
         return result;
+    }
+
+    public void setInput(Map<FTree, FBCandidates> input) {
+        this.input = input;
     }
 }

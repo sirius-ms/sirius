@@ -145,6 +145,8 @@ public class SiriusProjectSpace implements IterableWithSize<CompoundContainerId>
                                 .flatMap(PrecursorIonType::parsePrecursorIonType).orElse(null);
 
                         final Double confidenceScore = Optional.ofNullable(keyValues.get("confidenceScore")).map(Double::parseDouble).orElse(null);
+                        final Double confidenceScoreApproximate = Optional.ofNullable(keyValues.get("confidenceScoreApproximate")).map(Double::parseDouble).orElse(null);
+                        final boolean useApproximate = Optional.ofNullable(keyValues.get("useApproximate")).map(Boolean::parseBoolean).orElse(false);
 
                         final String featureId = keyValues.get("featureId");
                         final String groupId = keyValues.get("groupId");
@@ -152,6 +154,9 @@ public class SiriusProjectSpace implements IterableWithSize<CompoundContainerId>
 
                         final CompoundContainerId cid = new CompoundContainerId(dirName, name, index, ionMass, ionType,
                                 rt, confidenceScore, featureId, groupId, groupRt);
+
+                        cid.setConfidenceScoreApproximate(confidenceScoreApproximate);
+                        cid.setUseApproximate(useApproximate);
 
                         cid.setDetectedAdducts(
                                 Optional.ofNullable(keyValues.get("detectedAdducts")).map(DetectedAdducts::fromString).orElse(null));

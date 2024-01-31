@@ -64,7 +64,8 @@ public class ExplIntFeatures implements FeatureCreator {
         //scores[1]= current_tree_scores.getExplainedIntensity();
         //scores[2]=current_tree_scores.getRatioOfExplainedPeaks();
         //scores[3]= idresult.getRawTree().getTreeWeight();
-        scores[0] = current_tree_scores.getExplainedIntensity();
+        if(Double.isNaN(current_tree_scores.getExplainedIntensity()))scores[0]=0;
+        else scores[0] = current_tree_scores.getExplainedIntensity();
 
 
 
