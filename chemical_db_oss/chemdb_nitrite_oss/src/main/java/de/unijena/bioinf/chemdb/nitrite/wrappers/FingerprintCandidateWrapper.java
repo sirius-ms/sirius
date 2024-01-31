@@ -41,7 +41,9 @@ public class  FingerprintCandidateWrapper {
     @Id
     long pk;
 
+//    @Id
     String inchiKey;
+
     String formula;
     double mass;
     CompoundCandidate candidate;
