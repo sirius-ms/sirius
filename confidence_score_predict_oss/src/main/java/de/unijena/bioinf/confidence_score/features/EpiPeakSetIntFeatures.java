@@ -14,9 +14,11 @@ import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 import de.unijena.bioinf.fragmenter.CombinatorialFragment;
 import de.unijena.bioinf.fragmenter.CombinatorialNode;
 import de.unijena.bioinf.fragmenter.CombinatorialSubtree;
+import org.checkerframework.checker.units.qual.A;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class EpiPeakSetIntFeatures implements FeatureCreator {
@@ -24,7 +26,7 @@ public class EpiPeakSetIntFeatures implements FeatureCreator {
     CombinatorialSubtree[] epiTrees;
     Map<Fragment,ArrayList<CombinatorialFragment>>[] originalMappings;
 
-    Map<CombinatorialFragment,Double>[] combFragMassMappings;
+    Map<CombinatorialFragment,List<Double>>[] combFragMassMappings;
 
     FTree[] fTrees;
 
@@ -39,17 +41,24 @@ public class EpiPeakSetIntFeatures implements FeatureCreator {
 
     }
 
-    private Map<CombinatorialFragment,Double>[] prepareMappings(){
+    private Map<CombinatorialFragment,List<Double>>[] prepareMappings(){
 
-        HashMap<CombinatorialFragment,Double>[] maps = new HashMap[originalMappings.length];
+        HashMap<CombinatorialFragment,List<Double>>[] maps = new HashMap[originalMappings.length];
 
 
         for(int i=0;i<originalMappings.length;i++){
 
             FragmentAnnotation<AnnotatedPeak> ano = fTrees[i].getFragmentAnnotationOrThrow(AnnotatedPeak.class);
-            HashMap<CombinatorialFragment,Double> tmpMap = new HashMap<>();
+            HashMap<CombinatorialFragment, List<Double>> tmpMap = new HashMap<>();
             for (Fragment frag : originalMappings[i].keySet()){
-                tmpMap.put(originalMappings[i].get(frag).get(0),ano.get(frag).getMass());
+                if(!tmpMap.containsKey(originalMappings[i].get(frag).get(0))){
+                    ArrayList<Double> d  = new ArrayList<>();
+                    d.add(ano.get(frag).getMass());
+                    tmpMap.put(originalMappings[i].get(frag).get(0),d);
+                }else {
+
+                    tmpMap.get(originalMappings[i].get(frag).get(0)).add(ano.get(frag).getMass());
+                }
             }
             maps[i]=tmpMap;
 
@@ -108,11 +117,12 @@ public class EpiPeakSetIntFeatures implements FeatureCreator {
             CombinatorialSubtree currTree = epiTrees[i];
 
             for(CombinatorialNode node :currTree.getTerminalNodes()) {
-                double peakMass=combFragMassMappings[i].get(node.getIncomingEdges().get(0).getSource().getFragment());
-                peakMassExistMap.put(peakMass,true);
-                peakMassIntMap.put(peakMass,node.getFragment().getPeakIntensity());
+                for(Double peakMass : combFragMassMappings[i].get(node.getIncomingEdges().get(0).getSource().getFragment())) {
+                    peakMassExistMap.put(peakMass, true);
+                    peakMassIntMap.put(peakMass, node.getFragment().getPeakIntensity());
 
-                if(i==0)peakMassesinTopHit.put(peakMass,true);
+                    if (i == 0) peakMassesinTopHit.put(peakMass, true);
+                }
 
             }
 
