@@ -20,22 +20,39 @@
 
 package de.unijena.bioinf.fingerid;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.canopus.CanopusResult;
+import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.DataSource;
+import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.annotations.StructureSearchDB;
-import de.unijena.bioinf.elgordo.InjectElGordoCompounds;
+import de.unijena.bioinf.confidence_score.ConfidenceScoreApproximateDistance;
+import de.unijena.bioinf.confidence_score.ExpansiveSearchConfidenceMode;
+import de.unijena.bioinf.elgordo.TagStructuresByElGordo;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
+import de.unijena.bioinf.fingerid.blast.FBCandidates;
+import de.unijena.bioinf.fingerid.blast.FingerblastResult;
+import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.ms.annotations.AnnotationJJob;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
 import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobInput;
 import de.unijena.bioinf.ms.webapi.WebJJob;
 import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.webapi.WebAPI;
+import it.unimi.dsi.fastutil.Hash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -59,6 +76,11 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
     private Ms2Experiment experiment;
     private List<FingerIdResult> idResult;
 
+    private StructureSearchResult structureSearchResult;
+
+
+    private List<CanopusResult> canopusResult;
+
     List<WebJJob<CovtreeJobInput, ?, BayesnetScoring, ?>> covtreeJobs = new ArrayList<>();
 
     public FingerblastJJob(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI) {
@@ -66,15 +88,16 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
     }
 
     public FingerblastJJob(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI, @Nullable Ms2Experiment experiment) {
-        this(predictor, webAPI, experiment, null);
+        this(predictor, webAPI, experiment, null,null);
     }
 
-    public FingerblastJJob(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI, @Nullable Ms2Experiment experiment, @Nullable List<FingerIdResult> idResult) {
+    public FingerblastJJob(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI, @Nullable Ms2Experiment experiment, @Nullable List<FingerIdResult> idResult, @Nullable List<CanopusResult> canopusResult) {
         super(JobType.SCHEDULER);
         this.predictor = predictor;
         this.experiment = experiment;
         this.idResult = idResult;
         this.webAPI = webAPI;
+        this.canopusResult=canopusResult;
     }
 
     public void setInput(Ms2Experiment experiment, List<FingerIdResult> idResult) {
@@ -109,7 +132,15 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
             return List.of();
         }
 
+        //Distance <= value for which structures are considered identical for approximate mode confidence score
+        final ConfidenceScoreApproximateDistance confScoreApproxDist =  experiment.getAnnotationOrNull(ConfidenceScoreApproximateDistance.class);
+
+        //Expansive search confidence mode. OFF= No expansive search, Exact = Use exact conf score, Approx = Use approximate conf score
+        final ExpansiveSearchConfidenceMode expansiveSearchConfidenceMode = experiment.getAnnotationOrNull(ExpansiveSearchConfidenceMode.class);
+
         final StructureSearchDB searchDB = experiment.getAnnotationOrThrow(StructureSearchDB.class);
+
+
 
         logDebug("Preparing CSI:FingerID structure db search jobs.");
         ////////////////////////////////////////
@@ -126,17 +157,14 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
                         searchDB.searchDBs,
                         fingeridInput.getPrecursorIonType(),
                         true,
-                        experiment.getAnnotation(InjectElGordoCompounds.class)
-                                .orElse(InjectElGordoCompounds.TRUE).value ? DataSource.LIPID.flag : 0)
+                        experiment.getAnnotation(TagStructuresByElGordo.class)
+                                .orElse(TagStructuresByElGordo.TRUE).value ? DataSource.LIPID.flag : 0)
         ).collect(Collectors.toList());
 
         submitSubJobsInBatches(formulaJobs, PropertyManager.getNumberOfThreads());
 
         checkForInterruption();
 
-        final ConfidenceJJob confidenceJJob = (predictor.getConfidenceScorer() != null) && enableConfidence
-                ? new ConfidenceJJob(predictor, experiment)
-                : null;
 
         final BayesnetScoring[] scorings = NetUtils.tryAndWait(() -> {
             BayesnetScoring[] s = new BayesnetScoring[idResult.size()];
@@ -157,16 +185,29 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
         }, this::checkForInterruption);
 
 
+        ArrayList<FingerblastSearchJJob> searchJJobs = new ArrayList<>();
+        HashMap<FingerblastSearchJJob, FingerIdResult> jobFidResult =  new HashMap<>();
+
+        /*
+        Loop over all fingerprints and start SearchJjobs for each one. Jobs gets saved in searchJJobs, jobFidResult maps a searchjob back to the FingerIDresult
+
+         */
+
         for (int i = 0; i < idResult.size(); i++) {
             final FingerIdResult fingeridInput = idResult.get(i);
 
             final FingerblastSearchJJob blastJob;
             if (scorings[i] != null) {
                 blastJob = FingerblastSearchJJob.of(predictor, scorings[i], fingeridInput);
+                searchJJobs.add(blastJob);
+                jobFidResult.put(blastJob,fingeridInput);
+
             } else {
                 // bayesnetScoring is null --> make a prepare job which computes the bayessian network (covTree) for the
                 // given molecular formula
                 blastJob = FingerblastSearchJJob.of(predictor, fingeridInput);
+                searchJJobs.add(blastJob);
+                jobFidResult.put(blastJob,fingeridInput);
                 WebJJob<CovtreeJobInput, ?, BayesnetScoring, ?> covTreeJob =
                         webAPI.submitCovtreeJob(fingeridInput.getMolecularFormula(), predictor.predictorType);
                 blastJob.addRequiredJob(covTreeJob);
@@ -174,15 +215,141 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
             }
 
             blastJob.addRequiredJob(formulaJobs.get(i));
-            if (confidenceJJob != null)
-                confidenceJJob.addRequiredJob(blastJob);
-            annotationJJobs.put(submitSubJob(blastJob), fingeridInput);
+
+            annotationJJobs.put(submitJob(blastJob), fingeridInput);
         }
+
+        final ArrayList<Scored<FingerprintCandidate>> allMergedCandidates = new ArrayList<>();
+        final ArrayList<Scored<FingerprintCandidate>> requestedMergedCandidates = new ArrayList<>();
+
+        Double topHitScoreRequested = null,topHitScoreAll = null;
+        ProbabilityFingerprint topHitFPRequested = null, topHitFPAll = null;
+        FTree topHitTreeRequested = null, topHitTreeAll = null;
+        MolecularFormula topHitFormulaRequested = null, topHitFormulaAll = null;
+        BayesnetScoring topHitScoringRequested = null, topHitScoringAll= null;
+        CanopusResult topFormulaCanopusResultRequested = null, topFormulaCanopusResultAll=null;
+        FingerIdResult topHitFidResultRequested =null, topHitFidResultAll=null;
+
+
+
+
+        /*
+         * Wait for all search jobs to finish and generate the merged ranked lists. MCES, Epi and conf score jobs all need this combined list
+         *
+         */
+
+        HashMap<FTree, FBCandidates> fTreeCandidatesMapRequested = new HashMap<>();
+        HashMap<FTree, FBCandidates> fTreeCandidatesMapAll = new HashMap<>();
+
+
+        for (int i=0;i<searchJJobs.size();i++) {
+            FingerblastSearchJJob searchDBJob =searchJJobs.get(i);
+            FingerblastResult r = searchDBJob.awaitResult();
+
+            final List<Scored<FingerprintCandidate>> allRestDbScoredCandidates = searchDBJob.getCandidates().getAllDbCandidatesInChIs().map(set ->
+                            searchDBJob.getAllScoredCandidates().stream().filter(sc -> set.contains(sc.getCandidate().getInchiKey2D())).collect(Collectors.toList())).
+                    orElseThrow(() -> new IllegalArgumentException("Additional candidates Flag 'ALL' from DataSource is not Available but mandatory to compute Confidence scores!"));
+
+
+            allMergedCandidates.addAll(allRestDbScoredCandidates);
+            requestedMergedCandidates.addAll(r.getResults());
+
+            fTreeCandidatesMapRequested.put(searchDBJob.ftree,new FBCandidates(r.getResults().stream().map(fc -> new Scored<CompoundCandidate>(fc.getCandidate().toCompoundCandidate(),fc.getScore())).collect(Collectors.toList())));
+            fTreeCandidatesMapAll.put(searchDBJob.ftree,new FBCandidates(allRestDbScoredCandidates.stream().map(fc -> new Scored<CompoundCandidate>(fc.getCandidate().toCompoundCandidate(),fc.getScore())).collect(Collectors.toList())));
+
+            if(r.getTopHitScore()!=null){
+
+            if (topHitScoreRequested == null || topHitScoreRequested < r.getTopHitScore().score()) {
+                topHitScoreRequested = r.getTopHitScore().score();
+                topHitFPRequested = searchDBJob.fp;
+                topHitTreeRequested = searchDBJob.ftree;
+                topHitFidResultRequested = idResult.get(i);
+                topHitFormulaRequested = searchDBJob.formula;
+                topHitScoringRequested = searchDBJob.bayesnetScoring;
+                topFormulaCanopusResultRequested = canopusResult.get(i);
+            }}
+
+            if(allRestDbScoredCandidates!=null && !allRestDbScoredCandidates.isEmpty()) {
+
+                if (topHitScoreAll == null || topHitScoreAll < allRestDbScoredCandidates.get(0).getScore()) {
+                    topHitScoreAll = allRestDbScoredCandidates.get(0).getScore();
+                    topHitFPAll = searchDBJob.fp;
+                    topHitTreeAll = searchDBJob.ftree;
+                    topHitFormulaAll = searchDBJob.formula;
+                    topHitFidResultAll = idResult.get(i);
+                    topHitScoringAll = searchDBJob.bayesnetScoring;
+                    topFormulaCanopusResultAll = canopusResult.get(i);
+                }
+            }
+
+
+        }
+
+        allMergedCandidates.sort(Comparator.reverseOrder());
+        requestedMergedCandidates.sort(Comparator.reverseOrder());
+
+        //We always submit this job, regardless of expansive search
+        ParameterStore parameterStoreRequested =(topHitFPRequested==null || topHitScoringRequested==null || topHitTreeRequested==null ||topHitFormulaRequested==null) ? null: ParameterStore.of(topHitFPRequested,topHitScoringRequested,topHitTreeRequested,topHitFormulaRequested);
+
+        ConfidenceJJob confidenceJJobRequested = executeConfidenceStack(requestedMergedCandidates,allMergedCandidates,fTreeCandidatesMapRequested,confScoreApproxDist.value,searchDB,parameterStoreRequested,topFormulaCanopusResultRequested);
+
+        /*
+         *
+         * If Expansive search is not OFF, we have to do it all again for PubChem aka ALL. We still need to compute approximate AND exact confidences here.
+         *
+         */
+        ConfidenceResult finalConfidenceResult = null;
+
+        if(!expansiveSearchConfidenceMode.confidenceScoreSimilarityMode.equals(ExpansiveSearchConfidenceMode.Mode.OFF)) {
+
+            StructureSearchDB searchDBFake=StructureSearchDB.fromString("PubChem");
+
+
+            ParameterStore parameterStoreAll =(topHitFPAll==null || topHitScoringAll==null || topHitTreeAll==null ||topHitFormulaAll==null) ? null: ParameterStore.of(topHitFPAll,topHitScoringAll,topHitTreeAll,topHitFormulaAll);
+
+            ConfidenceJJob confidenceJJobAll = executeConfidenceStack(allMergedCandidates,allMergedCandidates,fTreeCandidatesMapAll,confScoreApproxDist.value,searchDBFake,parameterStoreAll,topFormulaCanopusResultAll);
+
+
+
+
+            ConfidenceResult confidenceResultRequested  = confidenceJJobRequested!=null ? confidenceJJobRequested.awaitResult(): ConfidenceResult.NaN;
+            ConfidenceResult confidenceResultAll =confidenceJJobAll!=null ? confidenceJJobAll.awaitResult() : ConfidenceResult.NaN;
+
+            /**
+             * expansive search decision happens here
+             */
+
+            if (expansiveSearchConfidenceMode.confidenceScoreSimilarityMode.equals(ExpansiveSearchConfidenceMode.Mode.EXACT)){
+                if(confidenceResultAll.score.score()*expansiveSearchConfidenceMode.confPubChemFactor>confidenceResultRequested.score.score()){
+                    //All wins over requested
+                    structureSearchResult= StructureSearchResult.of(confidenceResultAll ,expansiveSearchConfidenceMode.confidenceScoreSimilarityMode);
+                    finalConfidenceResult = confidenceResultAll;
+                }else{
+                    structureSearchResult= StructureSearchResult.of(confidenceResultRequested, ExpansiveSearchConfidenceMode.Mode.OFF);
+                    finalConfidenceResult = confidenceResultRequested;
+                }
+            }else if (expansiveSearchConfidenceMode.confidenceScoreSimilarityMode.equals(ExpansiveSearchConfidenceMode.Mode.APPROXIMATE)){
+                if(confidenceResultAll.scoreApproximate.score()*expansiveSearchConfidenceMode.confPubChemFactor>confidenceResultRequested.scoreApproximate.score()){
+                    //All wins over requested
+                    structureSearchResult= StructureSearchResult.of(confidenceResultAll, expansiveSearchConfidenceMode.confidenceScoreSimilarityMode);
+                    finalConfidenceResult = confidenceResultAll;
+                }else {
+                    structureSearchResult= StructureSearchResult.of(confidenceResultRequested, ExpansiveSearchConfidenceMode.Mode.OFF);
+                    finalConfidenceResult = confidenceResultRequested;
+                }
+            }
+
+
+        }else {
+            ConfidenceResult confidenceResultRequested  = confidenceJJobRequested!= null ? confidenceJJobRequested.awaitResult() : ConfidenceResult.NaN;
+            structureSearchResult= StructureSearchResult.of(confidenceResultRequested,expansiveSearchConfidenceMode.confidenceScoreSimilarityMode);
+            finalConfidenceResult = confidenceResultRequested;
+        }
+
+
 
         // confidence job: calculate confidence of scored candidate list that are MERGED among ALL
         // IdentificationResults results with none empty candidate lists.
-        if (confidenceJJob != null)
-            submitSubJob(confidenceJJob);
 
         logDebug("Searching structure DB with CSI:FingerID");
         /////////////////////////////////////////////////
@@ -192,28 +359,37 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
         // this loop is just to ensure that we wait until all jobs are finished.
         // the logic if a job can fail or not is done via job dependencies (see above)
         checkForInterruption();
-        annotationJJobs.forEach(AnnotationJJob::takeAndAnnotateResult);
+
+
+        //if expansive search expanded the results to "All", we need to annotate the ALL fingerblast result. If not, then regular requested
+        boolean isExpanded = !structureSearchResult.getExpansiveSearchConfidenceMode().equals(ExpansiveSearchConfidenceMode.Mode.OFF);
+
+        for(FingerblastSearchJJob  job : searchJJobs ){
+
+            FingerblastResult r = isExpanded ? new FingerblastResult(job.getCandidates().getAllDbCandidatesInChIs().map(set ->
+                            job.getAllScoredCandidates().stream().filter(sc -> set.contains(sc.getCandidate().getInchiKey2D())).collect(Collectors.toList())).
+                    orElseThrow(() -> new IllegalArgumentException("Additional candidates Flag 'ALL' from DataSource is not Available but mandatory to compute Confidence scores!"))) : job.getResult();
+
+            jobFidResult.get(job).setAnnotation(FingerblastResult.class,r);
+
+        }
+
         checkForInterruption();
 
-        if (confidenceJJob != null) {
-            try {
-                ConfidenceResult confidenceRes = confidenceJJob.awaitResult();
-                if (confidenceRes.topHit != null) {
-                    FingerIdResult topHit = annotationJJobs.values().stream().distinct()
-                            .filter(fpr -> !fpr.getFingerprintCandidates().isEmpty()).max(Comparator.comparing(fpr -> fpr.getFingerprintCandidates().get(0))).orElse(null);
-                    if (topHit != null) {
-                        if (topHit.getFingerprintCandidates().get(0).getCandidate().getInchiKey2D().equals(confidenceRes.topHit.getCandidate().getInchiKey2D()))
-                            topHit.setAnnotation(ConfidenceResult.class, confidenceRes);
-                        else
-                            logWarn("TopHit does not Match Confidence Result TopHit!'" + confidenceRes.topHit.getCandidate().getInchiKey2D() + "' vs '" + topHit.getFingerprintCandidates().get(0).getCandidate().getInchiKey2D() + "'.  Confidence might be lost!");
-                    } else {
-                        logWarn("No TopHit found for. But confidence was calculated for: '" + confidenceRes.topHit.getCandidate().getInchiKey2D() + "'.  Looks like a Bug. Confidence might be lost!");
-                    }
+        if (finalConfidenceResult != null) {
+            if (finalConfidenceResult.topHit != null) {
+                FingerIdResult topHit = isExpanded ? topHitFidResultAll : topHitFidResultRequested;
+                if (topHit != null) {
+                    if (topHit.getFingerprintCandidates().get(0).getCandidate().getInchiKey2D().equals(finalConfidenceResult.topHit.getCandidate().getInchiKey2D())) {
+                        topHit.setAnnotation(ConfidenceResult.class, finalConfidenceResult);
+                        topHit.setAnnotation(StructureSearchResult.class, structureSearchResult);
+                    } else
+                        logWarn("TopHit does not Match Confidence Result TopHit!'" + finalConfidenceResult.topHit.getCandidate().getInchiKey2D() + "' vs '" + topHit.getFingerprintCandidates().get(0).getCandidate().getInchiKey2D() + "'.  Confidence might be lost!");
                 } else {
-                    logWarn("No Confidence computed.");
+                    logWarn("No TopHit found for. But confidence was calculated for: '" + finalConfidenceResult.topHit.getCandidate().getInchiKey2D() + "'.  Looks like a Bug. Confidence might be lost!");
                 }
-            } catch (ExecutionException e) {
-                logWarn("Could not compute confidence, due to and Error!", e);
+            } else {
+                logWarn("No Confidence computed.");
             }
         }
 
@@ -221,6 +397,76 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
         logDebug("CSI:FingerID structure DB Search DONE!");
         //in linked maps values() collection is not a set -> so we have to make that distinct
         return annotationJJobs.values().stream().distinct().collect(Collectors.toList());
+    }
+
+
+    private ConfidenceJJob executeConfidenceStack(ArrayList<Scored<FingerprintCandidate>> requestedMergedCandidates,ArrayList<Scored<FingerprintCandidate>> allMergedCandidates,HashMap<FTree, FBCandidates> fTreeCandidatesMap, int confScoreApproxDist, StructureSearchDB searchDB,ParameterStore parameterStore, CanopusResult topFormulaCanopusResult){
+
+        if (requestedMergedCandidates.isEmpty() || parameterStore == null) return null;
+
+
+        try {
+            //Start and finish MCES job for requested DBs here, since Epi and conf are dependent on the mces-condensed list
+            final MCESJJob mcesJJobRequested = new MCESJJob(confScoreApproxDist, requestedMergedCandidates);
+            submitSubJob(mcesJJobRequested);
+            int mcesIndexRequested = mcesJJobRequested.awaitResult();
+
+
+            //MCES-condensed list for requested
+            ArrayList<Scored<FingerprintCandidate>> requestedMergedCandidatesMCESCondensed = new ArrayList<>();
+            requestedMergedCandidatesMCESCondensed.add(requestedMergedCandidates.get(0));
+            Map removedCandidatesrequested = requestedMergedCandidates.subList(1, mcesIndexRequested + 1).stream().collect(Collectors.toMap(c -> c.getCandidate().getInchiKey2D(), Scored<FingerprintCandidate>::getScore));
+            requestedMergedCandidatesMCESCondensed.addAll(requestedMergedCandidates.subList(mcesIndexRequested + 1, requestedMergedCandidates.size()));
+
+
+            /**
+             *
+             * Submit epi jobs for requested databases
+             */
+
+            //epi Job for <exact, requested>
+            final SubstructureAnnotationJJob epiJJobExactRequested = new SubstructureAnnotationJJob(requestedMergedCandidates.size() >= 5 ? 5 : requestedMergedCandidates.size() >= 2 ? 2 : requestedMergedCandidates.size() >= 1 ? 1 : 0);
+            epiJJobExactRequested.setInput(fTreeCandidatesMap);
+            submitSubJob(epiJJobExactRequested);
+
+            //epi job for <approximate, requested>. Remove candidate from ftreeCandidatesMap that are within MCES distance of approximate mode
+            final SubstructureAnnotationJJob epiJJobApproximateRequested = new SubstructureAnnotationJJob(requestedMergedCandidates.size() >= 5 ? 5 : requestedMergedCandidates.size() >= 2 ? 2 : requestedMergedCandidates.size() >= 1 ? 1 : 0);
+            HashMap<FTree, FBCandidates> fTreeCandidatesMapMCESCondensedRequested = new HashMap<>();
+            for (FTree t : fTreeCandidatesMap.keySet()) {
+                List<Scored<CompoundCandidate>> filteredCandidates = fTreeCandidatesMap.get(t).getResults().stream().filter(a -> !removedCandidatesrequested.containsKey(a.getCandidate().getInchiKey2D())).collect(Collectors.toList());
+                fTreeCandidatesMapMCESCondensedRequested.put(t, new FBCandidates(filteredCandidates));
+            }
+            epiJJobApproximateRequested.setInput(fTreeCandidatesMapMCESCondensedRequested);
+            submitSubJob(epiJJobApproximateRequested);
+
+            //canopus job for requested
+
+            final int specHash = Spectrums.mergeSpectra(experiment.getMs2Spectra()).hashCode();
+            WebJJob<CanopusJobInput, ?, CanopusResult, ?> canopusJob = webAPI.submitCanopusJob(requestedMergedCandidates.get(0).getCandidate().getInchi().extractFormula(), experiment.getPrecursorIonType().getCharge(), requestedMergedCandidates.get(0).getCandidate().getFingerprint().asProbabilistic(), specHash);
+
+            //confidence job for requested
+
+            final ConfidenceJJob confidenceJJobRequested = (predictor.getConfidenceScorer() != null) && enableConfidence
+                    ? new ConfidenceJJob(predictor, experiment, allMergedCandidates, requestedMergedCandidates, requestedMergedCandidatesMCESCondensed, searchDB, parameterStore, topFormulaCanopusResult, mcesIndexRequested)
+                    : null;
+
+
+            confidenceJJobRequested.setEpiExact(() -> epiJJobExactRequested.getResult());
+            confidenceJJobRequested.setEpiApprox(() -> epiJJobApproximateRequested.getResult());
+            confidenceJJobRequested.setCanopusResultTopHit(() -> canopusJob.getResult());
+
+            confidenceJJobRequested.addRequiredJob(epiJJobExactRequested);
+            confidenceJJobRequested.addRequiredJob(epiJJobApproximateRequested);
+            confidenceJJobRequested.addRequiredJob(canopusJob);
+
+
+            return submitSubJob(confidenceJJobRequested);
+        }catch (ExecutionException | UnknownElementException | IOException e){
+            e.printStackTrace();
+            logError("Couldn't compute confidence Job");
+            return null;
+        }
+
     }
 
     @Override
