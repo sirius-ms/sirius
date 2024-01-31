@@ -285,8 +285,10 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
 
         }
 
-        allMergedCandidates.sort(Comparator.reverseOrder());
-        requestedMergedCandidates.sort(Comparator.reverseOrder());
+
+        allMergedCandidates.sort(Comparator.<Scored<FingerprintCandidate>>reverseOrder().thenComparing((Scored<FingerprintCandidate> s) -> s.getCandidate().getInchiKey2D()));
+
+        requestedMergedCandidates.sort(Comparator.<Scored<FingerprintCandidate>>reverseOrder().thenComparing((Scored<FingerprintCandidate> s) -> s.getCandidate().getInchiKey2D()));
 
         //We always submit this job, regardless of expansive search
         ParameterStore parameterStoreRequested =(topHitFPRequested==null || topHitScoringRequested==null || topHitTreeRequested==null ||topHitFormulaRequested==null) ? null: ParameterStore.of(topHitFPRequested,topHitScoringRequested,topHitTreeRequested,topHitFormulaRequested);

@@ -3,6 +3,7 @@ package de.unijena.bioinf.fingerid;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
+import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fragmenter.InsilicoFragmentationPeakAnnotator;
 import de.unijena.bioinf.fragmenter.InsilicoFragmentationResult;
@@ -42,7 +43,7 @@ public class SubstructureAnnotationJJob extends BasicMasterJJob<Map<FTree, Subst
         final Map<InsilicoFragmentationPeakAnnotator.Job, Scored<CompoundCandidate>> jobToCandidate = new HashMap<>();
 
         InsilicoFragmentationPeakAnnotator fragmenter = new InsilicoFragmentationPeakAnnotator();
-        candidatesMap.keySet().stream().sorted(Comparator.reverseOrder()).limit(topKOnly)
+        candidatesMap.keySet().stream().sorted(Comparator.<Scored<CompoundCandidate>>reverseOrder().thenComparing((Scored<CompoundCandidate> s) -> s.getCandidate().getInchiKey2D())).limit(topKOnly)
                 .forEach(c -> {
                     InsilicoFragmentationPeakAnnotator.Job j = submitSubJob(fragmenter.makeJJob(candidatesMap.get(c), c.getCandidate().getSmiles()));
                     jobMap.computeIfAbsent(j.getTree(), f -> new ArrayList<>()).add(j);
