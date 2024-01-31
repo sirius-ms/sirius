@@ -205,8 +205,8 @@ public class ChemicalNoSQLDatabaseTest {
     @Test
     public void testStore() throws IOException {
         long start = System.nanoTime();
-//        Path tempDB = Path.of("nitrite_" + System.nanoTime() + ".db");
-        Path tempDB = Path.of("nitrite_long_pk.db");
+        Path tempDB = Path.of("nitrite_" + System.nanoTime() + ".db");
+//        Path tempDB = Path.of("nitrite_long_pk.db");
         chemDb = new ChemicalNitriteDatabase(tempDB);
         long elapsed = System.nanoTime() - start;
         System.out.println("Init time " + (elapsed / 1000000) + " ms");
@@ -227,12 +227,34 @@ public class ChemicalNoSQLDatabaseTest {
     }
 
     @Test
-    public void testGetPk() throws IOException {
-        Path tempDB = Path.of("nitrite_long_pk.db");
+    public void testUpsert() throws IOException {
+        Path tempDB = Path.of("nitrite_long_178177761364905.db");
+        chemDb = new ChemicalNitriteDatabase(tempDB);
+        long start = System.nanoTime();
+        chemDb.updateAllFingerprints(fpc -> fpc.referenceSpectraSplash.add(""));
+        long elapsed = System.nanoTime() - start;
+        System.out.println("Upsert time " + (elapsed / 1000000) + " ms");
+    }
+
+    @Test
+    public void testQuery() throws IOException {
+        Path tempDB = Path.of("nitrite_str_180554482719662.db");
         chemDb = new ChemicalNitriteDatabase(tempDB);
         NitriteDatabase storage = chemDb.getStorage();
-        long pk = storage.findAll(FingerprintCandidateWrapper.class).iterator().next().getPk();
-        assertTrue(pk > 0);
+
+        long start = System.nanoTime();
+//        double c = storage.findAllStr(FingerprintCandidateWrapper.class).map(FingerprintCandidateWrapper::getCandidate).mapToDouble(ce -> ce.xlogp).average().orElse(Double.NaN);
+        int c = storage.findAllStr(FingerprintCandidateWrapper.class).map(FingerprintCandidateWrapper::getCandidate).mapToInt(ce -> ce.referenceSpectraSplash.size()).sum();
+        long elapsed = System.nanoTime() - start;
+        System.out.println(c);
+        System.out.println("Query time " + (elapsed / 1000000) + " ms");
+    }
+
+    @Test
+    public void getFPCCount() throws IOException {
+        Path tempDB = Path.of("nitrite_str_180554482719662.db");
+        chemDb = new ChemicalNitriteDatabase(tempDB);
+        System.out.println(chemDb.countAllFingerprints());
     }
 
     protected Map<MolecularFormula, List<FingerprintCandidate>> loadJson() throws IOException {
