@@ -330,7 +330,7 @@ public class SimilarityMatrixWorkflow implements Workflow {
     }
 
     private static double withAtLeast(SpectralSimilarity similarity, int minPeaks) {
-        if (similarity.shardPeaks < minPeaks) return 0d;
+        if (similarity.sharedPeaks < minPeaks) return 0d;
         else return similarity.similarity;
     }
 

@@ -263,7 +263,7 @@ public class ProjectSpaceWorkflow implements Workflow, ProgressSupport {
                                     }
                                     rightExp = Q.createQueryWithIntensityTransformationNoLoss(Spectrums.from(new Ms2Preprocessor().preprocess(right.getExperiment()).getMergedPeaks()), rm, true);
                                     final SpectralSimilarity spectralSimilarity = Q.cosineProduct(leftExp, rightExp);
-                                    if (spectralSimilarity.similarity >= cosine && spectralSimilarity.shardPeaks >= Math.min(6, Math.min(leftExp.size(), rightExp.size()))) {
+                                    if (spectralSimilarity.similarity >= cosine && spectralSimilarity.sharedPeaks >= Math.min(6, Math.min(leftExp.size(), rightExp.size()))) {
                                         // merge both compounds
                                         int color = assignments[i];
                                         if (color < 0) color = assignments[j];

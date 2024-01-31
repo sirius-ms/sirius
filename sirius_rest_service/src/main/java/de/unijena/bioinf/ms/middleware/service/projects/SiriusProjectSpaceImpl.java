@@ -30,7 +30,6 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.canopus.CanopusResult;
@@ -38,10 +37,10 @@ import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.elgordo.LipidSpecies;
 import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
+import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.lcms.LCMSCompoundSummary;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
-import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.middleware.controller.AlignedFeatureController;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
@@ -50,6 +49,8 @@ import de.unijena.bioinf.ms.middleware.model.features.AlignedFeatureQuality;
 import de.unijena.bioinf.ms.middleware.model.features.LCMSFeatureQuality;
 import de.unijena.bioinf.ms.middleware.model.features.MsData;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
+import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
+import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
@@ -61,7 +62,6 @@ import de.unijena.bioinf.projectspace.fingerid.FBCandidateNumber;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidatesTopK;
 import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
-import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.sirius.scores.TreeScore;
@@ -81,6 +81,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.text.DecimalFormat;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -286,7 +287,55 @@ public class SiriusProjectSpaceImpl implements Project {
                                             .orElse(null),
                                     fr.getAnnotationOrThrow(FormulaScoring.class), optFields, fr.getId()))
                     );
-        }).orElseThrow();
+        }).orElse(null);
+    }
+
+    @Override
+    public AnnotatedSpectrum findAnnotatedSpectrumByStructureId(@Nullable String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId) {
+        Instance instance = loadInstance(alignedFeatureId);
+        Optional<FormulaResult> fr;
+        if (inchiKey == null || inchiKey.isBlank()) {
+            fr = instance.loadFormulaResult(parseFID(instance, formulaId), FTree.class);
+        } else {
+            fr = instance.loadFormulaResult(parseFID(instance, formulaId), FTree.class, FBCandidates.class);
+        }
+
+        FTree ftree = fr.flatMap(f -> f.getAnnotation(FTree.class)).orElse(null);
+        String smiles = fr.flatMap(f -> f.getAnnotation(FBCandidates.class)).stream()
+                .flatMap(fb -> fb.getResults().stream())
+                .map(SScored::getCandidate)
+                .filter(c -> Objects.equals(c.getInchiKey2D(), inchiKey))
+                .findFirst().map(CompoundCandidate::getSmiles).orElse(null);
+
+        return asAnnotatedSpectrum(instance, ftree, smiles);
+    }
+
+
+    @Override
+    public StructureCandidateScored findStructureCandidateById(@NotNull String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
+        Instance instance = loadInstance(alignedFeatureId);
+        FormulaResultId fid = parseFID(instance, formulaId);
+        return instance.loadFormulaResult(fid, FormulaScoring.class, FBCandidates.class)
+                .map(fr -> {
+                    FBCandidates candidates = fr.getAnnotation(FBCandidates.class).orElse(null);
+
+                    if (candidates != null) {
+                        AtomicInteger index = new AtomicInteger(0);
+                        for (Scored<CompoundCandidate> result : candidates.getResults()) {
+                            if (inchiKey.equals(result.getCandidate().getInchiKey2D())) {
+                                Fingerprint fp = null;
+                                if (optFields.contains(StructureCandidateScored.OptField.fingerprint))
+                                    fp = instance.loadFormulaResult(fid, FBCandidateFingerprints.class)
+                                            .flatMap(frr -> frr.getAnnotation(FBCandidateFingerprints.class))
+                                            .map(fps -> fps.getFingerprints().get(index.get())).orElse(null);
+
+                                return StructureCandidateFormula.of(result, fp, fr.getAnnotation(FormulaScoring.class).orElse(null), optFields, fid);
+                            }
+                            index.incrementAndGet();
+                        }
+                    }
+                    return null;
+                }).orElseThrow();
     }
 
     private AlignedFeature asAlignedFeature(CompoundContainerId cid, EnumSet<AlignedFeature.OptField> optFields) {
@@ -483,7 +532,7 @@ public class SiriusProjectSpaceImpl implements Project {
         fidObj.setAnnotation(FBCandidateNumber.class, topK <= 0 ? FBCandidateNumber.ALL : new FBCandidateNumber((int) topK));
         FormulaResult fr = instance.loadFormulaResult(fidObj, (Class<? extends DataAnnotation>[]) para.toArray(Class[]::new)).orElseThrow();
         return fr.getAnnotation(FBCandidatesTopK.class).map(FBCandidatesTopK::getResults).map(l -> {
-            List<StructureCandidateFormula> candidates = new ArrayList();
+            List<StructureCandidateFormula> candidates = new ArrayList<>();
 
             Iterator<Scored<CompoundCandidate>> it =
                     l.stream().skip(pageable.getOffset()).limit(pageable.getPageSize()).iterator();
@@ -519,8 +568,10 @@ public class SiriusProjectSpaceImpl implements Project {
 
         if (optFields.contains(FormulaCandidate.OptField.fragmentationTree))
             res.getAnnotation(FTree.class).map(FragmentationTree::fromFtree).ifPresent(candidate::fragmentationTree);
+        if (optFields.contains(FormulaCandidate.OptField.annotatedSpectrum))
+            candidate.annotatedSpectrum(asAnnotatedSpectrum(inst, res.getAnnotation(FTree.class).orElse(null), null));
         if (optFields.contains(FormulaCandidate.OptField.isotopePattern))
-            candidate.isotopePatternAnnotation(asIsotopePatternAnnotation(inst, res));
+            candidate.isotopePatternAnnotation(asIsotopePatternAnnotation(inst, res.getAnnotation(FTree.class).orElse(null)));
         if (optFields.contains(FormulaCandidate.OptField.lipidAnnotation))
             res.getAnnotation(FTree.class).map(SiriusProjectSpaceImpl::asLipidAnnotation).ifPresent(candidate::lipidAnnotation);
         if (optFields.contains(FormulaCandidate.OptField.predictedFingerprint))
@@ -613,6 +664,7 @@ public class SiriusProjectSpaceImpl implements Project {
         if (Stream.of(
                         FormulaCandidate.OptField.statistics,
                         FormulaCandidate.OptField.fragmentationTree,
+                        FormulaCandidate.OptField.annotatedSpectrum,
                         FormulaCandidate.OptField.isotopePattern,
                         FormulaCandidate.OptField.lipidAnnotation)
                 .anyMatch(optFields::contains))
@@ -628,11 +680,19 @@ public class SiriusProjectSpaceImpl implements Project {
         return classes.toArray(Class[]::new);
     }
 
-    public static IsotopePatternAnnotation asIsotopePatternAnnotation(Instance instance, FormulaResult fResult) {
+    public static IsotopePatternAnnotation asIsotopePatternAnnotation(Instance instance, FTree ftree) {
         Ms2Experiment exp = instance.loadCompoundContainer(Ms2Experiment.class).getAnnotation(Ms2Experiment.class)
-                .orElse(null);
-        FTree ftree = fResult.getAnnotation(FTree.class).orElse(null);
-        return  IsotopePatternAnnotation.create(ftree, exp);
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Could not find spectra data for '" + instance.getID().getFeatureId() + "'!"));
+        return IsotopePatternAnnotation.create(exp, ftree);
+    }
+
+    public static AnnotatedSpectrum asAnnotatedSpectrum(Instance instance, FTree ftree, String structureSmiles) {
+        Ms2Experiment exp = instance.loadCompoundContainer(Ms2Experiment.class).getAnnotation(Ms2Experiment.class)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Could not find spectra data for '" + instance.getID().getFeatureId() + "'!"));
+
+        return Spectrums.createMergedMsMsWithAnnotations(exp, ftree, structureSmiles);
     }
 
     public static FeatureAnnotations extractTopAnnotationsDeNovo(Instance inst) {
@@ -688,13 +748,13 @@ public class SiriusProjectSpaceImpl implements Project {
                 .getAnnotation(Ms2Experiment.class).map(exp -> MsData.builder()
                         .mergedMs1(
                                 opt(exp.getMergedMs1Spectrum(), s -> {
-                                    AnnotatedSpectrum t = new AnnotatedSpectrum((Spectrum<Peak>) s);
+                                    BasicSpectrum t = new BasicSpectrum((Spectrum<Peak>) s);
                                     t.setMsLevel(1);
                                     return t;
                                 }).orElse(null))
                         .ms1Spectra(
                                 exp.getMs1Spectra().stream().map(x -> {
-                                    AnnotatedSpectrum t = new AnnotatedSpectrum(x);
+                                    BasicSpectrum t = new BasicSpectrum(x);
                                     t.setMsLevel(1);
                                     //todo scannumber not available for MS1 Spectra? Maybe as annotation?
                                     return t;
@@ -702,7 +762,7 @@ public class SiriusProjectSpaceImpl implements Project {
                         .ms2Spectra(
                                 //todo ms/ms annotations for spectrum viewer
                                 exp.getMs2Spectra().stream().map(x -> {
-                                    AnnotatedSpectrum t = new AnnotatedSpectrum(x);
+                                    BasicSpectrum t = new BasicSpectrum(x);
                                     t.setCollisionEnergy(new CollisionEnergy(x.getCollisionEnergy()));
                                     t.setMsLevel(2);
                                     t.setScanNumber(((MutableMs2Spectrum) x).getScanNumber());

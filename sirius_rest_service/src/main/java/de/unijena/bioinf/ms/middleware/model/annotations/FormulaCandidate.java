@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.middleware.model.annotations;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -36,7 +37,7 @@ import lombok.*;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FormulaCandidate {
     @Schema(enumAsRef = true, name = "FormulaCandidateOptField", nullable = true)
-    public enum OptField {none, statistics, fragmentationTree, isotopePattern, lipidAnnotation, predictedFingerprint, compoundClasses, canopusPredictions}
+    public enum OptField {none, statistics, fragmentationTree, annotatedSpectrum, isotopePattern, lipidAnnotation, predictedFingerprint, compoundClasses, canopusPredictions}
 
     /**
      * Unique identifier of this formula candidate
@@ -92,6 +93,13 @@ public class FormulaCandidate {
      */
     @Schema(nullable = true)
     protected FragmentationTree fragmentationTree;
+
+    /**
+     * Fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses
+     */
+    @Schema(nullable = true)
+    protected AnnotatedSpectrum annotatedSpectrum;
+
     /**
      * The measured and simulated isotope pattern that have been  compared against each other to produce the isotopeScore.
      */
