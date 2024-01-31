@@ -19,14 +19,14 @@
 
 package de.unijena.bioinf.ms.gui.compute;
 
-import de.unijena.bioinf.ChemistryBase.chem.*;
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
-import de.unijena.bioinf.chemdb.annotations.FormulaSearchDB;
+import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
@@ -47,11 +47,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ItemEvent;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -62,7 +63,8 @@ import java.util.stream.Stream;
  * @author Marcus Ludwig, Markus Fleischauer
  * @since 12.01.17
  */
-public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
+public class
+FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
     protected Logger logger = LoggerFactory.getLogger(FormulaIDConfigPanel.class);
 
     public enum Instrument {
@@ -92,21 +94,16 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         }
     }
 
-    protected final JCheckboxListPanel<String> adductList;
-    protected final JToggleButton enforceAdducts;
-    protected final JCheckboxListPanel<CustomDataSources.Source> searchDBList;
-    protected final JComboBox<Instrument> profileSelector;
-    protected final JSpinner ppmSpinner, candidatesSpinner, candidatesPerIonSpinner, treeTimeout, comoundTimeout, mzHeuristic, mzHeuristicOnly, bottomUpSearchEnabled, bottomUpSearchOnly;
+    protected JCheckboxListPanel<String> adductList;
+    protected JToggleButton enforceAdducts;
+    protected JComboBox<Instrument> profileSelector;
+    protected JSpinner ppmSpinner, candidatesSpinner, candidatesPerIonSpinner, treeTimeout, comoundTimeout, mzHeuristic, mzHeuristicOnly;
 
     enum Strategy {IGNORE, SCORE} //todo remove if Filter is implemented
 
-    protected final JComboBox<Strategy> ms2IsotpeSetting;
-    protected final JComboBox<SiriusOptions.BottomUpSearchOptions> bottomUpSearchSelector;
-//    protected final JComboBox<IsotopeMs2Settings.Strategy> ms2IsotpeSetting;
+    protected JComboBox<Strategy> ms2IsotpeSetting;
 
-    //    protected final JCheckBox restrictToOrganics;
-    protected ElementsPanel elementPanel;
-//    protected JButton elementAutoDetect;
+    protected FormulaSearchStrategy formulaSearchStrategy;
 
 
     protected final List<InstanceBean> ecs;
@@ -114,57 +111,68 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
 
     protected final Dialog owner;
 
-    public FormulaIDConfigPanel(Dialog owner, List<InstanceBean> ecs, boolean ms2) {
+    protected boolean hasMs2;
+    protected boolean displayAdvancedParameters;
+
+    public FormulaIDConfigPanel(Dialog owner, List<InstanceBean> ecs, boolean ms2, boolean displayAdvancedParameters) {
         super(SiriusOptions.class);
         this.ecs = ecs;
         this.owner = owner;
+        this.hasMs2 = ms2;
+        this.displayAdvancedParameters = displayAdvancedParameters;
 
+        createPanel(hasMs2, displayAdvancedParameters);
+
+    }
+
+    public void setDisplayAdvancedParameters(boolean display) {
+        displayAdvancedParameters = display;
+        createPanel(hasMs2, displayAdvancedParameters);
+    }
+
+    private void createPanel(boolean hasMs2, boolean displayAdvancedParameters) {
+        this.removeAll();
 
         setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
         final JPanel center = applyDefaultLayout(new JPanel());
         add(center);
 
         // configure small stuff panel
-        final TwoColumnPanel smallParameters = new TwoColumnPanel();
-        center.add(new TextHeaderBoxPanel("General", smallParameters));
+        {
+            final TwoColumnPanel smallParameters = new TwoColumnPanel();
+            center.add(new TextHeaderBoxPanel("General", smallParameters));
 
-        profileSelector = makeParameterComboBox("AlgorithmProfile", List.of(Instrument.values()), Instrument::asProfile);
-        smallParameters.addNamed("Instrument", profileSelector);
+            profileSelector = makeParameterComboBox("AlgorithmProfile", List.of(Instrument.values()), Instrument::asProfile);
+            smallParameters.addNamed("Instrument", profileSelector);
 
-        smallParameters.addNamed("Filter by isotope pattern", makeParameterCheckBox("IsotopeSettings.filter"));
+            if (displayAdvancedParameters) smallParameters.addNamed("Filter by isotope pattern", makeParameterCheckBox("IsotopeSettings.filter"));
 
-        ms2IsotpeSetting = makeParameterComboBox("IsotopeMs2Settings", Strategy.class);
-        ppmSpinner = makeParameterSpinner("MS2MassDeviation.allowedMassDeviation",
-                PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class).allowedMassDeviation.getPpm(),
-                0.25, 50, 0.25, m -> m.getNumber().doubleValue() + "ppm");
+            ms2IsotpeSetting = makeParameterComboBox("IsotopeMs2Settings", Strategy.class);
+            ppmSpinner = makeParameterSpinner("MS2MassDeviation.allowedMassDeviation",
+                    PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class).allowedMassDeviation.getPpm(),
+                    0.25, 50, 0.25, m -> m.getNumber().doubleValue() + "ppm");
 
-        if (ms2) {
-            smallParameters.addNamed("MS2 mass accuracy (ppm)", ppmSpinner);
-            smallParameters.addNamed("MS/MS isotope scorer", ms2IsotpeSetting);
+            if (hasMs2) {
+                smallParameters.addNamed("MS2 mass accuracy (ppm)", ppmSpinner);
+                if (displayAdvancedParameters) smallParameters.addNamed("MS/MS isotope scorer", ms2IsotpeSetting);
+            }
+
+            candidatesSpinner = makeIntParameterSpinner("NumberOfCandidates", 1, 10000, 1);
+            if (displayAdvancedParameters) smallParameters.addNamed("Candidates stored", candidatesSpinner);
+
+            candidatesPerIonSpinner = makeIntParameterSpinner("NumberOfCandidatesPerIon", 0, 10000, 1);
+            if (displayAdvancedParameters) smallParameters.addNamed("Min candidates per ionization stored", candidatesPerIonSpinner);
+
+            smallParameters.addNamed("Fix formula for detected lipid", makeParameterCheckBox("EnforceElGordoFormula")); //El Gordo detects lipids and by default fixes the formula
+
+
+            //sync profile with ppm spinner
+            profileSelector.addItemListener(e -> {
+                final Instrument i = (Instrument) e.getItem();
+                final double recommendedPPM = i.ppm;
+                ppmSpinner.setValue(recommendedPPM);
+            });
         }
-
-        candidatesSpinner = makeIntParameterSpinner("NumberOfCandidates", 1, 10000, 1);
-        smallParameters.addNamed("Candidates stored", candidatesSpinner);
-
-        candidatesPerIonSpinner = makeIntParameterSpinner("NumberOfCandidatesPerIon", 0, 10000, 1);
-        smallParameters.addNamed("Min candidates per Ion stored", candidatesPerIonSpinner);
-
-        //todo advancedParameters: this should be ane
-        smallParameters.addNamed("Fix formula for detected lipid", makeParameterCheckBox("EnforceElGordoFormula")); //El Gordo detects lipids and by default fixes the formula
-
-
-//        restrictToOrganics = new JCheckBox(); //todo implement parameter?? or as constraint?
-//        GuiUtils.assignParameterToolTip(restrictToOrganics, "RestrictToOrganics");
-//        parameterBindings.put("RestrictToOrganics", () -> String.valueOf(restrictToOrganics.isSelected()));
-//        smallParameters.addNamed("Restrict to organics", restrictToOrganics);
-
-        //sync profile with ppm spinner
-        profileSelector.addItemListener(e -> {
-            final Instrument i = (Instrument) e.getItem();
-            final double recommendedPPM = i.ppm;
-            ppmSpinner.setValue(recommendedPPM);
-        });
-
 
         //configure adduct panel
         adductList = new JCheckboxListPanel<>(new JCheckBoxList<>(), isBatchDialog() ? "Fallback Adducts" : "Possible Adducts",
@@ -183,29 +191,6 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
             parameterBindings.put("AdductSettings.enforced", () -> getSelectedAdducts().toString());
         }
 
-
-
-        // configure database to search list
-        searchDBList = new JCheckboxListPanel<>(new DBSelectionList(), "Use DB formulas only");
-        GuiUtils.assignParameterToolTip(searchDBList.checkBoxList, "FormulaSearchDB");
-        center.add(searchDBList);
-        parameterBindings.put("FormulaSearchDB", () -> String.join(",", getFormulaSearchDBStrings()));
-        PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSearchDB.class).searchDBs
-                .forEach(s -> searchDBList.checkBoxList.check(CustomDataSources.getSourceFromName(s.name())));
-
-        // configure Element panel
-        makeElementPanel(isBatchDialog());
-        add(elementPanel);
-        parameterBindings.put("FormulaSettings.enforced", () -> {
-            return elementPanel.getElementConstraints().toString(); //todo check if this makes scence
-        });
-
-        parameterBindings.put("FormulaSettings.detectable", () -> {
-            final List<Element> elementsToAutoDetect = elementPanel.individualAutoDetect ? elementPanel.getElementsToAutoDetect() : Collections.emptyList();
-            return (elementsToAutoDetect.isEmpty() ? "," :
-                    elementsToAutoDetect.stream().map(Element::toString).collect(Collectors.joining(",")));
-        }); //todo check if this makes sense
-
         // technical parameters: bottom up search and ilp options
         final JPanel technicalParameters = new JPanel();
         RelativeLayout rl = new RelativeLayout(RelativeLayout.Y_AXIS, GuiUtils.MEDIUM_GAP);
@@ -213,77 +198,48 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         rl.setBorderGap(0);
         technicalParameters.setLayout(rl);
 
-        // bottom up search options
-        final TwoColumnPanel busOptions = new TwoColumnPanel();
-        bottomUpSearchSelector = new JComboBox<>();
-        List<SiriusOptions.BottomUpSearchOptions> settings = java.util.List.copyOf(EnumSet.allOf(SiriusOptions.BottomUpSearchOptions.class));
-        settings.forEach(bottomUpSearchSelector::addItem);
-        busOptions.addNamed("Bottom up search", bottomUpSearchSelector);
 
-        bottomUpSearchEnabled = makeIntParameterSpinner("BottomUpSearchSettings.enabledFromMass", 0, Integer.MAX_VALUE, 5);
-        bottomUpSearchOnly = makeIntParameterSpinner("BottomUpSearchSettings.replaceDeNovoFromMass", 0, Integer.MAX_VALUE, 5);
-        bottomUpSearchEnabled.setValue(0);
-        bottomUpSearchOnly.setValue(400);
-        bottomUpSearchEnabled.setEnabled(false);
-        bottomUpSearchOnly.setEnabled(false);
-
-        bottomUpSearchSelector.addItemListener(e -> {
+        //select formula search strategy
+        final JPanel formulaSearchStrategySelection = new JPanel();
+        formulaSearchStrategySelection.setLayout(new BoxLayout(formulaSearchStrategySelection, BoxLayout.PAGE_AXIS));
+        add(new TextHeaderBoxPanel("Molecular formula generation", formulaSearchStrategySelection));
+        JComboBox<FormulaSearchStrategy.Strategy> strategyBox =  GuiUtils.makeParameterComboBoxFromDescriptiveValues(FormulaSearchStrategy.Strategy.values());
+        formulaSearchStrategySelection.add(strategyBox);
+        formulaSearchStrategy = new FormulaSearchStrategy((FormulaSearchStrategy.Strategy) strategyBox.getSelectedItem(), owner, ecs, hasMs2, isBatchDialog(), parameterBindings);
+        formulaSearchStrategySelection.add(formulaSearchStrategy);
+        strategyBox.addItemListener(e -> {
             if (e.getStateChange() != ItemEvent.SELECTED) {
                 return;
             }
-            final SiriusOptions.BottomUpSearchOptions source = (SiriusOptions.BottomUpSearchOptions) e.getItem();
-            switch (source) {
-                case BOTTOM_UP_ONLY -> {
-                    bottomUpSearchEnabled.setEnabled(false);
-                    bottomUpSearchOnly.setEnabled(false);
-                    bottomUpSearchEnabled.setValue(0);
-                    bottomUpSearchOnly.setValue(0);
-                }
-                case DISABLED -> {
-                    bottomUpSearchEnabled.setEnabled(false);
-                    bottomUpSearchOnly.setEnabled(false);
-                    bottomUpSearchEnabled.setValue(Double.POSITIVE_INFINITY);
-                    bottomUpSearchOnly.setValue(Double.POSITIVE_INFINITY);
-                }
-                case CUSTOM -> {
-                    bottomUpSearchEnabled.setEnabled(true);
-                    bottomUpSearchOnly.setEnabled(true);
-                    bottomUpSearchEnabled.setValue(0);
-                    bottomUpSearchOnly.setValue(400);
-                }
-            }
+            final DescriptiveOptions source = (DescriptiveOptions) e.getItem();
+            int panelIndex = GuiUtils.getComponentIndex(formulaSearchStrategySelection, formulaSearchStrategy);
+            formulaSearchStrategySelection.remove(panelIndex);
+            formulaSearchStrategy = new FormulaSearchStrategy((FormulaSearchStrategy.Strategy) strategyBox.getSelectedItem(), owner, ecs, hasMs2, isBatchDialog(), parameterBindings);
+            formulaSearchStrategySelection.add(formulaSearchStrategy, panelIndex);
+            revalidate();
         });
-        busOptions.addNamed("Use bottom up search above m/z", bottomUpSearchEnabled);
-        busOptions.addNamed("Use bottom up search only above m/z", bottomUpSearchOnly);
-        technicalParameters.add(new TextHeaderBoxPanel("Bottom Up Search", busOptions));
+
 
         // ilp timeouts
-        final TwoColumnPanel ilpOptions = new TwoColumnPanel();
+        if (displayAdvancedParameters) {
+            final TwoColumnPanel ilpOptions = new TwoColumnPanel();
 
-        treeTimeout = makeIntParameterSpinner("Timeout.secondsPerTree", 0, Integer.MAX_VALUE, 1);
-        ilpOptions.addNamed("Tree timeout", treeTimeout);
+            treeTimeout = makeIntParameterSpinner("Timeout.secondsPerTree", 0, Integer.MAX_VALUE, 1);
+            ilpOptions.addNamed("Tree timeout", treeTimeout);
 
-        comoundTimeout = makeIntParameterSpinner("Timeout.secondsPerInstance", 0, Integer.MAX_VALUE, 1);
-        ilpOptions.addNamed("Compound timeout", comoundTimeout);
+            comoundTimeout = makeIntParameterSpinner("Timeout.secondsPerInstance", 0, Integer.MAX_VALUE, 1);
+            ilpOptions.addNamed("Compound timeout", comoundTimeout);
 
-        mzHeuristic = makeIntParameterSpinner("UseHeuristic.mzToUseHeuristic", 0, 3000, 5);
-        ilpOptions.addNamed("Use heuristic above m/z", mzHeuristic);
+            mzHeuristic = makeIntParameterSpinner("UseHeuristic.mzToUseHeuristic", 0, 3000, 5);
+            ilpOptions.addNamed("Use heuristic above m/z", mzHeuristic);
 
-        mzHeuristicOnly = makeIntParameterSpinner("UseHeuristic.mzToUseHeuristicOnly", 0, 3000, 5);
-        ilpOptions.addNamed("Use heuristic only above m/z", mzHeuristicOnly);
+            mzHeuristicOnly = makeIntParameterSpinner("UseHeuristic.mzToUseHeuristicOnly", 0, 3000, 5);
+            ilpOptions.addNamed("Use heuristic only above m/z", mzHeuristicOnly);
 
-        // Adjust width of busOptions and ilpOptions to be the same
-        Dimension ilpDimension = ilpOptions.getPreferredSize();
-        Dimension busDimension = busOptions.getPreferredSize();
-        double width = Math.max(ilpDimension.getWidth(), busDimension.getWidth());
-        ilpDimension.setSize(width, ilpDimension.getHeight());
-        busDimension.setSize(width, busDimension.getHeight());
-        ilpOptions.setPreferredSize(ilpDimension);
-        busOptions.setPreferredSize(busDimension);
-
-        if (ms2)
-            technicalParameters.add(new TextHeaderBoxPanel("ILP", ilpOptions));
-        center.add(technicalParameters);
+            if (hasMs2)
+                technicalParameters.add(new TextHeaderBoxPanel("Fragmentation tree computation", ilpOptions));
+            add(technicalParameters);
+        }
 
         // add ionization's of selected compounds to default
         refreshPossibleAdducts(ecs.stream().map(it -> it.getIonType().toString()).collect(Collectors.toSet()), true);
@@ -337,63 +293,6 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
 
     }
 
-    protected void makeElementPanel(boolean multi) {
-        final FormulaSettings formulaSettings = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class);
-        List<Element> possDetectableElements = new ArrayList<>(ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor().getSetOfPredictableElements());
-
-        final JButton elementAutoDetect;
-        if (multi) {
-            elementAutoDetect = null;
-            elementPanel = new ElementsPanel(owner, 4, possDetectableElements, formulaSettings.getAutoDetectionElements(), formulaSettings.getEnforcedAlphabet());
-        } else {
-            /////////////Solo Element//////////////////////
-            elementPanel = new ElementsPanel(owner, 4, formulaSettings.getEnforcedAlphabet());
-            elementAutoDetect = new JButton("Auto detect");
-            elementAutoDetect.setToolTipText("Auto detectable element are: "
-                    + possDetectableElements.stream().map(Element::toString).collect(Collectors.joining(",")));
-            elementAutoDetect.addActionListener(e -> detectElements());
-            elementAutoDetect.setEnabled(true);
-            elementPanel.lowerPanel.add(elementAutoDetect);
-        }
-
-        ListSelectionListener listener = e -> {
-            final List<CustomDataSources.Source> source = getFormulaSearchDBs();
-            elementPanel.enableElementSelection(source == null || source.isEmpty());
-            if (elementAutoDetect != null)
-                elementAutoDetect.setEnabled(source == null || source.isEmpty());
-        };
-        listener.valueChanged(null);
-        //enable disable element panel if db is selected
-        searchDBList.checkBoxList.addListSelectionListener(listener);
-        elementPanel.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));
-    }
-
-    protected void detectElements() {
-        String notWorkingMessage = "Element detection requires MS1 spectrum with isotope pattern.";
-        InstanceBean ec = ecs.get(0);
-        if (!ec.getMs1Spectra().isEmpty() || ec.getMergedMs1Spectrum() != null) {
-            Jobs.runInBackgroundAndLoad(owner, "Detecting Elements...", () -> {
-                final Ms1Preprocessor pp = ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor();
-                ProcessedInput pi = pp.preprocess(new MutableMs2Experiment(ec.getExperiment(), false));
-
-                pi.getAnnotation(FormulaConstraints.class).
-                        ifPresentOrElse(c -> {
-                                    for (Element element : c.getChemicalAlphabet()) {
-                                        if (c.getUpperbound(element) <= 0) {
-                                            c.setLowerbound(element, 0);
-                                            c.setUpperbound(element, 0);
-                                        }
-                                    }
-                                    elementPanel.setSelectedElements(c);
-                                },
-                                () -> new ExceptionDialog(owner, notWorkingMessage)
-                        );
-            }).getResult();
-        } else {
-            new ExceptionDialog(owner, notWorkingMessage);
-        }
-    }
-
     protected void detectPossibleAdducts(InstanceBean ec) {
         //todo is this the same detection as happening in batch mode?
         String notWorkingMessage = "Adduct detection requires MS1 spectrum.";
@@ -431,16 +330,16 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         return ((SpinnerNumberModel) candidatesPerIonSpinner.getModel()).getNumber().intValue();
     }
 
-    public List<CustomDataSources.Source> getFormulaSearchDBs() {
-        return searchDBList.checkBoxList.getCheckedItems();
-    }
-
-    public List<String> getFormulaSearchDBStrings() {
-        return getFormulaSearchDBs().stream().map(CustomDataSources.Source::id).filter(Objects::nonNull).collect(Collectors.toList());
-    }
-
     public PossibleAdducts getSelectedAdducts() {
         return adductList.checkBoxList.getCheckedItems().stream().map(PrecursorIonType::parsePrecursorIonType)
                 .flatMap(Optional::stream).collect(Collectors.collectingAndThen(Collectors.toSet(), PossibleAdducts::new));
+    }
+
+    public JCheckboxListPanel<CustomDataSources.Source> getSearchDBList() {
+        return formulaSearchStrategy.getSearchDBList();
+    }
+
+    public List<CustomDataSources.Source> getFormulaSearchDBs() {
+        return formulaSearchStrategy.getFormulaSearchDBs();
     }
 }

@@ -27,16 +27,14 @@ import java.awt.*;
 public class ActFormulaIDConfigPanel extends ActivatableConfigPanel<FormulaIDConfigPanel> {
 
 
-    public ActFormulaIDConfigPanel(Dialog owner, java.util.List<InstanceBean> ecs, boolean ms2) {
-        super("SIRIUS", Icons.SIRIUS_32, false, () -> new FormulaIDConfigPanel(owner, ecs, ms2));
+    public ActFormulaIDConfigPanel(Dialog owner, java.util.List<InstanceBean> ecs, boolean ms2, boolean displayAdvancedParameters) {
+        super("SIRIUS", Icons.SIRIUS_32, false, () -> new FormulaIDConfigPanel(owner, ecs, ms2, displayAdvancedParameters));
     }
 
     @Override
     protected void setComponentsEnabled(boolean enabled) {
-        content.elementPanel.enableElementSelection(enabled);
         content.adductList.setEnabled(enabled);
         super.setComponentsEnabled(enabled);
-        if (enabled)
-            content.searchDBList.checkBoxList.refresh();
+        content.formulaSearchStrategy.setEnabled(enabled);
     }
 }

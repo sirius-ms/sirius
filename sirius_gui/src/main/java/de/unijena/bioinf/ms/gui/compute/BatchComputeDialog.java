@@ -75,12 +75,15 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
     // tool configurations
     private final ActFormulaIDConfigPanel formulaIDConfigPanel; //Sirius configs
     private final ActZodiacConfigPanel zodiacConfigs; //Zodiac configs
-    private final ActFingerprintConfigPanel csiPredictConfigs; //CSI:FingerID predict configs
+    private final ActFingerprintAndCanopusConfigPanel fingerprintAndCanopusConfigPanel; //Combines CSI:FingerID predict and CANOPUS configs
     private final ActFingerblastConfigPanel csiSearchConfigs; //CSI:FingerID search configs
-    private final ActCanopusConfigPanel canopusConfigPanel; //Canopus configs
+    private final ActMSNovelistConfigPanel msNovelistConfigPanel; //MsNovelist configs
 
     // compounds on which the configured Run will be executed
     private final List<InstanceBean> compoundsToProcess;
+
+    protected final JButton toggleAdvancedMode;
+    protected boolean isAdvancedView = false; //todo NewWorkflow: do we need to sync/remember selections between basic and advanced mode?
 
     public BatchComputeDialog(MainFrame owner, List<InstanceBean> compoundsToProcess) {
         super(owner, "Compute", true);
@@ -104,13 +107,13 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             boolean ms2 = compoundsToProcess.stream().anyMatch(inst -> !inst.getMs2Spectra().isEmpty());
 
             // make subtool config panels
-            formulaIDConfigPanel = new ActFormulaIDConfigPanel(this, compoundsToProcess, ms2);
+            formulaIDConfigPanel = new ActFormulaIDConfigPanel(this, compoundsToProcess, ms2, isAdvancedView);
             addConfigPanel("SIRIUS - Molecular Formula Identification", formulaIDConfigPanel);
 
-            zodiacConfigs = new ActZodiacConfigPanel();
-            csiPredictConfigs = new ActFingerprintConfigPanel(formulaIDConfigPanel.content.adductList.checkBoxList);
-            csiSearchConfigs = new ActFingerblastConfigPanel(formulaIDConfigPanel.content.searchDBList.checkBoxList);
-            canopusConfigPanel = new ActCanopusConfigPanel();
+            zodiacConfigs = new ActZodiacConfigPanel(isAdvancedView);
+            fingerprintAndCanopusConfigPanel = new ActFingerprintAndCanopusConfigPanel();
+            csiSearchConfigs = new ActFingerblastConfigPanel(formulaIDConfigPanel.content.getSearchDBList().checkBoxList);
+            msNovelistConfigPanel = new ActMSNovelistConfigPanel();
 
             if (compoundsToProcess.size() > 1 && ms2){
                 zodiacConfigs.addEnableChangeListener((s, enabled) -> {
@@ -141,9 +144,10 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             }
 
             if (ms2) {
-                JPanel csi = addConfigPanel("CSI:FingerID - Fingerprint Prediction", csiPredictConfigs);
-                addConfigPanel("CSI:FingerID - Structure Database Search", csiSearchConfigs, csi);
-                addConfigPanel("CANOPUS - Compound Class Prediction", canopusConfigPanel);
+                JPanel fpPrediction = addConfigPanel("Predict properties: CSI:FingerID - Fingerprint Prediction & CANOPUS - Compound Class Prediction", fingerprintAndCanopusConfigPanel);
+                JPanel dbSearch =  addConfigPanel("CSI:FingerID - Structure Database Search", csiSearchConfigs);
+                addConfigPanel("MSNovelist - De Novo Structure Generation", msNovelistConfigPanel, dbSearch); //todo NewWorkflow: is this advanced mode only?
+
             }
 
             //Make edit panel for single compound mode if needed
@@ -162,6 +166,24 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
 
             //checkConnectionToUrl by default when just one experiment is selected
             if (compoundsToProcess.size() == 1) recomputeBox.setSelected(true);
+
+            JPanel csouthPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
+            toggleAdvancedMode = new JButton("Switch to Advanced View"); //todo NewWorkflow: is this a good position and wording? Upper right corner seems wasted space
+            isAdvancedView = false;
+            toggleAdvancedMode.addActionListener(e -> {
+                isAdvancedView = !isAdvancedView;
+                if (isAdvancedView) {
+                    toggleAdvancedMode.setText("Switch to Basic View");
+                } else {
+                    toggleAdvancedMode.setText("Switch to Advanced View");
+                }
+
+                //todo NewWorkflow: in general for all the panels: What's better? adding and recreating views vs making them visible?
+                //todo NewWorkflow: when switching, parameters/strategies are reset. Shall these be remembered?
+                formulaIDConfigPanel.content.setDisplayAdvancedParameters(isAdvancedView);
+                zodiacConfigs.content.setDisplayAdvancedParameters(isAdvancedView);
+            });
+            csouthPanel.add(toggleAdvancedMode);
 
             JPanel rsouthPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
             JButton compute = new JButton("Compute");
@@ -194,6 +216,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             rsouthPanel.add(abort);
 
             southPanel.add(lsouthPanel);
+            southPanel.add(csouthPanel);
             southPanel.add(rsouthPanel);
 
             this.add(southPanel, BorderLayout.SOUTH);
@@ -276,7 +299,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         }
 
 
-        if (csiPredictConfigs.isToolSelected() || csiSearchConfigs.isToolSelected() || canopusConfigPanel.isToolSelected() && !PropertyManager.getBoolean(DO_NOT_SHOW_AGAIN_KEY_OUTDATED_PS, false)) {
+        if (fingerprintAndCanopusConfigPanel.isToolSelected() || csiSearchConfigs.isToolSelected() || msNovelistConfigPanel.isToolSelected() && !PropertyManager.getBoolean(DO_NOT_SHOW_AGAIN_KEY_OUTDATED_PS, false)) {
             //CHECK Server connection
             if (checkResult == null)
                 checkResult = CheckConnectionAction.checkConnectionAndLoad();
@@ -306,12 +329,6 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
 
             }
         }
-        // todo hotfix to prevent gui from going crazy
-        {
-            int index = MF.getCompoundListSelectionModel().getMinSelectionIndex();
-            MF.getCompoundListSelectionModel().setSelectionInterval(index, index);
-        }
-
 
         Jobs.runInBackgroundAndLoad(getOwner(), "Submitting Identification Jobs", new TinyBackgroundJJob<>() {
             @Override
@@ -382,20 +399,15 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             configCommand.addAll(zodiacConfigs.asParameterList());
         }
 
-        if (csiPredictConfigs != null && csiPredictConfigs.isToolSelected()) {
-            toolCommands.add(csiPredictConfigs.content.toolCommand());
-            configCommand.addAll(csiPredictConfigs.asParameterList());
+        //canopus prediction included. Must now run before structure database search
+        if (fingerprintAndCanopusConfigPanel != null && fingerprintAndCanopusConfigPanel.isToolSelected()) {
+            toolCommands.addAll(fingerprintAndCanopusConfigPanel.content.toolCommands());
+            configCommand.addAll(fingerprintAndCanopusConfigPanel.asParameterList());
         }
-
 
         if (csiSearchConfigs != null && csiSearchConfigs.isToolSelected()) {
             toolCommands.add(csiSearchConfigs.content.toolCommand());
             configCommand.addAll(csiSearchConfigs.asParameterList());
-        }
-
-        if (canopusConfigPanel != null && canopusConfigPanel.isToolSelected()) {
-            toolCommands.add(canopusConfigPanel.content.toolCommand());
-            configCommand.addAll(canopusConfigPanel.asParameterList());
         }
 
         List<String> command = new ArrayList<>();
@@ -408,7 +420,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
     }
 
     private boolean warnNoMethodIsSelected() {
-        if (!isAnySelected(formulaIDConfigPanel, zodiacConfigs, csiPredictConfigs, csiSearchConfigs, canopusConfigPanel)) {
+        if (!isAnySelected(formulaIDConfigPanel, zodiacConfigs, fingerprintAndCanopusConfigPanel, csiSearchConfigs, msNovelistConfigPanel)) {
             new WarningDialog(this, "Please select at least one method.");
             return true;
         } else {
@@ -429,7 +441,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
 
         if (checkResult != null) {
             if (checkResult.isConnected()) {
-                if ((csiPredictConfigs.isToolSelected() || csiSearchConfigs.isToolSelected()) && checkResult.hasWorkerWarning()) {
+                if ((fingerprintAndCanopusConfigPanel.isToolSelected() || csiSearchConfigs.isToolSelected() || msNovelistConfigPanel.isToolSelected()) && checkResult.hasWorkerWarning()) {
                     if (checkResult.workerInfo == null ||
                             (!checkResult.workerInfo.supportsAllPredictorTypes(ConnectionMonitor.neededTypes.stream().filter(WorkerWithCharge::isNegative).collect(Collectors.toSet()))
                                     && compoundsToProcess.stream().anyMatch(it -> it.getIonType().isNegative())) ||
@@ -440,13 +452,13 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             } else {
                 if (formulaIDConfigPanel.content.getFormulaSearchDBs() != null) {
                     new WarnFormulaSourceDialog(MF);
-                    formulaIDConfigPanel.content.searchDBList.checkBoxList.uncheckAll();
+                    formulaIDConfigPanel.content.getSearchDBList().checkBoxList.uncheckAll();
                 }
             }
         } else {
             if (formulaIDConfigPanel.content.getFormulaSearchDBs() != null) {
                 new WarnFormulaSourceDialog(MF);
-                formulaIDConfigPanel.content.searchDBList.checkBoxList.uncheckAll();
+                formulaIDConfigPanel.content.getSearchDBList().checkBoxList.uncheckAll();
             }
         }
     }
@@ -475,7 +487,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             @Override
             public void changedUpdate(DocumentEvent e) {
                 boolean enable = e.getDocument().getLength() == 0;
-                formulaIDConfigPanel.content.searchDBList.setEnabled(enable);
+                formulaIDConfigPanel.content.getSearchDBList().setEnabled(enable);
                 formulaIDConfigPanel.content.candidatesSpinner.setEnabled(enable);
                 formulaIDConfigPanel.content.candidatesPerIonSpinner.setEnabled(enable);
             }

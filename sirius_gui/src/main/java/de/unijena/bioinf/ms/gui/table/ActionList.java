@@ -196,4 +196,8 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
             dataLock.writeLock().unlock();
         }
     }
+
+    public boolean hasData() {
+        return data != null;
+    }
 }

@@ -24,6 +24,7 @@ import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
 import de.unijena.bioinf.projectspace.Instance;
 import picocli.CommandLine;
 
@@ -60,6 +61,6 @@ public class CanopusOptions implements ToolChainOptions<CanopusSubToolJob, Insta
 
     @Override
     public List<Class<? extends ToolChainOptions<?, ?>>> getDependentSubCommands() {
-        return List.of();
+        return List.of(FingerblastOptions.class);
     }
 }
