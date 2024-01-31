@@ -25,7 +25,9 @@ import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.Tanimoto;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.confidence_score.ExpansiveSearchConfidenceMode;
 import de.unijena.bioinf.fingerid.*;
 import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
@@ -77,7 +79,7 @@ public class FingerblastSubToolJob extends InstanceJob {
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
         List<? extends SScored<FormulaResult, ? extends FormulaScore>> formulaResults =
-                inst.loadFormulaResults(FormulaScoring.class, FTree.class, FingerprintResult.class, FBCandidates.class);
+                inst.loadFormulaResults(FormulaScoring.class, FTree.class, FingerprintResult.class, FBCandidates.class, CanopusResult.class);
 
         checkForInterruption();
 
@@ -117,9 +119,15 @@ public class FingerblastSubToolJob extends InstanceJob {
                     return idr;
                 }));
 
+
+        final Map<FormulaResult, CanopusResult> formulaCanopusResultsMap = formulaResults.stream().map(SScored::getCandidate)
+                .filter(res -> res.hasAnnotation(CanopusResult.class))
+                .collect(Collectors.toMap(res -> res, res -> res.getAnnotationOrThrow(CanopusResult.class)));
+
+
         updateProgress(20);
         {
-            final FingerblastJJob job = new FingerblastJJob(csi, ApplicationCore.WEB_API, inst.getExperiment(), new ArrayList<>(formulaResultsMap.values()));
+            final FingerblastJJob job = new FingerblastJJob(csi, ApplicationCore.WEB_API, inst.getExperiment(), new ArrayList<>(formulaResultsMap.values()), new ArrayList<>(formulaCanopusResultsMap.values()));
 
             checkForInterruption();
             // do computation and await results -> objects are already in formulaResultsMap
@@ -172,20 +180,33 @@ public class FingerblastSubToolJob extends InstanceJob {
             // annotate results
             formRes.setAnnotation(FBCandidates.class, structRes.getAnnotation(FingerblastResult.class).map(FingerblastResult::getCandidates).orElse(null));
             formRes.setAnnotation(FBCandidateFingerprints.class, structRes.getAnnotation(FingerblastResult.class).map(FingerblastResult::getCandidateFingerprints).orElse(null));
+            formRes.setAnnotation(StructureSearchResult.class, structRes.getAnnotation(StructureSearchResult.class).orElse(null));
+            // add scores
             formRes.getAnnotationOrThrow(FormulaScoring.class)
                     .setAnnotation(TopCSIScore.class, structRes.getAnnotation(FingerblastResult.class).map(FingerblastResult::getTopHitScore).orElse(null));
-
             formRes.getAnnotationOrThrow(FormulaScoring.class)
                     .setAnnotation(ConfidenceScore.class, structRes.getAnnotation(ConfidenceResult.class).map(x -> x.score).orElse(null));
+            formRes.getAnnotationOrThrow(FormulaScoring.class)
+                    .setAnnotation(ConfidenceScoreApproximate.class, structRes.getAnnotation(ConfidenceResult.class).map(x -> x.scoreApproximate).orElse(null));
 
             // write results
             inst.updateFormulaResult(formRes,
-                    FormulaScoring.class, FingerprintResult.class, FBCandidates.class, FBCandidateFingerprints.class);
+                    FormulaScoring.class, FingerprintResult.class, FBCandidates.class, FBCandidateFingerprints.class, StructureSearchResult.class);
         }
         updateProgress(90);
 
-        final Double confidence = inst.loadTopFormulaResult(List.of(TopCSIScore.class, SiriusScore.class)).flatMap(r -> r.getAnnotation(FormulaScoring.class)).flatMap(s -> s.getAnnotation(ConfidenceScore.class)).map(ConfidenceScore::score).orElse(null);
-        inst.getID().setConfidenceScore(confidence);
+        inst.loadTopFormulaResult(List.of(TopCSIScore.class, SiriusScore.class))
+                .flatMap(r -> r.getAnnotation(StructureSearchResult.class))
+                .ifPresentOrElse(sr -> {
+                    inst.getID().setConfidenceScore(sr.getConfidenceScore());
+                    inst.getID().setConfidenceScoreApproximate(sr.getConfidenceScore());
+                    inst.getID().setUseApproximate(sr.getExpansiveSearchConfidenceMode() != ExpansiveSearchConfidenceMode.Mode.EXACT);
+                }, () -> {
+                    inst.getID().setConfidenceScore(null);
+                    inst.getID().setConfidenceScoreApproximate(null);
+                    inst.getID().setUseApproximate(false);
+                });
+
         inst.updateCompoundID();
         updateProgress(97);
 

@@ -165,37 +165,39 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
         elementListSelectionModel.clearSelection();
 //        elementList.clear();
 
-        final List<FormulaResultBean> r = readDataByFunction(InstanceBean::getResults);
-        if (r != null && !r.isEmpty()) {
-            double[] zscores = new double[r.size()];
-            double[] sscores = new double[r.size()];
-            double[] iScores = new double[r.size()];
-            double[] tScores = new double[r.size()];
-            double[] csiScores = new double[r.size()];
-            int i = 0;
+        if (hasData()) {
+            final List<FormulaResultBean> r = readDataByFunction(InstanceBean::getResults);
+            if (r != null && !r.isEmpty()) {
+                double[] zscores = new double[r.size()];
+                double[] sscores = new double[r.size()];
+                double[] iScores = new double[r.size()];
+                double[] tScores = new double[r.size()];
+                double[] csiScores = new double[r.size()];
+                int i = 0;
 
-            for (FormulaResultBean element : r) {
-                element.registerProjectSpaceListeners();
-                zscores[i] = element.getScoreValueIfNa(ZodiacScore.class, 0d);
-                sscores[i] = element.getScoreValue(SiriusScore.class);
-                iScores[i] = element.getScoreValue(IsotopeScore.class);
-                tScores[i] = element.getScoreValue(TreeScore.class);
-                csiScores[i++] = element.getScoreValue(TopCSIScore.class);
+                for (FormulaResultBean element : r) {
+                    element.registerProjectSpaceListeners();
+                    zscores[i] = element.getScoreValueIfNa(ZodiacScore.class, 0d);
+                    sscores[i] = element.getScoreValue(SiriusScore.class);
+                    iScores[i] = element.getScoreValue(IsotopeScore.class);
+                    tScores[i] = element.getScoreValue(TreeScore.class);
+                    csiScores[i++] = element.getScoreValue(TopCSIScore.class);
+                }
+    //            elementList.addAll(r);
+                refillElements(r);
+
+                this.zodiacScoreStats.update(zscores);
+                this.siriusScoreStats.update(sscores);
+                this.isotopeScoreStats.update(iScores);
+                this.treeScoreStats.update(tScores);
+                this.csiScoreStats.update(csiScores);
+
+                this.explainedIntensity.setMinScoreValue(0).setMaxScoreValue(1)
+                        .setScoreSum(this.explainedIntensity.getMax());
+
+                this.explainedPeaks.setMinScoreValue(0).setMaxScoreValue(r.get(0).getNumberOfExplainablePeaks())
+                        .setScoreSum(this.explainedPeaks.getMax());
             }
-//            elementList.addAll(r);
-            refillElements(r);
-
-            this.zodiacScoreStats.update(zscores);
-            this.siriusScoreStats.update(sscores);
-            this.isotopeScoreStats.update(iScores);
-            this.treeScoreStats.update(tScores);
-            this.csiScoreStats.update(csiScores);
-
-            this.explainedIntensity.setMinScoreValue(0).setMaxScoreValue(1)
-                    .setScoreSum(this.explainedIntensity.getMax());
-
-            this.explainedPeaks.setMinScoreValue(0).setMaxScoreValue(r.get(0).getNumberOfExplainablePeaks())
-                    .setScoreSum(this.explainedPeaks.getMax());
         }
 
     }

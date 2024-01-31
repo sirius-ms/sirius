@@ -28,10 +28,9 @@ import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
 import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
-import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
+import de.unijena.bioinf.projectspace.FormulaResult;
 import de.unijena.bioinf.projectspace.FormulaResultId;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.FormulaResult;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
@@ -47,7 +46,7 @@ import java.util.stream.Collectors;
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-@CommandLine.Command(name = "fingerprint", description = "<COMPOUND_TOOL> Predict molecular fingerprint from MS/MS and fragmentation trees for each compound Individually using CSI:FingerID fingerprint prediction.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
+@CommandLine.Command(name = "fingerprint", description = "<COMPOUND_TOOL> Predict molecular fingerprint from MS/MS and fragmentation trees for each compound individually using CSI:FingerID fingerprint prediction.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class FingerprintOptions implements ToolChainOptions<FingerprintSubToolJob, InstanceJob.Factory<FingerprintSubToolJob>> {
     protected final DefaultParameterConfigLoader defaultConfigOptions;
 
@@ -85,6 +84,6 @@ public class FingerprintOptions implements ToolChainOptions<FingerprintSubToolJo
 
     @Override
     public List<Class<? extends ToolChainOptions<?, ?>>> getDependentSubCommands() {
-        return List.of(FingerblastOptions.class, CanopusOptions.class);
+        return List.of(CanopusOptions.class);
     }
 }

@@ -20,13 +20,9 @@
 package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
-import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 
 public class ActZodiacConfigPanel extends ActivatableConfigPanel<ZodiacConfigPanel> {
-    public ActZodiacConfigPanel() {
-        super("ZODIAC", Icons.NET_32, false, ZodiacConfigPanel::new);
+    public ActZodiacConfigPanel(boolean displayAdvancedParameters) {
+        super("ZODIAC", Icons.NET_32, false, () -> new ZodiacConfigPanel(displayAdvancedParameters));
     }
 }

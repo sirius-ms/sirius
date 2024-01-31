@@ -21,6 +21,8 @@ package de.unijena.bioinf.ms.frontend.subtools.fingerblast;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
+import de.unijena.bioinf.fingerid.ConfidenceScoreApproximate;
+import de.unijena.bioinf.fingerid.StructureSearchResult;
 import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
@@ -29,11 +31,10 @@ import de.unijena.bioinf.ms.frontend.completion.DataSourceCandidates;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
-import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.projectspace.FormulaResultRankingScore;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.FormulaResultRankingScore;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
@@ -74,9 +75,10 @@ public class FingerblastOptions implements ToolChainOptions<FingerblastSubToolJo
         defaultConfigOptions.changeOption("StructurePredictors", predictors);
     }
 
-    @Option(names = {"-l", "tag-lipids", "flag-lipids", "--elgordo"}, descriptionKey = "InjectElGordoCompounds", description = {"Tag candidates that are matching lipid class determined by El Gordo in CSI:FingerID candidate list."})
-    public void setInjectElGordoCompounds(DefaultParameter value) throws Exception {
-        defaultConfigOptions.changeOption("InjectElGordoCompounds", value);
+    @Option(names = {"-e", "--exp"}, descriptionKey = "ExpansiveSearchConfidenceMode.confidenceScoreSimilarityMode",
+            description = {"Confidence mode that is used for expansive search. OFF -> no expansive search. EXACT -> Exact mode confidence score is used for expansive search. APPROXIMATE ->  Approximate mode confidence score is used for expansive search"})
+    public void setExpansiveSearchConfMode(String expansiveSearchConfMode) throws Exception {
+        defaultConfigOptions.changeOption("ExpansiveSearchConfidenceMode.confidenceScoreSimilarityMode", expansiveSearchConfMode);
     }
 
     @Override
@@ -90,18 +92,22 @@ public class FingerblastOptions implements ToolChainOptions<FingerblastSubToolJo
     @Override
     public Consumer<Instance> getInvalidator() {
         return inst -> {
-            inst.deleteFromFormulaResults(FBCandidates.class, FBCandidateFingerprints.class);
+            inst.deleteFromFormulaResults(FBCandidates.class, FBCandidateFingerprints.class, StructureSearchResult.class);
             inst.loadFormulaResults(FormulaScoring.class).stream().map(SScored::getCandidate)
                     .forEach(it -> it.getAnnotation(FormulaScoring.class).ifPresent(z -> {
-                        if (z.removeAnnotation(TopCSIScore.class) != null || z.removeAnnotation(ConfidenceScore.class) != null)
+                        if (z.removeAnnotation(TopCSIScore.class) != null || z.removeAnnotation(ConfidenceScore.class) != null || z.removeAnnotation(ConfidenceScoreApproximate.class) != null)
                             inst.updateFormulaResult(it, FormulaScoring.class); //update only if there was something to remove
                     }));
             if (inst.getExperiment().getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto()) {
-                inst.getID().getRankingScoreTypes().removeAll(List.of(TopCSIScore.class, ConfidenceScore.class));
+                inst.getID().getRankingScoreTypes().removeAll(List.of(TopCSIScore.class, ConfidenceScore.class, ConfidenceScoreApproximate.class));
                 inst.getID().setConfidenceScore(null);
+                inst.getID().setConfidenceScoreApproximate(null);
+                inst.getID().setUseApproximate(false); //todo proper default
                 inst.updateCompoundID();
             } else if (inst.getID().getConfidenceScore().isPresent()) {
                 inst.getID().setConfidenceScore(null);
+                inst.getID().setConfidenceScoreApproximate(null);
+                inst.getID().setUseApproximate(false); //todo proper default
                 inst.updateCompoundID();
             }
         };
@@ -110,10 +116,5 @@ public class FingerblastOptions implements ToolChainOptions<FingerblastSubToolJo
     @Override
     public List<Class<? extends ToolChainOptions<?, ?>>> getDependentSubCommands() {
         return List.of();
-    }
-
-    @Override
-    public List<Class<? extends ToolChainOptions<?, ?>>> getFollowupSubCommands() {
-        return List.of(CanopusOptions.class);
     }
 }
