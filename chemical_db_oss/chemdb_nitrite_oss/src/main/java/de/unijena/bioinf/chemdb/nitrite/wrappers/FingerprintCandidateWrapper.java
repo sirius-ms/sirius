@@ -26,7 +26,6 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import de.unijena.bioinf.chemdb.InChISMILESUtils;
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -49,6 +48,11 @@ public class  FingerprintCandidateWrapper {
     public FingerprintCandidate getFingerprintCandidate() {
         return new FingerprintCandidate(candidate, fingerprint);
     }
+
+    public static FingerprintCandidateWrapper of(String formula, double mass, FingerprintCandidate candidate) {
+        return new FingerprintCandidateWrapper(candidate.getInchiKey2D(), formula, mass, candidate.toCompoundCandidate(), candidate.getFingerprint());
+    }
+
     public static FingerprintCandidateWrapper of(MolecularFormula formula, FingerprintCandidate candidate) {
         return new FingerprintCandidateWrapper(candidate.getInchiKey2D(), formula.toString(), formula.getMass(), candidate.toCompoundCandidate(), candidate.getFingerprint());
     }
