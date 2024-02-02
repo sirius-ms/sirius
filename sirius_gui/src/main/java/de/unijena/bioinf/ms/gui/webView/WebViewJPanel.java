@@ -79,13 +79,12 @@ public class WebViewJPanel extends JFXPanel {
             });
             final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
             final String theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
-            if (!theme.equals("Dark")) {
-                this.webView.getEngine().setUserStyleSheetLocation(
-                        getClass().getResource("/sirius/" + "style.css").toExternalForm());
-            } else {
-                this.webView.getEngine().setUserStyleSheetLocation(
-                        getClass().getResource("/sirius/" + "style-dark.css").toExternalForm());
-            }
+            final String css = switch (theme) {
+                case "Dark" -> "style-dark.css";
+                case "Classic" -> "style-classic.css";
+                default -> "style-light.css";
+            };
+            this.webView.getEngine().setUserStyleSheetLocation(getClass().getResource("/sirius/" + css).toExternalForm());
             this.setScene(new Scene(this.webView));
         });
     }

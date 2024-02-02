@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.gui.utils;
 
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;
+import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
@@ -33,6 +34,9 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import javax.swing.plaf.nimbus.AbstractRegionPainter;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
@@ -292,5 +296,41 @@ public class GuiUtils {
         }
 
         new WebViewBrowserDialog(owner, title == null ? "SIRIUS WebView" : title, url);
+    }
+
+    /**
+     * Adds a key binding to close the given dialog on pressing escape
+     */
+    public static void closeOnEscape(JDialog dialog) {
+        JRootPane rootPane = dialog.getRootPane();
+        String escapePressed = "escapePressed";
+        rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("ESCAPE"), escapePressed);
+        rootPane.getActionMap().put(escapePressed, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dialog.dispatchEvent(new WindowEvent(dialog, WindowEvent.WINDOW_CLOSING));
+            }
+        });
+    }
+
+    public static int getComponentIndex(JComponent parent, JComponent child) {
+        for (int i = 0; i < parent.getComponentCount(); ++i) {
+            if (parent.getComponent(i).equals(child)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public static <T extends DescriptiveOptions> JComboBox<T> makeParameterComboBoxFromDescriptiveValues(T[] options) {
+        JComboBox<T> box = new JComboBox<>(options);
+        box.addItemListener(e -> {
+            if (e.getStateChange() != ItemEvent.SELECTED) {
+                return;
+            }
+            final DescriptiveOptions source = (DescriptiveOptions) e.getItem();
+            box.setToolTipText(source.getDescription());
+        });
+        return box;
     }
 }

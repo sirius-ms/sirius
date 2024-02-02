@@ -70,7 +70,7 @@ public class ChangeAdductAction extends AbstractGuiAction {
                         updateProgress(0, toModify.size(), progress++, "Changing " + (progress - 1) + "/" + toModify.size());
                         for (InstanceBean instance : toModify) {
                             checkForInterruption();
-                            instance.set().setIonization(adduct).apply();
+                            instance.set().setIonType(adduct).apply();
                             updateProgress(0, toModify.size(), progress++, "Changing " + (progress - 1) + "/" + toModify.size());
                         }
                         return true;

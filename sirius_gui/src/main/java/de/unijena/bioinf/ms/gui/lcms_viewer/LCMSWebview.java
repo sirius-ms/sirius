@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.utils.FxTaskList;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
@@ -14,6 +15,7 @@ import netscape.javascript.JSObject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
@@ -38,6 +40,15 @@ public class LCMSWebview extends JFXPanel {
         this.delayAfterHTMLLoading = new ArrayList<>();
         taskList.runJFXLater(()-> {
             this.webView = new WebView();
+            final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
+            final String theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
+            if (!theme.equals("Dark")) {
+                this.webView.getEngine().setUserStyleSheetLocation(
+                        getClass().getResource("/js/" + "styles.css").toExternalForm());
+            } else {
+                this.webView.getEngine().setUserStyleSheetLocation(
+                        getClass().getResource("/js/" + "styles-dark.css").toExternalForm());
+            }
 //            System.out.println("A");
             setScene(new Scene(webView));
 //            System.out.println("B");
@@ -52,6 +63,11 @@ public class LCMSWebview extends JFXPanel {
                 if (newState == Worker.State.SUCCEEDED) {
                     lock.lock();
                     ((JSObject)webView.getEngine().executeScript("window")).setMember("console", new Console());
+                    if (!theme.equals("Dark")) {
+                        this.webView.getEngine().executeScript("var fg_color = 'black';");
+                    } else {
+                        this.webView.getEngine().executeScript("var fg_color = 'lightsteelblue';");
+                    }
                     this.lcmsViewer = (JSObject)webView.getEngine().executeScript(
                             "document.lcmsViewer = new LCMSViewer(\"#lcms\", \"#lcms_view\");"
                     );

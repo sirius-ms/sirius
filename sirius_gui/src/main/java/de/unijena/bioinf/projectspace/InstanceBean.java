@@ -175,7 +175,7 @@ public class InstanceBean implements SiriusPCS {
         return getName() + " (" + getFeatureId() + ")";
     }
 
-    public PrecursorIonType getIonization() {
+    public PrecursorIonType getIonType() {
         if (getSourceFeature().getIonType() == null)
             return null;
         return PrecursorIonType.fromString(getSourceFeature().getIonType());
@@ -283,9 +283,9 @@ public class InstanceBean implements SiriusPCS {
             return this;*/
         }
 
-        public Setter setIonization(final PrecursorIonType ionization) {
+        public Setter setIonType(final PrecursorIonType ionType) {
 
-            mods.add((exp) -> exp.setPrecursorIonType(ionization));
+            mods.add((exp) -> exp.setPrecursorIonType(ionType));
             return this;
         }
 

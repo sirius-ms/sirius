@@ -63,27 +63,27 @@ public class SpectralSearchResultBean {
 
     public boolean isFPCandidateInResults(String inchiKey) {
         if (resultMap.containsKey(inchiKey)) {
-            return resultMap.get(inchiKey).stream().anyMatch(r -> r.getSimilarity().shardPeaks >= MIN_SHARED_PEAKS && r.getSimilarity().similarity >= MIN_SIMILARITY);
+            return resultMap.get(inchiKey).stream().anyMatch(r -> r.getSimilarity().sharedPeaks >= MIN_SHARED_PEAKS && r.getSimilarity().similarity >= MIN_SIMILARITY);
         }
         return false;
     }
 
     public Optional<List<SpectralSearchResult.SearchResult>> getMatchingSpectraForFPCandidate(String inchiKey) {
         if (resultMap.containsKey(inchiKey)) {
-            return Optional.of(resultMap.get(inchiKey).stream().filter(r -> r.getSimilarity().shardPeaks >= MIN_SHARED_PEAKS && r.getSimilarity().similarity >= MIN_SIMILARITY).toList());
+            return Optional.of(resultMap.get(inchiKey).stream().filter(r -> r.getSimilarity().sharedPeaks >= MIN_SHARED_PEAKS && r.getSimilarity().similarity >= MIN_SIMILARITY).toList());
         }
         return Optional.empty();
     }
 
     public Optional<SpectralSearchResult.SearchResult> getBestMatchingSpectrumForFPCandidate(String inchiKey) {
         if (resultMap.containsKey(inchiKey)) {
-            return resultMap.get(inchiKey).stream().filter(r -> r.getSimilarity().shardPeaks >= MIN_SHARED_PEAKS && r.getSimilarity().similarity >= MIN_SIMILARITY).findFirst();
+            return resultMap.get(inchiKey).stream().filter(r -> r.getSimilarity().sharedPeaks >= MIN_SHARED_PEAKS && r.getSimilarity().similarity >= MIN_SIMILARITY).findFirst();
         }
         return Optional.empty();
     }
 
     public List<SpectralSearchResult.SearchResult> getAllResults() {
-        return result.getResults().stream().filter(r -> r.getSimilarity().shardPeaks >= MIN_SHARED_PEAKS && r.getSimilarity().similarity >= MIN_SIMILARITY).toList();
+        return result.getResults().stream().filter(r -> r.getSimilarity().sharedPeaks >= MIN_SHARED_PEAKS && r.getSimilarity().similarity >= MIN_SIMILARITY).toList();
     }
 
     public static class MatchBean implements SiriusPCS, Comparable<MatchBean> {

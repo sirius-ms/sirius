@@ -29,7 +29,6 @@ import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoade
 import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
 import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoOptions;
 import de.unijena.bioinf.ms.frontend.subtools.zodiac.ZodiacOptions;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.Instance;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -90,7 +89,7 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
     }
 
     // candidates
-    @Option(names = {"-c", "--candidates"}, descriptionKey ="NumberOfCandidates" , description = "Number of formula candidates in the output.")
+    @Option(names = {"-c", "--candidates"}, descriptionKey ="NumberOfCandidates" , description = "Number of precursor formula candidates in the output - each can correspond to  multiple adducts.")
     public void setNumberOfCandidates(DefaultParameter value) throws Exception {
         defaultConfigOptions.changeOption("NumberOfCandidates", value);
     }
@@ -123,6 +122,10 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
         defaultConfigOptions.changeOption("CandidateFormulas", formulas);
     }
 
+    @Option(names = {"-l", "--fix-lipids", "--elgordo"}, descriptionKey = "EnforceElGordoFormula", description = {"Fix the single molecular formula determined by El Gordo if a lipid class is detected."})
+    public void setInjectElGordoCompounds(DefaultParameter value) throws Exception {
+        defaultConfigOptions.changeOption("EnforceElGordoFormula", value);
+    }
 
     @Option(names = {"--no-isotope-filter"}, description = "Disable molecular formula filter. When filtering is enabled, molecular formulas are excluded if their theoretical isotope pattern does not match the theoretical one, even if their MS/MS pattern has high score.")
     public void disableIsotopeFilter(boolean disable) throws Exception {
@@ -136,13 +139,13 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
     }
 
     //Adducts
-    @Option(names = {"-i", "--ions-considered"}, descriptionKey = "AdductSettings.detectable" , description = "the iontype/adduct of the MS/MS data. Example: [M+H]+, [M-H]-, [M+Cl]-, [M+Na]+, [M]+. You can also provide a comma separated list of adducts.")
+    @Option(names = {"-i", "--ions-considered"}, descriptionKey = "AdductSettings.detectable" , description = "Adducts which are considered during adduct detection. They are only used for further analyses if there is an indication in the MS1 scan. If none of them could be detected in MS1, all of them will be used as a fallback. Example: [M+H]+,[M-H]-,[M+Cl]-,[M+Na]+,[M]+,[M-H2O+H]+.")
     public void setIonsConsidered(DefaultParameter adductList) throws Exception {
         defaultConfigOptions.changeOption("AdductSettings.detectable", adductList);
         defaultConfigOptions.changeOption("AdductSettings.fallback", adductList);
     }
 
-    @Option(names = {"-I", "--ions-enforced"}, descriptionKey = "AdductSettings.enforced", description = "the iontype/adduct of the MS/MS data. Example: [M+H]+, [M-H]-, [M+Cl]-, [M+Na]+, [M]+. You can also provide a comma separated list of adducts.")
+    @Option(names = {"-I", "--ions-enforced"}, descriptionKey = "AdductSettings.enforced", description = "Adducts that are always considered during the analysis. Example: [M+H]+,[M-H]-,[M+Cl]-,[M+Na]+,[M]+,[M-H2O+H]+.")
     public void setIonsEnforced(DefaultParameter adductList) throws Exception {
         defaultConfigOptions.changeOption("AdductSettings.enforced", adductList);
     }
