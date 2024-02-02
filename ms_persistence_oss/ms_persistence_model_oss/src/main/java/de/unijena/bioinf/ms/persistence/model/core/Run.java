@@ -20,12 +20,10 @@
 
 package de.unijena.bioinf.ms.persistence.model.core;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
 import jakarta.persistence.Id;
 import lombok.*;
 
-import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 
@@ -61,7 +59,7 @@ public class Run {
     private ChromatographyType chromatography;
     private IonizationType ionization;
     private FragmentationType fragmentation;
-    private List<MassAnalyzerType> massAnalyzers;
+    private List<MassAnalyzer> massAnalyzers;
 
 
     /**
