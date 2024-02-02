@@ -22,13 +22,16 @@ package de.unijena.bioinf.fingerid;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
+import de.unijena.bioinf.ms.rest.model.fingerid.TrainingStructures;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.extern.jackson.Jacksonized;
 
 import java.util.Set;
 
 @Getter
 @Builder
+@Jacksonized
 @JsonAutoDetect(
         fieldVisibility = JsonAutoDetect.Visibility.ANY,
         getterVisibility = JsonAutoDetect.Visibility.NONE,
@@ -56,5 +59,12 @@ public class TrainingStructuresSet {
     }
     public boolean isInTrainingData(InChI inchi){
         return isInTrainingData(inchi.key2D());
+    }
+
+    public static TrainingStructuresSet of(TrainingStructures structures){
+        return TrainingStructuresSet.builder()
+                .extraInchiKeys(structures.getExtraInchiKeys())
+                .kernelInchiKeys(structures.getKernelInchiKeys())
+                .build();
     }
 }

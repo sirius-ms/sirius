@@ -25,6 +25,7 @@ import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.webapi.WebAPI;
 import okhttp3.OkHttpClient;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -57,15 +58,22 @@ class TrainingStructuresPerPredictor {
     TrainingStructuresSet getTrainingStructuresSet(PredictorType predictorType, @NotNull WebAPI.Clients api, @NotNull OkHttpClient client) throws IOException {
         try {
             return predictorTypeToInchiKeys2D.computeIfAbsent(predictorType, pt -> {
-                try { //todo nightsky: replace with new version
-                    return TrainingStructuresSet.builder()
-                            .kernelInchiKeys(
-                                    Arrays.stream(api.fingerprintClient().getTrainingStructures(predictorType, client).getTrainingStructures())
-                                            .map(InChI::key2D).collect(Collectors.toSet()))
-                            .extraInchiKeys(Set.of())
-                            .build();
+                try {
+                    return TrainingStructuresSet.of(
+                            api.fingerprintClient().getTrainingStructuresAll(predictorType, client));
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    //todo nightsky: remove fallback to old version
+                    LoggerFactory.getLogger(getClass()).warn("Could not load new TrainingData file. Falling back to old version without extra dnn structures.", e);
+                    try {
+                        return TrainingStructuresSet.builder()
+                                .kernelInchiKeys(
+                                        Arrays.stream(api.fingerprintClient().getTrainingStructures(predictorType, client).getTrainingStructures())
+                                                .map(InChI::key2D).collect(Collectors.toSet()))
+                                .extraInchiKeys(Set.of())
+                                .build();
+                    } catch (IOException ex) {
+                        throw new RuntimeException(ex);
+                    }
                 }
             });
         } catch (RuntimeException e) {
