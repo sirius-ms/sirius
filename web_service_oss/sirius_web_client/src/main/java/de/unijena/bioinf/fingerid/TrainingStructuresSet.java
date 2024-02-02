@@ -20,23 +20,41 @@
 
 package de.unijena.bioinf.fingerid;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
+import lombok.Builder;
+import lombok.Getter;
 
-import java.util.HashSet;
 import java.util.Set;
 
+@Getter
+@Builder
+@JsonAutoDetect(
+        fieldVisibility = JsonAutoDetect.Visibility.ANY,
+        getterVisibility = JsonAutoDetect.Visibility.NONE,
+        setterVisibility = JsonAutoDetect.Visibility.NONE,
+        isGetterVisibility = JsonAutoDetect.Visibility.NONE
+)
 public class TrainingStructuresSet {
+    private final Set<String> kernelInchiKeys;
+    private final Set<String> extraInchiKeys;
 
-    final Set<String> inchiKeys2D;
 
-    public TrainingStructuresSet(InChI[] inchis) {
-        this.inchiKeys2D = new HashSet<>();
-        for (InChI inchi : inchis) {
-            inchiKeys2D.add(inchi.key2D());
-        }
+    public boolean isInKernelTrainingData(String inchiKey2D){
+        return kernelInchiKeys.contains(inchiKey2D);
+
     }
 
+    public boolean isInExtraTrainingData(String inchiKey2D){
+        return extraInchiKeys.contains(inchiKey2D);
+    }
+
+
+    public boolean isInTrainingData(String inchiKey2D){
+        return isInKernelTrainingData(inchiKey2D) || isInExtraTrainingData(inchiKey2D);
+
+    }
     public boolean isInTrainingData(InChI inchi){
-        return inchiKeys2D.contains(inchi.key2D());
+        return isInTrainingData(inchi.key2D());
     }
 }

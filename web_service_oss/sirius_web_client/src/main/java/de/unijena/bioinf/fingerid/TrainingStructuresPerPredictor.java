@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -20,14 +20,18 @@
 
 package de.unijena.bioinf.fingerid;
 
+import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.webapi.WebAPI;
 import okhttp3.OkHttpClient;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 class TrainingStructuresPerPredictor {
     private static final Object lock = new Object();
@@ -53,10 +57,13 @@ class TrainingStructuresPerPredictor {
     TrainingStructuresSet getTrainingStructuresSet(PredictorType predictorType, @NotNull WebAPI.Clients api, @NotNull OkHttpClient client) throws IOException {
         try {
             return predictorTypeToInchiKeys2D.computeIfAbsent(predictorType, pt -> {
-                try {
-                    return new TrainingStructuresSet(
-                            api.fingerprintClient().getTrainingStructures(predictorType, client).getTrainingStructures()
-                    );
+                try { //todo nightsky: replace with new version
+                    return TrainingStructuresSet.builder()
+                            .kernelInchiKeys(
+                                    Arrays.stream(api.fingerprintClient().getTrainingStructures(predictorType, client).getTrainingStructures())
+                                            .map(InChI::key2D).collect(Collectors.toSet()))
+                            .extraInchiKeys(Set.of())
+                            .build();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
