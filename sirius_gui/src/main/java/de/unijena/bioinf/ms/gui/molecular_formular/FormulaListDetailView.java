@@ -39,7 +39,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ * @author Markus Fleischauer
  */
 public class FormulaListDetailView extends ActionListDetailView<FormulaResultBean, InstanceBean, FormulaList> {
     private final ActionTable<FormulaResultBean> table;
@@ -65,13 +65,13 @@ public class FormulaListDetailView extends ActionListDetailView<FormulaResultBea
         table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer(tableFormat.highlightColumnIndex()));
         //todo re-enable threshold marker
 //        table.getColumnModel().getColumn(3).setCellRenderer(new FingerIDScoreBarRenderer(tableFormat.highlightColumnIndex(), source.zodiacScoreStats, true));
-        table.getColumnModel().getColumn(3).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.zodiacScoreStats, true));
+        table.getColumnModel().getColumn(4).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.zodiacScoreStats, true));
 //        table.getColumnModel().getColumn(4).setCellRenderer(new FingerIDScoreBarRenderer(tableFormat.highlightColumnIndex(), source.siriusScoreStats, true));
-        table.getColumnModel().getColumn(4).setCellRenderer(new ScoreListStatBarTableCellRenderer(tableFormat.highlightColumnIndex(), source.siriusScoreStats, true));
-        table.getColumnModel().getColumn(5).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.isotopeScoreStats, false));
-        table.getColumnModel().getColumn(6).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.treeScoreStats, false));
-        table.getColumnModel().getColumn(7).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.explainedPeaks, false, true, new DecimalFormat("#0")));
-        table.getColumnModel().getColumn(8).setCellRenderer(new BarTableCellRenderer(tableFormat.highlightColumnIndex(), 0, 1, true));
+        table.getColumnModel().getColumn(5).setCellRenderer(new ScoreListStatBarTableCellRenderer(tableFormat.highlightColumnIndex(), source.siriusScoreStats, true));
+        table.getColumnModel().getColumn(6).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.isotopeScoreStats, false));
+        table.getColumnModel().getColumn(7).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.treeScoreStats, false));
+        table.getColumnModel().getColumn(8).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.explainedPeaks, false, true, new DecimalFormat("#0")));
+        table.getColumnModel().getColumn(9).setCellRenderer(new BarTableCellRenderer(tableFormat.highlightColumnIndex(), 0, 1, true));
 
         table.addMouseListener(new MouseListener() {
             @Override

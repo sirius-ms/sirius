@@ -35,7 +35,7 @@ public class ActFingerblastConfigPanel extends ActivatableConfigPanel<Fingerblas
     @Override
     protected void setComponentsEnabled(final boolean enabled) {
         super.setComponentsEnabled(enabled);
-        content.searchDBList.setEnabled(enabled);
+        content.getSearchDBList().setEnabled(enabled);
     }
 
     @Override

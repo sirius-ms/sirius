@@ -96,7 +96,7 @@ class SampleViewer {
     addDefinitions(svg) {
         svg.append("defs").append("marker").attr("id","arrowhead")
         .attr("markerWidth","10").attr("markerHeight","7").attr("refX","10").attr("refY","3.5").attr("orient","auto")
-        .append("polygon").attr("points", "0 0, 10 3.5, 0 7");
+        .append("polygon").attr("fill", fg_color).attr("points", "0 0, 10 3.5, 0 7");
     }
 
     reload() {
@@ -212,7 +212,7 @@ class SampleViewer {
             .attr("y1", d=>d.orig(xrt,y)[1])
             .attr("x2", d=>d.tx(xrt))
             .attr("y2", d=>d.ty(y))
-            .attr("stroke","black")
+            .attr("stroke", fg_color)
             .attr("marker-end","url(#arrowhead)");
 
         // add marker for average and median
@@ -263,13 +263,13 @@ class SampleViewer {
                             marker.timePoint < retentionTimes[i+1])) ||
                             (marker.timePoint <= retentionTimes[i] && (i==0 || marker.timePoint > retentionTimes[i-1]))) {
                             ms2Text.attr("transform", `translate(${x(self.rt(marker.timePoint))},${y(marker.intensity)})`).attr("display", null);
-                            ms2Text.select("text").text("MS/MS scan");
+                            ms2Text.select("text").text("MS/MS scan").attr("fill", fg_color);
                         }
                     }
                 }
                 path.attr("stroke", d => d.color(d===s || d.main===s || s.main === d, noone)).filter(d => d === s).raise();
-                dot.attr("transform", `translate(${x(self.rt(retentionTimes[i]))},${y(s.values[i-s.trace.indexOffset].intensity)})`);
-                dot.select("text").text(s.description(K));
+                dot.attr("transform", `translate(${x(self.rt(retentionTimes[i]))},${y(s.values[i-s.trace.indexOffset].intensity)})`).attr("fill", fg_color);
+                dot.select("text").text(s.description(K)).attr("fill", fg_color);
             }
 
             const entered = function() {

@@ -60,7 +60,7 @@ public class DragAndDrop {
     }
 
     private static class ToManyFilesException extends Exception {
-        private static final String DEF_MESSAGE = "Too many Files dropped. You cannot import so many files via dag'n'drop. Please use the Batch import File browser instead.";
+        private static final String DEF_MESSAGE = "Too many Files dropped. You cannot import so many files via drag'n'drop. Please use the Batch import File browser instead.";
 
         public ToManyFilesException() {
             super(DEF_MESSAGE);

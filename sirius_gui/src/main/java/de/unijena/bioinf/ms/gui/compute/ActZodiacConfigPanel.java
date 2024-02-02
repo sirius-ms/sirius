@@ -22,7 +22,7 @@ package de.unijena.bioinf.ms.gui.compute;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 
 public class ActZodiacConfigPanel extends ActivatableConfigPanel<ZodiacConfigPanel> {
-    public ActZodiacConfigPanel() {
-        super("ZODIAC", Icons.NET_32, ZodiacConfigPanel::new);
+    public ActZodiacConfigPanel(boolean displayAdvancedParameters) {
+        super("ZODIAC", Icons.NET_32, () -> new ZodiacConfigPanel(displayAdvancedParameters));
     }
 }

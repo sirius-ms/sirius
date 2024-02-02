@@ -127,27 +127,27 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                         });
                     }
 
-                        checkForInterruption();
-                        //refreshing selection
-                        if (!elementList.isEmpty()) {
-                            final AtomicInteger index = new AtomicInteger(0);
-                            final Function<FormulaResultBean, Boolean> f = getBestFunc();
-                            for (FormulaResultBean resultBean : elementList) {
-                                if (f.apply(resultBean))
-                                    break;
-                                index.incrementAndGet();
-                            }
-                            //set selection
-                            Jobs.runEDTAndWait(() -> {
-                                if (index.get() < elementList.size())
-                                    elementListSelectionModel.setSelectionInterval(index.get(), index.get());
-                                else
-                                    elementListSelectionModel.clearSelection();
-                            });
-                        }else {
-                            elementListSelectionModel.clearSelection();
+                    checkForInterruption();
+                    //refreshing selection
+                    if (!elementList.isEmpty()) {
+                        final AtomicInteger index = new AtomicInteger(0);
+                        final Function<FormulaResultBean, Boolean> f = getBestFunc();
+                        for (FormulaResultBean resultBean : elementList) {
+                            if (f.apply(resultBean))
+                                break;
+                            index.incrementAndGet();
                         }
-                        return true;
+                        //set selection
+                        Jobs.runEDTAndWait(() -> {
+                            if (index.get() < elementList.size())
+                                elementListSelectionModel.setSelectionInterval(index.get(), index.get());
+                            else
+                                elementListSelectionModel.clearSelection();
+                        });
+                    } else {
+                        elementListSelectionModel.clearSelection();
+                    }
+                    return true;
                 }
             });
         } finally {
@@ -160,37 +160,39 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
         elementListSelectionModel.clearSelection();
 //        elementList.clear();
 
-        final List<FormulaResultBean> r = readDataByFunction(InstanceBean::getFormulaCandidates);
+        if (hasData()) {
+            final List<FormulaResultBean> r = readDataByFunction(InstanceBean::getFormulaCandidates);
 
-        if (r != null && !r.isEmpty()) {
-            double[] zscores = new double[r.size()];
-            double[] sscores = new double[r.size()];
-            double[] iScores = new double[r.size()];
-            double[] tScores = new double[r.size()];
-            double[] csiScores = new double[r.size()];
-            int i = 0;
+            if (r != null && !r.isEmpty()) {
+                double[] zscores = new double[r.size()];
+                double[] sscores = new double[r.size()];
+                double[] iScores = new double[r.size()];
+                double[] tScores = new double[r.size()];
+                double[] csiScores = new double[r.size()];
+                int i = 0;
 
 
-            for (FormulaResultBean fc : r) {
-                zscores[i] = fc.getZodiacScore().orElse(0d); //why do we want 0 here?
-                sscores[i] = fc.getSiriusScore().orElse(Double.NEGATIVE_INFINITY);
-                iScores[i] = fc.getIsotopeScore().orElse(Double.NEGATIVE_INFINITY);
-                tScores[i] = fc.getTreeScore().orElse(Double.NEGATIVE_INFINITY);
-                csiScores[i++] = fc.getTopCSIScore().orElse(Double.NEGATIVE_INFINITY);
+                for (FormulaResultBean fc : r) {
+                    zscores[i] = fc.getZodiacScore().orElse(0d); //why do we want 0 here?
+                    sscores[i] = fc.getSiriusScore().orElse(Double.NEGATIVE_INFINITY);
+                    iScores[i] = fc.getIsotopeScore().orElse(Double.NEGATIVE_INFINITY);
+                    tScores[i] = fc.getTreeScore().orElse(Double.NEGATIVE_INFINITY);
+                    csiScores[i++] = fc.getTopCSIScore().orElse(Double.NEGATIVE_INFINITY);
+                }
+                refillElements(r);
+
+                this.zodiacScoreStats.update(zscores);
+                this.siriusScoreStats.update(sscores);
+                this.isotopeScoreStats.update(iScores);
+                this.treeScoreStats.update(tScores);
+                this.csiScoreStats.update(csiScores);
+
+                this.explainedIntensity.setMinScoreValue(0).setMaxScoreValue(1)
+                        .setScoreSum(this.explainedIntensity.getMax());
+
+                this.explainedPeaks.setMinScoreValue(0).setMaxScoreValue(r.get(0).getNumOfExplainablePeaks().orElseThrow())
+                        .setScoreSum(this.explainedPeaks.getMax());
             }
-            refillElements(r);
-
-            this.zodiacScoreStats.update(zscores);
-            this.siriusScoreStats.update(sscores);
-            this.isotopeScoreStats.update(iScores);
-            this.treeScoreStats.update(tScores);
-            this.csiScoreStats.update(csiScores);
-
-            this.explainedIntensity.setMinScoreValue(0).setMaxScoreValue(1)
-                    .setScoreSum(this.explainedIntensity.getMax());
-
-            this.explainedPeaks.setMinScoreValue(0).setMaxScoreValue(r.get(0).getNumOfExplainablePeaks().orElseThrow())
-                    .setScoreSum(this.explainedPeaks.getMax());
         }
 
     }

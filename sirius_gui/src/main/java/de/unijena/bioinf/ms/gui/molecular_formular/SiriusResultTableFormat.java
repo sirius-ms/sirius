@@ -34,10 +34,10 @@ import java.util.function.Function;
 /**
  * Display issues in a tabular form.
  *
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ * @author Markus Fleischauer
  */
 public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean> {
-    private static final int COL_COUNT = 11;
+    private static final int COL_COUNT = 12;
 
     protected SiriusResultTableFormat(Function<FormulaResultBean,Boolean> isBest) {
         super(isBest);
@@ -56,18 +56,19 @@ public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean
     @Override
     public String getColumnName(int column) {
         return switch (column) {
-            case 0 -> "Molecular Formula";
-            case 1 -> "Adduct";
-            case 2 -> "Zodiac Score";
-            case 3 -> "Sirius Score";
-            case 4 -> "Isotope Score";
-            case 5 -> "Tree Score";
-            case 6 -> "Explained Peaks";
-            case 7 -> "Total Explained Intensity";
-            case 8 -> "Median Mass Error (ppm)";
-            case 9 -> "Median Absolute Mass Error (ppm)";
-            case 10 -> "Lipid Class";
-            case 11 -> "Best";
+            case 0 -> "Precursor Molecular Formula";
+            case 1 -> "Molecular Formula";
+            case 2 -> "Adduct";
+            case 3 -> "Zodiac Score";
+            case 4 -> "Sirius Score";
+            case 5 -> "Isotope Score";
+            case 6 -> "Tree Score";
+            case 7 -> "Explained Peaks";
+            case 8 -> "Total Explained Intensity";
+            case 9 -> "Median Mass Error (ppm)";
+            case 10 -> "Median Absolute Mass Error (ppm)";
+            case 11 -> "Lipid Class";
+            case 12 -> "Best";
             default -> throw new IllegalStateException();
         };
     }
@@ -75,18 +76,19 @@ public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean
     @Override
     public Object getColumnValue(FormulaResultBean result, int column) {
         return switch (column) {
-            case 0 -> result.getMolecularFormula();
-            case 1 -> result.getAdduct();
-            case 2 -> result.getZodiacScore().orElse(Double.NaN);
-            case 3 -> result.getSiriusScore().orElse(Double.NaN);
-            case 4 -> result.getIsotopeScore().orElse(Double.NaN);
-            case 5 -> result.getTreeScore().orElse(Double.NaN);
-            case 6 -> result.getNumOfExplainedPeaks().stream().mapToDouble(v -> (double) v).findFirst().orElse(Double.NaN);
-            case 7 -> result.getTotalExplainedIntensity().orElse(Double.NaN);
-            case 8 -> result.getMedianMassDeviation().map(Deviation::getPpm).orElse(Double.NaN);
-            case 9 -> result.getMedianMassDeviation().map(Deviation::getAbsolute).orElse(Double.NaN);
-            case 10 -> result.getLipidAnnotation().map(LipidAnnotation::getLipidSpecies).orElse("N/A"); //N/A or better empty?
-            case 11 -> isBest.apply(result);
+            case 0 -> result.getPrecursorFormula();
+            case 1 -> result.getMolecularFormula();
+            case 2 -> result.getAdduct();
+            case 3 -> result.getZodiacScore().orElse(Double.NaN);
+            case 4 -> result.getSiriusScore().orElse(Double.NaN);
+            case 5 -> result.getIsotopeScore().orElse(Double.NaN);
+            case 6 -> result.getTreeScore().orElse(Double.NaN);
+            case 7 -> result.getNumOfExplainedPeaks().stream().mapToDouble(v -> (double) v).findFirst().orElse(Double.NaN);
+            case 8 -> result.getTotalExplainedIntensity().orElse(Double.NaN);
+            case 9 -> result.getMedianMassDeviation().map(Deviation::getPpm).orElse(Double.NaN);
+            case 10 -> result.getMedianMassDeviation().map(Deviation::getAbsolute).orElse(Double.NaN);
+            case 11 -> result.getLipidAnnotation().map(LipidAnnotation::getLipidSpecies).orElse("N/A"); //N/A or better empty?
+            case 12 -> isBest.apply(result);
             default -> throw new IllegalStateException();
         };
     }

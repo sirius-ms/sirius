@@ -19,23 +19,19 @@
 
 package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 
-import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.chemdb.DataSources;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.jjobs.LoadingBackroundTask;
+import de.unijena.bioinf.chemdb.custom.CustomDatabaseFactory;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.DialogHeader;
-import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
-import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import de.unijena.bioinf.ms.gui.utils.JTextAreaDropImage;
-import de.unijena.bioinf.ms.gui.utils.ListAction;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.nightsky.sdk.jjobs.SseProgressJJob;
 import de.unijena.bioinf.ms.nightsky.sdk.model.CommandSubmission;
@@ -46,18 +42,16 @@ import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
+import javax.swing.filechooser.FileFilter;
 import java.awt.*;
-import java.awt.dnd.DropTarget;
-import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
-import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -65,13 +59,11 @@ import java.util.stream.Collectors;
 
 public class DatabaseDialog extends JDialog {
     private final SiriusGui gui;
-    //todo: we should separate the Dialog from the Database Managing part.
-    protected JList<String> dbList;
-    protected Map<String, CustomDatabase> customDatabases;
+
+    protected JList<CustomDatabase> dbList;
+    protected List<CustomDatabase> customDatabases;
 
     protected DatabaseView dbView;
-    private final JDialog owner = this;
-    JButton deleteDB, editDB, addCustomDb;
 
     public DatabaseDialog(SiriusGui gui) {
         this(gui, gui.getMainFrame());
@@ -83,98 +75,86 @@ public class DatabaseDialog extends JDialog {
         setTitle("Custom Databases");
         setLayout(new BorderLayout());
 
-        //============= NORTH (Header) =================
         JPanel header = new DialogHeader(Icons.DB_64);
         add(header, BorderLayout.NORTH);
 
+        dbList = new JList<>();
+        dbList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        dbView = new DatabaseView();
 
-        this.customDatabases = Jobs.runInBackgroundAndLoad(owner, "Loading DBs...", (Callable<List<CustomDatabase>>) SearchableDatabases::getCustomDatabases).getResult()
-                .stream().collect(Collectors.toMap(CustomDatabase::name, k -> k));
-        this.dbList = new DatabaseList(customDatabases.keySet().stream().sorted().collect(Collectors.toList()));
+        JButton addCustomDb = Buttons.getAddButton16("Create custom Database");
+        JButton deleteDB = Buttons.getRemoveButton16("Delete Custom Database");
+        JButton editDB = Buttons.getEditButton16("Edit Custom Database");
+        JButton openDB = Buttons.getFileChooserButton16("Add existing Database");
+
+        loadDatabaseList();
+
+        dbList.addListSelectionListener(e -> {
+            CustomDatabase db = dbList.getSelectedValue();
+            dbView.updateContent(db);
+            if (db != null) {
+                editDB.setEnabled(!db.needsUpgrade());
+                deleteDB.setEnabled(true);
+            } else {
+                editDB.setEnabled(false);
+                deleteDB.setEnabled(false);
+            }
+        });
+
         JScrollPane scroll = new JScrollPane(dbList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         TextHeaderBoxPanel pane = new TextHeaderBoxPanel("Custom Databases", scroll);
         pane.setBorder(BorderFactory.createEmptyBorder(GuiUtils.SMALL_GAP, GuiUtils.SMALL_GAP, 0, 0));
-
-        addCustomDb = Buttons.getAddButton16("Create custom DB");
-        deleteDB = Buttons.getRemoveButton16("Delete Custom Database");
-        editDB = Buttons.getEditButton16("Edit Custom Database");
 
         final Box but = Box.createHorizontalBox();
         but.add(Box.createHorizontalGlue());
         but.add(deleteDB);
         but.add(editDB);
+        but.add(openDB);
         but.add(addCustomDb);
         editDB.setEnabled(false);
         deleteDB.setEnabled(false);
-
-        this.dbView = new DatabaseView();
 
         add(but, BorderLayout.SOUTH);
         add(pane, BorderLayout.CENTER);
         add(dbView, BorderLayout.EAST);
 
-
-        dbList.addListSelectionListener(e -> {
-            final int i = dbList.getSelectedIndex();
-            if (i >= 0) {
-                final String s = dbList.getModel().getElementAt(i);
-                if (customDatabases.containsKey(s)) {
-                    final CustomDatabase c = customDatabases.get(s);
-                    dbView.updateContent(c);
-                    editDB.setEnabled(!c.needsUpgrade());
-                    deleteDB.setEnabled(true);
-                } else {
-                    editDB.setEnabled(false);
-                    deleteDB.setEnabled(false);
-                }
-
-            }
-        });
-
-        dbList.setSelectedIndex(0);
-
-        addCustomDb.addActionListener(e -> new ImportDatabaseDialog());
-
-
-        //klick on Entry ->  open import dialog
-        new ListAction(dbList, new AbstractAction() {
+        Action editSelectedDb = new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                final int k = dbList.getSelectedIndex();
-                if (k >= 0 && k < dbList.getModel().getSize()) {
-                    String key = dbList.getModel().getElementAt(k);
-                    CustomDatabase db = customDatabases.get(key);
-                    new ImportDatabaseDialog(db);
+                if (dbList.getSelectedIndex() != -1) {
+                    new ImportDatabaseDialog(DatabaseDialog.this, dbList.getSelectedValue());
                 }
-
             }
-        });
+        };
 
-        //edit button ->  open import dialog
-        editDB.addActionListener(e -> {
-            final int k = dbList.getSelectedIndex();
-            if (k >= 0 && k < dbList.getModel().getSize()) {
-                String key = dbList.getModel().getElementAt(k);
-                CustomDatabase db = customDatabases.get(key);
-                new ImportDatabaseDialog(db);
-            }
-        });
+        Action deleteSelectedDb = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                CustomDatabase db = dbList.getSelectedValue();
+                if (db == null) {
+                    return;
+                }
+                final String name = db.name();
 
-        deleteDB.addActionListener(e -> {
-            final int index = dbList.getSelectedIndex();
-            if (index < 0 || index >= dbList.getModel().getSize())
-                return;
-            final String name = dbList.getModel().getElementAt(index);
-            final String msg = "Do you really want to remove the custom database (will not be deleted from disk)'" + name + "'?";
-            if (new QuestionDialog(getOwner(), msg).isSuccess()) {
+                Box deleteDialogBox = Box.createVerticalBox();
+                deleteDialogBox.add(new JLabel("Do you really want to remove '" + name + "'?"));
+                JCheckBox deleteFromDisk = new JCheckBox("Delete from disk");
+                deleteDialogBox.add(Box.createRigidArea(new Dimension(0,10)));
+                deleteDialogBox.add(deleteFromDisk);
+
+                if (JOptionPane.showConfirmDialog(getOwner(), deleteDialogBox, "", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
 
                 try {
+                    CommandSubmission deleteCommand = new CommandSubmission()
+                            .addCommandItem(CustomDBOptions.class.getAnnotation(CommandLine.Command.class).name())
+                            .addCommandItem("--remove")
+                            .addCommandItem(name);
+                    if (deleteFromDisk.isSelected()) {
+                        deleteCommand.addCommandItem("--delete");
+                    }
+
                     gui.applySiriusClient((c, pid) -> {
-                        Job job = c.jobs().startCommand(pid, new CommandSubmission()
-                                        .addCommandItem(CustomDBOptions.class.getAnnotation(CommandLine.Command.class).name())
-                                        .addCommandItem("--remove").addCommandItem(name),
-                                List.of(JobOptField.PROGRESS)
-                        );
+                        Job job = c.jobs().startCommand(pid, deleteCommand, List.of(JobOptField.PROGRESS));
                         return LoadingBackroundTask.runInBackground(gui.getMainFrame(),
                                 "Deleting database '" + name + "'...", null,
                                 new SseProgressJJob(gui.getSiriusClient(), pid, job));
@@ -182,24 +162,72 @@ public class DatabaseDialog extends JDialog {
                 } catch (ExecutionException ex) {
                     LoggerFactory.getLogger(getClass()).error("Error during Custom DB removal.", ex);
 
-                    if (ex.getCause() != null)
-                        new StacktraceDialog(this, ex.getCause().getMessage(), ex.getCause());
-                    else
-                        new StacktraceDialog(this, "Unexpected error when removing custom DB!", ex);
-                } catch (Exception ex2) {
-                    LoggerFactory.getLogger(getClass()).error("Fatal Error during Custom DB removal.", ex2);
-                    if (getOwner() instanceof Frame)
+                        if (ex.getCause() != null)
+                            new StacktraceDialog(DatabaseDialog.this, ex.getCause().getMessage(), ex.getCause());
+                        else
+                            new StacktraceDialog(DatabaseDialog.this, "Unexpected error when removing custom DB!", ex);
+                    } catch (Exception ex2) {
+                        LoggerFactory.getLogger(getClass()).error("Fatal Error during Custom DB removal.", ex2);
+                        if (getOwner() instanceof Frame)
                         new StacktraceDialog((Frame) getOwner(), "Fatal Error during Custom DB removal.", ex2);
                     else
                         new StacktraceDialog((Dialog) getOwner(), "Fatal Error during Custom DB removal.", ex2);
+                    }
+
+                    loadDatabaseList();
                 }
-
-                final String[] dbs = Jobs.runInBackgroundAndLoad(owner, "Reloading DBs...", (Callable<List<CustomDatabase>>) SearchableDatabases::getCustomDatabases).getResult()
-                        .stream().map(CustomDatabase::name).toArray(String[]::new);
-                dbList.setListData(dbs);
             }
+        };
 
+        addCustomDb.addActionListener(e -> new ImportDatabaseDialog(this));
+        editDB.addActionListener(editSelectedDb);
+        deleteDB.addActionListener(deleteSelectedDb);
+
+        JFileChooser openDbFileChooser = new JFileChooser();
+        openDbFileChooser.setFileFilter(new CustomDbFileFilter());
+        openDB.addActionListener(e -> {
+            if (openDbFileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+                File file = openDbFileChooser.getSelectedFile();
+                if (customDatabases.stream().anyMatch(db -> db.storageLocation().equals(file.toString()))) {
+                    JOptionPane.showMessageDialog(this, "Database is already available in SIRIUS.", "" , JOptionPane.INFORMATION_MESSAGE);
+                } else if (customDatabases.stream().anyMatch(db -> db.name().equals(file.getName()))) {
+                    JOptionPane.showMessageDialog(this, "A different database with name " + file.getName() + " already exists.", "" , JOptionPane.ERROR_MESSAGE);
+                } else {
+                    try {
+                        CustomDatabase newDb = SearchableDatabases.loadCustomDatabaseFromLocation(file.getAbsolutePath(), true);
+                        CustomDBOptions.addDBToPropertiesIfNotExist(newDb);
+                        whenCustomDbIsAdded(newDb.storageLocation());
+                    } catch (IOException ex) {
+                        JOptionPane.showMessageDialog(this, ex.getMessage(), "" , JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
         });
+
+        String editDbActionName = "editCurrentDb";
+        dbList.getInputMap().put(KeyStroke.getKeyStroke("ENTER"), editDbActionName);
+        dbList.getInputMap().put(KeyStroke.getKeyStroke("SPACE"),editDbActionName);
+        dbList.getActionMap().put(editDbActionName, editSelectedDb);
+
+        dbList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
+                    int i = dbList.getSelectedIndex();
+                            if (i >= 0 && dbList.getCellBounds(i, i).contains(e.getPoint())) {
+                        editSelectedDb.actionPerformed(null);
+                    }
+                }
+            }
+        });
+
+        String deleteDbActionName = "deleteCurrentDb";
+        dbList.getInputMap().put(KeyStroke.getKeyStroke("DELETE"),deleteDbActionName);
+        dbList.getActionMap().put(deleteDbActionName, deleteSelectedDb);
+
+        dbList.setSelectedIndex(0);
+
+        GuiUtils.closeOnEscape(this);
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setMinimumSize(new Dimension(375, getMinimumSize().height));
@@ -208,27 +236,37 @@ public class DatabaseDialog extends JDialog {
         setVisible(true);
     }
 
-    protected void whenCustomDbIsAdded(final String dbName) {
-        CustomDatabase db = SearchableDatabases.getCustomDatabaseByPathOrThrow(Path.of(dbName));
-        this.customDatabases.put(db.name(), db);
-        dbList.setListData(this.customDatabases.keySet().stream().sorted().toArray(String[]::new));
-        dbList.setSelectedValue(db.name(), true);
+    private void loadDatabaseList() {
+        customDatabases = Jobs.runInBackgroundAndLoad(getOwner(), "Loading DBs...", (Callable<List<CustomDatabase>>) SearchableDatabases::getCustomDatabases).getResult();
+        customDatabases.sort(Comparator.comparing(CustomDatabase::name));
+        dbList.setListData(customDatabases.toArray(new CustomDatabase[0]));
+    }
+
+    protected void whenCustomDbIsAdded(final String dbLocation) {
+        loadDatabaseList();
+        CustomDatabase newDb = customDatabases.stream().filter(db -> db.storageLocation().equals(dbLocation)).findFirst().orElseThrow();
+        dbList.setSelectedValue(newDb, true);
+        dbList.requestFocusInWindow();
     }
 
     protected static class DatabaseView extends JPanel {
         JLabel content;
 
         protected DatabaseView() {
-            this.content = new JLabel("No DB selected!");
+            this.content = new JLabel();
             content.setHorizontalAlignment(JLabel.CENTER);
             content.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
             setLayout(new BorderLayout());
             add(content, BorderLayout.CENTER);
             setPreferredSize(new Dimension(200, 240));
+            updateContent(null);
         }
 
         public void updateContent(CustomDatabase c) {
-            if (c.getStatistics().getCompounds() > 0) {
+            if (c == null) {
+                content.setText("No Database selected.");
+                content.setToolTipText(null);
+            } else if (c.getStatistics().getCompounds() > 0) {
                 content.setText("<html><b>" + c.name() + "</b>"
                         + "<br><b>"
                         + c.getStatistics().getCompounds() + "</b> compounds with <b>" + c.getStatistics().getFormulas()
@@ -247,175 +285,16 @@ public class DatabaseDialog extends JDialog {
         }
     }
 
-    protected static class DatabaseList extends JList<String> {
-        protected DatabaseList(List<String> databaseList) {
-            super(new Vector<>(databaseList));
-            setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    public static class CustomDbFileFilter extends FileFilter {
+
+        @Override
+        public boolean accept(File f) {
+            return f.isDirectory() || f.getName().endsWith(CustomDatabaseFactory.NOSQL_SUFFIX);
         }
 
-    }
-
-    protected class ImportDatabaseDialog extends JDialog {
-        protected JButton importButton;
-        protected DatabaseImportConfigPanel configPanel;
-
-        public ImportDatabaseDialog() {
-            this(null);
-        }
-
-        public ImportDatabaseDialog(@Nullable CustomDatabase db) {
-            super(owner, db != null ? "Import into '" + db.name() + "' database" : "Create/Add custom database", false);
-
-            setPreferredSize(new Dimension(640, 480));
-            setLayout(new BorderLayout());
-
-            final JLabel explain = new JLabel("<html>You can inherit compounds from PubChem or our biological databases. If you do so, all compounds in these databases are implicitly added to your custom database.");
-            final Box hbox = Box.createHorizontalBox();
-            hbox.add(explain);
-            final Box vbox = Box.createVerticalBox();
-            vbox.add(hbox);
-            vbox.add(Box.createVerticalStrut(4));
-
-            final Box box = Box.createVerticalBox();
-            box.setAlignmentX(Component.LEFT_ALIGNMENT);
-            final JLabel label = new JLabel(
-                    "<html>Please insert the compounds of your custom database as SMILES here (one compound per line). It is also possible to drag and drop files with SMILES and reference spectrum files into this text field.");
-            label.setAlignmentX(Component.LEFT_ALIGNMENT);
-            box.add(label);
-            final JTextArea textArea = new JTextAreaDropImage();
-            textArea.setAlignmentX(Component.LEFT_ALIGNMENT);
-            final JScrollPane pane = new JScrollPane(textArea, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-            pane.setAlignmentX(Component.LEFT_ALIGNMENT);
-            box.add(pane);
-            box.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Import compounds"));
-
-            importButton = new JButton("Create/Open database and import compounds");
-            importButton.setAlignmentX(Component.RIGHT_ALIGNMENT);
-
-            configPanel = new DatabaseImportConfigPanel(db);
-            importButton.setEnabled(db != null && !configPanel.dbLocationField.getFilePath().isBlank());
-            configPanel.dbLocationField.field.getDocument().addDocumentListener(new DocumentListener() {
-                @Override
-                public void insertUpdate(DocumentEvent e) {
-                    onTextChanged();
-                }
-
-                @Override
-                public void removeUpdate(DocumentEvent e) {
-                    onTextChanged();
-                }
-
-                @Override
-                public void changedUpdate(DocumentEvent e) {
-                    onTextChanged();
-                }
-
-                public void onTextChanged() {
-                    if (configPanel.dbLocationField.getFilePath() == null) return;
-                    importButton.setEnabled(configPanel.dbLocationField.getFilePath().length() > 0 && configPanel.dbLocationField.getFilePath().replaceAll("\\s", "").equals(configPanel.dbLocationField.getFilePath()) && customDatabases.keySet().stream().noneMatch(k -> k.equalsIgnoreCase(configPanel.dbLocationField.getFilePath())));
-                }
-            });
-
-            add(configPanel, BorderLayout.NORTH);
-            add(box, BorderLayout.CENTER);
-            add(importButton, BorderLayout.SOUTH);
-
-            importButton.addActionListener(e -> {
-                dispose();
-                String t = textArea.getText();
-                runImportJob(null,
-                        t != null && !t.isBlank()
-                                ? Arrays.asList(t.split("\n"))
-                                : null
-                );
-            });
-
-            final DropTarget dropTarget = new DropTarget() {
-                @Override
-                public synchronized void drop(DropTargetDropEvent evt) {
-                    dispose();
-                    String t = textArea.getText();
-                    runImportJob(
-                            DragAndDrop.getFileListFromDrop(((Frame) DatabaseDialog.this.getOwner()), evt).stream().map(File::toPath).collect(Collectors.toList()),
-                            t != null && !t.isBlank()
-                                    ? Arrays.asList(t.split("\n"))
-                                    : null
-                    );
-                }
-            };
-
-            setDropTarget(dropTarget);
-            textArea.setDropTarget(dropTarget);
-            pack();
-            setLocationRelativeTo(getOwner());
-            setVisible(true);
-
-        }
-
-        protected void runImportJob(@Nullable List<Path> sources, @Nullable List<String> stringSources) {
-            if (sources == null)
-                sources = new ArrayList<>();
-            try {
-                Jobs.runInBackgroundAndLoad(this, "Checking output location...", () -> {
-                    Path p = Path.of(configPanel.dbLocationField.getFilePath());
-                    if (Files.exists(p)) {
-                        if (Files.isRegularFile(p)) {
-                            try {
-                                return SearchableDatabases.loadCustomDatabaseFromLocation(p.toAbsolutePath().toString(), true);
-                            } catch (IOException ex) {
-                                throw new IOException("Illegal DB location: Found a file but DB location must either not exist, be an empty directory or an existing custom db.", ex);
-                            }
-                        } else if (FileUtils.listAndClose(p, s -> s.findAny().isPresent())) {
-                            try {
-                                return SearchableDatabases.loadCustomDatabaseFromLocation(p.toAbsolutePath().toString(), true);
-                            } catch (IOException ex) {
-                                throw new IOException("Illegal DB location: Found non empty directory that is not a valid custom db. To create a new DB, location must not exist or be an empty directory.", ex);
-                            }
-                        }
-                    }
-                    return null;
-                }).awaitResult();
-
-                if (stringSources != null && !stringSources.isEmpty()) {
-                    sources.add(Jobs.runInBackgroundAndLoad(this, "Processing string input Data...", () -> {
-                        Path f = FileUtils.newTempFile("custom-db-import", ".csv");
-                        try {
-                            Files.write(f, stringSources);
-                            return f;
-                        } catch (IOException ioException) {
-                            throw new IOException("Could not write input data to temp location '" + f + "'.", ioException);
-                        }
-                    }).awaitResult());
-                }
-
-                final CommandSubmission sub = new CommandSubmission();
-                sub.addCommandItem(configPanel.toolCommand());
-                configPanel.asParameterList().forEach(sub::addCommandItem);
-                sub.inputPaths(sources.stream().map(Path::toString).toList());
-
-                gui.applySiriusClient((c, pid) -> {
-                    final Job j = c.jobs().startCommand(pid, sub, List.of(JobOptField.PROGRESS));
-                    return LoadingBackroundTask.runInBackground(gui.getMainFrame(),
-                            "Importing into '" + configPanel.dbLocationField.getFilePath() + "'...", null,
-                            new SseProgressJJob(gui.getSiriusClient(), pid, j)
-                    );
-                }).awaitResult();
-
-                whenCustomDbIsAdded(configPanel.dbLocationField.getFilePath());
-            } catch (ExecutionException ex) {
-                LoggerFactory.getLogger(getClass()).error("Error during Custom DB import.", ex);
-
-                if (ex.getCause() != null)
-                    new StacktraceDialog(this, ex.getCause().getMessage(), ex.getCause());
-                else
-                    new StacktraceDialog(this, "Unexpected error when importing custom DB!", ex);
-            } catch (Exception e) {
-                LoggerFactory.getLogger(getClass()).error("Fatal Error during Custom DB import.", e);
-                if (getOwner() instanceof Frame)
-                    new StacktraceDialog((Frame) getOwner(), "Fatal Error during Custom DB import.", e);
-                else
-                    new StacktraceDialog((Dialog) getOwner(), "Fatal Error during Custom DB import.", e);
-            }
+        @Override
+        public String getDescription() {
+            return "SIRIUS custom database files";
         }
     }
 }

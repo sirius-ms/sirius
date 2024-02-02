@@ -79,7 +79,7 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
             return false;
         }
 
-        if (filterModel.isAdductFilterActive() && !filterModel.getAdducts().contains(item.getIonization()))
+        if (filterModel.isAdductFilterActive() && !filterModel.getAdducts().contains(item.getIonType()))
             return false;
 
         return anyIOIntenseFilterMatches(item, filterModel);

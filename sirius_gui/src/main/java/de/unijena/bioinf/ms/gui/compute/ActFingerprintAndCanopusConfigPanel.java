@@ -21,22 +21,20 @@ package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
-import org.jetbrains.annotations.NotNull;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 
-public class ActFingerprintConfigPanel extends ActivatableConfigPanel<FingerprintConfigPanel> {
-    public ActFingerprintConfigPanel(@NotNull SiriusGui gui, @NotNull final JCheckBoxList<String> sourceIonization) {
-        super(gui, "Predict FPs", Icons.FINGER_32, () -> new FingerprintConfigPanel(sourceIonization));
+public class ActFingerprintAndCanopusConfigPanel extends ActivatableConfigPanel<FingerprintAndCanopusConfigPanel> {
+    public ActFingerprintAndCanopusConfigPanel(@NotNull SiriusGui gui) {
+        super(gui, "Predict", GuiUtils.formatToolTip(FingerprintAndCanopusConfigPanel.description), Icons.FINGER_32, true, () -> new FingerprintAndCanopusConfigPanel());
     }
 
     @Override
     protected void setComponentsEnabled(final boolean enabled) {
         super.setComponentsEnabled(enabled);
-        content.adductOptions.setEnabled(enabled);
     }
 
     @Override
     protected void setButtonEnabled(boolean enabled) {
-        setButtonEnabled(enabled, enabled ? "Enable CSI:FingerID fingerprint prediction" : "Can't connect to CSI:FingerID server!");
+        setButtonEnabled(enabled, enabled ? "Enable prediction" : "Can't connect to prediction server!");
     }
 }

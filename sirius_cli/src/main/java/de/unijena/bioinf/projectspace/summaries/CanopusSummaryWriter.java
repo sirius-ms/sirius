@@ -85,7 +85,6 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
             FingerprintVersion v = npcClassifications[0].getFingerprintVersion();
             if (v instanceof MaskedFingerprintVersion) v = ((MaskedFingerprintVersion) v).getMaskedFingerprintVersion();
             NPCF = (NPCFingerprintVersion) v;
-            //todo do we have to perform index mapping?
             for (int i = 0; i < npcClassifications.length; ++i) {
                 ProbabilityFingerprint fp = npcClassifications[i];
                 for (FPIter fpIter : fp) {
@@ -151,22 +150,23 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
     public void addWriteCompoundSummary(ProjectWriter writer, @NotNull CompoundContainer exp, List<? extends SScored<FormulaResult, ? extends FormulaScore>> results) throws IOException {
         if (!results.isEmpty()) {
             if (rowsBySiriusScore != null)
-                addToRows(rowsBySiriusScore, FormulaScoring.reRankBy(results, List.of(ZodiacScore.class, SiriusScore.class, TreeScore.class, IsotopeScore.class), true), false);
+                addToRows(rowsBySiriusScore, results.stream().map(SScored::getCandidate).sorted(FormulaSummaryWriter.FROMULA_COMPARATOR).toList(), false);
             if (rowsByCSIScore != null) {
                 if (results.stream().anyMatch(it -> it.getCandidate().hasAnnotation(FBCandidates.class)))
                     numStructureResults.incrementAndGet();
-                addToRows(rowsByCSIScore, FormulaScoring.reRankBy(results, List.of(TopCSIScore.class, ZodiacScore.class, SiriusScore.class, TreeScore.class, IsotopeScore.class), true), false);
+                addToRows(rowsByCSIScore, FormulaScoring.reRankBy(results, List.of(TopCSIScore.class, ZodiacScore.class, SiriusScore.class, TreeScore.class, IsotopeScore.class), true)
+                        .stream().map(SScored::getCandidate).toList(), false);
             }
             if (rowsBySiriusScoreAll != null)
-                addToRows(rowsBySiriusScoreAll, FormulaScoring.reRankBy(results, List.of(ZodiacScore.class, SiriusScore.class, TreeScore.class, IsotopeScore.class), true), true);
+                addToRows(rowsBySiriusScoreAll, results.stream().map(SScored::getCandidate).sorted(FormulaSummaryWriter.FROMULA_COMPARATOR).toList(), true);
         }
     }
 
-    private void addToRows(List<CanopusSummaryRow> rows, List<? extends SScored<FormulaResult, ? extends FormulaScore>> results, boolean all) {
+    private void addToRows(List<CanopusSummaryRow> rows, List<FormulaResult> results, boolean all) {
         // sometimes we have multiple results with same score (adducts!). In this case, we list all of them in
         // a separate summary file
         int i = 0;
-        SScored<FormulaResult, ? extends FormulaScore> hit;
+        FormulaResult hit;
         ArrayList<ProbabilityFingerprint> cfFingerprints = new ArrayList<>();
         ArrayList<ProbabilityFingerprint> npcFingerprints = new ArrayList<>();
         ArrayList<MolecularFormula> formulas = new ArrayList<>(), preForms = new ArrayList<>();
@@ -174,8 +174,8 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
         FormulaResultId id;
         do {
             hit = results.get(i);
-            id = hit.getCandidate().getId();
-            final Optional<CanopusResult> cr = hit.getCandidate().getAnnotation(CanopusResult.class);
+            id = hit.getId();
+            final Optional<CanopusResult> cr = hit.getAnnotation(CanopusResult.class);
             final var cid = id;
             cr.ifPresent(canopusResult -> {
                 cfFingerprints.add(canopusResult.getCanopusFingerprint());
@@ -185,7 +185,7 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
                 preForms.add(cid.getPrecursorFormula());
             });
             ++i;
-        } while (i < results.size() && (results.get(i).getCandidate().getId().getPrecursorFormula().equals(results.get(0).getCandidate().getId().getPrecursorFormula()) || all));
+        } while (i < results.size() && (results.get(i).getId().getPrecursorFormula().equals(results.get(0).getId().getPrecursorFormula()) || all));
         if (cfFingerprints.size() > 0) {
             lock.writeLock().lock();
             try {
@@ -261,25 +261,25 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
 
                 int i = 0;
                 cols[i++] = row.id;
-                cols[i++] = row.molecularFormulas[row.best].toString();
-                cols[i++] = row.ionTypes[row.best].toString();
-                cols[i++] = row.precursorFormulas[row.best].toString();
+                cols[i++] = row.molecularFormulas[0].toString();
+                cols[i++] = row.ionTypes[0].toString();
+                cols[i++] = row.precursorFormulas[0].toString();
 
-                cols[i++] = row.bestNPCProps[row.best][0].getName();
-                cols[i++] = Double.toString(row.bestNPCProbs[row.best][0]);
+                cols[i++] = row.bestNPCProps[0][0].getName();
+                cols[i++] = Double.toString(row.bestNPCProbs[0][0]);
 
-                cols[i++] = row.bestNPCProps[row.best][1].getName();
-                cols[i++] = Double.toString(row.bestNPCProbs[row.best][1]);
+                cols[i++] = row.bestNPCProps[0][1].getName();
+                cols[i++] = Double.toString(row.bestNPCProbs[0][1]);
 
-                cols[i++] = row.bestNPCProps[row.best][2].getName();
-                cols[i++] = Double.toString(row.bestNPCProbs[row.best][2]);
+                cols[i++] = row.bestNPCProps[0][2].getName();
+                cols[i++] = Double.toString(row.bestNPCProbs[0][2]);
 
                 cols[i++] = primaryClass.getName();
-                cols[i++] = Double.toString(row.cfClassifications[row.best].getProbability(row.CLF.getIndexOfMolecularProperty(primaryClass)));
+                cols[i++] = Double.toString(row.cfClassifications[0].getProbability(row.CLF.getIndexOfMolecularProperty(primaryClass)));
 
                 if (lineage.length > 5) {
                     cols[i++] = lineage[5].getName();
-                    cols[i++] = Double.toString(row.cfClassifications[row.best].getProbability(row.CLF.getIndexOfMolecularProperty(lineage[5])));
+                    cols[i++] = Double.toString(row.cfClassifications[0].getProbability(row.CLF.getIndexOfMolecularProperty(lineage[5])));
                 } else {
                     cols[i++] = "";
                     cols[i++] = "";
@@ -287,7 +287,7 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
 
                 if (lineage.length > 4) {
                     cols[i++] = lineage[4].getName();
-                    cols[i++] = Double.toString(row.cfClassifications[row.best].getProbability(row.CLF.getIndexOfMolecularProperty(lineage[4])));
+                    cols[i++] = Double.toString(row.cfClassifications[0].getProbability(row.CLF.getIndexOfMolecularProperty(lineage[4])));
                 } else {
                     cols[i++] = "";
                     cols[i++] = "";
@@ -295,7 +295,7 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
 
                 if (lineage.length > 3) {
                     cols[i++] = lineage[3].getName();
-                    cols[i++] = Double.toString(row.cfClassifications[row.best].getProbability(row.CLF.getIndexOfMolecularProperty(lineage[3])));
+                    cols[i++] = Double.toString(row.cfClassifications[0].getProbability(row.CLF.getIndexOfMolecularProperty(lineage[3])));
                 } else {
                     cols[i++] = "";
                     cols[i++] = "";
@@ -303,13 +303,13 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
 
                 if (lineage.length > 2) {
                     cols[i++] = lineage[2].getName();
-                    cols[i++] = Double.toString(row.cfClassifications[row.best].getProbability(row.CLF.getIndexOfMolecularProperty(lineage[2])));
+                    cols[i++] = Double.toString(row.cfClassifications[0].getProbability(row.CLF.getIndexOfMolecularProperty(lineage[2])));
                 } else {
                     cols[i++] = "";
                     cols[i++] = "";
                 }
 
-                cols[i++] = Joiner.on("; ").join(row.cfClassifications[row.best].asDeterministic().asArray().presentFingerprints().asMolecularPropertyIterator());
+                cols[i++] = Joiner.on("; ").join(row.cfClassifications[0].asDeterministic().asArray().presentFingerprints().asMolecularPropertyIterator());
 //                cols[i++] = Joiner.on("; ").join(row.npcClassifications[row.best].asDeterministic().asArray().presentFingerprints().asMolecularPropertyIterator());
 
                 cols[i++] = row.featureId;
