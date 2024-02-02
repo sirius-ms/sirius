@@ -48,8 +48,8 @@ public class MzXMLParser implements LCMSParser {
                     file,
                     storageFactory.createNewStorage(),
                     runConsumer, scanConsumer, msmsScanConsumer,
-                    runBuilder,
-                    this);
+                    runBuilder
+            );
             SAXParserFactory.newInstance().newSAXParser().parse(file, saxParser);
             return saxParser.getProcessedSample();
         } catch (SAXException | ParserConfigurationException e) {

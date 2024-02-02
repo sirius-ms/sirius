@@ -20,65 +20,66 @@
 
 package de.unijena.bioinf.ms.persistence.model.core;
 
-import org.jetbrains.annotations.NotNull;
+import it.unimi.dsi.fastutil.Pair;
+import lombok.Getter;
 
-import java.util.Collections;
+import javax.validation.constraints.NotNull;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
+import java.util.regex.Pattern;
 
 public enum IonizationType {
 
-    ESI("Electrospray ionization", true),
-    CI("Chemical ionization", true),
-    SICRIT("Soft Ionization by Chemical Reaction in Transfer", true),
-    MALDI("Matrix-assisted laser desorption ionization", true),
+    ESI("Electrospray ionization", "esi|electrospray", true, "MS:1000073"),
+    CI("Chemical ionization", "ci|chemical", true, "MS:1000071"),
+    SICRIT("Soft Ionization by Chemical Reaction in Transfer", "sicrit", true),
+    MALDI("Matrix-assisted laser desorption ionization", "maldi", true, "MS:1000075"),
 
-    FAB("Fast atom bombardment", true),
+    FAB("Fast atom bombardment", "fab|atom[-\\s]+bombardment", true, "MS:1000074"),
 
-    FD("Field desorption ionization", true),
+    FD("Field desorption ionization", "fd|field[-\\s]+desorption", true, "MS:1000257"),
 
-    SIMS("Secondary ion mass spectrometry", true),
+    SIMS("Secondary ion mass spectrometry", "sims|secondary[-\\s]+ion", true),
 
-    PD("Plasma desorption", true),
+    PD("Plasma desorption", "pd|plasma[-\\s]+desorption", true, "MS:1000134"),
 
-    LD("Laser desorption", true),
+    LD("Laser desorption", "ld|laser[-\\s]+desorption", true, "MS:1000266"),
 
-    TSI("Thermal spray", true),
+    TSI("Thermal spray", "tsi|thermal[-\\s]+spray", true),
 
-    EI("Electron impact", false),
-    ICP("Inductively Coupled Plasma", false);
+    EI("Electron impact", "ei|electron[-\\s]+impact", false, "MS:1000072"),
+    ICP("Inductively Coupled Plasma", "icp|inductively[-\\s]+coupled", false);
 
+    public static Optional<IonizationType> byHupoId(String hupoId) {
+        return Arrays.stream(IonizationType.values()).filter(type -> type.hupoIds.stream().anyMatch(id -> id.equalsIgnoreCase(hupoId))).findFirst();
+    }
+
+    public static Optional<IonizationType> byValue(String value) {
+        return Arrays.stream(IonizationType.values()).map(
+                type -> Pair.of(type, type.pattern.matcher(value).results().map(mr -> mr.end() - mr.start()).max(Integer::compare).orElse(0))
+        ).max(Comparator.comparing(Pair::right)).map(best -> best.right() > 0 ? best.left() : null);
+    }
 
     @NotNull
-    public final String fullName;
+    @Getter
+    private final String fullName;
+
     @NotNull
-    public final List<String> hupoIds;
+    private final Pattern pattern;
 
-    public final boolean soft;
+    @NotNull
+    private final List<String> hupoIds;
 
-    IonizationType(@NotNull String fullName, boolean soft, String... hupoIds) {
+    @Getter
+    private final boolean soft;
+
+    IonizationType(@NotNull String fullName, @NotNull String pattern, boolean soft, String... hupoIds) {
         this.fullName = fullName;
+        this.pattern = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
         this.soft = soft;
         this.hupoIds = List.of(hupoIds);
     }
-    IonizationType(@NotNull String fullName, boolean soft, List<String> hupoIds) {
-        this.fullName = fullName;
-        this.soft = soft;
-        this.hupoIds = Collections.unmodifiableList(hupoIds);
-    }
 
-    public String fullName() {
-        return fullName;
-    }
-
-    public List<String> hupoIds() {
-        return hupoIds;
-    }
-
-    public boolean isSoft() {
-        return soft;
-    }
-
-    public String getType(){
-        return isSoft()? "SOFT" : "HARD";
-    }
 }

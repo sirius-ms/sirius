@@ -100,32 +100,31 @@ public class MzMLParser implements LCMSParser {
             // Read available instument information
             IonizationType ionization = null;
             FragmentationType fragmentation = null;
-            List<MassAnalyzerType> massAnalyzers = new ArrayList<>();
+            List<MassAnalyzer> massAnalyzers = new ArrayList<>();
 
             InstrumentConfigurationList instrumentList = um.unmarshalFromXpath("/instrumentConfigurationList", InstrumentConfigurationList.class);
-            if (instrumentList != null && instrumentList.getCount() > 0) {
+            if (instrumentList != null) {
                 for (InstrumentConfiguration ic : instrumentList.getInstrumentConfiguration()) {
-
+                    ComponentList componentList = ic.getComponentList();
+                    if (componentList == null) {
+                        continue;
+                    }
                     // get ion source
-                    for (SourceComponent sc : ic.getComponentList().getSource()) {
+                    sourceLoop:
+                    for (SourceComponent sc : componentList.getSource()) {
                         for (CVParam cvParam : sc.getCvParam()) {
-                            ionization = switch (cvParam.getAccession()) {
-                                case "MS:1000073" -> IonizationType.ESI;
-                                case "MS:1000071" -> IonizationType.CI;
-                                case "MS:1000075" -> IonizationType.MALDI;
-                                case "MS:1000074" -> IonizationType.FAB;
-                                case "MS:1000257" -> IonizationType.FD;
-                                case "MS:1000134" -> IonizationType.PD;
-                                case "MS:1000266" -> IonizationType.LD;
-                                case "MS:1000072" -> IonizationType.EI;
-                                default -> ionization;
-                            };
+                            Optional<IonizationType> optType = IonizationType.byHupoId(cvParam.getAccession());
+                            if (optType.isPresent()) {
+                                ionization = optType.get();
+                                break sourceLoop;
+                            }
                         }
                         if (ionization == null) {
                             for (UserParam userParam : sc.getUserParam()) {
-                                Optional<IonizationType> optType = matchIonizationType(userParam.getValue());
+                                Optional<IonizationType> optType = IonizationType.byValue(userParam.getValue());
                                 if (optType.isPresent()) {
                                     ionization = optType.get();
+                                    break sourceLoop;
                                 }
                             }
                         }
@@ -135,26 +134,11 @@ public class MzMLParser implements LCMSParser {
                     analyzerLoop:
                     for (AnalyzerComponent ac : ic.getComponentList().getAnalyzer()) {
                         for (CVParam cvParam : ac.getCvParam()) {
-                            switch (cvParam.getAccession()) {
-                                case "MS:1000084":
-                                    massAnalyzers.add(MassAnalyzerType.TOF);
-                                    break analyzerLoop;
-                                case "MS:1000264":
-                                    massAnalyzers.add(MassAnalyzerType.IONTRAP);
-                                    break analyzerLoop;
-                                case "MS:1000082":
-                                    massAnalyzers.add(MassAnalyzerType.QUAD);
-                                    break analyzerLoop;
-                                case "MS:1000484":
-                                    massAnalyzers.add(MassAnalyzerType.ORBITRAP);
-                                    break analyzerLoop;
-                                case "MS:1000079":
-                                    massAnalyzers.add(MassAnalyzerType.FTICR);
-                                    break analyzerLoop;
-                            }
+                            MassAnalyzer.byHupoId(cvParam.getAccession()).ifPresent(massAnalyzers::add);
+                            continue analyzerLoop;
                         }
                         for (UserParam userParam : ac.getUserParam()) {
-                            matchMassAnalyzerType(userParam.getValue()).ifPresent(massAnalyzers::add);
+                            MassAnalyzer.byValue(userParam.getValue()).ifPresent(massAnalyzers::add);
                         }
                     }
 
@@ -165,21 +149,18 @@ public class MzMLParser implements LCMSParser {
             ReferenceableParamGroup refParams = um.unmarshalFromXpath("/run/referenceableParamGroup", ReferenceableParamGroup.class);
             if (refParams != null) {
                 for (CVParam cvParam : refParams.getCvParam()) {
-                    fragmentation = switch (cvParam.getAccession()) {
-                        case "MS:1000133" -> FragmentationType.CID;
-                        case "MS:1000136" -> FragmentationType.SID;
-                        case "MS:1000250" -> FragmentationType.ECD;
-                        case "MS:1000598" -> FragmentationType.ETD;
-                        case "MS:1001880" -> FragmentationType.ION_SOURCE;
-                        case "MS:1003247" -> FragmentationType.NETD;
-                        default -> fragmentation;
-                    };
+                    Optional<FragmentationType> optType = FragmentationType.byHupoId(cvParam.getAccession());
+                    if (optType.isPresent()) {
+                        fragmentation = optType.get();
+                        break;
+                    }
                 }
                 if (fragmentation == null) {
                     for (UserParam userParam : refParams.getUserParam()) {
-                        Optional<FragmentationType> optType = matchFragmentationType(userParam.getValue());
+                        Optional<FragmentationType> optType = FragmentationType.byValue(userParam.getValue());
                         if (optType.isPresent()) {
                             fragmentation = optType.get();
+                            break;
                         }
                     }
                 }
