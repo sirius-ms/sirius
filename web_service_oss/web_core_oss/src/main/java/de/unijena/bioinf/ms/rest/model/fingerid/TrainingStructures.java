@@ -2,12 +2,14 @@ package de.unijena.bioinf.ms.rest.model.fingerid;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.extern.jackson.Jacksonized;
 
 import java.util.Set;
 
 @Getter
 @Builder
-public class TrainingStructures{
+@Jacksonized
+public class TrainingStructures {
         private final Set<String> kernelInchiKeys;
         private final Set<String> extraInchiKeys;
 
