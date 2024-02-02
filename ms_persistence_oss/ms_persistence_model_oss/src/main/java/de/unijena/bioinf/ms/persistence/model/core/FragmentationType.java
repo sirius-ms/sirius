@@ -20,43 +20,53 @@
 
 package de.unijena.bioinf.ms.persistence.model.core;
 
-import org.jetbrains.annotations.NotNull;
+import it.unimi.dsi.fastutil.Pair;
+import lombok.Getter;
 
-import java.util.Collections;
+import javax.validation.constraints.NotNull;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
+import java.util.regex.Pattern;
 
 public enum FragmentationType {
-    CID("Collision-induced dissociation"),
-    HCD("Higher-energy C-trap dissociation "),
-    SID("Surface-induced dissociation"),
-    ECD("Electron capture dissociation"),
-    ETD("Electron-transfer dissociation"),
-    NETD("Negative electron-transfer dissociation"),
-    EDD("Electron-detachment dissociation"),
-    ION_SOURCE("In-source fragmentation"),
-    NONE("No fragmentation");
+    CID("Collision-induced dissociation", "cid|collision[-\\s]+induced", "MS:1000133"),
+    HCD("Higher-energy C-trap dissociation", "hcd|higher[-\\s]+energy|c[-\\s]*trap"),
+    SID("Surface-induced dissociation", "sid|surface[-\\s]+induced", "MS:1000136"),
+    ECD("Electron capture dissociation", "ecd|electron[-\\s]+capture", "MS:1000250"),
+    ETD("Electron-transfer dissociation", "etd|electron[-\\s]+transfer", "MS:1000598"),
+    NETD("Negative electron-transfer dissociation", "netd|negative[-\\s]+electron[-\\s]+transfer", "MS:1003247"),
+    EDD("Electron-detachment dissociation", "edd|electron[-\\s]+detachment"),
+    ION_SOURCE("In-source fragmentation", "ion[-\\s]*source|in[-\\s]*source","MS:1001880");
 
 
     @NotNull
-    public final String fullName;
+    @Getter
+    private final String fullName;
+
     @NotNull
-    public final List<String> hupoIds;
+    private final Pattern pattern;
+
+    @NotNull
+    private final List<String> hupoIds;
 
 
-    FragmentationType(@NotNull String fullName, String... hupoIds) {
+    public static Optional<FragmentationType> byHupoId(String hupoId) {
+        return Arrays.stream(FragmentationType.values()).filter(type -> type.hupoIds.stream().anyMatch(id -> id.equalsIgnoreCase(hupoId))).findFirst();
+    }
+
+    public static Optional<FragmentationType> byValue(String value) {
+        return Arrays.stream(FragmentationType.values()).map(
+                type -> Pair.of(type, type.pattern.matcher(value).results().map(mr -> mr.end() - mr.start()).max(Integer::compare).orElse(0))
+        ).max(Comparator.comparing(Pair::right)).map(best -> best.right() > 0 ? best.left() : null);
+    }
+
+
+    FragmentationType(@NotNull String fullName, @NotNull String pattern, String... hupoIds) {
         this.fullName = fullName;
+        this.pattern = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
         this.hupoIds = List.of(hupoIds);
     }
-    FragmentationType(@NotNull String fullName, List<String> hupoIds) {
-        this.fullName = fullName;
-        this.hupoIds = Collections.unmodifiableList(hupoIds);
-    }
 
-    public String fullName() {
-        return fullName;
-    }
-
-    public List<String> hupoIds() {
-        return hupoIds;
-    }
 }
