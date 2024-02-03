@@ -31,7 +31,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * 
  */
 @JsonPropertyOrder({
-  PeakAnnotation.JSON_PROPERTY_FORMULA,
+  PeakAnnotation.JSON_PROPERTY_MOLECULAR_FORMULA,
   PeakAnnotation.JSON_PROPERTY_IONIZATION,
   PeakAnnotation.JSON_PROPERTY_EXACT_MASS,
   PeakAnnotation.JSON_PROPERTY_MASS_DEVIATION_MZ,
@@ -47,8 +47,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class PeakAnnotation {
-  public static final String JSON_PROPERTY_FORMULA = "formula";
-  private String formula;
+  public static final String JSON_PROPERTY_MOLECULAR_FORMULA = "molecularFormula";
+  private String molecularFormula;
 
   public static final String JSON_PROPERTY_IONIZATION = "ionization";
   private String ionization;
@@ -89,29 +89,29 @@ public class PeakAnnotation {
   public PeakAnnotation() {
   }
 
-  public PeakAnnotation formula(String formula) {
+  public PeakAnnotation molecularFormula(String molecularFormula) {
     
-    this.formula = formula;
+    this.molecularFormula = molecularFormula;
     return this;
   }
 
    /**
    * Molecular formula that has been annotated to this peak
-   * @return formula
+   * @return molecularFormula
   **/
   @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_FORMULA)
+  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public String getFormula() {
-    return formula;
+  public String getMolecularFormula() {
+    return molecularFormula;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_FORMULA)
+  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setFormula(String formula) {
-    this.formula = formula;
+  public void setMolecularFormula(String molecularFormula) {
+    this.molecularFormula = molecularFormula;
   }
 
 
@@ -459,7 +459,7 @@ public class PeakAnnotation {
       return false;
     }
     PeakAnnotation peakAnnotation = (PeakAnnotation) o;
-    return Objects.equals(this.formula, peakAnnotation.formula) &&
+    return Objects.equals(this.molecularFormula, peakAnnotation.molecularFormula) &&
         Objects.equals(this.ionization, peakAnnotation.ionization) &&
         Objects.equals(this.exactMass, peakAnnotation.exactMass) &&
         Objects.equals(this.massDeviationMz, peakAnnotation.massDeviationMz) &&
@@ -476,14 +476,14 @@ public class PeakAnnotation {
 
   @Override
   public int hashCode() {
-    return Objects.hash(formula, ionization, exactMass, massDeviationMz, massDeviationPpm, recalibratedMassDeviationMz, recalibratedMassDeviationPpm, parentPeak, substructureAtoms, substructureBonds, substructureBondsCut, substructureScore, hydrogenRearrangements);
+    return Objects.hash(molecularFormula, ionization, exactMass, massDeviationMz, massDeviationPpm, recalibratedMassDeviationMz, recalibratedMassDeviationPpm, parentPeak, substructureAtoms, substructureBonds, substructureBondsCut, substructureScore, hydrogenRearrangements);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class PeakAnnotation {\n");
-    sb.append("    formula: ").append(toIndentedString(formula)).append("\n");
+    sb.append("    molecularFormula: ").append(toIndentedString(molecularFormula)).append("\n");
     sb.append("    ionization: ").append(toIndentedString(ionization)).append("\n");
     sb.append("    exactMass: ").append(toIndentedString(exactMass)).append("\n");
     sb.append("    massDeviationMz: ").append(toIndentedString(massDeviationMz)).append("\n");

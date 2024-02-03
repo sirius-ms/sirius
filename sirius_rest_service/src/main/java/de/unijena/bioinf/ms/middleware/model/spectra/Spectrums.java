@@ -23,7 +23,6 @@ package de.unijena.bioinf.ms.middleware.model.spectra;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.fragmenter.*;
@@ -76,7 +75,7 @@ public class Spectrums {
             SpectrumAnnotation.SpectrumAnnotationBuilder specAnno = SpectrumAnnotation.builder();
             { // create formula/ftree based spectrum annotation
                 if (ftree.getRoot().getFormula() != null && ftree.getRoot().getIonization() != null) {
-                    specAnno.formula(ftree.getRoot().getFormula().toString())
+                    specAnno.molecularFormula(ftree.getRoot().getFormula().toString())
                             .ionization(ftree.getRoot().getIonization().toString())
                             .exactMass(ftree.getRoot().getIonization().addToMass(ftree.getRoot().getFormula().getMass()));
                 }
@@ -95,7 +94,7 @@ public class Spectrums {
                 if (i >= 0) {
                     PeakAnnotation.PeakAnnotationBuilder peakAnno = PeakAnnotation.builder();
                     if (f.getFormula() != null && f.getIonization() != null) {
-                        peakAnno.formula(f.getFormula().toString());
+                        peakAnno.molecularFormula(f.getFormula().toString());
                         peakAnno.ionization(f.getIonization().toString());
                         peakAnno.exactMass(f.getIonization().addToMass(f.getFormula().getMass()));
                     }

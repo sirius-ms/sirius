@@ -8,7 +8,7 @@
 
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
-|**formula** | **String** | Molecular formula that has been annotated to this spectrum |  [optional] |
+|**molecularFormula** | **String** | Molecular formula that has been annotated to this spectrum |  [optional] |
 |**ionization** | **String** | Ionization that has been annotated to this spectrum |  [optional] |
 |**exactMass** | **Double** | Exact mass based on the annotated molecular formula and ionization |  [optional] |
 |**massDeviationMz** | **Double** | Absolute mass deviation of the exact mass to the precursor mass (precursorMz) of this spectrum in mDa |  [optional] |

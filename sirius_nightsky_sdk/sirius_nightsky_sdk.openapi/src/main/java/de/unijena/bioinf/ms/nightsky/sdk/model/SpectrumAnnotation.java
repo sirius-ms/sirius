@@ -27,7 +27,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * 
  */
 @JsonPropertyOrder({
-  SpectrumAnnotation.JSON_PROPERTY_FORMULA,
+  SpectrumAnnotation.JSON_PROPERTY_MOLECULAR_FORMULA,
   SpectrumAnnotation.JSON_PROPERTY_IONIZATION,
   SpectrumAnnotation.JSON_PROPERTY_EXACT_MASS,
   SpectrumAnnotation.JSON_PROPERTY_MASS_DEVIATION_MZ,
@@ -37,8 +37,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class SpectrumAnnotation {
-  public static final String JSON_PROPERTY_FORMULA = "formula";
-  private String formula;
+  public static final String JSON_PROPERTY_MOLECULAR_FORMULA = "molecularFormula";
+  private String molecularFormula;
 
   public static final String JSON_PROPERTY_IONIZATION = "ionization";
   private String ionization;
@@ -61,29 +61,29 @@ public class SpectrumAnnotation {
   public SpectrumAnnotation() {
   }
 
-  public SpectrumAnnotation formula(String formula) {
+  public SpectrumAnnotation molecularFormula(String molecularFormula) {
     
-    this.formula = formula;
+    this.molecularFormula = molecularFormula;
     return this;
   }
 
    /**
    * Molecular formula that has been annotated to this spectrum
-   * @return formula
+   * @return molecularFormula
   **/
   @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_FORMULA)
+  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public String getFormula() {
-    return formula;
+  public String getMolecularFormula() {
+    return molecularFormula;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_FORMULA)
+  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setFormula(String formula) {
-    this.formula = formula;
+  public void setMolecularFormula(String molecularFormula) {
+    this.molecularFormula = molecularFormula;
   }
 
 
@@ -251,7 +251,7 @@ public class SpectrumAnnotation {
       return false;
     }
     SpectrumAnnotation spectrumAnnotation = (SpectrumAnnotation) o;
-    return Objects.equals(this.formula, spectrumAnnotation.formula) &&
+    return Objects.equals(this.molecularFormula, spectrumAnnotation.molecularFormula) &&
         Objects.equals(this.ionization, spectrumAnnotation.ionization) &&
         Objects.equals(this.exactMass, spectrumAnnotation.exactMass) &&
         Objects.equals(this.massDeviationMz, spectrumAnnotation.massDeviationMz) &&
@@ -262,14 +262,14 @@ public class SpectrumAnnotation {
 
   @Override
   public int hashCode() {
-    return Objects.hash(formula, ionization, exactMass, massDeviationMz, massDeviationPpm, structureAnnotationSmiles, structureAnnotationScore);
+    return Objects.hash(molecularFormula, ionization, exactMass, massDeviationMz, massDeviationPpm, structureAnnotationSmiles, structureAnnotationScore);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class SpectrumAnnotation {\n");
-    sb.append("    formula: ").append(toIndentedString(formula)).append("\n");
+    sb.append("    molecularFormula: ").append(toIndentedString(molecularFormula)).append("\n");
     sb.append("    ionization: ").append(toIndentedString(ionization)).append("\n");
     sb.append("    exactMass: ").append(toIndentedString(exactMass)).append("\n");
     sb.append("    massDeviationMz: ").append(toIndentedString(massDeviationMz)).append("\n");

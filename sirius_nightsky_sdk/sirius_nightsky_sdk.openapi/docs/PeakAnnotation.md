@@ -8,7 +8,7 @@
 
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
-|**formula** | **String** | Molecular formula that has been annotated to this peak |  [optional] |
+|**molecularFormula** | **String** | Molecular formula that has been annotated to this peak |  [optional] |
 |**ionization** | **String** | Ionization that has been annotated to this peak |  [optional] |
 |**exactMass** | **Double** | Exact mass of the annotated molecular formula and ionization |  [optional] |
 |**massDeviationMz** | **Double** | Absolute mass deviation of the exact mass to the measured peak mass in mDa |  [optional] |
