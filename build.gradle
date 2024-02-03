@@ -115,6 +115,8 @@ allprojects {
         api 'org.apache.commons:commons-lang3:3.12.0'
         api 'commons-io:commons-io:2.11.0' //maybe provide via io package?
 
+        api 'io.swagger.core.v3:swagger-annotations:2.2.20'
+
         api "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
         api "com.fasterxml.jackson.core:jackson-annotations:$jackson_version"
 
