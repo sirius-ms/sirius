@@ -2,7 +2,7 @@
 
 # Zodiac
 
-User/developer friendly parameter subset for the ZODIAC tool (Network base molecular formula re-ranking).
+User/developer friendly parameter subset for the ZODIAC tool (Network base molecular formula re-ranking).  Needs results from Formula/SIRIUS Tool
 
 ## Properties
 

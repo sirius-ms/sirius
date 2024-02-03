@@ -20,8 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import de.unijena.bioinf.ms.nightsky.sdk.model.AnnotatedPeak;
-import de.unijena.bioinf.ms.nightsky.sdk.model.SpectrumAnnotation;
+import de.unijena.bioinf.ms.nightsky.sdk.model.Peak;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -32,16 +31,15 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * 
  */
 @JsonPropertyOrder({
-  AnnotatedSpectrum.JSON_PROPERTY_MS_LEVEL,
-  AnnotatedSpectrum.JSON_PROPERTY_COLLISION_ENERGY,
-  AnnotatedSpectrum.JSON_PROPERTY_PRECURSOR_MZ,
-  AnnotatedSpectrum.JSON_PROPERTY_SCAN_NUMBER,
-  AnnotatedSpectrum.JSON_PROPERTY_PEAKS,
-  AnnotatedSpectrum.JSON_PROPERTY_SPECTRUM_ANNOTATION,
-  AnnotatedSpectrum.JSON_PROPERTY_EMPTY
+  BasicSpectrum.JSON_PROPERTY_MS_LEVEL,
+  BasicSpectrum.JSON_PROPERTY_COLLISION_ENERGY,
+  BasicSpectrum.JSON_PROPERTY_PRECURSOR_MZ,
+  BasicSpectrum.JSON_PROPERTY_SCAN_NUMBER,
+  BasicSpectrum.JSON_PROPERTY_PEAKS,
+  BasicSpectrum.JSON_PROPERTY_EMPTY
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
-public class AnnotatedSpectrum {
+public class BasicSpectrum {
   public static final String JSON_PROPERTY_MS_LEVEL = "msLevel";
   private Integer msLevel;
 
@@ -55,18 +53,15 @@ public class AnnotatedSpectrum {
   private Integer scanNumber;
 
   public static final String JSON_PROPERTY_PEAKS = "peaks";
-  private List<AnnotatedPeak> peaks = new ArrayList<>();
-
-  public static final String JSON_PROPERTY_SPECTRUM_ANNOTATION = "spectrumAnnotation";
-  private SpectrumAnnotation spectrumAnnotation;
+  private List<Peak> peaks = new ArrayList<>();
 
   public static final String JSON_PROPERTY_EMPTY = "empty";
   private Boolean empty;
 
-  public AnnotatedSpectrum() {
+  public BasicSpectrum() {
   }
 
-  public AnnotatedSpectrum msLevel(Integer msLevel) {
+  public BasicSpectrum msLevel(Integer msLevel) {
     
     this.msLevel = msLevel;
     return this;
@@ -92,7 +87,7 @@ public class AnnotatedSpectrum {
   }
 
 
-  public AnnotatedSpectrum collisionEnergy(String collisionEnergy) {
+  public BasicSpectrum collisionEnergy(String collisionEnergy) {
     
     this.collisionEnergy = collisionEnergy;
     return this;
@@ -118,7 +113,7 @@ public class AnnotatedSpectrum {
   }
 
 
-  public AnnotatedSpectrum precursorMz(Double precursorMz) {
+  public BasicSpectrum precursorMz(Double precursorMz) {
     
     this.precursorMz = precursorMz;
     return this;
@@ -144,7 +139,7 @@ public class AnnotatedSpectrum {
   }
 
 
-  public AnnotatedSpectrum scanNumber(Integer scanNumber) {
+  public BasicSpectrum scanNumber(Integer scanNumber) {
     
     this.scanNumber = scanNumber;
     return this;
@@ -170,13 +165,13 @@ public class AnnotatedSpectrum {
   }
 
 
-  public AnnotatedSpectrum peaks(List<AnnotatedPeak> peaks) {
+  public BasicSpectrum peaks(List<Peak> peaks) {
     
     this.peaks = peaks;
     return this;
   }
 
-  public AnnotatedSpectrum addPeaksItem(AnnotatedPeak peaksItem) {
+  public BasicSpectrum addPeaksItem(Peak peaksItem) {
     if (this.peaks == null) {
       this.peaks = new ArrayList<>();
     }
@@ -192,45 +187,19 @@ public class AnnotatedSpectrum {
   @JsonProperty(JSON_PROPERTY_PEAKS)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
-  public List<AnnotatedPeak> getPeaks() {
+  public List<Peak> getPeaks() {
     return peaks;
   }
 
 
   @JsonProperty(JSON_PROPERTY_PEAKS)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setPeaks(List<AnnotatedPeak> peaks) {
+  public void setPeaks(List<Peak> peaks) {
     this.peaks = peaks;
   }
 
 
-  public AnnotatedSpectrum spectrumAnnotation(SpectrumAnnotation spectrumAnnotation) {
-    
-    this.spectrumAnnotation = spectrumAnnotation;
-    return this;
-  }
-
-   /**
-   * Get spectrumAnnotation
-   * @return spectrumAnnotation
-  **/
-  @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SPECTRUM_ANNOTATION)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public SpectrumAnnotation getSpectrumAnnotation() {
-    return spectrumAnnotation;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_SPECTRUM_ANNOTATION)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSpectrumAnnotation(SpectrumAnnotation spectrumAnnotation) {
-    this.spectrumAnnotation = spectrumAnnotation;
-  }
-
-
-  public AnnotatedSpectrum empty(Boolean empty) {
+  public BasicSpectrum empty(Boolean empty) {
     
     this.empty = empty;
     return this;
@@ -263,31 +232,29 @@ public class AnnotatedSpectrum {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    AnnotatedSpectrum annotatedSpectrum = (AnnotatedSpectrum) o;
-    return Objects.equals(this.msLevel, annotatedSpectrum.msLevel) &&
-        Objects.equals(this.collisionEnergy, annotatedSpectrum.collisionEnergy) &&
-        Objects.equals(this.precursorMz, annotatedSpectrum.precursorMz) &&
-        Objects.equals(this.scanNumber, annotatedSpectrum.scanNumber) &&
-        Objects.equals(this.peaks, annotatedSpectrum.peaks) &&
-        Objects.equals(this.spectrumAnnotation, annotatedSpectrum.spectrumAnnotation) &&
-        Objects.equals(this.empty, annotatedSpectrum.empty);
+    BasicSpectrum basicSpectrum = (BasicSpectrum) o;
+    return Objects.equals(this.msLevel, basicSpectrum.msLevel) &&
+        Objects.equals(this.collisionEnergy, basicSpectrum.collisionEnergy) &&
+        Objects.equals(this.precursorMz, basicSpectrum.precursorMz) &&
+        Objects.equals(this.scanNumber, basicSpectrum.scanNumber) &&
+        Objects.equals(this.peaks, basicSpectrum.peaks) &&
+        Objects.equals(this.empty, basicSpectrum.empty);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(msLevel, collisionEnergy, precursorMz, scanNumber, peaks, spectrumAnnotation, empty);
+    return Objects.hash(msLevel, collisionEnergy, precursorMz, scanNumber, peaks, empty);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class AnnotatedSpectrum {\n");
+    sb.append("class BasicSpectrum {\n");
     sb.append("    msLevel: ").append(toIndentedString(msLevel)).append("\n");
     sb.append("    collisionEnergy: ").append(toIndentedString(collisionEnergy)).append("\n");
     sb.append("    precursorMz: ").append(toIndentedString(precursorMz)).append("\n");
     sb.append("    scanNumber: ").append(toIndentedString(scanNumber)).append("\n");
     sb.append("    peaks: ").append(toIndentedString(peaks)).append("\n");
-    sb.append("    spectrumAnnotation: ").append(toIndentedString(spectrumAnnotation)).append("\n");
     sb.append("    empty: ").append(toIndentedString(empty)).append("\n");
     sb.append("}");
     return sb.toString();

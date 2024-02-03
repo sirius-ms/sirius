@@ -63,14 +63,14 @@ public class StructureDbSearch extends Tool<FingerblastOptions> {
     Boolean tagStructuresWithLipidClass;
 
     /**
-     * Specify Expansive search mode.
-     * Expansive search will expand the search space to whole PubChem
-     * in case no hit with reasonable confidence was found in one of the specified databases (structureSearchDBs).
+     * Expansive search mode.
+     * Expansive search will expand the search space to whole PubChem in case no hit with reasonable confidence was
+     * found in one of the specified databases (structureSearchDBs).
      *
-     * Possible Values:
-     * OFF: No expansive search is performed
-     * EXACT: Use confidence score in exact mode: Only molecular structures identical to the true structure should count as correct identification.
-     * APPROXIMATE: Use confidence score in approximate mode: Molecular structures hits that are close to the true structure should count as correct identification.
+     * Possible Values
+     * OFF - No expansive search is performed
+     * EXACT - Use confidence score in exact mode: Only molecular structures identical to the true structure should count as correct identification.
+     * APPROXIMATE - Use confidence score in approximate mode: Molecular structures hits that are close to the true structure should count as correct identification.
      */
     @Schema(enumAsRef = true)
     ExpansiveSearchConfidenceMode.Mode expansiveSearchConfidenceMode;

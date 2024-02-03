@@ -2282,6 +2282,66 @@
         }
       }
     },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-spectrum": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier\n These annotations are only available if a fragmentation tree is available.",
+        "description": "Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier\n These annotations are only available if a fragmentation tree is available.",
+        "operationId": "getStructureAnnotatedSpectrum",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) the formula result belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "formulaId",
+            "in": "path",
+            "description": "identifier of the requested formula result",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "inchiKey",
+            "in": "path",
+            "description": "2d InChIKey of the structure candidate to be used to annotate the spectrum annotation",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fragmentation spectrum annotated with fragments and sub-structures.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnotatedSpectrum"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/sirius-tree": {
       "get": {
         "tags": [
@@ -2387,7 +2447,7 @@
         ],
         "summary": "Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)\n for the given formula result identifier.",
         "description": "Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)\n for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).",
-        "operationId": "getSimulatedIsotopePattern",
+        "operationId": "getIsotopePatternAnnotation",
         "parameters": [
           {
             "name": "projectId",
@@ -2581,6 +2641,57 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CompoundClasses"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/annotated-spectrum": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier\n These annotations are only available if a fragmentation tree is available.",
+        "description": "Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier\n These annotations are only available if a fragmentation tree is available.",
+        "operationId": "getFormulaAnnotatedSpectrum",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) the formula result belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "formulaId",
+            "in": "path",
+            "description": "identifier of the requested formula result",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fragmentation spectrum annotated with fragment formulas and losses.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnotatedSpectrum"
                 }
               }
             }
@@ -3278,7 +3389,7 @@
             "description": "tags whether the tool is enabled"
           }
         },
-        "description": "User/developer friendly parameter subset for the CANOPUS tool\n CANOPUS is parameter free, so this Object is just a flag that canopus should be executed."
+        "description": "User/developer friendly parameter subset for the CANOPUS tool\n CANOPUS is parameter free, so this Object is just a flag that canopus should be executed.\n Needs results from FingerprintPrediction Tool"
       },
       "FingerprintPrediction": {
         "type": "object",
@@ -3292,7 +3403,7 @@
             "description": "If true, an adaptive soft threshold will be applied to only compute Fingerprints for promising formula candidates\n Enabling is highly recommended."
           }
         },
-        "description": "User/developer friendly parameter subset for the CSI:FingerID Fingerprint tool"
+        "description": "User/developer friendly parameter subset for the CSI:FingerID Fingerprint tool\n Needs results from Formula/SIRIUS Tool"
       },
       "Instrument": {
         "type": "string",
@@ -3375,6 +3486,15 @@
         },
         "description": "Object to submit a job to be executed by SIRIUS"
       },
+      "Mode": {
+        "type": "string",
+        "description": "",
+        "enum": [
+          "OFF",
+          "EXACT",
+          "APPROXIMATE"
+        ]
+      },
       "Sirius": {
         "type": "object",
         "properties": {
@@ -3413,46 +3533,7 @@
             "type": "array",
             "description": "List Structure database to extract molecular formulas from to reduce formula search space.\n SIRIUS is quite good at de novo formula annotation, so only enable if you have a good reason.",
             "items": {
-              "type": "string",
-              "enum": [
-                "ALL",
-                "ALL_BUT_INSILICO",
-                "BIO",
-                "PUBCHEM",
-                "MESH",
-                "HMDB",
-                "KNAPSACK",
-                "CHEBI",
-                "PUBMED",
-                "KEGG",
-                "HSDB",
-                "MACONDA",
-                "METACYC",
-                "GNPS",
-                "ZINCBIO",
-                "TRAIN",
-                "YMDB",
-                "PLANTCYC",
-                "NORMAN",
-                "SUPERNATURAL",
-                "COCONUT",
-                "BloodExposome",
-                "TeroMol",
-                "PUBCHEMANNOTATIONBIO",
-                "PUBCHEMANNOTATIONDRUG",
-                "PUBCHEMANNOTATIONSAFETYANDTOXIC",
-                "PUBCHEMANNOTATIONFOOD",
-                "LOTUS",
-                "FooDB",
-                "MiMeDB",
-                "LIPIDMAPS",
-                "LIPID",
-                "KEGGMINE",
-                "ECOCYCMINE",
-                "YMDBMINE",
-                "MASSBANK",
-                "DSSTox"
-              ]
+              "type": "string"
             }
           },
           "enforcedFormulaConstraints": {
@@ -3480,6 +3561,9 @@
         "description": "User/developer friendly parameter subset for the Formula/SIRIUS tool"
       },
       "StructureDbSearch": {
+        "required": [
+          "structureSearchDBs"
+        ],
         "type": "object",
         "properties": {
           "enabled": {
@@ -3488,56 +3572,20 @@
           },
           "structureSearchDBs": {
             "type": "array",
-            "description": "Structure databases to search in",
+            "description": "Structure databases to search in, If expansive search is enabled this DB selection will be expanded to PubChem\n if not high confidence hit was found in the selected databases.\n\n Defaults to BIO + Custom Databases. Possible values are available to Database API.",
             "items": {
-              "type": "string",
-              "enum": [
-                "ALL",
-                "ALL_BUT_INSILICO",
-                "BIO",
-                "PUBCHEM",
-                "MESH",
-                "HMDB",
-                "KNAPSACK",
-                "CHEBI",
-                "PUBMED",
-                "KEGG",
-                "HSDB",
-                "MACONDA",
-                "METACYC",
-                "GNPS",
-                "ZINCBIO",
-                "TRAIN",
-                "YMDB",
-                "PLANTCYC",
-                "NORMAN",
-                "SUPERNATURAL",
-                "COCONUT",
-                "BloodExposome",
-                "TeroMol",
-                "PUBCHEMANNOTATIONBIO",
-                "PUBCHEMANNOTATIONDRUG",
-                "PUBCHEMANNOTATIONSAFETYANDTOXIC",
-                "PUBCHEMANNOTATIONFOOD",
-                "LOTUS",
-                "FooDB",
-                "MiMeDB",
-                "LIPIDMAPS",
-                "LIPID",
-                "KEGGMINE",
-                "ECOCYCMINE",
-                "YMDBMINE",
-                "MASSBANK",
-                "DSSTox"
-              ]
+              "type": "string"
             }
           },
-          "tagLipids": {
+          "tagStructuresWithLipidClass": {
             "type": "boolean",
             "description": "Candidates matching the lipid class estimated by El Gordo will be tagged.\n The lipid class will only be available if El Gordo predicts that the MS/MS is a lipid spectrum.\n If this parameter is set to \u0027false\u0027 El Gordo will still be executed and e.g. improve the fragmentation\n tree, but the matching structure candidates will not be tagged if they match lipid class."
+          },
+          "expansiveSearchConfidenceMode": {
+            "$ref": "#/components/schemas/Mode"
           }
         },
-        "description": "User/developer friendly parameter subset for the CSI:FingerID structure db search tool."
+        "description": "User/developer friendly parameter subset for the CSI:FingerID structure db search tool.\n Needs results from FingerprintPrediction and Canopus Tool"
       },
       "Timeout": {
         "type": "object",
@@ -3595,7 +3643,7 @@
             "$ref": "#/components/schemas/ZodiacEpochs"
           }
         },
-        "description": "User/developer friendly parameter subset for the ZODIAC tool (Network base molecular formula re-ranking)."
+        "description": "User/developer friendly parameter subset for the ZODIAC tool (Network base molecular formula re-ranking).\n Needs results from Formula/SIRIUS Tool"
       },
       "ZodiacEdgeFilterThresholds": {
         "type": "object",
@@ -3717,11 +3765,21 @@
           "first": {
             "type": "boolean"
           },
+          "last": {
+            "type": "boolean"
+          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "last": {
-            "type": "boolean"
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectInfo"
+            }
           },
           "number": {
             "type": "integer",
@@ -3734,16 +3792,6 @@
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
           },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ProjectInfo"
-            }
-          },
           "empty": {
             "type": "boolean"
           }
@@ -3754,6 +3802,10 @@
         "properties": {
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "offset": {
+            "type": "integer",
+            "format": "int64"
           },
           "pageNumber": {
             "type": "integer",
@@ -3768,23 +3820,19 @@
           },
           "unpaged": {
             "type": "boolean"
-          },
-          "offset": {
-            "type": "integer",
-            "format": "int64"
           }
         }
       },
       "SortObject": {
         "type": "object",
         "properties": {
+          "empty": {
+            "type": "boolean"
+          },
           "sorted": {
             "type": "boolean"
           },
           "unsorted": {
-            "type": "boolean"
-          },
-          "empty": {
             "type": "boolean"
           }
         },
@@ -3804,11 +3852,21 @@
           "first": {
             "type": "boolean"
           },
+          "last": {
+            "type": "boolean"
+          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "last": {
-            "type": "boolean"
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Job"
+            }
           },
           "number": {
             "type": "integer",
@@ -3820,16 +3878,6 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Job"
-            }
           },
           "empty": {
             "type": "boolean"
@@ -3938,6 +3986,12 @@
             "description": "Collision energy used for MS/MS spectra\n Null for spectra where collision energy is not applicable",
             "nullable": true
           },
+          "precursorMz": {
+            "type": "number",
+            "description": "Precursor m/z of the MS/MS spectrum\n Null for spectra where precursor m/z is not applicable",
+            "format": "double",
+            "nullable": true
+          },
           "scanNumber": {
             "type": "integer",
             "description": "Scan number of the spectrum.\n Might be null for artificial spectra with no scan number (e.g. Simulated Isotope patterns or merged spectra)",
@@ -3949,6 +4003,52 @@
             "description": "The peaks of this spectrum which might contain additional annotations such as molecular formulas.",
             "items": {
               "$ref": "#/components/schemas/AnnotatedPeak"
+            }
+          },
+          "spectrumAnnotation": {
+            "$ref": "#/components/schemas/SpectrumAnnotation"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        },
+        "description": "",
+        "nullable": true
+      },
+      "BasicSpectrum": {
+        "required": [
+          "peaks"
+        ],
+        "type": "object",
+        "properties": {
+          "msLevel": {
+            "type": "integer",
+            "description": "MS level of the measured spectrum.\n Artificial spectra with no msLevel (e.g. Simulated Isotope patterns) use null or zero",
+            "format": "int32",
+            "nullable": true
+          },
+          "collisionEnergy": {
+            "type": "string",
+            "description": "Collision energy used for MS/MS spectra\n Null for spectra where collision energy is not applicable",
+            "nullable": true
+          },
+          "precursorMz": {
+            "type": "number",
+            "description": "Precursor m/z of the MS/MS spectrum\n Null for spectra where precursor m/z is not applicable",
+            "format": "double",
+            "nullable": true
+          },
+          "scanNumber": {
+            "type": "integer",
+            "description": "Scan number of the spectrum.\n Might be null for artificial spectra with no scan number (e.g. Simulated Isotope patterns or merged spectra)",
+            "format": "int32",
+            "nullable": true
+          },
+          "peaks": {
+            "type": "array",
+            "description": "The peaks of this spectrum which might contain additional annotations such as molecular formulas.",
+            "items": {
+              "$ref": "#/components/schemas/Peak"
             }
           },
           "empty": {
@@ -4330,6 +4430,9 @@
           "fragmentationTree": {
             "$ref": "#/components/schemas/FragmentationTree"
           },
+          "annotatedSpectrum": {
+            "$ref": "#/components/schemas/AnnotatedSpectrum"
+          },
           "isotopePatternAnnotation": {
             "$ref": "#/components/schemas/IsotopePatternAnnotation"
           },
@@ -4426,20 +4529,10 @@
         "type": "object",
         "properties": {
           "isotopePattern": {
-            "$ref": "#/components/schemas/AnnotatedSpectrum"
+            "$ref": "#/components/schemas/BasicSpectrum"
           },
           "simulatedPattern": {
-            "$ref": "#/components/schemas/AnnotatedSpectrum"
-          },
-          "ms1": {
-            "$ref": "#/components/schemas/AnnotatedSpectrum"
-          },
-          "peaksInMs1": {
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "format": "int32"
-            }
+            "$ref": "#/components/schemas/BasicSpectrum"
           }
         },
         "description": "",
@@ -4499,30 +4592,32 @@
         "description": ""
       },
       "MsData": {
+        "required": [
+          "ms1Spectra",
+          "ms2Spectra"
+        ],
         "type": "object",
         "properties": {
           "mergedMs1": {
-            "$ref": "#/components/schemas/AnnotatedSpectrum"
+            "$ref": "#/components/schemas/BasicSpectrum"
           },
           "mergedMs2": {
-            "$ref": "#/components/schemas/AnnotatedSpectrum"
-          },
-          "ms2Spectra": {
-            "type": "array",
-            "nullable": true,
-            "items": {
-              "$ref": "#/components/schemas/AnnotatedSpectrum"
-            }
+            "$ref": "#/components/schemas/BasicSpectrum"
           },
           "ms1Spectra": {
             "type": "array",
-            "nullable": true,
             "items": {
-              "$ref": "#/components/schemas/AnnotatedSpectrum"
+              "$ref": "#/components/schemas/BasicSpectrum"
+            }
+          },
+          "ms2Spectra": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BasicSpectrum"
             }
           }
         },
-        "description": "The MsData wraps all spectral input data belonging to a feature.\n\n Each Feature has:\n - One merged MS/MS spectrum (optional)\n - One merged MS spectrum (optional)\n - many MS/MS spectra\n - many MS spectra\n\n Each non-merged spectrum has an index which can be used to access the spectrum.\n\n In the future we might add some additional information like chromatographic peak or something similar",
+        "description": "The MsData wraps all spectral input data belonging to a feature.\n \u003cp\u003e\n Each Feature has:\n - One merged MS/MS spectrum (optional)\n - One merged MS spectrum (optional)\n - many MS/MS spectra\n - many MS spectra\n \u003cp\u003e\n Each non-merged spectrum has an index which can be used to access the spectrum.\n \u003cp\u003e\n In the future we might add some additional information like chromatographic peak or something similar",
         "nullable": true
       },
       "PageCompound": {
@@ -4539,11 +4634,21 @@
           "first": {
             "type": "boolean"
           },
+          "last": {
+            "type": "boolean"
+          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "last": {
-            "type": "boolean"
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Compound"
+            }
           },
           "number": {
             "type": "integer",
@@ -4556,30 +4661,175 @@
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
           },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Compound"
-            }
-          },
           "empty": {
             "type": "boolean"
+          }
+        }
+      },
+      "ParentPeak": {
+        "required": [
+          "lossFormula",
+          "parentIdx"
+        ],
+        "type": "object",
+        "properties": {
+          "parentIdx": {
+            "type": "integer",
+            "description": "Index to the parent peak connected via this loss",
+            "format": "int32"
+          },
+          "lossFormula": {
+            "type": "string",
+            "description": "Molecular formula of the neutral loss that connects these two peaks."
+          }
+        },
+        "description": "",
+        "nullable": true
+      },
+      "Peak": {
+        "type": "object",
+        "properties": {
+          "mass": {
+            "type": "number",
+            "format": "double"
+          },
+          "intensity": {
+            "type": "number",
+            "format": "double"
           }
         }
       },
       "PeakAnnotation": {
         "type": "object",
         "properties": {
-          "molecularFormula": {
+          "formula": {
             "type": "string",
+            "description": "Molecular formula that has been annotated to this peak",
+            "nullable": true
+          },
+          "ionization": {
+            "type": "string",
+            "description": "Ionization that has been annotated to this peak",
             "nullable": true
           },
           "exactMass": {
             "type": "number",
+            "description": "Exact mass of the annotated molecular formula and ionization",
+            "format": "double",
+            "nullable": true
+          },
+          "massDeviationMz": {
+            "type": "number",
+            "description": "Absolute mass deviation of the exact mass to the measured peak mass in mDa",
+            "format": "double",
+            "nullable": true
+          },
+          "massDeviationPpm": {
+            "type": "number",
+            "description": "Relative mass deviation of the exact mass to the measured peak mass in ppm",
+            "format": "double",
+            "nullable": true
+          },
+          "recalibratedMassDeviationMz": {
+            "type": "number",
+            "description": "Absolute mass deviation of the exact mass to the recalibrated peak mass in mDa",
+            "format": "double",
+            "nullable": true
+          },
+          "recalibratedMassDeviationPpm": {
+            "type": "number",
+            "description": "Relative mass deviation of the exact mass to the recalibrated peak mass in ppm",
+            "format": "double",
+            "nullable": true
+          },
+          "parentPeak": {
+            "$ref": "#/components/schemas/ParentPeak"
+          },
+          "substructureAtoms": {
+            "type": "array",
+            "description": "Array/List of indices of the atoms of the structure candidate that are part of this fragments substructure\n (highlighted atoms)",
+            "nullable": true,
+            "items": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            }
+          },
+          "substructureBonds": {
+            "type": "array",
+            "description": "Array/List of indices of the bonds of the structure candidate that are part of this fragments substructure\n (highlighted bonds)\n\n Null if substructure annotation not available or not requested.",
+            "nullable": true,
+            "items": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            }
+          },
+          "substructureBondsCut": {
+            "type": "array",
+            "description": "Array/List of indices of the bonds of the structure candidate that need to be cut to produce this fragments\n substructure (highlighted cutted bonds).\n\n Null if substructure annotation not available or not requested.",
+            "nullable": true,
+            "items": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            }
+          },
+          "substructureScore": {
+            "type": "number",
+            "description": "This score roughly reflects the probability of this fragment forming.\n\n This is the score of the path from root to this node which has the maximal score or \"profit\".\n The score of a path is equal to the sum of scores of its contained fragments and edges.\n Note: Refers to \u0027totalScore\u0027 in CombinatorialNode\n\n Null if substructure annotation not available or not requested.",
+            "format": "float",
+            "nullable": true
+          },
+          "hydrogenRearrangements": {
+            "type": "integer",
+            "description": "Number of hydrogens rearrangements needed to match the substructure to the fragment formula.\n\n Null if substructure annotation not available or not requested.",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "description": "",
+        "nullable": true
+      },
+      "SpectrumAnnotation": {
+        "type": "object",
+        "properties": {
+          "formula": {
+            "type": "string",
+            "description": "Molecular formula that has been annotated to this spectrum",
+            "nullable": true
+          },
+          "ionization": {
+            "type": "string",
+            "description": "Ionization that has been annotated to this spectrum",
+            "nullable": true
+          },
+          "exactMass": {
+            "type": "number",
+            "description": "Exact mass based on the annotated molecular formula and ionization",
+            "format": "double",
+            "nullable": true
+          },
+          "massDeviationMz": {
+            "type": "number",
+            "description": "Absolute mass deviation of the exact mass to the precursor mass (precursorMz) of this spectrum in mDa",
+            "format": "double",
+            "nullable": true
+          },
+          "massDeviationPpm": {
+            "type": "number",
+            "description": "Relative mass deviation of the exact mass to the precursor mass (precursorMz) of this spectrum in ppm",
+            "format": "double",
+            "nullable": true
+          },
+          "structureAnnotationSmiles": {
+            "type": "string",
+            "description": "Smiles of the structure candidate used to derive substructure peak annotations via epimetheus insilico fragmentation\n Substructure highlighting (bond and atom indices) refer to this specific SMILES.\n If you standardize or canonicalize this SMILES in any way the indices of substructure highlighting might\n not match correctly anymore.\n\n Null if substructure annotation not available or not requested.",
+            "nullable": true
+          },
+          "structureAnnotationScore": {
+            "type": "number",
+            "description": "Overall score of all substructure annotations computed for this structure candidate (structureAnnotationSmiles)\n\n Null if substructure annotation not available or not requested.",
             "format": "double",
             "nullable": true
           }
@@ -4699,11 +4949,21 @@
           "first": {
             "type": "boolean"
           },
+          "last": {
+            "type": "boolean"
+          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "last": {
-            "type": "boolean"
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlignedFeature"
+            }
           },
           "number": {
             "type": "integer",
@@ -4715,16 +4975,6 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AlignedFeature"
-            }
           },
           "empty": {
             "type": "boolean"
@@ -4756,11 +5006,21 @@
           "first": {
             "type": "boolean"
           },
+          "last": {
+            "type": "boolean"
+          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "last": {
-            "type": "boolean"
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StructureCandidateFormula"
+            }
           },
           "number": {
             "type": "integer",
@@ -4772,16 +5032,6 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/StructureCandidateFormula"
-            }
           },
           "empty": {
             "type": "boolean"
@@ -4863,6 +5113,7 @@
           "none",
           "statistics",
           "fragmentationTree",
+          "annotatedSpectrum",
           "isotopePattern",
           "lipidAnnotation",
           "predictedFingerprint",
@@ -4884,11 +5135,21 @@
           "first": {
             "type": "boolean"
           },
+          "last": {
+            "type": "boolean"
+          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "last": {
-            "type": "boolean"
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormulaCandidate"
+            }
           },
           "number": {
             "type": "integer",
@@ -4900,16 +5161,6 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/FormulaCandidate"
-            }
           },
           "empty": {
             "type": "boolean"
@@ -4930,11 +5181,21 @@
           "first": {
             "type": "boolean"
           },
+          "last": {
+            "type": "boolean"
+          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "last": {
-            "type": "boolean"
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StructureCandidateScored"
+            }
           },
           "number": {
             "type": "integer",
@@ -4946,16 +5207,6 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/StructureCandidateScored"
-            }
           },
           "empty": {
             "type": "boolean"

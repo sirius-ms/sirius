@@ -10,13 +10,13 @@
 |**totalPages** | **Integer** |  |  [optional] |
 |**totalElements** | **Long** |  |  [optional] |
 |**first** | **Boolean** |  |  [optional] |
-|**sort** | [**SortObject**](SortObject.md) |  |  [optional] |
 |**last** | **Boolean** |  |  [optional] |
+|**sort** | [**SortObject**](SortObject.md) |  |  [optional] |
+|**size** | **Integer** |  |  [optional] |
+|**content** | [**List&lt;FormulaCandidate&gt;**](FormulaCandidate.md) |  |  [optional] |
 |**number** | **Integer** |  |  [optional] |
 |**numberOfElements** | **Integer** |  |  [optional] |
 |**pageable** | [**PageableObject**](PageableObject.md) |  |  [optional] |
-|**size** | **Integer** |  |  [optional] |
-|**content** | [**List&lt;FormulaCandidate&gt;**](FormulaCandidate.md) |  |  [optional] |
 |**empty** | **Boolean** |  |  [optional] |
 
 

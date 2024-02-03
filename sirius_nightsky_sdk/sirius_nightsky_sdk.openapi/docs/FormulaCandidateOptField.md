@@ -11,6 +11,8 @@
 
 * `FRAGMENTATIONTREE` (value: `"fragmentationTree"`)
 
+* `ANNOTATEDSPECTRUM` (value: `"annotatedSpectrum"`)
+
 * `ISOTOPEPATTERN` (value: `"isotopePattern"`)
 
 * `LIPIDANNOTATION` (value: `"lipidAnnotation"`)

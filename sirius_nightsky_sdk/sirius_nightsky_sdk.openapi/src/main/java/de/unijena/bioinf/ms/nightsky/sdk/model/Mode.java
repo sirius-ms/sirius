@@ -24,29 +24,17 @@ import com.fasterxml.jackson.annotation.JsonValue;
 /**
  * 
  */
-public enum FormulaCandidateOptField {
+public enum Mode {
   
-  NONE("none"),
+  OFF("OFF"),
   
-  STATISTICS("statistics"),
+  EXACT("EXACT"),
   
-  FRAGMENTATIONTREE("fragmentationTree"),
-  
-  ANNOTATEDSPECTRUM("annotatedSpectrum"),
-  
-  ISOTOPEPATTERN("isotopePattern"),
-  
-  LIPIDANNOTATION("lipidAnnotation"),
-  
-  PREDICTEDFINGERPRINT("predictedFingerprint"),
-  
-  COMPOUNDCLASSES("compoundClasses"),
-  
-  CANOPUSPREDICTIONS("canopusPredictions");
+  APPROXIMATE("APPROXIMATE");
 
   private String value;
 
-  FormulaCandidateOptField(String value) {
+  Mode(String value) {
     this.value = value;
   }
 
@@ -61,13 +49,13 @@ public enum FormulaCandidateOptField {
   }
 
   @JsonCreator
-  public static FormulaCandidateOptField fromValue(String value) {
-    for (FormulaCandidateOptField b : FormulaCandidateOptField.values()) {
+  public static Mode fromValue(String value) {
+    for (Mode b : Mode.values()) {
       if (b.value.equals(value)) {
         return b;
       }
     }
-    return null;
+    throw new IllegalArgumentException("Unexpected value '" + value + "'");
   }
 }
 

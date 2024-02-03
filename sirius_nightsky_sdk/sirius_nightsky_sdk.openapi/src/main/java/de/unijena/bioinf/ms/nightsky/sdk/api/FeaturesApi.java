@@ -4,6 +4,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
 
 import de.unijena.bioinf.ms.nightsky.sdk.model.AlignedFeature;
 import de.unijena.bioinf.ms.nightsky.sdk.model.AlignedFeatureOptField;
+import de.unijena.bioinf.ms.nightsky.sdk.model.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.nightsky.sdk.model.CanopusPrediction;
 import de.unijena.bioinf.ms.nightsky.sdk.model.CompoundClasses;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FormulaCandidate;
@@ -610,6 +611,98 @@ public class FeaturesApi {
         return getFingerprintPredictionRequestCreation(projectId, alignedFeatureId, formulaId);
     }
     /**
+     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+     * <p><b>200</b> - Fragmentation spectrum annotated with fragment formulas and losses.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param formulaId identifier of the requested formula result
+     * @return AnnotatedSpectrum
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getFormulaAnnotatedSpectrumRequestCreation(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getFormulaAnnotatedSpectrum", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'alignedFeatureId' is set
+        if (alignedFeatureId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getFormulaAnnotatedSpectrum", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'formulaId' is set
+        if (formulaId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'formulaId' when calling getFormulaAnnotatedSpectrum", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("alignedFeatureId", alignedFeatureId);
+        pathParams.put("formulaId", formulaId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<AnnotatedSpectrum> localVarReturnType = new ParameterizedTypeReference<AnnotatedSpectrum>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/annotated-spectrum", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+     * <p><b>200</b> - Fragmentation spectrum annotated with fragment formulas and losses.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param formulaId identifier of the requested formula result
+     * @return AnnotatedSpectrum
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public AnnotatedSpectrum getFormulaAnnotatedSpectrum(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+        ParameterizedTypeReference<AnnotatedSpectrum> localVarReturnType = new ParameterizedTypeReference<AnnotatedSpectrum>() {};
+        return getFormulaAnnotatedSpectrumRequestCreation(projectId, alignedFeatureId, formulaId).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+     * <p><b>200</b> - Fragmentation spectrum annotated with fragment formulas and losses.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param formulaId identifier of the requested formula result
+     * @return ResponseEntity&lt;AnnotatedSpectrum&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<AnnotatedSpectrum> getFormulaAnnotatedSpectrumWithHttpInfo(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+        ParameterizedTypeReference<AnnotatedSpectrum> localVarReturnType = new ParameterizedTypeReference<AnnotatedSpectrum>() {};
+        return getFormulaAnnotatedSpectrumRequestCreation(projectId, alignedFeatureId, formulaId).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+     * <p><b>200</b> - Fragmentation spectrum annotated with fragment formulas and losses.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param formulaId identifier of the requested formula result
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getFormulaAnnotatedSpectrumWithResponseSpec(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+        return getFormulaAnnotatedSpectrumRequestCreation(projectId, alignedFeatureId, formulaId);
+    }
+    /**
      * FormulaResultContainers for the given &#39;formulaId&#39; with minimal information.
      * FormulaResultContainers for the given &#39;formulaId&#39; with minimal information.  Can be enriched with an optional results overview and formula candidate information.
      * <p><b>200</b> - FormulaCandidate of this feature (aligned over runs) with.
@@ -914,6 +1007,98 @@ public class FeaturesApi {
         return getFragTreeRequestCreation(projectId, alignedFeatureId, formulaId);
     }
     /**
+     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier.
+     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).
+     * <p><b>200</b> - Isotope pattern information
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param formulaId identifier of the requested formula result
+     * @return IsotopePatternAnnotation
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getIsotopePatternAnnotationRequestCreation(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getIsotopePatternAnnotation", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'alignedFeatureId' is set
+        if (alignedFeatureId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getIsotopePatternAnnotation", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'formulaId' is set
+        if (formulaId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'formulaId' when calling getIsotopePatternAnnotation", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("alignedFeatureId", alignedFeatureId);
+        pathParams.put("formulaId", formulaId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<IsotopePatternAnnotation> localVarReturnType = new ParameterizedTypeReference<IsotopePatternAnnotation>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/isotope-pattern", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier.
+     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).
+     * <p><b>200</b> - Isotope pattern information
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param formulaId identifier of the requested formula result
+     * @return IsotopePatternAnnotation
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public IsotopePatternAnnotation getIsotopePatternAnnotation(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+        ParameterizedTypeReference<IsotopePatternAnnotation> localVarReturnType = new ParameterizedTypeReference<IsotopePatternAnnotation>() {};
+        return getIsotopePatternAnnotationRequestCreation(projectId, alignedFeatureId, formulaId).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier.
+     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).
+     * <p><b>200</b> - Isotope pattern information
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param formulaId identifier of the requested formula result
+     * @return ResponseEntity&lt;IsotopePatternAnnotation&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<IsotopePatternAnnotation> getIsotopePatternAnnotationWithHttpInfo(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+        ParameterizedTypeReference<IsotopePatternAnnotation> localVarReturnType = new ParameterizedTypeReference<IsotopePatternAnnotation>() {};
+        return getIsotopePatternAnnotationRequestCreation(projectId, alignedFeatureId, formulaId).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier.
+     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).
+     * <p><b>200</b> - Isotope pattern information
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param formulaId identifier of the requested formula result
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getIsotopePatternAnnotationWithResponseSpec(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+        return getIsotopePatternAnnotationRequestCreation(projectId, alignedFeatureId, formulaId);
+    }
+    /**
      * Returns Lipid annotation (ElGordo) for the given formula result identifier.
      * Returns Lipid annotation (ElGordo) for the given formula result identifier.  ElGordo lipid annotation runs as part of the SIRIUS formula identification step.
      * <p><b>200</b> - LipidAnnotation
@@ -1089,98 +1274,6 @@ public class FeaturesApi {
         return getMsDataRequestCreation(projectId, alignedFeatureId);
     }
     /**
-     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier.
-     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).
-     * <p><b>200</b> - Isotope pattern information
-     * @param projectId project-space to read from.
-     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
-     * @param formulaId identifier of the requested formula result
-     * @return IsotopePatternAnnotation
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    private ResponseSpec getSimulatedIsotopePatternRequestCreation(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
-        Object postBody = null;
-        // verify the required parameter 'projectId' is set
-        if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getSimulatedIsotopePattern", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // verify the required parameter 'alignedFeatureId' is set
-        if (alignedFeatureId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getSimulatedIsotopePattern", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // verify the required parameter 'formulaId' is set
-        if (formulaId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'formulaId' when calling getSimulatedIsotopePattern", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // create path and map variables
-        final Map<String, Object> pathParams = new HashMap<String, Object>();
-
-        pathParams.put("projectId", projectId);
-        pathParams.put("alignedFeatureId", alignedFeatureId);
-        pathParams.put("formulaId", formulaId);
-
-        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
-        final HttpHeaders headerParams = new HttpHeaders();
-        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
-        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
-
-        final String[] localVarAccepts = { 
-            "application/json"
-        };
-        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
-        final String[] localVarContentTypes = { };
-        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
-
-        String[] localVarAuthNames = new String[] {  };
-
-        ParameterizedTypeReference<IsotopePatternAnnotation> localVarReturnType = new ParameterizedTypeReference<IsotopePatternAnnotation>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/isotope-pattern", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
-    }
-
-    /**
-     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier.
-     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).
-     * <p><b>200</b> - Isotope pattern information
-     * @param projectId project-space to read from.
-     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
-     * @param formulaId identifier of the requested formula result
-     * @return IsotopePatternAnnotation
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public IsotopePatternAnnotation getSimulatedIsotopePattern(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
-        ParameterizedTypeReference<IsotopePatternAnnotation> localVarReturnType = new ParameterizedTypeReference<IsotopePatternAnnotation>() {};
-        return getSimulatedIsotopePatternRequestCreation(projectId, alignedFeatureId, formulaId).bodyToMono(localVarReturnType).block();
-    }
-
-    /**
-     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier.
-     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).
-     * <p><b>200</b> - Isotope pattern information
-     * @param projectId project-space to read from.
-     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
-     * @param formulaId identifier of the requested formula result
-     * @return ResponseEntity&lt;IsotopePatternAnnotation&gt;
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseEntity<IsotopePatternAnnotation> getSimulatedIsotopePatternWithHttpInfo(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
-        ParameterizedTypeReference<IsotopePatternAnnotation> localVarReturnType = new ParameterizedTypeReference<IsotopePatternAnnotation>() {};
-        return getSimulatedIsotopePatternRequestCreation(projectId, alignedFeatureId, formulaId).toEntity(localVarReturnType).block();
-    }
-
-    /**
-     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier.
-     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).
-     * <p><b>200</b> - Isotope pattern information
-     * @param projectId project-space to read from.
-     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
-     * @param formulaId identifier of the requested formula result
-     * @return ResponseSpec
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseSpec getSimulatedIsotopePatternWithResponseSpec(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
-        return getSimulatedIsotopePatternRequestCreation(projectId, alignedFeatureId, formulaId);
-    }
-    /**
      * 
      * 
      * <p><b>200</b> - OK
@@ -1273,6 +1366,107 @@ public class FeaturesApi {
      */
     public ResponseSpec getSiriusFragTreeWithResponseSpec(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
         return getSiriusFragTreeRequestCreation(projectId, alignedFeatureId, formulaId);
+    }
+    /**
+     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+     * <p><b>200</b> - Fragmentation spectrum annotated with fragments and sub-structures.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param formulaId identifier of the requested formula result
+     * @param inchiKey 2d InChIKey of the structure candidate to be used to annotate the spectrum annotation
+     * @return AnnotatedSpectrum
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getStructureAnnotatedSpectrumRequestCreation(String projectId, String alignedFeatureId, String formulaId, String inchiKey) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getStructureAnnotatedSpectrum", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'alignedFeatureId' is set
+        if (alignedFeatureId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getStructureAnnotatedSpectrum", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'formulaId' is set
+        if (formulaId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'formulaId' when calling getStructureAnnotatedSpectrum", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'inchiKey' is set
+        if (inchiKey == null) {
+            throw new WebClientResponseException("Missing the required parameter 'inchiKey' when calling getStructureAnnotatedSpectrum", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("alignedFeatureId", alignedFeatureId);
+        pathParams.put("formulaId", formulaId);
+        pathParams.put("inchiKey", inchiKey);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<AnnotatedSpectrum> localVarReturnType = new ParameterizedTypeReference<AnnotatedSpectrum>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-spectrum", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+     * <p><b>200</b> - Fragmentation spectrum annotated with fragments and sub-structures.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param formulaId identifier of the requested formula result
+     * @param inchiKey 2d InChIKey of the structure candidate to be used to annotate the spectrum annotation
+     * @return AnnotatedSpectrum
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public AnnotatedSpectrum getStructureAnnotatedSpectrum(String projectId, String alignedFeatureId, String formulaId, String inchiKey) throws WebClientResponseException {
+        ParameterizedTypeReference<AnnotatedSpectrum> localVarReturnType = new ParameterizedTypeReference<AnnotatedSpectrum>() {};
+        return getStructureAnnotatedSpectrumRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+     * <p><b>200</b> - Fragmentation spectrum annotated with fragments and sub-structures.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param formulaId identifier of the requested formula result
+     * @param inchiKey 2d InChIKey of the structure candidate to be used to annotate the spectrum annotation
+     * @return ResponseEntity&lt;AnnotatedSpectrum&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<AnnotatedSpectrum> getStructureAnnotatedSpectrumWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, String inchiKey) throws WebClientResponseException {
+        ParameterizedTypeReference<AnnotatedSpectrum> localVarReturnType = new ParameterizedTypeReference<AnnotatedSpectrum>() {};
+        return getStructureAnnotatedSpectrumRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+     * <p><b>200</b> - Fragmentation spectrum annotated with fragments and sub-structures.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param formulaId identifier of the requested formula result
+     * @param inchiKey 2d InChIKey of the structure candidate to be used to annotate the spectrum annotation
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getStructureAnnotatedSpectrumWithResponseSpec(String projectId, String alignedFeatureId, String formulaId, String inchiKey) throws WebClientResponseException {
+        return getStructureAnnotatedSpectrumRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey);
     }
     /**
      * List of StructureCandidates for the given &#39;alignedFeatureId&#39; with minimal information.

@@ -36,13 +36,13 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   PageStructureCandidateScored.JSON_PROPERTY_TOTAL_PAGES,
   PageStructureCandidateScored.JSON_PROPERTY_TOTAL_ELEMENTS,
   PageStructureCandidateScored.JSON_PROPERTY_FIRST,
-  PageStructureCandidateScored.JSON_PROPERTY_SORT,
   PageStructureCandidateScored.JSON_PROPERTY_LAST,
+  PageStructureCandidateScored.JSON_PROPERTY_SORT,
+  PageStructureCandidateScored.JSON_PROPERTY_SIZE,
+  PageStructureCandidateScored.JSON_PROPERTY_CONTENT,
   PageStructureCandidateScored.JSON_PROPERTY_NUMBER,
   PageStructureCandidateScored.JSON_PROPERTY_NUMBER_OF_ELEMENTS,
   PageStructureCandidateScored.JSON_PROPERTY_PAGEABLE,
-  PageStructureCandidateScored.JSON_PROPERTY_SIZE,
-  PageStructureCandidateScored.JSON_PROPERTY_CONTENT,
   PageStructureCandidateScored.JSON_PROPERTY_EMPTY
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
@@ -56,11 +56,17 @@ public class PageStructureCandidateScored {
   public static final String JSON_PROPERTY_FIRST = "first";
   private Boolean first;
 
+  public static final String JSON_PROPERTY_LAST = "last";
+  private Boolean last;
+
   public static final String JSON_PROPERTY_SORT = "sort";
   private SortObject sort;
 
-  public static final String JSON_PROPERTY_LAST = "last";
-  private Boolean last;
+  public static final String JSON_PROPERTY_SIZE = "size";
+  private Integer size;
+
+  public static final String JSON_PROPERTY_CONTENT = "content";
+  private List<StructureCandidateScored> content;
 
   public static final String JSON_PROPERTY_NUMBER = "number";
   private Integer number;
@@ -70,12 +76,6 @@ public class PageStructureCandidateScored {
 
   public static final String JSON_PROPERTY_PAGEABLE = "pageable";
   private PageableObject pageable;
-
-  public static final String JSON_PROPERTY_SIZE = "size";
-  private Integer size;
-
-  public static final String JSON_PROPERTY_CONTENT = "content";
-  private List<StructureCandidateScored> content;
 
   public static final String JSON_PROPERTY_EMPTY = "empty";
   private Boolean empty;
@@ -161,6 +161,32 @@ public class PageStructureCandidateScored {
   }
 
 
+  public PageStructureCandidateScored last(Boolean last) {
+    
+    this.last = last;
+    return this;
+  }
+
+   /**
+   * Get last
+   * @return last
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_LAST)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Boolean isLast() {
+    return last;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_LAST)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setLast(Boolean last) {
+    this.last = last;
+  }
+
+
   public PageStructureCandidateScored sort(SortObject sort) {
     
     this.sort = sort;
@@ -187,29 +213,63 @@ public class PageStructureCandidateScored {
   }
 
 
-  public PageStructureCandidateScored last(Boolean last) {
+  public PageStructureCandidateScored size(Integer size) {
     
-    this.last = last;
+    this.size = size;
     return this;
   }
 
    /**
-   * Get last
-   * @return last
+   * Get size
+   * @return size
   **/
   @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_LAST)
+  @JsonProperty(JSON_PROPERTY_SIZE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Boolean isLast() {
-    return last;
+  public Integer getSize() {
+    return size;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_LAST)
+  @JsonProperty(JSON_PROPERTY_SIZE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setLast(Boolean last) {
-    this.last = last;
+  public void setSize(Integer size) {
+    this.size = size;
+  }
+
+
+  public PageStructureCandidateScored content(List<StructureCandidateScored> content) {
+    
+    this.content = content;
+    return this;
+  }
+
+  public PageStructureCandidateScored addContentItem(StructureCandidateScored contentItem) {
+    if (this.content == null) {
+      this.content = new ArrayList<>();
+    }
+    this.content.add(contentItem);
+    return this;
+  }
+
+   /**
+   * Get content
+   * @return content
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_CONTENT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public List<StructureCandidateScored> getContent() {
+    return content;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_CONTENT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setContent(List<StructureCandidateScored> content) {
+    this.content = content;
   }
 
 
@@ -291,66 +351,6 @@ public class PageStructureCandidateScored {
   }
 
 
-  public PageStructureCandidateScored size(Integer size) {
-    
-    this.size = size;
-    return this;
-  }
-
-   /**
-   * Get size
-   * @return size
-  **/
-  @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SIZE)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Integer getSize() {
-    return size;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_SIZE)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSize(Integer size) {
-    this.size = size;
-  }
-
-
-  public PageStructureCandidateScored content(List<StructureCandidateScored> content) {
-    
-    this.content = content;
-    return this;
-  }
-
-  public PageStructureCandidateScored addContentItem(StructureCandidateScored contentItem) {
-    if (this.content == null) {
-      this.content = new ArrayList<>();
-    }
-    this.content.add(contentItem);
-    return this;
-  }
-
-   /**
-   * Get content
-   * @return content
-  **/
-  @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_CONTENT)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public List<StructureCandidateScored> getContent() {
-    return content;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_CONTENT)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setContent(List<StructureCandidateScored> content) {
-    this.content = content;
-  }
-
-
   public PageStructureCandidateScored empty(Boolean empty) {
     
     this.empty = empty;
@@ -388,19 +388,19 @@ public class PageStructureCandidateScored {
     return Objects.equals(this.totalPages, pageStructureCandidateScored.totalPages) &&
         Objects.equals(this.totalElements, pageStructureCandidateScored.totalElements) &&
         Objects.equals(this.first, pageStructureCandidateScored.first) &&
-        Objects.equals(this.sort, pageStructureCandidateScored.sort) &&
         Objects.equals(this.last, pageStructureCandidateScored.last) &&
+        Objects.equals(this.sort, pageStructureCandidateScored.sort) &&
+        Objects.equals(this.size, pageStructureCandidateScored.size) &&
+        Objects.equals(this.content, pageStructureCandidateScored.content) &&
         Objects.equals(this.number, pageStructureCandidateScored.number) &&
         Objects.equals(this.numberOfElements, pageStructureCandidateScored.numberOfElements) &&
         Objects.equals(this.pageable, pageStructureCandidateScored.pageable) &&
-        Objects.equals(this.size, pageStructureCandidateScored.size) &&
-        Objects.equals(this.content, pageStructureCandidateScored.content) &&
         Objects.equals(this.empty, pageStructureCandidateScored.empty);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(totalPages, totalElements, first, sort, last, number, numberOfElements, pageable, size, content, empty);
+    return Objects.hash(totalPages, totalElements, first, last, sort, size, content, number, numberOfElements, pageable, empty);
   }
 
   @Override
@@ -410,13 +410,13 @@ public class PageStructureCandidateScored {
     sb.append("    totalPages: ").append(toIndentedString(totalPages)).append("\n");
     sb.append("    totalElements: ").append(toIndentedString(totalElements)).append("\n");
     sb.append("    first: ").append(toIndentedString(first)).append("\n");
-    sb.append("    sort: ").append(toIndentedString(sort)).append("\n");
     sb.append("    last: ").append(toIndentedString(last)).append("\n");
+    sb.append("    sort: ").append(toIndentedString(sort)).append("\n");
+    sb.append("    size: ").append(toIndentedString(size)).append("\n");
+    sb.append("    content: ").append(toIndentedString(content)).append("\n");
     sb.append("    number: ").append(toIndentedString(number)).append("\n");
     sb.append("    numberOfElements: ").append(toIndentedString(numberOfElements)).append("\n");
     sb.append("    pageable: ").append(toIndentedString(pageable)).append("\n");
-    sb.append("    size: ").append(toIndentedString(size)).append("\n");
-    sb.append("    content: ").append(toIndentedString(content)).append("\n");
     sb.append("    empty: ").append(toIndentedString(empty)).append("\n");
     sb.append("}");
     return sb.toString();

@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * User/developer friendly parameter subset for the CSI:FingerID Fingerprint tool
+ * User/developer friendly parameter subset for the CSI:FingerID Fingerprint tool  Needs results from Formula/SIRIUS Tool
  */
 @JsonPropertyOrder({
   FingerprintPrediction.JSON_PROPERTY_ENABLED,

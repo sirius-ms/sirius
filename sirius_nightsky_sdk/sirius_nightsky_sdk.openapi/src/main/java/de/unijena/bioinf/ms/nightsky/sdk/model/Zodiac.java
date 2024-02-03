@@ -26,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * User/developer friendly parameter subset for the ZODIAC tool (Network base molecular formula re-ranking).
+ * User/developer friendly parameter subset for the ZODIAC tool (Network base molecular formula re-ranking).  Needs results from Formula/SIRIUS Tool
  */
 @JsonPropertyOrder({
   Zodiac.JSON_PROPERTY_ENABLED,

@@ -10,13 +10,13 @@
 |**totalPages** | **Integer** |  |  [optional] |
 |**totalElements** | **Long** |  |  [optional] |
 |**first** | **Boolean** |  |  [optional] |
-|**sort** | [**SortObject**](SortObject.md) |  |  [optional] |
 |**last** | **Boolean** |  |  [optional] |
+|**sort** | [**SortObject**](SortObject.md) |  |  [optional] |
+|**size** | **Integer** |  |  [optional] |
+|**content** | [**List&lt;StructureCandidateFormula&gt;**](StructureCandidateFormula.md) |  |  [optional] |
 |**number** | **Integer** |  |  [optional] |
 |**numberOfElements** | **Integer** |  |  [optional] |
 |**pageable** | [**PageableObject**](PageableObject.md) |  |  [optional] |
-|**size** | **Integer** |  |  [optional] |
-|**content** | [**List&lt;StructureCandidateFormula&gt;**](StructureCandidateFormula.md) |  |  [optional] |
 |**empty** | **Boolean** |  |  [optional] |
 
 

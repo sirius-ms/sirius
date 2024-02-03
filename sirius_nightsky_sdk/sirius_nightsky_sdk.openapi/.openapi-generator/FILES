@@ -6,6 +6,7 @@ docs/AlignedFeatureOptField.md
 docs/AnnotatedPeak.md
 docs/AnnotatedSpectrum.md
 docs/BackgroundComputationsStateEvent.md
+docs/BasicSpectrum.md
 docs/BinaryFingerprint.md
 docs/Canopus.md
 docs/CanopusPrediction.md
@@ -50,6 +51,7 @@ docs/LicenseInfo.md
 docs/LipidAnnotation.md
 docs/LoginAndAccountApi.md
 docs/LossEdge.md
+docs/Mode.md
 docs/MsData.md
 docs/PageAlignedFeature.md
 docs/PageCompound.md
@@ -59,6 +61,8 @@ docs/PageProjectInfo.md
 docs/PageStructureCandidateFormula.md
 docs/PageStructureCandidateScored.md
 docs/PageableObject.md
+docs/ParentPeak.md
+docs/Peak.md
 docs/PeakAnnotation.md
 docs/ProjectChangeEvent.md
 docs/ProjectInfo.md
@@ -67,6 +71,7 @@ docs/ProjectsApi.md
 docs/SearchQueryType.md
 docs/Sirius.md
 docs/SortObject.md
+docs/SpectrumAnnotation.md
 docs/StructureCandidate.md
 docs/StructureCandidateFormula.md
 docs/StructureCandidateOptField.md
@@ -106,6 +111,7 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/AlignedFeatureOptField.jav
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/AnnotatedPeak.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/AnnotatedSpectrum.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/BackgroundComputationsStateEvent.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/BasicSpectrum.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/BinaryFingerprint.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Canopus.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/CanopusPrediction.java
@@ -144,6 +150,7 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/JobSubmission.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/LicenseInfo.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/LipidAnnotation.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/LossEdge.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Mode.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/MsData.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageAlignedFeature.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageCompound.java
@@ -153,6 +160,8 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageProjectInfo.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageStructureCandidateFormula.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageStructureCandidateScored.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageableObject.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ParentPeak.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Peak.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PeakAnnotation.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ProjectChangeEvent.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ProjectInfo.java
@@ -160,6 +169,7 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ProjectInfoOptField.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SearchQueryType.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Sirius.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SortObject.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SpectrumAnnotation.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/StructureCandidate.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/StructureCandidateFormula.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/StructureCandidateOptField.java

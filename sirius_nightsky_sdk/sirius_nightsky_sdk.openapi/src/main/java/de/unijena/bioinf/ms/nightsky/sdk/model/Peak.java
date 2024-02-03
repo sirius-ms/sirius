@@ -20,77 +20,76 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import de.unijena.bioinf.ms.nightsky.sdk.model.BasicSpectrum;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * 
+ * Peak
  */
 @JsonPropertyOrder({
-  IsotopePatternAnnotation.JSON_PROPERTY_ISOTOPE_PATTERN,
-  IsotopePatternAnnotation.JSON_PROPERTY_SIMULATED_PATTERN
+  Peak.JSON_PROPERTY_MASS,
+  Peak.JSON_PROPERTY_INTENSITY
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
-public class IsotopePatternAnnotation {
-  public static final String JSON_PROPERTY_ISOTOPE_PATTERN = "isotopePattern";
-  private BasicSpectrum isotopePattern;
+public class Peak {
+  public static final String JSON_PROPERTY_MASS = "mass";
+  private Double mass;
 
-  public static final String JSON_PROPERTY_SIMULATED_PATTERN = "simulatedPattern";
-  private BasicSpectrum simulatedPattern;
+  public static final String JSON_PROPERTY_INTENSITY = "intensity";
+  private Double intensity;
 
-  public IsotopePatternAnnotation() {
+  public Peak() {
   }
 
-  public IsotopePatternAnnotation isotopePattern(BasicSpectrum isotopePattern) {
+  public Peak mass(Double mass) {
     
-    this.isotopePattern = isotopePattern;
+    this.mass = mass;
     return this;
   }
 
    /**
-   * Get isotopePattern
-   * @return isotopePattern
+   * Get mass
+   * @return mass
   **/
   @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ISOTOPE_PATTERN)
+  @JsonProperty(JSON_PROPERTY_MASS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public BasicSpectrum getIsotopePattern() {
-    return isotopePattern;
+  public Double getMass() {
+    return mass;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ISOTOPE_PATTERN)
+  @JsonProperty(JSON_PROPERTY_MASS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setIsotopePattern(BasicSpectrum isotopePattern) {
-    this.isotopePattern = isotopePattern;
+  public void setMass(Double mass) {
+    this.mass = mass;
   }
 
 
-  public IsotopePatternAnnotation simulatedPattern(BasicSpectrum simulatedPattern) {
+  public Peak intensity(Double intensity) {
     
-    this.simulatedPattern = simulatedPattern;
+    this.intensity = intensity;
     return this;
   }
 
    /**
-   * Get simulatedPattern
-   * @return simulatedPattern
+   * Get intensity
+   * @return intensity
   **/
   @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SIMULATED_PATTERN)
+  @JsonProperty(JSON_PROPERTY_INTENSITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public BasicSpectrum getSimulatedPattern() {
-    return simulatedPattern;
+  public Double getIntensity() {
+    return intensity;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SIMULATED_PATTERN)
+  @JsonProperty(JSON_PROPERTY_INTENSITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSimulatedPattern(BasicSpectrum simulatedPattern) {
-    this.simulatedPattern = simulatedPattern;
+  public void setIntensity(Double intensity) {
+    this.intensity = intensity;
   }
 
   @Override
@@ -101,22 +100,22 @@ public class IsotopePatternAnnotation {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    IsotopePatternAnnotation isotopePatternAnnotation = (IsotopePatternAnnotation) o;
-    return Objects.equals(this.isotopePattern, isotopePatternAnnotation.isotopePattern) &&
-        Objects.equals(this.simulatedPattern, isotopePatternAnnotation.simulatedPattern);
+    Peak peak = (Peak) o;
+    return Objects.equals(this.mass, peak.mass) &&
+        Objects.equals(this.intensity, peak.intensity);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(isotopePattern, simulatedPattern);
+    return Objects.hash(mass, intensity);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class IsotopePatternAnnotation {\n");
-    sb.append("    isotopePattern: ").append(toIndentedString(isotopePattern)).append("\n");
-    sb.append("    simulatedPattern: ").append(toIndentedString(simulatedPattern)).append("\n");
+    sb.append("class Peak {\n");
+    sb.append("    mass: ").append(toIndentedString(mass)).append("\n");
+    sb.append("    intensity: ").append(toIndentedString(intensity)).append("\n");
     sb.append("}");
     return sb.toString();
   }

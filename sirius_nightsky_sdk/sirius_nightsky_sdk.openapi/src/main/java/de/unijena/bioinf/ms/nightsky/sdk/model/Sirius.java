@@ -103,113 +103,8 @@ public class Sirius {
   public static final String JSON_PROPERTY_ISOTOPE_MS2_SETTINGS = "isotopeMs2Settings";
   private IsotopeMs2SettingsEnum isotopeMs2Settings;
 
-  /**
-   * Gets or Sets formulaSearchDBs
-   */
-  public enum FormulaSearchDBsEnum {
-    ALL("ALL"),
-    
-    ALL_BUT_INSILICO("ALL_BUT_INSILICO"),
-    
-    BIO("BIO"),
-    
-    PUBCHEM("PUBCHEM"),
-    
-    MESH("MESH"),
-    
-    HMDB("HMDB"),
-    
-    KNAPSACK("KNAPSACK"),
-    
-    CHEBI("CHEBI"),
-    
-    PUBMED("PUBMED"),
-    
-    KEGG("KEGG"),
-    
-    HSDB("HSDB"),
-    
-    MACONDA("MACONDA"),
-    
-    METACYC("METACYC"),
-    
-    GNPS("GNPS"),
-    
-    ZINCBIO("ZINCBIO"),
-    
-    TRAIN("TRAIN"),
-    
-    YMDB("YMDB"),
-    
-    PLANTCYC("PLANTCYC"),
-    
-    NORMAN("NORMAN"),
-    
-    SUPERNATURAL("SUPERNATURAL"),
-    
-    COCONUT("COCONUT"),
-    
-    BLOODEXPOSOME("BloodExposome"),
-    
-    TEROMOL("TeroMol"),
-    
-    PUBCHEMANNOTATIONBIO("PUBCHEMANNOTATIONBIO"),
-    
-    PUBCHEMANNOTATIONDRUG("PUBCHEMANNOTATIONDRUG"),
-    
-    PUBCHEMANNOTATIONSAFETYANDTOXIC("PUBCHEMANNOTATIONSAFETYANDTOXIC"),
-    
-    PUBCHEMANNOTATIONFOOD("PUBCHEMANNOTATIONFOOD"),
-    
-    LOTUS("LOTUS"),
-    
-    FOODB("FooDB"),
-    
-    MIMEDB("MiMeDB"),
-    
-    LIPIDMAPS("LIPIDMAPS"),
-    
-    LIPID("LIPID"),
-    
-    KEGGMINE("KEGGMINE"),
-    
-    ECOCYCMINE("ECOCYCMINE"),
-    
-    YMDBMINE("YMDBMINE"),
-    
-    MASSBANK("MASSBANK"),
-    
-    DSSTOX("DSSTox");
-
-    private String value;
-
-    FormulaSearchDBsEnum(String value) {
-      this.value = value;
-    }
-
-    @JsonValue
-    public String getValue() {
-      return value;
-    }
-
-    @Override
-    public String toString() {
-      return String.valueOf(value);
-    }
-
-    @JsonCreator
-    public static FormulaSearchDBsEnum fromValue(String value) {
-      for (FormulaSearchDBsEnum b : FormulaSearchDBsEnum.values()) {
-        if (b.value.equals(value)) {
-          return b;
-        }
-      }
-      throw new IllegalArgumentException("Unexpected value '" + value + "'");
-    }
-  }
-
   public static final String JSON_PROPERTY_FORMULA_SEARCH_D_BS = "formulaSearchDBs";
-  private List<FormulaSearchDBsEnum> formulaSearchDBs;
+  private List<String> formulaSearchDBs;
 
   public static final String JSON_PROPERTY_ENFORCED_FORMULA_CONSTRAINTS = "enforcedFormulaConstraints";
   private String enforcedFormulaConstraints;
@@ -385,13 +280,13 @@ public class Sirius {
   }
 
 
-  public Sirius formulaSearchDBs(List<FormulaSearchDBsEnum> formulaSearchDBs) {
+  public Sirius formulaSearchDBs(List<String> formulaSearchDBs) {
     
     this.formulaSearchDBs = formulaSearchDBs;
     return this;
   }
 
-  public Sirius addFormulaSearchDBsItem(FormulaSearchDBsEnum formulaSearchDBsItem) {
+  public Sirius addFormulaSearchDBsItem(String formulaSearchDBsItem) {
     if (this.formulaSearchDBs == null) {
       this.formulaSearchDBs = new ArrayList<>();
     }
@@ -407,14 +302,14 @@ public class Sirius {
   @JsonProperty(JSON_PROPERTY_FORMULA_SEARCH_D_BS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public List<FormulaSearchDBsEnum> getFormulaSearchDBs() {
+  public List<String> getFormulaSearchDBs() {
     return formulaSearchDBs;
   }
 
 
   @JsonProperty(JSON_PROPERTY_FORMULA_SEARCH_D_BS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setFormulaSearchDBs(List<FormulaSearchDBsEnum> formulaSearchDBs) {
+  public void setFormulaSearchDBs(List<String> formulaSearchDBs) {
     this.formulaSearchDBs = formulaSearchDBs;
   }
 

@@ -125,13 +125,15 @@ Class | Method | HTTP request | Description
 *FeaturesApi* | [**getBestMatchingCompoundClasses**](docs/FeaturesApi.md#getBestMatchingCompoundClasses) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/best-compound-classes | Best matching compound classes,  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
 *FeaturesApi* | [**getCanopusPrediction**](docs/FeaturesApi.md#getCanopusPrediction) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/canopus-prediction | All predicted compound classes (CANOPUS) from ClassyFire and NPC and their probabilities,
 *FeaturesApi* | [**getFingerprintPrediction**](docs/FeaturesApi.md#getFingerprintPrediction) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/fingerprint | Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier  This fingerprint is used to perform structure database search and predict compound classes.
+*FeaturesApi* | [**getFormulaAnnotatedSpectrum**](docs/FeaturesApi.md#getFormulaAnnotatedSpectrum) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/annotated-spectrum | Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
 *FeaturesApi* | [**getFormulaCandidate**](docs/FeaturesApi.md#getFormulaCandidate) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId} | FormulaResultContainers for the given &#39;formulaId&#39; with minimal information.
 *FeaturesApi* | [**getFormulaCandidates**](docs/FeaturesApi.md#getFormulaCandidates) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas | List of all FormulaResultContainers available for this feature with minimal information.
 *FeaturesApi* | [**getFragTree**](docs/FeaturesApi.md#getFragTree) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/tree | Returns fragmentation tree (SIRIUS) for the given formula result identifier  This tree is used to rank formula candidates (treeScore).
+*FeaturesApi* | [**getIsotopePatternAnnotation**](docs/FeaturesApi.md#getIsotopePatternAnnotation) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/isotope-pattern | Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier.
 *FeaturesApi* | [**getLipidAnnotation**](docs/FeaturesApi.md#getLipidAnnotation) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/lipid-annotation | Returns Lipid annotation (ElGordo) for the given formula result identifier.
 *FeaturesApi* | [**getMsData**](docs/FeaturesApi.md#getMsData) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/ms-data | Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; .
-*FeaturesApi* | [**getSimulatedIsotopePattern**](docs/FeaturesApi.md#getSimulatedIsotopePattern) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/isotope-pattern | Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier.
 *FeaturesApi* | [**getSiriusFragTree**](docs/FeaturesApi.md#getSiriusFragTree) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/sirius-tree | 
+*FeaturesApi* | [**getStructureAnnotatedSpectrum**](docs/FeaturesApi.md#getStructureAnnotatedSpectrum) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-spectrum | Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
 *FeaturesApi* | [**getStructureCandidates**](docs/FeaturesApi.md#getStructureCandidates) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/structures | List of StructureCandidates for the given &#39;alignedFeatureId&#39; with minimal information.
 *FeaturesApi* | [**getStructureCandidatesByFormula**](docs/FeaturesApi.md#getStructureCandidatesByFormula) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures | List of StructureCandidates the given &#39;formulaId&#39; with minimal information.
 *InfoApi* | [**getConnectionCheck**](docs/InfoApi.md#getConnectionCheck) | **GET** /api/connection-status | 
@@ -180,6 +182,7 @@ Class | Method | HTTP request | Description
  - [AnnotatedPeak](docs/AnnotatedPeak.md)
  - [AnnotatedSpectrum](docs/AnnotatedSpectrum.md)
  - [BackgroundComputationsStateEvent](docs/BackgroundComputationsStateEvent.md)
+ - [BasicSpectrum](docs/BasicSpectrum.md)
  - [BinaryFingerprint](docs/BinaryFingerprint.md)
  - [Canopus](docs/Canopus.md)
  - [CanopusPrediction](docs/CanopusPrediction.md)
@@ -218,6 +221,7 @@ Class | Method | HTTP request | Description
  - [LicenseInfo](docs/LicenseInfo.md)
  - [LipidAnnotation](docs/LipidAnnotation.md)
  - [LossEdge](docs/LossEdge.md)
+ - [Mode](docs/Mode.md)
  - [MsData](docs/MsData.md)
  - [PageAlignedFeature](docs/PageAlignedFeature.md)
  - [PageCompound](docs/PageCompound.md)
@@ -227,6 +231,8 @@ Class | Method | HTTP request | Description
  - [PageStructureCandidateFormula](docs/PageStructureCandidateFormula.md)
  - [PageStructureCandidateScored](docs/PageStructureCandidateScored.md)
  - [PageableObject](docs/PageableObject.md)
+ - [ParentPeak](docs/ParentPeak.md)
+ - [Peak](docs/Peak.md)
  - [PeakAnnotation](docs/PeakAnnotation.md)
  - [ProjectChangeEvent](docs/ProjectChangeEvent.md)
  - [ProjectInfo](docs/ProjectInfo.md)
@@ -234,6 +240,7 @@ Class | Method | HTTP request | Description
  - [SearchQueryType](docs/SearchQueryType.md)
  - [Sirius](docs/Sirius.md)
  - [SortObject](docs/SortObject.md)
+ - [SpectrumAnnotation](docs/SpectrumAnnotation.md)
  - [StructureCandidate](docs/StructureCandidate.md)
  - [StructureCandidateFormula](docs/StructureCandidateFormula.md)
  - [StructureCandidateOptField](docs/StructureCandidateOptField.md)
