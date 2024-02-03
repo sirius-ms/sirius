@@ -4005,6 +4005,11 @@
               "$ref": "#/components/schemas/AnnotatedPeak"
             }
           },
+          "name": {
+            "type": "string",
+            "description": "Optional Displayable name of this spectrum.",
+            "nullable": true
+          },
           "spectrumAnnotation": {
             "$ref": "#/components/schemas/SpectrumAnnotation"
           },
@@ -4050,6 +4055,11 @@
             "items": {
               "$ref": "#/components/schemas/Peak"
             }
+          },
+          "name": {
+            "type": "string",
+            "description": "Optional Displayable name of this spectrum.",
+            "nullable": true
           },
           "empty": {
             "type": "boolean"
@@ -5101,6 +5111,10 @@
           "adduct": {
             "type": "string",
             "description": "Adduct of this candidate"
+          },
+          "formulaId": {
+            "type": "string",
+            "description": "Id of the corresponding Formula candidate"
           }
         },
         "description": ""

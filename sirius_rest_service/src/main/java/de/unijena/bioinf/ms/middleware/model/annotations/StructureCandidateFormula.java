@@ -51,20 +51,25 @@ public class StructureCandidateFormula extends StructureCandidateScored {
      * Adduct of this candidate
      */
     protected String adduct;
+    /**
+     * Id of the corresponding Formula candidate
+     */
+    protected String formulaId;
 
     public static StructureCandidateFormula of(Scored<CompoundCandidate> can, FormulaScoring scorings,
                                                EnumSet<OptField> optFields,
                                                FormulaResultId fid
     ) {
-        return of(can, null, scorings, optFields, fid.getMolecularFormula(), fid.getIonType());
+        return of(can, null, scorings, optFields, fid.getMolecularFormula(), fid.getIonType(), fid.fileName());
     }
 
     public static StructureCandidateFormula of(Scored<CompoundCandidate> can, FormulaScoring scorings,
                                                EnumSet<OptField> optFields,
                                                MolecularFormula formula,
-                                               PrecursorIonType adduct
+                                               PrecursorIonType adduct,
+                                               String fomulaId
     ) {
-        return of(can, null, scorings, optFields, formula, adduct);
+        return of(can, null, scorings, optFields, formula, adduct, fomulaId);
     }
 
     public static StructureCandidateFormula of(Scored<CompoundCandidate> can, @Nullable Fingerprint fp,
@@ -72,14 +77,15 @@ public class StructureCandidateFormula extends StructureCandidateScored {
                                                EnumSet<OptField> optFields,
                                                FormulaResultId fid
     ) {
-        return of(can, fp, confidenceScoreProvider, optFields, fid.getMolecularFormula(), fid.getIonType());
+        return of(can, fp, confidenceScoreProvider, optFields, fid.getMolecularFormula(), fid.getIonType(), fid.fileName());
     }
 
     public static StructureCandidateFormula of(Scored<CompoundCandidate> can, @Nullable Fingerprint fp,
                                                @Nullable FormulaScoring confidenceScoreProvider,
                                                EnumSet<OptField> optFields,
                                                MolecularFormula formula,
-                                               PrecursorIonType adduct
+                                               PrecursorIonType adduct,
+                                               String fomulaId
     ) {
 
 
@@ -108,7 +114,7 @@ public class StructureCandidateFormula extends StructureCandidateScored {
 
         if (optFields.contains(OptField.refSpectraLinks))
             sSum.setRefSpectraLinks(List.of());
-        //todo add reference spectra links
+        //todo SpctraSearch: add reference spectra links
 //            sSum.setDbLinks(can.getCandidate().getReferenceSpectraSplash());
 
         //FP
