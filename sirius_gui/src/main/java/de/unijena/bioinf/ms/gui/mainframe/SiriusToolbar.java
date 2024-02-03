@@ -40,7 +40,7 @@ import java.awt.event.WindowEvent;
  */
 public class SiriusToolbar extends JToolBar {
     private final ToolbarToggleButton logsB;
-    private ToolbarButton importCompB, createB, openB, saveB, exportB, summB, fbmnB, importB, computeAllB, jobs, db, connect, settings, account, /*bug,*/
+    private ToolbarButton createB, openB, saveB, exportB, summB, fbmnB, importB, computeAllB, jobs, db, connect, settings, account, /*bug,*/
             help, about;
 
 
@@ -61,8 +61,6 @@ public class SiriusToolbar extends JToolBar {
         addSeparator(new Dimension(20, 20));
 
         //import
-        importCompB = new ToolbarButton(SiriusActions.IMPORT_EXP.getInstance(gui, true));
-        add(importCompB);
         importB = new ToolbarButton(SiriusActions.IMPORT_EXP_BATCH.getInstance(gui, true));
         add(importB);
 
@@ -160,11 +158,6 @@ public class SiriusToolbar extends JToolBar {
     public ToolbarToggleButton getLogsB() {
         return logsB;
     }
-
-    public ToolbarButton getImportCompB() {
-        return importCompB;
-    }
-
     public ToolbarButton getCreateB() {
         return createB;
     }

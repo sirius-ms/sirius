@@ -5,13 +5,16 @@ import de.unijena.bioinf.chemdb.custom.CustomDatabaseFactory;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.io.FileChooserPanel;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.SubToolConfigPanel;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.*;
+import de.unijena.bioinf.ms.nightsky.sdk.model.ConnectionCheck;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -26,7 +29,8 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
+import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
+import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isLoggedIn;
 
 
 public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOptions> {
@@ -43,23 +47,26 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
 
     private final JLabel loginErrorLabel = new JLabel();
 
-    public DatabaseImportConfigPanel(@Nullable CustomDatabase db, Set<String> existingNames) {
+    private final SiriusGui gui;
+    public DatabaseImportConfigPanel(@NotNull SiriusGui gui, @Nullable CustomDatabase db, Set<String> existingNames) {
         super(CustomDBOptions.class);
+        this.gui = gui;
         setLayout(new BorderLayout());
 
         add(createParametersPanel(db, existingNames), BorderLayout.NORTH);
         add(createCompoundsBox(), BorderLayout.CENTER);
         add(createImportButton(), BorderLayout.SOUTH);
 
-        MF.CONNECTION_MONITOR().addConnectionStateListener(evt -> {
-            ConnectionMonitor.ConnectionCheck check = ((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck();
+
+        gui.getConnectionMonitor().addConnectionStateListener(evt -> {
+            ConnectionCheck check = ((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck();
             setLoggedIn(check);
         });
-        Jobs.runInBackground(() -> setLoggedIn(MF.CONNECTION_MONITOR().checkConnection()));
+        Jobs.runInBackground(() -> setLoggedIn(gui.getConnectionMonitor().checkConnection()));
     }
 
-    private synchronized void setLoggedIn(ConnectionMonitor.ConnectionCheck check) {
-        loggedIn = check.isConnected() && check.isLoggedIn();
+    private synchronized void setLoggedIn(ConnectionCheck check) {
+        loggedIn = isConnected(check) && isLoggedIn(check);
         loginErrorLabel.setVisible(!loggedIn);
         refreshImportButton();
     }
@@ -193,7 +200,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         DropTarget dropTarget = new DropTarget() {
             @Override
             public synchronized void drop(DropTargetDropEvent evt) {
-                fileListModel.addAll(DragAndDrop.getFileListFromDrop(evt));
+                fileListModel.addAll(DragAndDrop.getFileListFromDrop(gui.getMainFrame(), evt));
                 refreshImportButton();
             }
         };

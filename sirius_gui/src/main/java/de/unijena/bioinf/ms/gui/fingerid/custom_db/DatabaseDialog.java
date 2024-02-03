@@ -22,8 +22,8 @@ package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 import de.unijena.bioinf.chemdb.DataSources;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
-import de.unijena.bioinf.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.chemdb.custom.CustomDatabaseFactory;
+import de.unijena.bioinf.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -37,6 +37,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.jjobs.SseProgressJJob;
 import de.unijena.bioinf.ms.nightsky.sdk.model.CommandSubmission;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Job;
 import de.unijena.bioinf.ms.nightsky.sdk.model.JobOptField;
+import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -49,7 +50,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -58,7 +58,8 @@ import java.util.stream.Collectors;
 
 
 public class DatabaseDialog extends JDialog {
-    private final SiriusGui gui;
+    @Getter
+    protected final SiriusGui gui;
 
     protected JList<CustomDatabase> dbList;
     protected List<CustomDatabase> customDatabases;
