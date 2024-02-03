@@ -31,7 +31,7 @@ public class PeakAnnotation {
      * Molecular formula that has been annotated to this peak
      */
     @Schema(nullable = true)
-    private String formula;
+    private String molecularFormula;
 
     /**
      * Ionization that has been annotated to this peak

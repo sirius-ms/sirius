@@ -33,7 +33,7 @@ public class SpectrumAnnotation {
      * Molecular formula that has been annotated to this spectrum
      */
     @Schema(nullable = true)
-    private String formula;
+    private String molecularFormula;
 
     /**
      * Ionization that has been annotated to this spectrum

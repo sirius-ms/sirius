@@ -4702,7 +4702,7 @@
       "PeakAnnotation": {
         "type": "object",
         "properties": {
-          "formula": {
+          "molecularFormula": {
             "type": "string",
             "description": "Molecular formula that has been annotated to this peak",
             "nullable": true
@@ -4794,7 +4794,7 @@
       "SpectrumAnnotation": {
         "type": "object",
         "properties": {
-          "formula": {
+          "molecularFormula": {
             "type": "string",
             "description": "Molecular formula that has been annotated to this spectrum",
             "nullable": true
