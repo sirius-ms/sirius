@@ -83,7 +83,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
     private final List<InstanceBean> compoundsToProcess;
 
     protected final JButton toggleAdvancedMode;
-    protected boolean isAdvancedView = false; //todo NewWorkflow: do we need to sync/remember selections between basic and advanced mode?
+    protected boolean isAdvancedView = false;
 
     public BatchComputeDialog(MainFrame owner, List<InstanceBean> compoundsToProcess) {
         super(owner, "Compute", true);
@@ -133,7 +133,6 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
                                     GuiUtils.formatToolTip("Your ZODIAC analysis contains `" + compoundsToProcess.size() + "` compounds and may therefore consume more system memory than available.", "", "Do you wish to continue anyways?"),
                                     DO_NOT_SHOW_AGAIN_KEY_Z_MEM).isAbort()) {
                                 zodiacConfigs.activationButton.setSelected(false);
-                                return;
                             }
                         }
                     }
@@ -168,18 +167,18 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             if (compoundsToProcess.size() == 1) recomputeBox.setSelected(true);
 
             JPanel csouthPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
-            toggleAdvancedMode = new JButton("Switch to Advanced View"); //todo NewWorkflow: is this a good position and wording? Upper right corner seems wasted space
+            final String SHOW_ADVANCED = "Show advanced settings";
+            final String HIDE_ADVANCED = "Hide advanced settings";
+            toggleAdvancedMode = new JButton(SHOW_ADVANCED);
             isAdvancedView = false;
             toggleAdvancedMode.addActionListener(e -> {
                 isAdvancedView = !isAdvancedView;
                 if (isAdvancedView) {
-                    toggleAdvancedMode.setText("Switch to Basic View");
+                    toggleAdvancedMode.setText(HIDE_ADVANCED);
                 } else {
-                    toggleAdvancedMode.setText("Switch to Advanced View");
+                    toggleAdvancedMode.setText(SHOW_ADVANCED);
                 }
 
-                //todo NewWorkflow: in general for all the panels: What's better? adding and recreating views vs making them visible?
-                //todo NewWorkflow: when switching, parameters/strategies are reset. Shall these be remembered?
                 formulaIDConfigPanel.content.setDisplayAdvancedParameters(isAdvancedView);
                 zodiacConfigs.content.setDisplayAdvancedParameters(isAdvancedView);
             });

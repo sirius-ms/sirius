@@ -49,10 +49,8 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -114,23 +112,26 @@ FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
     protected boolean hasMs2;
     protected boolean displayAdvancedParameters;
 
+    private final List<Component> advancedParametersComponents;
+
     public FormulaIDConfigPanel(Dialog owner, List<InstanceBean> ecs, boolean ms2, boolean displayAdvancedParameters) {
         super(SiriusOptions.class);
         this.ecs = ecs;
         this.owner = owner;
         this.hasMs2 = ms2;
         this.displayAdvancedParameters = displayAdvancedParameters;
+        advancedParametersComponents = new ArrayList<>();
 
-        createPanel(hasMs2, displayAdvancedParameters);
-
+        createPanel();
+        updateAdvancedParametersVisibility();
     }
 
     public void setDisplayAdvancedParameters(boolean display) {
         displayAdvancedParameters = display;
-        createPanel(hasMs2, displayAdvancedParameters);
+        updateAdvancedParametersVisibility();
     }
 
-    private void createPanel(boolean hasMs2, boolean displayAdvancedParameters) {
+    private void createPanel() {
         this.removeAll();
 
         setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
@@ -145,7 +146,7 @@ FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
             profileSelector = makeParameterComboBox("AlgorithmProfile", List.of(Instrument.values()), Instrument::asProfile);
             smallParameters.addNamed("Instrument", profileSelector);
 
-            if (displayAdvancedParameters) smallParameters.addNamed("Filter by isotope pattern", makeParameterCheckBox("IsotopeSettings.filter"));
+            addAdvancedParameter(smallParameters, "Filter by isotope pattern", makeParameterCheckBox("IsotopeSettings.filter"));
 
             ms2IsotpeSetting = makeParameterComboBox("IsotopeMs2Settings", Strategy.class);
             ppmSpinner = makeParameterSpinner("MS2MassDeviation.allowedMassDeviation",
@@ -154,14 +155,14 @@ FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
 
             if (hasMs2) {
                 smallParameters.addNamed("MS2 mass accuracy (ppm)", ppmSpinner);
-                if (displayAdvancedParameters) smallParameters.addNamed("MS/MS isotope scorer", ms2IsotpeSetting);
+                addAdvancedParameter(smallParameters, "MS/MS isotope scorer", ms2IsotpeSetting);
             }
 
             candidatesSpinner = makeIntParameterSpinner("NumberOfCandidates", 1, 10000, 1);
-            if (displayAdvancedParameters) smallParameters.addNamed("Candidates stored", candidatesSpinner);
+            addAdvancedParameter(smallParameters, "Candidates stored", candidatesSpinner);
 
             candidatesPerIonSpinner = makeIntParameterSpinner("NumberOfCandidatesPerIon", 0, 10000, 1);
-            if (displayAdvancedParameters) smallParameters.addNamed("Min candidates per ionization stored", candidatesPerIonSpinner);
+            addAdvancedParameter(smallParameters, "Min candidates per ionization stored", candidatesPerIonSpinner);
 
             smallParameters.addNamed("Fix formula for detected lipid", makeParameterCheckBox("EnforceElGordoFormula")); //El Gordo detects lipids and by default fixes the formula
 
@@ -191,14 +192,6 @@ FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
             parameterBindings.put("AdductSettings.enforced", () -> getSelectedAdducts().toString());
         }
 
-        // technical parameters: bottom up search and ilp options
-        final JPanel technicalParameters = new JPanel();
-        RelativeLayout rl = new RelativeLayout(RelativeLayout.Y_AXIS, GuiUtils.MEDIUM_GAP);
-        rl.setAlignment(RelativeLayout.LEADING);
-        rl.setBorderGap(0);
-        technicalParameters.setLayout(rl);
-
-
         //select formula search strategy
         final JPanel formulaSearchStrategySelection = new JPanel();
         formulaSearchStrategySelection.setLayout(new BoxLayout(formulaSearchStrategySelection, BoxLayout.PAGE_AXIS));
@@ -221,7 +214,7 @@ FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
 
 
         // ilp timeouts
-        if (displayAdvancedParameters) {
+        if (hasMs2) {
             final TwoColumnPanel ilpOptions = new TwoColumnPanel();
 
             treeTimeout = makeIntParameterSpinner("Timeout.secondsPerTree", 0, Integer.MAX_VALUE, 1);
@@ -236,9 +229,14 @@ FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
             mzHeuristicOnly = makeIntParameterSpinner("UseHeuristic.mzToUseHeuristicOnly", 0, 3000, 5);
             ilpOptions.addNamed("Use heuristic only above m/z", mzHeuristicOnly);
 
-            if (hasMs2)
-                technicalParameters.add(new TextHeaderBoxPanel("Fragmentation tree computation", ilpOptions));
+            final JPanel technicalParameters = new JPanel();
+            RelativeLayout rl = new RelativeLayout(RelativeLayout.Y_AXIS, GuiUtils.MEDIUM_GAP);
+            rl.setAlignment(RelativeLayout.LEADING);
+            rl.setBorderGap(0);
+            technicalParameters.setLayout(rl);
+            technicalParameters.add(new TextHeaderBoxPanel("Fragmentation tree computation", ilpOptions));
             add(technicalParameters);
+            advancedParametersComponents.add(technicalParameters);
         }
 
         // add ionization's of selected compounds to default
@@ -249,6 +247,17 @@ FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         return ecs.size() > 1; //should never be 0
     }
 
+    private void addAdvancedParameter(TwoColumnPanel panel, String name, Component control) {
+        JLabel label = new JLabel(name);
+        panel.add(label, control);
+
+        advancedParametersComponents.add(label);
+        advancedParametersComponents.add(control);
+    }
+
+    private void updateAdvancedParametersVisibility() {
+        advancedParametersComponents.forEach(c -> c.setVisible(displayAdvancedParameters));
+    }
 
     public void refreshPossibleAdducts(Set<String> precursorIonTypes, boolean enabled) {
         Set<String> adducts = new HashSet<>();
