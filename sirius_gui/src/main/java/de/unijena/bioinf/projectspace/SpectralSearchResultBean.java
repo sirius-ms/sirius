@@ -24,7 +24,7 @@ import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchSubtoolJob;
-import de.unijena.bioinf.ms.nightsky.sdk.model.AnnotatedSpectrum;
+import de.unijena.bioinf.ms.nightsky.sdk.model.BasicSpectrum;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.spectraldb.SpectralLibrary;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
@@ -106,12 +106,12 @@ public class SpectralSearchResultBean {
                 SpectralLibrary db = SearchableDatabases.getCustomDatabase(match.getDbName()).orElseThrow().toSpectralLibraryOrThrow();
                 this.reference = db.getReferenceSpectrum(match.getReferenceUUID());
                 if (instance != null) {
-                    AnnotatedSpectrum query = instance.getMsData().getMs2Spectra().get(match.getQuerySpectrumIndex());
+                    BasicSpectrum query = instance.getMsData().getMs2Spectra().get(match.getQuerySpectrumIndex());
                     this.queryName = SpectraSearchSubtoolJob.getQueryName(
                             query.getMsLevel(),
                             -1, //todo nightsky: do we want to add additional meta info to nightsky spectrum
                             query.getCollisionEnergy(),
-                            instance.getIonization().getIonization().toString(),
+                            instance.getIonType().getIonization().toString(),
                             match.getQuerySpectrumIndex());
                 }
             } catch (Exception e) {

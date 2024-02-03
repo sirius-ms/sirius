@@ -281,7 +281,7 @@ public class FormulaResultBean implements SiriusPCS, DataAnnotation {
         if (this.isotopePatterAnnotation == null)
             this.isotopePatterAnnotation = Optional.ofNullable(
                     sourceCandidate().map(FormulaCandidate::getIsotopePatternAnnotation)
-                            .orElse(withIds((pid, fid, foid) -> getClient().features().getSimulatedIsotopePattern(pid, fid, foid))));
+                            .orElse(withIds((pid, fid, foid) -> getClient().features().getIsotopePatternAnnotation(pid, fid, foid))));
 
 
         return this.isotopePatterAnnotation;

@@ -51,7 +51,7 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
         this(gui, toolname, null, buttonIcon, contentSuppl);
     }
 
-    private ActivatableConfigPanel(@Nullable SiriusGui gui, String toolname, String toolDescription, Icon buttonIcon, Supplier<C> contentSuppl) {
+    ActivatableConfigPanel(@Nullable SiriusGui gui, String toolname, String toolDescription, Icon buttonIcon, Supplier<C> contentSuppl) {
         super();
         this.toolName = toolname;
         this.content = contentSuppl.get();
