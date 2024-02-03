@@ -31,6 +31,7 @@ import java.util.Map;
 
 /**
  * User/developer friendly parameter subset for the ZODIAC tool (Network base molecular formula re-ranking).
+ * Needs results from Formula/SIRIUS Tool
  */
 @Getter
 @Setter
