@@ -48,6 +48,7 @@ import java.util.stream.Collectors;
 @Getter
 @Setter
 public class Sirius extends Tool<SiriusOptions> {
+    //todo NewWorkflow: adapt to new search modes
     @Schema(enumAsRef = true, nullable = true)
     enum Instrument {QTOF, ORBI, FTICR}
 
@@ -88,7 +89,7 @@ public class Sirius extends Tool<SiriusOptions> {
      * List Structure database to extract molecular formulas from to reduce formula search space.
      * SIRIUS is quite good at de novo formula annotation, so only enable if you have a good reason.
      */
-    List<DataSource> formulaSearchDBs;
+    List<String> formulaSearchDBs;
 
     /**
      * These configurations hold the information how to autodetect elements based on the given formula constraints.
@@ -161,7 +162,7 @@ public class Sirius extends Tool<SiriusOptions> {
 
                 .putNonNull("IsotopeMs2Settings", isotopeMs2Settings, IsotopeMs2Settings.Strategy::name)
 
-                .putNonNull("FormulaSearchDB", formulaSearchDBs, f -> f.stream().map(DataSource::name).collect(Collectors.joining(",")))
+                .putNonNull("FormulaSearchDB", formulaSearchDBs, f -> String.join(",", f))
 
                 .putNonNull("NumberOfCandidates", numberOfCandidates)
                 .putNonNull("NumberOfCandidatesPerIon", numberOfCandidatesPerIon)

@@ -28,7 +28,14 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * The MsData wraps all spectral input data belonging to a feature.   Each Feature has:  - One merged MS/MS spectrum (optional)  - One merged MS spectrum (optional)  - many MS/MS spectra  - many MS spectra   Each non-merged spectrum has an index which can be used to access the spectrum.   In the future we might add some additional information like chromatographic peak or something similar
+ * The MsData wraps all spectral input data belonging to a feature. Each Feature has
+ * - One merged MS/MS spectrum (optional)
+ * - One merged MS spectrum (optional)
+ * - many MS/MS spectra
+ * - many MS spectra
+ *
+ * Each non-merged spectrum has an index which can be used to access the spectrum.
+ * In the future additional information such as the chromatographic peak or something similar might be added
  */
 @JsonPropertyOrder({
   MsData.JSON_PROPERTY_MERGED_MS1,
