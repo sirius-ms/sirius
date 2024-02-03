@@ -44,7 +44,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   StructureCandidateFormula.JSON_PROPERTY_CONFIDENCE_APPROX_MATCH,
   StructureCandidateFormula.JSON_PROPERTY_FINGERPRINT,
   StructureCandidateFormula.JSON_PROPERTY_MOLECULAR_FORMULA,
-  StructureCandidateFormula.JSON_PROPERTY_ADDUCT
+  StructureCandidateFormula.JSON_PROPERTY_ADDUCT,
+  StructureCandidateFormula.JSON_PROPERTY_FORMULA_ID
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class StructureCandidateFormula {
@@ -86,6 +87,9 @@ public class StructureCandidateFormula {
 
   public static final String JSON_PROPERTY_ADDUCT = "adduct";
   private String adduct;
+
+  public static final String JSON_PROPERTY_FORMULA_ID = "formulaId";
+  private String formulaId;
 
   public StructureCandidateFormula() {
   }
@@ -443,6 +447,32 @@ public class StructureCandidateFormula {
     this.adduct = adduct;
   }
 
+
+  public StructureCandidateFormula formulaId(String formulaId) {
+    
+    this.formulaId = formulaId;
+    return this;
+  }
+
+   /**
+   * Id of the corresponding Formula candidate
+   * @return formulaId
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_FORMULA_ID)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getFormulaId() {
+    return formulaId;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_FORMULA_ID)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setFormulaId(String formulaId) {
+    this.formulaId = formulaId;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -464,12 +494,13 @@ public class StructureCandidateFormula {
         Objects.equals(this.confidenceApproxMatch, structureCandidateFormula.confidenceApproxMatch) &&
         Objects.equals(this.fingerprint, structureCandidateFormula.fingerprint) &&
         Objects.equals(this.molecularFormula, structureCandidateFormula.molecularFormula) &&
-        Objects.equals(this.adduct, structureCandidateFormula.adduct);
+        Objects.equals(this.adduct, structureCandidateFormula.adduct) &&
+        Objects.equals(this.formulaId, structureCandidateFormula.formulaId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(inchiKey, smiles, structureName, xlogP, dbLinks, refSpectraLinks, csiScore, tanimotoSimilarity, confidenceExactMatch, confidenceApproxMatch, fingerprint, molecularFormula, adduct);
+    return Objects.hash(inchiKey, smiles, structureName, xlogP, dbLinks, refSpectraLinks, csiScore, tanimotoSimilarity, confidenceExactMatch, confidenceApproxMatch, fingerprint, molecularFormula, adduct, formulaId);
   }
 
   @Override
@@ -489,6 +520,7 @@ public class StructureCandidateFormula {
     sb.append("    fingerprint: ").append(toIndentedString(fingerprint)).append("\n");
     sb.append("    molecularFormula: ").append(toIndentedString(molecularFormula)).append("\n");
     sb.append("    adduct: ").append(toIndentedString(adduct)).append("\n");
+    sb.append("    formulaId: ").append(toIndentedString(formulaId)).append("\n");
     sb.append("}");
     return sb.toString();
   }

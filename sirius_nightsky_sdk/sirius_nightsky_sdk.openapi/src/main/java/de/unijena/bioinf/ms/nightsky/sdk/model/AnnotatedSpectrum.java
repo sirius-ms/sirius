@@ -37,6 +37,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AnnotatedSpectrum.JSON_PROPERTY_PRECURSOR_MZ,
   AnnotatedSpectrum.JSON_PROPERTY_SCAN_NUMBER,
   AnnotatedSpectrum.JSON_PROPERTY_PEAKS,
+  AnnotatedSpectrum.JSON_PROPERTY_NAME,
   AnnotatedSpectrum.JSON_PROPERTY_SPECTRUM_ANNOTATION,
   AnnotatedSpectrum.JSON_PROPERTY_EMPTY
 })
@@ -56,6 +57,9 @@ public class AnnotatedSpectrum {
 
   public static final String JSON_PROPERTY_PEAKS = "peaks";
   private List<AnnotatedPeak> peaks = new ArrayList<>();
+
+  public static final String JSON_PROPERTY_NAME = "name";
+  private String name;
 
   public static final String JSON_PROPERTY_SPECTRUM_ANNOTATION = "spectrumAnnotation";
   private SpectrumAnnotation spectrumAnnotation;
@@ -204,6 +208,32 @@ public class AnnotatedSpectrum {
   }
 
 
+  public AnnotatedSpectrum name(String name) {
+    
+    this.name = name;
+    return this;
+  }
+
+   /**
+   * Optional Displayable name of this spectrum.
+   * @return name
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getName() {
+    return name;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setName(String name) {
+    this.name = name;
+  }
+
+
   public AnnotatedSpectrum spectrumAnnotation(SpectrumAnnotation spectrumAnnotation) {
     
     this.spectrumAnnotation = spectrumAnnotation;
@@ -269,13 +299,14 @@ public class AnnotatedSpectrum {
         Objects.equals(this.precursorMz, annotatedSpectrum.precursorMz) &&
         Objects.equals(this.scanNumber, annotatedSpectrum.scanNumber) &&
         Objects.equals(this.peaks, annotatedSpectrum.peaks) &&
+        Objects.equals(this.name, annotatedSpectrum.name) &&
         Objects.equals(this.spectrumAnnotation, annotatedSpectrum.spectrumAnnotation) &&
         Objects.equals(this.empty, annotatedSpectrum.empty);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(msLevel, collisionEnergy, precursorMz, scanNumber, peaks, spectrumAnnotation, empty);
+    return Objects.hash(msLevel, collisionEnergy, precursorMz, scanNumber, peaks, name, spectrumAnnotation, empty);
   }
 
   @Override
@@ -287,6 +318,7 @@ public class AnnotatedSpectrum {
     sb.append("    precursorMz: ").append(toIndentedString(precursorMz)).append("\n");
     sb.append("    scanNumber: ").append(toIndentedString(scanNumber)).append("\n");
     sb.append("    peaks: ").append(toIndentedString(peaks)).append("\n");
+    sb.append("    name: ").append(toIndentedString(name)).append("\n");
     sb.append("    spectrumAnnotation: ").append(toIndentedString(spectrumAnnotation)).append("\n");
     sb.append("    empty: ").append(toIndentedString(empty)).append("\n");
     sb.append("}");

@@ -13,6 +13,7 @@
 |**precursorMz** | **Double** | Precursor m/z of the MS/MS spectrum  Null for spectra where precursor m/z is not applicable |  [optional] |
 |**scanNumber** | **Integer** | Scan number of the spectrum.  Might be null for artificial spectra with no scan number (e.g. Simulated Isotope patterns or merged spectra) |  [optional] |
 |**peaks** | [**List&lt;AnnotatedPeak&gt;**](AnnotatedPeak.md) | The peaks of this spectrum which might contain additional annotations such as molecular formulas. |  |
+|**name** | **String** | Optional Displayable name of this spectrum. |  [optional] |
 |**spectrumAnnotation** | [**SpectrumAnnotation**](SpectrumAnnotation.md) |  |  [optional] |
 |**empty** | **Boolean** |  |  [optional] |
 
