@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.middleware.controller;
 import de.unijena.bioinf.ms.middleware.model.SearchQueryType;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
+import de.unijena.bioinf.ms.middleware.model.features.AnnotatedMsMsData;
 import de.unijena.bioinf.ms.middleware.model.features.MsData;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
@@ -214,18 +215,47 @@ public class AlignedFeatureController {
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId        identifier of the requested formula result
      * @param inchiKey         2d InChIKey of the structure candidate to be used to annotate the spectrum annotation
+     * @param spectrumIndex    index of the spectrum to be annotated. Merged MS/MS will be used if spectrumIndex < 0 (default)
      * @return Fragmentation spectrum annotated with fragments and sub-structures.
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-spectrum", produces = MediaType.APPLICATION_JSON_VALUE)
     public AnnotatedSpectrum getStructureAnnotatedSpectrum(@PathVariable String projectId,
                                                            @PathVariable String alignedFeatureId,
                                                            @PathVariable String formulaId,
-                                                           @PathVariable String inchiKey
+                                                           @PathVariable String inchiKey,
+                                                           @RequestParam(defaultValue = "-1") int spectrumIndex
     ) {
         AnnotatedSpectrum res = projectsProvider.getProjectOrThrow(projectId)
-                .findAnnotatedSpectrumByStructureId(inchiKey, alignedFeatureId, formulaId);
+                .findAnnotatedSpectrumByStructureId(spectrumIndex, inchiKey, alignedFeatureId, formulaId);
         if (res == null)
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Annotated MS/MS AbstractSpectrum for '"
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Annotated MS/MS Spectrum for '"
+                    + idString(projectId, alignedFeatureId, formulaId)
+                    + "' not available! Maybe because FragmentationTree is missing?");
+
+        return res;
+    }
+
+    /**
+     * Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses
+     * for the given formula result identifier and structure candidate inChIKey.
+     * These annotations are only available if a fragmentation tree and the structure candidate are available.
+     *
+     * @param projectId        project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param formulaId        identifier of the requested formula result
+     * @param inchiKey         2d InChIKey of the structure candidate to be used to annotate the spectrum annotation
+     * @return Fragmentation spectrum annotated with fragments and sub-structures.
+     */
+    @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-msmsdata", produces = MediaType.APPLICATION_JSON_VALUE)
+    public AnnotatedMsMsData getStructureAnnotatedMsData(@PathVariable String projectId,
+                                                         @PathVariable String alignedFeatureId,
+                                                         @PathVariable String formulaId,
+                                                         @PathVariable String inchiKey
+    ) {
+        AnnotatedMsMsData res = projectsProvider.getProjectOrThrow(projectId)
+                .findAnnotatedMsMsDataByStructureId(inchiKey, alignedFeatureId, formulaId);
+        if (res == null)
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Annotated MS/MS Spectrum for '"
                     + idString(projectId, alignedFeatureId, formulaId)
                     + "' not available! Maybe because FragmentationTree is missing?");
 
@@ -268,16 +298,43 @@ public class AlignedFeatureController {
      * @param projectId        project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId        identifier of the requested formula result
+     * @param spectrumIndex    index of the spectrum to be annotated. Merged MS/MS will be used if spectrumIndex < 0 (default)
      * @return Fragmentation spectrum annotated with fragment formulas and losses.
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/annotated-spectrum", produces = MediaType.APPLICATION_JSON_VALUE)
     public AnnotatedSpectrum getFormulaAnnotatedSpectrum(@PathVariable String projectId,
                                                          @PathVariable String alignedFeatureId,
-                                                         @PathVariable String formulaId) {
+                                                         @PathVariable String formulaId,
+                                                         @RequestParam(defaultValue = "-1") int spectrumIndex ) {
         AnnotatedSpectrum res = projectsProvider.getProjectOrThrow(projectId)
-                .findAnnotatedSpectrumByFormulaId(alignedFeatureId, formulaId);
+                .findAnnotatedSpectrumByFormulaId(spectrumIndex, alignedFeatureId, formulaId);
         if (res == null)
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Annotated MS/MS AbstractSpectrum for '"
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Annotated MS/MS Spectrum for '"
+                    + idString(projectId, alignedFeatureId, formulaId)
+                    + "' not available! Maybe because FragmentationTree is missing?");
+
+        return res;
+    }
+
+    /**
+     * Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses
+     * for the given formula result identifier
+     * These annotations are only available if a fragmentation tree and the structure candidate are available.
+     *
+     * @param projectId        project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param formulaId        identifier of the requested formula result
+     * @return Fragmentation spectra annotated with fragment formulas and losses.
+     */
+    @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/annotated-msmsdata", produces = MediaType.APPLICATION_JSON_VALUE)
+    public AnnotatedMsMsData getFormulaAnnotatedMsMsData(@PathVariable String projectId,
+                                                         @PathVariable String alignedFeatureId,
+                                                         @PathVariable String formulaId
+    ) {
+        AnnotatedMsMsData res = projectsProvider.getProjectOrThrow(projectId)
+                .findAnnotatedMsMsDataByFormulaId(alignedFeatureId, formulaId);
+        if (res == null)
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Annotated MS/MS Data for '"
                     + idString(projectId, alignedFeatureId, formulaId)
                     + "' not available! Maybe because FragmentationTree is missing?");
 

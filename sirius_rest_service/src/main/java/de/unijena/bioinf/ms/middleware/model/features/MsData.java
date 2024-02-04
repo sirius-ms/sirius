@@ -56,7 +56,7 @@ public class MsData {
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     protected List<BasicSpectrum> ms2Spectra;
 
-    public static MsData create(Ms2Experiment exp) {
+    public static MsData of(Ms2Experiment exp) {
         MsDataBuilder b = MsData.builder()
                 .ms1Spectra(
                         exp.getMs1Spectra().stream().map(x -> {
@@ -69,6 +69,7 @@ public class MsData {
                         //todo ms/ms annotations for spectrum viewer
                         exp.getMs2Spectra().stream().map(x -> {
                             BasicSpectrum t = new BasicSpectrum(x);
+                            t.setPrecursorMz(x.getPrecursorMz());
                             t.setCollisionEnergy(new CollisionEnergy(x.getCollisionEnergy()));
                             t.setMsLevel(2);
                             t.setScanNumber(((MutableMs2Spectrum) x).getScanNumber());

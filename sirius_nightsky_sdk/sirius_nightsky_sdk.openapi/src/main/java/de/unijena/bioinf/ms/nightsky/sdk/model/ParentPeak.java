@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * 
+ * Link from annotated fragment peak to its parent fragment peak connected by their neutral loss.
  */
 @JsonPropertyOrder({
   ParentPeak.JSON_PROPERTY_PARENT_IDX,

@@ -2,7 +2,7 @@
 
 # ParentPeak
 
-
+Link from annotated fragment peak to its parent fragment peak connected by their neutral loss.
 
 ## Properties
 

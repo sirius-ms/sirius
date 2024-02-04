@@ -10,6 +10,7 @@ All URIs are relative to *http://localhost:8080*
 | [**getBestMatchingCompoundClasses**](FeaturesApi.md#getBestMatchingCompoundClasses) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/best-compound-classes | Best matching compound classes,  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology, |
 | [**getCanopusPrediction**](FeaturesApi.md#getCanopusPrediction) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/canopus-prediction | All predicted compound classes (CANOPUS) from ClassyFire and NPC and their probabilities, |
 | [**getFingerprintPrediction**](FeaturesApi.md#getFingerprintPrediction) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/fingerprint | Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier  This fingerprint is used to perform structure database search and predict compound classes. |
+| [**getFormulaAnnotatedMsMsData**](FeaturesApi.md#getFormulaAnnotatedMsMsData) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/annotated-msmsdata | Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses  for the given formula result identifier  These annotations are only available if a fragmentation tree and the structure candidate are available. |
 | [**getFormulaAnnotatedSpectrum**](FeaturesApi.md#getFormulaAnnotatedSpectrum) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/annotated-spectrum | Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available. |
 | [**getFormulaCandidate**](FeaturesApi.md#getFormulaCandidate) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId} | FormulaResultContainers for the given &#39;formulaId&#39; with minimal information. |
 | [**getFormulaCandidates**](FeaturesApi.md#getFormulaCandidates) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas | List of all FormulaResultContainers available for this feature with minimal information. |
@@ -18,6 +19,7 @@ All URIs are relative to *http://localhost:8080*
 | [**getLipidAnnotation**](FeaturesApi.md#getLipidAnnotation) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/lipid-annotation | Returns Lipid annotation (ElGordo) for the given formula result identifier. |
 | [**getMsData**](FeaturesApi.md#getMsData) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/ms-data | Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; . |
 | [**getSiriusFragTree**](FeaturesApi.md#getSiriusFragTree) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/sirius-tree |  |
+| [**getStructureAnnotatedMsData**](FeaturesApi.md#getStructureAnnotatedMsData) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-msmsdata | Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey. |
 | [**getStructureAnnotatedSpectrum**](FeaturesApi.md#getStructureAnnotatedSpectrum) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-spectrum | Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available. |
 | [**getStructureCandidates**](FeaturesApi.md#getStructureCandidates) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/structures | List of StructureCandidates for the given &#39;alignedFeatureId&#39; with minimal information. |
 | [**getStructureCandidatesByFormula**](FeaturesApi.md#getStructureCandidatesByFormula) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures | List of StructureCandidates the given &#39;formulaId&#39; with minimal information. |
@@ -449,9 +451,79 @@ No authorization required
 | **200** | probabilistic fingerprint predicted by CSI:FingerID |  -  |
 
 
+## getFormulaAnnotatedMsMsData
+
+> AnnotatedMsMsData getFormulaAnnotatedMsMsData(projectId, alignedFeatureId, formulaId)
+
+Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses  for the given formula result identifier  These annotations are only available if a fragmentation tree and the structure candidate are available.
+
+Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses  for the given formula result identifier  These annotations are only available if a fragmentation tree and the structure candidate are available.
+
+### Example
+
+```java
+// Import classes:
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
+import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
+import de.unijena.bioinf.ms.nightsky.sdk.api.FeaturesApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8080");
+
+        FeaturesApi apiInstance = new FeaturesApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to read from.
+        String alignedFeatureId = "alignedFeatureId_example"; // String | feature (aligned over runs) the formula result belongs to.
+        String formulaId = "formulaId_example"; // String | identifier of the requested formula result
+        try {
+            AnnotatedMsMsData result = apiInstance.getFormulaAnnotatedMsMsData(projectId, alignedFeatureId, formulaId);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling FeaturesApi#getFormulaAnnotatedMsMsData");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to read from. | |
+| **alignedFeatureId** | **String**| feature (aligned over runs) the formula result belongs to. | |
+| **formulaId** | **String**| identifier of the requested formula result | |
+
+### Return type
+
+[**AnnotatedMsMsData**](AnnotatedMsMsData.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Fragmentation spectra annotated with fragment formulas and losses. |  -  |
+
+
 ## getFormulaAnnotatedSpectrum
 
-> AnnotatedSpectrum getFormulaAnnotatedSpectrum(projectId, alignedFeatureId, formulaId)
+> AnnotatedSpectrum getFormulaAnnotatedSpectrum(projectId, alignedFeatureId, formulaId, spectrumIndex)
 
 Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
 
@@ -476,8 +548,9 @@ public class Example {
         String projectId = "projectId_example"; // String | project-space to read from.
         String alignedFeatureId = "alignedFeatureId_example"; // String | feature (aligned over runs) the formula result belongs to.
         String formulaId = "formulaId_example"; // String | identifier of the requested formula result
+        Integer spectrumIndex = -1; // Integer | index of the spectrum to be annotated. Merged MS/MS will be used if spectrumIndex < 0 (default)
         try {
-            AnnotatedSpectrum result = apiInstance.getFormulaAnnotatedSpectrum(projectId, alignedFeatureId, formulaId);
+            AnnotatedSpectrum result = apiInstance.getFormulaAnnotatedSpectrum(projectId, alignedFeatureId, formulaId, spectrumIndex);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getFormulaAnnotatedSpectrum");
@@ -498,6 +571,7 @@ public class Example {
 | **projectId** | **String**| project-space to read from. | |
 | **alignedFeatureId** | **String**| feature (aligned over runs) the formula result belongs to. | |
 | **formulaId** | **String**| identifier of the requested formula result | |
+| **spectrumIndex** | **Integer**| index of the spectrum to be annotated. Merged MS/MS will be used if spectrumIndex &lt; 0 (default) | [optional] [default to -1] |
 
 ### Return type
 
@@ -1017,9 +1091,81 @@ No authorization required
 | **200** | OK |  -  |
 
 
+## getStructureAnnotatedMsData
+
+> AnnotatedMsMsData getStructureAnnotatedMsData(projectId, alignedFeatureId, formulaId, inchiKey)
+
+Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.
+
+Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.  These annotations are only available if a fragmentation tree and the structure candidate are available.
+
+### Example
+
+```java
+// Import classes:
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
+import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
+import de.unijena.bioinf.ms.nightsky.sdk.api.FeaturesApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8080");
+
+        FeaturesApi apiInstance = new FeaturesApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to read from.
+        String alignedFeatureId = "alignedFeatureId_example"; // String | feature (aligned over runs) the formula result belongs to.
+        String formulaId = "formulaId_example"; // String | identifier of the requested formula result
+        String inchiKey = "inchiKey_example"; // String | 2d InChIKey of the structure candidate to be used to annotate the spectrum annotation
+        try {
+            AnnotatedMsMsData result = apiInstance.getStructureAnnotatedMsData(projectId, alignedFeatureId, formulaId, inchiKey);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling FeaturesApi#getStructureAnnotatedMsData");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to read from. | |
+| **alignedFeatureId** | **String**| feature (aligned over runs) the formula result belongs to. | |
+| **formulaId** | **String**| identifier of the requested formula result | |
+| **inchiKey** | **String**| 2d InChIKey of the structure candidate to be used to annotate the spectrum annotation | |
+
+### Return type
+
+[**AnnotatedMsMsData**](AnnotatedMsMsData.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Fragmentation spectrum annotated with fragments and sub-structures. |  -  |
+
+
 ## getStructureAnnotatedSpectrum
 
-> AnnotatedSpectrum getStructureAnnotatedSpectrum(projectId, alignedFeatureId, formulaId, inchiKey)
+> AnnotatedSpectrum getStructureAnnotatedSpectrum(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex)
 
 Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
 
@@ -1045,8 +1191,9 @@ public class Example {
         String alignedFeatureId = "alignedFeatureId_example"; // String | feature (aligned over runs) the formula result belongs to.
         String formulaId = "formulaId_example"; // String | identifier of the requested formula result
         String inchiKey = "inchiKey_example"; // String | 2d InChIKey of the structure candidate to be used to annotate the spectrum annotation
+        Integer spectrumIndex = -1; // Integer | index of the spectrum to be annotated. Merged MS/MS will be used if spectrumIndex < 0 (default)
         try {
-            AnnotatedSpectrum result = apiInstance.getStructureAnnotatedSpectrum(projectId, alignedFeatureId, formulaId, inchiKey);
+            AnnotatedSpectrum result = apiInstance.getStructureAnnotatedSpectrum(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getStructureAnnotatedSpectrum");
@@ -1068,6 +1215,7 @@ public class Example {
 | **alignedFeatureId** | **String**| feature (aligned over runs) the formula result belongs to. | |
 | **formulaId** | **String**| identifier of the requested formula result | |
 | **inchiKey** | **String**| 2d InChIKey of the structure candidate to be used to annotate the spectrum annotation | |
+| **spectrumIndex** | **Integer**| index of the spectrum to be annotated. Merged MS/MS will be used if spectrumIndex &lt; 0 (default) | [optional] [default to -1] |
 
 ### Return type
 

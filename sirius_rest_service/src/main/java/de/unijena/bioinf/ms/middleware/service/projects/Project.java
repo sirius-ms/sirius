@@ -26,6 +26,7 @@ import de.unijena.bioinf.ms.middleware.model.annotations.StructureCandidateScore
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeatureQuality;
+import de.unijena.bioinf.ms.middleware.model.features.AnnotatedMsMsData;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -126,11 +127,25 @@ public interface Project {
         return findStructureCandidateById(inchiKey, formulaId, alignedFeatureId, toEnumSet(StructureCandidateScored.OptField.class, optFields));
     }
 
-    default AnnotatedSpectrum findAnnotatedSpectrumByFormulaId(@NotNull String formulaId, @NotNull String alignedFeatureId){
-        return findAnnotatedSpectrumByStructureId(null, formulaId, alignedFeatureId);
+    default AnnotatedSpectrum findAnnotatedSpectrumByFormulaId(int specIndex, @NotNull String formulaId, @NotNull String alignedFeatureId){
+        return findAnnotatedSpectrumByStructureId(specIndex,null, formulaId, alignedFeatureId);
     }
 
-    AnnotatedSpectrum findAnnotatedSpectrumByStructureId(@Nullable String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId);
+    /**
+     * Return Annotated MsMs Spectrum (Fragments and Structure)
+     * @param specIndex index of the spectrum to annotate if < 0 a Merged Ms/Ms over all spectra will be used
+     * @param inchiKey of the structure candidate that will be used
+     * @param formulaId of the formula candidate to retrieve the fragments from
+     * @param alignedFeatureId the feature the spectrum belongs to
+     * @return Annotated MsMs Spectrum (Fragments and Structure)
+     */
+    AnnotatedSpectrum findAnnotatedSpectrumByStructureId(int specIndex, @Nullable String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId);
+
+    default AnnotatedMsMsData findAnnotatedMsMsDataByFormulaId(@NotNull String formulaId, @NotNull String alignedFeatureId){
+        return findAnnotatedMsMsDataByStructureId(null, formulaId, alignedFeatureId);
+    }
+
+    AnnotatedMsMsData findAnnotatedMsMsDataByStructureId(@Nullable String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId);
 
     String getFingerIdDataCSV(int charge);
 

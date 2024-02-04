@@ -76,6 +76,10 @@ public abstract class AbstractSpectrum<P extends Peak> implements OrderedSpectru
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     protected List<P> peaks;
 
+    List<P> getPeaks() {
+        return peaks;
+    }
+
     public double[] getMasses() {
         return peaks.stream().mapToDouble(Peak::getMass).toArray();
     }

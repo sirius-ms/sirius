@@ -2326,6 +2326,17 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "spectrumIndex",
+            "in": "query",
+            "description": "index of the spectrum to be annotated. Merged MS/MS will be used if spectrumIndex \u003c 0 (default)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": -1
+            }
           }
         ],
         "responses": {
@@ -2335,6 +2346,66 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AnnotatedSpectrum"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-msmsdata": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses\n for the given formula result identifier and structure candidate inChIKey.",
+        "description": "Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses\n for the given formula result identifier and structure candidate inChIKey.\n These annotations are only available if a fragmentation tree and the structure candidate are available.",
+        "operationId": "getStructureAnnotatedMsData",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) the formula result belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "formulaId",
+            "in": "path",
+            "description": "identifier of the requested formula result",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "inchiKey",
+            "in": "path",
+            "description": "2d InChIKey of the structure candidate to be used to annotate the spectrum annotation",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fragmentation spectrum annotated with fragments and sub-structures.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnotatedMsMsData"
                 }
               }
             }
@@ -2683,6 +2754,17 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "spectrumIndex",
+            "in": "query",
+            "description": "index of the spectrum to be annotated. Merged MS/MS will be used if spectrumIndex \u003c 0 (default)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": -1
+            }
           }
         ],
         "responses": {
@@ -2692,6 +2774,57 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AnnotatedSpectrum"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/annotated-msmsdata": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses\n for the given formula result identifier\n These annotations are only available if a fragmentation tree and the structure candidate are available.",
+        "description": "Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses\n for the given formula result identifier\n These annotations are only available if a fragmentation tree and the structure candidate are available.",
+        "operationId": "getFormulaAnnotatedMsMsData",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) the formula result belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "formulaId",
+            "in": "path",
+            "description": "identifier of the requested formula result",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fragmentation spectra annotated with fragment formulas and losses.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnotatedMsMsData"
                 }
               }
             }
@@ -4693,7 +4826,7 @@
             "description": "Molecular formula of the neutral loss that connects these two peaks."
           }
         },
-        "description": "",
+        "description": "Link from annotated fragment peak to its parent fragment peak connected by their neutral loss.",
         "nullable": true
       },
       "Peak": {
@@ -5226,6 +5359,25 @@
             "type": "boolean"
           }
         }
+      },
+      "AnnotatedMsMsData": {
+        "required": [
+          "mergedMs2",
+          "ms2Spectra"
+        ],
+        "type": "object",
+        "properties": {
+          "mergedMs2": {
+            "$ref": "#/components/schemas/AnnotatedSpectrum"
+          },
+          "ms2Spectra": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnnotatedSpectrum"
+            }
+          }
+        },
+        "description": ""
       },
       "Info": {
         "required": [
