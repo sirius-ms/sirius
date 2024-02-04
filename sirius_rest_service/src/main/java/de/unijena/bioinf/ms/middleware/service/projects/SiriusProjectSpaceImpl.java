@@ -44,10 +44,7 @@ import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.middleware.controller.AlignedFeatureController;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
-import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
-import de.unijena.bioinf.ms.middleware.model.features.AlignedFeatureQuality;
-import de.unijena.bioinf.ms.middleware.model.features.LCMSFeatureQuality;
-import de.unijena.bioinf.ms.middleware.model.features.MsData;
+import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
@@ -291,7 +288,7 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     @Override
-    public AnnotatedSpectrum findAnnotatedSpectrumByStructureId(@Nullable String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId) {
+    public AnnotatedSpectrum findAnnotatedSpectrumByStructureId(int specIndex, @Nullable String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId) {
         Instance instance = loadInstance(alignedFeatureId);
         Optional<FormulaResult> fr;
         if (inchiKey == null || inchiKey.isBlank()) {
@@ -307,9 +304,28 @@ public class SiriusProjectSpaceImpl implements Project {
                 .filter(c -> Objects.equals(c.getInchiKey2D(), inchiKey))
                 .findFirst().map(CompoundCandidate::getSmiles).orElse(null);
 
-        return asAnnotatedSpectrum(instance, ftree, smiles);
+        return asAnnotatedSpectrum(specIndex, instance, ftree, smiles);
     }
 
+    @Override
+    public AnnotatedMsMsData findAnnotatedMsMsDataByStructureId(@Nullable String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId) {
+        Instance instance = loadInstance(alignedFeatureId);
+        Optional<FormulaResult> fr;
+        if (inchiKey == null || inchiKey.isBlank()) {
+            fr = instance.loadFormulaResult(parseFID(instance, formulaId), FTree.class);
+        } else {
+            fr = instance.loadFormulaResult(parseFID(instance, formulaId), FTree.class, FBCandidates.class);
+        }
+
+        FTree ftree = fr.flatMap(f -> f.getAnnotation(FTree.class)).orElse(null);
+        String smiles = fr.flatMap(f -> f.getAnnotation(FBCandidates.class)).stream()
+                .flatMap(fb -> fb.getResults().stream())
+                .map(SScored::getCandidate)
+                .filter(c -> Objects.equals(c.getInchiKey2D(), inchiKey))
+                .findFirst().map(CompoundCandidate::getSmiles).orElse(null);
+
+        return AnnotatedMsMsData.of(loadExperiment(instance), ftree, smiles);
+    }
 
     @Override
     public StructureCandidateScored findStructureCandidateById(@NotNull String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
@@ -436,6 +452,12 @@ public class SiriusProjectSpaceImpl implements Project {
         return co;
     }
 
+
+    protected static Ms2Experiment loadExperiment(Instance instance) {
+        return instance.loadCompoundContainer(Ms2Experiment.class).getAnnotation(Ms2Experiment.class)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Could not find spectra data for '" + instance.getID().getFeatureId() + "'!"));
+    }
 
     protected Instance loadInstance(String cid) {
         return projectSpaceManager.getInstanceFromCompound(parseCID(cid));
@@ -569,7 +591,7 @@ public class SiriusProjectSpaceImpl implements Project {
         if (optFields.contains(FormulaCandidate.OptField.fragmentationTree))
             res.getAnnotation(FTree.class).map(FragmentationTree::fromFtree).ifPresent(candidate::fragmentationTree);
         if (optFields.contains(FormulaCandidate.OptField.annotatedSpectrum))
-            candidate.annotatedSpectrum(asAnnotatedSpectrum(inst, res.getAnnotation(FTree.class).orElse(null), null));
+            candidate.annotatedSpectrum(asAnnotatedSpectrum(-1, inst, res.getAnnotation(FTree.class).orElse(null), null));
         if (optFields.contains(FormulaCandidate.OptField.isotopePattern))
             candidate.isotopePatternAnnotation(asIsotopePatternAnnotation(inst, res.getAnnotation(FTree.class).orElse(null)));
         if (optFields.contains(FormulaCandidate.OptField.lipidAnnotation))
@@ -681,18 +703,15 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     public static IsotopePatternAnnotation asIsotopePatternAnnotation(Instance instance, FTree ftree) {
-        Ms2Experiment exp = instance.loadCompoundContainer(Ms2Experiment.class).getAnnotation(Ms2Experiment.class)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Could not find spectra data for '" + instance.getID().getFeatureId() + "'!"));
-        return IsotopePatternAnnotation.create(exp, ftree);
+        return IsotopePatternAnnotation.create(loadExperiment(instance), ftree);
     }
 
-    public static AnnotatedSpectrum asAnnotatedSpectrum(Instance instance, FTree ftree, String structureSmiles) {
-        Ms2Experiment exp = instance.loadCompoundContainer(Ms2Experiment.class).getAnnotation(Ms2Experiment.class)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Could not find spectra data for '" + instance.getID().getFeatureId() + "'!"));
-
-        return Spectrums.createMergedMsMsWithAnnotations(exp, ftree, structureSmiles);
+    public static AnnotatedSpectrum asAnnotatedSpectrum(int specIndex, Instance instance, FTree ftree, String structureSmiles) {
+        Ms2Experiment exp = loadExperiment(instance);
+        if (specIndex < 0)
+            return Spectrums.createMergedMsMsWithAnnotations(exp, ftree, structureSmiles);
+        else
+            return Spectrums.createMsMsWithAnnotations(exp.getMs2Spectra().get(specIndex), ftree, structureSmiles);
     }
 
     public static FeatureAnnotations extractTopAnnotationsDeNovo(Instance inst) {

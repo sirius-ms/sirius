@@ -24,6 +24,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 
+/**
+ * Link from annotated fragment peak to its parent fragment peak connected by their neutral loss.
+ */
 @Getter
 @Builder
 public class ParentPeak {
