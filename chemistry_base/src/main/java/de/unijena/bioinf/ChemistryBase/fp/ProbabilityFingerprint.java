@@ -23,10 +23,17 @@ package de.unijena.bioinf.ChemistryBase.fp;
 import com.google.common.base.Joiner;
 
 import java.util.Iterator;
+import java.util.List;
 
 public class ProbabilityFingerprint extends AbstractFingerprint {
 
     protected final double[] fingerprint;
+
+    public ProbabilityFingerprint(FingerprintVersion fingerprintVersion, List<Double> fingerprint) {
+        super(fingerprintVersion);
+        this.fingerprint = fingerprint.stream().mapToDouble(Double::doubleValue).toArray();
+        if (fingerprint.size() != fingerprintVersion.size()) throw new IllegalArgumentException("fp length does not match fingerprint version length: " + fingerprint.size() + " vs. " + fingerprintVersion.size());
+    }
 
     public ProbabilityFingerprint(FingerprintVersion fingerprintVersion, double[] fingerprint) {
         super(fingerprintVersion);
