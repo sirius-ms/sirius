@@ -62,7 +62,7 @@ import java.util.stream.Stream;
  * @since 12.01.17
  */
 public class
-FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
+FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
     protected Logger logger = LoggerFactory.getLogger(FormulaIDConfigPanel.class);
 
     public enum Instrument {
@@ -110,29 +110,18 @@ FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
     protected final Dialog owner;
 
     protected boolean hasMs2;
-    protected boolean displayAdvancedParameters;
 
-    private final List<Component> advancedParametersComponents;
 
     public FormulaIDConfigPanel(Dialog owner, List<InstanceBean> ecs, boolean ms2, boolean displayAdvancedParameters) {
-        super(SiriusOptions.class);
+        super(SiriusOptions.class, displayAdvancedParameters);
         this.ecs = ecs;
         this.owner = owner;
         this.hasMs2 = ms2;
-        this.displayAdvancedParameters = displayAdvancedParameters;
-        advancedParametersComponents = new ArrayList<>();
 
         createPanel();
-        updateAdvancedParametersVisibility();
-    }
-
-    public void setDisplayAdvancedParameters(boolean display) {
-        displayAdvancedParameters = display;
-        updateAdvancedParametersVisibility();
     }
 
     private void createPanel() {
-        this.removeAll();
 
         setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
         final JPanel center = applyDefaultLayout(new JPanel());
@@ -236,7 +225,7 @@ FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
             technicalParameters.setLayout(rl);
             technicalParameters.add(new TextHeaderBoxPanel("Fragmentation tree computation", ilpOptions));
             add(technicalParameters);
-            advancedParametersComponents.add(technicalParameters);
+            addAdvancedComponent(technicalParameters);
         }
 
         // add ionization's of selected compounds to default
@@ -251,12 +240,8 @@ FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         JLabel label = new JLabel(name);
         panel.add(label, control);
 
-        advancedParametersComponents.add(label);
-        advancedParametersComponents.add(control);
-    }
-
-    private void updateAdvancedParametersVisibility() {
-        advancedParametersComponents.forEach(c -> c.setVisible(displayAdvancedParameters));
+        addAdvancedComponent(label);
+        addAdvancedComponent(control);
     }
 
     public void refreshPossibleAdducts(Set<String> precursorIonTypes, boolean enabled) {
