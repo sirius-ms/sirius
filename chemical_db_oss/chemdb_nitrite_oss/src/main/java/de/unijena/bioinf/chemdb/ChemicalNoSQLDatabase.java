@@ -239,7 +239,7 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
         for (FingerprintCandidateWrapper wrapper : chunk) {
             FingerprintCandidate fingerprintCandidate = wrapper.getFingerprintCandidate();
             updater.accept(fingerprintCandidate);
-            updated.add(FingerprintCandidateWrapper.of(wrapper.getFormula(), wrapper.getMass(), fingerprintCandidate));
+            updated.add(FingerprintCandidateWrapper.of(wrapper.getPk(), wrapper.getFormula(), wrapper.getMass(), fingerprintCandidate));
         }
         this.storage.upsertAll(updated);
     }
