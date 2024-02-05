@@ -79,6 +79,9 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
     private RetentionTime rt;
     @Nullable
     private Double confidenceScore;
+    @Nullable
+    private Double confidenceScoreApproximate;
+    private boolean useApproximate = false;
 
     protected CompoundContainerId(@NotNull String directoryName, @NotNull String compoundName, int compoundIndex) {
         this(directoryName, compoundName, compoundIndex, null, null, null, null, null, null, null);
@@ -165,6 +168,22 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         this.confidenceScore = confidenceScore;
     }
 
+    public Optional<Double> getConfidenceScoreApproximate() {
+        return Optional.ofNullable(confidenceScoreApproximate);
+    }
+
+    public void setConfidenceScoreApproximate(@Nullable Double confidenceScoreApproximate) {
+        this.confidenceScoreApproximate = confidenceScoreApproximate;
+    }
+
+    public boolean isUseApproximate() {
+        return useApproximate;
+    }
+
+    public void setUseApproximate(boolean useApproximate) {
+        this.useApproximate = useApproximate;
+    }
+
     @NotNull
     public Optional<String> getFeatureId() {
         return Optional.ofNullable(featureId);
@@ -217,11 +236,13 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         Map<String, String> kv = new LinkedHashMap<>(3);
         kv.put("index", String.valueOf(getCompoundIndex()));
         kv.put("name", getCompoundName());
+        kv.put("useApproximate", String.valueOf(isUseApproximate()));
         getIonMass().ifPresent(im -> kv.put("ionMass", String.valueOf(im)));
         getIonType().ifPresent(it -> kv.put("ionType", it.toString()));
         getDetectedAdducts().ifPresent(pa -> kv.put("detectedAdducts", pa.toString()));
         getRt().ifPresent(rt -> kv.put("rt", RetentionTime.asStringValue(rt)));
         getConfidenceScore().ifPresent(cs -> kv.put("confidenceScore", String.valueOf(cs)));
+        getConfidenceScoreApproximate().ifPresent(cs -> kv.put("confidenceScoreApproximate", String.valueOf(cs)));
         getFeatureId().ifPresent(fid -> kv.put("featureId", featureId));
         getGroupId().ifPresent(fid -> kv.put("groupId", groupId));
         getGroupRt().ifPresent(rt -> kv.put("groupRt", RetentionTime.asStringValue(rt)));
@@ -242,6 +263,8 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         setDetectedAdducts(cid.possibleAdducts);
         setRt(cid.rt);
         setConfidenceScore(cid.confidenceScore);
+        setConfidenceScoreApproximate(cid.confidenceScoreApproximate);
+        setUseApproximate(cid.useApproximate);
         setFeatureId(cid.featureId);
         setGroupId(cid.groupId);
         setGroupRt(cid.groupRt);

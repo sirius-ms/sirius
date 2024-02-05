@@ -82,8 +82,6 @@ class MzXMLSaxParser extends DefaultHandler {
     private final LCMSParser.IOThrowingConsumer<Scan> scanConsumer;
     private final LCMSParser.IOThrowingConsumer<MSMSScan> msmsScanConsumer;
 
-    private final MzXMLParser parent;
-
     private final DatatypeFactory datatypeFactory;
 
     private final ByteList totalBuffer = new ByteArrayList(1024);
@@ -99,8 +97,7 @@ class MzXMLSaxParser extends DefaultHandler {
             LCMSParser.IOThrowingConsumer<Run> runConsumer,
             LCMSParser.IOThrowingConsumer<Scan> scanConsumer,
             LCMSParser.IOThrowingConsumer<MSMSScan> msmsScanConsumer,
-            Run.RunBuilder runBuilder,
-            MzXMLParser parent
+            Run.RunBuilder runBuilder
     ) throws IOException {
         this.storage = storage;
         this.runBuilder = runBuilder.sourceReference(new MsDataSourceReference(file.toURI(), file.getName(), null, null));
@@ -108,8 +105,6 @@ class MzXMLSaxParser extends DefaultHandler {
         this.runConsumer = runConsumer;
         this.scanConsumer = scanConsumer;
         this.msmsScanConsumer = msmsScanConsumer;
-
-        this.parent = parent;
 
         this.stack = new ArrayList<>();
         this.handler = new RootHandler();
@@ -240,18 +235,16 @@ class MzXMLSaxParser extends DefaultHandler {
 
     public class MsInstrumentHandler extends Handler {
 
-        private final List<MassAnalyzerType> massAnalyzers = new ArrayList<>();
+        private final List<MassAnalyzer> massAnalyzers = new ArrayList<>();
 
         @Override
         public void enterElement(String elementName, Attributes attrs) {
             switch (elementName) {
                 case "msIonisation":
-                    Optional<IonizationType> optIonization = parent.matchIonizationType(attrs.getValue("value"));
-                    optIonization.ifPresent(runBuilder::ionization);
+                    IonizationType.byValue(attrs.getValue("value")).ifPresent(runBuilder::ionization);
                     break;
                 case "msMassAnalyzer":
-                    Optional<MassAnalyzerType> optMassAnalyzer = parent.matchMassAnalyzerType(attrs.getValue("value"));
-                    optMassAnalyzer.ifPresent(massAnalyzers::add);
+                    MassAnalyzer.byValue(attrs.getValue("value")).ifPresent(massAnalyzers::add);
                     break;
             }
         }

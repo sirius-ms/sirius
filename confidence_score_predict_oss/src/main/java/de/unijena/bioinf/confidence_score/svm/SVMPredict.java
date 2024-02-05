@@ -63,13 +63,36 @@ LibLinearImpl.svm_model model;
 
 
 
+    }
 
+    public double[] predict_SVM_Value(double[][] features,TrainedSVM svm){
 
+        double[] scores = new double[features.length];
+        try{
+            LinearSVMPredictor predictor = new LinearSVMPredictor(svm.weights,0);
+            for(int i=0;i<features.length;i++) {
 
+                    scores[i] = predictor.score(features[i]);
 
+            }
 
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+        return scores;
 
     }
+
+    public double applyPlatt(double svmValue,TrainedSVM svm){
+
+        double score;
+        score =1.0/(1+Math.exp(svm.probAB[0]*svmValue+svm.probAB[1]));
+        return score;
+
+    }
+
+
 
     public boolean[] predict_classes(double[][] features, TrainedSVM svm){
 
