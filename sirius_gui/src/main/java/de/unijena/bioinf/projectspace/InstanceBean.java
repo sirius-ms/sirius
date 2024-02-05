@@ -22,7 +22,13 @@ package de.unijena.bioinf.projectspace;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.WrapperSpectrum;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
@@ -34,9 +40,13 @@ import org.slf4j.LoggerFactory;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static de.unijena.bioinf.projectspace.FormulaResultBean.ensureDefaultOptFields;
@@ -64,9 +74,6 @@ public class InstanceBean implements SiriusPCS {
 
     //Project-space listener
     private final PropertyChangeListener listener;
-
-    private SpectralSearchResultBean spectralBean = null;
-
 
     //todo best hit property change is needed.
     // e.g. if the scoring changes from sirius to zodiac
@@ -107,8 +114,8 @@ public class InstanceBean implements SiriusPCS {
                                             pcs.firePropertyChange("instance.createFormulaResult", null, pce);
                                     case RESULT_DELETED ->
                                             pcs.firePropertyChange("instance.deleteFormulaResult", null, pce);
-                                    case RESULT_UPDATED -> //todo nightsky: do we need this event here or just on formula level?
-                                            pcs.firePropertyChange("instance.updateFormulaResult." + pce.getFormulaId(), null, pce);
+//                                    case RESULT_UPDATED -> //todo nightsky: do we need this event here or just on formula level?
+//                                            pcs.firePropertyChange("instance.updateFormulaResult." + pce.getFormulaId(), null, pce);
                                 }
                             } else {
                                 LoggerFactory.getLogger(getClass()).warn("Event delegated with wrong feature id! Id is {} instead of {}!", pce.getFeaturedId(), getFeatureId());
@@ -225,15 +232,33 @@ public class InstanceBean implements SiriusPCS {
                 .getContent().stream()
                 .map(formulaCandidate -> new FormulaResultBean(formulaCandidate, this))
                 .toList();
+
     }
 
-    public PageStructureCandidateFormula getStructureCandidates(int topK) {
-        return getStructureCandidates(0, topK);
+    public List<FingerprintCandidateBean> getStructureCandidates(int topK) {
+        PageStructureCandidateFormula page = getStructureCandidatesPage(topK);
+        if (page.getContent() == null)
+            return null;
+
+        MaskedFingerprintVersion fpVersion = getProjectManager().getFingerIdData(getIonType().getCharge())
+                .getFingerprintVersion();
+
+        Map<String, ProbabilityFingerprint> fps = page.getContent().stream()
+                .map(StructureCandidateFormula::getFormulaId).distinct()
+                .collect(Collectors.toMap(fcid -> fcid, fcid -> new ProbabilityFingerprint(
+                        fpVersion,
+                        (List<Double>) withIds((pid, fid) -> getClient().features().getFingerprintPrediction(pid, fid, fcid))
+                )));
+
+        return page.getContent().stream().map(c -> new FingerprintCandidateBean(c, fps.get(c.getFormulaId()))).toList();
     }
 
-    public PageStructureCandidateFormula getStructureCandidates(int pageNum, int pageSize) {
+    public PageStructureCandidateFormula getStructureCandidatesPage(int topK) {
+        return getStructureCandidatesPage(0, topK);
+    }
+
+    public PageStructureCandidateFormula getStructureCandidatesPage(int pageNum, int pageSize) {
         return withIds((pid, fid) -> getClient().features().getStructureCandidates(pid, fid, pageNum, pageSize, null, null, SearchQueryType.LUCENE, List.of(StructureCandidateOptField.DBLINKS)));
-
     }
 
 
@@ -247,16 +272,34 @@ public class InstanceBean implements SiriusPCS {
     }
 
     public Optional<SpectralSearchResultBean> getSpectralSearchResults() {
+        //todo nightsky: implement
         throw new UnsupportedOperationException("Implement modification features in nightsky api");
 //        CompoundContainer container = loadCompoundContainer(SpectralSearchResult.class);
 //        Optional<SpectralSearchResult> result = container.getAnnotation(SpectralSearchResult.class);
 //        return result.map(SpectralSearchResultBean::new);
     }
 
+    public MutableMs2Experiment asMs2Experiment() {
+        MutableMs2Experiment exp = new MutableMs2Experiment();
+        exp.setIonMass(getIonMass());
+        exp.setFeatureId(getFeatureId());
+        exp.setPrecursorIonType(getIonType());
+        exp.setMs1Spectra(getMsData().getMs1Spectra().stream()
+                .map(s -> new SimpleSpectrum(WrapperSpectrum.of(s.getPeaks(), Peak::getMass,Peak::getIntensity)))
+                .toList());
+        exp.setMs2Spectra(getMsData().getMs2Spectra().stream()
+                .map(s -> new MutableMs2Spectrum(WrapperSpectrum.of(s.getPeaks(), Peak::getMass,Peak::getIntensity),s.getPrecursorMz(), CollisionEnergy.fromString(s.getCollisionEnergy()),2))
+                .toList());
+        Optional.ofNullable(msData.getMergedMs1())
+                .map(s -> new SimpleSpectrum(WrapperSpectrum.of(s.getPeaks(), Peak::getMass,Peak::getIntensity)))
+                .ifPresent(exp::setMergedMs1Spectrum);
+        return exp;
+    }
+
 
     //todo nightsky reenable setter
 
-    private <R> R withIds(BiFunction<String, String, R> doWithClient) {
+    public  <R> R withIds(BiFunction<String, String, R> doWithClient) {
         return doWithClient.apply(projectManager.getProjectId(), getFeatureId());
     }
 

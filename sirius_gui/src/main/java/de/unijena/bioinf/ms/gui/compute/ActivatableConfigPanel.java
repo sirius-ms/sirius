@@ -42,19 +42,23 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
     protected final String toolName;
     protected final C content;
 
+    protected final SiriusGui gui;
+
     protected LinkedHashSet<EnableChangeListener<C>> listeners = new LinkedHashSet<>();
 
-    protected ActivatableConfigPanel(String toolname, Icon buttonIcon, Supplier<C> contentSuppl) {
-        this(null, toolname, null, buttonIcon, contentSuppl);
-    }
     protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, Icon buttonIcon, Supplier<C> contentSuppl) {
-        this(gui, toolname, null, buttonIcon, contentSuppl);
+        this(gui, toolname, buttonIcon, false, contentSuppl);
     }
 
-    ActivatableConfigPanel(@Nullable SiriusGui gui, String toolname, String toolDescription, Icon buttonIcon, Supplier<C> contentSuppl) {
+    protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, Icon buttonIcon, boolean checkServerConnection, Supplier<C> contentSuppl) {
+        this(gui, toolname, null, buttonIcon, checkServerConnection, contentSuppl);
+    }
+
+    protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, String toolDescription, Icon buttonIcon, boolean checkServerConnection, Supplier<C> contentSuppl) {
         super();
         this.toolName = toolname;
         this.content = contentSuppl.get();
+        this.gui = gui;
 
         activationButton = new ToolbarToggleButton(this.toolName, buttonIcon);
         activationButton.setPreferredSize(new Dimension(110, 60));
@@ -67,7 +71,7 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
         add(activationButton, content);
 
 
-        if (gui != null) {
+        if (checkServerConnection) {
             gui.getConnectionMonitor().addConnectionStateListener(evt ->
                             setButtonEnabled(isConnected(((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck())));
         } else {

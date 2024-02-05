@@ -27,9 +27,6 @@ import de.unijena.bioinf.ms.gui.table.*;
 
 import javax.swing.*;
 
-/**
- * Created by fleisch on 15.05.17.
- */
 public class CandidateListTableView extends CandidateListView {
 
     private final ActionTable<FingerprintCandidateBean> table;
@@ -38,8 +35,8 @@ public class CandidateListTableView extends CandidateListView {
     public CandidateListTableView(final StructureList list) {
         super(list);
 
-        getSource().addActiveResultChangedListener((experiment, sre, resultElements, selections) -> {
-            if (experiment == null || experiment.stream().noneMatch(e -> e.getPredictedFingerprint().isPresent()))
+        getSource().addActiveResultChangedListener((instanceBean, sre, resultElements, selections) -> {
+            if (instanceBean == null) //todo nighsky: how to check if fingerprint was computed
                 showCenterCard(ActionList.ViewState.NOT_COMPUTED);
             else if (resultElements.isEmpty())
                 showCenterCard(ActionList.ViewState.EMPTY);

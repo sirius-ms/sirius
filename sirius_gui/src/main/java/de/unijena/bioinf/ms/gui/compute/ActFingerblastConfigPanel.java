@@ -28,8 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ActFingerblastConfigPanel extends ActivatableConfigPanel<FingerblastConfigPanel> {
     public ActFingerblastConfigPanel(@NotNull SiriusGui gui, @Nullable final JCheckBoxList<CustomDataSources.Source> syncSource) {
-        super(gui, "Search DBs", Icons.DB_LENS_32, () -> new FingerblastConfigPanel(syncSource));
-        //todo change icon
+        super(gui, "Search DBs", Icons.DB_LENS_32, true, () -> new FingerblastConfigPanel(syncSource));
     }
 
     @Override

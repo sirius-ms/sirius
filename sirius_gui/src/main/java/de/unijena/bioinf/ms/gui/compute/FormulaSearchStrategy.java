@@ -15,6 +15,7 @@ import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
+import de.unijena.bioinf.ms.nightsky.sdk.model.MsData;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.sirius.Ms1Preprocessor;
@@ -94,7 +95,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
     }
 
     public void setEnabled(boolean enabled) {
-        isEnabled = enabled;
+        isEnabled = enabled; //todo NewWorkflow: @marcus this looks wrong is this on purpos? why no super call
         revalidate();
     }
 
@@ -268,12 +269,14 @@ public class FormulaSearchStrategy extends ConfigPanel {
     }
 
     protected void detectElements() {
+        //todo nightsky: do we want todo that in the frontend?
         String notWorkingMessage = "Element detection requires MS1 spectrum with isotope pattern.";
         InstanceBean ec = ecs.get(0);
-        if (!ec.getMs1Spectra().isEmpty() || ec.getMergedMs1Spectrum() != null) {
+        MsData msData = ec.getMsData();
+        if (!msData.getMs1Spectra().isEmpty() || msData.getMergedMs1() != null) {
             Jobs.runInBackgroundAndLoad(owner, "Detecting Elements...", () -> {
                 final Ms1Preprocessor pp = ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor();
-                ProcessedInput pi = pp.preprocess(new MutableMs2Experiment(ec.getExperiment(), false));
+                ProcessedInput pi = pp.preprocess(new MutableMs2Experiment(ec.asMs2Experiment(), false));
 
                 pi.getAnnotation(FormulaConstraints.class).
                         ifPresentOrElse(c -> {

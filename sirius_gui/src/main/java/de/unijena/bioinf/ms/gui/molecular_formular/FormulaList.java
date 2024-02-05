@@ -31,6 +31,7 @@ import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -93,7 +94,7 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
             backgroundLoaderLock.lock();
             setData(ec);
             final JJob<Boolean> old = backgroundLoader;
-            backgroundLoader = Jobs.runInBackground(new TinyBackgroundJJob<Boolean>() {
+            backgroundLoader = Jobs.runInBackground(new TinyBackgroundJJob<>() {
                 @Override
                 protected Boolean compute() throws Exception {
 
@@ -102,32 +103,13 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                         old.getResult(); //await cancellation so that nothing strange can happen.
                     }
                     checkForInterruption();
-                    if (ec != null && ec.getFormulaCandidates() != null && !ec.getFormulaCandidates().isEmpty()) {
-                        checkForInterruption();
-                        if (!ec.getFormulaCandidates().equals(elementList)) {
-                            checkForInterruption();
-                            Jobs.runEDTAndWait(FormulaList.this::intiResultList);
-                        }
-                    } else {
-                        checkForInterruption();
-                        Jobs.runEDTAndWait(() -> {
-                            if (!elementList.isEmpty()) {
-                                elementList.forEach(FormulaResultBean::unregisterProjectSpaceListeners);
-                                elementListSelectionModel.clearSelection();
-                                refillElements(null);
-                            } else {
-                                // to have notification even if the list is already empty
-                                readDataByConsumer(data -> notifyListeners(data, null, elementList, elementListSelectionModel));
-                            }
-                            zodiacScoreStats.update(new double[0]);
-                            siriusScoreStats.update(new double[0]);
-                            isotopeScoreStats.update(new double[0]);
-                            treeScoreStats.update(new double[0]);
-                            csiScoreStats.update(new double[0]);
-                        });
-                    }
-
+                    //fetch data
+                    final List<FormulaResultBean> candidates = ec != null ? readDataByFunction(InstanceBean::getFormulaCandidates) : null;
                     checkForInterruption();
+                    //loading data
+                    intiResultList(candidates);
+                    checkForInterruption();
+
                     //refreshing selection
                     if (!elementList.isEmpty()) {
                         final AtomicInteger index = new AtomicInteger(0);
@@ -155,46 +137,55 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
         }
     }
 
-    private void intiResultList() {
+    private void intiResultList(List<FormulaResultBean> candidates) throws InterruptedException, InvocationTargetException {
         elementList.forEach(FormulaResultBean::unregisterProjectSpaceListeners);
-        elementListSelectionModel.clearSelection();
-//        elementList.clear();
+        if (candidates != null && !candidates.isEmpty()) { //refill case
+            elementListSelectionModel.clearSelection();
 
-        if (hasData()) {
-            final List<FormulaResultBean> r = readDataByFunction(InstanceBean::getFormulaCandidates);
-
-            if (r != null && !r.isEmpty()) {
-                double[] zscores = new double[r.size()];
-                double[] sscores = new double[r.size()];
-                double[] iScores = new double[r.size()];
-                double[] tScores = new double[r.size()];
-                double[] csiScores = new double[r.size()];
-                int i = 0;
+            double[] zscores = new double[candidates.size()];
+            double[] sscores = new double[candidates.size()];
+            double[] iScores = new double[candidates.size()];
+            double[] tScores = new double[candidates.size()];
+            double[] csiScores = new double[candidates.size()];
+            int i = 0;
 
 
-                for (FormulaResultBean fc : r) {
-                    zscores[i] = fc.getZodiacScore().orElse(0d); //why do we want 0 here?
-                    sscores[i] = fc.getSiriusScore().orElse(Double.NEGATIVE_INFINITY);
-                    iScores[i] = fc.getIsotopeScore().orElse(Double.NEGATIVE_INFINITY);
-                    tScores[i] = fc.getTreeScore().orElse(Double.NEGATIVE_INFINITY);
-                    csiScores[i++] = fc.getTopCSIScore().orElse(Double.NEGATIVE_INFINITY);
-                }
-                refillElements(r);
-
-                this.zodiacScoreStats.update(zscores);
-                this.siriusScoreStats.update(sscores);
-                this.isotopeScoreStats.update(iScores);
-                this.treeScoreStats.update(tScores);
-                this.csiScoreStats.update(csiScores);
-
-                this.explainedIntensity.setMinScoreValue(0).setMaxScoreValue(1)
-                        .setScoreSum(this.explainedIntensity.getMax());
-
-                this.explainedPeaks.setMinScoreValue(0).setMaxScoreValue(r.get(0).getNumOfExplainablePeaks().orElseThrow())
-                        .setScoreSum(this.explainedPeaks.getMax());
+            for (FormulaResultBean fc : candidates) {
+                zscores[i] = fc.getZodiacScore().orElse(0d); //why do we want 0 here?
+                sscores[i] = fc.getSiriusScore().orElse(Double.NEGATIVE_INFINITY);
+                iScores[i] = fc.getIsotopeScore().orElse(Double.NEGATIVE_INFINITY);
+                tScores[i] = fc.getTreeScore().orElse(Double.NEGATIVE_INFINITY);
+                csiScores[i++] = fc.getTopCSIScore().orElse(Double.NEGATIVE_INFINITY);
             }
-        }
+            refillElements(candidates);
 
+            this.zodiacScoreStats.update(zscores);
+            this.siriusScoreStats.update(sscores);
+            this.isotopeScoreStats.update(iScores);
+            this.treeScoreStats.update(tScores);
+            this.csiScoreStats.update(csiScores);
+
+            this.explainedIntensity.setMinScoreValue(0).setMaxScoreValue(1)
+                    .setScoreSum(this.explainedIntensity.getMax());
+
+            this.explainedPeaks.setMinScoreValue(0).setMaxScoreValue(candidates.get(0).getNumOfExplainablePeaks().orElseThrow())
+                    .setScoreSum(this.explainedPeaks.getMax());
+        } else { //clear case
+            Jobs.runEDTAndWait(() -> {
+                if (!elementList.isEmpty()) {
+                    elementListSelectionModel.clearSelection();
+                    refillElements(null);
+                } else {
+                    // to have notification even if the list is already empty
+                    readDataByConsumer(data -> notifyListeners(data, null, elementList, elementListSelectionModel));
+                }
+                zodiacScoreStats.update(new double[0]);
+                siriusScoreStats.update(new double[0]);
+                isotopeScoreStats.update(new double[0]);
+                treeScoreStats.update(new double[0]);
+                csiScoreStats.update(new double[0]);
+            });
+        }
     }
 
     public List<FormulaResultBean> getSelectedValues() {

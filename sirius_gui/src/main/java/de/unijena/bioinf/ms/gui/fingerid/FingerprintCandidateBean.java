@@ -21,16 +21,17 @@
 
 package de.unijena.bioinf.ms.gui.fingerid;
 
+import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.chemdb.DataSource;
+import de.unijena.bioinf.chemdb.InChISMILESUtils;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.nightsky.sdk.model.BinaryFingerprint;
 import de.unijena.bioinf.ms.nightsky.sdk.model.DBLink;
 import de.unijena.bioinf.ms.nightsky.sdk.model.StructureCandidateFormula;
-import de.unijena.bioinf.projectspace.FormulaResultBean;
 import org.jetbrains.annotations.NotNull;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
@@ -77,7 +78,9 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
     private static final double THRESHOLD_FP = 0.4;
 
     //data
-    protected final ProbabilityFingerprint fp;
+    @NotNull
+    private final ProbabilityFingerprint fp;
+    @NotNull
     protected final StructureCandidateFormula candidate;
 
 
@@ -100,13 +103,10 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
     protected boolean atomCoordinatesAreComputed = false;
     protected ReentrantLock compoundLock = new ReentrantLock();
 
-    protected final FormulaResultBean parent;
 
-
-    private FingerprintCandidateBean(ProbabilityFingerprint fp, StructureCandidateFormula candidate, FormulaResultBean parent) {
-        this.fp = fp;
+    public FingerprintCandidateBean(@NotNull StructureCandidateFormula candidate, @NotNull ProbabilityFingerprint fp) {
+        this.fp = fp; //todo nightsky: ->  do we want to lazy load the fp instead?
         this.candidate = candidate;
-        this.parent = parent;
         this.relevantFps = null;
 
 
@@ -133,10 +133,6 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         this.referenceLabel = new EmptyLabel();
         this.moreLabel = new EmptyLabel();
     }
-
-/*    public DatabaseLabel[] getLabels() {
-        return labels;
-    }*/
 
     public void highlightInBackground() {
         CompoundMatchHighlighter h = new CompoundMatchHighlighter(this, getPlatts());
@@ -165,6 +161,22 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         return candidate.getInchiKey();
     }
 
+    public InChI getInChI() {
+        try {
+            return InChISMILESUtils.getInchiFromSmiles(candidate.getSmiles(), true);
+        } catch (CDKException e) {
+            throw new RuntimeException("Could not generate InChI from Smiles", e);
+        }
+    }
+
+    public String getSmiles(){
+        return candidate.getSmiles();
+    }
+
+    public @NotNull StructureCandidateFormula getCandidate() {
+        return candidate;
+    }
+
     public long getMergedDBFlags() {
         return CustomDataSources.getDBFlagsFromNames(candidate.getDbLinks().stream().map(DBLink::getName).collect(toList()));
     }
@@ -179,11 +191,6 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         }
         return molecule;
     }
-
-    public FormulaResultBean getFormulaResult() {
-        return parent;
-    }
-
 
     @Override
     public int compareTo(FingerprintCandidateBean o) {
@@ -340,11 +347,6 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         return candidate.getXlogP();
     }
 
-/*    public int index() {
-        //todo check if we really need that for the detail list reloading stuff
-        return rank - 1;
-    }*/
-
     private static class PrototypeCompoundCandidate extends FingerprintCandidateBean {
         private static StructureCandidateFormula makeSourceCandidate() {
             final StructureCandidateFormula candidate = new StructureCandidateFormula()
@@ -360,7 +362,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         }
 
         private PrototypeCompoundCandidate() {
-            super(null, makeSourceCandidate(), null);
+            super(makeSourceCandidate(), null);
         }
 
 

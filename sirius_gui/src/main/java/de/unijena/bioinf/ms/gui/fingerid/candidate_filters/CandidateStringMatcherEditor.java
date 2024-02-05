@@ -24,9 +24,6 @@ import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 
 import javax.swing.text.JTextComponent;
 
-/**
- * Created by fleisch on 18.05.17.
- */
 public class CandidateStringMatcherEditor extends TextComponentMatcherEditor<FingerprintCandidateBean> {
 
     public CandidateStringMatcherEditor(JTextComponent textComponent) {
@@ -34,8 +31,8 @@ public class CandidateStringMatcherEditor extends TextComponentMatcherEditor<Fin
             baseList.add(element.getMolecularFormula());
             baseList.add(element.getName());
             baseList.add(element.getInChiKey());
-            baseList.add(element.getFingerprintCandidate().getInchi().in3D);
-            baseList.add(element.getFingerprintCandidate().getSmiles());
+            baseList.add(element.getInChI().in3D);
+            baseList.add(element.getSmiles());
         });
     }
 }
