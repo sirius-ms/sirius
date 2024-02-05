@@ -124,6 +124,11 @@ public class DefaultBlobModelStore<Storage extends BlobStorage> extends Abstract
     }
 
     @Override
+    public Optional<InputStream> getFingerIdTrainingStructuresAll(PredictorType type) throws IOException {
+        return getResource(Path.of("trainingStructuresAll.json"), type);
+    }
+
+    @Override
     public void writeBayesnetScoringTree(@NotNull PredictorType type, @Nullable MolecularFormula formula, IOFunctions.IOConsumer<OutputStream> consume) throws IOException {
         if (formula == null)
             writeResource(Path.of("bayesnetScoring").resolve("trees").resolve("default.tsv"), type, consume);

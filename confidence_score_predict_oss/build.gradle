@@ -19,6 +19,8 @@
  */
 version =  fingeridVersion
 dependencies {
+    annotationProcessor project(':default_properties:processor')
+
 	//internal
 	api project(':fingerblast_oss')
 	api project(':fingerprinter_oss')
@@ -29,4 +31,6 @@ dependencies {
 	implementation group: "de.bwaldvogel", name: "liblinear", version: "$liblinear_version"
 	implementation group: "tw.edu.ntu.csie", name: "libsvm", version: "$libsvm_version"
 	implementation group: 'ca.umontreal.iro.simul', name: 'ssj', version: '3.1.0'
+	implementation project(':canopus_predict_oss')
+    implementation project(':combinatorial_fragmenter')
 }	
