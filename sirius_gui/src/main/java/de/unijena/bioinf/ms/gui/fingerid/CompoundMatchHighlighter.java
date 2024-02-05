@@ -23,6 +23,8 @@ import de.unijena.bioinf.ChemistryBase.fp.*;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TIntDoubleHashMap;
 import gnu.trove.procedure.TIntDoubleProcedure;
+import it.unimi.dsi.fastutil.shorts.ShortArrayList;
+import it.unimi.dsi.fastutil.shorts.ShortList;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -34,6 +36,7 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class CompoundMatchHighlighter {
 
@@ -47,7 +50,14 @@ public class CompoundMatchHighlighter {
         final TIntDoubleHashMap map = new TIntDoubleHashMap();
         final TIntDoubleHashMap unsureMap = new TIntDoubleHashMap();
         try {
-            for (FPIter mp : compound.candidate.getFingerprint().presentFingerprints()) {
+            ShortList indeces = compound.candidate.getFingerprint().getBitsSet().stream()
+                    .map(Integer::shortValue)
+                    .collect(Collectors.toCollection(ShortArrayList::new));
+            ArrayFingerprint f = new ArrayFingerprint(
+                    compound.getPlatts().getFingerprintVersion(),
+                    indeces.toShortArray());
+
+            for (FPIter mp : f.presentFingerprints()) {
                 final double probability = fp.getProbability(mp.getIndex());
                 final double weight;
                 if (probability >= 0.5) {

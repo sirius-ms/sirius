@@ -119,8 +119,8 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
         return false;
 
         */
-        LoggerFactory.getLogger(getClass()).warn("Filter by PeakShape not implented via NIghtSky -> Fileter is always True");
-        //todo nightsky -> implent into api
+        LoggerFactory.getLogger(getClass()).warn("Filter by PeakShape not implemented via NIghtSky -> Fileter is always True");
+        //todo nightsky: -> implement peak shape filter into api
         return false;
     }
 
@@ -144,7 +144,7 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
         if (k == 0)
             return false;
 
-        final PageStructureCandidateFormula candidates = item.getStructureCandidates(k);
+        final PageStructureCandidateFormula candidates = item.getStructureCandidatesPage(k);
 
         if (candidates == null || candidates.getContent() == null || candidates.getContent().isEmpty())
             return false;

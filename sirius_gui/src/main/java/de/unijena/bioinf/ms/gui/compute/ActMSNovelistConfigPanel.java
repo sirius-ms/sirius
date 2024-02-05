@@ -20,16 +20,16 @@
 package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 
 public class ActMSNovelistConfigPanel extends ActivatableConfigPanel<SubToolConfigPanel<FingerprintOptions>> {
 
-    public ActMSNovelistConfigPanel() {
-        super("MSNovelist", Icons.FINGER_32, true, () -> { //todo change icon
+    public ActMSNovelistConfigPanel(SiriusGui gui) {
+        super(gui, "MSNovelist", Icons.FINGER_32, () -> { //todo newWorkflow: change icon
             SubToolConfigPanel<FingerprintOptions> p = new SubToolConfigPanel<>(FingerprintOptions.class) { //todo NewWorkflow: set correct options
             };
             return p;
@@ -38,11 +38,11 @@ public class ActMSNovelistConfigPanel extends ActivatableConfigPanel<SubToolConf
 
     @Override
     protected void setComponentsEnabled(boolean enabled) {
-        //todo maybe add citation dialog?
+        //todo newWorkflow: maybe add citation dialog?
         String adviceKey = "de.unijena.bioinf.sirius.ui.advise.msnovelist";
 
         if (enabled && !PropertyManager.getBoolean(adviceKey, false)) {
-            if (new QuestionDialog(MainFrame.MF, "Do you require de novo structure generation?",
+            if (new QuestionDialog(gui.getMainFrame(), "Do you require de novo structure generation?",
                     GuiUtils.formatToolTip("Please note that de novo structure elucidation from MS data remains challenging. For most applications, searching in a molecular structure database with CSI:FingerID shouldbe default.", "", "Do you wish to continue anyways?"),
                     adviceKey).isAbort()) {
                 super.setComponentsEnabled(false);

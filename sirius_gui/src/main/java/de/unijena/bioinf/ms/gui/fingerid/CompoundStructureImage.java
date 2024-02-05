@@ -38,9 +38,6 @@ import java.awt.geom.Rectangle2D;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 
-/**
- * Created by fleisch on 24.05.17.
- */
 class CompoundStructureImage extends JPanel {
 
     protected static final Font nameFont, rankFont, matchFont;
@@ -106,12 +103,12 @@ class CompoundStructureImage extends JPanel {
             renderer.paint(molecule.getMolecule(), new AWTDrawVisitor(gg),
                     new Rectangle2D.Double(7, 14, 360, 185), true);
         }
-        if ((molecule.candidate.getName() != null) && (!molecule.candidate.getName().equalsIgnoreCase("null"))) {
+        if ((molecule.getName() != null) && (!"null".equalsIgnoreCase(molecule.getName()))) {
             gg.setFont(nameFont);
-            gg.drawString(molecule.candidate.getName(), 3, 16);
+            gg.drawString(molecule.getName(), 3, 16);
         }
         gg.setFont(rankFont);
-        final String rankString = String.valueOf(molecule.rank);
+        final String rankString = "XX"; //todo nightsky: remove rank properly or replace with counted rank
         final Rectangle2D bound = gg.getFontMetrics().getStringBounds(rankString, gg);
         {
             final int x = 3;

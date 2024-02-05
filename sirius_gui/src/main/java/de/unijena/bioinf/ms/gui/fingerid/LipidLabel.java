@@ -26,7 +26,7 @@ import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FormulaCandidate;
 import de.unijena.bioinf.ms.nightsky.sdk.model.LipidAnnotation;
-import de.unijena.bioinf.projectspace.FormulaResultBean;
+import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -40,9 +40,8 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 
-public class LipidLabel extends JLabel implements ActiveElementChangedListener<FingerprintCandidateBean, Set<FormulaResultBean>> {
+public class LipidLabel extends JLabel implements ActiveElementChangedListener<FingerprintCandidateBean, InstanceBean> {
 
 
 
@@ -91,18 +90,12 @@ public class LipidLabel extends JLabel implements ActiveElementChangedListener<F
     }
 
     @Override
-    public void resultsChanged(Set<FormulaResultBean> experiment, FingerprintCandidateBean sre, List<FingerprintCandidateBean> resultElements, ListSelectionModel selections) {
+    public void resultsChanged(InstanceBean experiment, FingerprintCandidateBean sre, List<FingerprintCandidateBean> resultElements, ListSelectionModel selections) {
         setText(null);
         setVisible(false);
         this.lipidSpecies = null;
-        if (experiment != null && !experiment.isEmpty()) {
-            String topHit = experiment.iterator().next().getParentInstance()
-                    .getFormulaAnnotation()
-                    .map(FormulaCandidate::getFormulaId).orElse(null);
-
-            this.lipidSpecies = experiment.stream().filter(fr -> fr.getFormulaId().equals(topHit))
-                    .findFirst().flatMap(FormulaResultBean::getLipidAnnotation).orElse(null);
-
+        if (experiment != null) {
+            this.lipidSpecies = experiment.getFormulaAnnotation().map(FormulaCandidate::getLipidAnnotation).orElse(null);
             if (this.lipidSpecies != null && lipidSpecies.getLipidSpecies() != null){
                 setText("<html>" +
                         "<b>" + lipidSpecies.getLipidSpecies() + "</b>" +

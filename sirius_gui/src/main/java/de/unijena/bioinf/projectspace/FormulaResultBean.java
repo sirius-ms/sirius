@@ -105,6 +105,7 @@ public class FormulaResultBean implements SiriusPCS, DataAnnotation {
                         });
             }
         };
+        registerProjectSpaceListeners();
     }
 
     public NightSkyClient getClient() {
@@ -302,9 +303,8 @@ public class FormulaResultBean implements SiriusPCS, DataAnnotation {
                     .orElse(withIds((pid, fid, foid) -> getClient().features().getFingerprintPrediction(pid, fid, foid)));
 
             this.fp = Optional.ofNullable(fpTmp)
-                    .map(fpRaw -> new ProbabilityFingerprint(
-                            parentInstance.getProjectManager().getFingerIdData(getCharge()).getFingerprintVersion(),
-                            fpRaw.stream().mapToDouble(Double::doubleValue).toArray()));
+                    .map(fpRaw -> new ProbabilityFingerprint(parentInstance.
+                            getProjectManager().getFingerIdData(getCharge()).getFingerprintVersion(), fpRaw));
         }
         return this.fp;
     }

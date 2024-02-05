@@ -28,7 +28,7 @@ import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.chemdb.DataSource;
@@ -43,13 +43,12 @@ import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.ms_viewer.WebViewSpectraViewer;
-import de.unijena.bioinf.ms.gui.ms_viewer.data.SpectraJSONWriter;
 import de.unijena.bioinf.ms.gui.table.*;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
 import de.unijena.bioinf.ms.gui.utils.NameFilterRangeSlider;
 import de.unijena.bioinf.ms.gui.utils.WrapLayout;
-import de.unijena.bioinf.ms.nightsky.sdk.model.AnnotatedPeak;
-import de.unijena.bioinf.ms.nightsky.sdk.model.AnnotatedSpectrum;
+import de.unijena.bioinf.ms.nightsky.sdk.model.BasicSpectrum;
+import de.unijena.bioinf.ms.nightsky.sdk.model.Peak;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.projectspace.SpectralSearchResult;
 import de.unijena.bioinf.projectspace.SpectralSearchResultBean;
@@ -76,7 +75,6 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
     private final MatchList matchList;
 
     private final WebViewSpectraViewer browser;
-    private final SpectraJSONWriter spectraWriter;
 
     public SpectralMatchingPanel(CompoundList compoundList) {
         this();
@@ -115,7 +113,6 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
     private SpectralMatchingPanel() {
         super(new BorderLayout());
 
-        this.spectraWriter = new SpectraJSONWriter();
         this.browser = new WebViewSpectraViewer();
 
         this.matchList = new MatchList();
@@ -129,23 +126,23 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
     @Override
     public String getDescription() {
         return "<html>"
-                +"<b>Reference spectra</b>"
-                +"<br>"
+                + "<b>Reference spectra</b>"
+                + "<br>"
                 + "Reference spectra from spectral libraries that match the spectra from your experiment."
-                +"<br>"
+                + "<br>"
                 + "For the selected match in the upper panel, the bottom panel shows a comparison of the experimental and reference spectrum."
                 + "</html>";
     }
 
-    public void showMatch(SimpleSpectrum query, SimpleSpectrum reference, String queryName, String referenceName) {
-            Jobs.runEDTLater(() -> {
-                try {
-                    String json = spectraWriter.ms2MirrorJSON(query, reference, queryName, referenceName);
-                    this.browser.loadData(json, null, null);
-                } catch (Exception e) {
-                    LoggerFactory.getLogger(getClass()).error("Error.", e);
-                }
-            });
+    public void showMatch(BasicSpectrum query, BasicSpectrum reference) {
+        Jobs.runEDTLater(() -> {
+            try {
+                String json = new ObjectMapper().writeValueAsString(List.of(query, reference));
+                this.browser.loadData(json, null, null);
+            } catch (Exception e) {
+                LoggerFactory.getLogger(getClass()).error("Error.", e);
+            }
+        });
     }
 
     private static class MatchList extends ActionList<SpectralSearchResultBean.MatchBean, InstanceBean> {
@@ -262,9 +259,12 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
                 case 3 -> baseObject.getReference().getSmiles();
                 case 4 -> baseObject.getMatch().getSimilarity().similarity;
                 case 5 -> baseObject.getMatch().getSimilarity().sharedPeaks;
-                case 6 -> baseObject.getReference().getPrecursorIonType() != null ? baseObject.getReference().getPrecursorIonType().toString() : "";
-                case 7 -> baseObject.getReference().getCollisionEnergy() != null ? baseObject.getReference().getCollisionEnergy().toString() : "";
-                case 8 -> baseObject.getReference().getInstrumentation() != null ? baseObject.getReference().getInstrumentation().toString() : "";
+                case 6 ->
+                        baseObject.getReference().getPrecursorIonType() != null ? baseObject.getReference().getPrecursorIonType().toString() : "";
+                case 7 ->
+                        baseObject.getReference().getCollisionEnergy() != null ? baseObject.getReference().getCollisionEnergy().toString() : "";
+                case 8 ->
+                        baseObject.getReference().getInstrumentation() != null ? baseObject.getReference().getInstrumentation().toString() : "";
                 case 9 -> baseObject.getMatch().getDbName();
                 case 10 -> baseObject.getReference().getSpectralDbLink();
                 case 11 -> isBest.apply(baseObject);
@@ -319,22 +319,17 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
                             checkForInterruption();
 
                             final SpectralSearchResultBean.MatchBean matchBean = selected.get(0);
-                            Pair<Pair<SimpleSpectrum, String>, Pair<SimpleSpectrum, String>> data = getSource().readDataByFunction(ec -> {
+                            Pair<BasicSpectrum, BasicSpectrum> data = getSource().readDataByFunction(ec -> {
                                 if (ec == null)
                                     return null;
-                                AnnotatedSpectrum queryMS2 = ec.getMsData().getMs2Spectra().get(matchBean.getMatch().getQuerySpectrumIndex());
+                                BasicSpectrum queryMS2 = ec.getMsData().getMs2Spectra().get(matchBean.getMatch().getQuerySpectrumIndex());
 
-                                SimpleSpectrum query = new SimpleSpectrum(
-                                        queryMS2.getPeaks().stream().map(AnnotatedPeak::getMass).mapToDouble(Double::doubleValue).toArray(),
-                                        queryMS2.getPeaks().stream().map(AnnotatedPeak::getIntensity).mapToDouble(Double::doubleValue).toArray()
-                                );
-
-                                //todo nighsky -> might be replaced with scans api
-                                String queryName = SpectraSearchSubtoolJob.getQueryName(
-                                        queryMS2.getMsLevel(), -1, queryMS2.getCollisionEnergy(),
-                                        null, matchBean.getMatch().getQuerySpectrumIndex()
-                                );
-
+                                //todo nighsky: -> might be replaced with spectra search API
+//                                String queryName = SpectraSearchSubtoolJob.getQueryName(
+//                                        queryMS2.getMsLevel(), -1, queryMS2.getCollisionEnergy(),
+//                                        null, matchBean.getMatch().getQuerySpectrumIndex()
+//                                );
+/*
                                 if (matchBean.getReference().getSpectrum() == null) {
                                     try {
                                         SpectralLibrary db = SearchableDatabases.getCustomDatabase(matchBean.getMatch().getDbName()).orElseThrow().toSpectralLibraryOrThrow();
@@ -343,15 +338,18 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
                                         LoggerFactory.getLogger(SpectralMatchingTableView.class).error("Error retrieving spectral data", exc);
                                         return null;
                                     }
-                                }
+                                }*/
 
-                                return Pair.of(Pair.of(query, queryName), Pair.of(matchBean.getReference().getSpectrum(), matchBean.getReference().getName()));
+                                //todo nightsky: get reference spectrum from api;
+                                //Pair.of(matchBean.getReference().getSpectrum(), matchBean.getReference().getName())
+                                BasicSpectrum reference = new BasicSpectrum();
+                                return Pair.of(queryMS2, reference);
                             });
 
                             if (data == null)
                                 return false;
 
-                            parentPanel.showMatch(data.getLeft().getLeft(), data.getRight().getLeft(), data.getLeft().getRight(), data.getRight().getRight());
+                            parentPanel.showMatch(data.getLeft(), data.getRight());
                             return true;
                         }
                     });

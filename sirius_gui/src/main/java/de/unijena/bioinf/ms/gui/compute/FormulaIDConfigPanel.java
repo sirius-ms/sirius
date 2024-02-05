@@ -23,7 +23,6 @@ import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
@@ -284,7 +283,7 @@ FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         } else {
             adductList.checkBoxList.replaceElements(adducts.stream().sorted().toList());
             adductList.checkBoxList.uncheckAll();
-            if (!isBatchDialog() && !ecs.get(0).getMs2Spectra().isEmpty()) {
+            if (!isBatchDialog() && !ecs.get(0).getMsData().getMs2Spectra().isEmpty()) {
                 detectPossibleAdducts(ecs.get(0));
             } else {
                 adductsEnabled.forEach(adductList.checkBoxList::check);
@@ -296,12 +295,13 @@ FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
 
     protected void detectPossibleAdducts(InstanceBean ec) {
         //todo is this the same detection as happening in batch mode?
+        //todo Nightsky: do we want this in the frontend?
         String notWorkingMessage = "Adduct detection requires MS1 spectrum.";
-        if (!ec.getMs1Spectra().isEmpty() || ec.getMergedMs1Spectrum() != null) {
+        MsData msData = ec.getMsData();
+        if (msData != null && (!msData.getMs1Spectra().isEmpty() || msData.getMergedMs1() != null)) {
             Jobs.runInBackgroundAndLoad(owner, "Detecting adducts...", () -> {
                 final Ms1Preprocessor pp = ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor();
-                ProcessedInput pi = pp.preprocess(new MutableMs2Experiment(ec.getExperiment(), false));
-
+                ProcessedInput pi = pp.preprocess(ec.asMs2Experiment());
                 pi.getAnnotation(PossibleAdducts.class).
                         ifPresentOrElse(pa -> {
                                     adductList.checkBoxList.uncheckAll();

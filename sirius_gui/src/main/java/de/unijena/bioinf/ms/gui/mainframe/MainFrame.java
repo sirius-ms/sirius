@@ -32,6 +32,7 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
+import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.logging.LogDialog;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListView;
@@ -107,6 +108,12 @@ public class MainFrame extends JFrame implements DropTargetListener {
         return formulaList;
     }
 
+    private StructureList structureList;
+
+    public StructureList getStructureList() {
+        return structureList;
+    }
+
     private ResultPanel resultsPanel;
 
     public ResultPanel getResultsPanel() {
@@ -174,12 +181,13 @@ public class MainFrame extends JFrame implements DropTargetListener {
         // create models for views
         compoundList = new CompoundList(gui);
         formulaList = new FormulaList(compoundList);
+        structureList = new StructureList(compoundList);
 
 
         //CREATE VIEWS
         jobDialog = new JobDialog(this);
         // results Panel
-        resultsPanel = new ResultPanel(formulaList, compoundList, gui);
+        resultsPanel = new ResultPanel(structureList, formulaList, compoundList, gui);
         JPanel resultPanelContainer = new JPanel(new BorderLayout());
         resultPanelContainer.setBorder(BorderFactory.createEmptyBorder());
         resultPanelContainer.add(resultsPanel, BorderLayout.CENTER);

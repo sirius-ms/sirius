@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.gui.fingerid;
 
 import ca.odell.glazedlists.EventList;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.gui.SiriusGui;
@@ -349,7 +350,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
 
         public void setCompound(FingerprintCandidateBean value) {
             setFont(propertyFont);
-            inchi.setText(value.candidate.getInchi().key2D());
+            inchi.setText(value.getInChiKey());
             databasePanel.setCompound(value);
             ag.agreement = null;
 
@@ -387,11 +388,13 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
                 });
             }
 
-            if (value.fp == null)
+            if (value.getPlatts() == null)
                 return;
 
+            int charge = PrecursorIonType.fromString(value.getCandidate().getAdduct()).getCharge();
             // runs in awt event queue but seems to be fast enough
-            ag.setAgreement(value.getSubstructures(value.getPlatts(), gui.getProjectManager().getFingerIdData(value.getFormulaResult().getCharge()).getPerformances()));
+            ag.setAgreement(value.getSubstructures(value.getPlatts(), gui.getProjectManager().getFingerIdData(charge)
+                    .getPerformances()));
         }
     }
 }

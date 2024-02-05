@@ -42,6 +42,7 @@ import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
+import de.unijena.bioinf.ms.nightsky.sdk.model.DBLink;
 import de.unijena.bioinf.rest.ProxyManager;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -96,7 +97,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         super(sourceList);
 
         getSource().addActiveResultChangedListener((experiment, sre, resultElements, selections) -> {
-            if (experiment == null || experiment.stream().noneMatch(e -> e.getPredictedFingerprint().isPresent()))
+            if (experiment == null /*|| experiment.stream().noneMatch(e -> e.getPredictedFingerprint().isPresent())*/)//todo nightsky:  how to check if fingerprint was computed but no results found?
                 showCenterCard(ActionList.ViewState.NOT_COMPUTED);
             else if (resultElements.isEmpty())
                 showCenterCard(ActionList.ViewState.EMPTY);
@@ -118,7 +119,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         showCenterCard(ActionList.ViewState.NOT_COMPUTED);
 
         candidateList.addMouseListener(this);
-        this.structureSearcher = new StructureSearcher(sourceList.getElementList().size()); //todo does this work
+        this.structureSearcher = new StructureSearcher(sourceList.getElementList().size());
         this.structureSearcherThread = new Thread(structureSearcher);
         structureSearcherThread.start();
         this.structureSearcher.reloadList(sourceList);
@@ -184,7 +185,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         if (e.getSource() == CopyInchiKey) {
             clipboard.setContents(new StringSelection(c.getInChiKey()), null);
         } else if (e.getSource() == CopyInchi) {
-            clipboard.setContents(new StringSelection(c.candidate.getInchi().in2D), null);
+            clipboard.setContents(new StringSelection(c.getInChI().in2D), null);
         } else if (e.getSource() == OpenInBrowser1) {
             try {
                 Desktop.getDesktop().browse(new URI("https://www.ncbi.nlm.nih.gov/pccompound?term=%22" + c.getInChiKey() + "%22[InChIKey]"));
@@ -192,15 +193,15 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
                 LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(), e1);
             }
         } else if (e.getSource() == OpenInBrowser2) {
-            for (Map.Entry<String, String> entry : c.getLinkedDatabases().entries()) {
-                DataSources.getSourceFromName(entry.getKey()).ifPresent(s -> {
-                    if (entry.getValue() == null || s.URI == null)
+            for (DBLink link : c.getCandidate().getDbLinks()) {
+                DataSources.getSourceFromName(link.getName()).ifPresent(s -> {
+                    if (link.getId() == null || s.URI == null)
                         return;
                     try {
                         if (s.URI.contains("%s")) {
-                            Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI, URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8))));
+                            Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI, URLEncoder.encode(link.getId(), StandardCharsets.UTF_8))));
                         } else {
-                            Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI, Integer.parseInt(entry.getValue()))));
+                            Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI, Integer.parseInt(link.getId()))));
                         }
                     } catch (IOException | URISyntaxException e1) {
                         LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(), e1);
@@ -253,7 +254,6 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         selectedCompoundId = index;
         if (index < 0) return;
         final FingerprintCandidateBean candidate = candidateList.getModel().getElementAt(index);
-        highlightedCandidate = candidate.index();
         final Rectangle relativeRect = candidateList.getCellBounds(index, index);
 
         final FingerprintAgreement ag = candidate.substructures;
@@ -307,7 +307,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
                             try {
                                 //todo remove if lipid maps is added to our pubchem copy
                                 List<String> lmIds = ProxyManager.applyClient(client -> {
-                                    URI uri = URI.create(String.format(Locale.US, "https://www.lipidmaps.org/rest/compound/inchi_key/%s/lm_id", URLEncoder.encode(InChISMILESUtils.inchi2inchiKey(candidate.candidate.getInchi().in3D, true), StandardCharsets.UTF_8)));
+                                    URI uri = URI.create(String.format(Locale.US, "https://www.lipidmaps.org/rest/compound/inchi_key/%s/lm_id", URLEncoder.encode(InChISMILESUtils.inchi2inchiKey(candidate.getInChI().in3D, true), StandardCharsets.UTF_8)));
                                     Response r = client.newCall(new Request.Builder().url(uri.toURL()).build()).execute();
                                     List<String> ids = new ArrayList<>();
                                     try (ResponseBody body = r.body()) {
@@ -370,9 +370,6 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         final int index = candidateList.locationToIndex(point);
         selectedCompoundId = index;
         if (index < 0) return;
-        final FingerprintCandidateBean candidate = candidateList.getModel().getElementAt(index);
-        highlightedCandidate = candidate.index();
-
         if (e.isPopupTrigger()) popup(e);
     }
 
@@ -436,7 +433,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
                     if (in.isPresent()) {
                         //todo separate detection of clickable components. This is too slow and hacky.
                         setCursor(new Cursor(Cursor.HAND_CURSOR));
-                        return candidate.candidate.getFingerprint().getFingerprintVersion().getMolecularProperty(in.getAsInt()).getDescription() + "  (" + prob.format(candidate.getPlatts().getProbability(in.getAsInt())) + " %)";
+                        return candidate.getPlatts().getFingerprintVersion().getMolecularProperty(in.getAsInt()).getDescription() + "  (" + prob.format(candidate.getPlatts().getProbability(in.getAsInt())) + " %)";
                     }
 
                 }

@@ -73,7 +73,8 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
             reset();
             return;
         }
-        final LCMSPeakInformation peakInformation = currentInstance.loadCompoundContainer(LCMSPeakInformation.class).getAnnotation(LCMSPeakInformation.class, LCMSPeakInformation::empty);
+        //todo nightsky: fill with new LCMS data
+        final LCMSPeakInformation peakInformation = null;//currentInstance.loadCompoundContainer(LCMSPeakInformation.class).getAnnotation(LCMSPeakInformation.class, LCMSPeakInformation::empty);
         currentInfo = peakInformation;
         lcmsWebview.setInstance(peakInformation);
         toolbar.reloadContent(peakInformation);
@@ -90,9 +91,10 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
     }
 
     private void updateInfo() {
+        //todo nightsky: fill with new LCMS data
         final Optional<CoelutingTraceSet> trace = activeIndex < currentInfo.length() ? currentInfo.getTracesFor(activeIndex) : Optional.empty();
-        if (trace.isPresent())
-            summaryPanel.set(trace.get(), currentInstance.getExperiment());
-        else summaryPanel.reset();
+//        if (trace.isPresent())
+//            summaryPanel.set(trace.get(), currentInstance.getExperiment());
+//        else summaryPanel.reset();
     }
 }

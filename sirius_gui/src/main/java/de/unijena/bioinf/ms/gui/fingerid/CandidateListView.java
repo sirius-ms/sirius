@@ -31,21 +31,16 @@ import de.unijena.bioinf.ms.gui.table.MinMaxMatcherEditor;
 import de.unijena.bioinf.ms.gui.utils.NameFilterRangeSlider;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.gui.utils.WrapLayout;
-import de.unijena.bioinf.projectspace.FormulaResultBean;
+import de.unijena.bioinf.projectspace.InstanceBean;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Set;
 
-/**
- * Created by fleisch on 16.05.17.
- */
-public class CandidateListView extends ActionListDetailView<FingerprintCandidateBean, Set<FormulaResultBean>, StructureList> {
+public class CandidateListView extends ActionListDetailView<FingerprintCandidateBean, InstanceBean, StructureList> {
 
-    private FilterRangeSlider<StructureList,FingerprintCandidateBean, Set<FormulaResultBean>> logPSlider;
-    private FilterRangeSlider<StructureList,FingerprintCandidateBean, Set<FormulaResultBean>> tanimotoSlider;
+    private FilterRangeSlider<StructureList, FingerprintCandidateBean, InstanceBean> logPSlider;
+    private FilterRangeSlider<StructureList,FingerprintCandidateBean, InstanceBean> tanimotoSlider;
     private DBFilterPanel dbFilterPanel;
-    private LipidLabel lipidLabel;
 
 
     public CandidateListView(StructureList source) {
@@ -58,8 +53,7 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
     protected JPanel getNorth() {
         final JPanel north = super.getNorth();
         north.add(dbFilterPanel, BorderLayout.CENTER);
-        lipidLabel = new LipidLabel(source);
-        north.add(lipidLabel, BorderLayout.SOUTH); //tpd
+        north.add(new LipidLabel(source), BorderLayout.SOUTH); //tpd
         return north;
     }
 

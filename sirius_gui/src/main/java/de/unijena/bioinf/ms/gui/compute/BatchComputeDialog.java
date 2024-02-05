@@ -21,7 +21,6 @@
 
 package de.unijena.bioinf.ms.gui.compute;
 
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.SiriusGui;
@@ -104,10 +103,10 @@ public class BatchComputeDialog extends JDialog {
             boolean ms2 = compoundsToProcess.stream().anyMatch(inst -> !inst.getMsData().getMs2Spectra().isEmpty());
 
             // make subtool config panels
-            formulaIDConfigPanel = new ActFormulaIDConfigPanel(this, compoundsToProcess, ms2, isAdvancedView);
+            formulaIDConfigPanel = new ActFormulaIDConfigPanel(gui, this, compoundsToProcess, ms2, isAdvancedView);
             addConfigPanel("SIRIUS - Molecular Formula Identification", formulaIDConfigPanel);
 
-            zodiacConfigs = new ActZodiacConfigPanel(isAdvancedView);
+            zodiacConfigs = new ActZodiacConfigPanel(gui, isAdvancedView);
             fingerprintAndCanopusConfigPanel = new ActFingerprintAndCanopusConfigPanel(gui);
             csiSearchConfigs = new ActFingerblastConfigPanel(gui, formulaIDConfigPanel.content.getSearchDBList().checkBoxList);
             msNovelistConfigPanel = new ActMSNovelistConfigPanel(gui);
@@ -379,7 +378,7 @@ public class BatchComputeDialog extends JDialog {
         dispose();
     }
 
-    //todo add endpoint to create command to NIghtsky API.
+    //todo nightsky: add endpoint to create command without submission to to NIghtsky API (dry run or try submission?) or create from submisstion in GUI.
     @Deprecated
     private List<String> makeCommand(final List<String> toolCommands) {
         // create computation parameters
@@ -434,21 +433,16 @@ public class BatchComputeDialog extends JDialog {
 
         }
 
-        if (csiPredictConfigs != null && csiPredictConfigs.isToolSelected()) {
+        //canopus prediction included. Must now run before structure database search
+        if (fingerprintAndCanopusConfigPanel != null && fingerprintAndCanopusConfigPanel.isToolSelected()) {
             sub.setFingerprintPredictionParams(new FingerprintPrediction().enabled(true));
-            sub.getConfigMap().putAll(csiPredictConfigs.asConfigMap());
-
+            sub.setCanopusParams(new Canopus().enabled(true));
+            sub.getConfigMap().putAll(fingerprintAndCanopusConfigPanel.asConfigMap());
         }
-
 
         if (csiSearchConfigs != null && csiSearchConfigs.isToolSelected()) {
             sub.setStructureDbSearchParams(new StructureDbSearch().enabled(true));
             sub.getConfigMap().putAll(csiSearchConfigs.asConfigMap());
-        }
-
-        if (canopusConfigPanel != null && canopusConfigPanel.isToolSelected()) {
-            sub.setCanopusParams(new Canopus().enabled(true));
-            sub.getConfigMap().putAll(canopusConfigPanel.asConfigMap());
         }
 
         sub.setRecompute(recomputeBox.isSelected());
