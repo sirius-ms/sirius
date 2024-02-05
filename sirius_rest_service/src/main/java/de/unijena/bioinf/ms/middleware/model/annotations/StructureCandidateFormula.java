@@ -92,6 +92,7 @@ public class StructureCandidateFormula extends StructureCandidateScored {
         final StructureCandidateFormula sSum = new StructureCandidateFormula();
         sSum.setMolecularFormula(formula.toString());
         sSum.setAdduct(adduct.toString());
+        sSum.setFormulaId(fomulaId);
         // scores
         sSum.setCsiScore(can.getScore());
         sSum.setTanimotoSimilarity(can.getCandidate().getTanimoto());

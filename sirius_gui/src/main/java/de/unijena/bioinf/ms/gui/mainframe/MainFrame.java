@@ -156,7 +156,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
         log = new LogDialog(null, false, Level.INFO); //todo property
 
         this.gui = gui;
-        decoradeMainFrame();
     }
 
     //if we want to add taskbar stuff we can configure this here
@@ -173,9 +172,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
     }
 
 
-    private void decoradeMainFrame() {
-
-
+    public void decoradeMainFrame() {
         Jobs.runEDTAndWaitLazy(() -> setTitlePath(gui.getProjectManager().getProjectLocation()));
 
         // create models for views

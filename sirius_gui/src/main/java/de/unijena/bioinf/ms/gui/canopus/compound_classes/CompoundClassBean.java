@@ -23,33 +23,43 @@ package de.unijena.bioinf.ms.gui.canopus.compound_classes;
 import de.unijena.bioinf.ChemistryBase.fp.ClassyfireProperty;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.nightsky.sdk.model.CompoundClass;
+import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
 
-public class CompoundClassBean implements SiriusPCS {
-    protected final MutableHiddenChangeSupport pcs = new MutableHiddenChangeSupport(this,true);
+public class CompoundClassBean implements SiriusPCS, Comparable<CompoundClassBean> {
+    protected final MutableHiddenChangeSupport pcs = new MutableHiddenChangeSupport(this, true);
+
     @Override
     public HiddenChangeSupport pcs() {
         return pcs;
     }
 
+    @NotNull
+    @Getter
     private final CompoundClass sourceClass;
 
-    public CompoundClassBean(CompoundClass sourceClass) {
+    public CompoundClassBean(@NotNull CompoundClass sourceClass) {
         this.sourceClass = sourceClass;
     }
 
-    public CompoundClass getSourceClass() {
-        return sourceClass;
-    }
 
     public ClassyfireProperty getParent() {
         return null; //todo nightsky -> how do we find the parent, do we want to add it to sdk
     }
 
     public String getChemontIdentifier() {
-        if (getSourceClass().getId() ==  null)
+        if (getSourceClass().getId() == null)
             return null;
         return String.format(Locale.US, "CHEMONT:%07d", getSourceClass().getId());
+    }
+
+    @Override
+    public int compareTo(@NotNull CompoundClassBean o) {
+        return Double.compare(
+                sourceClass.getProbability(),
+                o.getSourceClass().getProbability()
+        );
     }
 }

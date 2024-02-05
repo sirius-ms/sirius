@@ -34,8 +34,8 @@ public class FormulaOverviewPanel extends JPanel implements PanelDescription {
     @Override
     public String getDescription() {
         return "<html>"
-                +"<b>SIRIUS - Molecular Formulas Identification</b>"
-                +"<br>"
+                + "<b>SIRIUS - Molecular Formulas Identification</b>"
+                + "<br>"
                 + "Overview about your Experiment and Results of the Formula Identification with SIRIUS."
                 + "</html>";
     }
@@ -51,11 +51,11 @@ public class FormulaOverviewPanel extends JPanel implements PanelDescription {
         suriusResultElements.addActiveResultChangedListener(overviewTVP);
         SpectraVisualizationPanel overviewSVP = new SpectraVisualizationPanel();
         suriusResultElements.addActiveResultChangedListener((experiment, sre, resultElements, selections) ->
-                overviewSVP.resultsChanged(experiment, sre.getFormulaId(), null));
+                overviewSVP.resultsChanged(experiment, sre != null ? sre.getFormulaId() : null, null));
 
         // Class to synchronize selected peak/node
         VisualizationPanelSynchronizer synchronizer = new VisualizationPanelSynchronizer(
-            overviewTVP, overviewSVP);
+                overviewTVP, overviewSVP);
 
         JSplitPane east = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, overviewSVP, overviewTVP);
         east.setDividerLocation(.5d);

@@ -120,10 +120,12 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
 
                     checkForInterruption();
                     setData(ec);
-                    final List<FingerprintCandidateBean> emChache = ec.getStructureCandidates(loadAllCandidates ? Integer.MAX_VALUE : 100); //todo allow user specifiable or pagination
-                    checkForInterruption();
-                    if (refillElementsEDT(emChache))
-                        loadMols = Jobs.MANAGER().submitJob(new LoadMoleculeJob(emChache));
+                    if (hasData()) {
+                        final List<FingerprintCandidateBean> emChache = ec.getStructureCandidates(loadAllCandidates ? Integer.MAX_VALUE : 100); //todo allow user specifiable or pagination
+                        checkForInterruption();
+                        if (refillElementsEDT(emChache))
+                            loadMols = Jobs.MANAGER().submitJob(new LoadMoleculeJob(emChache));
+                    }
 
                     return true;
                 }

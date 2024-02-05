@@ -45,6 +45,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.Flow;
 
+import static de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient.*;
 import static de.unijena.bioinf.ms.nightsky.sdk.model.JobOptField.*;
 
 
@@ -78,7 +79,11 @@ public class NightSkyClient implements AutoCloseable {
 
     public NightSkyClient(int port, String baseUrl) {
         this.basePath = baseUrl + ":" + port;
-        apiClient = new ApiClient();
+        apiClient = new ApiClient(buildWebClientBuilder(createDefaultObjectMapper(createDefaultDateFormat()))
+                .codecs(codecs -> codecs
+                        .defaultCodecs()
+                        .maxInMemorySize(100 * 1024 * 1024))
+                .build());
         apiClient.setBasePath(this.basePath);
 
         compounds = new CompoundsApi(apiClient);

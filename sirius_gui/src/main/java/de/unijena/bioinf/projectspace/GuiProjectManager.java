@@ -34,14 +34,11 @@ import de.unijena.bioinf.sse.DataEventType;
 import de.unijena.bioinf.sse.DataObjectEvents;
 import it.unimi.dsi.fastutil.Pair;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.Closeable;
 import java.io.StringReader;
-import java.util.List;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.stream.Collectors;
@@ -126,7 +123,8 @@ public class GuiProjectManager implements Closeable {
         siriusClient.addEventListener(computeListener, projectId, DataEventType.JOB);
     }
 
-    private final ArrayBlockingQueue<ProjectChangeEvent> events = new ArrayBlockingQueue<>(Integer.MAX_VALUE);
+    //todo nightsky: ->  does this work, tests needed?
+    private final ArrayBlockingQueue<ProjectChangeEvent> events = new ArrayBlockingQueue<>(1000);
     private JJob<Boolean> debounceExec;
 
     private void addRemoveDebounced(ProjectChangeEvent event) {

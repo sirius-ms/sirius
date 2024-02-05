@@ -125,7 +125,7 @@ public class FingerprintTable extends ActionList<FingerIdPropertyBean, FormulaRe
                         }
                     }
                     checkForInterruption();
-                    Jobs.runEDTAndWait(() -> notifyListeners(sre, null, elementList, elementListSelectionModel));
+                    Jobs.runEDTAndWait(() -> notifyListeners(sre, getSelectedElement(), elementList, elementListSelectionModel));
                     return true;
                 }
 

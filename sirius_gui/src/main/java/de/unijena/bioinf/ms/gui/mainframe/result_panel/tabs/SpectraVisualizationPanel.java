@@ -70,10 +70,13 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 public class SpectraVisualizationPanel
@@ -192,9 +195,11 @@ public class SpectraVisualizationPanel
                 if (spectrum != null) {
                     if (mode.equals(MS1_DISPLAY)) {
                         //match already extracted pattern to highlight peaks, remove patter from result
-                        ViewContainer<BasicSpectrum> ob = matchSpectra(spectrum, isotopePatternAnnotation.getIsotopePattern());
-                        ob.spectra.remove(1);
-                        ob.peakMatches.remove(1);
+                        ViewContainer<BasicSpectrum> ob = matchSpectra(spectrum, isotopePatternAnnotation != null ? isotopePatternAnnotation.getIsotopePattern() : null);
+                        if (ob.spectra.size() > 1 && ob.peakMatches.size() > 1) {
+                            ob.spectra.remove(1);
+                            ob.peakMatches.remove(1);
+                        }
                         jsonSpectra = new ObjectMapper().writeValueAsString(ob);
                     } else if (mode.equals(MS1_MIRROR_DISPLAY)) {
                         if (isotopePatternAnnotation != null && isotopePatternAnnotation.getSimulatedPattern() != null) {
@@ -250,8 +255,8 @@ public class SpectraVisualizationPanel
                                                       @NotNull BasicSpectrum pattern,
                                                       @NotNull Deviation massDiffDev
     ) {
-        List<PeakMatch> peakMatchesSpectrum = new ArrayList<>(spectrum.getPeaks().size());
-        List<PeakMatch> peakMatchesPattern = new ArrayList<>(pattern.getPeaks().size());
+        PeakMatch[] peakMatchesSpectrum = new PeakMatch[spectrum.getPeaks().size()];
+        PeakMatch[] peakMatchesPattern = new PeakMatch[pattern.getPeaks().size()];
 
         WrapperSpectrum<de.unijena.bioinf.ms.nightsky.sdk.model.Peak> pat = WrapperSpectrum.
                 of(pattern.getPeaks(), p -> p.getMass(), p -> p.getIntensity());
@@ -260,13 +265,16 @@ public class SpectraVisualizationPanel
         for (de.unijena.bioinf.ms.nightsky.sdk.model.Peak p : spectrum.getPeaks()) {
             int j = Spectrums.mostIntensivePeakWithin(pat, p.getMass(), massDiffDev);
             if (j >= 0) {
-                peakMatchesSpectrum.set(i, new PeakMatch(j));
-                peakMatchesPattern.add(j, new PeakMatch(i));
+                peakMatchesSpectrum[i] = new PeakMatch(j);
+                peakMatchesPattern[j] = new PeakMatch(i);
             }
             i++;
         }
 
-        return new ViewContainer<>(List.of(spectrum, pattern), List.of(peakMatchesSpectrum, peakMatchesPattern));
+        return new ViewContainer<>(
+                Stream.of(spectrum, pattern).collect(Collectors.toCollection(ArrayList::new)),
+                Stream.of(Arrays.asList(peakMatchesSpectrum), Arrays.asList(peakMatchesPattern))
+                        .collect(Collectors.toCollection(ArrayList::new)));
     }
 
     @Getter
@@ -331,7 +339,7 @@ public class SpectraVisualizationPanel
                         //load date
                         msData = instance.getMsData();
                         checkForInterruption();
-                        if (formulaCandidateId != null){
+                        if (formulaCandidateId != null) {
                             isotopePatternAnnotation = instance.withIds((pid, fid) -> instance.getClient().features()
                                     .getIsotopePatternAnnotation(pid, fid, formulaCandidateId));
                             checkForInterruption();

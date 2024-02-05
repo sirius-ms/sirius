@@ -24,7 +24,6 @@ import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassBean;
 import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassList;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.fingerid.fingerprints.FingerprintTable;
-import de.unijena.bioinf.ms.gui.lcms_viewer.LCMSViewerPanel;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.*;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
@@ -49,7 +48,7 @@ public class ResultPanel extends JTabbedPane {
     public final TreeVisualizationPanel treeTab;
     public final SpectraVisualizationPanel spectrumTab;
 
-    public final LCMSViewerPanel lcmsTab;
+//    public final LCMSViewerPanel lcmsTab;
 
     public final CandidateListDetailViewPanel structuresTab;
     public final EpimetheusPanel structureAnnoTab;
@@ -70,7 +69,7 @@ public class ResultPanel extends JTabbedPane {
         treeTab = new TreeVisualizationPanel();
         spectrumTab = new SpectraVisualizationPanel();
 
-        this.lcmsTab = new LCMSViewerPanel(siriusResultElements);
+//        this.lcmsTab = new LCMSViewerPanel(siriusResultElements); //todo LCMS: reactivate if LCMS Data structures are done!
 
         structureAnnoTab = new EpimetheusPanel(structureList);
         structuresTab = new CandidateListDetailViewPanel(this, compoundList, structureList, gui);
@@ -91,7 +90,7 @@ public class ResultPanel extends JTabbedPane {
         );
 
 
-        addTab("LC-MS", null, lcmsTab, lcmsTab.getDescription());
+//        addTab("LC-MS", null, lcmsTab, lcmsTab.getDescription());
 
         addTab("Formulas", null, formulasTab, formulasTab.getDescription());
         addTab("Spectra", null, new FormulaListHeaderPanel(siriusResultElements, spectrumTab), spectrumTab.getDescription());
