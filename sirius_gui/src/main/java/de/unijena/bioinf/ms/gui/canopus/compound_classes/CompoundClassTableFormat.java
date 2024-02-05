@@ -49,7 +49,7 @@ public class CompoundClassTableFormat implements TableFormat<CompoundClassBean> 
     public Object getColumnValue(CompoundClassBean compoundClass, int column) {
         CompoundClass cc = compoundClass.getSourceClass();
         int col = 0;
-        if (column == col++) return "N/A"; //todo nightsky add after index is part of sdk
+        if (column == col++) return cc.getIndex();
         if (column == col++) return cc.getName();
         if (column == col++) return cc.getProbability();
         if (column == col++) return cc.getDescription();

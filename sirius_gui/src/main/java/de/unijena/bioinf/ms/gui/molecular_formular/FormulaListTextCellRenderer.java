@@ -43,16 +43,16 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
 
     private FormulaResultBean sre;
 
-//    private DecimalFormat numberFormat;
-
     private final Function<FormulaResultBean, Boolean> bestHitFunc;
+    private final Function<FormulaResultBean, RenderScore> scoreFunc;
 
 
-    public FormulaListTextCellRenderer(Function<FormulaResultBean,Boolean> bestHitFuction) {
+    public FormulaListTextCellRenderer(Function<FormulaResultBean,Boolean> bestHitFuction, Function<FormulaResultBean, RenderScore> scoreFunction) {
         this.setPreferredSize(new Dimension(250, 45));
         initColorsAndFonts();
         sre = null;
         this.bestHitFunc = bestHitFuction;
+        this.scoreFunc = scoreFunction;
     }
 
     public void initColorsAndFonts() {
@@ -130,8 +130,7 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
         g2.drawString(charge > 0 ? "+" : "-", 15 + mfLength - 4, 13 - 4);
 
         {
-            RenderScore renderScore = sre.getZodiacScore().map(s -> new RenderScore(s, "Zodiac"))
-                    .orElse(new RenderScore(sre.getSiriusScore().orElse(Double.NaN), "SIRIUS"));
+            RenderScore renderScore = scoreFunc.apply(sre);
 
             int scoreLength = propertyFm.stringWidth(renderScore.name);
             g2.setFont(propertyFont);

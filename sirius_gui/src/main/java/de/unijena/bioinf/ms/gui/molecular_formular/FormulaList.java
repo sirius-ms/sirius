@@ -202,6 +202,12 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
         return selected;
     }
 
+    protected Function<FormulaResultBean, FormulaListTextCellRenderer.RenderScore> getRenderScoreFunc() {
+       return sre -> sre.getZodiacScore().map(s -> new FormulaListTextCellRenderer.RenderScore(s, "Zodiac"))
+                .orElse(new FormulaListTextCellRenderer.RenderScore(sre.getSiriusScore().
+                        map(s -> Math.exp(s - siriusScoreStats.getMax()) / siriusScoreStats.getExpScoreSum() * 100d)
+                        .orElse(Double.NaN), "SIRIUS"));
+    }
     protected Function<FormulaResultBean, Boolean> getBestFunc() {
         //top annotation corresponds to the best hit selected by sirius. so just check ID
         return sre -> Optional.ofNullable(sre)

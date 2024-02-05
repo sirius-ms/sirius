@@ -356,6 +356,9 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
 
     @Override
     public int compareTo(FormulaResultBean o) {
-        return Double.compare(getSiriusScore().orElse(Double.NaN), o.getSiriusScore().orElse(Double.NaN));
+        return Double.compare(
+                o.getSiriusScore().orElse(Double.NaN),
+                getSiriusScore().orElse(Double.NaN)
+        );
     }
 }
