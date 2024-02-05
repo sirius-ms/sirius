@@ -23,11 +23,8 @@ import de.unijena.bioinf.ms.gui.molecular_formular.FormulaScoreListStats;
 
 import javax.swing.*;
 import java.text.NumberFormat;
-import java.util.function.Function;
 
-/**
- * Created by fleisch on 24.05.17.
- */
+
 public class ScoreListStatBarTableCellRenderer extends ListStatBarTableCellRenderer<FormulaScoreListStats> {
 //    private Function<FormulaScoreListStats, Double> thresholder = (stats) -> Math.max(stats.getMax(), 0) - Math.max(5, stats.getMax() * 0.25);
 

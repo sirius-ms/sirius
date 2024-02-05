@@ -21,14 +21,9 @@ package de.unijena.bioinf.ms.gui.molecular_formular;
 
 import de.unijena.bioinf.ms.gui.table.SiriusTableFormat;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Deviation;
-import de.unijena.bioinf.ms.nightsky.sdk.model.FormulaCandidate;
-import de.unijena.bioinf.ms.nightsky.sdk.model.FormulaCandidateOptField;
 import de.unijena.bioinf.ms.nightsky.sdk.model.LipidAnnotation;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
-import org.jetbrains.annotations.NotNull;
-import org.slf4j.LoggerFactory;
 
-import java.util.OptionalInt;
 import java.util.function.Function;
 
 /**
@@ -86,8 +81,8 @@ public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean
             case 7 -> result.getNumOfExplainedPeaks().stream().mapToDouble(v -> (double) v).findFirst().orElse(Double.NaN);
             case 8 -> result.getTotalExplainedIntensity().orElse(Double.NaN);
             case 9 -> result.getMedianMassDeviation().map(Deviation::getPpm).orElse(Double.NaN);
-            case 10 -> result.getMedianMassDeviation().map(Deviation::getAbsolute).orElse(Double.NaN);
-            case 11 -> result.getLipidAnnotation().map(LipidAnnotation::getLipidSpecies).orElse("N/A"); //N/A or better empty?
+            case 10 -> result.getMedianMassDeviation().map(Deviation::getAbsolute).map(d -> d * 1000d).orElse(Double.NaN);
+            case 11 -> result.getLipidAnnotation().map(LipidAnnotation::getLipidSpecies).orElse(""); //N/A or better empty?
             case 12 -> isBest.apply(result);
             default -> throw new IllegalStateException();
         };

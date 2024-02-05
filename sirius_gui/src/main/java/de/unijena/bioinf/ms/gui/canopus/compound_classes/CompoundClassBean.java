@@ -58,8 +58,8 @@ public class CompoundClassBean implements SiriusPCS, Comparable<CompoundClassBea
     @Override
     public int compareTo(@NotNull CompoundClassBean o) {
         return Double.compare(
-                sourceClass.getProbability(),
-                o.getSourceClass().getProbability()
+                o.getSourceClass().getProbability(),
+                sourceClass.getProbability()
         );
     }
 }
