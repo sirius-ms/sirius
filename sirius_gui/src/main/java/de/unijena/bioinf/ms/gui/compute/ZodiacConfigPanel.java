@@ -54,11 +54,5 @@ public class ZodiacConfigPanel extends SubToolConfigPanelAdvancedParams<ZodiacOp
         TextHeaderBoxPanel gibbsPanel = new TextHeaderBoxPanel("Gibbs Sampling", gibbsSampling);
         addAdvancedComponent(gibbsPanel);
         add(gibbsPanel);
-
-//        final TwoColumnPanel libraryHits = new TwoColumnPanel();
-//        add(new TextHeaderBoxPanel("Library Hits (Anchors)", libraryHits));
-//        //todo library file input
-//        libraryHits.addNamed("Minimal Cosine", makeDoubleParameterSpinner("ZodiacLibraryScoring.minCosine", 0, 1, .02));
-//        libraryHits.addNamed("Lamda", makeIntParameterSpinner("ZodiacLibraryScoring.lambda", 0, 99999, 1));
     }
 }
