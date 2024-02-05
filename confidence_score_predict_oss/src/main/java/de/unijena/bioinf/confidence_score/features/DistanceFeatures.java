@@ -50,14 +50,12 @@ public class DistanceFeatures implements FeatureCreator {
     private int feature_size;
     int min_quartil=1;
     int max_quartil=99;
-    Scored<FingerprintCandidate>[] rankedCandidates;
     Scored<FingerprintCandidate>[] rankedCandidates_filtered;
 
 
-    public DistanceFeatures(Scored<FingerprintCandidate>[] rankedCandidates,Scored<FingerprintCandidate>[] rankedCandidates_filtered,int... distances){
+    public DistanceFeatures(Scored<FingerprintCandidate>[] rankedCandidates_filtered,int... distances){
         this.distances=distances;
         feature_size=distances.length;
-        this.rankedCandidates=rankedCandidates;
         this.rankedCandidates_filtered=rankedCandidates_filtered;
 
     }

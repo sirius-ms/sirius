@@ -85,10 +85,21 @@ public interface FingerIdClientDataStore extends Compressible {
     Optional<InputStream> getConfidenceSVMs(PredictorType type) throws IOException;
 
     /**
-     * Get get InChIs of fingerid trainings structures for the given predictor type
+     * Get InChIs of fingerid trainings structures for the given predictor type
      *
      * @param type Positive or negative predictor type
      * @return List of InChIs in .tsv format
+     *
+     * Replaced by inchikey based json file
      */
+    @Deprecated(forRemoval = true)
     Optional<InputStream> getFingerIdTrainingStructures(PredictorType type) throws IOException;
+
+    /**
+     * Get InChIKeys of fingerid trainings structures (kernel and dnn) for the given predictor type
+     *
+     * @param type Positive or negative predictor type
+     * @return Two sets of InChIKey in .json format
+     */
+    Optional<InputStream> getFingerIdTrainingStructuresAll(PredictorType type) throws IOException;
 }

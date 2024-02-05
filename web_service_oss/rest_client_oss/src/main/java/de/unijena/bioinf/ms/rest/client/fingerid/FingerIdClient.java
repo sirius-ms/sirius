@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.rest.client.fingerid;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
@@ -32,6 +33,7 @@ import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.ms.rest.client.AbstractCsiClient;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.rest.model.fingerid.TrainingData;
+import de.unijena.bioinf.ms.rest.model.fingerid.TrainingStructures;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -98,11 +100,20 @@ public class FingerIdClient extends AbstractCsiClient {
         );
     }
 
+    @Deprecated
     public TrainingData getTrainingStructures(@NotNull PredictorType predictorType, @NotNull OkHttpClient client) throws IOException {
         return execute(client,
                 () -> new Request.Builder().get().url(buildVersionSpecificWebapiURI("/fingerid/trainingstructures")
                         .addQueryParameter("predictor", predictorType.toBitsAsString()).build()),
                 TrainingData::readTrainingData
+        );
+    }
+
+    public TrainingStructures getTrainingStructuresAll(@NotNull PredictorType predictorType, @NotNull OkHttpClient client) throws IOException {
+        return execute(client,
+                () -> new Request.Builder().get().url(buildVersionSpecificWebapiURI("/fingerid/training-structures-all")
+                        .addQueryParameter("predictor", predictorType.toBitsAsString()).build()),
+                r -> new ObjectMapper().readValue(r, TrainingStructures.class)
         );
     }
     //endregion

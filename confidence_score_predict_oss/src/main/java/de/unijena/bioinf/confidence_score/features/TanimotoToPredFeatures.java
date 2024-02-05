@@ -42,17 +42,15 @@ import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 
 public class TanimotoToPredFeatures implements FeatureCreator {
     private int feature_size;
-    Scored<FingerprintCandidate>[] rankedCandidates;
     Scored<FingerprintCandidate>[] rankedCandidates_filtered;
     int min_quartil=1;
     int max_quartil=99;
 
 
-    public TanimotoToPredFeatures(Scored<FingerprintCandidate>[] rankedCandidates, Scored<FingerprintCandidate>[] rankedCandidates_filtered) {
+    public TanimotoToPredFeatures(Scored<FingerprintCandidate>[] rankedCandidates_filtered) {
 
 
         feature_size=1;
-        this.rankedCandidates=rankedCandidates;
         this.rankedCandidates_filtered=rankedCandidates_filtered;
 
     }

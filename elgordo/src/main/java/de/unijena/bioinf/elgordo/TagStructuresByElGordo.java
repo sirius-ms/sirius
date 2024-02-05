@@ -24,23 +24,23 @@ import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
 
 /**
- * Candidates matching the lipid class estimated by El Gordo will be tagged.
+ * Molecular structure candidates matching the lipid class estimated by El Gordo will be tagged.
  * The lipid class will only be available if El Gordo predicts that the MS/MS is a lipid spectrum.
- * If this parameter is set to 'false' El Gordo will still be executed and e.g. improve the fragmentation
- * tree, but the matching candidates will not be tagged as lipid class.
+ * If this parameter is set to 'false' El Gordo will still be executed and e.g. improve molecular
+ * formula annotaton, but the matching structure candidates will not be tagged as lipid class.
  */
-public class InjectElGordoCompounds implements Ms2ExperimentAnnotation {
-    public static final InjectElGordoCompounds TRUE = new InjectElGordoCompounds(true);
-    public static final InjectElGordoCompounds FALSE = new InjectElGordoCompounds(false);
+public class TagStructuresByElGordo implements Ms2ExperimentAnnotation {
+    public static final TagStructuresByElGordo TRUE = new TagStructuresByElGordo(true);
+    public static final TagStructuresByElGordo FALSE = new TagStructuresByElGordo(false);
 
     public final boolean value;
 
-    private InjectElGordoCompounds(boolean value) {
+    private TagStructuresByElGordo(boolean value) {
         this.value = value;
     }
 
     @DefaultInstanceProvider
-    public static InjectElGordoCompounds newInstance(@DefaultProperty boolean value){
+    public static TagStructuresByElGordo newInstance(@DefaultProperty boolean value){
         return value ? TRUE : FALSE;
     }
 }
