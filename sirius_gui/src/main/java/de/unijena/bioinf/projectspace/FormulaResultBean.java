@@ -28,6 +28,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
 import de.unijena.bioinf.ms.nightsky.sdk.model.*;
 import de.unijena.bioinf.sse.DataObjectEvents;
 import it.unimi.dsi.fastutil.Pair;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import org.apache.commons.lang3.function.TriFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,12 +39,13 @@ import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
  * this is the view for SiriusResultElement.class
  */
-public class FormulaResultBean implements SiriusPCS, DataAnnotation {
+public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBean>, DataAnnotation {
     private final MutableHiddenChangeSupport pcs = new MutableHiddenChangeSupport(this, true);
     private final PropertyChangeListener listener;
 
@@ -65,6 +67,14 @@ public class FormulaResultBean implements SiriusPCS, DataAnnotation {
     @Override
     public HiddenChangeSupport pcs() {
         return pcs;
+    }
+
+    protected FormulaResultBean() {
+        this.formulaId = null;
+        this.sourceCandidate = null;
+        this.parentInstance = null;
+        listener = null;
+        //dummy constructor
     }
 
     public FormulaResultBean(@NotNull FormulaCandidate sourceCandidate, @NotNull InstanceBean parentInstance) {
@@ -121,7 +131,7 @@ public class FormulaResultBean implements SiriusPCS, DataAnnotation {
         return getFormulaCandidate(List.of(optFields));
     }
 
-    public static List<FormulaCandidateOptField>  ensureDefaultOptFields(@Nullable List<FormulaCandidateOptField> optFields){
+    public static List<FormulaCandidateOptField> ensureDefaultOptFields(@Nullable List<FormulaCandidateOptField> optFields) {
         //we always load top annotations because it contains mandatory information for the SIRIUS GUI
         return (optFields != null && !optFields.isEmpty() && !optFields.equals(List.of(FormulaCandidateOptField.NONE))
                 ? Stream.concat(optFields.stream(), Stream.of(FormulaCandidateOptField.STATISTICS)).distinct().toList()
@@ -140,7 +150,7 @@ public class FormulaResultBean implements SiriusPCS, DataAnnotation {
         return sourceCandidate;
     }
 
-    private Optional<FormulaCandidate> sourceCandidate(){
+    private Optional<FormulaCandidate> sourceCandidate() {
         return Optional.ofNullable(sourceCandidate);
     }
 
@@ -263,17 +273,22 @@ public class FormulaResultBean implements SiriusPCS, DataAnnotation {
 
     public Optional<FragmentationTree> getFragmentationTree() {
         if (this.fragmentationTree == null)
-            this.fragmentationTree =  Optional.ofNullable(
+            this.fragmentationTree = Optional.ofNullable(
                     sourceCandidate().map(FormulaCandidate::getFragmentationTree)
-                            .orElse(withIds((pid, fid, foid) -> getClient().features().getFragTree(pid, fid, foid))));
+                            .orElse(withIds((pid, fid, foid) -> getClient().features()
+                                    .getFragTreeWithResponseSpec(pid, fid, foid)
+                                    .bodyToMono(FragmentationTree.class).onErrorComplete().block()
+                            )));
 
         return this.fragmentationTree;
     }
 
     public Optional<String> getFTreeJson() {
         if (this.ftreeJson == null)
-            this.ftreeJson =  Optional.ofNullable(withIds((pid, fid, foid) ->
-                    getClient().features().getSiriusFragTree(pid, fid, foid)));
+            this.ftreeJson = Optional.ofNullable(withIds((pid, fid, foid) ->
+                    getClient().features().getSiriusFragTreeWithResponseSpec(pid, fid, foid)
+                            .bodyToMono(String.class).onErrorComplete().block()
+            ));
 
         return this.ftreeJson;
     }
@@ -282,17 +297,23 @@ public class FormulaResultBean implements SiriusPCS, DataAnnotation {
         if (this.isotopePatterAnnotation == null)
             this.isotopePatterAnnotation = Optional.ofNullable(
                     sourceCandidate().map(FormulaCandidate::getIsotopePatternAnnotation)
-                            .orElse(withIds((pid, fid, foid) -> getClient().features().getIsotopePatternAnnotation(pid, fid, foid))));
+                            .orElse(withIds((pid, fid, foid) -> getClient().features()
+                                    .getIsotopePatternAnnotationWithResponseSpec(pid, fid, foid)
+                                    .bodyToMono(IsotopePatternAnnotation.class).onErrorComplete().block()
+                            )));
 
 
         return this.isotopePatterAnnotation;
     }
 
     public Optional<LipidAnnotation> getLipidAnnotation() {
-        if (this.lipidAnnotation == null){
+        if (this.lipidAnnotation == null) {
             this.lipidAnnotation = Optional.ofNullable(
                     sourceCandidate().map(FormulaCandidate::getLipidAnnotation)
-                    .orElse(withIds((pid, fid, foid) -> getClient().features().getLipidAnnotation(pid, fid, foid))));
+                            .orElse(withIds((pid, fid, foid) -> getClient().features()
+                                    .getLipidAnnotationWithResponseSpec(pid, fid, foid)
+                                    .bodyToMono(LipidAnnotation.class).onErrorComplete().block()
+                            )));
         }
         return this.lipidAnnotation;
     }
@@ -300,7 +321,13 @@ public class FormulaResultBean implements SiriusPCS, DataAnnotation {
     public Optional<ProbabilityFingerprint> getPredictedFingerprint() {
         if (this.fp == null) {
             List<Double> fpTmp = sourceCandidate().map(FormulaCandidate::getPredictedFingerprint)
-                    .orElse(withIds((pid, fid, foid) -> getClient().features().getFingerprintPrediction(pid, fid, foid)));
+                    .orElse(withIds((pid, fid, foid) -> getClient().features()
+                            .getFingerprintPredictionWithResponseSpec(pid, fid, foid))
+                            .bodyToFlux(Double.class)
+                            .collect(Collectors.toCollection(DoubleArrayList::new))
+                            .onErrorComplete().block()
+                    );
+
 
             this.fp = Optional.ofNullable(fpTmp)
                     .map(fpRaw -> new ProbabilityFingerprint(parentInstance.
@@ -325,5 +352,10 @@ public class FormulaResultBean implements SiriusPCS, DataAnnotation {
 
     public Optional<CanopusPrediction> getCanopusPrediction() {
         return Optional.ofNullable(getCanopusResults().second());
+    }
+
+    @Override
+    public int compareTo(FormulaResultBean o) {
+        return Double.compare(getSiriusScore().orElse(Double.NaN), o.getSiriusScore().orElse(Double.NaN));
     }
 }

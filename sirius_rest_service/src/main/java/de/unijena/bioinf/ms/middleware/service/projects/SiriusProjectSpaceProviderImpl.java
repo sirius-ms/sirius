@@ -54,8 +54,6 @@ import static de.unijena.bioinf.projectspace.ProjectSpaceIO.isZipProjectSpace;
 
 public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusProjectSpaceImpl> {
 
-
-    //    protected final ProjectSpaceManagerFactory<?, ?> projectSpaceManagerFactory = new ProjectSpaceManagerFactory.Default();
     protected final ProjectSpaceManagerFactory<?, ?> projectSpaceManagerFactory = new ProjectSpaceManagerFactory.Default();
 
     private final HashMap<String, ProjectSpaceManager<?>> projectSpaces = new HashMap<>();

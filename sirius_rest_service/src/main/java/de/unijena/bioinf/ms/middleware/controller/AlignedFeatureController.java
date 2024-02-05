@@ -226,7 +226,7 @@ public class AlignedFeatureController {
                                                            @RequestParam(defaultValue = "-1") int spectrumIndex
     ) {
         AnnotatedSpectrum res = projectsProvider.getProjectOrThrow(projectId)
-                .findAnnotatedSpectrumByStructureId(spectrumIndex, inchiKey, alignedFeatureId, formulaId);
+                .findAnnotatedSpectrumByStructureId(spectrumIndex, inchiKey, formulaId, alignedFeatureId);
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Annotated MS/MS Spectrum for '"
                     + idString(projectId, alignedFeatureId, formulaId)
@@ -253,7 +253,7 @@ public class AlignedFeatureController {
                                                          @PathVariable String inchiKey
     ) {
         AnnotatedMsMsData res = projectsProvider.getProjectOrThrow(projectId)
-                .findAnnotatedMsMsDataByStructureId(inchiKey, alignedFeatureId, formulaId);
+                .findAnnotatedMsMsDataByStructureId(inchiKey, formulaId, alignedFeatureId);
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Annotated MS/MS Spectrum for '"
                     + idString(projectId, alignedFeatureId, formulaId)
@@ -266,7 +266,7 @@ public class AlignedFeatureController {
     @Deprecated(forRemoval = true)
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/sirius-tree", produces = MediaType.APPLICATION_JSON_VALUE)
     public String getSiriusFragTree(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
-        String json = projectsProvider.getProjectOrThrow(projectId).findSiriusFtreeJsonById(alignedFeatureId, formulaId);
+        String json = projectsProvider.getProjectOrThrow(projectId).findSiriusFtreeJsonById(formulaId, alignedFeatureId);
         if (json == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "FragmentationTree for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");
         return json;
@@ -284,7 +284,7 @@ public class AlignedFeatureController {
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/tree", produces = MediaType.APPLICATION_JSON_VALUE)
     public FragmentationTree getFragTree(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         FragmentationTree res = projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidateByFeatureIdAndId(alignedFeatureId, formulaId, FormulaCandidate.OptField.fragmentationTree)
+                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, FormulaCandidate.OptField.fragmentationTree)
                 .getFragmentationTree();
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "FragmentationTree for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");
@@ -307,7 +307,7 @@ public class AlignedFeatureController {
                                                          @PathVariable String formulaId,
                                                          @RequestParam(defaultValue = "-1") int spectrumIndex ) {
         AnnotatedSpectrum res = projectsProvider.getProjectOrThrow(projectId)
-                .findAnnotatedSpectrumByFormulaId(spectrumIndex, alignedFeatureId, formulaId);
+                .findAnnotatedSpectrumByFormulaId(spectrumIndex, formulaId, alignedFeatureId);
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Annotated MS/MS Spectrum for '"
                     + idString(projectId, alignedFeatureId, formulaId)
@@ -332,7 +332,7 @@ public class AlignedFeatureController {
                                                          @PathVariable String formulaId
     ) {
         AnnotatedMsMsData res = projectsProvider.getProjectOrThrow(projectId)
-                .findAnnotatedMsMsDataByFormulaId(alignedFeatureId, formulaId);
+                .findAnnotatedMsMsDataByFormulaId(formulaId, alignedFeatureId);
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Annotated MS/MS Data for '"
                     + idString(projectId, alignedFeatureId, formulaId)
@@ -353,7 +353,7 @@ public class AlignedFeatureController {
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/isotope-pattern", produces = MediaType.APPLICATION_JSON_VALUE)
     public IsotopePatternAnnotation getIsotopePatternAnnotation(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         IsotopePatternAnnotation res = projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidateByFeatureIdAndId(alignedFeatureId, formulaId, FormulaCandidate.OptField.isotopePattern)
+                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, FormulaCandidate.OptField.isotopePattern)
                 .getIsotopePatternAnnotation();
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Isotope Pattern for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");
@@ -372,7 +372,7 @@ public class AlignedFeatureController {
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/lipid-annotation", produces = MediaType.APPLICATION_JSON_VALUE)
     public LipidAnnotation getLipidAnnotation(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         LipidAnnotation res = projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidateByFeatureIdAndId(alignedFeatureId, formulaId, FormulaCandidate.OptField.lipidAnnotation)
+                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, FormulaCandidate.OptField.lipidAnnotation)
                 .getLipidAnnotation();
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Lipid annotation for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");
@@ -391,7 +391,7 @@ public class AlignedFeatureController {
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/fingerprint", produces = MediaType.APPLICATION_JSON_VALUE)
     public double[] getFingerprintPrediction(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         double[] res = projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidateByFeatureIdAndId(alignedFeatureId, formulaId, FormulaCandidate.OptField.predictedFingerprint)
+                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, FormulaCandidate.OptField.predictedFingerprint)
                 .getPredictedFingerprint();
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Fingerprint for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");
@@ -409,7 +409,7 @@ public class AlignedFeatureController {
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/canopus-prediction", produces = MediaType.APPLICATION_JSON_VALUE)
     public CanopusPrediction getCanopusPrediction(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         CanopusPrediction res = projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidateByFeatureIdAndId(alignedFeatureId, formulaId, FormulaCandidate.OptField.canopusPredictions)
+                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, FormulaCandidate.OptField.canopusPredictions)
                 .getCanopusPrediction();
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Compound Classes for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");
@@ -428,7 +428,7 @@ public class AlignedFeatureController {
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/best-compound-classes", produces = MediaType.APPLICATION_JSON_VALUE)
     public CompoundClasses getBestMatchingCompoundClasses(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         CompoundClasses res = projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidateByFeatureIdAndId(alignedFeatureId, formulaId, FormulaCandidate.OptField.compoundClasses)
+                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, FormulaCandidate.OptField.compoundClasses)
                 .getCompoundClasses();
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Compound Classes for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");

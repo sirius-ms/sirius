@@ -182,11 +182,6 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
         public Optional<Double> getTopCSIScore() {
             return getScoreValue();
         }
-
-        public DummySiriusResult() {
-            //Dummy ignores non null!
-            super(null,null,null);
-        }
     }
 
     public static class RenderScore{

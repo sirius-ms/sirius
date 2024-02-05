@@ -100,7 +100,7 @@ public class Spectrums {
 
         Fragment[] fragments = annotateFragmentsToSingleMsMs(specSource, ftree);
 
-        return createMsMsWithAnnotations(spectrum, ftree, List.of(fragments), candidateSmiles);
+        return createMsMsWithAnnotations(spectrum, ftree, Arrays.asList(fragments), candidateSmiles);
     }
 
 
@@ -116,46 +116,48 @@ public class Spectrums {
     private static void setPeakAnnotations(@NotNull AnnotatedSpectrum spectrum, @NotNull FTree ftree, @NotNull Iterable<Fragment> fragments, @Nullable InsilicoFragmentationResult structureAnno) {
         List<AnnotatedPeak> peaks = spectrum.getPeaks();
         for (Fragment f : fragments) {
-            short i = f.getPeakId();
-            if (i >= 0) {
-                PeakAnnotation.PeakAnnotationBuilder peakAnno = PeakAnnotation.builder();
-                if (f.getFormula() != null && f.getIonization() != null) {
-                    peakAnno.molecularFormula(f.getFormula().toString());
-                    peakAnno.ionization(f.getIonization().toString());
-                    peakAnno.exactMass(f.getIonization().addToMass(f.getFormula().getMass()));
+            if (f != null) {
+                short peakId = f.getPeakId();
+                if (peakId >= 0) {
+                    PeakAnnotation.PeakAnnotationBuilder peakAnno = PeakAnnotation.builder();
+                    if (f.getFormula() != null && f.getIonization() != null) {
+                        peakAnno.molecularFormula(f.getFormula().toString());
+                        peakAnno.ionization(f.getIonization().toString());
+                        peakAnno.exactMass(f.getIonization().addToMass(f.getFormula().getMass()));
+                    }
+
+                    // deviation (from FTJsonWriter tree2json)
+                    {
+                        Deviation dev = ftree.getMassError(f);
+                        if (f.isRoot() && dev.equals(Deviation.NULL_DEVIATION))
+                            dev = ftree.getMassErrorTo(f, spectrum.getPrecursorMz());
+                        Deviation rdev = ftree.getRecalibratedMassError(f);
+                        if (f.isRoot() && dev.equals(Deviation.NULL_DEVIATION))
+                            rdev = ftree.getMassErrorTo(f, spectrum.getPrecursorMz());
+
+                        peakAnno.massDeviationMz(dev.getAbsolute())
+                                .massDeviationPpm(dev.getPpm())
+                                .recalibratedMassDeviationMz(rdev.getAbsolute())
+                                .recalibratedMassDeviationPpm(rdev.getPpm());
+                    }
+
+                    // we only store incoming edges because references are ugly for serialization
+                    f.getIncomingEdges().stream().findFirst().ifPresent(l ->
+                            peakAnno.parentPeak(ParentPeak.builder()
+                                    .lossFormula(l.getFormula().toString())
+                                    .parentIdx((int) l.getSource().getPeakId())
+                                    .build()));
+
+                    if (structureAnno != null) {
+                        Optional.ofNullable(structureAnno.getFragmentMapping().get(f))
+                                .map(List::stream).flatMap(Stream::findFirst)
+                                .ifPresent(subStr -> annotateSubstructure(
+                                        peakAnno, f.getFormula(), subStr, structureAnno.getSubtree()));
+                    }
+
+                    //add annotations to corresponding peak
+                    peaks.get(peakId).setPeakAnnotation(peakAnno.build());
                 }
-
-                // deviation (from FTJsonWriter tree2json)
-                {
-                    Deviation dev = ftree.getMassError(f);
-                    if (f.isRoot() && dev.equals(Deviation.NULL_DEVIATION))
-                        dev = ftree.getMassErrorTo(f, spectrum.getPrecursorMz());
-                    Deviation rdev = ftree.getRecalibratedMassError(f);
-                    if (f.isRoot() && dev.equals(Deviation.NULL_DEVIATION))
-                        rdev = ftree.getMassErrorTo(f, spectrum.getPrecursorMz());
-
-                    peakAnno.massDeviationMz(dev.getAbsolute())
-                            .massDeviationPpm(dev.getPpm())
-                            .recalibratedMassDeviationMz(rdev.getAbsolute())
-                            .recalibratedMassDeviationPpm(rdev.getPpm());
-                }
-
-                // we only store incoming edges because references are ugly for serialization
-                f.getIncomingEdges().stream().findFirst().ifPresent(l ->
-                        peakAnno.parentPeak(ParentPeak.builder()
-                                .lossFormula(l.getFormula().toString())
-                                .parentIdx((int) l.getSource().getPeakId())
-                                .build()));
-
-                if (structureAnno != null) {
-                    Optional.ofNullable(structureAnno.getFragmentMapping().get(f))
-                            .map(List::stream).flatMap(Stream::findFirst)
-                            .ifPresent(subStr -> annotateSubstructure(
-                                    peakAnno, f.getFormula(), subStr, structureAnno.getSubtree()));
-                }
-
-                //add annotations to corresponding peak
-                peaks.get(i).setPeakAnnotation(peakAnno.build());
             }
         }
     }

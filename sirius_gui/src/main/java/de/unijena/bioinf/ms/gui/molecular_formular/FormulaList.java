@@ -34,6 +34,8 @@ import de.unijena.bioinf.projectspace.InstanceBean;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -138,40 +140,41 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
     }
 
     private void intiResultList(List<FormulaResultBean> candidates) throws InterruptedException, InvocationTargetException {
-        elementList.forEach(FormulaResultBean::unregisterProjectSpaceListeners);
-        if (candidates != null && !candidates.isEmpty()) { //refill case
-            elementListSelectionModel.clearSelection();
+        Jobs.runEDTAndWait(() -> {
+            elementList.forEach(FormulaResultBean::unregisterProjectSpaceListeners); // todo can this be called outside ui thread
+            if (candidates != null && !candidates.isEmpty()) { //refill case
+                elementListSelectionModel.clearSelection();
 
-            double[] zscores = new double[candidates.size()];
-            double[] sscores = new double[candidates.size()];
-            double[] iScores = new double[candidates.size()];
-            double[] tScores = new double[candidates.size()];
-            double[] csiScores = new double[candidates.size()];
-            int i = 0;
+                double[] zscores = new double[candidates.size()];
+                double[] sscores = new double[candidates.size()];
+                double[] iScores = new double[candidates.size()];
+                double[] tScores = new double[candidates.size()];
+                double[] csiScores = new double[candidates.size()];
+                int i = 0;
 
 
-            for (FormulaResultBean fc : candidates) {
-                zscores[i] = fc.getZodiacScore().orElse(0d); //why do we want 0 here?
-                sscores[i] = fc.getSiriusScore().orElse(Double.NEGATIVE_INFINITY);
-                iScores[i] = fc.getIsotopeScore().orElse(Double.NEGATIVE_INFINITY);
-                tScores[i] = fc.getTreeScore().orElse(Double.NEGATIVE_INFINITY);
-                csiScores[i++] = fc.getTopCSIScore().orElse(Double.NEGATIVE_INFINITY);
-            }
-            refillElements(candidates);
+                for (FormulaResultBean fc : candidates) {
+                    zscores[i] = fc.getZodiacScore().orElse(0d); //why do we want 0 here?
+                    sscores[i] = fc.getSiriusScore().orElse(Double.NEGATIVE_INFINITY);
+                    iScores[i] = fc.getIsotopeScore().orElse(Double.NEGATIVE_INFINITY);
+                    tScores[i] = fc.getTreeScore().orElse(Double.NEGATIVE_INFINITY);
+                    csiScores[i++] = fc.getTopCSIScore().orElse(Double.NEGATIVE_INFINITY);
+                }
+                refillElements(candidates);
 
-            this.zodiacScoreStats.update(zscores);
-            this.siriusScoreStats.update(sscores);
-            this.isotopeScoreStats.update(iScores);
-            this.treeScoreStats.update(tScores);
-            this.csiScoreStats.update(csiScores);
+                this.zodiacScoreStats.update(zscores);
+                this.siriusScoreStats.update(sscores);
+                this.isotopeScoreStats.update(iScores);
+                this.treeScoreStats.update(tScores);
+                this.csiScoreStats.update(csiScores);
 
-            this.explainedIntensity.setMinScoreValue(0).setMaxScoreValue(1)
-                    .setScoreSum(this.explainedIntensity.getMax());
+                this.explainedIntensity.setMinScoreValue(0).setMaxScoreValue(1)
+                        .setScoreSum(this.explainedIntensity.getMax());
 
-            this.explainedPeaks.setMinScoreValue(0).setMaxScoreValue(candidates.get(0).getNumOfExplainablePeaks().orElseThrow())
-                    .setScoreSum(this.explainedPeaks.getMax());
-        } else { //clear case
-            Jobs.runEDTAndWait(() -> {
+                this.explainedPeaks.setMinScoreValue(0).setMaxScoreValue(candidates.get(0).getNumOfExplainablePeaks().orElseThrow())
+                        .setScoreSum(this.explainedPeaks.getMax());
+            } else { //clear case
+
                 if (!elementList.isEmpty()) {
                     elementListSelectionModel.clearSelection();
                     refillElements(null);
@@ -184,8 +187,9 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                 isotopeScoreStats.update(new double[0]);
                 treeScoreStats.update(new double[0]);
                 csiScoreStats.update(new double[0]);
-            });
-        }
+
+            }
+        });
     }
 
     public List<FormulaResultBean> getSelectedValues() {
@@ -200,8 +204,10 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
 
     protected Function<FormulaResultBean, Boolean> getBestFunc() {
         //top annotation corresponds to the best hit selected by sirius. so just check ID
-        return sre -> sre.getParentInstance().getFormulaAnnotation()
-                .map(it -> it.getFormulaId().equals(sre.getFormulaId()))
+        return sre -> Optional.ofNullable(sre)
+                .map(FormulaResultBean::getParentInstance)
+                .flatMap(InstanceBean::getFormulaAnnotation)
+                .map(it -> Objects.equals(it.getFormulaId(), sre.getFormulaId()))
                 .orElse(false);
     }
 }

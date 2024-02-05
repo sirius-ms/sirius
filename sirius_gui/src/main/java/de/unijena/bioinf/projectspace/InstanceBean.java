@@ -200,6 +200,8 @@ public class InstanceBean implements SiriusPCS {
     public Optional<RetentionTime> getRT() {
         @NotNull AlignedFeature f = getSourceFeature();
         if (f.getRtStartSeconds() != null && f.getRtEndSeconds() != null) {
+            if (Double.compare(f.getRtStartSeconds(), f.getRtEndSeconds()) == 0)
+                return Optional.of(new RetentionTime(f.getRtStartSeconds()));
             return Optional.of(new RetentionTime(f.getRtStartSeconds(), f.getRtEndSeconds()));
         } else if (f.getRtStartSeconds() != null) {
             return Optional.of(new RetentionTime(f.getRtStartSeconds()));

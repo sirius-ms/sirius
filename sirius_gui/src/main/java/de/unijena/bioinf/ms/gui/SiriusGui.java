@@ -80,7 +80,7 @@ public class SiriusGui {
         siriusClient.enableEventListening(EnumSet.allOf(DataEventType.class));
         projectManager =  new GuiProjectManager(projectId, siriusClient);
         mainFrame = new MainFrame(this);
-
+        mainFrame.decoradeMainFrame();
         //todo nightsky: check why JFX webview is only working for first instance...
         //todo nightsky: connect SSE connection to retrieve gui change states ???
     }
