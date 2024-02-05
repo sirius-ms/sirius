@@ -53,8 +53,8 @@ public class  FingerprintCandidateWrapper {
         return new FingerprintCandidate(candidate, fingerprint);
     }
 
-    public static FingerprintCandidateWrapper of(String formula, double mass, FingerprintCandidate candidate) {
-        return new FingerprintCandidateWrapper(candidate.getInchiKey2D(), formula, mass, candidate.toCompoundCandidate(), candidate.getFingerprint());
+    public static FingerprintCandidateWrapper of(long id, String formula, double mass, FingerprintCandidate candidate) {
+        return new FingerprintCandidateWrapper(id, candidate.getInchiKey2D(), formula, mass, candidate.toCompoundCandidate(), candidate.getFingerprint());
     }
 
     public static FingerprintCandidateWrapper of(MolecularFormula formula, FingerprintCandidate candidate) {
