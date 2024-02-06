@@ -183,12 +183,12 @@ public class ChemicalNoSQLDatabaseTest {
 
 
     //    @Test
-    public void getChemDbDateTest() throws ChemicalDatabaseException {
+    public void getChemDbDateTest() {
         //todo check db date if decided that it must be available or not.
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void annotateCompoundsTest() throws ChemicalDatabaseException {
+    public void annotateCompoundsTest() {
         chemDb.annotateCompounds(List.of());
     }
 
@@ -203,83 +203,14 @@ public class ChemicalNoSQLDatabaseTest {
     }
 
     @Test
-    public void testStore() throws IOException {
-        long start = System.nanoTime();
-        Path tempDB = Path.of("nitrite_long_" + System.nanoTime() + ".db");
-//        Path tempDB = Path.of("nitrite_long_pk.db");
-        chemDb = new ChemicalNitriteDatabase(tempDB);
-        long elapsed = System.nanoTime() - start;
-        System.out.println("Init time " + (elapsed / 1000000) + " ms");
-
-        Map<MolecularFormula, List<FingerprintCandidate>> compounds = loadJson();
-        System.out.println("Number of formulas: " + compounds.size());
-        start = System.nanoTime();
-        ChemicalNoSQLDBs.importCandidatesAndSpectra(chemDb, compounds, null, "2099-12-24", null, 5, 100000);
-        elapsed = System.nanoTime() - start;
-        System.out.println("Store time " + (elapsed / 1000000) + " ms");
-
-        start = System.nanoTime();
-
-        long c = chemDb.countAllFingerprints();
-        elapsed = System.nanoTime() - start;
-        System.out.println("Count time " + (elapsed / 1000000) + " ms");
-        System.out.println("Number of fingerprints: " + c);
-    }
-
-    @Test
     public void testUpsert() throws IOException {
-        Path tempDB = Path.of("nitrite_long_2.db");
-        chemDb = new ChemicalNitriteDatabase(tempDB);
-        long oldCount = chemDb.countAllFingerprints();
-        long start = System.nanoTime();
-//        chemDb.updateAllFingerprints(fpc -> fpc.referenceSpectraSplash.add(""));
-        chemDb.updateAllFingerprints(fpc -> fpc.xlogp += 1);
-        long elapsed = System.nanoTime() - start;
-        System.out.println("Upsert time " + (elapsed / 1000000) + " ms");
-        long newCount = chemDb.countAllFingerprints();
-        assertEquals(oldCount, newCount);
-    }
-
-    @Test
-    public void testQuery() throws IOException {
-        Path tempDB = Path.of("nitrite_long_2.db");
-        chemDb = new ChemicalNitriteDatabase(tempDB);
+        long fingerprintCountBefore = chemDb.countAllFingerprints();
         NitriteDatabase storage = chemDb.getStorage();
+        double avgXLogPBefore = storage.findAllStr(FingerprintCandidateWrapper.class).mapToDouble(w -> w.getCandidate().xlogp).average().orElse(Double.NaN);
 
-        long start = System.nanoTime();
-        double c = storage.findAllStr(FingerprintCandidateWrapper.class).map(FingerprintCandidateWrapper::getCandidate).mapToDouble(ce -> ce.xlogp).average().orElse(Double.NaN);
-//        int c = storage.findAllStr(FingerprintCandidateWrapper.class).map(FingerprintCandidateWrapper::getCandidate).mapToInt(ce -> ce.referenceSpectraSplash.size()).sum();
-        long elapsed = System.nanoTime() - start;
-        System.out.println(c);
-        System.out.println("Query time " + (elapsed / 1000000) + " ms");
-    }
-
-    @Test
-    public void getFPCCount() throws IOException {
-        Path tempDB = Path.of("nitrite_long_547668682556775 (copy).db");
-        chemDb = new ChemicalNitriteDatabase(tempDB);
-        System.out.println(chemDb.countAllFingerprints());
-    }
-
-    protected Map<MolecularFormula, List<FingerprintCandidate>> loadJson() throws IOException {
-        Map<MolecularFormula, List<FingerprintCandidate>> candidates = new HashMap<>();
-
-        long start = System.nanoTime();
-        FileBlobStorage fileBlobStorage = new FileBlobStorage(Path.of("compounds-test"));
-        ChemicalBlobDatabase<FileBlobStorage> db = new ChemicalBlobDatabase<>(fileBlobStorage, null);
-
-        fileBlobStorage.listBlobs().forEachRemaining(blob -> {
-            String formula = blob.getKey().split("[.]")[0];
-            try {
-                MolecularFormula mf = MolecularFormula.parseOrThrow(formula);
-                List<FingerprintCandidate> compounds = db.lookupStructuresAndFingerprintsByFormula(mf);
-                candidates.put(mf, compounds);
-            } catch (ChemicalDatabaseException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        long elapsed = System.nanoTime() - start;
-        System.out.println("Loading Json " + (elapsed / 1000000) + " ms");
-        return candidates;
+        chemDb.updateAllFingerprints(fpc -> fpc.xlogp += 1);
+        double avgXLogPAfter = storage.findAllStr(FingerprintCandidateWrapper.class).mapToDouble(w -> w.getCandidate().xlogp).average().orElse(Double.NaN);
+        assertEquals(fingerprintCountBefore, chemDb.countAllFingerprints());
+        assertEquals(avgXLogPBefore + 1, avgXLogPAfter, 10e-9);
     }
 }
