@@ -201,11 +201,11 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         return candidate.getXlogP();
     }
 
-    public Double getXLogPOrNull() {
-        Double xLogP = getXLogP();
-        if (xLogP.isNaN())
-            return null;
-        return xLogP;
+    public OptionalDouble getXLogPOpt() {
+        double xLogP = getXLogP();
+        if (Double.isNaN(xLogP))
+            return OptionalDouble.empty();
+        return OptionalDouble.of(xLogP);
     }
 
     public boolean computeAtomCoordinates() {

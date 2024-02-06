@@ -31,7 +31,7 @@ import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import javax.swing.*;
 import java.awt.*;
 
-public class CandidateListDetailViewPanel extends JPanel implements /* ActiveElementChangedListener<FingerprintCandidateBean,Set<FormulaResultBean>>,*/ PanelDescription {
+public class CandidateListDetailViewPanel extends JPanel implements PanelDescription {
     @Override
     public String getDescription() {
         return "<html>"
