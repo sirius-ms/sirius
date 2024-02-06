@@ -260,7 +260,9 @@ public class InstanceBean implements SiriusPCS {
     }
 
     public PageStructureCandidateFormula getStructureCandidatesPage(int pageNum, int pageSize) {
-        return withIds((pid, fid) -> getClient().features().getStructureCandidates(pid, fid, pageNum, pageSize, null, null, SearchQueryType.LUCENE, List.of(StructureCandidateOptField.DBLINKS)));
+        return withIds((pid, fid) -> getClient().features()
+                .getStructureCandidates(pid, fid, pageNum, pageSize, null, null, SearchQueryType.LUCENE,
+                        List.of(StructureCandidateOptField.DBLINKS, StructureCandidateOptField.FINGERPRINT)));
     }
 
 
@@ -275,7 +277,8 @@ public class InstanceBean implements SiriusPCS {
 
     public Optional<SpectralSearchResultBean> getSpectralSearchResults() {
         //todo nightsky: implement
-        throw new UnsupportedOperationException("Implement modification features in nightsky api");
+        LoggerFactory.getLogger(getClass()).warn("Implement spectral lib result features in nightsky api");
+        return Optional.empty();
 //        CompoundContainer container = loadCompoundContainer(SpectralSearchResult.class);
 //        Optional<SpectralSearchResult> result = container.getAnnotation(SpectralSearchResult.class);
 //        return result.map(SpectralSearchResultBean::new);

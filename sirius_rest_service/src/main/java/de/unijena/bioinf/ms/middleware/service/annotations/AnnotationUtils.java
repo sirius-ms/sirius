@@ -201,8 +201,13 @@ public class AnnotationUtils {
 
     public static BinaryFingerprint asBinaryFingerprint (Fingerprint fingerprint){
         BinaryFingerprint fp = new BinaryFingerprint();
-        fp.setLength(fingerprint.cardinality());
-        fp.setBitsSet(fingerprint.toIndizesArray());
+        fp.setLength(fingerprint.getFingerprintVersion().size());
+        short[] absIdx = fingerprint.toIndizesArray();
+        short[] relativeIdx = new short[absIdx.length];
+        for (int i = 0; i < absIdx.length; i++)
+            relativeIdx[i] = (short) fingerprint.getFingerprintVersion().getRelativeIndexOf(absIdx[i]);
+
+        fp.setBitsSet(relativeIdx);
         return fp;
     }
 }
