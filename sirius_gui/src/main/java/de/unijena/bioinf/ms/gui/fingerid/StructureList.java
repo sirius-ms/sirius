@@ -119,12 +119,21 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
                     });
 
                     checkForInterruption();
-                    setData(ec);
-                    if (hasData()) {
-                        final List<FingerprintCandidateBean> emChache = ec.getStructureCandidates(loadAllCandidates ? Integer.MAX_VALUE : 100); //todo allow user specifiable or pagination
+
+
+                    if (ec != null) {
+                        final List<FingerprintCandidateBean> fpcChache = ec.getStructureCandidates(loadAllCandidates ? Integer.MAX_VALUE : 100); //todo allow user specifiable or pagination
+                        //prepare stats for filters and views before setting data
+                        fpcChache.forEach(fpc ->{
+                            csiScoreStats.addValue(fpc.getCandidate().getCsiScore());
+                            fpc.getXLogPOpt().ifPresent(logPStats::addValue);
+                            tanimotoStats.addValue(fpc.getTanimotoScore());
+                        });
                         checkForInterruption();
-                        if (refillElementsEDT(emChache))
-                            loadMols = Jobs.MANAGER().submitJob(new LoadMoleculeJob(emChache));
+                        setData(ec); //notifies listeners about data change
+                        checkForInterruption();
+                        if (refillElementsEDT(fpcChache))
+                            loadMols = Jobs.MANAGER().submitJob(new LoadMoleculeJob(fpcChache));
                     }
 
                     return true;

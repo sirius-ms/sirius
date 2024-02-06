@@ -49,7 +49,7 @@ class CompoundStructureImage extends JPanel {
         if (tempFont != null) {
             nameFont = tempFont.deriveFont(13f);
             matchFont = tempFont.deriveFont(18f);
-            rankFont = tempFont.deriveFont(32f);
+            rankFont = tempFont.deriveFont(18f);
         } else {
             nameFont = matchFont = rankFont = Font.getFont(Font.SANS_SERIF);
 
@@ -108,13 +108,13 @@ class CompoundStructureImage extends JPanel {
             gg.drawString(molecule.getName(), 3, 16);
         }
         gg.setFont(rankFont);
-        final String rankString = "XX"; //todo nightsky: remove rank properly or replace with counted rank
-        final Rectangle2D bound = gg.getFontMetrics().getStringBounds(rankString, gg);
+        final String fromulaString = molecule.getMolecularFormula();
+        final Rectangle2D bound = gg.getFontMetrics().getStringBounds(fromulaString, gg);
         {
             final int x = 3;
             final int y = getHeight() - (int) (bound.getHeight());
             final int h = (int) (y + bound.getHeight());
-            gg.drawString(rankString, x, h - 2);
+            gg.drawString(fromulaString, x, h - 2);
         }
 //
 

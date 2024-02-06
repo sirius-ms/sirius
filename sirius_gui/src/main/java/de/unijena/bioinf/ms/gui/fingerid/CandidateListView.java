@@ -39,7 +39,7 @@ import java.awt.*;
 public class CandidateListView extends ActionListDetailView<FingerprintCandidateBean, InstanceBean, StructureList> {
 
     private FilterRangeSlider<StructureList, FingerprintCandidateBean, InstanceBean> logPSlider;
-    private FilterRangeSlider<StructureList,FingerprintCandidateBean, InstanceBean> tanimotoSlider;
+    private FilterRangeSlider<StructureList, FingerprintCandidateBean, InstanceBean> tanimotoSlider;
     private DBFilterPanel dbFilterPanel;
 
 
@@ -102,8 +102,10 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
     protected EventList<MatcherEditor<FingerprintCandidateBean>> getSearchFieldMatchers() {
         return GlazedLists.eventListOf(
                 new CandidateStringMatcherEditor(searchField.textField)
-                ,new MinMaxMatcherEditor<>(logPSlider, (baseList, element) -> baseList.add(element.getXLogPOrNull()))
-                ,new MinMaxMatcherEditor<>(tanimotoSlider, (baseList, element) -> baseList.add(element.getTanimotoScore()))
+                ,new MinMaxMatcherEditor<>(logPSlider, (baseList, element) ->
+                        element.getXLogPOpt().ifPresentOrElse(baseList::add, () -> baseList.add(null)))
+                ,new MinMaxMatcherEditor<>(tanimotoSlider, (baseList, element) ->
+                        baseList.add(element.getTanimotoScore()))
                , new DatabaseFilterMatcherEditor(dbFilterPanel)
         );
     }

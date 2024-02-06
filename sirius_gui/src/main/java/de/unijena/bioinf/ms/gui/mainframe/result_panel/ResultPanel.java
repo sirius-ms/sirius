@@ -97,11 +97,10 @@ public class ResultPanel extends JTabbedPane {
         addTab("Trees", null, new FormulaListHeaderPanel(siriusResultElements, treeTab), treeTab.getDescription());
 
         addTab("Predicted Fingerprint", null, new FormulaListHeaderPanel(siriusResultElements, fpTab), fpTab.getDescription());
-
-        addTab("Structures", null, new FormulaListHeaderPanel(siriusResultElements, structuresTab), structuresTab.getDescription());
-        addTab("Substructure Annotation", null, structureAnnoTab, structureAnnoTab.getDescription());
-
         addTab("Compound Classes", null, new FormulaListHeaderPanel(siriusResultElements, canopusTab), canopusTab.getDescription());
+
+        addTab("Structures", null, structuresTab, structuresTab.getDescription());
+        addTab("Substructure Annotation", null, structureAnnoTab, structureAnnoTab.getDescription());
 
         if (spectralMatchingPanel != null) {
             addTab("Reference Spectra", null, spectralMatchingPanel, spectralMatchingPanel.getDescription());
