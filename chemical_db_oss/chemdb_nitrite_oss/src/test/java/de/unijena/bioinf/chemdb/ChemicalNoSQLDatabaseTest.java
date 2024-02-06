@@ -26,10 +26,10 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.chemdb.nitrite.ChemicalNitriteDatabase;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
-import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintWrapper;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.storage.blob.file.FileBlobStorage;
 import de.unijena.bioinf.storage.db.nosql.Filter;
+import de.unijena.bioinf.storage.db.nosql.nitrite.NitriteDatabase;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -183,12 +183,12 @@ public class ChemicalNoSQLDatabaseTest {
 
 
     //    @Test
-    public void getChemDbDateTest() throws ChemicalDatabaseException {
+    public void getChemDbDateTest() {
         //todo check db date if decided that it must be available or not.
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void annotateCompoundsTest() throws ChemicalDatabaseException {
+    public void annotateCompoundsTest() {
         chemDb.annotateCompounds(List.of());
     }
 
@@ -202,4 +202,15 @@ public class ChemicalNoSQLDatabaseTest {
         assertEquals(2, candidates.size());
     }
 
+    @Test
+    public void testUpsert() throws IOException {
+        long fingerprintCountBefore = chemDb.countAllFingerprints();
+        NitriteDatabase storage = chemDb.getStorage();
+        double avgXLogPBefore = storage.findAllStr(FingerprintCandidateWrapper.class).mapToDouble(w -> w.getCandidate().xlogp).average().orElse(Double.NaN);
+
+        chemDb.updateAllFingerprints(fpc -> fpc.xlogp += 1);
+        double avgXLogPAfter = storage.findAllStr(FingerprintCandidateWrapper.class).mapToDouble(w -> w.getCandidate().xlogp).average().orElse(Double.NaN);
+        assertEquals(fingerprintCountBefore, chemDb.countAllFingerprints());
+        assertEquals(avgXLogPBefore + 1, avgXLogPAfter, 10e-9);
+    }
 }
