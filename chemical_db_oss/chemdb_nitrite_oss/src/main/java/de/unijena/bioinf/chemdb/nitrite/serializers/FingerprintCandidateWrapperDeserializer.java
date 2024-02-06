@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.chemdb.nitrite.serializers;
 
-import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -46,10 +45,10 @@ public class FingerprintCandidateWrapperDeserializer extends StdDeserializer<Fin
     }
 
     @Override
-    public FingerprintCandidateWrapper deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
+    public FingerprintCandidateWrapper deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         String inchi = null, formula = null;
         double mass = 0;
-        long pk = 0;
+        long id = -1;
         CompoundCandidate candidate = null;
         Fingerprint fingerprint = null;
         for (JsonToken jsonToken = p.nextToken(); jsonToken != null && !jsonToken.isStructEnd(); jsonToken = p.nextToken()) {
@@ -59,10 +58,10 @@ public class FingerprintCandidateWrapperDeserializer extends StdDeserializer<Fin
             final String fieldName = p.currentName();
 
             switch (fieldName) {
-                case "pk":
-                    pk = p.nextLongValue(0);
+                case "id":
+                    id = p.nextLongValue(-1);
                     break;
-                case "inchi":
+                case "inchiKey":
                     inchi = p.nextTextValue();
                     break;
                 case "formula":
@@ -83,6 +82,6 @@ public class FingerprintCandidateWrapperDeserializer extends StdDeserializer<Fin
                     break;
             }
         }
-        return new FingerprintCandidateWrapper(pk, inchi, formula, mass, candidate, fingerprint);
+        return new FingerprintCandidateWrapper(id, inchi, formula, mass, candidate, fingerprint);
     }
 }

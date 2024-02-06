@@ -39,9 +39,8 @@ import lombok.Setter;
 public class  FingerprintCandidateWrapper {
 
     @Id
-    long pk;
+    long id;
 
-//    @Id
     String inchiKey;
 
     String formula;
@@ -58,7 +57,7 @@ public class  FingerprintCandidateWrapper {
     }
 
     public static FingerprintCandidateWrapper of(MolecularFormula formula, FingerprintCandidate candidate) {
-        return new FingerprintCandidateWrapper(0, candidate.getInchiKey2D(), formula.toString(), formula.getMass(), candidate.toCompoundCandidate(), candidate.getFingerprint());
+        return new FingerprintCandidateWrapper(-1, candidate.getInchiKey2D(), formula.toString(), formula.getMass(), candidate.toCompoundCandidate(), candidate.getFingerprint());
     }
 
     public static FingerprintCandidateWrapper of(FingerprintCandidate candidate) throws UnknownElementException {
