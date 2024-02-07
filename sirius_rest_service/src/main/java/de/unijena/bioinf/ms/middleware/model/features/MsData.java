@@ -57,35 +57,11 @@ public class MsData {
     protected List<BasicSpectrum> ms2Spectra;
 
     public static MsData of(Ms2Experiment exp) {
-        MsDataBuilder b = MsData.builder()
-                .ms1Spectra(
-                        exp.getMs1Spectra().stream().map(x -> {
-                            BasicSpectrum t = new BasicSpectrum(x);
-                            t.setMsLevel(1);
-                            //todo scannumber not available for MS1 Spectra? Maybe as annotation?
-                            return t;
-                        }).collect(Collectors.toList()))
-                .ms2Spectra(
-                        //todo ms/ms annotations for spectrum viewer
-                        exp.getMs2Spectra().stream().map(x -> {
-                            BasicSpectrum t = new BasicSpectrum(x);
-                            t.setPrecursorMz(x.getPrecursorMz());
-                            t.setCollisionEnergy(new CollisionEnergy(x.getCollisionEnergy()));
-                            t.setMsLevel(2);
-                            t.setScanNumber(((MutableMs2Spectrum) x).getScanNumber());
-                            return t;
-                        }).collect(Collectors.toList()))
-                .mergedMs2(Spectrums.createMergedMsMs(exp));
-
-        Spectrum<Peak> mergedMs1 = exp.getMergedMs1Spectrum();
-        if (mergedMs1 == null && !exp.getMs1Spectra().isEmpty())
-            mergedMs1 = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.mergeSpectra(exp.getMs1Spectra());
-
-        if (mergedMs1 != null) {
-            BasicSpectrum t = new BasicSpectrum(mergedMs1);
-            t.setMsLevel(1);
-            b.mergedMs1(t);
-        }
-        return b.build();
+        return MsData.builder()
+                .ms1Spectra(exp.getMs1Spectra().stream().map(Spectrums::createMs1).toList())
+                .ms2Spectra(exp.getMs2Spectra().stream().map(Spectrums::createMsMs).toList())
+                .mergedMs1(Spectrums.createMergedMs1(exp))
+                .mergedMs2(Spectrums.createMergedMsMs(exp))
+                .build();
     }
 }

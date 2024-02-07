@@ -39,6 +39,13 @@ import java.util.List;
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE, setterVisibility = JsonAutoDetect.Visibility.NONE, creatorVisibility = JsonAutoDetect.Visibility.NONE)
 public abstract class AbstractSpectrum<P extends Peak> implements OrderedSpectrum<P> {
     /**
+     * Optional Displayable name of this spectrum.
+     */
+    @Schema(nullable = true)
+    @Getter @Setter
+    protected String name = null;
+
+    /**
      * MS level of the measured spectrum.
      * Artificial spectra with no msLevel (e.g. Simulated Isotope patterns) use null or zero
      */

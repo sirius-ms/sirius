@@ -38,13 +38,6 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE, setterVisibility = JsonAutoDetect.Visibility.NONE, creatorVisibility = JsonAutoDetect.Visibility.NONE)
 public class BasicSpectrum extends AbstractSpectrum<Peak> {
-    /**
-     * Optional Displayable name of this spectrum.
-     */
-    @Schema(nullable = true)
-    @Getter @Setter
-    private String name = null;
-
     public BasicSpectrum(@NotNull List<Peak> peaks) {
         this.peaks = peaks;
     }

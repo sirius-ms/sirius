@@ -52,17 +52,15 @@ public class IsotopePatternAnnotation {
 
     @JsonIgnore
     private void simulate(@NotNull Ms2Experiment exp, @NotNull FTree tree) {
-        final MolecularFormula formula = extractPrecursorFormula(tree, exp.getPrecursorIonType());
+        PrecursorIonType ionType = tree.getAnnotation(PrecursorIonType.class).orElse(exp.getPrecursorIonType());
+        final MolecularFormula formula = tree.getRoot().getFormula().subtract(ionType.getInSourceFragmentation()).add(ionType.getAdduct());
         final FastIsotopePatternGenerator gen = new FastIsotopePatternGenerator(Normalization.Max);
         gen.setMinimalProbabilityThreshold(Math.min(0.005, de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.getMinimalIntensity(isotopePattern)));
         gen.setMaximalNumberOfPeaks(Math.max(4, isotopePattern.size()));
         this.simulatedPattern = new BasicSpectrum(gen.simulatePattern(formula,
                 tree.getAnnotation(PrecursorIonType.class).orElse(exp.getPrecursorIonType()).getIonization()));
-    }
+        simulatedPattern.setName("Simulated Isotope Pattern");
 
-    public static MolecularFormula extractPrecursorFormula(@NotNull FTree tree, PrecursorIonType fallback) {
-        PrecursorIonType ionType = tree.getAnnotation(PrecursorIonType.class).orElse(fallback);
-        return tree.getRoot().getFormula().subtract(ionType.getInSourceFragmentation()).add(ionType.getAdduct());
     }
 
     @JsonIgnore
@@ -80,5 +78,6 @@ public class IsotopePatternAnnotation {
                     exp.getPrecursorIonType().getCharge(),
                     true));
         }
+        isotopePattern.setName("MS1 Isotope Pattern");
     }
 }
