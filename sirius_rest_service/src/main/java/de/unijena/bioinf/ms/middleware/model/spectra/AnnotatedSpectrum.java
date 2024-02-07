@@ -59,14 +59,6 @@ import java.util.List;
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE, setterVisibility = JsonAutoDetect.Visibility.NONE, creatorVisibility = JsonAutoDetect.Visibility.NONE)
 public class AnnotatedSpectrum extends AbstractSpectrum<AnnotatedPeak> {
     /**
-     * Optional Displayable name of this spectrum.
-     */
-    @Schema(nullable = true)
-    @Getter
-    @Setter
-    private String name = null;
-
-    /**
      * Optional Annotations of this spectrum.
      */
     @Schema(nullable = true)

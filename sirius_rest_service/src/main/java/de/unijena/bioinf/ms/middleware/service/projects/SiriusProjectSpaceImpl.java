@@ -764,33 +764,8 @@ public class SiriusProjectSpaceImpl implements Project {
 
     public static MsData asCompoundMsData(Instance instance) {
         return instance.loadCompoundContainer(Ms2Experiment.class)
-                .getAnnotation(Ms2Experiment.class).map(exp -> MsData.builder()
-                        .mergedMs1(
-                                opt(exp.getMergedMs1Spectrum(), s -> {
-                                    BasicSpectrum t = new BasicSpectrum((Spectrum<Peak>) s);
-                                    t.setMsLevel(1);
-                                    return t;
-                                }).orElse(null))
-                        .ms1Spectra(
-                                exp.getMs1Spectra().stream().map(x -> {
-                                    BasicSpectrum t = new BasicSpectrum(x);
-                                    t.setMsLevel(1);
-                                    //todo scannumber not available for MS1 Spectra? Maybe as annotation?
-                                    return t;
-                                }).collect(Collectors.toList()))
-                        .ms2Spectra(
-                                //todo ms/ms annotations for spectrum viewer
-                                exp.getMs2Spectra().stream().map(x -> {
-                                    BasicSpectrum t = new BasicSpectrum(x);
-                                    t.setCollisionEnergy(new CollisionEnergy(x.getCollisionEnergy()));
-                                    t.setMsLevel(2);
-                                    t.setScanNumber(((MutableMs2Spectrum) x).getScanNumber());
-                                    return t;
-                                }).collect(Collectors.toList())
-                        )
-                        .build()
-
-                ).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                .getAnnotation(Ms2Experiment.class).map(MsData::of)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                         "Feature with ID '" + instance + "' has no input Data!"));
     }
 

@@ -45,15 +45,50 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public class Spectrums {
+    private static <S extends AbstractSpectrum<?>> S decorateMsMs(S spectrum, @NotNull Ms2Spectrum<Peak> sourceSpectrum) {
+        spectrum.setPrecursorMz(sourceSpectrum.getPrecursorMz());
+        spectrum.setCollisionEnergy(new CollisionEnergy(sourceSpectrum.getCollisionEnergy()));
+        spectrum.setMsLevel(2);
+        spectrum.setScanNumber(((MutableMs2Spectrum) sourceSpectrum).getScanNumber());
+        spectrum.setName("MS2 " + sourceSpectrum.getCollisionEnergy().toString());
+        return spectrum;
+    }
+
+    private static <S extends AbstractSpectrum<?>> S decorateMergedMsMs(S spectrum, @Nullable List<Ms2Spectrum<Peak>> sourceSpectra) {
+        spectrum.setMsLevel(2);
+        spectrum.setName("MS2 merged");
+        if (sourceSpectra != null && !sourceSpectra.isEmpty())
+            spectrum.setPrecursorMz(sourceSpectra.iterator().next().getPrecursorMz());
+        return spectrum;
+    }
+
+
+
+    public static BasicSpectrum createMs1(@NotNull Spectrum<Peak> spectrum) {
+        BasicSpectrum ms1 = new BasicSpectrum(spectrum);
+        ms1.setMsLevel(1);
+        ms1.setName("MS1");
+        //todo add more meta information if available.
+        return ms1;
+    }
+
+    public static BasicSpectrum createMergedMs1(@NotNull Ms2Experiment exp) {
+        Spectrum<Peak> mergedMs1 = exp.getMergedMs1Spectrum();
+        if (mergedMs1 == null && !exp.getMs1Spectra().isEmpty())
+            mergedMs1 = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.mergeSpectra(exp.getMs1Spectra());
+        if (mergedMs1 == null)
+            return null;
+        return createMs1(mergedMs1);
+    }
+
+    public static BasicSpectrum createMsMs(@NotNull Ms2Spectrum<Peak> x) {
+        return decorateMsMs(new BasicSpectrum(x), x);
+    }
 
     public static BasicSpectrum createMergedMsMs(@NotNull Ms2Experiment exp) {
         final Ms2Preprocessor preprocessor = new Ms2Preprocessor();
         final ProcessedInput processedInput = preprocessor.preprocess(exp);
-        BasicSpectrum spec = new BasicSpectrum(List.copyOf(processedInput.getMergedPeaks()));
-        spec.setMsLevel(2);
-        if (!exp.getMs2Spectra().isEmpty())
-            spec.setPrecursorMz(exp.getMs2Spectra().iterator().next().getPrecursorMz());
-        return spec;
+        return decorateMergedMsMs(new BasicSpectrum(List.copyOf(processedInput.getMergedPeaks())), exp.getMs2Spectra());
     }
 
     public static AnnotatedSpectrum createMergedMsMsWithAnnotations(@NotNull Ms2Experiment exp, @Nullable FTree ftree) {
@@ -67,20 +102,14 @@ public class Spectrums {
         List<AnnotatedPeak> peaks = processedPeaks.stream()
                 .map(p -> new AnnotatedPeak(p.getMass(), p.getIntensity(), null)).toList();
 
-        AnnotatedSpectrum spectrum = new AnnotatedSpectrum(peaks);
-        spectrum.setMsLevel(2);
-
-        if (exp.getMs2Spectra().isEmpty())
-            return spectrum;
-
-        spectrum.setPrecursorMz(exp.getMs2Spectra().iterator().next().getPrecursorMz());
+        AnnotatedSpectrum spectrum = decorateMergedMsMs(new AnnotatedSpectrum(peaks), exp.getMs2Spectra());
 
         if (ftree == null || peaks.isEmpty())
             return spectrum;
 
         //map tree to spectrum
         processedInput.mapTreeToInput(ftree);
-        return createMsMsWithAnnotations(spectrum, ftree, ftree, candidateSmiles);
+        return makeMsMsWithAnnotations(spectrum, ftree, ftree, candidateSmiles);
 
     }
 
@@ -91,22 +120,15 @@ public class Spectrums {
     }
 
     public static AnnotatedSpectrum createMsMsWithAnnotations(@NotNull Ms2Spectrum<Peak> specSource, @Nullable FTree ftree, @Nullable String candidateSmiles) {
-        AnnotatedSpectrum spectrum = new AnnotatedSpectrum(specSource);
-        spectrum.setPrecursorMz(specSource.getPrecursorMz());
-        spectrum.setCollisionEnergy(new CollisionEnergy(specSource.getCollisionEnergy()));
-        spectrum.setMsLevel(2);
-        spectrum.setScanNumber(((MutableMs2Spectrum) specSource).getScanNumber());
-
+        AnnotatedSpectrum spectrum = decorateMsMs(new AnnotatedSpectrum(specSource), specSource);
         if (ftree == null)
             return spectrum;
-
         Fragment[] fragments = annotateFragmentsToSingleMsMs(specSource, ftree);
-
-        return createMsMsWithAnnotations(spectrum, ftree, Arrays.asList(fragments), candidateSmiles);
+        return makeMsMsWithAnnotations(spectrum, ftree, Arrays.asList(fragments), candidateSmiles);
     }
 
 
-    private static AnnotatedSpectrum createMsMsWithAnnotations(@NotNull AnnotatedSpectrum spectrum, @NotNull FTree ftree, @NotNull Iterable<Fragment> fragments, @Nullable String candidateSmiles) {
+    private static AnnotatedSpectrum makeMsMsWithAnnotations(@NotNull AnnotatedSpectrum spectrum, @NotNull FTree ftree, @NotNull Iterable<Fragment> fragments, @Nullable String candidateSmiles) {
         //compute substructure annotations //todo nightsky: do we want to do this somewhere else?
         final InsilicoFragmentationResult structureAnno = candidateSmiles == null ? null
                 : SiriusJobs.runInBackground(new InsilicoFragmentationPeakAnnotator().makeJJob(ftree, candidateSmiles)
