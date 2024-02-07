@@ -39,7 +39,7 @@ public class MS2Peak extends SimplePeak {
     }
 
     public MS2Peak(MS2Peak p) {
-        this(p.spectrum, p.mass, p.intensity);
+        this(p.spectrum, p.mz, p.intensity);
     }
 
     public Ms2Spectrum getSpectrum() {
@@ -47,7 +47,7 @@ public class MS2Peak extends SimplePeak {
     }
 
     public double getMz() {
-        return mass;
+        return mz;
     }
 
     @Override
@@ -63,14 +63,14 @@ public class MS2Peak extends SimplePeak {
         MS2Peak peak = (MS2Peak) o;
 
         if (Double.compare(peak.intensity, intensity) != 0) return false;
-        return Double.compare(peak.mass, mass) == 0;
+        return Double.compare(peak.mz, mz) == 0;
     }
 
     @Override
     public int hashCode() {
         int result;
         long temp;
-        temp = mass != +0.0d ? Double.doubleToLongBits(mass) : 0L;
+        temp = mz != +0.0d ? Double.doubleToLongBits(mz) : 0L;
         result = (int) (temp ^ (temp >>> 32));
         temp = intensity != +0.0d ? Double.doubleToLongBits(intensity) : 0L;
         result = 31 * result + (int) (temp ^ (temp >>> 32));
@@ -79,7 +79,7 @@ public class MS2Peak extends SimplePeak {
 
     @Override
     public String toString() {
-        return intensity + "@" + mass + " Da";
+        return intensity + "@" + mz + " Da";
     }
 
     public static class IntensityComparator implements Comparator<MS2Peak> {
