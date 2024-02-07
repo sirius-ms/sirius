@@ -202,24 +202,25 @@ public class IsotopePatternAnalysis implements Parameterized {
             final MS1MassDeviation massDev = input.getAnnotationOrDefault(MS1MassDeviation.class);
             final PossibleAdducts ionModes = input.getAnnotationOrDefault(PossibleAdducts.class);
             final FormulaConstraints constraints = input.getAnnotationOrDefault(FormulaConstraints.class);
+            final double monoMz = spec.getMzAt(0); //should be coherent with FragmentationPatternAnalysis.performDecomposition()
+            final List<Decomposition> decompositions = whiteset == null ? null : whiteset.resolve(monoMz, massDev.allowedMassDeviation, ionModes.getIonModes().stream().map(PrecursorIonType::getPrecursorIonType).toList());
             //map formulas to their ionMode
-            final Deviation dev = input.getAnnotation(MS2MassDeviation.class).map(x->x.allowedMassDeviation).orElse(new Deviation(100)); //larger ppm should not hurt for adduct mapping
-            final double precurorMz = input.getExperimentInformation().getIonMass();
-            final List<Decomposition> decompositions = whiteset.resolve(precurorMz, dev, ionModes.getIonModes().stream().map(PrecursorIonType::getPrecursorIonType).toList());
             for (IonMode ionMode : ionModes.getIonModes()) {
-                List<MolecularFormula> formulas = new ArrayList<>();
-                if (whiteset.isStillAllowDeNovo())
-                    formulas.addAll(decomposer.getDecomposer(constraints.getChemicalAlphabet()).decomposeToFormulas(pattern.getPeaks()[0].getMass(), ionMode, massDev.allowedMassDeviation, constraints));
+                Set<MolecularFormula> formulas = new HashSet<>();
+                if (whiteset == null || whiteset.isStillAllowDeNovo())
+                    formulas.addAll(decomposer.getDecomposer(constraints.getChemicalAlphabet()).decomposeToFormulas(monoMz, ionMode, massDev.allowedMassDeviation, constraints));
                 //select formulas for the current ionMode
-                final Whiteset resolvedWhiteset = Whiteset.ofMeasuredFormulas(decompositions.stream().filter(decomposition -> decomposition.getIon().equals(ionMode)).map(d -> d.getCandidate()).toList());
-                if (!resolvedWhiteset.isEmpty()) {
-                    formulas.addAll(resolvedWhiteset.getMeasuredFormulas());
+                if (whiteset != null) {
+                    final Whiteset resolvedWhiteset = Whiteset.ofMeasuredFormulas(decompositions.stream().filter(decomposition -> decomposition.getIon().equals(ionMode)).map(d -> d.getCandidate()).toList());
+                    if (!resolvedWhiteset.isEmpty()) {
+                        formulas.addAll(resolvedWhiteset.getMeasuredFormulas());
+                    }
                 }
                 PrecursorIonType precursorIonType = input.getExperimentInformation().getPrecursorIonType();
                 if (!precursorIonType.hasNeitherAdductNorInsource()) {
-                    formulas=formulas.stream().filter(f->precursorIonType.measuredNeutralMoleculeToNeutralMolecule(f).isAllPositiveOrZero()).collect(Collectors.toList());
+                    formulas=formulas.stream().filter(f->precursorIonType.measuredNeutralMoleculeToNeutralMolecule(f).isAllPositiveOrZero()).collect(Collectors.toSet());
                 }
-                for (IsotopePattern pat : scoreFormulas(spec, formulas, input.getExperimentInformation(), PrecursorIonType.getPrecursorIonType(ionMode))) {
+                for (IsotopePattern pat : scoreFormulas(spec, formulas.stream().toList(), input.getExperimentInformation(), PrecursorIonType.getPrecursorIonType(ionMode))) {
                     explanations.put(pat.getCandidate(), pat);
                 }
             }
@@ -230,26 +231,7 @@ public class IsotopePatternAnalysis implements Parameterized {
 
 
     public boolean computeAndScoreIsotopePattern(ProcessedInput input) {
-        final Ms1IsotopePattern pattern = input.getAnnotation(Ms1IsotopePattern.class, Ms1IsotopePattern::none);
-        if (!pattern.isEmpty()) {
-            final HashMap<MolecularFormula, IsotopePattern> explanations = new HashMap<>();
-            final SimpleSpectrum spec = pattern.getSpectrum();
-            final MS1MassDeviation massDev = input.getAnnotationOrDefault(MS1MassDeviation.class);
-            final PossibleAdducts ionModes = input.getAnnotationOrDefault(PossibleAdducts.class);
-            final FormulaConstraints constraints = input.getAnnotationOrDefault(FormulaConstraints.class);
-            for (IonMode ionMode : ionModes.getIonModes()) {
-                List<MolecularFormula> formulas = decomposer.getDecomposer(constraints.getChemicalAlphabet()).decomposeToFormulas(pattern.getPeaks()[0].getMass(), ionMode, massDev.allowedMassDeviation, constraints);
-                PrecursorIonType precursorIonType = input.getExperimentInformation().getPrecursorIonType();
-                if (!precursorIonType.hasNeitherAdductNorInsource()) {
-                    formulas=formulas.stream().filter(f->precursorIonType.measuredNeutralMoleculeToNeutralMolecule(f).isAllPositiveOrZero()).collect(Collectors.toList());
-                }
-                for (IsotopePattern pat : scoreFormulas(spec, formulas, input.getExperimentInformation(), PrecursorIonType.getPrecursorIonType(ionMode))) {
-                    explanations.put(pat.getCandidate(), pat);
-                }
-            }
-            input.setAnnotation(ExtractedIsotopePattern.class, new ExtractedIsotopePattern(spec, explanations));
-            return true;
-        } else return false;
+        return computeAndScoreIsotopePattern(input, null);
     }
 
     public List<IsotopePattern> deisotope(Ms2Experiment experiment, List<MolecularFormula> formulas) {
