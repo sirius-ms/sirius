@@ -25,6 +25,7 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +34,8 @@ import org.jetbrains.annotations.NotNull;
  *
  */
 public interface Peak extends Comparable<Peak>, DataAnnotation {
-	public double getMass();
+	@JsonProperty("mz")
+	public double getMass(); //todo rename to mz
 	public double getIntensity();
 
 	@Override
