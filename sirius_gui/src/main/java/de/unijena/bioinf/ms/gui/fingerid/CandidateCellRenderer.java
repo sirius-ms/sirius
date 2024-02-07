@@ -388,12 +388,12 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
                 });
             }
 
-            if (value.getPlatts() == null)
+            if (value.getPredictedFingerprint() == null)
                 return;
 
             int charge = PrecursorIonType.fromString(value.getCandidate().getAdduct()).getCharge();
             // runs in awt event queue but seems to be fast enough
-            ag.setAgreement(value.getSubstructures(value.getPlatts(), gui.getProjectManager().getFingerIdData(charge)
+            ag.setAgreement(value.getSubstructures(value.getPredictedFingerprint(), gui.getProjectManager().getFingerIdData(charge)
                     .getPerformances()));
         }
     }
