@@ -106,8 +106,10 @@ public class InstanceBean implements SiriusPCS {
                             if (getFeatureId().equals(pce.getFeaturedId())) {
                                 switch (pce.getEventType()) {
                                     case FEATURE_UPDATED -> {
-                                        InstanceBean.this.sourceFeature = null;
-                                        InstanceBean.this.msData = null;
+                                        synchronized (InstanceBean.this) {
+                                            InstanceBean.this.sourceFeature = null;
+                                            InstanceBean.this.msData = null;
+                                        }
                                         pcs.firePropertyChange("instance.updated", null, pce);
                                     }
                                     case RESULT_CREATED ->
@@ -266,7 +268,7 @@ public class InstanceBean implements SiriusPCS {
     }
 
 
-    public MsData getMsData() {
+    public synchronized MsData getMsData() {
         if (msData == null) {
             msData = sourceFeature().map(AlignedFeature::getMsData)
                     .orElse(withIds((pid, fid) -> getClient().features().getMsData(pid, getFeatureId())));
@@ -295,7 +297,7 @@ public class InstanceBean implements SiriusPCS {
         exp.setMs2Spectra(getMsData().getMs2Spectra().stream()
                 .map(s -> new MutableMs2Spectrum(WrapperSpectrum.of(s.getPeaks(), Peak::getMass,Peak::getIntensity),s.getPrecursorMz(), CollisionEnergy.fromString(s.getCollisionEnergy()),2))
                 .toList());
-        Optional.ofNullable(msData.getMergedMs1())
+        Optional.ofNullable(getMsData().getMergedMs1())
                 .map(s -> new SimpleSpectrum(WrapperSpectrum.of(s.getPeaks(), Peak::getMass,Peak::getIntensity)))
                 .ifPresent(exp::setMergedMs1Spectrum);
         return exp;
@@ -304,7 +306,7 @@ public class InstanceBean implements SiriusPCS {
 
     //todo nightsky reenable setter
 
-    public  <R> R withIds(BiFunction<String, String, R> doWithClient) {
+    public synchronized <R> R withIds(BiFunction<String, String, R> doWithClient) {
         return doWithClient.apply(projectManager.getProjectId(), getFeatureId());
     }
 
