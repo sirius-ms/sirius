@@ -85,15 +85,15 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
 
 
     //view
-    private volatile IAtomContainer molecule; //todo check if we need to cache this this
+    private volatile IAtomContainer molecule;
     protected CompoundMatchHighlighter highlighter;
 
-    protected boolean prepared = false;//todo fire property change???
+    protected boolean prepared = false;
 
     protected CircularFingerprinter.FP[] relevantFps;
-    protected int[] ecfpHashs;//todo fire property change???
+    protected int[] ecfpHashs;
 
-    protected FingerprintAgreement substructures; //todo fire property change???
+    protected FingerprintAgreement substructures;
     protected final DatabaseLabel[] labels;
 
     protected final EmptyLabel referenceLabel;
@@ -222,8 +222,8 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         return true;
     }
 
-    public boolean hasFingerprintIndex(int index) {
-        return candidate.getFingerprint().getBitsSet().get(index) == 1;
+    public boolean hasFingerprintIndex(int relativeIndex) {
+        return candidate.getFingerprint().getBitsSet().contains(relativeIndex); //todo nightsky this is currently not O(1)
     }
 
     public boolean highlightFingerprint(int absoluteIndex) {
@@ -232,7 +232,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         final IAtomContainer molecule = getMolecule();
         for (IAtom atom : molecule.atoms()) atom.removeProperty(StandardGenerator.HIGHLIGHT_COLOR);
         for (IBond bond : molecule.bonds()) bond.removeProperty(StandardGenerator.HIGHLIGHT_COLOR);
-        if (!hasFingerprintIndex(absoluteIndex)) {
+        if (!hasFingerprintIndex(version.getRelativeIndexOf(absoluteIndex))) {
             molecule.setProperty(HighlightGenerator.ID_MAP, Collections.emptyMap());
             return false;
         }

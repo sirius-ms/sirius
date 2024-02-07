@@ -99,14 +99,15 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
                         .ifPresent(pce -> {
                             if (sourceCandidate.getFormulaId().equals(pce.getFormulaId())) {
                                 if (pce.getEventType() == ProjectChangeEvent.EventTypeEnum.RESULT_UPDATED) {
-                                    FormulaResultBean.this.sourceCandidate = null;
-                                    FormulaResultBean.this.canopusResults = null;
-                                    FormulaResultBean.this.fp = null;
-                                    FormulaResultBean.this.lipidAnnotation = null;
-                                    FormulaResultBean.this.isotopePatterAnnotation = null;
-                                    FormulaResultBean.this.fragmentationTree = null;
-                                    FormulaResultBean.this.ftreeJson = null;
-
+                                    synchronized (FormulaResultBean.this) {
+                                        FormulaResultBean.this.sourceCandidate = null;
+                                        FormulaResultBean.this.canopusResults = null;
+                                        FormulaResultBean.this.fp = null;
+                                        FormulaResultBean.this.lipidAnnotation = null;
+                                        FormulaResultBean.this.isotopePatterAnnotation = null;
+                                        FormulaResultBean.this.fragmentationTree = null;
+                                        FormulaResultBean.this.ftreeJson = null;
+                                    }
                                     pcs.firePropertyChange("formulaResult.update", null, pce);
                                 }
                             } else {
@@ -139,7 +140,7 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
     }
 
     @NotNull
-    private FormulaCandidate getFormulaCandidate(@Nullable List<FormulaCandidateOptField> optFields) {
+    private synchronized FormulaCandidate getFormulaCandidate(@Nullable List<FormulaCandidateOptField> optFields) {
         final List<FormulaCandidateOptField> of = ensureDefaultOptFields(optFields);
 
         // we update every time here since we do not know which optional fields are already loaded.
@@ -168,8 +169,10 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         parentInstance.removePropertyChangeListener("instance.updateFormulaResult." + getFormulaId(), listener);
     }
 
-    private <R> R withIds(TriFunction<String, String, String, R> doWithClient) {
-        return doWithClient.apply(parentInstance.getProjectManager().getProjectId(), parentInstance.getFeatureId(), getFormulaId());
+    private synchronized  <R> R  withIds(TriFunction<String, String, String, R> doWithClient) {
+        synchronized (parentInstance){
+            return doWithClient.apply(parentInstance.getProjectManager().getProjectId(), parentInstance.getFeatureId(), getFormulaId());
+        }
     }
 
 
@@ -271,7 +274,7 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         return Optional.ofNullable(getFormulaCandidate().getTopCSIScore());
     }
 
-    public Optional<FragmentationTree> getFragmentationTree() {
+    public synchronized Optional<FragmentationTree> getFragmentationTree() {
         if (this.fragmentationTree == null)
             this.fragmentationTree = Optional.ofNullable(
                     sourceCandidate().map(FormulaCandidate::getFragmentationTree)
@@ -283,7 +286,7 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         return this.fragmentationTree;
     }
 
-    public Optional<String> getFTreeJson() {
+    public synchronized Optional<String> getFTreeJson() {
         if (this.ftreeJson == null)
             this.ftreeJson = Optional.ofNullable(withIds((pid, fid, foid) ->
                     getClient().features().getSiriusFragTreeWithResponseSpec(pid, fid, foid)
@@ -293,7 +296,7 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         return this.ftreeJson;
     }
 
-    public Optional<IsotopePatternAnnotation> getIsotopePatterAnnotation() {
+    public synchronized Optional<IsotopePatternAnnotation> getIsotopePatterAnnotation() {
         if (this.isotopePatterAnnotation == null)
             this.isotopePatterAnnotation = Optional.ofNullable(
                     sourceCandidate().map(FormulaCandidate::getIsotopePatternAnnotation)
@@ -306,7 +309,7 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         return this.isotopePatterAnnotation;
     }
 
-    public Optional<LipidAnnotation> getLipidAnnotation() {
+    public synchronized Optional<LipidAnnotation> getLipidAnnotation() {
         if (this.lipidAnnotation == null) {
             this.lipidAnnotation = Optional.ofNullable(
                     sourceCandidate().map(FormulaCandidate::getLipidAnnotation)
@@ -318,7 +321,7 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         return this.lipidAnnotation;
     }
 
-    public Optional<ProbabilityFingerprint> getPredictedFingerprint() {
+    public synchronized Optional<ProbabilityFingerprint> getPredictedFingerprint() {
         if (this.fp == null) {
             List<Double> fpTmp = sourceCandidate().map(FormulaCandidate::getPredictedFingerprint)
                     .orElse(withIds((pid, fid, foid) -> getClient().features()
@@ -337,7 +340,7 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
     }
 
     @NotNull
-    private Pair<CompoundClasses, CanopusPrediction> getCanopusResults() {
+    private synchronized Pair<CompoundClasses, CanopusPrediction> getCanopusResults() {
         if (canopusResults == null) {
             @NotNull FormulaCandidate f = sourceCandidate().filter(fc -> fc.getCanopusPrediction() != null && fc.getCompoundClasses() != null)
                     .orElse(getFormulaCandidate(FormulaCandidateOptField.CANOPUSPREDICTIONS, FormulaCandidateOptField.COMPOUNDCLASSES));

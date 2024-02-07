@@ -83,7 +83,6 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     protected JPopupMenu popupMenu;
 
     protected int highlightAgree = -1;
-    protected int highlightedCandidate = -1;
     protected int selectedCompoundId;
 
     private ToolbarToggleButton filterByMolecularPropertyButton;
@@ -247,7 +246,6 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     @Override
     public void mouseClicked(MouseEvent e) {
         if (e.isPopupTrigger()) return;
-        highlightedCandidate = -1;
         highlightAgree = -1;
         final Point point = e.getPoint();
         final int index = candidateList.locationToIndex(point);
@@ -264,7 +262,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         if (rowcol == null || candidate.substructures.indexAt(rowcol[0], rowcol[1]).isEmpty()) {
             if (highlightAgree >= 0) {
                 highlightAgree = -1;
-                structureSearcher.reloadList(source, highlightAgree, highlightedCandidate);
+                structureSearcher.reloadList(source, highlightAgree, source.getElementList().indexOf(candidate)); //todo nightsky O(1) would be cool
                 molecularPropertyMatcherEditor.highlightChanged(filterByMolecularPropertyButton.isSelected());
             }
 
@@ -284,7 +282,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
             }
         } else {
             highlightAgree = candidate.substructures.indexAt(rowcol[0], rowcol[1]).getAsInt();
-            structureSearcher.reloadList(source, highlightAgree, highlightedCandidate);
+            structureSearcher.reloadList(source, highlightAgree, source.getElementList().indexOf(candidate)); //todo nightsky O(1) would be cool
             molecularPropertyMatcherEditor.highlightChanged(filterByMolecularPropertyButton.isSelected());
         }
     }
@@ -305,7 +303,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
                     if (s == DataSource.LIPID) {
                         Jobs.runInBackground(() -> {
                             try {
-                                //todo remove if lipid maps is added to our pubchem copy
+                                //todo nightsky: remove if lipid maps is added to our pubchem copy
                                 List<String> lmIds = ProxyManager.applyClient(client -> {
                                     URI uri = URI.create(String.format(Locale.US, "https://www.lipidmaps.org/rest/compound/inchi_key/%s/lm_id", URLEncoder.encode(InChISMILESUtils.inchi2inchiKey(candidate.getInChI().in3D, true), StandardCharsets.UTF_8)));
                                     Response r = client.newCall(new Request.Builder().url(uri.toURL()).build()).execute();
@@ -364,7 +362,6 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
 
     @Override
     public void mousePressed(MouseEvent e) {
-        highlightedCandidate = -1;
         highlightAgree = -1;
         final Point point = e.getPoint();
         final int index = candidateList.locationToIndex(point);

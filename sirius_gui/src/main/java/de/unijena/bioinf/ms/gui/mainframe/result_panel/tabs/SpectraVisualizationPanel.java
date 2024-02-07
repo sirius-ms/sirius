@@ -316,7 +316,7 @@ public class SpectraVisualizationPanel
         }
     }
 
-    private JJob<Boolean> backgroundLoader = null;
+    private volatile JJob<Boolean> backgroundLoader = null;
     private final Lock backgroundLoaderLock = new ReentrantLock();
 
 
@@ -328,31 +328,36 @@ public class SpectraVisualizationPanel
                 @Override
                 protected Boolean compute() throws Exception {
                     //cancel running job if not finished to not waist resources for fetching data that is not longer needed.
-                    if (old != null && !old.isFinished()) {
+                    if (old != null) {
                         old.cancel(false);
                         old.getResult(); //await cancellation so that nothing strange can happen.
                     }
+                    clearData();
                     checkForInterruption();
                     //todo check if data is unchanged and prevent re-rendering
                     if (instance != null) {
-                        clearData();
-                        //load date
-                        msData = instance.getMsData();
-                        checkForInterruption();
-                        if (formulaCandidateId != null) {
-                            isotopePatternAnnotation = instance.withIds((pid, fid) -> instance.getClient().features()
-                                    .getIsotopePatternAnnotation(pid, fid, formulaCandidateId));
-                            checkForInterruption();
-                            if (inChIKey2d != null)
-                                annotatedMsMsData = instance.withIds((pid, fid) -> instance.getClient().features()
-                                        .getStructureAnnotatedMsData(pid, fid, formulaCandidateId, inChIKey2d));
-                            else
-                                annotatedMsMsData = instance.withIds((pid, fid) -> instance.getClient().features()
-                                        .getFormulaAnnotatedMsMsData(pid, fid, formulaCandidateId));
-                        }
-                        checkForInterruption();
-                        final List<String> items = new ArrayList<>(5);
+                        final MsData msData = instance.getMsData();
                         if (msData != null) {
+                            checkForInterruption();
+                            final IsotopePatternAnnotation isotopePatternAnnotation;
+                            final AnnotatedMsMsData annotatedMsMsData;
+                            if (formulaCandidateId != null) {
+                                isotopePatternAnnotation = instance.withIds((pid, fid) -> instance.getClient().features()
+                                        .getIsotopePatternAnnotation(pid, fid, formulaCandidateId));
+                                checkForInterruption();
+                                if (inChIKey2d != null)
+                                    annotatedMsMsData = instance.withIds((pid, fid) -> instance.getClient().features()
+                                            .getStructureAnnotatedMsData(pid, fid, formulaCandidateId, inChIKey2d));
+                                else
+                                    annotatedMsMsData = instance.withIds((pid, fid) -> instance.getClient().features()
+                                            .getFormulaAnnotatedMsMsData(pid, fid, formulaCandidateId));
+                            } else {
+                                isotopePatternAnnotation = null;
+                                annotatedMsMsData = null;
+                            }
+                            checkForInterruption();
+                            final List<String> items = new ArrayList<>(5);
+
                             Jobs.runEDTAndWait(() -> setToolbarEnabled(true));
                             if (!msData.getMs1Spectra().isEmpty() || msData.getMergedMs1() != null)
                                 items.add(MS1_DISPLAY);
@@ -381,7 +386,7 @@ public class SpectraVisualizationPanel
 
                             checkForInterruption();
 
-                            // todo why are these two jobs?
+                            // todo nightsky: why are these two jobs?
                             Jobs.runEDTAndWait(() -> {
                                 boolean preferredPossible = false; // no `contains` for combobox
                                 for (int i = 0; i < modesBox.getItemCount(); i++)
@@ -401,14 +406,16 @@ public class SpectraVisualizationPanel
                                     browser.executeJS("SpectrumPlot.setSelection(main.spectrum, " + peak_selection + ")");
 
                             });
+
+                            SpectraVisualizationPanel.this.msData = msData;
+                            SpectraVisualizationPanel.this.isotopePatternAnnotation = isotopePatternAnnotation;
+                            SpectraVisualizationPanel.this.annotatedMsMsData = annotatedMsMsData;
                         } else {
+                            clearData();
                             Jobs.runEDTAndWait(() -> setToolbarEnabled(false));
                             browser.clear();
                         }
                     }
-
-                    checkForInterruption();
-
                     return true;
                 }
             });
