@@ -430,7 +430,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
                     if (in.isPresent()) {
                         //todo separate detection of clickable components. This is too slow and hacky.
                         setCursor(new Cursor(Cursor.HAND_CURSOR));
-                        return candidate.getPlatts().getFingerprintVersion().getMolecularProperty(in.getAsInt()).getDescription() + "  (" + prob.format(candidate.getPlatts().getProbability(in.getAsInt())) + " %)";
+                        return candidate.getPredictedFingerprint().getFingerprintVersion().getMolecularProperty(in.getAsInt()).getDescription() + "  (" + prob.format(candidate.getPredictedFingerprint().getProbability(in.getAsInt())) + " %)";
                     }
 
                 }

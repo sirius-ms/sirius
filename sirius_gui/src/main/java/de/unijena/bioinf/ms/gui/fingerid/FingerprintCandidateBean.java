@@ -32,6 +32,8 @@ import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.nightsky.sdk.model.BinaryFingerprint;
 import de.unijena.bioinf.ms.nightsky.sdk.model.DBLink;
 import de.unijena.bioinf.ms.nightsky.sdk.model.StructureCandidateFormula;
+import it.unimi.dsi.fastutil.shorts.ShortArrayList;
+import it.unimi.dsi.fastutil.shorts.ShortList;
 import org.jetbrains.annotations.NotNull;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
@@ -135,7 +137,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
     }
 
     public void highlightInBackground() {
-        CompoundMatchHighlighter h = new CompoundMatchHighlighter(this, getPlatts());
+        CompoundMatchHighlighter h = new CompoundMatchHighlighter(this, getPredictedFingerprint());
         synchronized (this) {
             this.highlighter = h;
         }
@@ -149,7 +151,19 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         return candidate.getCsiScore();
     }
 
-    public ProbabilityFingerprint getPlatts() {
+
+
+
+    public ArrayFingerprint getCandidateFingerprint() {
+        FingerprintVersion version = getPredictedFingerprint().getFingerprintVersion();
+        ShortList indices = candidate.getFingerprint().getBitsSet().stream()
+                .map(version::getAbsoluteIndexOf)
+                .map(Integer::shortValue)
+                .collect(Collectors.toCollection(ShortArrayList::new));
+        return new ArrayFingerprint(version, indices.toShortArray());
+    }
+
+    public ProbabilityFingerprint getPredictedFingerprint() {
         return fp;
     }
 
@@ -377,7 +391,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         }
 
         @Override
-        public ProbabilityFingerprint getPlatts() {
+        public ProbabilityFingerprint getPredictedFingerprint() {
             return null;
         }
     }
