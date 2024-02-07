@@ -21,12 +21,14 @@
 package de.unijena.bioinf.ms.middleware.model.spectra;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Ms2IsotopePattern;
 import de.unijena.bioinf.fragmenter.*;
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.sirius.Ms2Preprocessor;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
@@ -105,9 +107,10 @@ public class Spectrums {
 
 
     private static AnnotatedSpectrum createMsMsWithAnnotations(@NotNull AnnotatedSpectrum spectrum, @NotNull FTree ftree, @NotNull Iterable<Fragment> fragments, @Nullable String candidateSmiles) {
-        //compute substructure annotations //todo do we want to do this somewhere else?
+        //compute substructure annotations //todo nightsky: do we want to do this somewhere else?
         final InsilicoFragmentationResult structureAnno = candidateSmiles == null ? null
-                : new InsilicoFragmentationPeakAnnotator().fragmentAndAnnotate(ftree, candidateSmiles);
+                : SiriusJobs.runInBackground(new InsilicoFragmentationPeakAnnotator().makeJJob(ftree, candidateSmiles)
+                .asType(JJob.JobType.TINY_BACKGROUND)).takeResult(); //executed as tiny background job to be computed instantly for immediate response
         setSpectrumAnnotation(spectrum, ftree, structureAnno, candidateSmiles);
         setPeakAnnotations(spectrum, ftree, fragments, structureAnno);
         return spectrum;
