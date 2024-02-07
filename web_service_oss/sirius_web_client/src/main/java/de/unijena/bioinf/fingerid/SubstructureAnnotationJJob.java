@@ -3,7 +3,6 @@ package de.unijena.bioinf.fingerid;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
-import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fragmenter.InsilicoFragmentationPeakAnnotator;
 import de.unijena.bioinf.fragmenter.InsilicoFragmentationResult;

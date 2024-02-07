@@ -54,11 +54,11 @@ public class InsilicoFragmentationPeakAnnotator {
     }
 
     public InsilicoFragmentationResult fragmentAndAnnotate(@NotNull FTree tree, @NotNull String structureSmiles) {
-        return SiriusJobs.runInBackground(makeJJob(tree, structureSmiles)).takeResult();
+        return SiriusJobs.getGlobalJobManager().submitJob(makeJJob(tree, structureSmiles)).takeResult();
     }
 
     public InsilicoFragmentationResult fragmentAndAnnotate(@NotNull FTree tree, @NotNull MolecularGraph structure) {
-        return SiriusJobs.runInBackground(makeJJob(tree, structure)).takeResult();
+        return SiriusJobs.getGlobalJobManager().submitJob(makeJJob(tree, structure)).takeResult();
     }
 
     public Job makeJJob(@NotNull FTree tree, @NotNull String structureSmiles) {
