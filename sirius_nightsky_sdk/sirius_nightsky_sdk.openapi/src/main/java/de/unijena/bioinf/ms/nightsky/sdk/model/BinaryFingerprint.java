@@ -59,7 +59,7 @@ public class BinaryFingerprint {
   }
 
    /**
-   * Array that contains all indices of bits that are set (are 1)
+   * Array that contains all RELATIVE indices (masked FP) of bits that are set (are 1)
    * @return bitsSet
   **/
   @javax.annotation.Nullable
@@ -85,7 +85,7 @@ public class BinaryFingerprint {
   }
 
    /**
-   * Size of the fingerprint, e.g. to reconstruct the binary array from the array of set bits
+   * Size of the fingerprint (masked fp), e.g. to reconstruct the binary array from the array of set bits
    * @return length
   **/
   @javax.annotation.Nullable

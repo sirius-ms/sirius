@@ -35,14 +35,14 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 @JsonPropertyOrder({
   PageJob.JSON_PROPERTY_TOTAL_PAGES,
   PageJob.JSON_PROPERTY_TOTAL_ELEMENTS,
+  PageJob.JSON_PROPERTY_SORT,
   PageJob.JSON_PROPERTY_FIRST,
   PageJob.JSON_PROPERTY_LAST,
-  PageJob.JSON_PROPERTY_SORT,
-  PageJob.JSON_PROPERTY_SIZE,
-  PageJob.JSON_PROPERTY_CONTENT,
   PageJob.JSON_PROPERTY_NUMBER,
   PageJob.JSON_PROPERTY_NUMBER_OF_ELEMENTS,
   PageJob.JSON_PROPERTY_PAGEABLE,
+  PageJob.JSON_PROPERTY_SIZE,
+  PageJob.JSON_PROPERTY_CONTENT,
   PageJob.JSON_PROPERTY_EMPTY
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
@@ -53,20 +53,14 @@ public class PageJob {
   public static final String JSON_PROPERTY_TOTAL_ELEMENTS = "totalElements";
   private Long totalElements;
 
+  public static final String JSON_PROPERTY_SORT = "sort";
+  private SortObject sort;
+
   public static final String JSON_PROPERTY_FIRST = "first";
   private Boolean first;
 
   public static final String JSON_PROPERTY_LAST = "last";
   private Boolean last;
-
-  public static final String JSON_PROPERTY_SORT = "sort";
-  private SortObject sort;
-
-  public static final String JSON_PROPERTY_SIZE = "size";
-  private Integer size;
-
-  public static final String JSON_PROPERTY_CONTENT = "content";
-  private List<Job> content;
 
   public static final String JSON_PROPERTY_NUMBER = "number";
   private Integer number;
@@ -76,6 +70,12 @@ public class PageJob {
 
   public static final String JSON_PROPERTY_PAGEABLE = "pageable";
   private PageableObject pageable;
+
+  public static final String JSON_PROPERTY_SIZE = "size";
+  private Integer size;
+
+  public static final String JSON_PROPERTY_CONTENT = "content";
+  private List<Job> content;
 
   public static final String JSON_PROPERTY_EMPTY = "empty";
   private Boolean empty;
@@ -135,6 +135,32 @@ public class PageJob {
   }
 
 
+  public PageJob sort(SortObject sort) {
+    
+    this.sort = sort;
+    return this;
+  }
+
+   /**
+   * Get sort
+   * @return sort
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_SORT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public SortObject getSort() {
+    return sort;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_SORT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setSort(SortObject sort) {
+    this.sort = sort;
+  }
+
+
   public PageJob first(Boolean first) {
     
     this.first = first;
@@ -184,92 +210,6 @@ public class PageJob {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setLast(Boolean last) {
     this.last = last;
-  }
-
-
-  public PageJob sort(SortObject sort) {
-    
-    this.sort = sort;
-    return this;
-  }
-
-   /**
-   * Get sort
-   * @return sort
-  **/
-  @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SORT)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public SortObject getSort() {
-    return sort;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_SORT)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSort(SortObject sort) {
-    this.sort = sort;
-  }
-
-
-  public PageJob size(Integer size) {
-    
-    this.size = size;
-    return this;
-  }
-
-   /**
-   * Get size
-   * @return size
-  **/
-  @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SIZE)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Integer getSize() {
-    return size;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_SIZE)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSize(Integer size) {
-    this.size = size;
-  }
-
-
-  public PageJob content(List<Job> content) {
-    
-    this.content = content;
-    return this;
-  }
-
-  public PageJob addContentItem(Job contentItem) {
-    if (this.content == null) {
-      this.content = new ArrayList<>();
-    }
-    this.content.add(contentItem);
-    return this;
-  }
-
-   /**
-   * Get content
-   * @return content
-  **/
-  @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_CONTENT)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public List<Job> getContent() {
-    return content;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_CONTENT)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setContent(List<Job> content) {
-    this.content = content;
   }
 
 
@@ -351,6 +291,66 @@ public class PageJob {
   }
 
 
+  public PageJob size(Integer size) {
+    
+    this.size = size;
+    return this;
+  }
+
+   /**
+   * Get size
+   * @return size
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_SIZE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Integer getSize() {
+    return size;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_SIZE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setSize(Integer size) {
+    this.size = size;
+  }
+
+
+  public PageJob content(List<Job> content) {
+    
+    this.content = content;
+    return this;
+  }
+
+  public PageJob addContentItem(Job contentItem) {
+    if (this.content == null) {
+      this.content = new ArrayList<>();
+    }
+    this.content.add(contentItem);
+    return this;
+  }
+
+   /**
+   * Get content
+   * @return content
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_CONTENT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public List<Job> getContent() {
+    return content;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_CONTENT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setContent(List<Job> content) {
+    this.content = content;
+  }
+
+
   public PageJob empty(Boolean empty) {
     
     this.empty = empty;
@@ -387,20 +387,20 @@ public class PageJob {
     PageJob pageJob = (PageJob) o;
     return Objects.equals(this.totalPages, pageJob.totalPages) &&
         Objects.equals(this.totalElements, pageJob.totalElements) &&
+        Objects.equals(this.sort, pageJob.sort) &&
         Objects.equals(this.first, pageJob.first) &&
         Objects.equals(this.last, pageJob.last) &&
-        Objects.equals(this.sort, pageJob.sort) &&
-        Objects.equals(this.size, pageJob.size) &&
-        Objects.equals(this.content, pageJob.content) &&
         Objects.equals(this.number, pageJob.number) &&
         Objects.equals(this.numberOfElements, pageJob.numberOfElements) &&
         Objects.equals(this.pageable, pageJob.pageable) &&
+        Objects.equals(this.size, pageJob.size) &&
+        Objects.equals(this.content, pageJob.content) &&
         Objects.equals(this.empty, pageJob.empty);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(totalPages, totalElements, first, last, sort, size, content, number, numberOfElements, pageable, empty);
+    return Objects.hash(totalPages, totalElements, sort, first, last, number, numberOfElements, pageable, size, content, empty);
   }
 
   @Override
@@ -409,14 +409,14 @@ public class PageJob {
     sb.append("class PageJob {\n");
     sb.append("    totalPages: ").append(toIndentedString(totalPages)).append("\n");
     sb.append("    totalElements: ").append(toIndentedString(totalElements)).append("\n");
+    sb.append("    sort: ").append(toIndentedString(sort)).append("\n");
     sb.append("    first: ").append(toIndentedString(first)).append("\n");
     sb.append("    last: ").append(toIndentedString(last)).append("\n");
-    sb.append("    sort: ").append(toIndentedString(sort)).append("\n");
-    sb.append("    size: ").append(toIndentedString(size)).append("\n");
-    sb.append("    content: ").append(toIndentedString(content)).append("\n");
     sb.append("    number: ").append(toIndentedString(number)).append("\n");
     sb.append("    numberOfElements: ").append(toIndentedString(numberOfElements)).append("\n");
     sb.append("    pageable: ").append(toIndentedString(pageable)).append("\n");
+    sb.append("    size: ").append(toIndentedString(size)).append("\n");
+    sb.append("    content: ").append(toIndentedString(content)).append("\n");
     sb.append("    empty: ").append(toIndentedString(empty)).append("\n");
     sb.append("}");
     return sb.toString();

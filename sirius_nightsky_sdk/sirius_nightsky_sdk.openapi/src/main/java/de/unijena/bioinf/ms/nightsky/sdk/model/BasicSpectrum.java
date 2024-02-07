@@ -31,16 +31,19 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * 
  */
 @JsonPropertyOrder({
+  BasicSpectrum.JSON_PROPERTY_NAME,
   BasicSpectrum.JSON_PROPERTY_MS_LEVEL,
   BasicSpectrum.JSON_PROPERTY_COLLISION_ENERGY,
   BasicSpectrum.JSON_PROPERTY_PRECURSOR_MZ,
   BasicSpectrum.JSON_PROPERTY_SCAN_NUMBER,
   BasicSpectrum.JSON_PROPERTY_PEAKS,
-  BasicSpectrum.JSON_PROPERTY_NAME,
   BasicSpectrum.JSON_PROPERTY_EMPTY
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class BasicSpectrum {
+  public static final String JSON_PROPERTY_NAME = "name";
+  private String name;
+
   public static final String JSON_PROPERTY_MS_LEVEL = "msLevel";
   private Integer msLevel;
 
@@ -56,14 +59,37 @@ public class BasicSpectrum {
   public static final String JSON_PROPERTY_PEAKS = "peaks";
   private List<Peak> peaks = new ArrayList<>();
 
-  public static final String JSON_PROPERTY_NAME = "name";
-  private String name;
-
   public static final String JSON_PROPERTY_EMPTY = "empty";
   private Boolean empty;
 
   public BasicSpectrum() {
   }
+
+  public BasicSpectrum name(String name) {
+    
+    this.name = name;
+    return this;
+  }
+
+   /**
+   * Optional Displayable name of this spectrum.
+   * @return name
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getName() {
+    return name;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setName(String name) {
+    this.name = name;
+  }
+
 
   public BasicSpectrum msLevel(Integer msLevel) {
     
@@ -203,32 +229,6 @@ public class BasicSpectrum {
   }
 
 
-  public BasicSpectrum name(String name) {
-    
-    this.name = name;
-    return this;
-  }
-
-   /**
-   * Optional Displayable name of this spectrum.
-   * @return name
-  **/
-  @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NAME)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public String getName() {
-    return name;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_NAME)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setName(String name) {
-    this.name = name;
-  }
-
-
   public BasicSpectrum empty(Boolean empty) {
     
     this.empty = empty;
@@ -263,30 +263,30 @@ public class BasicSpectrum {
       return false;
     }
     BasicSpectrum basicSpectrum = (BasicSpectrum) o;
-    return Objects.equals(this.msLevel, basicSpectrum.msLevel) &&
+    return Objects.equals(this.name, basicSpectrum.name) &&
+        Objects.equals(this.msLevel, basicSpectrum.msLevel) &&
         Objects.equals(this.collisionEnergy, basicSpectrum.collisionEnergy) &&
         Objects.equals(this.precursorMz, basicSpectrum.precursorMz) &&
         Objects.equals(this.scanNumber, basicSpectrum.scanNumber) &&
         Objects.equals(this.peaks, basicSpectrum.peaks) &&
-        Objects.equals(this.name, basicSpectrum.name) &&
         Objects.equals(this.empty, basicSpectrum.empty);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(msLevel, collisionEnergy, precursorMz, scanNumber, peaks, name, empty);
+    return Objects.hash(name, msLevel, collisionEnergy, precursorMz, scanNumber, peaks, empty);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class BasicSpectrum {\n");
+    sb.append("    name: ").append(toIndentedString(name)).append("\n");
     sb.append("    msLevel: ").append(toIndentedString(msLevel)).append("\n");
     sb.append("    collisionEnergy: ").append(toIndentedString(collisionEnergy)).append("\n");
     sb.append("    precursorMz: ").append(toIndentedString(precursorMz)).append("\n");
     sb.append("    scanNumber: ").append(toIndentedString(scanNumber)).append("\n");
     sb.append("    peaks: ").append(toIndentedString(peaks)).append("\n");
-    sb.append("    name: ").append(toIndentedString(name)).append("\n");
     sb.append("    empty: ").append(toIndentedString(empty)).append("\n");
     sb.append("}");
     return sb.toString();

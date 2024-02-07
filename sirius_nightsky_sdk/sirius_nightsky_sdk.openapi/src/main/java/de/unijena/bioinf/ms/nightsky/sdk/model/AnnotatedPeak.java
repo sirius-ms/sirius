@@ -28,14 +28,14 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * 
  */
 @JsonPropertyOrder({
-  AnnotatedPeak.JSON_PROPERTY_MASS,
+  AnnotatedPeak.JSON_PROPERTY_MZ,
   AnnotatedPeak.JSON_PROPERTY_INTENSITY,
   AnnotatedPeak.JSON_PROPERTY_PEAK_ANNOTATION
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class AnnotatedPeak {
-  public static final String JSON_PROPERTY_MASS = "mass";
-  private Double mass;
+  public static final String JSON_PROPERTY_MZ = "mz";
+  private Double mz;
 
   public static final String JSON_PROPERTY_INTENSITY = "intensity";
   private Double intensity;
@@ -46,29 +46,29 @@ public class AnnotatedPeak {
   public AnnotatedPeak() {
   }
 
-  public AnnotatedPeak mass(Double mass) {
+  public AnnotatedPeak mz(Double mz) {
     
-    this.mass = mass;
+    this.mz = mz;
     return this;
   }
 
    /**
-   * Get mass
-   * @return mass
+   * Get mz
+   * @return mz
   **/
   @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MASS)
+  @JsonProperty(JSON_PROPERTY_MZ)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Double getMass() {
-    return mass;
+  public Double getMz() {
+    return mz;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MASS)
+  @JsonProperty(JSON_PROPERTY_MZ)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMass(Double mass) {
-    this.mass = mass;
+  public void setMz(Double mz) {
+    this.mz = mz;
   }
 
 
@@ -132,21 +132,21 @@ public class AnnotatedPeak {
       return false;
     }
     AnnotatedPeak annotatedPeak = (AnnotatedPeak) o;
-    return Objects.equals(this.mass, annotatedPeak.mass) &&
+    return Objects.equals(this.mz, annotatedPeak.mz) &&
         Objects.equals(this.intensity, annotatedPeak.intensity) &&
         Objects.equals(this.peakAnnotation, annotatedPeak.peakAnnotation);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(mass, intensity, peakAnnotation);
+    return Objects.hash(mz, intensity, peakAnnotation);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class AnnotatedPeak {\n");
-    sb.append("    mass: ").append(toIndentedString(mass)).append("\n");
+    sb.append("    mz: ").append(toIndentedString(mz)).append("\n");
     sb.append("    intensity: ").append(toIndentedString(intensity)).append("\n");
     sb.append("    peakAnnotation: ").append(toIndentedString(peakAnnotation)).append("\n");
     sb.append("}");

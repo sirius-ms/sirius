@@ -292,13 +292,13 @@ public class InstanceBean implements SiriusPCS {
         exp.setFeatureId(getFeatureId());
         exp.setPrecursorIonType(getIonType());
         exp.setMs1Spectra(getMsData().getMs1Spectra().stream()
-                .map(s -> new SimpleSpectrum(WrapperSpectrum.of(s.getPeaks(), Peak::getMass,Peak::getIntensity)))
+                .map(s -> new SimpleSpectrum(WrapperSpectrum.of(s.getPeaks(), Peak::getMz,Peak::getIntensity)))
                 .toList());
         exp.setMs2Spectra(getMsData().getMs2Spectra().stream()
-                .map(s -> new MutableMs2Spectrum(WrapperSpectrum.of(s.getPeaks(), Peak::getMass,Peak::getIntensity),s.getPrecursorMz(), CollisionEnergy.fromString(s.getCollisionEnergy()),2))
+                .map(s -> new MutableMs2Spectrum(WrapperSpectrum.of(s.getPeaks(), Peak::getMz,Peak::getIntensity),s.getPrecursorMz(), CollisionEnergy.fromString(s.getCollisionEnergy()),2))
                 .toList());
         Optional.ofNullable(getMsData().getMergedMs1())
-                .map(s -> new SimpleSpectrum(WrapperSpectrum.of(s.getPeaks(), Peak::getMass,Peak::getIntensity)))
+                .map(s -> new SimpleSpectrum(WrapperSpectrum.of(s.getPeaks(), Peak::getMz,Peak::getIntensity)))
                 .ifPresent(exp::setMergedMs1Spectrum);
         return exp;
     }

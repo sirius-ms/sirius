@@ -8,7 +8,7 @@
 
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
-|**mass** | **Double** |  |  [optional] |
+|**mz** | **Double** |  |  [optional] |
 |**intensity** | **Double** |  |  [optional] |
 |**peakAnnotation** | [**PeakAnnotation**](PeakAnnotation.md) |  |  [optional] |
 

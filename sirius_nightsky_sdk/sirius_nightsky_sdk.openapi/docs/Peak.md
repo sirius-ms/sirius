@@ -7,8 +7,8 @@
 
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
-|**mass** | **Double** |  |  [optional] |
 |**intensity** | **Double** |  |  [optional] |
+|**mz** | **Double** |  |  [optional] |
 
 
 

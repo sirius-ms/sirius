@@ -27,45 +27,19 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * Peak
  */
 @JsonPropertyOrder({
-  Peak.JSON_PROPERTY_MASS,
-  Peak.JSON_PROPERTY_INTENSITY
+  Peak.JSON_PROPERTY_INTENSITY,
+  Peak.JSON_PROPERTY_MZ
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class Peak {
-  public static final String JSON_PROPERTY_MASS = "mass";
-  private Double mass;
-
   public static final String JSON_PROPERTY_INTENSITY = "intensity";
   private Double intensity;
 
+  public static final String JSON_PROPERTY_MZ = "mz";
+  private Double mz;
+
   public Peak() {
   }
-
-  public Peak mass(Double mass) {
-    
-    this.mass = mass;
-    return this;
-  }
-
-   /**
-   * Get mass
-   * @return mass
-  **/
-  @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MASS)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Double getMass() {
-    return mass;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_MASS)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMass(Double mass) {
-    this.mass = mass;
-  }
-
 
   public Peak intensity(Double intensity) {
     
@@ -92,6 +66,32 @@ public class Peak {
     this.intensity = intensity;
   }
 
+
+  public Peak mz(Double mz) {
+    
+    this.mz = mz;
+    return this;
+  }
+
+   /**
+   * Get mz
+   * @return mz
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_MZ)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Double getMz() {
+    return mz;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_MZ)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setMz(Double mz) {
+    this.mz = mz;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -101,21 +101,21 @@ public class Peak {
       return false;
     }
     Peak peak = (Peak) o;
-    return Objects.equals(this.mass, peak.mass) &&
-        Objects.equals(this.intensity, peak.intensity);
+    return Objects.equals(this.intensity, peak.intensity) &&
+        Objects.equals(this.mz, peak.mz);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(mass, intensity);
+    return Objects.hash(intensity, mz);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class Peak {\n");
-    sb.append("    mass: ").append(toIndentedString(mass)).append("\n");
     sb.append("    intensity: ").append(toIndentedString(intensity)).append("\n");
+    sb.append("    mz: ").append(toIndentedString(mz)).append("\n");
     sb.append("}");
     return sb.toString();
   }
