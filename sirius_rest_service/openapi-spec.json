@@ -3895,24 +3895,14 @@
             "type": "integer",
             "format": "int64"
           },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
           "first": {
             "type": "boolean"
           },
           "last": {
             "type": "boolean"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ProjectInfo"
-            }
           },
           "number": {
             "type": "integer",
@@ -3925,6 +3915,16 @@
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
           },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectInfo"
+            }
+          },
           "empty": {
             "type": "boolean"
           }
@@ -3935,10 +3935,6 @@
         "properties": {
           "sort": {
             "$ref": "#/components/schemas/SortObject"
-          },
-          "offset": {
-            "type": "integer",
-            "format": "int64"
           },
           "pageNumber": {
             "type": "integer",
@@ -3953,19 +3949,23 @@
           },
           "unpaged": {
             "type": "boolean"
+          },
+          "offset": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
       "SortObject": {
         "type": "object",
         "properties": {
-          "empty": {
-            "type": "boolean"
-          },
           "sorted": {
             "type": "boolean"
           },
           "unsorted": {
+            "type": "boolean"
+          },
+          "empty": {
             "type": "boolean"
           }
         },
@@ -3982,24 +3982,14 @@
             "type": "integer",
             "format": "int64"
           },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
           "first": {
             "type": "boolean"
           },
           "last": {
             "type": "boolean"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Job"
-            }
           },
           "number": {
             "type": "integer",
@@ -4011,6 +4001,16 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Job"
+            }
           },
           "empty": {
             "type": "boolean"
@@ -4088,7 +4088,7 @@
       "AnnotatedPeak": {
         "type": "object",
         "properties": {
-          "mass": {
+          "mz": {
             "type": "number",
             "format": "double"
           },
@@ -4108,6 +4108,11 @@
         ],
         "type": "object",
         "properties": {
+          "name": {
+            "type": "string",
+            "description": "Optional Displayable name of this spectrum.",
+            "nullable": true
+          },
           "msLevel": {
             "type": "integer",
             "description": "MS level of the measured spectrum.\n Artificial spectra with no msLevel (e.g. Simulated Isotope patterns) use null or zero",
@@ -4138,11 +4143,6 @@
               "$ref": "#/components/schemas/AnnotatedPeak"
             }
           },
-          "name": {
-            "type": "string",
-            "description": "Optional Displayable name of this spectrum.",
-            "nullable": true
-          },
           "spectrumAnnotation": {
             "$ref": "#/components/schemas/SpectrumAnnotation"
           },
@@ -4159,6 +4159,11 @@
         ],
         "type": "object",
         "properties": {
+          "name": {
+            "type": "string",
+            "description": "Optional Displayable name of this spectrum.",
+            "nullable": true
+          },
           "msLevel": {
             "type": "integer",
             "description": "MS level of the measured spectrum.\n Artificial spectra with no msLevel (e.g. Simulated Isotope patterns) use null or zero",
@@ -4189,11 +4194,6 @@
               "$ref": "#/components/schemas/Peak"
             }
           },
-          "name": {
-            "type": "string",
-            "description": "Optional Displayable name of this spectrum.",
-            "nullable": true
-          },
           "empty": {
             "type": "boolean"
           }
@@ -4205,7 +4205,7 @@
         "properties": {
           "bitsSet": {
             "type": "array",
-            "description": "Array that contains all indices of bits that are set (are 1)",
+            "description": "Array that contains all RELATIVE indices (masked FP) of bits that are set (are 1)",
             "items": {
               "type": "integer",
               "format": "int32"
@@ -4213,7 +4213,7 @@
           },
           "length": {
             "type": "integer",
-            "description": "Size of the fingerprint, e.g. to reconstruct the binary array from the array of set bits",
+            "description": "Size of the fingerprint (masked fp), e.g. to reconstruct the binary array from the array of set bits",
             "format": "int32"
           }
         },
@@ -4774,24 +4774,14 @@
             "type": "integer",
             "format": "int64"
           },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
           "first": {
             "type": "boolean"
           },
           "last": {
             "type": "boolean"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Compound"
-            }
           },
           "number": {
             "type": "integer",
@@ -4803,6 +4793,16 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Compound"
+            }
           },
           "empty": {
             "type": "boolean"
@@ -4832,11 +4832,11 @@
       "Peak": {
         "type": "object",
         "properties": {
-          "mass": {
+          "intensity": {
             "type": "number",
             "format": "double"
           },
-          "intensity": {
+          "mz": {
             "type": "number",
             "format": "double"
           }
@@ -5089,24 +5089,14 @@
             "type": "integer",
             "format": "int64"
           },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
           "first": {
             "type": "boolean"
           },
           "last": {
             "type": "boolean"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AlignedFeature"
-            }
           },
           "number": {
             "type": "integer",
@@ -5118,6 +5108,16 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlignedFeature"
+            }
           },
           "empty": {
             "type": "boolean"
@@ -5146,24 +5146,14 @@
             "type": "integer",
             "format": "int64"
           },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
           "first": {
             "type": "boolean"
           },
           "last": {
             "type": "boolean"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/StructureCandidateFormula"
-            }
           },
           "number": {
             "type": "integer",
@@ -5175,6 +5165,16 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StructureCandidateFormula"
+            }
           },
           "empty": {
             "type": "boolean"
@@ -5279,24 +5279,14 @@
             "type": "integer",
             "format": "int64"
           },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
           "first": {
             "type": "boolean"
           },
           "last": {
             "type": "boolean"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/FormulaCandidate"
-            }
           },
           "number": {
             "type": "integer",
@@ -5308,6 +5298,16 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormulaCandidate"
+            }
           },
           "empty": {
             "type": "boolean"
@@ -5325,24 +5325,14 @@
             "type": "integer",
             "format": "int64"
           },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
           "first": {
             "type": "boolean"
           },
           "last": {
             "type": "boolean"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/StructureCandidateScored"
-            }
           },
           "number": {
             "type": "integer",
@@ -5354,6 +5344,16 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StructureCandidateScored"
+            }
           },
           "empty": {
             "type": "boolean"

@@ -259,11 +259,11 @@ public class SpectraVisualizationPanel
         PeakMatch[] peakMatchesPattern = new PeakMatch[pattern.getPeaks().size()];
 
         WrapperSpectrum<de.unijena.bioinf.ms.nightsky.sdk.model.Peak> pat = WrapperSpectrum.
-                of(pattern.getPeaks(), p -> p.getMass(), p -> p.getIntensity());
+                of(pattern.getPeaks(), p -> p.getMz(), p -> p.getIntensity());
 
         int i = 0;
         for (de.unijena.bioinf.ms.nightsky.sdk.model.Peak p : spectrum.getPeaks()) {
-            int j = Spectrums.mostIntensivePeakWithin(pat, p.getMass(), massDiffDev);
+            int j = Spectrums.mostIntensivePeakWithin(pat, p.getMz(), massDiffDev);
             if (j >= 0) {
                 peakMatchesSpectrum[i] = new PeakMatch(j);
                 peakMatchesPattern[j] = new PeakMatch(i);
