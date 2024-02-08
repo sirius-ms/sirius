@@ -45,8 +45,6 @@ public class ResultPanel extends JTabbedPane {
     public final SpectralMatchingPanel spectralMatchingPanel;
 
     public final FormulaOverviewPanel formulasTab;
-    public final TreeVisualizationPanel treeTab;
-    public final SpectraVisualizationPanel spectrumTab;
 
 //    public final LCMSViewerPanel lcmsTab;
 
@@ -66,8 +64,6 @@ public class ResultPanel extends JTabbedPane {
         }
 
         formulasTab = new FormulaOverviewPanel(siriusResultElements);
-        treeTab = new TreeVisualizationPanel();
-        spectrumTab = new SpectraVisualizationPanel();
 
 //        this.lcmsTab = new LCMSViewerPanel(siriusResultElements); //todo LCMS: reactivate if LCMS Data structures are done!
 
@@ -90,20 +86,18 @@ public class ResultPanel extends JTabbedPane {
         );
 
 
-//        addTab("LC-MS", null, lcmsTab, lcmsTab.getDescription());
+//        addTab("LC-MS", null, lcmsTab, lcmsTab.getDescription()); //todo LCMS: reactivate if LCMS Data structures are done!
 
         addTab("Formulas", null, formulasTab, formulasTab.getDescription());
-        addTab("Spectra", null, new FormulaListHeaderPanel(siriusResultElements, spectrumTab), spectrumTab.getDescription());
-        addTab("Trees", null, new FormulaListHeaderPanel(siriusResultElements, treeTab), treeTab.getDescription());
 
-        addTab("Predicted Fingerprint", null, new FormulaListHeaderPanel(siriusResultElements, fpTab), fpTab.getDescription());
+        addTab("Predicted Fingerprints", null, new FormulaListHeaderPanel(siriusResultElements, fpTab), fpTab.getDescription());
         addTab("Compound Classes", null, new FormulaListHeaderPanel(siriusResultElements, canopusTab), canopusTab.getDescription());
 
         addTab("Structures", null, structuresTab, structuresTab.getDescription());
-        addTab("Substructure Annotation", null, structureAnnoTab, structureAnnoTab.getDescription());
+        addTab("Substructure Annotations", null, structureAnnoTab, structureAnnoTab.getDescription());
 
         if (spectralMatchingPanel != null) {
-            addTab("Reference Spectra", null, spectralMatchingPanel, spectralMatchingPanel.getDescription());
+            addTab("Library Matches", null, spectralMatchingPanel, spectralMatchingPanel.getDescription());
         }
 
         setSelectedIndex(1);
