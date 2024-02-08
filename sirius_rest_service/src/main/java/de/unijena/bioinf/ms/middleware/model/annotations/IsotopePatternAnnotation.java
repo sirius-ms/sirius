@@ -66,18 +66,21 @@ public class IsotopePatternAnnotation {
     @JsonIgnore
     private void annotate(@NotNull Ms2Experiment exp, @Nullable FTree tree) {
         final IsotopePattern pattern = tree != null ? tree.getAnnotationOrNull(IsotopePattern.class) : null;
-
+        final String name = "MS1 Isotope Pattern";
         if (pattern != null) {
             isotopePattern = new BasicSpectrum(pattern.getPattern());
+            isotopePattern.setName(name);
         } else {
-            BasicSpectrum msms = Spectrums.createMergedMsMs(exp);
-            isotopePattern = new BasicSpectrum(de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.extractIsotopePattern(
-                    msms,
-                    exp.getAnnotationOrDefault(MS1MassDeviation.class),
-                    exp.getIonMass(),
-                    exp.getPrecursorIonType().getCharge(),
-                    true));
+            BasicSpectrum ms = Spectrums.createMergedMs1(exp);
+            if (ms != null) {
+                isotopePattern = new BasicSpectrum(de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.extractIsotopePattern(
+                        ms,
+                        exp.getAnnotationOrDefault(MS1MassDeviation.class),
+                        exp.getIonMass(),
+                        exp.getPrecursorIonType().getCharge(),
+                        true));
+                isotopePattern.setName(name);
+            }
         }
-        isotopePattern.setName("MS1 Isotope Pattern");
     }
 }
