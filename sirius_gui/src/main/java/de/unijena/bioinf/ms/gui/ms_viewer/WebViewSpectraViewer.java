@@ -59,18 +59,18 @@ public class WebViewSpectraViewer extends WebViewPanel {
             });
     }
 
-    public void loadData(String json_spectra, String json_highlight, String svg) { // TEST CODE
+    public void loadData(String json_spectra, String svg) { // TEST CODE
         cancelTasks();
 
         queueTaskInJFXThread(() -> {
                 // set data
-                JSObject obj = (JSObject) webView.getEngine().executeScript("document.webview = { \"spectrum\": " + json_spectra + ", \"highlight\": " + escapeNull(json_highlight) + ", svg: null};");
+                JSObject obj = (JSObject) webView.getEngine().executeScript("document.webview = { \"spectrum\": " + json_spectra + ", \"svg\": null};");
                 if (svg!=null) {
                     obj.setMember("svg", svg);
                 }
                 // load Data
                 webView.getEngine().executeScript(
-                    "main.loadJSONData(document.webview.spectrum, document.webview.highlight, document.webview.svg)");
+                    "main.loadJSONData(document.webview.spectrum, document.webview.svg)");
             });
     }
 
