@@ -45,6 +45,10 @@ public class SiriusGui {
 
     static {
         GuiUtils.initUI();
+        //debug console
+//        WebConsoleListener.setDefaultListener((webView, message, lineNumber, sourceId) -> {
+//            System.err.println("WEBVIEW: " + message + "[at " + lineNumber + "]");
+//        });
     }
 
     private final NightSkyClient siriusClient;
