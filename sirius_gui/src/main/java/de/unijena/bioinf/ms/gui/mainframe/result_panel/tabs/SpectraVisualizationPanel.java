@@ -79,9 +79,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
-public class SpectraVisualizationPanel
-        extends JPanel implements ActionListener, ItemListener, PanelDescription {
-
+public class SpectraVisualizationPanel extends JPanel implements ActionListener, ItemListener, PanelDescription {
 
     @Override
     public String getDescription() {
@@ -384,6 +382,11 @@ public class SpectraVisualizationPanel
                                 }
                             });
 
+
+                            SpectraVisualizationPanel.this.msData = msData;
+                            SpectraVisualizationPanel.this.isotopePatternAnnotation = isotopePatternAnnotation;
+                            SpectraVisualizationPanel.this.annotatedMsMsData = annotatedMsMsData;
+
                             checkForInterruption();
 
                             // todo nightsky: why are these two jobs?
@@ -406,10 +409,6 @@ public class SpectraVisualizationPanel
                                     browser.executeJS("SpectrumPlot.setSelection(main.spectrum, " + peak_selection + ")");
 
                             });
-
-                            SpectraVisualizationPanel.this.msData = msData;
-                            SpectraVisualizationPanel.this.isotopePatternAnnotation = isotopePatternAnnotation;
-                            SpectraVisualizationPanel.this.annotatedMsMsData = annotatedMsMsData;
                         } else {
                             clearData();
                             Jobs.runEDTAndWait(() -> setToolbarEnabled(false));
