@@ -1167,7 +1167,7 @@ class Main {
         //this.data = undefined;
     }
 
-    loadJSONData(data_spectra, data_svg) {
+    loadJSONDataAndStructure(data_spectra, data_svg) {
         d3.select("#debug").text("debug div visible?");
         if (data_svg !== null) {
             this.svg_str = data_svg;

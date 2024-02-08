@@ -70,7 +70,7 @@ public class WebViewSpectraViewer extends WebViewPanel {
                 }
                 // load Data
                 webView.getEngine().executeScript(
-                    "main.loadJSONData(document.webview.spectrum, document.webview.svg)");
+                    "main.loadJSONDataAndStructure(document.webview.spectrum, document.webview.svg)");
             });
     }
 
