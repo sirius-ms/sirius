@@ -36,8 +36,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   BasicSpectrum.JSON_PROPERTY_COLLISION_ENERGY,
   BasicSpectrum.JSON_PROPERTY_PRECURSOR_MZ,
   BasicSpectrum.JSON_PROPERTY_SCAN_NUMBER,
-  BasicSpectrum.JSON_PROPERTY_PEAKS,
-  BasicSpectrum.JSON_PROPERTY_EMPTY
+  BasicSpectrum.JSON_PROPERTY_PEAKS
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class BasicSpectrum {
@@ -58,9 +57,6 @@ public class BasicSpectrum {
 
   public static final String JSON_PROPERTY_PEAKS = "peaks";
   private List<Peak> peaks = new ArrayList<>();
-
-  public static final String JSON_PROPERTY_EMPTY = "empty";
-  private Boolean empty;
 
   public BasicSpectrum() {
   }
@@ -228,32 +224,6 @@ public class BasicSpectrum {
     this.peaks = peaks;
   }
 
-
-  public BasicSpectrum empty(Boolean empty) {
-    
-    this.empty = empty;
-    return this;
-  }
-
-   /**
-   * Get empty
-   * @return empty
-  **/
-  @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_EMPTY)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Boolean isEmpty() {
-    return empty;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_EMPTY)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setEmpty(Boolean empty) {
-    this.empty = empty;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -268,13 +238,12 @@ public class BasicSpectrum {
         Objects.equals(this.collisionEnergy, basicSpectrum.collisionEnergy) &&
         Objects.equals(this.precursorMz, basicSpectrum.precursorMz) &&
         Objects.equals(this.scanNumber, basicSpectrum.scanNumber) &&
-        Objects.equals(this.peaks, basicSpectrum.peaks) &&
-        Objects.equals(this.empty, basicSpectrum.empty);
+        Objects.equals(this.peaks, basicSpectrum.peaks);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, msLevel, collisionEnergy, precursorMz, scanNumber, peaks, empty);
+    return Objects.hash(name, msLevel, collisionEnergy, precursorMz, scanNumber, peaks);
   }
 
   @Override
@@ -287,7 +256,6 @@ public class BasicSpectrum {
     sb.append("    precursorMz: ").append(toIndentedString(precursorMz)).append("\n");
     sb.append("    scanNumber: ").append(toIndentedString(scanNumber)).append("\n");
     sb.append("    peaks: ").append(toIndentedString(peaks)).append("\n");
-    sb.append("    empty: ").append(toIndentedString(empty)).append("\n");
     sb.append("}");
     return sb.toString();
   }

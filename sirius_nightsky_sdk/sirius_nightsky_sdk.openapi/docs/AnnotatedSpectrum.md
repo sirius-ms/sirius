@@ -15,7 +15,6 @@
 |**scanNumber** | **Integer** | Scan number of the spectrum.  Might be null for artificial spectra with no scan number (e.g. Simulated Isotope patterns or merged spectra) |  [optional] |
 |**peaks** | [**List&lt;AnnotatedPeak&gt;**](AnnotatedPeak.md) | The peaks of this spectrum which might contain additional annotations such as molecular formulas. |  |
 |**spectrumAnnotation** | [**SpectrumAnnotation**](SpectrumAnnotation.md) |  |  [optional] |
-|**empty** | **Boolean** |  |  [optional] |
 
 
 

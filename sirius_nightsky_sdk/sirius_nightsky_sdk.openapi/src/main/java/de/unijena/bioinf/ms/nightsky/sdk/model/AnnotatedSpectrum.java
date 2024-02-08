@@ -38,8 +38,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AnnotatedSpectrum.JSON_PROPERTY_PRECURSOR_MZ,
   AnnotatedSpectrum.JSON_PROPERTY_SCAN_NUMBER,
   AnnotatedSpectrum.JSON_PROPERTY_PEAKS,
-  AnnotatedSpectrum.JSON_PROPERTY_SPECTRUM_ANNOTATION,
-  AnnotatedSpectrum.JSON_PROPERTY_EMPTY
+  AnnotatedSpectrum.JSON_PROPERTY_SPECTRUM_ANNOTATION
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class AnnotatedSpectrum {
@@ -63,9 +62,6 @@ public class AnnotatedSpectrum {
 
   public static final String JSON_PROPERTY_SPECTRUM_ANNOTATION = "spectrumAnnotation";
   private SpectrumAnnotation spectrumAnnotation;
-
-  public static final String JSON_PROPERTY_EMPTY = "empty";
-  private Boolean empty;
 
   public AnnotatedSpectrum() {
   }
@@ -259,32 +255,6 @@ public class AnnotatedSpectrum {
     this.spectrumAnnotation = spectrumAnnotation;
   }
 
-
-  public AnnotatedSpectrum empty(Boolean empty) {
-    
-    this.empty = empty;
-    return this;
-  }
-
-   /**
-   * Get empty
-   * @return empty
-  **/
-  @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_EMPTY)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Boolean isEmpty() {
-    return empty;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_EMPTY)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setEmpty(Boolean empty) {
-    this.empty = empty;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -300,13 +270,12 @@ public class AnnotatedSpectrum {
         Objects.equals(this.precursorMz, annotatedSpectrum.precursorMz) &&
         Objects.equals(this.scanNumber, annotatedSpectrum.scanNumber) &&
         Objects.equals(this.peaks, annotatedSpectrum.peaks) &&
-        Objects.equals(this.spectrumAnnotation, annotatedSpectrum.spectrumAnnotation) &&
-        Objects.equals(this.empty, annotatedSpectrum.empty);
+        Objects.equals(this.spectrumAnnotation, annotatedSpectrum.spectrumAnnotation);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, msLevel, collisionEnergy, precursorMz, scanNumber, peaks, spectrumAnnotation, empty);
+    return Objects.hash(name, msLevel, collisionEnergy, precursorMz, scanNumber, peaks, spectrumAnnotation);
   }
 
   @Override
@@ -320,7 +289,6 @@ public class AnnotatedSpectrum {
     sb.append("    scanNumber: ").append(toIndentedString(scanNumber)).append("\n");
     sb.append("    peaks: ").append(toIndentedString(peaks)).append("\n");
     sb.append("    spectrumAnnotation: ").append(toIndentedString(spectrumAnnotation)).append("\n");
-    sb.append("    empty: ").append(toIndentedString(empty)).append("\n");
     sb.append("}");
     return sb.toString();
   }
