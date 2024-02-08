@@ -138,7 +138,7 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
         Jobs.runEDTLater(() -> {
             try {
                 String json = new ObjectMapper().writeValueAsString(List.of(query, reference));
-                this.browser.loadData(json, null, null);
+                this.browser.loadData(json, null);
             } catch (Exception e) {
                 LoggerFactory.getLogger(getClass()).error("Error.", e);
             }

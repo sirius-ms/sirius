@@ -237,7 +237,7 @@ public class SpectraVisualizationPanel
                 if (mode.equals(MS2_DISPLAY) && smiles != null) {
                     svg = makeSVG(smiles);
                 }
-                browser.loadData(jsonSpectra, null, svg); //todo nightsky:  check an remove highlighting
+                browser.loadData(jsonSpectra, svg);
             }
         } catch (JsonProcessingException e) {
             LoggerFactory.getLogger(getClass()).error("Error when creating data Json!", e);
