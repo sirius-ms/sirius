@@ -4145,9 +4145,6 @@
           },
           "spectrumAnnotation": {
             "$ref": "#/components/schemas/SpectrumAnnotation"
-          },
-          "empty": {
-            "type": "boolean"
           }
         },
         "description": "",
@@ -4193,9 +4190,6 @@
             "items": {
               "$ref": "#/components/schemas/Peak"
             }
-          },
-          "empty": {
-            "type": "boolean"
           }
         },
         "description": ""
