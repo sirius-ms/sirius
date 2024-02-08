@@ -36,7 +36,7 @@ import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.logging.LogDialog;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListView;
-import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableExperimentListPanel;
+import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableCompoundListPanel;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -201,7 +201,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         add(mainPanel, BorderLayout.CENTER);
 
         //build left sidepane
-        FilterableExperimentListPanel experimentListPanel = new FilterableExperimentListPanel(new ExperimentListView(gui, compoundList));
+        FilterableCompoundListPanel experimentListPanel = new FilterableCompoundListPanel(new ExperimentListView(gui, compoundList));
         experimentListPanel.setPreferredSize(new Dimension(228, (int) experimentListPanel.getPreferredSize().getHeight()));
         mainPanel.setDividerLocation(232);
 

@@ -18,16 +18,12 @@
  */
 
 package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 01.02.17.
- */
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.jjobs.ProgressJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.utils.Loadable;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -38,9 +34,9 @@ import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
 
 /**
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ * @author Markus Fleischauer
  */
-public class FilterableExperimentListPanel extends JPanel implements Loadable {
+public class FilterableCompoundListPanel extends JPanel implements Loadable {
     final JLabel elementCounter = new JLabel("N/A");
 
     final CardLayout centerCards = new CardLayout();
@@ -71,7 +67,7 @@ public class FilterableExperimentListPanel extends JPanel implements Loadable {
         }
     }
 
-    public FilterableExperimentListPanel(ExperimentListView view) {
+    public FilterableCompoundListPanel(ExperimentListView view) {
         super(new BorderLayout());
         center.add("content", view);
         JPanel lp = loadingPanel();
@@ -96,7 +92,7 @@ public class FilterableExperimentListPanel extends JPanel implements Loadable {
     //todo make generic loader panel
     private JPanel loadingPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Color.WHITE);
+        panel.setBackground(Colors.BACKGROUND);
         panel.setOpaque(true);
         JLabel iconLabel = new JLabel(Icons.FILTER_LOADER_120, SwingUtilities.CENTER);
         Icons.FILTER_LOADER_120.setImageObserver(iconLabel);
