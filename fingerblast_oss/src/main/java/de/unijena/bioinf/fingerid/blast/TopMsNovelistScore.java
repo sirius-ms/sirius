@@ -18,11 +18,29 @@
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.projectspace.fingerid;
+package de.unijena.bioinf.fingerid.blast;
 
-import de.unijena.bioinf.projectspace.FormulaResultId;
-import de.unijena.bioinf.projectspace.Location;
-public interface MsNovelistFingerIdLocations {
-    Location<FormulaResultId>
-            MSNOVELIST_FINGERBLAST = new Location<>("msnovelist", "tsv", FormulaResultId::fileName);
+
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
+
+public class TopMsNovelistScore extends FormulaScore {
+
+    public TopMsNovelistScore(double score) {
+        super(score);
+    }
+
+    @Override
+    public ScoreType getScoreType() {
+        return ScoreType.Logarithmic;
+    }
+
+    @Override
+    public String name() {
+        return "MsNovelistScore";
+    }
+
+    @Override
+    public String shortName() {
+        return "MsNovelist";
+    }
 }

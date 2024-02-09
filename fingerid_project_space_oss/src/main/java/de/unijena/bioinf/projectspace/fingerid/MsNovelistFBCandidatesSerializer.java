@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static de.unijena.bioinf.projectspace.fingerid.MsNovelistFingerIdLocations.MSNOVELIST_FINGERBLAST;
+import static de.unijena.bioinf.projectspace.fingerid.FingerIdLocations.MSNOVELIST_FINGERBLAST;
 
 public class MsNovelistFBCandidatesSerializer implements ComponentSerializer<FormulaResultId, FormulaResult, MsNovelistFBCandidates> {
 
@@ -47,7 +47,7 @@ public class MsNovelistFBCandidatesSerializer implements ComponentSerializer<For
             return null;
 
         final ArrayList<Scored<MsNovelistCompoundCandidate>> results = new ArrayList<>();
-        final MsNovelistFBCandidateNumber numC = id.getAnnotation(MsNovelistFBCandidateNumber.class).orElse(MsNovelistFBCandidateNumber.ALL);
+        final FBCandidateNumber numC = id.getAnnotation(FBCandidateNumber.class).orElse(FBCandidateNumber.ALL);
 
         reader.table(MSNOVELIST_FINGERBLAST.relFilePath(id), true, 0, numC.value, (row) -> {
             if (row.length == 0) return;
