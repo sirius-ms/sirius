@@ -23,20 +23,17 @@ package de.unijena.bioinf.fingerid;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import de.unijena.bioinf.fingerid.blast.AbstractFingerblastResult;
-import de.unijena.bioinf.fingerid.blast.MsNovelistCompoundCandidate;
-import de.unijena.bioinf.fingerid.blast.MsNovelistFBCandidateFingerprints;
-import de.unijena.bioinf.fingerid.blast.MsNovelistFBCandidates;
+import de.unijena.bioinf.fingerid.blast.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class MsNovelistFingerblastResult extends AbstractFingerblastResult {
+public class MsNovelistFingerblastResult extends AbstractFingerblastResult<TopMsNovelistScore> {
     private final double[] rnnScores;
 
     public MsNovelistFingerblastResult(List<Scored<FingerprintCandidate>> results, double[] rnnScores) {
-        super(results);
+        super(results, TopMsNovelistScore::new);
         this.rnnScores = rnnScores;
     }
 
