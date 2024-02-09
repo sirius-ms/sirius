@@ -20,15 +20,15 @@
 
 package de.unijena.bioinf.fingerid;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
-import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.chemdb.InChISMILESUtils;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
-import de.unijena.bioinf.fingerid.blast.MsNovelistFingerblastResult;
 import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 import de.unijena.bioinf.fingerid.fingerprints.FixedFingerprinter;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
@@ -41,6 +41,7 @@ import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.rest.model.msnovelist.MsNovelistCandidate;
 import de.unijena.bioinf.ms.webapi.WebJJob;
 import de.unijena.bioinf.webapi.WebAPI;
+import it.unimi.dsi.fastutil.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.DefaultChemObjectBuilder;
@@ -111,17 +112,12 @@ public class MsNovelistFingerblastJJob extends BasicMasterJJob<List<Scored<Finge
         if (candidates.isEmpty())
             return null;
 
-        // turn MSNovelist candidate list into scoring-compatible FingerprintCandidates
-        final Collection<BasicJJob<Void>> candidateJobs = new ArrayList<>(Collections.emptyList());
-        final Collection<FingerprintCandidate> combinedCandidates = new ArrayList<>(Collections.emptyList());
-
         // needed for fingerprinting and FingerprintCandidate generation
         final FixedFingerprinter fixedFingerprinter = new FixedFingerprinter(webAPI.getCDKChemDBFingerprintVersion());
         final FingerIdData fingerIdData = idResult.getPrecursorIonType().getCharge() > 0
                 ? webAPI.getFingerIdData(PredictorType.CSI_FINGERID_POSITIVE)
                 : webAPI.getFingerIdData(PredictorType.CSI_FINGERID_NEGATIVE);
         final MaskedFingerprintVersion fpMask = fingerIdData.getFingerprintVersion();
-        final InChI inchiDummy = new InChI("", "");
 
         // needed to perceive aromaticity
         final CDKHydrogenAdder hydrogenAdder = CDKHydrogenAdder.getInstance(DefaultChemObjectBuilder.getInstance());
@@ -130,33 +126,40 @@ public class MsNovelistFingerblastJJob extends BasicMasterJJob<List<Scored<Finge
 
         checkForInterruption();
 
-        // create jobs for transformation and fingerprinting
-        candidateJobs.addAll(Partition.ofSize(candidates, SiriusJobs.getCPUThreads())
-                .stream().map(l -> new BasicJJob<Void>(JobType.CPU) {
-                    @Override
-                    protected Void compute() {
-                        l.forEach(candidate -> {
-                            IAtomContainer molecule = perceiveAromaticityOnSMILES(
-                                    candidate.getSmiles(), hydrogenAdder, aromaticity);
-                            if (Objects.isNull(molecule)) return;
+        // create and submit jobs for transformation and fingerprinting
+        final Collection<BasicJJob<List<Pair<FingerprintCandidate, MsNovelistCandidate>>>> candidateJobs =
+                new ArrayList<>(Partition.ofSize(candidates, SiriusJobs.getCPUThreads()).stream()
+                        .map(l -> new BasicJJob<List<Pair<FingerprintCandidate, MsNovelistCandidate>>>(JobType.CPU) {
+                            @Override
+                            protected List<Pair<FingerprintCandidate, MsNovelistCandidate>> compute() {
+                                List<Pair<FingerprintCandidate, MsNovelistCandidate>> result = new ArrayList<>(l.size());
+                                l.forEach(candidate -> {
+                                    IAtomContainer molecule = perceiveAromaticityOnSMILES(
+                                            candidate.getSmiles(), hydrogenAdder, aromaticity);
+                                    if (Objects.isNull(molecule)) return;
 
-                            FingerprintCandidate fingerprintCandidate = new FingerprintCandidate(inchiDummy,
-                                    Objects.requireNonNull(fpMask.mask(fixedFingerprinter.computeFingerprint(molecule))));
+                                    FingerprintCandidate fingerprintCandidate = new FingerprintCandidate(
+                                            InChISMILESUtils.getInchiFromSmilesOrThrow(candidate.getSmiles(), false),
+                                            Objects.requireNonNull(fpMask.mask(fixedFingerprinter.computeFingerprint(molecule)))
+                                    );
+                                    fingerprintCandidate.setSmiles(candidate.getSmiles());
 
-                            fingerprintCandidate.setSmiles(candidate.getSmiles());
-                            fingerprintCandidate.setRnnScore(candidate.getRnnScore());
-                            combinedCandidates.add(fingerprintCandidate);
-                        });
-                        return null;
-                    }
-                }).toList());
+                                    result.add(Pair.of(fingerprintCandidate, candidate));
+                                });
+                                return result;
+                            }
+                        }).peek(this::submitSubJob).toList());
 
         checkForInterruption();
-        candidateJobs.forEach(this::submitSubJob);
-        checkForInterruption();
 
-        // collect job results
-        candidateJobs.forEach(JJob::getResult);
+
+        // collect job results to turn MSNovelist candidate list into scoring-compatible FingerprintCandidates
+        Map<FingerprintCandidate, MsNovelistCandidate> combinedCandidates = candidateJobs.stream()
+                .map(JJob::takeResult).flatMap(List::stream).collect(Collectors.toMap(Pair::key, Pair::value));
+
+        Map<String, MsNovelistCandidate> inchiKeyToCandidate = combinedCandidates.entrySet().stream()
+                .collect(Collectors.toMap(p -> p.getKey().getInchiKey2D(), Map.Entry::getValue));
+
         checkForInterruption();
 
         // check if no candidate was valid
@@ -187,7 +190,7 @@ public class MsNovelistFingerblastJJob extends BasicMasterJJob<List<Scored<Finge
         // has to be initialized
         ProbabilityFingerprint fp = idResult.getPredictedFingerprint();
         List<JJob<List<Scored<FingerprintCandidate>>>> scoreJobs = Fingerblast.makeScoringJobs(
-                predictor.getPreparedFingerblastScorer(ParameterStore.of(fp, bayesnetScoring)), combinedCandidates, fp);
+                predictor.getPreparedFingerblastScorer(ParameterStore.of(fp, bayesnetScoring)), combinedCandidates.keySet(), fp);
 
         checkForInterruption();
         scoreJobs.forEach(this::submitSubJob);
@@ -200,13 +203,15 @@ public class MsNovelistFingerblastJJob extends BasicMasterJJob<List<Scored<Finge
         checkForInterruption();
 
         // annotate result of BayesNet scoring
-        idResult.addAnnotation(MsNovelistFingerblastResult.class, new MsNovelistFingerblastResult(scoredCandidates));
+        idResult.annotate(new MsNovelistFingerblastResult(scoredCandidates, scoredCandidates.stream()
+                .map(SScored::getCandidate).map(FingerprintCandidate::getInchiKey2D).map(inchiKeyToCandidate::get)
+                .mapToDouble(MsNovelistCandidate::getRnnScore).toArray()));
         return scoredCandidates;
     }
 
-    public IAtomContainer perceiveAromaticityOnSMILES(@NotNull String smiles, @NotNull CDKHydrogenAdder hydrogenAdder, @NotNull Aromaticity aromaticity){
+    public IAtomContainer perceiveAromaticityOnSMILES(@NotNull String smiles, @NotNull CDKHydrogenAdder hydrogenAdder, @NotNull Aromaticity aromaticity) {
         IAtomContainer molecule = FixedFingerprinter.parseStructureFromStandardizedSMILES(smiles);
-        try{
+        try {
             aromaticity.apply(molecule);
             AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(molecule);
             hydrogenAdder.addImplicitHydrogens(molecule);

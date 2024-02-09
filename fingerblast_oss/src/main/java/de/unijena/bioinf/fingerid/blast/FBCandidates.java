@@ -31,7 +31,7 @@ import java.util.List;
  * - used database
  * - used scoring method
  */
-public class FBCandidates extends AbstractFBCandidates {
+public class FBCandidates extends AbstractFBCandidates<CompoundCandidate> {
 
     public FBCandidates(List<Scored<CompoundCandidate>> results) {
         super(results);
