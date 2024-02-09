@@ -33,15 +33,15 @@ import java.util.List;
  * - used database
  * - used scoring method
  */
-public abstract class AbstractFBCandidates implements ResultAnnotation {
+public abstract class AbstractFBCandidates<C extends CompoundCandidate> implements ResultAnnotation {
 
-    protected final List<Scored<CompoundCandidate>> results;
+    protected final List<Scored<C>> results;
 
-    protected AbstractFBCandidates(List<Scored<CompoundCandidate>> results) {
+    protected AbstractFBCandidates(List<Scored<C>> results) {
         this.results = results;
     }
 
-    public List<Scored<CompoundCandidate>> getResults() {
+    public List<Scored<C>> getResults() {
         return Collections.unmodifiableList(results);
     }
 

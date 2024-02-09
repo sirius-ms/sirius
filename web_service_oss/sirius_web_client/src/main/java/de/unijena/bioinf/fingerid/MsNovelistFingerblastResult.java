@@ -18,20 +18,26 @@
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.fingerid.blast;
+package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
-import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.fingerid.blast.AbstractFingerblastResult;
+import de.unijena.bioinf.fingerid.blast.MsNovelistCompoundCandidate;
+import de.unijena.bioinf.fingerid.blast.MsNovelistFBCandidateFingerprints;
+import de.unijena.bioinf.fingerid.blast.MsNovelistFBCandidates;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class MsNovelistFingerblastResult extends AbstractFingerblastResult {
+    private final double[] rnnScores;
 
-    public MsNovelistFingerblastResult(List<Scored<FingerprintCandidate>> results) {
+    public MsNovelistFingerblastResult(List<Scored<FingerprintCandidate>> results, double[] rnnScores) {
         super(results);
+        this.rnnScores = rnnScores;
     }
 
     public MsNovelistFBCandidateFingerprints getCandidateFingerprints(){
@@ -41,6 +47,12 @@ public class MsNovelistFingerblastResult extends AbstractFingerblastResult {
     }
 
     public MsNovelistFBCandidates getCandidates() {
-        return new MsNovelistFBCandidates(results.stream().map(s -> new Scored<>(new CompoundCandidate(s.getCandidate()), s.getScore())).collect(Collectors.toList()));
+        List<Scored<MsNovelistCompoundCandidate>> msnCandidates = new ArrayList<>(results.size());
+        for (int i = 0; i < rnnScores.length; i++){
+            Scored<FingerprintCandidate> c = results.get(i);
+            msnCandidates.add(new Scored<>(new MsNovelistCompoundCandidate(c.getCandidate(), rnnScores[i]), c.getScore()));
+        }
+
+        return new MsNovelistFBCandidates(msnCandidates);
     }
 }

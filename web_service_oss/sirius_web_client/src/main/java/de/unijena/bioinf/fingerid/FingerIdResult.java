@@ -27,7 +27,6 @@ import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
-import de.unijena.bioinf.fingerid.blast.MsNovelistFingerblastResult;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.ResultAnnotation;
 import de.unijena.bioinf.sirius.IdentificationResult;

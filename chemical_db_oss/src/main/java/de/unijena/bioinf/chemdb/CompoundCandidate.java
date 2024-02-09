@@ -64,9 +64,6 @@ public class CompoundCandidate {
     @Nullable //this is the tanimoto to a matched fingerprint.
     protected Double tanimoto = null;
 
-    // score assigned by MsNovelist model, use only for MsNovelist predictions!
-    protected Double rnnScore;
-
     protected List<String> referenceSpectraSplash;
 
     public CompoundCandidate(InChI inchi, String name, String smiles, int pLayer, int qLayer, double xlogp, @Nullable Double tanimoto, long bitset, DBLink[] links, PubmedLinks pubmedIDs, List<String> referenceSpectraSplash) {
@@ -97,10 +94,7 @@ public class CompoundCandidate {
         this.qLayer = c.qLayer;
         this.xlogp = c.xlogp;
         this.tanimoto = c.tanimoto;
-        if (c.pubmedIDs != null)
-            this.pubmedIDs = c.pubmedIDs;
-        if (c.rnnScore != null)
-            this.rnnScore = c.rnnScore;
+        this.pubmedIDs = c.pubmedIDs;
         this.taxonomicScore = c.taxonomicScore;
         this.taxonomicSpecies = c.taxonomicSpecies;
         this.referenceSpectraSplash = c.referenceSpectraSplash;
@@ -200,14 +194,6 @@ public class CompoundCandidate {
 
     public void setTanimoto(Double tanimoto) {
         this.tanimoto = tanimoto;
-    }
-
-    public Double getRnnScore() {
-        return rnnScore;
-    }
-
-    public void setRnnScore(Double rnnScore) {
-        this.rnnScore = rnnScore;
     }
 
     @Nullable
