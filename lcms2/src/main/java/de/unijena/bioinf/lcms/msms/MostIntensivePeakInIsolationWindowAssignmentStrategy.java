@@ -10,7 +10,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
-public class MostIntensivePeakInIsolatioNWindowAssignmentStrategy implements Ms2TraceStrategy{
+public class MostIntensivePeakInIsolationWindowAssignmentStrategy implements Ms2TraceStrategy{
 
     private final IsolationWindow defaultWindow = new IsolationWindow(0, 0.5);
 
@@ -22,8 +22,8 @@ public class MostIntensivePeakInIsolatioNWindowAssignmentStrategy implements Ms2
         final IsolationWindow window = ms2.getIsolationWindow().orElse(defaultWindow);
         final double pmz = ms2.getPrecursorMz();
         List<ContiguousTrace> contigousTraces = sample.getStorage().getTraceStorage().getContigousTraces(pmz - window.getWindowWidth() / 2d, pmz + window.getWindowWidth() / 2d, parentId, parentId);
-        // for simplicity we assume gaussian shape of the isolation window with sigma = window radius
-        final double sigma = window.getWindowWidth()/2d;
+        // for simplicity we assume gaussian shape of the isolation window with 2*sigma = window radius
+        final double sigma = window.getWindowWidth()/4d;
         Optional<ContiguousTrace> tr = contigousTraces.stream().max(Comparator.comparingDouble(x -> x.apexIntensity() * Math.exp(-Math.pow(x.averagedMz() - pmz, 2) / (2 * sigma * sigma))));
         return tr.isPresent() ? tr.get().getUid() : -1;
 
