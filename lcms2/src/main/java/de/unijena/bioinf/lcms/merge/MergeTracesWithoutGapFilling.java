@@ -11,6 +11,7 @@ import de.unijena.bioinf.lcms.isotopes.IsotopePattern;
 import de.unijena.bioinf.lcms.statistics.SampleStats;
 import de.unijena.bioinf.lcms.trace.*;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.slf4j.LoggerFactory;
 
@@ -122,12 +123,25 @@ public class MergeTracesWithoutGapFilling {
             }
         }
 
+        // add ms2 data
+        addMs2(mergedTrace, sample, traces);
+
         // now also add isotopic traces
         createIsotopeMergedTraces(merged, sample, mergedTrace, T, moisForSample);
 
         // update
         merged.getStorage().getMergeStorage().addMerged(mergedTrace);
 
+    }
+
+    private void addMs2(MergedTrace mergedTrace, ProcessedSample sample, ContiguousTrace[] sourceTraces) {
+        IntArrayList ids = new IntArrayList();
+        for (ContiguousTrace t : sourceTraces) {
+            ids.addElements(ids.size(), sample.getStorage().getTraceStorage().getMs2ForTrace(t.getUid()));
+        }
+        if (!ids.isEmpty()) {
+            mergedTrace.addMs2(sample.getUid(), ids.toIntArray());
+        }
     }
 
     private void createIsotopeMergedTraces(ProcessedSample merged, ProcessedSample sample, MergedTrace mergedTrace, ContiguousTrace t, MoI[] mois) {
@@ -201,6 +215,9 @@ public class MergeTracesWithoutGapFilling {
                         isotopeMergedTrace.getInts()[k - isotopeMergedTrace.getStartId()] += normInt;
                     }
                 }
+
+                // add ms2 data
+                addMs2(isotopeMergedTrace, sample, isotopeTraces.toArray(ContiguousTrace[]::new));
 
                 // update
                 merged.getStorage().getMergeStorage().addMerged(isotopeMergedTrace);

@@ -46,7 +46,7 @@ public class IsolationWindow implements Serializable {
     }
 
     public double getLeftOffset() {
-        return (windowWidth/2d  - windowOffset);
+        return (windowOffset - windowWidth/2d);
     }
 
     public double getRightOffset() {

@@ -66,7 +66,7 @@ public abstract class TraceStorage implements Iterable<ContiguousTrace>  {
                 if (ints == null) trace2ms2.put(traceId, new int[]{ms2headerid});
                 else {
                     ints = Arrays.copyOf(ints, ints.length + 1);
-                    ints[ints.length - 1] = traceId;
+                    ints[ints.length - 1] = ms2headerid;
                     trace2ms2.put(traceId, ints);
                 }
             }
@@ -124,7 +124,7 @@ public abstract class TraceStorage implements Iterable<ContiguousTrace>  {
                 k = it.next();
                 ContiguousTrace tr = traceMap.get((int)k.getId());
                 double avgmz = tr.averagedMz();
-                if (avgmz <= toMz && avgmz >= fromMz && tr.apex() >= fromScanId && tr.apex() <= toScanId) {
+                if (avgmz <= toMz && avgmz >= fromMz && tr.startId >= fromScanId && tr.endId() >= toScanId) {
                     outp.add(tr.withMapping(mapping));
                 }
             }
