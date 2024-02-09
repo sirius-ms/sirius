@@ -34,10 +34,10 @@ import java.util.stream.Collectors;
  * - used database
  * - used scoring method
  */
-public class FingerblastResult extends AbstractFingerblastResult {
+public class FingerblastResult extends AbstractFingerblastResult<TopCSIScore> {
 
     public FingerblastResult(List<Scored<FingerprintCandidate>> results) {
-        super(results);
+        super(results, TopCSIScore::new);
     }
 
     public FBCandidateFingerprints getCandidateFingerprints(){

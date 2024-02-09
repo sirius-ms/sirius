@@ -20,12 +20,14 @@
 
 package de.unijena.bioinf.fingerid.blast;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.ms.annotations.ResultAnnotation;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * Result of a fingerblast job
@@ -33,21 +35,23 @@ import java.util.List;
  * - used database
  * - used scoring method
  */
-public abstract class AbstractFingerblastResult implements ResultAnnotation {
+public abstract class AbstractFingerblastResult<S extends FormulaScore> implements ResultAnnotation {
 
     protected final List<Scored<FingerprintCandidate>> results;
+    private final Function<Double, S> scoreCreator;
 
-    public AbstractFingerblastResult(List<Scored<FingerprintCandidate>> results) {
+    public AbstractFingerblastResult(List<Scored<FingerprintCandidate>> results, Function<Double, S> scoreCreator) {
         this.results = results;
+        this.scoreCreator = scoreCreator;
     }
 
     public List<Scored<FingerprintCandidate>> getResults() {
         return Collections.unmodifiableList(results);
     }
 
-    public TopCSIScore getTopHitScore() {
+    public S getTopHitScore() {
         if (results == null || results.isEmpty())
             return null;
-        return new TopCSIScore(results.get(0).getScore());
+        return scoreCreator.apply(results.get(0).getScore());
     }
 }
