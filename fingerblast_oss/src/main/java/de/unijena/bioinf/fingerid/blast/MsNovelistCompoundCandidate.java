@@ -2,6 +2,7 @@ package de.unijena.bioinf.fingerid.blast;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.InChISMILESUtils;
 import lombok.Getter;
@@ -14,6 +15,11 @@ public class MsNovelistCompoundCandidate extends CompoundCandidate {
     @Getter
     @Setter
     private double rnnScore;
+
+
+    public MsNovelistCompoundCandidate(InChI inchi) {
+        super(inchi);
+    }
 
     public MsNovelistCompoundCandidate(CompoundCandidate c, double rnnScore) {
         super(c);

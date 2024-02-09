@@ -21,6 +21,7 @@
 package de.unijena.bioinf.projectspace.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
+import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.fingerid.blast.MsNovelistCompoundCandidate;
 import de.unijena.bioinf.fingerid.blast.MsNovelistFBCandidates;
 import de.unijena.bioinf.projectspace.*;
@@ -50,13 +51,13 @@ public class MsNovelistFBCandidatesSerializer implements ComponentSerializer<For
 
         reader.table(MSNOVELIST_FINGERBLAST.relFilePath(id), true, 0, numC.value, (row) -> {
             if (row.length == 0) return;
-            final String smiles = row[2];
-            final double score = Double.parseDouble(row[3]);
 
-            final MsNovelistCompoundCandidate candidate = new MsNovelistCompoundCandidate(smiles, Double.parseDouble(row[5]));
-            candidate.setTanimoto(Double.valueOf(row[4]));
+            final MsNovelistCompoundCandidate candidate = new MsNovelistCompoundCandidate(new InChI(row[0], row[1]));
+            candidate.setSmiles(row[5]);
+            candidate.setTanimoto(Double.valueOf(row[6]));
+            candidate.setRnnScore(Double.parseDouble(row[7]));
 
-            results.add(new Scored<>(candidate, score));
+            results.add(new Scored<>(candidate, Double.parseDouble(row[4])));
         });
         return results;
     }
@@ -65,18 +66,20 @@ public class MsNovelistFBCandidatesSerializer implements ComponentSerializer<For
     public void write(ProjectWriter writer, FormulaResultId id, FormulaResult container, Optional<MsNovelistFBCandidates> optFingeridResult) throws IOException {
         final MsNovelistFBCandidates fingerblastResult = optFingeridResult.orElseThrow(() -> new IllegalArgumentException("Could not find FingerIdResult to write for ID: " + id));
         final String[] header = new String[]{
-                "molecularFormula", "rank", "smiles", "score", "tanimotoSimilarity", "rnnScore"
+                "inchikey2D", "inchi", "molecularFormula", "rank", "score", "smiles", "tanimotoSimilarity", "rnnScore"
         };
         final String[] row = new String[header.length];
         final AtomicInteger ranking = new AtomicInteger(0);
         writer.table(MSNOVELIST_FINGERBLAST.relFilePath(id), header, fingerblastResult.getResults().stream().map((hit) -> {
             MsNovelistCompoundCandidate c = hit.getCandidate();
-            row[0] = id.getMolecularFormula().toString();
-            row[1] = String.valueOf(ranking.incrementAndGet());
-            row[2] = c.getSmiles();
-            row[3] = String.valueOf(hit.getScore());
-            row[4] = String.valueOf(c.getTanimoto());
-            row[5] = String.valueOf(c.getRnnScore());
+            row[0] = c.getInchiKey2D();
+            row[1] = c.getInchi().in2D;
+            row[2] = id.getMolecularFormula().toString();
+            row[3] = String.valueOf(ranking.incrementAndGet());
+            row[4] = String.valueOf(hit.getScore());
+            row[5] = c.getSmiles();
+            row[6] = String.valueOf(c.getTanimoto());
+            row[7] = String.valueOf(c.getRnnScore());
             return row;
         })::iterator);
     }
