@@ -21,8 +21,7 @@
 package de.unijena.bioinf.projectspace.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
-import de.unijena.bioinf.ChemistryBase.chem.InChI;
-import de.unijena.bioinf.chemdb.CompoundCandidate;
+import de.unijena.bioinf.fingerid.blast.MsNovelistCompoundCandidate;
 import de.unijena.bioinf.fingerid.blast.MsNovelistFBCandidates;
 import de.unijena.bioinf.projectspace.*;
 import org.jetbrains.annotations.Nullable;
@@ -38,15 +37,15 @@ public class MsNovelistFBCandidatesSerializer implements ComponentSerializer<For
 
     @Override
     public @Nullable MsNovelistFBCandidates read(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
-        final ArrayList<Scored<CompoundCandidate>> c = readCandidates(reader, id, container);
+        final ArrayList<Scored<MsNovelistCompoundCandidate>> c = readCandidates(reader, id, container);
         return c == null ? null : new MsNovelistFBCandidates(c);
     }
 
-    private ArrayList<Scored<CompoundCandidate>> readCandidates(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
+    private ArrayList<Scored<MsNovelistCompoundCandidate>> readCandidates(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
         if (!reader.exists(MSNOVELIST_FINGERBLAST.relFilePath(id)))
             return null;
 
-        final ArrayList<Scored<CompoundCandidate>> results = new ArrayList<>();
+        final ArrayList<Scored<MsNovelistCompoundCandidate>> results = new ArrayList<>();
         final MsNovelistFBCandidateNumber numC = id.getAnnotation(MsNovelistFBCandidateNumber.class).orElse(MsNovelistFBCandidateNumber.ALL);
 
         reader.table(MSNOVELIST_FINGERBLAST.relFilePath(id), true, 0, numC.value, (row) -> {
@@ -54,10 +53,8 @@ public class MsNovelistFBCandidatesSerializer implements ComponentSerializer<For
             final String smiles = row[2];
             final double score = Double.parseDouble(row[3]);
 
-            final CompoundCandidate candidate = new CompoundCandidate(new InChI("",""));
-            candidate.setSmiles(smiles);
+            final MsNovelistCompoundCandidate candidate = new MsNovelistCompoundCandidate(smiles, Double.parseDouble(row[5]));
             candidate.setTanimoto(Double.valueOf(row[4]));
-            candidate.setRnnScore(Double.valueOf(row[5]));
 
             results.add(new Scored<>(candidate, score));
         });
@@ -73,7 +70,7 @@ public class MsNovelistFBCandidatesSerializer implements ComponentSerializer<For
         final String[] row = new String[header.length];
         final AtomicInteger ranking = new AtomicInteger(0);
         writer.table(MSNOVELIST_FINGERBLAST.relFilePath(id), header, fingerblastResult.getResults().stream().map((hit) -> {
-            CompoundCandidate c = hit.getCandidate();
+            MsNovelistCompoundCandidate c = hit.getCandidate();
             row[0] = id.getMolecularFormula().toString();
             row[1] = String.valueOf(ranking.incrementAndGet());
             row[2] = c.getSmiles();
