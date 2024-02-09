@@ -9,7 +9,9 @@ import de.unijena.bioinf.lcms.isotopes.IsotopeDetectionStrategy;
 import de.unijena.bioinf.lcms.merge.MergeTracesWithoutGapFilling;
 import de.unijena.bioinf.lcms.merge.MergedTrace;
 import de.unijena.bioinf.lcms.merge.ScanPointInterpolator;
-import de.unijena.bioinf.lcms.msms.MostIntensivePeakInIsolatioNWindowAssignmentStrategy;
+import de.unijena.bioinf.lcms.msms.MergeGreedyStrategy;
+import de.unijena.bioinf.lcms.msms.MostIntensivePeakInIsolationWindowAssignmentStrategy;
+import de.unijena.bioinf.lcms.msms.Ms2MergeStrategy;
 import de.unijena.bioinf.lcms.msms.Ms2TraceStrategy;
 import de.unijena.bioinf.lcms.projectspace.ImportStrategy;
 import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
@@ -60,7 +62,7 @@ public class LCMSProcessing {
             new AdductAndIsotopeBasedDetectionStrategy()
     );
 
-    @Getter @Setter private Ms2TraceStrategy ms2TraceStrategy = new MostIntensivePeakInIsolatioNWindowAssignmentStrategy();
+    @Getter @Setter private Ms2TraceStrategy ms2TraceStrategy = new MostIntensivePeakInIsolationWindowAssignmentStrategy();
 
     /**
      * This class determines how we ensure that no two peaks are picked in different traces
@@ -87,6 +89,8 @@ public class LCMSProcessing {
     @Getter @Setter private ImportStrategy importStrategy;
 
     @Getter @Setter private MergedFeatureExtractionStrategy mergedFeatureExtractionStrategy = new MergedFeatureExtractor();
+
+    @Getter @Setter private Ms2MergeStrategy ms2MergeStrategy = new MergeGreedyStrategy();
 
     protected List<ProcessedSample> samples = new ArrayList<>();
 
@@ -157,7 +161,7 @@ public class LCMSProcessing {
             trace.finishMerging();
             ProcessedSample[] samplesInTrace = new ProcessedSample[trace.getSampleIds().size()];
             trace.getTraceIds().forEach(x->samplesInTrace[x]=idx2sample.get(x));
-            Iterator<AlignedFeatures> fiter = mergedFeatureExtractionStrategy.extractFeatures(merged, samplesInTrace, trace);
+            Iterator<AlignedFeatures> fiter = mergedFeatureExtractionStrategy.extractFeatures(merged, samplesInTrace, trace, ms2MergeStrategy);
             while (fiter.hasNext()) {
                 importStrategy.importAlignedFeature(storage, fiter.next());
             }
@@ -179,7 +183,7 @@ public class LCMSProcessing {
                     for (int i = 0; i < trace.getTraceIds().size(); ++i) {
                         samplesInTrace[i] = idx2sample.get(trace.getSampleIds().getInt(i));
                     }
-                    String line = ((MergedFeatureExtractor) mergedFeatureExtractionStrategy).extractFeaturesToString(merged, samplesInTrace, trace);
+                    String line = ((MergedFeatureExtractor) mergedFeatureExtractionStrategy).extractFeaturesToString(merged, samplesInTrace, trace, ms2MergeStrategy);
                     if (line !=null) {
                         out.println("\"" + trace.getUid() + "\": " +  line + ",");
                     }
