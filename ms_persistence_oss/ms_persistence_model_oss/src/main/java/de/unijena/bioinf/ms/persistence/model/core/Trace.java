@@ -57,4 +57,5 @@ public class Trace {
      * intensities of all peaks ordered by RT
      */
     DoubleList intensities;
+
 }

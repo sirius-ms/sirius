@@ -1,0 +1,64 @@
+# DATEI, DIE EINE SEITENKETTEN-LISTE DEFINIERT
+#
+# Diese Datei definiert eine Liste von Seitenketten, deren Vorkommen in den zu vergleichenden Molekülen
+# durch '*' ersetzt werden. Daneben wird auch der Aufbau einer solchen Datei beschrieben.
+#
+# ********AUFBAU DER DATEI********
+# 1. KOMMENTARE:
+# Zeichenabfolgen innerhalb einer Zeile gelten als Kommentare, 
+# solange das Zeichen '#' vorangestellt ist.
+# Dabei ist es nur erlaubt, dass eine variable Anzahl an Leerzeichen vor dem '#'-Symbol steht.
+#
+# 2. SEITENKETTEN:
+# Jede Seitenkette ist definiert durch einen Header, der durch ein voranstehendes '>'-Zeichen und
+# einem nachstehendem Namen definiert ist, und einer nachfolgenden Zeile,
+# in der die jeweilige Seitenkette in Form eines SMILES-Strings definiert ist.
+# Da eine Seitenkette nach Definition nur ein einziges Atom enthält,
+# welches die Seitenkette im Molekül mit dem restlichen Molekül verbindet,
+# nennen wir dieses Atom den Brückenknoten der jeweiligen Seitenkette.
+# Dieses Atom ist gekennzeichnet durch:
+# 	1. 	Es ist das erste Atom im SMILES-String.
+#	2. 	Die Anzahl an Atomen, mit denen der Brückenknoten eine Bindung eingehend würde,
+#       wenn die Seitenkette in einem Molekül vorkommt, ist um Eins reduziert.
+#
+# Daneben werden die Seitenkette durch SMILES-Strings mit expliziten Wasserstoff-Atomen dargestellt.
+#
+# Beispiel:	Das C-Atom in einer Carboxylgruppe ist sp2-hybridisiert und würde
+#           somit mit drei Atomen eine Bindung eingehen.
+#			Hier lässt man das Atom, welches nicht zur Seitenkette gehört, weg und schreibt:
+#			>Carboxylgruppe
+#			[C](=[O])[O][H]
+#
+# 3. AUFBAU EINER SEITENKETTENLISTE:
+# Da im Verlauf des Algorithmus jedes Vorkommen einer Seitenkette durch ein '*'-Atom ersetzt wird,
+# ist es erforderlich, dass folgende Regel zu beachten ist:
+#	Es seien G1 und G2 zwei Seitenketten, die sich in der gleichen Seitenkettenliste L befinden.
+#	Ist G2 ein Teilgraph (Teilstruktur) von G1, dann muss der Index von G2 in L größer als der Index von G1 in L sein.
+# Mit dieser Regel wird garantiert, dass jedes Vorkommen einer jeden Seitenkette in der Seitenkettenliste gefunden wird.
+
+>carboxyl group
+[C](=[O])[O][H]
+
+>aldehyde group
+[C](=[O])[H]
+
+>phosphate group
+[O][P](=[O])([O-])[O-]
+
+>methoxy group
+[O][C]([H])([H])[H]
+
+>methyl group
+[C]([H])([H])[H]
+
+>amino group
+[N]([H])[H]
+
+>sulfhydryl group
+[S][H]
+
+>hydroxyl group
+[O][H]
+
+>hydrogen atom
+[H]

@@ -32,7 +32,6 @@ public abstract class BasicMutableSpectrum<P extends Peak> extends AbstractSpect
     protected TDoubleArrayList intensities;
 
     public <T extends Peak, S extends Spectrum<T>> BasicMutableSpectrum(S immutable) {
-        super(immutable);
         this.masses = new TDoubleArrayList(Spectrums.copyMasses(immutable));
         this.intensities = new TDoubleArrayList(Spectrums.copyIntensities(immutable));
     }

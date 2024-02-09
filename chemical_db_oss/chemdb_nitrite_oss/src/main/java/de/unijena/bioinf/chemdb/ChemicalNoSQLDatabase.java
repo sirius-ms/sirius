@@ -34,6 +34,7 @@ import de.unijena.bioinf.storage.db.nosql.*;
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
+import lombok.SneakyThrows;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -226,17 +227,21 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
     @Override
     public void updateAllFingerprints(Consumer<FingerprintCandidate> updater) throws ChemicalDatabaseException {
         try {
-            Iterables.partition(this.storage.findAll(FingerprintCandidateWrapper.class, "fingerprint"), 50).forEach(chunk -> {
-                List<FingerprintCandidateWrapper> updated = chunk.stream().peek(wrapper -> updater.accept(wrapper.getFingerprintCandidate())).toList();
-                try {
-                    this.storage.upsertAll(updated);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            });
-        } catch (RuntimeException | IOException e) {
+            Iterables.partition(this.storage.findAll(FingerprintCandidateWrapper.class, "fingerprint"), 50).forEach(chunk -> doUpdate(chunk, updater));
+        } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }
+    }
+
+    @SneakyThrows
+    private void doUpdate(List<FingerprintCandidateWrapper> chunk, Consumer<FingerprintCandidate> updater) {
+        List<FingerprintCandidateWrapper> updated = new ArrayList<>();
+        for (FingerprintCandidateWrapper wrapper : chunk) {
+            FingerprintCandidate fingerprintCandidate = wrapper.getFingerprintCandidate();
+            updater.accept(fingerprintCandidate);
+            updated.add(FingerprintCandidateWrapper.of(wrapper.getId(), wrapper.getFormula(), wrapper.getMass(), fingerprintCandidate));
+        }
+        this.storage.upsertAll(updated);
     }
 
     @NoArgsConstructor
