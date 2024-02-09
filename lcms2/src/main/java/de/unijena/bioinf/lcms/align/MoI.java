@@ -1,12 +1,14 @@
 package de.unijena.bioinf.lcms.align;
 
 import de.unijena.bioinf.lcms.datatypes.CustomDataType;
+import de.unijena.bioinf.lcms.isotopes.IsotopeResult;
 import de.unijena.bioinf.lcms.trace.Rect;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.With;
 import org.h2.mvstore.WriteBuffer;
 
+import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
 import java.util.Locale;
 
@@ -14,6 +16,8 @@ import java.util.Locale;
  * Mass of Interest
  */
 public class MoI {
+
+    private static final byte ISOTOPE_FLAG = 1, MULTIPLE_CHARGED = 2;
 
     @Getter private final Rect rect;
     @Getter @With private final double retentionTime;
@@ -27,6 +31,9 @@ public class MoI {
     @Getter @Setter
     private float confidence;
 
+    @Getter @Setter @Nullable
+    private IsotopeResult isotopes;
+
     protected byte state;
 
     public MoI(Rect rect, int scanId, double retentionTime, float intensity, int sampleIdx) {
@@ -36,6 +43,8 @@ public class MoI {
         this.intensity = intensity;
         this.sampleIdx = sampleIdx;
         this.uid = -1;
+        this.isotopes = null;
+        this.state = 0;
     }
 
     @Override
@@ -43,7 +52,7 @@ public class MoI {
         return String.format(Locale.US, "MoI(mz = %.4f, rt = %.1f)", rect.avgMz, retentionTime);
     }
 
-    protected MoI(Rect rect, double retentionTime, int scanId, int sampleIdx, long uid, float intensity, float confidence, byte state) {
+    protected MoI(Rect rect, double retentionTime, int scanId, int sampleIdx, long uid, float intensity, float confidence, IsotopeResult isotopes, byte state) {
         this.rect = rect;
         this.retentionTime = retentionTime;
         this.scanId = scanId;
@@ -51,23 +60,25 @@ public class MoI {
         this.uid = uid;
         this.intensity = intensity;
         this.confidence = confidence;
+        this.isotopes = isotopes;
         this.state = state;
     }
 
-    public boolean getIsotopeFlag() {
-        return (state & 2) > 0;
-    }
-    public boolean getAdductFlag() {
-        return (state & 4) > 0;
+    public boolean isIsotopePeak() {
+        return (this.state & ISOTOPE_FLAG) != 0;
     }
 
-    public void setIsotopeFlag(boolean value) {
-        if (value) state |= 2;
-        else state &= ~2;
+    public boolean isMultiCharged() {
+        return (this.state & MULTIPLE_CHARGED) != 0;
     }
-    public void setAdductFlag(boolean value) {
-        if (value) state |= 4;
-        else state &= ~4;
+
+    public void setIsotopePeakFlag(boolean value) {
+        if (value) this.state |= ISOTOPE_FLAG;
+        else this.state &= ~ISOTOPE_FLAG;
+    }
+    public void setMultiChargeFlag(boolean value) {
+        if (value) this.state |= MULTIPLE_CHARGED;
+        else this.state &= ~MULTIPLE_CHARGED;
     }
 
     public int getTraceId() {
@@ -111,6 +122,7 @@ public class MoI {
                 }
             } else {
                 buff.putInt(-1);
+                IsotopeResult.writeBinary(buff, m.isotopes);
             }
         }
 
@@ -130,11 +142,15 @@ public class MoI {
             if (aligns >= 0) {
                 MoI[] parts = new MoI[aligns];
                 for (int k=0; k < aligns; ++k) parts[k] = (MoI)read(buff);
-                return new AlignedMoI(new Rect(rect[0],rect[1],rect[2],rect[3], avgMz, rectId), rt, scanId, sampleIdx, uid, intensity, confidence, state, parts);
+                return new AlignedMoI(new Rect(rect[0],rect[1],rect[2],rect[3], avgMz, rectId), rt, scanId, sampleIdx, uid, intensity, confidence, parts, state);
             } else {
-                return new MoI(new Rect(rect[0],rect[1],rect[2],rect[3], avgMz, rectId), rt, scanId, sampleIdx, uid, intensity, confidence, state);
+                IsotopeResult is = IsotopeResult.loadBinary(buff);
+                return new MoI(new Rect(rect[0],rect[1],rect[2],rect[3], avgMz, rectId), rt, scanId, sampleIdx, uid, intensity, confidence, is, state);
             }
         }
+    }
+    public boolean hasIsotopes() {
+        return isotopes!=null && isotopes.isotopeIntensities.length>1;
     }
 
 }

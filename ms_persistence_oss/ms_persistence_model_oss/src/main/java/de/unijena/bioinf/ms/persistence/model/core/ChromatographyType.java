@@ -20,35 +20,22 @@
 
 package de.unijena.bioinf.ms.persistence.model.core;
 
-import org.jetbrains.annotations.NotNull;
+import lombok.Getter;
 
-import java.util.Collections;
-import java.util.List;
+import javax.validation.constraints.NotNull;
 
+@Getter
 public enum ChromatographyType {
     LC("Liquid Chromatography"),
     GC("Gas Chromatography");
 
+
     @NotNull
-    public final String fullName;
-    @NotNull
-    public final List<String> hupoIds;
+    private final String fullName;
 
 
-    ChromatographyType(@NotNull String fullName, String... hupoIds) {
+    ChromatographyType(@NotNull String fullName) {
         this.fullName = fullName;
-        this.hupoIds = List.of(hupoIds);
-    }
-    ChromatographyType(@NotNull String fullName, List<String> hupoIds) {
-        this.fullName = fullName;
-        this.hupoIds = Collections.unmodifiableList(hupoIds);
     }
 
-    public String fullName() {
-        return fullName;
-    }
-
-    public List<String> hupoIds() {
-        return hupoIds;
-    }
 }

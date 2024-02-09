@@ -22,10 +22,7 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.awt.geom.Point2D;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
-import java.io.StringWriter;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -252,18 +249,27 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
 
     public static void main(String[] args) {
 
-        final File mzxmlFile = new File("/home/kaidu/data/raw/polluted_citrus/G79625_1x_RH6_01_18974.mzML");
+        final File mzxmlFile = new File("/home/mel/lcms-data/polluted_citrus/G79624_5x_BH4_01_18895.mzML");
                 //new File("/home/kaidu/analysis/lcms/examples").listFiles()[0];
         InMemoryStorage storage= new InMemoryStorage();
         final LCMSProccessingInstance i = new LCMSProccessingInstance();
         try {
             final LCMSRun parse = (mzxmlFile.getName().toLowerCase(Locale.US).endsWith(".mzml") ? new MzMLParser() : new MzXMLParser()).parse(mzxmlFile, storage);
-            final ProcessedSample sample = i.addSample(parse, storage);
+            final ProcessedSample sample = i.addSample(parse, storage, false);
 
             i.detectFeatures(sample);
 
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter("/home/mel/lcms-data/polluted_citrus/SIRIUS/1_features.csv"))) {
+                sample.ions.forEach(ion -> {
+                    try {
+                        writer.write((ion.getRetentionTime()/1000d)+ ", " + ion.getMass() + "\n");
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+            }
 
-            final GUI gui = new GUI(i, sample);
+//            final GUI gui = new GUI(i, sample);
 
         } catch (IOException| InvalidInputData e) {
             e.printStackTrace();

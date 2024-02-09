@@ -27,6 +27,7 @@ import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.utils.MutableMs2SpectrumWithAdditionalFields;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.massbank.MassbankFormat;
 import de.unijena.bioinf.spectraldb.WriteableSpectralLibrary;
@@ -104,11 +105,13 @@ public class SpectralUtils {
             experiment.getAnnotation(MsInstrumentation.class).ifPresent(b::instrumentation);
             experiment.getAnnotation(RetentionTime.class).ifPresent(rt -> b.retentionTime(rt.getMiddleTime()));
 
-            s.getAnnotation(AdditionalFields.class).ifPresent(fields -> {
-                if (fields.containsKey(MassbankFormat.ACCESSION.k())) {
-                    b.libraryId(fields.get(MassbankFormat.ACCESSION.k()));
-                }
-            });
+            if (s instanceof MutableMs2SpectrumWithAdditionalFields) {
+                AdditionalFields fields = ((MutableMs2SpectrumWithAdditionalFields) s).additionalFields();
+                    if (fields.containsKey(MassbankFormat.ACCESSION.k())) {
+                        b.libraryId(fields.get(MassbankFormat.ACCESSION.k()));
+                    }
+                
+            }
 
             return b.build();
         }).collect(Collectors.toList());

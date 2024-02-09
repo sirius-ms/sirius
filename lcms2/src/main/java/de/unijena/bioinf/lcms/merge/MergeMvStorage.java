@@ -20,6 +20,7 @@ public class MergeMvStorage implements MergeStorage{
     private final TraceRectangleMap rectangleMap;
 
     private final AtomicInteger traceCounter;
+    private final AtomicInteger mergeCounter;
 
     public MergeMvStorage(MVStore store) {
         this.store = store;
@@ -27,6 +28,7 @@ public class MergeMvStorage implements MergeStorage{
         underlyingTraces = store.openMap("underlyingTraces", new MVMap.Builder<Integer,ContiguousTrace>().valueType(new ContigousTraceDatatype()));
         rectangleMap = new TraceRectangleMapByRVMap(store, "merge");
         traceCounter = new AtomicInteger();
+        mergeCounter = new AtomicInteger(2);
     }
 
     @Override
@@ -65,5 +67,9 @@ public class MergeMvStorage implements MergeStorage{
     @Override
     public Iterator<MergedTrace> iterator() {
         return mergedTraces.values().iterator();
+    }
+
+    public int getFreeIsotopeMergeUid() {
+        return -(mergeCounter.incrementAndGet());
     }
 }

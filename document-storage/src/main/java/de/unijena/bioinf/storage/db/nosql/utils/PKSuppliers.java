@@ -20,41 +20,28 @@
 
 package de.unijena.bioinf.storage.db.nosql.utils;
 
+import io.hypersistence.tsid.TSID;
 import lombok.Getter;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.UUID;
 import java.util.function.Supplier;
 
 public class PKSuppliers {
 
     @Getter
-    private static final Supplier<Long> longKey = () -> Math.abs(UUID.randomUUID().getLeastSignificantBits());
+    private static final Supplier<Long> longKey = () -> TSID.fast().toLong();
 
     @Getter
-    private static final Supplier<Double> doubleKey = () -> (double) longKey.get();
+    private static final Supplier<Double> doubleKey = () -> (double) TSID.fast().toLong();
 
     @Getter
-    private static final Supplier<BigInteger> bigIntKey = () -> {
-        try (ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
-             DataOutputStream dataOut = new DataOutputStream(byteOut)) {
-            UUID uuid = UUID.randomUUID();
-            dataOut.writeLong(uuid.getMostSignificantBits());
-            dataOut.writeLong(uuid.getLeastSignificantBits());
-            return new BigInteger(1, byteOut.toByteArray());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    };
+    private static final Supplier<BigInteger> bigIntKey = () -> BigInteger.valueOf(TSID.fast().toLong());
 
     @Getter
-    private static final Supplier<BigDecimal> bigDecimalKey = () -> new BigDecimal(bigIntKey.get());
+    private static final Supplier<BigDecimal> bigDecimalKey = () -> BigDecimal.valueOf(TSID.fast().toLong());
 
     @Getter
-    private static final Supplier<String> stringKey = () -> UUID.randomUUID().toString();
+    private static final Supplier<String> stringKey = () -> TSID.fast().toString();
 
 }

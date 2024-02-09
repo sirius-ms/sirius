@@ -3,7 +3,9 @@ package de.unijena.bioinf.lcms;
 import de.unijena.bioinf.lcms.align.*;
 import de.unijena.bioinf.lcms.features.MergedFeatureExtractionStrategy;
 import de.unijena.bioinf.lcms.features.MergedFeatureExtractor;
-import de.unijena.bioinf.lcms.io.MZmlSampleParser;
+import de.unijena.bioinf.lcms.io.LCMSImporter;
+import de.unijena.bioinf.lcms.isotopes.IsotopeDetectionByCorrelation;
+import de.unijena.bioinf.lcms.isotopes.IsotopeDetectionStrategy;
 import de.unijena.bioinf.lcms.merge.MergeTracesWithoutGapFilling;
 import de.unijena.bioinf.lcms.merge.MergedTrace;
 import de.unijena.bioinf.lcms.merge.ScanPointInterpolator;
@@ -21,6 +23,10 @@ import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegmentationStrategy;
 import de.unijena.bioinf.lcms.traceextractor.*;
 import de.unijena.bioinf.ms.persistence.model.core.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.ChromatographyType;
+import de.unijena.bioinf.ms.persistence.model.core.Run;
+import de.unijena.bioinf.ms.persistence.storage.MsProjectDocumentDatabase;
+import de.unijena.bioinf.storage.db.nosql.Database;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.LoggerFactory;
@@ -64,7 +70,10 @@ public class LCMSProcessing {
     @Getter @Setter private TraceSegmentationStrategy segmentationStrategy = new PersistentHomology();
 
     @Getter @Setter private MassOfInterestConfidenceEstimatorStrategy confidenceEstimatorStrategy = new MassOfInterestCombinedStrategy(
-        new IsotopesAndAdductsAreConfidentStrategy(), new PrecursorsWithMsMsAreConfidentStrategy()
+            new IsotopesAndAdductsAreConfidentStrategy(),
+            new PrecursorsWithMsMsAreConfidentStrategy(),
+            new TracesWithTooManyApexesAreStrange(),
+            new IntensivePeaksAreConfident()
     );
 
     @Getter @Setter private NormalizationStrategy normalizationStrategy = new AverageOfTop100TracesNormalization();
@@ -84,11 +93,28 @@ public class LCMSProcessing {
     /**
      * parses an MZML file and stores the processed sample. Note: we should add possibility to parse from input
      * stream later
-     * TODO: implement other than MZML
      */
-    public ProcessedSample processSample(File file) throws IOException {
+    public ProcessedSample processSample(
+            File file,
+            MsProjectDocumentDatabase<? extends Database<?>> store
+    ) throws IOException {
+        return processSample(file, store, false, Run.Type.SAMPLE, ChromatographyType.LC);
+    }
+
+    /**
+     * parses an MZML file and stores the processed sample. Note: we should add possibility to parse from input
+     * stream later
+     */
+    public ProcessedSample processSample(
+            File file,
+            MsProjectDocumentDatabase<? extends Database<?>> store,
+            boolean saveRawScans,
+            Run.Type runType,
+            ChromatographyType chromatographyType
+    ) throws IOException {
         // parse file and extract spectra
-        ProcessedSample sample = new MZmlSampleParser().parse(file, storageFactory);
+        ProcessedSample sample = LCMSImporter.importToProject(
+                file, storageFactory, store, saveRawScans, runType, chromatographyType);
         sample.setUid(this.samples.size());
         this.samples.add(sample);
         sample.active();
@@ -105,8 +131,6 @@ public class LCMSProcessing {
         LCMSStorage mergedStorage = storageFactory.createNewStorage();
         AlignmentBackbone alignmentBackbone = alignmentStrategy.makeAlignmentBackbone(mergedStorage.getAlignmentStorage(), samples, alignmentAlgorithm, alignmentScorerBackbone);
         ProcessedSample merged = new ProcessedSample(
-                null,
-                null,
                 alignmentBackbone.getScanPointMapping(),
                 mergedStorage,
                 samples.get(0).getPolarity(),
@@ -148,7 +172,7 @@ public class LCMSProcessing {
             Path p = Path.of(System.getProperty("lcms.logdir"), "data.js");
             Files.createDirectories(p.getParent());
             try (PrintStream out = new PrintStream(p.toAbsolutePath().toString())) {
-                out.print("document.lcdata = [");
+                out.print("document.traces = {");
                 for (MergedTrace trace : merged.getStorage().getMergeStorage()) {
                     //if (trace.getSampleIds().size()<6 || trace.toTrace(merged).apexIntensity() < 0.01) continue;
                     ProcessedSample[] samplesInTrace = new ProcessedSample[trace.getSampleIds().size()];
@@ -157,10 +181,10 @@ public class LCMSProcessing {
                     }
                     String line = ((MergedFeatureExtractor) mergedFeatureExtractionStrategy).extractFeaturesToString(merged, samplesInTrace, trace);
                     if (line !=null) {
-                        out.println(line + ",");
+                        out.println("\"" + trace.getUid() + "\": " +  line + ",");
                     }
                 }
-                out.println("\n];");
+                out.println("\n};");
             } catch (FileNotFoundException e) {
                 throw new RuntimeException(e);
             }
@@ -217,11 +241,24 @@ public class LCMSProcessing {
                 rect.maxMz = (float)maxMz;
                 MoI moi = new MoI(rect, segment.apex, sample.getMapping().getRetentionTimeAt(segment.apex),
                         (float)normalizer.normalize(trace.intensity(segment.apex)), sample.getUid());
+
+                detectIsotopesForMoI(sample, trace, segment, moi);
+
                 moi.setConfidence(confidenceEstimatorStrategy.estimateConfidence(sample,trace,moi, null));
                 if (moi.getConfidence() >= 0) {
+                    //System.out.println(moi + " intensity = " + moi.getIntensity() + ", isotopes = " + (moi.getIsotopes()==null ? 0 : moi.getIsotopes().isotopeIntensities.length) + ", confidence = "+ moi.getConfidence());
                     alignmentStorage.addMoI(moi);
                 }
             }
+        }
+    }
+
+    private void detectIsotopesForMoI(ProcessedSample sample, ContiguousTrace trace, TraceSegment segment, MoI moi) {
+        IsotopeDetectionStrategy.Result result = new IsotopeDetectionByCorrelation().detectIsotopesFor(sample, moi, trace, segment);
+        if (result.isMonoisotopic()) {
+            moi.setIsotopes(result.getIsotopePeaks().get());
+        } else {
+            moi.setIsotopePeakFlag(true);
         }
     }
 

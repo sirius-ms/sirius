@@ -30,6 +30,7 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.ChemicalCompoundScorer
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
+import org.slf4j.LoggerFactory;
 
 @Called("Chemical Prior")
 public class ChemicalPriorScorer implements DecompositionScorer<Object> {
@@ -84,17 +85,29 @@ public class ChemicalPriorScorer implements DecompositionScorer<Object> {
     }
 
     public double score(MolecularFormula formula) {
-        return formula.getMass() >= minimalMass ? Math.max(-10d, prior.score(formula)) - normalizationConstant : 0d;
+        try {
+            return formula.getMass() >= minimalMass ? Math.max(-10d, prior.score(formula)) - normalizationConstant : 0d;
+        } catch (Exception e) {
+            LoggerFactory.getLogger(getClass())
+                    .error("ERROR in " + formula.toString());
+            return 0;
+        }
     }
 
     @Override
     public double score(MolecularFormula formula, Ionization ion, ProcessedPeak peak, ProcessedInput input, Object precomputed) {
-        return formula.getMass() >= minimalMass ? Math.max(-10d, prior.score(formula)) - normalizationConstant : 0d;
+        try {
+            return formula.getMass() >= minimalMass ? Math.max(-10d, prior.score(formula)) - normalizationConstant : 0d;
+        } catch (Exception e) {
+            LoggerFactory.getLogger(getClass())
+                    .error("ERROR IN " + input.getOriginalInput().getName() + " " + formula.toString());
+            return 0;
+        }
     }
 
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        this.prior = (MolecularFormulaScorer)helper.unwrap(document, document.getFromDictionary(dictionary, "prior"));
+        this.prior = (MolecularFormulaScorer) helper.unwrap(document, document.getFromDictionary(dictionary, "prior"));
         this.normalizationConstant = document.getDoubleFromDictionary(dictionary, "normalization");
         this.minimalMass = document.getDoubleFromDictionary(dictionary, "minimalMass");
     }

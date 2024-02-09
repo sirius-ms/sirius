@@ -37,15 +37,13 @@ import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 public class ScoreFeatures<P> implements FeatureCreator {
     private final String[] names;
     private final FingerblastScoring<P> scoring;
-    Scored<FingerprintCandidate>[] rankedCandidates;
     Scored<FingerprintCandidate>[] rankedCandidates_filtered;
     public int weight_direction=1;
     int min_quartil=1;
     int max_quartil=99;
 
 
-    public ScoreFeatures(FingerblastScoring<P> scoring, Scored<FingerprintCandidate>[] rankedCandidates,Scored<FingerprintCandidate>[] rankedCandidates_filtered){
-        this.rankedCandidates=rankedCandidates;
+    public ScoreFeatures(FingerblastScoring<P> scoring,Scored<FingerprintCandidate>[] rankedCandidates_filtered){
         names = new String[]{"scoreFeature"};
         this.scoring=scoring;
         this.rankedCandidates_filtered=rankedCandidates_filtered;
@@ -68,7 +66,6 @@ public class ScoreFeatures<P> implements FeatureCreator {
 
     @Override
     public double[] computeFeatures( ParameterStore para) {
-        assert  rankedCandidates[0].getScore()>=rankedCandidates[rankedCandidates.length-1].getScore();
 
         final FingerprintCandidate topHit = rankedCandidates_filtered[0].getCandidate();
         final double[] scores = new double[1];

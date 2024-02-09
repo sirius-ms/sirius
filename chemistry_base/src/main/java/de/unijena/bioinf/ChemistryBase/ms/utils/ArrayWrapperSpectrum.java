@@ -39,8 +39,6 @@ public class ArrayWrapperSpectrum extends AbstractSpectrum<Peak> implements Muta
     private final double[] mzs, ints;
 
     public <P extends Peak, S extends Spectrum<P>> ArrayWrapperSpectrum(S s) {
-        super(s);
-
         this.mzs = new double[s.size()];
         this.ints = new double[s.size()];
 
@@ -131,8 +129,6 @@ public class ArrayWrapperSpectrum extends AbstractSpectrum<Peak> implements Muta
         private final float[] ints;
 
         public <P extends Peak, S extends Spectrum<P>> DoubleFloat(S s) {
-            super(s);
-
             this.mzs = new double[s.size()];
             this.ints = new float[s.size()];
 
@@ -223,8 +219,6 @@ public class ArrayWrapperSpectrum extends AbstractSpectrum<Peak> implements Muta
         private final float[] mzs, ints;
 
         public <P extends Peak, S extends Spectrum<P>> Float(S s) {
-            super(s);
-
             this.mzs = new float[s.size()];
             this.ints = new float[s.size()];
 
