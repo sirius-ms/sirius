@@ -20,21 +20,27 @@
 
 package de.unijena.bioinf.fingerid.blast;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
-import de.unijena.bioinf.chemdb.CompoundCandidate;
 
-import java.util.List;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 
-/**
- * Result of a fingerblast job
- * We might add additional information in future like:
- * - used database
- * - used scoring method
- */
-public class FBCandidates extends AbstractFBCandidates<CompoundCandidate> {
+public class TopMsNovelistScore extends FormulaScore {
 
-    public FBCandidates(List<Scored<CompoundCandidate>> results) {
-        super(results);
+    public TopMsNovelistScore(double score) {
+        super(score);
     }
 
+    @Override
+    public ScoreType getScoreType() {
+        return ScoreType.Logarithmic;
+    }
+
+    @Override
+    public String name() {
+        return "MsNovelistScore";
+    }
+
+    @Override
+    public String shortName() {
+        return "MsNovelist";
+    }
 }

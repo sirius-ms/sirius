@@ -52,6 +52,12 @@ public abstract class SpectrumStorage {
         public Ms2SpectrumHeader addMs2Spectrum(Ms2SpectrumHeader header, SimpleSpectrum spectrum) {
             int id = ms2spectraIds.incrementAndGet();
             Ms2SpectrumHeader ms2SpectrumHeader = header.withUid(id);
+
+            // TODO: workaround. Validation should be done somewhere else @martin_engler
+            if (Double.isNaN(header.getTargetedMz())) {
+
+            }
+
             ms2SpectraMap.put(id, spectrum);
             ms2headers.put(id, ms2SpectrumHeader);
             return ms2SpectrumHeader;

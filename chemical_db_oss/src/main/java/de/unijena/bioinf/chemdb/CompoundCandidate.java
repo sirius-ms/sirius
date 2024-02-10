@@ -94,8 +94,7 @@ public class CompoundCandidate {
         this.qLayer = c.qLayer;
         this.xlogp = c.xlogp;
         this.tanimoto = c.tanimoto;
-        if (c.pubmedIDs != null)
-            this.pubmedIDs = c.pubmedIDs;
+        this.pubmedIDs = c.pubmedIDs;
         this.taxonomicScore = c.taxonomicScore;
         this.taxonomicSpecies = c.taxonomicSpecies;
         this.referenceSpectraSplash = c.referenceSpectraSplash;
@@ -188,7 +187,6 @@ public class CompoundCandidate {
     public void setXlogp(double xlogp) {
         this.xlogp = xlogp;
     }
-
 
     public Double getTanimoto() {
         return tanimoto;

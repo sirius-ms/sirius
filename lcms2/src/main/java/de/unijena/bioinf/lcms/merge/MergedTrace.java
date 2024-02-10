@@ -4,13 +4,14 @@ import de.unijena.bioinf.lcms.ScanPointMapping;
 import de.unijena.bioinf.lcms.datatypes.CustomDataType;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.lcms.trace.Trace;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import lombok.Getter;
-import lombok.Setter;
 import org.h2.mvstore.WriteBuffer;
 
 import java.nio.ByteBuffer;
-import java.util.Locale;
+import java.util.*;
 
 public class MergedTrace {
 
@@ -26,9 +27,11 @@ public class MergedTrace {
     private int startId;
     @Getter
     private int endId;
-
     @Getter
     private IntArrayList isotopeUids;
+
+    @Getter
+    private Int2ObjectOpenHashMap<int[]> ms2SpectraIds;
 
     public MergedTrace(int uid) {
         this.uid = uid;
@@ -37,17 +40,19 @@ public class MergedTrace {
         this.sampleIds = new IntArrayList();
         this.traceIds = new IntArrayList();
         this.isotopeUids = new IntArrayList();
+        this.ms2SpectraIds = new Int2ObjectOpenHashMap<>();
         this.startId = -1;
         this.endId = -1;
     }
 
-    protected MergedTrace(int uid, double[] mz, double[] ints, int[] sampleIds, int[] traceIds, int[] isotopeUids, int startId, int endId) {
+    protected MergedTrace(int uid, double[] mz, double[] ints, int[] sampleIds, int[] traceIds, int[] isotopeUids, Int2ObjectOpenHashMap<int[]> ms2SpectraList, int startId, int endId) {
         this.uid = uid;
         this.mz = mz;
         this.ints = ints;
         this.sampleIds = new IntArrayList(sampleIds);
         this.traceIds = new IntArrayList(traceIds);
         this.isotopeUids = new IntArrayList(isotopeUids);
+        this.ms2SpectraIds =  ms2SpectraList;
         this.startId = startId;
         this.endId = endId;
     }
@@ -55,6 +60,9 @@ public class MergedTrace {
     public void finishMerging() {
         for (int k=0; k < mz.length; ++k) {
             if (ints[k]>0) mz[k] /=  ints[k];
+        }
+        for (int key : ms2SpectraIds.keySet().toIntArray()) {
+            ms2SpectraIds.put(key, new IntOpenHashSet(ms2SpectraIds.get(key)).intStream().sorted().toArray());
         }
     }
 
@@ -173,6 +181,16 @@ public class MergedTrace {
         }
     }
 
+    public void addMs2(int sampleId, int... ms2Ids) {
+        int[] xs = ms2SpectraIds.get(sampleId);
+        if (xs!=null) {
+            int n=xs.length;
+            xs = Arrays.copyOf(xs, xs.length+ms2Ids.length);
+            System.arraycopy(ms2Ids, 0, xs, n, ms2Ids.length);
+        } else xs = ms2Ids;
+        ms2SpectraIds.put(sampleId, xs);
+    }
+
     public static class DataType extends CustomDataType {
 
         @Override
@@ -192,6 +210,11 @@ public class MergedTrace {
             writeInt(buff, t.sampleIds.toIntArray());
             writeInt(buff, t.traceIds.toIntArray());
             writeInt(buff, t.isotopeUids.toIntArray());
+            buff.putInt(t.ms2SpectraIds.size());
+            for (int id : t.ms2SpectraIds.keySet()) {
+                buff.putInt(id);
+                writeInt(buff, t.ms2SpectraIds.get(id));
+            }
         }
 
         @Override
@@ -204,7 +227,14 @@ public class MergedTrace {
             int[] sampleIds = readInt(buff);
             int[] traceIds = readInt(buff);
             int[] isotopeUids = readInt(buff);
-            return new MergedTrace(uid, mz, ints, sampleIds, traceIds, isotopeUids, startId, endId);
+            int ms2n = buff.getInt();
+            Int2ObjectOpenHashMap<int[]> ms2 = new Int2ObjectOpenHashMap<>();
+            for (int k=0; k < ms2n; ++k) {
+                int sampleId = buff.getInt();
+                int[] uids = readInt(buff);
+                ms2.put(sampleId, uids);
+            }
+            return new MergedTrace(uid, mz, ints, sampleIds, traceIds, isotopeUids, ms2, startId, endId);
         }
     }
 }
