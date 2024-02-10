@@ -67,7 +67,7 @@ public class CanopusSubToolJob extends InstanceJob {
 
         // create input
         List<FormulaResult> res = input.stream().map(SScored::getCandidate)
-                .filter(ir -> ir.hasAnnotation(FingerprintResult.class)).collect(Collectors.toList());
+                .filter(ir -> ir.hasAnnotation(FingerprintResult.class)).toList();
 
         // check for valid input
         if (res.isEmpty()) {

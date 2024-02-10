@@ -82,7 +82,6 @@ public class Run extends ApplicationCore {
     }
 
     public void cancel() {
-        System.out.println("RUN CANCEL: " + (flow != null));
         if (flow != null)
             flow.cancel();
     }

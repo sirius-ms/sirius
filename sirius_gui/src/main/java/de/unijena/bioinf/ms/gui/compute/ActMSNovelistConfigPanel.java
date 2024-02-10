@@ -20,25 +20,24 @@
 package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
+import de.unijena.bioinf.ms.frontend.subtools.msnovelist.MsNovelistOptions;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 
-public class ActMSNovelistConfigPanel extends ActivatableConfigPanel<SubToolConfigPanel<FingerprintOptions>> {
+public class ActMSNovelistConfigPanel extends ActivatableConfigPanel<SubToolConfigPanel<MsNovelistOptions>> {
 
     public ActMSNovelistConfigPanel() {
-        super("MSNovelist", Icons.FINGER_32, true, () -> { //todo change icon
-            SubToolConfigPanel<FingerprintOptions> p = new SubToolConfigPanel<>(FingerprintOptions.class) { //todo NewWorkflow: set correct options
-            };
+        super("MSNovelist", Icons.DB_LENS_32, true, () -> { //todo NewWorkflow change icon
+            SubToolConfigPanel<MsNovelistOptions> p = new SubToolConfigPanel<>(MsNovelistOptions.class) {};
             return p;
         });
     }
 
     @Override
     protected void setComponentsEnabled(boolean enabled) {
-        //todo maybe add citation dialog?
         String adviceKey = "de.unijena.bioinf.sirius.ui.advise.msnovelist";
 
         if (enabled && !PropertyManager.getBoolean(adviceKey, false)) {
