@@ -20,6 +20,7 @@
 package de.unijena.bioinf.projectspace.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
+import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
 import de.unijena.bioinf.projectspace.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +30,7 @@ import java.util.Optional;
 
 public class FBCandidateFingerprintSerializerTopK implements ComponentSerializer<FormulaResultId, FormulaResult, FBCandidateFingerprintsTopK> {
     final FBCandidateNumber k;
-    final FBCandidateFingerprintSerializer source = new FBCandidateFingerprintSerializer();
+    final FBCandidateFingerprintSerializer<FBCandidateFingerprints> source = new FBCandidateFingerprintSerializer<>(FingerIdLocations.FINGERBLAST_FPs, FBCandidateFingerprints::new);
 
     public FBCandidateFingerprintSerializerTopK(FBCandidateNumber k) {
         this.k = k;

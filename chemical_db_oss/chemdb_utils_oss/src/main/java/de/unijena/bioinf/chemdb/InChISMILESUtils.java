@@ -154,6 +154,15 @@ public class InChISMILESUtils {
         }
     }
 
+    public static InChI getInchiFromSmilesOrThrow(String smiles, boolean keepStereoInformation) {
+        try {
+            return getInchiFromSmiles(smiles,keepStereoInformation);
+        } catch (CDKException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
     public static InChI getInchiFromSmiles(String smiles, boolean keepStereoInformation) throws CDKException {
         return getInchi(getAtomContainerFromSmiles(smiles), keepStereoInformation);
     }

@@ -28,6 +28,8 @@ public interface FingerIdLocations {
             SEARCH = new Location<>("search", "json", FormulaResultId::fileName),
             FINGERBLAST = new Location<>("fingerid", "tsv", FormulaResultId::fileName),
             FINGERBLAST_FPs = new Location<>("fingerid", "fps", FormulaResultId::fileName),
+            MSNOVELIST_FINGERBLAST = new Location<>("msnovelist", "tsv", FormulaResultId::fileName),
+            MSNOVELIST_FINGERBLAST_FPs = new Location<>("msnovelist", "fps", FormulaResultId::fileName),
             FINGERPRINTS = new Location<>("fingerprints", "fpt", FormulaResultId::fileName);
 
     String

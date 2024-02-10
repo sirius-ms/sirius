@@ -18,35 +18,38 @@
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.fingerid.blast;
+package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
-import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.fingerid.blast.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Result of a fingerblast job
- * We might add additional information in future like:
- * - used database
- * - used scoring method
- */
-public class FingerblastResult extends AbstractFingerblastResult<TopCSIScore> {
+public class MsNovelistFingerblastResult extends AbstractFingerblastResult<TopMsNovelistScore> {
+    private final double[] rnnScores;
 
-    public FingerblastResult(List<Scored<FingerprintCandidate>> results) {
-        super(results, TopCSIScore::new);
+    public MsNovelistFingerblastResult(List<Scored<FingerprintCandidate>> results, double[] rnnScores) {
+        super(results, TopMsNovelistScore::new);
+        this.rnnScores = rnnScores;
     }
 
-    public FBCandidateFingerprints getCandidateFingerprints(){
-        return new FBCandidateFingerprints(
+    public MsNovelistFBCandidateFingerprints getCandidateFingerprints(){
+        return new MsNovelistFBCandidateFingerprints(
                 results.stream().map(SScored::getCandidate).map(FingerprintCandidate::getFingerprint)
                         .collect(Collectors.toList()));
     }
 
-    public FBCandidates getCandidates(){
-        return new FBCandidates(results.stream().map(s -> new Scored<>(new CompoundCandidate(s.getCandidate()),s.getScore())).collect(Collectors.toList()));
+    public MsNovelistFBCandidates getCandidates() {
+        List<Scored<MsNovelistCompoundCandidate>> msnCandidates = new ArrayList<>(results.size());
+        for (int i = 0; i < rnnScores.length; i++){
+            Scored<FingerprintCandidate> c = results.get(i);
+            msnCandidates.add(new Scored<>(new MsNovelistCompoundCandidate(c.getCandidate(), rnnScores[i]), c.getScore()));
+        }
+
+        return new MsNovelistFBCandidates(msnCandidates);
     }
 }

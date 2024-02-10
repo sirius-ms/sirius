@@ -74,4 +74,8 @@ public class FingerIdResult implements Annotated<ResultAnnotation> {
     public List<Scored<FingerprintCandidate>> getFingerprintCandidates() {
         return getAnnotation(FingerblastResult.class).map(FingerblastResult::getResults).orElse(null);
     }
+
+    public List<Scored<FingerprintCandidate>> getMsNovelistFingerprintCandidates() {
+        return getAnnotation(MsNovelistFingerblastResult.class).map(MsNovelistFingerblastResult::getResults).orElse(null);
+    }
 }

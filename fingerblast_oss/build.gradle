@@ -26,4 +26,5 @@ dependencies() {
 	api project(':fingerprint_pvalues_oss')
 	api project(':chemical_db_oss')
 	api project(':chemical_db_oss:chemdb_sql_oss')
+	api project(':chemical_db_oss:chemdb_utils_oss')
 }
