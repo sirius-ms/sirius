@@ -70,7 +70,7 @@ public class BatchComputeDialog extends JDialog {
     private final ActZodiacConfigPanel zodiacConfigs; //Zodiac configs
     private final ActFingerprintAndCanopusConfigPanel fingerprintAndCanopusConfigPanel; //Combines CSI:FingerID predict and CANOPUS configs
     private final ActFingerblastConfigPanel csiSearchConfigs; //CSI:FingerID search configs
-    private final ActMSNovelistConfigPanel msNovelistConfigPanel; //MsNovelist configs
+    private final ActMSNovelistConfigPanel msNovelistConfigs; //MsNovelist configs
 
     // compounds on which the configured Run will be executed
     private final List<InstanceBean> compoundsToProcess;
@@ -109,7 +109,7 @@ public class BatchComputeDialog extends JDialog {
             zodiacConfigs = new ActZodiacConfigPanel(gui, isAdvancedView);
             fingerprintAndCanopusConfigPanel = new ActFingerprintAndCanopusConfigPanel(gui);
             csiSearchConfigs = new ActFingerblastConfigPanel(gui, formulaIDConfigPanel.content.getSearchDBList().checkBoxList);
-            msNovelistConfigPanel = new ActMSNovelistConfigPanel(gui);
+            msNovelistConfigs = new ActMSNovelistConfigPanel(gui);
 
             if (compoundsToProcess.size() > 1 && ms2) {
                 zodiacConfigs.addEnableChangeListener((s, enabled) -> {
@@ -140,10 +140,9 @@ public class BatchComputeDialog extends JDialog {
             }
 
             if (ms2) {
-                JPanel fpPrediction = addConfigPanel("Predict properties: CSI:FingerID - Fingerprint Prediction & CANOPUS - Compound Class Prediction", fingerprintAndCanopusConfigPanel);
-                JPanel dbSearch =  addConfigPanel("CSI:FingerID - Structure Database Search", csiSearchConfigs);
-                addConfigPanel("MSNovelist - De Novo Structure Generation", msNovelistConfigPanel, dbSearch); //todo NewWorkflow: is this advanced mode only?
-
+                addConfigPanel("Predict properties: CSI:FingerID - Fingerprint Prediction & CANOPUS - Compound Class Prediction", fingerprintAndCanopusConfigPanel);
+                addConfigPanel("MSNovelist - De Novo Structure Generation", msNovelistConfigs,
+                        addConfigPanel("CSI:FingerID - Structure Database Search", csiSearchConfigs)); //todo NewWorkflow: is this advanced mode only?
             }
         }
         // make south panel with Recompute/Compute/Abort
@@ -288,7 +287,7 @@ public class BatchComputeDialog extends JDialog {
         }
 
 
-        if (fingerprintAndCanopusConfigPanel.isToolSelected() || csiSearchConfigs.isToolSelected() || msNovelistConfigPanel.isToolSelected() && !PropertyManager.getBoolean(DO_NOT_SHOW_AGAIN_KEY_OUTDATED_PS, false)) {
+        if (fingerprintAndCanopusConfigPanel.isToolSelected() || csiSearchConfigs.isToolSelected() || msNovelistConfigs.isToolSelected() && !PropertyManager.getBoolean(DO_NOT_SHOW_AGAIN_KEY_OUTDATED_PS, false)) {
             //CHECK Server connection
             if (checkResult == null)
                 checkResult = CheckConnectionAction.checkConnectionAndLoad(gui);
@@ -407,6 +406,11 @@ public class BatchComputeDialog extends JDialog {
             configCommand.addAll(csiSearchConfigs.asParameterList());
         }
 
+        if (msNovelistConfigs != null && msNovelistConfigs.isToolSelected()) {
+            toolCommands.add(msNovelistConfigs.content.toolCommand());
+            configCommand.addAll(msNovelistConfigs.asParameterList());
+        }
+
         List<String> command = new ArrayList<>();
         configCommand.add("--RecomputeResults=" + recomputeBox.isSelected());
 
@@ -450,7 +454,7 @@ public class BatchComputeDialog extends JDialog {
     }
 
     private boolean warnNoMethodIsSelected() {
-        if (!isAnySelected(formulaIDConfigPanel, zodiacConfigs, fingerprintAndCanopusConfigPanel, csiSearchConfigs, msNovelistConfigPanel)) {
+        if (!isAnySelected(formulaIDConfigPanel, zodiacConfigs, fingerprintAndCanopusConfigPanel, csiSearchConfigs, msNovelistConfigs)) {
             new WarningDialog(this, "Please select at least one method.");
             return true;
         } else {
@@ -471,7 +475,7 @@ public class BatchComputeDialog extends JDialog {
 
         if (checkResult != null) {
             if (isConnected(checkResult)) {
-                if ((fingerprintAndCanopusConfigPanel.isToolSelected() || csiSearchConfigs.isToolSelected() || msNovelistConfigPanel.isToolSelected()) && isWorkerWarning(checkResult)) {
+                if ((fingerprintAndCanopusConfigPanel.isToolSelected() || csiSearchConfigs.isToolSelected() || msNovelistConfigs.isToolSelected()) && isWorkerWarning(checkResult)) {
                     if (checkResult.getWorkerInfo() == null ||
                             (!checkResult.isSupportsNegPredictorTypes()
                                     && compoundsToProcess.stream().anyMatch(it -> it.getIonType().isNegative())) ||

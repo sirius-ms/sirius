@@ -54,6 +54,7 @@ import org.apache.commons.math3.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -113,17 +114,17 @@ public class FingerblastSubToolJob extends InstanceJob {
 
         final Map<FormulaResult, FingerIdResult> formulaResultsMap = formulaResults.stream().map(SScored::getCandidate)
                 .filter(res -> res.hasAnnotation(FingerprintResult.class))
+                .filter(res -> res.hasAnnotation(CanopusResult.class))
                 .collect(Collectors.toMap(res -> res, res -> {
                     FingerIdResult idr = new FingerIdResult(res.getAnnotationOrThrow(FTree.class));
                     idr.setAnnotation(FingerprintResult.class, res.getAnnotationOrThrow(FingerprintResult.class));
                     return idr;
-                }));
+                }, (k, v) -> v,  LinkedHashMap::new));
 
 
-        final Map<FormulaResult, CanopusResult> formulaCanopusResultsMap = formulaResults.stream().map(SScored::getCandidate)
-                .filter(res -> res.hasAnnotation(CanopusResult.class))
-                .collect(Collectors.toMap(res -> res, res -> res.getAnnotationOrThrow(CanopusResult.class)));
-
+        final Map<FormulaResult, CanopusResult> formulaCanopusResultsMap = formulaResultsMap.keySet().stream()
+                .collect(Collectors.toMap(res -> res, res -> res.getAnnotationOrThrow(CanopusResult.class),
+                        (k, v) -> v,  LinkedHashMap::new));
 
         updateProgress(20);
         {
@@ -191,7 +192,7 @@ public class FingerblastSubToolJob extends InstanceJob {
 
             // write results
             inst.updateFormulaResult(formRes,
-                    FormulaScoring.class, FingerprintResult.class, FBCandidates.class, FBCandidateFingerprints.class, StructureSearchResult.class);
+                    FormulaScoring.class, FBCandidates.class, FBCandidateFingerprints.class, StructureSearchResult.class);
         }
         updateProgress(90);
 
