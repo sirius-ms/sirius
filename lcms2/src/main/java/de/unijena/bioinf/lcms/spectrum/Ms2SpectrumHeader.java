@@ -34,7 +34,7 @@ public class Ms2SpectrumHeader extends Ms1SpectrumHeader implements Serializable
         super(uid, polarity, centroided);
         this.energy = energy;
         this.parentId = parentId;
-        this.isolationWindow = window;
+        this.isolationWindow = window==null || window.isUndefined() ? null : window;
         this.retentionTime = retentionTime;
         if (precursorMz<0 && targetedMz<0) {
             throw new IllegalArgumentException("Neither precursor nor targeted mz is known");
