@@ -22,13 +22,10 @@ package de.unijena.bioinf.projectspace.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
+import de.unijena.bioinf.fingerid.blast.AbstractFBCandidateFingerprints;
 import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
-import de.unijena.bioinf.projectspace.ComponentSerializer;
-import de.unijena.bioinf.projectspace.FormulaResultId;
-import de.unijena.bioinf.projectspace.ProjectReader;
-import de.unijena.bioinf.projectspace.ProjectWriter;
-import de.unijena.bioinf.projectspace.FormulaResult;
+import de.unijena.bioinf.projectspace.*;
 import gnu.trove.list.array.TShortArrayList;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,19 +35,28 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.projectspace.fingerid.FingerIdLocations.FINGERBLAST_FPs;
 
-public class FBCandidateFingerprintSerializer implements ComponentSerializer<FormulaResultId, FormulaResult, FBCandidateFingerprints> {
+public class FBCandidateFingerprintSerializer<FB extends AbstractFBCandidateFingerprints> implements ComponentSerializer<FormulaResultId, FormulaResult, FB> {
+    private final Function<List<Fingerprint>, FB> creator;
+    private final Location<FormulaResultId> location;
+
+    public FBCandidateFingerprintSerializer(Location<FormulaResultId> location, Function<List<Fingerprint>, FB> creator) {
+        this.location = location;
+        this.creator = creator;
+    }
+
     protected List<Fingerprint> readFingerprints(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
         //read fingerprints from binary
-        if (reader.exists(FINGERBLAST_FPs.relFilePath(id))) {
+        if (reader.exists(location.relFilePath(id))) {
             final FingerIdData fingerIdData = reader.getProjectSpaceProperty(FingerIdDataProperty.class)
                     .map(p -> p.getByIonType(id.getIonType())).orElseThrow();
 
             final FBCandidateNumber numC = id.getAnnotationOrNull(FBCandidateNumber.class);
-            return reader.binaryFile(FINGERBLAST_FPs.relFilePath(id), br -> {
+            return reader.binaryFile(location.relFilePath(id), br -> {
                 List<Fingerprint> fps = new ArrayList<>();
                 try (DataInputStream dis = new DataInputStream(br)) {
                     TShortArrayList shorts = new TShortArrayList(2000); //use it to reconstruct the array
@@ -74,20 +80,19 @@ public class FBCandidateFingerprintSerializer implements ComponentSerializer<For
 
     @Nullable
     @Override
-    public FBCandidateFingerprints read(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
+    public FB read(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
         final List<Fingerprint> fps = readFingerprints(reader, id, container);
-        return fps == null ? null : new FBCandidateFingerprints(fps);
+        return fps == null ? null : creator.apply(fps);
     }
 
     @Override
-    public void write(ProjectWriter writer, FormulaResultId id, FormulaResult container, Optional<FBCandidateFingerprints> component) throws IOException {
-        final FBCandidateFingerprints candidatefps = component.orElseThrow(() -> new IllegalArgumentException("Could not find CandidateFingerprints to write for ID: " + id));
+    public void write(ProjectWriter writer, FormulaResultId id, FormulaResult container, Optional<FB> component) throws IOException {
+        final FB candidatefps = component.orElseThrow(() -> new IllegalArgumentException("Could not find CandidateFingerprints to write for ID: " + id));
 
-        writer.binaryFile(FINGERBLAST_FPs.relFilePath(id), (w) -> {
+        writer.binaryFile(location.relFilePath(id), (w) -> {
             try (DataOutputStream da = new DataOutputStream(w)) {
-                List<short[]> fpIdxs = candidatefps.getFingerprints().stream()
-                        .map(Fingerprint::toIndizesArray)
-                        .collect(Collectors.toList());
+                List<short[]> fpIdxs = candidatefps.getFingerprints()
+                        .stream().map(Fingerprint::toIndizesArray).toList();
                 for (short[] fpIdx : fpIdxs) {
                     for (short idx : fpIdx) {
                         da.writeShort(idx);
@@ -100,11 +105,11 @@ public class FBCandidateFingerprintSerializer implements ComponentSerializer<For
 
     @Override
     public void delete(ProjectWriter writer, FormulaResultId id) throws IOException {
-        writer.deleteIfExists(FINGERBLAST_FPs.relFilePath(id));
+        writer.deleteIfExists(location.relFilePath(id));
     }
 
     @Override
     public void deleteAll(ProjectWriter writer) throws IOException {
-        writer.deleteIfExists(FINGERBLAST_FPs.relDir());
+        writer.deleteIfExists(location.relDir());
     }
 }

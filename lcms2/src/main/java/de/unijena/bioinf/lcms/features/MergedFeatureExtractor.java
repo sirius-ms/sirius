@@ -1,6 +1,8 @@
 package de.unijena.bioinf.lcms.features;
 
 import de.unijena.bioinf.lcms.merge.MergedTrace;
+import de.unijena.bioinf.lcms.msms.MergedSpectrum;
+import de.unijena.bioinf.lcms.msms.Ms2MergeStrategy;
 import de.unijena.bioinf.lcms.statistics.SampleStats;
 import de.unijena.bioinf.lcms.trace.ContiguousTrace;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
@@ -8,6 +10,7 @@ import de.unijena.bioinf.lcms.trace.Trace;
 import de.unijena.bioinf.lcms.trace.segmentation.PersistentHomology;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import de.unijena.bioinf.ms.persistence.model.core.AlignedFeatures;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -15,7 +18,7 @@ import java.util.stream.Collectors;
 public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
 
     @Override
-    public Iterator<AlignedFeatures> extractFeatures(ProcessedSample mergedSample, ProcessedSample[] samplesInTrace, MergedTrace alignedFeature) {
+    public Iterator<AlignedFeatures> extractFeatures(ProcessedSample mergedSample, ProcessedSample[] samplesInTrace, MergedTrace alignedFeature, Ms2MergeStrategy ms2MergeStrategy) {
         // segments for merged trace
         Trace mergedTrace = alignedFeature.toTrace(mergedSample);
         final SampleStats stats = mergedSample.getStorage().getStatistics();
@@ -28,13 +31,22 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
             assert sample.getUid() == alignedFeature.getSampleIds().getInt(k);
             individualSegments[k] = assignSegmentsToIndividualTrace(mergedSample, sample, traceSegments, mergedTrace, mergedSample.getStorage().getMergeStorage().getTrace(alignedFeature.getTraceIds().getInt(k)) );
         }
+        final Int2ObjectOpenHashMap<ProcessedSample> uid2sample = new Int2ObjectOpenHashMap<>();
+        for (ProcessedSample sample : samplesInTrace) {
+            uid2sample.put(sample.getUid(), sample);
+        }
         {
-
+            ms2MergeStrategy.assignMs2(mergedSample, alignedFeature, traceSegments, uid2sample, new Ms2MergeStrategy.AssignMs2ToFeature() {
+                @Override
+                public void assignMs2ToFeature(MergedTrace mergedTrace, TraceSegment segment, MergedSpectrum mergedSpectrum) {
+                    // TODO: Do something with MS/MS
+                }
+            });
         }
         return null;
     }
 
-    public String extractFeaturesToString(ProcessedSample mergedSample, ProcessedSample[] samplesInTrace, MergedTrace alignedFeature) {
+    public String extractFeaturesToString(ProcessedSample mergedSample, ProcessedSample[] samplesInTrace, MergedTrace alignedFeature, Ms2MergeStrategy ms2MergeStrategy) {
         // segments for merged trace
         Trace mergedTrace = alignedFeature.toTrace(mergedSample);
         SampleStats stats = mergedSample.getStorage().getStatistics();
@@ -46,6 +58,18 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
             ProcessedSample sample = samplesInTrace[k];
             assert sample.getUid() == alignedFeature.getSampleIds().getInt(k);
             individualSegments[k] = assignSegmentsToIndividualTrace(mergedSample, sample, traceSegments, mergedTrace, mergedSample.getStorage().getMergeStorage().getTrace(alignedFeature.getTraceIds().getInt(k)) );
+        }
+        final Int2ObjectOpenHashMap<ProcessedSample> uid2sample = new Int2ObjectOpenHashMap<>();
+        for (ProcessedSample sample : samplesInTrace) {
+            uid2sample.put(sample.getUid(), sample);
+        }
+        {
+            ms2MergeStrategy.assignMs2(mergedSample, alignedFeature, traceSegments, uid2sample, new Ms2MergeStrategy.AssignMs2ToFeature() {
+                @Override
+                public void assignMs2ToFeature(MergedTrace mergedTrace, TraceSegment segment, MergedSpectrum mergedSpectrum) {
+                    // TODO: do something with MS/MS
+                }
+            });
         }
         {
             StringBuffer buf = new StringBuffer();
