@@ -33,9 +33,7 @@ import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.StructureSearchResult;
-import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
-import de.unijena.bioinf.fingerid.blast.FBCandidates;
-import de.unijena.bioinf.fingerid.blast.TopCSIScore;
+import de.unijena.bioinf.fingerid.blast.*;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -105,8 +103,11 @@ public class ProjectSpaceManager<I extends Instance> implements IterableWithSize
         config.defineProjectSpaceProperty(FingerIdDataProperty.class, new FingerIdDataSerializer());
         config.registerComponent(FormulaResult.class, FingerprintResult.class, new FingerprintSerializer());
         config.registerComponent(FormulaResult.class, FBCandidates.class, new FBCandidatesSerializer());
-        config.registerComponent(FormulaResult.class, FBCandidateFingerprints.class, new FBCandidateFingerprintSerializer());
+        config.registerComponent(FormulaResult.class, FBCandidateFingerprints.class, new FBCandidateFingerprintSerializer<>(FingerIdLocations.FINGERBLAST_FPs, FBCandidateFingerprints::new));
         config.registerComponent(FormulaResult.class, StructureSearchResult.class, new StructureSearchResultSerializer());
+        //fingerid on msnovelist
+        config.registerComponent(FormulaResult.class, MsNovelistFBCandidates.class, new MsNovelistFBCandidatesSerializer());
+        config.registerComponent(FormulaResult.class, MsNovelistFBCandidateFingerprints.class, new FBCandidateFingerprintSerializer<>(FingerIdLocations.MSNOVELIST_FINGERBLAST_FPs, MsNovelistFBCandidateFingerprints::new));
         //canopus
         config.defineProjectSpaceProperty(CanopusCfDataProperty.class, new CanopusCfDataProperty.Serializer());
         config.defineProjectSpaceProperty(CanopusNpcDataProperty.class, new CanopusNpcDataProperty.Serializer());

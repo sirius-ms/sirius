@@ -34,6 +34,7 @@ import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerprinter.FingerprinterOptions;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignOptions;
 import de.unijena.bioinf.ms.frontend.subtools.login.LoginOptions;
+import de.unijena.bioinf.ms.frontend.subtools.msnovelist.MsNovelistOptions;
 import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoOptions;
 import de.unijena.bioinf.ms.frontend.subtools.projectspace.ProjecSpaceOptions;
 import de.unijena.bioinf.ms.frontend.subtools.settings.SettingsOptions;
@@ -135,7 +136,8 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
                 PassatuttoOptions.class, new PassatuttoOptions(configOptionLoader),
                 FingerprintOptions.class, new FingerprintOptions(configOptionLoader),
                 FingerblastOptions.class, new FingerblastOptions(configOptionLoader),
-                CanopusOptions.class, new CanopusOptions(configOptionLoader)
+                CanopusOptions.class, new CanopusOptions(configOptionLoader),
+                MsNovelistOptions.class, new MsNovelistOptions(configOptionLoader)
         );
 
         customDBOptions = new CustomDBOptions();

@@ -32,6 +32,7 @@ import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.ms.frontend.subtools.msnovelist.MsNovelistOptions;
 import de.unijena.bioinf.projectspace.FormulaResultRankingScore;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.Instance;
@@ -116,5 +117,10 @@ public class FingerblastOptions implements ToolChainOptions<FingerblastSubToolJo
     @Override
     public List<Class<? extends ToolChainOptions<?, ?>>> getDependentSubCommands() {
         return List.of();
+    }
+
+    @Override
+    public List<Class<? extends ToolChainOptions<?, ?>>> getFollowupSubCommands() {
+        return List.of(MsNovelistOptions.class);
     }
 }

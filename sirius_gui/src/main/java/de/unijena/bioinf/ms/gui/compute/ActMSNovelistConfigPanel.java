@@ -21,16 +21,17 @@ package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.frontend.subtools.msnovelist.MsNovelistOptions;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 
-public class ActMSNovelistConfigPanel extends ActivatableConfigPanel<SubToolConfigPanel<FingerprintOptions>> {
+public class ActMSNovelistConfigPanel extends ActivatableConfigPanel<SubToolConfigPanel<MsNovelistOptions>> {
 
     public ActMSNovelistConfigPanel(SiriusGui gui) {
-        super(gui, "MSNovelist", Icons.FINGER_32, () -> { //todo newWorkflow: change icon
-            SubToolConfigPanel<FingerprintOptions> p = new SubToolConfigPanel<>(FingerprintOptions.class) { //todo NewWorkflow: set correct options
+        super(gui, "MSNovelist", Icons.DB_LENS_32, () -> { //todo newWorkflow: change icon
+            SubToolConfigPanel<MsNovelistOptions> p = new SubToolConfigPanel<>(MsNovelistOptions.class) { //todo NewWorkflow: set correct options
             };
             return p;
         });
