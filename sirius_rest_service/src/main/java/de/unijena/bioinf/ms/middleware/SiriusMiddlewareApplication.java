@@ -34,14 +34,12 @@ import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoade
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastSubToolJob;
 import de.unijena.bioinf.ms.frontend.subtools.middleware.MiddlewareAppOptions;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
+import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
+import de.unijena.bioinf.ms.middleware.service.gui.GuiService;
 import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceProviderImpl;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.projectspace.FormulaResult;
-import de.unijena.bioinf.projectspace.ProjectSpaceConfiguration;
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
-import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
+import de.unijena.bioinf.projectspace.*;
 import de.unijena.bioinf.projectspace.fingerid.*;
-import de.unijena.bioinf.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.rest.ProxyManager;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -56,6 +54,7 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.ApplicationPidFileWriter;
 import org.springframework.boot.web.context.WebServerPortFileWriter;
 import org.springframework.context.ConfigurableApplicationContext;
+import picocli.CommandLine;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -89,22 +88,22 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
             };
         }
 
-        System.setProperty("de.unijena.bioinf.sirius.springSupport", "true");
-        //run gui if not parameter ist given, to get rid of a second launcher
         if (args == null || args.length == 0)
-            args = new String[]{"gui"};
-
+            args = new String[]{"rest", "-s", "--gui"};
         if (Arrays.stream(args).anyMatch(it ->
-                it.equalsIgnoreCase("asService") ||
-                        it.equalsIgnoreCase("rest") ||
-                        it.equalsIgnoreCase("-h") ||
-                        it.equalsIgnoreCase("--help")
+                it.equalsIgnoreCase(MiddlewareAppOptions.class.getAnnotation(CommandLine.Command.class).name())
+                        || Arrays.stream(MiddlewareAppOptions.class.getAnnotation(CommandLine.Command.class).aliases())
+                        .anyMatch(cmd -> cmd.equalsIgnoreCase(it))
+                        || it.equalsIgnoreCase("-h") || it.equalsIgnoreCase("--help") // just to get Middleware help.
         )) {
+
+            System.setProperty("de.unijena.bioinf.sirius.springSupport", "true");
             System.setProperty(APP_TYPE_PROPERTY_KEY, "SERVICE");
 //            SiriusJobs.enforceClassLoaderGlobally(Thread.currentThread().getContextClassLoader());
             measureTime("Init Swing Job Manager");
             // The spring app classloader seems not to be correctly inherited to sub thread
             // So we need to ensure that the apache.configuration2 libs gets access otherwise.
+            // SwingJobManager is needed to show loading screens in GUI
             SiriusJobs.setJobManagerFactory((cpuThreads) -> new SwingJobManager(
                     cpuThreads,
                     Math.min(PropertyManager.getNumberOfThreads(), 4),
@@ -121,11 +120,13 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                 final ProjectSpaceManagerFactory<?, ?> psf = new ProjectSpaceManagerFactory.Default();
 
                 rootOptions = new CLIRootOptions<>(configOptionLoader, psf);
+                MiddlewareAppOptions<Instance, ProjectSpaceManager<Instance>> middlewareOpts = new MiddlewareAppOptions<>();
+
                 if (RUN != null)
                     throw new IllegalStateException("Application can only run Once!");
                 measureTime("init Run");
                 RUN = new Run(new WorkflowBuilder<>(rootOptions, configOptionLoader, BackgroundRuns.getBufferFactory(),
-                        List.of(new MiddlewareAppOptions<>())));
+                        List.of(middlewareOpts)));
                 measureTime("Start Parse args");
                 successfulParsed = RUN.parseArgs(args);
                 measureTime("Parse args Done!");
@@ -152,17 +153,23 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                     //add default project to project service
                     //todo make generic that it works with arbitrary provider ore remove if not needed...
                     final SiriusProjectSpace ps = rootOptions.getProjectSpace().projectSpace();
-                    appContext.getBean("projectsProvider", SiriusProjectSpaceProviderImpl.class)
+                    ProjectInfo startPs = appContext
+                            .getBean("projectsProvider", SiriusProjectSpaceProviderImpl.class)
                             .addProjectSpace(ps.getLocation().getFileName().toString(), ps);
 
                     measureTime("Workflow DONE!");
                     System.err.println("SIRIUS Service started successfully!");
+
+                    if (middlewareOpts.isStartGui()) ((GuiService<?>)appContext.getBean("guiService"))
+                            .createGuiInstance(startPs.getProjectId());
                 } else {
                     System.exit(0);// Zero because this is the help message case
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        } else {
+            SiriusCLIApplication.main(args);
         }
     }
 

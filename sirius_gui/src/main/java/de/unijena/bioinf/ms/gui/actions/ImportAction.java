@@ -41,6 +41,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -105,6 +106,7 @@ public class ImportAction extends AbstractGuiAction {
             align = new QuestionDialog(popupOwner, "<html><body> You inserted multiple LC-MS/MS Runs. <br> Do you want to Align them during import?</br></body></html>"/*, DONT_ASK_OPEN_KEY*/).isSuccess();
 
         ImportLocalFilesSubmission sub = new ImportLocalFilesSubmission() //todo nightsky: add this parameters to import dialog with defaults set...
+                .inputPaths(input.msInput.msParserfiles.keySet().stream().map(Path::toAbsolutePath).map(Path::toString).toList())
                 .allowMs1OnlyData(PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.allowMs1Only", true))
                 .ignoreFormulas(PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.ignoreFormulas", false))
                 .alignLCMSRuns(align);

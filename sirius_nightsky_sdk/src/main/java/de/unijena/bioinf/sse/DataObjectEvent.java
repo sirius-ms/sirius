@@ -51,4 +51,12 @@ public class DataObjectEvent<Data>  {
         return dataType;
     }
 
+    @Override
+    public String toString() {
+        return "DataObjectEvent{" +
+                "data=" + data +
+                ", lastEventId='" + lastEventId + '\'' +
+                ", dataType=" + dataType +
+                '}';
+    }
 }

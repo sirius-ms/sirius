@@ -32,6 +32,7 @@ import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 public interface ProjectsProvider<P extends de.unijena.bioinf.ms.middleware.service.projects.Project> extends DisposableBean {
 
@@ -77,5 +78,12 @@ public interface ProjectsProvider<P extends de.unijena.bioinf.ms.middleware.serv
             if (!containsProject(n))
                 return n;
         }
+    }
+
+    Pattern projectIdValidator = Pattern.compile("[a-zA-Z0-9_-]*", Pattern.CASE_INSENSITIVE);
+    default String validateId(String projectId){
+        if (!projectIdValidator.matcher(projectId).matches())
+            throw new IllegalArgumentException("Illegal ProjectId. ProjectId must only contain [a-zA-Z0-9_-]!");
+        return projectId;
     }
 }
