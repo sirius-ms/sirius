@@ -71,17 +71,6 @@ public class GuiProjectManager implements Closeable {
         this.projectId = projectId;
         this.siriusClient = siriusClient;
 
-
-        fingerIdDataPos = FingerIdData.readAndClose(new StringReader(siriusClient.projects().getFingerIdData(projectId, 1)));
-        fingerIdDataNeg = FingerIdData.readAndClose(new StringReader(siriusClient.projects().getFingerIdData(projectId, -1)));
-
-        canopusNpcDataPos = CanopusNpcData.readAndClose(new StringReader(siriusClient.projects().getCanopusNpcData(projectId, 1)));
-        canopusNpcDataNeg = CanopusNpcData.readAndClose(new StringReader(siriusClient.projects().getCanopusNpcData(projectId, -1)));
-
-        canopusCfDataPos = CanopusCfData.readAndClose(new StringReader(siriusClient.projects().getCanopusClassyFireData(projectId, 1)));
-        canopusCfDataNeg = CanopusCfData.readAndClose(new StringReader(siriusClient.projects().getCanopusClassyFireData(projectId, -1)));
-
-
         List<InstanceBean> tmp = siriusClient.features().getAlignedFeatures(projectId, 0, Integer.MAX_VALUE, List.of(),
                 null, SearchQueryType.LUCENE, List.of(AlignedFeatureOptField.TOPANNOTATIONS)
         ).getContent().stream().map(f -> new InstanceBean(f, this)).toList();
@@ -135,10 +124,10 @@ public class GuiProjectManager implements Closeable {
             debounceExec = DebouncedExecutionJJob.start((ExFunctions.Runnable) () -> {
                 List<Pair<InstanceBean, Boolean>> toProcess = new ArrayList<>();
 
-                ProjectChangeEvent evt = events.poll();
+                ProjectChangeEvent evt = events.take();
                 while (evt != null) {
                     processEvent(evt).ifPresent(toProcess::add);
-                    evt = events.take();
+                    evt = events.poll();
                 }
 
                 SiriusGlazedLists.multiAddRemove(INSTANCE_LIST, innerList, toProcess);
@@ -192,19 +181,55 @@ public class GuiProjectManager implements Closeable {
 
     public FingerIdData getFingerIdData(int charge) {
         if (charge > 0)
-            return fingerIdDataPos;
+            return getFingerIdDataPos();
+        return getFingerIdDataNeg();
+    }
+
+    public FingerIdData getFingerIdDataPos() {
+        if (fingerIdDataPos == null)
+            fingerIdDataPos = FingerIdData.readAndClose(new StringReader(siriusClient.projects().getFingerIdData(projectId, 1)));
+        return fingerIdDataPos;
+    }
+
+    public FingerIdData getFingerIdDataNeg() {
+        if (fingerIdDataNeg == null)
+            fingerIdDataNeg = FingerIdData.readAndClose(new StringReader(siriusClient.projects().getFingerIdData(projectId, -1)));
         return fingerIdDataNeg;
     }
 
     public CanopusCfData getCanopusCfData(int charge) {
         if (charge > 0)
-            return canopusCfDataPos;
+            return getCanopusCfDataPos();
+        return getCanopusCfDataNeg();
+    }
+
+    public CanopusCfData getCanopusCfDataPos() {
+        if (canopusCfDataPos == null)
+            canopusCfDataPos = CanopusCfData.readAndClose(new StringReader(siriusClient.projects().getCanopusClassyFireData(projectId, 1)));
+        return canopusCfDataPos;
+    }
+
+    public CanopusCfData getCanopusCfDataNeg() {
+        if (canopusCfDataNeg == null)
+            canopusCfDataNeg = CanopusCfData.readAndClose(new StringReader(siriusClient.projects().getCanopusClassyFireData(projectId, -1)));
         return canopusCfDataNeg;
     }
 
     public CanopusNpcData getCanopusNpcData(int charge) {
         if (charge > 0)
-            return canopusNpcDataPos;
+            return getCanopusNpcDataPos();
+        return getCanopusNpcDataNeg();
+    }
+
+    public CanopusNpcData getCanopusNpcDataPos() {
+        if (canopusNpcDataPos == null)
+            canopusNpcDataPos = CanopusNpcData.readAndClose(new StringReader(siriusClient.projects().getCanopusNpcData(projectId, 1)));
+        return canopusNpcDataPos;
+    }
+
+    public CanopusNpcData getCanopusNpcDataNeg() {
+        if (canopusNpcDataNeg == null)
+            canopusNpcDataNeg = CanopusNpcData.readAndClose(new StringReader(siriusClient.projects().getCanopusNpcData(projectId, -1)));
         return canopusNpcDataNeg;
     }
 }

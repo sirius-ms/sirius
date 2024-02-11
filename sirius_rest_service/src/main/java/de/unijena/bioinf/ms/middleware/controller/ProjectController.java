@@ -37,9 +37,12 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Pattern;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.EnumSet;
@@ -92,8 +95,14 @@ public class ProjectController {
      * @param projectId unique name/identifier that shall be used to access the opened project-space.
      */
     @PutMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ProjectInfo openProjectSpace(@PathVariable String projectId, @RequestParam String pathToProject, @RequestParam(defaultValue = "") EnumSet<ProjectInfo.OptField> optFields) throws IOException {
-        return projectsProvider.openProjectSpace(projectId, pathToProject, optFields);
+    public ProjectInfo openProjectSpace(@PathVariable String projectId,
+                                        @RequestParam String pathToProject,
+                                        @RequestParam(defaultValue = "") EnumSet<ProjectInfo.OptField> optFields) throws IOException {
+        try {
+            return projectsProvider.openProjectSpace(projectId, pathToProject, optFields);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
     }
 
     /**
@@ -102,7 +111,7 @@ public class ProjectController {
      * @param projectId unique name/identifier that shall be used to access the newly created project-space.
      */
     @PostMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ProjectInfo createProjectSpace(@PathVariable String projectId,
+    public ProjectInfo createProjectSpace(@PathVariable @Validated @NotBlank @Pattern(regexp = "[a-zA-Z0-9_-]*", message = "Project Id must only contain a-zA-Z0-9_- characters.") String projectId,
                                           @RequestParam String pathToProject,
                                           @RequestParam(required = false) String pathToSourceProject,
                                           @RequestParam(required = false, defaultValue = "true") boolean awaitImport
@@ -119,7 +128,12 @@ public class ProjectController {
 
         }
 
-        ProjectInfo pid = projectsProvider.createProjectSpace(projectId, Path.of(pathToProject));
+        ProjectInfo pid = null;
+        try {
+            pid = projectsProvider.createProjectSpace(projectId, Path.of(pathToProject));
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
         de.unijena.bioinf.ms.middleware.service.projects.Project project = projectsProvider.getProjectOrThrow(projectId);
         if (inputFiles != null) {
             Job id = computeContext.createAndSubmitJob(project, List.of("project-space", "--keep-open"),

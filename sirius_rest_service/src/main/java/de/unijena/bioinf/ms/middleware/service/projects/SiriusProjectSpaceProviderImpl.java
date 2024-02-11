@@ -132,6 +132,7 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
 
     @Override
     public ProjectInfo openProjectSpace(@NotNull String projectId, @NotNull String pathToProject, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException {
+        validateId(projectId);
         final Lock lock = projectSpaceLock.writeLock();
         lock.lock();
         try {
@@ -158,6 +159,7 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
     }
 
     public ProjectInfo addProjectSpace(@NotNull String nameSuggestion, @NotNull ProjectSpaceManager<?> projectSpaceToAdd) {
+        validateId(nameSuggestion);
         return ensureUniqueName(nameSuggestion, (name) -> {
             registerEventListeners(name, projectSpaceToAdd.projectSpace());
             projectSpaces.put(name, projectSpaceToAdd);
