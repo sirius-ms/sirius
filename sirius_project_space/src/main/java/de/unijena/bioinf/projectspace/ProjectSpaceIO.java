@@ -181,7 +181,7 @@ public class ProjectSpaceIO {
 
     public static Path createTmpProjectSpaceLocation() throws IOException {
         String tmpDir = System.getProperty("java.io.tmpdir");
-        return Path.of(tmpDir).resolve(".sirius-tmp-project-" + TsidCreator.getTsid());
+        return Path.of(tmpDir).resolve("sirius-tmp-project-" + TsidCreator.getTsid());
     }
 
     /**
