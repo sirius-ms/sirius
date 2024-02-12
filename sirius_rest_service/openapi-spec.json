@@ -97,7 +97,7 @@
           {
             "name": "projectId",
             "in": "path",
-            "description": "unique name/identifier that shall be used to access the opened project-space.",
+            "description": "unique name/identifier that shall be used to access the opened project-space. Must consist only of [a-zA-Z0-9_-].",
             "required": true,
             "schema": {
               "type": "string"
@@ -148,7 +148,7 @@
           {
             "name": "projectId",
             "in": "path",
-            "description": "unique name/identifier that shall be used to access the newly created project-space.",
+            "description": "unique name/identifier that shall be used to access the newly created project-space. Must consist only of [a-zA-Z0-9_-].",
             "required": true,
             "schema": {
               "type": "string"
@@ -4143,6 +4143,12 @@
               "$ref": "#/components/schemas/AnnotatedPeak"
             }
           },
+          "absIntensityFactor": {
+            "type": "number",
+            "description": "Factor to convert relative intensities to absolute intensities.\n Might be null or 1 for spectra where absolute intensities are not available (E.g. artificial or merged spectra)",
+            "format": "double",
+            "nullable": true
+          },
           "spectrumAnnotation": {
             "$ref": "#/components/schemas/SpectrumAnnotation"
           }
@@ -4190,6 +4196,12 @@
             "items": {
               "$ref": "#/components/schemas/Peak"
             }
+          },
+          "absIntensityFactor": {
+            "type": "number",
+            "description": "Factor to convert relative intensities to absolute intensities.\n Might be null or 1 for spectra where absolute intensities are not available (E.g. artificial or merged spectra)",
+            "format": "double",
+            "nullable": true
           }
         },
         "description": ""
