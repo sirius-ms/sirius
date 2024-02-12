@@ -24,12 +24,7 @@ import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 
 public class ActFingerprintAndCanopusConfigPanel extends ActivatableConfigPanel<FingerprintAndCanopusConfigPanel> {
     public ActFingerprintAndCanopusConfigPanel() {
-        super("Predict", GuiUtils.formatToolTip(FingerprintAndCanopusConfigPanel.description), Icons.FINGER_32, true, () -> new FingerprintAndCanopusConfigPanel());
-    }
-
-    @Override
-    protected void setComponentsEnabled(final boolean enabled) {
-        super.setComponentsEnabled(enabled);
+        super("Predict", GuiUtils.formatToolTip(FingerprintAndCanopusConfigPanel.description), Icons.FINGER_32, true, FingerprintAndCanopusConfigPanel::new);
     }
 
     @Override
