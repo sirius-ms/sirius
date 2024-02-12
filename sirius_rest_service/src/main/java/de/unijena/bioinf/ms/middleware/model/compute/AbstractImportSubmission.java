@@ -25,35 +25,16 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
-import org.jetbrains.annotations.Nullable;
 
-import javax.validation.constraints.NotNull;
-
-
-/**
- * Parameter Object to submit a job that imports ms/ms data from the given format into the specified project
- * Supported formats (ms, mgf, cef, msp, mzML, mzXML)
- */
 @Getter
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ImportStringSubmission extends AbstractImportSubmission {
-
-    /**
-     * Name that specifies the data source. Can e.g. be a file path  or just a name.
-     */
-    @Nullable
+public abstract class AbstractImportSubmission {
     @Schema(nullable = true)
-    protected String sourceName;
-    /**
-     * Data format used in the data field.
-     */
-    @NotNull
-    protected ImportFormat format;
-    /**
-     * Data content in specified format
-     */
-    @NotNull
-    protected String data;
+    protected boolean allowMs1OnlyData;
+    @Schema(nullable = true)
+    protected boolean ignoreFormulas;
+    @Schema(nullable = true)
+    protected boolean alignLCMSRuns;
 }

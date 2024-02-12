@@ -32,7 +32,7 @@ import java.util.List;
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ImportLocalFilesSubmission extends ImportSubmission {
+public class ImportLocalFilesSubmission extends AbstractImportSubmission {
     @NotEmpty
     protected List<String> inputPaths;
 }
