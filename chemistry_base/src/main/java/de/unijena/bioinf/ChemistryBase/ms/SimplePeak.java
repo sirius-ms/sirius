@@ -22,6 +22,8 @@ package de.unijena.bioinf.ChemistryBase.ms;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Builder;
+import lombok.extern.jackson.Jacksonized;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(
@@ -30,6 +32,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
         isGetterVisibility = JsonAutoDetect.Visibility.NONE,
         setterVisibility = JsonAutoDetect.Visibility.NONE,
         creatorVisibility = JsonAutoDetect.Visibility.NONE)
+@Builder
+@Jacksonized
 public class SimplePeak implements Peak {
     protected static final double DELTA = 1e-8;
 
