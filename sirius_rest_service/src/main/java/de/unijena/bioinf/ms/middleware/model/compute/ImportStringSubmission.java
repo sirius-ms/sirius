@@ -38,7 +38,7 @@ import javax.validation.constraints.NotNull;
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ImportStringSubmission extends ImportSubmission {
+public class ImportStringSubmission extends AbstractImportSubmission {
 
     /**
      * Name that specifies the data source. Can e.g. be a file path  or just a name.
