@@ -242,7 +242,10 @@ public class InstanceBean implements SiriusPCS {
     public List<FingerprintCandidateBean> getStructureCandidates(int topK) {
         PageStructureCandidateFormula page = getStructureCandidatesPage(topK);
         if (page.getContent() == null)
-            return null;
+            return null; //this does usually not happen?!
+        if (page.getContent().isEmpty())
+            return List.of();
+
 
         MaskedFingerprintVersion fpVersion = getProjectManager().getFingerIdData(getIonType().getCharge())
                 .getFingerprintVersion();
