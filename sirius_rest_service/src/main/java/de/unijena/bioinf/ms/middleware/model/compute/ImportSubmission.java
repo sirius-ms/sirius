@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schiller University.
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -20,21 +20,9 @@
 
 package de.unijena.bioinf.ms.middleware.model.compute;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
-import lombok.Setter;
 
-@Getter
-@Setter
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonIgnoreProperties(ignoreUnknown = true)
-public abstract class ImportSubmission {
-    @Schema(nullable = true)
-    protected boolean allowMs1OnlyData;
-    @Schema(nullable = true)
-    protected boolean ignoreFormulas;
-    @Schema(nullable = true)
-    protected boolean alignLCMSRuns;
+public class ImportSubmission {
+
+
+
 }

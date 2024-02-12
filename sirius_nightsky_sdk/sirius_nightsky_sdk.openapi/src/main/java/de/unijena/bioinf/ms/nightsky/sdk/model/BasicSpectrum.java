@@ -36,7 +36,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   BasicSpectrum.JSON_PROPERTY_COLLISION_ENERGY,
   BasicSpectrum.JSON_PROPERTY_PRECURSOR_MZ,
   BasicSpectrum.JSON_PROPERTY_SCAN_NUMBER,
-  BasicSpectrum.JSON_PROPERTY_PEAKS
+  BasicSpectrum.JSON_PROPERTY_PEAKS,
+  BasicSpectrum.JSON_PROPERTY_ABS_INTENSITY_FACTOR
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class BasicSpectrum {
@@ -57,6 +58,9 @@ public class BasicSpectrum {
 
   public static final String JSON_PROPERTY_PEAKS = "peaks";
   private List<Peak> peaks = new ArrayList<>();
+
+  public static final String JSON_PROPERTY_ABS_INTENSITY_FACTOR = "absIntensityFactor";
+  private Double absIntensityFactor;
 
   public BasicSpectrum() {
   }
@@ -224,6 +228,32 @@ public class BasicSpectrum {
     this.peaks = peaks;
   }
 
+
+  public BasicSpectrum absIntensityFactor(Double absIntensityFactor) {
+    
+    this.absIntensityFactor = absIntensityFactor;
+    return this;
+  }
+
+   /**
+   * Factor to convert relative intensities to absolute intensities.  Might be null or 1 for spectra where absolute intensities are not available (E.g. artificial or merged spectra)
+   * @return absIntensityFactor
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_ABS_INTENSITY_FACTOR)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Double getAbsIntensityFactor() {
+    return absIntensityFactor;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_ABS_INTENSITY_FACTOR)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setAbsIntensityFactor(Double absIntensityFactor) {
+    this.absIntensityFactor = absIntensityFactor;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -238,12 +268,13 @@ public class BasicSpectrum {
         Objects.equals(this.collisionEnergy, basicSpectrum.collisionEnergy) &&
         Objects.equals(this.precursorMz, basicSpectrum.precursorMz) &&
         Objects.equals(this.scanNumber, basicSpectrum.scanNumber) &&
-        Objects.equals(this.peaks, basicSpectrum.peaks);
+        Objects.equals(this.peaks, basicSpectrum.peaks) &&
+        Objects.equals(this.absIntensityFactor, basicSpectrum.absIntensityFactor);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, msLevel, collisionEnergy, precursorMz, scanNumber, peaks);
+    return Objects.hash(name, msLevel, collisionEnergy, precursorMz, scanNumber, peaks, absIntensityFactor);
   }
 
   @Override
@@ -256,6 +287,7 @@ public class BasicSpectrum {
     sb.append("    precursorMz: ").append(toIndentedString(precursorMz)).append("\n");
     sb.append("    scanNumber: ").append(toIndentedString(scanNumber)).append("\n");
     sb.append("    peaks: ").append(toIndentedString(peaks)).append("\n");
+    sb.append("    absIntensityFactor: ").append(toIndentedString(absIntensityFactor)).append("\n");
     sb.append("}");
     return sb.toString();
   }

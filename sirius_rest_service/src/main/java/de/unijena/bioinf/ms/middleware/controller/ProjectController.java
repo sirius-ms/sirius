@@ -37,12 +37,9 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Pattern;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.EnumSet;
@@ -92,7 +89,7 @@ public class ProjectController {
     /**
      * Open an existing project-space and make it accessible via the given projectId.
      *
-     * @param projectId unique name/identifier that shall be used to access the opened project-space.
+     * @param projectId unique name/identifier that shall be used to access the opened project-space. Must consist only of [a-zA-Z0-9_-].
      */
     @PutMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ProjectInfo openProjectSpace(@PathVariable String projectId,
@@ -108,10 +105,10 @@ public class ProjectController {
     /**
      * Create and open a new project-space at given location and make it accessible via the given projectId.
      *
-     * @param projectId unique name/identifier that shall be used to access the newly created project-space.
+     * @param projectId unique name/identifier that shall be used to access the newly created project-space. Must consist only of [a-zA-Z0-9_-].
      */
     @PostMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ProjectInfo createProjectSpace(@PathVariable @Validated @NotBlank @Pattern(regexp = "[a-zA-Z0-9_-]*", message = "Project Id must only contain a-zA-Z0-9_- characters.") String projectId,
+    public ProjectInfo createProjectSpace(@PathVariable String projectId,
                                           @RequestParam String pathToProject,
                                           @RequestParam(required = false) String pathToSourceProject,
                                           @RequestParam(required = false, defaultValue = "true") boolean awaitImport

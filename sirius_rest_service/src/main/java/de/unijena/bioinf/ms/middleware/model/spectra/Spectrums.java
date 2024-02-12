@@ -47,10 +47,16 @@ import java.util.stream.StreamSupport;
 public class Spectrums {
     private static <S extends AbstractSpectrum<?>> S decorateMsMs(S spectrum, @NotNull Ms2Spectrum<Peak> sourceSpectrum) {
         spectrum.setPrecursorMz(sourceSpectrum.getPrecursorMz());
-        spectrum.setCollisionEnergy(new CollisionEnergy(sourceSpectrum.getCollisionEnergy()));
+        if (sourceSpectrum.getCollisionEnergy() != null && sourceSpectrum.getCollisionEnergy() != CollisionEnergy.none() && sourceSpectrum.getCollisionEnergy().equals(CollisionEnergy.none())) {
+            spectrum.setCollisionEnergy(new CollisionEnergy(sourceSpectrum.getCollisionEnergy()));
+            spectrum.setName("MS2 " + sourceSpectrum.getCollisionEnergy().toString());
+        } else {
+            spectrum.setName("MS2");
+        }
+
         spectrum.setMsLevel(2);
         spectrum.setScanNumber(((MutableMs2Spectrum) sourceSpectrum).getScanNumber());
-        spectrum.setName("MS2 " + sourceSpectrum.getCollisionEnergy().toString());
+
         return spectrum;
     }
 

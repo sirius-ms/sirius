@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.middleware.model.spectra;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.SimplePeak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
@@ -30,6 +31,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,10 +49,26 @@ public class BasicSpectrum extends AbstractSpectrum<Peak> {
     }
 
     public BasicSpectrum(@NotNull Spectrum<Peak> spec) {
-        this(Spectrums.copyMasses(spec), Spectrums.copyIntensities(spec));
+        this(spec, true);
     }
 
-    public BasicSpectrum(double[] masses, double[] intensities) {
+    public BasicSpectrum(@NotNull Spectrum<Peak> spec, boolean makeRelative) {
+        Double factor = null;
+        if (makeRelative) {
+            double maxInt = spec.getMaxIntensity();
+            if (maxInt > 1d){
+                factor = maxInt;
+                spec = Spectrums.getNormalizedSpectrum(spec, Normalization.Max);
+            }
+        }
+        init(Spectrums.copyMasses(spec), Spectrums.copyIntensities(spec), factor);
+    }
+
+    public BasicSpectrum(double[] masses, double[] intensities, @Nullable Double intFactor) {
+        init(masses, intensities, intFactor);
+    }
+
+    protected void init(double[] masses, double[] intensities, @Nullable Double intFactor) {
         if (masses == null)
             throw new IllegalArgumentException("Masses are Null but must be non Null.");
         if (intensities == null)
@@ -63,5 +81,7 @@ public class BasicSpectrum extends AbstractSpectrum<Peak> {
 
         for (int i = 0; i < masses.length; i++)
             peaks.add(new SimplePeak(masses[i], intensities[i]));
+
+        absIntensityFactor = intFactor;
     }
 }

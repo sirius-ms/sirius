@@ -216,7 +216,7 @@ public class ProjectsApi {
      * Create and open a new project-space at given location and make it accessible via the given projectId.
      * Create and open a new project-space at given location and make it accessible via the given projectId.
      * <p><b>200</b> - OK
-     * @param projectId unique name/identifier that shall be used to access the newly created project-space.
+     * @param projectId unique name/identifier that shall be used to access the newly created project-space. Must consist only of [a-zA-Z0-9_-].
      * @param pathToProject The pathToProject parameter
      * @param pathToSourceProject The pathToSourceProject parameter
      * @param awaitImport The awaitImport parameter
@@ -264,7 +264,7 @@ public class ProjectsApi {
      * Create and open a new project-space at given location and make it accessible via the given projectId.
      * Create and open a new project-space at given location and make it accessible via the given projectId.
      * <p><b>200</b> - OK
-     * @param projectId unique name/identifier that shall be used to access the newly created project-space.
+     * @param projectId unique name/identifier that shall be used to access the newly created project-space. Must consist only of [a-zA-Z0-9_-].
      * @param pathToProject The pathToProject parameter
      * @param pathToSourceProject The pathToSourceProject parameter
      * @param awaitImport The awaitImport parameter
@@ -280,7 +280,7 @@ public class ProjectsApi {
      * Create and open a new project-space at given location and make it accessible via the given projectId.
      * Create and open a new project-space at given location and make it accessible via the given projectId.
      * <p><b>200</b> - OK
-     * @param projectId unique name/identifier that shall be used to access the newly created project-space.
+     * @param projectId unique name/identifier that shall be used to access the newly created project-space. Must consist only of [a-zA-Z0-9_-].
      * @param pathToProject The pathToProject parameter
      * @param pathToSourceProject The pathToSourceProject parameter
      * @param awaitImport The awaitImport parameter
@@ -296,7 +296,7 @@ public class ProjectsApi {
      * Create and open a new project-space at given location and make it accessible via the given projectId.
      * Create and open a new project-space at given location and make it accessible via the given projectId.
      * <p><b>200</b> - OK
-     * @param projectId unique name/identifier that shall be used to access the newly created project-space.
+     * @param projectId unique name/identifier that shall be used to access the newly created project-space. Must consist only of [a-zA-Z0-9_-].
      * @param pathToProject The pathToProject parameter
      * @param pathToSourceProject The pathToSourceProject parameter
      * @param awaitImport The awaitImport parameter
@@ -732,7 +732,7 @@ public class ProjectsApi {
      * Open an existing project-space and make it accessible via the given projectId.
      * Open an existing project-space and make it accessible via the given projectId.
      * <p><b>200</b> - OK
-     * @param projectId unique name/identifier that shall be used to access the opened project-space.
+     * @param projectId unique name/identifier that shall be used to access the opened project-space. Must consist only of [a-zA-Z0-9_-].
      * @param pathToProject The pathToProject parameter
      * @param optFields The optFields parameter
      * @return ProjectInfo
@@ -778,7 +778,7 @@ public class ProjectsApi {
      * Open an existing project-space and make it accessible via the given projectId.
      * Open an existing project-space and make it accessible via the given projectId.
      * <p><b>200</b> - OK
-     * @param projectId unique name/identifier that shall be used to access the opened project-space.
+     * @param projectId unique name/identifier that shall be used to access the opened project-space. Must consist only of [a-zA-Z0-9_-].
      * @param pathToProject The pathToProject parameter
      * @param optFields The optFields parameter
      * @return ProjectInfo
@@ -793,7 +793,7 @@ public class ProjectsApi {
      * Open an existing project-space and make it accessible via the given projectId.
      * Open an existing project-space and make it accessible via the given projectId.
      * <p><b>200</b> - OK
-     * @param projectId unique name/identifier that shall be used to access the opened project-space.
+     * @param projectId unique name/identifier that shall be used to access the opened project-space. Must consist only of [a-zA-Z0-9_-].
      * @param pathToProject The pathToProject parameter
      * @param optFields The optFields parameter
      * @return ResponseEntity&lt;ProjectInfo&gt;
@@ -808,7 +808,7 @@ public class ProjectsApi {
      * Open an existing project-space and make it accessible via the given projectId.
      * Open an existing project-space and make it accessible via the given projectId.
      * <p><b>200</b> - OK
-     * @param projectId unique name/identifier that shall be used to access the opened project-space.
+     * @param projectId unique name/identifier that shall be used to access the opened project-space. Must consist only of [a-zA-Z0-9_-].
      * @param pathToProject The pathToProject parameter
      * @param optFields The optFields parameter
      * @return ResponseSpec

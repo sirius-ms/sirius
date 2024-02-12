@@ -177,7 +177,7 @@ public class Example {
         defaultClient.setBasePath("http://localhost:8080");
 
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
-        String projectId = "projectId_example"; // String | unique name/identifier that shall be used to access the newly created project-space.
+        String projectId = "projectId_example"; // String | unique name/identifier that shall be used to access the newly created project-space. Must consist only of [a-zA-Z0-9_-].
         String pathToProject = "pathToProject_example"; // String | 
         String pathToSourceProject = "pathToSourceProject_example"; // String | 
         Boolean awaitImport = true; // Boolean | 
@@ -200,7 +200,7 @@ public class Example {
 
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
-| **projectId** | **String**| unique name/identifier that shall be used to access the newly created project-space. | |
+| **projectId** | **String**| unique name/identifier that shall be used to access the newly created project-space. Must consist only of [a-zA-Z0-9_-]. | |
 | **pathToProject** | **String**|  | |
 | **pathToSourceProject** | **String**|  | [optional] |
 | **awaitImport** | **Boolean**|  | [optional] [default to true] |
@@ -589,7 +589,7 @@ public class Example {
         defaultClient.setBasePath("http://localhost:8080");
 
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
-        String projectId = "projectId_example"; // String | unique name/identifier that shall be used to access the opened project-space.
+        String projectId = "projectId_example"; // String | unique name/identifier that shall be used to access the opened project-space. Must consist only of [a-zA-Z0-9_-].
         String pathToProject = "pathToProject_example"; // String | 
         List<ProjectInfoOptField> optFields = Arrays.asList(); // List<ProjectInfoOptField> | 
         try {
@@ -611,7 +611,7 @@ public class Example {
 
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
-| **projectId** | **String**| unique name/identifier that shall be used to access the opened project-space. | |
+| **projectId** | **String**| unique name/identifier that shall be used to access the opened project-space. Must consist only of [a-zA-Z0-9_-]. | |
 | **pathToProject** | **String**|  | |
 | **optFields** | [**List&lt;ProjectInfoOptField&gt;**](ProjectInfoOptField.md)|  | [optional] |
 

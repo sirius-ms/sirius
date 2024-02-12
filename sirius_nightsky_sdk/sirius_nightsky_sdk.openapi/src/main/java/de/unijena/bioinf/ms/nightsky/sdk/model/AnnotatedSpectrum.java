@@ -38,6 +38,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AnnotatedSpectrum.JSON_PROPERTY_PRECURSOR_MZ,
   AnnotatedSpectrum.JSON_PROPERTY_SCAN_NUMBER,
   AnnotatedSpectrum.JSON_PROPERTY_PEAKS,
+  AnnotatedSpectrum.JSON_PROPERTY_ABS_INTENSITY_FACTOR,
   AnnotatedSpectrum.JSON_PROPERTY_SPECTRUM_ANNOTATION
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
@@ -59,6 +60,9 @@ public class AnnotatedSpectrum {
 
   public static final String JSON_PROPERTY_PEAKS = "peaks";
   private List<AnnotatedPeak> peaks = new ArrayList<>();
+
+  public static final String JSON_PROPERTY_ABS_INTENSITY_FACTOR = "absIntensityFactor";
+  private Double absIntensityFactor;
 
   public static final String JSON_PROPERTY_SPECTRUM_ANNOTATION = "spectrumAnnotation";
   private SpectrumAnnotation spectrumAnnotation;
@@ -230,6 +234,32 @@ public class AnnotatedSpectrum {
   }
 
 
+  public AnnotatedSpectrum absIntensityFactor(Double absIntensityFactor) {
+    
+    this.absIntensityFactor = absIntensityFactor;
+    return this;
+  }
+
+   /**
+   * Factor to convert relative intensities to absolute intensities.  Might be null or 1 for spectra where absolute intensities are not available (E.g. artificial or merged spectra)
+   * @return absIntensityFactor
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_ABS_INTENSITY_FACTOR)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Double getAbsIntensityFactor() {
+    return absIntensityFactor;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_ABS_INTENSITY_FACTOR)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setAbsIntensityFactor(Double absIntensityFactor) {
+    this.absIntensityFactor = absIntensityFactor;
+  }
+
+
   public AnnotatedSpectrum spectrumAnnotation(SpectrumAnnotation spectrumAnnotation) {
     
     this.spectrumAnnotation = spectrumAnnotation;
@@ -270,12 +300,13 @@ public class AnnotatedSpectrum {
         Objects.equals(this.precursorMz, annotatedSpectrum.precursorMz) &&
         Objects.equals(this.scanNumber, annotatedSpectrum.scanNumber) &&
         Objects.equals(this.peaks, annotatedSpectrum.peaks) &&
+        Objects.equals(this.absIntensityFactor, annotatedSpectrum.absIntensityFactor) &&
         Objects.equals(this.spectrumAnnotation, annotatedSpectrum.spectrumAnnotation);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, msLevel, collisionEnergy, precursorMz, scanNumber, peaks, spectrumAnnotation);
+    return Objects.hash(name, msLevel, collisionEnergy, precursorMz, scanNumber, peaks, absIntensityFactor, spectrumAnnotation);
   }
 
   @Override
@@ -288,6 +319,7 @@ public class AnnotatedSpectrum {
     sb.append("    precursorMz: ").append(toIndentedString(precursorMz)).append("\n");
     sb.append("    scanNumber: ").append(toIndentedString(scanNumber)).append("\n");
     sb.append("    peaks: ").append(toIndentedString(peaks)).append("\n");
+    sb.append("    absIntensityFactor: ").append(toIndentedString(absIntensityFactor)).append("\n");
     sb.append("    spectrumAnnotation: ").append(toIndentedString(spectrumAnnotation)).append("\n");
     sb.append("}");
     return sb.toString();

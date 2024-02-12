@@ -79,6 +79,15 @@ public abstract class AbstractSpectrum<P extends Peak> implements OrderedSpectru
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     protected List<P> peaks;
 
+    /**
+     * Factor to convert relative intensities to absolute intensities.
+     * Might be null or 1 for spectra where absolute intensities are not available (E.g. artificial or merged spectra)
+     */
+    @Schema(nullable = true)
+    @Getter
+    @Setter
+    protected Double absIntensityFactor;
+
     List<P> getPeaks() {
         return peaks;
     }
