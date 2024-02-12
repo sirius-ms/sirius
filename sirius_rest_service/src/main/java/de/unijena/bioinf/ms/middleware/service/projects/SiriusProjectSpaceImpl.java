@@ -241,7 +241,7 @@ public class SiriusProjectSpaceImpl implements Project {
         return loadStructureCandidates(instance, fidObj, pageable, para, optFields)
                 .map(l -> l.stream().map(c -> (StructureCandidateScored) c).toList())
                 .map(it -> (Page<StructureCandidateScored>) new PageImpl<>(it, pageable, Long.MAX_VALUE))
-                .orElse(Page.empty(pageable)); //todo number of candidates for page.
+                .orElse(Page.empty(pageable)); //todo nightsky: number of candidates for page -> do only for new project space.
     }
 
     @Override
@@ -714,6 +714,7 @@ public class SiriusProjectSpaceImpl implements Project {
             return Spectrums.createMsMsWithAnnotations(exp.getMs2Spectra().get(specIndex), ftree, structureSmiles);
     }
 
+    @NotNull
     public static FeatureAnnotations extractTopAnnotationsDeNovo(Instance inst) {
         return inst.loadTopFormulaResult(List.of(SiriusScore.class)).map(FormulaResult::getId)
                 .flatMap(frid -> inst.loadFormulaResult(frid, FormulaScoring.class, FTree.class, CanopusResult.class)
@@ -737,6 +738,7 @@ public class SiriusProjectSpaceImpl implements Project {
                         })).orElseGet(FeatureAnnotations::new);
     }
 
+    @NotNull
     public static FeatureAnnotations extractTopAnnotations(Instance inst) {
         return inst.loadTopFormulaResult(List.of(TopCSIScore.class, SiriusScore.class)).map(FormulaResult::getId).flatMap(frid -> {
             frid.setAnnotation(FBCandidateNumber.class, new FBCandidateNumber(1));

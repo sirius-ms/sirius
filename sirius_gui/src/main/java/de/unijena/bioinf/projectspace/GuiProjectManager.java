@@ -129,7 +129,6 @@ public class GuiProjectManager implements Closeable {
                     processEvent(evt).ifPresent(toProcess::add);
                     evt = events.poll();
                 }
-
                 SiriusGlazedLists.multiAddRemove(INSTANCE_LIST, innerList, toProcess);
             });
         events.add(event);
@@ -137,7 +136,7 @@ public class GuiProjectManager implements Closeable {
 
     private Optional<Pair<InstanceBean, Boolean>> processEvent(ProjectChangeEvent evt) {
         if (evt.getEventType() == FEATURE_CREATED) {
-            return Optional.of(Pair.of(new InstanceBean(getFeature(evt.getFeaturedId()), GuiProjectManager.this), true));
+            return Optional.of(Pair.of(new InstanceBean(getFeature(evt.getFeaturedId(), List.of(AlignedFeatureOptField.TOPANNOTATIONS)), GuiProjectManager.this), true));
         }
         if (evt.getEventType() == FEATURE_DELETED) {
             return INSTANCE_LIST.stream().filter(inst -> inst.getFeatureId().equals(evt.getFeaturedId()))
