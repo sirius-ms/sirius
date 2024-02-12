@@ -20,9 +20,12 @@
 
 package de.unijena.bioinf.ms.middleware.service.projects;
 
+import com.github.f4b6a3.tsid.Tsid;
+import com.github.f4b6a3.tsid.TsidCreator;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
+import de.unijena.bioinf.ChemistryBase.chem.FeatureGroup;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
@@ -44,9 +47,9 @@ import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.middleware.controller.AlignedFeatureController;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
+import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
 import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
-import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
@@ -124,6 +127,18 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     @Override
+    public List<Compound> addCompounds(@NotNull List<CompoundImport> compounds, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
+        return compounds.stream().map(c -> {
+            Tsid cuuid = TsidCreator.getTsid();
+            FeatureGroup fg = FeatureGroup.builder().groupName(c.getName()).groupId(cuuid.toString()).build();
+            return FeatureImports.toExperimentsStr(c.getFeatures())
+                    .peek(exp -> exp.annotate(fg))
+                    .map(projectSpaceManager::newCompoundWithUniqueId)
+                    .map(Instance::getID).toList();
+        }).map(cids -> asCompound(cids, optFields, optFieldsFeatures)).toList();
+    }
+
+    @Override
     public Compound findCompoundById(String compoundId, @NotNull EnumSet<Compound.OptField> optFields,
                                      @NotNull EnumSet<AlignedFeature.OptField> featureOptFields) {
         List<CompoundContainerId> groupFeatures = projectSpaceManager.projectSpace()
@@ -178,6 +193,15 @@ public class SiriusProjectSpaceImpl implements Project {
 
         return new PageImpl<>(alignedFeatures, pageable, projectSpaceManager.size());
     }
+
+    @Override
+    public List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
+        return FeatureImports.toExperimentsStr(features)
+                .map(projectSpaceManager::newCompoundWithUniqueId)
+                .map(Instance::getID).map(cid -> asAlignedFeature(cid, optFields))
+                .toList();
+    }
+
 
     @Override
     public AlignedFeature findAlignedFeaturesById(String alignedFeatureId, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
@@ -624,7 +648,7 @@ public class SiriusProjectSpaceImpl implements Project {
         id.setIndex(cid.getCompoundIndex());
         id.setIonMass(cid.getIonMass().orElse(0d));
         id.setComputing(cid.hasFlag(CompoundContainerId.Flag.COMPUTING));
-        cid.getIonType().map(PrecursorIonType::toString).ifPresent(id::setIonType);
+        cid.getIonType().map(PrecursorIonType::toString).ifPresent(id::setAdduct);
         cid.getRt().ifPresent(rt -> {
             if (rt.isInterval()) {
                 id.setRtStartSeconds(rt.getStartTime());

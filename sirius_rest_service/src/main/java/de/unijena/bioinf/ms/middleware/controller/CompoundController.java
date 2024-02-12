@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.middleware.controller;
 
 import de.unijena.bioinf.ms.middleware.model.SearchQueryType;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
+import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,6 +34,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.EnumSet;
+import java.util.List;
 
 import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.removeNone;
 
@@ -70,6 +72,21 @@ public class CompoundController {
         return projectsProvider.getProjectOrThrow(projectId).findCompounds(pageable, removeNone(optFields), removeNone(optFieldsFeatures));
     }
 
+    /**
+     *
+     * @param projectId project-space to import into.
+     * @param compounds the compound data to be imported
+     * @param optFields set of optional fields to be included. Use 'none' to override defaults.
+     * @param optFieldsFeatures set of optional fields of the nested features to be included. Use 'none' to override defaults.
+     * @return the Compounds that have been imported with specified optional fields
+     */
+    @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<Compound> addCompounds(@PathVariable String projectId, @RequestBody List<CompoundImport> compounds,
+                                       @RequestParam(defaultValue = "") EnumSet<Compound.OptField> optFields,
+                                       @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFieldsFeatures
+    ) {
+        return projectsProvider.getProjectOrThrow(projectId).addCompounds(compounds, removeNone(optFields), removeNone(optFieldsFeatures));
+    }
 
     /**
      * Get compound (group of ion identities) with the given identifier from the specified project-space.

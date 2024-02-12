@@ -24,10 +24,6 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.SiriusGuiFactory;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceImpl;
-import de.unijena.bioinf.sse.DataEventType;
-import de.unijena.bioinf.sse.DataObjectEvent;
-
-import java.util.concurrent.Flow;
 
 public class SiriusProjectSpaceGuiService extends AbstractGuiService<SiriusProjectSpaceImpl> {
     private final SiriusGuiFactory guiFactory;
@@ -42,31 +38,7 @@ public class SiriusProjectSpaceGuiService extends AbstractGuiService<SiriusProje
 
     @Override
     protected SiriusGui makeGuiInstance(String projectId) {
-        SiriusGui gui = guiFactory.newGui(projectId);
-        gui.getSiriusClient().addEventListener(new Flow.Subscriber<>() {
-            @Override
-            public void onSubscribe(Flow.Subscription subscription) {
-                System.out.println("SUBSCRIBED!");
-            }
-
-            @Override
-            public void onNext(DataObjectEvent<?> item) {
-                System.out.println("Event delivered: " + item.toString());
-            }
-
-            @Override
-            public void onError(Throwable throwable) {
-                System.out.println("ERROR: ");
-                throwable.printStackTrace(System.out);
-            }
-
-            @Override
-            public void onComplete() {
-                System.out.println("COMPLETED!");
-            }
-        }, projectId, DataEventType.PROJECT, DataEventType.JOB, DataEventType.GUI_STATE);
-
-        return gui;
+        return guiFactory.newGui(projectId);
     }
 
     @Override

@@ -91,12 +91,15 @@ public class CompoundsApiExample {
         defaultClient.setBasePath("http://localhost:8080");
         
         CompoundsApi apiInstance = new CompoundsApi(defaultClient);
-        String projectId = "projectId_example"; // String | project-space to delete from.
-        String compoundId = "compoundId_example"; // String | identifier of the compound to delete.
+        String projectId = "projectId_example"; // String | project-space to import into.
+        List<CompoundImport> compoundImport = Arrays.asList(); // List<CompoundImport> | the compound data to be imported
+        List<CompoundOptField> optFields = Arrays.asList(); // List<CompoundOptField> | set of optional fields to be included. Use 'none' to override defaults.
+        List<AlignedFeatureOptField> optFieldsFeatures = Arrays.asList(); // List<AlignedFeatureOptField> | set of optional fields of the nested features to be included. Use 'none' to override defaults.
         try {
-            apiInstance.deleteCompound(projectId, compoundId);
+            List<Compound> result = apiInstance.addCompounds(projectId, compoundImport, optFields, optFieldsFeatures);
+            System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling CompoundsApi#deleteCompound");
+            System.err.println("Exception when calling CompoundsApi#addCompounds");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -113,12 +116,14 @@ All URIs are relative to *http://localhost:8080*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
+*CompoundsApi* | [**addCompounds**](docs/CompoundsApi.md#addCompounds) | **POST** /api/projects/{projectId}/compounds | 
 *CompoundsApi* | [**deleteCompound**](docs/CompoundsApi.md#deleteCompound) | **DELETE** /api/projects/{projectId}/compounds/{compoundId} | Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space.
 *CompoundsApi* | [**getCompound**](docs/CompoundsApi.md#getCompound) | **GET** /api/projects/{projectId}/compounds/{compoundId} | Get compound (group of ion identities) with the given identifier from the specified project-space.
 *CompoundsApi* | [**getCompounds**](docs/CompoundsApi.md#getCompounds) | **GET** /api/projects/{projectId}/compounds | Get all available compounds (group of ion identities) in the given project-space.
 *ExperimentalGuiApi* | [**applyToGui**](docs/ExperimentalGuiApi.md#applyToGui) | **PATCH** /api/projects/{projectId}/gui | Apply given changes to the running GUI instance.
 *ExperimentalGuiApi* | [**closeGui**](docs/ExperimentalGuiApi.md#closeGui) | **DELETE** /api/projects/{projectId}/gui | Close GUI instance of given project-space if available.
 *ExperimentalGuiApi* | [**openGui**](docs/ExperimentalGuiApi.md#openGui) | **POST** /api/projects/{projectId}/gui | Open GUI instance on specified project-space and bring the GUI window to foreground.
+*FeaturesApi* | [**addAlignedFeatures**](docs/FeaturesApi.md#addAlignedFeatures) | **POST** /api/projects/{projectId}/aligned-features | 
 *FeaturesApi* | [**deleteAlignedFeature**](docs/FeaturesApi.md#deleteAlignedFeature) | **DELETE** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Delete feature (aligned over runs) with the given identifier from the specified project-space.
 *FeaturesApi* | [**getAlignedFeature**](docs/FeaturesApi.md#getAlignedFeature) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Get feature (aligned over runs) with the given identifier from the specified project-space.
 *FeaturesApi* | [**getAlignedFeatures**](docs/FeaturesApi.md#getAlignedFeatures) | **GET** /api/projects/{projectId}/aligned-features | Get all available features (aligned over runs) in the given project-space.
@@ -194,6 +199,7 @@ Class | Method | HTTP request | Description
  - [CompoundClass](docs/CompoundClass.md)
  - [CompoundClassType](docs/CompoundClassType.md)
  - [CompoundClasses](docs/CompoundClasses.md)
+ - [CompoundImport](docs/CompoundImport.md)
  - [CompoundOptField](docs/CompoundOptField.md)
  - [ConnectionCheck](docs/ConnectionCheck.md)
  - [ConnectionError](docs/ConnectionError.md)
@@ -204,6 +210,7 @@ Class | Method | HTTP request | Description
  - [DBLink](docs/DBLink.md)
  - [Deviation](docs/Deviation.md)
  - [FeatureAnnotations](docs/FeatureAnnotations.md)
+ - [FeatureImport](docs/FeatureImport.md)
  - [FingerprintPrediction](docs/FingerprintPrediction.md)
  - [FormulaCandidate](docs/FormulaCandidate.md)
  - [FormulaCandidateOptField](docs/FormulaCandidateOptField.md)

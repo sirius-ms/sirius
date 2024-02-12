@@ -4,6 +4,7 @@ All URIs are relative to *http://localhost:8080*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
+| [**addAlignedFeatures**](FeaturesApi.md#addAlignedFeatures) | **POST** /api/projects/{projectId}/aligned-features |  |
 | [**deleteAlignedFeature**](FeaturesApi.md#deleteAlignedFeature) | **DELETE** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Delete feature (aligned over runs) with the given identifier from the specified project-space. |
 | [**getAlignedFeature**](FeaturesApi.md#getAlignedFeature) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Get feature (aligned over runs) with the given identifier from the specified project-space. |
 | [**getAlignedFeatures**](FeaturesApi.md#getAlignedFeatures) | **GET** /api/projects/{projectId}/aligned-features | Get all available features (aligned over runs) in the given project-space. |
@@ -24,6 +25,74 @@ All URIs are relative to *http://localhost:8080*
 | [**getStructureCandidates**](FeaturesApi.md#getStructureCandidates) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/structures | List of StructureCandidates for the given &#39;alignedFeatureId&#39; with minimal information. |
 | [**getStructureCandidatesByFormula**](FeaturesApi.md#getStructureCandidatesByFormula) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures | List of StructureCandidates the given &#39;formulaId&#39; with minimal information. |
 
+
+
+## addAlignedFeatures
+
+> List&lt;AlignedFeature&gt; addAlignedFeatures(projectId, featureImport, optFields)
+
+
+
+### Example
+
+```java
+// Import classes:
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
+import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
+import de.unijena.bioinf.ms.nightsky.sdk.api.FeaturesApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8080");
+
+        FeaturesApi apiInstance = new FeaturesApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to import into.
+        List<FeatureImport> featureImport = Arrays.asList(); // List<FeatureImport> | the feature data to be imported
+        List<AlignedFeatureOptField> optFields = Arrays.asList(); // List<AlignedFeatureOptField> | set of optional fields to be included. Use 'none' to override defaults.
+        try {
+            List<AlignedFeature> result = apiInstance.addAlignedFeatures(projectId, featureImport, optFields);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling FeaturesApi#addAlignedFeatures");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to import into. | |
+| **featureImport** | [**List&lt;FeatureImport&gt;**](FeatureImport.md)| the feature data to be imported | |
+| **optFields** | [**List&lt;AlignedFeatureOptField&gt;**](AlignedFeatureOptField.md)| set of optional fields to be included. Use &#39;none&#39; to override defaults. | [optional] |
+
+### Return type
+
+[**List&lt;AlignedFeature&gt;**](AlignedFeature.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | the Features that have been imported with specified optional fields |  -  |
 
 
 ## deleteAlignedFeature

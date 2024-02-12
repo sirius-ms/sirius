@@ -37,10 +37,8 @@ import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IBond;
 
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -69,7 +67,6 @@ public class Spectrums {
     }
 
 
-
     public static BasicSpectrum createMs1(@NotNull Spectrum<Peak> spectrum) {
         BasicSpectrum ms1 = new BasicSpectrum(spectrum);
         ms1.setMsLevel(1);
@@ -94,7 +91,7 @@ public class Spectrums {
     public static BasicSpectrum createMergedMsMs(@NotNull Ms2Experiment exp) {
         final Ms2Preprocessor preprocessor = new Ms2Preprocessor();
         final ProcessedInput processedInput = preprocessor.preprocess(exp);
-        return decorateMergedMsMs(new BasicSpectrum(List.copyOf(processedInput.getMergedPeaks())), exp.getMs2Spectra());
+        return decorateMergedMsMs(new BasicSpectrum(processedInput.getMergedPeaks().stream().map(SimplePeak::new).collect(Collectors.toCollection(() -> new ArrayList<>()))), exp.getMs2Spectra());
     }
 
     public static AnnotatedSpectrum createMergedMsMsWithAnnotations(@NotNull Ms2Experiment exp, @Nullable FTree ftree) {

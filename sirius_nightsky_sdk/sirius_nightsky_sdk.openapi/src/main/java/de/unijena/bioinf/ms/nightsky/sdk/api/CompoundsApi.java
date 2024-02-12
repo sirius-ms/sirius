@@ -4,6 +4,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
 
 import de.unijena.bioinf.ms.nightsky.sdk.model.AlignedFeatureOptField;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Compound;
+import de.unijena.bioinf.ms.nightsky.sdk.model.CompoundImport;
 import de.unijena.bioinf.ms.nightsky.sdk.model.CompoundOptField;
 import de.unijena.bioinf.ms.nightsky.sdk.model.PageCompound;
 import de.unijena.bioinf.ms.nightsky.sdk.model.SearchQueryType;
@@ -50,6 +51,101 @@ public class CompoundsApi {
         this.apiClient = apiClient;
     }
 
+    /**
+     * 
+     * 
+     * <p><b>200</b> - the Compounds that have been imported with specified optional fields
+     * @param projectId project-space to import into.
+     * @param compoundImport the compound data to be imported
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; to override defaults.
+     * @param optFieldsFeatures set of optional fields of the nested features to be included. Use &#39;none&#39; to override defaults.
+     * @return List&lt;Compound&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec addCompoundsRequestCreation(String projectId, List<CompoundImport> compoundImport, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+        Object postBody = compoundImport;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling addCompounds", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'compoundImport' is set
+        if (compoundImport == null) {
+            throw new WebClientResponseException("Missing the required parameter 'compoundImport' when calling addCompounds", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFieldsFeatures", optFieldsFeatures));
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { 
+            "application/json"
+        };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Compound> localVarReturnType = new ParameterizedTypeReference<Compound>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/compounds", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * 
+     * 
+     * <p><b>200</b> - the Compounds that have been imported with specified optional fields
+     * @param projectId project-space to import into.
+     * @param compoundImport the compound data to be imported
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; to override defaults.
+     * @param optFieldsFeatures set of optional fields of the nested features to be included. Use &#39;none&#39; to override defaults.
+     * @return List&lt;Compound&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public List<Compound> addCompounds(String projectId, List<CompoundImport> compoundImport, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+        ParameterizedTypeReference<Compound> localVarReturnType = new ParameterizedTypeReference<Compound>() {};
+        return addCompoundsRequestCreation(projectId, compoundImport, optFields, optFieldsFeatures).bodyToFlux(localVarReturnType).collectList().block();
+    }
+
+    /**
+     * 
+     * 
+     * <p><b>200</b> - the Compounds that have been imported with specified optional fields
+     * @param projectId project-space to import into.
+     * @param compoundImport the compound data to be imported
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; to override defaults.
+     * @param optFieldsFeatures set of optional fields of the nested features to be included. Use &#39;none&#39; to override defaults.
+     * @return ResponseEntity&lt;List&lt;Compound&gt;&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<List<Compound>> addCompoundsWithHttpInfo(String projectId, List<CompoundImport> compoundImport, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+        ParameterizedTypeReference<Compound> localVarReturnType = new ParameterizedTypeReference<Compound>() {};
+        return addCompoundsRequestCreation(projectId, compoundImport, optFields, optFieldsFeatures).toEntityList(localVarReturnType).block();
+    }
+
+    /**
+     * 
+     * 
+     * <p><b>200</b> - the Compounds that have been imported with specified optional fields
+     * @param projectId project-space to import into.
+     * @param compoundImport the compound data to be imported
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; to override defaults.
+     * @param optFieldsFeatures set of optional fields of the nested features to be included. Use &#39;none&#39; to override defaults.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec addCompoundsWithResponseSpec(String projectId, List<CompoundImport> compoundImport, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+        return addCompoundsRequestCreation(projectId, compoundImport, optFields, optFieldsFeatures);
+    }
     /**
      * Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space.
      * Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space.

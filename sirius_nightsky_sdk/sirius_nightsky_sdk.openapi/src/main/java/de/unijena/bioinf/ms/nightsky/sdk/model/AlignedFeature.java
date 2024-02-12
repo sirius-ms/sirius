@@ -33,7 +33,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AlignedFeature.JSON_PROPERTY_NAME,
   AlignedFeature.JSON_PROPERTY_INDEX,
   AlignedFeature.JSON_PROPERTY_ION_MASS,
-  AlignedFeature.JSON_PROPERTY_ION_TYPE,
+  AlignedFeature.JSON_PROPERTY_ADDUCT,
   AlignedFeature.JSON_PROPERTY_RT_START_SECONDS,
   AlignedFeature.JSON_PROPERTY_RT_END_SECONDS,
   AlignedFeature.JSON_PROPERTY_MS_DATA,
@@ -55,8 +55,8 @@ public class AlignedFeature {
   public static final String JSON_PROPERTY_ION_MASS = "ionMass";
   private Double ionMass;
 
-  public static final String JSON_PROPERTY_ION_TYPE = "ionType";
-  private String ionType;
+  public static final String JSON_PROPERTY_ADDUCT = "adduct";
+  private String adduct;
 
   public static final String JSON_PROPERTY_RT_START_SECONDS = "rtStartSeconds";
   private Double rtStartSeconds;
@@ -183,29 +183,29 @@ public class AlignedFeature {
   }
 
 
-  public AlignedFeature ionType(String ionType) {
+  public AlignedFeature adduct(String adduct) {
     
-    this.ionType = ionType;
+    this.adduct = adduct;
     return this;
   }
 
    /**
-   * Get ionType
-   * @return ionType
+   * Get adduct
+   * @return adduct
   **/
   @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ION_TYPE)
+  @JsonProperty(JSON_PROPERTY_ADDUCT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public String getIonType() {
-    return ionType;
+  public String getAdduct() {
+    return adduct;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ION_TYPE)
+  @JsonProperty(JSON_PROPERTY_ADDUCT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setIonType(String ionType) {
-    this.ionType = ionType;
+  public void setAdduct(String adduct) {
+    this.adduct = adduct;
   }
 
 
@@ -377,7 +377,7 @@ public class AlignedFeature {
         Objects.equals(this.name, alignedFeature.name) &&
         Objects.equals(this.index, alignedFeature.index) &&
         Objects.equals(this.ionMass, alignedFeature.ionMass) &&
-        Objects.equals(this.ionType, alignedFeature.ionType) &&
+        Objects.equals(this.adduct, alignedFeature.adduct) &&
         Objects.equals(this.rtStartSeconds, alignedFeature.rtStartSeconds) &&
         Objects.equals(this.rtEndSeconds, alignedFeature.rtEndSeconds) &&
         Objects.equals(this.msData, alignedFeature.msData) &&
@@ -388,7 +388,7 @@ public class AlignedFeature {
 
   @Override
   public int hashCode() {
-    return Objects.hash(alignedFeatureId, name, index, ionMass, ionType, rtStartSeconds, rtEndSeconds, msData, topAnnotations, topAnnotationsDeNovo, computing);
+    return Objects.hash(alignedFeatureId, name, index, ionMass, adduct, rtStartSeconds, rtEndSeconds, msData, topAnnotations, topAnnotationsDeNovo, computing);
   }
 
   @Override
@@ -399,7 +399,7 @@ public class AlignedFeature {
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
     sb.append("    index: ").append(toIndentedString(index)).append("\n");
     sb.append("    ionMass: ").append(toIndentedString(ionMass)).append("\n");
-    sb.append("    ionType: ").append(toIndentedString(ionType)).append("\n");
+    sb.append("    adduct: ").append(toIndentedString(adduct)).append("\n");
     sb.append("    rtStartSeconds: ").append(toIndentedString(rtStartSeconds)).append("\n");
     sb.append("    rtEndSeconds: ").append(toIndentedString(rtEndSeconds)).append("\n");
     sb.append("    msData: ").append(toIndentedString(msData)).append("\n");

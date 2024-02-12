@@ -8,6 +8,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.AnnotatedMsMsData;
 import de.unijena.bioinf.ms.nightsky.sdk.model.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.nightsky.sdk.model.CanopusPrediction;
 import de.unijena.bioinf.ms.nightsky.sdk.model.CompoundClasses;
+import de.unijena.bioinf.ms.nightsky.sdk.model.FeatureImport;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FormulaCandidate;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FormulaCandidateOptField;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FragmentationTree;
@@ -63,6 +64,96 @@ public class FeaturesApi {
         this.apiClient = apiClient;
     }
 
+    /**
+     * 
+     * 
+     * <p><b>200</b> - the Features that have been imported with specified optional fields
+     * @param projectId project-space to import into.
+     * @param featureImport the feature data to be imported
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; to override defaults.
+     * @return List&lt;AlignedFeature&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec addAlignedFeaturesRequestCreation(String projectId, List<FeatureImport> featureImport, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+        Object postBody = featureImport;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling addAlignedFeatures", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'featureImport' is set
+        if (featureImport == null) {
+            throw new WebClientResponseException("Missing the required parameter 'featureImport' when calling addAlignedFeatures", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { 
+            "application/json"
+        };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<AlignedFeature> localVarReturnType = new ParameterizedTypeReference<AlignedFeature>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * 
+     * 
+     * <p><b>200</b> - the Features that have been imported with specified optional fields
+     * @param projectId project-space to import into.
+     * @param featureImport the feature data to be imported
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; to override defaults.
+     * @return List&lt;AlignedFeature&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public List<AlignedFeature> addAlignedFeatures(String projectId, List<FeatureImport> featureImport, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<AlignedFeature> localVarReturnType = new ParameterizedTypeReference<AlignedFeature>() {};
+        return addAlignedFeaturesRequestCreation(projectId, featureImport, optFields).bodyToFlux(localVarReturnType).collectList().block();
+    }
+
+    /**
+     * 
+     * 
+     * <p><b>200</b> - the Features that have been imported with specified optional fields
+     * @param projectId project-space to import into.
+     * @param featureImport the feature data to be imported
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; to override defaults.
+     * @return ResponseEntity&lt;List&lt;AlignedFeature&gt;&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<List<AlignedFeature>> addAlignedFeaturesWithHttpInfo(String projectId, List<FeatureImport> featureImport, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<AlignedFeature> localVarReturnType = new ParameterizedTypeReference<AlignedFeature>() {};
+        return addAlignedFeaturesRequestCreation(projectId, featureImport, optFields).toEntityList(localVarReturnType).block();
+    }
+
+    /**
+     * 
+     * 
+     * <p><b>200</b> - the Features that have been imported with specified optional fields
+     * @param projectId project-space to import into.
+     * @param featureImport the feature data to be imported
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; to override defaults.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec addAlignedFeaturesWithResponseSpec(String projectId, List<FeatureImport> featureImport, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+        return addAlignedFeaturesRequestCreation(projectId, featureImport, optFields);
+    }
     /**
      * Delete feature (aligned over runs) with the given identifier from the specified project-space.
      * Delete feature (aligned over runs) with the given identifier from the specified project-space.

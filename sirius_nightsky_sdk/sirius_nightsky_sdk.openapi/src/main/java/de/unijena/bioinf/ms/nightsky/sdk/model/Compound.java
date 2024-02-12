@@ -186,7 +186,7 @@ public class Compound {
   }
 
    /**
-   * Neutral mass of this compound. Ion masse minus the mass of the assigned adduct of each feature assigned  to this compound should result in the same neutral mass
+   * Neutral mass of this compound. Ion masse minus the mass of the assigned adduct of each feature of  this compound should result in the same neutral mass
    * @return neutralMass
   **/
   @javax.annotation.Nullable

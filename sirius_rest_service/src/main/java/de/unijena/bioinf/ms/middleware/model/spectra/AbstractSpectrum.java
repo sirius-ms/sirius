@@ -19,6 +19,8 @@
 
 package de.unijena.bioinf.ms.middleware.model.spectra;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
@@ -33,6 +35,12 @@ import java.util.Iterator;
 import java.util.List;
 
 @NoArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY,
+        getterVisibility = JsonAutoDetect.Visibility.NONE,
+        setterVisibility = JsonAutoDetect.Visibility.NONE,
+        creatorVisibility = JsonAutoDetect.Visibility.NONE,
+        isGetterVisibility = JsonAutoDetect.Visibility.NONE)
 public abstract class AbstractSpectrum<P extends Peak> implements OrderedSpectrum<P> {
     /**
      * Optional Displayable name of this spectrum.
@@ -107,7 +115,7 @@ public abstract class AbstractSpectrum<P extends Peak> implements OrderedSpectru
 
     @Override
     public double getIntensityAt(int index) {
-        return peaks.get(index).getMass();
+        return peaks.get(index).getIntensity();
     }
 
 

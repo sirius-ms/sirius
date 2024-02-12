@@ -16,6 +16,7 @@ docs/Compound.md
 docs/CompoundClass.md
 docs/CompoundClassType.md
 docs/CompoundClasses.md
+docs/CompoundImport.md
 docs/CompoundOptField.md
 docs/CompoundsApi.md
 docs/ConnectionCheck.md
@@ -28,6 +29,7 @@ docs/DBLink.md
 docs/Deviation.md
 docs/ExperimentalGuiApi.md
 docs/FeatureAnnotations.md
+docs/FeatureImport.md
 docs/FeaturesApi.md
 docs/FingerprintPrediction.md
 docs/FormulaCandidate.md
@@ -122,6 +124,7 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Compound.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/CompoundClass.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/CompoundClassType.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/CompoundClasses.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/CompoundImport.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/CompoundOptField.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ConnectionCheck.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ConnectionError.java
@@ -132,6 +135,7 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ConsensusCriterionDeNovo.j
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/DBLink.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Deviation.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/FeatureAnnotations.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/FeatureImport.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/FingerprintPrediction.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/FormulaCandidate.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/FormulaCandidateOptField.java

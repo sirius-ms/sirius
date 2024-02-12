@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.middleware.controller;
 import de.unijena.bioinf.ms.middleware.model.SearchQueryType;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
+import de.unijena.bioinf.ms.middleware.model.features.FeatureImport;
 import de.unijena.bioinf.ms.middleware.model.features.AnnotatedMsMsData;
 import de.unijena.bioinf.ms.middleware.model.features.MsData;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
@@ -37,6 +38,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.EnumSet;
+import java.util.List;
 
 import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.removeNone;
 
@@ -72,6 +74,21 @@ public class AlignedFeatureController {
             @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId).findAlignedFeatures(pageable, removeNone(optFields));
+    }
+
+
+    /**
+     *
+     * @param projectId project-space to import into.
+     * @param features the feature data to be imported
+     * @param optFields set of optional fields to be included. Use 'none' to override defaults.
+     * @return the Features that have been imported with specified optional fields
+     */
+    @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<AlignedFeature> addAlignedFeatures(@PathVariable String projectId, @RequestBody List<FeatureImport> features,
+                                       @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFields
+    ) {
+        return projectsProvider.getProjectOrThrow(projectId).addAlignedFeatures(features, removeNone(optFields));
     }
 
 

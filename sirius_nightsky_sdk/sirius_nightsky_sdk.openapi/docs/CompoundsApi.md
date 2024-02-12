@@ -4,10 +4,81 @@ All URIs are relative to *http://localhost:8080*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
+| [**addCompounds**](CompoundsApi.md#addCompounds) | **POST** /api/projects/{projectId}/compounds |  |
 | [**deleteCompound**](CompoundsApi.md#deleteCompound) | **DELETE** /api/projects/{projectId}/compounds/{compoundId} | Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space. |
 | [**getCompound**](CompoundsApi.md#getCompound) | **GET** /api/projects/{projectId}/compounds/{compoundId} | Get compound (group of ion identities) with the given identifier from the specified project-space. |
 | [**getCompounds**](CompoundsApi.md#getCompounds) | **GET** /api/projects/{projectId}/compounds | Get all available compounds (group of ion identities) in the given project-space. |
 
+
+
+## addCompounds
+
+> List&lt;Compound&gt; addCompounds(projectId, compoundImport, optFields, optFieldsFeatures)
+
+
+
+### Example
+
+```java
+// Import classes:
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
+import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
+import de.unijena.bioinf.ms.nightsky.sdk.api.CompoundsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8080");
+
+        CompoundsApi apiInstance = new CompoundsApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to import into.
+        List<CompoundImport> compoundImport = Arrays.asList(); // List<CompoundImport> | the compound data to be imported
+        List<CompoundOptField> optFields = Arrays.asList(); // List<CompoundOptField> | set of optional fields to be included. Use 'none' to override defaults.
+        List<AlignedFeatureOptField> optFieldsFeatures = Arrays.asList(); // List<AlignedFeatureOptField> | set of optional fields of the nested features to be included. Use 'none' to override defaults.
+        try {
+            List<Compound> result = apiInstance.addCompounds(projectId, compoundImport, optFields, optFieldsFeatures);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling CompoundsApi#addCompounds");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to import into. | |
+| **compoundImport** | [**List&lt;CompoundImport&gt;**](CompoundImport.md)| the compound data to be imported | |
+| **optFields** | [**List&lt;CompoundOptField&gt;**](CompoundOptField.md)| set of optional fields to be included. Use &#39;none&#39; to override defaults. | [optional] |
+| **optFieldsFeatures** | [**List&lt;AlignedFeatureOptField&gt;**](AlignedFeatureOptField.md)| set of optional fields of the nested features to be included. Use &#39;none&#39; to override defaults. | [optional] |
+
+### Return type
+
+[**List&lt;Compound&gt;**](Compound.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | the Compounds that have been imported with specified optional fields |  -  |
 
 
 ## deleteCompound
