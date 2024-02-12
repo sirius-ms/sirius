@@ -48,7 +48,9 @@ public class DebouncedExecutionJJob extends TinyBackgroundJJob<Boolean> {
                 debouncedFunction.run();
                 lastExecution = System.currentTimeMillis();
             } else {
-                wait(wait);
+                synchronized (this){
+                    this.wait(wait);
+                }
             }
         }
     }
