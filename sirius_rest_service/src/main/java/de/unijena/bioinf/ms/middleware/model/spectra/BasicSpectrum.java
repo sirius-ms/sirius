@@ -27,6 +27,7 @@ import de.unijena.bioinf.ChemistryBase.ms.SimplePeak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -43,8 +44,8 @@ import java.util.List;
         setterVisibility = JsonAutoDetect.Visibility.NONE,
         creatorVisibility = JsonAutoDetect.Visibility.NONE,
         isGetterVisibility = JsonAutoDetect.Visibility.NONE)
-public class BasicSpectrum extends AbstractSpectrum<Peak> {
-    public BasicSpectrum(@NotNull List<Peak> peaks) {
+public class BasicSpectrum extends AbstractSpectrum<SimplePeak> {
+    public BasicSpectrum(@NotNull List<SimplePeak> peaks) {
         this.peaks = peaks;
     }
 

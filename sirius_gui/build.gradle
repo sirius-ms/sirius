@@ -10,8 +10,8 @@ dependencies {
 //        exclude group: "de.unijena.bioinf.ms", module: "sirius_web_client"
 //        exclude group: "de.unijena.bioinf.ms", module: "web_core_oss"
     }
-    api project(':sirius_nightsky_sdk')
-    api project(':sirius_nightsky_sdk:sirius_nightsky_sdk.jjobs')
+    implementation project(':sirius_nightsky_sdk')
+    implementation project(':sirius_nightsky_sdk:sirius_nightsky_sdk.jjobs')
 
 //internal
     api "de.unijena.bioinf:jjobs-swing:$jjobs_version"

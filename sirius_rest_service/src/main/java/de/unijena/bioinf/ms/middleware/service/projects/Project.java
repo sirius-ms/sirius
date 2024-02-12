@@ -24,7 +24,9 @@ import de.unijena.bioinf.ms.middleware.model.annotations.FormulaCandidate;
 import de.unijena.bioinf.ms.middleware.model.annotations.StructureCandidateFormula;
 import de.unijena.bioinf.ms.middleware.model.annotations.StructureCandidateScored;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
+import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
+import de.unijena.bioinf.ms.middleware.model.features.FeatureImport;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeatureQuality;
 import de.unijena.bioinf.ms.middleware.model.features.AnnotatedMsMsData;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
@@ -34,6 +36,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.EnumSet;
+import java.util.List;
 
 import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.toEnumSet;
 
@@ -44,6 +47,10 @@ public interface Project {
 
     Page<Compound> findCompounds(Pageable pageable, @NotNull EnumSet<Compound.OptField> optFields,
                                  @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields);
+
+    List<Compound> addCompounds(@NotNull List<CompoundImport> compounds,
+                                @NotNull EnumSet<Compound.OptField> optFields,
+                                @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures);
 
     default Page<Compound> findCompounds(Pageable pageable, Compound.OptField... optFields) {
         return findCompounds(pageable, toEnumSet(Compound.OptField.class, optFields),
@@ -78,6 +85,9 @@ public interface Project {
 
 
     Page<AlignedFeature> findAlignedFeatures(Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields);
+
+    List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features,
+                                            @NotNull EnumSet<AlignedFeature.OptField> optFields);
 
     default Page<AlignedFeature> findAlignedFeatures(Pageable pageable, AlignedFeature.OptField... optFields) {
         return findAlignedFeatures(pageable, toEnumSet(AlignedFeature.OptField.class, optFields));
@@ -127,21 +137,22 @@ public interface Project {
         return findStructureCandidateById(inchiKey, formulaId, alignedFeatureId, toEnumSet(StructureCandidateScored.OptField.class, optFields));
     }
 
-    default AnnotatedSpectrum findAnnotatedSpectrumByFormulaId(int specIndex, @NotNull String formulaId, @NotNull String alignedFeatureId){
-        return findAnnotatedSpectrumByStructureId(specIndex,null, formulaId, alignedFeatureId);
+    default AnnotatedSpectrum findAnnotatedSpectrumByFormulaId(int specIndex, @NotNull String formulaId, @NotNull String alignedFeatureId) {
+        return findAnnotatedSpectrumByStructureId(specIndex, null, formulaId, alignedFeatureId);
     }
 
     /**
      * Return Annotated MsMs Spectrum (Fragments and Structure)
-     * @param specIndex index of the spectrum to annotate if < 0 a Merged Ms/Ms over all spectra will be used
-     * @param inchiKey of the structure candidate that will be used
-     * @param formulaId of the formula candidate to retrieve the fragments from
+     *
+     * @param specIndex        index of the spectrum to annotate if < 0 a Merged Ms/Ms over all spectra will be used
+     * @param inchiKey         of the structure candidate that will be used
+     * @param formulaId        of the formula candidate to retrieve the fragments from
      * @param alignedFeatureId the feature the spectrum belongs to
      * @return Annotated MsMs Spectrum (Fragments and Structure)
      */
     AnnotatedSpectrum findAnnotatedSpectrumByStructureId(int specIndex, @Nullable String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId);
 
-    default AnnotatedMsMsData findAnnotatedMsMsDataByFormulaId(@NotNull String formulaId, @NotNull String alignedFeatureId){
+    default AnnotatedMsMsData findAnnotatedMsMsDataByFormulaId(@NotNull String formulaId, @NotNull String alignedFeatureId) {
         return findAnnotatedMsMsDataByStructureId(null, formulaId, alignedFeatureId);
     }
 

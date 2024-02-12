@@ -18,11 +18,28 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.middleware.model.compute;
+package de.unijena.bioinf.ms.middleware.model.compounds;
+
+import de.unijena.bioinf.ms.middleware.model.features.FeatureImport;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
+import lombok.Getter;
+
+import java.util.List;
+
+@Getter
+@Builder
+public class CompoundImport {
+    /**
+     * Some (optional) human-readable name
+     */
+    @Schema(nullable = true)
+    protected String name;
 
 
-public class ImportSubmission {
-
-
-
+    /**
+     * The features this compound consists of.
+     */
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    List<FeatureImport> features;
 }

@@ -47,7 +47,7 @@ public class AlignedFeature {
 
     // additional attributes
     protected Double ionMass;
-    protected String ionType;
+    protected String adduct;
 
     @Schema(nullable = true)
     protected Double rtStartSeconds;

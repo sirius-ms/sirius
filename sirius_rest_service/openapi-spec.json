@@ -858,6 +858,345 @@
         }
       }
     },
+    "/api/projects/{projectId}/compounds": {
+      "get": {
+        "tags": [
+          "Compounds"
+        ],
+        "summary": "Get all available compounds (group of ion identities) in the given project-space.",
+        "description": "Get all available compounds (group of ion identities) in the given project-space.",
+        "operationId": "getCompounds",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "searchQuery",
+            "in": "query",
+            "description": "optional search query in specified format",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "querySyntax",
+            "in": "query",
+            "description": "query syntax used fpr searchQuery",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SearchQueryType"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/CompoundOptField"
+              },
+              "default": []
+            }
+          },
+          {
+            "name": "optFieldsFeatures",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/AlignedFeatureOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Compounds with additional optional fields (if specified).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageCompound"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Compounds"
+        ],
+        "operationId": "addCompounds",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to import into.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/CompoundOptField"
+              },
+              "default": []
+            }
+          },
+          {
+            "name": "optFieldsFeatures",
+            "in": "query",
+            "description": "set of optional fields of the nested features to be included. Use \u0027none\u0027 to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/AlignedFeatureOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "the compound data to be imported",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CompoundImport"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "the Compounds that have been imported with specified optional fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Compound"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "Get all available features (aligned over runs) in the given project-space.",
+        "description": "Get all available features (aligned over runs) in the given project-space.",
+        "operationId": "getAlignedFeatures",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "searchQuery",
+            "in": "query",
+            "description": "optional search query in specified format",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "querySyntax",
+            "in": "query",
+            "description": "query syntax used fpr searchQuery",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SearchQueryType"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/AlignedFeatureOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlignedFeatures with additional annotations and MS/MS data (if specified).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageAlignedFeature"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Features"
+        ],
+        "operationId": "addAlignedFeatures",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to import into.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/AlignedFeatureOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "the feature data to be imported",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/FeatureImport"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "the Features that have been imported with specified optional fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlignedFeature"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/job-configs/{name}": {
       "get": {
         "tags": [
@@ -1359,116 +1698,6 @@
         }
       }
     },
-    "/api/projects/{projectId}/compounds": {
-      "get": {
-        "tags": [
-          "Compounds"
-        ],
-        "summary": "Get all available compounds (group of ion identities) in the given project-space.",
-        "description": "Get all available compounds (group of ion identities) in the given project-space.",
-        "operationId": "getCompounds",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "project-space to read from.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "description": "Zero-based page index (0..N)",
-            "required": false,
-            "schema": {
-              "minimum": 0,
-              "type": "integer",
-              "default": 0
-            }
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "description": "The size of the page to be returned",
-            "required": false,
-            "schema": {
-              "minimum": 1,
-              "type": "integer",
-              "default": 20
-            }
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          {
-            "name": "searchQuery",
-            "in": "query",
-            "description": "optional search query in specified format",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "querySyntax",
-            "in": "query",
-            "description": "query syntax used fpr searchQuery",
-            "required": false,
-            "schema": {
-              "$ref": "#/components/schemas/SearchQueryType"
-            }
-          },
-          {
-            "name": "optFields",
-            "in": "query",
-            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/components/schemas/CompoundOptField"
-              },
-              "default": []
-            }
-          },
-          {
-            "name": "optFieldsFeatures",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/components/schemas/AlignedFeatureOptField"
-              },
-              "default": []
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Compounds with additional optional fields (if specified).",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PageCompound"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/projects/{projectId}/compounds/{compoundId}": {
       "get": {
         "tags": [
@@ -1602,104 +1831,6 @@
               "application/csv": {
                 "schema": {
                   "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/projects/{projectId}/aligned-features": {
-      "get": {
-        "tags": [
-          "Features"
-        ],
-        "summary": "Get all available features (aligned over runs) in the given project-space.",
-        "description": "Get all available features (aligned over runs) in the given project-space.",
-        "operationId": "getAlignedFeatures",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "project-space to read from.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "description": "Zero-based page index (0..N)",
-            "required": false,
-            "schema": {
-              "minimum": 0,
-              "type": "integer",
-              "default": 0
-            }
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "description": "The size of the page to be returned",
-            "required": false,
-            "schema": {
-              "minimum": 1,
-              "type": "integer",
-              "default": 20
-            }
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          {
-            "name": "searchQuery",
-            "in": "query",
-            "description": "optional search query in specified format",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "querySyntax",
-            "in": "query",
-            "description": "query syntax used fpr searchQuery",
-            "required": false,
-            "schema": {
-              "$ref": "#/components/schemas/SearchQueryType"
-            }
-          },
-          {
-            "name": "optFields",
-            "in": "query",
-            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/components/schemas/AlignedFeatureOptField"
-              },
-              "default": []
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "AlignedFeatures with additional annotations and MS/MS data (if specified).",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PageAlignedFeature"
                 }
               }
             }
@@ -3858,162 +3989,140 @@
           "DASHBOARD"
         ]
       },
-      "AccountCredentials": {
+      "BasicSpectrum": {
+        "required": [
+          "peaks"
+        ],
         "type": "object",
         "properties": {
-          "username": {
+          "name": {
             "type": "string",
+            "description": "Optional Displayable name of this spectrum.",
             "nullable": true
           },
-          "password": {
-            "type": "string",
+          "msLevel": {
+            "type": "integer",
+            "description": "MS level of the measured spectrum.\n Artificial spectra with no msLevel (e.g. Simulated Isotope patterns) use null or zero",
+            "format": "int32",
             "nullable": true
           },
-          "refreshToken": {
+          "collisionEnergy": {
             "type": "string",
+            "description": "Collision energy used for MS/MS spectra\n Null for spectra where collision energy is not applicable",
             "nullable": true
-          }
-        },
-        "description": "Simple object to hold account credentials, e.g. to perform login operations.\n If refreshToken is given, it is usually preferred over password based authentication.\n But in the end this is up to the respective web service."
-      },
-      "SearchQueryType": {
-        "type": "string",
-        "description": "",
-        "nullable": true,
-        "enum": [
-          "LUCENE"
-        ]
-      },
-      "PageProjectInfo": {
-        "type": "object",
-        "properties": {
-          "totalPages": {
+          },
+          "precursorMz": {
+            "type": "number",
+            "description": "Precursor m/z of the MS/MS spectrum\n Null for spectra where precursor m/z is not applicable",
+            "format": "double",
+            "nullable": true
+          },
+          "scanNumber": {
             "type": "integer",
-            "format": "int32"
+            "description": "Scan number of the spectrum.\n Might be null for artificial spectra with no scan number (e.g. Simulated Isotope patterns or merged spectra)",
+            "format": "int32",
+            "nullable": true
           },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "first": {
-            "type": "boolean"
-          },
-          "last": {
-            "type": "boolean"
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
+          "peaks": {
             "type": "array",
+            "description": "The peaks of this spectrum which might contain additional annotations such as molecular formulas.",
             "items": {
-              "$ref": "#/components/schemas/ProjectInfo"
+              "$ref": "#/components/schemas/Peak"
             }
           },
-          "empty": {
-            "type": "boolean"
-          }
-        }
-      },
-      "PageableObject": {
-        "type": "object",
-        "properties": {
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "pageNumber": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "paged": {
-            "type": "boolean"
-          },
-          "unpaged": {
-            "type": "boolean"
-          },
-          "offset": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "SortObject": {
-        "type": "object",
-        "properties": {
-          "sorted": {
-            "type": "boolean"
-          },
-          "unsorted": {
-            "type": "boolean"
-          },
-          "empty": {
-            "type": "boolean"
+          "absIntensityFactor": {
+            "type": "number",
+            "description": "Factor to convert relative intensities to absolute intensities.\n Might be null or 1 for spectra where absolute intensities are not available (E.g. artificial or merged spectra)",
+            "format": "double",
+            "nullable": true
           }
         },
         "description": ""
       },
-      "PageJob": {
+      "CompoundImport": {
+        "required": [
+          "features"
+        ],
         "type": "object",
         "properties": {
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
+          "name": {
+            "type": "string",
+            "description": "Some (optional) human-readable name",
+            "nullable": true
           },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
+          "features": {
+            "type": "array",
+            "description": "The features this compound consists of.",
+            "items": {
+              "$ref": "#/components/schemas/FeatureImport"
+            }
+          }
+        },
+        "description": ""
+      },
+      "FeatureImport": {
+        "required": [
+          "adduct",
+          "ionMass",
+          "ms1Spectra",
+          "ms2Spectra"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
           },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
+          "featureId": {
+            "type": "string",
+            "nullable": true
           },
-          "first": {
-            "type": "boolean"
+          "ionMass": {
+            "type": "number",
+            "format": "double"
           },
-          "last": {
-            "type": "boolean"
+          "adduct": {
+            "type": "string",
+            "description": "Adduct of this feature. If not know specify [M+?]+ or [M+?]- to define the charge"
           },
-          "number": {
-            "type": "integer",
-            "format": "int32"
+          "rtStartSeconds": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
+          "rtEndSeconds": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
+          "mergedMs1": {
+            "$ref": "#/components/schemas/BasicSpectrum"
           },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
+          "ms1Spectra": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Job"
+              "$ref": "#/components/schemas/BasicSpectrum"
             }
           },
-          "empty": {
-            "type": "boolean"
+          "ms2Spectra": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BasicSpectrum"
+            }
+          }
+        },
+        "description": ""
+      },
+      "Peak": {
+        "type": "object",
+        "properties": {
+          "intensity": {
+            "type": "number",
+            "format": "double"
+          },
+          "mz": {
+            "type": "number",
+            "format": "double"
           }
         }
       },
@@ -4056,7 +4165,7 @@
             "type": "number",
             "format": "double"
           },
-          "ionType": {
+          "adduct": {
             "type": "string"
           },
           "rtStartSeconds": {
@@ -4156,56 +4265,6 @@
         "description": "",
         "nullable": true
       },
-      "BasicSpectrum": {
-        "required": [
-          "peaks"
-        ],
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "description": "Optional Displayable name of this spectrum.",
-            "nullable": true
-          },
-          "msLevel": {
-            "type": "integer",
-            "description": "MS level of the measured spectrum.\n Artificial spectra with no msLevel (e.g. Simulated Isotope patterns) use null or zero",
-            "format": "int32",
-            "nullable": true
-          },
-          "collisionEnergy": {
-            "type": "string",
-            "description": "Collision energy used for MS/MS spectra\n Null for spectra where collision energy is not applicable",
-            "nullable": true
-          },
-          "precursorMz": {
-            "type": "number",
-            "description": "Precursor m/z of the MS/MS spectrum\n Null for spectra where precursor m/z is not applicable",
-            "format": "double",
-            "nullable": true
-          },
-          "scanNumber": {
-            "type": "integer",
-            "description": "Scan number of the spectrum.\n Might be null for artificial spectra with no scan number (e.g. Simulated Isotope patterns or merged spectra)",
-            "format": "int32",
-            "nullable": true
-          },
-          "peaks": {
-            "type": "array",
-            "description": "The peaks of this spectrum which might contain additional annotations such as molecular formulas.",
-            "items": {
-              "$ref": "#/components/schemas/Peak"
-            }
-          },
-          "absIntensityFactor": {
-            "type": "number",
-            "description": "Factor to convert relative intensities to absolute intensities.\n Might be null or 1 for spectra where absolute intensities are not available (E.g. artificial or merged spectra)",
-            "format": "double",
-            "nullable": true
-          }
-        },
-        "description": ""
-      },
       "BinaryFingerprint": {
         "type": "object",
         "properties": {
@@ -4275,7 +4334,7 @@
           },
           "neutralMass": {
             "type": "number",
-            "description": "Neutral mass of this compound. Ion masse minus the mass of the assigned adduct of each feature assigned\n to this compound should result in the same neutral mass",
+            "description": "Neutral mass of this compound. Ion masse minus the mass of the assigned adduct of each feature of\n this compound should result in the same neutral mass",
             "format": "double",
             "nullable": true
           },
@@ -4769,52 +4828,6 @@
         "description": "The MsData wraps all spectral input data belonging to a feature.\n \u003cp\u003e\n Each Feature has:\n - One merged MS/MS spectrum (optional)\n - One merged MS spectrum (optional)\n - many MS/MS spectra\n - many MS spectra\n \u003cp\u003e\n Each non-merged spectrum has an index which can be used to access the spectrum.\n \u003cp\u003e\n In the future we might add some additional information like chromatographic peak or something similar",
         "nullable": true
       },
-      "PageCompound": {
-        "type": "object",
-        "properties": {
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "first": {
-            "type": "boolean"
-          },
-          "last": {
-            "type": "boolean"
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Compound"
-            }
-          },
-          "empty": {
-            "type": "boolean"
-          }
-        }
-      },
       "ParentPeak": {
         "required": [
           "lossFormula",
@@ -4834,19 +4847,6 @@
         },
         "description": "Link from annotated fragment peak to its parent fragment peak connected by their neutral loss.",
         "nullable": true
-      },
-      "Peak": {
-        "type": "object",
-        "properties": {
-          "intensity": {
-            "type": "number",
-            "format": "double"
-          },
-          "mz": {
-            "type": "number",
-            "format": "double"
-          }
-        }
       },
       "PeakAnnotation": {
         "type": "object",
@@ -5084,7 +5084,33 @@
         "description": "",
         "nullable": true
       },
-      "PageAlignedFeature": {
+      "AccountCredentials": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "nullable": true
+          },
+          "password": {
+            "type": "string",
+            "nullable": true
+          },
+          "refreshToken": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "description": "Simple object to hold account credentials, e.g. to perform login operations.\n If refreshToken is given, it is usually preferred over password based authentication.\n But in the end this is up to the respective web service."
+      },
+      "SearchQueryType": {
+        "type": "string",
+        "description": "",
+        "nullable": true,
+        "enum": [
+          "LUCENE"
+        ]
+      },
+      "PageProjectInfo": {
         "type": "object",
         "properties": {
           "totalPages": {
@@ -5095,14 +5121,24 @@
             "type": "integer",
             "format": "int64"
           },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
+          "last": {
+            "type": "boolean"
           },
           "first": {
             "type": "boolean"
           },
-          "last": {
-            "type": "boolean"
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectInfo"
+            }
           },
           "number": {
             "type": "integer",
@@ -5115,6 +5151,164 @@
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
           },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PageableObject": {
+        "type": "object",
+        "properties": {
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "offset": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "paged": {
+            "type": "boolean"
+          },
+          "unpaged": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SortObject": {
+        "type": "object",
+        "properties": {
+          "empty": {
+            "type": "boolean"
+          },
+          "sorted": {
+            "type": "boolean"
+          },
+          "unsorted": {
+            "type": "boolean"
+          }
+        },
+        "description": ""
+      },
+      "PageJob": {
+        "type": "object",
+        "properties": {
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Job"
+            }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PageCompound": {
+        "type": "object",
+        "properties": {
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Compound"
+            }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PageAlignedFeature": {
+        "type": "object",
+        "properties": {
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
           "size": {
             "type": "integer",
             "format": "int32"
@@ -5124,6 +5318,17 @@
             "items": {
               "$ref": "#/components/schemas/AlignedFeature"
             }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"
@@ -5152,14 +5357,24 @@
             "type": "integer",
             "format": "int64"
           },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
+          "last": {
+            "type": "boolean"
           },
           "first": {
             "type": "boolean"
           },
-          "last": {
-            "type": "boolean"
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StructureCandidateFormula"
+            }
           },
           "number": {
             "type": "integer",
@@ -5171,16 +5386,6 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/StructureCandidateFormula"
-            }
           },
           "empty": {
             "type": "boolean"
@@ -5285,14 +5490,24 @@
             "type": "integer",
             "format": "int64"
           },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
+          "last": {
+            "type": "boolean"
           },
           "first": {
             "type": "boolean"
           },
-          "last": {
-            "type": "boolean"
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormulaCandidate"
+            }
           },
           "number": {
             "type": "integer",
@@ -5304,16 +5519,6 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/FormulaCandidate"
-            }
           },
           "empty": {
             "type": "boolean"
@@ -5331,14 +5536,24 @@
             "type": "integer",
             "format": "int64"
           },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
+          "last": {
+            "type": "boolean"
           },
           "first": {
             "type": "boolean"
           },
-          "last": {
-            "type": "boolean"
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StructureCandidateScored"
+            }
           },
           "number": {
             "type": "integer",
@@ -5350,16 +5565,6 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/StructureCandidateScored"
-            }
           },
           "empty": {
             "type": "boolean"
