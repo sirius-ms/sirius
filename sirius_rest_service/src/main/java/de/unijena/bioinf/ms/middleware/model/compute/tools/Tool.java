@@ -77,6 +77,10 @@ public abstract class Tool<C> {
             return putNonNull(key, value, String::valueOf);
         }
 
+        protected <T extends Enum<T>> NullCheckMapBuilder putNonNull(String key, T value) {
+            return putNonNull(key, value, Enum::name);
+        }
+
         protected <T> NullCheckMapBuilder putNonNullObj(@NotNull String key,
                                                         @Nullable T value,
                                                         @NotNull Function<T, ?> valueConverter

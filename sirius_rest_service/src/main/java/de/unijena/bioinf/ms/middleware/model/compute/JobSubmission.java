@@ -133,7 +133,7 @@ public class JobSubmission extends AbstractSubmission {
 
     @JsonIgnore
     public List<Tool<?>> getEnabledTools() {
-        return Stream.of(formulaIdParams, zodiacParams, fingerprintPredictionParams, structureDbSearchParams, canopusParams)
+        return Stream.of(formulaIdParams, zodiacParams, fingerprintPredictionParams, canopusParams, structureDbSearchParams) //todo nightsky add msnovelist
                 .filter(Objects::nonNull).filter(Tool::isEnabled).collect(Collectors.toList());
     }
 }

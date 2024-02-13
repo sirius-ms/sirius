@@ -427,7 +427,7 @@ public class BatchComputeDialog extends JDialog {
         sub.setConfigMap(new HashMap<>());
 
         if (formulaIDConfigPanel != null && formulaIDConfigPanel.isToolSelected()) {
-            sub.setFingerprintPredictionParams(new FingerprintPrediction().enabled(true));
+            sub.setFormulaIdParams(new Sirius().enabled(true));
             sub.getConfigMap().putAll(formulaIDConfigPanel.asConfigMap());
         }
 
