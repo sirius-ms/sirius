@@ -104,6 +104,8 @@ public class CollisionEnergy implements Serializable {
     @Nullable
     public static CollisionEnergy fromStringOrNull(String value) {
         try {
+            if (value == null || value.isBlank())
+                return null;
             return fromString(value);
         } catch (NumberFormatException e) {
             LoggerFactory.getLogger(CollisionEnergy.class).error("Could not parse Collision Energy '" + value + "'. Try ignoring...");
