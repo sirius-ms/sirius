@@ -56,6 +56,7 @@ docs/LoginAndAccountApi.md
 docs/LossEdge.md
 docs/Mode.md
 docs/MsData.md
+docs/MsNovelist.md
 docs/PageAlignedFeature.md
 docs/PageCompound.md
 docs/PageFormulaCandidate.md
@@ -65,13 +66,13 @@ docs/PageStructureCandidateFormula.md
 docs/PageStructureCandidateScored.md
 docs/PageableObject.md
 docs/ParentPeak.md
-docs/Peak.md
 docs/PeakAnnotation.md
 docs/ProjectChangeEvent.md
 docs/ProjectInfo.md
 docs/ProjectInfoOptField.md
 docs/ProjectsApi.md
 docs/SearchQueryType.md
+docs/SimplePeak.md
 docs/Sirius.md
 docs/SortObject.md
 docs/SpectrumAnnotation.md
@@ -158,6 +159,7 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/LipidAnnotation.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/LossEdge.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Mode.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/MsData.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/MsNovelist.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageAlignedFeature.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageCompound.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageFormulaCandidate.java
@@ -167,12 +169,12 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageStructureCandidateForm
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageStructureCandidateScored.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageableObject.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ParentPeak.java
-src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Peak.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PeakAnnotation.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ProjectChangeEvent.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ProjectInfo.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ProjectInfoOptField.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SearchQueryType.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SimplePeak.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Sirius.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SortObject.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SpectrumAnnotation.java

@@ -3734,11 +3734,14 @@
           "fingerprintPredictionParams": {
             "$ref": "#/components/schemas/FingerprintPrediction"
           },
+          "canopusParams": {
+            "$ref": "#/components/schemas/Canopus"
+          },
           "structureDbSearchParams": {
             "$ref": "#/components/schemas/StructureDbSearch"
           },
-          "canopusParams": {
-            "$ref": "#/components/schemas/Canopus"
+          "msNovelistParams": {
+            "$ref": "#/components/schemas/MsNovelist"
           },
           "configMap": {
             "type": "object",
@@ -3758,6 +3761,21 @@
           "EXACT",
           "APPROXIMATE"
         ]
+      },
+      "MsNovelist": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "tags whether the tool is enabled"
+          },
+          "numberOfCandidateToPredict": {
+            "type": "integer",
+            "description": "Number of structure candidates to be predicted by MsNovelist.\n Max Value 128. Values \u003e 128 will be set to 128.\n Actual number of returned candidate might be lower du to duplicates being created by MsNovelist.",
+            "format": "int32"
+          }
+        },
+        "description": ""
       },
       "Sirius": {
         "type": "object",
@@ -4027,7 +4045,7 @@
             "type": "array",
             "description": "The peaks of this spectrum which might contain additional annotations such as molecular formulas.",
             "items": {
-              "$ref": "#/components/schemas/Peak"
+              "$ref": "#/components/schemas/SimplePeak"
             }
           },
           "absIntensityFactor": {
@@ -4113,18 +4131,19 @@
         },
         "description": ""
       },
-      "Peak": {
+      "SimplePeak": {
         "type": "object",
         "properties": {
-          "intensity": {
-            "type": "number",
-            "format": "double"
-          },
           "mz": {
             "type": "number",
             "format": "double"
+          },
+          "intensity": {
+            "type": "number",
+            "format": "double"
           }
-        }
+        },
+        "description": ""
       },
       "CompoundOptField": {
         "type": "string",

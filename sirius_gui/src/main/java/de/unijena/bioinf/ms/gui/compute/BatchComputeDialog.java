@@ -434,7 +434,6 @@ public class BatchComputeDialog extends JDialog {
         if (zodiacConfigs != null && zodiacConfigs.isToolSelected()) {
             sub.setZodiacParams(new Zodiac().enabled(true));
             sub.getConfigMap().putAll(zodiacConfigs.asConfigMap());
-
         }
 
         //canopus prediction included. Must now run before structure database search
@@ -447,6 +446,11 @@ public class BatchComputeDialog extends JDialog {
         if (csiSearchConfigs != null && csiSearchConfigs.isToolSelected()) {
             sub.setStructureDbSearchParams(new StructureDbSearch().enabled(true));
             sub.getConfigMap().putAll(csiSearchConfigs.asConfigMap());
+        }
+
+        if (msNovelistConfigs != null && msNovelistConfigs.isToolSelected()) {
+            sub.setMsNovelistParams(new MsNovelist().enabled(true));
+            sub.getConfigMap().putAll(msNovelistConfigs.asConfigMap());
         }
 
         sub.setRecompute(recomputeBox.isSelected());

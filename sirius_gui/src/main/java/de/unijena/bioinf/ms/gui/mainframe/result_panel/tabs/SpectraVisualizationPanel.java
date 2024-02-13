@@ -256,11 +256,11 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
         PeakMatch[] peakMatchesSpectrum = new PeakMatch[spectrum.getPeaks().size()];
         PeakMatch[] peakMatchesPattern = new PeakMatch[pattern.getPeaks().size()];
 
-        WrapperSpectrum<de.unijena.bioinf.ms.nightsky.sdk.model.Peak> pat = WrapperSpectrum.
+        WrapperSpectrum<de.unijena.bioinf.ms.nightsky.sdk.model.SimplePeak> pat = WrapperSpectrum.
                 of(pattern.getPeaks(), p -> p.getMz(), p -> p.getIntensity());
 
         int i = 0;
-        for (de.unijena.bioinf.ms.nightsky.sdk.model.Peak p : spectrum.getPeaks()) {
+        for (SimplePeak p : spectrum.getPeaks()) {
             int j = Spectrums.mostIntensivePeakWithin(pat, p.getMz(), massDiffDev);
             if (j >= 0) {
                 peakMatchesSpectrum[i] = new PeakMatch(j);

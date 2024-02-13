@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import de.unijena.bioinf.ms.nightsky.sdk.model.Peak;
+import de.unijena.bioinf.ms.nightsky.sdk.model.SimplePeak;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -57,7 +57,7 @@ public class BasicSpectrum {
   private Integer scanNumber;
 
   public static final String JSON_PROPERTY_PEAKS = "peaks";
-  private List<Peak> peaks = new ArrayList<>();
+  private List<SimplePeak> peaks = new ArrayList<>();
 
   public static final String JSON_PROPERTY_ABS_INTENSITY_FACTOR = "absIntensityFactor";
   private Double absIntensityFactor;
@@ -195,13 +195,13 @@ public class BasicSpectrum {
   }
 
 
-  public BasicSpectrum peaks(List<Peak> peaks) {
+  public BasicSpectrum peaks(List<SimplePeak> peaks) {
     
     this.peaks = peaks;
     return this;
   }
 
-  public BasicSpectrum addPeaksItem(Peak peaksItem) {
+  public BasicSpectrum addPeaksItem(SimplePeak peaksItem) {
     if (this.peaks == null) {
       this.peaks = new ArrayList<>();
     }
@@ -217,14 +217,14 @@ public class BasicSpectrum {
   @JsonProperty(JSON_PROPERTY_PEAKS)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
-  public List<Peak> getPeaks() {
+  public List<SimplePeak> getPeaks() {
     return peaks;
   }
 
 
   @JsonProperty(JSON_PROPERTY_PEAKS)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setPeaks(List<Peak> peaks) {
+  public void setPeaks(List<SimplePeak> peaks) {
     this.peaks = peaks;
   }
 

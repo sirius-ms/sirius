@@ -24,50 +24,24 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * Peak
+ * 
  */
 @JsonPropertyOrder({
-  Peak.JSON_PROPERTY_INTENSITY,
-  Peak.JSON_PROPERTY_MZ
+  SimplePeak.JSON_PROPERTY_MZ,
+  SimplePeak.JSON_PROPERTY_INTENSITY
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
-public class Peak {
-  public static final String JSON_PROPERTY_INTENSITY = "intensity";
-  private Double intensity;
-
+public class SimplePeak {
   public static final String JSON_PROPERTY_MZ = "mz";
   private Double mz;
 
-  public Peak() {
+  public static final String JSON_PROPERTY_INTENSITY = "intensity";
+  private Double intensity;
+
+  public SimplePeak() {
   }
 
-  public Peak intensity(Double intensity) {
-    
-    this.intensity = intensity;
-    return this;
-  }
-
-   /**
-   * Get intensity
-   * @return intensity
-  **/
-  @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_INTENSITY)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Double getIntensity() {
-    return intensity;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_INTENSITY)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setIntensity(Double intensity) {
-    this.intensity = intensity;
-  }
-
-
-  public Peak mz(Double mz) {
+  public SimplePeak mz(Double mz) {
     
     this.mz = mz;
     return this;
@@ -92,6 +66,32 @@ public class Peak {
     this.mz = mz;
   }
 
+
+  public SimplePeak intensity(Double intensity) {
+    
+    this.intensity = intensity;
+    return this;
+  }
+
+   /**
+   * Get intensity
+   * @return intensity
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_INTENSITY)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Double getIntensity() {
+    return intensity;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_INTENSITY)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setIntensity(Double intensity) {
+    this.intensity = intensity;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -100,22 +100,22 @@ public class Peak {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    Peak peak = (Peak) o;
-    return Objects.equals(this.intensity, peak.intensity) &&
-        Objects.equals(this.mz, peak.mz);
+    SimplePeak simplePeak = (SimplePeak) o;
+    return Objects.equals(this.mz, simplePeak.mz) &&
+        Objects.equals(this.intensity, simplePeak.intensity);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(intensity, mz);
+    return Objects.hash(mz, intensity);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class Peak {\n");
-    sb.append("    intensity: ").append(toIndentedString(intensity)).append("\n");
+    sb.append("class SimplePeak {\n");
     sb.append("    mz: ").append(toIndentedString(mz)).append("\n");
+    sb.append("    intensity: ").append(toIndentedString(intensity)).append("\n");
     sb.append("}");
     return sb.toString();
   }

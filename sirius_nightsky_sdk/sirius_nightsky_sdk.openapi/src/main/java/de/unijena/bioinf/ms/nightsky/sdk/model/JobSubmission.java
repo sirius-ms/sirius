@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Canopus;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FingerprintPrediction;
+import de.unijena.bioinf.ms.nightsky.sdk.model.MsNovelist;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Sirius;
 import de.unijena.bioinf.ms.nightsky.sdk.model.StructureDbSearch;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Zodiac;
@@ -46,8 +47,9 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   JobSubmission.JSON_PROPERTY_FORMULA_ID_PARAMS,
   JobSubmission.JSON_PROPERTY_ZODIAC_PARAMS,
   JobSubmission.JSON_PROPERTY_FINGERPRINT_PREDICTION_PARAMS,
-  JobSubmission.JSON_PROPERTY_STRUCTURE_DB_SEARCH_PARAMS,
   JobSubmission.JSON_PROPERTY_CANOPUS_PARAMS,
+  JobSubmission.JSON_PROPERTY_STRUCTURE_DB_SEARCH_PARAMS,
+  JobSubmission.JSON_PROPERTY_MS_NOVELIST_PARAMS,
   JobSubmission.JSON_PROPERTY_CONFIG_MAP
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
@@ -79,11 +81,14 @@ public class JobSubmission {
   public static final String JSON_PROPERTY_FINGERPRINT_PREDICTION_PARAMS = "fingerprintPredictionParams";
   private FingerprintPrediction fingerprintPredictionParams;
 
+  public static final String JSON_PROPERTY_CANOPUS_PARAMS = "canopusParams";
+  private Canopus canopusParams;
+
   public static final String JSON_PROPERTY_STRUCTURE_DB_SEARCH_PARAMS = "structureDbSearchParams";
   private StructureDbSearch structureDbSearchParams;
 
-  public static final String JSON_PROPERTY_CANOPUS_PARAMS = "canopusParams";
-  private Canopus canopusParams;
+  public static final String JSON_PROPERTY_MS_NOVELIST_PARAMS = "msNovelistParams";
+  private MsNovelist msNovelistParams;
 
   public static final String JSON_PROPERTY_CONFIG_MAP = "configMap";
   private Map<String, String> configMap = new HashMap<>();
@@ -365,6 +370,32 @@ public class JobSubmission {
   }
 
 
+  public JobSubmission canopusParams(Canopus canopusParams) {
+    
+    this.canopusParams = canopusParams;
+    return this;
+  }
+
+   /**
+   * Get canopusParams
+   * @return canopusParams
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_CANOPUS_PARAMS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Canopus getCanopusParams() {
+    return canopusParams;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_CANOPUS_PARAMS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setCanopusParams(Canopus canopusParams) {
+    this.canopusParams = canopusParams;
+  }
+
+
   public JobSubmission structureDbSearchParams(StructureDbSearch structureDbSearchParams) {
     
     this.structureDbSearchParams = structureDbSearchParams;
@@ -391,29 +422,29 @@ public class JobSubmission {
   }
 
 
-  public JobSubmission canopusParams(Canopus canopusParams) {
+  public JobSubmission msNovelistParams(MsNovelist msNovelistParams) {
     
-    this.canopusParams = canopusParams;
+    this.msNovelistParams = msNovelistParams;
     return this;
   }
 
    /**
-   * Get canopusParams
-   * @return canopusParams
+   * Get msNovelistParams
+   * @return msNovelistParams
   **/
   @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_CANOPUS_PARAMS)
+  @JsonProperty(JSON_PROPERTY_MS_NOVELIST_PARAMS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Canopus getCanopusParams() {
-    return canopusParams;
+  public MsNovelist getMsNovelistParams() {
+    return msNovelistParams;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_CANOPUS_PARAMS)
+  @JsonProperty(JSON_PROPERTY_MS_NOVELIST_PARAMS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setCanopusParams(Canopus canopusParams) {
-    this.canopusParams = canopusParams;
+  public void setMsNovelistParams(MsNovelist msNovelistParams) {
+    this.msNovelistParams = msNovelistParams;
   }
 
 
@@ -468,14 +499,15 @@ public class JobSubmission {
         Objects.equals(this.formulaIdParams, jobSubmission.formulaIdParams) &&
         Objects.equals(this.zodiacParams, jobSubmission.zodiacParams) &&
         Objects.equals(this.fingerprintPredictionParams, jobSubmission.fingerprintPredictionParams) &&
-        Objects.equals(this.structureDbSearchParams, jobSubmission.structureDbSearchParams) &&
         Objects.equals(this.canopusParams, jobSubmission.canopusParams) &&
+        Objects.equals(this.structureDbSearchParams, jobSubmission.structureDbSearchParams) &&
+        Objects.equals(this.msNovelistParams, jobSubmission.msNovelistParams) &&
         Objects.equals(this.configMap, jobSubmission.configMap);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(compoundIds, alignedFeatureIds, fallbackAdducts, enforcedAdducts, detectableAdducts, recompute, formulaIdParams, zodiacParams, fingerprintPredictionParams, structureDbSearchParams, canopusParams, configMap);
+    return Objects.hash(compoundIds, alignedFeatureIds, fallbackAdducts, enforcedAdducts, detectableAdducts, recompute, formulaIdParams, zodiacParams, fingerprintPredictionParams, canopusParams, structureDbSearchParams, msNovelistParams, configMap);
   }
 
   @Override
@@ -491,8 +523,9 @@ public class JobSubmission {
     sb.append("    formulaIdParams: ").append(toIndentedString(formulaIdParams)).append("\n");
     sb.append("    zodiacParams: ").append(toIndentedString(zodiacParams)).append("\n");
     sb.append("    fingerprintPredictionParams: ").append(toIndentedString(fingerprintPredictionParams)).append("\n");
-    sb.append("    structureDbSearchParams: ").append(toIndentedString(structureDbSearchParams)).append("\n");
     sb.append("    canopusParams: ").append(toIndentedString(canopusParams)).append("\n");
+    sb.append("    structureDbSearchParams: ").append(toIndentedString(structureDbSearchParams)).append("\n");
+    sb.append("    msNovelistParams: ").append(toIndentedString(msNovelistParams)).append("\n");
     sb.append("    configMap: ").append(toIndentedString(configMap)).append("\n");
     sb.append("}");
     return sb.toString();

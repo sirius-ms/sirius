@@ -90,17 +90,21 @@ public class JobSubmission extends AbstractSubmission {
      */
     FingerprintPrediction fingerprintPredictionParams;
     /**
-     * Parameter Object for structure database search with CSI:FingerID (CLI-Tool: structure).
-     * If NULL the tool will not be executed.
-     */
-    StructureDbSearch structureDbSearchParams;
-    /**
      * Parameter Object for CANOPUS compound class prediction tool (CLI-Tool: canopus).
      * If NULL the tool will not be executed.
      */
     Canopus canopusParams;
+    /**
+     * Parameter Object for structure database search with CSI:FingerID (CLI-Tool: structure).
+     * If NULL the tool will not be executed.
+     */
+    StructureDbSearch structureDbSearchParams;
 
-    //todo passatutto api.
+    /**
+     * Parameter Object for MsNovelist DeNovo structure generation (CLI-Tool: msnovelist)
+     * If NULL the tool will not be executed.
+     */
+    MsNovelist msNovelistParams;
 
     /**
      * As an alternative to the object based parameters, this map allows to store key value pairs
@@ -119,8 +123,9 @@ public class JobSubmission extends AbstractSubmission {
                 .formulaIdParams(new Sirius())
                 .zodiacParams(new Zodiac())
                 .fingerprintPredictionParams(new FingerprintPrediction())
+                .canopusParams(new Canopus())
                 .structureDbSearchParams(new StructureDbSearch())
-                .canopusParams(new Canopus());
+                .msNovelistParams(new MsNovelist());
         if (includeConfigMap) {
             final Map<String, String> configMap = new HashMap<>();
             PropertyManager.DEFAULTS.getConfigKeys().forEachRemaining(k ->
@@ -133,7 +138,7 @@ public class JobSubmission extends AbstractSubmission {
 
     @JsonIgnore
     public List<Tool<?>> getEnabledTools() {
-        return Stream.of(formulaIdParams, zodiacParams, fingerprintPredictionParams, canopusParams, structureDbSearchParams) //todo nightsky add msnovelist
+        return Stream.of(formulaIdParams, zodiacParams, fingerprintPredictionParams, canopusParams, structureDbSearchParams, msNovelistParams)
                 .filter(Objects::nonNull).filter(Tool::isEnabled).collect(Collectors.toList());
     }
 }
