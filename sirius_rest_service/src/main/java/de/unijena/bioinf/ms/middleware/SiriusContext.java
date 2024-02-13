@@ -34,6 +34,7 @@ import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceProvid
 import de.unijena.bioinf.webapi.WebAPI;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
@@ -66,8 +67,8 @@ public class SiriusContext{
     }
 
     @Bean(destroyMethod = "shutdown")
-    public GuiService<?> guiService(EventService<?> eventService){
-        return new SiriusProjectSpaceGuiService(eventService);
+    public GuiService<?> guiService(EventService<?> eventService, ApplicationContext applicationContext){
+        return new SiriusProjectSpaceGuiService(eventService, applicationContext);
     }
 
     @Bean

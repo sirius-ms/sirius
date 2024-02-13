@@ -73,17 +73,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
     public LogDialog getLogConsole() {
         return log;
     }
-//    private GuiProjectSpaceManager ps;
-
-    private boolean closeProjectOnDispose = true;
-
-    public boolean isCloseProjectOnDispose() {
-        return closeProjectOnDispose;
-    }
-
-    public void setCloseProjectOnDispose(boolean closeProjectOnDispose) {
-        this.closeProjectOnDispose = closeProjectOnDispose;
-    }
 
     //left side panel
     private CompoundList compoundList;

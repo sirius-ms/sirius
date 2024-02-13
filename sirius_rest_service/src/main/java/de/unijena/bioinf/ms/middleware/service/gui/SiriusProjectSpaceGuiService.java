@@ -24,15 +24,16 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.SiriusGuiFactory;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceImpl;
+import org.springframework.context.ApplicationContext;
 
 public class SiriusProjectSpaceGuiService extends AbstractGuiService<SiriusProjectSpaceImpl> {
     private final SiriusGuiFactory guiFactory;
 
-    public SiriusProjectSpaceGuiService(EventService<?> eventService) {
-        this(new SiriusGuiFactory(), eventService);
+    public SiriusProjectSpaceGuiService(EventService<?> eventService, ApplicationContext applicationContext) {
+        this(new SiriusGuiFactory(), eventService, applicationContext);
     }
-    public SiriusProjectSpaceGuiService(SiriusGuiFactory guiFactory, EventService<?> eventService) {
-        super(eventService);
+    public SiriusProjectSpaceGuiService(SiriusGuiFactory guiFactory, EventService<?> eventService, ApplicationContext applicationContext) {
+        super(eventService, applicationContext);
         this.guiFactory = guiFactory;
     }
 

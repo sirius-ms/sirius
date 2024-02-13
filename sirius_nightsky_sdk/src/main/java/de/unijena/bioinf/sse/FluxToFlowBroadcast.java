@@ -59,7 +59,7 @@ public class FluxToFlowBroadcast implements Closeable {
         subscribe(subscriber, jobId, projectId, EnumSet.of(DataEventType.JOB));
     }
 
-    private void subscribe(Flow.Subscriber<DataObjectEvent<?>> subscriber, @Nullable String jobId, @Nullable String projectId, @NotNull EnumSet<DataEventType> eventsToListenOn) {
+    private synchronized void subscribe(Flow.Subscriber<DataObjectEvent<?>> subscriber, @Nullable String jobId, @Nullable String projectId, @NotNull EnumSet<DataEventType> eventsToListenOn) {
         if (eventsToListenOn.isEmpty())
             throw new IllegalArgumentException("events to listen on must not be empty");
 
@@ -87,7 +87,7 @@ public class FluxToFlowBroadcast implements Closeable {
         });
     }
 
-    public void onNext(@NotNull ServerSentEvent<String> sse) {
+    public synchronized void onNext(@NotNull ServerSentEvent<String> sse) {
         final String[] evtSplit = Optional.ofNullable(sse.event()).map(s -> s.split("[.]")).filter(a -> a.length > 1).orElse(null);
         if (evtSplit == null || !DataObjectEvents.isKnownObjectDataType(evtSplit[1])){
             LoggerFactory.getLogger(getClass()).warn("Skipping unknown sse event! " + Arrays.toString(evtSplit));
@@ -124,11 +124,11 @@ public class FluxToFlowBroadcast implements Closeable {
         });
     }
 
-    public void onError(Throwable throwable) {
+    public synchronized void onError(Throwable throwable) {
         subscribers.values().stream().flatMap(Collection::stream).distinct().forEach(e -> e.onError(throwable));
     }
 
-    public void onComplete() {
+    public synchronized void onComplete() {
         subscribers.values().stream().flatMap(Collection::stream).distinct().forEach(Flow.Subscriber::onComplete);
     }
 

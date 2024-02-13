@@ -102,6 +102,7 @@ public abstract class AbstractComputeService<P extends Project> implements Compu
 
     protected List<String> makeCommand(JobSubmission jobSubmission) {
         ArrayList<String> commands = new ArrayList<>(makeConfigToolCommand(jobSubmission));
+        commands.add("--RecomputeResults=" + jobSubmission.isRecompute());
         commands.addAll(jobSubmission.getEnabledTools().stream()
                 .map(Tool::getCommand)
                 .map(CommandLine.Command::name)

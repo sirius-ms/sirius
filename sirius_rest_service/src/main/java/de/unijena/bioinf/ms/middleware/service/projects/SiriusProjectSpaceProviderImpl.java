@@ -172,14 +172,14 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
         return createProjectSpace(location.getFileName().toString(), location);
     }
 
-    public ProjectInfo createProjectSpace(@NotNull String nameSuggestion, @NotNull Path location) throws IOException {
+    public ProjectInfo createProjectSpace(@NotNull String projectIdSuggestion, @NotNull Path location) throws IOException {
         if (Files.exists(location) && !(Files.isDirectory(location) && FileUtils.listAndClose(location, s -> s.findAny().isEmpty())))
             throw new IllegalArgumentException("Location '" + location.toAbsolutePath() +
                     "' already exists and is not an empty directory. Cannot create new project space here.");
 
         projectSpaceLock.writeLock().lock();
         try {
-            String name = ensureUniqueProjectName(nameSuggestion);
+            String name = ensureUniqueProjectId(projectIdSuggestion);
             if (projectSpaces.containsKey(name))
                 throw new IllegalArgumentException("project space with name '" + name + "' already exists.");
 
@@ -194,19 +194,19 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
     }
 
     @Override
-    public boolean containsProject(@NotNull String name) {
-        return projectSpaces.containsKey(name);
+    public boolean containsProject(@NotNull String projectId) {
+        return projectSpaces.containsKey(projectId);
     }
 
-    public void closeProjectSpace(String name) throws IOException {
+    public void closeProjectSpace(String projectId) throws IOException {
         projectSpaceLock.writeLock().lock();
         try {
-            final ProjectSpaceManager<?> space = projectSpaces.get(name);
+            final ProjectSpaceManager<?> space = projectSpaces.get(projectId);
             if (space == null) {
-                throw new ResponseStatusException(HttpStatus.NO_CONTENT, "Project space with name '" + name + "' not found!");
+                throw new ResponseStatusException(HttpStatus.NO_CONTENT, "Project space with name '" + projectId + "' not found!");
             }
             space.close();
-            projectSpaces.remove(name);
+            projectSpaces.remove(projectId);
         } finally {
             projectSpaceLock.writeLock().unlock();
         }

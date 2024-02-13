@@ -21,17 +21,25 @@
 package de.unijena.bioinf.ms.middleware.service.gui;
 
 import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
+import de.unijena.bioinf.ms.middleware.model.gui.GuiInfo;
 import de.unijena.bioinf.ms.middleware.model.gui.GuiParameters;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -40,9 +48,22 @@ public abstract class AbstractGuiService<P extends Project> implements GuiServic
     protected final Map<String, SiriusGui> siriusGuiInstances = new ConcurrentHashMap<>();
 
     protected final EventService<?> eventService;
+    private final ApplicationContext applicationContext;
 
-    protected AbstractGuiService(EventService<?> eventService) {
+    protected AbstractGuiService(EventService<?> eventService, ApplicationContext applicationContext) {
         this.eventService = eventService;
+        this.applicationContext = applicationContext;
+    }
+
+    @Override
+    public Page<GuiInfo> findGui(Pageable pageable) {
+        synchronized (siriusGuiInstances) {
+        List<GuiInfo> guis = siriusGuiInstances.entrySet().stream().sorted(Map.Entry.comparingByKey())
+                .skip(pageable.getOffset()).limit(pageable.getPageSize())
+                .map(e -> GuiInfo.builder().projectId(e.getKey()).build())
+                .toList();
+            return new PageImpl<>(guis, pageable, siriusGuiInstances.size());
+        }
     }
 
     @Override
@@ -53,14 +74,27 @@ public abstract class AbstractGuiService<P extends Project> implements GuiServic
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "There is already a SIRIUS GUI instance running on project: " + projectId);
             gui = makeGuiInstance(projectId);
             siriusGuiInstances.put(projectId, gui);
-            gui.getMainFrame().addWindowListener(new WindowAdapter() {
+
+            gui.getMainFrame().addWindowListener(new WindowAdapter() { //special shutdown procedure for bundled GUI instances
                 @Override
                 public void windowClosing(WindowEvent e) {
-                   closeGuiInstance(projectId);
+                    boolean closeSirius = false;
+                    synchronized (siriusGuiInstances) {
+                        SiriusGui gui = siriusGuiInstances.remove(projectId);
+                        if (gui != null) {
+                            if (siriusGuiInstances.size() == 0)
+                                closeSirius = new QuestionDialog(gui.getMainFrame(), "You are about to close the last SIRIUS GUI Window. Do you wish to shutdown SIRIUS?").isSuccess();
+                            gui.shutdown();
+                        }
+                    }
+                    if (closeSirius){
+                        ((ConfigurableApplicationContext) applicationContext).close();
+                        System.exit(0);
+                    }
                 }
             });
         }
-        if (gui != null && guiParameters != null)
+        if (guiParameters != null)
             eventService.sendEvent(ServerEvents.newGuiEvent(guiParameters, projectId));
     }
 
@@ -69,7 +103,8 @@ public abstract class AbstractGuiService<P extends Project> implements GuiServic
         synchronized (siriusGuiInstances) {
             SiriusGui gui = siriusGuiInstances.remove(projectId);
             if (gui != null)
-                gui.shutdown(false);
+                gui.shutdown();
+            //todo nightsky: do we need to close close SSE connections from the server side?
         }
     }
 
@@ -85,7 +120,7 @@ public abstract class AbstractGuiService<P extends Project> implements GuiServic
 
     @Override
     public void shutdown() {
-        siriusGuiInstances.forEach((k,v) -> v.shutdown());
+        siriusGuiInstances.forEach((k, v) -> v.shutdown());
     }
 
     protected abstract SiriusGui makeGuiInstance(String projectId);

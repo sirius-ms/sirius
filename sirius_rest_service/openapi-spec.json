@@ -29,6 +29,14 @@
       "description": "Perform signIn, signOut and signUp. Get tokens and account information."
     },
     {
+      "name": "Actuator",
+      "description": "Monitor and interact",
+      "externalDocs": {
+        "description": "Spring Boot Actuator Web API Documentation",
+        "url": "https://docs.spring.io/spring-boot/docs/current/actuator-api/html/"
+      }
+    },
+    {
       "name": "Features",
       "description": "This feature based API allows access features (aligned over runs) and there Annotations of a specified project-space. This is the entry point to access all raw annotation results an there summaries."
     },
@@ -1386,6 +1394,37 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AccountInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/actuator/shutdown": {
+      "post": {
+        "tags": [
+          "Actuator"
+        ],
+        "summary": "Actuator web endpoint \u0027shutdown\u0027",
+        "operationId": "shutdown",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/vnd.spring-boot.actuator.v3+json": {
+                "schema": {
+                  "type": "object"
+                }
+              },
+              "application/vnd.spring-boot.actuator.v2+json": {
+                "schema": {
+                  "type": "object"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object"
                 }
               }
             }
@@ -3020,6 +3059,64 @@
         }
       }
     },
+    "/api/guis": {
+      "get": {
+        "tags": [
+          "[Experimental] GUI"
+        ],
+        "summary": "Get list of currently running gui instances, managed by this SIRIUS instance.",
+        "description": "Get list of currently running gui instances, managed by this SIRIUS instance.",
+        "operationId": "getGuis",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of GUI instances that are currently managed by this SIRIUS instance.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageGuiInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/default-job-config": {
       "get": {
         "tags": [
@@ -3207,6 +3304,37 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AccountInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/actuator/health": {
+      "get": {
+        "tags": [
+          "Actuator"
+        ],
+        "summary": "Actuator web endpoint \u0027health\u0027",
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/vnd.spring-boot.actuator.v3+json": {
+                "schema": {
+                  "type": "object"
+                }
+              },
+              "application/vnd.spring-boot.actuator.v2+json": {
+                "schema": {
+                  "type": "object"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object"
                 }
               }
             }
@@ -3998,13 +4126,11 @@
         "nullable": true,
         "enum": [
           "FORMULAS",
-          "SPECTRA",
-          "TREES",
           "PREDICTED_FINGERPRINT",
+          "COMPOUND_CLASSES",
           "STRUCTURES",
           "STRUCTURE_ANNOTATION",
-          "COMPOUND_CLASSES",
-          "DASHBOARD"
+          "DE_NOVO_STRUCTURES"
         ]
       },
       "BasicSpectrum": {
@@ -5673,6 +5799,62 @@
           }
         },
         "description": ""
+      },
+      "GuiInfo": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "description": "The project this instance is running on"
+          }
+        },
+        "description": ""
+      },
+      "PageGuiInfo": {
+        "type": "object",
+        "properties": {
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GuiInfo"
+            }
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
       },
       "ConnectionCheck": {
         "required": [

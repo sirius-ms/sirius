@@ -82,24 +82,20 @@ Please follow the [installation](#installation) instruction and execute the foll
 import de.unijena.bioinf.ms.nightsky.sdk.client.*;
 import de.unijena.bioinf.ms.nightsky.sdk.client.auth.*;
 import de.unijena.bioinf.ms.nightsky.sdk.model.*;
-import de.unijena.bioinf.ms.nightsky.sdk.api.CompoundsApi;
+import de.unijena.bioinf.ms.nightsky.sdk.api.ActuatorApi;
 
-public class CompoundsApiExample {
+public class ActuatorApiExample {
 
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
         defaultClient.setBasePath("http://localhost:8080");
         
-        CompoundsApi apiInstance = new CompoundsApi(defaultClient);
-        String projectId = "projectId_example"; // String | project-space to import into.
-        List<CompoundImport> compoundImport = Arrays.asList(); // List<CompoundImport> | the compound data to be imported
-        List<CompoundOptField> optFields = Arrays.asList(); // List<CompoundOptField> | set of optional fields to be included. Use 'none' to override defaults.
-        List<AlignedFeatureOptField> optFieldsFeatures = Arrays.asList(); // List<AlignedFeatureOptField> | set of optional fields of the nested features to be included. Use 'none' to override defaults.
+        ActuatorApi apiInstance = new ActuatorApi(defaultClient);
         try {
-            List<Compound> result = apiInstance.addCompounds(projectId, compoundImport, optFields, optFieldsFeatures);
+            Object result = apiInstance.health();
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling CompoundsApi#addCompounds");
+            System.err.println("Exception when calling ActuatorApi#health");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -116,12 +112,15 @@ All URIs are relative to *http://localhost:8080*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
+*ActuatorApi* | [**health**](docs/ActuatorApi.md#health) | **GET** /actuator/health | Actuator web endpoint &#39;health&#39;
+*ActuatorApi* | [**shutdown**](docs/ActuatorApi.md#shutdown) | **POST** /actuator/shutdown | Actuator web endpoint &#39;shutdown&#39;
 *CompoundsApi* | [**addCompounds**](docs/CompoundsApi.md#addCompounds) | **POST** /api/projects/{projectId}/compounds | 
 *CompoundsApi* | [**deleteCompound**](docs/CompoundsApi.md#deleteCompound) | **DELETE** /api/projects/{projectId}/compounds/{compoundId} | Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space.
 *CompoundsApi* | [**getCompound**](docs/CompoundsApi.md#getCompound) | **GET** /api/projects/{projectId}/compounds/{compoundId} | Get compound (group of ion identities) with the given identifier from the specified project-space.
 *CompoundsApi* | [**getCompounds**](docs/CompoundsApi.md#getCompounds) | **GET** /api/projects/{projectId}/compounds | Get all available compounds (group of ion identities) in the given project-space.
 *ExperimentalGuiApi* | [**applyToGui**](docs/ExperimentalGuiApi.md#applyToGui) | **PATCH** /api/projects/{projectId}/gui | Apply given changes to the running GUI instance.
 *ExperimentalGuiApi* | [**closeGui**](docs/ExperimentalGuiApi.md#closeGui) | **DELETE** /api/projects/{projectId}/gui | Close GUI instance of given project-space if available.
+*ExperimentalGuiApi* | [**getGuis**](docs/ExperimentalGuiApi.md#getGuis) | **GET** /api/guis | Get list of currently running gui instances, managed by this SIRIUS instance.
 *ExperimentalGuiApi* | [**openGui**](docs/ExperimentalGuiApi.md#openGui) | **POST** /api/projects/{projectId}/gui | Open GUI instance on specified project-space and bring the GUI window to foreground.
 *FeaturesApi* | [**addAlignedFeatures**](docs/FeaturesApi.md#addAlignedFeatures) | **POST** /api/projects/{projectId}/aligned-features | 
 *FeaturesApi* | [**deleteAlignedFeature**](docs/FeaturesApi.md#deleteAlignedFeature) | **DELETE** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Delete feature (aligned over runs) with the given identifier from the specified project-space.
@@ -216,6 +215,7 @@ Class | Method | HTTP request | Description
  - [FormulaCandidateOptField](docs/FormulaCandidateOptField.md)
  - [FragmentNode](docs/FragmentNode.md)
  - [FragmentationTree](docs/FragmentationTree.md)
+ - [GuiInfo](docs/GuiInfo.md)
  - [GuiParameters](docs/GuiParameters.md)
  - [GuiResultTab](docs/GuiResultTab.md)
  - [ImportFormat](docs/ImportFormat.md)
@@ -237,6 +237,7 @@ Class | Method | HTTP request | Description
  - [PageAlignedFeature](docs/PageAlignedFeature.md)
  - [PageCompound](docs/PageCompound.md)
  - [PageFormulaCandidate](docs/PageFormulaCandidate.md)
+ - [PageGuiInfo](docs/PageGuiInfo.md)
  - [PageJob](docs/PageJob.md)
  - [PageProjectInfo](docs/PageProjectInfo.md)
  - [PageStructureCandidateFormula](docs/PageStructureCandidateFormula.md)

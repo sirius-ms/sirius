@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schiller University.
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -20,18 +20,14 @@
 
 package de.unijena.bioinf.ms.middleware.model.gui;
 
-import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
+import lombok.Getter;
 
-/**
- * Available result tabs in the SIRIUS GUI. Name correspond to the names in the GUI.
- */
-@Schema(enumAsRef = true, nullable = true)
-public enum GuiResultTab {
-    FORMULAS,
-    PREDICTED_FINGERPRINT,
-    COMPOUND_CLASSES,
-    STRUCTURES,
-    STRUCTURE_ANNOTATION,
-    DE_NOVO_STRUCTURES,
-//    DASHBOARD
+@Builder
+@Getter
+public class GuiInfo {
+    /**
+     * The project this instance is running on
+     */
+    String projectId;
 }

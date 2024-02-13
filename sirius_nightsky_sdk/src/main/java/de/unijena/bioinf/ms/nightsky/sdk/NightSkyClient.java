@@ -250,6 +250,10 @@ public class NightSkyClient implements AutoCloseable {
         return infos;
     }
 
+    public void shutDownSirius(){
+        new ActuatorApi(apiClient).shutdownWithResponseSpec().bodyToMono(String.class).blockOptional();
+    }
+
     @Override
     public synchronized void close() throws Exception {
         if (sseConnection != null && !sseConnection.isDisposed())
