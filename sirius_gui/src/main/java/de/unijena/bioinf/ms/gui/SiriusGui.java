@@ -51,7 +51,7 @@ public class SiriusGui {
 //        });
     }
 
-    private final NightSkyClient siriusClient;
+    private NightSkyClient siriusClient;
 
     public NightSkyClient getSiriusClient() {
         return siriusClient;
@@ -75,28 +75,25 @@ public class SiriusGui {
         return projectManager;
     }
 
-
-
     public SiriusGui(@NotNull String projectId, @Nullable NightSkyClient nightSkyClient, @NotNull ConnectionMonitor connectionMonitor) { //todo nighsky: change to nightsky api and project ID.
 //        this.projectId = projectId;
         this.connectionMonitor = connectionMonitor;
         siriusClient = nightSkyClient != null ? nightSkyClient : new NightSkyClient();
         siriusClient.enableEventListening(EnumSet.allOf(DataEventType.class));
-        projectManager =  new GuiProjectManager(projectId, siriusClient);
+        projectManager = new GuiProjectManager(projectId, siriusClient);
         mainFrame = new MainFrame(this);
         mainFrame.decoradeMainFrame();
-        //todo nightsky: check why JFX webview is only working for first instance...
         //todo nightsky: connect SSE connection to retrieve gui change states ???
+        //todo nightsky: GUI standablone mode with external SIRIUS Service
     }
 
-    public void shutdown(boolean closeProject) {
+    public void shutdown() {
         System.out.println("SHUTDOWN SIRIUS GUI");
         try {
             siriusClient.close();
         } catch (Exception e) {
             LoggerFactory.getLogger(getClass()).error("Error when closing NighSky client!", e);
         }
-        mainFrame.setCloseProjectOnDispose(closeProject);
         mainFrame.dispose();
     }
 
@@ -106,10 +103,6 @@ public class SiriusGui {
 
     public <R> R applySiriusClient(BiFunction<NightSkyClient, String, R> doWithProject) {
         return doWithProject.apply(getSiriusClient(), projectManager.getProjectId());
-    }
-
-    public void shutdown() {
-        shutdown(true);
     }
 
 

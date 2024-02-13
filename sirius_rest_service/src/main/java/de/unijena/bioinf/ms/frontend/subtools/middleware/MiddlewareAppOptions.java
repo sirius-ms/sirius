@@ -42,9 +42,9 @@ public class MiddlewareAppOptions<I extends Instance, P extends ProjectSpaceMana
     @CommandLine.Option(names = {"--enable-rest-shutdown", "-s"}, description = "Allows to shut down the SIRIUS REST Service via a rest api call (/actuator/shutdown)", defaultValue = "false")
     private void setShutdown(boolean enableRestShutdown) {
         if (enableRestShutdown)
-            System.getProperties().setProperty("management.endpoints.web.exposure.include", "info,health,shutdown");
+            System.getProperties().setProperty("management.endpoints.web.exposure.include", "health,shutdown");
         else
-            System.getProperties().setProperty("management.endpoints.web.exposure.include", "info,health");
+            System.getProperties().setProperty("management.endpoints.web.exposure.include", "health");
 
     }
 

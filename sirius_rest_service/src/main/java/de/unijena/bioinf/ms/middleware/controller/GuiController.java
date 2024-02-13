@@ -20,17 +20,23 @@
 
 package de.unijena.bioinf.ms.middleware.controller;
 
+import de.unijena.bioinf.ms.middleware.model.gui.GuiInfo;
 import de.unijena.bioinf.ms.middleware.model.gui.GuiParameters;
 import de.unijena.bioinf.ms.middleware.service.gui.GuiService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springdoc.api.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+
 @RestController
-@RequestMapping(value = "/api/projects/{projectId}/gui")
+//@RequestMapping(value = "/api/projects/{projectId}/gui")
 @Tag(name = "[Experimental] GUI",
         description = "Open, control and close SIRIUS Graphical User Interface (GUI) on the specified project-space.")
 public class GuiController {
@@ -46,12 +52,23 @@ public class GuiController {
     }
 
     /**
+     * Get list of currently running gui windows, managed by this SIRIUS instance.
+     * Note this will not show any Clients that are connected from a separate process!
+     * @return List of GUI windows that are currently managed by this SIRIUS instance.
+     */
+    @GetMapping(value = "/api/guis", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.OK)
+    public Page<GuiInfo> getGuis(@ParameterObject Pageable pageable) {
+        return guiService.findGui(pageable);
+    }
+
+    /**
      * Open GUI instance on specified project-space and bring the GUI window to foreground.
      *
      * @param readOnly  open in read-only mode.
      * @param projectId of project-space the GUI instance will connect to.
      */
-    @PostMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/api/projects/{projectId}/gui", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     public void openGui(@PathVariable String projectId, @RequestBody(required = false) GuiParameters guiParameters, @RequestParam(required = false, defaultValue = "true") boolean readOnly) {
         guiService.createGuiInstance(projectId, guiParameters);
@@ -63,7 +80,7 @@ public class GuiController {
      * @param projectId     of project-space the GUI instance is connected to.
      * @param guiParameters parameters that should be applied.
      */
-    @PatchMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PatchMapping(value = "/api/projects/{projectId}/gui", produces = MediaType.APPLICATION_JSON_VALUE)
     public void applyToGui(@PathVariable String projectId, @RequestBody GuiParameters guiParameters) {
         guiService.applyToGuiInstance(projectId, guiParameters);
     }
@@ -73,8 +90,10 @@ public class GuiController {
      *
      * @param projectId if project-space the GUI instance is connected to.
      */
-    @DeleteMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
-    public void closeGui(@PathVariable String projectId) {
+    @DeleteMapping(value = "/api/projects/{projectId}/gui", produces = MediaType.APPLICATION_JSON_VALUE)
+    public void closeGui(@PathVariable String projectId, @RequestParam(required = false) boolean closeProject) throws IOException {
         guiService.closeGuiInstance(projectId);
+        if (closeProject)
+            projectsProvider.closeProjectSpace(projectId);
     }
 }

@@ -69,7 +69,7 @@ public interface ProjectsProvider<P extends de.unijena.bioinf.ms.middleware.serv
 
     void closeAll();
 
-    default String ensureUniqueProjectName(String nameSuggestion) {
+    default String ensureUniqueProjectId(String nameSuggestion) {
         if (!containsProject(nameSuggestion))
             return nameSuggestion;
         int app = 2;

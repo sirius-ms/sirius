@@ -28,11 +28,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(enumAsRef = true, nullable = true)
 public enum GuiResultTab {
     FORMULAS,
-    SPECTRA,
-    TREES,
     PREDICTED_FINGERPRINT,
+    COMPOUND_CLASSES,
     STRUCTURES,
     STRUCTURE_ANNOTATION,
-    COMPOUND_CLASSES,
-    DASHBOARD
+    DE_NOVO_STRUCTURES,
+//    DASHBOARD
 }
