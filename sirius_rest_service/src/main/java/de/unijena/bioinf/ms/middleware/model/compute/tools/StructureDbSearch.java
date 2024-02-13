@@ -91,10 +91,10 @@ public class StructureDbSearch extends Tool<FingerblastOptions> {
     @JsonIgnore
     @Override
     public Map<String, String> asConfigMap() {
-        return Map.of(
-                "TagStructuresByElGordo", String.valueOf(tagStructuresWithLipidClass),
-                "StructureSearchDB", String.join(",", structureSearchDBs).toLowerCase(Locale.ROOT),
-                "ExpansiveSearchConfidenceMode.confidenceScoreSimilarityMode",expansiveSearchConfidenceMode.name()
-        );
+        return new NullCheckMapBuilder()
+                .putNonNull("TagStructuresByElGordo", tagStructuresWithLipidClass)
+                .putNonNullObj("StructureSearchDB", structureSearchDBs, db -> String.join(",", db).toLowerCase(Locale.ROOT))
+                .putNonNull("ExpansiveSearchConfidenceMode.confidenceScoreSimilarityMode", expansiveSearchConfidenceMode)
+                .toUnmodifiableMap();
     }
 }

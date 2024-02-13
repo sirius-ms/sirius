@@ -30,7 +30,6 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.IsotopeMs2Settings;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Timeout;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.UseHeuristic;
-import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -160,13 +159,13 @@ public class Sirius extends Tool<SiriusOptions> {
                 .putNonNull("FormulaSettings.detectable", detectableElements, d -> String.join(",", d))
                 .putNonNull("FormulaSettings.fallback", fallbackFormulaConstraints)
 
-                .putNonNull("IsotopeMs2Settings", isotopeMs2Settings, IsotopeMs2Settings.Strategy::name)
+                .putNonNull("IsotopeMs2Settings", isotopeMs2Settings)
 
                 .putNonNull("FormulaSearchDB", formulaSearchDBs, f -> String.join(",", f))
 
                 .putNonNull("NumberOfCandidates", numberOfCandidates)
                 .putNonNull("NumberOfCandidatesPerIon", numberOfCandidatesPerIon)
-                .putNonNull("AlgorithmProfile", profile, Sirius.Instrument::name)
+                .putNonNull("AlgorithmProfile", profile)
                 .toUnmodifiableMap();
     }
 }
