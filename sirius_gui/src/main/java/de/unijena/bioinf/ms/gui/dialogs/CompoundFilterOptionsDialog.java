@@ -53,7 +53,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
 
     final SearchTextField searchField;
     final JTextField searchFieldDialogCopy;
-    final JSpinner minMzSpinner, maxMzSpinner, minRtSpinner, maxRtSpinner, minConfidenceSpinner, maxConfidenceSpinner, candidateSpinner;
+    final JSpinner minMzSpinner, maxMzSpinner, minRtSpinner, maxRtSpinner, minConfidenceSpinner, maxConfidenceSpinner, candidateSpinner, minIsotopeSpinner;
     public final JCheckboxListPanel<PrecursorIonType> adductOptions;
     JButton discard, apply, reset;
     JCheckBox invertFilter;
@@ -133,6 +133,12 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             }
             smallParameters.addNamed("Peak shape quality: ", group);
         }
+
+        //isotope peak filter
+
+        minIsotopeSpinner = makeSpinner(filterModel.getCurrentMinIsotopePeaks(), filterModel.getMinIsotopePeaks(), filterModel.getMaxIsotopePeaks(), 1);
+        smallParameters.addNamed("Minimum number of isotope peaks: ", minIsotopeSpinner);
+
 
         //lipid filter
         {
@@ -294,6 +300,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         filterModel.setCurrentMaxRt(getMaxRt());
         filterModel.setCurrentMinConfidence(getMinConfidence());
         filterModel.setCurrentMaxConfidence(getMaxConfidence());
+        filterModel.setCurrentMinIsotopePeaks(getMinIsotopePeaks());
         filterModel.setAdducts(new HashSet<>(adductOptions.checkBoxList.getCheckedItems()));
 
         for (int k = 0; k < peakShape.length; ++k) {
@@ -382,6 +389,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         maxRtSpinner.setValue(filterModel.getMaxRt());
         minConfidenceSpinner.setValue(filterModel.getMinConfidence());
         maxConfidenceSpinner.setValue(filterModel.getMaxConfidence());
+        minIsotopeSpinner.setValue(filterModel.getMinIsotopePeaks());
         candidateSpinner.setValue(1);
     }
 
@@ -409,9 +417,15 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         return getDoubleValue(maxConfidenceSpinner);
     }
 
+    public int getMinIsotopePeaks() {return getIntValue(minIsotopeSpinner);}
+
 
     public double getDoubleValue(JSpinner spinner) {
         return ((SpinnerNumberModel) spinner.getModel()).getNumber().doubleValue();
+    }
+
+    public int getIntValue(JSpinner spinner){
+        return ((SpinnerNumberModel) spinner.getModel()).getNumber().intValue();
     }
 
     private void ensureCompatibleBounds(JSpinner minSpinner, JSpinner maxSpinner) {

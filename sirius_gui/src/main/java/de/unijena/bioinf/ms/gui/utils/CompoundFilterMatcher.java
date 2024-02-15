@@ -19,25 +19,17 @@ package de.unijena.bioinf.ms.gui.utils;/*
  */
 
 import ca.odell.glazedlists.matchers.Matcher;
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
-import de.unijena.bioinf.chemdb.ChemDBs;
-import de.unijena.bioinf.chemdb.CompoundCandidate;
-import de.unijena.bioinf.chemdb.SearchableDatabases;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.ChemistryBase.ms.utils.WrapperSpectrum;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
-import de.unijena.bioinf.fingerid.blast.FBCandidates;
-import de.unijena.bioinf.fingerid.blast.TopCSIScore;
-import de.unijena.bioinf.ms.nightsky.sdk.model.DBLink;
-import de.unijena.bioinf.ms.nightsky.sdk.model.PageStructureCandidateFormula;
-import de.unijena.bioinf.ms.nightsky.sdk.model.StructureCandidateFormula;
+import de.unijena.bioinf.ms.nightsky.sdk.model.*;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -92,6 +84,9 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
         if (filterModel.isPeakShapeFilterEnabled())
             if (!filterByPeakShape(item, filterModel)) return false;
 
+        if(filterModel.isMinIsotopePeaksFilterEnabled())
+            if(!filterByMinIsotopePeaks(item,filterModel)) return false;
+
         if (filterModel.isLipidFilterEnabled())
             if (!matchesLipidFilter(item, filterModel)) return false;
 
@@ -99,6 +94,16 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
             if (!matchesDBFilter(item, filterModel)) return false;
 
         return true;
+    }
+
+    private boolean filterByMinIsotopePeaks(InstanceBean item, CompoundFilterModel filterModel){
+       return Optional.ofNullable(item.getMsData())
+               .map(MsData::getMergedMs1)
+               .map(ms1 -> WrapperSpectrum.of(ms1.getPeaks(), SimplePeak::getMz, SimplePeak::getIntensity))
+               .map(s -> Spectrums.extractIsotopePattern(s, item.asMs2Experiment()))
+               .map(s -> s.size() >= filterModel.getCurrentMinIsotopePeaks())
+               .orElse(false);
+                //todo nightsky: -> add isotope pattern to MS/MS data.
     }
 
     private boolean filterByPeakShape(InstanceBean item, CompoundFilterModel filterModel) {
