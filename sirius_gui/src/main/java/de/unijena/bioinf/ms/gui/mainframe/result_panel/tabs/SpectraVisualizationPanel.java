@@ -341,7 +341,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
                             final AnnotatedMsMsData annotatedMsMsData;
                             if (formulaCandidateId != null) {
                                 isotopePatternAnnotation = instance.withIds((pid, fid) -> instance.getClient().features()
-                                        .getIsotopePatternAnnotation(pid, fid, formulaCandidateId));
+                                        .getIsotopePatternAnnotationWithResponseSpec(pid, fid, formulaCandidateId).bodyToMono(IsotopePatternAnnotation.class).blockOptional().orElse(null));
                                 checkForInterruption();
                                 if (inChIKey2d != null)
                                     annotatedMsMsData = instance.withIds((pid, fid) -> instance.getClient().features()
