@@ -19,22 +19,19 @@
 
 package de.unijena.bioinf.ms.gui.io.filefilter;
 
-import de.unijena.bioinf.projectspace.ProjectSpaceIO;
-
 import javax.swing.filechooser.FileFilter;
 import java.io.File;
 
 public class ProjectArchivedFilter extends FileFilter {
     @Override
     public boolean accept(File f) {
-        //todo nightsky replace with new project-space
         if (f.isDirectory())
             return true;
-        return ProjectSpaceIO.isZipProjectSpace(f.toPath());
+        return f.getName().endsWith(".sirius"); //todo nightsky: do we want a proper project db check here?
     }
 
     @Override
     public String getDescription() {
-        return ".sirius, .workspace";
+        return ".sirius";
     }
 }

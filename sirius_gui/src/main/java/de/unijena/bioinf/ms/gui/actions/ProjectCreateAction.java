@@ -27,22 +27,30 @@ import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.io.filefilter.ProjectArchivedFilter;
 import de.unijena.bioinf.ms.gui.io.filefilter.ProjectDirectoryFilter;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 
 
 /**
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ * @author Markus Fleischauer
  */
-public class ProjectCreateAction extends AbstractGuiAction {
+public class ProjectCreateAction extends ProjectOpenAction {
+
+    public static final String DONT_ASK_NEW_WINDOW_CREATE_KEY = "de.unijena.bioinf.sirius.dragdrop.newWindowCreate.dontAskAgain";
+
 
     public ProjectCreateAction(SiriusGui gui) {
         super("New", gui);
         putValue(Action.LARGE_ICON_KEY, Icons.ADD_DOC_32);
-        putValue(Action.SHORT_DESCRIPTION, "Create a new empty project at the given location (.sirius or directory)");
+        putValue(Action.SHORT_DESCRIPTION, "Create a new empty project at the given location.");
         setEnabled(true);
     }
 
@@ -62,7 +70,6 @@ public class ProjectCreateAction extends AbstractGuiAction {
             int returnval = jfc.showDialog(mainFrame, "Create");
             if (returnval == JFileChooser.APPROVE_OPTION) {
                 File selFile = jfc.getSelectedFile();
-
                 {
                     final String path = selFile.getParentFile().getAbsolutePath();
                     Jobs.runInBackground(() ->
@@ -86,12 +93,35 @@ public class ProjectCreateAction extends AbstractGuiAction {
 
         if (selectedFile != null) {
             try {
-                //todo nightsky implement via api
-                throw new IllegalStateException("create new ProjectSpace not implemented");
-//                MF.createNewProjectSpace(selectedFile.toPath());
+                createProject(selectedFile.toPath());
             } catch (Exception e2) {
                 new StacktraceDialog(mainFrame, e2.getMessage(), e2);
             }
         }
+    }
+
+    public void createProject(@NotNull Path projectPath) {
+        createProject(projectPath, null);
+    }
+
+    public void createProject(@NotNull Path projectPath, @Nullable Boolean closeCurrent) {
+        try {
+            String pid = Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Creating Project...", () ->
+                    gui.getSiriusClient().projects()
+                            .createProjectSpace(projectPath.getFileName().toString(), projectPath.toAbsolutePath().toString(), null,true)
+                            .getProjectId()
+
+            ).awaitResult();
+
+            openProject(pid, closeCurrent);
+        } catch (ExecutionException e) {
+            LoggerFactory.getLogger(getClass()).error("Error when creating new project!", e);
+            Jobs.runEDTLater(() -> new StacktraceDialog(gui.getMainFrame(), "Error when creating new project!", e));
+        }
+    }
+
+    @Override
+    protected String dontAskKey() {
+        return DONT_ASK_NEW_WINDOW_CREATE_KEY;
     }
 }

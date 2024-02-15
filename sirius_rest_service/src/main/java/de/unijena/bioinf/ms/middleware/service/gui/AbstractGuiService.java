@@ -99,13 +99,15 @@ public abstract class AbstractGuiService<P extends Project> implements GuiServic
     }
 
     @Override
-    public void closeGuiInstance(@NotNull String projectId) {
+    public boolean closeGuiInstance(@NotNull String projectId) {
         synchronized (siriusGuiInstances) {
             SiriusGui gui = siriusGuiInstances.remove(projectId);
-            if (gui != null)
+            if (gui != null){
                 gui.shutdown();
-            //todo nightsky: do we need to close close SSE connections from the server side?
+                return true;
+            }
         }
+        return false;
     }
 
     @Override

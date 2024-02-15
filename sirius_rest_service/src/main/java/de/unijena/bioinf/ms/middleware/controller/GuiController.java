@@ -91,9 +91,10 @@ public class GuiController {
      * @param projectId if project-space the GUI instance is connected to.
      */
     @DeleteMapping(value = "/api/projects/{projectId}/gui", produces = MediaType.APPLICATION_JSON_VALUE)
-    public void closeGui(@PathVariable String projectId, @RequestParam(required = false) boolean closeProject) throws IOException {
-        guiService.closeGuiInstance(projectId);
+    public boolean closeGui(@PathVariable String projectId, @RequestParam(required = false) boolean closeProject) throws IOException {
+        boolean closed = guiService.closeGuiInstance(projectId);
         if (closeProject)
             projectsProvider.closeProjectSpace(projectId);
+        return closed;
     }
 }

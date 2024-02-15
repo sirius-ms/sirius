@@ -822,11 +822,26 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "closeProject",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
           }
         }
       },
@@ -3064,8 +3079,8 @@
         "tags": [
           "[Experimental] GUI"
         ],
-        "summary": "Get list of currently running gui instances, managed by this SIRIUS instance.",
-        "description": "Get list of currently running gui instances, managed by this SIRIUS instance.",
+        "summary": "Get list of currently running gui windows, managed by this SIRIUS instance.",
+        "description": "Get list of currently running gui windows, managed by this SIRIUS instance.\n Note this will not show any Clients that are connected from a separate process!",
         "operationId": "getGuis",
         "parameters": [
           {
@@ -3105,7 +3120,7 @@
         ],
         "responses": {
           "200": {
-            "description": "List of GUI instances that are currently managed by this SIRIUS instance.",
+            "description": "List of GUI windows that are currently managed by this SIRIUS instance.",
             "content": {
               "application/json": {
                 "schema": {
