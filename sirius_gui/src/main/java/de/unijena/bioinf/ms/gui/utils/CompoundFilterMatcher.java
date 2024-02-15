@@ -25,6 +25,8 @@ import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.chemdb.ChemDBs;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
@@ -33,6 +35,7 @@ import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.lcms.LCMSCompoundSummary;
 import de.unijena.bioinf.lcms.quality.LCMSQualityCheck;
+import de.unijena.bioinf.ms.gui.ms_viewer.data.SiriusIsotopePattern;
 import de.unijena.bioinf.projectspace.CompoundContainer;
 import de.unijena.bioinf.projectspace.FormulaResult;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
@@ -94,6 +97,9 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
         if (filterModel.isPeakShapeFilterEnabled())
             if (!filterByPeakShape(item, filterModel)) return false;
 
+        if(filterModel.isMinIsotopePeaksFilterEnabled())
+            if(!filterByMinIsotopePeaks(item,filterModel)) return false;
+
         if (filterModel.isLipidFilterEnabled())
             if (!matchesLipidFilter(item, filterModel)) return false;
 
@@ -101,6 +107,13 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
             if (!matchesDBFilter(item, filterModel)) return false;
 
         return true;
+    }
+
+    private boolean filterByMinIsotopePeaks(InstanceBean item, CompoundFilterModel filterModel){
+
+        SimpleSpectrum siriusIsotopePattern = item.getMergedMs1Spectrum() != null ? Spectrums.extractIsotopePattern(item.getMergedMs1Spectrum(), item.getExperiment()) : null;
+        return siriusIsotopePattern != null ?  (siriusIsotopePattern.size() >= filterModel.getCurrentMinIsotopePeaks()) : false;
+
     }
 
     private boolean filterByPeakShape(InstanceBean item, CompoundFilterModel filterModel) {
