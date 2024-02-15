@@ -21,10 +21,13 @@ package de.unijena.bioinf.ms.gui.utils;/*
 import ca.odell.glazedlists.matchers.Matcher;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
+import de.unijena.bioinf.ChemistryBase.ms.MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ChemistryBase.ms.utils.WrapperSpectrum;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.nightsky.sdk.model.*;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jetbrains.annotations.NotNull;
@@ -100,10 +103,12 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
        return Optional.ofNullable(item.getMsData())
                .map(MsData::getMergedMs1)
                .map(ms1 -> WrapperSpectrum.of(ms1.getPeaks(), SimplePeak::getMz, SimplePeak::getIntensity))
-               .map(s -> Spectrums.extractIsotopePattern(s, item.asMs2Experiment()))
+               .map(s -> Spectrums.extractIsotopePattern(s,
+                       PropertyManager.DEFAULTS.createInstanceWithDefaults(MS1MassDeviation.class),
+                       item.getIonMass(), item.getIonType().getCharge(), true))
                .map(s -> s.size() >= filterModel.getCurrentMinIsotopePeaks())
                .orElse(false);
-                //todo nightsky: -> add isotope pattern to MS/MS data.
+                //todo nightsky: -> add isotope pattern to MS/MS data to make such things easier?.
     }
 
     private boolean filterByPeakShape(InstanceBean item, CompoundFilterModel filterModel) {
