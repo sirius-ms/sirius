@@ -34,14 +34,12 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ * @author Markus Fleischauer
  */
 public enum SiriusActions {
 
     COMPUTE(ComputeAction.class),
-    //    CANCEL_COMPUTE(CancelComputeAction.class),
     COMPUTE_ALL(ComputeAllAction.class),
-    //    CANCEL_ALL(CancelComputeAllAction.class),
     ORDER_BY_INDEX(OrderCompoundByIndex.class),
     ORDER_BY_RT(OrderCompoundByRT.class),
     ORDER_BY_MASS(OrderCompoundByMass.class),
@@ -51,19 +49,14 @@ public enum SiriusActions {
     TOOGLE_INVERT_FILTER(InvertFilterAction.class),
     RESET_FILTER(ResetFilterAction.class),
 
-//    COMPUTE_CSI(ComputeCSIAction.class),
-//    COMPUTE_CSI_LOCAL(ComputeCSILocalAction.class),
-
     IMPORT_EXP_BATCH(ImportAction.class),
     DELETE_EXP(DeleteExperimentAction.class),
     CHANGE_ADDCUCT_EXP(ChangeAdductAction.class),
     SUMMARIZE_EXP(SummarizeSelectedAction.class),
 
-
     NEW_WS(ProjectCreateAction.class),
     LOAD_WS(ProjectOpenAction.class),
     SAVE_WS(ProjectSaveAction.class),
-    EXPORT_WS(ProjectSaveCopyAction.class),
     SUMMARIZE_WS(SummarizeAllAction.class),
     EXPORT_FBMN(FBMNExportAction.class),
 
@@ -132,6 +125,8 @@ public enum SiriusActions {
     SiriusActions(Class<? extends Action> action) {
         this.actionClass = action;
     }
+
+
 
 
     public static boolean notComputingOrEmpty(Collection<InstanceBean> instance) {

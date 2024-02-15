@@ -36,7 +36,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 /**
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ * @author Markus Fleischauer
  */
 public class SiriusToolbar extends JToolBar {
     private final ToolbarToggleButton logsB;
@@ -46,21 +46,16 @@ public class SiriusToolbar extends JToolBar {
 
     SiriusToolbar(SiriusGui gui) {
         setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, Colors.ICON_BLUE));
-        //create/open
+        //create/open/save project
         createB = new ToolbarButton(SiriusActions.NEW_WS.getInstance(gui, true));
         add(createB);
         openB = new ToolbarButton(SiriusActions.LOAD_WS.getInstance(gui, true));
         add(openB);
-        addSeparator(new Dimension(20, 20));
-
-        //save
         saveB = new ToolbarButton(SiriusActions.SAVE_WS.getInstance(gui, true));
         add(saveB);
-        exportB = new ToolbarButton(SiriusActions.EXPORT_WS.getInstance(gui, true));
-        add(exportB);
         addSeparator(new Dimension(20, 20));
 
-        //import
+        //import data
         importB = new ToolbarButton(SiriusActions.IMPORT_EXP_BATCH.getInstance(gui, true));
         add(importB);
 

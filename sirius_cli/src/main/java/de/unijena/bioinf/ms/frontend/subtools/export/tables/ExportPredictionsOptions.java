@@ -110,7 +110,7 @@ public class ExportPredictionsOptions implements StandaloneTool<ExportPrediction
             List<Instance> filtered = new ArrayList<>();
             for (Instance inst : instances) {
                 final int pol = inst.getExperiment().getPrecursorIonType().getCharge();
-                if (polarity==0) {
+                if (polarity == 0) {
                     polarity = pol;
                 }
                 if (polarity == pol) {
@@ -135,7 +135,7 @@ public class ExportPredictionsOptions implements StandaloneTool<ExportPrediction
                         headerWritten = true;
                     }
                     try {
-                        write(writer, inst, inst.getExperiment());
+                        write(writer, inst);
                     } catch (IOException e) {
                         throw e;
                     } catch (Exception e) {
@@ -176,7 +176,7 @@ public class ExportPredictionsOptions implements StandaloneTool<ExportPrediction
             }
         }
 
-        private void write(BufferedWriter writer, Instance inst, Ms2Experiment experiment) throws IOException {
+        private void write(BufferedWriter writer, Instance inst) throws IOException {
             Optional<FormulaResult> fid = inst.loadTopFormulaResult(components);
             if (fid.isPresent()) {
                 final FormulaResult formulaResult = fid.get();
@@ -203,7 +203,6 @@ public class ExportPredictionsOptions implements StandaloneTool<ExportPrediction
                     write(writer, versions[X.MACCS.ordinal()], formulaResult.getAnnotation(FingerprintResult.class).map(x -> versions[X.MACCS.ordinal()].mask(x.fingerprint)));
                 }
 
-
                 writer.newLine();
             }
         }
@@ -212,61 +211,83 @@ public class ExportPredictionsOptions implements StandaloneTool<ExportPrediction
             writer.write("id\tname\tmolecularFormula\tadduct");
             if (options.classyfire) {
                 final MaskedFingerprintVersion version = versions[X.CLASSYFIRE.ordinal()];
-                for (int absi : version.allowedIndizes()) {
-                    MolecularProperty prop = version.getMolecularProperty(absi);
-                    writer.write('\t');
-                    writer.write("ClassyFire#");
-                    writer.write(((ClassyfireProperty) prop).getName());
+                if (version != null) {
+                    for (int absi : version.allowedIndizes()) {
+                        MolecularProperty prop = version.getMolecularProperty(absi);
+                        writer.write('\t');
+                        writer.write("ClassyFire#");
+                        writer.write(((ClassyfireProperty) prop).getName());
+                    }
+                } else {
+                    logWarn("No CLASSYFIRE prediction data found. Maybe because no results exist. Skipping export.");
                 }
             }
 
             if (options.npc) {
                 final MaskedFingerprintVersion version = versions[X.NPC.ordinal()];
-                for (int absi : version.allowedIndizes()) {
-                    MolecularProperty prop = version.getMolecularProperty(absi);
-                    writer.write('\t');
-                    writer.write("NPC#");
-                    writer.write(((NPCFingerprintVersion.NPCProperty) prop).getName());
+                if (version != null) {
+                    for (int absi : version.allowedIndizes()) {
+                        MolecularProperty prop = version.getMolecularProperty(absi);
+                        writer.write('\t');
+                        writer.write("NPC#");
+                        writer.write(((NPCFingerprintVersion.NPCProperty) prop).getName());
+                    }
+                } else {
+                    logWarn("No NPC prediction data found. Maybe because no results exist. Skipping export.");
                 }
             }
 
             if (options.fingerprints) {
                 final MaskedFingerprintVersion version = versions[X.FP.ordinal()];
-                for (int absi : version.allowedIndizes()) {
-                    writer.write('\t');
-                    writer.write(String.valueOf(absi));
+                if (version != null) {
+                    for (int absi : version.allowedIndizes()) {
+                        writer.write('\t');
+                        writer.write(String.valueOf(absi));
+                    }
+                } else {
+                    logWarn("No SIRIUS Fingerprint data found. Maybe because no results exist. Skipping export.");
                 }
             }
 
             if (options.pubchem) {
                 final MaskedFingerprintVersion version = versions[X.PUBCHEM.ordinal()];
-                int pubchemOffset = CdkFingerprintVersion.getComplete().getOffsetFor(CdkFingerprintVersion.USED_FINGERPRINTS.PUBCHEM);
-                for (int absi : version.allowedIndizes()) {
-                    writer.write('\t');
-                    writer.write("PubChem#");
-                    writer.write(String.valueOf(absi-pubchemOffset));
+                if (version != null) {
+                    int pubchemOffset = CdkFingerprintVersion.getComplete().getOffsetFor(CdkFingerprintVersion.USED_FINGERPRINTS.PUBCHEM);
+                    for (int absi : version.allowedIndizes()) {
+                        writer.write('\t');
+                        writer.write("PubChem#");
+                        writer.write(String.valueOf(absi - pubchemOffset));
+                    }
+                } else {
+                    logWarn("No PUBCHEM Fingerprint data found. Maybe because no results exist. Skipping export.");
                 }
             }
             if (options.maccs) {
                 final MaskedFingerprintVersion version = versions[X.MACCS.ordinal()];
-                int pubchemOffset = CdkFingerprintVersion.getComplete().getOffsetFor(CdkFingerprintVersion.USED_FINGERPRINTS.MACCS);
-                for (int absi : version.allowedIndizes()) {
-                    writer.write('\t');
-                    writer.write("MACCS#");
-                    writer.write(String.valueOf(absi-pubchemOffset));
+                if (version != null) {
+                    int pubchemOffset = CdkFingerprintVersion.getComplete().getOffsetFor(CdkFingerprintVersion.USED_FINGERPRINTS.MACCS);
+                    for (int absi : version.allowedIndizes()) {
+                        writer.write('\t');
+                        writer.write("MACCS#");
+                        writer.write(String.valueOf(absi - pubchemOffset));
+                    }
+                } else {
+                    logWarn("No MACCS Fingerprint data found. Maybe because no results exist. Skipping export.");
                 }
             }
         }
 
         private void write(BufferedWriter writer, MaskedFingerprintVersion version, Optional<ProbabilityFingerprint> fp) throws IOException {
-            if (fp.isPresent()) {
-                for (FPIter x : fp.get()) {
-                    writer.write('\t');
-                    writer.write(options.float2string(x.getProbability()));
-                }
-            } else {
-                for (int i = 0; i < version.size(); ++i) {
-                    writer.write("\tN/A");
+            if (version != null) {
+                if (fp.isPresent()) {
+                    for (FPIter x : fp.get()) {
+                        writer.write('\t');
+                        writer.write(options.float2string(x.getProbability()));
+                    }
+                } else {
+                    for (int i = 0; i < version.size(); ++i) {
+                        writer.write("\tN/A");
+                    }
                 }
             }
         }

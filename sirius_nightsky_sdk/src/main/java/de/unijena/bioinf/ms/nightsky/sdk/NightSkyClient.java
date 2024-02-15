@@ -67,11 +67,9 @@ public class NightSkyClient implements AutoCloseable {
     protected final ProjectsApi projects;
 
     protected InfoApi infos;
-    //    private SSEHandler sseHandler = null;
     private EnumSet<DataEventType> sseEventsToListenOn = null;
     private Disposable sseConnection;
     private FluxToFlowBroadcast sseBroadcast;
-//    private CompletableFuture<Integer> sseConnection = null;
 
     public NightSkyClient() {
         this(8080, "http://localhost");
@@ -156,7 +154,7 @@ public class NightSkyClient implements AutoCloseable {
             throw new IllegalArgumentException("At least one event type needs to be specified!");
 
         if (sseConnection != null) {
-            System.out.println("Event lsitening already running!");
+            LOG.debug("Event listening already running!");
             return;
         }
         sseEventsToListenOn = events;

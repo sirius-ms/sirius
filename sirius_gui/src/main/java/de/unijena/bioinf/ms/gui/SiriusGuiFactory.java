@@ -23,7 +23,11 @@ package de.unijena.bioinf.ms.gui;
 
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
+import de.unijena.bioinf.sse.DataEventType;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
+
+import java.util.EnumSet;
 
 /**
  * This is usually a singleton instance class that holds all active gui instances and there shared infrastructure
@@ -36,33 +40,41 @@ public final class SiriusGuiFactory {
     public SiriusGuiFactory() {
         this(null, null);
     }
+
     public SiriusGuiFactory(NightSkyClient nightSkyClient, ConnectionMonitor connectionMonitor) {
         this.nightSkyClient = nightSkyClient;
         this.connectionMonitor = connectionMonitor;
     }
 
-    public SiriusGui newGui(@NotNull String projectId){
+    public SiriusGui newGui(@NotNull String projectId) {
         init();
         return new SiriusGui(projectId, nightSkyClient, connectionMonitor);
     }
 
-    private void init(){
-        if (nightSkyClient == null){
-            synchronized (this){
+    private void init() {
+        if (nightSkyClient == null) {
+            synchronized (this) {
                 if (nightSkyClient == null)
                     nightSkyClient = new NightSkyClient();
             }
         }
+        nightSkyClient.enableEventListening(EnumSet.allOf(DataEventType.class));
 
-        if (connectionMonitor == null){
-            synchronized (this){
+
+        if (connectionMonitor == null) {
+            synchronized (this) {
                 if (connectionMonitor == null)
                     connectionMonitor = new ConnectionMonitor(nightSkyClient);
             }
         }
     }
 
-    public void shutdowm(){
-        connectionMonitor.close();
+    public void shutdowm() {
+        try {
+            connectionMonitor.close();
+            nightSkyClient.close();
+        } catch (Exception e) {
+            LoggerFactory.getLogger(getClass()).error("Error when closing NighSky client!", e);
+        }
     }
 }

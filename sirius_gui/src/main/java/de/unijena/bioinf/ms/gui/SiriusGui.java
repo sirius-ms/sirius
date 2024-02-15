@@ -25,13 +25,8 @@ import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
 import de.unijena.bioinf.projectspace.GuiProjectManager;
-import de.unijena.bioinf.sse.DataEventType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.EnumSet;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
@@ -54,6 +49,8 @@ public class SiriusGui {
     private NightSkyClient siriusClient;
 
     public NightSkyClient getSiriusClient() {
+        if (siriusClient == null)
+            throw new IllegalStateException("Gui instance that is using this Client has already been closed!");
         return siriusClient;
     }
 
@@ -75,25 +72,22 @@ public class SiriusGui {
         return projectManager;
     }
 
-    public SiriusGui(@NotNull String projectId, @Nullable NightSkyClient nightSkyClient, @NotNull ConnectionMonitor connectionMonitor) { //todo nighsky: change to nightsky api and project ID.
-//        this.projectId = projectId;
+    public SiriusGui(@NotNull String projectId, @NotNull NightSkyClient nightSkyClient, @NotNull ConnectionMonitor connectionMonitor) {
         this.connectionMonitor = connectionMonitor;
-        siriusClient = nightSkyClient != null ? nightSkyClient : new NightSkyClient();
-        siriusClient.enableEventListening(EnumSet.allOf(DataEventType.class));
+        siriusClient = nightSkyClient;
         projectManager = new GuiProjectManager(projectId, siriusClient);
         mainFrame = new MainFrame(this);
         mainFrame.decoradeMainFrame();
-        //todo nightsky: connect SSE connection to retrieve gui change states ???
         //todo nightsky: GUI standablone mode with external SIRIUS Service
     }
 
+    public void close() {
+        boolean closed = getSiriusClient().gui().closeGui(getProjectManager().getProjectId(), true);
+        if (!closed)
+            shutdown();
+    }
+
     public void shutdown() {
-        System.out.println("SHUTDOWN SIRIUS GUI");
-        try {
-            siriusClient.close();
-        } catch (Exception e) {
-            LoggerFactory.getLogger(getClass()).error("Error when closing NighSky client!", e);
-        }
         mainFrame.dispose();
     }
 
@@ -104,97 +98,4 @@ public class SiriusGui {
     public <R> R applySiriusClient(BiFunction<NightSkyClient, String, R> doWithProject) {
         return doWithProject.apply(getSiriusClient(), projectManager.getProjectId());
     }
-
-
-    //todo what is still needed from here
-    /*
-    * //todo nightsky create new GUI instance on project
-    public void openNewProjectSpace(Path selFile) {
-        changeProject(() -> new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(selFile));
-    }
-
-    public void createNewProjectSpace(Path selFile) {
-        changeProject(() -> new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createNewProjectSpace(selFile));
-    }
-
-    protected void changeProject(IOFunctions.IOSupplier<SiriusProjectSpace> makeSpace) {
-        final BasicEventList<InstanceBean> psList = compoundBaseList;
-        final AtomicBoolean compatible = new AtomicBoolean(true);
-        backgroundRuns.setProject(Jobs.runInBackgroundAndLoad(this, "Opening new Project...", () -> {
-            GuiProjectSpaceManager old = ps();
-            try {
-                final SiriusProjectSpace ps = makeSpace.get();
-                compatible.set(InstanceImporter.checkDataCompatibility(ps, NetUtils.checkThreadInterrupt(Thread.currentThread())) == null);
-                backgroundRuns.cancelAllRuns();
-                final GuiProjectSpaceManager gps = new GuiProjectSpaceManager(ps, psList, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY, 10));
-                Jobs.runEDTAndWaitLazy(() -> setTitlePath(gps.projectSpace().getLocation().toString()));
-
-                gps.projectSpace().addProjectSpaceListener(event -> {
-                    if (event.equals(ProjectSpaceEvent.LOCATION_CHANGED))
-                        Jobs.runEDTAndWaitLazy(() -> setTitlePath(gps.projectSpace().getLocation().toString()));
-                });
-                return gps;
-            } finally {
-                old.close();
-            }
-        }).getResult());
-
-        if (ps() == null) {
-            try {
-                LoggerFactory.getLogger(getClass()).warn("Error when changing project-space. Falling back to tmp project-space");
-                createNewProjectSpace(ProjectSpaceIO.createTmpProjectSpaceLocation());
-            } catch (IOException e) {
-                new StacktraceDialog(this, "Cannot recreate a valid project-space due to: " + e.getMessage() + "'.  SIRIUS will not work properly without valid project-space. Please restart SIRIUS.", e);
-            }
-        }
-        if (!compatible.get())
-            if (new QuestionDialog(this, "<html><body>" +
-                    "The opened project-space contains results based on an outdated fingerprint version.<br><br>" +
-                    "You can either convert the project to the new fingerprint version and <b>lose all fingerprint related results</b> (e.g. CSI:FingerID an CANOPUS),<br>" +
-                    "or you stay with the old fingerprint version but without being able to execute any fingerprint related computations (e.g. for data visualization).<br><br>" +
-                    "Do you wish to convert and lose all fingerprint related results?" +
-                    "</body></html>").isSuccess())
-                ps().updateFingerprintData(this);
-    }
-    * */
-
-    /*protected void copy(Path newlocation, boolean switchLocation, Frame popupOwner) {
-        final String header = switchLocation ? "Saving Project to" : "Saving a Copy to";
-        final IOException ex = Jobs.runInBackgroundAndLoad(popupOwner, header + " '" + newlocation.toString() + "'...", () -> {
-            synchronized (GuiProjectSpaceManager.this) {
-                try {
-                    siriusClient.projects().
-                            ProjectSpaceIO.copyProject(projectSpace(), newlocation, switchLocation);
-                    return null;
-                } catch (IOException e) {
-                    return e;
-                }
-            }
-        }).getResult();
-
-        if (ex != null)
-            new ExceptionDialog(popupOwner, ex.getMessage());
-    }
-
-
-
-    *//**
-     * Saves (copy) the project to a new location. New location is active
-     *
-     * @param newlocation The path where the project will be saved
-     * @throws IOException Thrown if writing of archive fails
-     *//*
-    public void saveAs(Path newlocation, Frame popupOwner) {
-        copy(newlocation, true, popupOwner);
-    }
-
-    *//**
-     * Saves a copy of the project to a new location. Original location will be the active project.
-     *
-     * @param copyLocation The path where the project will be saved
-     *//*
-    public void saveCopy(Path copyLocation, Frame popupOwner) {
-        copy(copyLocation, false, popupOwner);
-    }*/
-
 }

@@ -120,7 +120,7 @@ Class | Method | HTTP request | Description
 *CompoundsApi* | [**getCompounds**](docs/CompoundsApi.md#getCompounds) | **GET** /api/projects/{projectId}/compounds | Get all available compounds (group of ion identities) in the given project-space.
 *ExperimentalGuiApi* | [**applyToGui**](docs/ExperimentalGuiApi.md#applyToGui) | **PATCH** /api/projects/{projectId}/gui | Apply given changes to the running GUI instance.
 *ExperimentalGuiApi* | [**closeGui**](docs/ExperimentalGuiApi.md#closeGui) | **DELETE** /api/projects/{projectId}/gui | Close GUI instance of given project-space if available.
-*ExperimentalGuiApi* | [**getGuis**](docs/ExperimentalGuiApi.md#getGuis) | **GET** /api/guis | Get list of currently running gui instances, managed by this SIRIUS instance.
+*ExperimentalGuiApi* | [**getGuis**](docs/ExperimentalGuiApi.md#getGuis) | **GET** /api/guis | Get list of currently running gui windows, managed by this SIRIUS instance.
 *ExperimentalGuiApi* | [**openGui**](docs/ExperimentalGuiApi.md#openGui) | **POST** /api/projects/{projectId}/gui | Open GUI instance on specified project-space and bring the GUI window to foreground.
 *FeaturesApi* | [**addAlignedFeatures**](docs/FeaturesApi.md#addAlignedFeatures) | **POST** /api/projects/{projectId}/aligned-features | 
 *FeaturesApi* | [**deleteAlignedFeature**](docs/FeaturesApi.md#deleteAlignedFeature) | **DELETE** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Delete feature (aligned over runs) with the given identifier from the specified project-space.

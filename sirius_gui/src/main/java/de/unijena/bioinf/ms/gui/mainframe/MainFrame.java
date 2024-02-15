@@ -25,11 +25,11 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.ImportAction;
+import de.unijena.bioinf.ms.gui.actions.ProjectOpenAction;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.JobDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
@@ -234,34 +234,22 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     }
 
-    public static final String DONT_ASK_NEW_WINDOW_KEY = "de.unijena.bioinf.sirius.dragdrop.newWindow.dontAskAgain";
 
     @Override
     public void drop(DropTargetDropEvent dtde) {
-        boolean openInNewWindow = false;
-
         final InputFilesOptions inputF = new InputFilesOptions();
         inputF.msInput = Jobs.runInBackgroundAndLoad(this, "Analyzing Dropped Files...", false,
                 InstanceImporter.makeExpandFilesJJob(DragAndDrop.getFileListFromDrop(this, dtde))).getResult();
 
         if (!inputF.msInput.isEmpty()) {
             if (inputF.msInput.isSingleProject()) {
-                openInNewWindow = new QuestionDialog(this, "<html><body>Open the dropped Project in an additional Window? Otherwise the current one will be replace. </body></html>", DONT_ASK_NEW_WINDOW_KEY).isSuccess();
-
-                if (openInNewWindow) {
-                    // todo nightsky open new project via API
-                    // todo nightsky prevent importing projects jsut ask whether it should opened in the new window or not!
-                    throw new IllegalStateException("openNewProject in new window not yet implemented");
-//                openNewProjectSpace(inputF.msInput.projects.keySet().iterator().next());
-                } else {
-                    throw new IllegalStateException("openNewProject in same window not yet implemented");
-                }
+                ((ProjectOpenAction)SiriusActions.LOAD_WS.getInstance(gui))
+                        .openProject(inputF.msInput.projects.keySet().iterator().next());
             } else {
                 importDragAndDropFiles(inputF); //does not support importing projects
             }
         }
     }
-
 
     private void importDragAndDropFiles(InputFilesOptions files) {
         //import all batch mode importable file types (e.g. .ms, .mgf, .mzml, .mzxml)

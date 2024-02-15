@@ -131,9 +131,11 @@ public class ExperimentalGuiApi {
      * Close GUI instance of given project-space if available.
      * <p><b>200</b> - OK
      * @param projectId if project-space the GUI instance is connected to.
+     * @param closeProject The closeProject parameter
+     * @return Boolean
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec closeGuiRequestCreation(String projectId) throws WebClientResponseException {
+    private ResponseSpec closeGuiRequestCreation(String projectId, Boolean closeProject) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -149,14 +151,18 @@ public class ExperimentalGuiApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
-        final String[] localVarAccepts = { };
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "closeProject", closeProject));
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
         final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        ParameterizedTypeReference<Boolean> localVarReturnType = new ParameterizedTypeReference<Boolean>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/gui", HttpMethod.DELETE, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -165,11 +171,13 @@ public class ExperimentalGuiApi {
      * Close GUI instance of given project-space if available.
      * <p><b>200</b> - OK
      * @param projectId if project-space the GUI instance is connected to.
+     * @param closeProject The closeProject parameter
+     * @return Boolean
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void closeGui(String projectId) throws WebClientResponseException {
-        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        closeGuiRequestCreation(projectId).bodyToMono(localVarReturnType).block();
+    public Boolean closeGui(String projectId, Boolean closeProject) throws WebClientResponseException {
+        ParameterizedTypeReference<Boolean> localVarReturnType = new ParameterizedTypeReference<Boolean>() {};
+        return closeGuiRequestCreation(projectId, closeProject).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -177,11 +185,13 @@ public class ExperimentalGuiApi {
      * Close GUI instance of given project-space if available.
      * <p><b>200</b> - OK
      * @param projectId if project-space the GUI instance is connected to.
+     * @param closeProject The closeProject parameter
+     * @return ResponseEntity&lt;Boolean&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> closeGuiWithHttpInfo(String projectId) throws WebClientResponseException {
-        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        return closeGuiRequestCreation(projectId).toEntity(localVarReturnType).block();
+    public ResponseEntity<Boolean> closeGuiWithHttpInfo(String projectId, Boolean closeProject) throws WebClientResponseException {
+        ParameterizedTypeReference<Boolean> localVarReturnType = new ParameterizedTypeReference<Boolean>() {};
+        return closeGuiRequestCreation(projectId, closeProject).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -189,16 +199,17 @@ public class ExperimentalGuiApi {
      * Close GUI instance of given project-space if available.
      * <p><b>200</b> - OK
      * @param projectId if project-space the GUI instance is connected to.
+     * @param closeProject The closeProject parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec closeGuiWithResponseSpec(String projectId) throws WebClientResponseException {
-        return closeGuiRequestCreation(projectId);
+    public ResponseSpec closeGuiWithResponseSpec(String projectId, Boolean closeProject) throws WebClientResponseException {
+        return closeGuiRequestCreation(projectId, closeProject);
     }
     /**
-     * Get list of currently running gui instances, managed by this SIRIUS instance.
-     * Get list of currently running gui instances, managed by this SIRIUS instance.
-     * <p><b>200</b> - List of GUI instances that are currently managed by this SIRIUS instance.
+     * Get list of currently running gui windows, managed by this SIRIUS instance.
+     * Get list of currently running gui windows, managed by this SIRIUS instance.  Note this will not show any Clients that are connected from a separate process!
+     * <p><b>200</b> - List of GUI windows that are currently managed by this SIRIUS instance.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
@@ -233,9 +244,9 @@ public class ExperimentalGuiApi {
     }
 
     /**
-     * Get list of currently running gui instances, managed by this SIRIUS instance.
-     * Get list of currently running gui instances, managed by this SIRIUS instance.
-     * <p><b>200</b> - List of GUI instances that are currently managed by this SIRIUS instance.
+     * Get list of currently running gui windows, managed by this SIRIUS instance.
+     * Get list of currently running gui windows, managed by this SIRIUS instance.  Note this will not show any Clients that are connected from a separate process!
+     * <p><b>200</b> - List of GUI windows that are currently managed by this SIRIUS instance.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
@@ -248,9 +259,9 @@ public class ExperimentalGuiApi {
     }
 
     /**
-     * Get list of currently running gui instances, managed by this SIRIUS instance.
-     * Get list of currently running gui instances, managed by this SIRIUS instance.
-     * <p><b>200</b> - List of GUI instances that are currently managed by this SIRIUS instance.
+     * Get list of currently running gui windows, managed by this SIRIUS instance.
+     * Get list of currently running gui windows, managed by this SIRIUS instance.  Note this will not show any Clients that are connected from a separate process!
+     * <p><b>200</b> - List of GUI windows that are currently managed by this SIRIUS instance.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
@@ -263,9 +274,9 @@ public class ExperimentalGuiApi {
     }
 
     /**
-     * Get list of currently running gui instances, managed by this SIRIUS instance.
-     * Get list of currently running gui instances, managed by this SIRIUS instance.
-     * <p><b>200</b> - List of GUI instances that are currently managed by this SIRIUS instance.
+     * Get list of currently running gui windows, managed by this SIRIUS instance.
+     * Get list of currently running gui windows, managed by this SIRIUS instance.  Note this will not show any Clients that are connected from a separate process!
+     * <p><b>200</b> - List of GUI windows that are currently managed by this SIRIUS instance.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.

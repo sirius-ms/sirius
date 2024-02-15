@@ -6,7 +6,7 @@ All URIs are relative to *http://localhost:8080*
 |------------- | ------------- | -------------|
 | [**applyToGui**](ExperimentalGuiApi.md#applyToGui) | **PATCH** /api/projects/{projectId}/gui | Apply given changes to the running GUI instance. |
 | [**closeGui**](ExperimentalGuiApi.md#closeGui) | **DELETE** /api/projects/{projectId}/gui | Close GUI instance of given project-space if available. |
-| [**getGuis**](ExperimentalGuiApi.md#getGuis) | **GET** /api/guis | Get list of currently running gui instances, managed by this SIRIUS instance. |
+| [**getGuis**](ExperimentalGuiApi.md#getGuis) | **GET** /api/guis | Get list of currently running gui windows, managed by this SIRIUS instance. |
 | [**openGui**](ExperimentalGuiApi.md#openGui) | **POST** /api/projects/{projectId}/gui | Open GUI instance on specified project-space and bring the GUI window to foreground. |
 
 
@@ -80,7 +80,7 @@ No authorization required
 
 ## closeGui
 
-> closeGui(projectId)
+> Boolean closeGui(projectId, closeProject)
 
 Close GUI instance of given project-space if available.
 
@@ -103,8 +103,10 @@ public class Example {
 
         ExperimentalGuiApi apiInstance = new ExperimentalGuiApi(defaultClient);
         String projectId = "projectId_example"; // String | if project-space the GUI instance is connected to.
+        Boolean closeProject = true; // Boolean | 
         try {
-            apiInstance.closeGui(projectId);
+            Boolean result = apiInstance.closeGui(projectId, closeProject);
+            System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ExperimentalGuiApi#closeGui");
             System.err.println("Status code: " + e.getCode());
@@ -122,10 +124,11 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| if project-space the GUI instance is connected to. | |
+| **closeProject** | **Boolean**|  | [optional] |
 
 ### Return type
 
-null (empty response body)
+**Boolean**
 
 ### Authorization
 
@@ -134,7 +137,7 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 
 ### HTTP response details
@@ -147,9 +150,9 @@ No authorization required
 
 > PageGuiInfo getGuis(page, size, sort)
 
-Get list of currently running gui instances, managed by this SIRIUS instance.
+Get list of currently running gui windows, managed by this SIRIUS instance.
 
-Get list of currently running gui instances, managed by this SIRIUS instance.
+Get list of currently running gui windows, managed by this SIRIUS instance.  Note this will not show any Clients that are connected from a separate process!
 
 ### Example
 
@@ -210,7 +213,7 @@ No authorization required
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | List of GUI instances that are currently managed by this SIRIUS instance. |  -  |
+| **200** | List of GUI windows that are currently managed by this SIRIUS instance. |  -  |
 
 
 ## openGui
