@@ -21,7 +21,6 @@ import de.unijena.bioinf.sirius.Ms1Preprocessor;
 import de.unijena.bioinf.sirius.ProcessedInput;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.util.List;
@@ -62,7 +61,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         }
     }
 
-    protected final Strategy strategy;
+    protected Strategy strategy;
 
     protected final Dialog owner;
     protected final List<InstanceBean> ecs;
@@ -71,14 +70,13 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
     protected final ParameterBinding parameterBindings;
 
-    private boolean isEnabled;
     protected  JCheckboxListPanel<CustomDataSources.Source> searchDBList;
 
     protected ElementsPanel elementPanel;
 
+    private Map<Strategy, JPanel> strategyCards;
 
-    public FormulaSearchStrategy(Strategy strategy, Dialog owner, List<InstanceBean> ecs, boolean isMs2, boolean isBatchDialog, ParameterBinding parameterBindings) {
-        this.strategy = strategy;
+    public FormulaSearchStrategy(Dialog owner, List<InstanceBean> ecs, boolean isMs2, boolean isBatchDialog, ParameterBinding parameterBindings) {
         this.owner = owner;
         this.ecs = ecs;
         this.isMs2 = isMs2;
@@ -86,42 +84,49 @@ public class FormulaSearchStrategy extends ConfigPanel {
         this.parameterBindings = parameterBindings;
 
         createPanel();
-
     }
 
     public JCheckboxListPanel<CustomDataSources.Source> getSearchDBList() {
         return searchDBList;
     }
 
-    public void setEnabled(boolean enabled) {
-        isEnabled = enabled;
-        revalidate();
-    }
-
     private void createPanel() {
-        this.removeAll();
         setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-        searchDBList = createDatabasePanel(); //todo NewWorkflow: always generate, but not use always?
 
+        final JPanel formulaSearchStrategySelection = new JPanel();
+        formulaSearchStrategySelection.setLayout(new BoxLayout(formulaSearchStrategySelection, BoxLayout.PAGE_AXIS));
+        add(new TextHeaderBoxPanel("Molecular formula generation", formulaSearchStrategySelection));
+        JComboBox<FormulaSearchStrategy.Strategy> strategyBox =  GuiUtils.makeParameterComboBoxFromDescriptiveValues(FormulaSearchStrategy.Strategy.values());
+        formulaSearchStrategySelection.add(strategyBox);
+        strategy = (Strategy) strategyBox.getSelectedItem();
 
-        switch (strategy) {
-            case DEFAULT -> {
-                createDefaultStrategyPanel(this);
+        strategyCards = new HashMap<>();
+        strategyCards.put(Strategy.DEFAULT, createDefaultStrategyCard());
+        strategyCards.put(Strategy.DE_NOVO, createDeNovoStrategyCard());
+        strategyCards.put(Strategy.DATABASE, createDatabaseStrategyCard());
+
+        strategyCards.forEach((s, c) -> add(c));
+        showStrategyCard(strategy);
+
+        strategyBox.addItemListener(e -> {
+            if (e.getStateChange() != ItemEvent.SELECTED) {
+                return;
             }
-            case DE_NOVO -> {
-                createDeNovoStrategyPanel(this);
-            }
-            case DATABASE -> {
-                createDatabaseStrategyPanel(this);
-            }
-        }
+            final Strategy source = (Strategy) e.getItem();
+            showStrategyCard(source);
+        });
+
     }
 
+    private void showStrategyCard(Strategy strategy) {
+        strategyCards.forEach((s, c) -> c.setVisible(s.equals(strategy)));
+    }
 
-    private void createDefaultStrategyPanel(JPanel main) {
-        // bottom up search options
-        JPanel center = applyDefaultLayout(new JPanel());
-        add(center);
+    private JPanel createDefaultStrategyCard() {
+        JPanel card = new JPanel();
+        card.setLayout(new BoxLayout(card, BoxLayout.PAGE_AXIS));
+        JPanel parameterPanel = applyDefaultLayout(new JPanel());
+
         final TwoColumnPanel busOptions = new TwoColumnPanel();
         JComboBox<SiriusOptions.BottomUpSearchOptions> bottomUpSearchSelector = new JComboBox<>();
         List<SiriusOptions.BottomUpSearchOptions> settings = new ArrayList<>(EnumSet.allOf(SiriusOptions.BottomUpSearchOptions.class));
@@ -175,53 +180,54 @@ public class FormulaSearchStrategy extends ConfigPanel {
         busOptions.addNamed("Perform bottom up search", bottomUpSearchEnabled);
         busOptions.addNamed("Perform de novo below m/z", bottomUpSearchOnly);
 
-        center.add(new TextHeaderBoxPanel("Bottom Up Search", busOptions));
-        main.add(center);
+        parameterPanel.add(new TextHeaderBoxPanel("Bottom Up Search", busOptions));
 
+        card.add(parameterPanel);
 
         JComboBox<ElementAlphabetStrategy> elementAlpahAlphabetStrategySelector = new JComboBox<>(); //todo NewWorflow: implement this feature in sirius-libs
         List<ElementAlphabetStrategy> settingsElements = java.util.List.copyOf(EnumSet.allOf(ElementAlphabetStrategy.class));
         settingsElements.forEach(elementAlpahAlphabetStrategySelector::addItem);
         final TwoColumnPanel elementOptions = new TwoColumnPanel();
         elementOptions.addNamed("Apply element filter to", elementAlpahAlphabetStrategySelector);
-        main.add(elementOptions);
+        card.add(elementOptions);
         elementPanel = createElementPanel(isBatchDialog);
-        main.add(elementPanel);
+        card.add(elementPanel);
+
+        return card;
     }
 
-    private void createDeNovoStrategyPanel(JPanel main) {
+    private JPanel createDeNovoStrategyCard() {
         elementPanel = createElementPanel(isBatchDialog);
-        main.add(elementPanel);
         // configure Element panel
-        parameterBindings.put("FormulaSettings.enforced", () -> {
-            return elementPanel.getElementConstraints().toString();
-        });
+        parameterBindings.put("FormulaSettings.enforced", () -> elementPanel.getElementConstraints().toString());
         parameterBindings.put("FormulaSettings.detectable", () -> {
             final List<Element> elementsToAutoDetect = elementPanel.individualAutoDetect ? elementPanel.getElementsToAutoDetect() : Collections.emptyList();
             return (elementsToAutoDetect.isEmpty() ? "," :
                     elementsToAutoDetect.stream().map(Element::toString).collect(Collectors.joining(",")));
-        }); //todo check if this makes sense //todo NewWorflow: this is a very old todo. I assume we can remove it
-
-
-
+        });
+        return elementPanel;
     }
 
-    private void createDatabaseStrategyPanel(JPanel main) {
-        main.add(searchDBList);
+    private JPanel createDatabaseStrategyCard() {
+        JPanel card = new JPanel();
+        card.setLayout(new BoxLayout(card, BoxLayout.PAGE_AXIS));
+
+        searchDBList = createDatabasePanel();
+
+        card.add(searchDBList);
 
         final TwoColumnPanel elementOptions = new TwoColumnPanel();
         JCheckBox useElementFilter = new JCheckBox(); //todo NewWorkflow: implement this feature. This makes the organics filter obsolete. Maybe dont use the checkbox but always select the organics. Make new Element panel popup
         useElementFilter.setSelected(false);
         elementOptions.addNamed("Use element filter", useElementFilter);
-        main.add(elementOptions);
+        card.add(elementOptions);
 
         elementPanel = createElementPanel(isBatchDialog);
-        main.add(elementPanel);
+        card.add(elementPanel);
         elementPanel.setVisible(useElementFilter.isSelected());
 
-        useElementFilter.addActionListener(e -> {
-            elementPanel.setVisible(useElementFilter.isSelected());
-        });
+        useElementFilter.addActionListener(e -> elementPanel.setVisible(useElementFilter.isSelected()));
+        return card;
     }
 
     private JCheckboxListPanel<CustomDataSources.Source> createDatabasePanel() {
@@ -241,7 +247,6 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
         final JButton elementAutoDetect;
         if (multi) {
-            elementAutoDetect = null;
             elementPanel = new ElementsPanel(owner, 4, possDetectableElements, formulaSettings.getAutoDetectionElements(), formulaSettings.getEnforcedAlphabet());
         } else {
             /////////////Solo Element//////////////////////
@@ -254,15 +259,6 @@ public class FormulaSearchStrategy extends ConfigPanel {
             elementPanel.lowerPanel.add(elementAutoDetect);
         }
 
-        ListSelectionListener listener = e -> {
-            final List<CustomDataSources.Source> source = getFormulaSearchDBs();
-            elementPanel.enableElementSelection(source == null || source.isEmpty());
-            if (elementAutoDetect != null)
-                elementAutoDetect.setEnabled(source == null || source.isEmpty());
-        };
-        listener.valueChanged(null);
-        //enable disable element panel if db is selected
-        searchDBList.checkBoxList.addListSelectionListener(listener);
         elementPanel.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));
         return elementPanel;
     }
