@@ -91,7 +91,7 @@ public class GuiProjectManager implements Closeable {
                         case FEATURE_CREATED, FEATURE_DELETED -> addRemoveDebounced(pce);
 
                         case FEATURE_UPDATED, RESULT_CREATED, RESULT_UPDATED, RESULT_DELETED ->
-                                pcs.firePropertyChange("instanceUpdate." + pce.getFeaturedId(), null, pce);
+                                pcs.firePropertyChange("project.updateInstance." + pce.getFeaturedId(), null, pce);
                     }
                 });
         siriusClient.addEventListener(projectListener, projectId, DataEventType.PROJECT);
@@ -130,6 +130,8 @@ public class GuiProjectManager implements Closeable {
                     evt = events.poll();
                 }
                 SiriusGlazedLists.multiAddRemove(INSTANCE_LIST, innerList, toProcess);
+                toProcess.stream().filter(p -> !p.value()).map(Pair::key)
+                        .forEach(InstanceBean::unregisterProjectSpaceListener);
             });
         events.add(event);
     }

@@ -26,7 +26,6 @@ import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
 import de.unijena.bioinf.ms.nightsky.sdk.model.*;
-import de.unijena.bioinf.sse.DataObjectEvents;
 import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import org.apache.commons.lang3.function.TriFunction;
@@ -95,25 +94,24 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         this.listener = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                DataObjectEvents.toDataObjectEventData(evt.getNewValue(), ProjectChangeEvent.class)
-                        .ifPresent(pce -> {
-                            if (sourceCandidate.getFormulaId().equals(pce.getFormulaId())) {
-                                if (pce.getEventType() == ProjectChangeEvent.EventTypeEnum.RESULT_UPDATED) {
-                                    synchronized (FormulaResultBean.this) {
-                                        FormulaResultBean.this.sourceCandidate = null;
-                                        FormulaResultBean.this.canopusResults = null;
-                                        FormulaResultBean.this.fp = null;
-                                        FormulaResultBean.this.lipidAnnotation = null;
-                                        FormulaResultBean.this.isotopePatterAnnotation = null;
-                                        FormulaResultBean.this.fragmentationTree = null;
-                                        FormulaResultBean.this.ftreeJson = null;
-                                    }
-                                    pcs.firePropertyChange("formulaResult.update", null, pce);
-                                }
-                            } else {
-                                LoggerFactory.getLogger(getClass()).warn("Event delegated with wrong formula id! Id is {} instead of {}!", pce.getFormulaId(), getFormulaId());
+                if (evt.getNewValue() != null && evt.getNewValue() instanceof ProjectChangeEvent pce) {
+                    if (sourceCandidate.getFormulaId().equals(pce.getFormulaId())) {
+                        if (pce.getEventType() == ProjectChangeEvent.EventTypeEnum.RESULT_UPDATED) {
+                            synchronized (FormulaResultBean.this) {
+                                FormulaResultBean.this.sourceCandidate = null;
+                                FormulaResultBean.this.canopusResults = null;
+                                FormulaResultBean.this.fp = null;
+                                FormulaResultBean.this.lipidAnnotation = null;
+                                FormulaResultBean.this.isotopePatterAnnotation = null;
+                                FormulaResultBean.this.fragmentationTree = null;
+                                FormulaResultBean.this.ftreeJson = null;
                             }
-                        });
+                            pcs.firePropertyChange("formulaResult.update", null, pce);
+                        }
+                    } else {
+                        LoggerFactory.getLogger(getClass()).warn("Event delegated with wrong formula id! Id is {} instead of {}!", pce.getFormulaId(), getFormulaId());
+                    }
+                }
             }
         };
         registerProjectSpaceListeners();
@@ -169,8 +167,8 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         parentInstance.removePropertyChangeListener("instance.updateFormulaResult." + getFormulaId(), listener);
     }
 
-    private synchronized  <R> R  withIds(TriFunction<String, String, String, R> doWithClient) {
-        synchronized (parentInstance){
+    private synchronized <R> R withIds(TriFunction<String, String, String, R> doWithClient) {
+        synchronized (parentInstance) {
             return doWithClient.apply(parentInstance.getProjectManager().getProjectId(), parentInstance.getFeatureId(), getFormulaId());
         }
     }

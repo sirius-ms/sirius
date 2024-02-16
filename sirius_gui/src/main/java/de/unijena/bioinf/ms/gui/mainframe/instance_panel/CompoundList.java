@@ -99,8 +99,8 @@ public class CompoundList {
 
         compountListSelectionModel.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
-                compountListSelectionModel.getDeselected().forEach(InstanceBean::unregisterProjectSpaceListener);
-                compountListSelectionModel.getSelected().forEach(InstanceBean::registerProjectSpaceListener);
+                compountListSelectionModel.getDeselected().forEach(InstanceBean::disableProjectSpaceListener);
+                compountListSelectionModel.getSelected().forEach(InstanceBean::enableProjectSpaceListener);
                 notifyListenerSelectionChange();
             }
         });

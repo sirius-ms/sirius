@@ -42,7 +42,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
 /**
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ * @author Markus Fleischauer
  */
 public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
     public final FormulaScoreListStats zodiacScoreStats = new FormulaScoreListStats();
