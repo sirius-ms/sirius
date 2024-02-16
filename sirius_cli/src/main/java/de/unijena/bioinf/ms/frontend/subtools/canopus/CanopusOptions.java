@@ -25,6 +25,7 @@ import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
+import de.unijena.bioinf.ms.frontend.subtools.msnovelist.MsNovelistOptions;
 import de.unijena.bioinf.projectspace.Instance;
 import picocli.CommandLine;
 
@@ -36,7 +37,7 @@ import java.util.function.Consumer;
  *
  * They may be annotated to the MS2 Experiment
  *
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ * @author Markus Fleischauer
  * */
 @CommandLine.Command(name = "canopus", aliases = {"compound-classes"}, description = "<COMPOUND_TOOL> Predict compound categories for each compound individually based on its predicted molecular fingerprint (CSI:FingerID) using CANOPUS.", versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true, showDefaultValues = true)
 public class CanopusOptions implements ToolChainOptions<CanopusSubToolJob, InstanceJob.Factory<CanopusSubToolJob>> {
@@ -62,5 +63,10 @@ public class CanopusOptions implements ToolChainOptions<CanopusSubToolJob, Insta
     @Override
     public List<Class<? extends ToolChainOptions<?, ?>>> getDependentSubCommands() {
         return List.of(FingerblastOptions.class);
+    }
+
+    @Override
+    public List<Class<? extends ToolChainOptions<?, ?>>> getFollowupSubCommands() {
+        return List.of(MsNovelistOptions.class);
     }
 }

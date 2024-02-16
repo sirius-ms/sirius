@@ -29,6 +29,7 @@ import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
 import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.projectspace.FormulaResult;
+import de.unijena.bioinf.ms.frontend.subtools.msnovelist.MsNovelistOptions;
 import de.unijena.bioinf.projectspace.FormulaResultId;
 import de.unijena.bioinf.projectspace.Instance;
 import picocli.CommandLine;
@@ -84,6 +85,6 @@ public class FingerprintOptions implements ToolChainOptions<FingerprintSubToolJo
 
     @Override
     public List<Class<? extends ToolChainOptions<?, ?>>> getDependentSubCommands() {
-        return List.of(CanopusOptions.class);
+        return List.of(CanopusOptions.class, MsNovelistOptions.class);
     }
 }
