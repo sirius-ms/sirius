@@ -33,7 +33,6 @@ import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
 import de.unijena.bioinf.ms.nightsky.sdk.model.*;
-import de.unijena.bioinf.sse.DataObjectEvents;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -44,6 +43,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -74,6 +74,8 @@ public class InstanceBean implements SiriusPCS {
 
     //Project-space listener
     private final PropertyChangeListener listener;
+    private final AtomicBoolean pcsEnabled = new AtomicBoolean(false);
+
 
     //todo best hit property change is needed.
     // e.g. if the scoring changes from sirius to zodiac
@@ -101,30 +103,35 @@ public class InstanceBean implements SiriusPCS {
         this.listener = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                DataObjectEvents.toDataObjectEventData(evt.getNewValue(), ProjectChangeEvent.class)
-                        .ifPresent(pce -> {
-                            if (getFeatureId().equals(pce.getFeaturedId())) {
-                                switch (pce.getEventType()) {
-                                    case FEATURE_UPDATED -> {
-                                        synchronized (InstanceBean.this) {
-                                            InstanceBean.this.sourceFeature = null;
-                                            InstanceBean.this.msData = null;
-                                        }
-                                        pcs.firePropertyChange("instance.updated", null, pce);
-                                    }
-                                    case RESULT_CREATED ->
-                                            pcs.firePropertyChange("instance.createFormulaResult", null, pce);
-                                    case RESULT_DELETED ->
-                                            pcs.firePropertyChange("instance.deleteFormulaResult", null, pce);
-//                                    case RESULT_UPDATED -> //todo nightsky: do we need this event here or just on formula level?
-//                                            pcs.firePropertyChange("instance.updateFormulaResult." + pce.getFormulaId(), null, pce);
+                if (evt.getNewValue() != null && evt.getNewValue() instanceof ProjectChangeEvent pce) {
+                    if (getFeatureId().equals(pce.getFeaturedId())) {
+                        synchronized (InstanceBean.this) {
+                            InstanceBean.this.sourceFeature = null;
+                        }
+                        switch (pce.getEventType()) {
+                            case FEATURE_UPDATED -> {
+                                synchronized (InstanceBean.this) {
+                                    InstanceBean.this.msData = null;
                                 }
-                            } else {
-                                LoggerFactory.getLogger(getClass()).warn("Event delegated with wrong feature id! Id is {} instead of {}!", pce.getFeaturedId(), getFeatureId());
+                                if (pcsEnabled.get())
+                                    pcs.firePropertyChange("instance.updated", null, pce);
                             }
-                        });
+                            case RESULT_CREATED -> {
+                                if (pcsEnabled.get())
+                                    pcs.firePropertyChange("instance.createFormulaResult", null, pce);
+                            }
+                            case RESULT_DELETED -> {
+                                if (pcsEnabled.get())
+                                    pcs.firePropertyChange("instance.deleteFormulaResult", null, pce);
+                            }
+                        }
+                    } else {
+                        LoggerFactory.getLogger(getClass()).warn("Event delegated with wrong feature id! Id is {} instead of {}!", pce.getFeaturedId(), getFeatureId());
+                    }
+                }
             }
         };
+        registerProjectSpaceListener();
     }
 
     public void registerProjectSpaceListener() {
@@ -133,6 +140,14 @@ public class InstanceBean implements SiriusPCS {
 
     public void unregisterProjectSpaceListener() {
         projectManager.pcs.removePropertyChangeListener("project.updateInstance." + getFeatureId(), listener);
+    }
+
+    public void enableProjectSpaceListener() {
+        pcsEnabled.set(true);
+    }
+
+    public void disableProjectSpaceListener() {
+        pcsEnabled.set(false);
     }
 
     public NightSkyClient getClient() {
@@ -295,13 +310,13 @@ public class InstanceBean implements SiriusPCS {
         exp.setFeatureId(getFeatureId());
         exp.setPrecursorIonType(getIonType());
         exp.setMs1Spectra(getMsData().getMs1Spectra().stream()
-                .map(s -> new SimpleSpectrum(WrapperSpectrum.of(s.getPeaks(), SimplePeak::getMz,SimplePeak::getIntensity)))
+                .map(s -> new SimpleSpectrum(WrapperSpectrum.of(s.getPeaks(), SimplePeak::getMz, SimplePeak::getIntensity)))
                 .toList());
         exp.setMs2Spectra(getMsData().getMs2Spectra().stream()
-                .map(s -> new MutableMs2Spectrum(WrapperSpectrum.of(s.getPeaks(), SimplePeak::getMz,SimplePeak::getIntensity),s.getPrecursorMz(), CollisionEnergy.fromStringOrNull(s.getCollisionEnergy()),2))
+                .map(s -> new MutableMs2Spectrum(WrapperSpectrum.of(s.getPeaks(), SimplePeak::getMz, SimplePeak::getIntensity), s.getPrecursorMz(), CollisionEnergy.fromStringOrNull(s.getCollisionEnergy()), 2))
                 .toList());
         Optional.ofNullable(getMsData().getMergedMs1())
-                .map(s -> new SimpleSpectrum(WrapperSpectrum.of(s.getPeaks(), SimplePeak::getMz,SimplePeak::getIntensity)))
+                .map(s -> new SimpleSpectrum(WrapperSpectrum.of(s.getPeaks(), SimplePeak::getMz, SimplePeak::getIntensity)))
                 .ifPresent(exp::setMergedMs1Spectrum);
         return exp;
     }

@@ -99,6 +99,8 @@ public class Spectrums {
     }
 
     public static AnnotatedSpectrum createMergedMsMsWithAnnotations(@NotNull Ms2Experiment exp, @Nullable FTree ftree, @Nullable String candidateSmiles) {
+        if (exp.getMs2Spectra() == null || exp.getMs2Spectra().isEmpty())
+            return null;
         final Ms2Preprocessor preprocessor = new Ms2Preprocessor();
         final ProcessedInput processedInput = preprocessor.preprocess(exp);
         List<ProcessedPeak> processedPeaks = processedInput.getMergedPeaks();
