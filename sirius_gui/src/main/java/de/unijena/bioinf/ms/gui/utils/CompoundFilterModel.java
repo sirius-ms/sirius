@@ -49,6 +49,8 @@ public class CompoundFilterModel implements SiriusPCS {
     private double currentMaxConfidence;
 
     //
+
+    private int currentMinIsotopePeaks;
     private boolean[] peakShapeQualities = new boolean[]{true, true, true};
 
     private Set<PrecursorIonType> adducts = Set.of();
@@ -68,12 +70,15 @@ public class CompoundFilterModel implements SiriusPCS {
     private final double minRt;
     private final double maxRt;
 
+    private final int minIsotopePeaks;
+    private final int maxIsotopePeaks;
+
     private final double minConfidence;
     private final double maxConfidence;
 
 
     public CompoundFilterModel() {
-        this(0, 5000d, 0, 10000d, 0, 1d);
+        this(0, 5000d, 0, 10000d, 0, 1d,0,Integer.MAX_VALUE);
     }
 
 
@@ -88,13 +93,14 @@ public class CompoundFilterModel implements SiriusPCS {
      * @param minConfidence
      * @param maxConfidence
      */
-    public CompoundFilterModel(double minMz, double maxMz, double minRt, double maxRt, double minConfidence, double maxConfidence) {
+    public CompoundFilterModel(double minMz, double maxMz, double minRt, double maxRt, double minConfidence, double maxConfidence, int minIsotopePeaks, int maxIsotopePeaks) {
         this.currentMinMz = minMz;
         this.currentMaxMz = maxMz;
         this.currentMinRt = minRt;
         this.currentMaxRt = maxRt;
         this.currentMinConfidence = minConfidence;
         this.currentMaxConfidence = maxConfidence;
+        this.currentMinIsotopePeaks=minIsotopePeaks;
 
         this.minMz = minMz;
         this.maxMz = maxMz;
@@ -102,6 +108,8 @@ public class CompoundFilterModel implements SiriusPCS {
         this.maxRt = maxRt;
         this.minConfidence = minConfidence;
         this.maxConfidence = maxConfidence;
+        this.minIsotopePeaks = minIsotopePeaks;
+        this.maxIsotopePeaks = maxIsotopePeaks;
     }
 
     public void fireUpdateCompleted() {
@@ -114,6 +122,14 @@ public class CompoundFilterModel implements SiriusPCS {
             if (!val) return true;
         }
         return false;
+    }
+
+    public boolean isMinIsotopePeaksFilterEnabled(){
+        if (currentMinIsotopePeaks != minIsotopePeaks) return true;
+
+        return false;
+
+
     }
 
     public boolean isLipidFilterEnabled() {
@@ -178,6 +194,17 @@ public class CompoundFilterModel implements SiriusPCS {
         return peakShapeQualities[quality];
     }
 
+    public void setCurrentMinIsotopePeaks(int currentMinIsotopePeaks){
+        if (currentMinIsotopePeaks < minIsotopePeaks) throw new IllegalArgumentException("current value out of range: " + currentMinMz);
+        int oldValue = this.currentMinIsotopePeaks;
+        this.currentMinIsotopePeaks=currentMinIsotopePeaks;
+        pcs.firePropertyChange("setMinIsotopePeaks",oldValue,currentMinIsotopePeaks);
+
+    }
+
+    public int getCurrentMinIsotopePeaks(){return currentMinIsotopePeaks;}
+
+
     public void setCurrentMinMz(double currentMinMz) {
         if (currentMinMz < minMz) throw new IllegalArgumentException("current value out of range: " + currentMinMz);
         double oldValue = this.currentMinMz;
@@ -239,6 +266,11 @@ public class CompoundFilterModel implements SiriusPCS {
     public double getMaxRt() {
         return maxRt;
     }
+
+    public int getMinIsotopePeaks(){return minIsotopePeaks;}
+
+    public int getMaxIsotopePeaks(){return maxIsotopePeaks;}
+
 
     public double getCurrentMaxConfidence() {
         return currentMaxConfidence;
