@@ -26,7 +26,6 @@ import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
-import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
@@ -48,9 +47,10 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.util.*;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -97,7 +97,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
     protected JComboBox<Instrument> profileSelector;
     protected JSpinner ppmSpinner, candidatesSpinner, candidatesPerIonSpinner, treeTimeout, comoundTimeout, mzHeuristic, mzHeuristicOnly;
 
-    enum Strategy {IGNORE, SCORE} //todo remove if Filter is implemented
+    public enum Strategy {IGNORE, SCORE} //todo remove if Filter is implemented
 
     protected JComboBox<Strategy> ms2IsotpeSetting;
 
@@ -181,26 +181,8 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
             parameterBindings.put("AdductSettings.enforced", () -> getSelectedAdducts().toString());
         }
 
-        //select formula search strategy
-        final JPanel formulaSearchStrategySelection = new JPanel();
-        formulaSearchStrategySelection.setLayout(new BoxLayout(formulaSearchStrategySelection, BoxLayout.PAGE_AXIS));
-        add(new TextHeaderBoxPanel("Molecular formula generation", formulaSearchStrategySelection));
-        JComboBox<FormulaSearchStrategy.Strategy> strategyBox =  GuiUtils.makeParameterComboBoxFromDescriptiveValues(FormulaSearchStrategy.Strategy.values());
-        formulaSearchStrategySelection.add(strategyBox);
-        formulaSearchStrategy = new FormulaSearchStrategy((FormulaSearchStrategy.Strategy) strategyBox.getSelectedItem(), owner, ecs, hasMs2, isBatchDialog(), parameterBindings);
-        formulaSearchStrategySelection.add(formulaSearchStrategy);
-        strategyBox.addItemListener(e -> {
-            if (e.getStateChange() != ItemEvent.SELECTED) {
-                return;
-            }
-            final DescriptiveOptions source = (DescriptiveOptions) e.getItem();
-            int panelIndex = GuiUtils.getComponentIndex(formulaSearchStrategySelection, formulaSearchStrategy);
-            formulaSearchStrategySelection.remove(panelIndex);
-            formulaSearchStrategy = new FormulaSearchStrategy((FormulaSearchStrategy.Strategy) strategyBox.getSelectedItem(), owner, ecs, hasMs2, isBatchDialog(), parameterBindings);
-            formulaSearchStrategySelection.add(formulaSearchStrategy, panelIndex);
-            revalidate();
-        });
-
+        formulaSearchStrategy = new FormulaSearchStrategy(owner, ecs, hasMs2, isBatchDialog(), parameterBindings);
+        add(formulaSearchStrategy);
 
         // ilp timeouts
         if (hasMs2) {
@@ -224,6 +206,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
             rl.setBorderGap(0);
             technicalParameters.setLayout(rl);
             technicalParameters.add(new TextHeaderBoxPanel("Fragmentation tree computation", ilpOptions));
+            technicalParameters.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));
             add(technicalParameters);
             addAdvancedComponent(technicalParameters);
         }
