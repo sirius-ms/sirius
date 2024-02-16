@@ -39,9 +39,10 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.Closeable;
 import java.io.StringReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ms.nightsky.sdk.model.ProjectChangeEvent.EventTypeEnum.FEATURE_CREATED;
 import static de.unijena.bioinf.ms.nightsky.sdk.model.ProjectChangeEvent.EventTypeEnum.FEATURE_DELETED;
@@ -96,23 +97,13 @@ public class GuiProjectManager implements Closeable {
                 });
         siriusClient.addEventListener(projectListener, projectId, DataEventType.PROJECT);
 
-        //todo nightsky: is compute state updated on request? or do we have to invalidate the state manually?
-        //fire event for compute state changes
-        computeListener = evt -> DataObjectEvents.toDataObjectEventData(evt.getNewValue(), Job.class)
-                .ifPresent(job -> {
-                    if (job.getAffectedAlignedFeatureIds() != null) {
-                        Set<String> ids = new HashSet<>(job.getAffectedAlignedFeatureIds());
-                        if (!ids.isEmpty())
-                            Jobs.runEDTLater(() -> SiriusGlazedLists.
-                                    multiUpdate(INSTANCE_LIST, INSTANCE_LIST.stream()
-                                            .filter(inst -> ids.contains(inst.getFeatureId()))
-                                            .collect(Collectors.toSet())));
-                    }
-                });
-        siriusClient.addEventListener(computeListener, projectId, DataEventType.JOB);
+        computeListener = evt -> {
+            System.out.println("============> BackgroundRuns event: " + evt);
+            Jobs.runEDTLater(() -> SiriusGlazedLists.allUpdate(INSTANCE_LIST));
+        };
+        siriusClient.addEventListener(computeListener, projectId, DataEventType.BACKGROUND_COMPUTATIONS_STATE);
     }
 
-    //todo nightsky: ->  does this work, tests needed?
     private final ArrayBlockingQueue<ProjectChangeEvent> events = new ArrayBlockingQueue<>(1000);
     private JJob<Boolean> debounceExec;
 
