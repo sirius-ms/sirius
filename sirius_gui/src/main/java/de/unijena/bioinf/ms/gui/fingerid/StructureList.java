@@ -132,8 +132,10 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
                         checkForInterruption();
                         setData(ec); //notifies listeners about data change
                         checkForInterruption();
-                        if (refillElementsEDT(fpcChache))
+                        if (refillElementsEDT(fpcChache)) {
+                            checkForInterruption();
                             loadMols = Jobs.MANAGER().submitJob(new LoadMoleculeJob(fpcChache));
+                        }
                     }
 
                     return true;
@@ -153,7 +155,7 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
 
     protected void reloadData(boolean loadAll) {
         if (loadAll != this.loadAll.get())
-            readDataByConsumer(d ->  changeData(d, loadAll));
+            readDataByConsumer(d -> changeData(d, loadAll));
     }
 
     protected Function<FingerprintCandidateBean, Boolean> getBestFunc() {

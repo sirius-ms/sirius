@@ -78,6 +78,10 @@ public abstract class ActionListDetailView<E extends SiriusPCS, D, T extends Act
 
     protected void showCenterCard(@NotNull ActionList.ViewState name) {
         showCenterCard(name.name());
+        if (source.elementList.isEmpty())
+            filteredSelectionModel.clearSelection();
+        else
+            filteredSelectionModel.addSelectionInterval(0,0);
     }
 
     protected void showCenterCard(@NotNull String name) {

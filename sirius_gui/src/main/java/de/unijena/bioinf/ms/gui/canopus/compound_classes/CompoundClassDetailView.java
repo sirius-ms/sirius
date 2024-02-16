@@ -139,13 +139,12 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
             container.add(new TextHeaderBoxPanel("Alternative Classes", alternativeClassPanels));
             //if (npcClasses.length>0)
             container.add(new TextHeaderBoxPanel("Natural Product Classes", npcPanel));
-
-
-            revalidate();
-            repaint();
-            if (getParent() instanceof JSplitPane)
-                ((JSplitPane) getParent()).setDividerLocation(getPreferredSize().height);
         }
+        revalidate();
+        repaint();
+        if (getParent() instanceof JSplitPane)
+            ((JSplitPane) getParent()).setDividerLocation(getPreferredSize().height);
+
     }
 
     private String description() {

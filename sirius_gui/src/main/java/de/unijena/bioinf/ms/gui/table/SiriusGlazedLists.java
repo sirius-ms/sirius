@@ -22,8 +22,8 @@ package de.unijena.bioinf.ms.gui.table;
 
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.event.ListEventAssembler;
-import de.unijena.bioinf.projectspace.ProjectSpaceEvent;
 import it.unimi.dsi.fastutil.Pair;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
@@ -33,13 +33,16 @@ import java.util.Set;
 
 public class SiriusGlazedLists {
 
-    public static <E> void multiUpdate(EventList<E> list, Set<E> elementsToUpdate) {
+    public static <E> void allUpdate(EventList<E> list) {
+        multiUpdate(list, null);
+    }
+    public static <E> void multiUpdate(EventList<E> list, @Nullable Set<E> elementsToUpdate) {
         try {
             list.getReadWriteLock().writeLock().lock();
             final ListEventAssembler<E> eventAssembler = new ListEventAssembler<>(list, list.getPublisher());
             eventAssembler.beginEvent();
             for (int i = 0; i < list.size(); i++) {
-                if (elementsToUpdate.contains(list.get(i)))
+                if (elementsToUpdate == null || elementsToUpdate.contains(list.get(i)))
                     eventAssembler.elementUpdated(i, null, list.get(i));
             }
             eventAssembler.commitEvent();
