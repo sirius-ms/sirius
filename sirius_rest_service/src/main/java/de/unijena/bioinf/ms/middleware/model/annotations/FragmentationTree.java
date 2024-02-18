@@ -24,9 +24,6 @@ import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
-import gnu.trove.map.hash.TIntIntHashMap;
-import io.swagger.v3.oas.annotations.media.Schema;
-import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import lombok.Builder;
@@ -35,7 +32,6 @@ import lombok.Setter;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 
 /**
@@ -60,7 +56,7 @@ public class FragmentationTree {
 
                 .fragments(sourceTree.getFragments().stream().sorted(Comparator.comparing(Fragment::getVertexId)).map(f -> {
                     final FragmentNode fn = new FragmentNode();
-                    fn.setId(f.getVertexId());
+                    fn.setFragmentId(f.getPeakId());
                     fn.setMolecularFormula(f.getFormula().toString());
                     fn.setIonType(f.getIonization().toString());
 
@@ -84,7 +80,7 @@ public class FragmentationTree {
                         fn.setScore(scores.get(f).sum());
                     }
 
-                    fragmentIdToIndex.put(fn.getId(), idx.getAndIncrement());
+                    fragmentIdToIndex.put(fn.getFragmentId(), idx.getAndIncrement());
                     return fn;
                 }).toList());
 

@@ -26,6 +26,12 @@ import lombok.Getter;
 @Getter
 @Builder
 public class PeakAnnotation {
+    /**
+     * Identifier of the peak/fragment. Can be used to map fragments and peaks
+     * among fragmentation trees and spectra.
+     */
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    private Integer fragmentId;
 
     /**
      * Molecular formula that has been annotated to this peak

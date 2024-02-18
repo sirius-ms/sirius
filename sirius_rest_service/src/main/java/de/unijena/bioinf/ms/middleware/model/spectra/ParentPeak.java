@@ -31,10 +31,17 @@ import lombok.Getter;
 @Builder
 public class ParentPeak {
     /**
-     * Index to the parent peak connected via this loss
+     * Index to the parent peak connected by this loss in this particular spectrum
      */
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private Integer parentIdx;
+
+    /**
+     * Identifier of the parent fragment connected via this loss. Can be used to map fragments and peaks
+     * among fragmentation trees and spectra.
+     */
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    private Integer parentFragmentId;
 
     /**
      * Molecular formula of the neutral loss that connects these two peaks.

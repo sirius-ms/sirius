@@ -27,7 +27,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * 
  */
 @JsonPropertyOrder({
-  FragmentNode.JSON_PROPERTY_ID,
+  FragmentNode.JSON_PROPERTY_FRAGMENT_ID,
   FragmentNode.JSON_PROPERTY_MOLECULAR_FORMULA,
   FragmentNode.JSON_PROPERTY_ION_TYPE,
   FragmentNode.JSON_PROPERTY_MASS_DEVIATION_DA,
@@ -38,8 +38,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class FragmentNode {
-  public static final String JSON_PROPERTY_ID = "id";
-  private Integer id;
+  public static final String JSON_PROPERTY_FRAGMENT_ID = "fragmentId";
+  private Integer fragmentId;
 
   public static final String JSON_PROPERTY_MOLECULAR_FORMULA = "molecularFormula";
   private String molecularFormula;
@@ -65,29 +65,29 @@ public class FragmentNode {
   public FragmentNode() {
   }
 
-  public FragmentNode id(Integer id) {
+  public FragmentNode fragmentId(Integer fragmentId) {
     
-    this.id = id;
+    this.fragmentId = fragmentId;
     return this;
   }
 
    /**
-   * Get id
-   * @return id
+   * Get fragmentId
+   * @return fragmentId
   **/
   @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ID)
+  @JsonProperty(JSON_PROPERTY_FRAGMENT_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Integer getId() {
-    return id;
+  public Integer getFragmentId() {
+    return fragmentId;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ID)
+  @JsonProperty(JSON_PROPERTY_FRAGMENT_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setId(Integer id) {
-    this.id = id;
+  public void setFragmentId(Integer fragmentId) {
+    this.fragmentId = fragmentId;
   }
 
 
@@ -281,7 +281,7 @@ public class FragmentNode {
       return false;
     }
     FragmentNode fragmentNode = (FragmentNode) o;
-    return Objects.equals(this.id, fragmentNode.id) &&
+    return Objects.equals(this.fragmentId, fragmentNode.fragmentId) &&
         Objects.equals(this.molecularFormula, fragmentNode.molecularFormula) &&
         Objects.equals(this.ionType, fragmentNode.ionType) &&
         Objects.equals(this.massDeviationDa, fragmentNode.massDeviationDa) &&
@@ -293,14 +293,14 @@ public class FragmentNode {
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, molecularFormula, ionType, massDeviationDa, massDeviationPpm, score, intensity, mz);
+    return Objects.hash(fragmentId, molecularFormula, ionType, massDeviationDa, massDeviationPpm, score, intensity, mz);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class FragmentNode {\n");
-    sb.append("    id: ").append(toIndentedString(id)).append("\n");
+    sb.append("    fragmentId: ").append(toIndentedString(fragmentId)).append("\n");
     sb.append("    molecularFormula: ").append(toIndentedString(molecularFormula)).append("\n");
     sb.append("    ionType: ").append(toIndentedString(ionType)).append("\n");
     sb.append("    massDeviationDa: ").append(toIndentedString(massDeviationDa)).append("\n");

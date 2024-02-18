@@ -8,6 +8,7 @@
 
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
+|**fragmentId** | **Integer** | Identifier of the peak/fragment. Can be used to map fragments and peaks  among fragmentation trees and spectra. |  |
 |**molecularFormula** | **String** | Molecular formula that has been annotated to this peak |  [optional] |
 |**ionization** | **String** | Ionization that has been annotated to this peak |  [optional] |
 |**exactMass** | **Double** | Exact mass of the annotated molecular formula and ionization |  [optional] |

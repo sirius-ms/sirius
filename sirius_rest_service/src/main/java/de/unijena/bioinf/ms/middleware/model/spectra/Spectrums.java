@@ -145,49 +145,50 @@ public class Spectrums {
 
     private static void setPeakAnnotations(@NotNull AnnotatedSpectrum spectrum, @NotNull FTree ftree, @NotNull Iterable<Fragment> fragments, @Nullable InsilicoFragmentationResult structureAnno) {
         List<AnnotatedPeak> peaks = spectrum.getPeaks();
+
         for (Fragment f : fragments) {
             if (f != null) {
-                short peakId = f.getPeakId();
-                if (peakId >= 0) {
-                    PeakAnnotation.PeakAnnotationBuilder peakAnno = PeakAnnotation.builder();
-                    if (f.getFormula() != null && f.getIonization() != null) {
-                        peakAnno.molecularFormula(f.getFormula().toString());
-                        peakAnno.ionization(f.getIonization().toString());
-                        peakAnno.exactMass(f.getIonization().addToMass(f.getFormula().getMass()));
-                    }
-
-                    // deviation (from FTJsonWriter tree2json)
-                    {
-                        Deviation dev = ftree.getMassError(f);
-                        if (f.isRoot() && dev.equals(Deviation.NULL_DEVIATION))
-                            dev = ftree.getMassErrorTo(f, spectrum.getPrecursorMz());
-                        Deviation rdev = ftree.getRecalibratedMassError(f);
-                        if (f.isRoot() && dev.equals(Deviation.NULL_DEVIATION))
-                            rdev = ftree.getMassErrorTo(f, spectrum.getPrecursorMz());
-
-                        peakAnno.massDeviationMz(dev.getAbsolute())
-                                .massDeviationPpm(dev.getPpm())
-                                .recalibratedMassDeviationMz(rdev.getAbsolute())
-                                .recalibratedMassDeviationPpm(rdev.getPpm());
-                    }
-
-                    // we only store incoming edges because references are ugly for serialization
-                    f.getIncomingEdges().stream().findFirst().ifPresent(l ->
-                            peakAnno.parentPeak(ParentPeak.builder()
-                                    .lossFormula(l.getFormula().toString())
-                                    .parentIdx((int) l.getSource().getPeakId())
-                                    .build()));
-
-                    if (structureAnno != null) {
-                        Optional.ofNullable(structureAnno.getFragmentMapping().get(f))
-                                .map(List::stream).flatMap(Stream::findFirst)
-                                .ifPresent(subStr -> annotateSubstructure(
-                                        peakAnno, f.getFormula(), subStr, structureAnno.getSubtree()));
-                    }
-
-                    //add annotations to corresponding peak
-                    peaks.get(peakId).setPeakAnnotation(peakAnno.build());
+                int vertexId = f.getVertexId();
+                PeakAnnotation.PeakAnnotationBuilder peakAnno = PeakAnnotation.builder();
+                if (f.getFormula() != null && f.getIonization() != null) {
+                    peakAnno.molecularFormula(f.getFormula().toString())
+                            .ionization(f.getIonization().toString())
+                            .exactMass(f.getIonization().addToMass(f.getFormula().getMass()))
+                            .fragmentId(vertexId);
                 }
+
+                // deviation (from FTJsonWriter tree2json)
+                {
+                    Deviation dev = ftree.getMassError(f);
+                    if (f.isRoot() && dev.equals(Deviation.NULL_DEVIATION))
+                        dev = ftree.getMassErrorTo(f, spectrum.getPrecursorMz());
+                    Deviation rdev = ftree.getRecalibratedMassError(f);
+                    if (f.isRoot() && dev.equals(Deviation.NULL_DEVIATION))
+                        rdev = ftree.getMassErrorTo(f, spectrum.getPrecursorMz());
+
+                    peakAnno.massDeviationMz(dev.getAbsolute())
+                            .massDeviationPpm(dev.getPpm())
+                            .recalibratedMassDeviationMz(rdev.getAbsolute())
+                            .recalibratedMassDeviationPpm(rdev.getPpm());
+                }
+
+                // we only store incoming edges because references are ugly for serialization
+                f.getIncomingEdges().stream().findFirst().ifPresent(l ->
+                        peakAnno.parentPeak(ParentPeak.builder()
+                                .lossFormula(l.getFormula().toString())
+                                .parentIdx((int) l.getSource().getPeakId())
+                                .parentFragmentId(l.getSource().getVertexId())
+                                .build()));
+
+                if (structureAnno != null) {
+                    Optional.ofNullable(structureAnno.getFragmentMapping().get(f))
+                            .map(List::stream).flatMap(Stream::findFirst)
+                            .ifPresent(subStr -> annotateSubstructure(
+                                    peakAnno, f.getFormula(), subStr, structureAnno.getSubtree()));
+                }
+
+                //add annotations to corresponding peak
+                peaks.get(f.getPeakId()).setPeakAnnotation(peakAnno.build());
             }
         }
     }
@@ -258,6 +259,7 @@ public class Spectrums {
                         int i = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.getFirstPeakGreaterOrEqualThan(spectrum, p.getMass() - 1e-6);
                         for (int j = i; j < spectrum.size(); ++j) {
                             if (dev.inErrorWindow(p.getMass(), spectrum.getMzAt(j))) {
+                                f.setPeakId(j);
                                 annotatedFormulas[j] = f;
                                 isIsotopicPeak.set(j);
                             } else break;
@@ -269,6 +271,7 @@ public class Spectrums {
                 int i = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.getFirstPeakGreaterOrEqualThan(spectrum, p.getMass() - 1e-6);
                 for (int j = i; j < spectrum.size(); ++j) {
                     if (dev.inErrorWindow(p.getMass(), spectrum.getMzAt(j))) {
+                        f.setPeakId(j);
                         annotatedFormulas[j] = f;
                     } else break;
                 }
@@ -279,6 +282,7 @@ public class Spectrums {
                 int i = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.getFirstPeakGreaterOrEqualThan(spectrum, recalibratedMz - 1e-4);
                 for (int j = i; j < spectrum.size(); ++j) {
                     if (dev.inErrorWindow(recalibratedMz, spectrum.getMzAt(j))) {
+                        f.setPeakId(j);
                         annotatedFormulas[j] = f;
                     } else break;
                 }

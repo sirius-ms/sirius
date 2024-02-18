@@ -8,7 +8,7 @@
 
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
-|**id** | **Integer** |  |  [optional] |
+|**fragmentId** | **Integer** |  |  [optional] |
 |**molecularFormula** | **String** |  |  [optional] |
 |**ionType** | **String** |  |  [optional] |
 |**massDeviationDa** | **Double** |  |  [optional] |

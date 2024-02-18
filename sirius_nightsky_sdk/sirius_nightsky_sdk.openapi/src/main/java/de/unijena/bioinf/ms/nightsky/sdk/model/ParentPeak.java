@@ -28,12 +28,16 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  */
 @JsonPropertyOrder({
   ParentPeak.JSON_PROPERTY_PARENT_IDX,
+  ParentPeak.JSON_PROPERTY_PARENT_FRAGMENT_ID,
   ParentPeak.JSON_PROPERTY_LOSS_FORMULA
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class ParentPeak {
   public static final String JSON_PROPERTY_PARENT_IDX = "parentIdx";
   private Integer parentIdx;
+
+  public static final String JSON_PROPERTY_PARENT_FRAGMENT_ID = "parentFragmentId";
+  private Integer parentFragmentId;
 
   public static final String JSON_PROPERTY_LOSS_FORMULA = "lossFormula";
   private String lossFormula;
@@ -48,7 +52,7 @@ public class ParentPeak {
   }
 
    /**
-   * Index to the parent peak connected via this loss
+   * Index to the parent peak connected by this loss in this particular spectrum
    * @return parentIdx
   **/
   @javax.annotation.Nonnull
@@ -64,6 +68,32 @@ public class ParentPeak {
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setParentIdx(Integer parentIdx) {
     this.parentIdx = parentIdx;
+  }
+
+
+  public ParentPeak parentFragmentId(Integer parentFragmentId) {
+    
+    this.parentFragmentId = parentFragmentId;
+    return this;
+  }
+
+   /**
+   * Identifier of the parent fragment connected via this loss. Can be used to map fragments and peaks  among fragmentation trees and spectra.
+   * @return parentFragmentId
+  **/
+  @javax.annotation.Nonnull
+  @JsonProperty(JSON_PROPERTY_PARENT_FRAGMENT_ID)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
+  public Integer getParentFragmentId() {
+    return parentFragmentId;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_PARENT_FRAGMENT_ID)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setParentFragmentId(Integer parentFragmentId) {
+    this.parentFragmentId = parentFragmentId;
   }
 
 
@@ -102,12 +132,13 @@ public class ParentPeak {
     }
     ParentPeak parentPeak = (ParentPeak) o;
     return Objects.equals(this.parentIdx, parentPeak.parentIdx) &&
+        Objects.equals(this.parentFragmentId, parentPeak.parentFragmentId) &&
         Objects.equals(this.lossFormula, parentPeak.lossFormula);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(parentIdx, lossFormula);
+    return Objects.hash(parentIdx, parentFragmentId, lossFormula);
   }
 
   @Override
@@ -115,6 +146,7 @@ public class ParentPeak {
     StringBuilder sb = new StringBuilder();
     sb.append("class ParentPeak {\n");
     sb.append("    parentIdx: ").append(toIndentedString(parentIdx)).append("\n");
+    sb.append("    parentFragmentId: ").append(toIndentedString(parentFragmentId)).append("\n");
     sb.append("    lossFormula: ").append(toIndentedString(lossFormula)).append("\n");
     sb.append("}");
     return sb.toString();
