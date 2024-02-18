@@ -27,7 +27,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class FragmentNode {
-    int id;
+    int fragmentId;
     @Schema(nullable = true)
     String molecularFormula;
     @Schema(nullable = true)

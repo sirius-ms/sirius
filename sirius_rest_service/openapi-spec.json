@@ -4830,7 +4830,7 @@
       "FragmentNode": {
         "type": "object",
         "properties": {
-          "id": {
+          "fragmentId": {
             "type": "integer",
             "format": "int32"
           },
@@ -4991,13 +4991,19 @@
       "ParentPeak": {
         "required": [
           "lossFormula",
+          "parentFragmentId",
           "parentIdx"
         ],
         "type": "object",
         "properties": {
           "parentIdx": {
             "type": "integer",
-            "description": "Index to the parent peak connected via this loss",
+            "description": "Index to the parent peak connected by this loss in this particular spectrum",
+            "format": "int32"
+          },
+          "parentFragmentId": {
+            "type": "integer",
+            "description": "Identifier of the parent fragment connected via this loss. Can be used to map fragments and peaks\n among fragmentation trees and spectra.",
             "format": "int32"
           },
           "lossFormula": {
@@ -5009,8 +5015,16 @@
         "nullable": true
       },
       "PeakAnnotation": {
+        "required": [
+          "fragmentId"
+        ],
         "type": "object",
         "properties": {
+          "fragmentId": {
+            "type": "integer",
+            "description": "Identifier of the peak/fragment. Can be used to map fragments and peaks\n among fragmentation trees and spectra.",
+            "format": "int32"
+          },
           "molecularFormula": {
             "type": "string",
             "description": "Molecular formula that has been annotated to this peak",
