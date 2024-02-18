@@ -101,6 +101,11 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
         add(formulaSearchStrategySelection);
         add(Box.createRigidArea(new Dimension(0, GuiUtils.MEDIUM_GAP)));
+
+        JPanel strategyCardContainer = new JPanel();
+        strategyCardContainer.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));
+        strategyCardContainer.setLayout(new BoxLayout(strategyCardContainer, BoxLayout.PAGE_AXIS));
+
         strategy = (Strategy) strategyBox.getSelectedItem();
 
         strategyCards = new HashMap<>();
@@ -108,7 +113,8 @@ public class FormulaSearchStrategy extends ConfigPanel {
         strategyCards.put(Strategy.DE_NOVO, createDeNovoStrategyCard());
         strategyCards.put(Strategy.DATABASE, createDatabaseStrategyCard());
 
-        strategyCards.forEach((s, c) -> add(c));
+        strategyCards.forEach((s, c) -> strategyCardContainer.add(c));
+        add(strategyCardContainer);
         showStrategyCard(strategy);
 
         strategyBox.addItemListener(e -> {
