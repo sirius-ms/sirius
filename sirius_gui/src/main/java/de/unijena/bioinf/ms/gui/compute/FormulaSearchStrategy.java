@@ -100,6 +100,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         formulaSearchStrategySelection.add(new TextHeaderBoxPanel("Molecular formula generation", strategyBox));
 
         add(formulaSearchStrategySelection);
+        add(Box.createRigidArea(new Dimension(0, GuiUtils.MEDIUM_GAP)));
         strategy = (Strategy) strategyBox.getSelectedItem();
 
         strategyCards = new HashMap<>();
@@ -213,9 +214,9 @@ public class FormulaSearchStrategy extends ConfigPanel {
     private JPanel createDatabaseStrategyCard() {
         JPanel card = new JPanel();
         card.setLayout(new BoxLayout(card, BoxLayout.PAGE_AXIS));
-        card.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));
 
         searchDBList = createDatabasePanel();
+        searchDBList.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));
 
         card.add(searchDBList);
 

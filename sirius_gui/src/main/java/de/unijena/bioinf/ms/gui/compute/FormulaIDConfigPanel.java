@@ -126,6 +126,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
         setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
         final JPanel center = applyDefaultLayout(new JPanel());
         add(center);
+        add(Box.createRigidArea(new Dimension(0, GuiUtils.LARGE_GAP)));
 
         // configure small stuff panel
         {
@@ -205,6 +206,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
             rl.setAlignment(RelativeLayout.LEADING);
             rl.setBorderGap(0);
             technicalParameters.setLayout(rl);
+            technicalParameters.add(Box.createRigidArea(new Dimension(0, GuiUtils.LARGE_GAP)));
             technicalParameters.add(new TextHeaderBoxPanel("Fragmentation tree computation", ilpOptions));
             technicalParameters.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));
             add(technicalParameters);
