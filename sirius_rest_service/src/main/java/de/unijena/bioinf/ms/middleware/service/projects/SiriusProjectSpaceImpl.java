@@ -41,6 +41,7 @@ import de.unijena.bioinf.elgordo.LipidSpecies;
 import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
+import de.unijena.bioinf.fingerid.blast.MsNovelistFBCandidates;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.lcms.LCMSCompoundSummary;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
@@ -748,12 +749,11 @@ public class SiriusProjectSpaceImpl implements Project {
                             //add formula summary
                             cSum.setFormulaAnnotation(asFormulaCandidate(topHit).build());
 
-                            // todo msnovelist: add msnovelist candidatas
-//                        topHit.getAnnotation(FBCandidatesTopK.class).map(FBCandidatesTopK::getResults)
-//                                .filter(l -> !l.isEmpty()).map(r -> r.get(0)).map(s ->
-//                                        StructureCandidateFormula.of(s, topHit.getAnnotationOrThrow(FormulaScoring.class),
-//                                                EnumSet.of(StructureCandidateScored.OptField.dbLinks, StructureCandidateScored.OptField.refSpectraLinks), topHit.getId()))
-//                                .ifPresent(cSum::setStructureAnnotation);
+                        topHit.getAnnotation(MsNovelistFBCandidates.class).map(MsNovelistFBCandidates::getResults)
+                                .filter(l -> !l.isEmpty()).map(r -> r.get(0)).map(s ->
+                                        StructureCandidateFormula.of(s, topHit.getAnnotationOrThrow(FormulaScoring.class),
+                                                EnumSet.noneOf(StructureCandidateScored.OptField.class), topHit.getId()))
+                                .ifPresent(cSum::setStructureAnnotation);
 
                             topHit.getAnnotation(CanopusResult.class).map(CompoundClasses::of).
                                     ifPresent(cSum::setCompoundClassAnnotation);
