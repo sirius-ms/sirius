@@ -86,6 +86,7 @@ public class ResultPanel extends JTabbedPane {
         );
 
 
+        addTab("LC-MS", null, new JPanel(), "TODO ENABLE again!");
 //        addTab("LC-MS", null, lcmsTab, lcmsTab.getDescription()); //todo LCMS: reactivate if LCMS Data structures are done!
 
         addTab("Formulas", null, formulasTab, formulasTab.getDescription());
