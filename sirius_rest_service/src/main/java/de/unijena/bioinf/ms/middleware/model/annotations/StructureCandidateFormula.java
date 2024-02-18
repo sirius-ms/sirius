@@ -56,14 +56,14 @@ public class StructureCandidateFormula extends StructureCandidateScored {
      */
     protected String formulaId;
 
-    public static StructureCandidateFormula of(Scored<CompoundCandidate> can, FormulaScoring scorings,
+    public static StructureCandidateFormula of(Scored<? extends CompoundCandidate> can, FormulaScoring scorings,
                                                EnumSet<OptField> optFields,
                                                FormulaResultId fid
     ) {
         return of(can, null, scorings, optFields, fid.getMolecularFormula(), fid.getIonType(), fid.fileName());
     }
 
-    public static StructureCandidateFormula of(Scored<CompoundCandidate> can, FormulaScoring scorings,
+    public static StructureCandidateFormula of(Scored<? extends CompoundCandidate> can, FormulaScoring scorings,
                                                EnumSet<OptField> optFields,
                                                MolecularFormula formula,
                                                PrecursorIonType adduct,
@@ -72,7 +72,7 @@ public class StructureCandidateFormula extends StructureCandidateScored {
         return of(can, null, scorings, optFields, formula, adduct, fomulaId);
     }
 
-    public static StructureCandidateFormula of(Scored<CompoundCandidate> can, @Nullable Fingerprint fp,
+    public static StructureCandidateFormula of(Scored<? extends CompoundCandidate> can, @Nullable Fingerprint fp,
                                                @Nullable FormulaScoring confidenceScoreProvider,
                                                EnumSet<OptField> optFields,
                                                FormulaResultId fid
@@ -80,7 +80,7 @@ public class StructureCandidateFormula extends StructureCandidateScored {
         return of(can, fp, confidenceScoreProvider, optFields, fid.getMolecularFormula(), fid.getIonType(), fid.fileName());
     }
 
-    public static StructureCandidateFormula of(Scored<CompoundCandidate> can, @Nullable Fingerprint fp,
+    public static StructureCandidateFormula of(Scored<? extends CompoundCandidate> can, @Nullable Fingerprint fp,
                                                @Nullable FormulaScoring confidenceScoreProvider,
                                                EnumSet<OptField> optFields,
                                                MolecularFormula formula,
