@@ -21,7 +21,7 @@
 package de.unijena.bioinf.babelms.cef;
 
 import de.unijena.bioinf.babelms.GenericParser;
-import de.unijena.bioinf.ms.persistence.model.core.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;

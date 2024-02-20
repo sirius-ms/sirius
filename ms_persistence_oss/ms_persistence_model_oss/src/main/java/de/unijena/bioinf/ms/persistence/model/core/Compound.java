@@ -22,6 +22,8 @@ package de.unijena.bioinf.ms.persistence.model.core;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.feature.CorrelatedIonPair;
 import it.unimi.dsi.fastutil.longs.LongList;
 import jakarta.persistence.Id;
 import lombok.*;
