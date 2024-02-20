@@ -18,12 +18,15 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.persistence.model.core;
+package de.unijena.bioinf.ms.persistence.model.core.feature;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
+import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
+import de.unijena.bioinf.ms.persistence.model.core.trace.AbstractTrace;
 import jakarta.persistence.Id;
 import lombok.*;
 
@@ -37,6 +40,7 @@ import java.util.stream.Stream;
 @AllArgsConstructor
 @Builder
 @ToString
+@Deprecated
 public class Feature {
 
 
@@ -102,9 +106,7 @@ public class Feature {
     /**
      * Traces of this feature (mono-isotopic + isotope peaks)
      * Optional Field
-     *
-     * TODO: should be a collection of (traceId, startIndex, endIndex)
      */
     @ToString.Exclude
-    protected List<Trace> traces;
+    protected List<AbstractTrace> traces;
 }

@@ -2,8 +2,7 @@
  *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schiller University.
+ *  Copyright (C) 2023 Bright Giant GmbH
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -15,40 +14,31 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ *  You should have received a copy of the GNU General Public License along with SIRIUS.
+ *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.persistence.model.core;
+package de.unijena.bioinf.ms.persistence.model.core.trace;
 
 import it.unimi.dsi.fastutil.doubles.DoubleList;
-import it.unimi.dsi.fastutil.longs.LongList;
-import lombok.*;
+import jakarta.persistence.Id;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
 @SuperBuilder
-@ToString(onlyExplicitlyIncluded = true)
-public class Trace {
-    /**
-     * ID of the Run this trace belongs to
-     */
-    @ToString.Include
-    long runId;
+@ToString(onlyExplicitlyIncluded = true, callSuper = true)
+public class MergedTrace extends AbstractTrace {
 
     /**
-     * Ids of the scans this trace is build from
-     * should be sorted by RT
+     * ID of this trace.
      */
-    @ToString.Include
-    LongList scanIds;
+    @Id
+    long mergedTraceId;
 
-    /**
-     * RTs of all scans in ascending order
-     */
-    DoubleList rts;
     /**
      * mz of all peaks ordered by RT
      */
@@ -57,5 +47,9 @@ public class Trace {
      * intensities of all peaks ordered by RT
      */
     DoubleList intensities;
+    /**
+     * estimated local noise level
+     */
+    DoubleList noise;
 
 }

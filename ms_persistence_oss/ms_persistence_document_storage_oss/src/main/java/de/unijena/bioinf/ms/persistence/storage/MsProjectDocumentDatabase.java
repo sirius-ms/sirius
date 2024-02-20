@@ -22,6 +22,12 @@ package de.unijena.bioinf.ms.persistence.storage;
 
 import de.unijena.bioinf.ms.persistence.model.Tag;
 import de.unijena.bioinf.ms.persistence.model.core.*;
+import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.feature.CorrelatedIonPair;
+import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
+import de.unijena.bioinf.ms.persistence.model.core.run.Run;
+import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
+import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import de.unijena.bioinf.storage.db.nosql.*;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -118,11 +124,12 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
     }
 
     default void fetchMsmsScans(@NotNull final AlignedFeatures alignedFeatures) {
-        if (alignedFeatures.getFeatures().isEmpty())
-            fetchFeatures(alignedFeatures);
-
-        alignedFeatures.getFeatures().ifPresent(fs -> fs.stream().filter(f -> f.getMsms().isEmpty())
-                .forEach(this::fetchMsmsScans));
+        // FIXME
+//        if (alignedFeatures.getFeatures().isEmpty())
+//            fetchFeatures(alignedFeatures);
+//
+//        alignedFeatures.getFeatures().ifPresent(fs -> fs.stream().filter(f -> f.getMsms().isEmpty())
+//                .forEach(this::fetchMsmsScans));
     }
 
     default void fetchMsmsScans(@NotNull final Feature feature) {
@@ -161,11 +168,12 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
     }
 
     default void importAlignedFeatures(List<AlignedFeatures> featureAlignments) throws IOException {
-        getStorage().insertAll(featureAlignments);
-        List<Feature> features = featureAlignments.stream()
-                .peek(fa -> fa.getFeatures().ifPresent(fs -> fs.forEach(f -> f.setAlignedFeatureId(fa.getAlignedFeatureId()))))
-                .flatMap(f -> f.getFeatures().stream().flatMap(List::stream)).toList();
-        importFeatures(features);
+        // FIXME
+//        getStorage().insertAll(featureAlignments);
+//        List<Feature> features = featureAlignments.stream()
+//                .peek(fa -> fa.getFeatures().ifPresent(fs -> fs.forEach(f -> f.setAlignedFeatureId(fa.getAlignedFeatureId()))))
+//                .flatMap(f -> f.getFeatures().stream().flatMap(List::stream)).toList();
+//        importFeatures(features);
     }
 
     default void importFeatures(List<Feature> features) throws IOException {

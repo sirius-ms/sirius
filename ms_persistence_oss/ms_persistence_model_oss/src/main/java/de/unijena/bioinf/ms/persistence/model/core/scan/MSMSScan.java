@@ -18,24 +18,31 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.persistence.model.core;
+package de.unijena.bioinf.ms.persistence.model.core.scan;
 
+import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
+import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import jakarta.persistence.Id;
 import lombok.*;
 
 /**
- * A measured Mass Spectrum (usually MS1) with metadata.
+ * A measured MS/MS Spectrum (usually MS2) with metadata.
  */
 @Getter
 @Setter
 @NoArgsConstructor
 @ToString(callSuper = true)
-public class Scan extends AbstractScan{
+public class MSMSScan extends AbstractScan {
     @Builder
-    public Scan(long scanId, Long runId, String scanNumber, Double scanTime, Double ccs, SimpleSpectrum peaks) {
+    public MSMSScan(long scanId, Long runId, String scanNumber, Double scanTime, Double ccs, SimpleSpectrum peaks, Long precursorScanId, byte msLevel, IsolationWindow isolationWindow, CollisionEnergy collisionEnergy, Double mzOfInterest) {
         super(runId, scanNumber, scanTime, ccs, peaks);
         this.scanId = scanId;
+        this.precursorScanId = precursorScanId;
+        this.msLevel = msLevel;
+        this.isolationWindow = isolationWindow;
+        this.collisionEnergy = collisionEnergy;
+        this.mzOfInterest = mzOfInterest;
     }
 
     /**
@@ -43,4 +50,27 @@ public class Scan extends AbstractScan{
      */
     @Id
     protected long scanId;
+
+    protected Long featureId;
+    protected Long precursorScanId;
+
+    protected byte msLevel;
+
+    /**
+     * Isolation window used to filter the precursor ions in Da
+     */
+    protected IsolationWindow isolationWindow;
+
+    /**
+     * Target precursor mz
+     */
+    protected Double mzOfInterest;
+
+
+    /**
+     * Collision Energy (CE) in eV
+     */
+    protected CollisionEnergy collisionEnergy;
+
+    //we can add measurement parameters for other fragmentation techniques as separate fields if needed
 }

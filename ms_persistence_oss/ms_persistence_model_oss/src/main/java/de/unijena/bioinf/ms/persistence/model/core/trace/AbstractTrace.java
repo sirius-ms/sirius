@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -18,24 +18,31 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.persistence.model.core;
+package de.unijena.bioinf.ms.persistence.model.core.trace;
 
-import lombok.Getter;
-
-import javax.validation.constraints.NotNull;
+import it.unimi.dsi.fastutil.doubles.DoubleList;
+import it.unimi.dsi.fastutil.longs.LongList;
+import jakarta.persistence.Id;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @Getter
-public enum ChromatographyType {
-    LC("Liquid Chromatography"),
-    GC("Gas Chromatography");
+@Setter
+@SuperBuilder
+@ToString(onlyExplicitlyIncluded = true)
+public abstract class AbstractTrace {
 
+    /**
+     * ID of the Run this trace belongs to
+     */
+    @ToString.Include
+    long runId;
 
-    @NotNull
-    private final String fullName;
+    /**
+     * RTs of all scans in ascending order
+     */
+    DoubleList rts;
 
-
-    ChromatographyType(@NotNull String fullName) {
-        this.fullName = fullName;
-    }
+    // TODO also save noise level?
 
 }

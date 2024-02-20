@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schiller University.
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -18,43 +18,55 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.persistence.model.core;
+package de.unijena.bioinf.ms.persistence.model.core.run;
 
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
+import jakarta.persistence.Id;
 import lombok.*;
 
-/**
- * A measured Mass Spectrum (usually MS1) with metadata.
- */
+import javax.validation.constraints.NotNull;
+import java.util.List;
+
 @Getter
 @Setter
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-public class AbstractScan {
-    /**
-     * Database ID of the Run this Scan belongs to
-     */
-    protected Long runId;
+public class Run {
+    //todo are there other types like validation or calibration???
+    public enum Type {
+        SAMPLE,
+        BLANK
+    }
 
     /**
-     * scan number from the mzml run.
+     * Run ID: unique identifier of this run within the project
      */
-    protected String scanNumber;
+    @Id
+    private long runId;
 
     /**
-     * Time this scan took place (in minutes)
+     * Informative, human-readable name of this run. Defaults to file name.
      */
-    protected Double scanTime;
+    private String name;
 
     /**
-     * Collisional Cross-Section (CCS) in Å^2
+     * indicated that this run is a Blank run
      */
-    protected Double ccs;
+    protected Type runType;
+
+    private ChromatographyType chromatography;
+    private Ionization ionization;
+    private Fragmentation fragmentation;
+    private List<MassAnalyzer> massAnalyzers;
+
 
     /**
-     * The actual spectrum that has been measured (masses and intensities)
+     * A reference to a certain LC/MS run in a mzml file.
      */
-    @ToString.Exclude
-    protected SimpleSpectrum peaks;
+    @NotNull
+    private MsDataSourceReference sourceReference;
+
+
 }
