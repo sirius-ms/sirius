@@ -1,5 +1,6 @@
 package de.unijena.bioinf.lcms.features;
 
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.lcms.merge.MergedTrace;
 import de.unijena.bioinf.lcms.msms.MergedSpectrum;
 import de.unijena.bioinf.lcms.msms.Ms2MergeStrategy;
@@ -9,7 +10,9 @@ import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.lcms.trace.Trace;
 import de.unijena.bioinf.lcms.trace.segmentation.PersistentHomology;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
-import de.unijena.bioinf.ms.persistence.model.core.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.IsotopePattern;
+import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import it.unimi.dsi.fastutil.ints.Int2LongMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import java.util.*;
@@ -18,19 +21,19 @@ import java.util.stream.Collectors;
 public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
 
     @Override
-    public Iterator<AlignedFeatures> extractFeatures(ProcessedSample mergedSample, ProcessedSample[] samplesInTrace, MergedTrace alignedFeature, Ms2MergeStrategy ms2MergeStrategy) {
+    public Iterator<AlignedFeatures> extractFeatures(ProcessedSample mergedSample, ProcessedSample[] samplesInTrace, MergedTrace alignedFeature, Ms2MergeStrategy ms2MergeStrategy, Int2LongMap trace2trace) {
         // segments for merged trace
         Trace mergedTrace = alignedFeature.toTrace(mergedSample);
         final SampleStats stats = mergedSample.getStorage().getStatistics();
         TraceSegment[] traceSegments = new PersistentHomology().detectSegments(mergedSample.getStorage().getStatistics(), mergedTrace).stream().filter(x->mergedTrace.intensity(x.apex) > stats.noiseLevel(x.apex)  ).toArray(TraceSegment[]::new);
         if (traceSegments.length==0) return Collections.emptyIterator();
-        // segments for each individual trace
-        TraceSegment[][] individualSegments = new TraceSegment[alignedFeature.getSampleIds().size()][];
-        for (int k=0; k < individualSegments.length; ++k) {
-            ProcessedSample sample = samplesInTrace[k];
-            assert sample.getUid() == alignedFeature.getSampleIds().getInt(k);
-            individualSegments[k] = assignSegmentsToIndividualTrace(mergedSample, sample, traceSegments, mergedTrace, mergedSample.getStorage().getMergeStorage().getTrace(alignedFeature.getTraceIds().getInt(k)) );
-        }
+//        // segments for each individual trace
+//        TraceSegment[][] individualSegments = new TraceSegment[alignedFeature.getSampleIds().size()][];
+//        for (int k=0; k < individualSegments.length; ++k) {
+//            ProcessedSample sample = samplesInTrace[k];
+//            assert sample.getUid() == alignedFeature.getSampleIds().getInt(k);
+//            individualSegments[k] = assignSegmentsToIndividualTrace(mergedSample, sample, traceSegments, mergedTrace, mergedSample.getStorage().getMergeStorage().getTrace(alignedFeature.getTraceIds().getInt(k)) );
+//        }
         final Int2ObjectOpenHashMap<ProcessedSample> uid2sample = new Int2ObjectOpenHashMap<>();
         for (ProcessedSample sample : samplesInTrace) {
             uid2sample.put(sample.getUid(), sample);
@@ -43,7 +46,89 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
                 }
             });
         }
-        return null;
+
+//        alignedFeature.getIsotopeUids()
+
+//        StringBuffer buf = new StringBuffer();
+//        buf.append("{ \"rt\": [");
+//        List<String> xs = new ArrayList<>();
+//        for (int k=mergedTrace.startId(); k <= mergedTrace.endId(); ++k) {
+//            xs.add(String.valueOf(mergedTrace.retentionTime(k)));
+//        }
+//        buf.append(String.join( ", ", xs));
+//        buf.append("], \"parent\": [");
+//        xs.clear();
+//        for (int k=mergedTrace.startId(); k <= mergedTrace.endId(); ++k) {
+//            xs.add(String.valueOf(mergedTrace.intensity(k)));
+//        }
+//        buf.append(String.join( ", ", xs));
+//        buf.append("], \"children\": {");
+//        for (int s=0; s < samplesInTrace.length; ++s) {
+//            buf.append("\"" + samplesInTrace[s].getUid() + "\": [");
+//            xs.clear();
+//            final ProcessedSample S = samplesInTrace[s];
+//            final Trace t = mergedSample.getStorage().getMergeStorage().getTrace(alignedFeature.getTraceIds().getInt(s));
+//            for (int k=mergedTrace.startId(); k <= mergedTrace.endId(); ++k) {
+//                xs.add(String.valueOf(S.getScanPointInterpolator().interpolateIntensity(t, k)));
+//            }
+//            buf.append(String.join( ", ", xs));
+//            buf.append("]");
+//            if (s+1 < samplesInTrace.length) buf.append(", ");
+//        }
+//        buf.append("}, ");
+//        buf.append("\"isotopes\": [" + alignedFeature.getIsotopeUids().intStream().mapToObj(Integer::toString).collect(Collectors.joining(", ")) + "],");
+//        buf.append("\"normalization\": {");
+//        for (int s=0; s < samplesInTrace.length; ++s) {
+//            ProcessedSample S = samplesInTrace[s];
+//            buf.append("\"" + samplesInTrace[s].getUid() + "\": " + S.getNormalizer().normalize(1));
+//            if (s+1 < samplesInTrace.length) buf.append(", ");
+//        }
+//        buf.append("}, ");
+//        buf.append("\"noise\": [");
+//        for (int k=mergedTrace.startId(); k <= mergedTrace.endId(); ++k) {
+//            double noise = stats.noiseLevel(k);
+//            buf.append(noise);
+//            if (k < mergedTrace.endId()) buf.append(", ");
+//        }
+//        buf.append("], ");
+//        buf.append("\"mz\": " + mergedTrace.averagedMz() + ", \"apexRt\": " + mergedTrace.retentionTime(mergedTrace.apex()) + ", ");
+//        buf.append("\"segments\": [");
+//        xs.clear();
+        final int o = mergedTrace.startId();
+        return new Iterator<>() {
+
+            private int segmentIndex = 0;
+
+            @Override
+            public boolean hasNext() {
+                return segmentIndex < traceSegments.length;
+            }
+
+            @Override
+            public AlignedFeatures next() {
+                // TODO run id
+                TraceSegment segment = traceSegments[segmentIndex];
+
+                RetentionTime rt = new RetentionTime(
+                        mergedTrace.retentionTime(segment.leftEdge - o),
+                        mergedTrace.retentionTime(segment.rightEdge - o),
+                        mergedTrace.retentionTime(segment.apex - o)
+                );
+                double apexMass = mergedTrace.mz(segment.apex - o);
+
+                AlignedFeatures alignedFeatures = AlignedFeatures.builder().mergedRT(rt).apexMass(apexMass).build();
+                alignedFeatures.getTraceSegments().add(de.unijena.bioinf.ms.persistence.model.core.trace.TraceSegment.builder()
+                        .traceId(trace2trace.get(alignedFeature.getUid())).start(segment.leftEdge - o).apex(segment.apex - o).end(segment.rightEdge - o).build());
+
+                for (int uid : alignedFeature.getIsotopeUids()) {
+                    // TODO now construct all other isotopes!
+                    // TODO also construct isotope pattern!
+                }
+
+                segmentIndex++;
+                return alignedFeatures;
+            }
+        };
     }
 
     public String extractFeaturesToString(ProcessedSample mergedSample, ProcessedSample[] samplesInTrace, MergedTrace alignedFeature, Ms2MergeStrategy ms2MergeStrategy) {
@@ -53,12 +138,12 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
         TraceSegment[] traceSegments = new PersistentHomology().detectSegments(mergedSample.getStorage().getStatistics(), mergedTrace).stream().filter(x->mergedTrace.intensity(x.apex) > stats.noiseLevel(x.apex)  ).toArray(TraceSegment[]::new);
         if (traceSegments.length==0 && alignedFeature.getUid()>=0) return null;
         // segments for each individual trace
-        TraceSegment[][] individualSegments = new TraceSegment[alignedFeature.getSampleIds().size()][];
-        for (int k=0; k < individualSegments.length; ++k) {
-            ProcessedSample sample = samplesInTrace[k];
-            assert sample.getUid() == alignedFeature.getSampleIds().getInt(k);
-            individualSegments[k] = assignSegmentsToIndividualTrace(mergedSample, sample, traceSegments, mergedTrace, mergedSample.getStorage().getMergeStorage().getTrace(alignedFeature.getTraceIds().getInt(k)) );
-        }
+//        TraceSegment[][] individualSegments = new TraceSegment[alignedFeature.getSampleIds().size()][];
+//        for (int k=0; k < individualSegments.length; ++k) {
+//            ProcessedSample sample = samplesInTrace[k];
+//            assert sample.getUid() == alignedFeature.getSampleIds().getInt(k);
+//            individualSegments[k] = assignSegmentsToIndividualTrace(mergedSample, sample, traceSegments, mergedTrace, mergedSample.getStorage().getMergeStorage().getTrace(alignedFeature.getTraceIds().getInt(k)) );
+//        }
         final Int2ObjectOpenHashMap<ProcessedSample> uid2sample = new Int2ObjectOpenHashMap<>();
         for (ProcessedSample sample : samplesInTrace) {
             uid2sample.put(sample.getUid(), sample);
