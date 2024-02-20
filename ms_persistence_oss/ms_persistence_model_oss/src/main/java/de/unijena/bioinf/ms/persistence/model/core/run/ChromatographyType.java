@@ -18,34 +18,24 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.persistence.model.core;
+package de.unijena.bioinf.ms.persistence.model.core.run;
 
-import jakarta.persistence.Id;
-import lombok.*;
-import org.jetbrains.annotations.NotNull;
+import lombok.Getter;
 
-/**
- * Edge between two {@link AlignedFeatures}s
- */
+import javax.validation.constraints.NotNull;
+
 @Getter
-@Setter
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-@ToString
-public class CorrelatedIonPair {
-    public enum Type {ADDUCT, INSOURCE, MULTIMERE, ISOMERE}
+public enum ChromatographyType {
+    LC("Liquid Chromatography"),
+    GC("Gas Chromatography");
 
-    @Id
-    private long ionPairId;
-
-    private long alignedFeatureId1;
-    private long alignedFeatureId2;
 
     @NotNull
-    private Type type;
+    private final String fullName;
 
-    //MetaInformation...
-    private Double score;
-    private Double correlationCoefficient;
+
+    ChromatographyType(@NotNull String fullName) {
+        this.fullName = fullName;
+    }
+
 }
