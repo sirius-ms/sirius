@@ -21,9 +21,7 @@
 package de.unijena.bioinf.ms.middleware.model.compute.tools;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import de.unijena.bioinf.chemdb.DataSource;
-import de.unijena.bioinf.chemdb.SearchableDatabases;
-import de.unijena.bioinf.chemdb.custom.CustomDatabase;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.confidence_score.ExpansiveSearchConfidenceMode;
 import de.unijena.bioinf.elgordo.TagStructuresByElGordo;
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
@@ -31,16 +29,15 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.stream.Stream;
 
 /**
  * User/developer friendly parameter subset for the CSI:FingerID structure db search tool.
  * Needs results from FingerprintPrediction and Canopus Tool
- *
  */
 @Getter
 @Setter
@@ -76,17 +73,19 @@ public class StructureDbSearch extends Tool<FingerblastOptions> {
     ExpansiveSearchConfidenceMode.Mode expansiveSearchConfidenceMode;
 
 
-    public StructureDbSearch() {
-        super(FingerblastOptions.class);
-        structureSearchDBs = Stream.concat(
-                Stream.of(DataSource.BIO.name()),
-                SearchableDatabases.getCustomDatabases().stream().map(CustomDatabase::name) //Can this be io intense?!
-        ).toList();
+    public StructureDbSearch(@NotNull List<CustomDataSources.Source> structureSearchDBs) {
+        this();
+        this.structureSearchDBs = structureSearchDBs.stream().distinct().map(CustomDataSources.Source::name).toList();
         tagStructuresWithLipidClass = PropertyManager.DEFAULTS.
                 createInstanceWithDefaults(TagStructuresByElGordo.class).value;
         expansiveSearchConfidenceMode = PropertyManager.DEFAULTS.
                 createInstanceWithDefaults(ExpansiveSearchConfidenceMode.class).confidenceScoreSimilarityMode;
     }
+
+    private StructureDbSearch() {
+        super(FingerblastOptions.class);
+    }
+
 
     @JsonIgnore
     @Override

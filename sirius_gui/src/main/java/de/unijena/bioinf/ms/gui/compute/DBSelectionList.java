@@ -21,7 +21,6 @@ package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.DataSources;
-import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
@@ -46,7 +45,7 @@ public class DBSelectionList extends JCheckBoxList<CustomDataSources.Source> {
 
     public DBSelectionList(@Nullable String descriptionKey, boolean includeCustom) {
         this(descriptionKey, CustomDataSources.sourcesStream().
-                filter(db -> !SearchableDatabases.NON_SLECTABLE_LIST.contains(db.name())).
+                filter(db -> !CustomDataSources.NON_SEARCHABLE_LIST.contains(db.name())).
                 filter(db -> includeCustom || !db.isCustomSource()).sorted(Comparator.comparing(CustomDataSources.Source::name)).
                 collect(Collectors.toList()));
     }

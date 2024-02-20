@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.CandidateFormulas;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
+import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.annotations.FormulaSearchDB;
 import de.unijena.bioinf.fingerid.FormulaWhiteListJob;
 import de.unijena.bioinf.jjobs.JobSubmitter;
@@ -69,7 +70,7 @@ public class SiriusSubToolJob extends InstanceJob {
             // create WhiteSet from DB if necessary
             //todo do we really want to restrict to organic even if the db is user selected
             final Optional<FormulaSearchDB> searchDB = exp.getAnnotation(FormulaSearchDB.class);
-            if (searchDB.isPresent() && searchDB.get().containsDBs())
+            if (searchDB.isPresent() && !searchDB.get().isEmpty())
                 wSet = submitSubJob(new FormulaWhiteListJob(ApplicationCore.WEB_API.getChemDB(), searchDB.get().searchDBs, exp, true, false))
                         .awaitResult();
 

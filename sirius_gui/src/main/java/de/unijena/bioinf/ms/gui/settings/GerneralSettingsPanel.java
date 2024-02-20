@@ -19,7 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.settings;
 
-import de.unijena.bioinf.chemdb.SearchableDatabases;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.frontend.io.FileChooserPanel;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
@@ -104,7 +104,7 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         clearDBCache.addActionListener(evt -> {
             Jobs.runInBackgroundAndLoad(mf, "Clearing database cache...", () -> {
                 try {
-                    SearchableDatabases.getWebDatabaseCacheStorage().clear();
+                    CustomDataSources.getWebDatabaseCacheStorage().clear();
                 } catch (IOException e) {
                     LoggerFactory.getLogger(getClass()).error("Error when clearing DB cache", e);
                     new StacktraceDialog(mf, "Error when clearing DB cache", e);
