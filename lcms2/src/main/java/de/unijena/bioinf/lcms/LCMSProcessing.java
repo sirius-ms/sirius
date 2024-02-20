@@ -14,21 +14,23 @@ import de.unijena.bioinf.lcms.msms.MostIntensivePeakInIsolationWindowAssignmentS
 import de.unijena.bioinf.lcms.msms.Ms2MergeStrategy;
 import de.unijena.bioinf.lcms.msms.Ms2TraceStrategy;
 import de.unijena.bioinf.lcms.projectspace.ImportStrategy;
+import de.unijena.bioinf.lcms.projectspace.ProjectSpaceImporter;
 import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
 import de.unijena.bioinf.lcms.statistics.*;
-import de.unijena.bioinf.lcms.trace.ContiguousTrace;
-import de.unijena.bioinf.lcms.trace.LCMSStorage;
+import de.unijena.bioinf.lcms.trace.*;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
-import de.unijena.bioinf.lcms.trace.Rect;
 import de.unijena.bioinf.lcms.trace.segmentation.PersistentHomology;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegmentationStrategy;
 import de.unijena.bioinf.lcms.traceextractor.*;
-import de.unijena.bioinf.ms.persistence.model.core.AlignedFeatures;
-import de.unijena.bioinf.ms.persistence.model.core.ChromatographyType;
-import de.unijena.bioinf.ms.persistence.model.core.Run;
+import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.run.ChromatographyType;
+import de.unijena.bioinf.ms.persistence.model.core.run.Run;
+import de.unijena.bioinf.ms.persistence.model.core.trace.AbstractTrace;
 import de.unijena.bioinf.ms.persistence.storage.MsProjectDocumentDatabase;
 import de.unijena.bioinf.storage.db.nosql.Database;
+import it.unimi.dsi.fastutil.ints.Int2LongMap;
+import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.LoggerFactory;
@@ -86,7 +88,9 @@ public class LCMSProcessing {
     @Getter @Setter private AlignmentScorer alignmentScorerFull = new AlignmentScorer(4);
     @Getter @Setter private MergeTracesWithoutGapFilling mergeStrategy = new MergeTracesWithoutGapFilling();
 
-    @Getter @Setter private ImportStrategy importStrategy;
+    @Getter @Setter private ImportStrategy importStrategy = new ProjectSpaceImporter();
+
+    @Getter @Setter private TraceExtractionStrategy mergeTraceExtractionStrategy = new TraceExtractor();
 
     @Getter @Setter private MergedFeatureExtractionStrategy mergedFeatureExtractionStrategy = new MergedFeatureExtractor();
 
@@ -117,6 +121,7 @@ public class LCMSProcessing {
             ChromatographyType chromatographyType
     ) throws IOException {
         // parse file and extract spectra
+        // TODO import via ImportStrategy
         ProcessedSample sample = LCMSImporter.importToProject(
                 file, storageFactory, store, saveRawScans, runType, chromatographyType);
         sample.setUid(this.samples.size());
@@ -154,19 +159,36 @@ public class LCMSProcessing {
         return merged;
     }
 
-    public void extractFeaturesAndExportToProjectSpace(ProcessedSample merged, AlignmentBackbone backbone, Object storage) {
+    public void extractFeaturesAndExportToProjectSpace(ProcessedSample merged, AlignmentBackbone backbone) throws IOException {
         final HashMap<Integer, ProcessedSample> idx2sample = new HashMap<>();
         for (ProcessedSample s : backbone.getSamples()) idx2sample.put(s.getUid(),s);
+
+        Int2LongMap trace2trace = new Int2LongOpenHashMap();
         for (MergedTrace trace : merged.getStorage().getMergeStorage()) {
             trace.finishMerging();
             ProcessedSample[] samplesInTrace = new ProcessedSample[trace.getSampleIds().size()];
             trace.getTraceIds().forEach(x->samplesInTrace[x]=idx2sample.get(x));
-            Iterator<AlignedFeatures> fiter = mergedFeatureExtractionStrategy.extractFeatures(merged, samplesInTrace, trace, ms2MergeStrategy);
+
+            Iterator<AbstractTrace> titer = mergeTraceExtractionStrategy.extractTrace(merged, samplesInTrace, trace);
+            while (titer.hasNext()) {
+                AbstractTrace atrace = titer.next();
+                importStrategy.importTrace(atrace);
+                if (atrace instanceof de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace)
+                    trace2trace.put(trace.getUid(), ((de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace) atrace).getMergedTraceId());
+            }
+        }
+
+        for (MergedTrace trace : merged.getStorage().getMergeStorage()) {
+            // TODO creating samplesInTrace twice!
+            ProcessedSample[] samplesInTrace = new ProcessedSample[trace.getSampleIds().size()];
+            trace.getTraceIds().forEach(x->samplesInTrace[x]=idx2sample.get(x));
+            Iterator<AlignedFeatures> fiter = mergedFeatureExtractionStrategy.extractFeatures(merged, samplesInTrace, trace, ms2MergeStrategy, trace2trace);
             while (fiter.hasNext()) {
-                importStrategy.importAlignedFeature(storage, fiter.next());
+                importStrategy.importAlignedFeature(fiter.next());
             }
         }
     }
+
     public void exportFeaturesToFiles(ProcessedSample merged, AlignmentBackbone backbone) {
         int J=0;
         final HashMap<Integer, ProcessedSample> idx2sample = new HashMap<>();
