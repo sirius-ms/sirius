@@ -31,15 +31,17 @@ import de.unijena.bioinf.lcms.spectrum.Ms1SpectrumHeader;
 import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
 import de.unijena.bioinf.lcms.trace.LCMSStorage;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
-import de.unijena.bioinf.ms.persistence.model.core.Run;
-import de.unijena.bioinf.ms.persistence.model.core.Scan;
-import de.unijena.bioinf.ms.persistence.model.core.*;
+import de.unijena.bioinf.ms.persistence.model.core.run.*;
+import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
+import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
+import de.unijena.bioinf.ms.persistence.model.core.run.Run;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import lombok.extern.slf4j.Slf4j;
 import uk.ac.ebi.jmzml.model.mzml.*;
+import uk.ac.ebi.jmzml.model.mzml.InstrumentConfiguration;
 import uk.ac.ebi.jmzml.xml.io.MzMLUnmarshaller;
 
 import javax.annotation.Nullable;
@@ -57,11 +59,12 @@ public class MzMLParser implements LCMSParser {
             File file,
             LCMSStorageFactory storageFactory,
             LCMSParser.IOThrowingConsumer<Run> runConsumer,
+            LCMSParser.IOThrowingConsumer<Run> runUpdateConsumer,
             @Nullable LCMSParser.IOThrowingConsumer<Scan> scanConsumer,
             @Nullable LCMSParser.IOThrowingConsumer<MSMSScan> msmsScanConsumer,
             Run.RunBuilder runBuilder
     ) throws IOException {
-        return parse(file, storageFactory, new MzMLUnmarshaller(file), runConsumer, scanConsumer, msmsScanConsumer, runBuilder);
+        return parse(file, storageFactory, new MzMLUnmarshaller(file), runConsumer, runUpdateConsumer, scanConsumer, msmsScanConsumer, runBuilder);
     }
 
     private ProcessedSample parse(
@@ -69,6 +72,7 @@ public class MzMLParser implements LCMSParser {
             LCMSStorageFactory storageFactory,
             MzMLUnmarshaller um,
             LCMSParser.IOThrowingConsumer<Run> runConsumer,
+            LCMSParser.IOThrowingConsumer<Run> runUpdateConsumer,
             @Nullable LCMSParser.IOThrowingConsumer<Scan> scanConsumer,
             @Nullable LCMSParser.IOThrowingConsumer<MSMSScan> msmsScanConsumer,
             Run.RunBuilder runBuilder
@@ -98,8 +102,8 @@ public class MzMLParser implements LCMSParser {
             final Int2IntMap idmap = new Int2IntOpenHashMap();
 
             // Read available instument information
-            IonizationType ionization = null;
-            FragmentationType fragmentation = null;
+            Ionization ionization = null;
+            Fragmentation fragmentation = null;
             List<MassAnalyzer> massAnalyzers = new ArrayList<>();
 
             InstrumentConfigurationList instrumentList = um.unmarshalFromXpath("/instrumentConfigurationList", InstrumentConfigurationList.class);
@@ -113,7 +117,7 @@ public class MzMLParser implements LCMSParser {
                     sourceLoop:
                     for (SourceComponent sc : componentList.getSource()) {
                         for (CVParam cvParam : sc.getCvParam()) {
-                            Optional<IonizationType> optType = IonizationType.byHupoId(cvParam.getAccession());
+                            Optional<Ionization> optType = Ionization.byHupoId(cvParam.getAccession()).or(() -> Ionization.byValue(cvParam.getName()));
                             if (optType.isPresent()) {
                                 ionization = optType.get();
                                 break sourceLoop;
@@ -121,7 +125,7 @@ public class MzMLParser implements LCMSParser {
                         }
                         if (ionization == null) {
                             for (UserParam userParam : sc.getUserParam()) {
-                                Optional<IonizationType> optType = IonizationType.byValue(userParam.getValue());
+                                Optional<Ionization> optType = Ionization.byValue(userParam.getValue());
                                 if (optType.isPresent()) {
                                     ionization = optType.get();
                                     break sourceLoop;
@@ -134,41 +138,27 @@ public class MzMLParser implements LCMSParser {
                     analyzerLoop:
                     for (AnalyzerComponent ac : ic.getComponentList().getAnalyzer()) {
                         for (CVParam cvParam : ac.getCvParam()) {
-                            MassAnalyzer.byHupoId(cvParam.getAccession()).ifPresent(massAnalyzers::add);
-                            continue analyzerLoop;
+                            Optional<MassAnalyzer> optType = MassAnalyzer.byHupoId(cvParam.getAccession()).or(() -> MassAnalyzer.byValue(cvParam.getName()));
+                            if (optType.isPresent()) {
+                                massAnalyzers.add(optType.get());
+                                continue analyzerLoop;
+                            }
                         }
+
                         for (UserParam userParam : ac.getUserParam()) {
-                            MassAnalyzer.byValue(userParam.getValue()).ifPresent(massAnalyzers::add);
+                            Optional<MassAnalyzer> optType = MassAnalyzer.byValue(userParam.getValue());
+                            if (optType.isPresent()) {
+                                massAnalyzers.add(optType.get());
+                                continue analyzerLoop;
+                            }
                         }
                     }
 
-                }
-            }
-
-            // get fragmentation
-            ReferenceableParamGroup refParams = um.unmarshalFromXpath("/run/referenceableParamGroup", ReferenceableParamGroup.class);
-            if (refParams != null) {
-                for (CVParam cvParam : refParams.getCvParam()) {
-                    Optional<FragmentationType> optType = FragmentationType.byHupoId(cvParam.getAccession());
-                    if (optType.isPresent()) {
-                        fragmentation = optType.get();
-                        break;
-                    }
-                }
-                if (fragmentation == null) {
-                    for (UserParam userParam : refParams.getUserParam()) {
-                        Optional<FragmentationType> optType = FragmentationType.byValue(userParam.getValue());
-                        if (optType.isPresent()) {
-                            fragmentation = optType.get();
-                            break;
-                        }
-                    }
                 }
             }
 
             Run run = runBuilder
                     .ionization(ionization)
-                    .fragmentation(fragmentation)
                     .massAnalyzers(!massAnalyzers.isEmpty() ? massAnalyzers : null)
                     .build();
             runConsumer.consume(run);
@@ -212,15 +202,15 @@ public class MzMLParser implements LCMSParser {
                 }
 
                 if (!centroided) {
-                    log.info("Spectrum with ID '" + sid  + "' is not centroided. Skipping!");
+                    log.error("Spectrum with ID '" + sid  + "' is not centroided. Skipping!");
                     continue;
                 }
                 if (!skipList.isEmpty()) {
-                    log.info("Spectrum with ID '" + sid  + "' contains parameters that indicate non Mass Spectrometry data (e.g. EMR spectra). Skipping! Parameters: " + skipList.stream().map(CVParam::getAccession).collect(Collectors.joining(", ")) );
+                    log.error("Spectrum with ID '" + sid  + "' contains parameters that indicate non Mass Spectrometry data (e.g. EMR spectra). Skipping! Parameters: " + skipList.stream().map(CVParam::getAccession).collect(Collectors.joining(", ")) );
                     continue;
                 }
                 if (msLevel < 1 && polarity == Polarity.UNKNOWN) {
-                    log.info("Spectrum with ID '" + sid  + "' does neither contain mslevel nor polarity information. Spectrum is likely to not be an Mass Spectrum. Skipping this entry." + System.lineSeparator() + "Spectrum information: " + spectrum.getCvParam().stream().map(CVParam::toString).collect(Collectors.joining(System.lineSeparator())));
+                    log.error("Spectrum with ID '" + sid  + "' does neither contain mslevel nor polarity information. Spectrum is likely to not be an Mass Spectrum. Skipping this entry." + System.lineSeparator() + "Spectrum information: " + spectrum.getCvParam().stream().map(CVParam::toString).collect(Collectors.joining(System.lineSeparator())));
                     continue;
                 }
 
@@ -261,7 +251,7 @@ public class MzMLParser implements LCMSParser {
                 }
 
                 if (mzArray == null || intArray == null || mzArray.length != intArray.length || mzArray.length == 0) {
-                    log.info("No spectrum data found in Spectrum with id: " + spectrum.getId() + " Skipping!");
+                    log.error("No spectrum data found in Spectrum with id: " + spectrum.getId() + " Skipping!");
                     continue;
                 }
 
@@ -273,7 +263,7 @@ public class MzMLParser implements LCMSParser {
                 }
 
                 if (peaks.isEmpty()) {
-                    log.info("No valid spectrum data found Spectrum with id: " + spectrum.getId() + " Skipping!");
+                    log.error("No valid spectrum data found Spectrum with id: " + spectrum.getId() + " Skipping!");
                     continue;
                 }
 
@@ -299,16 +289,35 @@ public class MzMLParser implements LCMSParser {
 
                 } else {
                     if (spectrum.getPrecursorList() == null || spectrum.getPrecursorList().getPrecursor() == null || spectrum.getPrecursorList().getPrecursor().isEmpty()) {
-                        log.info("No precursor information given for MS/MS spectrum with id: " + spectrum.getId() + " Skipping!");
+                        log.error("No precursor information given for MS/MS spectrum with id: " + spectrum.getId() + " Skipping!");
                         continue;
                     }
                     uk.ac.ebi.jmzml.model.mzml.Precursor precursor = spectrum.getPrecursorList().getPrecursor().get(0);
                     if (precursor == null) {
-                        log.info("No precursor information given for MS/MS spectrum with id: " + spectrum.getId() + " Skipping!");
+                        log.error("No precursor information given for MS/MS spectrum with id: " + spectrum.getId() + " Skipping!");
                         continue;
                     }
                     double collisionEnergy = precursor.getActivation().getCvParam().stream().filter(cv -> cv.getAccession().equals("MS:1000045"))
                                 .findFirst().map(cv -> Double.parseDouble(cv.getValue())).orElse(Double.NaN);
+
+                    if (fragmentation == null) {
+                        for (CVParam cvParam : precursor.getActivation().getCvParam()) {
+                            Optional<Fragmentation> optType = Fragmentation.byHupoId(cvParam.getAccession()).or(() -> Fragmentation.byValue(cvParam.getName()));
+                            if (optType.isPresent()) {
+                                fragmentation = optType.get();
+                                break;
+                            }
+                        }
+                        if (fragmentation == null) {
+                            for (UserParam userParam : precursor.getActivation().getUserParam()) {
+                                Optional<Fragmentation> optType = Fragmentation.byValue(userParam.getValue());
+                                if (optType.isPresent()) {
+                                    fragmentation = optType.get();
+                                    break;
+                                }
+                            }
+                        }
+                    }
 
                     Precursor prec = makePrecursor(precursor, ms1Ids, idToIndex);
 
@@ -339,6 +348,15 @@ public class MzMLParser implements LCMSParser {
                     storage.getSpectrumStorage().addMs2Spectrum(header, peaks);
                 }
 
+            }
+
+            if (scanids.isEmpty()) {
+                throw new RuntimeException("No spectra imported from " + file);
+            }
+
+            if (fragmentation != null) {
+                run.setFragmentation(fragmentation);
+                runUpdateConsumer.consume(run);
             }
 
             final ScanPointMapping mapping = new ScanPointMapping(retentionTimes.toDoubleArray(), scanids.toIntArray(), idmap);
@@ -402,35 +420,35 @@ public class MzMLParser implements LCMSParser {
         );
     }
 
-//    public static void main(String[] args) throws IOException {
-//        File f = new File("/home/mel/lcms-data/polluted_citrus/G87532_1x_RD6_01_26277.mzML");
-//        List<Scan> scans = new ArrayList<>();
-//        List<MSMSScan> ms2scans = new ArrayList<>();
-////        AtomicInteger scans = new AtomicInteger(0);
-////        AtomicInteger ms2scans = new AtomicInteger(0);
-//        ProcessedSample sample = new MzMLParser().parse(
-//                f,
-//                LCMSStorage.temporaryStorage(),
-//                System.out::println,
-//                ms -> {
-//                    ms.setScanId(new Random().nextLong());
-//                    scans.add(ms);
-//                },
-//                msms -> {
-//                    msms.setScanId(new Random().nextLong());
-//                    ms2scans.add(msms);
-//                },
-////                ms -> scans.addAndGet(1),
-////                msms -> ms2scans.addAndGet(1),
-//                Run.builder().runType(Run.Type.SAMPLE).chromatography(ChromatographyType.LC)
-//        );
-//        System.out.println(sample.getRtSpan());
-//        System.out.println(scans.size());
-//        System.out.println(ms2scans.size());
-//        System.out.println(sample.getTraceStorage().numberOfScans());
-//
-////        System.out.println(scans);
-////        System.out.println(ms2scans);
-//    }
+    public static void main(String[] args) throws IOException {
+        File f = new File("/home/mel/lcms-data/polluted_citrus/G87532_1x_RD6_01_26277.mzML");
+        List<Scan> scans = new ArrayList<>();
+        List<MSMSScan> ms2scans = new ArrayList<>();
+//        AtomicInteger scans = new AtomicInteger(0);
+//        AtomicInteger ms2scans = new AtomicInteger(0);
+        ProcessedSample sample = new MzMLParser().parse(
+                f,
+                LCMSStorage.temporaryStorage(),
+                System.out::println,
+                System.out::println,
+                ms -> {
+                    ms.setScanId(new Random().nextLong());
+                    scans.add(ms);
+                },
+                msms -> {
+                    msms.setScanId(new Random().nextLong());
+                    ms2scans.add(msms);
+                },
+//                ms -> scans.addAndGet(1),
+//                msms -> ms2scans.addAndGet(1),
+                Run.builder().runType(Run.Type.SAMPLE).chromatography(ChromatographyType.LC)
+        );
+        System.out.println(sample.getRtSpan());
+        System.out.println(scans.size());
+        System.out.println(ms2scans.size());
+
+//        System.out.println(scans);
+//        System.out.println(ms2scans);
+    }
 
 }
