@@ -22,8 +22,8 @@ package de.unijena.bioinf.lcms.io;
 
 import de.unijena.bioinf.lcms.LCMSStorageFactory;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
-import de.unijena.bioinf.ms.persistence.model.core.ChromatographyType;
-import de.unijena.bioinf.ms.persistence.model.core.Run;
+import de.unijena.bioinf.ms.persistence.model.core.run.ChromatographyType;
+import de.unijena.bioinf.ms.persistence.model.core.run.Run;
 import de.unijena.bioinf.ms.persistence.storage.MsProjectDocumentDatabase;
 import de.unijena.bioinf.storage.db.nosql.Database;
 
@@ -51,9 +51,9 @@ public class LCMSImporter {
         Database<?> db = store.getStorage();
         Run.RunBuilder runBuilder = Run.builder().runType(runType).chromatography(chromatographyType);
         if (!saveRawScans) {
-            return parser.parse(source, storageFactory, db::insert, null, null, runBuilder);
+            return parser.parse(source, storageFactory, db::insert, db::upsert, null, null, runBuilder);
         } else {
-            return parser.parse(source, storageFactory, db::insert, db::insert, db::insert, runBuilder);
+            return parser.parse(source, storageFactory, db::insert, db::upsert, db::insert, db::insert, runBuilder);
         }
     }
 

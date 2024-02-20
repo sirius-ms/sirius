@@ -22,9 +22,9 @@ package de.unijena.bioinf.lcms.io;
 
 import de.unijena.bioinf.lcms.LCMSStorageFactory;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
-import de.unijena.bioinf.ms.persistence.model.core.MSMSScan;
-import de.unijena.bioinf.ms.persistence.model.core.Run;
-import de.unijena.bioinf.ms.persistence.model.core.Scan;
+import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
+import de.unijena.bioinf.ms.persistence.model.core.run.Run;
+import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 
 import java.io.File;
 import java.io.IOException;
@@ -50,6 +50,7 @@ public interface LCMSParser {
             File file,
             LCMSStorageFactory storageFactory,
             LCMSParser.IOThrowingConsumer<Run> runConsumer,
+            LCMSParser.IOThrowingConsumer<Run> runUpdateConsumer,
             LCMSParser.IOThrowingConsumer<Scan> scanConsumer,
             LCMSParser.IOThrowingConsumer<MSMSScan> msmsScanConsumer,
             Run.RunBuilder runBuilder
