@@ -20,17 +20,23 @@
 
 package de.unijena.bioinf.lcms.io;
 
+import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
 import de.unijena.bioinf.lcms.LCMSStorageFactory;
+import de.unijena.bioinf.lcms.trace.LCMSStorage;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
-import de.unijena.bioinf.ms.persistence.model.core.MSMSScan;
-import de.unijena.bioinf.ms.persistence.model.core.Run;
-import de.unijena.bioinf.ms.persistence.model.core.Scan;
+import de.unijena.bioinf.ms.persistence.model.core.run.ChromatographyType;
+import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
+import de.unijena.bioinf.ms.persistence.model.core.run.Run;
+import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 public class MzXMLParser implements LCMSParser {
 
@@ -39,53 +45,56 @@ public class MzXMLParser implements LCMSParser {
             File file,
             LCMSStorageFactory storageFactory,
             IOThrowingConsumer<Run> runConsumer,
+            IOThrowingConsumer<Run> runUpdateConsumer,
             IOThrowingConsumer<Scan> scanConsumer,
             IOThrowingConsumer<MSMSScan> msmsScanConsumer,
             Run.RunBuilder runBuilder
     ) throws IOException {
         try {
+            Run run = runBuilder.sourceReference(new MsDataSourceReference(file.toURI(), file.getName(), null, null)).build();
+            runConsumer.consume(run);
             MzXMLSaxParser saxParser = new MzXMLSaxParser(
-                    file,
+                    file.getName(),
                     storageFactory.createNewStorage(),
-                    runConsumer, scanConsumer, msmsScanConsumer,
-                    runBuilder
+                    run, scanConsumer, msmsScanConsumer
             );
             SAXParserFactory.newInstance().newSAXParser().parse(file, saxParser);
+            runUpdateConsumer.consume(run);
             return saxParser.getProcessedSample();
         } catch (SAXException | ParserConfigurationException e) {
             throw new IOException(e);
         }
     }
 
-//    public static void main(String[] args) throws IOException {
-//        File f = new File("/home/mel/lcms-data/220331AliW_Mut_LytM.mzXML");
-//        List<Scan> scans = new ArrayList<>();
-//        List<MSMSScan> ms2scans = new ArrayList<>();
-////        AtomicInteger scans = new AtomicInteger(0);
-////        AtomicInteger ms2scans = new AtomicInteger(0);
-//        ProcessedSample sample = new MzXMLParser().parse(
-//                f,
-//                LCMSStorage.temporaryStorage(),
-//                System.out::println,
-//                ms -> {
-//                    ms.setScanId(new Random().nextLong());
-//                    scans.add(ms);
-//                },
-//                msms -> {
-//                    msms.setScanId(new Random().nextLong());
-//                    ms2scans.add(msms);
-//                },
-////                ms -> scans.addAndGet(1),
-////                msms -> ms2scans.addAndGet(1),
-//                Run.builder().runType(Run.Type.SAMPLE).chromatography(ChromatographyType.LC)
-//        );
-//        System.out.println(sample.getRtSpan());
-//        System.out.println(scans.size());
-//        System.out.println(ms2scans.size());
-//        System.out.println(sample.getTraceStorage().numberOfScans());
-//
-////        System.out.println(scans);
-////        System.out.println(ms2scans);
-//    }
+    public static void main(String[] args) throws IOException {
+        File f = new File("/home/mel/lcms-data/220331AliW_Mut_LytM.mzXML");
+        List<Scan> scans = new ArrayList<>();
+        List<MSMSScan> ms2scans = new ArrayList<>();
+//        AtomicInteger scans = new AtomicInteger(0);
+//        AtomicInteger ms2scans = new AtomicInteger(0);
+        ProcessedSample sample = new MzXMLParser().parse(
+                f,
+                LCMSStorage.temporaryStorage(),
+                System.out::println,
+                System.out::println,
+                ms -> {
+                    ms.setScanId(new Random().nextLong());
+                    scans.add(ms);
+                },
+                msms -> {
+                    msms.setScanId(new Random().nextLong());
+                    ms2scans.add(msms);
+                },
+//                ms -> scans.addAndGet(1),
+//                msms -> ms2scans.addAndGet(1),
+                Run.builder().runType(Run.Type.SAMPLE).chromatography(ChromatographyType.LC)
+        );
+        System.out.println(sample.getRtSpan());
+        System.out.println(scans.size());
+        System.out.println(ms2scans.size());
+
+//        System.out.println(scans);
+//        System.out.println(ms2scans);
+    }
 
 }
