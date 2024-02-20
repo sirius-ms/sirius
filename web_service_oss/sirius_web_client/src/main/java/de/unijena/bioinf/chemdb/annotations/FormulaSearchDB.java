@@ -20,7 +20,7 @@
 
 package de.unijena.bioinf.chemdb.annotations;
 
-import de.unijena.bioinf.chemdb.SearchableDatabase;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +35,7 @@ public class FormulaSearchDB extends SearchableDBAnnotation {
         return CONSIDER_ALL_FORMULAS;
     }
 
-    public FormulaSearchDB(Collection<SearchableDatabase> source) {
+    public FormulaSearchDB(Collection<CustomDataSources.Source> source) {
         super(source);
     }
 

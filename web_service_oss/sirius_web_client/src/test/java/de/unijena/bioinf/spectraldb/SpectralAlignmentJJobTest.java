@@ -28,11 +28,8 @@ import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrumDelegate;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.chemdb.AbstractChemicalDatabase;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
-import de.unijena.bioinf.chemdb.SearchableDatabase;
-import de.unijena.bioinf.chemdb.custom.CustomDatabase;
-import de.unijena.bioinf.chemdb.custom.CustomDatabaseSettings;
+import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
 import de.unijena.bioinf.projectspace.SpectralSearchResult;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bionf.spectral_alignment.*;
@@ -44,9 +41,7 @@ import org.mockito.junit.MockitoRule;
 import org.mockito.quality.Strictness;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -96,10 +91,10 @@ public class SpectralAlignmentJJobTest {
         assertNotEquals(cq1, cq2);
         assertNotEquals(r1, r2);
 
-        SpectralLibrary mockDb = mock(SpectralLibrary.class);
-        when(mockDb.lookupSpectra(anyDouble(), any(), anyBoolean())).thenReturn(Arrays.asList(r1, r2));
+        WebWithCustomDatabase mockDb = mock(WebWithCustomDatabase.class);
+        when(mockDb.lookupSpectra(anyDouble(), any(), anyBoolean(), any())).thenReturn(Arrays.asList(r1, r2));
 
-        List<SpectralMatchMasterJJob> jobs = job.getAlignmentJJobsForLibrary(utils, Arrays.asList(cq1, cq2), mockDb);
+        List<SpectralMatchMasterJJob> jobs = job.getAlignmentJJobs(utils, Arrays.asList(cq1, cq2), List.of(), mockDb);
 
         SpectralMatchMasterJJob j1 = jobs.get(0);
         SpectralMatchMasterJJob j2 = jobs.get(1);
@@ -120,39 +115,6 @@ public class SpectralAlignmentJJobTest {
 
         assertEquals(r1, ((Ms2ReferenceSpectrumWrapper) p11.getRight().getSpectrum()).getMs2ReferenceSpectrum());
         assertEquals(r2, ((Ms2ReferenceSpectrumWrapper) p12.getRight().getSpectrum()).getMs2ReferenceSpectrum());
-    }
-
-    @Test
-    public void testFilterSpectralLibraries() {
-        SearchableDatabase dbNotCustom = mock();
-        when(dbNotCustom.isCustomDb()).thenReturn(false);
-
-        CustomDatabaseSettings.Statistics statNoSpectra = mock();
-        when(statNoSpectra.getSpectra()).thenReturn(0L);
-
-        CustomDatabase dbNoSpectra = mock();
-        when(dbNoSpectra.isCustomDb()).thenReturn(true);
-        when(dbNoSpectra.getStatistics()).thenReturn(statNoSpectra);
-
-        CustomDatabaseSettings.Statistics statWithSpectra = mock();
-        when(statWithSpectra.getSpectra()).thenReturn(1L);
-
-        CustomDatabase dbWrongVersion = mock();
-        when(dbWrongVersion.isCustomDb()).thenReturn(true);
-        when(dbWrongVersion.getStatistics()).thenReturn(statWithSpectra);
-        when(dbWrongVersion.toChemDB(any())).thenReturn(Optional.empty());
-
-        CustomDatabase spectralLib = mock(withSettings().extraInterfaces(SpectralLibrary.class, AbstractChemicalDatabase.class));
-        when(spectralLib.isCustomDb()).thenReturn(true);
-        when(spectralLib.getStatistics()).thenReturn(statWithSpectra);
-        when(spectralLib.toChemDB(any())).thenReturn(Optional.of((AbstractChemicalDatabase) spectralLib));
-
-        List<SearchableDatabase> testDatabases = Arrays.asList(dbNotCustom, dbNoSpectra, dbWrongVersion, spectralLib);
-
-        SpectralAlignmentJJob job = new SpectralAlignmentJJob(null, null);
-        List<SpectralLibrary> spectralDbs = job.filterCustomSpectralLibraries(testDatabases, null).toList();
-
-        assertEquals(Collections.singletonList((SpectralLibrary) spectralLib), spectralDbs);
     }
 
     @Test

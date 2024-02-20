@@ -21,7 +21,7 @@
 package de.unijena.bioinf.chemdb.annotations;
 
 import de.unijena.bioinf.chemdb.DataSource;
-import de.unijena.bioinf.chemdb.SearchableDatabase;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +30,7 @@ import java.util.Collection;
 
 public class SpectralSearchDB extends SearchableDBAnnotation {
 
-    public SpectralSearchDB(Collection<SearchableDatabase> value) {
+    public SpectralSearchDB(Collection<CustomDataSources.Source> value) {
         super(value);
     }
 
