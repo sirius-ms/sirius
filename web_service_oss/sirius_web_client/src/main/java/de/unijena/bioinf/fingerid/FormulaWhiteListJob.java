@@ -31,6 +31,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.chemdb.FormulaCandidate;
 import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.rest.NetUtils;
 
@@ -42,7 +43,7 @@ import java.util.stream.Collectors;
  * retrieves a {@link Whiteset} of {@link MolecularFormula}s based on the given {@link SearchableDatabase}
  */
 public class FormulaWhiteListJob extends BasicJJob<Whiteset> {
-    private final List<SearchableDatabase> searchableDatabases;
+    private final List<CustomDataSources.Source> dbToSearch;
     private final WebWithCustomDatabase searchDB;
     //job parameter
     private final boolean onlyOrganic;
@@ -52,14 +53,14 @@ public class FormulaWhiteListJob extends BasicJJob<Whiteset> {
     private final Ms2Experiment experiment;
     private final Deviation massDev;
 
-    public FormulaWhiteListJob(WebWithCustomDatabase searchDB, List<SearchableDatabase> searchableDatabases, Ms2Experiment experiment, boolean onlyOrganic, boolean annotateResult) {
-        this(searchDB, searchableDatabases, experiment, experiment.getAnnotationOrThrow(MS2MassDeviation.class).allowedMassDeviation, onlyOrganic, annotateResult);
+    public FormulaWhiteListJob(WebWithCustomDatabase searchDB, List<CustomDataSources.Source> dbToSearch, Ms2Experiment experiment, boolean onlyOrganic, boolean annotateResult) {
+        this(searchDB, dbToSearch, experiment, experiment.getAnnotationOrThrow(MS2MassDeviation.class).allowedMassDeviation, onlyOrganic, annotateResult);
     }
 
-    public FormulaWhiteListJob(WebWithCustomDatabase searchDB, List<SearchableDatabase> searchableDatabases, Ms2Experiment experiment, Deviation massDev, boolean onlyOrganic, boolean annotateResult) {
+    public FormulaWhiteListJob(WebWithCustomDatabase searchDB, List<CustomDataSources.Source> dbToSearch, Ms2Experiment experiment, Deviation massDev, boolean onlyOrganic, boolean annotateResult) {
         super(JobType.WEBSERVICE);
         this.massDev = massDev;
-        this.searchableDatabases = searchableDatabases;
+        this.dbToSearch = dbToSearch;
         this.experiment = experiment;
         this.annotate = annotateResult;
         this.searchDB = searchDB;
@@ -78,7 +79,7 @@ public class FormulaWhiteListJob extends BasicJJob<Whiteset> {
 
 
         final Set<MolecularFormula> formulas = NetUtils.tryAndWait(() ->
-                searchDB.loadMolecularFormulas(experiment.getIonMass(), massDev, allowedIons, searchableDatabases)
+                searchDB.loadMolecularFormulas(experiment.getIonMass(), massDev, allowedIons, dbToSearch)
                 .stream().map(FormulaCandidate::getFormula).filter(f -> !onlyOrganic || f.isCHNOPSBBrClFI())
                 .collect(Collectors.toSet()), this::checkForInterruption);
 

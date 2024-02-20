@@ -21,7 +21,7 @@
 package de.unijena.bioinf.chemdb.annotations;
 
 import de.unijena.bioinf.chemdb.DataSource;
-import de.unijena.bioinf.chemdb.SearchableDatabase;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +30,7 @@ import java.util.Collection;
 
 @DefaultProperty
 public class StructureSearchDB extends SearchableDBAnnotation {
-    public StructureSearchDB(Collection<SearchableDatabase> value) {
+    public StructureSearchDB(Collection<CustomDataSources.Source> value) {
         super(value);
     }
 

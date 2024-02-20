@@ -20,78 +20,39 @@
 
 package de.unijena.bioinf.chemdb;
 
+import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.chemdb.custom.CustomDatabaseFactory;
 import de.unijena.bioinf.chemdb.custom.OutdatedDBExeption;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
-import de.unijena.bioinf.storage.blob.file.FileBlobStorage;
-import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static de.unijena.bioinf.chemdb.custom.CustomDataSources.PROP_KEY;
+import static de.unijena.bioinf.chemdb.custom.CustomDataSources.getCustomDatabaseDirectory;
+
 public class SearchableDatabases {
-    public final static Set<String> NON_SLECTABLE_LIST = Set.of(DataSource.TRAIN.realName, DataSource.LIPID.realName(), DataSource.ALL.realName, DataSource.ALL_BUT_INSILICO.realName,
-            DataSource.PUBCHEMANNOTATIONBIO.realName, DataSource.PUBCHEMANNOTATIONDRUG.realName, DataSource.PUBCHEMANNOTATIONFOOD.realName, DataSource.PUBCHEMANNOTATIONSAFETYANDTOXIC.realName,
-            DataSource.SUPERNATURAL.realName
-    );
+    SearchableDatabases() {
 
-    //todo should be configurable
-    public static final String WEB_CACHE_DIR = "web-cache"; //cache directory for all remote (web) dbs
-    public static final String CUSTOM_DB_DIR = "custom";
-    public static final String PROP_KEY = "de.unijena.bioinf.chemdb.custom.source";
-
-    private SearchableDatabases() {
     }
 
-    @NotNull
-    public static Path getCustomDatabaseDirectory() {
-        return getDatabaseDirectory().resolve(CUSTOM_DB_DIR);
-    }
-
-    @NotNull
-    public static Path getWebDatabaseCacheDirectory() {
-        return getDatabaseDirectory().resolve(WEB_CACHE_DIR);
-    }
-
-    public static FileBlobStorage getWebDatabaseCacheStorage() {
-        try {
-            Files.createDirectories(getWebDatabaseCacheDirectory());
-            return new FileBlobStorage(getWebDatabaseCacheDirectory());
-        } catch (IOException e) {
-            throw new RuntimeException("Could not create cache directories!", e);
-        }
-    }
-
-    public static Path getDatabaseDirectory() {
-        final String val = PropertyManager.getProperty("de.unijena.bioinf.sirius.fingerID.cache");
-        Path p;
-        if (val == null || val.isBlank()){
-            p =  Path.of(System.getProperty("java.io.tmpdir")).resolve("csi_cache_dir");
-            LoggerFactory.getLogger(SearchableDatabases.class).warn("No structure db cache found. Using fallback: " + p);
-        }else {
-            p = Paths.get(val);
-        }
-        return p;
-    }
-
-    public static CustomDatabase getCustomDatabaseByNameOrThrow(@NotNull String name) {
-        return getCustomDatabaseByName(name).
+    public static CustomDatabase getCustomDatabaseByNameOrThrow(@NotNull String name, FingerprintVersion version) {
+        return getCustomDatabaseByName(name, version).
                 orElseThrow(() -> new IllegalArgumentException("Database with name: " + name + " does not exist!"));
     }
 
     @NotNull
-    public static Optional<CustomDatabase> getCustomDatabaseByName(@NotNull String name) {
-        @NotNull List<CustomDatabase> custom = getCustomDatabases();
+    public static Optional<CustomDatabase> getCustomDatabaseByName(@NotNull String name, FingerprintVersion version) {
+        @NotNull List<CustomDatabase> custom = getCustomDatabases(version);
         for (CustomDatabase customDatabase : custom)
             if (customDatabase.name().equalsIgnoreCase(name))
                 return Optional.of(customDatabase);
@@ -99,27 +60,27 @@ public class SearchableDatabases {
     }
 
     @NotNull
-    public static Optional<CustomDatabase> getCustomDatabaseByPath(@NotNull Path dbDir) {
+    public static Optional<CustomDatabase> getCustomDatabaseByPath(@NotNull Path dbDir, FingerprintVersion version) {
         try {
-            return Optional.of(getCustomDatabaseByPathOrThrow(dbDir));
+            return Optional.of(getCustomDatabaseByPathOrThrow(dbDir, version));
         } catch (RuntimeException e) {
             LoggerFactory.getLogger(SearchableDatabases.class).error(e.getMessage(), e.getCause());
             return Optional.empty();
         }
     }
 
-    public static @NotNull Optional<CustomDatabase> getCustomDatabase(@NotNull String nameOrPath) {
-        Optional<CustomDatabase> it = getCustomDatabaseByName(nameOrPath);
+    public static @NotNull Optional<CustomDatabase> getCustomDatabase(@NotNull String nameOrPath, FingerprintVersion version) {
+        Optional<CustomDatabase> it = getCustomDatabaseByName(nameOrPath, version);
         if (it.isEmpty())
-            it = getCustomDatabaseByPath(Path.of(nameOrPath));
+            it = getCustomDatabaseByPath(Path.of(nameOrPath), version);
         return it;
     }
 
 
     @NotNull
-    public static CustomDatabase getCustomDatabaseByPathOrThrow(@NotNull Path dbDir) {
+    public static CustomDatabase getCustomDatabaseByPathOrThrow(@NotNull Path dbDir, FingerprintVersion version) {
         try {
-            return loadCustomDatabaseFromLocation(dbDir.toAbsolutePath().toString(), true);
+            return loadCustomDatabaseFromLocation(dbDir.toAbsolutePath().toString(), true, version);
         } catch (IOException e) {
             throw new RuntimeException("Could not load DB from path: " + dbDir, e);
         }
@@ -127,51 +88,55 @@ public class SearchableDatabases {
 
 
     @NotNull
-    public static SearchableDatabase getDatabaseByNameOrThrow(@NotNull String name) {
-        return getDatabaseByName(name)
+    public static SearchableDatabase getDatabaseByNameOrThrow(@NotNull String name, FingerprintVersion version) {
+        return getDatabaseByName(name, version)
                 .orElseThrow(() -> new IllegalArgumentException("Database with name: " + name + " does not exist!"));
     }
 
     @NotNull
-    public static Optional<? extends SearchableDatabase> getDatabaseByName(@NotNull String name) {
+    public static Optional<? extends SearchableDatabase> getDatabaseByName(@NotNull String name, FingerprintVersion version) {
         final DataSource source = DataSources.getSourceFromNameOrNull(name);
         if (source != null)
             return Optional.of(new SearchableWebDB(source.realName, source.flag()));
-        return getCustomDatabaseByName(name);
+        return getCustomDatabaseByName(name, version);
     }
 
     @NotNull
-    public static Optional<? extends SearchableDatabase> getDatabase(@NotNull String nameOrPath) {
-        Optional<? extends SearchableDatabase> it = getDatabaseByName(nameOrPath);
+    public static Optional<? extends SearchableDatabase> getDatabase(@NotNull String nameOrPath, FingerprintVersion version) {
+        Optional<? extends SearchableDatabase> it = getDatabaseByName(nameOrPath, version);
         if (it.isEmpty())
-            it = getCustomDatabaseByPath(Path.of(nameOrPath));
+            it = getCustomDatabaseByPath(Path.of(nameOrPath), version);
         return it;
     }
 
     @NotNull
-    public static List<CustomDatabase> getCustomDatabases() {
-        return getCustomDatabases(true);
+    public static CustomDatabase getCustomDatabaseBySource(@NotNull CustomDataSources.Source db, FingerprintVersion version) {
+        return getCustomDatabaseByPathOrThrow(Path.of(db.id()), version);
     }
 
     @NotNull
-    public static List<CustomDatabase> getCustomDatabases(final boolean up2date) {
-        return loadCustomDatabases(up2date);
-    }
-
-    public static WebWithCustomDatabase makeWebWithCustomDB(WebAPI<?> webAPI) {
-        return new WebWithCustomDatabase(webAPI, getDatabaseDirectory(), getWebDatabaseCacheStorage());
+    public static List<CustomDatabase> getCustomDatabases(FingerprintVersion version) {
+        return getCustomDatabases(true, version);
     }
 
     @NotNull
-    public static List<SearchableDatabase> getAvailableDatabases() {
-        final List<SearchableDatabase> db = Stream.of(DataSource.values()).map(DataSource::realName).map(SearchableDatabases::getDatabaseByNameOrThrow).collect(Collectors.toList());
+    public static List<CustomDatabase> getCustomDatabases(final boolean up2date, FingerprintVersion version) {
+        return loadCustomDatabases(up2date, version);
+    }
+
+    @NotNull
+    public static List<SearchableDatabase> getAvailableDatabases(FingerprintVersion version) {
+        final List<SearchableDatabase> db = Stream.of(DataSource.values())
+                .map(DataSource::realName)
+                .map(name -> getDatabaseByNameOrThrow(name, version)).collect(Collectors.toList());
+
         Collections.swap(db, 2, DataSource.BIO.ordinal()); //just to put bio on index 3
-        db.addAll(getCustomDatabases());
+        db.addAll(getCustomDatabases(version));
         return db;
     }
 
     @NotNull
-    public static List<CustomDatabase> loadCustomDatabases(boolean up2date) {
+    public static List<CustomDatabase> loadCustomDatabases(boolean up2date, FingerprintVersion version) {
         final List<CustomDatabase> databases = new ArrayList<>();
         final Path custom = getCustomDatabaseDirectory();
 
@@ -189,7 +154,7 @@ public class SearchableDatabases {
                 }
 
                 try {
-                    final CustomDatabase db = CustomDatabaseFactory.open(bucketLocation);//new CustomDatabase(dbDir.getName(), dbDir);
+                    final CustomDatabase db = CustomDatabaseFactory.open(bucketLocation, version);
                     if (up2date && db.needsUpgrade())
                         throw new OutdatedDBExeption("DB '" + db.name() + "' is outdated (DB-Version: " + db.getDatabaseVersion() + " vs. ReqVersion: " + VersionsInfo.CUSTOM_DATABASE_SCHEMA + ") . PLease reimport the structures. ");
 
@@ -203,29 +168,10 @@ public class SearchableDatabases {
     }
 
     @NotNull
-    public static CustomDatabase loadCustomDatabaseFromLocation(String bucketLocation, boolean up2date) throws IOException {
-        final CustomDatabase db = CustomDatabaseFactory.open(bucketLocation);
+    public static CustomDatabase loadCustomDatabaseFromLocation(String bucketLocation, boolean up2date, FingerprintVersion version) throws IOException {
+        final CustomDatabase db = CustomDatabaseFactory.open(bucketLocation, version);
         if (!up2date || !db.needsUpgrade())
             return db;
         throw new OutdatedDBExeption("DB '" + db.name() + "' is outdated (DB-Version: " + db.getDatabaseVersion() + " vs. ReqVersion: " + VersionsInfo.CUSTOM_DATABASE_SCHEMA + ") . PLease reimport the structures. ");
-    }
-
-    public static List<SearchableDatabase> getAllSelectableDbs() {
-        return getAvailableDatabases().stream().
-                filter(db -> !NON_SLECTABLE_LIST.contains(db.name()))
-                .collect(Collectors.toList());
-    }
-
-    public static List<SearchableDatabase> getNonInSilicoSelectableDbs() {
-        return Arrays.stream(DataSource.valuesNoALLNoMINES()).map(DataSource::realName)
-                .filter(s -> !NON_SLECTABLE_LIST.contains(s))
-                .map(SearchableDatabases::getDatabase).flatMap(Optional::stream)
-                .collect(Collectors.toList());
-    }
-
-    public static List<CustomDataSources.Source> getNonInSilicoSelectableSources() {
-        return CustomDataSources.getSourcesFromNames(
-                Arrays.stream(DataSource.valuesNoALLNoMINES()).map(DataSource::realName)
-                        .filter(s -> !NON_SLECTABLE_LIST.contains(s)).collect(Collectors.toList()));
     }
 }

@@ -22,11 +22,11 @@ package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.rest.NetUtils;
 
 import java.util.List;
 
@@ -37,17 +37,17 @@ public class FormulaJob extends BasicJJob<WebWithCustomDatabase.CandidateResult>
 
     protected final MolecularFormula formula;
     protected final WebWithCustomDatabase searchDatabase;
-    protected final List<SearchableDatabase> dbs;
+    protected final List<CustomDataSources.Source> dbs;
     protected final PrecursorIonType ionType;
     protected final boolean includeRestAllDb;
     protected final long fakeFilterBits;
 
 
-    public FormulaJob(MolecularFormula formula, WebWithCustomDatabase searchDatabase, List<SearchableDatabase> dbs, PrecursorIonType precursorIonType, boolean includeRestAllDb) {
+    public FormulaJob(MolecularFormula formula, WebWithCustomDatabase searchDatabase, List<CustomDataSources.Source> dbs, PrecursorIonType precursorIonType, boolean includeRestAllDb) {
         this(formula, searchDatabase, dbs, precursorIonType, includeRestAllDb, 0);
     }
 
-    public FormulaJob(MolecularFormula formula, WebWithCustomDatabase searchDatabase, List<SearchableDatabase> dbs, PrecursorIonType precursorIonType, boolean includeRestAllDb, long fakeFilterBits) {
+    public FormulaJob(MolecularFormula formula, WebWithCustomDatabase searchDatabase, List<CustomDataSources.Source> dbs, PrecursorIonType precursorIonType, boolean includeRestAllDb, long fakeFilterBits) {
         super(JobType.WEBSERVICE);
         this.formula = formula;
         this.searchDatabase = searchDatabase;

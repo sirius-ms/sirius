@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.chemdb.custom;
 
-import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.jjobs.BasicJJob;
@@ -58,6 +57,7 @@ public abstract class CustomDatabase implements SearchableDatabase {
     }
 
     public boolean needsUpgrade() {
+        //todo nightsky: check fingerprint compatibility?
         return settings.getSchemaVersion() != VersionsInfo.CUSTOM_DATABASE_SCHEMA;
     }
 
@@ -67,17 +67,12 @@ public abstract class CustomDatabase implements SearchableDatabase {
 
     @Override
     public boolean isRestDb() {
-        return settings.isInheritance();
+        return false;
     }
 
     @Override
     public long getFilterFlag() {
-        return settings.getFilter();
-    }
-
-    @Override
-    public boolean isCustomDb() {
-        return true;
+        return CustomDataSources.getFlagFromName(name());
     }
 
     @Override
@@ -117,10 +112,10 @@ public abstract class CustomDatabase implements SearchableDatabase {
         return Objects.hash(storageLocation());
     }
 
-    public abstract AbstractChemicalDatabase toChemDBOrThrow(CdkFingerprintVersion version) throws IOException;
+    public abstract AbstractChemicalDatabase toChemDBOrThrow() throws IOException;
 
-    public Optional<AbstractChemicalDatabase> toChemDB(CdkFingerprintVersion version) {
-        return toOptional(() -> this.toChemDBOrThrow(version), AbstractChemicalDatabase.class);
+    public Optional<AbstractChemicalDatabase> toChemDB() {
+        return toOptional(this::toChemDBOrThrow, AbstractChemicalDatabase.class);
     }
 
     public abstract WriteableChemicalDatabase toWriteableChemDBOrThrow() throws IOException;
@@ -167,7 +162,7 @@ public abstract class CustomDatabase implements SearchableDatabase {
         if (listener != null)
             importer.addListener(listener);
 
-        AbstractChemicalDatabase chemDb = this.toChemDBOrThrow(CdkFingerprintVersion.getDefault());
+        AbstractChemicalDatabase chemDb = this.toChemDBOrThrow();
         WriteableChemicalDatabase writeableChemDB = this.toWriteableChemDBOrThrow();
 
         if (!spectrumFiles.isEmpty()) {
