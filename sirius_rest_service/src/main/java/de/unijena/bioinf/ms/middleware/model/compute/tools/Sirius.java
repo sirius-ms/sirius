@@ -30,11 +30,13 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.IsotopeMs2Settings;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Timeout;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.UseHeuristic;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
@@ -68,7 +70,7 @@ public class Sirius extends Tool<SiriusOptions> {
      */
     Integer numberOfCandidatesPerIon;
     /**
-     * Maximum allowed mass accuracy. Only molecular formulas within this mass window are considered.
+     * Maximum allowed mass deviation. Only molecular formulas within this mass window are considered.
      */
     Double massAccuracyMS2ppm;
 
@@ -129,13 +131,16 @@ public class Sirius extends Tool<SiriusOptions> {
 
 
     public Sirius() {
+        this(List.of());
+    }
+    public Sirius(@NotNull List<CustomDataSources.Source> formulaSearchDBs) {
         super(SiriusOptions.class);
         profile = Instrument.QTOF;
         numberOfCandidates = PropertyManager.DEFAULTS.createInstanceWithDefaults(NumberOfCandidates.class).value;
         numberOfCandidatesPerIon = PropertyManager.DEFAULTS.createInstanceWithDefaults(NumberOfCandidatesPerIon.class).value;
         massAccuracyMS2ppm = PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class).allowedMassDeviation.getPpm();
         isotopeMs2Settings = PropertyManager.DEFAULTS.createInstanceWithDefaults(IsotopeMs2Settings.class).value;
-        formulaSearchDBs = List.of();
+        this.formulaSearchDBs = formulaSearchDBs.stream().distinct().map(CustomDataSources.Source::name).toList();
         FormulaSettings settings = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class);
         enforcedFormulaConstraints = settings.getEnforcedAlphabet().toString();
         fallbackFormulaConstraints = settings.getFallbackAlphabet().toString();

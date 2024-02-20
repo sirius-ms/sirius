@@ -25,6 +25,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
+import de.unijena.bioinf.chemdb.DataSource;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.middleware.model.compute.tools.*;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import lombok.Getter;
@@ -75,6 +77,12 @@ public class JobSubmission extends AbstractSubmission {
     boolean recompute;
 
     /**
+     * Parameter Object for spectral library search tool (CLI-Tool: spectra-search).
+     * Library search results can be used to enhance formula search results
+     * If NULL the tool will not be executed.
+     */
+    SpectralLibrarySearch spectraSearchParams;
+    /**
      * Parameter Object for molecular formula identification tool (CLI-Tool: formula, sirius).
      * If NULL the tool will not be executed.
      */
@@ -115,16 +123,22 @@ public class JobSubmission extends AbstractSubmission {
 
     public static JobSubmission createDefaultInstance(boolean includeConfigMap) {
         AdductSettings settings = PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class);
+        //common default search dbs for spectra and structure. Formula only if db search is used.
+        List<CustomDataSources.Source> searchDbs = Stream.concat(Stream.of(
+                CustomDataSources.getSourceFromName(DataSource.BIO.realName)),
+                CustomDataSources.sourcesStream().filter(CustomDataSources.Source::isCustomSource)).toList();
+
         JobSubmissionBuilder<?, ?> b = JobSubmission.builder()
                 .fallbackAdducts(settings.getFallback().stream().map(PrecursorIonType::toString).collect(Collectors.toList()))
                 .enforcedAdducts(settings.getEnforced().stream().map(PrecursorIonType::toString).collect(Collectors.toList()))
                 .detectableAdducts(settings.getDetectable().stream().map(PrecursorIonType::toString).collect(Collectors.toList()))
                 .recompute(false)
+                .spectraSearchParams(new SpectralLibrarySearch(searchDbs))
                 .formulaIdParams(new Sirius())
                 .zodiacParams(new Zodiac())
                 .fingerprintPredictionParams(new FingerprintPrediction())
                 .canopusParams(new Canopus())
-                .structureDbSearchParams(new StructureDbSearch())
+                .structureDbSearchParams(new StructureDbSearch(searchDbs))
                 .msNovelistParams(new MsNovelist());
         if (includeConfigMap) {
             final Map<String, String> configMap = new HashMap<>();

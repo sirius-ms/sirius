@@ -24,6 +24,7 @@ import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
@@ -93,7 +94,7 @@ class ImportDatabaseDialog extends JDialog {
                         "Importing into '" + configPanel.getDbFilePath() + "'...", null,
                         new SseProgressJJob(databaseDialog.gui.getSiriusClient(), pid, j));
             }).awaitResult();
-
+            Jobs.runInBackground(CustomDBOptions::writeDBProperties);
             databaseDialog.whenCustomDbIsAdded(configPanel.getDbFilePath());
         } catch (ExecutionException ex) {
             LoggerFactory.getLogger(getClass()).error("Error during Custom DB import.", ex);

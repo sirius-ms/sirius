@@ -20,8 +20,6 @@
 
 package de.unijena.bioinf.projectspace;
 
-import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
-import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchSubtoolJob;
 import de.unijena.bioinf.ms.nightsky.sdk.model.BasicSpectrum;
@@ -45,14 +43,15 @@ public class SpectralSearchResultBean {
     public SpectralSearchResultBean(SpectralSearchResult result) {
         for (SpectralSearchResult.SearchResult r : result) {
             try {
-                SpectralLibrary db = SearchableDatabases.getCustomDatabase(r.getDbName()).orElseThrow().toSpectralLibraryOrThrow();
-                Ms2ReferenceSpectrum reference = db.getReferenceSpectrum(r.getReferenceUUID());
+//                SpectralLibrary db = SearchableDatabases.getCustomDatabase(r.getDbName()).orElseThrow().toSpectralLibraryOrThrow();
+//                Ms2ReferenceSpectrum reference = db.getReferenceSpectrum(r.getReferenceUUID());
+                Ms2ReferenceSpectrum reference = null; //todo nightsky, implement spectral search
                 if (!resultMap.containsKey(reference.getCandidateInChiKey())) {
                     resultMap.put(reference.getCandidateInChiKey(), new ArrayList<>());
                 }
                 resultMap.get(reference.getCandidateInChiKey()).add(r);
-            } catch (ChemicalDatabaseException e) {
-                LoggerFactory.getLogger(this.getClass()).error("Error reading spectrum " + r.getReferenceUUID(), e);
+//            } catch (ChemicalDatabaseException e) {
+//                LoggerFactory.getLogger(this.getClass()).error("Error reading spectrum " + r.getReferenceUUID(), e);
             } catch (Exception e) {
                 LoggerFactory.getLogger(this.getClass()).error("No such database: '" + r.getDbName() + "'");
                 break;
@@ -103,7 +102,7 @@ public class SpectralSearchResultBean {
         public MatchBean(SpectralSearchResult.SearchResult match, InstanceBean instance) {
             this.match = match;
             try {
-                SpectralLibrary db = SearchableDatabases.getCustomDatabase(match.getDbName()).orElseThrow().toSpectralLibraryOrThrow();
+                SpectralLibrary db = null;//SearchableDatabases.getCustomDatabase(match.getDbName()).orElseThrow().toSpectralLibraryOrThrow();
                 this.reference = db.getReferenceSpectrum(match.getReferenceUUID());
                 if (instance != null) {
                     BasicSpectrum query = instance.getMsData().getMs2Spectra().get(match.getQuerySpectrumIndex());

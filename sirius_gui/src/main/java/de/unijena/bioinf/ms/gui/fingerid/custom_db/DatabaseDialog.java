@@ -19,11 +19,12 @@
 
 package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 
-import de.unijena.bioinf.chemdb.DataSources;
+import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.chemdb.custom.CustomDatabaseFactory;
 import de.unijena.bioinf.jjobs.LoadingBackroundTask;
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -52,9 +53,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 
 public class DatabaseDialog extends JDialog {
@@ -195,8 +194,7 @@ public class DatabaseDialog extends JDialog {
                     JOptionPane.showMessageDialog(this, "A different database with name " + file.getName() + " already exists.", "" , JOptionPane.ERROR_MESSAGE);
                 } else {
                     try {
-                        CustomDatabase newDb = SearchableDatabases.loadCustomDatabaseFromLocation(file.getAbsolutePath(), true);
-                        CustomDBOptions.addDBToPropertiesIfNotExist(newDb);
+                        CustomDatabase newDb = SearchableDatabases.loadCustomDatabaseFromLocation(file.getAbsolutePath(), true, ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion()); //todo nightsky: change to db api
                         whenCustomDbIsAdded(newDb.storageLocation());
                     } catch (IOException ex) {
                         JOptionPane.showMessageDialog(this, ex.getMessage(), "" , JOptionPane.ERROR_MESSAGE);
@@ -238,8 +236,8 @@ public class DatabaseDialog extends JDialog {
     }
 
     private void loadDatabaseList() {
-        customDatabases = Jobs.runInBackgroundAndLoad(getOwner(), "Loading DBs...", (Callable<List<CustomDatabase>>) SearchableDatabases::getCustomDatabases).getResult();
-        customDatabases.sort(Comparator.comparing(CustomDatabase::name));
+        customDatabases = Jobs.runInBackgroundAndLoad(getOwner(), "Loading DBs...", () -> SearchableDatabases.getCustomDatabases(ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion())).getResult(); //todo nightsky: replace with api version
+        customDatabases.sort(Comparator.comparing(SearchableDatabase::name));
         dbList.setListData(customDatabases.toArray(new CustomDatabase[0]));
     }
 
@@ -274,8 +272,7 @@ public class DatabaseDialog extends JDialog {
                         + "</b> different molecular formulas"
                         + (c.getStatistics().getSpectra() > 0 ? " and <b>" + c.getStatistics().getSpectra() + "</b> reference spectra." : ".")
                         + "<br>"
-                        + ((c.getSettings().isInheritance() ? "<br>This database will also include all compounds from '" + DataSources.getDataSourcesFromBitFlags(c.getFilterFlag()).stream().filter(n -> !SearchableDatabases.NON_SLECTABLE_LIST.contains(n)).collect(Collectors.joining("', '")) + "'." : "")
-                        + (c.needsUpgrade() ? "<br><b>This database schema is outdated. You have to upgrade the database before you can use it.</b>" : "")
+                        + ((c.needsUpgrade() ? "<br><b>This database schema is outdated. You have to upgrade the database before you can use it.</b>" : "")
                         + "</html>"));
 
                 content.setToolTipText(c.storageLocation());

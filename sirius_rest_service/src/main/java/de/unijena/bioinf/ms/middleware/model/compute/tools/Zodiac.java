@@ -65,6 +65,7 @@ public class Zodiac extends Tool<ZodiacOptions> {
 
     public Zodiac() {
         super(ZodiacOptions.class);
+        setEnabled(false);
     }
 
     @JsonIgnore

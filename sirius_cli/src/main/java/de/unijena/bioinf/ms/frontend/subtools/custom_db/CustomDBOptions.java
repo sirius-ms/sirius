@@ -19,14 +19,12 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.custom_db;
 
+import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
-import de.unijena.bioinf.chemdb.custom.CustomDatabase;
-import de.unijena.bioinf.chemdb.custom.CustomDatabaseFactory;
-import de.unijena.bioinf.chemdb.custom.CustomDatabaseImporter;
-import de.unijena.bioinf.chemdb.custom.CustomDatabaseSettings;
+import de.unijena.bioinf.chemdb.custom.*;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -44,10 +42,11 @@ import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -148,6 +147,9 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
 
         @Override
         protected Boolean compute() throws Exception {
+            final CdkFingerprintVersion version = ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion();
+            //loads all current available dbs
+            final @NotNull List<CustomDatabase> dbs = SearchableDatabases.getCustomDatabases(version);
 
             if (mode.importParas != null) {
                 if (mode.importParas.location == null || mode.importParas.location.isBlank()) {
@@ -159,11 +161,11 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
 
                 checkConflictingName(mode.importParas.location);
 
-                CustomDatabaseSettings settings = new CustomDatabaseSettings(false, 0,
-                        List.of(ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion().getUsedFingerprints()), VersionsInfo.CUSTOM_DATABASE_SCHEMA, null);
+                CustomDatabaseSettings settings = new CustomDatabaseSettings(List.of(version.getUsedFingerprints()), VersionsInfo.CUSTOM_DATABASE_SCHEMA, null);
 
-                final CustomDatabase db = CustomDatabaseFactory.createOrOpen(mode.importParas.location, Compressible.Compression.NONE, settings);
-                addDBToPropertiesIfNotExist(db);
+                final CustomDatabase db = CustomDatabaseFactory.createOrOpen(mode.importParas.location, Compressible.Compression.NONE, settings, version);
+                writeDBProperties();
+                ;
                 logInfo("Database added to SIRIUS. Use 'structure --db=\"" + db.storageLocation() + "\"' to search in this database.");
 
                 if (mode.importParas.input == null || mode.importParas.input.isEmpty())
@@ -200,25 +202,19 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
 
                 return true;
             } else if (mode.removeParas != null) {
-                if (mode.removeParas.location == null ||mode.removeParas.location.isBlank())
+                if (mode.removeParas.location == null || mode.removeParas.location.isBlank())
                     throw new IllegalArgumentException("Database location to remove not specified!");
 
-                SearchableDatabases.getCustomDatabase(mode.removeParas.location).ifPresentOrElse(db -> {
-                            removeDBFromProperties(db);
-                            if (mode.removeParas.delete) {
-                                try {
-                                    CustomDatabaseFactory.delete(db);
-                                } catch (IOException e) {
-                                    logError("Error deleting database.", e);
-                                }
-                            }
-                        }, () -> logWarn("\n==> No custom database with location '" + mode.removeParas.location + "' found.\n")
-                );
+                SearchableDatabases.getCustomDatabase(mode.removeParas.location, version)
+                        .ifPresentOrElse(db -> {
+                                    CustomDatabaseFactory.remove(db, mode.removeParas.delete);
+                                    writeDBProperties();
+                                }, () -> logWarn("\n==> No custom database with location '" + mode.removeParas.location + "' found.\n")
+                        );
                 return true;
             } else if (mode.showParas != null) {
                 if (mode.showParas.db == null) {
-                    @NotNull List<CustomDatabase> dbs = SearchableDatabases.getCustomDatabases();
-                    if (dbs.isEmpty()){
+                    if (dbs.isEmpty()) {
                         logWarn("\n==> No Custom database found!\n");
                         return false;
                     }
@@ -230,7 +226,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                     });
                     return true;
                 } else {
-                    SearchableDatabases.getCustomDatabase(mode.showParas.db)
+                    SearchableDatabases.getCustomDatabase(mode.showParas.db, version)
                             .ifPresentOrElse(
                                     CustomDBOptions.this::printDBInfo,
                                     () -> logWarn("\n==> No custom database with location '" + mode.showParas.db + "' found.\n"));
@@ -262,40 +258,27 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
             System.out.println("Version: " + db.getDatabaseVersion());
             System.out.println("Schema Version: " + s.getSchemaVersion());
             System.out.println("FilterFlag: " + db.getFilterFlag());
-            System.out.println("Used Fingerprints: [ '" + s.getFingerprintVersion().stream().map(Enum::name).collect(Collectors.joining("','")) + "' ]");
+            System.out.println("Used Fingerprints: [ '" + s.getUsedFingerprints().stream().map(Enum::name).collect(Collectors.joining("','")) + "' ]");
         }
         System.out.println("###############  END  ###############");
     }
 
-    public static void addDBToPropertiesIfNotExist(@NotNull CustomDatabase db) {
-        Set<CustomDatabase> customs = new HashSet<>(SearchableDatabases.getCustomDatabases());
-        if (!customs.contains(db)) {
-            customs.add(db);
-            writeDBProperties(customs);
-        }
-    }
-
-    public static void removeDBFromProperties(@NotNull CustomDatabase db) {
-        Set<CustomDatabase> customs = new HashSet<>(SearchableDatabases.getCustomDatabases());
-        customs.remove(db);
-        writeDBProperties(customs);
-    }
-
-    private static void writeDBProperties(Collection<CustomDatabase> dbs) {
-        SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(SearchableDatabases.PROP_KEY, dbs.stream()
-                .sorted(Comparator.comparing(CustomDatabase::name))
-                .map(CustomDatabase::storageLocation)
+    public static void writeDBProperties() {
+        SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(CustomDataSources.PROP_KEY, CustomDataSources.sourcesStream()
+                .filter(CustomDataSources.Source::isCustomSource)
+                .sorted(Comparator.comparing(CustomDataSources.Source::name))
+                .map(CustomDataSources.Source::id)
                 .collect(Collectors.joining(",")));
     }
 
     private static void checkConflictingName(String location) {
         String dbName = Path.of(location).getFileName().toString();
-        SearchableDatabases.getCustomDatabases().stream()
-                .filter(db -> db.name().equals(dbName) && !db.storageLocation().equals(location))
+        CustomDataSources.sourcesStream()
+                .filter(db -> db.name().equals(dbName) && !db.id().equals(location))
                 .findAny()
                 .ifPresent(db -> {
-                    throw new RuntimeException("Database with name " + dbName + " already exists in " + db.storageLocation());
-                } );
+                    throw new RuntimeException("Database with name " + dbName + " already exists in " + db.id());
+                });
     }
 
 }
