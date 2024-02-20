@@ -21,7 +21,7 @@
 package de.unijena.bioinf.chemdb.custom;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.chemdb.AbstractChemicalDatabase;
 import de.unijena.bioinf.chemdb.ChemicalBlobDatabase;
 import de.unijena.bioinf.chemdb.WriteableChemicalDatabase;
@@ -39,9 +39,11 @@ import java.nio.file.Path;
 public class BlobCustomDatabase<Storage extends BlobStorage> extends CustomDatabase {
 
     protected final CompressibleBlobStorage<Storage> storage;
+    protected final FingerprintVersion version;
 
-    BlobCustomDatabase(CompressibleBlobStorage<Storage> storage) {
+    BlobCustomDatabase(CompressibleBlobStorage<Storage> storage, FingerprintVersion version) {
         this.storage = storage;
+        this.version = version;
     }
 
     @Override
@@ -50,8 +52,6 @@ public class BlobCustomDatabase<Storage extends BlobStorage> extends CustomDatab
             storage.deleteBucket();
         } catch (IOException e) {
             LoggerFactory.getLogger(getClass()).error("Error when deleting data storage bucked. Please remove manually at your storage provider. ");
-        } finally {
-            CustomDataSources.removeCustomSource(storage.getName());
         }
     }
 
@@ -101,9 +101,13 @@ public class BlobCustomDatabase<Storage extends BlobStorage> extends CustomDatab
         return storage.getBucketLocation();
     }
 
+
+    private ChemicalBlobDatabase<Storage> chemDB = null;
     @Override
-    public AbstractChemicalDatabase toChemDBOrThrow(CdkFingerprintVersion version) throws IOException {
-        return new ChemicalBlobDatabase<>(version, storage.getRawStorage(), null);
+    public synchronized AbstractChemicalDatabase toChemDBOrThrow() throws IOException {
+        if (chemDB == null)
+            chemDB = new ChemicalBlobDatabase<>(version, storage.getRawStorage(), null);
+        return chemDB;
     }
 
     @Override

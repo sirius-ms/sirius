@@ -23,25 +23,19 @@ package de.unijena.bioinf.chemdb.custom;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
-import de.unijena.bioinf.chemdb.DataSources;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CustomDatabaseSettings {
-    private final boolean inheritance;
-    private final long filter;
     private final List<CdkFingerprintVersion.USED_FINGERPRINTS> fingerprintVersion;
     private final int schemaVersion;
 
     private Statistics statistics;
 
-    public CustomDatabaseSettings(boolean inheritance, long filter, List<CdkFingerprintVersion.USED_FINGERPRINTS> fingerprintVersion, int schemaVersion, @Nullable Statistics statistics) {
-        this.inheritance = inheritance;
-        this.filter = filter;
+    public CustomDatabaseSettings(List<CdkFingerprintVersion.USED_FINGERPRINTS> fingerprintVersion, int schemaVersion, @Nullable Statistics statistics) {
         this.fingerprintVersion = fingerprintVersion;
         this.schemaVersion = schemaVersion;
         this.statistics = statistics == null ? new Statistics() : statistics;
@@ -49,7 +43,7 @@ public class CustomDatabaseSettings {
 
     //json constructor
     private CustomDatabaseSettings() {
-        this(false,0,null,0,null);
+        this(null,0,null);
     }
 
     public static class Statistics {
@@ -102,20 +96,7 @@ public class CustomDatabaseSettings {
 
     }
 
-    public boolean isInheritance() {
-        return inheritance;
-    }
-
-    public long getFilter() {
-        return filter;
-    }
-
-    @JsonIgnore
-    public Set<String> getInheritedDBs() {
-        return DataSources.getDataSourcesFromBitFlags(getFilter());
-    }
-
-    public List<CdkFingerprintVersion.USED_FINGERPRINTS> getFingerprintVersion() {
+    public List<CdkFingerprintVersion.USED_FINGERPRINTS> getUsedFingerprints() {
         return fingerprintVersion;
     }
 

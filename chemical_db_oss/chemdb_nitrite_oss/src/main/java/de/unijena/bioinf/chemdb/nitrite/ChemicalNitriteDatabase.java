@@ -34,7 +34,7 @@ public class ChemicalNitriteDatabase extends ChemicalNoSQLDatabase<Document> {
     private final String name;
 
     public ChemicalNitriteDatabase(Path file) throws IOException {
-        super(new NitriteDatabase(file, initMetadata(CdkFingerprintVersion.getDefault())));
+        super(new NitriteDatabase(file, initMetadata(USE_EXTENDED_FINGERPRINTS ? CdkFingerprintVersion.getExtended() : CdkFingerprintVersion.getDefault())));
         this.name = file.getFileName().toString();
     }
 

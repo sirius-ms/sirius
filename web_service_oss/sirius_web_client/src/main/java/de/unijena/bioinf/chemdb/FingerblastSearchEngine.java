@@ -21,6 +21,7 @@
 package de.unijena.bioinf.chemdb;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -29,9 +30,9 @@ import java.util.List;
 public class FingerblastSearchEngine implements SearchStructureByFormula, AnnotateStructures{
 
     protected final WebWithCustomDatabase underlyingDatabase;
-    protected final Collection<SearchableDatabase> queryDBs;
+    protected final Collection<CustomDataSources.Source> queryDBs;
 
-    FingerblastSearchEngine(WebWithCustomDatabase underlyingDatabase, Collection<SearchableDatabase> queryDBs) {
+    FingerblastSearchEngine(WebWithCustomDatabase underlyingDatabase, Collection<CustomDataSources.Source> queryDBs) {
         this.underlyingDatabase = underlyingDatabase;
         this.queryDBs = queryDBs;
     }

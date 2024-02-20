@@ -32,7 +32,6 @@ import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
 import de.unijena.bioinf.fingerid.fingerprints.FixedFingerprinter;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.storage.blob.file.FileBlobStorage;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.NotNull;
@@ -302,7 +301,7 @@ public class CustomDatabaseImporter {
         List<JJob<Boolean>> jobs = formulasToSearch.stream().map(formula -> new BasicJJob<Boolean>() {
             @Override
             protected Boolean compute() throws Exception {
-                api.consumeStructureDB(DataSource.ALL.flag(), new FileBlobStorage(SearchableDatabases.getWebDatabaseCacheDirectory()), db -> {
+                api.consumeStructureDB(DataSource.ALL.flag(), db -> {
                     List<FingerprintCandidate> cans = db.lookupStructuresAndFingerprintsByFormula(formula);
                     for (FingerprintCandidate can : cans) {
                         Comp toAdd = dict.get(can.getInchi().in2D);
