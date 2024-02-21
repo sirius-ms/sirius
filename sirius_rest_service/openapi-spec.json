@@ -3808,6 +3808,10 @@
           "useScoreThreshold": {
             "type": "boolean",
             "description": "If true, an adaptive soft threshold will be applied to only compute Fingerprints for promising formula candidates\n Enabling is highly recommended."
+          },
+          "alwaysPredictHighRefMatches": {
+            "type": "boolean",
+            "description": "If true Fingerprint/Classes/Structures will be predicted for formulas candidates with\n reference spectrum similarity \u003e Sirius.minReferenceMatchScoreToInject will be predicted no matter which\n score threshold rules apply.\n If NULL default value will be used."
           }
         },
         "description": "User/developer friendly parameter subset for the CSI:FingerID Fingerprint tool\n Needs results from Formula/SIRIUS Tool"
@@ -3867,6 +3871,9 @@
           "recompute": {
             "type": "boolean",
             "description": "Indicate if already existing result for a tool to be executed should be overwritten or not."
+          },
+          "spectraSearchParams": {
+            "$ref": "#/components/schemas/SpectralLibrarySearch"
           },
           "formulaIdParams": {
             "$ref": "#/components/schemas/Sirius"
@@ -3942,7 +3949,7 @@
           },
           "massAccuracyMS2ppm": {
             "type": "number",
-            "description": "Maximum allowed mass accuracy. Only molecular formulas within this mass window are considered.",
+            "description": "Maximum allowed mass deviation. Only molecular formulas within this mass window are considered.",
             "format": "double"
           },
           "isotopeMs2Settings": {
@@ -3981,9 +3988,24 @@
           },
           "useHeuristic": {
             "$ref": "#/components/schemas/UseHeuristic"
+          },
+          "minRefMatchScoreToInject": {
+            "type": "number",
+            "description": "Similarity Threshold to inject formula candidates no matter which score/rank they have or which filter settings are applied.\n If threshold \u003e\u003d 0 formulas candidates with reference spectrum similarity above the threshold will be injected.\n If NULL injection is disables.",
+            "format": "double"
           }
         },
         "description": "User/developer friendly parameter subset for the Formula/SIRIUS tool"
+      },
+      "SpectralLibrarySearch": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "tags whether the tool is enabled"
+          }
+        },
+        "description": ""
       },
       "StructureDbSearch": {
         "required": [

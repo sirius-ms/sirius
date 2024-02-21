@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.fingerid.annotations.FormulaResultThreshold;
 import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.spectraldb.InjectHighSpectraMatchFormulas;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -44,6 +45,14 @@ public class FingerprintPrediction extends Tool<FingerprintOptions> {
      */
     Boolean useScoreThreshold = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaResultThreshold.class).useThreshold();
 
+    /**
+     * If true Fingerprint/Classes/Structures will be predicted for formulas candidates with
+     * reference spectrum similarity > Sirius.minReferenceMatchScoreToInject will be predicted no matter which
+     * score threshold rules apply.
+     * If NULL default value will be used.
+     */
+    Boolean alwaysPredictHighRefMatches = PropertyManager.DEFAULTS.createInstanceWithDefaults(InjectHighSpectraMatchFormulas.class).isAlwaysPredict();
+
     public FingerprintPrediction() {
         super(FingerprintOptions.class);
     }
@@ -53,6 +62,7 @@ public class FingerprintPrediction extends Tool<FingerprintOptions> {
     public Map<String, String> asConfigMap() {
         return new NullCheckMapBuilder()
                 .putNonNull("FormulaResultThreshold", useScoreThreshold)
+                .putNonNull("InjectHighSpectraMatchFormulas.alwaysPredict", alwaysPredictHighRefMatches)
                 .toUnmodifiableMap();
     }
 }

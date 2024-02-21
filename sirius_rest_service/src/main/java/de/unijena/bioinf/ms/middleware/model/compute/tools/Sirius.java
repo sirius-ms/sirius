@@ -33,6 +33,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.UseHeuristic;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.spectraldb.InjectHighSpectraMatchFormulas;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -129,6 +131,14 @@ public class Sirius extends Tool<SiriusOptions> {
      */
     UseHeuristic useHeuristic;
 
+    /**
+     * Similarity Threshold to inject formula candidates no matter which score/rank they have or which filter settings are applied.
+     * If threshold >= 0 formulas candidates with reference spectrum similarity above the threshold will be injected.
+     * If NULL injection is disables.
+     */
+    Double minRefMatchScoreToInject;
+
+
 
     public Sirius() {
         this(List.of());
@@ -145,7 +155,8 @@ public class Sirius extends Tool<SiriusOptions> {
         enforcedFormulaConstraints = settings.getEnforcedAlphabet().toString();
         fallbackFormulaConstraints = settings.getFallbackAlphabet().toString();
         detectableElements = settings.getAutoDetectionElements().stream().map(Element::getSymbol).collect(Collectors.toList());
-
+        minRefMatchScoreToInject = PropertyManager.DEFAULTS.createInstanceWithDefaults(InjectHighSpectraMatchFormulas.class).isInjectFormulas()
+                ? PropertyManager.DEFAULTS.createInstanceWithDefaults(InjectHighSpectraMatchFormulas.class).getMinScoreToInject() : null;
         ilpTimeout = PropertyManager.DEFAULTS.createInstanceWithDefaults(Timeout.class);
         useHeuristic = PropertyManager.DEFAULTS.createInstanceWithDefaults(UseHeuristic.class);
     }
@@ -166,11 +177,16 @@ public class Sirius extends Tool<SiriusOptions> {
 
                 .putNonNull("IsotopeMs2Settings", isotopeMs2Settings)
 
+                .putNonNull("MS2MassDeviation.allowedMassDeviation", massAccuracyMS2ppm, it -> it + " ppm")
+
                 .putNonNull("FormulaSearchDB", formulaSearchDBs, f -> String.join(",", f))
 
                 .putNonNull("NumberOfCandidates", numberOfCandidates)
                 .putNonNull("NumberOfCandidatesPerIon", numberOfCandidatesPerIon)
                 .putNonNull("AlgorithmProfile", profile)
+
+                .putNonNull("InjectHighSpectraMatchFormulas.minScoreToInject", minRefMatchScoreToInject)
+                .putNonNullObj("InjectHighSpectraMatchFormulas.injectFormulas", minRefMatchScoreToInject, Objects::nonNull)
                 .toUnmodifiableMap();
     }
 }
