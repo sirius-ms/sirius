@@ -21,11 +21,13 @@
 package de.unijena.bioinf.ms.middleware.model.compute.tools;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import de.unijena.bioinf.GibbsSampling.properties.*;
 import de.unijena.bioinf.ms.frontend.subtools.zodiac.ZodiacOptions;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 import java.util.Map;
 
@@ -35,37 +37,38 @@ import java.util.Map;
  */
 @Getter
 @Setter
+@SuperBuilder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Zodiac extends Tool<ZodiacOptions> {
 
     /**
      * Maximum number of candidate molecular formulas (fragmentation trees computed by SIRIUS) per compound which are considered by ZODIAC for compounds below 300 m/z.
      */
-    Integer consideredCandidatesAt300Mz = PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacNumberOfConsideredCandidatesAt300Mz.class).value;
+    Integer consideredCandidatesAt300Mz;
     /**
      * Maximum number of candidate molecular formulas (fragmentation trees computed by SIRIUS) per compound which are considered by ZODIAC for compounds above 800 m/z.
      */
-    Integer consideredCandidatesAt800Mz = PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacNumberOfConsideredCandidatesAt800Mz.class).value;
+    Integer consideredCandidatesAt800Mz;
     /**
      * As default ZODIAC runs a 2-step approach. First running 'good quality compounds' only, and afterwards including the remaining.
      */
-    Boolean runInTwoSteps = PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacRunInTwoSteps.class).value;
+    Boolean runInTwoSteps;
 
     /**
      * thresholdFilter = Defines the proportion of edges of the complete network which will be ignored.
      * minLocalConnections = Minimum number of compounds to which at least one candidate per compound must be connected to.
      */
-    ZodiacEdgeFilterThresholds edgeFilterThresholds = PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacEdgeFilterThresholds.class);
+    ZodiacEdgeFilterThresholds edgeFilterThresholds;
 
     /**
      * iterations: "Number of epochs to run the Gibbs sampling. When multiple Markov chains are computed, all chains' iterations sum up to this value."
      * burnInPeriod: "Number of epochs considered as 'burn-in period'.
      * numberOfMarkovChains: Number of separate Gibbs sampling runs.
      */
-    ZodiacEpochs gibbsSamplerParameters = PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacEpochs.class);
+    ZodiacEpochs gibbsSamplerParameters;
 
-    public Zodiac() {
+    private Zodiac() {
         super(ZodiacOptions.class);
-        setEnabled(false);
     }
 
     @JsonIgnore
@@ -76,13 +79,26 @@ public class Zodiac extends Tool<ZodiacOptions> {
                 .putNonNull("ZodiacNumberOfConsideredCandidatesAt800Mz", consideredCandidatesAt800Mz)
                 .putNonNull("ZodiacRunInTwoSteps", runInTwoSteps)
 
-                .putNonNull("ZodiacEpochs.iterations", gibbsSamplerParameters.iterations)
-                .putNonNull("ZodiacEpochs.burnInPeriod", gibbsSamplerParameters.burnInPeriod)
+                .putNonNullObj("ZodiacEpochs.iterations", gibbsSamplerParameters, it -> it.iterations)
+                .putNonNullObj("ZodiacEpochs.burnInPeriod", gibbsSamplerParameters, it -> it.burnInPeriod)
                 .putNonNull("ZodiacEpochs.numberOfMarkovChains", gibbsSamplerParameters.numberOfMarkovChains)
 
-                .putNonNull("ZodiacEdgeFilterThresholds.thresholdFilter", edgeFilterThresholds.thresholdFilter)
-                .putNonNull("ZodiacEdgeFilterThresholds.minLocalConnections", edgeFilterThresholds.minLocalConnections)
-                .putNonNull("ZodiacEdgeFilterThresholds.minLocalCandidates", edgeFilterThresholds.minLocalCandidates)
+                .putNonNullObj("ZodiacEdgeFilterThresholds.thresholdFilter", edgeFilterThresholds, it -> it.thresholdFilter)
+                .putNonNullObj("ZodiacEdgeFilterThresholds.minLocalConnections", edgeFilterThresholds, it -> it.minLocalConnections)
+                .putNonNullObj("ZodiacEdgeFilterThresholds.minLocalCandidates", edgeFilterThresholds, it -> it.minLocalCandidates)
                 .toUnmodifiableMap();
+    }
+
+    public static Zodiac buildDefault(){
+        return builderWithDefaults().build();
+    }
+    public static Zodiac.ZodiacBuilder<?,?> builderWithDefaults(){
+        return Zodiac.builder()
+                .enabled(false)
+                .consideredCandidatesAt300Mz(PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacNumberOfConsideredCandidatesAt300Mz.class).value)
+                .consideredCandidatesAt800Mz(PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacNumberOfConsideredCandidatesAt800Mz.class).value)
+                .runInTwoSteps(PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacRunInTwoSteps.class).value)
+                .edgeFilterThresholds(PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacEdgeFilterThresholds.class))
+                .gibbsSamplerParameters(PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacEpochs.class));
     }
 }

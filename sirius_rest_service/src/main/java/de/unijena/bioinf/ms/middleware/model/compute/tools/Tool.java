@@ -21,6 +21,8 @@
 package de.unijena.bioinf.ms.middleware.model.compute.tools;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.experimental.SuperBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
@@ -29,8 +31,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
-
+@SuperBuilder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public abstract class Tool<C> {
+    //todo we can delegate command infos as separate files to provide all infos to clients e.g. SIRIUS GUI
+    @JsonIgnore
     private final CommandLine.Command command;
 
     /**
@@ -38,7 +43,13 @@ public abstract class Tool<C> {
      */
     private boolean enabled = true;
 
-    public Tool(Class<C> annotatedObject) {
+    /**
+     * Call in empty constructor of superclass that does not call anything else to allow for Jackson compatibility.
+     * Everything else should be done with builders.
+     *
+     * @param annotatedObject the corresponding commandline annotation.
+     */
+    protected Tool(Class<C> annotatedObject) {
         command = annotatedObject.getAnnotation(CommandLine.Command.class);
     }
 

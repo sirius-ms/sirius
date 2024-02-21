@@ -65,7 +65,7 @@ public class SpectraSearchOptions implements ToolChainOptions<SpectraSearchSubto
         defaultConfigOptions.changeOption("SpectralSearchLog", value);
     }
 
-    @CommandLine.Option(names = "--scorer", descriptionKey = "SpectralAlignmentScorer", description = "Scoring function for alignment. Valid values: ${COMPLETION-CANDIDATES}.", defaultValue = "MODIFIED_COSINE")
+    @CommandLine.Option(names = "--scorer", descriptionKey = "SpectralAlignmentScorer", description = "Scoring function for alignment. Valid values: ${COMPLETION-CANDIDATES}.")
     public void setScorer(SpectralAlignmentType alignmentType) throws Exception {
         defaultConfigOptions.changeOption("SpectralAlignmentScorer", alignmentType.toString());
     }

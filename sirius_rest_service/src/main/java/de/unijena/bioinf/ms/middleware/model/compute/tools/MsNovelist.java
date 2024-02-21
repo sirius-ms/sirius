@@ -21,21 +21,24 @@
 package de.unijena.bioinf.ms.middleware.model.compute.tools;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import de.unijena.bioinf.ms.frontend.subtools.msnovelist.MsNovelistOptions;
 import de.unijena.bioinf.ms.frontend.subtools.msnovelist.NumberOfMsNovelistCandidates;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 import java.util.Map;
 
 @Getter
 @Setter
+@SuperBuilder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class MsNovelist extends Tool<MsNovelistOptions> {
 
-    public MsNovelist() {
+    private MsNovelist() {
         super(MsNovelistOptions.class);
-        numberOfCandidateToPredict = PropertyManager.DEFAULTS.createInstanceWithDefaults(NumberOfMsNovelistCandidates.class).value;
     }
 
     /**
@@ -52,5 +55,14 @@ public class MsNovelist extends Tool<MsNovelistOptions> {
         return new NullCheckMapBuilder()
                 .putNonNull("NumberOfMsNovelistCandidates", numberOfCandidateToPredict)
                 .toUnmodifiableMap();
+    }
+
+    public static MsNovelist buildDefault() {
+        return builderWithDefaults().build();
+    }
+    public static MsNovelist.MsNovelistBuilder<?,?> builderWithDefaults() {
+        return MsNovelist.builder()
+                .enabled(false)
+                .numberOfCandidateToPredict(PropertyManager.DEFAULTS.createInstanceWithDefaults(NumberOfMsNovelistCandidates.class).value);
     }
 }

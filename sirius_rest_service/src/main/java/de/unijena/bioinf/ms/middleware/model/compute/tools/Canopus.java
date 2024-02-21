@@ -21,9 +21,11 @@
 package de.unijena.bioinf.ms.middleware.model.compute.tools;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 import java.util.Map;
 
@@ -34,9 +36,11 @@ import java.util.Map;
  */
 @Getter
 @Setter
+@SuperBuilder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Canopus extends Tool<CanopusOptions> {
 
-    public Canopus() {
+    private Canopus() {
         super(CanopusOptions.class);
     }
 
@@ -46,4 +50,12 @@ public class Canopus extends Tool<CanopusOptions> {
     public Map<String, String> asConfigMap() {
         return Map.of();
     }
+
+    public static Canopus buildDefault() {
+        return builderWithDefaults().build();
+    }
+    public static CanopusBuilder<?,?> builderWithDefaults() {
+        return Canopus.builder().enabled(true);
+    }
+
 }
