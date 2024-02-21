@@ -44,7 +44,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Sirius.JSON_PROPERTY_FALLBACK_FORMULA_CONSTRAINTS,
   Sirius.JSON_PROPERTY_DETECTABLE_ELEMENTS,
   Sirius.JSON_PROPERTY_ILP_TIMEOUT,
-  Sirius.JSON_PROPERTY_USE_HEURISTIC
+  Sirius.JSON_PROPERTY_USE_HEURISTIC,
+  Sirius.JSON_PROPERTY_MIN_REF_MATCH_SCORE_TO_INJECT
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class Sirius {
@@ -120,6 +121,9 @@ public class Sirius {
 
   public static final String JSON_PROPERTY_USE_HEURISTIC = "useHeuristic";
   private UseHeuristic useHeuristic;
+
+  public static final String JSON_PROPERTY_MIN_REF_MATCH_SCORE_TO_INJECT = "minRefMatchScoreToInject";
+  private Double minRefMatchScoreToInject;
 
   public Sirius() {
   }
@@ -235,7 +239,7 @@ public class Sirius {
   }
 
    /**
-   * Maximum allowed mass accuracy. Only molecular formulas within this mass window are considered.
+   * Maximum allowed mass deviation. Only molecular formulas within this mass window are considered.
    * @return massAccuracyMS2ppm
   **/
   @javax.annotation.Nullable
@@ -451,6 +455,32 @@ public class Sirius {
     this.useHeuristic = useHeuristic;
   }
 
+
+  public Sirius minRefMatchScoreToInject(Double minRefMatchScoreToInject) {
+    
+    this.minRefMatchScoreToInject = minRefMatchScoreToInject;
+    return this;
+  }
+
+   /**
+   * Similarity Threshold to inject formula candidates no matter which score/rank they have or which filter settings are applied.  If threshold &gt;&#x3D; 0 formulas candidates with reference spectrum similarity above the threshold will be injected.  If NULL injection is disables.
+   * @return minRefMatchScoreToInject
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_MIN_REF_MATCH_SCORE_TO_INJECT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Double getMinRefMatchScoreToInject() {
+    return minRefMatchScoreToInject;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_MIN_REF_MATCH_SCORE_TO_INJECT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setMinRefMatchScoreToInject(Double minRefMatchScoreToInject) {
+    this.minRefMatchScoreToInject = minRefMatchScoreToInject;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -471,12 +501,13 @@ public class Sirius {
         Objects.equals(this.fallbackFormulaConstraints, sirius.fallbackFormulaConstraints) &&
         Objects.equals(this.detectableElements, sirius.detectableElements) &&
         Objects.equals(this.ilpTimeout, sirius.ilpTimeout) &&
-        Objects.equals(this.useHeuristic, sirius.useHeuristic);
+        Objects.equals(this.useHeuristic, sirius.useHeuristic) &&
+        Objects.equals(this.minRefMatchScoreToInject, sirius.minRefMatchScoreToInject);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(enabled, profile, numberOfCandidates, numberOfCandidatesPerIon, massAccuracyMS2ppm, isotopeMs2Settings, formulaSearchDBs, enforcedFormulaConstraints, fallbackFormulaConstraints, detectableElements, ilpTimeout, useHeuristic);
+    return Objects.hash(enabled, profile, numberOfCandidates, numberOfCandidatesPerIon, massAccuracyMS2ppm, isotopeMs2Settings, formulaSearchDBs, enforcedFormulaConstraints, fallbackFormulaConstraints, detectableElements, ilpTimeout, useHeuristic, minRefMatchScoreToInject);
   }
 
   @Override
@@ -495,6 +526,7 @@ public class Sirius {
     sb.append("    detectableElements: ").append(toIndentedString(detectableElements)).append("\n");
     sb.append("    ilpTimeout: ").append(toIndentedString(ilpTimeout)).append("\n");
     sb.append("    useHeuristic: ").append(toIndentedString(useHeuristic)).append("\n");
+    sb.append("    minRefMatchScoreToInject: ").append(toIndentedString(minRefMatchScoreToInject)).append("\n");
     sb.append("}");
     return sb.toString();
   }

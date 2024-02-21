@@ -20,15 +20,20 @@
 
 package de.unijena.bioinf.ms.middleware.model.compute.tools;
 
+import de.unijena.bioinf.chemdb.annotations.SpectralAlignmentScorer;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchOptions;
+import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.spectraldb.SpectraMatchingMassDeviation;
+import de.unijena.bionf.spectral_alignment.SpectralAlignmentType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
-public class SpectralLibrarySearch extends Tool<SpectraSearchOptions>  {
+public class SpectralLibrarySearch extends Tool<SpectraSearchOptions> {
     /**
      * Structure Databases with Reference spectra to search in.
      *
@@ -40,17 +45,32 @@ public class SpectralLibrarySearch extends Tool<SpectraSearchOptions>  {
     /**
      * Maximum allowed mass deviation in ppm for matching peaks.
      */
+    @Schema(nullable = true)
     private Double peakDeviationPpm;
 
     /**
      * Maximum allowed mass deviation in ppm for matching the precursor. If not specified, the same value as for the peaks is used.
      */
+    @Schema(nullable = true)
     private Double precursorDeviationPpm;
 
+    /**
+     * Specify scoring method to match spectra
+     * INTENSITY: Intensity weighted. Each peak matches at most one peak in the other spectrum.
+     * GAUSSIAN: Treat peaks as (un-normalized) Gaussians and score overlapping areas of PDFs. Each peak might score against multiple peaks in the other spectrum.
+     * MODIFIED_COSINE:  This algorithm requires that there is at most one pair of peaks (u,v) where the m/z of u and v are within the allowed mass tolerance. To be used for analog search with different precursor masses.
+     */
+    @Schema(nullable = true, enumAsRef = true)
+    private SpectralAlignmentType scoring;
 
     public SpectralLibrarySearch(@NotNull List<CustomDataSources.Source> spectraSearchDBs) {
         this();
         this.spectraSearchDBs = spectraSearchDBs.stream().distinct().map(CustomDataSources.Source::name).toList();
+        this.peakDeviationPpm = PropertyManager.DEFAULTS.createInstanceWithDefaults(SpectraMatchingMassDeviation.class)
+                .allowedPeakDeviation.getPpm();
+        this.precursorDeviationPpm = PropertyManager.DEFAULTS.createInstanceWithDefaults(SpectraMatchingMassDeviation.class)
+                .allowedPrecursorDeviation.getPpm();
+        this.scoring = PropertyManager.DEFAULTS.createInstanceWithDefaults(SpectralAlignmentScorer.class).spectralAlignmentType;
     }
 
     private SpectralLibrarySearch() {
@@ -59,6 +79,11 @@ public class SpectralLibrarySearch extends Tool<SpectraSearchOptions>  {
 
     @Override
     public Map<String, String> asConfigMap() {
-        return null;
+        return new NullCheckMapBuilder()
+                .putNonNullObj("SpectralSearchDB", spectraSearchDBs, db -> String.join(",", db).toLowerCase(Locale.ROOT))
+                .putNonNull("SpectraMatchingMassDeviation.allowedPeakDeviation", peakDeviationPpm, it -> it + " ppm")
+                .putNonNull("SpectraMatchingMassDeviation.allowedPrecursorDeviation", precursorDeviationPpm, it -> it + " ppm")
+                .putNonNull("SpectralAlignmentScorer", scoring)
+                .toUnmodifiableMap();
     }
 }

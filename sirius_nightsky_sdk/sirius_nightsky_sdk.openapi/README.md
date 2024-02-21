@@ -252,6 +252,7 @@ Class | Method | HTTP request | Description
  - [SimplePeak](docs/SimplePeak.md)
  - [Sirius](docs/Sirius.md)
  - [SortObject](docs/SortObject.md)
+ - [SpectralLibrarySearch](docs/SpectralLibrarySearch.md)
  - [SpectrumAnnotation](docs/SpectrumAnnotation.md)
  - [StructureCandidate](docs/StructureCandidate.md)
  - [StructureCandidateFormula](docs/StructureCandidateFormula.md)

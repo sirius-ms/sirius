@@ -78,6 +78,7 @@ docs/SearchQueryType.md
 docs/SimplePeak.md
 docs/Sirius.md
 docs/SortObject.md
+docs/SpectralLibrarySearch.md
 docs/SpectrumAnnotation.md
 docs/StructureCandidate.md
 docs/StructureCandidateFormula.md
@@ -183,6 +184,7 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SearchQueryType.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SimplePeak.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Sirius.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SortObject.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SpectralLibrarySearch.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SpectrumAnnotation.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/StructureCandidate.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/StructureCandidateFormula.java

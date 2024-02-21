@@ -28,7 +28,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  */
 @JsonPropertyOrder({
   FingerprintPrediction.JSON_PROPERTY_ENABLED,
-  FingerprintPrediction.JSON_PROPERTY_USE_SCORE_THRESHOLD
+  FingerprintPrediction.JSON_PROPERTY_USE_SCORE_THRESHOLD,
+  FingerprintPrediction.JSON_PROPERTY_ALWAYS_PREDICT_HIGH_REF_MATCHES
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class FingerprintPrediction {
@@ -37,6 +38,9 @@ public class FingerprintPrediction {
 
   public static final String JSON_PROPERTY_USE_SCORE_THRESHOLD = "useScoreThreshold";
   private Boolean useScoreThreshold;
+
+  public static final String JSON_PROPERTY_ALWAYS_PREDICT_HIGH_REF_MATCHES = "alwaysPredictHighRefMatches";
+  private Boolean alwaysPredictHighRefMatches;
 
   public FingerprintPrediction() {
   }
@@ -92,6 +96,32 @@ public class FingerprintPrediction {
     this.useScoreThreshold = useScoreThreshold;
   }
 
+
+  public FingerprintPrediction alwaysPredictHighRefMatches(Boolean alwaysPredictHighRefMatches) {
+    
+    this.alwaysPredictHighRefMatches = alwaysPredictHighRefMatches;
+    return this;
+  }
+
+   /**
+   * If true Fingerprint/Classes/Structures will be predicted for formulas candidates with  reference spectrum similarity &gt; Sirius.minReferenceMatchScoreToInject will be predicted no matter which  score threshold rules apply.  If NULL default value will be used.
+   * @return alwaysPredictHighRefMatches
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_ALWAYS_PREDICT_HIGH_REF_MATCHES)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Boolean isAlwaysPredictHighRefMatches() {
+    return alwaysPredictHighRefMatches;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_ALWAYS_PREDICT_HIGH_REF_MATCHES)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setAlwaysPredictHighRefMatches(Boolean alwaysPredictHighRefMatches) {
+    this.alwaysPredictHighRefMatches = alwaysPredictHighRefMatches;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -102,12 +132,13 @@ public class FingerprintPrediction {
     }
     FingerprintPrediction fingerprintPrediction = (FingerprintPrediction) o;
     return Objects.equals(this.enabled, fingerprintPrediction.enabled) &&
-        Objects.equals(this.useScoreThreshold, fingerprintPrediction.useScoreThreshold);
+        Objects.equals(this.useScoreThreshold, fingerprintPrediction.useScoreThreshold) &&
+        Objects.equals(this.alwaysPredictHighRefMatches, fingerprintPrediction.alwaysPredictHighRefMatches);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(enabled, useScoreThreshold);
+    return Objects.hash(enabled, useScoreThreshold, alwaysPredictHighRefMatches);
   }
 
   @Override
@@ -116,6 +147,7 @@ public class FingerprintPrediction {
     sb.append("class FingerprintPrediction {\n");
     sb.append("    enabled: ").append(toIndentedString(enabled)).append("\n");
     sb.append("    useScoreThreshold: ").append(toIndentedString(useScoreThreshold)).append("\n");
+    sb.append("    alwaysPredictHighRefMatches: ").append(toIndentedString(alwaysPredictHighRefMatches)).append("\n");
     sb.append("}");
     return sb.toString();
   }

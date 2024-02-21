@@ -24,6 +24,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.Canopus;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FingerprintPrediction;
 import de.unijena.bioinf.ms.nightsky.sdk.model.MsNovelist;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Sirius;
+import de.unijena.bioinf.ms.nightsky.sdk.model.SpectralLibrarySearch;
 import de.unijena.bioinf.ms.nightsky.sdk.model.StructureDbSearch;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Zodiac;
 import java.util.ArrayList;
@@ -44,6 +45,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   JobSubmission.JSON_PROPERTY_ENFORCED_ADDUCTS,
   JobSubmission.JSON_PROPERTY_DETECTABLE_ADDUCTS,
   JobSubmission.JSON_PROPERTY_RECOMPUTE,
+  JobSubmission.JSON_PROPERTY_SPECTRA_SEARCH_PARAMS,
   JobSubmission.JSON_PROPERTY_FORMULA_ID_PARAMS,
   JobSubmission.JSON_PROPERTY_ZODIAC_PARAMS,
   JobSubmission.JSON_PROPERTY_FINGERPRINT_PREDICTION_PARAMS,
@@ -71,6 +73,9 @@ public class JobSubmission {
 
   public static final String JSON_PROPERTY_RECOMPUTE = "recompute";
   private Boolean recompute;
+
+  public static final String JSON_PROPERTY_SPECTRA_SEARCH_PARAMS = "spectraSearchParams";
+  private SpectralLibrarySearch spectraSearchParams;
 
   public static final String JSON_PROPERTY_FORMULA_ID_PARAMS = "formulaIdParams";
   private Sirius formulaIdParams;
@@ -292,6 +297,32 @@ public class JobSubmission {
   }
 
 
+  public JobSubmission spectraSearchParams(SpectralLibrarySearch spectraSearchParams) {
+    
+    this.spectraSearchParams = spectraSearchParams;
+    return this;
+  }
+
+   /**
+   * Get spectraSearchParams
+   * @return spectraSearchParams
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_SPECTRA_SEARCH_PARAMS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public SpectralLibrarySearch getSpectraSearchParams() {
+    return spectraSearchParams;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_SPECTRA_SEARCH_PARAMS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setSpectraSearchParams(SpectralLibrarySearch spectraSearchParams) {
+    this.spectraSearchParams = spectraSearchParams;
+  }
+
+
   public JobSubmission formulaIdParams(Sirius formulaIdParams) {
     
     this.formulaIdParams = formulaIdParams;
@@ -496,6 +527,7 @@ public class JobSubmission {
         Objects.equals(this.enforcedAdducts, jobSubmission.enforcedAdducts) &&
         Objects.equals(this.detectableAdducts, jobSubmission.detectableAdducts) &&
         Objects.equals(this.recompute, jobSubmission.recompute) &&
+        Objects.equals(this.spectraSearchParams, jobSubmission.spectraSearchParams) &&
         Objects.equals(this.formulaIdParams, jobSubmission.formulaIdParams) &&
         Objects.equals(this.zodiacParams, jobSubmission.zodiacParams) &&
         Objects.equals(this.fingerprintPredictionParams, jobSubmission.fingerprintPredictionParams) &&
@@ -507,7 +539,7 @@ public class JobSubmission {
 
   @Override
   public int hashCode() {
-    return Objects.hash(compoundIds, alignedFeatureIds, fallbackAdducts, enforcedAdducts, detectableAdducts, recompute, formulaIdParams, zodiacParams, fingerprintPredictionParams, canopusParams, structureDbSearchParams, msNovelistParams, configMap);
+    return Objects.hash(compoundIds, alignedFeatureIds, fallbackAdducts, enforcedAdducts, detectableAdducts, recompute, spectraSearchParams, formulaIdParams, zodiacParams, fingerprintPredictionParams, canopusParams, structureDbSearchParams, msNovelistParams, configMap);
   }
 
   @Override
@@ -520,6 +552,7 @@ public class JobSubmission {
     sb.append("    enforcedAdducts: ").append(toIndentedString(enforcedAdducts)).append("\n");
     sb.append("    detectableAdducts: ").append(toIndentedString(detectableAdducts)).append("\n");
     sb.append("    recompute: ").append(toIndentedString(recompute)).append("\n");
+    sb.append("    spectraSearchParams: ").append(toIndentedString(spectraSearchParams)).append("\n");
     sb.append("    formulaIdParams: ").append(toIndentedString(formulaIdParams)).append("\n");
     sb.append("    zodiacParams: ").append(toIndentedString(zodiacParams)).append("\n");
     sb.append("    fingerprintPredictionParams: ").append(toIndentedString(fingerprintPredictionParams)).append("\n");
