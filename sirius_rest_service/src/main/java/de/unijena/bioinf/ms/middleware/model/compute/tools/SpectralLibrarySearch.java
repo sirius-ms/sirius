@@ -20,23 +20,32 @@
 
 package de.unijena.bioinf.ms.middleware.model.compute.tools;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import de.unijena.bioinf.chemdb.annotations.SpectralAlignmentScorer;
-import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchOptions;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.spectraldb.SpectraMatchingMassDeviation;
 import de.unijena.bionf.spectral_alignment.SpectralAlignmentType;
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.jetbrains.annotations.NotNull;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+/**
+ * User/developer friendly parameter subset for the Spectral library search tool.
+ */
+@Getter
+@Setter
+@SuperBuilder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SpectralLibrarySearch extends Tool<SpectraSearchOptions> {
     /**
      * Structure Databases with Reference spectra to search in.
-     *
+     * <p>
      * Defaults to BIO + Custom Databases. Possible values are available to Database API.
      */
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
@@ -63,16 +72,6 @@ public class SpectralLibrarySearch extends Tool<SpectraSearchOptions> {
     @Schema(nullable = true, enumAsRef = true)
     private SpectralAlignmentType scoring;
 
-    public SpectralLibrarySearch(@NotNull List<CustomDataSources.Source> spectraSearchDBs) {
-        this();
-        this.spectraSearchDBs = spectraSearchDBs.stream().distinct().map(CustomDataSources.Source::name).toList();
-        this.peakDeviationPpm = PropertyManager.DEFAULTS.createInstanceWithDefaults(SpectraMatchingMassDeviation.class)
-                .allowedPeakDeviation.getPpm();
-        this.precursorDeviationPpm = PropertyManager.DEFAULTS.createInstanceWithDefaults(SpectraMatchingMassDeviation.class)
-                .allowedPrecursorDeviation.getPpm();
-        this.scoring = PropertyManager.DEFAULTS.createInstanceWithDefaults(SpectralAlignmentScorer.class).spectralAlignmentType;
-    }
-
     private SpectralLibrarySearch() {
         super(SpectraSearchOptions.class);
     }
@@ -85,5 +84,20 @@ public class SpectralLibrarySearch extends Tool<SpectraSearchOptions> {
                 .putNonNull("SpectraMatchingMassDeviation.allowedPrecursorDeviation", precursorDeviationPpm, it -> it + " ppm")
                 .putNonNull("SpectralAlignmentScorer", scoring)
                 .toUnmodifiableMap();
+    }
+
+    public static SpectralLibrarySearch buildDefault() {
+        return builderWithDefaults().build();
+    }
+
+    public static SpectralLibrarySearch.SpectralLibrarySearchBuilder<?, ?> builderWithDefaults() {
+        return SpectralLibrarySearch.builder()
+                .enabled(true)
+                .peakDeviationPpm(PropertyManager.DEFAULTS.createInstanceWithDefaults(SpectraMatchingMassDeviation.class)
+                        .allowedPeakDeviation.getPpm())
+                .precursorDeviationPpm(PropertyManager.DEFAULTS.createInstanceWithDefaults(SpectraMatchingMassDeviation.class)
+                        .allowedPrecursorDeviation.getPpm())
+                .scoring(PropertyManager.DEFAULTS.createInstanceWithDefaults(SpectralAlignmentScorer.class)
+                        .spectralAlignmentType);
     }
 }

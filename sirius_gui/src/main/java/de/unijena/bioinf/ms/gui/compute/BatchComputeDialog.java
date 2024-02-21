@@ -23,6 +23,7 @@ package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.CheckConnectionAction;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -34,6 +35,7 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.slf4j.LoggerFactory;
+import picocli.CommandLine;
 
 import javax.swing.*;
 import java.awt.*;
@@ -367,7 +369,8 @@ public class BatchComputeDialog extends JDialog {
                                 .map(InstanceBean::getFeatureId).toList());
                     Job job = gui.applySiriusClient((c, pid) -> c.jobs().startJob(pid, jobSubmission, List.of(JobOptField.COMMAND)));
                 } catch (Exception e) {
-                    new ExceptionDialog(mf(), e.getMessage());
+                    LoggerFactory.getLogger(getClass()).error("Error when starting Computation.", e);
+                    new ExceptionDialog(mf(), "Error when starting Computation: " + e.getMessage());
                 }
 
                 updateProgress(0, 100, 100, "Computation Configured!");
@@ -386,6 +389,7 @@ public class BatchComputeDialog extends JDialog {
 
         configCommand.add("config");
         if (formulaIDConfigPanel != null && formulaIDConfigPanel.isToolSelected()) {
+            configCommand.add(SpectraSearchOptions.class.getAnnotation(CommandLine.Command.class).name());
             toolCommands.add(formulaIDConfigPanel.content.toolCommand());
             configCommand.addAll(formulaIDConfigPanel.asParameterList());
         }
@@ -427,6 +431,7 @@ public class BatchComputeDialog extends JDialog {
         sub.setConfigMap(new HashMap<>());
 
         if (formulaIDConfigPanel != null && formulaIDConfigPanel.isToolSelected()) {
+            sub.spectraSearchParams(new SpectralLibrarySearch().enabled(true));
             sub.setFormulaIdParams(new Sirius().enabled(true));
             sub.getConfigMap().putAll(formulaIDConfigPanel.asConfigMap());
         }

@@ -124,22 +124,23 @@ public class JobSubmission extends AbstractSubmission {
     public static JobSubmission createDefaultInstance(boolean includeConfigMap) {
         AdductSettings settings = PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class);
         //common default search dbs for spectra and structure. Formula only if db search is used.
-        List<CustomDataSources.Source> searchDbs = Stream.concat(Stream.of(
+        List<String> searchDbs = Stream.concat(Stream.of(
                 CustomDataSources.getSourceFromName(DataSource.BIO.realName)),
-                CustomDataSources.sourcesStream().filter(CustomDataSources.Source::isCustomSource)).toList();
+                CustomDataSources.sourcesStream().filter(CustomDataSources.Source::isCustomSource)).distinct().map(CustomDataSources.Source::name).toList();
+
 
         JobSubmissionBuilder<?, ?> b = JobSubmission.builder()
                 .fallbackAdducts(settings.getFallback().stream().map(PrecursorIonType::toString).collect(Collectors.toList()))
                 .enforcedAdducts(settings.getEnforced().stream().map(PrecursorIonType::toString).collect(Collectors.toList()))
                 .detectableAdducts(settings.getDetectable().stream().map(PrecursorIonType::toString).collect(Collectors.toList()))
                 .recompute(false)
-                .spectraSearchParams(new SpectralLibrarySearch(searchDbs))
-                .formulaIdParams(new Sirius())
-                .zodiacParams(new Zodiac())
-                .fingerprintPredictionParams(new FingerprintPrediction())
-                .canopusParams(new Canopus())
-                .structureDbSearchParams(new StructureDbSearch(searchDbs))
-                .msNovelistParams(new MsNovelist());
+                .spectraSearchParams(SpectralLibrarySearch.builderWithDefaults().spectraSearchDBs(searchDbs).build())
+                .formulaIdParams(Sirius.buildDefault())
+                .zodiacParams(Zodiac.buildDefault())
+                .fingerprintPredictionParams(FingerprintPrediction.buildDefault())
+                .canopusParams(Canopus.buildDefault())
+                .structureDbSearchParams(StructureDbSearch.builderWithDefaults().structureSearchDBs(searchDbs).build())
+                .msNovelistParams(MsNovelist.buildDefault());
         if (includeConfigMap) {
             final Map<String, String> configMap = new HashMap<>();
             PropertyManager.DEFAULTS.getConfigKeys().forEachRemaining(k ->
@@ -152,7 +153,7 @@ public class JobSubmission extends AbstractSubmission {
 
     @JsonIgnore
     public List<Tool<?>> getEnabledTools() {
-        return Stream.of(formulaIdParams, zodiacParams, fingerprintPredictionParams, canopusParams, structureDbSearchParams, msNovelistParams)
+        return Stream.of(spectraSearchParams, formulaIdParams, zodiacParams, fingerprintPredictionParams, canopusParams, structureDbSearchParams, msNovelistParams)
                 .filter(Objects::nonNull).filter(Tool::isEnabled).collect(Collectors.toList());
     }
 }

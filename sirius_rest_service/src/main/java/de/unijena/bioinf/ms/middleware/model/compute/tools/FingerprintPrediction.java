@@ -22,12 +22,14 @@ package de.unijena.bioinf.ms.middleware.model.compute.tools;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import de.unijena.bioinf.fingerid.annotations.FormulaResultThreshold;
 import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.spectraldb.InjectHighSpectraMatchFormulas;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 import java.util.Map;
 
@@ -38,12 +40,14 @@ import java.util.Map;
 
 @Getter
 @Setter
+@SuperBuilder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class FingerprintPrediction extends Tool<FingerprintOptions> {
     /**
      * If true, an adaptive soft threshold will be applied to only compute Fingerprints for promising formula candidates
      * Enabling is highly recommended.
      */
-    Boolean useScoreThreshold = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaResultThreshold.class).useThreshold();
+    Boolean useScoreThreshold;
 
     /**
      * If true Fingerprint/Classes/Structures will be predicted for formulas candidates with
@@ -51,9 +55,9 @@ public class FingerprintPrediction extends Tool<FingerprintOptions> {
      * score threshold rules apply.
      * If NULL default value will be used.
      */
-    Boolean alwaysPredictHighRefMatches = PropertyManager.DEFAULTS.createInstanceWithDefaults(InjectHighSpectraMatchFormulas.class).isAlwaysPredict();
+    Boolean alwaysPredictHighRefMatches;
 
-    public FingerprintPrediction() {
+    private FingerprintPrediction() {
         super(FingerprintOptions.class);
     }
 
@@ -64,5 +68,15 @@ public class FingerprintPrediction extends Tool<FingerprintOptions> {
                 .putNonNull("FormulaResultThreshold", useScoreThreshold)
                 .putNonNull("InjectHighSpectraMatchFormulas.alwaysPredict", alwaysPredictHighRefMatches)
                 .toUnmodifiableMap();
+    }
+
+    public static FingerprintPrediction buildDefault(){
+        return builderWithDefaults().build();
+    }
+    public static FingerprintPrediction.FingerprintPredictionBuilder<?,?> builderWithDefaults(){
+        return FingerprintPrediction.builder()
+                .enabled(true)
+                .alwaysPredictHighRefMatches(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaResultThreshold.class).useThreshold())
+                .useScoreThreshold(PropertyManager.DEFAULTS.createInstanceWithDefaults(InjectHighSpectraMatchFormulas.class).isAlwaysPredict());
     }
 }

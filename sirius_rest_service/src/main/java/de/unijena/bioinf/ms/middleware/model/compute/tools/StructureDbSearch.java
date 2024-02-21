@@ -21,7 +21,7 @@
 package de.unijena.bioinf.ms.middleware.model.compute.tools;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import de.unijena.bioinf.chemdb.custom.CustomDataSources;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import de.unijena.bioinf.confidence_score.ExpansiveSearchConfidenceMode;
 import de.unijena.bioinf.elgordo.TagStructuresByElGordo;
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
@@ -29,7 +29,7 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
-import org.jetbrains.annotations.NotNull;
+import lombok.experimental.SuperBuilder;
 
 import java.util.List;
 import java.util.Locale;
@@ -41,6 +41,8 @@ import java.util.Map;
  */
 @Getter
 @Setter
+@SuperBuilder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class StructureDbSearch extends Tool<FingerblastOptions> {
     /**
      * Structure databases to search in, If expansive search is enabled this DB selection will be expanded to PubChem
@@ -73,15 +75,6 @@ public class StructureDbSearch extends Tool<FingerblastOptions> {
     ExpansiveSearchConfidenceMode.Mode expansiveSearchConfidenceMode;
 
 
-    public StructureDbSearch(@NotNull List<CustomDataSources.Source> structureSearchDBs) {
-        this();
-        this.structureSearchDBs = structureSearchDBs.stream().distinct().map(CustomDataSources.Source::name).toList();
-        tagStructuresWithLipidClass = PropertyManager.DEFAULTS.
-                createInstanceWithDefaults(TagStructuresByElGordo.class).value;
-        expansiveSearchConfidenceMode = PropertyManager.DEFAULTS.
-                createInstanceWithDefaults(ExpansiveSearchConfidenceMode.class).confidenceScoreSimilarityMode;
-    }
-
     private StructureDbSearch() {
         super(FingerblastOptions.class);
     }
@@ -95,5 +88,18 @@ public class StructureDbSearch extends Tool<FingerblastOptions> {
                 .putNonNullObj("StructureSearchDB", structureSearchDBs, db -> String.join(",", db).toLowerCase(Locale.ROOT))
                 .putNonNull("ExpansiveSearchConfidenceMode.confidenceScoreSimilarityMode", expansiveSearchConfidenceMode)
                 .toUnmodifiableMap();
+    }
+
+    public static StructureDbSearch buildDefault() {
+        return builderWithDefaults().build();
+    }
+    public static StructureDbSearch.StructureDbSearchBuilder<?,?> builderWithDefaults() {
+        return StructureDbSearch.builder()
+                .enabled(true)
+                .structureSearchDBs(List.of())
+                .tagStructuresWithLipidClass(PropertyManager.DEFAULTS.
+                        createInstanceWithDefaults(TagStructuresByElGordo.class).value)
+                .expansiveSearchConfidenceMode(PropertyManager.DEFAULTS.
+                        createInstanceWithDefaults(ExpansiveSearchConfidenceMode.class).confidenceScoreSimilarityMode);
     }
 }

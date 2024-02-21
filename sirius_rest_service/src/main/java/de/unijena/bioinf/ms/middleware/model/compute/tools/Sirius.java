@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.middleware.model.compute.tools;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidates;
@@ -30,14 +31,13 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.IsotopeMs2Settings;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Timeout;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.UseHeuristic;
-import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.spectraldb.InjectHighSpectraMatchFormulas;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
-import org.jetbrains.annotations.NotNull;
+import lombok.experimental.SuperBuilder;
 
 import java.util.List;
 import java.util.Map;
@@ -46,10 +46,13 @@ import java.util.stream.Collectors;
 
 /**
  * User/developer friendly parameter subset for the Formula/SIRIUS tool
+ * Can use results from Spectral library search tool.
  */
 
 @Getter
 @Setter
+@SuperBuilder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Sirius extends Tool<SiriusOptions> {
     //todo NewWorkflow: adapt to new search modes
     @Schema(enumAsRef = true, nullable = true)
@@ -139,26 +142,8 @@ public class Sirius extends Tool<SiriusOptions> {
     Double minRefMatchScoreToInject;
 
 
-
-    public Sirius() {
-        this(List.of());
-    }
-    public Sirius(@NotNull List<CustomDataSources.Source> formulaSearchDBs) {
+    private Sirius() {
         super(SiriusOptions.class);
-        profile = Instrument.QTOF;
-        numberOfCandidates = PropertyManager.DEFAULTS.createInstanceWithDefaults(NumberOfCandidates.class).value;
-        numberOfCandidatesPerIon = PropertyManager.DEFAULTS.createInstanceWithDefaults(NumberOfCandidatesPerIon.class).value;
-        massAccuracyMS2ppm = PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class).allowedMassDeviation.getPpm();
-        isotopeMs2Settings = PropertyManager.DEFAULTS.createInstanceWithDefaults(IsotopeMs2Settings.class).value;
-        this.formulaSearchDBs = formulaSearchDBs.stream().distinct().map(CustomDataSources.Source::name).toList();
-        FormulaSettings settings = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class);
-        enforcedFormulaConstraints = settings.getEnforcedAlphabet().toString();
-        fallbackFormulaConstraints = settings.getFallbackAlphabet().toString();
-        detectableElements = settings.getAutoDetectionElements().stream().map(Element::getSymbol).collect(Collectors.toList());
-        minRefMatchScoreToInject = PropertyManager.DEFAULTS.createInstanceWithDefaults(InjectHighSpectraMatchFormulas.class).isInjectFormulas()
-                ? PropertyManager.DEFAULTS.createInstanceWithDefaults(InjectHighSpectraMatchFormulas.class).getMinScoreToInject() : null;
-        ilpTimeout = PropertyManager.DEFAULTS.createInstanceWithDefaults(Timeout.class);
-        useHeuristic = PropertyManager.DEFAULTS.createInstanceWithDefaults(UseHeuristic.class);
     }
 
     @JsonIgnore
@@ -188,5 +173,25 @@ public class Sirius extends Tool<SiriusOptions> {
                 .putNonNull("InjectHighSpectraMatchFormulas.minScoreToInject", minRefMatchScoreToInject)
                 .putNonNullObj("InjectHighSpectraMatchFormulas.injectFormulas", minRefMatchScoreToInject, Objects::nonNull)
                 .toUnmodifiableMap();
+    }
+
+    public static Sirius buildDefault() {
+        return builderWithDefaults().build();
+    }
+    public static Sirius.SiriusBuilder<?,?> builderWithDefaults() {
+        return Sirius.builder()
+                .profile(Instrument.QTOF)
+                .numberOfCandidates(PropertyManager.DEFAULTS.createInstanceWithDefaults(NumberOfCandidates.class).value)
+                .numberOfCandidatesPerIon(PropertyManager.DEFAULTS.createInstanceWithDefaults(NumberOfCandidatesPerIon.class).value)
+                .massAccuracyMS2ppm(PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class).allowedMassDeviation.getPpm())
+                .isotopeMs2Settings(PropertyManager.DEFAULTS.createInstanceWithDefaults(IsotopeMs2Settings.class).value)
+                .formulaSearchDBs(List.of())
+                .enforcedFormulaConstraints(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class).getEnforcedAlphabet().toString())
+                .fallbackFormulaConstraints(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class).getFallbackAlphabet().toString())
+                .detectableElements(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class).getAutoDetectionElements().stream().map(Element::getSymbol).collect(Collectors.toList()))
+                .minRefMatchScoreToInject(PropertyManager.DEFAULTS.createInstanceWithDefaults(InjectHighSpectraMatchFormulas.class).isInjectFormulas()
+                        ? PropertyManager.DEFAULTS.createInstanceWithDefaults(InjectHighSpectraMatchFormulas.class).getMinScoreToInject() : null)
+                .ilpTimeout(PropertyManager.DEFAULTS.createInstanceWithDefaults(Timeout.class))
+                .useHeuristic(PropertyManager.DEFAULTS.createInstanceWithDefaults(UseHeuristic.class));
     }
 }
