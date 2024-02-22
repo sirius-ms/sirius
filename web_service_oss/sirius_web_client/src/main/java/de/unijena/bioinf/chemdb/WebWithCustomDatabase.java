@@ -367,6 +367,7 @@ public class WebWithCustomDatabase {
                 x.setqLayer(x.getqLayer() | c.getqLayer());
                 x.mergeDBLinks(c.links);
                 x.mergeBits(c.bitset);
+                x.mergeCompoundName(c.getName());
             } else {
                 if (onlyContained)
                     continue;

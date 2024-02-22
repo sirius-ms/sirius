@@ -28,7 +28,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @AllArgsConstructor
-public class SpectraMatchingMassDeviation implements Ms2ExperimentAnnotation {
+public class SpectralMatchingMassDeviation implements Ms2ExperimentAnnotation {
     @Getter
     public final Deviation allowedPeakDeviation;
     @Getter
@@ -41,16 +41,16 @@ public class SpectraMatchingMassDeviation implements Ms2ExperimentAnnotation {
      * @param allowedPrecursorDeviation Maximum allowed mass deviation in ppm for matching the precursor.
      */
     @DefaultInstanceProvider
-    public static SpectraMatchingMassDeviation newInstance(@DefaultProperty(propertyKey = "allowedPeakDeviation") Deviation allowedPeakDeviation,
-                                               @DefaultProperty(propertyKey = "allowedPrecursorDeviation") Deviation allowedPrecursorDeviation) {
-        return new SpectraMatchingMassDeviation(allowedPeakDeviation, allowedPrecursorDeviation);
+    public static SpectralMatchingMassDeviation newInstance(@DefaultProperty(propertyKey = "allowedPeakDeviation") Deviation allowedPeakDeviation,
+                                                            @DefaultProperty(propertyKey = "allowedPrecursorDeviation") Deviation allowedPrecursorDeviation) {
+        return new SpectralMatchingMassDeviation(allowedPeakDeviation, allowedPrecursorDeviation);
     }
 
-    public SpectraMatchingMassDeviation withAllowedPeakDeviation(Deviation allowedPeakDeviation) {
-        return new SpectraMatchingMassDeviation(allowedPeakDeviation, allowedPrecursorDeviation);
+    public SpectralMatchingMassDeviation withAllowedPeakDeviation(Deviation allowedPeakDeviation) {
+        return new SpectralMatchingMassDeviation(allowedPeakDeviation, allowedPrecursorDeviation);
     }
 
-    public SpectraMatchingMassDeviation withAllowedPrecursorDeviation(Deviation allowedPrecursorDeviation) {
-        return new SpectraMatchingMassDeviation(allowedPeakDeviation, allowedPrecursorDeviation);
+    public SpectralMatchingMassDeviation withAllowedPrecursorDeviation(Deviation allowedPrecursorDeviation) {
+        return new SpectralMatchingMassDeviation(allowedPeakDeviation, allowedPrecursorDeviation);
     }
 }
