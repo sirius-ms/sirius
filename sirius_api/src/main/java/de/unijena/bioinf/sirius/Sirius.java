@@ -21,7 +21,6 @@
 
 package de.unijena.bioinf.sirius;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.chem.utils.biotransformation.BioTransformation;
@@ -79,17 +78,18 @@ public class Sirius {
         this.getMs2Analyzer().registerPlugin(new DefaultPlugin());
         this.getMs2Analyzer().registerPlugin(new TreeStatisticPlugin());
         this.getMs2Analyzer().registerPlugin(new AdductSwitchPlugin());
-        this.getMs2Analyzer().registerPlugin(new IsotopePatternInMs1Plugin());
         this.getMs2Analyzer().registerPlugin(new IsotopePatternInMs2Plugin());
         this.getMs2Analyzer().registerPlugin(new UseLossMassDeviationScoringPlugin());
         this.getMs2Analyzer().registerPlugin(new TreeMotifPlugin());
 
         this.getMs2Analyzer().registerPlugin(new PredefinedPeakPlugin());
-        this.getMs2Analyzer().registerPlugin(new ElGordoPlugin());
         this.getMs2Analyzer().registerPlugin(new AminoAcidPlugin());
         this.getMs2Analyzer().registerPlugin(new AdductNeutralizationPlugin());
 
         this.getMs2Analyzer().registerPlugin(new BottomUpSearch());
+
+        this.getMs2Analyzer().registerPlugin(new IsotopePatternInMs1Plugin()); //must be executed after BottomUpSearch, so it can also filter these formulas
+        this.getMs2Analyzer().registerPlugin(new ElGordoPlugin()); //must be executed after IsotopePatternInMs1Plugin, so it is not filtered out
     }
 
     public Sirius(@NotNull Profile profile, @NotNull PeriodicTable table) {
@@ -170,7 +170,7 @@ public class Sirius {
         final MutableMs2Experiment copy = new MutableMs2Experiment(experiment);
         copy.setMolecularFormula(formula);
         Set<MolecularFormula> wh = Collections.singleton(formula);
-        copy.setAnnotation(Whiteset.class, Whiteset.ofMeasuredOrNeutral(wh));
+        copy.setAnnotation(Whiteset.class, Whiteset.ofNeutralizedFormulas(wh, Sirius.class));
         final List<IdentificationResult<SiriusScore>> irs = identify(copy);
         if (irs.isEmpty()) return null;
         else return irs.get(0);
@@ -180,7 +180,7 @@ public class Sirius {
             formula) {
         final MutableMs2Experiment copy = new MutableMs2Experiment(experiment);
         copy.setMolecularFormula(formula);
-        copy.setAnnotation(Whiteset.class, Whiteset.ofMeasuredOrNeutral(Collections.singleton(formula)));
+        copy.setAnnotation(Whiteset.class, Whiteset.ofNeutralizedFormulas(Collections.singleton(formula), Sirius.class));
         return new SiriusIdentificationJob(copy).wrap(x->x.get(0));
 
     }
@@ -219,7 +219,7 @@ public class Sirius {
                                                     experiment, Iterable<MolecularFormula> formulas) {
         final HashSet<MolecularFormula> fs = new HashSet<MolecularFormula>();
         for (MolecularFormula f : formulas) fs.add(f);
-        final Whiteset whiteset = Whiteset.ofMeasuredOrNeutral(fs);
+        final Whiteset whiteset = Whiteset.ofNeutralizedFormulas(fs, Sirius.class);
         experiment.setAnnotation(Whiteset.class, whiteset);
     }
 
@@ -651,11 +651,10 @@ public class Sirius {
         }
 
         private void computeIsotopeScoresAndMs1Decompositions(ProcessedInput input) {
-            BottomUpSearchSettings settings = input.getAnnotation(BottomUpSearchSettings.class, BottomUpSearchSettings::disabled);
+            FormulaSearchSettings settings = input.getAnnotation(FormulaSearchSettings.class, FormulaSearchSettings::deNovoOnly);
             if (getMs2Analyzer().hasPlugin(BottomUpSearch.class)) {
-                if (settings.isEnabledFor(input.getExperimentInformation().getIonMass())) {
-                    getMs1Analyzer().computeAndScoreIsotopePattern(input, Whiteset.ofMeasuredFormulas(BottomUpSearch.generateDecompositions(input).stream().map(SScored::getCandidate).collect(Collectors.toList())).addDeNovo(settings.stillUseDeNovoFor(input.getExperimentInformation().getIonMass())));
-                    return;
+                if (settings.useBottomUpFor(input.getExperimentInformation().getIonMass())) {
+                    BottomUpSearch.generateDecompositionsAndSaveToWhiteset(input);
                 }
             }
             getMs1Analyzer().computeAndScoreIsotopePattern(input);
@@ -677,12 +676,9 @@ public class Sirius {
                     .sorted(Comparator.reverseOrder())
                     .collect(Collectors.toList());
 
-            final PrecursorIonType ionType = computationInstance.getProcessedInput().getExperimentInformation().getPrecursorIonType();
-
             ProcessedInput pinput = computationInstance.getProcessedInput();
-            PossibleAdducts pa = pinput.getAnnotationOrThrow(PossibleAdducts.class);
             irs = irs.stream()
-                    .flatMap(idr->  resolveAdductIfPossible(idr, pa, pinput).stream())
+                    .flatMap(idr->  resolveAdductIfPossible(idr, pinput).stream())
                     .collect(Collectors.toList());
             return irs;
         }
@@ -693,18 +689,21 @@ public class Sirius {
          * @param possibleAdducts
          * @return
          */
-        private List<IdentificationResult<SiriusScore>> resolveAdductIfPossible(IdentificationResult<SiriusScore> identificationResult, PossibleAdducts possibleAdducts, ProcessedInput pinput) {
+        private List<IdentificationResult<SiriusScore>> resolveAdductIfPossible(IdentificationResult<SiriusScore> identificationResult, ProcessedInput pinput) {
             try {
                 FTree tree = identificationResult.getTree();
                 SiriusScore siriusScore = identificationResult.getScoreObject();
                 PrecursorIonType ionType = tree.getAnnotation(PrecursorIonType.class).orElseThrow();
-                final MolecularFormula mf = tree.getRoot().getFormula();
-                final FormulaConstraints constraints = pinput.getAnnotationOrThrow(FormulaConstraints.class);
+                final MolecularFormula measuredMF = tree.getRoot().getFormula();
 
+                final FormulaConstraints constraints = pinput.getAnnotationOrThrow(FormulaConstraints.class);
+                final PossibleAdducts possibleAdducts = pinput.getAnnotationOrThrow(PossibleAdducts.class);
+                final Whiteset ws = pinput.getAnnotationOrThrow(Whiteset.class);
 
                 List<IdentificationResult<SiriusScore>> resolvedTrees = new ArrayList<>();
                 for (PrecursorIonType pa : possibleAdducts.getAdducts(ionType.getIonization())) {
-                    if(isValidNeutralFormula(pa, constraints, mf)) {
+                    boolean checkElementFilter = false;
+                    if(isValidNeutralFormula(measuredMF, pa, ws, constraints, checkElementFilter)) {
                         resolvedTrees.add(new IdentificationResult<>(new IonTreeUtils().treeToNeutralTree(tree, pa, true), siriusScore));
                     }
                 }
@@ -723,9 +722,14 @@ public class Sirius {
             }
         }
 
-        private static boolean isValidNeutralFormula(PrecursorIonType pa, FormulaConstraints constraints, MolecularFormula mf) {
+        /*
+         * assumes that whiteset contains EVERY allowed parent molecular formula - eiter in measured or neutral form. Even de novo and bottup-up formulas must be included!
+         */
+        private static boolean isValidNeutralFormula(MolecularFormula measuredMF, PrecursorIonType ionType, Whiteset whiteset, FormulaConstraints constraints,  boolean checkElementFilter) {
+            if (!whiteset.containsMeasuredFormula(measuredMF, ionType)) return false;
+            if (checkElementFilter) return constraints.isSatisfied(ionType.measuredNeutralMoleculeToNeutralMolecule(measuredMF), ionType.getIonization());
             for (FormulaFilter filter : constraints.getFilters()) {
-                if (!filter.isValid(mf, pa)){
+                if (!filter.isValid(measuredMF, ionType)){
                     return false;
                 }
             }

@@ -4,6 +4,7 @@ MS2MassDeviation=de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation
 Timeout=de.unijena.bioinf.ChemistryBase.ms.ft.model.Timeout
 AdductSettings=de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings
 CandidateFormulas=de.unijena.bioinf.ChemistryBase.ms.ft.model.CandidateFormulas
+FormulaSearchSettings=de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSearchSettings
 CompoundQuality=de.unijena.bioinf.ChemistryBase.ms.CompoundQuality
 PossibleAdductSwitches=de.unijena.bioinf.ChemistryBase.ms.PossibleAdductSwitches
 IsotopeSettings=de.unijena.bioinf.ChemistryBase.ms.ft.model.IsotopeSettings

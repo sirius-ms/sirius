@@ -29,7 +29,6 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.IsotopicDistribution;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Ms1IsotopePattern;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -39,6 +38,7 @@ import de.unijena.bioinf.IsotopePatternAnalysis.generation.IsotopePatternGenerat
 import de.unijena.bioinf.IsotopePatternAnalysis.scoring.IsotopePatternScorer;
 import de.unijena.bioinf.IsotopePatternAnalysis.scoring.MassDifferenceDeviationScorer;
 import de.unijena.bioinf.IsotopePatternAnalysis.scoring.NormalDistributedIntensityScorer;
+import de.unijena.bioinf.MassDecomposer.Chemistry.AddDeNovoDecompositionsToWhiteset;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 import de.unijena.bioinf.sirius.ProcessedInput;
 
@@ -191,35 +191,40 @@ public class IsotopePatternAnalysis implements Parameterized {
         return new SimpleSpectrum(spec);
     }
 
-    /*
-    I'm afraid using whiteset annotation, as I do not know how that will interfere with the rest of the pipeline
+    /**
+     * May update the Whiteset annotation. If de novo decomposition has not been performed yet, adds formulas and sets the whiteset's denovo flag to false.
+     * @param input
+     * @return
      */
-    public boolean computeAndScoreIsotopePattern(ProcessedInput input, Whiteset whiteset) {
+    public boolean computeAndScoreIsotopePattern(ProcessedInput input) {
         final Ms1IsotopePattern pattern = input.getAnnotation(Ms1IsotopePattern.class, Ms1IsotopePattern::none);
         if (!pattern.isEmpty()) {
             final HashMap<MolecularFormula, IsotopePattern> explanations = new HashMap<>();
             final SimpleSpectrum spec = pattern.getSpectrum();
             final MS1MassDeviation massDev = input.getAnnotationOrDefault(MS1MassDeviation.class);
-            final PossibleAdducts ionModes = input.getAnnotationOrDefault(PossibleAdducts.class);
+            final PossibleAdducts possibleAdducts = input.getAnnotationOrDefault(PossibleAdducts.class);
             final FormulaConstraints constraints = input.getAnnotationOrDefault(FormulaConstraints.class);
             final double monoMz = spec.getMzAt(0); //should be coherent with FragmentationPatternAnalysis.performDecomposition()
-            final List<Decomposition> decompositions = whiteset == null ? null : whiteset.resolve(monoMz, massDev.allowedMassDeviation, ionModes.getIonModes().stream().map(PrecursorIonType::getPrecursorIonType).toList());
-            //map formulas to their ionMode
-            for (IonMode ionMode : ionModes.getIonModes()) {
+
+            Whiteset whiteset = input.getAnnotationOrNull(Whiteset.class);
+            if (whiteset == null || (!whiteset.isFinalized() && whiteset.stillRequiresDeNovoToBeAdded())) {
+                whiteset = AddDeNovoDecompositionsToWhiteset.createNewWhitesetWithDenovoAdded(whiteset, monoMz, massDev.allowedMassDeviation, possibleAdducts, constraints, decomposer);
+                input.setAnnotation(Whiteset.class, whiteset);
+            }
+
+            for (IonMode ionMode : possibleAdducts.getIonModes()) {
                 Set<MolecularFormula> formulas = new HashSet<>();
-                if (whiteset == null || whiteset.isStillAllowDeNovo())
-                    formulas.addAll(decomposer.getDecomposer(constraints.getChemicalAlphabet()).decomposeToFormulas(monoMz, ionMode, massDev.allowedMassDeviation, constraints));
                 //select formulas for the current ionMode
                 if (whiteset != null) {
-                    final Whiteset resolvedWhiteset = Whiteset.ofMeasuredFormulas(decompositions.stream().filter(decomposition -> decomposition.getIon().equals(ionMode)).map(d -> d.getCandidate()).toList());
-                    if (!resolvedWhiteset.isEmpty()) {
-                        formulas.addAll(resolvedWhiteset.getMeasuredFormulas());
-                    }
+                    final Set<MolecularFormula> resolvedWhiteset = whiteset.resolve(monoMz, massDev.allowedMassDeviation, possibleAdducts.getAdducts(ionMode)).stream().map(d -> d.getCandidate()).collect(Collectors.toSet());//decompositions.stream().filter(decomposition -> decomposition.getIon().equals(ionMode)).map(d -> d.getCandidate()).collect(Collectors.toSet());
+                    formulas.addAll(resolvedWhiteset);
                 }
+                //todo ElementFilter: same task performed multiple times for each ionMode. Remove or move
                 PrecursorIonType precursorIonType = input.getExperimentInformation().getPrecursorIonType();
                 if (!precursorIonType.hasNeitherAdductNorInsource()) {
-                    formulas=formulas.stream().filter(f->precursorIonType.measuredNeutralMoleculeToNeutralMolecule(f).isAllPositiveOrZero()).collect(Collectors.toSet());
+                    formulas=formulas.stream().filter(f->precursorIonType.measuredNeutralMoleculeToNeutralMolecule(f).isAllPositiveOrZero()).collect(Collectors.toSet()); //todo ElementFilter: this should be resolved earlier ... maybe the valence/formulaconstraints filter could be used. but on the other hand, this should also be tested earlier...
                 }
+
                 for (IsotopePattern pat : scoreFormulas(spec, formulas.stream().toList(), input.getExperimentInformation(), PrecursorIonType.getPrecursorIonType(ionMode))) {
                     explanations.put(pat.getCandidate(), pat);
                 }
@@ -227,11 +232,6 @@ public class IsotopePatternAnalysis implements Parameterized {
             input.setAnnotation(ExtractedIsotopePattern.class, new ExtractedIsotopePattern(spec, explanations));
             return true;
         } else return false;
-    }
-
-
-    public boolean computeAndScoreIsotopePattern(ProcessedInput input) {
-        return computeAndScoreIsotopePattern(input, null);
     }
 
     public List<IsotopePattern> deisotope(Ms2Experiment experiment, List<MolecularFormula> formulas) {
