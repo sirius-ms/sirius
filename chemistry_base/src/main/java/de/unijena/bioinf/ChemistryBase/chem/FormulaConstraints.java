@@ -430,6 +430,10 @@ public class FormulaConstraints implements Ms2ExperimentAnnotation {
             }
         });
         */
+        return isViolatesBounds(formula);
+    }
+
+    private boolean isViolatesBounds(MolecularFormula formula) {
         int atomNumber = 0;
         for (int i=0; i < lowerbounds.length; ++i) {
             final Element e = chemicalAlphabet.get(i);
@@ -439,6 +443,7 @@ public class FormulaConstraints implements Ms2ExperimentAnnotation {
         }
         return (atomNumber != formula.atomCount());
     }
+
     public boolean isViolated(ChemicalAlphabet formula) {
         for (Element e : formula.getElements()) {
             if (getUpperbound(e) <= 0) return true;
@@ -446,10 +451,22 @@ public class FormulaConstraints implements Ms2ExperimentAnnotation {
         return false;
     }
 
+    public boolean isViolated(MolecularFormula formula) {
+        for (FormulaFilter f : filters)
+            if (!f.isValid(formula)) return true;
+
+        return isViolatesBounds(formula);
+    }
+
     public boolean isSatisfied(MolecularFormula formula, Ionization ionization) {
         return !isViolated(formula, ionization);
     }
+
     public boolean isSatisfied(ChemicalAlphabet formula) {
+        return !isViolated(formula);
+    }
+
+    public boolean isSatisfied(MolecularFormula formula) {
         return !isViolated(formula);
     }
 
