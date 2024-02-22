@@ -203,7 +203,7 @@ public class Feature implements Annotated<DataAnnotation> {
         exp.setSource(new SpectrumFileSource(origin.source.getURI()));
 
         final Set<PrecursorIonType> ionTypes = getPossibleAdductTypes();
-        exp.computeAnnotationIfAbsent(DetectedAdducts.class, DetectedAdducts::new).put(DetectedAdducts.Keys.LCMS_ALIGN,new PossibleAdducts(ionTypes));
+        exp.computeAnnotationIfAbsent(DetectedAdducts.class, DetectedAdducts::new).put(DetectedAdducts.Source.LCMS_ALIGN,new PossibleAdducts(ionTypes));
 
         // add trace information
         exp.setAnnotation(LCMSPeakInformation.class, new LCMSPeakInformation(new CoelutingTraceSet[]{getTraceset()}));
