@@ -24,9 +24,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -36,28 +34,19 @@ import java.util.stream.Collectors;
  * This is intended to collect Adducts from different detection sources.
  * Can be attached to MsExperiment
  */
-public final class DetectedAdducts extends ConcurrentHashMap<String, PossibleAdducts> implements Ms2ExperimentAnnotation {
-    public enum Keys {LCMS_ALIGN, MS1_PREPROCESSOR, SPECTRAL_LIBRARY_SEARCH} //todo implement PossibleAdducts by library search
+public final class DetectedAdducts extends ConcurrentHashMap<String, PossibleAdducts> implements Ms2ExperimentAnnotation, Cloneable { //todo ElementFilter: ConcurrentHashMap is not immutable. Hence, in princlipe, this could be cleared. Should Ms2ExperimentAnnotation be immutable?
+    public enum Source {LCMS_ALIGN, MS1_PREPROCESSOR, SPECTRAL_LIBRARY_SEARCH, UNSPECIFIED_SOURCE} //todo implement PossibleAdducts by library search
 
     public DetectedAdducts() {
         super();
     }
 
-    public DetectedAdducts(Class<?> producer, PossibleAdducts adducts) {
-        this(producer.getSimpleName(), adducts);
-    }
-
-    public DetectedAdducts(String id, PossibleAdducts adducts) {
-        this();
-        put(id, adducts);
-    }
-
     public Optional<PossibleAdducts> getAdducts() {
-        return getAdducts(Keys.values());
+        return getAdducts(Source.values());
     }
 
-    public Optional<PossibleAdducts> getAdducts(Keys... keyPrio) {
-        return getAdducts(Arrays.stream(keyPrio).map(Keys::name).toArray(String[]::new));
+    public Optional<PossibleAdducts> getAdducts(Source... keyPrio) {
+        return getAdducts(Arrays.stream(keyPrio).map(Source::name).toArray(String[]::new));
     }
 
     public Optional<PossibleAdducts> getAdducts(String... keyPrio) {
@@ -79,16 +68,34 @@ public final class DetectedAdducts extends ConcurrentHashMap<String, PossibleAdd
         return values().stream().anyMatch(it -> !it.isEmpty());
     }
 
-    public boolean containsKey(Keys key) {
+    public boolean containsKey(Source key) {
         return containsKey(key.name());
     }
 
-    public PossibleAdducts get(Keys key) {
+    public PossibleAdducts get(Source key) {
         return get(key.name());
     }
 
-    public PossibleAdducts put(@NotNull Keys key, @NotNull PossibleAdducts value) {
+    public PossibleAdducts put(@NotNull Source key, @NotNull PossibleAdducts value) {
         return put(key.name(), value);
+    }
+
+    public Set<String> getSourceStrings() {
+        //todo ElementFilter: Do we require String keys for flexibility or can be change it to the Source enum?
+        return Collections.unmodifiableSet(keySet());
+    }
+
+    public Set<Source> getSources() {
+        Set<Source> sourceSet = new HashSet<>();
+        for (String key : keySet()) {
+            try {
+                Source source = Source.valueOf(key);
+                sourceSet.add(source);
+            } catch (IllegalArgumentException e) {
+                sourceSet.add(Source.UNSPECIFIED_SOURCE);
+            }
+        }
+        return sourceSet;
     }
 
     @Override

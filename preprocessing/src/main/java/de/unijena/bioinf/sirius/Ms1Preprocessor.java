@@ -20,15 +20,11 @@
 
 package de.unijena.bioinf.sirius;
 
-import de.unijena.bioinf.ChemistryBase.chem.Element;
-import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
-import de.unijena.bioinf.ChemistryBase.chem.FormulaFilter;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ValenceFilter;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Ms1IsotopePattern;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.*;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Ms2ExperimentValidator;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Warning;
 import de.unijena.bioinf.ms.annotations.Provides;
@@ -43,6 +39,7 @@ import de.unijena.bioinf.sirius.merging.Ms1Merging;
 import de.unijena.bioinf.sirius.validation.Ms1Validator;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -67,6 +64,7 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
         elementDetection(pinput);
         adductDetection(pinput);
         adjustValenceFilter(pinput);
+        createWhitesetFromCandidateList(pinput);
 
         return pinput;
     }
@@ -128,14 +126,14 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
         if (pinput.hasAnnotation(PossibleAdducts.class)) return;
 
         final DetectedAdducts detAdds = exp.computeAnnotationIfAbsent(DetectedAdducts.class, DetectedAdducts::new);
-        if (!detAdds.containsKey(DetectedAdducts.Keys.MS1_PREPROCESSOR) && !detAdds.containsKey(DetectedAdducts.Keys.LCMS_ALIGN))  {
+        if (!detAdds.containsKey(DetectedAdducts.Source.MS1_PREPROCESSOR) && !detAdds.containsKey(DetectedAdducts.Source.LCMS_ALIGN))  {
             final int charge = exp.getPrecursorIonType().getCharge();
 
             final AdductSettings settings = pinput.getAnnotationOrDefault(AdductSettings.class);
             final PossibleAdducts ionModes = ionModeDetection.detect(pinput, settings.getDetectable(charge));
 
             if (ionModes != null)
-                detAdds.put(DetectedAdducts.Keys.MS1_PREPROCESSOR, new PossibleAdducts(ionModes.getAdducts()));
+                detAdds.put(DetectedAdducts.Source.MS1_PREPROCESSOR, new PossibleAdducts(ionModes.getAdducts()));
         }
         pinput.setAnnotation(PossibleAdducts.class, exp.getPossibleAdductsOrFallback());
     }
@@ -143,7 +141,7 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
     @Requires(FormulaConstraints.class)
     @Requires(PossibleAdducts.class)
     @Requires(AdductSettings.class)
-    public void adjustValenceFilter(ProcessedInput pinput) {
+    public void adjustValenceFilter(ProcessedInput pinput) { //todo ElementFilter: check if this is still correct
         ;
         final PossibleAdducts possibleAdducts = pinput.getAnnotationOrThrow(PossibleAdducts.class);
 
@@ -167,6 +165,57 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
             }
         }
         pinput.setAnnotation(FormulaConstraints.class, fc.withNewFilters(newFilters));
+    }
+
+    @Requires(FormulaConstraints.class)
+    @Requires(PossibleAdducts.class)
+    @Provides(Whiteset.class)
+    private void createWhitesetFromCandidateList(ProcessedInput pinput) {
+        Whiteset whiteset = pinput.computeAnnotationIfAbsent(Whiteset.class, Whiteset::empty); //should not exist in general. maybe just for some old code.
+        FormulaSearchSettings formulaSettings = pinput.getAnnotation(FormulaSearchSettings.class, FormulaSearchSettings::deNovoOnly);
+        FormulaConstraints formulaConstraints = pinput.getAnnotationOrThrow(FormulaConstraints.class);
+        PossibleAdducts possibleAdducts = pinput.getAnnotationOrThrow(PossibleAdducts.class);
+
+        final boolean formulaGiven = pinput.getOriginalInput().getMolecularFormula()!=null;
+
+        if (formulaGiven) {
+            //from input file or otherwise specified formula
+            Set<MolecularFormula> inputFormulaSingleton = Collections.singleton(pinput.getOriginalInput().getMolecularFormula());
+            if (formulaSettings.prioritizeAndForceCandidatesFromInputFiles) {
+                //molecular formula given in input file. Force it.
+                //PossibleAdducts should always contain a matching adduct after Ms2Validator was run -> is this also true for MS1?
+                whiteset = Whiteset.ofNeutralizedFormulas(inputFormulaSingleton, Ms1Preprocessor.class).setRequiresDeNovo(false).setRequiresBottomUp(false).setIgnoreMassDeviationToResolveIonType(true).setFinalized(true);
+                pinput.setAnnotation(Whiteset.class, whiteset);
+                return;
+            } else {
+                //just add to whiteset. Still, it is kind of strange not to enforce it.
+                whiteset = whiteset.addNeutral(inputFormulaSingleton, Ms1Preprocessor.class);
+            }
+        }
+
+        if (pinput.hasAnnotation(CandidateFormulas.class) && pinput.getAnnotationOrThrow(CandidateFormulas.class).numberOfFormulas()>0) { //I think somehow we always have at least an empty based on DefaultInstanceProvider
+            //CandidateFormulas may be set by user, database or from input files.
+            //here we convert them to Whiteset to use and modify internally
+            CandidateFormulas candidateFormulas = pinput.getAnnotationOrThrow(CandidateFormulas.class);
+            if (formulaSettings.prioritizeAndForceCandidatesFromInputFiles && candidateFormulas.hasInputFileProvider()) {
+                //molecular formula candidate set given in input file. Force it.
+                whiteset = candidateFormulas.getWhitesetOfInputFileCandidates().setRequiresDeNovo(false).setRequiresBottomUp(false).setIgnoreMassDeviationToResolveIonType(true);
+            } else {
+                Whiteset candidateWhiteset = candidateFormulas.toWhiteSet();
+                if (formulaSettings.applyFormulaContraintsToCandidateLists) candidateWhiteset = candidateWhiteset.filter(formulaConstraints, possibleAdducts.getAdducts(), Ms1Preprocessor.class);
+                if (whiteset.isEmpty()) {
+                    whiteset = candidateWhiteset;
+                } else {
+                    whiteset = whiteset.add(candidateWhiteset);
+                }
+            }
+            whiteset = whiteset.setIgnoreMassDeviationToResolveIonType(formulaSettings.ignoreMassDeviationForCandidateList);
+        }
+        whiteset = whiteset
+                .setRequiresDeNovo(formulaSettings.useDeNovoFor(pinput.getExperimentInformation().getIonMass()))
+                .setRequiresBottomUp(formulaSettings.useBottomUpFor(pinput.getExperimentInformation().getIonMass()));
+
+        pinput.setAnnotation(Whiteset.class, whiteset);
     }
 
     public Set<Element> getSetOfPredictableElements() {

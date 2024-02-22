@@ -24,15 +24,16 @@ import com.google.common.collect.Iterables;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.CandidateFormulas;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.chemdb.FormulaCandidate;
 import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.rest.NetUtils;
+import de.unijena.bioinf.sirius.Ms1Preprocessor;
+import de.unijena.bioinf.sirius.ProcessedInput;
 
 import java.util.List;
 import java.util.Set;
@@ -41,51 +42,54 @@ import java.util.stream.Collectors;
 /**
  * retrieves a {@link Whiteset} of {@link MolecularFormula}s based on the given {@link SearchableDatabase}
  */
-public class FormulaWhiteListJob extends BasicJJob<Whiteset> {
+public class FormulaWhiteListJob extends BasicJJob<CandidateFormulas> {
     private final List<SearchableDatabase> searchableDatabases;
     private final WebWithCustomDatabase searchDB;
     //job parameter
     private final boolean onlyOrganic;
-    private final boolean annotate;
 
     //experiment parameter
-    private final Ms2Experiment experiment;
+    private final double precursorMass;
     private final Deviation massDev;
+    private final PrecursorIonType[] allowedIons;
 
-    public FormulaWhiteListJob(WebWithCustomDatabase searchDB, List<SearchableDatabase> searchableDatabases, Ms2Experiment experiment, boolean onlyOrganic, boolean annotateResult) {
-        this(searchDB, searchableDatabases, experiment, experiment.getAnnotationOrThrow(MS2MassDeviation.class).allowedMassDeviation, onlyOrganic, annotateResult);
-    }
-
-    public FormulaWhiteListJob(WebWithCustomDatabase searchDB, List<SearchableDatabase> searchableDatabases, Ms2Experiment experiment, Deviation massDev, boolean onlyOrganic, boolean annotateResult) {
+    private FormulaWhiteListJob(WebWithCustomDatabase searchDB, List<SearchableDatabase> searchableDatabases, double precursorMass, Deviation massDev, PrecursorIonType[] allowedIonTypes, boolean onlyOrganic) {
         super(JobType.WEBSERVICE);
         this.massDev = massDev;
         this.searchableDatabases = searchableDatabases;
-        this.experiment = experiment;
-        this.annotate = annotateResult;
+        this.precursorMass = precursorMass;
+        this.allowedIons = allowedIonTypes;
         this.searchDB = searchDB;
         this.onlyOrganic = onlyOrganic;
     }
 
-    @Override
-    protected Whiteset compute() throws Exception {
-        PrecursorIonType ionType = experiment.getPrecursorIonType();
-        PrecursorIonType[] allowedIons;
-        if (ionType.isIonizationUnknown()) {
-            allowedIons = Iterables.toArray(PeriodicTable.getInstance().getIonizations(ionType.getCharge()), PrecursorIonType.class);
-        } else {
-            allowedIons = new PrecursorIonType[]{ionType};
-        }
-
-
-        final Set<MolecularFormula> formulas = NetUtils.tryAndWait(() ->
-                searchDB.loadMolecularFormulas(experiment.getIonMass(), massDev, allowedIons, searchableDatabases)
-                .stream().map(FormulaCandidate::getFormula).filter(f -> !onlyOrganic || f.isCHNOPSBBrClFI())
-                .collect(Collectors.toSet()), this::checkForInterruption);
-
-        final Whiteset whiteset = Whiteset.ofNeutralizedFormulas(formulas);
-        if (annotate)
-            experiment.setAnnotation(Whiteset.class, whiteset);
-
-        return whiteset;
+    //todo as soon as we always perform adduct detection directly at import (and not as part of MS1PreProcessor), we can change this and retrieve the allowedIonTypes from PossibleAdducts
+    public static FormulaWhiteListJob create(WebWithCustomDatabase searchDB, List<SearchableDatabase> searchableDatabases, Ms2Experiment experiment , PrecursorIonType[] allowedIonTypes, boolean onlyOrganic) {
+        final double precursorMass = experiment.getIonMass();
+        final Deviation massDev = getMassDeviation(experiment);
+        return new FormulaWhiteListJob(searchDB, searchableDatabases, precursorMass, massDev, allowedIonTypes, onlyOrganic);
     }
+
+    /**
+     * returns the larger of MS1 and MS2 mass dev. This should be on the safe side for the downstream workflow.
+     */
+    private static Deviation getMassDeviation(Ms2Experiment experiment) {
+        double ionMass = experiment.getIonMass();
+        MS1MassDeviation ms1Dev = experiment.getAnnotationOrDefault(MS1MassDeviation.class);
+        MS2MassDeviation ms2Dev = experiment.getAnnotationOrDefault(MS2MassDeviation.class);
+
+        return new Deviation(
+                Math.max(ms1Dev.allowedMassDeviation.getPpm(), ms2Dev.allowedMassDeviation.getPpm()),
+                Math.max(ms1Dev.allowedMassDeviation.getAbsolute(), ms2Dev.allowedMassDeviation.getAbsolute()));
+    }
+
+    @Override
+    protected CandidateFormulas compute() throws Exception {
+        final Set<MolecularFormula> formulas = NetUtils.tryAndWait(() ->
+                searchDB.loadMolecularFormulas(precursorMass, massDev, allowedIons, searchableDatabases) //todo ElementFilter: I am not sure that every Database implementation only retrieves MFs that respect the adduct (and not just the mass)
+                .stream().map(FormulaCandidate::getFormula).filter(f -> !onlyOrganic || f.isCHNOPSBBrClFI()) //todo ElementFilter: handle this as part of element filter -> but if so, set reasonable defaults...
+                .collect(Collectors.toSet()), this::checkForInterruption);
+        return CandidateFormulas.fromSet(formulas, FormulaWhiteListJob.class);
+    }
+
 }

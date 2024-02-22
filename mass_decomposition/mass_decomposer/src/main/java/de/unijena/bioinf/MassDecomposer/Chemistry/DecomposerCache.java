@@ -22,6 +22,7 @@
 package de.unijena.bioinf.MassDecomposer.Chemistry;
 
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
@@ -69,6 +70,16 @@ public class DecomposerCache {
                 return d;
             } else if (state == dirtyState) return d;
         }
+    }
+
+    /**
+     * Gives a decomposer that also uses the elements of provided {@link PrecursorIonType}s with all adducts and in-source elements.
+     * @param alphabet
+     * @param ionTypes
+     * @return
+     */
+    public MassToFormulaDecomposer getDecomposer(ChemicalAlphabet alphabet, PrecursorIonType ionType) {
+        return getDecomposer(alphabet.extend(ionType.getAdduct().add(ionType.getInSourceFragmentation()).elementArray()));
     }
 
     private MassToFormulaDecomposer findDecomposer(ChemicalAlphabet alphabet, int state) {
