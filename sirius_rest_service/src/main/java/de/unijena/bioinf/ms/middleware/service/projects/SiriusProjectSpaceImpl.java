@@ -246,6 +246,23 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     @Override
+    public Page<SpectralLibraryMatch> findLibraryMatchesByFeatureId(String alignedFeatureId, Pageable pageable) {
+        SpectralSearchResult searchresult = loadSpectalLibraryMachtes(loadInstance(alignedFeatureId))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Could not find spectral library search results for '" + alignedFeatureId + "'! Maybe library search has not been executed"));
+
+        return new PageImpl<>(
+                searchresult.getResults().stream()
+                        .skip(pageable.getOffset())
+                        .limit(pageable.getPageSize())
+                        .map(SpectralLibraryMatch::of)
+                        .toList(),
+                pageable,
+                searchresult.getResults().size()
+        );
+    }
+
+    @Override
     public FormulaCandidate findFormulaCandidateByFeatureIdAndId(String formulaId, String alignedFeatureId, @NotNull EnumSet<FormulaCandidate.OptField> optFields) {
         Class<? extends DataAnnotation>[] annotations = resolveFormulaCandidateAnnotations(optFields);
         Instance instance = loadInstance(alignedFeatureId);
@@ -291,11 +308,13 @@ public class SiriusProjectSpaceImpl implements Project {
 
     @Override
     public StructureCandidateFormula findTopStructureCandidateByFeatureId(String alignedFeatureId, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
-        List<Class<? extends DataAnnotation>> para = (optFields.contains(StructureCandidateScored.OptField.fingerprint)
+        List<Class<? extends DataAnnotation>> para = optFields.contains(StructureCandidateScored.OptField.fingerprint)
                 ? List.of(FormulaScoring.class, FBCandidatesTopK.class, FBCandidateFingerprints.class)
-                : List.of(FormulaScoring.class, FBCandidatesTopK.class));
+                : List.of(FormulaScoring.class, FBCandidatesTopK.class);
 
         Instance instance = loadInstance(alignedFeatureId);
+        SpectralSearchResult spectralSearchResult = optFields.contains(StructureCandidateScored.OptField.libraryMatches) ?
+                loadSpectalLibraryMachtes(instance).orElse(null) : null;
 
         return instance.loadTopFormulaResult(List.of(TopCSIScore.class)).flatMap(fr -> {
             fr.getId().setAnnotation(FBCandidateNumber.class, new FBCandidateNumber(1));
@@ -307,6 +326,7 @@ public class SiriusProjectSpaceImpl implements Project {
                                             .map(FBCandidateFingerprints::getFingerprints)
                                             .map(fps -> fps.isEmpty() ? null : fps.get(0))
                                             .orElse(null),
+                                    spectralSearchResult,
                                     fr.getAnnotationOrThrow(FormulaScoring.class), optFields, fr.getId()))
                     );
         }).orElse(null);
@@ -355,6 +375,8 @@ public class SiriusProjectSpaceImpl implements Project {
     @Override
     public StructureCandidateScored findStructureCandidateById(@NotNull String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
         Instance instance = loadInstance(alignedFeatureId);
+        SpectralSearchResult spectralSearchResult = optFields.contains(StructureCandidateScored.OptField.libraryMatches) ?
+                loadSpectalLibraryMachtes(instance).orElse(null) : null;
         FormulaResultId fid = parseFID(instance, formulaId);
         return instance.loadFormulaResult(fid, FormulaScoring.class, FBCandidates.class)
                 .map(fr -> {
@@ -370,7 +392,7 @@ public class SiriusProjectSpaceImpl implements Project {
                                             .flatMap(frr -> frr.getAnnotation(FBCandidateFingerprints.class))
                                             .map(fps -> fps.getFingerprints().get(index.get())).orElse(null);
 
-                                return StructureCandidateFormula.of(result, fp, fr.getAnnotation(FormulaScoring.class).orElse(null), optFields, fid);
+                                return StructureCandidateFormula.of(result, fp, spectralSearchResult, fr.getAnnotation(FormulaScoring.class).orElse(null), optFields, fid);
                             }
                             index.incrementAndGet();
                         }
@@ -478,14 +500,18 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
 
+    protected static Optional<SpectralSearchResult> loadSpectalLibraryMachtes(Instance instance) {
+        return instance.loadCompoundContainer(SpectralSearchResult.class).getAnnotation(SpectralSearchResult.class);
+    }
+
     protected static Ms2Experiment loadExperiment(Instance instance) {
         return instance.loadCompoundContainer(Ms2Experiment.class).getAnnotation(Ms2Experiment.class)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Could not find spectra data for '" + instance.getID().getFeatureId() + "'!"));
     }
 
-    protected Instance loadInstance(String cid) {
-        return projectSpaceManager.getInstanceFromCompound(parseCID(cid));
+    protected Instance loadInstance(String alignedFeatureId) {
+        return projectSpaceManager.getInstanceFromCompound(parseCID(alignedFeatureId));
     }
 
     protected CompoundContainerId parseCID(String cid) {
@@ -578,6 +604,9 @@ public class SiriusProjectSpaceImpl implements Project {
         long topK = pageable.getOffset() + pageable.getPageSize();
         fidObj.setAnnotation(FBCandidateNumber.class, topK <= 0 ? FBCandidateNumber.ALL : new FBCandidateNumber((int) topK));
         FormulaResult fr = instance.loadFormulaResult(fidObj, (Class<? extends DataAnnotation>[]) para.toArray(Class[]::new)).orElseThrow();
+        SpectralSearchResult spectralSearchResult = optFields.contains(StructureCandidateScored.OptField.libraryMatches) ?
+                loadSpectalLibraryMachtes(instance).orElse(null) : null;
+
         return fr.getAnnotation(FBCandidatesTopK.class).map(FBCandidatesTopK::getResults).map(l -> {
             List<StructureCandidateFormula> candidates = new ArrayList<>();
 
@@ -589,19 +618,19 @@ public class SiriusProjectSpaceImpl implements Project {
                         .stream().skip(pageable.getOffset()).limit(pageable.getPageSize()).iterator();
 
                 if (it.hasNext())//tophit
-                    candidates.add(StructureCandidateFormula.of(it.next(), fps.next(),
+                    candidates.add(StructureCandidateFormula.of(it.next(), fps.next(), spectralSearchResult,
                             fr.getAnnotationOrNull(FormulaScoring.class), optFields, fidObj));
 
                 while (it.hasNext())
-                    candidates.add(StructureCandidateFormula.of(it.next(), fps.next(),
+                    candidates.add(StructureCandidateFormula.of(it.next(), fps.next(), spectralSearchResult,
                             null, optFields, fidObj));
             } else {
                 if (it.hasNext())//tophit
-                    candidates.add(StructureCandidateFormula.of(it.next(), null,
+                    candidates.add(StructureCandidateFormula.of(it.next(), null, spectralSearchResult,
                             fr.getAnnotationOrNull(FormulaScoring.class), optFields, fidObj));
 
                 while (it.hasNext())
-                    candidates.add(StructureCandidateFormula.of(it.next(), null,
+                    candidates.add(StructureCandidateFormula.of(it.next(), null, spectralSearchResult,
                             null, optFields, fidObj));
             }
             return candidates;
@@ -749,11 +778,11 @@ public class SiriusProjectSpaceImpl implements Project {
                             //add formula summary
                             cSum.setFormulaAnnotation(asFormulaCandidate(topHit).build());
 
-                        topHit.getAnnotation(MsNovelistFBCandidates.class).map(MsNovelistFBCandidates::getResults)
-                                .filter(l -> !l.isEmpty()).map(r -> r.get(0)).map(s ->
-                                        StructureCandidateFormula.of(s, topHit.getAnnotationOrThrow(FormulaScoring.class),
-                                                EnumSet.noneOf(StructureCandidateScored.OptField.class), topHit.getId()))
-                                .ifPresent(cSum::setStructureAnnotation);
+                            topHit.getAnnotation(MsNovelistFBCandidates.class).map(MsNovelistFBCandidates::getResults)
+                                    .filter(l -> !l.isEmpty()).map(r -> r.get(0)).map(s ->
+                                            StructureCandidateFormula.of(s, topHit.getAnnotationOrThrow(FormulaScoring.class),
+                                                    EnumSet.noneOf(StructureCandidateScored.OptField.class), topHit.getId()))
+                                    .ifPresent(cSum::setStructureAnnotation);
 
                             topHit.getAnnotation(CanopusResult.class).map(CompoundClasses::of).
                                     ifPresent(cSum::setCompoundClassAnnotation);
@@ -777,7 +806,7 @@ public class SiriusProjectSpaceImpl implements Project {
                         topHit.getAnnotation(FBCandidatesTopK.class).map(FBCandidatesTopK::getResults)
                                 .filter(l -> !l.isEmpty()).map(r -> r.get(0)).map(s ->
                                         StructureCandidateFormula.of(s, topHit.getAnnotationOrThrow(FormulaScoring.class),
-                                                EnumSet.of(StructureCandidateScored.OptField.dbLinks, StructureCandidateScored.OptField.refSpectraLinks), topHit.getId()))
+                                                EnumSet.of(StructureCandidateScored.OptField.dbLinks, StructureCandidateScored.OptField.libraryMatches), topHit.getId()))
                                 .ifPresent(cSum::setStructureAnnotation);
 
                         topHit.getAnnotation(CanopusResult.class).map(CompoundClasses::of).

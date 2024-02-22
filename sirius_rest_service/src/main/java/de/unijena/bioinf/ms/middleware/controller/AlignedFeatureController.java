@@ -143,6 +143,26 @@ public class AlignedFeatureController {
     }
 
     /**
+     * List of spectral library matches for the given 'alignedFeatureId'.
+     *
+     * @param projectId        project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @param searchQuery      optional search query in specified format
+     * @param querySyntax      query syntax used fpr searchQuery
+     * @return Spectral library matches of this feature (aligned over runs).
+     */
+    @GetMapping(value = "/{alignedFeatureId}/spectral-library-matches", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Page<SpectralLibraryMatch> getStructureCandidates(
+            @PathVariable String projectId, @PathVariable String alignedFeatureId,
+            @ParameterObject Pageable pageable,
+            @RequestParam(required = false) String searchQuery,
+            @RequestParam(defaultValue = "LUCENE") SearchQueryType querySyntax
+    ) {
+        return projectsProvider.getProjectOrThrow(projectId)
+                .findLibraryMatchesByFeatureId(alignedFeatureId, pageable);
+    }
+
+    /**
      * Mass Spec data (input data) for the given 'alignedFeatureId' .
      *
      * @param projectId        project-space to read from.

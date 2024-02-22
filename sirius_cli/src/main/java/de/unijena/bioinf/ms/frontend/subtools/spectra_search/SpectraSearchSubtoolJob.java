@@ -118,7 +118,7 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
                 SpectralSimilarity similarity = r.getSimilarity();
 
                 try {
-                    Ms2ReferenceSpectrum reference = ApplicationCore.WEB_API.getChemDB().getReferenceSpectrum(CustomDataSources.getSourceFromName(r.getDbName()), r.getReferenceUUID());
+                    Ms2ReferenceSpectrum reference = ApplicationCore.WEB_API.getChemDB().getReferenceSpectrum(CustomDataSources.getSourceFromName(r.getDbName()), r.getUuid());
                     builder.append(String.format("\n%10.3e | %5d | %9s | %9.3f | %2d | %5s | %10s | %s | %s | %s  | %s | %s | %s",
                             similarity.similarity,
                             similarity.sharedPeaks,

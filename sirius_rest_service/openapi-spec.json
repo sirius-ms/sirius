@@ -2087,6 +2087,100 @@
         }
       }
     },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "List of spectral library matches for the given \u0027alignedFeatureId\u0027.",
+        "description": "List of spectral library matches for the given \u0027alignedFeatureId\u0027.",
+        "operationId": "getStructureCandidates_1",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) the structure candidates belong to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "searchQuery",
+            "in": "query",
+            "description": "optional search query in specified format",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "querySyntax",
+            "in": "query",
+            "description": "query syntax used fpr searchQuery",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SearchQueryType"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Spectral library matches of this feature (aligned over runs).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageSpectralLibraryMatch"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/ms-data": {
       "get": {
         "tags": [
@@ -3995,17 +4089,52 @@
             "format": "double"
           }
         },
-        "description": "User/developer friendly parameter subset for the Formula/SIRIUS tool"
+        "description": "User/developer friendly parameter subset for the Formula/SIRIUS tool\n Can use results from Spectral library search tool."
+      },
+      "SpectralAlignmentType": {
+        "type": "string",
+        "description": "",
+        "nullable": true,
+        "enum": [
+          "INTENSITY",
+          "GAUSSIAN",
+          "MODIFIED_COSINE"
+        ]
       },
       "SpectralLibrarySearch": {
+        "required": [
+          "spectraSearchDBs"
+        ],
         "type": "object",
         "properties": {
           "enabled": {
             "type": "boolean",
             "description": "tags whether the tool is enabled"
+          },
+          "spectraSearchDBs": {
+            "type": "array",
+            "description": "Structure Databases with Reference spectra to search in.\n \u003cp\u003e\n Defaults to BIO + Custom Databases. Possible values are available to Database API.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "peakDeviationPpm": {
+            "type": "number",
+            "description": "Maximum allowed mass deviation in ppm for matching peaks.",
+            "format": "double",
+            "nullable": true
+          },
+          "precursorDeviationPpm": {
+            "type": "number",
+            "description": "Maximum allowed mass deviation in ppm for matching the precursor. If not specified, the same value as for the peaks is used.",
+            "format": "double",
+            "nullable": true
+          },
+          "scoring": {
+            "$ref": "#/components/schemas/SpectralAlignmentType"
           }
         },
-        "description": ""
+        "description": "User/developer friendly parameter subset for the Spectral library search tool."
       },
       "StructureDbSearch": {
         "required": [
@@ -5136,6 +5265,49 @@
         "description": "",
         "nullable": true
       },
+      "SpectralLibraryMatch": {
+        "required": [
+          "candidateInChiKey",
+          "querySpectrumIndex",
+          "similarity",
+          "uuid"
+        ],
+        "type": "object",
+        "properties": {
+          "similarity": {
+            "type": "number",
+            "format": "double"
+          },
+          "sharedPeaks": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "querySpectrumIndex": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dbName": {
+            "type": "string"
+          },
+          "dbId": {
+            "type": "string"
+          },
+          "uuid": {
+            "type": "string"
+          },
+          "splash": {
+            "type": "string"
+          },
+          "smiles": {
+            "type": "string"
+          },
+          "candidateInChiKey": {
+            "type": "string"
+          }
+        },
+        "description": "",
+        "nullable": true
+      },
       "SpectrumAnnotation": {
         "type": "object",
         "properties": {
@@ -5208,12 +5380,12 @@
               "$ref": "#/components/schemas/DBLink"
             }
           },
-          "refSpectraLinks": {
+          "spectralLibraryMatches": {
             "type": "array",
-            "description": "List of spectral library links belonging to this structure candidate\n OPTIONAL: needs to be added by parameter",
+            "description": "List of spectral library matches belonging to this structure candidate\n OPTIONAL: needs to be added by parameter",
             "nullable": true,
             "items": {
-              "$ref": "#/components/schemas/DBLink"
+              "$ref": "#/components/schemas/SpectralLibraryMatch"
             }
           }
         },
@@ -5246,12 +5418,12 @@
               "$ref": "#/components/schemas/DBLink"
             }
           },
-          "refSpectraLinks": {
+          "spectralLibraryMatches": {
             "type": "array",
-            "description": "List of spectral library links belonging to this structure candidate\n OPTIONAL: needs to be added by parameter",
+            "description": "List of spectral library matches belonging to this structure candidate\n OPTIONAL: needs to be added by parameter",
             "nullable": true,
             "items": {
-              "$ref": "#/components/schemas/DBLink"
+              "$ref": "#/components/schemas/SpectralLibraryMatch"
             }
           },
           "csiScore": {
@@ -5539,7 +5711,7 @@
           "none",
           "fingerprint",
           "dbLinks",
-          "refSpectraLinks"
+          "libraryMatches"
         ]
       },
       "PageStructureCandidateFormula": {
@@ -5614,12 +5786,12 @@
               "$ref": "#/components/schemas/DBLink"
             }
           },
-          "refSpectraLinks": {
+          "spectralLibraryMatches": {
             "type": "array",
-            "description": "List of spectral library links belonging to this structure candidate\n OPTIONAL: needs to be added by parameter",
+            "description": "List of spectral library matches belonging to this structure candidate\n OPTIONAL: needs to be added by parameter",
             "nullable": true,
             "items": {
-              "$ref": "#/components/schemas/DBLink"
+              "$ref": "#/components/schemas/SpectralLibraryMatch"
             }
           },
           "csiScore": {
@@ -5658,6 +5830,52 @@
           }
         },
         "description": ""
+      },
+      "PageSpectralLibraryMatch": {
+        "type": "object",
+        "properties": {
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpectralLibraryMatch"
+            }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
       },
       "FormulaCandidateOptField": {
         "type": "string",

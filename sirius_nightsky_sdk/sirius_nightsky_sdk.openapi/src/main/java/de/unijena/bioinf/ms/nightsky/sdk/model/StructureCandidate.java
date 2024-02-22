@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import de.unijena.bioinf.ms.nightsky.sdk.model.DBLink;
+import de.unijena.bioinf.ms.nightsky.sdk.model.SpectralLibraryMatch;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -36,7 +37,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   StructureCandidate.JSON_PROPERTY_STRUCTURE_NAME,
   StructureCandidate.JSON_PROPERTY_XLOG_P,
   StructureCandidate.JSON_PROPERTY_DB_LINKS,
-  StructureCandidate.JSON_PROPERTY_REF_SPECTRA_LINKS
+  StructureCandidate.JSON_PROPERTY_SPECTRAL_LIBRARY_MATCHES
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class StructureCandidate {
@@ -55,8 +56,8 @@ public class StructureCandidate {
   public static final String JSON_PROPERTY_DB_LINKS = "dbLinks";
   private List<DBLink> dbLinks;
 
-  public static final String JSON_PROPERTY_REF_SPECTRA_LINKS = "refSpectraLinks";
-  private List<DBLink> refSpectraLinks;
+  public static final String JSON_PROPERTY_SPECTRAL_LIBRARY_MATCHES = "spectralLibraryMatches";
+  private List<SpectralLibraryMatch> spectralLibraryMatches;
 
   public StructureCandidate() {
   }
@@ -199,37 +200,37 @@ public class StructureCandidate {
   }
 
 
-  public StructureCandidate refSpectraLinks(List<DBLink> refSpectraLinks) {
+  public StructureCandidate spectralLibraryMatches(List<SpectralLibraryMatch> spectralLibraryMatches) {
     
-    this.refSpectraLinks = refSpectraLinks;
+    this.spectralLibraryMatches = spectralLibraryMatches;
     return this;
   }
 
-  public StructureCandidate addRefSpectraLinksItem(DBLink refSpectraLinksItem) {
-    if (this.refSpectraLinks == null) {
-      this.refSpectraLinks = new ArrayList<>();
+  public StructureCandidate addSpectralLibraryMatchesItem(SpectralLibraryMatch spectralLibraryMatchesItem) {
+    if (this.spectralLibraryMatches == null) {
+      this.spectralLibraryMatches = new ArrayList<>();
     }
-    this.refSpectraLinks.add(refSpectraLinksItem);
+    this.spectralLibraryMatches.add(spectralLibraryMatchesItem);
     return this;
   }
 
    /**
-   * List of spectral library links belonging to this structure candidate  OPTIONAL: needs to be added by parameter
-   * @return refSpectraLinks
+   * List of spectral library matches belonging to this structure candidate  OPTIONAL: needs to be added by parameter
+   * @return spectralLibraryMatches
   **/
   @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_REF_SPECTRA_LINKS)
+  @JsonProperty(JSON_PROPERTY_SPECTRAL_LIBRARY_MATCHES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public List<DBLink> getRefSpectraLinks() {
-    return refSpectraLinks;
+  public List<SpectralLibraryMatch> getSpectralLibraryMatches() {
+    return spectralLibraryMatches;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_REF_SPECTRA_LINKS)
+  @JsonProperty(JSON_PROPERTY_SPECTRAL_LIBRARY_MATCHES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setRefSpectraLinks(List<DBLink> refSpectraLinks) {
-    this.refSpectraLinks = refSpectraLinks;
+  public void setSpectralLibraryMatches(List<SpectralLibraryMatch> spectralLibraryMatches) {
+    this.spectralLibraryMatches = spectralLibraryMatches;
   }
 
   @Override
@@ -246,12 +247,12 @@ public class StructureCandidate {
         Objects.equals(this.structureName, structureCandidate.structureName) &&
         Objects.equals(this.xlogP, structureCandidate.xlogP) &&
         Objects.equals(this.dbLinks, structureCandidate.dbLinks) &&
-        Objects.equals(this.refSpectraLinks, structureCandidate.refSpectraLinks);
+        Objects.equals(this.spectralLibraryMatches, structureCandidate.spectralLibraryMatches);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(inchiKey, smiles, structureName, xlogP, dbLinks, refSpectraLinks);
+    return Objects.hash(inchiKey, smiles, structureName, xlogP, dbLinks, spectralLibraryMatches);
   }
 
   @Override
@@ -263,7 +264,7 @@ public class StructureCandidate {
     sb.append("    structureName: ").append(toIndentedString(structureName)).append("\n");
     sb.append("    xlogP: ").append(toIndentedString(xlogP)).append("\n");
     sb.append("    dbLinks: ").append(toIndentedString(dbLinks)).append("\n");
-    sb.append("    refSpectraLinks: ").append(toIndentedString(refSpectraLinks)).append("\n");
+    sb.append("    spectralLibraryMatches: ").append(toIndentedString(spectralLibraryMatches)).append("\n");
     sb.append("}");
     return sb.toString();
   }

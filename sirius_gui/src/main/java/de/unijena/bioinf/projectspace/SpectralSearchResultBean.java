@@ -103,7 +103,7 @@ public class SpectralSearchResultBean {
             this.match = match;
             try {
                 SpectralLibrary db = null;//SearchableDatabases.getCustomDatabase(match.getDbName()).orElseThrow().toSpectralLibraryOrThrow();
-                this.reference = db.getReferenceSpectrum(match.getReferenceUUID());
+                this.reference = db.getReferenceSpectrum(match.getUuid());
                 if (instance != null) {
                     BasicSpectrum query = instance.getMsData().getMs2Spectra().get(match.getQuerySpectrumIndex());
                     this.queryName = SpectraSearchSubtoolJob.getQueryName(

@@ -65,6 +65,7 @@ docs/PageFormulaCandidate.md
 docs/PageGuiInfo.md
 docs/PageJob.md
 docs/PageProjectInfo.md
+docs/PageSpectralLibraryMatch.md
 docs/PageStructureCandidateFormula.md
 docs/PageStructureCandidateScored.md
 docs/PageableObject.md
@@ -78,6 +79,8 @@ docs/SearchQueryType.md
 docs/SimplePeak.md
 docs/Sirius.md
 docs/SortObject.md
+docs/SpectralAlignmentType.md
+docs/SpectralLibraryMatch.md
 docs/SpectralLibrarySearch.md
 docs/SpectrumAnnotation.md
 docs/StructureCandidate.md
@@ -172,6 +175,7 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageFormulaCandidate.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageGuiInfo.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageJob.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageProjectInfo.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageSpectralLibraryMatch.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageStructureCandidateFormula.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageStructureCandidateScored.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageableObject.java
@@ -184,6 +188,8 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SearchQueryType.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SimplePeak.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Sirius.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SortObject.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SpectralAlignmentType.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SpectralLibraryMatch.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SpectralLibrarySearch.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SpectrumAnnotation.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/StructureCandidate.java

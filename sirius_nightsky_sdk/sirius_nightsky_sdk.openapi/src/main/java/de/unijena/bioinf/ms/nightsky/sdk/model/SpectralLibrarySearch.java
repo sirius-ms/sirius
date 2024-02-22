@@ -20,19 +20,39 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import de.unijena.bioinf.ms.nightsky.sdk.model.SpectralAlignmentType;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * 
+ * User/developer friendly parameter subset for the Spectral library search tool.
  */
 @JsonPropertyOrder({
-  SpectralLibrarySearch.JSON_PROPERTY_ENABLED
+  SpectralLibrarySearch.JSON_PROPERTY_ENABLED,
+  SpectralLibrarySearch.JSON_PROPERTY_SPECTRA_SEARCH_D_BS,
+  SpectralLibrarySearch.JSON_PROPERTY_PEAK_DEVIATION_PPM,
+  SpectralLibrarySearch.JSON_PROPERTY_PRECURSOR_DEVIATION_PPM,
+  SpectralLibrarySearch.JSON_PROPERTY_SCORING
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class SpectralLibrarySearch {
   public static final String JSON_PROPERTY_ENABLED = "enabled";
   private Boolean enabled;
+
+  public static final String JSON_PROPERTY_SPECTRA_SEARCH_D_BS = "spectraSearchDBs";
+  private List<String> spectraSearchDBs = new ArrayList<>();
+
+  public static final String JSON_PROPERTY_PEAK_DEVIATION_PPM = "peakDeviationPpm";
+  private Double peakDeviationPpm;
+
+  public static final String JSON_PROPERTY_PRECURSOR_DEVIATION_PPM = "precursorDeviationPpm";
+  private Double precursorDeviationPpm;
+
+  public static final String JSON_PROPERTY_SCORING = "scoring";
+  private SpectralAlignmentType scoring;
 
   public SpectralLibrarySearch() {
   }
@@ -62,6 +82,118 @@ public class SpectralLibrarySearch {
     this.enabled = enabled;
   }
 
+
+  public SpectralLibrarySearch spectraSearchDBs(List<String> spectraSearchDBs) {
+    
+    this.spectraSearchDBs = spectraSearchDBs;
+    return this;
+  }
+
+  public SpectralLibrarySearch addSpectraSearchDBsItem(String spectraSearchDBsItem) {
+    if (this.spectraSearchDBs == null) {
+      this.spectraSearchDBs = new ArrayList<>();
+    }
+    this.spectraSearchDBs.add(spectraSearchDBsItem);
+    return this;
+  }
+
+   /**
+   * Structure Databases with Reference spectra to search in.  &lt;p&gt;  Defaults to BIO + Custom Databases. Possible values are available to Database API.
+   * @return spectraSearchDBs
+  **/
+  @javax.annotation.Nonnull
+  @JsonProperty(JSON_PROPERTY_SPECTRA_SEARCH_D_BS)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
+  public List<String> getSpectraSearchDBs() {
+    return spectraSearchDBs;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_SPECTRA_SEARCH_D_BS)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setSpectraSearchDBs(List<String> spectraSearchDBs) {
+    this.spectraSearchDBs = spectraSearchDBs;
+  }
+
+
+  public SpectralLibrarySearch peakDeviationPpm(Double peakDeviationPpm) {
+    
+    this.peakDeviationPpm = peakDeviationPpm;
+    return this;
+  }
+
+   /**
+   * Maximum allowed mass deviation in ppm for matching peaks.
+   * @return peakDeviationPpm
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_PEAK_DEVIATION_PPM)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Double getPeakDeviationPpm() {
+    return peakDeviationPpm;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_PEAK_DEVIATION_PPM)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setPeakDeviationPpm(Double peakDeviationPpm) {
+    this.peakDeviationPpm = peakDeviationPpm;
+  }
+
+
+  public SpectralLibrarySearch precursorDeviationPpm(Double precursorDeviationPpm) {
+    
+    this.precursorDeviationPpm = precursorDeviationPpm;
+    return this;
+  }
+
+   /**
+   * Maximum allowed mass deviation in ppm for matching the precursor. If not specified, the same value as for the peaks is used.
+   * @return precursorDeviationPpm
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_PRECURSOR_DEVIATION_PPM)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Double getPrecursorDeviationPpm() {
+    return precursorDeviationPpm;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_PRECURSOR_DEVIATION_PPM)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setPrecursorDeviationPpm(Double precursorDeviationPpm) {
+    this.precursorDeviationPpm = precursorDeviationPpm;
+  }
+
+
+  public SpectralLibrarySearch scoring(SpectralAlignmentType scoring) {
+    
+    this.scoring = scoring;
+    return this;
+  }
+
+   /**
+   * Get scoring
+   * @return scoring
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_SCORING)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public SpectralAlignmentType getScoring() {
+    return scoring;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_SCORING)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setScoring(SpectralAlignmentType scoring) {
+    this.scoring = scoring;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -71,12 +203,16 @@ public class SpectralLibrarySearch {
       return false;
     }
     SpectralLibrarySearch spectralLibrarySearch = (SpectralLibrarySearch) o;
-    return Objects.equals(this.enabled, spectralLibrarySearch.enabled);
+    return Objects.equals(this.enabled, spectralLibrarySearch.enabled) &&
+        Objects.equals(this.spectraSearchDBs, spectralLibrarySearch.spectraSearchDBs) &&
+        Objects.equals(this.peakDeviationPpm, spectralLibrarySearch.peakDeviationPpm) &&
+        Objects.equals(this.precursorDeviationPpm, spectralLibrarySearch.precursorDeviationPpm) &&
+        Objects.equals(this.scoring, spectralLibrarySearch.scoring);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(enabled);
+    return Objects.hash(enabled, spectraSearchDBs, peakDeviationPpm, precursorDeviationPpm, scoring);
   }
 
   @Override
@@ -84,6 +220,10 @@ public class SpectralLibrarySearch {
     StringBuilder sb = new StringBuilder();
     sb.append("class SpectralLibrarySearch {\n");
     sb.append("    enabled: ").append(toIndentedString(enabled)).append("\n");
+    sb.append("    spectraSearchDBs: ").append(toIndentedString(spectraSearchDBs)).append("\n");
+    sb.append("    peakDeviationPpm: ").append(toIndentedString(peakDeviationPpm)).append("\n");
+    sb.append("    precursorDeviationPpm: ").append(toIndentedString(precursorDeviationPpm)).append("\n");
+    sb.append("    scoring: ").append(toIndentedString(scoring)).append("\n");
     sb.append("}");
     return sb.toString();
   }

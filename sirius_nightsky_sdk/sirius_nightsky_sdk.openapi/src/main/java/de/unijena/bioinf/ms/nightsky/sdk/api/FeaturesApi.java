@@ -17,6 +17,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.LipidAnnotation;
 import de.unijena.bioinf.ms.nightsky.sdk.model.MsData;
 import de.unijena.bioinf.ms.nightsky.sdk.model.PageAlignedFeature;
 import de.unijena.bioinf.ms.nightsky.sdk.model.PageFormulaCandidate;
+import de.unijena.bioinf.ms.nightsky.sdk.model.PageSpectralLibraryMatch;
 import de.unijena.bioinf.ms.nightsky.sdk.model.PageStructureCandidateFormula;
 import de.unijena.bioinf.ms.nightsky.sdk.model.PageStructureCandidateScored;
 import de.unijena.bioinf.ms.nightsky.sdk.model.SearchQueryType;
@@ -1878,6 +1879,115 @@ public class FeaturesApi {
      */
     public ResponseSpec getStructureCandidatesWithResponseSpec(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         return getStructureCandidatesRequestCreation(projectId, alignedFeatureId, page, size, sort, searchQuery, querySyntax, optFields);
+    }
+    /**
+     * List of spectral library matches for the given &#39;alignedFeatureId&#39;.
+     * List of spectral library matches for the given &#39;alignedFeatureId&#39;.
+     * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param searchQuery optional search query in specified format
+     * @param querySyntax query syntax used fpr searchQuery
+     * @return PageSpectralLibraryMatch
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getStructureCandidates1RequestCreation(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getStructureCandidates1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'alignedFeatureId' is set
+        if (alignedFeatureId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getStructureCandidates1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("alignedFeatureId", alignedFeatureId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "page", page));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "searchQuery", searchQuery));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "querySyntax", querySyntax));
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<PageSpectralLibraryMatch> localVarReturnType = new ParameterizedTypeReference<PageSpectralLibraryMatch>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * List of spectral library matches for the given &#39;alignedFeatureId&#39;.
+     * List of spectral library matches for the given &#39;alignedFeatureId&#39;.
+     * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param searchQuery optional search query in specified format
+     * @param querySyntax query syntax used fpr searchQuery
+     * @return PageSpectralLibraryMatch
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public PageSpectralLibraryMatch getStructureCandidates1(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax) throws WebClientResponseException {
+        ParameterizedTypeReference<PageSpectralLibraryMatch> localVarReturnType = new ParameterizedTypeReference<PageSpectralLibraryMatch>() {};
+        return getStructureCandidates1RequestCreation(projectId, alignedFeatureId, page, size, sort, searchQuery, querySyntax).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * List of spectral library matches for the given &#39;alignedFeatureId&#39;.
+     * List of spectral library matches for the given &#39;alignedFeatureId&#39;.
+     * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param searchQuery optional search query in specified format
+     * @param querySyntax query syntax used fpr searchQuery
+     * @return ResponseEntity&lt;PageSpectralLibraryMatch&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<PageSpectralLibraryMatch> getStructureCandidates1WithHttpInfo(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax) throws WebClientResponseException {
+        ParameterizedTypeReference<PageSpectralLibraryMatch> localVarReturnType = new ParameterizedTypeReference<PageSpectralLibraryMatch>() {};
+        return getStructureCandidates1RequestCreation(projectId, alignedFeatureId, page, size, sort, searchQuery, querySyntax).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * List of spectral library matches for the given &#39;alignedFeatureId&#39;.
+     * List of spectral library matches for the given &#39;alignedFeatureId&#39;.
+     * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param searchQuery optional search query in specified format
+     * @param querySyntax query syntax used fpr searchQuery
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getStructureCandidates1WithResponseSpec(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax) throws WebClientResponseException {
+        return getStructureCandidates1RequestCreation(projectId, alignedFeatureId, page, size, sort, searchQuery, querySyntax);
     }
     /**
      * List of StructureCandidates the given &#39;formulaId&#39; with minimal information.

@@ -50,14 +50,14 @@ public class SpectraSearchOptions implements ToolChainOptions<SpectraSearchSubto
         defaultConfigOptions.changeOption("SpectralSearchDB", dbList);
     }
 
-    @CommandLine.Option(names = "--ppm-max-peaks", descriptionKey = "SpectraMatchingMassDeviation.allowedPeakDeviation")
+    @CommandLine.Option(names = "--ppm-max-peaks", descriptionKey = "SpectralMatchingMassDeviation.allowedPeakDeviation")
     public void setPpmMax(DefaultParameter value) throws Exception {
-        defaultConfigOptions.changeOption("SpectraMatchingMassDeviation.allowedPeakDeviation", value + "ppm");
+        defaultConfigOptions.changeOption("SpectralMatchingMassDeviation.allowedPeakDeviation", value + "ppm");
     }
 
-    @CommandLine.Option(names = "--ppm-max-precursor", descriptionKey = "SpectraMatchingMassDeviation.allowedPrecursorDeviation")
+    @CommandLine.Option(names = "--ppm-max-precursor", descriptionKey = "SpectralMatchingMassDeviation.allowedPrecursorDeviation")
     public void setPpmMaxMs2(DefaultParameter value) throws Exception {
-        defaultConfigOptions.changeOption("SpectraMatchingMassDeviation.allowedPrecursorDeviation", value + "ppm");
+        defaultConfigOptions.changeOption("SpectralMatchingMassDeviation.allowedPrecursorDeviation", value + "ppm");
     }
 
     @CommandLine.Option(names = "--print", descriptionKey = "SpectralSearchLog", description = "Number of matches to print per experiment.")

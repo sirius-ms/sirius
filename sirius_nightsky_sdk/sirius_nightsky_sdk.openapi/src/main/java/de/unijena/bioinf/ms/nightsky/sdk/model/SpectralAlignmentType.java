@@ -24,19 +24,17 @@ import com.fasterxml.jackson.annotation.JsonValue;
 /**
  * 
  */
-public enum StructureCandidateOptField {
+public enum SpectralAlignmentType {
   
-  NONE("none"),
+  INTENSITY("INTENSITY"),
   
-  FINGERPRINT("fingerprint"),
+  GAUSSIAN("GAUSSIAN"),
   
-  DBLINKS("dbLinks"),
-  
-  LIBRARYMATCHES("libraryMatches");
+  MODIFIED_COSINE("MODIFIED_COSINE");
 
   private String value;
 
-  StructureCandidateOptField(String value) {
+  SpectralAlignmentType(String value) {
     this.value = value;
   }
 
@@ -51,8 +49,8 @@ public enum StructureCandidateOptField {
   }
 
   @JsonCreator
-  public static StructureCandidateOptField fromValue(String value) {
-    for (StructureCandidateOptField b : StructureCandidateOptField.values()) {
+  public static SpectralAlignmentType fromValue(String value) {
+    for (SpectralAlignmentType b : SpectralAlignmentType.values()) {
       if (b.value.equals(value)) {
         return b;
       }

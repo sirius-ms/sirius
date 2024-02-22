@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import de.unijena.bioinf.ms.nightsky.sdk.model.BinaryFingerprint;
 import de.unijena.bioinf.ms.nightsky.sdk.model.DBLink;
+import de.unijena.bioinf.ms.nightsky.sdk.model.SpectralLibraryMatch;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -37,7 +38,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   StructureCandidateScored.JSON_PROPERTY_STRUCTURE_NAME,
   StructureCandidateScored.JSON_PROPERTY_XLOG_P,
   StructureCandidateScored.JSON_PROPERTY_DB_LINKS,
-  StructureCandidateScored.JSON_PROPERTY_REF_SPECTRA_LINKS,
+  StructureCandidateScored.JSON_PROPERTY_SPECTRAL_LIBRARY_MATCHES,
   StructureCandidateScored.JSON_PROPERTY_CSI_SCORE,
   StructureCandidateScored.JSON_PROPERTY_TANIMOTO_SIMILARITY,
   StructureCandidateScored.JSON_PROPERTY_CONFIDENCE_EXACT_MATCH,
@@ -61,8 +62,8 @@ public class StructureCandidateScored {
   public static final String JSON_PROPERTY_DB_LINKS = "dbLinks";
   private List<DBLink> dbLinks;
 
-  public static final String JSON_PROPERTY_REF_SPECTRA_LINKS = "refSpectraLinks";
-  private List<DBLink> refSpectraLinks;
+  public static final String JSON_PROPERTY_SPECTRAL_LIBRARY_MATCHES = "spectralLibraryMatches";
+  private List<SpectralLibraryMatch> spectralLibraryMatches;
 
   public static final String JSON_PROPERTY_CSI_SCORE = "csiScore";
   private Double csiScore;
@@ -220,37 +221,37 @@ public class StructureCandidateScored {
   }
 
 
-  public StructureCandidateScored refSpectraLinks(List<DBLink> refSpectraLinks) {
+  public StructureCandidateScored spectralLibraryMatches(List<SpectralLibraryMatch> spectralLibraryMatches) {
     
-    this.refSpectraLinks = refSpectraLinks;
+    this.spectralLibraryMatches = spectralLibraryMatches;
     return this;
   }
 
-  public StructureCandidateScored addRefSpectraLinksItem(DBLink refSpectraLinksItem) {
-    if (this.refSpectraLinks == null) {
-      this.refSpectraLinks = new ArrayList<>();
+  public StructureCandidateScored addSpectralLibraryMatchesItem(SpectralLibraryMatch spectralLibraryMatchesItem) {
+    if (this.spectralLibraryMatches == null) {
+      this.spectralLibraryMatches = new ArrayList<>();
     }
-    this.refSpectraLinks.add(refSpectraLinksItem);
+    this.spectralLibraryMatches.add(spectralLibraryMatchesItem);
     return this;
   }
 
    /**
-   * List of spectral library links belonging to this structure candidate  OPTIONAL: needs to be added by parameter
-   * @return refSpectraLinks
+   * List of spectral library matches belonging to this structure candidate  OPTIONAL: needs to be added by parameter
+   * @return spectralLibraryMatches
   **/
   @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_REF_SPECTRA_LINKS)
+  @JsonProperty(JSON_PROPERTY_SPECTRAL_LIBRARY_MATCHES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public List<DBLink> getRefSpectraLinks() {
-    return refSpectraLinks;
+  public List<SpectralLibraryMatch> getSpectralLibraryMatches() {
+    return spectralLibraryMatches;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_REF_SPECTRA_LINKS)
+  @JsonProperty(JSON_PROPERTY_SPECTRAL_LIBRARY_MATCHES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setRefSpectraLinks(List<DBLink> refSpectraLinks) {
-    this.refSpectraLinks = refSpectraLinks;
+  public void setSpectralLibraryMatches(List<SpectralLibraryMatch> spectralLibraryMatches) {
+    this.spectralLibraryMatches = spectralLibraryMatches;
   }
 
 
@@ -397,7 +398,7 @@ public class StructureCandidateScored {
         Objects.equals(this.structureName, structureCandidateScored.structureName) &&
         Objects.equals(this.xlogP, structureCandidateScored.xlogP) &&
         Objects.equals(this.dbLinks, structureCandidateScored.dbLinks) &&
-        Objects.equals(this.refSpectraLinks, structureCandidateScored.refSpectraLinks) &&
+        Objects.equals(this.spectralLibraryMatches, structureCandidateScored.spectralLibraryMatches) &&
         Objects.equals(this.csiScore, structureCandidateScored.csiScore) &&
         Objects.equals(this.tanimotoSimilarity, structureCandidateScored.tanimotoSimilarity) &&
         Objects.equals(this.confidenceExactMatch, structureCandidateScored.confidenceExactMatch) &&
@@ -407,7 +408,7 @@ public class StructureCandidateScored {
 
   @Override
   public int hashCode() {
-    return Objects.hash(inchiKey, smiles, structureName, xlogP, dbLinks, refSpectraLinks, csiScore, tanimotoSimilarity, confidenceExactMatch, confidenceApproxMatch, fingerprint);
+    return Objects.hash(inchiKey, smiles, structureName, xlogP, dbLinks, spectralLibraryMatches, csiScore, tanimotoSimilarity, confidenceExactMatch, confidenceApproxMatch, fingerprint);
   }
 
   @Override
@@ -419,7 +420,7 @@ public class StructureCandidateScored {
     sb.append("    structureName: ").append(toIndentedString(structureName)).append("\n");
     sb.append("    xlogP: ").append(toIndentedString(xlogP)).append("\n");
     sb.append("    dbLinks: ").append(toIndentedString(dbLinks)).append("\n");
-    sb.append("    refSpectraLinks: ").append(toIndentedString(refSpectraLinks)).append("\n");
+    sb.append("    spectralLibraryMatches: ").append(toIndentedString(spectralLibraryMatches)).append("\n");
     sb.append("    csiScore: ").append(toIndentedString(csiScore)).append("\n");
     sb.append("    tanimotoSimilarity: ").append(toIndentedString(tanimotoSimilarity)).append("\n");
     sb.append("    confidenceExactMatch: ").append(toIndentedString(confidenceExactMatch)).append("\n");

@@ -120,13 +120,13 @@ bootJar {
 }
 
 openApi {
-    apiDocsUrl.set("http://localhost:8080/v3/api-docs")
+    apiDocsUrl.set("http://localhost:8888/v3/api-docs")
     outputDir.set(file("$projectDir"))
     outputFileName.set("openapi-spec.json")
     waitTimeInSeconds.set(20)
 
     customBootRun {
-        args = ["rest", "-s"]
+        args = ["rest", "-s", "-p", "8888"]
     }
 }
 

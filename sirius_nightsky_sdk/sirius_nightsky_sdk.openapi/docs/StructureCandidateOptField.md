@@ -11,7 +11,7 @@
 
 * `DBLINKS` (value: `"dbLinks"`)
 
-* `REFSPECTRALINKS` (value: `"refSpectraLinks"`)
+* `LIBRARYMATCHES` (value: `"libraryMatches"`)
 
 
 

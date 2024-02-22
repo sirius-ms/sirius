@@ -21,6 +21,8 @@ package de.unijena.bioinf.ms.middleware;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.JobManager;
+import de.unijena.bioinf.ms.middleware.service.dbs.StructureDatabaseService;
+import de.unijena.bioinf.ms.middleware.service.dbs.StructureDatabaseServiceImpl;
 import de.unijena.bioinf.ms.middleware.service.gui.SiriusProjectSpaceGuiService;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
@@ -72,9 +74,13 @@ public class SiriusContext{
     }
 
     @Bean
-    @DependsOn({"webAPI"})
     ConnectionChecker connectionMonitor(WebAPI<?> webAPI){
         return new ConnectionChecker(webAPI);
+    }
+
+    @Bean
+    StructureDatabaseService structureDatabaseService(WebAPI<?> webAPI){
+        return new StructureDatabaseServiceImpl(webAPI);
     }
 
     @Bean(destroyMethod = "shutdown")

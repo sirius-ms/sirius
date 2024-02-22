@@ -151,8 +151,8 @@ FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
             ppmSpinner = makeParameterSpinner("MS2MassDeviation.allowedMassDeviation",
                     PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class).allowedMassDeviation.getPpm(),
                     0.25, 50, 0.25, m -> m.getNumber().doubleValue() + "ppm");
-            parameterBindings.put("SpectraMatchingMassDeviation.allowedPeakDeviation", () -> ((SpinnerNumberModel)ppmSpinner.getModel()).getNumber().doubleValue() + "ppm");
-            parameterBindings.put("SpectraMatchingMassDeviation.allowedPrecursorDeviation", () -> ((SpinnerNumberModel)ppmSpinner.getModel()).getNumber().doubleValue() + "ppm");
+            parameterBindings.put("SpectralMatchingMassDeviation.allowedPeakDeviation", () -> ((SpinnerNumberModel)ppmSpinner.getModel()).getNumber().doubleValue() + "ppm");
+            parameterBindings.put("SpectralMatchingMassDeviation.allowedPrecursorDeviation", () -> ((SpinnerNumberModel)ppmSpinner.getModel()).getNumber().doubleValue() + "ppm");
 
             if (hasMs2) {
                 smallParameters.addNamed("MS2 mass accuracy (ppm)", ppmSpinner);
