@@ -22,19 +22,21 @@ package de.unijena.bioinf.spectraldb;
 
 
 import de.unijena.bioinf.ms.properties.DefaultProperty;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.extern.jackson.Jacksonized;
 
 /**
  * Specify settings to inject/preserver formula candidates that belong to
  * high scoring reference spectra.
  */
+@Getter
 public class InjectHighSpectraMatchFormulas {
 
     /**
      * Similarity Threshold to inject formula candidates no matter which score they have or which filter is applied.
      */
     @DefaultProperty
-    @Getter
     private final double minScoreToInject;
 
     /**
@@ -42,7 +44,6 @@ public class InjectHighSpectraMatchFormulas {
      * list no matter of other filter settings or there rank regarding SIRIUS score.
      */
     @DefaultProperty
-    @Getter
     private final boolean injectFormulas;
 
     /**
@@ -51,8 +52,12 @@ public class InjectHighSpectraMatchFormulas {
      * will apply.
      */
     @DefaultProperty
-    @Getter
     private final boolean alwaysPredict;
+
+
+    private InjectHighSpectraMatchFormulas() {
+        this(-1d, false, false);
+    }
 
     private InjectHighSpectraMatchFormulas(double minScoreToInject, boolean injectFormulas, boolean alwaysPredict) {
         this.minScoreToInject = minScoreToInject;
