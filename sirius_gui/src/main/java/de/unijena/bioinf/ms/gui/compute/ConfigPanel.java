@@ -30,7 +30,7 @@ import java.util.EnumSet;
 import java.util.function.Function;
 
 public abstract class ConfigPanel extends JPanel implements ParameterProvider {
-    protected final ParameterBinding parameterBindings = new ParameterBinding();
+    protected final ParameterBinding parameterBindings;
 
     @Override
     public ParameterBinding getParameterBinding() {
@@ -38,9 +38,13 @@ public abstract class ConfigPanel extends JPanel implements ParameterProvider {
     }
 
     public ConfigPanel() {
-        applyDefaultLayout(this);
+        this(new ParameterBinding());
     }
 
+    public ConfigPanel(ParameterBinding parameterBindings) {
+        this.parameterBindings = parameterBindings;
+        applyDefaultLayout(this);
+    }
 
     protected JPanel applyDefaultLayout(@NotNull final JPanel pToStyle) {
         RelativeLayout rl = new RelativeLayout(RelativeLayout.X_AXIS, GuiUtils.LARGE_GAP);
@@ -92,5 +96,15 @@ public abstract class ConfigPanel extends JPanel implements ParameterProvider {
         GuiUtils.assignParameterToolTip(box, parameterKey);
         parameterBindings.put(parameterKey, () -> result.apply((T) box.getSelectedItem()));
         return box;
+    }
+
+    public JTextField makeParameterTextField(@NotNull String parameterKey, int columns) {
+        return makeParameterTextField(parameterKey, PropertyManager.DEFAULTS.getConfigValue(parameterKey), columns);
+    }
+
+    public JTextField makeParameterTextField(@NotNull String parameterKey, String value, int columns) {
+        JTextField textField = new JTextField(value, columns);
+        parameterBindings.put(parameterKey, textField::getText);
+        return textField;
     }
 }
