@@ -29,10 +29,7 @@ import de.unijena.bioinf.MassDecomposer.Interval;
 import de.unijena.bioinf.MassDecomposer.RangeMassDecomposer;
 import de.unijena.bioinf.MassDecomposer.ValencyAlphabet;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class MassToFormulaDecomposer extends RangeMassDecomposer<Element> {
 
@@ -115,6 +112,43 @@ public class MassToFormulaDecomposer extends RangeMassDecomposer<Element> {
         return decomposeToFormulas(mass, ionization, deviation, getBoundaries(constraints), FormulaFilterList.create(constraints.getFilters()));
     }
 
+    /**
+     * Decomposes molecular formulas for the measured mass, but applies the constraints to the neutral formula.
+     * Example: neutral formula C3H6O with {@link PrecursorIonType} [M+NH4]+ meets contraint [CHO]. But the measured formula is C3H9NO.
+     *
+     * Note: we will decompose the exact measuredMass and not the neutral mass to make sure that no differences between
+     * knowing and not knowing the adduct emerge.
+     * @param measuredMass
+     * @param ionType
+     * @param deviation
+     * @param constraints
+     * @return molecular formulas decompotions for the measured mass
+     */
+    public List<MolecularFormula> decomposeToMeasuredFormulas(double measuredMass, PrecursorIonType ionType, double massTolerance, FormulaConstraints constraints) {
+        //
+        Map<Element, Interval> boundaries = getBoundaries(constraints);
+        if (!applyIonType(boundaries, ionType)) return Collections.emptyList();
+        return decomposeToMeasuredFormulas(measuredMass, ionType, massTolerance, getBoundaries(constraints), FormulaFilterList.create(constraints.getFilters()));
+    }
+
+    /**
+     *
+     * @param boundaries
+     * @param ionType
+     * @return false, if ionType cannot be applied to boundaries. Hence, no valid formula can exist.
+     */
+    private boolean applyIonType(Map<Element, Interval> boundaries, PrecursorIonType ionType) {
+        MolecularFormula modification = ionType.getModification(); //can contain positiv and negative number of elements.
+        for (Element element : modification) {
+            Interval interval = boundaries.get(element);
+            if (interval == null) throw new IllegalArgumentException("Incompatible alphabet due to PrecursorIonType: " + alphabet +  " with ion type " + ionType); //todo do I need to check something to prevent this?
+            Interval newInterval = new Interval(Math.max(0, interval.getMin()+modification.numberOf(element)), Math.min((long)interval.getMax()+modification.numberOf(element), Integer.MAX_VALUE)); //don't check overflow for min since it makes literally know sense to ever have a min value of Integer.MAX_VALUE when decomposing
+            if (newInterval.getMin() > newInterval.getMax()) return false; //no valid formula possible with this alphabet and ionType
+            boundaries.put(element, newInterval);
+        }
+        return true;
+    }
+
     private Map<Element, Interval> getBoundaries(FormulaConstraints constraints) {
         final Map<Element, Interval> boundaries = alphabet.toMap();
         if (!constraints.getChemicalAlphabet().equals(alphabet)) {
@@ -181,6 +215,31 @@ public class MassToFormulaDecomposer extends RangeMassDecomposer<Element> {
             final MolecularFormula formula = alphabet.decompositionToFormula(ary);
             if (filter!=null && !filter.isValid(formula, ionization)) continue;
             formulas.add(formula);
+        }
+        return formulas;
+    }
+
+    /**
+     *
+     * @param measuredMass
+     * @param ionType
+     * @param massTolerance
+     * @param boundaries adjusted to the ionType. E.g. Forcing the N for ammonium adduct.
+     * @param filter
+     * @return
+     */
+    private List<MolecularFormula> decomposeToMeasuredFormulas(double measuredMass, PrecursorIonType ionType, double massTolerance, Map<Element, Interval> boundaries, final FormulaFilter filter) {
+        if (measuredMass < 0d)
+            throw new IllegalArgumentException("Expect positive mass for decomposition: " + measuredMass);
+        final Map<Element, Interval> boundaryMap;
+        boundaryMap = boundaries;
+        double neutralMass = ionType.getIonization().subtractFromMass(measuredMass); //neutral mass of precursor, not of the compound.
+        final List<int[]> decompositions = super.decompose(Math.max(0,neutralMass-massTolerance), neutralMass+massTolerance, boundaryMap);
+        final ArrayList<MolecularFormula> formulas = new ArrayList<MolecularFormula>(decompositions.size());
+        for (int[] ary : decompositions) {
+            final MolecularFormula measuredNeutralFormula = alphabet.decompositionToFormula(ary);
+            if (filter!=null && !filter.isValid(measuredNeutralFormula, ionType)) continue;
+            formulas.add(measuredNeutralFormula);
         }
         return formulas;
     }

@@ -44,6 +44,6 @@ public class ParserUtils {
         }
 
         if (exp.getMolecularFormula() != null)
-            exp.setAnnotation(Whiteset.class, Whiteset.ofNeutralizedFormulas(List.of(exp.getMolecularFormula())));
+            exp.setAnnotation(Whiteset.class, Whiteset.ofNeutralizedFormulas(List.of(exp.getMolecularFormula()), ParserUtils.class));
     }
 }

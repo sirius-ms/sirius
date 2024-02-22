@@ -25,8 +25,8 @@ import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.data.Tagging;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.CandidateFormulas;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.ForbidRecalibration;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.ChemistryBase.ms.utils.*;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.babelms.GenericParser;
@@ -123,7 +123,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private final BufferedReader reader;
         private int lineNumber;
         private String compoundName = null;
-        private Whiteset formulas;
+        private CandidateFormulas formulas;
         private List<String> tags;
 
         //private NoiseInformation noiseInformation;
@@ -297,10 +297,10 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             } else if (optionName.equals("formula") || optionName.equals("formulas")) {
                 final List<String> valueList = Arrays.asList(value.split("\\s+|,"));
                 if (this.formulas == null) {
-                    this.formulas = Whiteset.of(valueList);
+                    this.formulas = CandidateFormulas.of(valueList, JenaMsParser.class);
                 } else {
                     warn("Molecular formulas is set twice, Sirius will collect them as a Whitelist!");
-                    this.formulas.add(Whiteset.of(valueList));
+                    this.formulas.addAndMerge(CandidateFormulas.of(valueList, JenaMsParser.class));
                 }
             } else if (optionName.equals("parentmass")) {
                 if (parentMass != 0) warn("parent mass is set twice");
@@ -426,10 +426,10 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             //set fields
             exp.setIonMass(parentMass);
             if (formulas != null) {
-                if (formulas.getNeutralFormulas().size() == 1)
-                    exp.setMolecularFormula(formulas.getNeutralFormulas().iterator().next());
+                if (formulas.numberOfFormulas() == 1)
+                    exp.setMolecularFormula(formulas.getFormulas().iterator().next());
                 else
-                    exp.setAnnotation(Whiteset.class, formulas);
+                    exp.setAnnotation(CandidateFormulas.class, formulas);
             }
             exp.setName(compoundName);
             exp.setFeatureId(featureId);

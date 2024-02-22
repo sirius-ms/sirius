@@ -72,7 +72,7 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
     @Nullable
     private PrecursorIonType ionType = null;
     @Nullable
-    private DetectedAdducts possibleAdducts = null;
+    private DetectedAdducts detectedAdducts = null;
     @NotNull
     private List<Class<? extends FormulaScore>> rankingScores = Collections.emptyList();
     @Nullable
@@ -144,11 +144,11 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
 
     @NotNull
     public Optional<DetectedAdducts> getDetectedAdducts() {
-        return Optional.ofNullable(possibleAdducts);
+        return Optional.ofNullable(detectedAdducts);
     }
 
-    public void setDetectedAdducts(@Nullable DetectedAdducts possibleAdducts) {
-        this.possibleAdducts = possibleAdducts;
+    public void setDetectedAdducts(@Nullable DetectedAdducts detectedAdducts) {
+        this.detectedAdducts = detectedAdducts;
     }
 
     @NotNull
@@ -260,7 +260,7 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         setRankingScoreTypes(cid.rankingScores);
         setIonMass(cid.ionMass);
         setIonType(cid.ionType);
-        setDetectedAdducts(cid.possibleAdducts);
+        setDetectedAdducts(cid.detectedAdducts);
         setRt(cid.rt);
         setConfidenceScore(cid.confidenceScore);
         setConfidenceScoreApproximate(cid.confidenceScoreApproximate);

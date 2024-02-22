@@ -180,7 +180,7 @@ public class ConsensusFeature implements Annotated<DataAnnotation> {
 
         final Set<PrecursorIonType> ionTypes = getPossibleAdductTypes();
 //        if (!ionTypes.isEmpty())
-            exp.computeAnnotationIfAbsent(DetectedAdducts.class, DetectedAdducts::new).put(DetectedAdducts.Keys.LCMS_ALIGN, new PossibleAdducts(ionTypes));
+            exp.computeAnnotationIfAbsent(DetectedAdducts.class, DetectedAdducts::new).put(DetectedAdducts.Source.LCMS_ALIGN, new PossibleAdducts(ionTypes));
 
         return exp;
     }

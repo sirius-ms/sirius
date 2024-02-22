@@ -24,10 +24,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
-import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
-import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.ForbidRecalibration;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
@@ -141,8 +138,8 @@ public class ElGordoPlugin extends SiriusPlugin  {
 
     @Override
     protected void beforeDecomposing(ProcessedInput input) {
-        super.beforeDecomposing(input);
-        final List<MassToLipid.LipidCandidate> lipidCandidates = new MassToLipid(input.getAnnotation(MS1MassDeviation.class).map(x->x.allowedMassDeviation).orElseGet(()->new Deviation(20)), input.getExperimentInformation().getPrecursorIonType().getCharge()).analyzePrecursor(input.getExperimentInformation().getIonMass());
+        if (input.getAnnotationOrThrow(Whiteset.class).isFinalized()) return;
+        final List<MassToLipid.LipidCandidate> lipidCandidates = new MassToLipid(input.getAnnotation(MS1MassDeviation.class).map(x->x.allowedMassDeviation).orElseGet(()->new Deviation(20)), input.getExperimentInformation().getPrecursorIonType().getCharge()).analyzePrecursor(input.getExperimentInformation().getIonMass()); //todo ElementFiter: this use of "or Else use 20 pp" clashes with whiteset.resolve. Should we expect given Dev values everywhere at this stage or set some default earlier?
         final Deviation ms2dev = input.getAnnotation(MS2MassDeviation.class).map(x -> x.allowedMassDeviation).orElseGet(() -> new Deviation(20));
         final MassToLipid m2l = new MassToLipid(ms2dev, input.getExperimentInformation().getPrecursorIonType().getCharge());
         final Spectrum<ProcessedPeak> peaklist = Spectrums.wrap(input.getMergedPeaks());
@@ -150,28 +147,32 @@ public class ElGordoPlugin extends SiriusPlugin  {
         final Optional<AnnotatedLipidSpectrum<SimpleSpectrum>> annotated = lipidCandidates.stream().map(x -> m2l.annotateSpectrum(x, ms2)).filter(Objects::nonNull).max(Comparator.naturalOrder());
         if (annotated.isPresent() && annotated.get().getDetectionLevel().isFormulaSpecified()) {
             // specify molecular formula
-
             final AnnotatedLipidSpectrum<SimpleSpectrum> ano = annotated.get();
             final LipidSpecies species = ano.getAnnotatedSpecies();
             Whiteset whiteset = input.getAnnotation(Whiteset.class, Whiteset::empty);
+            boolean enforceElGordo = input.getAnnotation(EnforceElGordoFormula.class, () -> EnforceElGordoFormula.newInstance(true)).value;
             if (!whiteset.isEmpty()) {
                 if (whiteset.getNeutralFormulas().contains(ano.getFormula()) || whiteset.getMeasuredFormulas().contains(ano.getIonType().neutralMoleculeToMeasuredNeutralMolecule(ano.getFormula()))) {
-                    if (input.getAnnotation(EnforceElGordoFormula.class, () -> EnforceElGordoFormula.newInstance(true)).value) {
-                        whiteset = Whiteset.ofNeutralizedFormulas(Arrays.asList(ano.getFormula()));
+                    if (enforceElGordo) {
+                        //enforce using only the ElGordo formula
+                        whiteset = whiteset.filterByNeutralFormulas(Collections.singleton(ano.getFormula()), input.getAnnotationOrThrow(PossibleAdducts.class).getAdducts(), ElGordoPlugin.class).setFinalized(true); //todo ElementFilter: test
+                        //alternatively a similar behaviour could be established just generating a new whiteset, but this "forgets" previous provider classes
+//                        whiteset = Whiteset.ofNeutralizedFormulas(Arrays.asList(ano.getFormula()), ElGordoPlugin.class);
                     } else {
-                        whiteset = whiteset.addNeutral(Collections.singleton(ano.getFormula()));
+                        whiteset = whiteset.addNeutral(Collections.singleton(ano.getFormula()), ElGordoPlugin.class);
                     }
                 } else {
+                    //todo ElementFilter: is this a warning? can happen for certain parameter combinations, e.g. for searching small database with formulas
                     LoggerFactory.getLogger(ElGordoPlugin.class).warn(input.getExperimentInformation().getName() + " is estimated to be " + species.toString() + " but the corresponding molecular formula " + ano.getFormula() + " is not part of the candidate set. Compound name = " + input.getExperimentInformation().getName());
-                    return;
+                    whiteset = whiteset.addNeutral(Collections.singleton(ano.getFormula()), ElGordoPlugin.class);
                 }
             } else {
-                whiteset = Whiteset.ofNeutralizedFormulas(Arrays.asList(ano.getFormula()));
+                whiteset = Whiteset.ofNeutralizedFormulas(Arrays.asList(ano.getFormula()), ElGordoPlugin.class).setFinalized(enforceElGordo);
             }
             input.setAnnotation(Whiteset.class, whiteset);
             if (input.getAnnotation(EnforceElGordoFormula.class, () -> EnforceElGordoFormula.newInstance(true)).value) {
-                input.getExperimentInformation().setPrecursorIonType(ano.getIonType());
-                input.getOrCreatePeakAnnotation(DecompositionList.class).set(input.getParentPeak(), DecompositionList.fromFormulas(Arrays.asList(ano.getIonType().neutralMoleculeToMeasuredNeutralMolecule(ano.getFormula())), ano.getIonType().getIonization()));
+                input.setAnnotation(PossibleAdducts.class, new PossibleAdducts(ano.getIonType())); //should have no real influence on current pipeline, since the enfored formula also implicitely specifies the adduct
+//                input.getOrCreatePeakAnnotation(DecompositionList.class).set(input.getParentPeak(), DecompositionList.fromFormulas(Arrays.asList(ano.getIonType().neutralMoleculeToMeasuredNeutralMolecule(ano.getFormula())), ano.getIonType().getIonization())); //todo ElementFiler: not used in FPA. Info overriden in FPA.performDecomposition()
             }
 
             // pre-annotate spectrum

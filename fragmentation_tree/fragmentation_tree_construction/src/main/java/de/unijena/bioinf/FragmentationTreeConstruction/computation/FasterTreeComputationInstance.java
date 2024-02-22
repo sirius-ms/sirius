@@ -98,7 +98,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
     private FasterTreeComputationInstance(FragmentationPatternAnalysis analyzer, ProcessedInput input, FTree tree) {
         this(analyzer, input);
         this.pinput = input;
-        this.pinput.setAnnotation(Whiteset.class, Whiteset.ofMeasuredFormulas(Collections.singleton(tree.getRoot().getFormula())));
+        this.pinput.setAnnotation(Whiteset.class, Whiteset.ofMeasuredFormulas(Collections.singleton(tree.getRoot().getFormula()), FasterTreeComputationInstance.class));
         this.inputCopyForRecalibration = pinput;
         score();
     }
@@ -182,19 +182,8 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             for (ExactResult result : results) result.tree.setAnnotation(UnconsideredCandidatesUpperBound.class, it);
         }
 
-        //we do not resolve here anymore -> because we need unresolved trees to expand adducts for fingerid
-        final List<FTree> trees = Arrays.stream(results).map(r -> fixIonization(r.tree)).collect(Collectors.toList());
+        final List<FTree> trees = Arrays.stream(results).map(r -> r.tree).collect(Collectors.toList());
         return new FinalResult(trees);
-    }
-
-    private FTree fixIonization(FTree tree) {
-        /*
-        // does not work yet
-        if (!(pinput.getExperimentInformation().getPrecursorIonType().hasNeitherAdductNorInsource())) {
-            return new IonTreeUtils().treeToNeutralTree(tree, pinput.getExperimentInformation().getPrecursorIonType());
-        } else return tree;
-        */
-        return tree;
     }
 
     protected void recalculateScore(ProcessedInput input, FTree tree, String prefix) {
@@ -568,7 +557,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         final ProcessedInput pin = this.inputCopyForRecalibration.clone();
         pin.setAnnotation(PossibleAdducts.class, new PossibleAdducts(PrecursorIonType.getPrecursorIonType(decomp.getIon())));
         pin.setAnnotation(SpectralRecalibration.class, rec);
-        pin.setAnnotation(Whiteset.class, Whiteset.ofMeasuredFormulas(Collections.singleton(tree.getRoot().getFormula()))); // TODO: check if this works for adducts
+        pin.setAnnotation(Whiteset.class, Whiteset.ofMeasuredFormulas(Collections.singleton(tree.getRoot().getFormula()), RecalibrationJob.class).setIgnoreMassDeviationToResolveIonType(true).setFinalized(true)); // TODO: check if this works for adducts //TODO ElementFilter: check old todo
         pin.getExperimentInformation().setPrecursorIonType(tree.getAnnotation(PrecursorIonType.class).orElse(pin.getExperimentInformation().getPrecursorIonType()));
         pin.setAnnotation(TreeSizeScorer.TreeSizeBonus.class, pinput.getAnnotationOrNull(TreeSizeScorer.TreeSizeBonus.class));
         // we have to completely rescore the input...
