@@ -83,7 +83,7 @@ public class ValenceFilter implements FormulaFilter {
 
     @Override
     public boolean isValid(MolecularFormula measuredNeutralFormula) {
-        return measuredNeutralFormula.doubledRDBE()>=MIN_VALENCE_DEFAULT;
+        return measuredNeutralFormula.doubledRDBE()>=MIN_VALENCE_DEFAULT; //todo ElementFilter: this seems wrong
     }
 
     @Override
