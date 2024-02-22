@@ -84,16 +84,16 @@ public final class PossibleAdducts implements Iterable<PrecursorIonType>, Proces
         return false;
     }
 
-    public void keepOnlyPositive() {
-        value.removeIf(it -> it.getCharge() > 1);
+    public PossibleAdducts keepOnlyPositive() {
+        return new PossibleAdducts(value.stream().filter(it -> it.getCharge() > 1).collect(Collectors.toSet()));
     }
 
-    public void keepOnlyNegative() {
-        value.removeIf(it -> it.getCharge() < 1);
+    public PossibleAdducts keepOnlyNegative() {
+        return new PossibleAdducts(value.stream().filter(it -> it.getCharge() < 1).collect(Collectors.toSet()));
     }
 
-    public void keepOnly(final int charge) {
-        value.removeIf(it -> it.getCharge() != charge);
+    public PossibleAdducts keepOnly(final int charge) {
+        return new PossibleAdducts(value.stream().filter(it -> it.getCharge() == charge).collect(Collectors.toSet()));
     }
 
     public Set<IonMode> getIonModes() {
