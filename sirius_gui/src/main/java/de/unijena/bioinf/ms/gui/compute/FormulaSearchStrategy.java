@@ -146,19 +146,15 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
         JSpinner bottomUpSearchOnly;
         JCheckBox bottomUpSearchEnabled = new JCheckBox();
-        bottomUpSearchEnabled.setSelected(true);
-        bottomUpSearchOnly = makeIntParameterSpinner("BottomUpSearchSettings.replaceDeNovoFromMass", 0, Integer.MAX_VALUE, 5);
+        bottomUpSearchOnly = makeIntParameterSpinner("FormulaSearchSettings.disableDeNovoAboveMass", 0, Integer.MAX_VALUE, 5);
         bottomUpSearchEnabled.setEnabled(false);
         bottomUpSearchOnly.setEnabled(false);
 
         bottomUpSearchEnabled.addActionListener(e -> {
             //enable of disable buttom up search. Not setting specific mz threshold
-            if (bottomUpSearchEnabled.isEnabled()) {
-                parameterBindings.put("BottomUpSearchSettings.enabledFromMass", () -> "0");
-            } else {
-                parameterBindings.put("BottomUpSearchSettings.enabledFromMass", () -> String.valueOf(Double.POSITIVE_INFINITY));
-            }
+            setBottomUpSearchMass(bottomUpSearchEnabled);
         });
+        bottomUpSearchEnabled.setSelected(true);
 
         bottomUpSearchSelector.addItemListener(e -> {
             if (e.getStateChange() != ItemEvent.SELECTED) {
@@ -202,19 +198,47 @@ public class FormulaSearchStrategy extends ConfigPanel {
         elementPanel = createElementPanel(isBatchDialog);
         card.add(elementPanel);
 
+        elementAlpahAlphabetStrategySelector.addItemListener(e -> {
+            if (e.getStateChange() != ItemEvent.SELECTED) {
+                return;
+            }
+            final ElementAlphabetStrategy filterStrategy = (ElementAlphabetStrategy) e.getItem();
+            boolean applyToBottomUp = (filterStrategy == ElementAlphabetStrategy.BOTH);
+
+            parameterBindings.put("FormulaSearchSettings.applyFormulaContraintsToBottomUp", () -> Boolean.toString(applyToBottomUp));
+        });
+        elementAlpahAlphabetStrategySelector.setSelectedItem(ElementAlphabetStrategy.DE_NOVO_ONLY);
+
         return card;
+    }
+
+    private void setBottomUpSearchMass(JCheckBox bottomUpSearchEnabled) {
+        if (bottomUpSearchEnabled.isSelected()) {
+            parameterBindings.put("FormulaSearchSettings.enableBottomUpFromMass", () -> "0");
+        } else {
+            parameterBindings.put("FormulaSearchSettings.enableBottomUpFromMass", () -> String.valueOf(Double.POSITIVE_INFINITY));
+        }
     }
 
     private JPanel createDeNovoStrategyCard() {
         elementPanel = createElementPanel(isBatchDialog);
-        // configure Element panel
-        parameterBindings.put("FormulaSettings.enforced", () -> elementPanel.getElementConstraints().toString());
-        parameterBindings.put("FormulaSettings.detectable", () -> {
-            final List<Element> elementsToAutoDetect = elementPanel.individualAutoDetect ? elementPanel.getElementsToAutoDetect() : Collections.emptyList();
-            return (elementsToAutoDetect.isEmpty() ? "," :
-                    elementsToAutoDetect.stream().map(Element::toString).collect(Collectors.joining(",")));
-        });
+
+        enableDeNovo();
+        disableBottomUpSearch();
+
         return elementPanel;
+    }
+
+    private void disableBottomUpSearch() {
+        parameterBindings.put("FormulaSearchSettings.enableBottomUpFromMass", () -> String.valueOf(Double.POSITIVE_INFINITY));
+    }
+
+    private void enableDeNovo() {
+        parameterBindings.put("FormulaSearchSettings.disableDeNovoAboveMass", () -> String.valueOf(Double.POSITIVE_INFINITY));
+    }
+
+    private void disableDeNovo() {
+        parameterBindings.put("FormulaSearchSettings.disableDeNovoAboveMass", () -> "0");
     }
 
     private JPanel createDatabaseStrategyCard() {
@@ -229,6 +253,8 @@ public class FormulaSearchStrategy extends ConfigPanel {
         final TwoColumnPanel elementOptions = new TwoColumnPanel();
         JCheckBox useElementFilter = new JCheckBox(); //todo NewWorkflow: implement this feature. This makes the organics filter obsolete. Maybe dont use the checkbox but always select the organics. Make new Element panel popup
         useElementFilter.setSelected(false);
+        parameterBindings.put("FormulaSearchSettings.applyFormulaContraintsToCandidateLists", () -> Boolean.toString(useElementFilter.isSelected()));
+
         elementOptions.addNamed("Use element filter", useElementFilter);
         card.add(elementOptions);
 
@@ -236,7 +262,15 @@ public class FormulaSearchStrategy extends ConfigPanel {
         card.add(elementPanel);
         elementPanel.setVisible(useElementFilter.isSelected());
 
-        useElementFilter.addActionListener(e -> elementPanel.setVisible(useElementFilter.isSelected()));
+        useElementFilter.addActionListener(e -> {
+            elementPanel.setVisible(useElementFilter.isSelected());
+            elementPanel.setEnabled(useElementFilter.isSelected()); //todo ElementFilter: this is not the proper way. Buttons still disabled.
+            parameterBindings.put("FormulaSearchSettings.applyFormulaContraintsToCandidateLists", () -> Boolean.toString(useElementFilter.isSelected()));
+        });
+
+        disableBottomUpSearch();
+        disableDeNovo();
+
         return card;
     }
 
@@ -270,6 +304,17 @@ public class FormulaSearchStrategy extends ConfigPanel {
         }
 
         elementPanel.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));
+
+        // configure Element panel
+        parameterBindings.put("FormulaSettings.enforced", () -> {
+            return elementPanel.getElementConstraints().toString();
+        });
+        parameterBindings.put("FormulaSettings.detectable", () -> {
+            final List<Element> elementsToAutoDetect = elementPanel.individualAutoDetect ? elementPanel.getElementsToAutoDetect() : Collections.emptyList();
+            return (elementsToAutoDetect.isEmpty() ? "," :
+                    elementsToAutoDetect.stream().map(Element::toString).collect(Collectors.joining(",")));
+        });
+
         return elementPanel;
     }
 

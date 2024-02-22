@@ -21,10 +21,7 @@ package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
-import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -180,6 +177,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
         } else {
             //alway enforce adducts for single feature.
             parameterBindings.put("AdductSettings.enforced", () -> getSelectedAdducts().toString());
+            parameterBindings.put("AdductSettings.detectable", () -> "");
         }
 
         formulaSearchStrategy = new FormulaSearchStrategy(owner, ecs, hasMs2, isBatchDialog(), parameterBindings);
@@ -278,7 +276,19 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
         if (!ec.getMs1Spectra().isEmpty() || ec.getMergedMs1Spectrum() != null) {
             Jobs.runInBackgroundAndLoad(owner, "Detecting adducts...", () -> {
                 final Ms1Preprocessor pp = ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor();
-                ProcessedInput pi = pp.preprocess(new MutableMs2Experiment(ec.getExperiment(), false));
+                MutableMs2Experiment experiment = new MutableMs2Experiment(ec.getExperiment(), true);
+                DetectedAdducts detectedAdducts = experiment.getAnnotationOrNull(DetectedAdducts.class);
+                if (detectedAdducts != null) {
+                    //copy DetectedAdducts, to remove previously detected adducts and to make sure the following preprocess does not already alter this annotation (probably not copy-safe)
+                    DetectedAdducts daWithoutMS1Detect = new DetectedAdducts();
+                    for (String source : detectedAdducts.getSourceStrings()) {
+                        if (source != DetectedAdducts.Source.MS1_PREPROCESSOR.name()) {
+                            daWithoutMS1Detect.put(source, detectedAdducts.get(source));
+                        }
+                    }
+                    experiment.setAnnotation(DetectedAdducts.class, daWithoutMS1Detect);
+                }
+                ProcessedInput pi = pp.preprocess(experiment);
 
                 pi.getAnnotation(PossibleAdducts.class).
                         ifPresentOrElse(pa -> {
