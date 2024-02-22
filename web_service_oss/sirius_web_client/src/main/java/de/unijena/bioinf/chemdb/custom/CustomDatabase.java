@@ -20,7 +20,11 @@
 
 package de.unijena.bioinf.chemdb.custom;
 
+import de.unijena.bioinf.ChemistryBase.chem.Smiles;
+import de.unijena.bioinf.ChemistryBase.ms.AdditionalFields;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
+import de.unijena.bioinf.babelms.annotations.CompoundMetaData;
 import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
@@ -168,46 +172,37 @@ public abstract class CustomDatabase implements SearchableDatabase {
         if (!spectrumFiles.isEmpty()) {
             SpectralLibrary spectralLibrary = this.toSpectralLibraryOrThrow();
 
-
             WriteableSpectralLibrary writeableSpectralLibrary = this.toWriteableSpectralLibraryOrThrow();
 
-
             Iterator<Ms2Experiment> iterator = new ParsingIterator(spectrumFiles.iterator());
-            Map<String, Pair<String, String>> spectrumSmiles = new HashMap<>();
-
-            // import all spectra files
-            SpectralUtils.importSpectraFromMs2Experiments(writeableSpectralLibrary, () -> iterator, bufferSize);
-
-            // get a map of <SMILES, <SPLASH, NAME>>
-            spectralLibrary.forEachSpectrum(ref -> {
-                String smiles = ref.getSmiles();
-                if (!spectrumSmiles.containsKey(smiles)) {
-                    spectrumSmiles.put(smiles, Pair.of(ref.getSplash(), ref.getName()));
+            // Map of <SMILES, <STRUCTURE_ID, NAME>>
+            Map<String, CompoundMetaData> spectrumSmiles = new HashMap<>();
+            { // import all spectra files and fill structure map
+                List<Ms2ReferenceSpectrum> spectra = new ArrayList<>();
+                while (iterator.hasNext()) {
+                    Ms2Experiment experiment = iterator.next();
+                    spectra.addAll(SpectralUtils.ms2ExpToMs2Ref((MutableMs2Experiment) experiment));
+                    String smiles = experiment.getAnnotation(Smiles.class).map(Smiles::toString)
+                            .orElseThrow(() -> new IllegalArgumentException("Spectrum file does not contain SMILES: " + experiment.getSource()));
+                    if (!spectrumSmiles.containsKey(smiles))
+                        //todo speclib: add support for custom structure ids to spectra formats -> important to import in house ref-libs without needing the structure tsv
+                        experiment.getAnnotation(CompoundMetaData.class).ifPresentOrElse(
+                                cm -> spectrumSmiles.put(smiles, cm),
+                                () -> spectrumSmiles.put(smiles, CompoundMetaData.builder().compoundName(experiment.getName()).build()));
                 }
-            });
+                SpectralUtils.importSpectra(writeableSpectralLibrary, spectra, bufferSize);
+            }
 
             // import structures from spectra with SMILES, SPLASH (as ID) and NAME
-            for (Map.Entry<String, Pair<String, String>> entry : spectrumSmiles.entrySet()) {
-                importer.importFromString(entry.getKey(), entry.getValue().getLeft(), entry.getValue().getRight());
+            for (Map.Entry<String, CompoundMetaData> entry : spectrumSmiles.entrySet()) {
+                importer.importFromString(entry.getKey(), entry.getValue().getCompoundId(), entry.getValue().getCompoundName());
             }
-            importStructuresToDatabase(structureFiles, importer);
 
             // update spectrum INCHIs to match structure INCHIs
             for (Map.Entry<String, String> entry : importer.inchiKeyCache.entrySet()) {
                 writeableSpectralLibrary.updateSpectraMatchingSmiles(spectrum -> spectrum.setCandidateInChiKey(entry.getValue()), entry.getKey());
             }
-
-            // set list of matching spectra for each structure
-            writeableChemDB.updateAllFingerprints((fp) -> {
-                try {
-                    Stream<Ms2ReferenceSpectrum> stream = StreamSupport.stream(spectralLibrary.lookupSpectra(fp.getInchiKey2D()).spliterator(), false);
-                    List<String> splashes = stream.map(Ms2ReferenceSpectrum::getSplash).toList();
-                    fp.setReferenceSpectraSplash(splashes);
-                } catch (ChemicalDatabaseException e) {
-                    throw new RuntimeException(e);
-                }
-            });
-
+            importStructuresToDatabase(structureFiles, importer);
             // update statistics
             getStatistics().spectra().set(spectralLibrary.countAllSpectra());
         } else {

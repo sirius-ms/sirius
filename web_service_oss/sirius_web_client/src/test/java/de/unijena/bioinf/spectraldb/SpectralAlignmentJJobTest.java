@@ -158,7 +158,7 @@ public class SpectralAlignmentJJobTest {
         assertEquals(queryIndex, result.getQuerySpectrumIndex());
         assertEquals(libraryId, result.getDbId());
         assertEquals(libraryName, result.getDbName());
-        assertEquals(UUID, result.getReferenceUUID());
+        assertEquals(UUID, result.getUuid());
         assertEquals(utils.cosineProduct(cosineQuery, cosineReference), result.getSimilarity());
     }
 }

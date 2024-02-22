@@ -62,8 +62,8 @@ public class SpectralAlignmentJJob extends BasicMasterJJob<SpectralSearchResult>
 
     @Override
     protected SpectralSearchResult compute() throws Exception {
-        Deviation peakDev = experiment.getAnnotationOrDefault(SpectraMatchingMassDeviation.class).allowedPeakDeviation;
-        precursorDev = experiment.getAnnotationOrDefault(SpectraMatchingMassDeviation.class).allowedPrecursorDeviation;
+        Deviation peakDev = experiment.getAnnotationOrDefault(SpectralMatchingMassDeviation.class).allowedPeakDeviation;
+        precursorDev = experiment.getAnnotationOrDefault(SpectralMatchingMassDeviation.class).allowedPrecursorDeviation;
 
         List<Ms2Spectrum<Peak>> queries = experiment.getMs2Spectra();
 
@@ -145,7 +145,10 @@ public class SpectralAlignmentJJob extends BasicMasterJJob<SpectralSearchResult>
                             .dbId(reference.getLibraryId())
                             .querySpectrumIndex(queryIndex)
                             .similarity(similarities.get(i))
-                            .referenceUUID(reference.getUuid())
+                            .uuid(reference.getUuid())
+                            .splash(reference.getSplash())
+                            .candidateInChiKey(reference.getCandidateInChiKey())
+                            .smiles(reference.getSmiles())
                             .build();
                 });
     }
