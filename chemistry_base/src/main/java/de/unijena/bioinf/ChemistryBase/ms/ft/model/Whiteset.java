@@ -20,12 +20,14 @@
 
 package de.unijena.bioinf.ChemistryBase.ms.ft.model;
 
+import com.google.common.collect.Streams;
+import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import gnu.trove.set.hash.TCustomHashSet;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
@@ -39,62 +41,96 @@ import java.util.stream.Collectors;
 public class Whiteset implements Ms2ExperimentAnnotation {
 
     private static Set<MolecularFormula> EMPTY_SET = Collections.unmodifiableSet(new HashSet<>());
-    private static Whiteset EMPTY_WHITESET = new Whiteset(EMPTY_SET,EMPTY_SET, false), NO_WHITESET = new Whiteset(EMPTY_SET,EMPTY_SET,true);
+    private static Whiteset EMPTY_WHITESET = new Whiteset(EMPTY_SET,EMPTY_SET, false, false, Whiteset.class);
 
+
+    /**
+     * Rather decide if you have measured or neutral formula candidates and use a method accordingly
+     */
+    @Deprecated
     public static Whiteset ofMeasuredOrNeutral(Set<MolecularFormula> f) {
-        return new Whiteset(f,f);
+        return new Whiteset(f,f, Collections.singletonList(null));
     }
 
-    // hm
-    public static Whiteset of(List<String> formulas) {
-        final Set<MolecularFormula> fs = formulas.stream().map(s -> {
-            try {
-                return MolecularFormula.parse(s);
-            } catch (UnknownElementException e) {
-                LoggerFactory.getLogger(Whiteset.class).warn("Could not par Formula String: " + s + " Skipping this Entry!");
-                return null;
-            }
-        }).filter(Objects::nonNull).collect(Collectors.toSet());
-        return new Whiteset(fs,fs);
+    public static Whiteset ofMeasuredFormulas(Collection<MolecularFormula> formulas, @NotNull Class provider) {
+        return Whiteset.ofMeasuredFormulas(formulas, Collections.singletonList(provider));
     }
 
-    public static Whiteset ofMeasuredFormulas(Collection<MolecularFormula> formulas) {
-        return new Whiteset(EMPTY_SET,new HashSet<>(formulas));
+    protected static Whiteset ofMeasuredFormulas(Collection<MolecularFormula> formulas, @NotNull List<Class> providers) {
+        return new Whiteset(EMPTY_SET,new HashSet<>(formulas), providers);
     }
 
-    public static Whiteset ofNeutralizedFormulas(Collection<MolecularFormula> formulas) {
-        return new Whiteset(new HashSet<>(formulas), EMPTY_SET);
+    public static Whiteset ofNeutralizedFormulas(Collection<MolecularFormula> formulas, @NotNull Class provider) {
+        return new Whiteset(new HashSet<>(formulas), EMPTY_SET, Collections.singletonList(provider));
     }
 
-    // these are molecular formulas which contain no adduct or loss. So the adduct has to be added
-    // and the loss has to be removed afterwards.
-    // This is typically for molecular formulas received from database search
+    /**
+     * these are molecular formulas which contain no adduct or loss. So the adduct has to be added
+     * and the loss has to be removed afterwards.
+     * This is typically for molecular formulas received from database search
+     */
     protected final Set<MolecularFormula> neutralFormulas;
 
-    // these are formulas as they are derived from the MS. They contain the adduct (but not the ionization)
+    /**
+     * these are formulas as they are derived from the MS. They contain the adduct (but not the ionization)
+     */
     protected final Set<MolecularFormula> measuredFormulas;
 
-    //indicates to perform de novo molecular formula generation in addition to the whitelist formulas.
-    //this is to combined bottom-up search with de novo
-    protected final boolean stillAllowDeNovo;
+    /**
+     * indicates to perform de novo molecular formula generation in addition to the whitelist formulas.
+     */
+    protected final boolean stillRequiresDeNovo;
+
+    /**
+     * indicates to perform bottom-up search molecular formula generation in addition to the whitelist formulas.
+     */
+    protected final boolean stillRequiresBottomUp;
+
+
+    /**
+     * ignores mass deviations when resolving the whiteset. This may be usefull testing a candidate set even if some candidatees have large mass errors.
+     * Note: there is still some extremely large max mass error threshold
+     */
+    protected final boolean ignoreMassDeviationToResolveIonType;
+
+    /**
+     * this Whiteset should not be altered.
+     */
+    protected final boolean isFinalized;
+
+    protected final List<Class> providers;
 
 
     public static Whiteset empty() {
         return EMPTY_WHITESET;
     }
 
-    public static Whiteset denovo() {
-        return NO_WHITESET;
+    private Whiteset(@NotNull Set<MolecularFormula> neutralFormulas, @NotNull Set<MolecularFormula> measuredFormulas, @NotNull List<Class> providers) {
+        this(neutralFormulas,measuredFormulas,false, false, false, false, providers);
     }
 
-    private Whiteset(Set<MolecularFormula> neutralFormulas, Set<MolecularFormula> measuredFormulas) {
-        this(neutralFormulas,measuredFormulas,false);
-    }
-
-    private Whiteset(Set<MolecularFormula> neutralFormulas, Set<MolecularFormula> measuredFormulas, boolean stillAllowDeNovo) {
+    private Whiteset(@NotNull Set<MolecularFormula> neutralFormulas, @NotNull Set<MolecularFormula> measuredFormulas, boolean stillRequiresDeNovo, boolean stillRequiresBottomUp, boolean ignoreMassDeviationToResolveIonType, boolean isFinalized, @NotNull List<Class> providers) {
         this.neutralFormulas = Set.copyOf(neutralFormulas);
         this.measuredFormulas = Set.copyOf(measuredFormulas);
-        this.stillAllowDeNovo = stillAllowDeNovo;
+        this.stillRequiresDeNovo = stillRequiresDeNovo;
+        this.stillRequiresBottomUp = stillRequiresBottomUp;
+        this.ignoreMassDeviationToResolveIonType = ignoreMassDeviationToResolveIonType;
+        this.isFinalized = isFinalized;
+        this.providers = new ArrayList<>(providers);
+        checkConsistency(stillRequiresDeNovo, stillRequiresBottomUp, providers);
+    }
+
+    private void checkConsistency(boolean stillRequiresDeNovo, boolean stillRequiresBottomUp, @NotNull List<Class> providers) {
+        if (stillRequiresDeNovo && providers.stream().anyMatch(p -> p.getSimpleName().equals("AddDeNovoDecompositionsToWhiteset"))) {
+            LoggerFactory.getLogger(getClass()).warn("Whiteset flag is set to still require de novo formula decomposition, but seems to be already contained.");
+        }
+        if (stillRequiresBottomUp && providers.stream().anyMatch(p -> p.getSimpleName().equals("BottomUpSearch"))) {
+            LoggerFactory.getLogger(getClass()).warn("Whiteset flag is set to still require bottom-up formula generation, but seems to be already contained.");
+        }
+    }
+
+    private Whiteset(@NotNull Set<MolecularFormula> neutralFormulas, @NotNull Set<MolecularFormula> measuredFormulas, boolean stillRequiresDeNovo, boolean stillRequiresBottomUp,  @NotNull Class provider) {
+        this(neutralFormulas, measuredFormulas, stillRequiresDeNovo, stillRequiresBottomUp, false, false, Collections.singletonList(provider));
     }
 
     public Set<MolecularFormula> getNeutralFormulas() {
@@ -105,34 +141,147 @@ public class Whiteset implements Ms2ExperimentAnnotation {
         return measuredFormulas;
     }
 
-    public boolean isStillAllowDeNovo() {
-        return stillAllowDeNovo;
+    /**
+     * @return true if de novo still formula generation needs to be performed. Basically, either no denovo/bottup-up should be performed at all or
+     * MS1 analysis sets this to false, so it is not re-performed in FragmentationPatternAnalysis
+     */
+    public boolean stillRequiresDeNovoToBeAdded() {
+        return stillRequiresDeNovo;
     }
 
-    public Whiteset addMeasured(Set<MolecularFormula> measured) {
-        return add(EMPTY_SET,measured);
+    /**
+     * @return true if bottom-up search formula generation needs to be performed. Basically, either no denovo/bottup-up should be performed at all or
+     * MS1 analysis sets this to false, so it is not re-performed in FragmentationPatternAnalysis
+     */
+    public boolean stillRequiresBottomUpBeAdded() {
+        return stillRequiresBottomUp;
     }
 
-    public Whiteset addNeutral(Set<MolecularFormula> neutral) {
-        return add(neutral, EMPTY_SET);
+    public boolean isFinalized() {
+        return isFinalized;
     }
 
-    public Whiteset addDeNovo(boolean value) {
-        return new Whiteset(getNeutralFormulas(), getMeasuredFormulas(), value);
-    }
-    public Whiteset addDeNovo() {
-        return addDeNovo(true);
+
+    public boolean isIgnoreMassDeviationToResolveIonType() {
+        return ignoreMassDeviationToResolveIonType;
     }
 
+    public Whiteset addMeasured(@NotNull Set<MolecularFormula> measured, @NotNull Class provider) {
+        if (warnIfFinalized()) return this;
+        return add(EMPTY_SET,measured, Collections.singletonList(provider));
+    }
+
+    public Whiteset addNeutral(@NotNull Set<MolecularFormula> neutral, @NotNull Class provider) {
+        if (warnIfFinalized()) return this;
+        return add(neutral, EMPTY_SET, Collections.singletonList(provider));
+    }
+
+    /**
+     * set to false directly before adding de novo candidates.
+     */
+    public Whiteset setRequiresDeNovo(boolean value) {
+        if (value && warnIfFinalized()) return this;
+        //we could set this automatically by checking the provider class. But for this we should move the AddDeNovoDecompositionsToWhiteset class to be accesible from here
+        return new Whiteset(getNeutralFormulas(), getMeasuredFormulas(), value, stillRequiresBottomUp, ignoreMassDeviationToResolveIonType, isFinalized, providers);
+    }
+
+    public Whiteset setRequiresDeNovo() {
+        return setRequiresDeNovo(true);
+    }
+
+    /**
+     * set to false directly before adding bottom-up candidates.
+     */
+    public Whiteset setRequiresBottomUp(boolean value) {
+        if (value && warnIfFinalized()) return this;
+        //we could set this automatically by checking the provider class. But for this we should move the BottomUpSearch class to be accesible from here
+        return new Whiteset(getNeutralFormulas(), getMeasuredFormulas(), stillRequiresDeNovo, value, ignoreMassDeviationToResolveIonType, isFinalized, providers);
+    }
+
+    public Whiteset setRequiresBottomUp() {
+        return setRequiresBottomUp(true);
+    }
+
+    public Whiteset setIgnoreMassDeviationToResolveIonType(boolean value) {
+        return new Whiteset(getNeutralFormulas(), getMeasuredFormulas(), stillRequiresDeNovo, stillRequiresBottomUp, value, isFinalized, providers);
+    }
+
+    /**
+     * If true, indicates that the Whiteset should not be altered anymore - meaning noting added or filtered. This is usually used to force a single molecular formula (e.g. as specified in the input or for the FT recalibration routine)
+     * @param value
+     * @return
+     */
+    public Whiteset setFinalized(boolean value) {
+        return new Whiteset(getNeutralFormulas(), getMeasuredFormulas(), stillRequiresDeNovo, stillRequiresBottomUp, ignoreMassDeviationToResolveIonType, value, providers);
+    }
+
+    //todo ElementFiler: maybe change to a "addIfNotFixed". Or rename to mergeWith to better communicate that it creates new object.
     public Whiteset add(Whiteset other) {
-        return add(other.neutralFormulas, other.measuredFormulas, stillAllowDeNovo|other.stillAllowDeNovo);
+        if (warnIfFinalized()) return this;
+        return add(other.neutralFormulas, other.measuredFormulas, stillRequiresDeNovo |other.stillRequiresDeNovo, stillRequiresBottomUp |other.stillRequiresBottomUp, other.providers);
     }
 
-    public Whiteset add(Set<MolecularFormula> neutralFormulas, Set<MolecularFormula> measuredFormulas){
-        return add(neutralFormulas,measuredFormulas,stillAllowDeNovo);
+    public Whiteset filterByMeasuredFormulas(@NotNull Set<MolecularFormula> measuredFormulas, @NotNull Set<PrecursorIonType> allowedIonTypes, Class provider) {
+        if (warnIfFinalized()) return this;
+        List<Class> newProviders = new ArrayList<>(providers);
+        newProviders.add(provider);
+        return new Whiteset(
+                getNeutralFormulas().stream().filter(mf -> allowedIonTypes.stream().anyMatch(ionType -> ionType.isApplicableToNeutralFormula(mf) && measuredFormulas.contains(ionType.neutralMoleculeToMeasuredNeutralMolecule(mf)))).collect(Collectors.toSet()),
+                getMeasuredFormulas().stream().filter(mf -> measuredFormulas.contains(mf)).collect(Collectors.toSet()),
+                stillRequiresDeNovo,
+                stillRequiresBottomUp,
+                ignoreMassDeviationToResolveIonType,
+                isFinalized,
+                newProviders
+        );
     }
 
-    public Whiteset add(Set<MolecularFormula> neutralFormulas, Set<MolecularFormula> measuredFormulas, boolean stillAllowDeNovo) {
+    public Whiteset filterByNeutralFormulas(@NotNull Set<MolecularFormula> neutralFormulas, @NotNull Set<PrecursorIonType> allowedIonTypes, Class provider) {
+        if (warnIfFinalized()) return this;
+        List<Class> newProviders = new ArrayList<>(providers);
+        newProviders.add(provider);
+        return new Whiteset(
+                getNeutralFormulas().stream().filter(mf -> neutralFormulas.contains(mf)).collect(Collectors.toSet()),
+                getMeasuredFormulas().stream().filter(mf -> allowedIonTypes.stream().anyMatch(ionType -> ionType.isApplicableToMeasuredFormula(mf) && neutralFormulas.contains(ionType.measuredNeutralMoleculeToNeutralMolecule(mf)))).collect(Collectors.toSet()),
+                stillRequiresDeNovo,
+                stillRequiresBottomUp,
+                ignoreMassDeviationToResolveIonType,
+                isFinalized,
+                newProviders
+        );
+    }
+
+    /**
+     *
+     * @param formulaConstraints
+     * @return a whiteset including only formulas that satisfy the formulaConstraints
+     */
+    public Whiteset filter(FormulaConstraints formulaConstraints, @NotNull Collection<PrecursorIonType> allowedIonTypes, Class provider) {
+        if (warnIfFinalized()) return this;
+        //todo ElementFilter: how do the different formulaConstraints isSatisfied() with and without ionization behave - hopefully identical?. Did we only introduce these because of the ionization-adduct issue - so measured vs neutral MF? Can we make this simpler again?
+        Set<MolecularFormula> newNeutralFormulas = filterNeutralFormulas(neutralFormulas, formulaConstraints);
+        Set<MolecularFormula> newMeasuredFormulas = filterMeasuredFormulas(measuredFormulas, formulaConstraints, allowedIonTypes);
+
+        List<Class> newProviders = new ArrayList<>(providers);
+        newProviders.add(provider);
+        return new Whiteset(newNeutralFormulas, newMeasuredFormulas, stillRequiresDeNovo, stillRequiresBottomUp, ignoreMassDeviationToResolveIonType, isFinalized, newProviders);
+    }
+
+    public static Set<MolecularFormula> filterNeutralFormulas(@NotNull Set<MolecularFormula> neutralFormulas, @NotNull FormulaConstraints formulaConstraints) {
+        return neutralFormulas.stream().filter(mf -> formulaConstraints.isSatisfied(mf)).collect(Collectors.toSet());
+    }
+
+    public static Set<MolecularFormula> filterMeasuredFormulas(@NotNull Set<MolecularFormula> measuredFormulas, @NotNull FormulaConstraints formulaConstraints, @NotNull Collection<PrecursorIonType> allowedIonTypes) {
+        return measuredFormulas.stream().filter(mf -> allowedIonTypes.stream().anyMatch(ionType -> formulaConstraints.isSatisfied(ionType.measuredNeutralMoleculeToNeutralMolecule(mf), ionType.getIonization()))).collect(Collectors.toSet());
+    }
+
+    protected Whiteset add(@NotNull Set<MolecularFormula> neutralFormulas, @NotNull Set<MolecularFormula> measuredFormulas, @NotNull List<Class> providers){
+        if (warnIfFinalized()) return this;
+        return add(neutralFormulas,measuredFormulas, stillRequiresDeNovo, stillRequiresBottomUp, providers);
+    }
+
+    protected Whiteset add(@NotNull Set<MolecularFormula> neutralFormulas, @NotNull Set<MolecularFormula> measuredFormulas, boolean stillRequiresDeNovo, boolean stillRequiresBottomUp, @NotNull List<Class> providers) {
+        if (warnIfFinalized()) return this;
         Set<MolecularFormula> n = neutralFormulas;
         if (n.isEmpty()) n = this.neutralFormulas;
         else if (this.neutralFormulas.isEmpty()) n = neutralFormulas;
@@ -147,33 +296,137 @@ public class Whiteset implements Ms2ExperimentAnnotation {
             m = new HashSet<>(measuredFormulas);
             m.addAll(this.measuredFormulas);
         }
-        return new Whiteset(n,m, stillAllowDeNovo);
+        return new Whiteset(n,m, stillRequiresDeNovo, stillRequiresBottomUp, ignoreMassDeviationToResolveIonType, isFinalized, Streams.concat(this.providers.stream(), providers.stream()).collect(Collectors.toList()));
     }
 
     /**
      * returns a new whiteset of all formulas that can be explained with the given mass and one
      * of the precursor iondetection
      */
-    public List<Decomposition> resolve(double parentMass, Deviation deviation, Collection<PrecursorIonType> allowedPrecursorIonTypes) {
-
+    public List<Decomposition> resolve(double parentMass, @NotNull Deviation deviation, @NotNull Collection<PrecursorIonType> allowedPrecursorIonTypes) {
         final TCustomHashSet<Decomposition> decompositionSet = Decomposition.newDecompositionSet();
         eachFormula:
         for (MolecularFormula formula : neutralFormulas) {
             for (PrecursorIonType ionType : allowedPrecursorIonTypes) {
-                if (ionType.isApplicableToNeutralFormula(formula) && deviation.inErrorWindow(parentMass, ionType.neutralMassToPrecursorMass(formula.getMass()))) {
+                if (ionType.isApplicableToNeutralFormula(formula) && (deviation.inErrorWindow(parentMass, ionType.neutralMassToPrecursorMass(formula.getMass())))) {
                     decompositionSet.add(new Decomposition(ionType.neutralMoleculeToMeasuredNeutralMolecule(formula), ionType.getIonization(), 0d));
                 }
+            }
+            if (ignoreMassDeviationToResolveIonType) {
+                //in principle, the above loop should find at most one ionType anyways. However, just if weird edge cases may exist, it is still performed additionally when we "forceAllCandidates"
+                //we run the next function to guarantee that each formula is forced into the set with at least one adduct even if none has the correct mass deviation
+                addClosestFormulaWithAbsurdlyLargeMassErrorAllowed(formula, allowedPrecursorIonTypes, parentMass, decompositionSet, true);
             }
         }
         eachFormula:
         for (MolecularFormula formula : measuredFormulas) {
             for (PrecursorIonType ionType : allowedPrecursorIonTypes) {
-                if (ionType.isApplicableToMeasuredFormula(formula) && deviation.inErrorWindow(parentMass, ionType.getIonization().addToMass(formula.getMass()))) {
+                if (ionType.isApplicableToMeasuredFormula(formula) && (deviation.inErrorWindow(parentMass, ionType.getIonization().addToMass(formula.getMass())))) {
                     decompositionSet.add(new Decomposition(formula, ionType.getIonization(), 0d));
                 }
             }
+            if (ignoreMassDeviationToResolveIonType) {
+                //in principle, the above loop should find at most one ionType anyways. However, just if weird edge cases may exist, it is still performed additionally when we "forceAllCandidates"
+                //we run the next function to guarantee that each formula is forced into the set with at least one adduct even if none has the correct mass deviation
+                addClosestFormulaWithAbsurdlyLargeMassErrorAllowed(formula, allowedPrecursorIonTypes, parentMass, decompositionSet, false);
+            }
         }
         return Arrays.asList(decompositionSet.toArray(new Decomposition[decompositionSet.size()]));
+    }
+
+    /**
+     *
+     * @param formula
+     * @param allowedPrecursorIonTypes
+     * @param parentMass
+     * @param isNeutralFormula if true input formula is a neutral formula. Else, it is a measured formula
+     */
+    private void addClosestFormulaWithAbsurdlyLargeMassErrorAllowed(MolecularFormula formula, Collection<PrecursorIonType> allowedPrecursorIonTypes, double parentMass, TCustomHashSet<Decomposition> decompositionSet, boolean isNeutralFormula) {
+        PrecursorIonType bestAdduct =  findBestAdduct(formula, allowedPrecursorIonTypes, parentMass, isNeutralFormula);
+        if (bestAdduct == null) {
+            LoggerFactory.getLogger(getClass()).warn((isNeutralFormula ? "Neutral " : "Measured ") + "molecular formula cannot be forced in the whiteset as no matching adduct could be found: "+formula);
+        } else {
+            MolecularFormula measuredFormula = isNeutralFormula ? bestAdduct.neutralMoleculeToMeasuredNeutralMolecule(formula) : formula;
+            decompositionSet.add(new Decomposition(measuredFormula, bestAdduct.getIonization(), 0d));
+        }
+    }
+
+    /**
+     * in principle there should be at most one ionType matching even remotely.
+     */
+    private PrecursorIonType findBestAdduct(MolecularFormula formula, Collection<PrecursorIonType> allowedPrecursorIonTypes, double parentMass, boolean isNeutralFormula) {
+        if (allowedPrecursorIonTypes.size() == 0) return null;
+        double maxAllowedAbsError = 0.01; //this is huge. If the error is even largen, we won't return any adduct.
+        double ppmToWarn = 30;
+        double neutralMass = formula.getMass();
+        PrecursorIonType best = null;
+        double absDeviation = Double.POSITIVE_INFINITY;
+        for (PrecursorIonType ionType : allowedPrecursorIonTypes) {
+            if (!isApplicable(formula, ionType, isNeutralFormula)) continue;
+            double otherDeviation  = getAbsMassDev(neutralMass, ionType, parentMass, isNeutralFormula);
+            if (best == null || otherDeviation < absDeviation) {
+                best = ionType;
+                absDeviation = otherDeviation;
+            }
+        }
+        if (absDeviation > maxAllowedAbsError) {
+            //no matching adduct available
+            return null;
+        }
+        double bestPpm = errorInPPm(absDeviation, parentMass);
+        if (bestPpm > ppmToWarn) {
+            LoggerFactory.getLogger(getClass()).warn("The " + (isNeutralFormula ? "neutral " : "measured ") + " molecular formula forced into the whiteset has a extremely large mass deviation: " + formula + " with adduct " + best + "(ppm " + bestPpm + ").");
+        }
+        return best;
+    }
+
+    private boolean isApplicable(MolecularFormula formula, PrecursorIonType ionType, boolean isNeutralFormula) {
+        if (isNeutralFormula) {
+            return ionType.isApplicableToNeutralFormula(formula);
+        } else {
+            return ionType.isApplicableToMeasuredFormula(formula);
+        }
+    }
+    private double getAbsMassDev(double neutralMass, PrecursorIonType ionType, double parentMass, boolean isNeutralFormula) {
+        if (isNeutralFormula) {
+            return Math.abs(ionType.neutralMassToPrecursorMass(neutralMass) - parentMass);
+        } else {
+            return Math.abs(ionType.getIonization().addToMass(neutralMass) - parentMass);
+        }
+    }
+
+    public double errorInPPm(double error, double mass) {
+        return  error / mass * 1e6;
+    }
+
+    /**
+     *
+     * @param measuredFormula
+     * @param ionType
+     * @return true if measuredFormula is either directly contained in this {@link Whiteset} or if the neutral formula based on ionType is contained.
+     */
+    public boolean containsMeasuredFormula(@NotNull MolecularFormula measuredFormula, @NotNull PrecursorIonType ionType) {
+        if (measuredFormulas.contains(measuredFormula)) return true;
+        else {
+            if (!ionType.isApplicableToMeasuredFormula(measuredFormula)) return false;
+            MolecularFormula neutralFormula = ionType.measuredNeutralMoleculeToNeutralMolecule(measuredFormula);
+            return neutralFormulas.contains(neutralFormula);
+        }
+    }
+
+    /**
+     * @param possiblePrecursorIonTypes these are usually the {@link de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts}
+     * @return a whiteset with only measured formulas by converting neutral formulas based on {@link PrecursorIonType}s
+     */
+    public Whiteset asMeasuredFormulas(@NotNull Collection<PrecursorIonType> possiblePrecursorIonTypes) {
+        Set<MolecularFormula> allMeasured = new HashSet<>(measuredFormulas);
+        possiblePrecursorIonTypes.stream().forEach(ionType -> {
+            neutralFormulas.stream()
+                    .filter(mf -> ionType.isApplicableToNeutralFormula(mf))
+                    .map(mf -> ionType.neutralMoleculeToMeasuredNeutralMolecule(mf))
+                    .forEach(mf -> allMeasured.add(mf));
+        });
+        return Whiteset.ofMeasuredFormulas(allMeasured, providers);
     }
 
     /*
@@ -194,6 +447,14 @@ public class Whiteset implements Ms2ExperimentAnnotation {
         return new Whiteset(n,m);
     }
      */
+
+    private boolean warnIfFinalized() {
+        if (isFinalized) {
+            LoggerFactory.getLogger(getClass()).warn("The formula whiteset has been finalized. However, a method tries to alter it. Keep it unchanged.");
+            return true;
+        }
+        return false;
+    }
 
     public boolean isEmpty() {
         return measuredFormulas.isEmpty() && neutralFormulas.isEmpty();

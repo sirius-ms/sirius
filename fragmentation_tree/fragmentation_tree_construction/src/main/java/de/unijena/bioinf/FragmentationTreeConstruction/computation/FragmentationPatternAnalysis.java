@@ -42,6 +42,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuil
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Scoring;
 import de.unijena.bioinf.IsotopePatternAnalysis.ExtractedIsotopePattern;
+import de.unijena.bioinf.MassDecomposer.Chemistry.AddDeNovoDecompositionsToWhiteset;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import de.unijena.bioinf.MassDecomposer.NonEmptyFormulaValidator;
@@ -154,9 +155,9 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         siriusPlugins.values().forEach(p->p.beforeDecomposing(input));
 
         final PeriodicTable PT = PeriodicTable.getInstance();
-        Whiteset whiteset = input.getAnnotationOrNull(Whiteset.class);
         FormulaConstraints constraints = input.getAnnotationOrNull(FormulaConstraints.class);
         final Ms2Experiment experiment = input.getExperimentInformation();
+        PossibleAdducts possibleAdducts = input.getAnnotationOrThrow(PossibleAdducts.class);
         final double parentMass;
         // if parent peak stems from MS1, use MS1 mass deviation instead
         final Deviation parentDeviation;
@@ -168,18 +169,21 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             parentMass = input.getParentPeak().getMass();
         }
 
+        Whiteset whiteset = input.getAnnotationOrNull(Whiteset.class);
+        if (whiteset == null || (!whiteset.isFinalized() && whiteset.stillRequiresDeNovoToBeAdded())) {
+            //should only trigger if MS1 analysis has not already been performed (MS2 data only).
+            //Hence, these de novo decompositions are not influcends by "beforeDecomposing" such as the filter step in IsotopePatternInMs1Plugin
+            whiteset = AddDeNovoDecompositionsToWhiteset.createNewWhitesetWithDenovoAdded(whiteset, parentMass, parentDeviation, possibleAdducts, constraints, decomposers);
+            input.setAnnotation(Whiteset.class, whiteset);
+            //after this step, the whiteset should be fixed. All plugins were run,
+        }
+
         // sort again...
         final ArrayList<ProcessedPeak> processedPeaks = new ArrayList<ProcessedPeak>(input.getMergedPeaks());
         Collections.sort(processedPeaks, new ProcessedPeak.MassComparator());
         final ProcessedPeak parentPeak = processedPeaks.get(processedPeaks.size() - 1);
         // decompose peaks
-        final Set<IonMode> ionModes = input.getAnnotationOrThrow(PossibleAdducts.class).getIonModes();
-        if (!input.getExperimentInformation().getPrecursorIonType().isIonizationUnknown()) {
-            ionModes.clear();
-            ionModes.add((IonMode)input.getExperimentInformation().getPrecursorIonType().getIonization());
-        }
         final PeakAnnotation<DecompositionList> decompositionList = input.getOrCreatePeakAnnotation(DecompositionList.class);
-        final MassToFormulaDecomposer decomposer = decomposers.getDecomposer(constraints.getChemicalAlphabet());
         final Deviation fragmentDeviation = input.getAnnotationOrDefault(MS2MassDeviation.class).allowedMassDeviation;
 
         final List<MolecularFormula> pmds;
@@ -188,7 +192,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         // we use "ORIGINAL" input here, such that we do not use molecular formula information from InChI
         // this is just for evaluation purpose! We want to be able to evaluate the formula identification rate
         // without having to remove any field that is not directly related to formula but helps to infer the formula.
-        if (input.getOriginalInput().getMolecularFormula()!=null){
+        if (input.getOriginalInput().getMolecularFormula()!=null){ //todo ElementFilter: can we get rid of this?
             //always use formula. don't look at mass dev.
             final MolecularFormula formula = input.getExperimentInformation().getMolecularFormula();
             final PrecursorIonType ionType = experiment.getPrecursorIonType();
@@ -205,25 +209,13 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 validatorWarning.warn("Specified precursor molecular formula does not fall into given m/z error window. "
                         +formula.formatByHill()+" for m/z "+parentPeak.getMass()+" and ionization "+ionType);
             }
-        } else if (whiteset != null && !whiteset.isEmpty() && !whiteset.isStillAllowDeNovo()) {
-            // we add whiteset later
+        } else  {
             pmds = new ArrayList<>();
-        } else {
-            pmds = new ArrayList<>();
-            for (Ionization ion : ionModes) {
-                final List<MolecularFormula> forms = decomposer.decomposeToFormulas(parentMass, ion, parentDeviation.absoluteFor(parentMass), constraints);
-                pmds.addAll(forms);
-                for (MolecularFormula f : forms) decomps.add(new Decomposition(f, ion, 0d));
-            }
-        }
-
-
-        if (whiteset != null && !whiteset.isEmpty()) {
             final Collection<PrecursorIonType> ionTypes;
             if (experiment.getPrecursorIonType().isIonizationUnknown()) {
                 ionTypes = input.getAnnotationOrThrow(PossibleAdducts.class).getAdducts();
             } else {
-                ionTypes = Arrays.asList(experiment.getPrecursorIonType());
+                ionTypes = Arrays.asList(experiment.getPrecursorIonType()); //todo ElementFilter: can we remove this special case?
             }
             List<Decomposition> forms = whiteset.resolve(parentMass, parentDeviation, ionTypes);
             decomps.addAll(forms);
@@ -242,6 +234,10 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 }
             }
         }
+
+        //extract the used ion modes
+        //todo ElementFilter: check new way of retrieving ionMdoes. Not using the Ionmodes you get from PossibleAdducts anymore. Because filtering (ElGordo, isotope pattern) may remove all formulas of a specific io mod
+        final Set<IonMode> ionModes = decomps.stream().filter(d -> d.getIon() instanceof IonMode).map(d -> (IonMode) d.getIon()).collect(Collectors.toSet());
 
         // may split pmds if multiple alphabets are present
         final List<MassToFormulaDecomposer> decomposers = new ArrayList<>();
