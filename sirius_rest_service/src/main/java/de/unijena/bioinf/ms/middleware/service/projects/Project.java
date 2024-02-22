@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.middleware.service.projects;
 
 import de.unijena.bioinf.ms.middleware.model.annotations.FormulaCandidate;
+import de.unijena.bioinf.ms.middleware.model.annotations.SpectralLibraryMatch;
 import de.unijena.bioinf.ms.middleware.model.annotations.StructureCandidateFormula;
 import de.unijena.bioinf.ms.middleware.model.annotations.StructureCandidateScored;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
@@ -100,6 +101,8 @@ public interface Project {
     }
 
     void deleteAlignedFeaturesById(String alignedFeatureId);
+
+    Page<SpectralLibraryMatch> findLibraryMatchesByFeatureId(String alignedFeatureId, Pageable pageable);
 
     Page<FormulaCandidate> findFormulaCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, @NotNull EnumSet<FormulaCandidate.OptField> optFields);
 

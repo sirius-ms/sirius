@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import de.unijena.bioinf.chemdb.annotations.SpectralAlignmentScorer;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchOptions;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.spectraldb.SpectraMatchingMassDeviation;
+import de.unijena.bioinf.spectraldb.SpectralMatchingMassDeviation;
 import de.unijena.bionf.spectral_alignment.SpectralAlignmentType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
@@ -80,8 +80,8 @@ public class SpectralLibrarySearch extends Tool<SpectraSearchOptions> {
     public Map<String, String> asConfigMap() {
         return new NullCheckMapBuilder()
                 .putNonNullObj("SpectralSearchDB", spectraSearchDBs, db -> String.join(",", db).toLowerCase(Locale.ROOT))
-                .putNonNull("SpectraMatchingMassDeviation.allowedPeakDeviation", peakDeviationPpm, it -> it + " ppm")
-                .putNonNull("SpectraMatchingMassDeviation.allowedPrecursorDeviation", precursorDeviationPpm, it -> it + " ppm")
+                .putNonNull("SpectralMatchingMassDeviation.allowedPeakDeviation", peakDeviationPpm, it -> it + " ppm")
+                .putNonNull("SpectralMatchingMassDeviation.allowedPrecursorDeviation", precursorDeviationPpm, it -> it + " ppm")
                 .putNonNull("SpectralAlignmentScorer", scoring)
                 .toUnmodifiableMap();
     }
@@ -93,9 +93,9 @@ public class SpectralLibrarySearch extends Tool<SpectraSearchOptions> {
     public static SpectralLibrarySearch.SpectralLibrarySearchBuilder<?, ?> builderWithDefaults() {
         return SpectralLibrarySearch.builder()
                 .enabled(true)
-                .peakDeviationPpm(PropertyManager.DEFAULTS.createInstanceWithDefaults(SpectraMatchingMassDeviation.class)
+                .peakDeviationPpm(PropertyManager.DEFAULTS.createInstanceWithDefaults(SpectralMatchingMassDeviation.class)
                         .allowedPeakDeviation.getPpm())
-                .precursorDeviationPpm(PropertyManager.DEFAULTS.createInstanceWithDefaults(SpectraMatchingMassDeviation.class)
+                .precursorDeviationPpm(PropertyManager.DEFAULTS.createInstanceWithDefaults(SpectralMatchingMassDeviation.class)
                         .allowedPrecursorDeviation.getPpm())
                 .scoring(PropertyManager.DEFAULTS.createInstanceWithDefaults(SpectralAlignmentScorer.class)
                         .spectralAlignmentType);

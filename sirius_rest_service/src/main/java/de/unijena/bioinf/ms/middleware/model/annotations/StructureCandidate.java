@@ -53,10 +53,9 @@ public class StructureCandidate {
     @Schema(nullable = true)
     List<DBLink> dbLinks;
     /**
-     * List of spectral library links belonging to this structure candidate
+     * List of spectral library matches belonging to this structure candidate
      * OPTIONAL: needs to be added by parameter
      */
     @Schema(nullable = true)
-    List<DBLink> refSpectraLinks;
-    //todo add spectral library
+    List<SpectralLibraryMatch> spectralLibraryMatches;
 }
