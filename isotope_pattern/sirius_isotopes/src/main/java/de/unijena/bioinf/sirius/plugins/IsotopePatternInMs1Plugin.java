@@ -26,6 +26,7 @@ import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.IntergraphMapping;
@@ -40,8 +41,8 @@ import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * If an isotope pattern analysis assigns an ExtractedIsotopePattern annotation to the processed input,
@@ -81,10 +82,13 @@ public class IsotopePatternInMs1Plugin extends SiriusPlugin {
         if (isotopeS != null && isotopeS.isFiltering()) {
             final ExtractedIsotopePattern extractedIsotopePattern = input.getAnnotationOrNull(ExtractedIsotopePattern.class);
             if (extractedIsotopePattern != null && input.getAnnotation(IsotopeSettings.class).map(IsotopeSettings::isFiltering).orElse(false)) {
+                Whiteset whiteset = input.getAnnotationOrThrow(Whiteset.class);
+                if (whiteset.isFinalized()) return;
                 // find all high-scoring isotope pattern
                 final MolecularFormula[] formulas = filterFormulasByIsotopeScore(extractedIsotopePattern);
-                final Whiteset whiteset = input.getAnnotation(Whiteset.class, Whiteset::empty);
-                input.setAnnotation(Whiteset.class, whiteset.isEmpty() ? whiteset.addMeasured(new HashSet<>(Arrays.asList(formulas))) : whiteset); // quickfix: never filter when whiteset is given
+                final PossibleAdducts adducts = input.getAnnotationOrThrow(PossibleAdducts.class);
+                whiteset = whiteset.filterByMeasuredFormulas(Arrays.stream(formulas).collect(Collectors.toSet()), adducts.getAdducts(), IsotopePatternInMs1Plugin.class);
+                input.setAnnotation(Whiteset.class, whiteset);
             }
         }
     }
