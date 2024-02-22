@@ -109,47 +109,52 @@ public class CustomDatabaseImporter {
         listeners.remove(listener);
     }
 
-    public void importFromString(String str) throws IOException, CDKException {
+    public void importFromString(String str) throws IOException {
         importFromString(str, null, null);
     }
 
-    public void importFromString(String str, String id, String name) throws IOException, CDKException {
+    public void importFromString(String str, String id, String name) throws IOException{
         if (str == null || str.isBlank()) {
             LoggerFactory.getLogger(getClass()).warn("No structure information given in Line ' " + str + "\t" + id + "\t" + name + "'. Skipping!");
             return;
         }
 
         final Molecule molecule;
-        if (InChIs.isInchi(str)) {
-            if (!InChIs.isConnected(str)) {
-                LoggerFactory.getLogger(getClass()).warn(
-                        String.format("Compound '%s' is Not connected! Only connected structures are supported! Skipping.", str));
-                return;
+        try {
+            if (InChIs.isInchi(str)) {
+                if (!InChIs.isConnected(str)) {
+                    LoggerFactory.getLogger(getClass()).warn(
+                            String.format("Compound '%s' is Not connected! Only connected structures are supported! Skipping.", str));
+                    return;
+                }
+
+                if (InChIs.isMultipleCharged(str)) {
+                    LoggerFactory.getLogger(getClass()).warn(
+                            String.format("Compound '%s' is multiple charged! Only neutral or single charged compounds are supported! Skipping.", str));
+                    return;
+                }
+
+
+                molecule = new Molecule(InChISMILESUtils.getAtomContainerFromInchi(str));
+            } else {
+                if (!SmilesU.isConnected(str)) {
+                    LoggerFactory.getLogger(getClass()).warn(
+                            String.format("Compound '%s' is Not connected! Only connected structures are supported! Skipping.", str));
+                    return;
+                }
+
+                if (SmilesU.isMultipleCharged(str)) {
+                    LoggerFactory.getLogger(getClass()).warn(
+                            String.format("Compound '%s' is multiple charged! Only neutral or single charged compounds are supported! Skipping.", str));
+                    return;
+                }
+
+                molecule = new Molecule(smilesParser.parseSmiles(str));
+                molecule.smiles = new Smiles(str);
             }
-
-            if (InChIs.isMultipleCharged(str)) {
-                LoggerFactory.getLogger(getClass()).warn(
-                        String.format("Compound '%s' is multiple charged! Only neutral or single charged compounds are supported! Skipping.", str));
-                return;
-            }
-
-
-            molecule = new Molecule(InChISMILESUtils.getAtomContainerFromInchi(str));
-        } else {
-            if (!SmilesU.isConnected(str)) {
-                LoggerFactory.getLogger(getClass()).warn(
-                        String.format("Compound '%s' is Not connected! Only connected structures are supported! Skipping.", str));
-                return;
-            }
-
-            if (SmilesU.isMultipleCharged(str)) {
-                LoggerFactory.getLogger(getClass()).warn(
-                        String.format("Compound '%s' is multiple charged! Only neutral or single charged compounds are supported! Skipping.", str));
-                return;
-            }
-
-            molecule = new Molecule(smilesParser.parseSmiles(str));
-            molecule.smiles = new Smiles(str);
+        } catch (CDKException e) {
+            LoggerFactory.getLogger(getClass()).warn(String.format("Error when parsing molecule: '%s'! Skipping.", str));
+            return;
         }
         molecule.id = id;
         molecule.name = name;
@@ -193,12 +198,7 @@ public class CustomDatabaseImporter {
 
                         final String id = parts.length > 1 ? parts[1] : null;
                         final String name = parts.length > 2 ? parts[2] : null;
-
-                        try {
-                            importFromString(structure, id, name);
-                        } catch (CDKException e) {
-                            CustomDatabase.logger.error(e.getMessage(), e);
-                        }
+                        importFromString(structure, id, name);
                     }
                 }
             }

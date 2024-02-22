@@ -20,11 +20,19 @@
 
 package de.unijena.bioinf.spectraldb.io;
 
+import de.unijena.bioinf.ChemistryBase.chem.InChI;
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
+import de.unijena.bioinf.ChemistryBase.ms.SpectrumFileSource;
+import de.unijena.bioinf.ChemistryBase.ms.Splash;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.babelms.ZippedSpectraParser;
+import de.unijena.bioinf.babelms.annotations.CompoundMetaData;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 
 import java.lang.reflect.InvocationTargetException;
@@ -35,12 +43,13 @@ import java.util.function.Consumer;
 public class SpectralDbMsExperimentParser extends MsExperimentParser {
 
     private static final List<String> ANNOTATION_WHITELIST = List.of(
-            "de.unijena.bioinf.ChemistryBase.ms.Splash",
-            "de.unijena.bioinf.ChemistryBase.chem.Smiles",
-            "de.unijena.bioinf.ChemistryBase.chem.InChI",
-            "de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation$Instrument",
-            "de.unijena.bioinf.ChemistryBase.ms.SpectrumFileSource",
-            "de.unijena.bioinf.ChemistryBase.chem.RetentionTime"
+            DataAnnotation.getIdentifier(Splash.class),
+            DataAnnotation.getIdentifier(Smiles.class),
+            DataAnnotation.getIdentifier(InChI.class),
+            DataAnnotation.getIdentifier(MsInstrumentation.Instrument.class),
+            DataAnnotation.getIdentifier(SpectrumFileSource.class),
+            DataAnnotation.getIdentifier(RetentionTime.class),
+            DataAnnotation.getIdentifier(CompoundMetaData.class)
     );
 
     public static final Consumer<Ms2Experiment> ANNOTATION_FILTER = exp -> {

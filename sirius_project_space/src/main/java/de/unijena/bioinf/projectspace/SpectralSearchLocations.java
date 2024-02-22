@@ -22,7 +22,7 @@ package de.unijena.bioinf.projectspace;
 
 public interface SpectralSearchLocations {
     Location<CompoundContainerId>
-            SEARCH_RESULTS = new Location<>("spectral_alignment", "tsv", CompoundContainerId::getCompoundName),
-            SEARCH_PARAMS = new Location<>("spectral_alignment", "tsv", (id) -> id.getCompoundName() + "_meta");
+            SEARCH_RESULTS = new Location<>("spectral_alignment", "tsv", id -> "candidates"),
+            SEARCH_PARAMS = new Location<>("spectral_alignment", "tsv", (id) -> "meta");
 
 }
