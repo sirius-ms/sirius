@@ -217,12 +217,12 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
     public void setBottomUpSearchOptions(BottomUpSearchOptions selection) throws Exception {
         switch (selection) {
             case BOTTOM_UP_ONLY -> {
-                defaultConfigOptions.changeOption("BottomUpSearchSettings.enabledFromMass", "0");
-                defaultConfigOptions.changeOption("BottomUpSearchSettings.replaceDeNovoFromMass", "0");
+                defaultConfigOptions.changeOption("FormulaSearchSettings.enableBottomUpFromMass", "0");
+                defaultConfigOptions.changeOption("FormulaSearchSettings.disableDeNovoAboveMass", "0");
             }
             case DISABLED -> {
-                defaultConfigOptions.changeOption("BottomUpSearchSettings.enabledFromMass", String.valueOf(Double.POSITIVE_INFINITY));
-                defaultConfigOptions.changeOption("BottomUpSearchSettings.replaceDeNovoFromMass", String.valueOf(Double.POSITIVE_INFINITY));
+                defaultConfigOptions.changeOption("FormulaSearchSettings.enableBottomUpFromMass", String.valueOf(Double.POSITIVE_INFINITY));
+                defaultConfigOptions.changeOption("FormulaSearchSettings.disableDeNovoAboveMass", String.valueOf(Double.POSITIVE_INFINITY));
             }
         }
     }
@@ -236,7 +236,7 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
     public Consumer<Instance> getInvalidator() {
         return inst -> {
             inst.deleteFormulaResults(); //this step creates the results, so we have to delete them before recompute
-            inst.getExperiment().getAnnotation(DetectedAdducts.class).ifPresent(it -> it.remove(DetectedAdducts.Keys.MS1_PREPROCESSOR.name()));
+            inst.getExperiment().getAnnotation(DetectedAdducts.class).ifPresent(it -> it.remove(DetectedAdducts.Source.MS1_PREPROCESSOR.name()));
             inst.getID().setDetectedAdducts(inst.getExperiment().getAnnotationOrNull(DetectedAdducts.class));
             inst.updateCompoundID();
         };
