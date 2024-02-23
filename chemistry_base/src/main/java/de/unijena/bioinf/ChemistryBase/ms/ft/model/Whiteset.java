@@ -221,6 +221,13 @@ public class Whiteset implements Ms2ExperimentAnnotation {
         return add(other.neutralFormulas, other.measuredFormulas, stillRequiresDeNovo |other.stillRequiresDeNovo, stillRequiresBottomUp |other.stillRequiresBottomUp, other.providers);
     }
 
+    /**
+     * only keep formula that match the provided measuredFormulas
+     * @param measuredFormulas
+     * @param allowedIonTypes
+     * @param provider
+     * @return
+     */
     public Whiteset filterByMeasuredFormulas(@NotNull Set<MolecularFormula> measuredFormulas, @NotNull Set<PrecursorIonType> allowedIonTypes, Class provider) {
         if (warnIfFinalized()) return this;
         List<Class> newProviders = new ArrayList<>(providers);
@@ -236,6 +243,13 @@ public class Whiteset implements Ms2ExperimentAnnotation {
         );
     }
 
+    /**
+     * only keep formula that match the provided neutralFormulas
+     * @param neutralFormulas
+     * @param allowedIonTypes
+     * @param provider
+     * @return
+     */
     public Whiteset filterByNeutralFormulas(@NotNull Set<MolecularFormula> neutralFormulas, @NotNull Set<PrecursorIonType> allowedIonTypes, Class provider) {
         if (warnIfFinalized()) return this;
         List<Class> newProviders = new ArrayList<>(providers);
@@ -356,7 +370,7 @@ public class Whiteset implements Ms2ExperimentAnnotation {
      */
     private PrecursorIonType findBestAdduct(MolecularFormula formula, Collection<PrecursorIonType> allowedPrecursorIonTypes, double parentMass, boolean isNeutralFormula) {
         if (allowedPrecursorIonTypes.size() == 0) return null;
-        double maxAllowedAbsError = 0.01; //this is huge. If the error is even largen, we won't return any adduct.
+        double maxAllowedAbsError = 0.1; //this is huge. If the error is even largen, we won't return any adduct.
         double ppmToWarn = 30;
         double neutralMass = formula.getMass();
         PrecursorIonType best = null;
