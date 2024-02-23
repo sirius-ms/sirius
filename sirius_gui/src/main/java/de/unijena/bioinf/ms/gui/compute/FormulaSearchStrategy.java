@@ -348,7 +348,6 @@ public class FormulaSearchStrategy extends ConfigPanel {
             }
         };
 
-        useElementFilter.setSelected(false);
         parameterBindings.put("FormulaSearchSettings.applyFormulaContraintsToCandidateLists", () -> Boolean.toString(useElementFilter.isSelected()));
 
         JLabel label = new JLabel("Enable element filter");
@@ -363,39 +362,6 @@ public class FormulaSearchStrategy extends ConfigPanel {
     private String join(List<?> objects) {
         return objects.stream().map(Object::toString).collect(Collectors.joining(","));
     }
-
-//    protected ElementsPanel createElementPanel(boolean multi) {
-//        final FormulaSettings formulaSettings = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class);
-//        List<Element> possDetectableElements = new ArrayList<>(ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor().getSetOfPredictableElements());
-//
-//        final JButton elementAutoDetect;
-//        if (multi) {
-//            elementPanel = new ElementsPanel(owner, 4, possDetectableElements, formulaSettings.getAutoDetectionElements(), formulaSettings.getEnforcedAlphabet());
-//        } else {
-//            /////////////Solo Element//////////////////////
-//            elementPanel = new ElementsPanel(owner, 4, formulaSettings.getEnforcedAlphabet());
-//            elementAutoDetect = new JButton("Auto detect");
-//            elementAutoDetect.setToolTipText("Auto detectable element are: "
-//                    + possDetectableElements.stream().map(Element::toString).collect(Collectors.joining(",")));
-//            elementAutoDetect.addActionListener(e -> detectElements());
-//            elementAutoDetect.setEnabled(true);
-//            elementPanel.lowerPanel.add(elementAutoDetect);
-//        }
-//
-//        elementPanel.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));
-//
-//        // configure Element panel
-//        parameterBindings.put("FormulaSettings.enforced", () -> {
-//            return elementPanel.getElementConstraints().toString();
-//        });
-//        parameterBindings.put("FormulaSettings.detectable", () -> {
-//            final List<Element> elementsToAutoDetect = elementPanel.individualAutoDetect ? elementPanel.getElementsToAutoDetect() : Collections.emptyList();
-//            return (elementsToAutoDetect.isEmpty() ? "," :
-//                    elementsToAutoDetect.stream().map(Element::toString).collect(Collectors.joining(",")));
-//        });
-//
-//        return elementPanel;
-//    }
 
     protected void detectElements(JTextField formulaConstraintsTextBox) {
 //        String notWorkingMessage = "Element detection requires MS1 spectrum with isotope pattern.";
