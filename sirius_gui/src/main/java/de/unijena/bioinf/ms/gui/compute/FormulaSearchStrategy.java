@@ -68,8 +68,6 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
     protected  JCheckboxListPanel<CustomDataSources.Source> searchDBList;
 
-    private JPanel elementFilterPanel;
-
     /**
      * Map of strategy-specific UI components for showing/hiding when changing the strategy
      */
@@ -111,7 +109,6 @@ public class FormulaSearchStrategy extends ConfigPanel {
         strategyCardContainer.setLayout(new BoxLayout(strategyCardContainer, BoxLayout.PAGE_AXIS));
 
         strategy = (Strategy) strategyBox.getSelectedItem();
-        elementFilterPanel = createElementFilterPanel();
 
         JPanel defaultStrategyParameters = createDefaultStrategyParameters();
         JPanel databaseStrategyParameters = createDatabaseStrategyParameters();
@@ -265,20 +262,26 @@ public class FormulaSearchStrategy extends ConfigPanel {
         JPanel flowPanel = new JPanel();
         final TwoColumnPanel filterFields = new TwoColumnPanel();
 
-        addDefaultStrategyElementFilterSettings(filterFields);
-        addDatabaseStrategyElementFilterSettings(filterFields);
-
+        JLabel constraintsLabel = new JLabel("Formula constraints");
         JTextField enforcedTextBox = makeParameterTextField("FormulaSettings.enforced", formulaSettings.getEnforcedAlphabet().toString(), 20);
-        final JTextField detectableTextBox;
-        filterFields.addNamed("Formula constraints", enforcedTextBox);
+
+        JLabel autodetectLabel = new JLabel("Autodetect");
+        final JTextField detectableTextBox = isBatchDialog ? makeParameterTextField("FormulaSettings.detectable", 20) : null;
+        JPanel buttonPanel = new JPanel();
+
+        addDefaultStrategyElementFilterSettings(filterFields);
+
+        List<Component> filterComponents = new ArrayList<>(List.of(constraintsLabel, enforcedTextBox, buttonPanel));
         if (isBatchDialog) {
-            detectableTextBox = makeParameterTextField("FormulaSettings.detectable", 20);
-            filterFields.addNamed("Autodetect", detectableTextBox);
-        } else {
-            detectableTextBox = null;
+            filterComponents.addAll(List.of(autodetectLabel, detectableTextBox));
+        }
+        addDatabaseStrategyElementFilterSettings(filterFields, filterComponents);
+
+        filterFields.add(constraintsLabel, enforcedTextBox);
+        if (isBatchDialog) {
+            filterFields.add(autodetectLabel, detectableTextBox);
         }
 
-        JPanel buttonPanel = new JPanel();
 
         JButton buttonEdit = new JButton("Customize Filter");
         buttonEdit.setAlignmentX(CENTER_ALIGNMENT);
@@ -332,23 +335,29 @@ public class FormulaSearchStrategy extends ConfigPanel {
         strategyComponents.get(Strategy.DEFAULT).add(elementAlphabetStrategySelector);
     }
 
-    private void addDatabaseStrategyElementFilterSettings(TwoColumnPanel filterFields) {
-        JCheckBox useElementFilter = new JCheckBox(); //todo NewWorkflow: implement this feature. This makes the organics filter obsolete. Maybe dont use the checkbox but always select the organics. Make new Element panel popup
+    private void addDatabaseStrategyElementFilterSettings(TwoColumnPanel filterFields, List<Component> filterComponents) {
+        JCheckBox useElementFilter = new JCheckBox() { //todo NewWorkflow: implement this feature. This makes the organics filter obsolete. Maybe dont use the checkbox but always select the organics. Make new Element panel popup
+            @Override
+            public void setVisible(boolean flag) {
+                super.setVisible(flag);
+                if (flag) {
+                    filterComponents.forEach(c -> c.setVisible(this.isSelected()));
+                } else {
+                    filterComponents.forEach(c -> c.setVisible(true));
+                }
+            }
+        };
+
         useElementFilter.setSelected(false);
         parameterBindings.put("FormulaSearchSettings.applyFormulaContraintsToCandidateLists", () -> Boolean.toString(useElementFilter.isSelected()));
 
-        JLabel label = new JLabel("Use element filter");
+        JLabel label = new JLabel("Enable element filter");
         filterFields.add(label, useElementFilter);
 
         strategyComponents.get(Strategy.DATABASE).add(label);
         strategyComponents.get(Strategy.DATABASE).add(useElementFilter);
 
-//        elementFilterPanel.setVisible(useElementFilter.isSelected());
-//
-//        useElementFilter.addActionListener(e -> {
-//            elementFilterPanel.setVisible(useElementFilter.isSelected());
-//            elementFilterPanel.setEnabled(useElementFilter.isSelected()); //todo ElementFilter: this is not the proper way. Buttons still disabled.
-//        });
+        useElementFilter.addActionListener(e -> filterComponents.forEach(c -> c.setVisible(useElementFilter.isSelected())));
     }
 
     private String join(List<?> objects) {
