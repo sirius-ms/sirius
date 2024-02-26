@@ -30,8 +30,16 @@ public class DatabaseLabel implements Comparable<DatabaseLabel> {
     protected String[] values;
     protected final Rectangle rect;
 
+    public DatabaseLabel(String name, String[] values) {
+        this(name, null, values);
+    }
+
     public DatabaseLabel(String name, String[] values, Rectangle rect) {
         this(name, null, values, rect);
+    }
+
+    public DatabaseLabel(String sourceName, String displayName, String[] values) {
+        this(sourceName, displayName, values, new Rectangle(0,0,0,0));
     }
 
     public DatabaseLabel(String sourceName, String displayName, String[] values, Rectangle rect) {

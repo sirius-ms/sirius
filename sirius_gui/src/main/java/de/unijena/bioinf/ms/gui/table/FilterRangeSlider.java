@@ -132,7 +132,7 @@ public class FilterRangeSlider<L extends ActionList<E, D>, E extends SiriusPCS, 
     }
 
     @Override
-    public void resultsChanged(D experiment, E sre, List<E> resultElements, ListSelectionModel selections) {
+    public void resultsChanged(D elementsParent, E selectedElement, List<E> resultElements, ListSelectionModel selections) {
         if (!isRefreshing.getAndSet(true)) {
             try {
                 rangeSlider.removeChangeListener(rangeSliderListener);

@@ -59,10 +59,10 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
     }
 
     @Override
-    public void resultsChanged(InstanceBean experiment, FormulaResultBean sre, List<FormulaResultBean> resultElements, ListSelectionModel selections) {
+    public void resultsChanged(InstanceBean elementsParent, FormulaResultBean selectedElement, List<FormulaResultBean> resultElements, ListSelectionModel selections) {
         // we are only interested in changes of the experiment
-        if (currentInstance!=experiment) {
-            currentInstance = experiment;
+        if (currentInstance!= elementsParent) {
+            currentInstance = elementsParent;
             activeIndex = 0;
             updateContent();
         }

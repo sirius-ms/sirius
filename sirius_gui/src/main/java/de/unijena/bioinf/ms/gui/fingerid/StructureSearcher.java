@@ -90,7 +90,7 @@ public class StructureSearcher implements Runnable {
                     }
                 }
 
-                if (c.candidate == null) continue;
+                if (c.getCandidate() == null) continue;
                 c.compoundLock.lock();
                 try {
                     if (highlight >= 0) c.highlightFingerprint(highlight);

@@ -29,12 +29,15 @@ import de.unijena.bioinf.chemdb.InChISMILESUtils;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
+import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchingResult;
 import de.unijena.bioinf.ms.nightsky.sdk.model.BinaryFingerprint;
 import de.unijena.bioinf.ms.nightsky.sdk.model.DBLink;
+import de.unijena.bioinf.ms.nightsky.sdk.model.SpectralLibraryMatch;
 import de.unijena.bioinf.ms.nightsky.sdk.model.StructureCandidateFormula;
 import it.unimi.dsi.fastutil.shorts.ShortArrayList;
 import it.unimi.dsi.fastutil.shorts.ShortList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.fingerprint.CircularFingerprinter;
@@ -49,8 +52,6 @@ import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import org.slf4j.LoggerFactory;
 
-import java.awt.*;
-import java.util.List;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -83,7 +84,8 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
     @NotNull
     private final ProbabilityFingerprint fp;
     @NotNull
-    protected final StructureCandidateFormula candidate;
+    private final StructureCandidateFormula candidate;
+    private final SpectralMatchingResult spectralMatchingResult;
 
 
     //view
@@ -95,20 +97,23 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
     protected CircularFingerprinter.FP[] relevantFps;
     protected int[] ecfpHashs;
 
+
     protected FingerprintAgreement substructures;
+    @NotNull
     protected final DatabaseLabel[] labels;
-
-    protected final EmptyLabel referenceLabel;
-
-    protected final EmptyLabel moreLabel;
+    @Nullable
+    protected final DatabaseLabel bestRefMatchLabel;
+    @Nullable
+    protected final EmptyLabel moreRefMatchesLabel;
 
     protected boolean atomCoordinatesAreComputed = false;
     protected ReentrantLock compoundLock = new ReentrantLock();
 
 
-    public FingerprintCandidateBean(@NotNull StructureCandidateFormula candidate, @NotNull ProbabilityFingerprint fp) {
+    public FingerprintCandidateBean(@NotNull StructureCandidateFormula candidate, @NotNull ProbabilityFingerprint fp, SpectralMatchingResult spectralMatchingResult) {
         this.fp = fp; //todo nightsky: ->  do we want to lazy load the fp instead?
         this.candidate = candidate;
+        this.spectralMatchingResult = spectralMatchingResult;
         this.relevantFps = null;
 
 
@@ -124,16 +129,27 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
                         .filter(Objects::nonNull).distinct().toList();
 
                 if (entry.getKey().equals(DataSource.LIPID.realName))
-                    labels.add(new DatabaseLabel(entry.getKey(), "Lipid - " + entry.getValue().iterator().next(), cleaned.toArray(String[]::new), new Rectangle(0, 0, 0, 0)));
+                    labels.add(new DatabaseLabel(entry.getKey(), "Lipid - " + entry.getValue().iterator().next(), cleaned.toArray(String[]::new)));
                 else
-                    labels.add(new DatabaseLabel(entry.getKey(), cleaned.toArray(String[]::new), new Rectangle(0, 0, 0, 0)));
+                    labels.add(new DatabaseLabel(entry.getKey(), cleaned.toArray(String[]::new)));
             }
             Collections.sort(labels);
             this.labels = labels.toArray(DatabaseLabel[]::new);
         }
 
-        this.referenceLabel = new EmptyLabel();
-        this.moreLabel = new EmptyLabel();
+        bestRefMatchLabel = getBestReferenceMatch().map(match ->
+                new DatabaseLabel(
+                        match.getDbName(),
+                        Math.round(100 * match.getSimilarity()) + "% " + match.getDbName(),
+                        new String[]{match.getDbId()}
+                )).orElse(null);
+
+        final int size = getReferenceMatches().size();
+        switch (size) {
+            case 0 -> moreRefMatchesLabel = null;
+            case 1 -> moreRefMatchesLabel = new EmptyLabel("...show more", "Opem table with detailed information and spectrum visualisation for all reference matches.");
+            default -> moreRefMatchesLabel = new EmptyLabel(String.format("...show %d more", size - 1), "Opem table with detailed information and spectrum visualisation for all reference matches.");
+        }
     }
 
     public void highlightInBackground() {
@@ -143,6 +159,20 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         }
     }
 
+    @NotNull
+    public List<SpectralLibraryMatch> getReferenceMatches() {
+        if (spectralMatchingResult == null)
+            return List.of();
+        return spectralMatchingResult.getMatchingSpectraForFPCandidate(getInChiKey()).orElse(List.of());
+    }
+
+    @NotNull
+    public Optional<SpectralLibraryMatch> getBestReferenceMatch() {
+        if (spectralMatchingResult == null)
+            return Optional.empty();
+        return spectralMatchingResult.getBestMatchingSpectrumForFPCandidate(getInChiKey());
+    }
+
     public Double getTanimotoScore() {
         return candidate.getTanimotoSimilarity();
     }
@@ -150,8 +180,6 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
     public double getScore() {
         return candidate.getCsiScore();
     }
-
-
 
 
     public ArrayFingerprint getCandidateFingerprint() {
@@ -183,7 +211,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         }
     }
 
-    public String getSmiles(){
+    public String getSmiles() {
         return candidate.getSmiles();
     }
 
@@ -376,7 +404,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         }
 
         private PrototypeCompoundCandidate() {
-            super(makeSourceCandidate(), null);
+            super(makeSourceCandidate(), null, null);
         }
 
 

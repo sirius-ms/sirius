@@ -21,20 +21,16 @@ package de.unijena.bioinf.ms.gui.fingerid.fingerprints;
 
 import ca.odell.glazedlists.gui.TableFormat;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import java.util.Locale;
-
 /**
- * Created by kaidu on 22.05.17.
+ * @author Kai Dührkop
  */
 public class FingerprintTableFormat implements TableFormat<FingerIdPropertyBean> {
-    protected FingerprintTable table;
+    protected FingerprintList table;
     protected static String[] columns = new String[]{
             "Index", "SMARTS", "Posterior Probability", "#Atoms", "Type", "Positive training examples", "Predictor quality (F1)"
     };
 
-    public FingerprintTableFormat(FingerprintTable table) {
+    public FingerprintTableFormat(FingerprintList table) {
         this.table = table;
     }
 

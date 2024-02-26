@@ -22,7 +22,6 @@ package de.unijena.bioinf.ms.gui.fingerid.fingerprints;
 import de.unijena.bioinf.ChemistryBase.fp.FPIter;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
-import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
@@ -36,18 +35,16 @@ import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
-import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class FingerprintTable extends ActionList<FingerIdPropertyBean, FormulaResultBean> implements ActiveElementChangedListener<FormulaResultBean, InstanceBean> {
+public class FingerprintList extends ActionList<FingerIdPropertyBean, FormulaResultBean> implements ActiveElementChangedListener<FormulaResultBean, InstanceBean> {
 
     protected FingerprintVisualization[] visualizations;
     protected double[] fscores = null;
@@ -58,12 +55,12 @@ public class FingerprintTable extends ActionList<FingerIdPropertyBean, FormulaRe
 
 
 
-    public FingerprintTable(final FormulaList source, SiriusGui gui) throws IOException {
+    public FingerprintList(final FormulaList source, SiriusGui gui) throws IOException {
         this(source, FingerprintVisualization.read(), gui);
 
     }
 
-    public FingerprintTable(final FormulaList source, FingerprintVisualization[] visualizations, SiriusGui gui) {
+    public FingerprintList(final FormulaList source, FingerprintVisualization[] visualizations, SiriusGui gui) {
         super(FingerIdPropertyBean.class, DataSelectionStrategy.FIRST_SELECTED);
         source.addActiveResultChangedListener(this);
         this.gui = gui;
@@ -89,8 +86,7 @@ public class FingerprintTable extends ActionList<FingerIdPropertyBean, FormulaRe
     private final Lock backgroundLoaderLock = new ReentrantLock();
 
     @Override
-    public void resultsChanged(InstanceBean experiment, FormulaResultBean sre, List<FormulaResultBean> resultElements, ListSelectionModel selections) {
-        //no lock all in edt
+    public void resultsChanged(InstanceBean elementsParent, FormulaResultBean selectedElement, List<FormulaResultBean> resultElements, ListSelectionModel selections) {
         try {
             backgroundLoaderLock.lock();
             final JJob<Boolean> old = backgroundLoader;
@@ -104,12 +100,12 @@ public class FingerprintTable extends ActionList<FingerIdPropertyBean, FormulaRe
                     Jobs.runEDTAndWait(elementList::clear);
                     checkForInterruption();
 
-                    if (sre != null) {
-                        ProbabilityFingerprint fingerprint = sre.getPredictedFingerprint().orElse(null);
+                    if (selectedElement != null) {
+                        ProbabilityFingerprint fingerprint = selectedElement.getPredictedFingerprint().orElse(null);
                         checkForInterruption();
                         if (fingerprint != null) {
                             try {
-                                setFScores(sre.getCharge() > 0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_NEGATIVE);
+                                setFScores(selectedElement.getCharge() > 0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_NEGATIVE);
                                 List<FingerIdPropertyBean> tmp = new ArrayList<>();
                                 for (final FPIter iter : fingerprint) {
                                     checkForInterruption();
@@ -125,7 +121,7 @@ public class FingerprintTable extends ActionList<FingerIdPropertyBean, FormulaRe
                         }
                     }
                     checkForInterruption();
-                    Jobs.runEDTAndWait(() -> notifyListeners(sre, getSelectedElement(), elementList, elementListSelectionModel));
+                    Jobs.runEDTAndWait(() -> notifyListeners(selectedElement, getSelectedElement(), elementList, elementListSelectionModel));
                     return true;
                 }
 

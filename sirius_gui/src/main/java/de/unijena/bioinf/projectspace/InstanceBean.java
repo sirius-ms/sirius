@@ -31,6 +31,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.WrapperSpectrum;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
+import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchingResult;
 import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
 import de.unijena.bioinf.ms.nightsky.sdk.model.*;
 import org.jetbrains.annotations.NotNull;
@@ -63,6 +64,7 @@ public class InstanceBean implements SiriusPCS {
     private final String featureId;
     private AlignedFeature sourceFeature;
     private MsData msData;
+    private SpectralMatchingResult spectralMatchingResult;
 
     @NotNull
     private final GuiProjectManager projectManager;
@@ -105,7 +107,8 @@ public class InstanceBean implements SiriusPCS {
             public void propertyChange(PropertyChangeEvent evt) {
                 if (evt.getNewValue() != null && evt.getNewValue() instanceof ProjectChangeEvent pce) {
                     if (getFeatureId().equals(pce.getFeaturedId())) {
-                        synchronized (InstanceBean.this) {
+                        synchronized (InstanceBean.this) { //todo nighsky: check if this makes sense or if this needs to change on selection only
+                            InstanceBean.this.spectralMatchingResult = null;
                             InstanceBean.this.sourceFeature = null;
                         }
                         switch (pce.getEventType()) {
@@ -272,7 +275,7 @@ public class InstanceBean implements SiriusPCS {
                         (List<Double>) withIds((pid, fid) -> getClient().features().getFingerprintPrediction(pid, fid, fcid))
                 )));
 
-        return page.getContent().stream().map(c -> new FingerprintCandidateBean(c, fps.get(c.getFormulaId()))).toList();
+        return page.getContent().stream().map(c -> new FingerprintCandidateBean(c, fps.get(c.getFormulaId()), getSpectralSearchResults())).toList();
     }
 
     public PageStructureCandidateFormula getStructureCandidatesPage(int topK) {
@@ -295,13 +298,26 @@ public class InstanceBean implements SiriusPCS {
         return msData;
     }
 
-    public Optional<SpectralSearchResultBean> getSpectralSearchResults() {
-        //todo nightsky: implement
-        LoggerFactory.getLogger(getClass()).warn("Implement spectral lib result features in nightsky api");
-        return Optional.empty();
-//        CompoundContainer container = loadCompoundContainer(SpectralSearchResult.class);
-//        Optional<SpectralSearchResult> result = container.getAnnotation(SpectralSearchResult.class);
-//        return result.map(SpectralSearchResultBean::new);
+    public SpectralMatchingResult getSpectralSearchResults() {
+        if (spectralMatchingResult == null) {
+            spectralMatchingResult = getSpectralSearchResults(100);
+        }
+        return spectralMatchingResult;
+    }
+    public SpectralMatchingResult getSpectralSearchResults(int topK) {
+        return Optional.ofNullable(getSpectralSearchResultsPage(topK)).map(PageSpectralLibraryMatch::getContent)
+                .map(SpectralMatchingResult::new).orElse(new SpectralMatchingResult(List.of()));
+    }
+
+    protected PageSpectralLibraryMatch getSpectralSearchResultsPage(int topK) {
+        return getSpectralSearchResultsPage(0, topK);
+
+    }
+
+    protected PageSpectralLibraryMatch getSpectralSearchResultsPage(int pageNum, int pageSize) {
+        return withIds((pid, fid) -> getClient().features()
+                .getSpectralLibraryMatchesWithResponseSpec(pid, fid, pageNum, pageSize, null, null, SearchQueryType.LUCENE,
+                        List.of(SpectralLibraryMatchOptField.REFERENCESPECTRUM)).bodyToMono(PageSpectralLibraryMatch.class).onErrorComplete().block());
     }
 
     public MutableMs2Experiment asMs2Experiment() {

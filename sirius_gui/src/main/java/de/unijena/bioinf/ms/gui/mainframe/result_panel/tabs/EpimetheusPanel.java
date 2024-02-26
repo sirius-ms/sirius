@@ -49,7 +49,6 @@ public class EpimetheusPanel extends JPanel implements PanelDescription {
         super(new BorderLayout());
         this.structureList = structureList;
         this.candidateTable = new CandidateListTableView(structureList);
-        this.structureList.getTopLevelSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         final SpectraVisualizationPanel overviewSVP = new SpectraVisualizationPanel(SpectraVisualizationPanel.MS2_DISPLAY);
 
         candidateTable.getFilteredSelectionModel().addListSelectionListener(e -> {

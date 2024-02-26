@@ -22,30 +22,37 @@ package de.unijena.bioinf.ms.gui.fingerid;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.FilterList;
 import ca.odell.glazedlists.SortedList;
-import de.unijena.bioinf.chemdb.PubmedLinks;
 import de.unijena.bioinf.ms.gui.table.*;
+import lombok.Getter;
 
 import javax.swing.*;
 
 public class CandidateListTableView extends CandidateListView {
 
-    private final ActionTable<FingerprintCandidateBean> table;
     private SortedList<FingerprintCandidateBean> sortedSource;
+
+    @Getter
+    private ActionTable<FingerprintCandidateBean> table;
 
     public CandidateListTableView(final StructureList list) {
         super(list);
 
         getSource().addActiveResultChangedListener((instanceBean, sre, resultElements, selections) -> {
+            filteredSelectionModel.setValueIsAdjusting(true);
+            filteredSelectionModel.clearSelection();
             if (instanceBean == null) //todo nighsky: how to check if fingerprint was computed
                 showCenterCard(ActionList.ViewState.NOT_COMPUTED);
             else if (resultElements.isEmpty())
                 showCenterCard(ActionList.ViewState.EMPTY);
             else
                 showCenterCard(ActionList.ViewState.DATA);
+            if (!getSource().getElementListSelectionModel().isSelectionEmpty())
+                filteredSelectionModel.setSelectionInterval(getSource().getElementListSelectionModel().getMinSelectionIndex(), getSource().getElementListSelectionModel().getMaxSelectionIndex());
+            filteredSelectionModel.setValueIsAdjusting(false);
         });
 
         final CandidateTableFormat tf = new CandidateTableFormat(getSource().getBestFunc());
-        this.table = new ActionTable<>(filteredSource, sortedSource, tf);
+        table = new ActionTable<>(filteredSource, sortedSource, tf);
 
         table.setSelectionModel(filteredSelectionModel);
         final SiriusResultTableCellRenderer defaultRenderer = new SiriusResultTableCellRenderer(tf.highlightColumnIndex());
@@ -53,11 +60,11 @@ public class CandidateListTableView extends CandidateListView {
 
         table.getTableHeader().setDefaultRenderer(new CandidateListTableHeaderRenderer());
 
-        table.getColumnModel().getColumn(5).setCellRenderer(new ListStatBarTableCellRenderer<>(tf.highlightColumnIndex(), source.csiScoreStats, false, false, null));
-        table.getColumnModel().getColumn(6).setCellRenderer(new BarTableCellRenderer(tf.highlightColumnIndex(), 0f, 1f, true));
+        table.getColumnModel().getColumn(4).setCellRenderer(new ListStatBarTableCellRenderer<>(tf.highlightColumnIndex(), source.csiScoreStats, false, false, null));
+        table.getColumnModel().getColumn(5).setCellRenderer(new BarTableCellRenderer(tf.highlightColumnIndex(), 0f, 1f, true));
         //todo nightsky: add pubmed link feature!
 //        LinkedSiriusTableCellRenderer linkRenderer = new LinkedSiriusTableCellRenderer(defaultRenderer, (LinkedSiriusTableCellRenderer.LinkCreator<PubmedLinks>) s -> s == null ? null : s.getPubmedLink());
-//        linkRenderer.registerToTable(table, 7);
+//        linkRenderer.registerToTable(table, 6);
 
         addToCenterCard(ActionList.ViewState.DATA, new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED));
         showCenterCard(ActionList.ViewState.NOT_COMPUTED);

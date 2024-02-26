@@ -2094,7 +2094,7 @@
         ],
         "summary": "List of spectral library matches for the given \u0027alignedFeatureId\u0027.",
         "description": "List of spectral library matches for the given \u0027alignedFeatureId\u0027.",
-        "operationId": "getStructureCandidates_1",
+        "operationId": "getSpectralLibraryMatches",
         "parameters": [
           {
             "name": "projectId",
@@ -2164,6 +2164,18 @@
             "required": false,
             "schema": {
               "$ref": "#/components/schemas/SearchQueryType"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/SpectralLibraryMatchOptField"
+              },
+              "default": []
             }
           }
         ],
@@ -5298,11 +5310,23 @@
           "splash": {
             "type": "string"
           },
+          "molecularFormula": {
+            "type": "string"
+          },
+          "adduct": {
+            "type": "string"
+          },
+          "exactMass": {
+            "type": "string"
+          },
           "smiles": {
             "type": "string"
           },
           "candidateInChiKey": {
             "type": "string"
+          },
+          "referenceSpectrum": {
+            "$ref": "#/components/schemas/BasicSpectrum"
           }
         },
         "description": "",
@@ -5831,6 +5855,15 @@
         },
         "description": ""
       },
+      "SpectralLibraryMatchOptField": {
+        "type": "string",
+        "description": "",
+        "nullable": true,
+        "enum": [
+          "none",
+          "referenceSpectrum"
+        ]
+      },
       "PageSpectralLibraryMatch": {
         "type": "object",
         "properties": {
@@ -5842,14 +5875,14 @@
             "type": "integer",
             "format": "int64"
           },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
           "last": {
             "type": "boolean"
           },
           "first": {
             "type": "boolean"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
           },
           "size": {
             "type": "integer",

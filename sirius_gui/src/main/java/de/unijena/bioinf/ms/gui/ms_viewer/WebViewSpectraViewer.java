@@ -19,6 +19,8 @@
 
 package de.unijena.bioinf.ms.gui.ms_viewer;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.webView.WebViewPanel;
 import javafx.concurrent.Worker;
@@ -57,6 +59,17 @@ public class WebViewSpectraViewer extends WebViewPanel {
                         }
                     });
             });
+    }
+
+    public void loadDataOrThrow(SpectraViewContainer data, String svg)  {
+        try {
+            loadData(data,svg);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public void loadData(SpectraViewContainer data, String svg) throws JsonProcessingException {
+        loadData(new ObjectMapper().writeValueAsString(data), svg);
     }
 
     public void loadData(String json_spectra, String svg) { // TEST CODE

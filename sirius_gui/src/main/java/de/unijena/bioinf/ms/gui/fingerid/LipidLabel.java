@@ -90,12 +90,12 @@ public class LipidLabel extends JLabel implements ActiveElementChangedListener<F
     }
 
     @Override
-    public void resultsChanged(InstanceBean experiment, FingerprintCandidateBean sre, List<FingerprintCandidateBean> resultElements, ListSelectionModel selections) {
+    public void resultsChanged(InstanceBean elementsParent, FingerprintCandidateBean selectedElement, List<FingerprintCandidateBean> resultElements, ListSelectionModel selections) {
         setText(null);
         setVisible(false);
         this.lipidSpecies = null;
-        if (experiment != null) {
-            this.lipidSpecies = experiment.getFormulaAnnotation().map(FormulaCandidate::getLipidAnnotation).orElse(null);
+        if (elementsParent != null) {
+            this.lipidSpecies = elementsParent.getFormulaAnnotation().map(FormulaCandidate::getLipidAnnotation).orElse(null);
             if (this.lipidSpecies != null && lipidSpecies.getLipidSpecies() != null){
                 setText("<html>" +
                         "<b>" + lipidSpecies.getLipidSpecies() + "</b>" +

@@ -84,7 +84,7 @@ public class JobDialog extends JDialog {
         });
 
         jobTable.getSelectionModel().addListSelectionListener(e -> {
-            final boolean enabled = e.getFirstIndex() >= 0;
+            final boolean enabled = e.getLastIndex() >= 0;
             cancelB.setEnabled(enabled);
             openLogb.setEnabled(enabled);
         });

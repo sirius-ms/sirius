@@ -22,13 +22,15 @@ package de.unijena.bioinf.ms.middleware.service.dbs;
 
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
+import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
 import de.unijena.bioinf.webapi.WebAPI;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
 @Slf4j
-public class StructureDatabaseServiceImpl implements StructureDatabaseService {
-    public StructureDatabaseServiceImpl(WebAPI<?> webAPI) {
+public class ChemDbServiceImpl implements ChemDbService {
+    private final WebAPI<?> webAPI;
+    public ChemDbServiceImpl(WebAPI<?> webAPI) {
+        this.webAPI = webAPI;
         System.out.println("INIT Databases");
         log.info("INIT Databases");
         try {
@@ -39,5 +41,10 @@ public class StructureDatabaseServiceImpl implements StructureDatabaseService {
         } catch (Exception e) {
             log.error("Error when loading Custom databases",e);
         }
+    }
+
+    @Override
+    public WebWithCustomDatabase db() {
+        return webAPI.getChemDB();
     }
 }

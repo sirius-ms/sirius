@@ -30,6 +30,7 @@ import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
 import de.unijena.bioinf.projectspace.InstanceBean;
 
+import javax.swing.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
@@ -46,18 +47,10 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
 
     public StructureList(final CompoundList compoundList) {
         super(FingerprintCandidateBean.class);
-
+        elementListSelectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         csiScoreStats = new DoubleListStats();
         logPStats = new DoubleListStats();
         tanimotoStats = new DoubleListStats();
-        topLevelSelectionModel = elementListSelectionModel;
-
-        DefaultEventSelectionModel<InstanceBean> m = compoundList.getCompoundListSelectionModel();
-        if (!m.isSelectionEmpty()) {
-            changeData(m.getSelected().get(0));
-        } else {
-            changeData(null);
-        }
 
         /////////// LISTENERS //////////////
         //this is the selection refresh, element changes are detected by eventlist
@@ -82,6 +75,14 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
                     changeData(null);
             }
         });
+
+        //set initial state because listeners are called on change and not on creation
+        DefaultEventSelectionModel<InstanceBean> m = compoundList.getCompoundListSelectionModel();
+        if (!m.isSelectionEmpty()) {
+            changeData(m.getSelected().get(0));
+        } else {
+            changeData(null);
+        }
     }
 
     private JJob<Boolean> backgroundLoader = null;
@@ -114,12 +115,9 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
                             logPStats.reset();
                             tanimotoStats.reset();
                             loadAll.set(loadAllCandidates);
-                            setData(null);
-                            topLevelSelectionModel.clearSelection();
                     });
 
                     checkForInterruption();
-
 
                     if (ec != null) {
                         final List<FingerprintCandidateBean> fpcChache = ec.getStructureCandidates(loadAllCandidates ? Integer.MAX_VALUE : 100); //todo allow user specifiable or pagination
@@ -130,14 +128,14 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
                             tanimotoStats.addValue(fpc.getTanimotoScore());
                         });
                         checkForInterruption();
-                        setData(ec); //notifies listeners about data change
-                        checkForInterruption();
-                        if (refillElementsEDT(fpcChache)) {
+                        if (refillElementsEDT(ec, fpcChache)) {
                             checkForInterruption();
-                            loadMols = Jobs.MANAGER().submitJob(new LoadMoleculeJob(fpcChache));
+                            if (!fpcChache.isEmpty())
+                                loadMols = Jobs.MANAGER().submitJob(new LoadMoleculeJob(fpcChache));
                         }
+                    } else {
+                        refillElementsEDT(null, List.of());
                     }
-
                     return true;
                 }
 
