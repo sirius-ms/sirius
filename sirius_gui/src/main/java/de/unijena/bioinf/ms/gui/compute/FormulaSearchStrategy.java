@@ -103,7 +103,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         final JPanel formulaSearchStrategySelection = new JPanel();
         formulaSearchStrategySelection.setLayout(new BoxLayout(formulaSearchStrategySelection, BoxLayout.PAGE_AXIS));
         formulaSearchStrategySelection.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));
-        JComboBox<FormulaSearchStrategy.Strategy> strategyBox =  GuiUtils.makeParameterComboBoxFromDescriptiveValues(FormulaSearchStrategy.Strategy.values());
+        JComboBox<Strategy> strategyBox =  GuiUtils.makeParameterComboBoxFromDescriptiveValues(Strategy.values());
         formulaSearchStrategySelection.add(new TextHeaderBoxPanel("Molecular formula generation", strategyBox));
 
         add(formulaSearchStrategySelection);
@@ -134,8 +134,8 @@ public class FormulaSearchStrategy extends ConfigPanel {
             if (e.getStateChange() != ItemEvent.SELECTED) {
                 return;
             }
-            final Strategy source = (Strategy) e.getItem();
-            showStrategy(source);
+            strategy = (Strategy) e.getItem();
+            showStrategy(strategy);
         });
     }
 
@@ -151,51 +151,38 @@ public class FormulaSearchStrategy extends ConfigPanel {
         final TwoColumnPanel busOptions = new TwoColumnPanel();
         JComboBox<SiriusOptions.BottomUpSearchOptions> bottomUpSearchSelector = new JComboBox<>();
         List<SiriusOptions.BottomUpSearchOptions> settings = new ArrayList<>(EnumSet.allOf(SiriusOptions.BottomUpSearchOptions.class));
-        if (strategy == Strategy.DE_NOVO) settings.remove(SiriusOptions.BottomUpSearchOptions.BOTTOM_UP_ONLY);
-        if (strategy == Strategy.DEFAULT) settings.remove(SiriusOptions.BottomUpSearchOptions.DISABLED);//this is not a contradiction by default, but we have the separate Strategy.DE_NOVO for that
+        settings.remove(SiriusOptions.BottomUpSearchOptions.DISABLED);  //this is not a contradiction by default, but we have the separate Strategy.DE_NOVO for that
         settings.forEach(bottomUpSearchSelector::addItem);
+        bottomUpSearchSelector.setSelectedItem(SiriusOptions.BottomUpSearchOptions.CUSTOM);
         busOptions.addNamed("Bottom up search", bottomUpSearchSelector);
 
-        JSpinner bottomUpSearchOnly;
         JCheckBox bottomUpSearchEnabled = new JCheckBox();
-        bottomUpSearchOnly = makeIntParameterSpinner("FormulaSearchSettings.disableDeNovoAboveMass", 0, Integer.MAX_VALUE, 5);
-        bottomUpSearchEnabled.setEnabled(false);
-        bottomUpSearchOnly.setEnabled(false);
-
-        bottomUpSearchEnabled.addActionListener(e -> {
-            //enable of disable buttom up search. Not setting specific mz threshold
-            setBottomUpSearchMass(bottomUpSearchEnabled);
-        });
         bottomUpSearchEnabled.setSelected(true);
 
-        bottomUpSearchSelector.addItemListener(e -> {
-            if (e.getStateChange() != ItemEvent.SELECTED) {
-                return;
-            }
-            final SiriusOptions.BottomUpSearchOptions source = (SiriusOptions.BottomUpSearchOptions) e.getItem();
-            switch (source) {
-                case BOTTOM_UP_ONLY -> {
-                    bottomUpSearchEnabled.setEnabled(false);
-                    bottomUpSearchOnly.setEnabled(false);
-                    bottomUpSearchEnabled.setSelected(true);
-                    bottomUpSearchOnly.setValue(0);
-                }
-                case DISABLED -> {
-                    bottomUpSearchEnabled.setEnabled(false);
-                    bottomUpSearchOnly.setEnabled(false);
-                    bottomUpSearchEnabled.setSelected(false);
-                    bottomUpSearchOnly.setValue(Double.POSITIVE_INFINITY);
-                }
-                case CUSTOM -> {
-                    bottomUpSearchEnabled.setEnabled(true);
-                    bottomUpSearchOnly.setEnabled(true);
-                    bottomUpSearchEnabled.setSelected(true);
-                    bottomUpSearchOnly.setValue(400);
-                }
-            }
-        });
+        JSpinner denovoUpTo = makeIntParameterSpinner("FormulaSearchSettings.disableDeNovoAboveMass", 0, Integer.MAX_VALUE, 5);  // binding is overwritten
+
         busOptions.addNamed("Perform bottom up search", bottomUpSearchEnabled);
-        busOptions.addNamed("Perform de novo below m/z", bottomUpSearchOnly);
+        busOptions.addNamed("Perform de novo below m/z", denovoUpTo);
+
+        parameterBindings.put("FormulaSearchSettings.enableBottomUpFromMass", () -> {
+            if (strategy.equals(Strategy.DEFAULT)) {
+                boolean onlyBottomUp = SiriusOptions.BottomUpSearchOptions.BOTTOM_UP_ONLY.equals(bottomUpSearchSelector.getSelectedItem());
+                boolean custom = SiriusOptions.BottomUpSearchOptions.CUSTOM.equals(bottomUpSearchSelector.getSelectedItem());
+                if (onlyBottomUp || (custom && bottomUpSearchEnabled.isSelected())) {
+                    return "0";
+                }
+            }
+            return String.valueOf(Double.POSITIVE_INFINITY);
+        });
+
+        parameterBindings.put("FormulaSearchSettings.disableDeNovoAboveMass", () -> switch (strategy) {
+            case DEFAULT -> SiriusOptions.BottomUpSearchOptions.CUSTOM.equals(bottomUpSearchSelector.getSelectedItem()) ?
+                    denovoUpTo.getValue().toString()
+                    : "0";
+            case DE_NOVO -> String.valueOf(Double.POSITIVE_INFINITY);
+            case DATABASE -> "0";
+        });
+
 
         parameterPanel.add(new TextHeaderBoxPanel("Bottom Up Search", busOptions));
 
@@ -203,33 +190,6 @@ public class FormulaSearchStrategy extends ConfigPanel {
         card.add(Box.createRigidArea(new Dimension(0, GuiUtils.SMALL_GAP)));  // gap with element filter
 
         return card;
-    }
-
-    private void setBottomUpSearchMass(JCheckBox bottomUpSearchEnabled) {
-        if (bottomUpSearchEnabled.isSelected()) {
-            parameterBindings.put("FormulaSearchSettings.enableBottomUpFromMass", () -> "0");
-        } else {
-            parameterBindings.put("FormulaSearchSettings.enableBottomUpFromMass", () -> String.valueOf(Double.POSITIVE_INFINITY));
-        }
-    }
-
-//    private JPanel createDeNovoStrategyCard() {
-//        enableDeNovo();
-//        disableBottomUpSearch();
-//
-//        return elementFilterPanel;
-//    }
-
-    private void disableBottomUpSearch() {
-        parameterBindings.put("FormulaSearchSettings.enableBottomUpFromMass", () -> String.valueOf(Double.POSITIVE_INFINITY));
-    }
-
-    private void enableDeNovo() {
-        parameterBindings.put("FormulaSearchSettings.disableDeNovoAboveMass", () -> String.valueOf(Double.POSITIVE_INFINITY));
-    }
-
-    private void disableDeNovo() {
-        parameterBindings.put("FormulaSearchSettings.disableDeNovoAboveMass", () -> "0");
     }
 
     private JPanel createDatabaseStrategyParameters() {
@@ -241,9 +201,6 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
         card.add(searchDBList);
         card.add(Box.createRigidArea(new Dimension(0, GuiUtils.SMALL_GAP)));  // gap with element filter
-
-        disableBottomUpSearch();
-        disableDeNovo();
 
         return card;
     }
@@ -329,7 +286,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
     private void addDefaultStrategyElementFilterSettings(TwoColumnPanel filterFields) {
         JComboBox<ElementAlphabetStrategy> elementAlphabetStrategySelector = new JComboBox<>(); //todo NewWorflow: implement this feature in sirius-libs
-        List<ElementAlphabetStrategy> settingsElements = java.util.List.copyOf(EnumSet.allOf(ElementAlphabetStrategy.class));
+        List<ElementAlphabetStrategy> settingsElements = List.copyOf(EnumSet.allOf(ElementAlphabetStrategy.class));
         settingsElements.forEach(elementAlphabetStrategySelector::addItem);
         elementAlphabetStrategySelector.setSelectedItem(ElementAlphabetStrategy.DE_NOVO_ONLY);
         parameterBindings.put("FormulaSearchSettings.applyFormulaContraintsToBottomUp", () -> Boolean.toString(elementAlphabetStrategySelector.getSelectedItem() == ElementAlphabetStrategy.BOTH));
