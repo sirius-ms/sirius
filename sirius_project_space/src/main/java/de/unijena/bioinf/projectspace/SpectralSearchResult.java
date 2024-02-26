@@ -20,6 +20,8 @@
 
 package de.unijena.bioinf.projectspace;
 
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ms.annotations.ResultAnnotation;
 import de.unijena.bionf.spectral_alignment.SpectralAlignmentType;
@@ -72,6 +74,9 @@ public class SpectralSearchResult implements Iterable<SpectralSearchResult.Searc
 
         private String splash;
 
+        private MolecularFormula molecularFormula;
+        private PrecursorIonType adduct;
+        private double exactMass;
         private String smiles;
 
         private String candidateInChiKey;
